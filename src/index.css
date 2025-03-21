@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.input-field {
+  @apply border border-gray-300 p-2 rounded w-full;
+}
+
+.btn-primary {
+  @apply bg-orange-500 text-white py-2 px-4 rounded hover:bg-orange-600;
+}
+
+.btn-secondary {
+  @apply bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300;
+}
+
+
+/* Add to your global.css file */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
