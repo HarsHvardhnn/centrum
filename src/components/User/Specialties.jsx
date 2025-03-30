@@ -1,0 +1,39 @@
+import React from "react";
+
+const specialtiesData = [
+  { id: 1, name: "Neurology" },
+  { id: 2, name: "Bones" },
+  { id: 3, name: "Neurology" },
+  { id: 4, name: "Neurology" },
+  { id: 5, name: "Neurology" },
+  { id: 6, name: "Neurology" },
+  { id: 7, name: "Neurology" },
+  { id: 8, name: "Neurology" },
+  { id: 9, name: "Neurology" },
+  { id: 10, name: "Neurology" },
+  { id: 11, name: "Neurology" },
+  { id: 12, name: "Neurology" },
+];
+
+export default function Specialties() {
+  return (
+    <section className="py-12 text-center">
+      <h3 className="text-xl font-bold text-neutral-800">ALWAYS CARING</h3>
+      <h2 className="text-4xl font-bold text-main font-serif mt-2 mb-16">
+        Our Specialties
+      </h2>
+
+      <div className="grid grid-cols-4 gap-4 max-w-4xl mx-auto">
+        {specialtiesData.map((specialty) => (
+          <div
+            key={specialty.id}
+            className="border-2 rounded-lg p-8 flex flex-col items-center cursor-pointer transition-all duration-300 hover:bg-main text-neutral-900 hover:text-white"
+          >
+            <img src="/images/speciality.png" className="size-10" />
+            <p className="mt-2 text-lg font-medium">{specialty.name}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}

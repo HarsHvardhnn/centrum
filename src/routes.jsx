@@ -7,14 +7,18 @@ import ForgotPasswordScreen from "./components/Auth/ForgotPasswordScreen";
 
 import { Outlet } from "react-router-dom";
 import Sidebar from "./components/UtilComponents/Sidebar";
-import DoctorListing from "./components/Doctor/DoctorList";
 import BillingPage from "./components/Doctor/Doctor";
-import Calendar from "./components/Doctor/SingleDoctor/Calendar";
 import StatsDashboard from "./components/Doctor/SingleDoctor/StatsDashboard";
 import PatientsList from "./components/Doctor/SingleDoctor/PatientsList";
-import DoctorDashboard from "./components/Doctor/SingleDoctor/DoctorDashboard";
 import DoctorsPage from "./components/Doctor/SingleDoctor/DoctorPage";
 import AddAppointmentModal from "./components/Doctor/Appointments/Step1";
+import FormCompTest from "./Comp";
+import UserLayout from "./UserLayout";
+import HomePage from "./components/User/Pages/HomePage";
+import AboutUsPage from "./components/User/Pages/AboutUsPage";
+import OurDoctorsPage from "./components/User/Pages/OurDoctorsPage";
+import OurServicesPage from "./components/User/Pages/OurServicesPage";
+import ServicesDetailPage from "./components/User/Pages/ServicesDetailPage";
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -67,10 +71,10 @@ const routes = [
         path: "/doctors/single",
         element: <DoctorsPage />,
       },
-      {
-        path: "/stats",
-        element: <StatsDashboard />,
-      },
+      // {
+      //   path: "/stats",
+      //   element: <StatsDashboard />,
+      // },
       
       {
         path: "/patients",
@@ -80,7 +84,37 @@ const routes = [
         path: "/steps",
         element: <AddAppointmentModal />,
       },
+      {
+        path: "/step/form",
+        element: <FormCompTest/>,
+      },
       
+    ],
+  },
+  {
+    path: "/user",
+    element: <UserLayout />,
+    children: [
+      {
+        path: "",
+        element: <HomePage />,
+      },
+      {
+        path: "about",
+        element: <AboutUsPage />,
+      },
+      {
+        path: "doctors",
+        element: <OurDoctorsPage />,
+      },
+      {
+        path: "services",
+        element: <OurServicesPage />,
+      },
+      {
+        path: "services/:service",
+        element: <ServicesDetailPage />,
+      },
     ],
   },
   {

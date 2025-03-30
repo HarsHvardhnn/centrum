@@ -4,38 +4,54 @@ const Sidebar = () => {
   return (
     <div className="w-64 h-screen bg-white shadow-md fixed left-0 top-0 flex flex-col">
       {/* Logo Section */}
-      <div className="flex items-center px-6 py-5">
+      <div className="flex items-center px-6 py-5 border-b border-gray-200">
         <div className="flex items-center">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-teal-500">
             <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4FB3B3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M2 17L12 22L22 17" stroke="#4FB3B3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M2 12L12 17L22 12" stroke="#4FB3B3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <div className="ml-2">
-            <span className="font-semibold text-gray-800">Centrum</span>
-            <span className="font-semibold text-gray-800">Medyczne</span>
+          <div className="ml-2 flex flex-col">
+            <span className="font-semibold text-gray-800 text-sm">Centrum</span>
+            <span className="font-semibold text-gray-800 text-sm">Medyczne</span>
           </div>
         </div>
       </div>
 
       {/* Navigation Menu */}
       <div className="flex-1 px-4 py-2">
-        <nav className="space-y-1">
+        <nav>
           <NavItem icon="dashboard" label="Dashboard" isActive={false} />
+          <div className="border-b border-gray-100"></div>
+          
           <NavItem icon="doctor" label="Doctor Appointment" isActive={false} />
+          <div className="border-b border-gray-100"></div>
+          
           <NavItem icon="lab" label="Lab Appointment" isActive={false} />
+          <div className="border-b border-gray-100"></div>
+          
           <NavItem icon="patients" label="Patients List" isActive={true} />
+          <div className="border-b border-gray-100"></div>
+          
           <NavItem icon="clinic" label="Clinic IP" isActive={false} />
+          <div className="border-b border-gray-100"></div>
+          
           <NavItem icon="billing" label="Billing" isActive={false} />
+          <div className="border-b border-gray-100"></div>
+          
           <NavItem icon="account" label="Account" isActive={false} />
-          <div className="py-3"></div>
+          
+          <div className="border-t border-gray-200 my-3"></div>
+          
           <NavItem icon="settings" label="Settings" isActive={false} />
+          <div className="border-b border-gray-100"></div>
+          
           <NavItem icon="logout" label="Log Out" isActive={false} />
         </nav>
       </div>
 
       {/* Help Center Section */}
-      <div className="px-4 pb-6">
+      <div className="px-4 pb-6 pt-4 border-t border-gray-100">
         <div className="bg-teal-50 rounded-lg p-4">
           <div className="flex justify-center mb-2">
             <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
@@ -46,7 +62,7 @@ const Sidebar = () => {
           </div>
           <h3 className="text-center text-teal-700 font-medium mb-1">Help center</h3>
           <p className="text-center text-teal-600 text-xs mb-3">Etiam porta sem malesuada magna mollis euismod.</p>
-          <button className="w-full bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded-md text-sm">
+          <button className="w-full bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded-md text-sm font-medium">
             Go to help center
           </button>
         </div>
@@ -133,6 +149,11 @@ const NavItem = ({ icon, label, isActive }) => {
         {getIcon(icon)}
       </span>
       {label}
+      {label === "Billing" && (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-auto text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+        </svg>
+      )}
     </a>
   );
 };

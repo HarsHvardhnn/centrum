@@ -1,19 +1,24 @@
 import React from "react";
 import LoginForm from "./Login";
 
-const LoginScreen = ({screenImg , isLogin}) => {
+const LoginScreen = ({ screenImg, isLogin }) => {
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-gray-50 overflow-hidden">
-      <div className="flex bg-white shadow-lg rounded-lg overflow-hidden max-w-6xl w-[90%] h-auto max-h-[90vh]">
+    <div className="h-screen w-screen flex items-center justify-center overflow-hidden">
+      <div className="flex flex-col md:flex-row bg-white rounded-lg overflow-hidden w-[98%] max-w-full h-[97vh] md:h-[95vh]">
         {/* Left Section - Login Form */}
-        <div className="w-full md:w-1/2 overflow-y-auto">
-          <LoginForm isLogin={isLogin}/>
+        <div className="w-full md:w-1/2 flex items-center justify-center h-full">
+          <div className="w-full max-w-md px-6 py-8 md:py-0 flex-1 flex items-center">
+            <div className="w-full">
+              <LoginForm isLogin={isLogin} />
+            </div>
+          </div>
         </div>
-        <div className="hidden sm:block md:w-1/2 bg-[#80C5C5]">
+        {/* Right Section - Image */}
+        <div className="hidden md:block md:w-1/2  ">
           <img
             src={screenImg}
-            alt=""
-            className="object-cover h-full w-full"
+            alt="Login illustration"
+            className="object-cover h-full w-full rounded-xl"
           />
         </div>
       </div>

@@ -8,8 +8,6 @@ import StatsDashboard from "./StatsDashboard";
 const DoctorDashboard = ({
   doctor,
   patients,
-  appointments,
-  stats,
   selectedPatient,
   onPatientSelect,
   onDateSelect,
@@ -86,7 +84,7 @@ const DoctorDashboard = ({
 
         <div className="w-full  mx-auto">
           <Calendar
-            viewType="Month"
+            viewMode="month"
             selectedDate={new Date()}
             onDateSelect={onDateSelect}
           />
