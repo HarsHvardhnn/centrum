@@ -1,4 +1,4 @@
-// src/components/AppointmentForm/PatientSearchField.jsx
+// PatientSearchField.jsx
 import { useState, useRef, useEffect } from 'react';
 import PatientDropdown from './PatientDropDown';
 
@@ -39,32 +39,45 @@ const PatientSearchField = ({ onPatientSelect }) => {
   };
 
   return (
-    <div ref={dropdownRef} className="relative mb-4">
-      <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">Patient name</label>
-      <input
-        id="search"
-        type="text"
-        placeholder="Enter patient name & number"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        onFocus={handleInputFocus}
-        className="w-full p-3 pr-[50px] border rounded-md focus:outline-none focus:ring-teal-500"
-      />
-      <button
-        type="button"
-        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className="absolute right-[10px] top-[10px] p-[5px] bg-teal-light rounded-md"
-      >
-        🔍
-      </button>
+    <div ref={dropdownRef} className="relative">
+      <div className="mb-2 text-sm font-medium">Patient name</div>
+      <div className="flex">
+        <input
+          id="search"
+          type="text"
+          placeholder="Enter patient name & number"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onFocus={handleInputFocus}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white shadow-xs"
+          style={{
+            borderColor: '#D0D5DD',
+            boxShadow: '0 1px 2px rgba(16, 24, 40, 0.05)',
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          className="ml-2 w-12 h-12 flex items-center justify-center rounded-lg"
+          style={{ backgroundColor: '#4EBFB4' }}
+          aria-label="Search"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+      </div>
 
-      {/* Dropdown */}
-      <PatientDropdown
-        isOpen={isDropdownOpen}
-        onClose={() => setIsDropdownOpen(false)}
-        onSelect={handleSelect}
-        patients={patients}
-      />
+      {/* Dropdown - positioned relative to the parent container */}
+      <div className="relative w-full">
+        <PatientDropdown
+          isOpen={isDropdownOpen}
+          onClose={() => setIsDropdownOpen(false)}
+          onSelect={handleSelect}
+          patients={patients}
+        />
+      </div>
     </div>
   );
 };

@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
 import LogoMark from "../../assets/Logomark.png";
 import { useTranslation } from "react-i18next";
 import { translateText } from "../../utils/translate";
+import { useNavigate, Link } from "react-router-dom";
+
 const AuthForm = ({ isLogin = false }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const translate = async () => {
@@ -13,66 +18,88 @@ const AuthForm = ({ isLogin = false }) => {
 
     translate();
   }, []);
-  const [formData, setFormData] = useState({
+
+  // Initial form values
+  const initialValues = {
     name: "",
     email: "",
     password: "",
-  });
-
-  const [errors, setErrors] = useState({
-    email: "",
-    password: "",
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Validation
-    if (name === "email") {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      setErrors((prev) => ({
-        ...prev,
-        email: emailRegex.test(value) ? "" : "Invalid email format",
-      }));
-    }
-    if (name === "password") {
-      setErrors((prev) => ({
-        ...prev,
-        password:
-          value.length >= 8 ? "" : "Password must be at least 8 characters",
-      }));
-    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // Validation schemas
+  const loginSchema = Yup.object().shape({
+    email: Yup.string()
+      .email("Invalid email format")
+      .required("Email is required"),
+    password: Yup.string()
+      .min(8, "Password must be at least 8 characters")
+      .required("Password is required"),
+  });
 
-    // Validate required fields
-    if (!errors.email && !errors.password) {
-      if (isLogin) {
-        console.log("Login Data:", {
-          email: formData.email,
-          password: formData.password,
-        });
-        alert("Login successful!");
-      } else {
-        console.log("Signup Data:", formData);
-        alert("Signup successful!");
-      }
+  const signupSchema = Yup.object().shape({
+    name: Yup.string().required("Name is required"),
+    email: Yup.string()
+      .email("Invalid email format")
+      .required("Email is required"),
+    password: Yup.string()
+      .min(8, "Password must be at least 8 characters")
+      .required("Password is required"),
+  });
+
+  // Form submission handler
+  const handleSubmit = (values, { setSubmitting, setErrors }) => {
+    let hasErrors = false;
+    const errors = {};
+    
+    if (!values.email) {
+      errors.email = "Email is required";
+      hasErrors = true;
     }
+    
+    if (!values.password) {
+      errors.password = "Password is required";
+      hasErrors = true;
+    }
+    
+    if (!isLogin && !values.name) {
+      errors.name = "Name is required";
+      hasErrors = true;
+    }
+    
+    if (hasErrors) {
+      setErrors(errors);
+      setSubmitting(false);
+      return;
+    }
+    
+    if (isLogin) {
+      console.log("Login Data:", {
+        email: values.email,
+        password: values.password,
+      });
+      navigate('/');
+    } else {
+      console.log("Signup Data:", values);
+      alert("Signup successful!");
+      // Navigate to login page after successful signup
+      navigate('/login');
+    }
+    setSubmitting(false);
+  };
+
+  // Handle navigation to forgot password page
+  const handleForgotPassword = () => {
+    navigate('/forgot-password');
   };
 
   return (
     <div className="w-full px-[140px] flex flex-col items-center gap-20 py-8">
- 
-        <div className="flex items-center">
-          <img src={LogoMark} alt="Centrum Medyczne" className="h-8" />
-          <span className="ml-2 text-gray-800 font-bold text-xl" >
-            Centrum Medyczne
-          </span>
-        </div>
-      {/* </div> */}
+      <div className="flex items-center">
+        <img src={LogoMark} alt="Centrum Medyczne" className="h-8" />
+        <span className="ml-2 text-gray-800 font-bold text-xl">
+          Centrum Medyczne
+        </span>
+      </div>
 
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-semibold text-gray-800 mb-2 text-center">
@@ -84,119 +111,157 @@ const AuthForm = ({ isLogin = false }) => {
             : "Start your 30-day free trial"}
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-6 w-full">
-          {/* Name Field - Only show for signup */}
-          {!isLogin && (
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-600 mb-1"
-              >
-                Name*
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                placeholder="Abu Fahim"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-[#80C5C5]"
-              />
-            </div>
-          )}
+        <Formik
+          initialValues={initialValues}
+          validationSchema={isLogin ? loginSchema : signupSchema}
+          onSubmit={handleSubmit}
+          validateOnChange={true}
+          validateOnBlur={true}
+          validateOnMount={false}
+        >
+          {({ isSubmitting, errors, touched, values, isValid, dirty }) => (
+            <Form className="space-y-6 w-full">
+              {/* Name Field - Only show for signup */}
+              {!isLogin && (
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-600 mb-1"
+                  >
+                    Name*
+                  </label>
+                  <Field
+                    type="text"
+                    id="name"
+                    name="name"
+                    placeholder="Abu Fahim"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
+                      errors.name && touched.name
+                        ? "border-red-500"
+                        : "focus:ring-1 focus:ring-[#80C5C5]"
+                    }`}
+                  />
+                  <ErrorMessage
+                    name="name"
+                    component="p"
+                    className="text-xs text-red-500 mt-1"
+                  />
+                </div>
+              )}
 
-          {/* Email Field */}
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-600 mb-1"
-            >
-              Email*
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              placeholder="hello@fahim.com"
-              value={formData.email}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
-                errors.email
-                  ? "border-red-500"
-                  : "focus:ring-1 focus:ring-[#80C5C5]"
-              }`}
-            />
-            {errors.email && (
-              <p className="text-xs text-red-500 mt-1">{errors.email}</p>
-            )}
-          </div>
-
-          {/* Password Field */}
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-600 mb-1"
-            >
-              Password*
-            </label>
-            <div className="relative">
-              <input
-                type="password"
-                id="password"
-                name="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
-                  errors.password
-                    ? "border-red-500"
-                    : "focus:ring-1 focus:ring-[#80C5C5]"
-                }`}
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
-              >
-                <svg
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+              {/* Email Field */}
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-600 mb-1"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
-              </button>
-            </div>
-            {!isLogin && (
-              <p className="text-xs text-gray-500 mt-1">
-                Must be at least 8 characters.
-              </p>
-            )}
-            {errors.password && (
-              <p className="text-xs text-red-500 mt-1">{errors.password}</p>
-            )}
-          </div>
+                  Email*
+                </label>
+                <Field
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="hello@fahim.com"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
+                    errors.email && touched.email
+                      ? "border-red-500"
+                      : "focus:ring-1 focus:ring-[#80C5C5]"
+                  }`}
+                />
+                <ErrorMessage
+                  name="email"
+                  component="p"
+                  className="text-xs text-red-500 mt-1"
+                />
+              </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-[#80C5C5] text-white py-2 px-4 rounded-md hover:bg-[#66b3b3] transition duration-200 mt-4"
-          >
-            {isLogin ? "Login" : "Get started"}
-          </button>
-        </form>
+              {/* Password Field */}
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-600 mb-1"
+                >
+                  Password*
+                </label>
+                <div className="relative">
+                  <Field
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="••••••••"
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
+                      errors.password && touched.password
+                        ? "border-red-500"
+                        : "focus:ring-1 focus:ring-[#80C5C5]"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                  >
+                    <svg
+                      className="h-5 w-5 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                {!isLogin && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Must be at least 8 characters.
+                  </p>
+                )}
+                <ErrorMessage
+                  name="password"
+                  component="p"
+                  className="text-xs text-red-500 mt-1"
+                />
+              </div>
+
+              {/* Forgot Password - Only show for login */}
+              {isLogin && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    className="text-sm text-[#80C5C5] hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-[#80C5C5] text-white py-2 px-4 rounded-md hover:bg-[#66b3b3] transition duration-200 mt-4"
+                onClick={() => {
+                  // Force validation before submission
+                  if (!values.email || !values.password || (!isLogin && !values.name)) {
+                    console.log("Validation failed");
+                  }
+                }}
+              >
+                {isLogin ? "Login" : "Get started"}
+              </button>
+            </Form>
+          )}
+        </Formik>
 
         {/* Social Login */}
         <div className="mt-6 text-center w-full relative">
@@ -208,7 +273,7 @@ const AuthForm = ({ isLogin = false }) => {
           </div>
           <div className="flex justify-center space-x-4 mt-4">
             {/* Social buttons remain the same */}
-            <button className="border border-gray-300 w-28 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center">
+            <button type="button" className="border border-gray-300 w-28 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 text-blue-600"
@@ -218,7 +283,7 @@ const AuthForm = ({ isLogin = false }) => {
                 <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
               </svg>
             </button>
-            <button className="border border-gray-300 w-28 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center">
+            <button type="button" className="border border-gray-300 w-28 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"
@@ -242,7 +307,7 @@ const AuthForm = ({ isLogin = false }) => {
                 />
               </svg>
             </button>
-            <button className="border border-gray-300 w-28 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center">
+            <button type="button" className="border border-gray-300 w-28 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"
@@ -258,9 +323,13 @@ const AuthForm = ({ isLogin = false }) => {
         {/* Toggle Link */}
         <p className="mt-4 text-center text-sm text-gray-600">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <a href="#" className="text-[#80C5C5] hover:underline">
+          <button
+            type="button"
+            onClick={() => navigate(isLogin ? '/signup' : '/login')}
+            className="text-[#80C5C5] hover:underline"
+          >
             {isLogin ? "Sign up" : "Log in"}
-          </a>
+          </button>
         </p>
       </div>
     </div>

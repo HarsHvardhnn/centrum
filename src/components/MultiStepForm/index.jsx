@@ -49,7 +49,7 @@ const MultiStepForm = ({
 
   // Function to determine button text based on step and sub-step
   const getNextButtonText = () => {
-    if (currentStep === steps.length - 1) return "Complete";
+    if (currentStep === steps.length - 1) return "Add Appointment";
     
     // If we're handling sub-steps and on the last sub-step
     if (handleSubStepNavigation && currentStep === 1 && currentSubStep === totalSubSteps - 1) {

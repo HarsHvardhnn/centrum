@@ -102,7 +102,7 @@ const DemographicsForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Sex</label>
-          <div className="flex gap-4 p-3 bg-blue-50 rounded-md">
+          <div className="flex gap-4 p-3 bg-primary-lighter rounded-xl">
             <label className="inline-flex items-center">
               <input 
                 type="radio" 
@@ -130,7 +130,7 @@ const DemographicsForm = () => {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Marital Status</label>
-          <div className="flex gap-4 p-3 bg-blue-50 rounded-md">
+          <div className="flex gap-4 p-3  bg-primary-lighter rounded-xl">
             <label className="inline-flex items-center">
               <input 
                 type="radio" 
@@ -169,7 +169,7 @@ const DemographicsForm = () => {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Ethnicity</label>
-          <div className="flex gap-4 p-3 bg-blue-50 rounded-md">
+          <div className="flex gap-4 p-3 bg-primary-lighter rounded-xl">
             <label className="inline-flex items-center">
               <input 
                 type="radio" 

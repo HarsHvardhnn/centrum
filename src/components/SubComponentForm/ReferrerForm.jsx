@@ -87,7 +87,7 @@ const ReferrerForm = () => {
       
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Consulting doctor</label>
-        <div className="bg-blue-50 p-4 rounded-md">
+        <div className="bg-primary-lighter p-4 rounded-xl">
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <div className="relative">
