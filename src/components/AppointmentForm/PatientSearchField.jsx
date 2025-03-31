@@ -1,6 +1,6 @@
 // src/components/AppointmentForm/PatientSearchField.jsx
 import { useState, useRef, useEffect } from 'react';
-import PatientDropdown from './PatientDropdown';
+import PatientDropdown from './PatientDropDown';
 
 const PatientSearchField = ({ onPatientSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
