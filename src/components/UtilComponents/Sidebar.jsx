@@ -1,6 +1,10 @@
 import React from "react";
+import { useLocation, Link } from "react-router-dom";
 
 const Sidebar = () => {
+  const location = useLocation();
+  const currentPath = location.pathname;
+
   return (
     <div className="w-64 h-screen bg-white shadow-md fixed left-0 top-0 flex flex-col">
       {/* Logo Section */}
@@ -21,32 +25,86 @@ const Sidebar = () => {
       {/* Navigation Menu */}
       <div className="flex-1 px-4 py-2">
         <nav>
-          <NavItem icon="dashboard" label="Dashboard" isActive={false} />
+          <NavItem 
+            icon="dashboard" 
+            label="Dashboard" 
+            to="/" 
+            isActive={currentPath === "/"} 
+            isEnabled={true}
+          />
           <div className="border-b border-gray-100"></div>
           
-          <NavItem icon="doctor" label="Doctor Appointment" isActive={false} />
+          <NavItem 
+            icon="doctor" 
+            label="Doctor Appointment" 
+            to="/doctors/appointments" 
+            isActive={currentPath === "/doctors/appointments"} 
+            isEnabled={false}
+          />
           <div className="border-b border-gray-100"></div>
           
-          <NavItem icon="lab" label="Lab Appointment" isActive={false} />
+          <NavItem 
+            icon="lab" 
+            label="Lab Appointment" 
+            to="/lab/appointments" 
+            isActive={currentPath === "/lab/appointments"} 
+            isEnabled={false} 
+          />
           <div className="border-b border-gray-100"></div>
           
-          <NavItem icon="patients" label="Patients List" isActive={true} />
+          <NavItem 
+            icon="patients" 
+            label="Patients List" 
+            to="/patients" 
+            isActive={currentPath === "/patients"} 
+            isEnabled={false} 
+          />
           <div className="border-b border-gray-100"></div>
           
-          <NavItem icon="clinic" label="Clinic IP" isActive={false} />
+          <NavItem 
+            icon="clinic" 
+            label="Clinic IP" 
+            to="/clinic" 
+            isActive={currentPath === "/clinic"} 
+            isEnabled={false} 
+          />
           <div className="border-b border-gray-100"></div>
           
-          <NavItem icon="billing" label="Billing" isActive={false} />
+          <NavItem 
+            icon="billing" 
+            label="Billing" 
+            to="/billing" 
+            isActive={currentPath === "/billing"} 
+            isEnabled={false} 
+          />
           <div className="border-b border-gray-100"></div>
           
-          <NavItem icon="account" label="Account" isActive={false} />
+          <NavItem 
+            icon="account" 
+            label="Account" 
+            to="/account" 
+            isActive={currentPath === "/account"} 
+            isEnabled={false} 
+          />
           
           <div className="border-t border-gray-200 my-3"></div>
           
-          <NavItem icon="settings" label="Settings" isActive={false} />
+          <NavItem 
+            icon="settings" 
+            label="Settings" 
+            to="/settings" 
+            isActive={currentPath === "/settings"} 
+            isEnabled={false} 
+          />
           <div className="border-b border-gray-100"></div>
           
-          <NavItem icon="logout" label="Log Out" isActive={false} />
+          <NavItem 
+            icon="logout" 
+            label="Log Out" 
+            to="/logout" 
+            isActive={currentPath === "/logout"} 
+            isEnabled={false}
+          />
         </nav>
       </div>
 
@@ -71,7 +129,7 @@ const Sidebar = () => {
   );
 };
 
-const NavItem = ({ icon, label, isActive }) => {
+const NavItem = ({ icon, label, to, isActive, isEnabled }) => {
   const getIcon = (iconName) => {
     switch (iconName) {
       case "dashboard":
@@ -136,14 +194,23 @@ const NavItem = ({ icon, label, isActive }) => {
     }
   };
 
+  // Determine the right element type based on if link is enabled
+  const Component = isEnabled ? Link : 'div';
+  
+  // Only pass 'to' prop if it's enabled
+  const linkProps = isEnabled ? { to } : {};
+  
+  // Styling based on active state and enabled state
+  const styles = `flex items-center px-3 py-2.5 text-sm font-medium rounded-md ${
+    isActive 
+      ? "bg-teal-50 text-teal-500" 
+      : `text-gray-500 ${isEnabled ? "hover:bg-gray-50 hover:text-gray-700" : "opacity-50 cursor-not-allowed"}`
+  }`;
+
   return (
-    <a
-      href="#"
-      className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md ${
-        isActive
-          ? "bg-teal-50 text-teal-500"
-          : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-      }`}
+    <Component
+      {...linkProps}
+      className={styles}
     >
       <span className={`mr-3 ${isActive ? "text-teal-500" : "text-gray-400"}`}>
         {getIcon(icon)}
@@ -154,7 +221,7 @@ const NavItem = ({ icon, label, isActive }) => {
           <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
         </svg>
       )}
-    </a>
+    </Component>
   );
 };
 

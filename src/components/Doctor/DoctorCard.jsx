@@ -1,6 +1,8 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const DoctorCard = ({ doctor }) => {
+  const navigate= useNavigate()
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 flex justify-between items-start border border-gray-100 mb-4">
       <div className="flex gap-6 items-center w-[60%]">
@@ -40,7 +42,10 @@ const DoctorCard = ({ doctor }) => {
       </div>
       
       <div className="flex flex-col gap-3">
-        <button className="bg-primary-light text-white py-3 px-5 rounded-lg hover:bg-primary transition-colors flex items-center justify-center gap-2 whitespace-nowrap">
+        <button   onClick={()=>{
+          navigate('/doctors/appointments')
+        }}
+         className="bg-primary-light text-white py-3 px-5 rounded-lg hover:bg-primary transition-colors flex items-center justify-center gap-2 whitespace-nowrap">
           View Appointments
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>

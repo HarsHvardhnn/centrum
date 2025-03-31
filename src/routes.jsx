@@ -59,16 +59,16 @@ const routes = [
     path: "/",
     element: <MainLayout />,
     children: [
+      // {
+      //   path: "/",
+      //   element: <App />
+      // },
       {
         path: "/",
-        element: <App />
-      },
-      {
-        path: "/doctors",
         element: <BillingPage />,
       },
       {
-        path: "/doctors/single",
+        path: "/doctors/appointments",
         element: <DoctorsPage />,
       },
       // {
@@ -85,7 +85,7 @@ const routes = [
         element: <AddAppointmentModal />,
       },
       {
-        path: "/step/form",
+        path: "/appointment/create",
         element: <FormCompTest/>,
       },
       

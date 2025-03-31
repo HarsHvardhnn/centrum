@@ -1,7 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import DoctorDashboard from './DoctorDashboard';
 
 function DoctorsPage() {
   // Sample data
+
+  const navigate=useNavigate()
   const doctorInfo = {
     name: "Ratul Ahamed",
     specialty: "Heart Specialist",
@@ -58,7 +61,7 @@ function DoctorsPage() {
       onDateSelect={(date) => console.log(`Selected date: ${date}`)}
       onSearch={(query) => console.log(`Search query: ${query}`)}
       onFilter={() => console.log('Filter clicked')}
-      onBookAppointment={() => console.log('Book appointment clicked')}
+      onBookAppointment={() => {navigate('/appointment/create')}}
     />
   );
 }

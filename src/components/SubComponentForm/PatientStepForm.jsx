@@ -1,5 +1,3 @@
-
-// components/AppointmentForm/PatientSelectionStep.jsx
 import { FormProvider } from '../../context/SubStepFormContext';
 import SubStepForm from './SubStepForm';
 import SubStep from './SubStep';
@@ -10,11 +8,23 @@ import PhotoUpload from './PhotoForm';
 import DetailsForm from './DetailsForm';
 import NotesForm from './NotesForm';
 
-const PatientStepForm = () => {
+const PatientStepForm = ({ 
+  currentSubStep, 
+  goToSubStep, 
+  markStepAsCompleted,
+  hideButtons = false,
+  subStepTitles = []
+}) => {
   return (
     <FormProvider>
       <div>
-        <SubStepForm>
+        <SubStepForm
+          currentSubStep={currentSubStep}
+          goToSubStep={goToSubStep}
+          onComplete={markStepAsCompleted}
+          hideButtons={hideButtons}
+          subStepTitles={subStepTitles}
+        >
           <SubStep title="Demographics">
             <DemographicsForm />
           </SubStep>

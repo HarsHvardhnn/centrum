@@ -28,7 +28,7 @@ const StatsDashboard = () => {
   ];
 
   return (
-    <div className="flex items-center justify-evenly">
+    <div className="flex items-center gap-3">
       {statsData.map((stat, index) => (
         <StatCard
           key={index}

@@ -11,7 +11,7 @@ const DoctorInfoCard = ({ doctor }) => {
   } = doctor;
 
   return (
-    <div className="flex items-start p-4 bg-white rounded-lg">
+    <div className="flex items-start p-4  rounded-lg">
       {/* Doctor Avatar */}
       <div className="mr-3">
         <img 

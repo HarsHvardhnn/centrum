@@ -168,7 +168,7 @@
             </label>
           </div>
 
-          <div className="text-right">
+          {/* <div className="text-right">
             <button
               onClick={handleContinue}
               className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 inline-flex items-center text-sm"
@@ -187,7 +187,7 @@
                 />
               </svg>
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     );
