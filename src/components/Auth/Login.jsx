@@ -93,13 +93,13 @@ const AuthForm = ({ isLogin = false }) => {
   };
 
   return (
-    <div className="w-full px-[140px] flex flex-col items-center gap-20 py-8">
-      <div className="flex items-center">
-        <img src={LogoMark} alt="Centrum Medyczne" className="h-8" />
-        <span className="ml-2 text-gray-800 font-bold text-xl">
-          Centrum Medyczne
-        </span>
-      </div>
+    <div className="w-full px-4 md:px-[140px] flex flex-col items-center gap-20 py-8">
+    <div className="flex items-center justify-center w-full">
+      <img src={LogoMark} alt="Centrum Medyczne" className="h-8" />
+      <span className="ml-2 text-gray-800 font-bold text-xl">
+        Centrum Medyczne
+      </span>
+    </div>
 
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-semibold text-gray-800 mb-2 text-center">
