@@ -37,7 +37,7 @@ export default function News() {
         News
       </h2>
 
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto overflow-clip">
         <Slider {...settings}>
           {groupedNews.map((group, index) => (
             <div key={index} className="p-4">
