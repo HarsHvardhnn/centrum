@@ -4,24 +4,22 @@ import { IoSend } from "react-icons/io5";
 export default function Footer() {
   return (
     <footer className="bg-[#008c8c] text-white px-6 md:px-8 xl:px-20">
-      <div className="mx-auto flex flex-col md:flex-row md:flex-wrap py-10 md:py-16 text-lg gap-10 md:gap-8 lg:gap-0 md:justify-around">
+      <div className="mx-auto flex flex-col md:flex-row md:flex-wrap py-10 md:py-16 text-lg gap-10 md:gap-8 lg:gap-0 md:justify-around items-start md:items-start">
         {/* Logo and Description */}
-        <div className="flex flex-col items-center text-center gap-4 md:items-start md:text-left max-w-xs">
-          <div className="flex flex-col items-center md:flex-row md:items-start gap-3">
+        <div className="flex flex-col gap-4 w-full max-w-xs">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
             <img src="/images/logo.png" className="w-12 h-12" alt="Logo" />
-            <h2 className="text-2xl font-bold">Centrum Medyczne</h2>
+            <h2 className="text-2xl font-bold text-left">Centrum Medyczne</h2>
           </div>
-          <p className="leading-relaxed max-w-xs">
+          <p className="text-left text-base leading-relaxed">
             Leading the Way in Medical Excellence, Trusted Care.
           </p>
         </div>
 
         {/* Important Links */}
-        <div className="flex flex-col items-center md:items-start gap-3">
-          <h3 className="font-semibold text-xl text-center md:text-left">
-            Important Links
-          </h3>
-          <ul className="mt-2 flex flex-col gap-2 text-center md:text-left">
+        <div className="flex flex-col items-start gap-3">
+          <h3 className="font-semibold text-xl text-left">Important Links</h3>
+          <ul className="mt-2 flex flex-col gap-2 text-left">
             <li>
               <a href="#" className="hover:underline">
                 Appointment
@@ -46,10 +44,8 @@ export default function Footer() {
         </div>
 
         {/* Contact Us */}
-        <div className="flex flex-col items-center md:items-start gap-3">
-          <h3 className="font-semibold text-xl text-center md:text-left">
-            Contact Us
-          </h3>
+        <div className="flex flex-col items-start gap-3">
+          <h3 className="font-semibold text-xl text-left">Contact Us</h3>
           <p>(237) 681-812-255</p>
           <p>support@centrum.com</p>
           <p>0123 Some place</p>
@@ -57,10 +53,8 @@ export default function Footer() {
         </div>
 
         {/* Newsletter */}
-        <div className="flex flex-col items-center md:items-start gap-4 w-full md:w-auto">
-          <h3 className="font-semibold text-xl text-center md:text-left">
-            Newsletter
-          </h3>
+        <div className="flex flex-col items-start gap-4 w-full md:w-auto">
+          <h3 className="font-semibold text-xl text-left">Newsletter</h3>
           <div className="flex w-full max-w-sm">
             <input
               type="email"
