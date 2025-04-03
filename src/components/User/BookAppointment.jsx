@@ -2,7 +2,7 @@ import React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
-export default function BookAppointment() {
+export default function BookAppointment({ page }) {
   const initialValues = {
     name: "",
     gender: "",
@@ -36,44 +36,60 @@ export default function BookAppointment() {
   };
 
   return (
-    <section className="py-12 px-6 flex justify-center items-center bg-[url('/images/appointmentbg.PNG')] bg-cover bg-center bg-no-repeat relative">
+    <section
+      className={` px-4 flex justify-center items-center ${
+        page === "home"
+          ? "bg-[url('/images/appointmentbg.PNG')] py-12 lg:px-16 bg-cover bg-center bg-no-repeat"
+          : "bg-white"
+      }  relative`}
+    >
       <div className="absolute inset-0 bg-white bg-opacity-70"></div>
 
-      <div className="max-w-6xl p-8 rounded-lg flex gap-8 relative z-10">
-        <div className="w-1/2 flex flex-col justify-center">
-          <h2 className="text-4xl font-serif font-bold text-gray-800">
+      <div
+        className={`max-w-6xl lg:p-6 md:p-8 rounded-lg flex ${
+          page === "home" ? "flex-col md:flex-row" : "flex-col"
+        } gap-6 md:gap-8 relative z-10 w-full`}
+      >
+        <div
+          className={`${
+            page === "home" ? "md:w-1/2" : "w-full"
+          }  flex flex-col justify-center text-center md:text-left`}
+        >
+          <h2 className="text-3xl md:text-4xl pt-10 font-serif font-bold text-gray-800">
             Book an Appointment
           </h2>
-          <p className="text-neutral-800 mt-2 text-lg">
+          <p className="text-neutral-800 mt-2 text-base md:text-lg">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque
-            placerat scelerisque tortor ornare ornare. Convallis felis vitae
-            tortor augue. Velit nascetur proin massa in. Consequat faucibus
-            porttitor enim et.{" "}
+            placerat scelerisque tortor ornare ornare.
           </p>
         </div>
 
-        <div className="w-1/2">
+        <div className={`${page === "home" ? "md:w-1/2 w-full" : "w-full"} `}>
           <Formik
             initialValues={initialValues}
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
           >
             {() => (
-              <Form className="grid grid-cols-2 bg-main-lighter rounded-md border border-main-light">
+              <Form className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-main-lighter rounded-md border border-main-light p-4">
                 <div>
                   <Field
                     name="name"
                     type="text"
                     placeholder="Name"
-                    className="p-4 rounded-tl-md outline-none w-full bg-main-lighter border-b border-r border-main-light text-main placeholder:text-main"
+                    className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   />
-                  <ErrorMessage name="name" component="div" className="error" />
+                  <ErrorMessage
+                    name="name"
+                    component="div"
+                    className="text-red-600 text-sm mt-1"
+                  />
                 </div>
                 <div>
                   <Field
                     as="select"
                     name="gender"
-                    className="p-4 rounded-tl-md outline-none w-full bg-main-lighter border-b border-r border-main-light text-main placeholder:text-main"
+                    className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   >
                     <option value="">Gender</option>
                     <option value="Male">Male</option>
@@ -82,7 +98,7 @@ export default function BookAppointment() {
                   <ErrorMessage
                     name="gender"
                     component="div"
-                    className="error"
+                    className="text-red-600 text-sm mt-1"
                   />
                 </div>
 
@@ -91,12 +107,12 @@ export default function BookAppointment() {
                     name="email"
                     type="email"
                     placeholder="Email"
-                    className="p-4 outline-none w-full bg-main-lighter border-b border-r border-main-light text-main placeholder:text-main"
+                    className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   />
                   <ErrorMessage
                     name="email"
                     component="div"
-                    className="error"
+                    className="text-red-600 text-sm mt-1"
                   />
                 </div>
                 <div>
@@ -104,12 +120,12 @@ export default function BookAppointment() {
                     name="phone"
                     type="text"
                     placeholder="Phone"
-                    className="p-4 outline-none w-full bg-main-lighter border-b border-r border-main-light text-main placeholder:text-main"
+                    className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   />
                   <ErrorMessage
                     name="phone"
                     component="div"
-                    className="error"
+                    className="text-red-600 text-sm mt-1"
                   />
                 </div>
 
@@ -117,24 +133,32 @@ export default function BookAppointment() {
                   <Field
                     name="date"
                     type="date"
-                    className="p-4 outline-none w-full bg-main-lighter border-b border-r border-main-light text-main placeholder:text-main"
+                    className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   />
-                  <ErrorMessage name="date" component="div" className="error" />
+                  <ErrorMessage
+                    name="date"
+                    component="div"
+                    className="text-red-600 text-sm mt-1"
+                  />
                 </div>
                 <div>
                   <Field
                     name="time"
                     type="time"
-                    className="p-4 outline-none w-full bg-main-lighter border-b border-r border-main-light text-main placeholder:text-main"
+                    className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   />
-                  <ErrorMessage name="time" component="div" className="error" />
+                  <ErrorMessage
+                    name="time"
+                    component="div"
+                    className="text-red-600 text-sm mt-1"
+                  />
                 </div>
 
                 <div>
                   <Field
                     as="select"
                     name="doctor"
-                    className="p-4 outline-none w-full bg-main-lighter border-b border-r border-main-light text-main placeholder:text-main"
+                    className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   >
                     <option value="">Select Doctor</option>
                     <option value="Dr. Smith">Dr. Smith</option>
@@ -143,14 +167,14 @@ export default function BookAppointment() {
                   <ErrorMessage
                     name="doctor"
                     component="div"
-                    className="error"
+                    className="text-red-600 text-sm mt-1"
                   />
                 </div>
                 <div>
                   <Field
                     as="select"
                     name="department"
-                    className="p-4 outline-none w-full bg-main-lighter border-b border-r border-main-light text-main placeholder:text-main"
+                    className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   >
                     <option value="">Select Department</option>
                     <option value="Neurology">Neurology</option>
@@ -159,27 +183,27 @@ export default function BookAppointment() {
                   <ErrorMessage
                     name="department"
                     component="div"
-                    className="error"
+                    className="text-red-600 text-sm mt-1"
                   />
                 </div>
 
-                <div className="col-span-2 h-48">
+                <div className="col-span-1 md:col-span-2">
                   <Field
                     as="textarea"
                     name="message"
                     placeholder="Message"
-                    className="p-4 outline-none w-full bg-main-lighter border-b border-r border-main-light text-main placeholder:text-main h-48"
+                    className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded h-24"
                   />
                   <ErrorMessage
                     name="message"
                     component="div"
-                    className="error"
+                    className="text-red-600 text-sm mt-1"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="col-span-2 bg-main uppercase rounded-b-md text-white py-3 font-bold hover:bg-teal-700"
+                  className="col-span-1 md:col-span-2 bg-main text-white uppercase rounded-md py-3 font-bold hover:bg-teal-700 transition duration-300"
                 >
                   Submit
                 </button>

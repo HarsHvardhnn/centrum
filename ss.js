@@ -1,5 +1,5 @@
-
-{
+export const data = [
+  {
     id: 1,
     name: "Dr. Mohon Khan",
     specialty: "Heart Specialist",
@@ -200,8 +200,7 @@
     specialty: "Nephrologist",
     timing: "11:30am - 3:30pm BST",
     date: "Jul 10, 2021",
-    description:
-      "Expert in kidney disease management and transplant medicine.",
+    description: "Expert in kidney disease management and transplant medicine.",
     image: "/images/doctor16.jpg",
     status: "Canceled",
     visitType: "Procedure",
@@ -259,3 +258,4 @@
     visitType: "Consultation",
     available: true,
   },
+];

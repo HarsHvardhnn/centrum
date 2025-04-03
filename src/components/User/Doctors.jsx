@@ -21,55 +21,54 @@ export default function Doctors() {
   };
 
   return (
-    <section className="py-12 px-6 bg-white text-center">
-      <h3 className=" text-xl font-bold text-neutral-800">TRUSTED CARE</h3>
-      <h2 className="text-4xl font-bold text-main font-serif mt-2 mb-16">Our Doctors</h2>
+    <section className="py-16 px-6 bg-white text-center">
+      <h3 className="md:text-xl font-bold text-neutral-800">TRUSTED CARE</h3>
+      <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 sm:mb-12">
+        Our Doctors
+      </h2>
 
-      <Slider {...settings} className="max-w-6xl mx-auto">
-        {doctorsData.map((doctor) => (
-          <div key={doctor.id} className="px-4">
-            <div className="bg-white rounded-lg overflow-hidden">
-              <img
-                src={doctor.image}
-                alt={doctor.name}
-                className="w-full h-96 object-cover bg-black"
-              />
+      <div className="max-w-sm md:max-w-6xl mx-auto">
+        <Slider {...settings}>
+          {doctorsData.map((doctor) => (
+            <div key={doctor.id} className="px-4">
+              <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+                <img
+                  src={doctor.image}
+                  alt={doctor.name}
+                  className="w-full h-80 md:h-96 object-cover"
+                />
 
-              <div className="bg-main-light text-main py-6 px-6">
-                <h4 className="text-lg">{doctor.name}</h4>
-                <p className="text-xl font-bold uppercase">
-                  {doctor.department}
-                </p>
+                <div className="bg-main-light text-main py-6 px-6">
+                  <h4 className="text-lg font-semibold">{doctor.name}</h4>
+                  <p className="text-xl font-bold uppercase">{doctor.department}</p>
 
-                <div className="flex justify-center gap-4 mt-3">
-                  <a
-                    href={doctor.social.linkedin}
-                    className=" text-main-light p-1.5 bg-main rounded-full"
-                  >
-                    <FaLinkedinIn className="text-sm"/>
-                  </a>
-                  <a
-                    href={doctor.social.facebook}
-                    className=" text-main-light p-1.5 bg-main rounded-full"
-                  >
-                    <FaFacebookF className="text-sm"/>
-                  </a>
-                  <a
-                    href={doctor.social.instagram}
-                    className=" text-main-light p-1.5 bg-main rounded-full"
-                  >
-                    <FaInstagram className="text-sm"/>
-                  </a>
+                  <div className="flex justify-center gap-4 mt-3">
+                    {doctor.social.linkedin && (
+                      <a href={doctor.social.linkedin} className="text-white p-2 bg-main rounded-full hover:bg-teal-700">
+                        <FaLinkedinIn className="text-sm" />
+                      </a>
+                    )}
+                    {doctor.social.facebook && (
+                      <a href={doctor.social.facebook} className="text-white p-2 bg-main rounded-full hover:bg-teal-700">
+                        <FaFacebookF className="text-sm" />
+                      </a>
+                    )}
+                    {doctor.social.instagram && (
+                      <a href={doctor.social.instagram} className="text-white p-2 bg-main rounded-full hover:bg-teal-700">
+                        <FaInstagram className="text-sm" />
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <button className="bg-main text-white font-semibold text-lg py-3 w-full">
-                View Profile
-              </button>
+                <button className="bg-main text-white font-semibold text-lg py-3 w-full hover:bg-teal-700 transition-all">
+                  View Profile
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </Slider>
+          ))}
+        </Slider>
+      </div>
     </section>
   );
 }

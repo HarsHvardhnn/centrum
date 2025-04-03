@@ -3,23 +3,25 @@ import { IoSend } from "react-icons/io5";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#008c8c] text-white px-6 md:px-28">
-      <div className="mx-auto flex py-16 text-lg justify-between ">
-        <div className="flx flex-col gap-10 max-w-72">
-          <div className="flex items-center gap-3">
-            <img src="/images/logo.png" className="size-14" />
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              Centrum Medyczne
-            </h2>
+    <footer className="bg-[#008c8c] text-white px-6 md:px-8 xl:px-20">
+      <div className="mx-auto flex flex-col md:flex-row md:flex-wrap py-10 md:py-16 text-lg gap-10 md:gap-8 lg:gap-0 md:justify-around">
+        {/* Logo and Description */}
+        <div className="flex flex-col items-center text-center gap-4 md:items-start md:text-left max-w-xs">
+          <div className="flex flex-col items-center md:flex-row md:items-start gap-3">
+            <img src="/images/logo.png" className="w-12 h-12" alt="Logo" />
+            <h2 className="text-2xl font-bold">Centrum Medyczne</h2>
           </div>
-          <p className="mt-2 text-base">
+          <p className="leading-relaxed max-w-xs">
             Leading the Way in Medical Excellence, Trusted Care.
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <h3 className="font-semibold text-xl">Important Links</h3>
-          <ul className="mt-2 flex flex-col gap-3">
+        {/* Important Links */}
+        <div className="flex flex-col items-center md:items-start gap-3">
+          <h3 className="font-semibold text-xl text-center md:text-left">
+            Important Links
+          </h3>
+          <ul className="mt-2 flex flex-col gap-2 text-center md:text-left">
             <li>
               <a href="#" className="hover:underline">
                 Appointment
@@ -43,38 +45,57 @@ export default function Footer() {
           </ul>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <h3 className="font-semibold text-xl">Contact Us</h3>
-          <p className=" mt-2">(237) 681-812-255</p>
-          <p className="">support@centrum.com</p>
-          <p className="">0123 Some place</p>
-          <p className="">Some country</p>
+        {/* Contact Us */}
+        <div className="flex flex-col items-center md:items-start gap-3">
+          <h3 className="font-semibold text-xl text-center md:text-left">
+            Contact Us
+          </h3>
+          <p>(237) 681-812-255</p>
+          <p>support@centrum.com</p>
+          <p>0123 Some place</p>
+          <p>Some country</p>
         </div>
-        <div className="flex flex-col gap-4">
-          <h3 className="font-semibold text-xl">Newsletter</h3>
-          <div className="mt-2 flex">
+
+        {/* Newsletter */}
+        <div className="flex flex-col items-center md:items-start gap-4 w-full md:w-auto">
+          <h3 className="font-semibold text-xl text-center md:text-left">
+            Newsletter
+          </h3>
+          <div className="flex w-full max-w-sm">
             <input
               type="email"
-              placeholder="Enter your email address"
+              placeholder="Enter your email"
               className="w-full p-3 text-black placeholder:text-teal-600 rounded-l-md outline-none"
             />
             <button className="bg-white text-teal-600 px-4 py-2 rounded-r-md">
-              <IoSend className="text-2xl -rotate-45"/>
+              <IoSend className="text-2xl -rotate-45" />
             </button>
           </div>
         </div>
       </div>
 
-      <div className="border-t border-white h-28 flex flex-col md:flex-row justify-between items-center ">
+      {/* Footer Bottom */}
+      <div className="border-t border-white py-6 flex flex-col md:flex-row justify-center md:justify-between items-center text-center space-y-4 md:space-y-0">
         <p>© 2025 Centrum Medyczne. All Rights Reserved</p>
-        <div className="flex space-x-4 mt-2 md:mt-0 text-sm">
-          <a href="#" className="text-[#008c8c] p-2 bg-white rounded-full">
+
+        {/* Social Media Icons */}
+        <div className="flex space-x-4">
+          <a
+            href="#"
+            className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"
+          >
             <FaLinkedinIn />
           </a>
-          <a href="#" className="text-[#008c8c] p-2 bg-white rounded-full">
+          <a
+            href="#"
+            className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"
+          >
             <FaFacebookF />
           </a>
-          <a href="#" className="text-[#008c8c] p-2 bg-white rounded-full">
+          <a
+            href="#"
+            className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"
+          >
             <FaInstagram />
           </a>
         </div>

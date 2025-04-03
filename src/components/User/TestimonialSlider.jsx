@@ -7,11 +7,13 @@ import testimonialsData from "../../utils/UserSideData/testimonialsData";
 
 const TestimonialSlider = () => {
   const settings = {
-    dots: false,
     infinite: true,
-    speed: 500,
+    speed: 1000,
     slidesToShow: 1,
     slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 4000,
+    fade: true,
     arrows: false,
   };
   return (
@@ -20,10 +22,14 @@ const TestimonialSlider = () => {
 
       <Slider {...settings}>
         {testimonialsData.map((testimonial) => (
-          <div key={testimonial.id} className="text-center p-6 h-80 ">
-            <IoMdQuote className="text-5xl mx-auto mb-4 text-gray-300" />
-            <p className="text-2xl max-w-2xl mx-auto">{testimonial.text}</p>
-            <p className="text-2xl w-fit mx-auto mt-6 px-10 border-t border-white py-3">{testimonial.name}</p>
+          <div key={testimonial.id} className="text-center p-6 h-60 md:h-80 ">
+            <IoMdQuote className="text-4xl md:text-5xl mx-auto mb-2 md:mb-4 text-gray-300" />
+            <p className="text-lg md:text-2xl max-w-md md:max-w-2xl mx-auto">
+              {testimonial.text}
+            </p>
+            <p className="text-lg md:text-2xl w-fit mx-auto mt-4 md:mt-6 px-6 md:px-10 border-t border-white py-2 md:py-3">
+              {testimonial.name}
+            </p>
           </div>
         ))}
       </Slider>

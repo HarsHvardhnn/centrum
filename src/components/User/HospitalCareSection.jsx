@@ -16,11 +16,11 @@ const HospitalCareSection = () => {
         <h4 className="font-semibold uppercase mb-2">
           Welcome to Hospital Name
         </h4>
-        <h2 className="text-main font-serif font-bold text-3xl md:text-5xl mb-4">
+        <h2 className="text-main font-serif font-bold text-3xl md:text-4xl lg:text-5xl mb-4">
           Best Care for Your Good Health
         </h2>
         
-        <div className="grid grid-cols-2 gap-3 text-lg text-gray-700 mb-6">
+        <div className="grid grid-cols-2 gap-3 lg:text-lg text-gray-700 mb-6">
           <p className="flex items-center gap-2">
             <FaCircle className="text-main" /> A Passion for Healing
           </p>

@@ -16,7 +16,7 @@ const HomePage = () => {
       <Welcome />
       <ServicesMini/>
       <Specialties />
-      <BookAppointment />
+      <BookAppointment page="home"/>
       <Doctors />
       <Testimonial />
       <News />

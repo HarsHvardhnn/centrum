@@ -11,10 +11,16 @@ export default function News() {
     dots: true,
     infinite: true,
     speed: 500,
-    slidesToShow: 2, 
+    slidesToShow: 2,
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 3000,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: { slidesToShow: 1, slidesToScroll: 1 },
+      },
+    ],
   };
 
   const groupedNews = [];
@@ -23,11 +29,13 @@ export default function News() {
   }
 
   return (
-    <section className="py-12 px-6">
-      <h3 className="text-xl font-bold text-neutral-800 text-center">
+    <section className="py-12 md:px-6">
+      <h3 className="md:text-xl font-bold text-neutral-800 text-center">
         BETTER INFORMATION, BETTER HEALTH
       </h3>
-      <h2 className="text-4xl font-bold text-main font-serif mt-2 mb-16 text-center">News</h2>
+      <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 sm:mb-12 text-center">
+        News
+      </h2>
 
       <div className="max-w-6xl mx-auto">
         <Slider {...settings}>
@@ -35,23 +43,32 @@ export default function News() {
             <div key={index} className="p-4">
               <div className="grid grid-rows-2 gap-4">
                 {group.map((news) => (
-                  <div key={news.id} className="bg-white shadow-md rounded-lg overflow-hidden flex">
-                    <img
-                      src={news.image}
-                      alt="News"
-                      className="w-1/3 h-40 object-cover"
-                    />
-                    <div className="p-4 w-2/3">
-                      <p className="text-neutral-700">
+                  <div
+                    key={news.id}
+                    className="bg-white shadow-md rounded-lg overflow-hidden flex"
+                  >
+                    <div className="w-1/3">
+                      <img
+                        src={news.image}
+                        alt="News"
+                        className="w-full h-40 object-cover"
+                      />
+                    </div>
+                    <div className="px-4 py-2 xl:p-4 w-2/3">
+                      <p className="text-neutral-700 max-md:text-xs max-xl:text-sm">
                         {news.date} | {news.author}
                       </p>
-                      <h4 className="mt-2 text-xl text-neutral-700">{news.title}</h4>
-                      <div className="flex items-center gap-4 mt-4">
+                      <h4 className="mt-2 sm:text-lg xl:text-xl text-neutral-700">
+                        {news.title}
+                      </h4>
+                      <div className="flex items-center gap-4 mt-4 max-md:text-sm">
                         <span className="flex items-center gap-1">
-                          <IoEyeOutline className="text-blue-600 text-xl"/> {news.views}
+                          <IoEyeOutline className="text-blue-600 sm:text-xl" />{" "}
+                          {news.views}
                         </span>
                         <span className="flex items-center gap-1">
-                          <FaRegHeart className="text-red-500 text-lg" /> {news.likes}
+                          <FaRegHeart className="text-red-500 text-sm sm:text-lg" />{" "}
+                          {news.likes}
                         </span>
                       </div>
                     </div>
