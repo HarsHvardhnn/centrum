@@ -27,7 +27,7 @@ export default function Doctors() {
         Our Doctors
       </h2>
 
-      <div className="max-w-sm md:max-w-6xl mx-auto">
+      <div className="max-w-sm md:max-w-6xl mx-auto overflow-clip">
         <Slider {...settings}>
           {doctorsData.map((doctor) => (
             <div key={doctor.id} className="px-4">
