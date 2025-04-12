@@ -37,7 +37,8 @@ export default function Doctors() {
                   alt={doctor.name}
                   className="w-full h-80 md:h-96 object-cover"
                 />
-
+                
+                
                 <div className="bg-[#DEE2CF] text-main py-6 px-6">
                   <h4 className="text-lg font-semibold">{doctor.name}</h4>
                   <p className="text-xl font-bold uppercase">
