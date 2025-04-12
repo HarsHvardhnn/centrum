@@ -38,23 +38,34 @@ export default function Doctors() {
                   className="w-full h-80 md:h-96 object-cover"
                 />
 
-                <div className="bg-main-light text-main py-6 px-6">
+                <div className="bg-[#DEE2CF] text-main py-6 px-6">
                   <h4 className="text-lg font-semibold">{doctor.name}</h4>
-                  <p className="text-xl font-bold uppercase">{doctor.department}</p>
+                  <p className="text-xl font-bold uppercase">
+                    {doctor.department}
+                  </p>
 
                   <div className="flex justify-center gap-4 mt-3">
                     {doctor.social.linkedin && (
-                      <a href={doctor.social.linkedin} className="text-white p-2 bg-main rounded-full hover:bg-teal-700">
+                      <a
+                        href={doctor.social.linkedin}
+                        className="text-white p-2 bg-main rounded-full hover:bg-teal-700"
+                      >
                         <FaLinkedinIn className="text-sm" />
                       </a>
                     )}
                     {doctor.social.facebook && (
-                      <a href={doctor.social.facebook} className="text-white p-2 bg-main rounded-full hover:bg-teal-700">
+                      <a
+                        href={doctor.social.facebook}
+                        className="text-white p-2 bg-main rounded-full hover:bg-teal-700"
+                      >
                         <FaFacebookF className="text-sm" />
                       </a>
                     )}
                     {doctor.social.instagram && (
-                      <a href={doctor.social.instagram} className="text-white p-2 bg-main rounded-full hover:bg-teal-700">
+                      <a
+                        href={doctor.social.instagram}
+                        className="text-white p-2 bg-main rounded-full hover:bg-teal-700"
+                      >
                         <FaInstagram className="text-sm" />
                       </a>
                     )}
