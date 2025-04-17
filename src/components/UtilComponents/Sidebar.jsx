@@ -1,23 +1,45 @@
 import React from "react";
 import { useLocation, Link } from "react-router-dom";
+import { FlaskConical } from "lucide-react";
+import { RiHomeLine } from "react-icons/ri";
+import { LuFileChartColumn } from "react-icons/lu";
+import { CgLogOut } from "react-icons/cg";
+
+import {
+  FiBarChart2,
+  FiCalendar,
+  FiDroplet,
+  FiUser,
+  FiMessageCircle,
+  FiHome,
+  FiFileText,
+  FiSettings,
+  FiLogOut,
+  FiUsers,
+  FiUserCheck,
+  FiClipboard,
+  FiDollarSign,
+  FiHelpCircle,
+} from "react-icons/fi";
+import { LuCalendarPlus2 } from "react-icons/lu";
 
 const Sidebar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
 
   return (
-    <div className="w-64 h-screen bg-white shadow-md fixed left-0 top-0 flex flex-col">
+    <div className="w-64 ml-6 h-screen bg-white shadow-md fixed left-0 top-0 flex flex-col">
       {/* Logo Section */}
-      <div className="flex items-center px-6 py-5 border-b border-gray-200">
+      <div className="flex items-center justify-center px-6 py-5 border-b border-teal-100">
         <div className="flex items-center">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-teal-500">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#4FB3B3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M2 17L12 22L22 17" stroke="#4FB3B3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M2 12L12 17L22 12" stroke="#4FB3B3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <div className="ml-2 flex flex-col">
-            <span className="font-semibold text-gray-800 text-sm">Centrum</span>
-            <span className="font-semibold text-gray-800 text-sm">Medyczne</span>
+          <img
+            src="/images/logo_teal.png"
+            className="size-10"
+            alt="company_logo"
+          />
+          <div className="ml-2 flex flex-col font-semibold text-gray-800 text-lg">
+            <span>Centrum</span>
+            <span>Medyczne</span>
           </div>
         </div>
       </div>
@@ -25,102 +47,90 @@ const Sidebar = () => {
       {/* Navigation Menu */}
       <div className="flex-1 px-4 py-2">
         <nav>
-          <NavItem 
-            icon="dashboard" 
-            label="Dashboard" 
-            to="/" 
-            isActive={currentPath === "/"} 
+          <NavItem
+            icon={<FiBarChart2 className="text-xl text-teal-400" />}
+            label="Dashboard"
+            to="/"
+            isActive={currentPath === "/"}
             isEnabled={true}
           />
-          <div className="border-b border-gray-100"></div>
-          
-          <NavItem 
-            icon="doctor" 
-            label="Doctor Appointment" 
-            to="/doctors/appointments" 
-            isActive={currentPath === "/doctors/appointments"} 
+
+          <NavItem
+            icon={<LuCalendarPlus2 className="text-xl text-teal-400" />}
+            label="Doctor Appointment"
+            to="/doctors/appointments"
+            isActive={currentPath === "/doctors/appointments"}
             isEnabled={false}
           />
-          <div className="border-b border-gray-100"></div>
-          
-          <NavItem 
-            icon="lab" 
-            label="Lab Appointment" 
-            to="/lab/appointments" 
-            isActive={currentPath === "/lab/appointments"} 
-            isEnabled={false} 
+
+          <NavItem
+            icon={<FiUsers className="text-xl text-teal-400" />}
+            label="Patients List"
+            to="/patients"
+            isActive={currentPath === "/patients"}
+            isEnabled={false}
           />
-          <div className="border-b border-gray-100"></div>
-          
-          <NavItem 
-            icon="patients" 
-            label="Patients List" 
-            to="/patients" 
-            isActive={currentPath === "/patients"} 
-            isEnabled={false} 
+          <div className="border-b border-teal-100"></div>
+
+          <NavItem
+            icon={<RiHomeLine className="text-xl text-teal-400" />}
+            label="Clinic IP"
+            to="/clinic"
+            isActive={currentPath === "/clinic"}
+            isEnabled={false}
           />
-          <div className="border-b border-gray-100"></div>
-          
-          <NavItem 
-            icon="clinic" 
-            label="Clinic IP" 
-            to="/clinic" 
-            isActive={currentPath === "/clinic"} 
-            isEnabled={false} 
+
+          <NavItem
+            icon={<LuFileChartColumn className="text-xl text-teal-400" />}
+            label="Billing"
+            to="/billing"
+            isActive={currentPath === "/billing"}
+            isEnabled={false}
           />
-          <div className="border-b border-gray-100"></div>
-          
-          <NavItem 
-            icon="billing" 
-            label="Billing" 
-            to="/billing" 
-            isActive={currentPath === "/billing"} 
-            isEnabled={false} 
+
+          <NavItem
+            icon={<FiUser className="text-xl text-teal-400" />}
+            label="Account"
+            to="/account"
+            isActive={currentPath === "/account"}
+            isEnabled={false}
           />
-          <div className="border-b border-gray-100"></div>
-          
-          <NavItem 
-            icon="account" 
-            label="Account" 
-            to="/account" 
-            isActive={currentPath === "/account"} 
-            isEnabled={false} 
+
+          <div className="border-t border-teal-100 my-3"></div>
+
+          <NavItem
+            icon={<FiSettings className="text-xl text-teal-400" />}
+            label="Settings"
+            to="/settings"
+            isActive={currentPath === "/settings"}
+            isEnabled={false}
           />
-          
-          <div className="border-t border-gray-200 my-3"></div>
-          
-          <NavItem 
-            icon="settings" 
-            label="Settings" 
-            to="/settings" 
-            isActive={currentPath === "/settings"} 
-            isEnabled={false} 
-          />
-          <div className="border-b border-gray-100"></div>
-          
-          <NavItem 
-            icon="logout" 
-            label="Log Out" 
-            to="/logout" 
-            isActive={currentPath === "/logout"} 
+
+          <NavItem
+            icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}
+            label="Log Out"
+            to="/logout"
+            isActive={currentPath === "/logout"}
             isEnabled={false}
           />
         </nav>
       </div>
 
       {/* Help Center Section */}
-      <div className="px-4 pb-6 pt-4 border-t border-gray-100">
-        <div className="bg-teal-50 rounded-lg p-4">
-          <div className="flex justify-center mb-2">
-            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-teal-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-              </svg>
+      <div className="px-4 pb-6 pt-4 ">
+        <div className="bg-[#e6f4f4] rounded-lg p-4 pt-10 relative">
+          <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+            <div className="w-12 h-12 rounded-full bg-[#d9eeee] flex items-center justify-center shadow-xl">
+              <div className="w-8 h-8 rounded-full bg-[#bbe8e8] flex items-center justify-center ">
+                <FiHelpCircle className="h-5 w-5 text-teal-500" />
+              </div>
             </div>
           </div>
-          <h3 className="text-center text-teal-700 font-medium mb-1">Help center</h3>
-          <p className="text-center text-teal-600 text-xs mb-3">Etiam porta sem malesuada magna mollis euismod.</p>
-          <button className="w-full bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded-md text-sm font-medium">
+          <h3 className="text-center font-medium mb-1">Help center</h3>
+          <p className="text-center text-gray-700 text-xs mb-3">
+            Etiam porta sem malesuada magna mollis euismod.
+          </p>
+          <button className="w-full bg-teal-400 hover:bg-teal-600 text-white py-3 px-4 rounded-md font-medium">
             Go to help center
           </button>
         </div>
@@ -130,95 +140,41 @@ const Sidebar = () => {
 };
 
 const NavItem = ({ icon, label, to, isActive, isEnabled }) => {
-  const getIcon = (iconName) => {
-    switch (iconName) {
-      case "dashboard":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z" />
-          </svg>
-        );
-      case "doctor":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        );
-      case "lab":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-          </svg>
-        );
-      case "patients":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-        );
-      case "clinic":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
-        );
-      case "billing":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-        );
-      case "account":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-        );
-      case "settings":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        );
-      case "logout":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-        );
-      default:
-        return null;
-    }
-  };
-
   // Determine the right element type based on if link is enabled
-  const Component = isEnabled ? Link : 'div';
-  
+  const Component = isEnabled ? Link : "div";
+
   // Only pass 'to' prop if it's enabled
   const linkProps = isEnabled ? { to } : {};
-  
+
   // Styling based on active state and enabled state
-  const styles = `flex items-center px-3 py-2.5 text-sm font-medium rounded-md ${
-    isActive 
-      ? "bg-teal-50 text-teal-500" 
-      : `text-gray-500 ${isEnabled ? "hover:bg-gray-50 hover:text-gray-700" : "opacity-50 cursor-not-allowed"}`
+  const styles = `flex items-center px-3 py-2.5 rounded-md ${
+    isActive
+      ? "bg-gradient-to-r from-[#bcc1f66B] to-[#e9eafc6B] text-teal-500 font-semibold"
+      : `text-gray-500 ${
+          isEnabled
+            ? "hover:bg-gray-50 hover:text-gray-700"
+            : " cursor-not-allowed"
+        }`
   }`;
 
   return (
-    <Component
-      {...linkProps}
-      className={styles}
-    >
+    <Component {...linkProps} className={styles}>
       <span className={`mr-3 ${isActive ? "text-teal-500" : "text-gray-400"}`}>
-        {getIcon(icon)}
+        {icon}
       </span>
       {label}
       {label === "Billing" && (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-auto text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5 ml-auto text-gray-300"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fillRule="evenodd"
+            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+            clipRule="evenodd"
+          />
         </svg>
       )}
     </Component>

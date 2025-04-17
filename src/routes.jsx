@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import App from "./App";
 import LoginScreen from "./components/Auth/AuthScreen";
-import LoginImage from "./assets/Login.png"
-import SignupImage from "./assets/Signup.png"
+import LoginImage from "./assets/Login.png";
+import SignupImage from "./assets/Signup.png";
 import ForgotPasswordScreen from "./components/Auth/ForgotPasswordScreen";
 
 import { Outlet } from "react-router-dom";
@@ -35,15 +35,17 @@ function MainLayout() {
 
   return (
     <div className={isDarkMode ? "dark" : ""}>
-      <div className="flex">
-        <Sidebar 
-          isDarkMode={isDarkMode} 
-          toggleTheme={toggleTheme} 
+      <div className="flex bg-gray-50">
+        <Sidebar
+          isDarkMode={isDarkMode}
+          toggleTheme={toggleTheme}
           isOpen={isSidebarOpen}
           toggleSidebar={toggleSidebar}
         />
-        <div 
-          className={`transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"} flex-1 min-h-screen ${
+        <div
+          className={`transition-all duration-300 ${
+            isSidebarOpen ? "ml-72" : "ml-20"
+          } flex-1 min-h-screen ${
             isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-800"
           }`}
         >
@@ -75,7 +77,7 @@ const routes = [
       //   path: "/stats",
       //   element: <StatsDashboard />,
       // },
-      
+
       {
         path: "/patients",
         element: <PatientsList />,
@@ -86,9 +88,8 @@ const routes = [
       },
       {
         path: "/appointment/create",
-        element: <FormCompTest/>,
+        element: <FormCompTest />,
       },
-      
     ],
   },
   {
@@ -119,16 +120,16 @@ const routes = [
   },
   {
     path: "/login",
-    element: <LoginScreen screenImg={LoginImage} isLogin={true}/>,
+    element: <LoginScreen screenImg={LoginImage} isLogin={true} />,
   },
   {
     path: "/signup",
-    element: <LoginScreen screenImg={SignupImage} isLogin={false}/>,
+    element: <LoginScreen screenImg={SignupImage} isLogin={false} />,
   },
   {
     path: "/forgot-password",
     element: <ForgotPasswordScreen />,
-  }
+  },
 ];
 
 export default routes;

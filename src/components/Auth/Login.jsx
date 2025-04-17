@@ -50,56 +50,56 @@ const AuthForm = ({ isLogin = false }) => {
   const handleSubmit = (values, { setSubmitting, setErrors }) => {
     let hasErrors = false;
     const errors = {};
-    
+
     if (!values.email) {
       errors.email = "Email is required";
       hasErrors = true;
     }
-    
+
     if (!values.password) {
       errors.password = "Password is required";
       hasErrors = true;
     }
-    
+
     if (!isLogin && !values.name) {
       errors.name = "Name is required";
       hasErrors = true;
     }
-    
+
     if (hasErrors) {
       setErrors(errors);
       setSubmitting(false);
       return;
     }
-    
+
     if (isLogin) {
       console.log("Login Data:", {
         email: values.email,
         password: values.password,
       });
-      navigate('/');
+      navigate("/");
     } else {
       console.log("Signup Data:", values);
       alert("Signup successful!");
       // Navigate to login page after successful signup
-      navigate('/login');
+      navigate("/login");
     }
     setSubmitting(false);
   };
 
   // Handle navigation to forgot password page
   const handleForgotPassword = () => {
-    navigate('/forgot-password');
+    navigate("/forgot-password");
   };
 
   return (
-    <div className="w-full px-4 md:px-[140px] flex flex-col items-center gap-20 py-8">
-    <div className="flex items-center justify-center w-full">
-      <img src={LogoMark} alt="Centrum Medyczne" className="h-8" />
-      <span className="ml-2 text-gray-800 font-bold text-xl">
-        Centrum Medyczne
-      </span>
-    </div>
+    <div className="w-full px-4 md:px-[140px] flex flex-col items-center gap-14 py-8">
+      <div className="flex items-center justify-center w-full">
+        <img src={LogoMark} alt="Centrum Medyczne" className="h-8" />
+        <span className="ml-2 text-gray-800 font-bold text-xl">
+          Centrum Medyczne
+        </span>
+      </div>
 
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-semibold text-gray-800 mb-2 text-center">
@@ -252,7 +252,11 @@ const AuthForm = ({ isLogin = false }) => {
                 className="w-full bg-[#80C5C5] text-white py-2 px-4 rounded-md hover:bg-[#66b3b3] transition duration-200 mt-4"
                 onClick={() => {
                   // Force validation before submission
-                  if (!values.email || !values.password || (!isLogin && !values.name)) {
+                  if (
+                    !values.email ||
+                    !values.password ||
+                    (!isLogin && !values.name)
+                  ) {
                     console.log("Validation failed");
                   }
                 }}
@@ -273,7 +277,10 @@ const AuthForm = ({ isLogin = false }) => {
           </div>
           <div className="flex justify-center space-x-4 mt-4">
             {/* Social buttons remain the same */}
-            <button type="button" className="border border-gray-300 w-28 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center">
+            <button
+              type="button"
+              className="border border-gray-300 w-28 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5 text-blue-600"
@@ -283,7 +290,10 @@ const AuthForm = ({ isLogin = false }) => {
                 <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
               </svg>
             </button>
-            <button type="button" className="border border-gray-300 w-28 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center">
+            <button
+              type="button"
+              className="border border-gray-300 w-28 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"
@@ -307,7 +317,10 @@ const AuthForm = ({ isLogin = false }) => {
                 />
               </svg>
             </button>
-            <button type="button" className="border border-gray-300 w-28 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center">
+            <button
+              type="button"
+              className="border border-gray-300 w-28 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"
@@ -325,7 +338,7 @@ const AuthForm = ({ isLogin = false }) => {
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button
             type="button"
-            onClick={() => navigate(isLogin ? '/signup' : '/login')}
+            onClick={() => navigate(isLogin ? "/signup" : "/login")}
             className="text-[#80C5C5] hover:underline"
           >
             {isLogin ? "Sign up" : "Log in"}

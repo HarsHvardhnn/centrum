@@ -29,7 +29,7 @@ const DoctorListing = ({ doctors = [] }) => {
         {/* <h1 className="text-2xl font-bold text-gray-dark mb-4">Our Doctors</h1> */}
 
         {/* Content area with fixed height and overflow */}
-        <div className="flex-grow overflow-auto mb-2">
+        <div className="flex-grow overflow-auto mb-2 px-1">
           {currentDoctors.length > 0 ? (
             currentDoctors.map((doctor) => (
               <DoctorCard key={doctor.id} doctor={doctor} />

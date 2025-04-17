@@ -4,6 +4,7 @@ import PatientsList from "./PatientsList";
 import Calendar from "./Calendar";
 import { Search, Filter } from "lucide-react";
 import StatsDashboard from "./StatsDashboard";
+import PatientInfo from "./PatientInfo";
 
 const DoctorDashboard = ({
   doctor,
@@ -16,7 +17,7 @@ const DoctorDashboard = ({
   onBookAppointment,
 }) => {
   return (
-    <div className="container mx-auto px-4 h-screen flex flex-col">
+    <div className="container mx-auto px-4 min-h-screen flex flex-col">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 py-4 gap-4">
         <div className="flex items-center">
           <button className="mr-4 text-teal-500">
@@ -101,18 +102,18 @@ const DoctorDashboard = ({
           </div>
 
           <div>
-            <div className="bg-white rounded-lg p-4">
+            <div className=" rounded-lg p-4">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium">Patients Details</h2>
-                <button className="text-teal-500 border border-teal-500 px-3 py-1 rounded-md text-sm">
+                <h2 className="text-lg font-medium">Patient Details</h2>
+                <button className="text-white bg-teal-400 hover:bg-teal-500 px-4 py-2 font-medium rounded-md text-sm">
                   View Details
                 </button>
               </div>
 
-              {selectedPatient && (
-                <div>
-                </div>
-              )}
+              {selectedPatient && <div></div>}
+            </div>
+            <div>
+              <PatientInfo />
             </div>
           </div>
         </div>

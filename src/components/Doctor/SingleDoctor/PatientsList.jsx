@@ -52,6 +52,33 @@ const PatientsList = ({
       age: 36,
       status: "Cancelled",
     },
+    {
+      id: "5",
+      name: "Simon Cyna",
+      username: "@simon",
+      avatar: "https://i.pravatar.cc/150?img=2",
+      sex: "Male",
+      age: 60,
+      status: "Waiting",
+    },
+    {
+      id: "6",
+      name: "Dave Rhio",
+      username: "@dave",
+      avatar: "https://i.pravatar.cc/150?img=2",
+      sex: "Male",
+      age: 42,
+      status: "Cancelled",
+    },
+    {
+      id: "7",
+      name: "Alina Cara",
+      username: "@diva",
+      avatar: "https://i.pravatar.cc/150?img=2",
+      sex: "Female",
+      age: 39,
+      status: "Finished",
+    },
   ];
 
   const [selectAll, setSelectAll] = useState(false);
@@ -101,7 +128,7 @@ const PatientsList = ({
     const { bgColor, textColor, dotColor } = statusStyles[status] || {};
     return (
       <div
-        className={`flex items-center px-2 py-1 rounded-full ${bgColor} ${textColor}`}
+        className={`flex items-center px-4 text-sm h-fit py-1 rounded-full ${bgColor} ${textColor}`}
       >
         <div className={`w-2 h-2 rounded-full ${dotColor} mr-2`} />
         {status}
@@ -113,9 +140,13 @@ const PatientsList = ({
     <div className="bg-white border rounded-lg shadow-sm">
       {/* Header */}
       <div className="flex justify-between items-center p-4 border-b">
-        <h2 className="text-lg font-semibold">Patients List</h2>
+        <div className="flex gap-8 items-center">
+          <h2 className="text-lg font-semibold">Patients List</h2>
+          <span className="text-sm text-teal-400 bg-teal-100 rounded-full px-3 py-1 ">
+            {totalPatients} users
+          </span>
+        </div>
         <div className="flex items-center space-x-4">
-          <span className="text-sm text-gray-500">{totalPatients} users</span>
           <MoreVertical size={18} />
         </div>
       </div>
@@ -133,16 +164,16 @@ const PatientsList = ({
             />
             Patients name
           </div>
-          <div>Sex</div>
+          <div className="text-center">Sex</div>
           <div
-            className="flex items-center cursor-pointer"
+            className="flex items-center justify-center cursor-pointer"
             onClick={() => requestSort("age")}
           >
             Age
             <ChevronDown size={16} />
           </div>
           <div
-            className="flex items-center cursor-pointer"
+            className="flex items-center cursor-pointer justify-center"
             onClick={() => requestSort("status")}
           >
             Status
@@ -154,9 +185,9 @@ const PatientsList = ({
         {sortedPatients.map((patient) => (
           <div
             key={patient.id}
-            className="grid grid-cols-5 px-4 py-3 border-b hover:bg-gray-50"
+            className="grid grid-cols-5 px-4 py-3 border-b hover:bg-gray-50 text-center"
           >
-            <div className="col-span-2 flex items-center">
+            <div className="col-span-2 flex items-center text-left">
               <input
                 type="checkbox"
                 checked={selectedPatients.includes(patient.id)}
