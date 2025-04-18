@@ -12,9 +12,8 @@ import {
 const MedicalDashboard = () => {
   return (
     <div className="bg-gray-50 min-h-screen p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="">
         <DoctorAppointmentChart />
-        <LabAppointmentsCard />
       </div>
 
       <PatientList />
@@ -72,18 +71,20 @@ const DoctorAppointmentChart = () => {
 
       <div className="relative h-64">
         {/* Y-axis labels */}
-        <div className="absolute -left-8 top-0 text-xs text-gray-500">1000</div>
-        <div className="absolute -left-6 top-16 text-xs text-gray-500">600</div>
-        <div className="absolute -left-6 top-32 text-xs text-gray-500">200</div>
-        <div className="absolute -left-4 top-48 text-xs text-gray-500">0</div>
+        <div className="absolute -left-0 top-0 text-xs text-gray-500">1000</div>
+        <div className="absolute left-2 top-8 text-xs text-gray-500">800</div>
+        <div className="absolute left-2 top-16 text-xs text-gray-500">600</div>
+        <div className="absolute left-2 top-24 text-xs text-gray-500">400</div>
+        <div className="absolute left-2 top-32 text-xs text-gray-500">200</div>
+        <div className="absolute left-4 top-40 text-xs text-gray-500">0</div>
 
         {/* Y-axis title */}
-        <div className="absolute -left-14 top-24 transform -rotate-90 text-xs text-gray-500 whitespace-nowrap">
+        <div className="absolute -left-12 top-24 transform -rotate-90 text-xs text-gray-500 whitespace-nowrap">
           Active doctor
         </div>
 
         {/* Chart content */}
-        <div className="flex items-end justify-between h-48 pl-8 gap-2">
+        <div className="flex items-end justify-between h-48 pl-16 gap-2">
           {chartData.map((data, index) => (
             <div key={index} className="flex flex-col items-center">
               <div className="w-8 flex flex-col-reverse">
@@ -137,7 +138,7 @@ const LabAppointmentsCard = () => {
               stroke="#E6F7F5"
               strokeWidth="8"
             />
-            
+
             {/* Middle background ring */}
             <circle
               cx="50"
@@ -147,7 +148,7 @@ const LabAppointmentsCard = () => {
               stroke="#E6F7F5"
               strokeWidth="8"
             />
-            
+
             {/* Inner background ring */}
             <circle
               cx="50"
@@ -157,7 +158,7 @@ const LabAppointmentsCard = () => {
               stroke="#E6F7F5"
               strokeWidth="8"
             />
-            
+
             {/* Outer progress ring */}
             <circle
               cx="50"
@@ -171,7 +172,7 @@ const LabAppointmentsCard = () => {
               strokeLinecap="round"
               transform="rotate(-90 50 50)"
             />
-            
+
             {/* Middle progress ring */}
             <circle
               cx="50"
@@ -185,7 +186,7 @@ const LabAppointmentsCard = () => {
               strokeLinecap="round"
               transform="rotate(-90 50 50)"
             />
-            
+
             {/* Inner progress ring */}
             <circle
               cx="50"
@@ -200,7 +201,7 @@ const LabAppointmentsCard = () => {
               transform="rotate(-90 50 50)"
             />
           </svg>
-          
+
           {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div className="text-sm text-gray-600">Appointment</div>
@@ -226,7 +227,6 @@ const LabAppointmentsCard = () => {
     </div>
   );
 };
-
 
 // Patient List Component
 const PatientList = () => {
