@@ -2,33 +2,22 @@ import React from "react";
 import { useLocation, Link } from "react-router-dom";
 import { FlaskConical } from "lucide-react";
 import { RiHomeLine } from "react-icons/ri";
-import { LuFileChartColumn } from "react-icons/lu";
+import { LuFileChartColumn, LuCalendarPlus2 } from "react-icons/lu";
 import { CgLogOut } from "react-icons/cg";
-
 import {
   FiBarChart2,
-  FiCalendar,
-  FiDroplet,
-  FiUser,
-  FiMessageCircle,
-  FiHome,
-  FiFileText,
-  FiSettings,
-  FiLogOut,
   FiUsers,
-  FiUserCheck,
-  FiClipboard,
-  FiDollarSign,
+  FiSettings,
   FiHelpCircle,
+  FiUser,
 } from "react-icons/fi";
-import { LuCalendarPlus2 } from "react-icons/lu";
 
 const Sidebar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
 
   return (
-    <div className="w-64 ml-6 h-screen bg-white shadow-md fixed left-0 top-0 flex flex-col">
+    <div className="w-64 ml-6 h-[calc(100vh-64px)] bg-white shadow-md fixed left-0 top-16 flex flex-col mt-2">
       {/* Logo Section */}
       <div className="flex items-center justify-center px-6 py-5 border-b border-teal-100">
         <div className="flex items-center">

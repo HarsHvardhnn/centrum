@@ -1,45 +1,52 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DoctorInfoCard from "./DoctorInfo";
 import PatientsList from "./PatientsList";
 import Calendar from "./Calendar";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, ArrowLeft } from "lucide-react";
 import StatsDashboard from "./StatsDashboard";
 import PatientInfo from "./PatientInfo";
+import Breadcrumb from "./BreadCrumb";
 
 const DoctorDashboard = ({
   doctor,
   patients,
-  selectedPatient,
-  onPatientSelect,
   onDateSelect,
   onSearch,
   onFilter,
   onBookAppointment,
+  breadcrumbs = [
+    { label: "Dashboard", onClick: () => console.log("Dashboard clicked") },
+    { label: "Doctor Appointment", onClick: null },
+  ],
 }) => {
+  const navigate = useNavigate();
+  const [selectedPatient, setSelectedPatient] = useState(null);
+
+  const handlePatientSelect = (patientId) => {
+    // Find the selected patient by ID
+    const patient = patients.find((p) => p.id === patientId);
+    setSelectedPatient(patient);
+  };
+
+  const handleViewDetails = () => {
+       navigate(`/patients-details/${selectedPatient?.id}`);
+    // if (selectedPatient) {
+    //   // Navigate to patient details page with the selected patient ID
+    //   navigate(`/patients-details/${selectedPatient.id}`);
+    // } else {
+    //   alert("Please select a patient first");
+    // }
+  };
+
   return (
     <div className="container mx-auto px-4 min-h-screen flex flex-col">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 py-4 gap-4">
         <div className="flex items-center">
           <button className="mr-4 text-teal-500">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M19 12H5M5 12L12 19M5 12L12 5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ArrowLeft size={24} />
           </button>
-          <h1 className="text-lg font-medium text-gray-700">
-            Doctor Appointment
-          </h1>
+          <Breadcrumb items={breadcrumbs} />
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
@@ -83,7 +90,7 @@ const DoctorDashboard = ({
           </div>
         </div>
 
-        <div className="w-full  mx-auto">
+        <div className="w-full mx-auto">
           <Calendar
             viewMode="month"
             selectedDate={new Date()}
@@ -96,21 +103,42 @@ const DoctorDashboard = ({
             <PatientsList
               variant="default"
               patientsData={patients}
-              onPatientSelect={onPatientSelect}
+              onPatientSelect={handlePatientSelect}
               title="Patients List"
             />
           </div>
 
           <div>
-            <div className=" rounded-lg p-4">
+            <div className="rounded-lg p-4">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-medium">Patient Details</h2>
-                <button className="text-white bg-teal-400 hover:bg-teal-500 px-4 py-2 font-medium rounded-md text-sm">
+                <button
+                  onClick={handleViewDetails}
+                  className="text-white bg-teal-400 hover:bg-teal-500 px-4 py-2 font-medium rounded-md text-sm"
+                >
                   View Details
                 </button>
               </div>
 
-              {selectedPatient && <div></div>}
+              {selectedPatient && (
+                <div>
+                  <div className="flex items-center mb-4">
+                    <img
+                      src={selectedPatient.avatar}
+                      alt={selectedPatient.name}
+                      className="w-12 h-12 rounded-full mr-4"
+                    />
+                    <div>
+                      <h3 className="font-semibold text-base">
+                        {selectedPatient.name}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {selectedPatient.username}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <PatientInfo />

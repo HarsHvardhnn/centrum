@@ -19,6 +19,9 @@ import AboutUsPage from "./components/User/Pages/AboutUsPage";
 import OurDoctorsPage from "./components/User/Pages/OurDoctorsPage";
 import OurServicesPage from "./components/User/Pages/OurServicesPage";
 import ServicesDetailPage from "./components/User/Pages/ServicesDetailPage";
+import MedicalDashboard from "./components/Dashboard";
+import Header from "./components/UtilComponents/Header";
+import PatientDetailsPage from "./components/Doctor/SingleDoctor/PatientDetailsPage";
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -29,23 +32,35 @@ function MainLayout() {
     setIsDarkMode(!isDarkMode);
   };
 
+    const user = {
+      name: "Abu Fahim",
+      email: "hello@fahim.com",
+    };
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   return (
     <div className={isDarkMode ? "dark" : ""}>
+      {/* Fixed Header */}
+      <div className="fixed top-0 left-0 right-0 z-10">
+        <Header user={user} />
+      </div>
+
       <div className="flex bg-gray-50">
+        {/* Sidebar with adjusted positioning */}
         <Sidebar
           isDarkMode={isDarkMode}
           toggleTheme={toggleTheme}
           isOpen={isSidebarOpen}
           toggleSidebar={toggleSidebar}
         />
+
+        {/* Main content with proper spacing */}
         <div
           className={`transition-all duration-300 ${
             isSidebarOpen ? "ml-72" : "ml-20"
-          } flex-1 min-h-screen ${
+          } flex-1 min-h-screen pt-16 ${
             isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-800"
           }`}
         >
@@ -73,6 +88,11 @@ const routes = [
         path: "/doctors/appointments",
         element: <DoctorsPage />,
       },
+      {
+        path: "/patients-details/",
+        element: <PatientDetailsPage />,
+      },
+
       // {
       //   path: "/stats",
       //   element: <StatsDashboard />,
@@ -89,6 +109,10 @@ const routes = [
       {
         path: "/appointment/create",
         element: <FormCompTest />,
+      },
+      {
+        path: "/dashboard",
+        element: <MedicalDashboard />,
       },
     ],
   },

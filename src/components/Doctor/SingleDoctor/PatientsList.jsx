@@ -81,9 +81,23 @@ const PatientsList = ({
     },
   ];
 
-  const [selectAll, setSelectAll] = useState(false);
-  const [selectedPatients, setSelectedPatients] = useState([]);
+  // Changed from array to single string to store only one selected patient ID
+  const [selectedPatient, setSelectedPatient] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
+
+  // Remove selectAll state and functionality since we now only allow one selection
+
+  // Notify parent component when selection changes
+  const handlePatientSelect = (patientId) => {
+    // If the same patient is clicked again, unselect it
+    if (selectedPatient === patientId) {
+      setSelectedPatient(null);
+      if (onPatientSelect) onPatientSelect(null);
+    } else {
+      setSelectedPatient(patientId);
+      if (onPatientSelect) onPatientSelect(patientId);
+    }
+  };
 
   const sortedPatients = useMemo(() => {
     let sortableItems = [
@@ -156,12 +170,7 @@ const PatientsList = ({
         {/* Table Header */}
         <div className="grid grid-cols-5 px-4 py-3 bg-gray-50 border-b">
           <div className="col-span-2 flex items-center">
-            <input
-              type="checkbox"
-              checked={selectAll}
-              onChange={(e) => setSelectAll(e.target.checked)}
-              className="w-4 h-4 mr-3"
-            />
+            {/* Removed the selectAll checkbox */}
             Patients name
           </div>
           <div className="text-center">Sex</div>
@@ -190,14 +199,8 @@ const PatientsList = ({
             <div className="col-span-2 flex items-center text-left">
               <input
                 type="checkbox"
-                checked={selectedPatients.includes(patient.id)}
-                onChange={() =>
-                  setSelectedPatients((prev) =>
-                    prev.includes(patient.id)
-                      ? prev.filter((id) => id !== patient.id)
-                      : [...prev, patient.id]
-                  )
-                }
+                checked={selectedPatient === patient.id}
+                onChange={() => handlePatientSelect(patient.id)}
                 className="w-4 h-4 mr-3"
               />
               <img
@@ -217,7 +220,6 @@ const PatientsList = ({
         ))}
       </div>
 
-      {/* Pagination */}
       {/* Pagination */}
       <div className="p-4 flex justify-between items-center">
         <button
