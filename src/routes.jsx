@@ -22,6 +22,7 @@ import ServicesDetailPage from "./components/User/Pages/ServicesDetailPage";
 import MedicalDashboard from "./components/Dashboard";
 import Header from "./components/UtilComponents/Header";
 import PatientDetailsPage from "./components/Doctor/SingleDoctor/PatientDetailsPage";
+import DoctorDetailPage from "./components/Doctor/DoctorDetailsPage";
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -91,6 +92,10 @@ const routes = [
       {
         path: "/patients-details/",
         element: <PatientDetailsPage />,
+      },
+      {
+        path: "/doctor-details",
+        element: <DoctorDetailPage />,
       },
 
       // {

@@ -59,7 +59,7 @@ const Sidebar = () => {
             isActive={currentPath === "/patients"}
             isEnabled={false}
           />
-          <div className="border-b border-teal-100"></div>
+          <div className="border-b border-teal-100 my-1"></div>
 
           <NavItem
             icon={<RiHomeLine className="text-xl text-teal-400" />}
@@ -85,7 +85,7 @@ const Sidebar = () => {
             isEnabled={false}
           />
 
-          <div className="border-t border-teal-100 my-3"></div>
+          <div className="border-t border-teal-100 my-1"></div>
 
           <NavItem
             icon={<FiSettings className="text-xl text-teal-400" />}
@@ -136,7 +136,7 @@ const NavItem = ({ icon, label, to, isActive, isEnabled }) => {
   const linkProps = isEnabled ? { to } : {};
 
   // Styling based on active state and enabled state
-  const styles = `flex items-center px-3 py-2.5 rounded-md ${
+  const styles = `flex items-center px-3 py-1.5 rounded-md ${
     isActive
       ? "bg-gradient-to-r from-[#bcc1f66B] to-[#e9eafc6B] text-teal-500 font-semibold"
       : `text-gray-500 ${
@@ -151,7 +151,7 @@ const NavItem = ({ icon, label, to, isActive, isEnabled }) => {
       <span className={`mr-3 ${isActive ? "text-teal-500" : "text-gray-400"}`}>
         {icon}
       </span>
-      {label}
+      <span className="text-sm">{label}</span>
       {label === "Billing" && (
         <svg
           xmlns="http://www.w3.org/2000/svg"
