@@ -5,7 +5,7 @@ import LoginImage from "./assets/Login.png";
 import SignupImage from "./assets/Signup.png";
 import ForgotPasswordScreen from "./components/Auth/ForgotPasswordScreen";
 
-import { Outlet } from "react-router-dom";
+import { createBrowserRouter, Outlet } from "react-router-dom";
 import Sidebar from "./components/UtilComponents/Sidebar";
 import BillingPage from "./components/Doctor/Doctor";
 import StatsDashboard from "./components/Doctor/SingleDoctor/StatsDashboard";
@@ -23,6 +23,11 @@ import MedicalDashboard from "./components/Dashboard";
 import Header from "./components/UtilComponents/Header";
 import PatientDetailsPage from "./components/Doctor/SingleDoctor/PatientDetailsPage";
 import DoctorDetailPage from "./components/Doctor/DoctorDetailsPage";
+import NotFound404 from "./components/UtilComponents/NotFound";
+import {
+  ProtectedRoute,
+  PublicRoute,
+} from "./components/UtilComponents/ProtectedRoutes";
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -33,10 +38,10 @@ function MainLayout() {
     setIsDarkMode(!isDarkMode);
   };
 
-    const user = {
-      name: "Abu Fahim",
-      email: "hello@fahim.com",
-    };
+  const user = {
+    name: "Abu Fahim",
+    email: "hello@fahim.com",
+  };
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -72,93 +77,77 @@ function MainLayout() {
   );
 }
 
-const routes = [
+const routes = createBrowserRouter([
+  // Public routes group
   {
-    path: "/",
-    element: <MainLayout />,
+    element: <PublicRoute redirectAuthenticatedTo="/" />,
     children: [
-      // {
-      //   path: "/",
-      //   element: <App />
-      // },
       {
-        path: "/",
-        element: <BillingPage />,
+        path: "/login",
+        element: <LoginScreen screenImg={LoginImage} isLogin={true} />,
       },
       {
-        path: "/doctors/appointments",
-        element: <DoctorsPage />,
+        path: "/signup",
+        element: <LoginScreen screenImg={SignupImage} isLogin={false} />,
       },
       {
-        path: "/patients-details/",
-        element: <PatientDetailsPage />,
-      },
-      {
-        path: "/doctor-details",
-        element: <DoctorDetailPage />,
-      },
-
-      // {
-      //   path: "/stats",
-      //   element: <StatsDashboard />,
-      // },
-
-      {
-        path: "/patients",
-        element: <PatientsList />,
-      },
-      {
-        path: "/steps",
-        element: <AddAppointmentModal />,
-      },
-      {
-        path: "/appointment/create",
-        element: <FormCompTest />,
-      },
-      {
-        path: "/dashboard",
-        element: <MedicalDashboard />,
+        path: "/forgot-password",
+        element: <ForgotPasswordScreen />,
       },
     ],
   },
+
+  // Public user site routes
   {
     path: "/user",
     element: <UserLayout />,
     children: [
+      { path: "", element: <HomePage /> },
+      { path: "about", element: <AboutUsPage /> },
+      { path: "doctors", element: <OurDoctorsPage /> },
+      { path: "services", element: <OurServicesPage /> },
+      { path: "services/:service", element: <ServicesDetailPage /> },
+      { path: "*", element: <NotFound404 /> },
+    ],
+  },
+
+  // Doctor & Admin protected routes
+  {
+    element: <ProtectedRoute allowedRoles={["doctor", "admin"]} />,
+    children: [
       {
-        path: "",
-        element: <HomePage />,
-      },
-      {
-        path: "about",
-        element: <AboutUsPage />,
-      },
-      {
-        path: "doctors",
-        element: <OurDoctorsPage />,
-      },
-      {
-        path: "services",
-        element: <OurServicesPage />,
-      },
-      {
-        path: "services/:service",
-        element: <ServicesDetailPage />,
+        element: <MainLayout />,
+        children: [
+          { path: "/", element: <BillingPage /> },
+          { path: "/doctors/appointments", element: <DoctorsPage /> },
+          { path: "/doctor-details", element: <DoctorDetailPage /> },
+          { path: "/patients", element: <PatientsList /> },
+          { path: "/patients-details", element: <PatientDetailsPage /> },
+          { path: "/dashboard", element: <MedicalDashboard /> },
+        ],
       },
     ],
   },
+
+  // Receptionist & Admin protected routes
   {
-    path: "/login",
-    element: <LoginScreen screenImg={LoginImage} isLogin={true} />,
+    element: <ProtectedRoute allowedRoles={["receptionist", "admin"]} />,
+    children: [
+      {
+        element: <MainLayout />,
+        children: [
+          { path: "/steps", element: <AddAppointmentModal /> },
+          { path: "/appointment/create", element: <FormCompTest /> },
+        ],
+      },
+    ],
   },
+
+  // Catch all route
   {
-    path: "/signup",
-    element: <LoginScreen screenImg={SignupImage} isLogin={false} />,
+    path: "*",
+    element: <NotFound404 />,
   },
-  {
-    path: "/forgot-password",
-    element: <ForgotPasswordScreen />,
-  },
-];
+]);
 
 export default routes;
