@@ -1,9 +1,10 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { FaStethoscope } from "react-icons/fa6";
+import { useNavigation } from "../../utils/useNavigate";
 
 const DoctorCard = ({ doctor }) => {
-  const navigate = useNavigate();
+  console.log("doctor info",doctor)
+  const {navigateReplace,navigateWithParams} = useNavigation();
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 flex justify-between items-start border border-gray-100 mb-4">
       <div className="flex gap-6 items-center w-[60%]">
@@ -13,7 +14,7 @@ const DoctorCard = ({ doctor }) => {
           className="w-20 h-20 rounded-lg object-cover"
         />
         <div>
-          <h3 className="text-xl font-semibold text-gray-dark mb-2">
+          <h3 className="text-xl font-semibold text-gray-dark mb-2 capitalize">
             {doctor.name}
           </h3>
           <div className="flex items-center gap-2 mb-2">
@@ -76,7 +77,7 @@ const DoctorCard = ({ doctor }) => {
       <div className="flex flex-col gap-3">
         <button
           onClick={() => {
-            navigate("/doctors/appointments");
+            navigateReplace(`/doctors/appointments/${doctor.id}`);
           }}
           className="bg-primary-light font-semibold text-white py-3 px-5 rounded-lg hover:bg-primary transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
         >
@@ -97,7 +98,7 @@ const DoctorCard = ({ doctor }) => {
           </svg>
         </button>
 
-        <button className="text-gray-dark font-semibold border border-gray-300 py-3 px-5 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
+        <button onClick={()=>{navigateReplace(`/doctor-details/${doctor.id}`)}} className="text-gray-dark font-semibold border border-gray-300 py-3 px-5 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
           View Doctor Details
         </button>
       </div>

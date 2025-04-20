@@ -47,9 +47,9 @@ const Sidebar = () => {
           <NavItem
             icon={<LuCalendarPlus2 className="text-xl text-teal-400" />}
             label="Doctor Appointment"
-            to="/doctors/appointments"
-            isActive={currentPath === "/doctors/appointments"}
-            isEnabled={false}
+            to="/doctors"
+            isActive={currentPath === "/doctors"}
+            isEnabled={true}
           />
 
           <NavItem
@@ -57,7 +57,7 @@ const Sidebar = () => {
             label="Patients List"
             to="/patients"
             isActive={currentPath === "/patients"}
-            isEnabled={false}
+            isEnabled={true}
           />
           <div className="border-b border-teal-100 my-1"></div>
 
@@ -100,7 +100,7 @@ const Sidebar = () => {
             label="Log Out"
             to="/logout"
             isActive={currentPath === "/logout"}
-            isEnabled={false}
+            isEnabled={true}
           />
         </nav>
       </div>

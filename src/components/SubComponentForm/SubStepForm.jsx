@@ -20,8 +20,7 @@ const SubStepForm = ({
   subStepTitles = [] // Array of sub-step titles for back button text
 }) => {
   const subSteps = useMemo(() => Array.isArray(children) ? children : [children], [children]);
-  const { formData } = useFormContext();
-  // Extract sub-step titles from children if not provided
+    // Extract sub-step titles from children if not provided
   useEffect(() => {
     if (subStepTitles.length === 0 && subSteps.length > 0) {
       const extractedTitles = subSteps.map(step => step.props.title || "Untitled");
@@ -84,7 +83,7 @@ const SubStepForm = ({
                   onComplete(); // Mark as completed when reaching the last sub-step
                 }
               }} 
-              className="px-4 py-2 bg-blue-500 text-white rounded"
+              className="px-4 py-2 bg-primary text-white rounded"
             >
               {currentSubStep === subSteps.length - 1 ? "Complete Step" : "Next"}
             </button>

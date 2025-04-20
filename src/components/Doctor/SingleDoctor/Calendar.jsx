@@ -5,7 +5,6 @@ const Calendar = ({ viewMode = "week" }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(new Date().getDate());
 
-  // Helper function to change the month or week
   const changeDate = (direction) => {
     if (viewMode === "month") {
       const newDate = new Date(
@@ -22,7 +21,6 @@ const Calendar = ({ viewMode = "week" }) => {
     }
   };
 
-  // Generate days for the current month
   const generateMonthDays = () => {
     const totalDays = new Date(
       currentDate.getFullYear(),
@@ -32,7 +30,6 @@ const Calendar = ({ viewMode = "week" }) => {
     return Array.from({ length: totalDays }, (_, i) => i + 1);
   };
 
-  // Generate days for the current week
   const generateWeekDays = () => {
     const startOfWeek = new Date(
       currentDate.setDate(currentDate.getDate() - currentDate.getDay())
@@ -47,7 +44,6 @@ const Calendar = ({ viewMode = "week" }) => {
     });
   };
 
-  // Determine which days to display based on viewMode
   const daysToDisplay =
     viewMode === "month"
       ? generateMonthDays()

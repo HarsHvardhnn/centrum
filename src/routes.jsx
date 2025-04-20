@@ -12,7 +12,6 @@ import StatsDashboard from "./components/Doctor/SingleDoctor/StatsDashboard";
 import PatientsList from "./components/Doctor/SingleDoctor/PatientsList";
 import DoctorsPage from "./components/Doctor/SingleDoctor/DoctorPage";
 import AddAppointmentModal from "./components/Doctor/Appointments/Step1";
-import FormCompTest from "./Comp";
 import UserLayout from "./UserLayout";
 import HomePage from "./components/User/Pages/HomePage";
 import AboutUsPage from "./components/User/Pages/AboutUsPage";
@@ -28,6 +27,8 @@ import {
   ProtectedRoute,
   PublicRoute,
 } from "./components/UtilComponents/ProtectedRoutes";
+import AddDoctorForm from "./components/Doctor/CreateDoctor";
+import LabAppointments from "./components/Patients/PatientList";
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -118,30 +119,31 @@ const routes = createBrowserRouter([
       {
         element: <MainLayout />,
         children: [
-          { path: "/", element: <BillingPage /> },
-          { path: "/doctors/appointments", element: <DoctorsPage /> },
-          { path: "/doctor-details", element: <DoctorDetailPage /> },
-          { path: "/patients", element: <PatientsList /> },
+          { path: "/doctors", element: <BillingPage /> },
+          { path: "/doctors/appointments/:id", element: <DoctorsPage /> },
+          { path: "/doctor-details/:id", element: <DoctorDetailPage /> },
+          { path: "/patients", element: <LabAppointments /> },
           { path: "/patients-details", element: <PatientDetailsPage /> },
-          { path: "/dashboard", element: <MedicalDashboard /> },
+          { path: "/", element: <MedicalDashboard /> },
+          { path: "/doctor/create", element: <AddDoctorForm /> },
         ],
       },
     ],
   },
 
   // Receptionist & Admin protected routes
-  {
-    element: <ProtectedRoute allowedRoles={["receptionist", "admin"]} />,
-    children: [
-      {
-        element: <MainLayout />,
-        children: [
-          { path: "/steps", element: <AddAppointmentModal /> },
-          { path: "/appointment/create", element: <FormCompTest /> },
-        ],
-      },
-    ],
-  },
+  // {
+  //   element: <ProtectedRoute allowedRoles={["receptionist", "admin"]} />,
+  //   children: [
+  //     {
+  //       element: <MainLayout />,
+  //       children: [
+  //         // { path: "/patients", element: <LabAppointments /> },
+  //         { path: "/appointment/create", element: <FormCompTest /> },
+  //       ],
+  //     },
+  //   ],
+  // },
 
   // Catch all route
   {

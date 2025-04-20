@@ -27,13 +27,13 @@ export default function DoctorAppointmentChart() {
 
   return (
     <div className="bg-white rounded-lg shadow-sm w-full max-w-xl p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium text-gray-800">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold text-gray-800">
           Doctor Appointment
         </h2>
         <div className="relative">
-          <button className="flex items-center bg-white border border-gray-200 rounded-md px-4 py-2">
-            <span className="text-sm text-gray-600 mr-2">{selectedMonth}</span>
+          <button className="flex items-center bg-white border border-gray-200 rounded-md px-4 py-2 text-gray-700">
+            <span className="text-sm mr-2">{selectedMonth}</span>
             <ChevronDown size={16} />
           </button>
         </div>
@@ -48,67 +48,77 @@ export default function DoctorAppointmentChart() {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center space-x-4 mb-4">
+      <div className="flex items-center space-x-4 mb-8">
         <div className="flex items-center">
-          <div className="w-2 h-2.rounded-full bg-teal-500 mr-2"></div>
+          <div className="w-2 h-2 rounded-full bg-teal-500 mr-2"></div>
           <span className="text-xs text-gray-500">Series 1</span>
         </div>
         <div className="flex items-center">
-          <div className="w-2 h-2.rounded-full bg-teal-300 mr-2"></div>
+          <div className="w-2 h-2 rounded-full bg-teal-300 mr-2"></div>
           <span className="text-xs text-gray-500">Series 2</span>
         </div>
         <div className="flex items-center">
-          <div className="w-2 h-2.rounded-full bg-teal-200 mr-2"></div>
+          <div className="w-2 h-2 rounded-full bg-teal-200 mr-2"></div>
           <span className="text-xs text-gray-500">Series 3</span>
         </div>
       </div>
 
-      {/* Y-axis labels */}
-      <div className="relative mt-8">
-        <div className="absolute -left-8 -top-6 text-xs text-gray-500">
-          1000
+      <div className="relative h-64 mt-4">
+        {/* Y-axis labels */}
+        <div className="absolute -left-8 top-0 text-xs text-gray-500">1000</div>
+        <div className="absolute -left-8 top-1/4 text-xs text-gray-500">
+          800
         </div>
-        <div className="absolute -left-6 top-16 text-xs text-gray-500">600</div>
-        <div className="absolute -left-6 top-32 text-xs text-gray-500">200</div>
-        <div className="absolute -left-4 top-48 text-xs text-gray-500">0</div>
-      </div>
+        <div className="absolute -left-8 top-1/2 text-xs text-gray-500">
+          400
+        </div>
+        <div className="absolute -left-8 bottom-8 text-xs text-gray-500">0</div>
 
-      {/* Chart */}
-      <div className="flex items-end justify-between h-48 mb-2 relative">
-        <div className="absolute -left-16 h-full flex flex-col justify-between">
-          <span className="text-xs text-gray-500">Active doctor</span>
+        {/* Y-axis label */}
+        <div className="absolute -left-16 top-1/2 transform -rotate-90 text-xs text-gray-500 whitespace-nowrap">
+          Active doctor
         </div>
 
-        {chartData.map((item, index) => {
-          const totalHeight = 192; // 48rem in pixels
-          const series1Height = (item.series1 / maxTotal) * totalHeight * 0.8;
-          const series2Height = (item.series2 / maxTotal) * totalHeight * 0.8;
-          const series3Height = (item.series3 / maxTotal) * totalHeight * 0.8;
+        {/* Chart grid lines */}
+        <div className="absolute left-0 right-0 h-px bg-gray-100 top-0 w-full"></div>
+        <div className="absolute left-0 right-0 h-px bg-gray-100 top-1/4 w-full"></div>
+        <div className="absolute left-0 right-0 h-px bg-gray-100 top-1/2 w-full"></div>
+        <div className="absolute left-0 right-0 h-px bg-gray-100 top-3/4 w-full"></div>
+        <div className="absolute left-0 right-0 h-px bg-gray-100 bottom-8 w-full"></div>
 
-          return (
-            <div key={index} className="flex flex-col items-center w-full">
-              <div className="w-12 flex flex-col-reverse">
-                <div
-                  className="bg-teal-600 w-full"
-                  style={{ height: `${series1Height}px` }}
-                ></div>
-                <div
-                  className="bg-teal-400 w-full"
-                  style={{ height: `${series2Height}px` }}
-                ></div>
-                <div
-                  className="bg-teal-200 w-full"
-                  style={{ height: `${series3Height}px` }}
-                ></div>
+        {/* Chart */}
+        <div className="flex items-end justify-between h-56 mb-8 pl-4">
+          {chartData.map((item, index) => {
+            const totalHeight = 224; // 56rem in pixels
+            const series1Height = (item.series1 / maxTotal) * totalHeight * 0.6;
+            const series2Height = (item.series2 / maxTotal) * totalHeight * 0.6;
+            const series3Height = (item.series3 / maxTotal) * totalHeight * 0.6;
+
+            return (
+              <div key={index} className="flex flex-col items-center">
+                <div className="w-10 flex flex-col-reverse">
+                  <div
+                    className="bg-teal-500 w-full rounded-t-sm"
+                    style={{ height: `${series1Height}px` }}
+                  ></div>
+                  <div
+                    className="bg-teal-300 w-full"
+                    style={{ height: `${series2Height}px` }}
+                  ></div>
+                  <div
+                    className="bg-teal-100 w-full"
+                    style={{ height: `${series3Height}px` }}
+                  ></div>
+                </div>
+                <div className="text-xs text-gray-500 mt-2">{item.month}</div>
               </div>
-              <div className="text-xs text-gray-500 mt-2">{item.month}</div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      {/* X-axis label */}
-      <div className="text-xs text-gray-500 text-center mt-2">Month</div>
+        {/* X-axis label */}
+        <div className="text-xs text-gray-500 text-center">Month</div>
+      </div>
     </div>
   );
 }

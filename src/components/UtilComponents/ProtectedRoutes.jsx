@@ -20,7 +20,7 @@ const LoadingScreen = () => (
  */
 export const ProtectedRoute = ({ allowedRoles, redirectPath = "/login" }) => {
   const { user, loading } = useUser();
-  console.log("role is :{}",user.role)
+  // console.log("role is :{}",user.role)
   const location = useLocation();
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -47,9 +47,9 @@ export const ProtectedRoute = ({ allowedRoles, redirectPath = "/login" }) => {
   const hasRequiredRole =
     user.role === "admin" || !allowedRoles || allowedRoles.includes(user.role);
 
-  if (!hasRequiredRole) {
-    return <NotFound404 />;
-  }
+  // if (!hasRequiredRole) {
+  //   return <NotFound404 />;
+  // }
 
   // User is authenticated and authorized
   return <Outlet />;

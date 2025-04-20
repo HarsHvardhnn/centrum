@@ -12,7 +12,7 @@ const PatientsList = ({
   currentPage = 1,
   onPageChange,
   onPatientSelect,
-  onEditPatient,
+  // onEditPatient,
   patientsData = [],
 }) => {
   const defaultPatientsData = [

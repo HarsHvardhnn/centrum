@@ -68,14 +68,21 @@ const validateAPIResponse = (response) => {
 // API call function
 const apiCaller = async (method, url, data = {}, headers = {}) => {
   try {
-    // Data validation (you can extend it for specific APIs)
+    // Handle POST/PUT data validation
     if (method === "POST" || method === "PUT") {
-      if (!data || Object.keys(data).length === 0) {
+      const isFormData = data instanceof FormData;
+
+      const isEmpty =
+        !data ||
+        (isFormData
+          ? [...data.entries()].length === 0
+          : Object.keys(data).length === 0);
+
+      if (isEmpty) {
         throw new Error("Data must be provided for POST/PUT requests");
       }
     }
 
-    // Make the API call
     const response = await axiosInstance({
       method,
       url,
@@ -83,14 +90,13 @@ const apiCaller = async (method, url, data = {}, headers = {}) => {
       headers,
     });
 
-    // Validate response data structure
     return validateAPIResponse(response);
   } catch (error) {
-    // Log errors or handle them here
     console.error("API call failed:", error);
-    throw error; // Propagate error for further handling
+    throw error;
   }
 };
+
 
 // Export the apiCaller for use in components
 export { apiCaller, axiosInstance };

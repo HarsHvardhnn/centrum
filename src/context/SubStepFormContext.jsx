@@ -6,52 +6,54 @@ const FormContext = createContext(null);
 export const FormProvider = ({ children }) => {
   const [formData, setFormData] = useState({
     // Demographics
-    fullName: '',
-    email: '',
-    mobileNumber: '',
-    dateOfBirth: '',
-    motherTongue: '',
-    govtId: '',
-    hospId: 'Auto generate',
-    sex: '',
-    maritalStatus: '',
-    ethnicity: '',
-    otherHospitalIds: '',
-    
+    fullName: "",
+    email: "",
+    mobileNumber: "",
+    dateOfBirth: "",
+    motherTongue: "",
+    govtId: "",
+    hospId: "Auto generate",
+    sex: "",
+    maritalStatus: "",
+    ethnicity: "",
+    otherHospitalIds: "",
+
+    consents: [],
+    documents: [],
     // Referrer
-    referrerType: '',
-    mainComplaint: '',
-    referrerName: '',
-    referrerNumber: '',
-    referrerEmail: '',
-    consultingDepartment: '',
-    consultingDoctor: '',
-    
+    referrerType: "",
+    mainComplaint: "",
+    referrerName: "",
+    referrerNumber: "",
+    referrerEmail: "",
+    consultingDepartment: "",
+    consultingDoctor: "",
+
     // Address
-    address: '',
-    city: '',
-    pinCode: '',
-    state: '',
-    country: '',
-    district: '',
+    address: "",
+    city: "",
+    pinCode: "",
+    state: "",
+    country: "",
+    district: "",
     isInternationalPatient: false,
-    
+
     // Photo
     photo: null,
-    
+
     // Details
-    fatherName: '',
-    motherName: '',
-    spouseName: '',
-    education: '',
-    alternateContact: '',
-    birthWeight: '',
-    occupation: '',
-    religion: '',
-    ivrLanguage: '',
-    
+    fatherName: "",
+    motherName: "",
+    spouseName: "",
+    education: "",
+    alternateContact: "",
+    birthWeight: "",
+    occupation: "",
+    religion: "",
+    ivrLanguage: "",
+
     // Notes
-    reviewNotes: ''
+    reviewNotes: "",
   });
 
   const updateFormData = (fieldName, value) => {
