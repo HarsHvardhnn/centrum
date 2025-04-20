@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useLoader } from "../../../context/LoaderContext";
 import doctorService from "../../../helpers/doctorHelper";
 import AppointmentFormModal from "../Appointments/AddAppointmentForm";
+import patientService from "../../../helpers/patientHelper";
 
 function DoctorsPage() {
   const router = useParams();
   const { showLoader, hideLoader } = useLoader();
   const [error, setError] = useState(null);
   const [doctorInfo, setDoctorInfo] = useState({});
+  const [patients, setPatients] = useState([]);
   // New state for controlling the modal visibility
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [appointmentData, setAppointmentData] = useState(null);
@@ -29,19 +31,37 @@ function DoctorsPage() {
           // Transform the API data to match our component structure
           const transformedData = transformToDoctorInfo(response.doctor);
           setDoctorInfo(transformedData);
+
+          fetchPatientsByDoctor(doctorId);
         } else {
           setError("Failed to load doctor data");
         }
       } catch (err) {
         console.error("Error fetching doctor data:", err);
         setError("Error loading doctor data");
-      } finally {
         hideLoader();
       }
     };
 
     fetchDoctorData();
   }, [router.id, showLoader, hideLoader]);
+
+  const fetchPatientsByDoctor = async (doctorId) => {
+    try {
+      const response = await patientService.getPatientsByDoctors(doctorId);
+
+      if (response && response.success && response.patients) {
+        setPatients(response.patients);
+      } else {
+        console.error("Failed to load patients data");
+      }
+    } catch (err) {
+      console.error("Error fetching patients data:", err);
+      setError("Error loading patients data");
+    } finally {
+      hideLoader();
+    }
+  };
 
   const transformToDoctorInfo = (apiDoctor) => {
     const fullName = `${apiDoctor.name?.first || ""} ${
@@ -71,12 +91,10 @@ function DoctorsPage() {
 
   const stats = {
     appointments: 165,
-    newPatients: 102,
+    newPatients: patients.length || 0,
     surgery: 4,
     criticalPatients: 54,
   };
-
-  const patients = [];
 
   const selectedPatient = {
     name: "Morshed Ali",
@@ -151,6 +169,12 @@ function DoctorsPage() {
     setShowAppointmentModal(false);
   };
 
+  // Function to handle patient selection
+  const handlePatientSelect = (patientId) => {
+    console.log(`Selected patient: ${patientId}`);
+    // You could implement logic to select a patient and display their details
+  };
+
   return (
     <>
       <DoctorDashboard
@@ -158,7 +182,7 @@ function DoctorsPage() {
         patients={patients}
         stats={stats}
         selectedPatient={selectedPatient}
-        onPatientSelect={(id) => console.log(`Selected patient: ${id}`)}
+        onPatientSelect={handlePatientSelect}
         onDateSelect={(date) => console.log(`Selected date: ${date}`)}
         onSearch={(query) => console.log(`Search query: ${query}`)}
         onFilter={() => console.log("Filter clicked")}

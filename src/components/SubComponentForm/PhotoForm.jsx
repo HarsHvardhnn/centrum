@@ -346,13 +346,21 @@ const ConsentDocumentUpload = () => {
                     ) : (
                       <div className="flex flex-col">
                         <div className="aspect-[4/3] overflow-hidden flex items-center justify-center bg-gray-100 rounded-lg mb-2">
-                          {document.preview && (
+                          {document.preview ? (
                             <img
                               src={document.preview}
                               alt={document.name}
                               className="max-w-full max-h-full object-contain"
                             />
-                          )}
+                            ):
+                            (
+                            <img
+                              src={document}
+                              alt={document}
+                              className="max-w-full max-h-full object-contain"
+                            />
+                            )
+                          }
                         </div>
                         <p className="text-sm truncate font-medium text-center">
                           {document.name}

@@ -8,7 +8,7 @@ import {
   Edit,
 } from "lucide-react";
 
-function PatientsTable({ patients }) {
+function PatientsTable({ patients, onEditPatient }) {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [patientsPerPage] = useState(10);
@@ -71,6 +71,13 @@ function PatientsTable({ patients }) {
 
     return pages;
   }, [currentPage, totalPages]);
+
+  // Handle edit button click
+  const handleEditClick = (patient) => {
+    if (onEditPatient) {
+      onEditPatient(patient);
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -168,7 +175,10 @@ function PatientsTable({ patients }) {
                     <button className="text-gray-400 hover:text-gray-600">
                       <Trash2 size={18} />
                     </button>
-                    <button className="text-gray-400 hover:text-gray-600">
+                    <button
+                      className="text-gray-400 hover:text-gray-600"
+                      onClick={() => handleEditClick(patient)}
+                    >
                       <Edit size={18} />
                     </button>
                   </td>

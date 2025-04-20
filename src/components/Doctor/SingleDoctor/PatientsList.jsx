@@ -128,7 +128,7 @@ const PatientsList = ({
         textColor: "text-green-700",
         dotColor: "bg-green-600",
       },
-      Waiting: {
+      "in-treatment": {
         bgColor: "bg-yellow-50",
         textColor: "text-yellow-700",
         dotColor: "bg-yellow-600",

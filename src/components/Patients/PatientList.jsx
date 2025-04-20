@@ -10,11 +10,15 @@ import {
 import PatientsTable from "./PatientTable";
 import PatientStepForm from "../SubComponentForm/PatientStepForm";
 import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
+import patientService from "../../helpers/patientHelper";
+import { toast } from "sonner";
+import { useLoader } from "../../context/LoaderContext";
 
 // Wrap the entire component with FormProvider
 function LabAppointmentsContent() {
   // Now we can access the form context directly
-  const { formData } = useFormContext();
+  const { formData, updateMultipleFields } = useFormContext();
+  const { showLoader, hideLoader } = useLoader();
 
   // Patient data
   const [allPatients, setAllPatients] = useState([
@@ -29,21 +33,24 @@ function LabAppointmentsContent() {
       status: "Compilate",
       doctor: "Dr. Imran Ali",
     },
-    // Adding more patients for pagination testing
-    ...[...Array(30)].map((_, i) => ({
-      id: "#85736733",
-      name: ["Olivia Rhye", "Phoenix Baker", "Demi Wilkinson", "Lana Steiner"][
-        i % 4
-      ],
-      username: ["@olivia", "@phoenix", "@demi", "@lana"][i % 4],
-      date: "Dec 01, 23",
-      sex: i % 2 === 0 ? "Male" : "Female",
-      age: 30 + (i % 40),
-      disease: i % 2 === 0 ? "Diabetes" : "Blood pressure",
-      status: i % 2 === 0 ? "Compilate" : "In-Treatment",
-      doctor: ["Dr. Mohon Roy", "Dr. Imran Ali", "Dr. Mustag"][i % 3],
-    })),
+    // Default patients...
   ]);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        showLoader();
+        const response = await patientService.getSimpliefiedPatientsList();
+        setAllPatients(response.patients || []);
+      } catch (error) {
+        console.error("Failed to fetch patients:", error);
+      } finally {
+        hideLoader();
+      }
+    };
+
+    fetchPatients();
+  }, []);
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,6 +61,8 @@ function LabAppointmentsContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentSubStep, setCurrentSubStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentPatientId, setCurrentPatientId] = useState(null);
 
   const subStepTitles = [
     "Demographics",
@@ -80,21 +89,100 @@ function LabAppointmentsContent() {
     });
   }, [allPatients, searchQuery, statusFilter]);
 
+  // Function to handle editing a patient
+  const handleEditPatient = async (patient) => {
+    try {
+      showLoader();
+
+      // Get patient details from the backend
+      const patientDetails = await patientService.getPatientById(patient.id);
+
+      // Map the backend data to our form structure
+      const mappedFormData = {
+        // Demographics
+        fullName:
+          patientDetails.name?.first + " " + (patientDetails.name?.last || ""),
+        email: patientDetails.email,
+        mobileNumber: patientDetails.phone,
+        dateOfBirth: patientDetails.dateOfBirth,
+        motherTongue: patientDetails.motherTongue,
+        govtId: patientDetails.govtId,
+        hospId: patientDetails.hospId,
+        sex: patientDetails.sex,
+        maritalStatus: patientDetails.maritalStatus,
+        ethnicity: patientDetails.ethnicity,
+        otherHospitalIds: patientDetails.otherHospitalIds,
+
+        consents: patientDetails.consents || [],
+        documents: patientDetails.documents || [],
+
+        // Referrer
+        referrerType: patientDetails.referrerType,
+        mainComplaint: patientDetails.mainComplaint,
+        referrerName: patientDetails.referrerName,
+        referrerNumber: patientDetails.referrerNumber,
+        referrerEmail: patientDetails.referrerEmail,
+        consultingDepartment: patientDetails.consultingDepartment,
+        consultingDoctor: patientDetails.consultingDoctor,
+
+        // Address
+        address: patientDetails.address,
+        city: patientDetails.city,
+        pinCode: patientDetails.pinCode,
+        state: patientDetails.state,
+        country: patientDetails.country,
+        district: patientDetails.district,
+        isInternationalPatient: patientDetails.isInternationalPatient || false,
+
+        // Photo
+        photo: patientDetails.photo || null,
+
+        // Details
+        fatherName: patientDetails.fatherName,
+        motherName: patientDetails.motherName,
+        spouseName: patientDetails.spouseName,
+        education: patientDetails.education,
+        alternateContact: patientDetails.alternateContact,
+        birthWeight: patientDetails.birthWeight,
+        occupation: patientDetails.occupation,
+        religion: patientDetails.religion,
+        ivrLanguage: patientDetails.ivrLanguage,
+
+        // Notes
+        reviewNotes: patientDetails.reviewNotes,
+      };
+
+      // Update the form context with patient data
+      updateMultipleFields(mappedFormData);
+
+      // Set edit mode and open modal
+      setIsEditMode(true);
+      setCurrentPatientId(patient.id);
+      setIsModalOpen(true);
+      setCurrentSubStep(0);
+      setCompletedSteps([]);
+    } catch (error) {
+      console.error("Error fetching patient details:", error);
+      toast.error("Failed to load patient details");
+    } finally {
+      hideLoader();
+    }
+  };
+
   // Function to go to a specific sub-step
   const goToSubStep = (step) => {
     setCurrentSubStep(step);
   };
 
   // Function to mark a step as completed
-  const markStepAsCompleted = () => {
-    console.log("form data", formData);
+  const markStepAsCompleted = async () => {
     if (!completedSteps.includes(currentSubStep)) {
       setCompletedSteps([...completedSteps, currentSubStep]);
     }
 
     // If we're on the last step, submit the form
     if (currentSubStep === subStepTitles.length - 1) {
-      handleFormSubmit();
+      await handleFormSubmit(); // Make it await since it's async now
     } else {
       // Otherwise, move to the next step
       setCurrentSubStep(currentSubStep + 1);
@@ -102,40 +190,128 @@ function LabAppointmentsContent() {
   };
 
   // Function to handle form submission
-  const handleFormSubmit = () => {
-    // Here you would typically gather all form data and make an API call
-    console.log("Form submitted successfully!");
-    console.log("Final form data:", formData);
+  const handleFormSubmit = async () => {
+    try {
+      showLoader();
 
-    // Generate a new patient ID
-    const newPatientId = `#${Math.floor(10000000 + Math.random() * 90000000)}`;
+      if (isEditMode && currentPatientId) {
+        // Update existing patient
+        const updatedPatient = await patientService.updatePatient(
+          currentPatientId,
+          formData
+        );
 
-    // Now we're using the actual form data to create the new patient
-    const newPatient = {
-      id: newPatientId,
-      name: formData.fullName || "New Patient",
-      username: `@${
-        formData.fullName?.toLowerCase().replace(/\s+/g, "") || "newpatient"
-      }`,
-      date: new Date().toLocaleDateString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "2-digit",
-      }),
-      sex: formData.sex || "Not specified",
-      age: formData.dateOfBirth ? calculateAge(formData.dateOfBirth) : 0,
-      disease: formData.mainComplaint || "Check-up",
-      status: "In-Treatment",
-      doctor: formData.consultingDoctor || "Dr. Imran Ali",
-    };
+        // Update the patient in the frontend list
+        setAllPatients((prevPatients) =>
+          prevPatients.map((patient) =>
+            patient.id === currentPatientId
+              ? {
+                  ...patient,
+                  name: formData.fullName,
+                  username: `@${formData.fullName
+                    ?.toLowerCase()
+                    .replace(/\s+/g, "")}`,
+                  sex: formData.sex || patient.sex,
+                  age: formData.dateOfBirth
+                    ? calculateAge(formData.dateOfBirth)
+                    : patient.age,
+                  disease: formData.mainComplaint || patient.disease,
+                  doctor: formData.consultingDoctor || patient.doctor,
+                }
+              : patient
+          )
+        );
 
-    // Add the new patient to the list
-    setAllPatients([newPatient, ...allPatients]);
+        toast.success("Patient updated successfully");
+      } else {
+        // Create new patient
+        const createdPatient = await patientService.createPatient(formData);
 
-    // Close the modal and reset form state
-    setIsModalOpen(false);
-    setCurrentSubStep(0);
-    setCompletedSteps([]);
+        // Update frontend list
+        const newPatientEntry = {
+          id:
+            createdPatient._id ||
+            `#${Math.floor(10000000 + Math.random() * 90000000)}`,
+          name: formData.fullName || "New Patient",
+          username: `@${
+            formData.fullName?.toLowerCase().replace(/\s+/g, "") || "newpatient"
+          }`,
+          date: new Date().toLocaleDateString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "2-digit",
+          }),
+          sex: formData.sex || "Not specified",
+          age: formData.dateOfBirth ? calculateAge(formData.dateOfBirth) : 0,
+          disease: formData.mainComplaint || "Check-up",
+          status: "In-Treatment",
+          doctor: formData.consultingDoctor || "Dr. Imran Ali",
+        };
+
+        setAllPatients([newPatientEntry, ...allPatients]);
+        toast.success("Patient created successfully");
+      }
+
+      // Close modal and reset form state
+      setIsModalOpen(false);
+      setCurrentSubStep(0);
+      setCompletedSteps([]);
+      setIsEditMode(false);
+      setCurrentPatientId(null);
+
+      // Reset form data
+      updateMultipleFields({
+        fullName: "",
+        email: "",
+        mobileNumber: "",
+        dateOfBirth: "",
+        motherTongue: "",
+        govtId: "",
+        hospId: "Auto generate",
+        sex: "",
+        maritalStatus: "",
+        ethnicity: "",
+        otherHospitalIds: "",
+
+        consents: [],
+        documents: [],
+        referrerType: "",
+        mainComplaint: "",
+        referrerName: "",
+        referrerNumber: "",
+        referrerEmail: "",
+        consultingDepartment: "",
+        consultingDoctor: "",
+
+        address: "",
+        city: "",
+        pinCode: "",
+        state: "",
+        country: "",
+        district: "",
+        isInternationalPatient: false,
+
+        photo: null,
+
+        fatherName: "",
+        motherName: "",
+        spouseName: "",
+        education: "",
+        alternateContact: "",
+        birthWeight: "",
+        occupation: "",
+        religion: "",
+        ivrLanguage: "",
+
+        reviewNotes: "",
+      });
+    } catch (error) {
+      toast.error(
+        "Error submitting form: " + (error.message || "Unknown error")
+      );
+    } finally {
+      hideLoader();
+    }
   };
 
   // Helper function to calculate age from date of birth
@@ -218,7 +394,59 @@ function LabAppointmentsContent() {
             {/* Add Patient Button */}
             <button
               className="bg-teal-500 text-white rounded-lg px-4 py-2 flex items-center gap-2"
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setIsEditMode(false);
+                setCurrentPatientId(null);
+                setIsModalOpen(true);
+                setCurrentSubStep(0);
+                setCompletedSteps([]);
+                // Reset form when adding new patient
+                updateMultipleFields({
+                  fullName: "",
+                  email: "",
+                  mobileNumber: "",
+                  dateOfBirth: "",
+                  motherTongue: "",
+                  govtId: "",
+                  hospId: "Auto generate",
+                  sex: "",
+                  maritalStatus: "",
+                  ethnicity: "",
+                  otherHospitalIds: "",
+
+                  consents: [],
+                  documents: [],
+                  referrerType: "",
+                  mainComplaint: "",
+                  referrerName: "",
+                  referrerNumber: "",
+                  referrerEmail: "",
+                  consultingDepartment: "",
+                  consultingDoctor: "",
+
+                  address: "",
+                  city: "",
+                  pinCode: "",
+                  state: "",
+                  country: "",
+                  district: "",
+                  isInternationalPatient: false,
+
+                  photo: null,
+
+                  fatherName: "",
+                  motherName: "",
+                  spouseName: "",
+                  education: "",
+                  alternateContact: "",
+                  birthWeight: "",
+                  occupation: "",
+                  religion: "",
+                  ivrLanguage: "",
+
+                  reviewNotes: "",
+                });
+              }}
             >
               <Plus size={18} />
               Add Patient
@@ -227,14 +455,19 @@ function LabAppointmentsContent() {
         </div>
 
         {/* Patients Table Component */}
-        <PatientsTable patients={filteredPatients} />
+        <PatientsTable
+          patients={filteredPatients}
+          onEditPatient={handleEditPatient}
+        />
 
-        {/* Add Patient Modal */}
+        {/* Patient Modal (Add/Edit) */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg w-3/4 max-w-4xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center border-b p-4">
-                <h2 className="text-xl font-bold">Add New Patient</h2>
+                <h2 className="text-xl font-bold">
+                  {isEditMode ? "Edit Patient" : "Add New Patient"}
+                </h2>
                 <button
                   className="text-gray-500 hover:text-gray-700"
                   onClick={() => setIsModalOpen(false)}
@@ -249,6 +482,7 @@ function LabAppointmentsContent() {
                   goToSubStep={goToSubStep}
                   markStepAsCompleted={markStepAsCompleted}
                   subStepTitles={subStepTitles}
+                  isEditMode={isEditMode}
                 />
               </div>
             </div>
