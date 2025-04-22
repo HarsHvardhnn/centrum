@@ -26,6 +26,7 @@ import {
 } from "./components/UtilComponents/ProtectedRoutes";
 import AddDoctorForm from "./components/Doctor/CreateDoctor";
 import LabAppointments from "./components/Patients/PatientList";
+import ChatComponent from "./components/User/ChatComponent";
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -92,7 +93,12 @@ const routes = createBrowserRouter([
         path: "/forgot-password",
         element: <ForgotPasswordScreen />,
       },
+      {
+        path: "/help-center",
+        element: <ChatComponent />,
+      },
     ],
+
   },
 
   // Public user site routes
