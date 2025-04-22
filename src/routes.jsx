@@ -27,6 +27,7 @@ import {
 import AddDoctorForm from "./components/Doctor/CreateDoctor";
 import LabAppointments from "./components/Patients/PatientList";
 import UserManagement from "./components/admin/Settings";
+import ChatComponent from "./components/User/ChatComponent";
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -125,6 +126,10 @@ const routes = createBrowserRouter([
           { path: "/", element: <MedicalDashboard /> },
           { path: "/doctor/create", element: <AddDoctorForm /> },
           { path: "/admin/accounts", element: <UserManagement /> },
+          {
+            path: "/help-center",
+            element: <ChatComponent />,
+          },
         ],
       },
     ],

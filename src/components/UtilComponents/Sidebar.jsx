@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import { FlaskConical } from "lucide-react";
 import { RiHomeLine } from "react-icons/ri";
 import { LuFileChartColumn, LuCalendarPlus2 } from "react-icons/lu";
@@ -14,7 +14,8 @@ import {
 import { useUser } from "../../context/userContext";
 
 const Sidebar = () => {
-  const {user}=useUser()
+  const { user } = useUser()
+  const navigate= useNavigate()
   const location = useLocation();
   const currentPath = location.pathname;
   const handleLogout =  () => {
@@ -135,7 +136,7 @@ const Sidebar = () => {
           <p className="text-center text-gray-700 text-xs mb-3">
             Etiam porta sem malesuada magna mollis euismod.
           </p>
-          <button className="w-full bg-teal-400 hover:bg-teal-600 text-white py-3 px-4 rounded-md font-medium">
+          <button onClick={()=>{navigate("/help-center")}} className="w-full bg-teal-400 hover:bg-teal-600 text-white py-3 px-4 rounded-md font-medium">
             Go to help center
           </button>
         </div>
