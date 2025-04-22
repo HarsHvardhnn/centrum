@@ -11,10 +11,18 @@ import {
   FiHelpCircle,
   FiUser,
 } from "react-icons/fi";
+import { useUser } from "../../context/userContext";
 
 const Sidebar = () => {
+  const {user}=useUser()
   const location = useLocation();
   const currentPath = location.pathname;
+  const handleLogout =  () => {
+    localStorage.clear();
+    window.location.href="/login"
+    
+  }
+
 
   return (
     <div className="w-64 ml-6 h-[calc(100vh-64px)] bg-white shadow-md fixed left-0 top-16 flex flex-col mt-2">
@@ -47,7 +55,11 @@ const Sidebar = () => {
           <NavItem
             icon={<LuCalendarPlus2 className="text-xl text-teal-400" />}
             label="Doctor Appointment"
-            to="/doctors"
+            to={
+              user?.role == "admin" || user?.role == "receptionist"
+                ? "/doctors"
+                : `/doctors/appointments/${user?.d_id}`
+            }
             isActive={currentPath === "/doctors"}
             isEnabled={true}
           />
@@ -80,9 +92,9 @@ const Sidebar = () => {
           <NavItem
             icon={<FiUser className="text-xl text-teal-400" />}
             label="Account"
-            to="/account"
-            isActive={currentPath === "/account"}
-            isEnabled={false}
+            to="/admin/accounts"
+            isActive={currentPath === "/admin/accounts"}
+            isEnabled={true}
           />
 
           <div className="border-t border-teal-100 my-1"></div>
@@ -98,7 +110,11 @@ const Sidebar = () => {
           <NavItem
             icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}
             label="Log Out"
-            to="/logout"
+            to="#" 
+            onClick={(e) => {
+              e.preventDefault();
+              handleLogout();
+            }}
             isActive={currentPath === "/logout"}
             isEnabled={true}
           />
@@ -128,12 +144,12 @@ const Sidebar = () => {
   );
 };
 
-const NavItem = ({ icon, label, to, isActive, isEnabled }) => {
+const NavItem = ({ icon, label, to, isActive, isEnabled, onClick }) => {
   // Determine the right element type based on if link is enabled
   const Component = isEnabled ? Link : "div";
 
   // Only pass 'to' prop if it's enabled
-  const linkProps = isEnabled ? { to } : {};
+  const linkProps = isEnabled ? { to, onClick } : {};
 
   // Styling based on active state and enabled state
   const styles = `flex items-center px-3 py-1.5 rounded-md ${
@@ -169,5 +185,4 @@ const NavItem = ({ icon, label, to, isActive, isEnabled }) => {
     </Component>
   );
 };
-
 export default Sidebar;

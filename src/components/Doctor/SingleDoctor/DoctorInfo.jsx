@@ -12,13 +12,14 @@ const DoctorInfoCard = ({ doctor }) => {
   } = doctor;
 
   return (
-    <div className="flex items-start p-4  rounded-lg">
+    <div className="flex items-start p-2  rounded-lg">
       {/* Doctor Avatar */}
       <div className="mr-3">
         <img
           src={avatarUrl}
           alt={`Dr. ${name}`}
-          className="w-16 h-16 rounded-full object-cover border border-blue-100"
+          referrerPolicy="no-referrer"
+          className="w-24 h-24 rounded-full object-cover border border-blue-100"
         />
       </div>
 

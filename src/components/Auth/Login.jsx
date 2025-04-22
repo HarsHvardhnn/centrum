@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { apiCaller } from "../../utils/axiosInstance";
+import { toast } from "sonner";
+import { useUser } from "../../context/userContext";
 
 const AuthForm = ({ isLogin = false }) => {
   const { t } = useTranslation();
@@ -13,6 +15,8 @@ const AuthForm = ({ isLogin = false }) => {
   const [showOtpScreen, setShowOtpScreen] = useState(false);
   const [registrationData, setRegistrationData] = useState(null);
   const [email, setEmail] = useState("");
+
+  const {setUser} = useUser();
 
   // Initial form values
   const initialValues = {
@@ -63,16 +67,15 @@ const AuthForm = ({ isLogin = false }) => {
       const response = await apiCaller("POST", "/auth/google", {
         token: credentialResponse.credential,
       });
-      console.log("Google login successful:", response.data);
+      toast.success("Google login successful");
 
-      // Store token in localStorage
       localStorage.setItem("authToken", response.data.token);
-
-      // Navigate to home page after successful login
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+      setUser(response.data.user || {})
       navigate("/");
     } catch (error) {
-      console.error("Google login failed:", error);
-      alert("Google login failed. Please try again.");
+      console.log("error",error)
+      toast.error("Google login failed:", error.response.data.message);
     }
   };
 
@@ -144,7 +147,7 @@ const AuthForm = ({ isLogin = false }) => {
       const response = await apiCaller("POST", "/auth/verify-otp", {
         email: email,
         otp: values.otp,
-        password:values?.password,
+        password: values?.password,
         purpose: "signup",
         firstName: registrationData.firstName,
         lastName: registrationData.lastName,
@@ -282,11 +285,12 @@ const AuthForm = ({ isLogin = false }) => {
                 ? `${t("Sign in to your account")}`
                 : "Create an account"}
             </h2>
-            <p className="text-gray-500 mb-6 text-lg text-center">
-              {isLogin
-                ? "Welcome back! Please enter your details."
-                : "Start your 30-day free trial"}
-            </p>
+
+            {isLogin && (
+              <p className="text-gray-500 mb-6 text-lg text-center">
+                Welcome back! Please enter your details.
+              </p>
+            )}
 
             <Formik
               initialValues={initialValues}

@@ -33,7 +33,7 @@ const PatientStepForm = ({
         <SubStep title="Address">
           <AddressForm />
         </SubStep>
-        <SubStep title="Photo">
+        <SubStep title="Consent">
           <ConsentDocumentUpload />
         </SubStep>
         <SubStep title="Details">

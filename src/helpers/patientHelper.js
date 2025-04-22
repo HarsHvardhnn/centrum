@@ -125,8 +125,8 @@ const patientService = {
       }
 
       const url = queryParams.toString()
-        ? `/patients/simplified?${queryParams}`
-        : `/patients/simplified`;
+        ? `/patients/data/simple?${queryParams}`
+        : `/patients/data/simple`;
 
       const response = await apiCaller("GET", url);
       return response.data;

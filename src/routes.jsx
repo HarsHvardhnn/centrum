@@ -26,6 +26,7 @@ import {
 } from "./components/UtilComponents/ProtectedRoutes";
 import AddDoctorForm from "./components/Doctor/CreateDoctor";
 import LabAppointments from "./components/Patients/PatientList";
+import UserManagement from "./components/admin/Settings";
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -123,6 +124,7 @@ const routes = createBrowserRouter([
           { path: "/patients-details", element: <PatientDetailsPage /> },
           { path: "/", element: <MedicalDashboard /> },
           { path: "/doctor/create", element: <AddDoctorForm /> },
+          { path: "/admin/accounts", element: <UserManagement /> },
         ],
       },
     ],

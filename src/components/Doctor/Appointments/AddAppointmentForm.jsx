@@ -26,7 +26,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
     "Demographics",
     "Referrer",
     "Address",
-    "Photo",
+    "Consent",
     "Details",
     "Notes",
   ];

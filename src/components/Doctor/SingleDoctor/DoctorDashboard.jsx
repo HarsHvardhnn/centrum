@@ -41,7 +41,7 @@ const DoctorDashboard = ({
 
   return (
     <div className="container mx-auto px-4 min-h-screen flex flex-col">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 py-4 gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-2 mt-2 py-4 gap-4">
         <div className="flex items-center">
           <button className="mr-4 text-teal-500">
             <ArrowLeft size={24} />
