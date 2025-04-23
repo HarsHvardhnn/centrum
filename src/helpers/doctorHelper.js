@@ -11,54 +11,58 @@ const doctorService = {
    * @param {Object} doctorData - Doctor information
    * @returns {Promise} - API response with doctor data
    */
-createDoctor: async (doctorData) => {
-  try {
-    const formData = new FormData();
+  createDoctor: async (doctorData) => {
+    try {
+      const formData = new FormData();
 
-    // Handle name fields
-    formData.append("name[first]", doctorData.firstName || doctorData.name?.first || "");
-    formData.append("name[last]", doctorData.lastName || doctorData.name?.last || "");
+      // Handle name fields
+      formData.append(
+        "name[first]",
+        doctorData.firstName || doctorData.name?.first || ""
+      );
+      formData.append(
+        "name[last]",
+        doctorData.lastName || doctorData.name?.last || ""
+      );
 
-    formData.append("email", doctorData.email);
-    formData.append("phone", doctorData.phone);
-    formData.append("password", doctorData.password);
-    formData.append("signupMethod", doctorData.signupMethod || "email");
-    formData.append("bio", doctorData.bio || "");
-    formData.append("experience", doctorData.experience || 0);
-    formData.append("consultationFee", doctorData.consultationFee || 0);
+      formData.append("email", doctorData.email);
+      formData.append("phone", doctorData.phone);
+      formData.append("password", doctorData.password);
+      formData.append("signupMethod", doctorData.signupMethod || "email");
+      formData.append("bio", doctorData.bio || "");
+      formData.append("experience", doctorData.experience || 0);
+      formData.append("consultationFee", doctorData.consultationFee || 0);
 
-    // Handle arrays
-    (doctorData.specializations || doctorData.specialization || []).forEach((item) =>
-      formData.append("specialization[]", item)
-    );
-    (doctorData.qualifications || []).forEach((item) =>
-      formData.append("qualifications[]", item)
-    );
-    (doctorData.weeklyShifts || []).forEach((item) =>
-      formData.append("weeklyShifts[]", JSON.stringify(item))
-    );
-    (doctorData.offSchedule || []).forEach((item) =>
-      formData.append("offSchedule[]", JSON.stringify(item))
-    );
+      // Handle arrays
+      (doctorData.specializations || doctorData.specialization || []).forEach(
+        (item) => formData.append("specialization[]", item)
+      );
+      (doctorData.qualifications || []).forEach((item) =>
+        formData.append("qualifications[]", item)
+      );
+      (doctorData.weeklyShifts || []).forEach((item) =>
+        formData.append("weeklyShifts[]", JSON.stringify(item))
+      );
+      (doctorData.offSchedule || []).forEach((item) =>
+        formData.append("offSchedule[]", JSON.stringify(item))
+      );
 
-    if (doctorData.profilePicture || doctorData.image) {
-      formData.append("file", doctorData.profilePicture || doctorData.image);
+      if (doctorData.profilePicture || doctorData.image) {
+        formData.append("file", doctorData.profilePicture || doctorData.image);
+      }
+
+      const response = await apiCaller("POST", "/docs/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error("Error creating doctor:", error);
+      throw error;
     }
-
-    const response = await apiCaller("POST", "/docs/", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error("Error creating doctor:", error);
-    throw error;
-  }
-}
-,
-
+  },
   /**
    * Get all doctors
    * @param {Object} filters - Optional filters for doctors
@@ -182,23 +186,72 @@ createDoctor: async (doctorData) => {
    * @param {string} doctorId - Doctor ID
    * @param {Object} offTime - Off schedule object with date and time ranges
    * @returns {Promise} - API response with updated off schedule
-   */
-  addDoctorOffTime: async (doctorId, offTime) => {
-    try {
-      if (!doctorId || !offTime) {
-        throw new Error("Doctor ID and off time details are required");
-      }
+  //  */
+  // addDoctorOffTime: async (doctorId, offTime) => {
+  //   try {
+  //     if (!doctorId || !offTime) {
+  //       throw new Error("Doctor ID and off time details are required");
+  //     }
 
-      const response = await apiCaller(
-        "POST",
-        `/api/doctors/${doctorId}/off-schedule`,
-        offTime
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error adding doctor off time:", error);
-      throw error;
-    }
+  //     const response = await apiCaller(
+  //       "POST",
+  //       `/api/doctors/${doctorId}/off-schedule`,
+  //       offTime
+  //     );
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error("Error adding doctor off time:", error);
+  //     throw error;
+  //   }
+  // },
+
+  getDoctorWeeklyShifts: async (doctorId = null) => {
+    const url = doctorId
+      ? `/docs/schedule/shifts/${doctorId}`
+      : "/docs/schedule/shifts";
+
+    return apiCaller("GET", url);
+  },
+  updateDoctorWeeklyShifts: async (shifts, doctorId = null) => {
+    const url = doctorId
+      ? `/docs/schedule/shifts/${doctorId}`
+      : "/docs/schedule/shifts";
+
+    return apiCaller("PUT", url, { shifts });
+  },
+
+  getDoctorOffSchedule: async (doctorId = null) => {
+    const url = doctorId
+      ? `/docs/schedule/off-time/${doctorId}`
+      : "/docs/schedule/off-time";
+
+    return apiCaller("GET", url);
+  },
+  addDoctorOffTime: async (offTimeData, doctorId = null) => {
+    const url = doctorId
+      ? `/docs/schedule/off-time/${doctorId}`
+      : "/docs/schedule/off-time";
+
+    return apiCaller("POST", url, offTimeData);
+  },
+  removeDoctorOffTime: async (date, doctorId = null) => {
+    const url = doctorId
+      ? `/docs/schedule/off-time/${doctorId}`
+      : "/docs/schedule/off-time";
+
+    return apiCaller("DELETE", url, { date });
+  },
+
+  getDoctorAvailableSlots: async (doctorId, date) => {
+    return apiCaller(
+      "GET",
+      `/docs/schedule/available-slots/${doctorId}`,
+      null,
+      {},
+      {
+        params: { date },
+      }
+    );
   },
 };
 

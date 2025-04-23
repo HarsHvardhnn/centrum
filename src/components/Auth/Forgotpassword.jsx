@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import LogoMark from "../../assets/Logomark.png";
+import { apiCaller } from "../../utils/axiosInstance";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -12,6 +12,7 @@ const ForgotPassword = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [otp, setOtp] = useState("");
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
@@ -24,8 +25,10 @@ const ForgotPassword = () => {
 
     setLoading(true);
     try {
-      // Replace with your actual API endpoint
-      // await axios.post("/api/forgot-password", { email });
+      // Using the apiCaller to make the request
+      const response = await apiCaller("POST", "/auth/request-password-reset", {
+        email,
+      });
       setStep(2);
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
@@ -37,8 +40,12 @@ const ForgotPassword = () => {
   const handleResendEmail = async () => {
     setLoading(true);
     try {
-      await axios.post("/api/forgot-password", { email });
-      // Show a success message if needed
+      // Using the apiCaller to resend OTP
+      await apiCaller("POST", "/auth/resend-otp", {
+        email,
+        purpose: "password-reset",
+      });
+      // Show success message if needed
     } catch (err) {
       setError(err.response?.data?.message || "Failed to resend email");
     } finally {
@@ -61,12 +68,18 @@ const ForgotPassword = () => {
       return;
     }
 
+    if (!otp) {
+      setError("Please enter the OTP from your email");
+      return;
+    }
+
     setLoading(true);
     try {
-      // Replace with your actual API endpoint
-      await axios.post("/api/reset-password", {
-        email,
-        password: newPassword,
+      // Using the apiCaller to reset password
+      await apiCaller("POST", "/auth/reset-password", {
+        resetToken: otp, // Using OTP as the reset token
+        newPassword,
+        email
       });
       setStep(4);
     } catch (err) {
@@ -189,7 +202,7 @@ const ForgotPassword = () => {
 
             <h1 className="text-2xl font-bold mb-2">Check your email</h1>
             <p className="text-gray-500 text-center mb-2">
-              We sent a password reset link to
+              We sent a password reset OTP to
             </p>
             <p className="text-[#80C5C5] mb-6">{email}</p>
 
@@ -207,8 +220,9 @@ const ForgotPassword = () => {
               <button
                 onClick={handleResendEmail}
                 className="ml-1 text-[#80C5C5] hover:underline"
+                disabled={loading}
               >
-                resend
+                {loading ? "Sending..." : "resend"}
               </button>
             </div>
 
@@ -262,6 +276,27 @@ const ForgotPassword = () => {
             </p>
 
             <form onSubmit={handlePasswordReset} className="w-full">
+              {/* OTP Input Field */}
+              <div className="mb-4">
+                <label
+                  htmlFor="otp"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Enter OTP*
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    id="otp"
+                    placeholder="Enter the OTP from your email"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#80C5C5]"
+                    required
+                  />
+                </div>
+              </div>
+
               <div className="mb-4">
                 <label
                   htmlFor="newPassword"
@@ -380,7 +415,7 @@ const ForgotPassword = () => {
 
             <div className="relative mb-4">
               <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-[#80C5C5] rounded-full flex items-center justify-center text-white">
-                J
+                ✓
               </div>
             </div>
 
@@ -393,14 +428,7 @@ const ForgotPassword = () => {
               onClick={() => (window.location.href = "/login")}
               className="w-full bg-[#80C5C5] text-white py-2 rounded-md hover:bg-[#6eb6b6] transition-colors mb-4"
             >
-              Reset password
-            </button>
-
-            <button
-              onClick={() => (window.location.href = "/login")}
-              className="flex items-center text-gray-500 hover:text-gray-700"
-            >
-              <ArrowLeft size={16} className="mr-1" /> Log in
+              Back to login
             </button>
           </div>
         );

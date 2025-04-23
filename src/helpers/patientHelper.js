@@ -114,19 +114,36 @@ const patientService = {
    * @param {Object} filters - Optional filters
    * @returns {Promise} - List of patients
    */
-  getSimpliefiedPatientsList: async (filters = {}) => {
+  getSimpliefiedPatientsList: async (options = {}) => {
     try {
+      const {
+        search = "",
+        page = 1,
+        limit = 10,
+        sortBy = "createdAt",
+        sortOrder = "desc",
+        status,
+        doctor,
+        sex,
+        minAge,
+        maxAge,
+      } = options;
+
       const queryParams = new URLSearchParams();
 
-      for (const key in filters) {
-        if (filters[key]) {
-          queryParams.append(key, filters[key]);
-        }
-      }
+      // Add all parameters that have values
+      if (search) queryParams.append("search", search);
+      if (page) queryParams.append("page", page);
+      if (limit) queryParams.append("limit", limit);
+      if (sortBy) queryParams.append("sortBy", sortBy);
+      if (sortOrder) queryParams.append("sortOrder", sortOrder);
+      if (status) queryParams.append("status", status);
+      if (doctor) queryParams.append("doctor", doctor);
+      if (sex) queryParams.append("sex", sex);
+      if (minAge) queryParams.append("minAge", minAge);
+      if (maxAge) queryParams.append("maxAge", maxAge);
 
-      const url = queryParams.toString()
-        ? `/patients/data/simple?${queryParams}`
-        : `/patients/data/simple`;
+      const url = `/patients/data/simple?${queryParams.toString()}`;
 
       const response = await apiCaller("GET", url);
       return response.data;
@@ -157,7 +174,10 @@ const patientService = {
     try {
       if (!doctorId) throw new Error("Patient ID is required");
 
-      const response = await apiCaller("GET", `/patients/by-doctor/${doctorId}`);
+      const response = await apiCaller(
+        "GET",
+        `/patients/by-doctor/${doctorId}`
+      );
       return response.data;
     } catch (error) {
       console.error(`Error fetching patient with ID ${doctorId}:`, error);

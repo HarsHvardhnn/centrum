@@ -1,0 +1,215 @@
+import { apiCaller } from "../utils/axiosInstance";
+
+class AppointmentService {
+  // Get all appointments with pagination, search, filtering and sorting
+  async getAllAppointments(
+    page = 1,
+    limit = 10,
+    searchTerm = "",
+    filters = {},
+    sortField = "appointmentDate",
+    sortOrder = "desc"
+  ) {
+    try {
+      // Construct query parameters
+      const queryParams = new URLSearchParams({
+        page,
+        limit,
+        search: searchTerm,
+        sortField,
+        sortOrder,
+        ...filters,
+      });
+
+      const response = await apiCaller(
+        "GET",
+        `/appointments?${queryParams.toString()}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+      throw error;
+    }
+  }
+
+  // Get appointment details by ID
+  async getAppointmentById(appointmentId) {
+    try {
+      const response = await apiCaller("GET", `/appointments/${appointmentId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching appointment details:", error);
+      throw error;
+    }
+  }
+
+  // Create new appointment
+  async createAppointment(appointmentData) {
+    try {
+      const response = await apiCaller(
+        "POST",
+        "/appointments",
+        appointmentData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      throw error;
+    }
+  }
+
+  // Update appointment details
+  async updateAppointment(appointmentId, updatedData) {
+    try {
+      const response = await apiCaller(
+        "PUT",
+        `/appointments/${appointmentId}`,
+        updatedData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating appointment:", error);
+      throw error;
+    }
+  }
+
+  // Cancel appointment
+  async cancelAppointment(appointmentId, cancellationReason) {
+    try {
+      const response = await apiCaller(
+        "PATCH",
+        `/appointments/${appointmentId}/cancel`,
+        { cancellationReason }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error canceling appointment:", error);
+      throw error;
+    }
+  }
+
+  // Reschedule appointment
+  async rescheduleAppointment(appointmentId, newScheduleData) {
+    try {
+      const response = await apiCaller(
+        "PATCH",
+        `/appointments/${appointmentId}/reschedule`,
+        newScheduleData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error rescheduling appointment:", error);
+      throw error;
+    }
+  }
+
+  // Mark appointment as completed
+  async completeAppointment(appointmentId, appointmentSummary) {
+    try {
+      const response = await apiCaller(
+        "PATCH",
+        `/appointments/${appointmentId}/complete`,
+        { appointmentSummary }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error marking appointment as completed:", error);
+      throw error;
+    }
+  }
+
+  // Get patient's appointment history
+  async getPatientAppointments(patientId, page = 1, limit = 10) {
+    try {
+      const response = await apiCaller(
+        "GET",
+        `/appointments/patient/${patientId}?page=${page}&limit=${limit}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching patient appointments:", error);
+      throw error;
+    }
+  }
+
+  // Get doctor's appointments
+  async getDoctorAppointments(
+    doctorId,
+    startDate,
+    endDate,
+    status = "all",
+    page = 1,
+    limit = 10
+  ) {
+    try {
+      const queryParams = new URLSearchParams({
+        startDate,
+        endDate,
+        status,
+        page,
+        limit,
+      });
+
+      const response = await apiCaller(
+        "GET",
+        `/appointments/doctor/${doctorId}?${queryParams.toString()}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching doctor appointments:", error);
+      throw error;
+    }
+  }
+
+  // Check doctor availability for specific date and time
+  async checkDoctorAvailability(doctorId, date, startTime, endTime) {
+    try {
+      const queryParams = new URLSearchParams({
+        date,
+        startTime,
+        endTime,
+      });
+
+      const response = await apiCaller(
+        "GET",
+        `/appointments/availability/doctor/${doctorId}?${queryParams.toString()}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error checking doctor availability:", error);
+      throw error;
+    }
+  }
+
+  // Get available slots for a doctor on a specific date
+  async getDoctorAvailableSlots(doctorId, date) {
+    try {
+      const response = await apiCaller(
+        "GET",
+        `/appointments/slots/doctor/${doctorId}?date=${date}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching doctor available slots:", error);
+      throw error;
+    }
+  }
+
+  // Get appointment statistics
+  async getAppointmentStatistics(period = "month", doctorId = null) {
+    try {
+      let endpoint = `/appointments/statistics?period=${period}`;
+      if (doctorId) {
+        endpoint += `&doctorId=${doctorId}`;
+      }
+
+      const response = await apiCaller("GET", endpoint);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching appointment statistics:", error);
+      throw error;
+    }
+  }
+}
+
+export default new AppointmentService();

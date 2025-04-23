@@ -90,7 +90,10 @@ const AuthForm = ({ isLogin = false }) => {
       console.log("Login successful:", response.data);
 
       // Store authentication token
-      localStorage.setItem("authToken", response.data.token);
+        localStorage.setItem("authToken", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        setUser(response.data.user || {});
+        navigate("/");
 
       // Navigate to home page
       navigate("/");

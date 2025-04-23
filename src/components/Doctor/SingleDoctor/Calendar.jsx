@@ -1,22 +1,23 @@
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const Calendar = ({ viewMode = "week" }) => {
+const Calendar = ({ viewMode = "week", onDateSelect }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(new Date().getDate());
 
   const changeDate = (direction) => {
+    let newDate;
     if (viewMode === "month") {
-      const newDate = new Date(
+      newDate = new Date(
         currentDate.getFullYear(),
         currentDate.getMonth() + direction,
         1
       );
       setCurrentDate(newDate);
     } else if (viewMode === "week") {
-      const newDate = new Date(
-        currentDate.setDate(currentDate.getDate() + direction * 7)
-      );
+      // Create a new date object to avoid mutation
+      newDate = new Date(currentDate);
+      newDate.setDate(newDate.getDate() + direction * 7);
       setCurrentDate(newDate);
     }
   };
@@ -31,8 +32,10 @@ const Calendar = ({ viewMode = "week" }) => {
   };
 
   const generateWeekDays = () => {
+    // Create a new date object to avoid mutation
+    const dateCopy = new Date(currentDate);
     const startOfWeek = new Date(
-      currentDate.setDate(currentDate.getDate() - currentDate.getDay())
+      dateCopy.setDate(dateCopy.getDate() - dateCopy.getDay())
     );
     return Array.from({ length: 7 }, (_, i) => {
       const day = new Date(
@@ -48,6 +51,28 @@ const Calendar = ({ viewMode = "week" }) => {
     viewMode === "month"
       ? generateMonthDays()
       : generateWeekDays().map((date) => date.getDate());
+
+  const handleDateSelect = (day) => {
+    setSelectedDay(day);
+
+    // Create the selected date object
+    let selectedDate;
+    if (viewMode === "month") {
+      selectedDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        day
+      );
+    } else {
+      // For week view, find the actual date object from the week array
+      selectedDate = generateWeekDays().find((date) => date.getDate() === day);
+    }
+
+    // Call the onDateSelect prop with the updated date object
+    if (onDateSelect && selectedDate) {
+      onDateSelect(selectedDate);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center w-full bg-gradient-to-b from-[#CCD0F86B] to-white rounded-xl px-2 py-3 shadow-sm border-[0.85px] border-[#D9EEEE]">
@@ -68,16 +93,26 @@ const Calendar = ({ viewMode = "week" }) => {
           <ChevronLeft size={16} className="text-white" />
         </button>
 
-        <div className={`flex justify-evenly w-full items-center mx-8 overflow-x-auto whitespace-nowrap`}>
+        <div className="flex justify-evenly w-full items-center mx-8 overflow-x-auto whitespace-nowrap">
           {daysToDisplay.map((day, index) => {
             const dayOfWeek =
               viewMode === "month"
-                ? new Date(currentDate.getFullYear(), currentDate.getMonth(), day).getDay()
+                ? new Date(
+                    currentDate.getFullYear(),
+                    currentDate.getMonth(),
+                    day
+                  ).getDay()
                 : generateWeekDays()[index].getDay();
 
-            const weekdayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
-              dayOfWeek
-            ];
+            const weekdayName = [
+              "Sun",
+              "Mon",
+              "Tue",
+              "Wed",
+              "Thu",
+              "Fri",
+              "Sat",
+            ][dayOfWeek];
 
             return (
               <div
@@ -87,6 +122,7 @@ const Calendar = ({ viewMode = "week" }) => {
                     ? "bg-[#7dd3c8] text-white border rounded-lg px-3 py-2"
                     : "text-gray-700 hover:bg-gray-200"
                 }`}
+                onClick={() => handleDateSelect(day)}
               >
                 <div
                   className={`text-[12px] mb-[2px] ${
@@ -95,10 +131,7 @@ const Calendar = ({ viewMode = "week" }) => {
                 >
                   {weekdayName}
                 </div>
-                <div
-                  className={`w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-md text-[15px] sm:text-s `}
-                  onClick={() => setSelectedDay(day)}
-                >
+                <div className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-md text-[15px] sm:text-s">
                   {day}
                 </div>
               </div>
