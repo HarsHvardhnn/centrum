@@ -221,7 +221,7 @@ const DoctorScheduleSettings = () => {
   return (
     <div className="bg-gray-100 min-h-screen">
       {/* Header */}
-      <header className="bg-teal-500 text-white p-4">
+      {/* <header className="bg-teal-500 text-white p-4">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
@@ -234,13 +234,13 @@ const DoctorScheduleSettings = () => {
             <button className="bg-teal-600 px-3 py-1 rounded">Logout</button>
           </div>
         </div>
-      </header>
+      </header> */}
 
       {/* Main Content */}
       <div className="container mx-auto p-6">
         <div className="flex">
           {/* Sidebar */}
-          <div className="w-64 bg-white rounded-lg shadow-md p-4 mr-6 h-fit">
+          {/* <div className="w-64 bg-white rounded-lg shadow-md p-4 mr-6 h-fit">
             <ul className="space-y-2">
               <li className="py-2 px-4 rounded text-gray-500">
                 <span>Dashboard</span>
@@ -267,7 +267,7 @@ const DoctorScheduleSettings = () => {
                 <span>Settings</span>
               </li>
             </ul>
-          </div>
+          </div> */}
 
           {/* Main Content Area */}
           <div className="flex-1">

@@ -103,15 +103,15 @@ const Sidebar = () => {
           <NavItem
             icon={<FiSettings className="text-xl text-teal-400" />}
             label="Settings"
-            to="/settings"
-            isActive={currentPath === "/settings"}
-            isEnabled={false}
+            to={`${user?.role == "doctor" ? "/doctor/settings" : "settings"}`}
+            isActive={currentPath === "/doctor/settings"}
+            isEnabled={user?.role == "doctor"}
           />
 
           <NavItem
             icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}
             label="Log Out"
-            to="#" 
+            to="#"
             onClick={(e) => {
               e.preventDefault();
               handleLogout();
@@ -136,7 +136,12 @@ const Sidebar = () => {
           <p className="text-center text-gray-700 text-xs mb-3">
             Etiam porta sem malesuada magna mollis euismod.
           </p>
-          <button onClick={()=>{navigate("/help-center")}} className="w-full bg-teal-400 hover:bg-teal-600 text-white py-3 px-4 rounded-md font-medium">
+          <button
+            onClick={() => {
+              navigate("/help-center");
+            }}
+            className="w-full bg-teal-400 hover:bg-teal-600 text-white py-3 px-4 rounded-md font-medium"
+          >
             Go to help center
           </button>
         </div>
