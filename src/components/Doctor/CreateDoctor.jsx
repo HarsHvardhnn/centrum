@@ -1,9 +1,21 @@
 import { useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { X, User, Mail, Award, BookOpen, Clock, FileText } from "lucide-react";
+import {
+  X,
+  User,
+  Mail,
+  Award,
+  BookOpen,
+  Clock,
+  FileText,
+  Briefcase,
+} from "lucide-react";
+import { DEPARTMENTS } from "../../utils/departments";
 
-// Validation schema using Yup
+// List of departments
+
+// Updated validation schema with department field
 const DoctorSchema = Yup.object().shape({
   firstName: Yup.string().required("First name is required"),
   lastName: Yup.string().required("Last name is required"),
@@ -17,6 +29,7 @@ const DoctorSchema = Yup.object().shape({
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password"), null], "Passwords must match")
     .required("Confirm password is required"),
+  department: Yup.string().required("Department is required"),
   specialization: Yup.array()
     .min(1, "At least one specialization is required")
     .required("Specialization is required"),
@@ -111,6 +124,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
             phone: "",
             password: "",
             confirmPassword: "",
+            department: "", // New department field
             specialization: [],
             qualifications: [],
             experience: "",
@@ -307,6 +321,49 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
 
                 {/* Right column */}
                 <div className="flex-1 space-y-6">
+                  {/* Department Dropdown - New Field */}
+                  <div>
+                    <label
+                      htmlFor="department"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Department*
+                    </label>
+                    <div className="relative">
+                      <Field
+                        as="select"
+                        name="department"
+                        id="department"
+                        className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 appearance-none bg-white"
+                      >
+                        <option value="">Select Department</option>
+                        {DEPARTMENTS.map((dept) => (
+                          <option key={dept} value={dept}>
+                            {dept}
+                          </option>
+                        ))}
+                      </Field>
+                      <Briefcase
+                        size={16}
+                        className="absolute left-3 top-3 text-gray-400"
+                      />
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <svg
+                          className="fill-current h-4 w-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <ErrorMessage
+                      name="department"
+                      component="div"
+                      className="text-red-500 text-xs mt-1"
+                    />
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Specialization*

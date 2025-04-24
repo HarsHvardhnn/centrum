@@ -74,19 +74,19 @@ class AppointmentService {
   }
 
   // Cancel appointment
-  async cancelAppointment(appointmentId, cancellationReason) {
-    try {
-      const response = await apiCaller(
-        "PATCH",
-        `/appointments/${appointmentId}/cancel`,
-        { cancellationReason }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error canceling appointment:", error);
-      throw error;
-    }
-  }
+  // async cancelAppointment(appointmentId, cancellationReason) {
+  //   try {
+  //     const response = await apiCaller(
+  //       "PATCH",
+  //       `/appointments/${appointmentId}/cancel`,
+  //       { cancellationReason }
+  //     );
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error("Error canceling appointment:", error);
+  //     throw error;
+  //   }
+  // }
 
   // Reschedule appointment
   async rescheduleAppointment(appointmentId, newScheduleData) {
@@ -210,6 +210,48 @@ class AppointmentService {
       throw error;
     }
   }
+
+  async getAppointmentsDashboard(page = 1, limit = 4) {
+    try {
+      const response = await apiCaller(
+        "GET",
+        `/appointments/dashboard?page=${page}&limit=${limit}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching dashboard appointments:", error);
+      throw error;
+    }
+  }
+  async cancelAppointment(appointmentId, reason = "Canceled by user") {
+    try {
+      // Validate inputs
+      if (!appointmentId) {
+        throw new Error("Appointment ID is required");
+      }
+    
+      const response = await apiCaller(
+        "PATCH",
+        `/appointments/cancel/${appointmentId}`,
+        { cancellationReason: reason }
+      );
+    
+      // You can add additional success handling here if needed
+      console.log("Appointment successfully canceled");
+    
+      return response.data;
+    } catch (error) {
+      console.error("Error canceling appointment:", error);
+    
+      // You can add specific error handling based on error types
+      if (error.response && error.response.status === 404) {
+        throw new Error("Appointment not found");
+      }
+    
+      throw error;
+    }
+  }
+  
 }
 
 export default new AppointmentService();

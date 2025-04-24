@@ -8,7 +8,7 @@ import {
   Edit,
 } from "lucide-react";
 
-function PatientsTable({ patients, onEditPatient }) {
+function PatientsTable({ patients, onEditPatient ,setShowCheckin}) {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [patientsPerPage] = useState(10);
@@ -89,7 +89,7 @@ function PatientsTable({ patients, onEditPatient }) {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button className="bg-teal-500 text-white rounded-md px-4 py-2 flex items-center">
+          <button onClick={()=>{setShowCheckin(true)}} className="bg-teal-500 text-white rounded-md px-4 py-2 flex items-center">
             Check In
           </button>
           <button className="text-gray-500 p-2">

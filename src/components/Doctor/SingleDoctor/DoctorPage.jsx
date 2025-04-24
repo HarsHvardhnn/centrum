@@ -176,7 +176,7 @@ function DoctorsPage() {
       // Call the appointment service to create the appointment
       const response = await appointmentHelper.createAppointment(data);
 
-      if (response.success) {
+      if (response) {
         // Show success notification
         toast.success("Appointment booked successfully!");
 

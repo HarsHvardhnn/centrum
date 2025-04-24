@@ -2,6 +2,9 @@
 import { useFormContext } from "../../context/SubStepFormContext";
 import { useEffect, useState } from "react";
 import doctorService from "../../helpers/doctorHelper";
+import { DEPARTMENTS } from "../../utils/departments";
+
+
 
 const ReferrerForm = () => {
   const { formData, updateFormData } = useFormContext();
@@ -17,7 +20,8 @@ const ReferrerForm = () => {
       try {
         setLoading(true);
         setError(null);
-        const filters = { specialization: formData.consultingDepartment };
+        const filters = { department: formData.consultingDepartment };
+        console.log("form data",formData)
         const response = await doctorService.getAllDoctors(filters);
         console.log("response",response.doctors)
         setDoctors(response.doctors || []);
@@ -153,9 +157,11 @@ const ReferrerForm = () => {
                   <option value="" disabled>
                     Select department
                   </option>
-                  <option value="cardiology">Cardiology</option>
-                  <option value="neurology">Neurology</option>
-                  <option value="orthopedics">Orthopedics</option>
+                  {DEPARTMENTS.map((department) => (
+                    <option key={department} value={department}>
+                      {department}
+                    </option>
+                  ))}
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                   <svg

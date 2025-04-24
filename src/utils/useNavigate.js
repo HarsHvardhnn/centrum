@@ -11,7 +11,7 @@ export const useNavigation = () => {
 
     // Common navigation shortcuts
     goBack: () => navigate(-1),
-    goHome: () => navigate("/"),
+    goHome: () => navigate("/admin"),
     goToDashboard: () => navigate("/dashboard"),
     goToProfile: () => navigate("/profile"),
     goToSettings: () => navigate("/settings"),
@@ -50,7 +50,7 @@ export const ROUTES = {
 // This is useful for non-functional components or utility functions
 export const createNavigationUtils = (navigate) => ({
   goBack: () => navigate(-1),
-  goHome: () => navigate("/"),
+  goHome: () => navigate("/admin"),
   goToDashboard: () => navigate("/dashboard"),
   // ... add other navigation functions similar to above
 });

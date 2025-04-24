@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Calendar,
   ChevronLeft,
@@ -8,8 +8,17 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
+import patientService from "../../helpers/patientHelper";
+import appointmentHelper from "../../helpers/appointmentHelper";
+import { useUser } from "../../context/userContext";
+import { useNavigate } from "react-router-dom";
 
 const MedicalDashboard = () => {
+  const { user } = useUser();
+  const navigate=useNavigate()
+  if (user?.role == "doctor") {
+    navigate("/doctors")
+  }
   return (
     <div className="bg-gray-50 min-h-screen p-6">
       <div className="">
@@ -231,49 +240,42 @@ const LabAppointmentsCard = () => {
 // Patient List Component
 const PatientList = () => {
   const [selectedPatients, setSelectedPatients] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    total: 0,
+    pages: 1,
+  });
 
-  const patients = [
-    {
-      id: 1,
-      name: "Olivia Rhye",
-      username: "@olivia",
-      patientId: "#85736733",
-      phone: "1241478523",
-      lastVisit: "14-02-2025",
-      doctor: "Dr. Ratul Ahamed",
-      dob: "14-02-2025",
-    },
-    {
-      id: 2,
-      name: "Phoenix Baker",
-      username: "@phoenix",
-      patientId: "#85736733",
-      phone: "1241478523",
-      lastVisit: "19-02-2025",
-      doctor: "Dr. Ratul Ahamed",
-      dob: "19-02-2025",
-    },
-    {
-      id: 3,
-      name: "Lana Steiner",
-      username: "@lana",
-      patientId: "#85736733",
-      phone: "1241478523",
-      lastVisit: "14-03-2025",
-      doctor: "Dr. Ratul Ahamed",
-      dob: "14-03-2025",
-    },
-    {
-      id: 4,
-      name: "Demi Wilkinson",
-      username: "@demi",
-      patientId: "#85736733",
-      phone: "1241478523",
-      lastVisit: "17-03-2025",
-      doctor: "Dr. Ratul Ahamed",
-      dob: "17-03-2025",
-    },
-  ];
+  // Fetch patients on component mount and when page changes
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        setLoading(true);
+        const response = await patientService.getSimpliefiedPatientsList({
+          page: pagination.currentPage,
+          limit: 10,
+        });
+
+        setPatients(response.patients);
+        setPagination({
+          currentPage: response.currentPage,
+          total: response.total,
+          pages: response.pages,
+        });
+        setError(null);
+      } catch (err) {
+        setError("Failed to load patients. Please try again later.");
+        console.error("Error fetching patients:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatients();
+  }, [pagination.currentPage]);
 
   const toggleSelectAll = () => {
     if (selectedPatients.length === patients.length) {
@@ -291,13 +293,55 @@ const PatientList = () => {
     }
   };
 
+  const handlePageChange = (newPage) => {
+    if (newPage > 0 && newPage <= pagination.pages) {
+      setPagination({ ...pagination, currentPage: newPage });
+    }
+  };
+
+  // Generate pagination buttons
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxButtons = 5;
+
+    // Current page is always shown
+    let startPage = Math.max(
+      1,
+      pagination.currentPage - Math.floor(maxButtons / 2)
+    );
+    let endPage = Math.min(pagination.pages, startPage + maxButtons - 1);
+
+    // Adjust start if we're near the end
+    if (endPage - startPage < maxButtons - 1) {
+      startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <button
+          key={i}
+          className={`w-8 h-8 flex items-center justify-center rounded-md ${
+            i === pagination.currentPage
+              ? "bg-teal-50 text-teal-700 font-medium"
+              : "text-gray-600"
+          }`}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    return buttons;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Lista pacjentów</h2>
           <span className="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
-            363 member
+            {pagination.total} member{pagination.total !== 1 ? "s" : ""}
           </span>
         </div>
         <button>
@@ -305,106 +349,157 @@ const PatientList = () => {
         </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr>
-              <th className="py-3 px-4 text-left">
-                <input
-                  type="checkbox"
-                  className="rounded border-gray-300"
-                  checked={selectedPatients.length === patients.length}
-                  onChange={toggleSelectAll}
-                />
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                Imię i Nazwisko Pacjenta
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                ID Pacjenta
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 flex items-center">
-                Numer telefonu <ArrowDown size={14} className="ml-1" />
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                Ostatnia wizyta
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                Lekarz prowadzący
-              </th>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                Data urodzenia
-              </th>
-              <th className="py-3 px-4"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {patients.map((patient) => (
-              <tr key={patient.id} className="hover:bg-gray-50">
-                <td className="py-4 px-4">
+      {loading ? (
+        <div className="p-8 text-center text-gray-500">Loading patients...</div>
+      ) : error ? (
+        <div className="p-8 text-center text-red-500">{error}</div>
+      ) : patients.length === 0 ? (
+        <div className="p-8 text-center text-gray-500">No patients found</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th className="py-3 px-4 text-left">
                   <input
                     type="checkbox"
                     className="rounded border-gray-300"
-                    checked={selectedPatients.includes(patient.id)}
-                    onChange={() => toggleSelectPatient(patient.id)}
+                    checked={
+                      selectedPatients.length === patients.length &&
+                      patients.length > 0
+                    }
+                    onChange={toggleSelectAll}
                   />
-                </td>
-                <td className="py-4 px-4">
-                  <div className="font-medium">{patient.name}</div>
-                  <div className="text-sm text-gray-500">
-                    {patient.username}
-                  </div>
-                </td>
-                <td className="py-4 px-4 text-gray-600">{patient.patientId}</td>
-                <td className="py-4 px-4 text-gray-600">{patient.phone}</td>
-                <td className="py-4 px-4 text-gray-600">{patient.lastVisit}</td>
-                <td className="py-4 px-4 text-gray-600">{patient.doctor}</td>
-                <td className="py-4 px-4 text-gray-600">{patient.dob}</td>
-                <td className="py-4 px-4">
-                  <div className="flex gap-2">
-                    <button className="text-gray-500">
-                      <Trash2 size={16} />
-                    </button>
-                    <button className="text-gray-500">
-                      <Edit size={16} />
-                    </button>
-                  </div>
-                </td>
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                  Imię i Nazwisko Pacjenta
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                  ID Pacjenta
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 flex items-center">
+                  Płeć <ArrowDown size={14} className="ml-1" />
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                  Wiek
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                  Status
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                  Lekarz prowadzący
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                  Data wizyty
+                </th>
+                <th className="py-3 px-4"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {patients.map((patient) => (
+                <tr key={patient.id} className="hover:bg-gray-50">
+                  <td className="py-4 px-4">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                      checked={selectedPatients.includes(patient.id)}
+                      onChange={() => toggleSelectPatient(patient.id)}
+                    />
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="font-medium">{patient.name || "N/A"}</div>
+                    <div className="text-sm text-gray-500">
+                      {patient.username || "N/A"}
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-gray-600">
+                    {patient.id || "N/A"}
+                  </td>
+                  <td className="py-4 px-4 text-gray-600">
+                    {patient.sex || "N/A"}
+                  </td>
+                  <td className="py-4 px-4 text-gray-600">
+                    {patient.age || "N/A"}
+                  </td>
+                  <td className="py-4 px-4">
+                    {patient.status ? (
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          patient.status === "in-treatment"
+                            ? "bg-blue-100 text-blue-800"
+                            : patient.status === "recovered"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {patient.status}
+                      </span>
+                    ) : (
+                      "N/A"
+                    )}
+                  </td>
+                  <td className="py-4 px-4 text-gray-600">
+                    {patient.doctor || "N/A"}
+                  </td>
+                  <td className="py-4 px-4 text-gray-600">
+                    {patient.date || "N/A"}
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="flex gap-2">
+                      <button className="text-gray-500">
+                        <Trash2 size={16} />
+                      </button>
+                      <button className="text-gray-500">
+                        <Edit size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="p-4 flex items-center justify-between border-t border-gray-200">
-        <button className="flex items-center gap-2 text-sm text-gray-600 border border-gray-200 rounded-md px-3 py-1">
+        <button
+          className={`flex items-center gap-2 text-sm border border-gray-200 rounded-md px-3 py-1 ${
+            pagination.currentPage === 1
+              ? "text-gray-400 cursor-not-allowed"
+              : "text-gray-600 cursor-pointer"
+          }`}
+          onClick={() => handlePageChange(pagination.currentPage - 1)}
+          disabled={pagination.currentPage === 1}
+        >
           <ChevronLeft size={16} />
           <span>Poprzednia</span>
         </button>
 
         <div className="flex items-center gap-2">
-          <button className="w-8 h-8 flex items-center justify-center rounded-md bg-teal-50 text-teal-700 font-medium">
-            1
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-600">
-            2
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-600">
-            3
-          </button>
-          <span className="text-gray-500">...</span>
-          <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-600">
-            8
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-600">
-            9
-          </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-md text-gray-600">
-            10
-          </button>
+          {renderPaginationButtons()}
+          {pagination.pages > 7 &&
+            pagination.currentPage < pagination.pages - 3 && (
+              <>
+                <span className="text-gray-500">...</span>
+                <button
+                  className="w-8 h-8 flex items-center justify-center rounded-md text-gray-600"
+                  onClick={() => handlePageChange(pagination.pages)}
+                >
+                  {pagination.pages}
+                </button>
+              </>
+            )}
         </div>
 
-        <button className="flex items-center gap-2 text-sm text-gray-600 border border-gray-200 rounded-md px-3 py-1">
+        <button
+          className={`flex items-center gap-2 text-sm border border-gray-200 rounded-md px-3 py-1 ${
+            pagination.currentPage === pagination.pages
+              ? "text-gray-400 cursor-not-allowed"
+              : "text-gray-600 cursor-pointer"
+          }`}
+          onClick={() => handlePageChange(pagination.currentPage + 1)}
+          disabled={pagination.currentPage === pagination.pages}
+        >
           <span>Następna</span>
           <ChevronRight size={16} />
         </button>
@@ -454,100 +549,160 @@ const ChevronDown = ({ size }) => (
 
 // Upcoming Appointments Component
 const UpcomingAppointments = () => {
-  const doctors = [
-    {
-      id: 1,
-      name: "Dr. Ratul Ahamed",
-      specialty: "Dental Specialist",
-      avatar: "/api/placeholder/40/40",
-      date: "27 Oct 2021",
-      time: "11:00 - 12:00 AM",
-    },
-    {
-      id: 2,
-      name: "Dr. Anas Toman",
-      specialty: "Dental Specialist",
-      avatar: "/api/placeholder/40/40",
-      date: "27 Oct 2021",
-      time: "11:00 - 12:00 AM",
-    },
-    {
-      id: 3,
-      name: "Dr. Nur Hasan",
-      specialty: "Dental Specialist",
-      avatar: "/api/placeholder/40/40",
-      date: "27 Oct 2021",
-      time: "11:00 - 12:00 AM",
-    },
-    {
-      id: 4,
-      name: "Dr. Jane Doe",
-      specialty: "Dental Specialist",
-      avatar: "/api/placeholder/40/40",
-      date: "27 Oct 2021",
-      time: "11:00 - 12:00 AM",
-    },
-  ];
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    limit: 4,
+    totalPages: 0,
+  });
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [page]);
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+      const response = await appointmentHelper.getAppointmentsDashboard(
+        page,
+        pagination.limit,
+        "",
+        {},
+        "date",
+        "asc"
+      );
+
+      setAppointments(response.data);
+      setPagination(response.pagination);
+      setLoading(false);
+    } catch (err) {
+      console.error("Failed to fetch appointments:", err);
+      setError("Failed to load appointments. Please try again later.");
+      setLoading(false);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (page < pagination.totalPages) {
+      setPage(page + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (page > 1) {
+      setPage(page - 1);
+    }
+  };
+
+  const handleCancelAppointment = async (appointmentId) => {
+    try {
+      await appointmentHelper.cancelAppointment(
+        appointmentId,
+        "Canceled by user"
+      );
+      // Refresh appointments after cancellation
+      fetchAppointments();
+    } catch (err) {
+      console.error("Failed to cancel appointment:", err);
+      setError("Failed to cancel appointment. Please try again.");
+    }
+  };
+
+  const handleRescheduleAppointment = async (appointmentId) => {
+    // This would typically open a modal or navigate to a reschedule page
+    // For now, we'll just console log the action
+    console.log("Reschedule appointment:", appointmentId);
+    // You could implement navigation like:
+    // navigate(`/appointments/${appointmentId}/reschedule`);
+  };
 
   return (
     <div className="mt-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Nadchodzące Wizyty</h2>
         <div className="flex gap-2">
-          <button className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200">
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200"
+            onClick={handlePrevPage}
+            disabled={page <= 1}
+          >
             <ChevronLeft size={16} />
           </button>
-          <button className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200">
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200"
+            onClick={handleNextPage}
+            disabled={page >= pagination.totalPages}
+          >
             <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {doctors.map((doctor) => (
-          <div
-            key={doctor.id}
-            className="bg-white rounded-lg shadow-sm border border-gray-100 p-6"
-          >
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
-                <img
-                  src={doctor.avatar}
-                  alt={doctor.name}
-                  className="w-full h-full object-cover"
-                />
+      {loading ? (
+        <div className="text-center py-8">Loading appointments...</div>
+      ) : error ? (
+        <div className="text-red-500 text-center py-8">{error}</div>
+      ) : appointments.length === 0 ? (
+        <div className="text-center py-8">No upcoming appointments found.</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {appointments.map((appointment) => (
+            <div
+              key={appointment.id}
+              className="bg-white rounded-lg shadow-sm border border-gray-100 p-6"
+            >
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
+                  <img
+                    src={appointment.avatar}
+                    alt={appointment.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-medium">{appointment.name}</h3>
+                  <p className="text-sm text-gray-500">
+                    {appointment.specialty}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-medium">{doctor.name}</h3>
-                <p className="text-sm text-gray-500">{doctor.specialty}</p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex items-center text-gray-600 text-sm">
-                <Calendar size={16} className="mr-2 text-teal-500" />
-                {doctor.date}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center text-gray-600 text-sm">
+                  <Calendar size={16} className="mr-2 text-teal-500" />
+                  {appointment.date}
+                </div>
+                <div className="flex items-center text-gray-600 text-sm">
+                  <Clock size={16} className="mr-2 text-teal-500" />
+                  {appointment.time}
+                </div>
               </div>
-              <div className="flex items-center text-gray-600 text-sm">
-                <Clock size={16} className="mr-2 text-teal-500" />
-                {doctor.time}
-              </div>
-            </div>
 
-            <div className="flex gap-2">
-              <button className="flex-1 bg-teal-50 text-teal-600 py-2 rounded-md text-sm font-medium">
-                Anuluj wizytę
-              </button>
-              <button className="flex-1 bg-teal-50 text-teal-600 py-2 rounded-md text-sm font-medium flex items-center justify-center">
-                <Calendar size={16} className="mr-2" />
-                Zmień termin
-              </button>
+              <div className="flex gap-2">
+                <button
+                  className="flex-1 bg-teal-50 text-teal-600 py-2 rounded-md text-sm font-medium"
+                  onClick={() => handleCancelAppointment(appointment.id)}
+                >
+                  Anuluj wizytę
+                </button>
+                <button
+                  className="flex-1 bg-teal-50 text-teal-600 py-2 rounded-md text-sm font-medium flex items-center justify-center"
+                  onClick={() => handleRescheduleAppointment(appointment.id)}
+                >
+                  <Calendar size={16} className="mr-2" />
+                  Zmień termin
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
+
 
 export default MedicalDashboard;

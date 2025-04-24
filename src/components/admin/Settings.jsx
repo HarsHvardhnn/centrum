@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import adminHelper from "../../helpers/adminHelper";
 import { useLoader } from "../../context/LoaderContext";
+import DoctorScheduleManager from "./DoctorScheduleEditor";
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -25,6 +26,9 @@ export default function UserManagement() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [usersPerPage, setUsersPerPage] = useState(5);
+  // New state for doctor schedule modal
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedDoctorId, setSelectedDoctorId] = useState(null);
 
   const fetchUsers = async () => {
     try {
@@ -84,6 +88,12 @@ export default function UserManagement() {
   const handleDeleteClick = (user) => {
     setSelectedUser(user);
     setShowDeleteModal(true);
+  };
+
+  // New function to open the schedule modal
+  const handleManageSchedule = (user) => {
+    setSelectedDoctorId(user._id);
+    setShowScheduleModal(true);
   };
 
   const confirmDelete = async () => {
@@ -389,21 +399,34 @@ export default function UserManagement() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    {user.deleted ? (
-                      <button
-                        onClick={() => handleReviveUser(user._id)}
-                        className="text-green-600 hover:text-green-900"
-                      >
-                        Revive
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleDeleteClick(user)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    )}
+                    <div className="flex space-x-3">
+                      {!user.deleted && (
+                        <>
+                          {user.role === "doctor" && (
+                            <button
+                              onClick={() => handleManageSchedule(user)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              Schedule
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteClick(user)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                      {user.deleted && (
+                        <button
+                          onClick={() => handleReviveUser(user._id)}
+                          className="text-green-600 hover:text-green-900"
+                        >
+                          Revive
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -595,6 +618,7 @@ export default function UserManagement() {
           </div>
         </div>
       )}
+
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -625,6 +649,18 @@ export default function UserManagement() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Doctor Schedule Modal */}
+      {showScheduleModal && selectedDoctorId && (
+        <DoctorScheduleManager
+          isModal={true}
+          doctorId={selectedDoctorId}
+          onClose={() => {
+            setShowScheduleModal(false);
+            setSelectedDoctorId(null);
+          }}
+        />
       )}
     </div>
   );

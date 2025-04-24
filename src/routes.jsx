@@ -29,6 +29,8 @@ import LabAppointments from "./components/Patients/PatientList";
 import UserManagement from "./components/admin/Settings";
 import ChatComponent from "./components/User/ChatComponent";
 import DoctorScheduleSettings from "./components/admin/DoctorSettings";
+import ProfilePage from "./components/Auth/Profile";
+import MyAppointments from "./components/User/MyAppointments";
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -51,7 +53,7 @@ function MainLayout() {
     <div className={isDarkMode ? "dark" : ""}>
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 z-10">
-        <Header user={user} />
+        <Header />
       </div>
 
       <div className="flex bg-gray-50">
@@ -81,7 +83,7 @@ function MainLayout() {
 const routes = createBrowserRouter([
   // Public routes group
   {
-    element: <PublicRoute redirectAuthenticatedTo="/" />,
+    element: <PublicRoute  />,
     children: [
       {
         path: "/login",
@@ -108,6 +110,7 @@ const routes = createBrowserRouter([
       { path: "doctors", element: <OurDoctorsPage /> },
       { path: "services", element: <OurServicesPage /> },
       { path: "services/:service", element: <ServicesDetailPage /> },
+      { path: "appointments", element: <MyAppointments /> },
       { path: "*", element: <NotFound404 /> },
     ],
   },
@@ -124,10 +127,11 @@ const routes = createBrowserRouter([
           { path: "/doctor-details/:id", element: <DoctorDetailPage /> },
           { path: "/patients", element: <LabAppointments /> },
           { path: "/patients-details", element: <PatientDetailsPage /> },
-          { path: "/", element: <MedicalDashboard /> },
+          { path: "/admin", element: <MedicalDashboard /> },
           { path: "/doctor/create", element: <AddDoctorForm /> },
           { path: "/admin/accounts", element: <UserManagement /> },
           { path: "/doctor/settings", element: <DoctorScheduleSettings /> },
+          { path: "/profile", element: <ProfilePage /> },
           {
             path: "/help-center",
             element: <ChatComponent />,

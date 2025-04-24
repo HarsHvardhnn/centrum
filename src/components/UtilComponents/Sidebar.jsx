@@ -23,6 +23,7 @@ const Sidebar = () => {
     window.location.href="/login"
     
   }
+  console.log('user',user)
 
 
   return (
@@ -48,8 +49,8 @@ const Sidebar = () => {
           <NavItem
             icon={<FiBarChart2 className="text-xl text-teal-400" />}
             label="Dashboard"
-            to="/"
-            isActive={currentPath === "/"}
+            to="/admin"
+            isActive={currentPath === "/admin"}
             isEnabled={true}
           />
 
@@ -93,8 +94,8 @@ const Sidebar = () => {
           <NavItem
             icon={<FiUser className="text-xl text-teal-400" />}
             label="Account"
-            to="/admin/accounts"
-            isActive={currentPath === "/admin/accounts"}
+            to="/profile"
+            isActive={currentPath === "/profile"}
             isEnabled={true}
           />
 
@@ -103,9 +104,11 @@ const Sidebar = () => {
           <NavItem
             icon={<FiSettings className="text-xl text-teal-400" />}
             label="Settings"
-            to={`${user?.role == "doctor" ? "/doctor/settings" : "settings"}`}
+            to={`${
+              user?.role == "doctor" ? "/doctor/settings" : "/admin/accounts"
+            }`}
             isActive={currentPath === "/doctor/settings"}
-            isEnabled={user?.role == "doctor"}
+            isEnabled={user?.role !== "receptionist"}
           />
 
           <NavItem
@@ -123,29 +126,31 @@ const Sidebar = () => {
       </div>
 
       {/* Help Center Section */}
-      <div className="px-4 pb-6 pt-4 ">
-        <div className="bg-[#e6f4f4] rounded-lg p-4 pt-10 relative">
-          <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-            <div className="w-12 h-12 rounded-full bg-[#d9eeee] flex items-center justify-center shadow-xl">
-              <div className="w-8 h-8 rounded-full bg-[#bbe8e8] flex items-center justify-center ">
-                <FiHelpCircle className="h-5 w-5 text-teal-500" />
+      {user?.role !== "admin" && (
+        <div className="px-4 pb-6 pt-4 ">
+          <div className="bg-[#e6f4f4] rounded-lg p-4 pt-10 relative">
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <div className="w-12 h-12 rounded-full bg-[#d9eeee] flex items-center justify-center shadow-xl">
+                <div className="w-8 h-8 rounded-full bg-[#bbe8e8] flex items-center justify-center ">
+                  <FiHelpCircle className="h-5 w-5 text-teal-500" />
+                </div>
               </div>
             </div>
+            <h3 className="text-center font-medium mb-1">Help center</h3>
+            <p className="text-center text-gray-700 text-xs mb-3">
+              Etiam porta sem malesuada magna mollis euismod.
+            </p>
+            <button
+              onClick={() => {
+                navigate("/help-center");
+              }}
+              className="w-full bg-teal-400 hover:bg-teal-600 text-white py-3 px-4 rounded-md font-medium"
+            >
+              Go to help center
+            </button>
           </div>
-          <h3 className="text-center font-medium mb-1">Help center</h3>
-          <p className="text-center text-gray-700 text-xs mb-3">
-            Etiam porta sem malesuada magna mollis euismod.
-          </p>
-          <button
-            onClick={() => {
-              navigate("/help-center");
-            }}
-            className="w-full bg-teal-400 hover:bg-teal-600 text-white py-3 px-4 rounded-md font-medium"
-          >
-            Go to help center
-          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 };

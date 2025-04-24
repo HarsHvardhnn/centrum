@@ -5,6 +5,7 @@ import {
   ChevronRight,
   MoreVertical,
   UserX,
+  Video,
 } from "lucide-react";
 
 const PatientsList = ({
@@ -84,6 +85,54 @@ const PatientsList = ({
     );
   };
 
+  const AppointmentModeBadge = ({ mode }) => {
+    const modeStyles = {
+      online: {
+        bgColor: "bg-blue-50",
+        textColor: "text-blue-700",
+        dotColor: "bg-blue-600",
+      },
+      offline: {
+        bgColor: "bg-purple-50",
+        textColor: "text-purple-700",
+        dotColor: "bg-purple-600",
+      },
+      phone: {
+        bgColor: "bg-indigo-50",
+        textColor: "text-indigo-700",
+        dotColor: "bg-indigo-600",
+      },
+    };
+    const { bgColor, textColor, dotColor } = modeStyles[mode] || {
+      bgColor: "bg-gray-50",
+      textColor: "text-gray-700",
+      dotColor: "bg-gray-600",
+    };
+
+    return (
+      <div
+        className={`flex items-center px-4 text-sm h-fit py-1 rounded-full capitalize ${bgColor} ${textColor}`}
+      >
+        <div className={`w-2 h-2 rounded-full ${dotColor} mr-2`} />
+        {mode === "inPerson" ? "In Person" : mode}
+      </div>
+    );
+  };
+
+  const JoinNowButton = ({ joiningLink }) => {
+    return (
+      <a
+        href={joiningLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center px-3 py-1 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors"
+      >
+        <Video size={16} className="mr-1" />
+        Join Now
+      </a>
+    );
+  };
+
   const EmptyState = () => (
     <div className="flex flex-col items-center justify-center py-16 text-gray-500">
       <UserX size={48} className="text-gray-400 mb-4" />
@@ -106,7 +155,7 @@ const PatientsList = ({
         <div className="flex gap-8 items-center">
           <h2 className="text-lg font-semibold">Patients List</h2>
           <span className="text-sm text-teal-400 bg-teal-100 rounded-full px-3 py-1">
-            {totalPatients} {totalPatients === 1 ? "user" : "users"}
+            {patientsData.length} {patientsData.length === 1 ? "user" : "users"}
           </span>
         </div>
         <div className="flex items-center space-x-4">
@@ -118,16 +167,16 @@ const PatientsList = ({
       {patientsData.length > 0 ? (
         <div>
           {/* Table Header */}
-          <div className="grid grid-cols-5 px-4 py-3 bg-gray-50 border-b">
+          <div className="w-full flex justify-evenly px-4 py-3 bg-gray-50 border-b">
             <div className="col-span-2 flex items-center">Patients name</div>
             <div className="text-center">Sex</div>
-            <div
+            {/* <div
               className="flex items-center justify-center cursor-pointer"
               onClick={() => requestSort("age")}
             >
               Age
               <ChevronDown size={16} />
-            </div>
+            </div> */}
             <div
               className="flex items-center cursor-pointer justify-center"
               onClick={() => requestSort("status")}
@@ -135,13 +184,21 @@ const PatientsList = ({
               Status
               <ChevronDown size={16} />
             </div>
+            <div
+              className="flex items-center cursor-pointer justify-center"
+              onClick={() => requestSort("appointmentMode")}
+            >
+              Mode
+              <ChevronDown size={16} />
+            </div>
+            <div className="text-center">Action</div>
           </div>
 
           {/* Table Body */}
           {sortedPatients.map((patient) => (
             <div
               key={patient.id}
-              className="grid grid-cols-5 px-4 py-3 border-b hover:bg-gray-50 text-center"
+              className="w-full flex justify-evenly px-4 py-3 border-b hover:bg-gray-50 text-center"
             >
               <div className="col-span-2 flex items-center text-left">
                 <input
@@ -161,9 +218,17 @@ const PatientsList = ({
                 </div>
               </div>
               <div>{patient.sex}</div>
-              <div>{patient.age}</div>
+              {/* <div>{patient.age}</div> */}
               <div className="flex justify-center">
                 <StatusBadge status={patient.status} />
+              </div>
+              <div className="flex justify-center">
+                <AppointmentModeBadge mode={patient.mode} />
+              </div>
+              <div className="flex justify-center">
+                {patient.mode === "online" && patient.status === "booked" && (
+                  <JoinNowButton joiningLink={patient.joining_link} />
+                )}
               </div>
             </div>
           ))}

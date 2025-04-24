@@ -13,13 +13,14 @@ const BillingPage = () => {
   const [activeFilters, setActiveFilters] = useState({});
   const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
-  const [allDoctors, setAllDoctors] = useState(doctors);
+  const [allDoctors, setAllDoctors] = useState([]);
 
   const { showLoader, hideLoader } = useLoader();
 
     useEffect(() => {
       const fetchDoctors = async () => {
         try {
+          showLoader()
           const response = await doctorService.getAllDoctors();
 
           const transformed = response.doctors.map((doc, index) => ({
@@ -41,6 +42,10 @@ const BillingPage = () => {
         } catch (error) {
           console.error("Failed to fetch doctors:", error);
         }
+        finally {
+          hideLoader()
+        }
+        
       };
 
       fetchDoctors();
@@ -76,6 +81,7 @@ const BillingPage = () => {
           "",
         available: createdDoctor.available || true,
         status: createdDoctor.status || "Available",
+        department:createdDoctor?.department || "",
         experience:
           createdDoctor.experience || `${doctorData.experience} years`,
         image: createdDoctor.image || doctorData.profilePicture,

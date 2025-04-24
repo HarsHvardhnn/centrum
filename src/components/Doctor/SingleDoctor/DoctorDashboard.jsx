@@ -7,6 +7,7 @@ import { Search, Filter, ArrowLeft } from "lucide-react";
 import StatsDashboard from "./StatsDashboard";
 import PatientInfo from "./PatientInfo";
 import Breadcrumb from "./BreadCrumb";
+import { useUser } from "../../../context/userContext";
 
 const DoctorDashboard = ({
   doctor,
@@ -21,6 +22,7 @@ const DoctorDashboard = ({
   ],
 }) => {
   const navigate = useNavigate();
+  const {user}=useUser()
   const [selectedPatient, setSelectedPatient] = useState(null);
 
   const handlePatientSelect = (patientId) => {
@@ -49,7 +51,7 @@ const DoctorDashboard = ({
           <Breadcrumb items={breadcrumbs} />
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
+   {user?.role!=="doctor" &&     <div className="flex flex-wrap items-center gap-4">
           <div className="relative">
             <input
               type="text"
@@ -76,7 +78,7 @@ const DoctorDashboard = ({
           >
             Book Appointment
           </button>
-        </div>
+        </div>}
       </div>
 
       <div className="flex flex-col gap-6">

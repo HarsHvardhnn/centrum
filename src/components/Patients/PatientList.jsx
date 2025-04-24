@@ -13,34 +13,26 @@ import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import patientService from "../../helpers/patientHelper";
 import { toast } from "sonner";
 import { useLoader } from "../../context/LoaderContext";
+import { useUser } from "../../context/userContext";
+import CheckInModal from "../admin/CheckinModal";
 
 // Wrap the entire component with FormProvider
 function LabAppointmentsContent() {
   // Now we can access the form context directly
   const { formData, updateMultipleFields } = useFormContext();
   const { showLoader, hideLoader } = useLoader();
+  const { user } = useUser()
+  const [showCheckin,setShowCheckin]=useState(false)
 
   // Patient data
-  const [allPatients, setAllPatients] = useState([
-    {
-      id: "#85736733",
-      name: "Demi Wilkinson",
-      username: "@demi",
-      date: "Dec 01, 23",
-      sex: "Female",
-      age: 36,
-      disease: "Diabetes",
-      status: "Compilate",
-      doctor: "Dr. Imran Ali",
-    },
-    // Default patients...
-  ]);
+  const [allPatients, setAllPatients] = useState([]);
 
-  useEffect(() => {
     const fetchPatients = async () => {
       try {
         showLoader();
-        const response = await patientService.getSimpliefiedPatientsList();
+      const filter = user?.role === "doctor" ? { doctor: user?._id } : {};
+      const response = await patientService.getSimpliefiedPatientsList(filter);
+
         setAllPatients(response.patients || []);
       } catch (error) {
         console.error("Failed to fetch patients:", error);
@@ -48,6 +40,8 @@ function LabAppointmentsContent() {
         hideLoader();
       }
     };
+  useEffect(() => {
+  
 
     fetchPatients();
   }, []);
@@ -248,7 +242,7 @@ function LabAppointmentsContent() {
           doctor: formData.consultingDoctor || "Dr. Imran Ali",
         };
 
-        setAllPatients([newPatientEntry, ...allPatients]);
+        fetchPatients()
         toast.success("Patient created successfully");
       }
 
@@ -329,6 +323,7 @@ function LabAppointmentsContent() {
   return (
     <div className="bg-white min-h-screen">
       {/* Header */}
+      {/* <CheckInModal isOpen={showCheckin} setIsOpen={setShowCheckin}/> */}
       <div className="w-full mx-auto px-4 py-8">
         <div className="flex w-full justify-between">
           <div>
@@ -392,7 +387,7 @@ function LabAppointmentsContent() {
             </div>
 
             {/* Add Patient Button */}
-            <button
+        { user?.role!=="doctor" &&  <button
               className="bg-teal-500 text-white rounded-lg px-4 py-2 flex items-center gap-2"
               onClick={() => {
                 setIsEditMode(false);
@@ -450,7 +445,7 @@ function LabAppointmentsContent() {
             >
               <Plus size={18} />
               Add Patient
-            </button>
+            </button>}
           </div>
         </div>
 
@@ -458,6 +453,8 @@ function LabAppointmentsContent() {
         <PatientsTable
           patients={filteredPatients}
           onEditPatient={handleEditPatient}
+          setShowCheckin={setShowCheckin}
+          
         />
 
         {/* Patient Modal (Add/Edit) */}

@@ -709,8 +709,8 @@ export default function ChatComponent() {
             </div>
           </div>
           <div className="flex items-center gap-5">
-            <BiPhone className="text-gray-700 text-xl cursor-pointer hover:text-[#008c8c] transition-colors" />
-            <LuVideo className="text-gray-700 text-xl cursor-pointer hover:text-[#008c8c] transition-colors" />
+            {/* <BiPhone className="text-gray-700 text-xl cursor-pointer hover:text-[#008c8c] transition-colors" />
+            <LuVideo className="text-gray-700 text-xl cursor-pointer hover:text-[#008c8c] transition-colors" /> */}
             <HiDotsVertical className="text-gray-700 cursor-pointer hover:text-[#008c8c] transition-colors" />
           </div>
         </div>

@@ -1,19 +1,53 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   MessageSquare,
   ArrowRight,
   ChevronDown,
   MoreHorizontal,
+  User,
+  LogOut,
 } from "lucide-react";
 import { useUser } from "../../context/userContext";
-
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   // Use the useUser hook to access user context data
-  const { user } = useUser();
-  console.log("user",user.profilePicture)
+  const { user, setUser } = useUser();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   const nameInitial = user?.name ? user.name.charAt(0).toUpperCase() : "?";
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    // Clear local storage
+    localStorage.clear();
+
+    // Reset user state to null
+    setUser(null);
+
+    // Redirect to login page
+    window.location.href = "/login";
+  };
+
+  const handleViewProfile = () => {
+    navigate("/profile");
+    setIsDropdownOpen(false);
+  };
 
   function cleanProfilePictureUrl(url) {
     // Check if it's a Google profile image
@@ -43,16 +77,21 @@ const Header = () => {
         </button>
       </div>
 
-      <div className="flex items-center w-[30%] gap-8 ">
-        <div className="flex items-center gap-4">
-          <button className="p-2 hover:bg-primary rounded-lg mx-1 border border-white">
-            <MessageSquare size={22} />
-          </button>
-          <button className="p-2 hover:bg-primary rounded-lg mx-1 border border-white">
-            <ArrowRight size={22} />
-          </button>
-        </div>
+      <div className="flex items-center gap-4">
+        {user?.role === "admin" && (
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate("/help-center")}
+              className="p-2 hover:bg-primary rounded-lg mx-1 border border-white"
+            >
+              <MessageSquare size={22} />
+            </button>
+          </div>
+        )}
+
+        {user?.role === "admin" && (
           <div className="h-8 w-px bg-white mx-3"></div>
+        )}
 
         {user ? (
           <div className="flex items-center mr-2">
@@ -87,9 +126,34 @@ const Header = () => {
           </div>
         )}
 
-        <button className="p-2 hover:bg-primary rounded-lg border border-white">
-          <MoreHorizontal size={22} />
-        </button>
+        <div className="relative" ref={dropdownRef}>
+          <button
+            className="p-2 hover:bg-primary rounded-lg border border-white"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            aria-label="More options"
+          >
+            <MoreHorizontal size={22} />
+          </button>
+
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+              <button
+                onClick={handleViewProfile}
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <User size={16} className="mr-2" />
+                View Profile
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+              >
+                <LogOut size={16} className="mr-2" />
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

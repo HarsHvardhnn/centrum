@@ -80,8 +80,17 @@ const AuthForm = ({ isLogin = false }) => {
 
       localStorage.setItem("authToken", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
+      console.log("response.data.user", response.data.user);
       setUser(response.data.user || {});
-      navigate("/");
+      if (response.data.user?.role == "doctor") {
+        navigate("/doctors");
+        return;
+      }
+      if (response.data.user.role == "patient") {
+        navigate("/user");
+        return;
+      }
+      navigate("/admin");
     } catch (error) {
       console.log("error", error);
       toast.error("Google login failed:", error.response.data.message);
@@ -102,10 +111,24 @@ const AuthForm = ({ isLogin = false }) => {
       localStorage.setItem("authToken", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
       setUser(response.data.user || {});
-      navigate("/");
+            console.log("response.data.user", response.data.user);
+
+      if (response.data.user?.role == "doctor") {
+        navigate("/doctors");
+        console.log(":doctor")
+        return;
+      }
+      if (response.data.user.role == "patient") {
+        navigate("/user");
+                console.log(":pattients");
+
+        return;
+      }
+      navigate("/admin");
+              console.log(":nilll");
+
 
       // Navigate to home page
-      navigate("/");
     } catch (error) {
       console.error(
         "Login failed:",
@@ -170,7 +193,7 @@ const AuthForm = ({ isLogin = false }) => {
 
       localStorage.setItem("authToken", response.data.token);
 
-      navigate("/");
+      navigate("/admin");
     } catch (error) {
       console.error(
         "OTP verification failed:",

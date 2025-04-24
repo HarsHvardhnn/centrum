@@ -1,8 +1,20 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import doctorService from "../../helpers/doctorHelper";
+import { DEPARTMENTS } from "../../utils/departments";
+import { apiCaller } from "../../utils/axiosInstance";
+import { toast } from "sonner";
 
 export default function BookAppointment({ page }) {
+  const [doctors, setDoctors] = useState([]);
+  const [departments, setDepartments] = useState(DEPARTMENTS);
+  const [loading, setLoading] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState({
+    success: false,
+    error: null,
+  });
+
   const initialValues = {
     name: "",
     gender: "",
@@ -29,10 +41,99 @@ export default function BookAppointment({ page }) {
     message: Yup.string().min(10, "Too short").required("Required"),
   });
 
-  const handleSubmit = (values, { resetForm }) => {
-    console.log("Form Data:", values);
-    alert("Appointment booked successfully!");
-    resetForm();
+  // Fetch all departments when component mounts
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setLoading(true);
+        const response = await doctorService.getAllDoctors();
+
+        // Extract unique departments from doctors
+        const uniqueDepartments = [
+          ...new Set(
+            response.data
+              .map((doctor) => doctor.department)
+              .filter((department) => department && department.trim() !== "")
+          ),
+        ];
+
+        setDepartments(uniqueDepartments);
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
+  // Fetch doctors based on selected department
+  const handleDepartmentChange = async (e, setFieldValue) => {
+    const selectedDepartment = e.target.value;
+    setFieldValue("department", selectedDepartment);
+
+    // Reset doctor selection when department changes
+    setFieldValue("doctor", "");
+
+    if (selectedDepartment) {
+      try {
+        setLoading(true);
+        const response = await doctorService.getAllDoctors({
+          department: selectedDepartment,
+        });
+
+        setDoctors(response.doctors);
+      } catch (error) {
+        console.error(
+          `Error fetching doctors for department ${selectedDepartment}:`,
+          error
+        );
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setDoctors([]);
+    }
+  };
+
+  // Updated handleSubmit function to use the apiCaller
+  const handleSubmit = async (values, { resetForm, setSubmitting }) => {
+    try {
+      setSubmitting(true);
+      setSubmitStatus({ success: false, error: null });
+
+      // Format date and time if needed
+      const formattedValues = {
+        ...values,
+        // You can add any additional formatting here if needed
+      };
+
+      // Make API call to book appointment
+      const response = await apiCaller(
+        "POST",
+        "/appointments/book",
+        formattedValues
+      );
+
+      console.log("Appointment booked successfully:", response.data);
+      setSubmitStatus({ success: true, error: null });
+      resetForm();
+
+      // Show success message to user
+      toast.success("Appointment booked successfully!");
+    } catch (error) {
+      console.error("Error booking appointment:", error);
+
+      // Set error status and show error message
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to book appointment. Please try again.";
+      setSubmitStatus({ success: false, error: errorMessage });
+      alert(errorMessage);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -70,8 +171,21 @@ export default function BookAppointment({ page }) {
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
           >
-            {() => (
+            {({ setFieldValue, isSubmitting }) => (
               <Form className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-main-lighter rounded-md border border-main-light p-4">
+                {/* Show success or error message if available */}
+                {submitStatus.success && (
+                  <div className="col-span-1 md:col-span-2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    Appointment booked successfully!
+                  </div>
+                )}
+
+                {submitStatus.error && (
+                  <div className="col-span-1 md:col-span-2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    {submitStatus.error}
+                  </div>
+                )}
+
                 <div>
                   <Field
                     name="name"
@@ -157,15 +271,19 @@ export default function BookAppointment({ page }) {
                 <div>
                   <Field
                     as="select"
-                    name="doctor"
+                    name="department"
+                    onChange={(e) => handleDepartmentChange(e, setFieldValue)}
                     className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   >
-                    <option value="">Select Doctor</option>
-                    <option value="Dr. Smith">Dr. Smith</option>
-                    <option value="Dr. Jane">Dr. Jane</option>
+                    <option value="">Select Department</option>
+                    {departments.map((department, index) => (
+                      <option key={index} value={department}>
+                        {department}
+                      </option>
+                    ))}
                   </Field>
                   <ErrorMessage
-                    name="doctor"
+                    name="department"
                     component="div"
                     className="text-red-600 text-sm mt-1"
                   />
@@ -173,15 +291,30 @@ export default function BookAppointment({ page }) {
                 <div>
                   <Field
                     as="select"
-                    name="department"
+                    name="doctor"
                     className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
+                    disabled={!doctors.length}
                   >
-                    <option value="">Select Department</option>
-                    <option value="Neurology">Neurology</option>
-                    <option value="Cardiology">Cardiology</option>
+                    <option value="">
+                      {loading
+                        ? "Loading doctors..."
+                        : doctors.length === 0
+                        ? "Select Department First"
+                        : "Select Doctor"}
+                    </option>
+                    {doctors.map((doctor) => (
+                      <option
+                        key={doctor._id || doctor.id}
+                        value={doctor._id || doctor.id}
+                      >
+                        {doctor.name.first && doctor.name.last
+                          ? `${doctor.name.first} ${doctor.name.last}`
+                          : doctor.name}
+                      </option>
+                    ))}
                   </Field>
                   <ErrorMessage
-                    name="department"
+                    name="doctor"
                     component="div"
                     className="text-red-600 text-sm mt-1"
                   />
@@ -203,9 +336,10 @@ export default function BookAppointment({ page }) {
 
                 <button
                   type="submit"
-                  className="col-span-1 md:col-span-2 bg-main text-white uppercase rounded-md py-3 font-bold hover:bg-teal-700 transition duration-300"
+                  disabled={isSubmitting}
+                  className="col-span-1 md:col-span-2 bg-main text-white uppercase rounded-md py-3 font-bold hover:bg-teal-700 transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  Submit
+                  {isSubmitting ? "Submitting..." : "Submit"}
                 </button>
               </Form>
             )}

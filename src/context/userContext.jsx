@@ -49,8 +49,16 @@ export const UserProvider = ({ children }) => {
       }
 
       // Using apiCaller instead of direct axios call
-      const response = await apiCaller("GET", "/api/user/profile");
-      const updatedUser = response.data;
+      const response = await apiCaller("GET", "/auth/profile/user");
+      const { name, role, profilePicture, _id ,email } = response.data.data;
+      const updatedUser = {
+        id: _id,
+        name: `${name.first} ${name.last}`,
+        role,
+        profilePicture,
+        email
+      };
+
       setUser(updatedUser);
 
       localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -144,8 +152,8 @@ export const UserProvider = ({ children }) => {
     refreshUserProfile,
     updateUserField,
     updateProfilePicture,
-    hasRole, 
-    setUser
+    hasRole,
+    setUser,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

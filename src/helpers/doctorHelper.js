@@ -27,6 +27,7 @@ const doctorService = {
 
       formData.append("email", doctorData.email);
       formData.append("phone", doctorData.phone);
+      formData.append("department", doctorData.department);
       formData.append("password", doctorData.password);
       formData.append("signupMethod", doctorData.signupMethod || "email");
       formData.append("bio", doctorData.bio || "");
@@ -80,6 +81,10 @@ const doctorService = {
       if (filters.experience) {
         queryParams.append("experience", filters.experience);
       }
+         if (filters.department) {
+           queryParams.append("department", filters.department);
+         }
+
 
       // Add more filters as needed
 
@@ -207,14 +212,14 @@ const doctorService = {
 
   getDoctorWeeklyShifts: async (doctorId = null) => {
     const url = doctorId
-      ? `/docs/schedule/shifts/${doctorId}`
+      ? `/docs/schedule/shifts?doctorId=${doctorId}`
       : "/docs/schedule/shifts";
 
     return apiCaller("GET", url);
   },
   updateDoctorWeeklyShifts: async (shifts, doctorId = null) => {
     const url = doctorId
-      ? `/docs/schedule/shifts/${doctorId}`
+      ? `/docs/schedule/shifts?doctorId=${doctorId}`
       : "/docs/schedule/shifts";
 
     return apiCaller("PUT", url, { shifts });
