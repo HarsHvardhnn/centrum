@@ -111,22 +111,21 @@ const AuthForm = ({ isLogin = false }) => {
       localStorage.setItem("authToken", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
       setUser(response.data.user || {});
-            console.log("response.data.user", response.data.user);
+      console.log("response.data.user", response.data.user);
 
       if (response.data.user?.role == "doctor") {
         navigate("/doctors");
-        console.log(":doctor")
+        console.log(":doctor");
         return;
       }
       if (response.data.user.role == "patient") {
         navigate("/user");
-                console.log(":pattients");
+        console.log(":pattients");
 
         return;
       }
       navigate("/admin");
-              console.log(":nilll");
-
+      console.log(":nilll");
 
       // Navigate to home page
     } catch (error) {

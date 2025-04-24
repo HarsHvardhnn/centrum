@@ -1,7 +1,7 @@
 import React from "react";
-import servicesData from "../../utils/UserSideData/serviceData";
 import { FaArrowRight } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { useServices } from "../../context/serviceContext";
 
 const ServiceCard = ({ service }) => {
   return (
@@ -28,10 +28,20 @@ const ServiceCard = ({ service }) => {
 };
 
 const AllServices = () => {
+  const { services, loading, error } = useServices();
+
+  if (loading) {
+    return <div className="text-center py-20">Loading services...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-20 text-red-500">{error}</div>;
+  }
+
   return (
     <div className="grid md:grid-cols-3 max-w-6xl mx-auto gap-6 pt-16 p-6">
-      {servicesData.map((service) => (
-        <ServiceCard key={service.id} service={service} />
+      {services.map((service) => (
+        <ServiceCard key={service._id} service={service} />
       ))}
     </div>
   );

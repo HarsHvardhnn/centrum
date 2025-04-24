@@ -31,6 +31,7 @@ import ChatComponent from "./components/User/ChatComponent";
 import DoctorScheduleSettings from "./components/admin/DoctorSettings";
 import ProfilePage from "./components/Auth/Profile";
 import MyAppointments from "./components/User/MyAppointments";
+import ServicesManagement from "./components/admin/Services";
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -83,7 +84,7 @@ function MainLayout() {
 const routes = createBrowserRouter([
   // Public routes group
   {
-    element: <PublicRoute  />,
+    element: <PublicRoute />,
     children: [
       {
         path: "/login",
@@ -130,6 +131,7 @@ const routes = createBrowserRouter([
           { path: "/admin", element: <MedicalDashboard /> },
           { path: "/doctor/create", element: <AddDoctorForm /> },
           { path: "/admin/accounts", element: <UserManagement /> },
+          { path: "/admin/services", element: <ServicesManagement /> },
           { path: "/doctor/settings", element: <DoctorScheduleSettings /> },
           { path: "/profile", element: <ProfilePage /> },
           {

@@ -1,6 +1,6 @@
 import React from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { FlaskConical } from "lucide-react";
+import { MdOutlineMedicalServices } from "react-icons/md";
 import { RiHomeLine } from "react-icons/ri";
 import { LuFileChartColumn, LuCalendarPlus2 } from "react-icons/lu";
 import { CgLogOut } from "react-icons/cg";
@@ -65,6 +65,18 @@ const Sidebar = () => {
             isActive={currentPath === "/doctors"}
             isEnabled={true}
           />
+
+          {user?.role === "admin" && (
+            <NavItem
+              icon={
+                <MdOutlineMedicalServices className="text-xl text-teal-400" />
+              }
+              label="Services"
+              to="/admin/services"
+              isActive={currentPath === "/admin/services"}
+              isEnabled={true}
+            />
+          )}
 
           <NavItem
             icon={<FiUsers className="text-xl text-teal-400" />}

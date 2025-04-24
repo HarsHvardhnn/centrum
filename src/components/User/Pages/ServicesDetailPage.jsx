@@ -4,6 +4,7 @@ import ContactSection from "../ContactSection";
 import { useParams } from "react-router-dom";
 import ServiceDetail from "../ServiceDetail";
 import PageHeader from "../PageHeader";
+import { ServicesProvider } from "../../../context/serviceContext";
 
 const ServicesDetailPage = () => {
   const { service } = useParams();
@@ -13,11 +14,11 @@ const ServicesDetailPage = () => {
         title={service}
         path="Home / Services"
         bgurl="/images/services-header.jfif"
-      />
+        />
       <ServiceDetail serviceName={service} />
       <Doctors />
       <ContactSection />
-    </>
+        </>
   );
 };
 
