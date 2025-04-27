@@ -4,8 +4,11 @@ import TestimonialSlider from "../TestimonialSlider";
 import News from "../News";
 import ContactSection from "../ContactSection";
 import PageHeader from "../PageHeader";
+import { useAppointmentContext } from "../../../UserLayout";
 
 const OurDoctorsPage = () => {
+  const { setSelectedDepartment, setSelectedDoctorId } =
+    useAppointmentContext();
   return (
     <>
       <PageHeader
@@ -13,7 +16,10 @@ const OurDoctorsPage = () => {
         path="Home / Doctors"
         bgurl="/images/about-header.jpg"
       />
-      <Doctors />
+      <Doctors
+        setSelectedDoctorId={setSelectedDoctorId}
+        setSelectedDepartment={setSelectedDepartment}
+      />
       <TestimonialSlider />
       <News />
       <ContactSection />

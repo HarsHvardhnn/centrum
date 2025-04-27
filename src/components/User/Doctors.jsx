@@ -4,12 +4,16 @@ import { FaInstagram, FaFacebookF, FaLinkedinIn } from "react-icons/fa";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import doctorService from "../../helpers/doctorHelper";
+import { useNavigate } from "react-router-dom";
 
-export default function Doctors() {
+export default function Doctors({
+  setSelectedDoctorId,
+  setSelectedDepartment,
+}) {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
@@ -115,7 +119,7 @@ export default function Doctors() {
                       </p>
                     )}
 
-                    <div className="flex justify-center gap-4 mt-3">
+                    {/* <div className="flex justify-center gap-4 mt-3">
                       {doctor.social.linkedin && (
                         <a
                           href={doctor.social.linkedin}
@@ -140,11 +144,19 @@ export default function Doctors() {
                           <FaInstagram className="text-sm" />
                         </a>
                       )}
-                    </div>
+                    </div> */}
                   </div>
 
-                  <button className="bg-main text-white font-semibold text-lg py-3 w-full hover:bg-teal-700 transition-all">
-                    View Profile
+                  <button
+                    onClick={() => {
+                      setSelectedDepartment(doctor.department);
+                      console.log("selecting doctor id", doctor);
+                      setSelectedDoctorId(doctor.id);
+                      navigate("/user");
+                    }}
+                    className="bg-main text-white font-semibold text-lg py-3 w-full hover:bg-teal-700 transition-all"
+                  >
+                    Book Appointment{" "}
                   </button>
                 </div>
               </div>

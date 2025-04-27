@@ -6,7 +6,12 @@ import { DEPARTMENTS } from "../../utils/departments";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 
-export default function BookAppointment({ page }) {
+export default function BookAppointment({
+  page,
+  selectedDepartment = "",
+  selectedDoctorId = "",
+}) {
+  console.log("selectedDoctorId",selectedDoctorId)
   const [doctors, setDoctors] = useState([]);
   const [departments, setDepartments] = useState(DEPARTMENTS);
   const [loading, setLoading] = useState(false);
@@ -22,8 +27,8 @@ export default function BookAppointment({ page }) {
     phone: "",
     date: "",
     time: "",
-    doctor: "",
-    department: "",
+    doctor: selectedDoctorId || "",
+    department: selectedDepartment || "",
     message: "",
   };
 
@@ -68,30 +73,47 @@ export default function BookAppointment({ page }) {
     fetchDepartments();
   }, []);
 
+  // Fetch doctors for preselected department when component mounts
+  useEffect(() => {
+    if (selectedDepartment) {
+      fetchDoctorsForDepartment(selectedDepartment);
+    }
+  }, [selectedDepartment]);
+
+  const fetchDoctorsForDepartment = async (department) => {
+    if (!department) return;
+
+    try {
+      setLoading(true);
+      const response = await doctorService.getAllDoctors({
+        department: department,
+      });
+
+
+      setDoctors(response.doctors || []);
+      if (selectedDoctorId) {
+        
+      }
+    } catch (error) {
+      console.error(
+        `Error fetching doctors for department ${department}:`,
+        error
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch doctors based on selected department
   const handleDepartmentChange = async (e, setFieldValue) => {
-    const selectedDepartment = e.target.value;
-    setFieldValue("department", selectedDepartment);
+    const newDepartment = e.target.value;
+    setFieldValue("department", newDepartment);
 
     // Reset doctor selection when department changes
     setFieldValue("doctor", "");
 
-    if (selectedDepartment) {
-      try {
-        setLoading(true);
-        const response = await doctorService.getAllDoctors({
-          department: selectedDepartment,
-        });
-
-        setDoctors(response.doctors);
-      } catch (error) {
-        console.error(
-          `Error fetching doctors for department ${selectedDepartment}:`,
-          error
-        );
-      } finally {
-        setLoading(false);
-      }
+    if (newDepartment) {
+      fetchDoctorsForDepartment(newDepartment);
     } else {
       setDoctors([]);
     }
@@ -130,7 +152,7 @@ export default function BookAppointment({ page }) {
         error.response?.data?.message ||
         "Failed to book appointment. Please try again.";
       setSubmitStatus({ success: false, error: errorMessage });
-      alert(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -138,7 +160,7 @@ export default function BookAppointment({ page }) {
 
   return (
     <section
-      className={` px-4 flex justify-center items-center ${
+      className={`px-4 flex justify-center items-center ${
         page === "home"
           ? "bg-[url('/images/appointmentbg.PNG')] py-12 lg:px-16 bg-cover bg-center bg-no-repeat"
           : "bg-white"
@@ -170,8 +192,9 @@ export default function BookAppointment({ page }) {
             initialValues={initialValues}
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
+            enableReinitialize={true}
           >
-            {({ setFieldValue, isSubmitting }) => (
+            {({ setFieldValue, isSubmitting, values }) => (
               <Form className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-main-lighter rounded-md border border-main-light p-4">
                 {/* Show success or error message if available */}
                 {submitStatus.success && (
@@ -293,12 +316,12 @@ export default function BookAppointment({ page }) {
                     as="select"
                     name="doctor"
                     className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
-                    disabled={!doctors.length}
+                    disabled={!doctors.length && !values.department}
                   >
                     <option value="">
                       {loading
                         ? "Loading doctors..."
-                        : doctors.length === 0
+                        : doctors.length === 0 && !values.department
                         ? "Select Department First"
                         : "Select Doctor"}
                     </option>

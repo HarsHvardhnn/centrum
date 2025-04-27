@@ -2,6 +2,12 @@ import { useState, useEffect } from "react";
 import adminHelper from "../../helpers/adminHelper";
 import { useLoader } from "../../context/LoaderContext";
 import DoctorScheduleManager from "./DoctorScheduleEditor";
+import { ChevronDown } from "lucide-react"; // For dropdown icon
+import PatientStepForm from "../SubComponentForm/PatientStepForm";
+import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
+import AddDoctorForm from "../Doctor/CreateDoctor";
+import doctorService from "../../helpers/doctorHelper";
+import patientService from "../../helpers/patientHelper";
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -12,7 +18,13 @@ export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
+
+  // Add User dropdowns and modals
+  const [showAddDropdown, setShowAddDropdown] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
+  const [showAddPatientModal, setShowAddPatientModal] = useState(false);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({
@@ -26,9 +38,30 @@ export default function UserManagement() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [usersPerPage, setUsersPerPage] = useState(5);
-  // New state for doctor schedule modal
+
+  // State for doctor schedule modal
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
+
+  // Remove the useFormContext hook from here - this is causing the error
+  // const { formData: patientFormData } = useFormContext();
+
+  // Keep a state for patient form data
+  const [patientFormData, setPatientFormData] = useState({});
+
+  // Patient form states
+  const [currentSubStep, setCurrentSubStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentPatientId, setCurrentPatientId] = useState(null);
+  const subStepTitles = [
+    "Demographics",
+    "Referrer",
+    "Address",
+    "Photo",
+    "Details",
+    "Notes",
+  ];
 
   const fetchUsers = async () => {
     try {
@@ -90,7 +123,7 @@ export default function UserManagement() {
     setShowDeleteModal(true);
   };
 
-  // New function to open the schedule modal
+  // Function to open the schedule modal
   const handleManageSchedule = (user) => {
     setSelectedDoctorId(user._id);
     setShowScheduleModal(true);
@@ -178,6 +211,81 @@ export default function UserManagement() {
     }
   };
 
+  // Function to handle adding a doctor
+  const handleAddDoctor = async (doctorData, resetForm, closeModal) => {
+    try {
+      showLoader();
+      // Call your doctor service here
+      const response = await doctorService.createDoctor(doctorData);
+
+      setSuccess("Doctor added successfully");
+      hideLoader();
+      fetchUsers(); // Refresh the users list
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess("");
+      }, 3000);
+
+      // Reset and close
+      resetForm();
+      closeModal();
+    } catch (error) {
+      setError(
+        "Failed to add doctor: " +
+          (error.response?.data?.error ||
+            error.response?.data?.message ||
+            "Unknown error")
+      );
+      hideLoader();
+    }
+  };
+
+  // Function to handle adding a patient - Modified to work with FormProvider context
+  const handleAddPatient = async (formData) => {
+    try {
+      showLoader();
+      const createdPatient = await patientService.createPatient(formData);
+      setSuccess("Patient added successfully");
+      hideLoader();
+      fetchUsers(); // Refresh the users list
+      setShowAddPatientModal(false);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess("");
+      }, 3000);
+    } catch (err) {
+      setError(
+        "Failed to add patient: " +
+          (err.response?.data?.error ||
+            err.response?.data?.message ||
+            "Unknown error")
+      );
+      hideLoader();
+    }
+  };
+
+  // Functions for patient form
+  const goToSubStep = (step) => {
+    setCurrentSubStep(step);
+  };
+
+  const markStepAsCompleted = (formData) => {
+    if (!completedSteps.includes(currentSubStep)) {
+      setCompletedSteps([...completedSteps, currentSubStep]);
+    }
+
+    // Save the form data for access outside the FormProvider
+    setPatientFormData(formData);
+
+    if (currentSubStep === subStepTitles.length - 1) {
+      handleAddPatient(formData);
+    } else {
+      setCurrentSubStep(currentSubStep + 1);
+    }
+  };
+
   const handleUsersPerPageChange = (e) => {
     setUsersPerPage(parseInt(e.target.value));
     setCurrentPage(1); // Reset to first page when changing limits
@@ -188,17 +296,69 @@ export default function UserManagement() {
     return sortOrder === "asc" ? "↑" : "↓";
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showAddDropdown && !event.target.closest(".dropdown-container")) {
+        setShowAddDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showAddDropdown]);
+
   return (
     <div className="p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-teal-700">User Management</h1>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md"
-        >
-          Add Receptionist
-        </button>
+
+        {/* Add User Dropdown Button */}
+        <div className="dropdown-container relative">
+          <button
+            onClick={() => setShowAddDropdown(!showAddDropdown)}
+            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+          >
+            Add User <ChevronDown size={16} />
+          </button>
+
+          {showAddDropdown && (
+            <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+              <div className="py-1" role="menu" aria-orientation="vertical">
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => {
+                    setShowAddDropdown(false);
+                    setShowAddDoctorModal(true);
+                  }}
+                >
+                  Add Doctor
+                </button>
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => {
+                    setShowAddDropdown(false);
+                    setShowAddModal(true);
+                  }}
+                >
+                  Add Receptionist
+                </button>
+                <button
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => {
+                    setShowAddDropdown(false);
+                    setShowAddPatientModal(true);
+                  }}
+                >
+                  Add Patient
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Search and filters */}
@@ -619,6 +779,62 @@ export default function UserManagement() {
         </div>
       )}
 
+      {/* Add Doctor Modal */}
+      {showAddDoctorModal && (
+        <AddDoctorForm
+          isOpen={showAddDoctorModal}
+          onClose={() => setShowAddDoctorModal(false)}
+          onAddDoctor={(doctorData, resetForm) =>
+            handleAddDoctor(doctorData, resetForm, () =>
+              setShowAddDoctorModal(false)
+            )
+          }
+        />
+      )}
+
+      {/* Add Patient Modal */}
+      {showAddPatientModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-3/4 max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b p-4">
+              <h2 className="text-xl font-bold">Add New Patient</h2>
+              <button
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setShowAddPatientModal(false)}
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6">
+              {/* Wrap PatientStepForm with FormProvider here */}
+              <FormProvider>
+                <PatientStepFormWrapper
+                  currentSubStep={currentSubStep}
+                  goToSubStep={goToSubStep}
+                  markStepAsCompleted={markStepAsCompleted}
+                  subStepTitles={subStepTitles}
+                  isEditMode={isEditMode}
+                  handleAddPatient={handleAddPatient}
+                />
+              </FormProvider>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -663,5 +879,43 @@ export default function UserManagement() {
         />
       )}
     </div>
+  );
+}
+
+// Create a wrapper component to use the form context
+function PatientStepFormWrapper({
+  currentSubStep,
+  goToSubStep,
+  markStepAsCompleted,
+  subStepTitles,
+  isEditMode,
+  handleAddPatient
+}) {
+   const [completedSteps, setCompletedSteps] = useState([]);
+  const { formData } = useFormContext();
+    // const [currentSubStep, setCurrentSubStep] = useState(0);
+
+
+  // This function connects the context's form data to the parent component
+  const handleStepCompleted = () => {
+    if (!completedSteps.includes(currentSubStep)) {
+      setCompletedSteps([...completedSteps, currentSubStep]);
+    }
+
+    if (currentSubStep === subStepTitles.length - 1) {
+      handleAddPatient(formData);
+    } else {
+      setCurrentSubStep(currentSubStep + 1);
+    }
+  };
+
+  return (
+    <PatientStepForm
+      currentSubStep={currentSubStep}
+      goToSubStep={goToSubStep}
+      markStepAsCompleted={handleStepCompleted}
+      subStepTitles={subStepTitles}
+      isEditMode={isEditMode}
+    />
   );
 }

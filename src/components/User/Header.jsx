@@ -69,7 +69,7 @@ const Header = () => {
         <img src="/images/mainlogo.png" alt="website logo" className="h-10" />
 
         <nav className="hidden lg:flex gap-4 lg:gap-6 text-teal-900 font-medium text-sm">
-          <Link to="/" className="text-teal-800 font-bold">
+          <Link to="/user" className="text-teal-800 font-bold">
             Home
           </Link>
           <Link to="/user/about">About Us</Link>

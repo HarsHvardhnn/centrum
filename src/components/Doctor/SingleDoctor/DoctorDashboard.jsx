@@ -51,7 +51,7 @@ const DoctorDashboard = ({
           <Breadcrumb items={breadcrumbs} />
         </div>
 
-   {user?.role!=="doctor" &&     <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-wrap items-center gap-4">
           <div className="relative">
             <input
               type="text"
@@ -78,7 +78,7 @@ const DoctorDashboard = ({
           >
             Book Appointment
           </button>
-        </div>}
+        </div>
       </div>
 
       <div className="flex flex-col gap-6">
