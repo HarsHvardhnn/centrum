@@ -27,7 +27,7 @@ export default function Doctors({
             doctor.name.first && doctor.name.last
               ? `${doctor.name.first} ${doctor.name.last}`
               : doctor.name, // Handle both object and string format
-          department: doctor?.specialization[0].name || doctor.department,
+          department: doctor.specialty,
           image: doctor.image || "https://via.placeholder.com/400x500",
           experience: doctor.experience || "",
           social: {
@@ -52,7 +52,7 @@ export default function Doctors({
 
   const settings = {
     dots: true,
-    infinite: true,
+    infinite: doctors.length > 3,
     speed: 500,
     slidesToShow: 3,
     slidesToScroll: 1,
@@ -103,7 +103,7 @@ export default function Doctors({
                   <div className="bg-[#DEE2CF] text-main py-6 px-6">
                     <h4 className="text-lg font-semibold">{doctor.name}</h4>
                     <p className="text-xl font-bold uppercase">
-                      {doctor.department}
+                      {doctor.department.name}
                     </p>
                     {doctor.experience && (
                       <p className="text-sm mt-1">
