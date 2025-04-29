@@ -7,12 +7,6 @@ const FileListItem = ({ file, onRemove }) => {
 
   console.log("FileListItem file:", file);
   // Format file size
-  const formatFileSize = (bytes) => {
-    if (bytes < 1024) return bytes + " B";
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
-    else return (bytes / 1048576).toFixed(1) + " MB";
-  };
-
   return (
     <div className="flex items-center p-3 border rounded-lg mb-2 bg-white shadow-sm">
       <div className="flex-shrink-0 mr-3">
@@ -31,12 +25,12 @@ const FileListItem = ({ file, onRemove }) => {
         )}
       </div>
 
-      <div className="flex-grow min-w-0">
+      {/* <div className="flex-grow min-w-0">
         <p className="text-sm font-medium text-gray-900 truncate">
           {file.name}
         </p>
         <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-      </div>
+      </div> */}
 
       {file.progress !== undefined && (
         <div className="w-24 mr-4">

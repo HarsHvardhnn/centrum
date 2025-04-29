@@ -32,7 +32,7 @@ const ActionButtons = ({ onAddMedicineClick, onAddTestClick, patientId }) => {
 
   return (
     <div className="flex gap-3 mt-4 justify-between border-b pb-4">
-      <button className="flex items-center justify-center border border-gray-200 rounded-lg px-4 py-2 text-sm">
+      {/* <button className="flex items-center justify-center border border-gray-200 rounded-lg px-4 py-2 text-sm">
         <svg
           width="16"
           height="16"
@@ -50,7 +50,7 @@ const ActionButtons = ({ onAddMedicineClick, onAddTestClick, patientId }) => {
           <line x1="3" y1="10" x2="21" y2="10" />
         </svg>
         Set New Appointment
-      </button>
+      </button> */}
       <button
         className="flex items-center justify-center border border-gray-200 rounded-lg px-4 py-2 text-sm"
         onClick={handleDownloadVisitCard}
@@ -72,7 +72,7 @@ const ActionButtons = ({ onAddMedicineClick, onAddTestClick, patientId }) => {
         </svg>
         Download Visit Card
       </button>
-      <button
+      {/* <button
         className="flex items-center justify-center border border-gray-200 rounded-lg px-4 py-2 text-sm"
         onClick={onAddTestClick}
       >
@@ -91,8 +91,8 @@ const ActionButtons = ({ onAddMedicineClick, onAddTestClick, patientId }) => {
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
         Add Test
-      </button>
-      <button className="flex items-center justify-center bg-teal-100 text-teal-600 rounded-lg px-4 py-2 text-sm">
+      </button> */}
+      {/* <button className="flex items-center justify-center bg-teal-100 text-teal-600 rounded-lg px-4 py-2 text-sm">
         <svg
           width="16"
           height="16"
@@ -107,8 +107,8 @@ const ActionButtons = ({ onAddMedicineClick, onAddTestClick, patientId }) => {
           <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
         </svg>
         Set Monitoring Plan
-      </button>
-      <button
+      </button> */}
+      {/* <button
         className="flex items-center justify-center bg-[#80c5c5] hover:bg-teal-500 text-white border border-gray-200 rounded-lg px-4 py-2 text-sm col-span-1"
         onClick={onAddMedicineClick}
       >
@@ -127,7 +127,7 @@ const ActionButtons = ({ onAddMedicineClick, onAddTestClick, patientId }) => {
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
         Add Medicine
-      </button>
+      </button> */}
     </div>
   );
 };

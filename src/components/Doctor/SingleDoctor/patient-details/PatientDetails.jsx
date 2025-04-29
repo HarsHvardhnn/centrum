@@ -73,10 +73,9 @@ const PatientDetailsPage = () => {
         setIsLoading(true);
         const data = await patientService.getPatientDetails(id);
 
-        console.log("data receivbed",data)
+        console.log("data receivbed", data);
         // Update state with received data while preserving default values for missing fields
         setPatientData(data.patientData || {});
-
 
         // If the API returns medications and tests data, update them too
         if (data.medications) {
@@ -92,7 +91,8 @@ const PatientDetailsPage = () => {
 
         if (data.consultationData) {
           setConsultationData(data.consultationData);
-        } setIsLoading(false);
+        }
+        setIsLoading(false);
       } catch (err) {
         console.error("Error fetching patient data:", err);
         setError("Failed to load patient data. Please try again.");
@@ -126,7 +126,7 @@ const PatientDetailsPage = () => {
       );
 
       if (hasUploadingFiles) {
-              console.log("Saving patient data...api call");
+        console.log("Saving patient data...api call");
 
         setSaveError("Please wait for all files to finish uploading");
         setIsSaving(false);
@@ -146,7 +146,7 @@ const PatientDetailsPage = () => {
       );
 
       // Update local state with saved data
-     window.location.reload()
+      window.location.reload();
 
       setIsSaving(false);
     } catch (error) {
@@ -161,7 +161,6 @@ const PatientDetailsPage = () => {
   // Handle file upload
   const handleFileUpload = (files) => {
     console.log("Files uploaded:", files);
-
 
     setUploadedFiles((prev) => [...prev, files]);
 

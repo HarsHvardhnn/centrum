@@ -13,7 +13,7 @@ const ConsultationForm = ({
   onRemoveFile,
   setPatientData,
 }) => {
-  console.log("consulting doctor", consultationData);
+  console.log("consulting doctor", uploadedFiles);
 
   // State for searchable dropdown
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -447,14 +447,14 @@ const ConsultationForm = ({
         {/* Review Notes */}
         <div className="col-span-1 md:col-span-2 mt-2">
           <label className="block text-sm text-gray-600 mb-1">
-            Review Notes
+            Upload Documents
           </label>
           <FileUploadArea onFileUpload={onFileUpload} />
         </div>
 
         {/* Uploaded Files */}
         <div className="col-span-1 md:col-span-2 mt-2">
-          {uploadedFiles.map((file, index) => (
+          {uploadedFiles?.map((file, index) => (
             <FileListItem
               key={index}
               file={file}

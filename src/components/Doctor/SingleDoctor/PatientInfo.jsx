@@ -1,52 +1,6 @@
 import React, { useState } from "react";
 
-const patientData = {
-  name: "undefined undefined",
-  patientId: "P-1745725178981",
-  avatar: "/path/to/patient-avatar.jpg",
-  email: "harshvchawla9sds9sd7@gmail.com",
-  phone: "08000561485",
-  lastChecked: "Dr. Surajpancholi on April 28, 2025",
-  prescription: "#67517886",
-  weight: "78 kg",
-  bp: "141/90 mmHg",
-  pulseRate: "Normal",
-  observation: "jasdisaiofaiosdoisad",
-  medications: [
-    {
-      name: "Metformin",
-      dosage: "500mg",
-      frequency: "Twice daily",
-      duration: "X 182 Days",
-    },
-    {
-      name: "ajshdjs",
-      dosage: "jjadhfj",
-      frequency: "afhj",
-      duration: "X 3 Days",
-    },
-  ],
-  reports: [
-    {
-      name: "hospital_app/dnx2m9svmm6uu3d3gcwv",
-      size: "32.0 KB",
-      url: "https://res.cloudinary.com/ddrquhbgy/image/upload/v1745866947/hospital_app/dnx2m9svmm6uu3d3gcwv.jpg",
-      type: "image/jpeg",
-    },
-    {
-      name: "hospital_app/dnx2m9svmm6uu3d3gcwv",
-      size: "32.0 KB",
-      url: "https://res.cloudinary.com/ddrquhbgy/image/upload/v1745866947/hospital_app/dnx2m9svmm6uu3d3gcwv.jpg",
-      type: "image/jpeg",
-    },
-    {
-      name: "hospital_app/xiljmukoigmp1geglywf",
-      size: "32.0 KB",
-      url: "https://res.cloudinary.com/ddrquhbgy/image/upload/v1745867036/hospital_app/xiljmukoigmp1geglywf.jpg",
-      type: "image/jpeg",
-    },
-  ],
-};
+
 
 const PatientInfo = ({ patientData }) => {
   console.log("Patient Data in info:", patientData);
@@ -65,7 +19,6 @@ const PatientInfo = ({ patientData }) => {
 
 
   // Calculate age and gender (placeholder since not provided in new data)
-  const ageGender = "N/A"; // Replace with actual data if available
 
   return (
     <div className="bg-gray-50">

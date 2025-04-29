@@ -2,8 +2,12 @@
 import React, { useRef } from "react";
 import { Upload } from "lucide-react";
 import { apiCaller } from "../../../../utils/axiosInstance";
+import { useLoader } from "../../../../context/LoaderContext";
 
 const FileUploadArea = ({ onFileUpload }) => {
+
+
+  const { showLoader, hideLoader } = useLoader();
   const fileInputRef = useRef(null);
 
   const handleClick = () => {
@@ -39,6 +43,7 @@ const FileUploadArea = ({ onFileUpload }) => {
       formData.append("file", file);
 
       try {
+        showLoader();
         const response = await apiCaller("POST", "/admin/upload-file", formData, {
           "Content-Type": "multipart/form-data",
         });
@@ -55,6 +60,10 @@ const FileUploadArea = ({ onFileUpload }) => {
       } catch (error) {
         console.error("File upload failed:", error);
       }
+      finally {
+        hideLoader();
+      }
+      
     }
   };
 
