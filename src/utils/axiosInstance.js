@@ -38,7 +38,10 @@ axiosInstance.interceptors.response.use(
         // Handle unauthorized errors (for example, redirect to login)
         console.error("Unauthorized access. Please login.");
         // Optionally, navigate to login page
-        window.location.href = "/login";
+        localStorage.clear()
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
       } else {
         // Other status codes handling (e.g., 500 server error)
         console.error("API Error:", error.response);
@@ -96,7 +99,6 @@ const apiCaller = async (method, url, data = {}, headers = {}) => {
     throw error;
   }
 };
-
 
 // Export the apiCaller for use in components
 export { apiCaller, axiosInstance };

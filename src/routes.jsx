@@ -17,7 +17,6 @@ import OurServicesPage from "./components/User/Pages/OurServicesPage";
 import ServicesDetailPage from "./components/User/Pages/ServicesDetailPage";
 import MedicalDashboard from "./components/Dashboard";
 import Header from "./components/UtilComponents/Header";
-import PatientDetailsPage from "./components/Doctor/SingleDoctor/PatientDetailsPage";
 import DoctorDetailPage from "./components/Doctor/DoctorDetailsPage";
 import NotFound404 from "./components/UtilComponents/NotFound";
 import {
@@ -32,20 +31,25 @@ import DoctorScheduleSettings from "./components/admin/DoctorSettings";
 import ProfilePage from "./components/Auth/Profile";
 import MyAppointments from "./components/User/MyAppointments";
 import ServicesManagement from "./components/admin/Services";
+import NewsList from "./components/User/NewsList";
+import News from "./components/User/News";
+import NewsPage from "./components/User/Pages/NewsPage";
+import PatientDetailsPage from "./components/Doctor/SingleDoctor/patient-details/PatientDetails";
+import NewsManagement from "./components/admin/NewManagement";
+import NewsDetail from "./components/User/NewsDetail";
+import PatientMedicalDetails from "./components/User/MyDetails";
+import { useUser } from "./context/userContext";
 
 // Modified App component to include the sidebar
 function MainLayout() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { user }=useUser()
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
   };
 
-  const user = {
-    name: "Abu Fahim",
-    email: "hello@fahim.com",
-  };
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -59,12 +63,14 @@ function MainLayout() {
 
       <div className="flex bg-gray-50">
         {/* Sidebar with adjusted positioning */}
-        <Sidebar
-          isDarkMode={isDarkMode}
-          toggleTheme={toggleTheme}
-          isOpen={isSidebarOpen}
-          toggleSidebar={toggleSidebar}
-        />
+        {user?.role != "patient" && (
+          <Sidebar
+            isDarkMode={isDarkMode}
+            toggleTheme={toggleTheme}
+            isOpen={isSidebarOpen}
+            toggleSidebar={toggleSidebar}
+          />
+        )}
 
         {/* Main content with proper spacing */}
         <div
@@ -112,6 +118,12 @@ const routes = createBrowserRouter([
       { path: "services", element: <OurServicesPage /> },
       { path: "services/:service", element: <ServicesDetailPage /> },
       { path: "appointments", element: <MyAppointments /> },
+      { path: "details", element: <PatientMedicalDetails /> },
+      { path: "news", element: <NewsPage /> },
+      { path: "blogs", element: <NewsPage isNews={false} /> },
+      { path: "news/single/:id", element: <NewsDetail /> },
+      { path: "profile", element: <ProfilePage /> },
+
       { path: "*", element: <NotFound404 /> },
     ],
   },
@@ -126,14 +138,17 @@ const routes = createBrowserRouter([
           { path: "/doctors", element: <BillingPage /> },
           { path: "/doctors/appointments/:id", element: <DoctorsPage /> },
           { path: "/doctor-details/:id", element: <DoctorDetailPage /> },
-          { path: "/patients", element: <LabAppointments /> },
-          { path: "/patients-details", element: <PatientDetailsPage /> },
+          { path: "/patients", element: <LabAppointments clinic={false} /> },
+          { path: "/clinic", element: <LabAppointments clinic={true} /> },
+
+          { path: "/patients-details/:id", element: <PatientDetailsPage /> },
           { path: "/admin", element: <MedicalDashboard /> },
           { path: "/doctor/create", element: <AddDoctorForm /> },
           { path: "/admin/accounts", element: <UserManagement /> },
           { path: "/admin/services", element: <ServicesManagement /> },
+          { path: "/admin/news", element: <NewsManagement /> },
           { path: "/doctor/settings", element: <DoctorScheduleSettings /> },
-          { path: "/profile", element: <ProfilePage /> },
+          { path: "/admin/profile", element: <ProfilePage /> },
           {
             path: "/help-center",
             element: <ChatComponent />,

@@ -249,6 +249,8 @@ const PatientList = () => {
     pages: 1,
   });
 
+  const navigate=useNavigate()
+
   // Fetch patients on component mount and when page changes
   useEffect(() => {
     const fetchPatients = async () => {
@@ -397,7 +399,7 @@ const PatientList = () => {
             </thead>
             <tbody>
               {patients.map((patient) => (
-                <tr key={patient.id} className="hover:bg-gray-50">
+                <tr key={patient.id} className="hover:bg-gray-50" onClick={() => navigate(`/patients-details/${patient._id}`)}>
                   <td className="py-4 px-4">
                     <input
                       type="checkbox"

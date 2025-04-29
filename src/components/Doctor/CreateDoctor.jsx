@@ -12,6 +12,8 @@ import {
   Briefcase,
 } from "lucide-react";
 import { DEPARTMENTS } from "../../utils/departments";
+import { useSpecializations } from "../../context/SpecializationContext";
+import SpecializationDropdown from "./SpecializationDropdown";
 
 // List of departments
 
@@ -29,7 +31,6 @@ const DoctorSchema = Yup.object().shape({
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password"), null], "Passwords must match")
     .required("Confirm password is required"),
-  department: Yup.string().required("Department is required"),
   specialization: Yup.array()
     .min(1, "At least one specialization is required")
     .required("Specialization is required"),
@@ -50,6 +51,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
   const [profileImage, setProfileImage] = useState(null);
   const [specializationInput, setSpecializationInput] = useState("");
   const [qualificationInput, setQualificationInput] = useState("");
+  const { specializations } = useSpecializations();
 
   if (!isOpen) return null;
 
@@ -321,8 +323,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
 
                 {/* Right column */}
                 <div className="flex-1 space-y-6">
-                  {/* Department Dropdown - New Field */}
-                  <div>
+                  {/* <div>
                     <label
                       htmlFor="department"
                       className="block text-sm font-medium text-gray-700 mb-1"
@@ -362,69 +363,15 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                       component="div"
                       className="text-red-500 text-xs mt-1"
                     />
-                  </div>
+                  </div> */}
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Specialization*
-                    </label>
-                    <div className="flex items-center">
-                      <div className="relative flex-grow">
-                        <input
-                          type="text"
-                          value={specializationInput}
-                          onChange={(e) =>
-                            setSpecializationInput(e.target.value)
-                          }
-                          className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                          placeholder="Add specialization"
-                        />
-                        <Award
-                          size={16}
-                          className="absolute left-3 top-3 text-gray-400"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleAddSpecialization(values, setFieldValue)
-                        }
-                        className="ml-2 bg-teal-500 text-white p-2 rounded-md hover:bg-teal-600"
-                      >
-                        Add
-                      </button>
-                    </div>
-                    {values.specialization.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {values.specialization.map((spec, index) => (
-                          <span
-                            key={index}
-                            className="bg-teal-50 text-teal-700 px-2 py-1 rounded-md text-sm flex items-center"
-                          >
-                            {spec}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleRemoveSpecialization(
-                                  index,
-                                  values,
-                                  setFieldValue
-                                )
-                              }
-                              className="ml-1 text-teal-700 hover:text-teal-900"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {errors.specialization && touched.specialization && (
-                      <div className="text-red-500 text-xs mt-1">
-                        {errors.specialization}
-                      </div>
-                    )}
-                  </div>
+                  <SpecializationDropdown
+                    values={values}
+                    setFieldValue={setFieldValue}
+                    errors={errors}
+                    touched={touched}
+                    specializations={specializations} // Pass the specializations array from context
+                  />
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -521,7 +468,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                         htmlFor="consultationFee"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Consultation Fee*
+                        Online Consultation Price*
                       </label>
                       <div className="relative">
                         <Field

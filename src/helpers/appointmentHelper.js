@@ -229,29 +229,56 @@ class AppointmentService {
       if (!appointmentId) {
         throw new Error("Appointment ID is required");
       }
-    
+
       const response = await apiCaller(
         "PATCH",
         `/appointments/cancel/${appointmentId}`,
         { cancellationReason: reason }
       );
-    
+
       // You can add additional success handling here if needed
       console.log("Appointment successfully canceled");
-    
+
       return response.data;
     } catch (error) {
       console.error("Error canceling appointment:", error);
-    
+
       // You can add specific error handling based on error types
       if (error.response && error.response.status === 404) {
         throw new Error("Appointment not found");
       }
-    
+
       throw error;
     }
   }
-  
+
+  async completeCheckIn(appointmentId,patientId) {
+    try {
+      // Validate inputs
+      if (!appointmentId) {
+        throw new Error("Appointment ID is required");
+      }
+
+      const response = await apiCaller(
+        "PATCH",
+        `/appointments/check-in/${appointmentId}?patientId=${patientId}`,
+      );
+
+      // You can add additional success handling here if needed
+      console.log("Appointment successfully completed");
+
+      return response.data;
+    } catch (error) {
+      console.error("Error completing appointment:", error);
+
+      // You can add specific error handling based on error types
+      if (error.response && error.response.status === 404) {
+        throw new Error("Appointment not found");
+      }
+
+      throw error;
+    }
+  }
 }
 
 export default new AppointmentService();

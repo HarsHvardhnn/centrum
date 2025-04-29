@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   ChevronDown,
   ChevronLeft,
@@ -13,20 +13,23 @@ const PatientsList = ({
   currentPage = 1,
   onPageChange,
   onPatientSelect,
+  selectedPatient,
   patientsData = [],
 }) => {
-  // Changed from array to single string to store only one selected patient ID
-  const [selectedPatient, setSelectedPatient] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
+  // Use the selectedPatient from props instead of local state
+
+  console.log("patients data",patientsData)
+  const [sortConfig, setSortConfig] = React.useState({
+    key: null,
+    direction: null,
+  });
 
   // Notify parent component when selection changes
   const handlePatientSelect = (patientId) => {
     // If the same patient is clicked again, unselect it
     if (selectedPatient === patientId) {
-      setSelectedPatient(null);
       if (onPatientSelect) onPatientSelect(null);
     } else {
-      setSelectedPatient(patientId);
       if (onPatientSelect) onPatientSelect(patientId);
     }
   };
@@ -141,10 +144,6 @@ const PatientsList = ({
         There are currently no patients in the system or matching your search
         criteria.
       </p>
-      {/* Optional button if you want to add one */}
-      {/* <button className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600">
-        Add New Patient
-      </button> */}
     </div>
   );
 
@@ -170,13 +169,6 @@ const PatientsList = ({
           <div className="w-full flex justify-evenly px-4 py-3 bg-gray-50 border-b">
             <div className="col-span-2 flex items-center">Patients name</div>
             <div className="text-center">Sex</div>
-            {/* <div
-              className="flex items-center justify-center cursor-pointer"
-              onClick={() => requestSort("age")}
-            >
-              Age
-              <ChevronDown size={16} />
-            </div> */}
             <div
               className="flex items-center cursor-pointer justify-center"
               onClick={() => requestSort("status")}
@@ -203,8 +195,8 @@ const PatientsList = ({
               <div className="col-span-2 flex items-center text-left">
                 <input
                   type="checkbox"
-                  checked={selectedPatient === patient.id}
-                  onChange={() => handlePatientSelect(patient.id)}
+                  checked={selectedPatient === patient.patient_id}
+                  onChange={() => handlePatientSelect(patient.patient_id)}
                   className="w-4 h-4 mr-3"
                 />
                 <img
@@ -218,7 +210,6 @@ const PatientsList = ({
                 </div>
               </div>
               <div>{patient.sex}</div>
-              {/* <div>{patient.age}</div> */}
               <div className="flex justify-center">
                 <StatusBadge status={patient.status} />
               </div>

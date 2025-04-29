@@ -6,12 +6,21 @@ import {
   MoreVertical,
   Trash2,
   Edit,
+  Check,
 } from "lucide-react";
 
-function PatientsTable({ patients, onEditPatient ,setShowCheckin}) {
+function PatientsTable({
+  patients,
+  onEditPatient,
+  setShowCheckin,
+  setSelectedPatient,
+  clinic
+}) {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [patientsPerPage] = useState(10);
+  // Track open dropdown by patient ID instead of a single boolean
+  const [openActionsId, setOpenActionsId] = useState(null);
 
   // Reset to first page when patients array changes
   useEffect(() => {
@@ -79,6 +88,30 @@ function PatientsTable({ patients, onEditPatient ,setShowCheckin}) {
     }
   };
 
+  // Handle check-in button click for a specific patient
+  const handleCheckInClick = (patient) => {
+    setSelectedPatient(patient);
+    setShowCheckin(true);
+  };
+
+  // Toggle actions dropdown for a specific patient
+  const toggleActions = (patientId) => {
+    setOpenActionsId((prevId) => (prevId === patientId ? null : patientId));
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setOpenActionsId(null);
+    };
+
+    document.addEventListener("click", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="flex justify-between items-center px-6 py-4 border-b">
@@ -89,9 +122,6 @@ function PatientsTable({ patients, onEditPatient ,setShowCheckin}) {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={()=>{setShowCheckin(true)}} className="bg-teal-500 text-white rounded-md px-4 py-2 flex items-center">
-            Check In
-          </button>
           <button className="text-gray-500 p-2">
             <MoreVertical size={20} />
           </button>
@@ -120,7 +150,7 @@ function PatientsTable({ patients, onEditPatient ,setShowCheckin}) {
                 Status <ChevronDown size={16} className="ml-1" />
               </th>
               <th className="px-4 py-3">Doctor name</th>
-              <th className="px-4 py-3"></th>
+              <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -171,16 +201,64 @@ function PatientsTable({ patients, onEditPatient ,setShowCheckin}) {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-gray-500">{patient.doctor}</td>
-                  <td className="px-4 py-3 flex gap-2">
-                    <button className="text-gray-400 hover:text-gray-600">
-                      <Trash2 size={18} />
-                    </button>
+                  <td className="px-4 py-3 relative">
                     <button
-                      className="text-gray-400 hover:text-gray-600"
-                      onClick={() => handleEditClick(patient)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent event bubbling to document
+                        toggleActions(patient.id);
+                      }}
+                      className="text-gray-600 hover:text-black"
                     >
-                      <Edit size={18} />
+                      <MoreVertical size={18} />
                     </button>
+
+                    {openActionsId === patient.id && (
+                      <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                        <ul className="text-sm text-gray-700">
+                          {!patient.isCheckedIn && !clinic && (
+                            <li>
+                              <button
+                                className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent event bubbling
+                                  handleCheckInClick(patient);
+                                  setOpenActionsId(null);
+                                }}
+                              >
+                                <Check size={14} className="inline mr-2" />
+                                Check In
+                              </button>
+                            </li>
+                          )}
+                          <li>
+                            <button
+                              className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent event bubbling
+                                handleEditClick(patient);
+                                setOpenActionsId(null);
+                              }}
+                            >
+                              <Edit size={14} className="inline mr-2" />
+                              Edit
+                            </button>
+                          </li>
+                          {/* <li>
+                            <button
+                              className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent event bubbling
+                                // You can implement delete here
+                                setOpenActionsId(null);
+                              }}
+                            >
+                              <Trash2 size={14} className="inline mr-2" />
+                              Delete
+                            </button>
+                          </li> */}
+                        </ul>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))

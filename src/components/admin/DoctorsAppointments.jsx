@@ -1,39 +1,28 @@
 import { useState, useEffect } from "react";
 import doctorService from "../../helpers/doctorHelper";
+import { useSpecializations } from "../../context/SpecializationContext";
 
 const DoctorSelectionWithSlots = ({
   onDoctorSelect,
   onSlotSelect,
   selectedDate,
 }) => {
-  const [departments, setDepartments] = useState([]);
-  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const { specializations } = useSpecializations();
+  const [selectedSpecialization, setSelectedSpecialization] = useState("");
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch departments on component mount
-  useEffect(() => {
-    // This would normally be a service call
-    setDepartments([
-      { id: "cardiology", name: "Cardiology" },
-      { id: "dermatology", name: "Dermatology" },
-      { id: "neurology", name: "Neurology" },
-      { id: "pediatrics", name: "Pediatrics" },
-      { id: "orthopedics", name: "Orthopedics" },
-    ]);
-  }, []);
-
-  // Fetch doctors when department changes
+  // Fetch doctors when specialization changes
   useEffect(() => {
     const fetchDoctors = async () => {
-      if (!selectedDepartment) return;
+      if (!selectedSpecialization) return;
 
       setIsLoading(true);
       try {
-        const filters = { department: selectedDepartment };
+        const filters = { specialization: selectedSpecialization };
         const response = await doctorService.getAllDoctors(filters);
         setDoctors(response.doctors || []);
       } catch (error) {
@@ -44,7 +33,7 @@ const DoctorSelectionWithSlots = ({
     };
 
     fetchDoctors();
-  }, [selectedDepartment]);
+  }, [selectedSpecialization]);
 
   // Fetch available slots when doctor or date changes
   useEffect(() => {
@@ -68,8 +57,8 @@ const DoctorSelectionWithSlots = ({
     fetchAvailableSlots();
   }, [selectedDoctor, selectedDate]);
 
-  const handleDepartmentChange = (e) => {
-    setSelectedDepartment(e.target.value);
+  const handleSpecializationChange = (e) => {
+    setSelectedSpecialization(e.target.value);
     setSelectedDoctor(null);
     setAvailableSlots([]);
     setSelectedSlot(null);
@@ -185,14 +174,14 @@ const DoctorSelectionWithSlots = ({
           <div className="flex items-center">
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                selectedDepartment
+                selectedSpecialization
                   ? "bg-teal-500 text-white"
                   : "bg-gray-200 text-gray-600"
               }`}
             >
               1
             </div>
-            <span className="ml-2 text-sm font-medium">Department</span>
+            <span className="ml-2 text-sm font-medium">Specialization</span>
           </div>
           <div className="h-px w-12 bg-gray-200"></div>
           <div className="flex items-center">
@@ -224,23 +213,24 @@ const DoctorSelectionWithSlots = ({
       </div>
 
       <div className="p-6">
-        {/* Department Selection */}
+        {/* Specialization Selection */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Department
+            Select Specialization
           </label>
           <div className="relative">
             <select
               className="w-full appearance-none p-3 pl-4 pr-10 bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-              value={selectedDepartment}
-              onChange={handleDepartmentChange}
+              value={selectedSpecialization}
+              onChange={handleSpecializationChange}
             >
-              <option value="">Choose a medical department</option>
-              {departments.map((dept) => (
-                <option key={dept.id} value={dept.id}>
-                  {dept.name}
-                </option>
-              ))}
+              <option value="">Choose a specialization</option>
+              {specializations &&
+                specializations.map((spec) => (
+                  <option key={spec._id} value={spec._id}>
+                    {spec.name}
+                  </option>
+                ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3">
               <svg
@@ -260,7 +250,7 @@ const DoctorSelectionWithSlots = ({
         </div>
 
         {/* Doctor Selection */}
-        {selectedDepartment && (
+        {selectedSpecialization && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
@@ -278,7 +268,7 @@ const DoctorSelectionWithSlots = ({
             {isLoading && doctors.length === 0 ? (
               renderLoadingState()
             ) : doctors.length === 0 ? (
-              renderEmptyState("No doctors available in this department")
+              renderEmptyState("No doctors available in this specialization")
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {doctors.map((doctor) => (
@@ -404,9 +394,13 @@ const DoctorSelectionWithSlots = ({
             </h4>
             <div className="flex flex-wrap gap-y-2">
               <div className="w-full md:w-1/2">
-                <span className="text-xs text-gray-500">Department</span>
+                <span className="text-xs text-gray-500">Specialization</span>
                 <p className="text-sm font-medium">
-                  {departments.find((d) => d.id === selectedDepartment)?.name}
+                  {
+                    specializations?.find(
+                      (s) => s._id === selectedSpecialization
+                    )?.name
+                  }
                 </p>
               </div>
               <div className="w-full md:w-1/2">

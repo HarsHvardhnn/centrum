@@ -1,24 +1,25 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import DoctorDashboard from "./DoctorDashboard";
 import { useEffect, useState } from "react";
 import { useLoader } from "../../../context/LoaderContext";
 import doctorService from "../../../helpers/doctorHelper";
 import AppointmentFormModal from "../Appointments/AddAppointmentForm";
-import patientService from "../../../helpers/patientHelper";
 import { toast } from "sonner";
 import appointmentHelper from "../../../helpers/appointmentHelper";
 import { formatDateToYYYYMMDD } from "../../../utils/formatDate";
 
 function DoctorsPage() {
   const router = useParams();
+  const navigate=useNavigate()
   const { showLoader, hideLoader } = useLoader();
   const [error, setError] = useState(null);
   const [doctorInfo, setDoctorInfo] = useState({});
   const [patients, setPatients] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  // New state for controlling the modal visibility
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [appointmentData, setAppointmentData] = useState(null);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [patientDetails, setPatientDetails] = useState(null);
 
   useEffect(() => {
     const fetchDoctorData = async () => {
@@ -36,8 +37,6 @@ function DoctorsPage() {
           const transformedData = transformToDoctorInfo(response.doctor);
           setDoctorInfo(transformedData);
           console.log("doctor data", transformedData);
-
-          // fetchPatientsByDoctor(doctorId);
         } else {
           setError("Failed to load doctor data");
         }
@@ -51,11 +50,21 @@ function DoctorsPage() {
 
     fetchDoctorData();
   }, [router.id, showLoader, hideLoader]);
+
   useEffect(() => {
     if (doctorInfo && doctorInfo.id) {
       fetchPatientsByDoctor(doctorInfo.id);
     }
   }, [selectedDate, doctorInfo]);
+
+  // New effect to fetch patient details when a patient is selected
+  useEffect(() => {
+    if (selectedPatient) {
+      fetchPatientDetails(selectedPatient);
+    } else {
+      setPatientDetails(null);
+    }
+  }, [selectedPatient]);
 
   const fetchPatientsByDoctor = async (doctorId) => {
     try {
@@ -66,7 +75,6 @@ function DoctorsPage() {
       );
 
       if (response && response.success && response.data) {
-
         setPatients(response.data);
       } else {
         console.error("Failed to load patients data");
@@ -79,11 +87,34 @@ function DoctorsPage() {
     }
   };
 
+  // New function to fetch patient details
+  const fetchPatientDetails = async (patientId) => {
+    try {
+      showLoader();
+      // Make API call to get patient details using the patient service
+      const response = await doctorService.getPatientDetailsAndReports(
+        patientId
+      );
+
+      console.log("patient response", response);
+      if (response ) {
+        setPatientDetails(response);
+      } else {
+        toast.error("Failed to load patient details");
+      }
+    } catch (err) {
+      console.error("Error fetching patient details:", err);
+      toast.error("Error loading patient details");
+    } finally {
+      hideLoader();
+    }
+  };
+
   const transformToDoctorInfo = (apiDoctor) => {
     const fullName = `${apiDoctor.name?.first || ""} ${
       apiDoctor.name?.last || ""
     }`.trim();
-    const specialty = apiDoctor.specialization?.[0] || "General Practitioner";
+    const specialty = apiDoctor.specialization?.[0]?.name || "General Practitioner";
 
     // Determine available time slot (optional enhancement using weeklyShifts)
     let timeSlot = "09:00am - 01:00pm";
@@ -111,58 +142,6 @@ function DoctorsPage() {
     newPatients: patients.length || 0,
     surgery: 4,
     criticalPatients: 54,
-  };
-
-  const selectedPatient = {
-    name: "Morshed Ali",
-    patientId: "#85736733",
-    avatar: "/path/to/patient-avatar.jpg",
-    email: "Morshed@gmail.com",
-    phone: "+8801780910722",
-    lastChecked: "Dr. Derry on 20 November 2022",
-    prescription: "#20151224-124",
-    weight: "67 kg",
-    bp: "120/80",
-    pulseRate: "Normal",
-    observation: "Left Fever and cough is normal.",
-    medications: [
-      {
-        name: "Cap.ANTACID",
-        dosage: "500mg 1+1+1",
-        frequency: "After meal",
-        duration: "X 5 Days",
-      },
-      {
-        name: "Cap.DECILONE",
-        dosage: "10mg 1+0",
-        frequency: "After meal",
-        duration: "X 5 Days",
-      },
-      {
-        name: "Cap.LEVOLIN",
-        dosage: "500mg 1+1+1",
-        frequency: "After meal",
-        duration: "X 5 Days",
-      },
-      {
-        name: "Tab.METHAI",
-        dosage: "10mg 1+0",
-        frequency: "After meal",
-        duration: "X 5 Days",
-      },
-    ],
-    reports: {
-      ecg: "/path/to/ecg-report.jpg",
-      blood: {
-        WBC: "6.8",
-        RBC: "5.2",
-        HGB: "15.8",
-        HCT: "47.6",
-        MCV: "12.6",
-        MCH: "30.4",
-      },
-      xray: "/path/to/xray-report.jpg",
-    },
   };
 
   // Function to handle appointment form submission
@@ -205,7 +184,7 @@ function DoctorsPage() {
   // Function to handle patient selection
   const handlePatientSelect = (patientId) => {
     console.log(`Selected patient: ${patientId}`);
-    // You could implement logic to select a patient and display their details
+    setSelectedPatient(patientId);
   };
 
   return (
@@ -215,8 +194,14 @@ function DoctorsPage() {
         patients={patients}
         stats={stats}
         selectedPatient={selectedPatient}
+        patientDetails={patientDetails} // Pass the patient details to DoctorDashboard
         onPatientSelect={handlePatientSelect}
         onDateSelect={setSelectedDate}
+        breadcrumbs={[
+            { label: "Dashboard", onClick: () => navigate("/admin") },
+            { label: "Doctor Appointment", onClick: null },
+          ]
+        }
         onSearch={(query) => console.log(`Search query: ${query}`)}
         onFilter={() => console.log("Filter clicked")}
         onBookAppointment={() => setShowAppointmentModal(true)}

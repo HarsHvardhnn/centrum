@@ -21,7 +21,7 @@ const ServicesManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     title: "",
-    icon: "",
+    price: "",
     shortDescription: "",
     description: "",
     bulletPoints: [],
@@ -114,15 +114,8 @@ const ServicesManagement = () => {
   const validateForm = () => {
     const errors = {};
     if (!formData.title.trim()) errors.title = "Title is required";
-    if (!formData.icon.trim()) errors.icon = "Icon is required";
-    if (!formData.shortDescription.trim())
-      errors.shortDescription = "Short description is required";
-    if (!formData.description.trim())
-      errors.description = "Description is required";
-    if (formData.bulletPoints.length === 0)
-      errors.bulletPoints = "At least one bullet point is required";
-    if (currentService === null && imageFiles.length === 0)
-      errors.images = "At least one image is required";
+    if (!formData.price.trim()) errors.price = "Price is required";
+  
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -138,7 +131,7 @@ const ServicesManagement = () => {
     // Create FormData object for file uploads
     const formDataToSend = new FormData();
     formDataToSend.append("title", formData.title);
-    formDataToSend.append("icon", formData.icon);
+    formDataToSend.append("price", formData.price);
     formDataToSend.append("shortDescription", formData.shortDescription);
     formDataToSend.append("description", formData.description);
     formDataToSend.append(
@@ -180,7 +173,7 @@ const ServicesManagement = () => {
     setCurrentService(service);
     setFormData({
       title: service.title,
-      icon: service.icon,
+      price: service.price,
       shortDescription: service.shortDescription,
       description: service.description,
       bulletPoints: service.bulletPoints || [],
@@ -214,7 +207,7 @@ const ServicesManagement = () => {
   const resetForm = () => {
     setFormData({
       title: "",
-      icon: "",
+      price: "",
       shortDescription: "",
       description: "",
       bulletPoints: [],
@@ -293,7 +286,7 @@ const ServicesManagement = () => {
                 Title
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Icon
+                Price
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Description
@@ -322,7 +315,7 @@ const ServicesManagement = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{service.icon}</div>
+                    <div className="text-sm text-gray-500">{service.price || 0}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-500 truncate max-w-md">
@@ -403,25 +396,25 @@ const ServicesManagement = () => {
                 {/* Icon */}
                 <div>
                   <label
-                    htmlFor="icon"
+                    htmlFor="price"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Icon Name*
+                    Price*
                   </label>
                   <input
                     type="text"
-                    id="icon"
-                    name="icon"
-                    value={formData.icon}
+                    id="price"
+                    name="price"
+                    value={formData.price}
                     onChange={handleInputChange}
-                    placeholder="e.g. FaStethoscope"
+                    placeholder="price..."
                     className={`w-full p-2 border ${
-                      formErrors.icon ? "border-red-500" : "border-gray-300"
+                      formErrors.price ? "border-red-500" : "border-gray-300"
                     } rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500`}
                   />
-                  {formErrors.icon && (
+                  {formErrors.price && (
                     <p className="mt-1 text-sm text-red-600">
-                      {formErrors.icon}
+                      {formErrors.price}
                     </p>
                   )}
                 </div>
@@ -432,7 +425,7 @@ const ServicesManagement = () => {
                     htmlFor="shortDescription"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Short Description*
+                    Short Description
                   </label>
                   <input
                     type="text"
@@ -459,7 +452,7 @@ const ServicesManagement = () => {
                     htmlFor="description"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Full Description*
+                    Full Description
                   </label>
                   <textarea
                     id="description"
@@ -483,7 +476,7 @@ const ServicesManagement = () => {
                 {/* Bullet Points */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Bullet Points*
+                    Bullet Points
                   </label>
                   <div className="flex items-center mb-2">
                     <input

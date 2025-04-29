@@ -12,33 +12,22 @@ import { useUser } from "../../../context/userContext";
 const DoctorDashboard = ({
   doctor,
   patients,
+  patientDetails,
   onDateSelect,
   onSearch,
   onFilter,
   onBookAppointment,
-  breadcrumbs = [
-    { label: "Dashboard", onClick: () => console.log("Dashboard clicked") },
-    { label: "Doctor Appointment", onClick: null },
-  ],
+  onPatientSelect,
+  selectedPatient,
+  breadcrumbs ,
 }) => {
   const navigate = useNavigate();
-  const {user}=useUser()
-  const [selectedPatient, setSelectedPatient] = useState(null);
-
-  const handlePatientSelect = (patientId) => {
-    // Find the selected patient by ID
-    const patient = patients.find((p) => p.id === patientId);
-    setSelectedPatient(patient);
-  };
+console.log("patiend eta;same",patientDetails)
 
   const handleViewDetails = () => {
-       navigate(`/patients-details/${selectedPatient?.id}`);
-    // if (selectedPatient) {
-    //   // Navigate to patient details page with the selected patient ID
-    //   navigate(`/patients-details/${selectedPatient.id}`);
-    // } else {
-    //   alert("Please select a patient first");
-    // }
+    if (selectedPatient) {
+      navigate(`/patients-details/${selectedPatient}`);
+    }
   };
 
   return (
@@ -51,7 +40,7 @@ const DoctorDashboard = ({
           <Breadcrumb items={breadcrumbs} />
         </div>
 
-    <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <div className="relative">
             <input
               type="text"
@@ -87,9 +76,9 @@ const DoctorDashboard = ({
             <DoctorInfoCard doctor={doctor} />
           </div>
 
-          <div className="md:col-span-3">
+          {/* <div className="md:col-span-3">
             <StatsDashboard />
-          </div>
+          </div> */}
         </div>
 
         <div className="w-full mx-auto">
@@ -105,7 +94,8 @@ const DoctorDashboard = ({
             <PatientsList
               variant="default"
               patientsData={patients}
-              onPatientSelect={handlePatientSelect}
+              onPatientSelect={onPatientSelect}
+              selectedPatient={selectedPatient}
               title="Patients List"
             />
           </div>
@@ -114,36 +104,29 @@ const DoctorDashboard = ({
             <div className="rounded-lg p-4">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-medium">Patient Details</h2>
-                <button
-                  onClick={handleViewDetails}
-                  className="text-white bg-teal-400 hover:bg-teal-500 px-4 py-2 font-medium rounded-md text-sm"
-                >
-                  View Details
-                </button>
+                {selectedPatient && (
+                  <button
+                    onClick={handleViewDetails}
+                    className="text-white bg-teal-400 hover:bg-teal-500 px-4 py-2 font-medium rounded-md text-sm"
+                  >
+                    View Details
+                  </button>
+                )}
               </div>
 
-              {selectedPatient && (
-                <div>
-                  <div className="flex items-center mb-4">
-                    <img
-                      src={selectedPatient.avatar}
-                      alt={selectedPatient.name}
-                      className="w-12 h-12 rounded-full mr-4"
-                    />
-                    <div>
-                      <h3 className="font-semibold text-base">
-                        {selectedPatient.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {selectedPatient.username}
-                      </p>
-                    </div>
-                  </div>
+              {/* Display message when no patient is selected */}
+              {!selectedPatient && (
+                <div className="flex flex-col items-center justify-center p-6 text-gray-500">
+                  <p className="text-center mb-2">No patient selected</p>
+                  <p className="text-sm text-center text-gray-400">
+                    Select a patient from the list to view their details
+                  </p>
                 </div>
               )}
             </div>
             <div>
-              <PatientInfo />
+              {/* Pass the patient details to PatientInfo component */}
+              {patientDetails && <PatientInfo patientData={patientDetails} />}
             </div>
           </div>
         </div>

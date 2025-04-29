@@ -82,6 +82,88 @@ const patientService = {
     }
   },
 
+
+  updatePatient: async (patientId, patientData) => {
+  try {
+    if (!patientId) {
+      throw new Error("Patient ID is required for update");
+    }
+
+    const formData = new FormData();
+
+    // Only append fields that are provided in patientData
+    if (patientData.address !== undefined) formData.append("address", patientData.address);
+    if (patientData.alternateContact !== undefined) formData.append("alternateContact", patientData.alternateContact);
+    if (patientData.birthWeight !== undefined) formData.append("birthWeight", patientData.birthWeight);
+    if (patientData.city !== undefined) formData.append("city", patientData.city);
+    if (patientData.consents !== undefined) formData.append("consents", JSON.stringify(patientData.consents));
+    if (patientData.consultingDepartment !== undefined) formData.append("consultingDepartment", patientData.consultingDepartment);
+    if (patientData.consultingDoctor !== undefined) formData.append("consultingDoctor", patientData.consultingDoctor);
+    if (patientData.consultingSpecialization !== undefined) formData.append("consultingSpecialization", patientData.consultingSpecialization);
+    if (patientData.country !== undefined) formData.append("country", patientData.country);
+    if (patientData.dateOfBirth !== undefined) formData.append("dateOfBirth", patientData.dateOfBirth);
+    if (patientData.district !== undefined) formData.append("district", patientData.district);
+    if (patientData.education !== undefined) formData.append("education", patientData.education);
+    if (patientData.email !== undefined) formData.append("email", patientData.email);
+    if (patientData.ethnicity !== undefined) formData.append("ethnicity", patientData.ethnicity);
+    if (patientData.fatherName !== undefined) formData.append("fatherName", patientData.fatherName);
+    if (patientData.fullName !== undefined) formData.append("fullName", patientData.fullName);
+    if (patientData.govtId !== undefined) formData.append("govtId", patientData.govtId);
+    if (patientData.hospId !== undefined) formData.append("hospId", patientData.hospId);
+    if (patientData.isInternationalPatient !== undefined) formData.append("isInternationalPatient", patientData.isInternationalPatient);
+    if (patientData.ivrLanguage !== undefined) formData.append("ivrLanguage", patientData.ivrLanguage);
+    if (patientData.mainComplaint !== undefined) formData.append("mainComplaint", patientData.mainComplaint);
+    if (patientData.maritalStatus !== undefined) formData.append("maritalStatus", patientData.maritalStatus);
+    if (patientData.mobileNumber !== undefined) formData.append("mobileNumber", patientData.mobileNumber);
+    if (patientData.motherName !== undefined) formData.append("motherName", patientData.motherName);
+    if (patientData.motherTongue !== undefined) formData.append("motherTongue", patientData.motherTongue);
+    if (patientData.occupation !== undefined) formData.append("occupation", patientData.occupation);
+    if (patientData.otherHospitalIds !== undefined) formData.append("otherHospitalIds", patientData.otherHospitalIds);
+    if (patientData.pinCode !== undefined) formData.append("pinCode", patientData.pinCode);
+    if (patientData.referrerEmail !== undefined) formData.append("referrerEmail", patientData.referrerEmail);
+    if (patientData.referrerName !== undefined) formData.append("referrerName", patientData.referrerName);
+    if (patientData.referrerNumber !== undefined) formData.append("referrerNumber", patientData.referrerNumber);
+    if (patientData.referrerType !== undefined) formData.append("referrerType", patientData.referrerType);
+    if (patientData.religion !== undefined) formData.append("religion", patientData.religion);
+    if (patientData.reviewNotes !== undefined) formData.append("reviewNotes", patientData.reviewNotes);
+    if (patientData.sex !== undefined) formData.append("sex", patientData.sex);
+    if (patientData.spouseName !== undefined) formData.append("spouseName", patientData.spouseName);
+    if (patientData.state !== undefined) formData.append("state", patientData.state);
+    if (patientData.treatmentCategory !== undefined) formData.append("treatmentCategory", patientData.treatmentCategory);
+
+    // Handle new documents to add (if any)
+    if (patientData.newDocuments?.length) {
+      patientData.newDocuments.forEach((file) => {
+        formData.append("files", file.file);
+      });
+    }
+
+    // Handle photo update if available
+    if (patientData.photo) {
+      formData.append("photo", patientData.photo);
+    }
+
+    // Handle document deletions if specified
+    if (patientData.documentsToDelete?.length) {
+      formData.append("documentsToDelete", JSON.stringify(patientData.documentsToDelete));
+    }
+
+    // Send the PUT request
+    const response = await apiCaller("PUT", `/patients/${patientId}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating patient ${patientId}:`, error);
+    throw error;
+  }
+},
+
+
+
   /**
    * Get all patients
    * @param {Object} filters - Optional filters
@@ -109,6 +191,84 @@ const patientService = {
     }
   },
 
+  getPatientDetails: async (id) => {
+    try {
+      if (!id) throw new Error("Patient ID is required");
+
+      const response = await apiCaller("GET", `/patients/details/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(
+        `Error fetching detailed patient info with ID ${id}:`,
+        error
+      );
+      throw error;
+    }
+  },
+
+  updatePatientDetails: async (
+    id,
+    patientData,
+    consultationData,
+    medications,
+    tests,
+    uploadedFiles,
+    notifyPatient
+  ) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      // Create form data if there are files to upload
+      let data;
+      let headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
+      if (
+        uploadedFiles &&
+        uploadedFiles.some((file) => file.file instanceof File)
+      ) {
+        // If we have actual File objects, use FormData
+        data = new FormData();
+        data.append("patientData", JSON.stringify(patientData));
+        data.append("consultationData", JSON.stringify(consultationData));
+        data.append("medications", JSON.stringify(medications));
+        data.append("tests", JSON.stringify(tests));
+        data.append("notifyPatient", JSON.stringify(notifyPatient));
+
+        // Append actual files
+        uploadedFiles.forEach((fileInfo, index) => {
+          if (fileInfo.file instanceof File) {
+            data.append(`files`, fileInfo.file);
+          }
+        });
+
+        // When using FormData, let the browser set the Content-Type
+        delete headers["Content-Type"];
+      } else {
+        // Regular JSON if no files
+        data = {
+          patientData,
+          consultationData,
+          medications,
+          tests,
+          uploadedFiles,
+          notifyPatient,
+        };
+      }
+
+      const response = await apiCaller("PUT", `/patients/details/${id}`, data, {
+        headers,
+      });
+
+      console.log("Response from updatePatientDetails:", response.data);
+      return response.data.data;
+    } catch (error) {
+      return error.response?.data || error.message;
+      // return handleError(error);
+    }
+  },
   /**
    * Get all patients
    * @param {Object} filters - Optional filters
@@ -184,27 +344,7 @@ const patientService = {
       throw error;
     }
   },
-  /**
-   * Update patient info
-   * @param {string} id - Patient ID
-   * @param {Object} updateData - Data to update
-   * @returns {Promise} - Updated patient
-   */
-  updatePatient: async (id, updateData) => {
-    try {
-      if (!id) throw new Error("Patient ID is required");
 
-      const response = await apiCaller(
-        "PUT",
-        `/api/patients/${id}`,
-        updateData
-      );
-      return response.data;
-    } catch (error) {
-      console.error(`Error updating patient with ID ${id}:`, error);
-      throw error;
-    }
-  },
 
   /**
    * Check if a patient is available for appointment

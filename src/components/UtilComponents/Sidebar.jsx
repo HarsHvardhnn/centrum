@@ -77,6 +77,17 @@ const Sidebar = () => {
               isEnabled={true}
             />
           )}
+          {user?.role === "admin" && (
+            <NavItem
+              icon={
+                <MdOutlineMedicalServices className="text-xl text-teal-400" />
+              }
+              label="News"
+              to="/admin/news"
+              isActive={currentPath === "/admin/news"}
+              isEnabled={true}
+            />
+          )}
 
           <NavItem
             icon={<FiUsers className="text-xl text-teal-400" />}
@@ -92,7 +103,7 @@ const Sidebar = () => {
             label="Clinic IP"
             to="/clinic"
             isActive={currentPath === "/clinic"}
-            isEnabled={false}
+            isEnabled={true}
           />
 
           <NavItem
@@ -106,8 +117,8 @@ const Sidebar = () => {
           <NavItem
             icon={<FiUser className="text-xl text-teal-400" />}
             label="Account"
-            to="/profile"
-            isActive={currentPath === "/profile"}
+            to="/admin/profile"
+            isActive={currentPath === "/admin/profile"}
             isEnabled={true}
           />
 

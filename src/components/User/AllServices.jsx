@@ -12,7 +12,13 @@ const ServiceCard = ({ service }) => {
         className="w-full h-80 object-cover rounded-t-md"
       />
       <div className="p-4">
-        <h3 className="text-2xl font-semibold text-main">{service.title}</h3>
+        <div className="flex justify-between items-center">
+          <h3 className="text-2xl font-semibold text-main">{service.title}</h3>
+          {/* Display the price */}
+          <div className="text-lg font-bold text-main bg-neutral-100 px-3 py-1 rounded-lg">
+            ${service.price || "N/A"}
+          </div>
+        </div>
         <p className="text-gray-600 text-sm mt-2 line-clamp-3">
           {service.description}
         </p>

@@ -24,10 +24,12 @@ const ServiceDetail = ({ serviceName }) => {
     return null;
   }
 
-  // Dynamically get the icon component
-  const getIconComponent = (iconName) => {
-    const IconComponent = Icons[iconName] || Icons.FaNotesMedical; // Fallback icon
-    return IconComponent;
+  // Get a random icon from the Icons object
+  const getRandomIcon = () => {
+    const iconKeys = Object.keys(Icons);
+    const randomIndex = Math.floor(Math.random() * iconKeys.length);
+    const randomIconName = iconKeys[randomIndex];
+    return Icons[randomIconName];
   };
 
   return (
@@ -35,7 +37,8 @@ const ServiceDetail = ({ serviceName }) => {
       <div className="w-full md:w-1/4 rounded-lg">
         <div className="border max-md:flex max-md:overflow-scroll border-neutral-200 rounded-lg overflow-hidden">
           {services.map((item) => {
-            const ItemIcon = getIconComponent(item.icon);
+            // Use a random icon for each service
+            const RandomIcon = getRandomIcon();
             return (
               <Link
                 to={"/user/services/" + item.title}
@@ -44,8 +47,12 @@ const ServiceDetail = ({ serviceName }) => {
                   item.title === serviceName ? "bg-main text-white" : ""
                 }`}
               >
-                <ItemIcon className="text-xl" />
-                {item.title}
+                <RandomIcon className="text-xl" />
+                <div className="flex flex-col">
+                  <span>{item.title}</span>
+                  {/* Display the price */}
+              
+                </div>
               </Link>
             );
           })}
@@ -61,9 +68,15 @@ const ServiceDetail = ({ serviceName }) => {
           />
         </div>
 
-        <h2 className="text-3xl md:text-4xl font-serif font-bold text-main mt-6">
-          {service.title}
-        </h2>
+        <div className="flex justify-between items-center mt-6">
+          <h2 className="text-3xl md:text-4xl font-serif font-bold text-main">
+            {service.title}
+          </h2>
+          {/* Display the price prominently */}
+          <div className="text-2xl font-bold text-main bg-neutral-100 px-4 py-2 rounded-lg">
+            ${service.price || "N/A"}
+          </div>
+        </div>
 
         <ul className="grid md:grid-cols-2 gap-2 mt-4 text-xl text-neutral-900">
           {service.bulletPoints.map((point, index) => (

@@ -17,12 +17,14 @@ import { useUser } from "../../context/userContext";
 import CheckInModal from "../admin/CheckinModal";
 
 // Wrap the entire component with FormProvider
-function LabAppointmentsContent() {
+function LabAppointmentsContent({clinic}) {
   // Now we can access the form context directly
   const { formData, updateMultipleFields } = useFormContext();
   const { showLoader, hideLoader } = useLoader();
   const { user } = useUser()
-  const [showCheckin,setShowCheckin]=useState(false)
+  const [showCheckin, setShowCheckin] = useState(false)
+    const [selectedPatient, setSelectedPatient] = useState(null);
+
 
   // Patient data
   const [allPatients, setAllPatients] = useState([]);
@@ -87,6 +89,7 @@ function LabAppointmentsContent() {
   const handleEditPatient = async (patient) => {
     try {
       showLoader();
+      console.log("oatuebt",patient)
 
       // Get patient details from the backend
       const patientDetails = await patientService.getPatientById(patient.id);
@@ -195,26 +198,7 @@ function LabAppointmentsContent() {
           formData
         );
 
-        // Update the patient in the frontend list
-        setAllPatients((prevPatients) =>
-          prevPatients.map((patient) =>
-            patient.id === currentPatientId
-              ? {
-                  ...patient,
-                  name: formData.fullName,
-                  username: `@${formData.fullName
-                    ?.toLowerCase()
-                    .replace(/\s+/g, "")}`,
-                  sex: formData.sex || patient.sex,
-                  age: formData.dateOfBirth
-                    ? calculateAge(formData.dateOfBirth)
-                    : patient.age,
-                  disease: formData.mainComplaint || patient.disease,
-                  doctor: formData.consultingDoctor || patient.doctor,
-                }
-              : patient
-          )
-        );
+        await fetchPatients()
 
         toast.success("Patient updated successfully");
       } else {
@@ -327,7 +311,9 @@ function LabAppointmentsContent() {
       <div className="w-full mx-auto px-4 py-8">
         <div className="flex w-full justify-between">
           <div>
-            <h1 className="text-2xl font-bold mb-1">Lab Appointments</h1>
+            <h1 className="text-2xl font-bold mb-1">
+              {clinic ? "Clinic IP" : "Lab Appointments"}
+            </h1>
             <p className="text-gray-600 mb-4">
               Showing: All Consultations of All Healthcare Providers
             </p>
@@ -387,65 +373,67 @@ function LabAppointmentsContent() {
             </div>
 
             {/* Add Patient Button */}
-        { user?.role!=="doctor" &&  <button
-              className="bg-teal-500 text-white rounded-lg px-4 py-2 flex items-center gap-2"
-              onClick={() => {
-                setIsEditMode(false);
-                setCurrentPatientId(null);
-                setIsModalOpen(true);
-                setCurrentSubStep(0);
-                setCompletedSteps([]);
-                // Reset form when adding new patient
-                updateMultipleFields({
-                  fullName: "",
-                  email: "",
-                  mobileNumber: "",
-                  dateOfBirth: "",
-                  motherTongue: "",
-                  govtId: "",
-                  hospId: "Auto generate",
-                  sex: "",
-                  maritalStatus: "",
-                  ethnicity: "",
-                  otherHospitalIds: "",
+            {user?.role !== "doctor" && !clinic && (
+              <button
+                className="bg-teal-500 text-white rounded-lg px-4 py-2 flex items-center gap-2"
+                onClick={() => {
+                  setIsEditMode(false);
+                  setCurrentPatientId(null);
+                  setIsModalOpen(true);
+                  setCurrentSubStep(0);
+                  setCompletedSteps([]);
+                  // Reset form when adding new patient
+                  updateMultipleFields({
+                    fullName: "",
+                    email: "",
+                    mobileNumber: "",
+                    dateOfBirth: "",
+                    motherTongue: "",
+                    govtId: "",
+                    hospId: "Auto generate",
+                    sex: "",
+                    maritalStatus: "",
+                    ethnicity: "",
+                    otherHospitalIds: "",
 
-                  consents: [],
-                  documents: [],
-                  referrerType: "",
-                  mainComplaint: "",
-                  referrerName: "",
-                  referrerNumber: "",
-                  referrerEmail: "",
-                  consultingDepartment: "",
-                  consultingDoctor: "",
+                    consents: [],
+                    documents: [],
+                    referrerType: "",
+                    mainComplaint: "",
+                    referrerName: "",
+                    referrerNumber: "",
+                    referrerEmail: "",
+                    consultingDepartment: "",
+                    consultingDoctor: "",
 
-                  address: "",
-                  city: "",
-                  pinCode: "",
-                  state: "",
-                  country: "",
-                  district: "",
-                  isInternationalPatient: false,
+                    address: "",
+                    city: "",
+                    pinCode: "",
+                    state: "",
+                    country: "",
+                    district: "",
+                    isInternationalPatient: false,
 
-                  photo: null,
+                    photo: null,
 
-                  fatherName: "",
-                  motherName: "",
-                  spouseName: "",
-                  education: "",
-                  alternateContact: "",
-                  birthWeight: "",
-                  occupation: "",
-                  religion: "",
-                  ivrLanguage: "",
+                    fatherName: "",
+                    motherName: "",
+                    spouseName: "",
+                    education: "",
+                    alternateContact: "",
+                    birthWeight: "",
+                    occupation: "",
+                    religion: "",
+                    ivrLanguage: "",
 
-                  reviewNotes: "",
-                });
-              }}
-            >
-              <Plus size={18} />
-              Add Patient
-            </button>}
+                    reviewNotes: "",
+                  });
+                }}
+              >
+                <Plus size={18} />
+                Add Patient
+              </button>
+            )}
           </div>
         </div>
 
@@ -454,7 +442,14 @@ function LabAppointmentsContent() {
           patients={filteredPatients}
           onEditPatient={handleEditPatient}
           setShowCheckin={setShowCheckin}
-          
+          setSelectedPatient={setSelectedPatient}
+          clinic={clinic}
+        />
+        <CheckInModal
+          isOpen={showCheckin}
+          setIsOpen={setShowCheckin}
+          patientData={selectedPatient}
+          clinic={clinic}
         />
 
         {/* Patient Modal (Add/Edit) */}
@@ -491,10 +486,10 @@ function LabAppointmentsContent() {
 }
 
 // Create a wrapper component that provides the form context
-function LabAppointments() {
+function LabAppointments({clinic}) {
   return (
     <FormProvider>
-      <LabAppointmentsContent />
+      <LabAppointmentsContent clinic={clinic} />
     </FormProvider>
   );
 }

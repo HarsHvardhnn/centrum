@@ -27,7 +27,6 @@ const doctorService = {
 
       formData.append("email", doctorData.email);
       formData.append("phone", doctorData.phone);
-      formData.append("department", doctorData.department);
       formData.append("password", doctorData.password);
       formData.append("signupMethod", doctorData.signupMethod || "email");
       formData.append("bio", doctorData.bio || "");
@@ -36,7 +35,7 @@ const doctorService = {
 
       // Handle arrays
       (doctorData.specializations || doctorData.specialization || []).forEach(
-        (item) => formData.append("specialization[]", item)
+        (item) => formData.append("specialization[]", item.id)
       );
       (doctorData.qualifications || []).forEach((item) =>
         formData.append("qualifications[]", item)
@@ -64,6 +63,22 @@ const doctorService = {
       throw error;
     }
   },
+
+   getPatientDetailsAndReports: async (patientId) => {
+  try {
+    if (!patientId) {
+      throw new Error("Patient ID is required");
+    }
+
+    const response = await apiCaller("GET", `/patients/det/reports/${patientId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching patient details with ID ${patientId}:`, error);
+    throw error;
+  }
+  },
+  
+
   /**
    * Get all doctors
    * @param {Object} filters - Optional filters for doctors
@@ -250,7 +265,7 @@ const doctorService = {
   getDoctorAvailableSlots: async (doctorId, date) => {
     return apiCaller(
       "GET",
-      `/docs/schedule/available-slots/${doctorId}`,
+      `/docs/schedule/available-slots/${doctorId}?date=${date}`,
       null,
       {},
       {

@@ -45,7 +45,7 @@ const Header = () => {
   };
 
   const handleViewProfile = () => {
-    navigate("/profile");
+    navigate("/admin/profile");
     setIsDropdownOpen(false);
   };
 

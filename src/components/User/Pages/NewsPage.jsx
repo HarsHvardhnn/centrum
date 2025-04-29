@@ -5,20 +5,20 @@ import NewsList from "../NewsList";
 import Categories from "../Categories";
 import RecentPosts from "../RecentPosts";
 
-const NewsPage = () => {
+const NewsPage = ({isNews=true}) => {
   return (
     <>
       <PageHeader
-        title="Blog Posts"
-        path="Home / News"
+        title={isNews ? "News" : "Blog"}
+        path={isNews ? "/HOME / NEWS" : "/HOME / BLOGS"}
         bgurl="/images/about-header.jpg"
       />
       <div className="flex max-w-6xl mx-auto mt-16">
         <div>
-          <NewsList />
+          <NewsList isNews={isNews} />
         </div>
         <div className="hidden md:flex flex-col gap-4 mt-4">
-          <RecentPosts />
+          <RecentPosts isNews={isNews} />
           <Categories />
         </div>
       </div>

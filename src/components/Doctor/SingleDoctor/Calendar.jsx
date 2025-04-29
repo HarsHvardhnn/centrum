@@ -68,8 +68,11 @@ const Calendar = ({ viewMode = "week", onDateSelect }) => {
       selectedDate = generateWeekDays().find((date) => date.getDate() === day);
     }
 
+          console.log("Selectsed date:", onDateSelect);
+
     // Call the onDateSelect prop with the updated date object
     if (onDateSelect && selectedDate) {
+      console.log("Selected date:", selectedDate);
       onDateSelect(selectedDate);
     }
   };

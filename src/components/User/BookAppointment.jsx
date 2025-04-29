@@ -2,18 +2,19 @@ import React, { useState, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import doctorService from "../../helpers/doctorHelper";
-import { DEPARTMENTS } from "../../utils/departments";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
+import { useSpecializations } from "../../context/SpecializationContext";
 
 export default function BookAppointment({
   page,
-  selectedDepartment = "",
+  selectedSpecialization = "",
   selectedDoctorId = "",
 }) {
-  console.log("selectedDoctorId",selectedDoctorId)
+  console.log("selectedDoctorId", selectedDoctorId);
+  const { specializations } = useSpecializations();
+  console.log("specializations", specializations);
   const [doctors, setDoctors] = useState([]);
-  const [departments, setDepartments] = useState(DEPARTMENTS);
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({
     success: false,
@@ -28,7 +29,7 @@ export default function BookAppointment({
     date: "",
     time: "",
     doctor: selectedDoctorId || "",
-    department: selectedDepartment || "",
+    specialization: selectedSpecialization || "",
     message: "",
   };
 
@@ -42,61 +43,30 @@ export default function BookAppointment({
     date: Yup.date().required("Required"),
     time: Yup.string().required("Required"),
     doctor: Yup.string().required("Required"),
-    department: Yup.string().required("Required"),
+    specialization: Yup.string().required("Required"),
     message: Yup.string().min(10, "Too short").required("Required"),
   });
 
-  // Fetch all departments when component mounts
+  // Fetch doctors for preselected specialization when component mounts
   useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        setLoading(true);
-        const response = await doctorService.getAllDoctors();
-
-        // Extract unique departments from doctors
-        const uniqueDepartments = [
-          ...new Set(
-            response.data
-              .map((doctor) => doctor.department)
-              .filter((department) => department && department.trim() !== "")
-          ),
-        ];
-
-        setDepartments(uniqueDepartments);
-      } catch (error) {
-        console.error("Error fetching departments:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDepartments();
-  }, []);
-
-  // Fetch doctors for preselected department when component mounts
-  useEffect(() => {
-    if (selectedDepartment) {
-      fetchDoctorsForDepartment(selectedDepartment);
+    if (selectedSpecialization) {
+      fetchDoctorsForSpecialization(selectedSpecialization);
     }
-  }, [selectedDepartment]);
+  }, [selectedSpecialization]);
 
-  const fetchDoctorsForDepartment = async (department) => {
-    if (!department) return;
+  const fetchDoctorsForSpecialization = async (specializationId) => {
+    if (!specializationId) return;
 
     try {
       setLoading(true);
       const response = await doctorService.getAllDoctors({
-        department: department,
+        specialization: specializationId,
       });
 
-
       setDoctors(response.doctors || []);
-      if (selectedDoctorId) {
-        
-      }
     } catch (error) {
       console.error(
-        `Error fetching doctors for department ${department}:`,
+        `Error fetching doctors for specialization ${specializationId}:`,
         error
       );
     } finally {
@@ -104,16 +74,16 @@ export default function BookAppointment({
     }
   };
 
-  // Fetch doctors based on selected department
-  const handleDepartmentChange = async (e, setFieldValue) => {
-    const newDepartment = e.target.value;
-    setFieldValue("department", newDepartment);
+  // Fetch doctors based on selected specialization
+  const handleSpecializationChange = async (e, setFieldValue) => {
+    const newSpecialization = e.target.value;
+    setFieldValue("specialization", newSpecialization);
 
-    // Reset doctor selection when department changes
+    // Reset doctor selection when specialization changes
     setFieldValue("doctor", "");
 
-    if (newDepartment) {
-      fetchDoctorsForDepartment(newDepartment);
+    if (newSpecialization) {
+      fetchDoctorsForSpecialization(newSpecialization);
     } else {
       setDoctors([]);
     }
@@ -294,19 +264,30 @@ export default function BookAppointment({
                 <div>
                   <Field
                     as="select"
-                    name="department"
-                    onChange={(e) => handleDepartmentChange(e, setFieldValue)}
+                    name="specialization"
+                    onChange={(e) =>
+                      handleSpecializationChange(e, setFieldValue)
+                    }
                     className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   >
-                    <option value="">Select Department</option>
-                    {departments.map((department, index) => (
-                      <option key={index} value={department}>
-                        {department}
+                    <option value="">Select Specialization</option>
+                    {specializations && specializations.length > 0 ? (
+                      specializations.map((specialization) => (
+                        <option
+                          key={specialization._id}
+                          value={specialization._id}
+                        >
+                          {specialization.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>
+                        Loading specializations...
                       </option>
-                    ))}
+                    )}
                   </Field>
                   <ErrorMessage
-                    name="department"
+                    name="specialization"
                     component="div"
                     className="text-red-600 text-sm mt-1"
                   />
@@ -316,13 +297,13 @@ export default function BookAppointment({
                     as="select"
                     name="doctor"
                     className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
-                    disabled={!doctors.length && !values.department}
+                    disabled={!doctors.length && !values.specialization}
                   >
                     <option value="">
                       {loading
                         ? "Loading doctors..."
-                        : doctors.length === 0 && !values.department
-                        ? "Select Department First"
+                        : doctors.length === 0 && !values.specialization
+                        ? "Select Specialization First"
                         : "Select Doctor"}
                     </option>
                     {doctors.map((doctor) => (

@@ -8,6 +8,7 @@ import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import AddDoctorForm from "../Doctor/CreateDoctor";
 import doctorService from "../../helpers/doctorHelper";
 import patientService from "../../helpers/patientHelper";
+import SpecializationModal from "./SpecializationModal";
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -18,6 +19,7 @@ export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [showSpecsModal,setShowSpecsModal]=useState(false)
 
   // Add User dropdowns and modals
   const [showAddDropdown, setShowAddDropdown] = useState(false);
@@ -42,11 +44,6 @@ export default function UserManagement() {
   // State for doctor schedule modal
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
-
-  // Remove the useFormContext hook from here - this is causing the error
-  // const { formData: patientFormData } = useFormContext();
-
-  // Keep a state for patient form data
   const [patientFormData, setPatientFormData] = useState({});
 
   // Patient form states
@@ -313,51 +310,61 @@ export default function UserManagement() {
   return (
     <div className="p-6">
       {/* Header */}
+      <SpecializationModal isOpen={showSpecsModal} onClose={()=>{setShowSpecsModal(false)}}/>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-teal-700">User Management</h1>
 
         {/* Add User Dropdown Button */}
-        <div className="dropdown-container relative">
+        <div className="flex gap-4">
+          {" "}
           <button
-            onClick={() => setShowAddDropdown(!showAddDropdown)}
+            onClick={() => setShowSpecsModal(true)}
             className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
           >
-            Add User <ChevronDown size={16} />
+           Manage Specializations
           </button>
+          <div className="dropdown-container relative">
+            <button
+              onClick={() => setShowAddDropdown(!showAddDropdown)}
+              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+            >
+              Add User <ChevronDown size={16} />
+            </button>
 
-          {showAddDropdown && (
-            <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-              <div className="py-1" role="menu" aria-orientation="vertical">
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={() => {
-                    setShowAddDropdown(false);
-                    setShowAddDoctorModal(true);
-                  }}
-                >
-                  Add Doctor
-                </button>
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={() => {
-                    setShowAddDropdown(false);
-                    setShowAddModal(true);
-                  }}
-                >
-                  Add Receptionist
-                </button>
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  onClick={() => {
-                    setShowAddDropdown(false);
-                    setShowAddPatientModal(true);
-                  }}
-                >
-                  Add Patient
-                </button>
+            {showAddDropdown && (
+              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                <div className="py-1" role="menu" aria-orientation="vertical">
+                  <button
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => {
+                      setShowAddDropdown(false);
+                      setShowAddDoctorModal(true);
+                    }}
+                  >
+                    Add Doctor
+                  </button>
+                  <button
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => {
+                      setShowAddDropdown(false);
+                      setShowAddModal(true);
+                    }}
+                  >
+                    Add Receptionist
+                  </button>
+                  <button
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => {
+                      setShowAddDropdown(false);
+                      setShowAddPatientModal(true);
+                    }}
+                  >
+                    Add Patient
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -506,8 +513,8 @@ export default function UserManagement() {
                           />
                         ) : (
                           <div className="h-10 w-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700">
-                            {user.name.first.charAt(0)}
-                            {user.name.last.charAt(0)}
+                            {user.name?.first?.charAt(0)}
+                            {user.name?.last?.charAt(0)}
                           </div>
                         )}
                       </div>

@@ -26,7 +26,7 @@ export const FormProvider = ({ children }) => {
     referrerName: "",
     referrerNumber: "",
     referrerEmail: "",
-    consultingDepartment: "",
+    consultingSpecialization: "",
     consultingDoctor: "",
 
     // Address

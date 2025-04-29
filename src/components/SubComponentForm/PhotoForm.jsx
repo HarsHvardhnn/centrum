@@ -302,16 +302,16 @@ const ConsentDocumentUpload = () => {
             onChange={handleFileChange}
           />
 
-          {formData.documents && formData.documents.length > 0 && (
+          {formData?.documents && formData?.documents.length > 0 && (
             <div className="mt-6">
               <h3 className="text-md font-medium mb-3">Uploaded Documents</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {formData.documents.map((document) => (
+                {formData?.documents.map((document) => (
                   <div
-                    key={document.id}
+                    key={document?.id}
                     className="relative border border-gray-200 rounded-lg p-3 bg-white"
                   >
-                    {document.isPdf ? (
+                    {document?.isPdf ? (
                       <div
                         onClick={() => openPdfInNewTab(document)}
                         className="flex items-center p-2 cursor-pointer hover:bg-gray-50 rounded"
@@ -346,7 +346,7 @@ const ConsentDocumentUpload = () => {
                     ) : (
                       <div className="flex flex-col">
                         <div className="aspect-[4/3] overflow-hidden flex items-center justify-center bg-gray-100 rounded-lg mb-2">
-                          {document.preview ? (
+                          {document?.preview ? (
                             <img
                               src={document.preview}
                               alt={document.name}
@@ -363,12 +363,12 @@ const ConsentDocumentUpload = () => {
                           }
                         </div>
                         <p className="text-sm truncate font-medium text-center">
-                          {document.name}
+                          {document?.name}
                         </p>
                       </div>
                     )}
                     <button
-                      onClick={() => removeDocument(document.id)}
+                      onClick={() => removeDocument(document?.id)}
                       className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
                       aria-label="Remove document"
                     >

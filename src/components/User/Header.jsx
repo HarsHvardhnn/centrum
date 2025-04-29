@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   FaPhoneAlt,
   FaClock,
@@ -7,14 +7,21 @@ import {
   FaTimes,
   FaSignOutAlt,
   FaCalendarCheck,
+  FaUser,
+  FaIdCard,
+  FaChevronDown,
+  FaChevronUp,
+  FaCog,
 } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import { useUser } from "../../context/userContext";
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user, logout } = useUser();
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
 
   // Check if user is logged in and has the correct role
   useEffect(() => {
@@ -24,6 +31,20 @@ const Header = () => {
       navigate("/login");
     }
   }, [user, navigate]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = () => {
     // Clear user data from context and localStorage
@@ -75,8 +96,8 @@ const Header = () => {
           <Link to="/user/about">About Us</Link>
           <Link to="/user/services">Services</Link>
           <Link to="/user/doctors">Doctors</Link>
-          <Link to="/news">News</Link>
-          <Link to="/blogs">Blogs</Link>
+          <Link to="/user/news">News</Link>
+          <Link to="/user/blogs">Blogs</Link>
           <Link to="/contact">Contact</Link>
         </nav>
 
@@ -139,6 +160,22 @@ const Header = () => {
                   <FaCalendarCheck />
                   My Appointments
                 </Link>
+                <Link
+                  to="/user/details"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 bg-teal-800 text-white w-48 py-2 text-sm rounded-full"
+                >
+                  <FaIdCard />
+                  My Prescriptions
+                </Link>
+                <Link
+                  to="/user/profile"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 bg-teal-800 text-white w-48 py-2 text-sm rounded-full"
+                >
+                  <FaUser />
+                  My Profile
+                </Link>
                 <button
                   onClick={() => {
                     setMenuOpen(false);
@@ -176,24 +213,64 @@ const Header = () => {
           </div>
         </div>
 
-        <div className="hidden lg:flex gap-3">
+        <div className="hidden lg:flex gap-3 items-center">
           {user && user.role === "patient" ? (
-            // Show My Appointments and Logout for logged-in patients
+            // Show dropdown for patient options and logout button
             <>
-              <Link
-                to="/user/appointments"
-                className="flex items-center justify-center gap-2 bg-teal-800 text-white w-40 py-2 text-sm rounded-full"
-              >
-                <FaCalendarCheck />
-                My Appointments
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="flex items-center justify-center gap-2 border border-teal-700 text-teal-700 w-28 py-2 text-sm rounded-full"
-              >
-                <FaSignOutAlt />
-                Logout
-              </button>
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center justify-center gap-2 bg-teal-800 text-white px-4 py-2 text-sm rounded-full"
+                >
+                  <FaUser />
+                  My Account
+                  {dropdownOpen ? (
+                    <FaChevronUp className="ml-1" />
+                  ) : (
+                    <FaChevronDown className="ml-1" />
+                  )}
+                </button>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                    <Link
+                      to="/user/profile"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-teal-50"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <FaUser className="mr-3 text-teal-600" />
+                      My Profile
+                    </Link>
+                    <Link
+                      to="/user/details"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-teal-50"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <FaIdCard className="mr-3 text-teal-600" />
+                      My Prescriptions
+                    </Link>
+                    <Link
+                      to="/user/appointments"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-teal-50"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      <FaCalendarCheck className="mr-3 text-teal-600" />
+                      My Appointments
+                    </Link>
+                    <hr className="my-1" />
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        handleLogout();
+                      }}
+                      className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-teal-50"
+                    >
+                      <FaSignOutAlt className="mr-3 text-teal-600" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             // Show Login and Signup for non-logged in users

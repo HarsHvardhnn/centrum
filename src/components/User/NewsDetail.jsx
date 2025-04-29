@@ -1,58 +1,58 @@
-import React, { useEffect } from "react";
-import newsData from "../../utils/UserSideData/newsData";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { GoDotFill } from "react-icons/go";
-import { Link, useNavigate } from "react-router-dom";
-import NewsHeader from "./NewsHeader";
+import { apiCaller } from "../../utils/axiosInstance";
 
-const NewsDetail = ({ newsId }) => {
+const NewsDetail = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const newsIndex = newsData.findIndex((n) => n.id === Number(newsId));
-  const news = newsData[newsIndex];
+  const [news, setNews] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!news) {
-      navigate("/user/news");
-    }
-  }, [news, navigate]);
+    const fetchNews = async () => {
+      try {
+        const response = await apiCaller("GET", `/news/${id}`);
+        setNews(response.data);
+      } catch (error) {
+        console.error("Failed to fetch news:", error);
+        navigate("/user/news");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!news) {
-    return null;
-  }
+    fetchNews();
+  }, [id, navigate]);
 
-  const prevNews = newsData[newsIndex - 1];
-  const nextNews = newsData[newsIndex + 1];
+  if (loading) return <p className="text-center p-6">Loading...</p>;
+  if (!news) return null;
 
   return (
     <div className="max-w-3xl mx-auto bg-white px-4 rounded-lg">
+      <button
+        onClick={() => navigate(-1)}
+        className="mb-4 inline-flex items-center gap-2 bg-teal-800 text-white px-4 py-2 rounded-full hover:bg-teal-700 transition"
+      >
+        ← Back
+      </button>
       <img
         src={news.image}
         alt={news.title}
         className="w-full h-64 sm:h-96 object-cover mb-2"
       />
 
-      <p className="text-gray-700 leading-relaxed mb-2 sm:mb-6 sm:p-4">{news.paragraph}</p>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4">{news.title}</h1>
 
-      <div className="flex justify-between p-2">
-        {prevNews ? (
-          <button
-            onClick={() => navigate(`/user/news/${prevNews.id}`)}
-            className="px-6 py-2 bg-main-light max-sm:text-sm text-main rounded-full"
-          >
-            Previous Article
-          </button>
-        ) : (
-          <span />
-        )}
-        {nextNews ? (
-          <button
-            onClick={() => navigate(`/user/news/${nextNews.id}`)}
-            className="px-6 py-2 bg-main-light max-sm:text-sm text-main rounded-full"
-          >
-            Next Article
-          </button>
-        ) : (
-          <span />
-        )}
+      <p className="text-gray-500 text-sm mb-1">
+        {news.date} <GoDotFill className="inline text-main" /> {news.author}
+      </p>
+
+      <p className="text-gray-700 leading-relaxed mb-6">{news.description}</p>
+
+      <div className="flex gap-4 text-sm text-gray-600">
+        <span>👁️ {news.views}</span>
+        <span>❤️ {news.likes}</span>
       </div>
     </div>
   );
