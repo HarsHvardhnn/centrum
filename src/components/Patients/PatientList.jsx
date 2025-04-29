@@ -192,6 +192,7 @@ function LabAppointmentsContent({clinic}) {
       showLoader();
 
       if (isEditMode && currentPatientId) {
+        console.log("patietn data in form", formData);;
         // Update existing patient
         const updatedPatient = await patientService.updatePatient(
           currentPatientId,

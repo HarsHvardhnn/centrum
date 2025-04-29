@@ -132,8 +132,8 @@ const patientService = {
     if (patientData.treatmentCategory !== undefined) formData.append("treatmentCategory", patientData.treatmentCategory);
 
     // Handle new documents to add (if any)
-    if (patientData.newDocuments?.length) {
-      patientData.newDocuments.forEach((file) => {
+    if (patientData?.documents?.length) {
+      patientData.documents.forEach((file) => {
         formData.append("files", file.file);
       });
     }
