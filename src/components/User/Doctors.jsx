@@ -27,10 +27,7 @@ export default function Doctors({
             doctor.name.first && doctor.name.last
               ? `${doctor.name.first} ${doctor.name.last}`
               : doctor.name, // Handle both object and string format
-          department:
-            doctor.department ||
-            (doctor.specializations && doctor.specializations[0]) ||
-            "",
+          department: doctor?.specialization[0].name || doctor.department,
           image: doctor.image || "https://via.placeholder.com/400x500",
           experience: doctor.experience || "",
           social: {

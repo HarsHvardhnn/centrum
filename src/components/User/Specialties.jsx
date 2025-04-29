@@ -1,21 +1,23 @@
 import React from "react";
+import { useSpecializations } from "../../context/SpecializationContext";
 
-const specialtiesData = [
-  { id: 1, name: "Neurology" },
-  { id: 2, name: "Bones" },
-  { id: 3, name: "Neurology" },
-  { id: 4, name: "Neurology" },
-  { id: 5, name: "Neurology" },
-  { id: 6, name: "Neurology" },
-  { id: 7, name: "Neurology" },
-  { id: 8, name: "Neurology" },
-  { id: 9, name: "Neurology" },
-  { id: 10, name: "Neurology" },
-  { id: 11, name: "Neurology" },
-  { id: 12, name: "Neurology" },
-];
+// const specialtiesData = [
+//   { id: 1, name: "Neurology" },
+//   { id: 2, name: "Bones" },
+//   { id: 3, name: "Neurology" },
+//   { id: 4, name: "Neurology" },
+//   { id: 5, name: "Neurology" },
+//   { id: 6, name: "Neurology" },
+//   { id: 7, name: "Neurology" },
+//   { id: 8, name: "Neurology" },
+//   { id: 9, name: "Neurology" },
+//   { id: 10, name: "Neurology" },
+//   { id: 11, name: "Neurology" },
+//   { id: 12, name: "Neurology" },
+// ];
 
 export default function Specialties() {
+  const { specializations: specialtiesData } = useSpecializations();
   return (
     <section className="py-12 text-center px-4 md:px-8 lg:px-16">
       <h3 className="text-lg md:text-xl font-bold text-neutral-800">

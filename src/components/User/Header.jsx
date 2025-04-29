@@ -122,7 +122,7 @@ const Header = () => {
 
           <nav className="flex flex-col items-center mt-16 gap-6 text-teal-900 font-medium text-lg">
             <Link
-              to="/"
+              to="/user"
               className="text-teal-800 font-bold"
               onClick={() => setMenuOpen(false)}
             >

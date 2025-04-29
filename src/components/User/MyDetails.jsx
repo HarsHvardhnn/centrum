@@ -412,7 +412,7 @@ export default function PatientMedicalDetails() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {medicalData.documents.map((doc, index) => {
                     // Extract filename from path
-                    const filename = doc.name.split("/").pop() || "Document";
+                    const filename = doc?.name?.split("/").pop() || "Document";
 
                     return (
                       <div
@@ -426,12 +426,16 @@ export default function PatientMedicalDetails() {
                           </h3>
                         </div>
                         <p className="text-xs text-gray-500 mb-2">
-                          {doc.document_type
+                          {doc?.document_type
                             ? doc.document_type.charAt(0).toUpperCase() +
                               doc.document_type.slice(1)
+                            : doc?.type
+                            ? doc.type.charAt(0).toUpperCase() +
+                              doc.type.slice(1)
                             : "Document"}{" "}
-                          • {doc.size}
+                          • {doc?.size}
                         </p>
+
                         <a
                           href={doc.url}
                           target="_blank"
