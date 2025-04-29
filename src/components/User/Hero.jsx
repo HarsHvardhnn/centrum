@@ -1,10 +1,53 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FaSearch } from "react-icons/fa";
 import { FaFacebookF, FaInstagram } from "react-icons/fa";
 import { FaRegCircleUser } from "react-icons/fa6";
 import { IoLocationOutline } from "react-icons/io5";
+import doctorService from "../../helpers/doctorHelper";
 
+// Import your actual doctor service here
+// import doctorService from '../services/doctorService';
+
+// This is a mock for demonstration - replace with your actual import
 export default function Hero() {
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [location, setLocation] = useState("New York"); // Hardcoded location
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await doctorService.getAllDoctors();
+
+        // Transform the API response to match the component's expected format
+        const transformedDoctors = response.doctors.map((doctor) => ({
+          id: doctor._id || doctor.id,
+          name:
+            doctor.name.first && doctor.name.last
+              ? `${doctor.name.first} ${doctor.name.last}`
+              : doctor.name, // Handle both object and string format
+          department: doctor.specialty,
+          image: doctor.image || "https://via.placeholder.com/400x500",
+          experience: doctor.experience || "",
+          social: {
+            linkedin: "#",
+            facebook: "#",
+            instagram: "#",
+          },
+          consultationFee: doctor.consultationFee,
+        }));
+
+        setDoctors(transformedDoctors);
+        setLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch doctors:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
+
   return (
     <section className="bg-teal-100 relative min-h-screen flex flex-col items-center pt-12 sm:pt-16">
       <div className="container mx-auto flex-1 flex flex-col md:flex-row items-center justify-between px-4 sm:px-10 xl:px-20 pt-8 sm:pt-16">
@@ -28,9 +71,16 @@ export default function Hero() {
             <div className="flex items-center w-full mb-3 sm:mb-0">
               <FaRegCircleUser className="text-gray-600 mr-2" />
               <select className="bg-transparent text-gray-700 outline-none flex-1 w-full">
-                <option>Doctor's Name</option>
-                <option>Dr. John Doe</option>
-                <option>Dr. Jane Smith</option>
+                <option value="">Doctor's Name</option>
+                {loading ? (
+                  <option>Loading doctors...</option>
+                ) : (
+                  doctors.map((doctor) => (
+                    <option key={doctor.id} value={doctor.id}>
+                      {doctor.name}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
@@ -40,6 +90,8 @@ export default function Hero() {
               <input
                 type="text"
                 placeholder="Location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
                 className="bg-transparent placeholder:text-gray-700 outline-none text-gray-700 flex-1 w-full"
               />
             </div>
