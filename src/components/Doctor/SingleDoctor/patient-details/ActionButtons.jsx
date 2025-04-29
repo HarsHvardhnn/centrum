@@ -1,9 +1,12 @@
 import React from "react";
 import { apiCaller } from "../../../../utils/axiosInstance";
+import { useLoader } from "../../../../context/LoaderContext";
 
-const ActionButtons = ({ onAddMedicineClick, onAddTestClick, patientId }) => {
+const ActionButtons = ({ patientId }) => {
+  const {showLoader,hideLoader}=useLoader()
   const handleDownloadVisitCard = async () => {
     try {
+      showLoader();
       const response = await apiCaller(
         "GET",
         `/visit-cards/generate/${patientId}`
@@ -27,6 +30,8 @@ const ActionButtons = ({ onAddMedicineClick, onAddTestClick, patientId }) => {
     } catch (error) {
       console.error("Error downloading visit card:", error);
       alert("Error downloading visit card. Please try again.");
+    } finally {
+      hideLoader();
     }
   };
 
