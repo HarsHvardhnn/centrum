@@ -98,7 +98,7 @@ const Header = () => {
           <Link to="/user/doctors">Doctors</Link>
           <Link to="/user/news">News</Link>
           <Link to="/user/blogs">Blogs</Link>
-          <Link to="/contact">Contact</Link>
+          {/* <Link to="/contact">Contact</Link> */}
         </nav>
 
         <button
@@ -137,15 +137,15 @@ const Header = () => {
             <Link to="/user/doctors" onClick={() => setMenuOpen(false)}>
               Doctors
             </Link>
-            <Link to="/news" onClick={() => setMenuOpen(false)}>
+            <Link to="/user/news" onClick={() => setMenuOpen(false)}>
               News
             </Link>
-            <Link to="/blogs" onClick={() => setMenuOpen(false)}>
+            <Link to="/user/blogs" onClick={() => setMenuOpen(false)}>
               Blogs
             </Link>
-            <Link to="/contact" onClick={() => setMenuOpen(false)}>
+            {/* <Link to="/contact" onClick={() => setMenuOpen(false)}>
               Contact
-            </Link>
+            </Link> */}
           </nav>
 
           <div className="flex flex-col items-center gap-3 mt-6">

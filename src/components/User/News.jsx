@@ -1,15 +1,34 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Slider from "react-slick";
-import newsData from "../../utils/UserSideData/newsData";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { IoEyeOutline } from "react-icons/io5";
 import { FaRegHeart } from "react-icons/fa";
+import { apiCaller } from "../../utils/axiosInstance";
 
 export default function News() {
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const response = await apiCaller("GET", "/news");
+        setNews(response.data);
+      } catch (error) {
+        console.error("Failed to fetch news:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, []);
+
+  // Only enable infinite scrolling if we have more than 4 news items
   const settings = {
     dots: true,
-    infinite: true,
+    infinite: news.length > 4,
     speed: 500,
     slidesToShow: 2,
     slidesToScroll: 1,
@@ -23,9 +42,18 @@ export default function News() {
     ],
   };
 
+  // Group news items into pairs for the slider
   const groupedNews = [];
-  for (let i = 0; i < newsData.length; i += 2) {
-    groupedNews.push(newsData.slice(i, i + 2));
+  for (let i = 0; i < news.length; i += 2) {
+    groupedNews.push(news.slice(i, i + 2));
+  }
+
+  if (loading) {
+    return (
+      <section className="py-12 md:px-6">
+        <div className="max-w-6xl mx-auto text-center">Loading news...</div>
+      </section>
+    );
   }
 
   return (
@@ -37,48 +65,52 @@ export default function News() {
         News
       </h2>
 
-      <div className="max-w-6xl mx-auto overflow-clip">
-        <Slider {...settings}>
-          {groupedNews.map((group, index) => (
-            <div key={index} className="p-4">
-              <div className="grid grid-rows-2 gap-4">
-                {group.map((news) => (
-                  <div
-                    key={news.id}
-                    className="bg-white shadow-md rounded-lg overflow-hidden flex"
-                  >
-                    <div className="w-1/3">
-                      <img
-                        src={news.image}
-                        alt="News"
-                        className="w-full h-40 object-cover"
-                      />
-                    </div>
-                    <div className="px-4 py-2 xl:p-4 w-2/3">
-                      <p className="text-neutral-700 max-md:text-xs max-xl:text-sm">
-                        {news.date} | {news.author}
-                      </p>
-                      <h4 className="mt-2 sm:text-lg xl:text-xl text-neutral-700">
-                        {news.title}
-                      </h4>
-                      <div className="flex items-center gap-4 mt-4 max-md:text-sm">
-                        <span className="flex items-center gap-1">
-                          <IoEyeOutline className="text-blue-600 sm:text-xl" />{" "}
-                          {news.views}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <FaRegHeart className="text-red-500 text-sm sm:text-lg" />{" "}
-                          {news.likes}
-                        </span>
+      {news.length === 0 ? (
+        <div className="max-w-6xl mx-auto text-center">No news available.</div>
+      ) : (
+        <div className="max-w-6xl mx-auto overflow-clip">
+          <Slider {...settings}>
+            {groupedNews.map((group, index) => (
+              <div key={index} className="p-4">
+                <div className="grid grid-rows-2 gap-4">
+                  {group.map((newsItem) => (
+                    <div
+                      key={newsItem._id}
+                      className="bg-white shadow-md rounded-lg overflow-hidden flex"
+                    >
+                      <div className="w-1/3">
+                        <img
+                          src={newsItem.image}
+                          alt={newsItem.title}
+                          className="w-full h-40 object-cover"
+                        />
+                      </div>
+                      <div className="px-4 py-2 xl:p-4 w-2/3">
+                        <p className="text-neutral-700 max-md:text-xs max-xl:text-sm">
+                          {newsItem.date} | {newsItem.author}
+                        </p>
+                        <h4 className="mt-2 sm:text-lg xl:text-xl text-neutral-700">
+                          {newsItem.title}
+                        </h4>
+                        <div className="flex items-center gap-4 mt-4 max-md:text-sm">
+                          <span className="flex items-center gap-1">
+                            <IoEyeOutline className="text-blue-600 sm:text-xl" />{" "}
+                            {newsItem.views}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <FaRegHeart className="text-red-500 text-sm sm:text-lg" />{" "}
+                            {newsItem.likes}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </Slider>
-      </div>
+            ))}
+          </Slider>
+        </div>
+      )}
     </section>
   );
 }
