@@ -39,6 +39,7 @@ import NewsManagement from "./components/admin/NewManagement";
 import NewsDetail from "./components/User/NewsDetail";
 import PatientMedicalDetails from "./components/User/MyDetails";
 import { useUser } from "./context/userContext";
+import UserMessaging from "./components/admin/SmsPage";
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -143,6 +144,7 @@ const routes = createBrowserRouter([
 
           { path: "/patients-details/:id", element: <PatientDetailsPage /> },
           { path: "/admin", element: <MedicalDashboard /> },
+          { path: "/admin/sms", element: <UserMessaging /> },
           { path: "/doctor/create", element: <AddDoctorForm /> },
           { path: "/admin/accounts", element: <UserManagement /> },
           { path: "/admin/services", element: <ServicesManagement /> },
