@@ -62,12 +62,12 @@ function LabAppointmentsContent({clinic}) {
   const [currentPatientId, setCurrentPatientId] = useState(null);
 
   const subStepTitles = [
-    "Demographics",
-    "Referrer",
-    "Address",
-    "Photo",
-    "Details",
-    "Notes",
+    "Dane osobowe",
+    "Skierowanie",
+    "Adres",
+    "Zdjęcie",
+    "Szczegóły",
+    "Notatki",
   ];
 
   // Filter patients based on search query and status filter
@@ -161,7 +161,7 @@ function LabAppointmentsContent({clinic}) {
       setCompletedSteps([]);
     } catch (error) {
       console.error("Error fetching patient details:", error);
-      toast.error("Failed to load patient details");
+      toast.error("Nie udało się wczytać danych pacjenta");
     } finally {
       hideLoader();
     }
@@ -202,7 +202,7 @@ function LabAppointmentsContent({clinic}) {
 
         await fetchPatients()
 
-        toast.success("Patient updated successfully");
+        toast.success("Dane pacjenta zostały zaktualizowane");
       } else {
         // Create new patient
         const createdPatient = await patientService.createPatient(formData);
@@ -212,7 +212,7 @@ function LabAppointmentsContent({clinic}) {
           id:
             createdPatient._id ||
             `#${Math.floor(10000000 + Math.random() * 90000000)}`,
-          name: formData.fullName || "New Patient",
+          name: formData.fullName || "Nowy Pacjent",
           username: `@${
             formData.fullName?.toLowerCase().replace(/\s+/g, "") || "newpatient"
           }`,
@@ -221,15 +221,15 @@ function LabAppointmentsContent({clinic}) {
             day: "2-digit",
             year: "2-digit",
           }),
-          sex: formData.sex || "Not specified",
+          sex: formData.sex || "Nie określono",
           age: formData.dateOfBirth ? calculateAge(formData.dateOfBirth) : 0,
-          disease: formData.mainComplaint || "Check-up",
-          status: "In-Treatment",
+          disease: formData.mainComplaint || "Badanie kontrolne",
+          status: "W trakcie leczenia",
           doctor: formData.consultingDoctor || "Dr. Imran Ali",
         };
 
         fetchPatients()
-        toast.success("Patient created successfully");
+        toast.success("Pacjent został dodany");
       }
 
       // Close modal and reset form state
@@ -247,7 +247,7 @@ function LabAppointmentsContent({clinic}) {
         dateOfBirth: "",
         motherTongue: "",
         govtId: "",
-        hospId: "Auto generate",
+        hospId: "Generuj automatycznie",
         sex: "",
         maritalStatus: "",
         ethnicity: "",

@@ -49,16 +49,16 @@ const DoctorAppointmentChart = () => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium">Doctor Appointment</h2>
+        <h2 className="text-lg font-medium">Wizyty lekarskie</h2>
         <button className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-1">
-          <span className="text-sm">Month</span>
+          <span className="text-sm">Miesiąc</span>
           <ChevronDown size={16} />
         </button>
       </div>
 
       <div className="mb-4">
         <div className="inline-block bg-teal-50 rounded-md px-3 py-2">
-          <span className="text-sm text-gray-700">September</span>
+          <span className="text-sm text-gray-700">Wrzesień</span>
           <span className="text-sm font-semibold text-gray-800 ml-1">20k</span>
         </div>
       </div>
@@ -66,15 +66,15 @@ const DoctorAppointmentChart = () => {
       <div className="flex items-center gap-4 mb-4">
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-          <span className="text-xs text-gray-500">Series 1</span>
+          <span className="text-xs text-gray-500">Seria 1</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full bg-teal-300"></div>
-          <span className="text-xs text-gray-500">Series 2</span>
+          <span className="text-xs text-gray-500">Seria 2</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full bg-teal-200"></div>
-          <span className="text-xs text-gray-500">Series 3</span>
+          <span className="text-xs text-gray-500">Seria 3</span>
         </div>
       </div>
 
@@ -89,7 +89,7 @@ const DoctorAppointmentChart = () => {
 
         {/* Y-axis title */}
         <div className="absolute -left-12 top-24 transform -rotate-90 text-xs text-gray-500 whitespace-nowrap">
-          Active doctor
+          Aktywni lekarze
         </div>
 
         {/* Chart content */}
@@ -116,7 +116,7 @@ const DoctorAppointmentChart = () => {
         </div>
 
         {/* X-axis label */}
-        <div className="text-xs text-gray-500 text-center mt-8">Month</div>
+        <div className="text-xs text-gray-500 text-center mt-8">Miesiąc</div>
       </div>
     </div>
   );
@@ -127,9 +127,9 @@ const LabAppointmentsCard = () => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium">Lab Appointment</h2>
+        <h2 className="text-lg font-medium">Wizyty laboratoryjne</h2>
         <button className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-1">
-          <span className="text-sm">Month</span>
+          <span className="text-sm">Miesiąc</span>
           <ChevronDown size={16} />
         </button>
       </div>

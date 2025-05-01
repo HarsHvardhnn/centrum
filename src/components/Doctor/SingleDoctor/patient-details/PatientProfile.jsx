@@ -7,18 +7,18 @@ const PatientProfile = ({ patient, setPatientData }) => {
   const [isEditingRoom, setIsEditingRoom] = useState(false);
   const [roomNumber, setRoomNumber] = useState(patient.roomNumber || "28B");
 
-  // Risk status options
-  const riskStatusOptions = ["Normal", "Risky", "High Risk", "Critical"];
+  // Opcje statusu ryzyka
+  const riskStatusOptions = ["Normalny", "Ryzykowny", "Wysokie ryzyko", "Krytyczny"];
 
-  // Treatment status options
+  // Opcje statusu leczenia
   const treatmentStatusOptions = [
-    "Under Treatment",
-    "Recovered",
-    "Scheduled",
-    "In Review",
+    "W trakcie leczenia",
+    "Wyleczony",
+    "Zaplanowany",
+    "W przeglądzie",
   ];
 
-  // Handle status changes
+  // Obsługa zmian statusu
   const handleStatusChange = (field, value) => {
     setPatientData((prev) => ({
       ...prev,
@@ -26,7 +26,7 @@ const PatientProfile = ({ patient, setPatientData }) => {
     }));
   };
 
-  // Handle room number edit
+  // Obsługa edycji numeru sali
   const handleRoomNumberChange = (e) => {
     setRoomNumber(e.target.value);
   };
@@ -36,7 +36,7 @@ const PatientProfile = ({ patient, setPatientData }) => {
     setIsEditingRoom(false);
   };
 
-  // Handle health metric updates
+  // Obsługa aktualizacji parametrów zdrowotnych
   const handleMetricUpdate = (metric, value) => {
     const mappings = {
       "blood pressure": "bloodPressure",
@@ -51,7 +51,7 @@ const PatientProfile = ({ patient, setPatientData }) => {
 
   return (
     <div className="w-full md:w-1/3 md:border-r border-gray-100 p-6">
-      {/* Profile Info */}
+      {/* Informacje o profilu */}
       <div className="w-full flex items-center">
         <div className="flex flex-col items-center text-center w-1/2 mb-6">
           <div className="relative mb-2">
@@ -82,15 +82,15 @@ const PatientProfile = ({ patient, setPatientData }) => {
           </div>
           <h3 className="font-medium text-base">{patient.name}</h3>
           <p className="text-xs text-gray-500">
-            {patient.age} Years, {patient.gender}
+            {patient.age} lat, {patient.gender}
           </p>
         </div>
 
-        {/* Status Card */}
+        {/* Karta statusu */}
         <div className="bg-teal-50 rounded-lg p-4 w-1/2">
-          <h4 className="text-sm font-medium mb-3">Current Status</h4>
+          <h4 className="text-sm font-medium mb-3">Aktualny status</h4>
 
-          {/* Room Number - Editable */}
+          {/* Numer sali - edytowalny */}
           <div className="bg-[#cce8e8] rounded-md p-2 mb-2 text-xs text-center relative">
             {isEditingRoom ? (
               <div className="flex items-center">
@@ -106,7 +106,7 @@ const PatientProfile = ({ patient, setPatientData }) => {
               </div>
             ) : (
               <div className="flex items-center justify-between">
-                <span>Room Number: {patient.roomNumber || "28B"}</span>
+                <span>Numer sali: {patient.roomNumber || "28B"}</span>
                 <svg
                   onClick={() => setIsEditingRoom(true)}
                   width="12"
@@ -125,11 +125,11 @@ const PatientProfile = ({ patient, setPatientData }) => {
             )}
           </div>
 
-          {/* Risk Status - Dropdown */}
+          {/* Status ryzyka - lista rozwijana */}
           <div className="bg-[#cce8e8] rounded-md p-2 mb-2 text-xs">
             <div className="relative">
               <select
-                value={patient.riskStatus || "Normal"}
+                value={patient.riskStatus || "Normalny"}
                 onChange={(e) =>
                   handleStatusChange("riskStatus", e.target.value)
                 }
@@ -147,11 +147,11 @@ const PatientProfile = ({ patient, setPatientData }) => {
             </div>
           </div>
 
-          {/* Treatment Status - Dropdown */}
+          {/* Status leczenia - lista rozwijana */}
           <div className="bg-[#cce8e8] rounded-md p-2 text-xs">
             <div className="relative">
               <select
-                value={patient.treatmentStatus || "Under Treatment"}
+                value={patient.treatmentStatus || "W trakcie leczenia"}
                 onChange={(e) =>
                   handleStatusChange("treatmentStatus", e.target.value)
                 }
@@ -171,7 +171,7 @@ const PatientProfile = ({ patient, setPatientData }) => {
         </div>
       </div>
 
-      {/* Contact Info */}
+      {/* Informacje kontaktowe */}
       <div className="mb-6 grid grid-cols-2 gap-4 mt-4 border-y py-4">
         <div>
           <p className="text-xs text-gray-500">Email</p>
@@ -187,34 +187,34 @@ const PatientProfile = ({ patient, setPatientData }) => {
         </div>
         <div>
           <p className="text-xs text-gray-500">Choroby</p>
-          <p className="text-sm">{patient.disease || "Not specified"}</p>
+          <p className="text-sm">{patient.disease || "Nie określono"}</p>
         </div>
       </div>
 
-      {/* Health Metrics - Now Editable */}
+      {/* Parametry zdrowotne - edytowalne */}
       <div className="grid grid-cols-2 gap-4">
         <HealthMetric
-          title="Blood Pressure"
+          title="Ciśnienie krwi"
           value={patient.bloodPressure}
           percentage={30}
           onUpdate={handleMetricUpdate}
         />
         <HealthMetric
-          title="Temperature"
+          title="Temperatura"
           value={patient.temperature}
-          percentage={30}
+          percentage={45}
           onUpdate={handleMetricUpdate}
         />
         <HealthMetric
-          title="Weight"
+          title="Waga"
           value={patient.weight}
-          percentage={30}
+          percentage={60}
           onUpdate={handleMetricUpdate}
         />
         <HealthMetric
-          title="Height"
+          title="Wzrost"
           value={patient.height}
-          percentage={30}
+          percentage={75}
           onUpdate={handleMetricUpdate}
         />
       </div>

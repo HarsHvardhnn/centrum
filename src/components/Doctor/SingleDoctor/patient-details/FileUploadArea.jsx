@@ -58,7 +58,7 @@ const FileUploadArea = ({ onFileUpload }) => {
 
         onFileUpload(uploadedFile); // send uploaded file info to parent
       } catch (error) {
-        console.error("File upload failed:", error);
+        console.error("Przesyłanie pliku nie powiodło się:", error);
       }
       finally {
         hideLoader();
@@ -78,11 +78,11 @@ const FileUploadArea = ({ onFileUpload }) => {
         <Upload size={16} className="text-gray-400" />
       </div>
       <div className="text-sm">
-        <span className="text-teal-500 cursor-pointer">Click to upload</span> or
-        drag and drop
+        <span className="text-teal-500 cursor-pointer">Kliknij, aby przesłać</span> lub
+        przeciągnij i upuść
       </div>
       <div className="text-xs text-gray-500 mt-1">
-        SVG, PNG, JPG or GIF (max. 800x400px)
+        SVG, PNG, JPG lub GIF (maks. 800x400px)
       </div>
       <input
         type="file"

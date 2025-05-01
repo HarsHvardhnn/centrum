@@ -45,29 +45,29 @@ const AuthForm = ({ isLogin = false }) => {
   // Validation schemas
   const loginSchema = Yup.object().shape({
     email: Yup.string()
-      .email("Invalid email format")
-      .required("Email is required"),
+      .email("Nieprawidłowy format email")
+      .required("Email jest wymagany"),
     password: Yup.string()
-      .min(8, "Password must be at least 8 characters")
-      .required("Password is required"),
+      .min(8, "Hasło musi mieć co najmniej 8 znaków")
+      .required("Hasło jest wymagane"),
   });
 
   const signupSchema = Yup.object().shape({
-    firstName: Yup.string().required("First name is required"),
-    lastName: Yup.string().required("Last name is required"),
+    firstName: Yup.string().required("Imię jest wymagane"),
+    lastName: Yup.string().required("Nazwisko jest wymagane"),
     email: Yup.string()
-      .email("Invalid email format")
-      .required("Email is required"),
+      .email("Nieprawidłowy format email")
+      .required("Email jest wymagany"),
     password: Yup.string()
-      .min(8, "Password must be at least 8 characters")
-      .required("Password is required"),
+      .min(8, "Hasło musi mieć co najmniej 8 znaków")
+      .required("Hasło jest wymagane"),
     phone: Yup.string().optional(),
   });
 
   const otpSchema = Yup.object().shape({
     otp: Yup.string()
-      .required("OTP is required")
-      .length(6, "OTP must be 6 digits"),
+      .required("Kod weryfikacyjny jest wymagany")
+      .length(6, "Kod OTP musi mieć 6 cyfr"),
   });
 
   // Google OAuth handler
@@ -76,7 +76,7 @@ const AuthForm = ({ isLogin = false }) => {
       const response = await apiCaller("POST", "/auth/google", {
         token: credentialResponse.credential,
       });
-      toast.success("Google login successful");
+      toast.success("Logowanie przez Google powiodło się");
 
       localStorage.setItem("authToken", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
@@ -93,7 +93,10 @@ const AuthForm = ({ isLogin = false }) => {
       navigate("/admin");
     } catch (error) {
       console.log("error", error);
-      toast.error("Google login failed:", error.response.data.message);
+      toast.error(
+        "Logowanie przez Google nie powiodło się:",
+        error.response.data.message
+      );
     }
   };
 
@@ -135,7 +138,8 @@ const AuthForm = ({ isLogin = false }) => {
       );
       setErrors({
         submit:
-          error.response?.data?.message || "Login failed. Please try again.",
+          error.response?.data?.message ||
+          "Logowanie nie powiodło się. Spróbuj ponownie.",
       });
     } finally {
       setSubmitting(false);
@@ -169,7 +173,8 @@ const AuthForm = ({ isLogin = false }) => {
       );
       setErrors({
         submit:
-          error.response?.data?.message || "Signup failed. Please try again.",
+          error.response?.data?.message ||
+          "Rejestracja nie powiodła się. Spróbuj ponownie.",
       });
     } finally {
       setSubmitting(false);
@@ -201,7 +206,7 @@ const AuthForm = ({ isLogin = false }) => {
       setErrors({
         submit:
           error.response?.data?.message ||
-          "OTP verification failed. Please try again.",
+          "Weryfikacja kodu OTP nie powiodła się. Spróbuj ponownie.",
       });
     } finally {
       setSubmitting(false);
@@ -224,13 +229,13 @@ const AuthForm = ({ isLogin = false }) => {
       });
 
       console.log("OTP resent:", response.data);
-      alert("OTP resent successfully!");
+      alert("Kod OTP wysłany ponownie!");
     } catch (error) {
       console.error(
         "Failed to resend OTP:",
         error.response?.data?.message || error.message
       );
-      alert("Failed to resend OTP. Please try again.");
+      alert("Nie udało się wysłać kodu OTP. Spróbuj ponownie.");
     }
   };
 
@@ -248,10 +253,10 @@ const AuthForm = ({ isLogin = false }) => {
           // OTP Verification Screen
           <>
             <h2 className="text-3xl font-semibold text-gray-800 mb-2 text-center">
-              Verify Your Email
+              Zweryfikuj swój email
             </h2>
             <p className="text-gray-500 mb-6 text-center">
-              We've sent a verification code to <strong>{email}</strong>
+              Wysłaliśmy kod weryfikacyjny na adres <strong>{email}</strong>
             </p>
 
             <Formik
@@ -266,13 +271,13 @@ const AuthForm = ({ isLogin = false }) => {
                       htmlFor="otp"
                       className="block text-sm font-medium text-gray-600 mb-1"
                     >
-                      Verification Code*
+                      Kod weryfikacyjny*
                     </label>
                     <Field
                       type="text"
                       id="otp"
                       name="otp"
-                      placeholder="Enter 6-digit code"
+                      placeholder="Wprowadź 6-cyfrowy kod"
                       className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
                         errors.otp && touched.otp
                           ? "border-red-500"
@@ -295,7 +300,7 @@ const AuthForm = ({ isLogin = false }) => {
                     disabled={isSubmitting}
                     className="w-full bg-[#80C5C5] text-white py-2 px-4 rounded-md hover:bg-[#66b3b3] transition duration-200"
                   >
-                    {isSubmitting ? "Verifying..." : "Verify OTP"}
+                    {isSubmitting ? "Weryfikowanie..." : "Zweryfikuj kod"}
                   </button>
 
                   <div className="text-center">
@@ -304,7 +309,7 @@ const AuthForm = ({ isLogin = false }) => {
                       onClick={handleResendOTP}
                       className="text-sm text-[#80C5C5] hover:underline"
                     >
-                      Didn't receive the code? Resend
+                      Nie otrzymałeś kodu? Wyślij ponownie
                     </button>
                   </div>
                 </Form>
@@ -316,13 +321,13 @@ const AuthForm = ({ isLogin = false }) => {
           <>
             <h2 className="text-3xl font-semibold text-gray-800 mb-2 text-center">
               {isLogin
-                ? `${t("Sign in to your account")}`
-                : "Create an account"}
+                ? `${t("Zaloguj się do swojego konta")}`
+                : "Utwórz konto"}
             </h2>
 
             {isLogin && (
               <p className="text-gray-500 mb-6 text-lg text-center">
-                Welcome back! Please enter your details.
+                Witaj ponownie! Wprowadź swoje dane.
               </p>
             )}
 
@@ -341,13 +346,13 @@ const AuthForm = ({ isLogin = false }) => {
                           htmlFor="firstName"
                           className="block text-sm font-medium text-gray-600 mb-1"
                         >
-                          First Name*
+                          Imię*
                         </label>
                         <Field
                           type="text"
                           id="firstName"
                           name="firstName"
-                          placeholder="John"
+                          placeholder="Jan"
                           className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
                             errors.firstName && touched.firstName
                               ? "border-red-500"
@@ -365,13 +370,13 @@ const AuthForm = ({ isLogin = false }) => {
                           htmlFor="lastName"
                           className="block text-sm font-medium text-gray-600 mb-1"
                         >
-                          Last Name*
+                          Nazwisko*
                         </label>
                         <Field
                           type="text"
                           id="lastName"
                           name="lastName"
-                          placeholder="Doe"
+                          placeholder="Kowalski"
                           className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
                             errors.lastName && touched.lastName
                               ? "border-red-500"
@@ -419,7 +424,7 @@ const AuthForm = ({ isLogin = false }) => {
                       htmlFor="password"
                       className="block text-sm font-medium text-gray-600 mb-1"
                     >
-                      Password*
+                      Hasło*
                     </label>
                     <div className="relative">
                       <Field
@@ -474,7 +479,7 @@ const AuthForm = ({ isLogin = false }) => {
                     </div>
                     {!isLogin && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Must be at least 8 characters.
+                        Musi mieć co najmniej 8 znaków.
                       </p>
                     )}
                     <ErrorMessage
@@ -491,13 +496,13 @@ const AuthForm = ({ isLogin = false }) => {
                         htmlFor="phone"
                         className="block text-sm font-medium text-gray-600 mb-1"
                       >
-                        Phone (optional)
+                        Telefon (opcjonalnie)
                       </label>
                       <Field
                         type="text"
                         id="phone"
                         name="phone"
-                        placeholder="+1 123 456 7890"
+                        placeholder="+48 123 456 789"
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-[#80C5C5]"
                       />
                     </div>
@@ -511,7 +516,7 @@ const AuthForm = ({ isLogin = false }) => {
                         onClick={handleForgotPassword}
                         className="text-sm text-[#80C5C5] hover:underline"
                       >
-                        Forgot password?
+                        Zapomniałeś hasła?
                       </button>
                     </div>
                   )}
@@ -528,11 +533,11 @@ const AuthForm = ({ isLogin = false }) => {
                   >
                     {isSubmitting
                       ? isLogin
-                        ? "Signing in..."
-                        : "Creating account..."
+                        ? "Logowanie..."
+                        : "Tworzenie konta..."
                       : isLogin
-                      ? "Sign in"
-                      : "Create account"}
+                      ? "Zaloguj się"
+                      : "Utwórz konto"}
                   </button>
                 </Form>
               )}
@@ -543,7 +548,7 @@ const AuthForm = ({ isLogin = false }) => {
               <div className="relative flex items-center justify-center">
                 <div className="w-full border-t border-gray-300"></div>
                 <div className="absolute bg-white px-4">
-                  <span className="text-sm text-gray-500">OR</span>
+                  <span className="text-sm text-gray-500">LUB</span>
                 </div>
               </div>
 
@@ -555,13 +560,15 @@ const AuthForm = ({ isLogin = false }) => {
                     onSuccess={handleGoogleLogin}
                     onError={() => {
                       console.log("Google Login Failed");
-                      alert("Google login failed. Please try again.");
+                      alert(
+                        "Logowanie przez Google nie powiodło się. Spróbuj ponownie."
+                      );
                     }}
                     useOneTap
                     theme="outline"
                     shape="rectangular"
                     text={isLogin ? "sign_in_with" : "signup_with"}
-                    locale="en"
+                    locale="pl"
                     width="100%"
                   />
                 </div>
@@ -600,15 +607,13 @@ const AuthForm = ({ isLogin = false }) => {
 
             {/* Toggle Link */}
             <p className="mt-4 text-center text-sm text-gray-600">
-              {isLogin
-                ? "Don't have an account? "
-                : "Already have an account? "}
+              {isLogin ? "Nie masz konta? " : "Masz już konto? "}
               <button
                 type="button"
                 onClick={() => navigate(isLogin ? "/signup" : "/login")}
                 className="text-[#80C5C5] hover:underline"
               >
-                {isLogin ? "Sign up" : "Log in"}
+                {isLogin ? "Zarejestruj się" : "Zaloguj się"}
               </button>
             </p>
           </>

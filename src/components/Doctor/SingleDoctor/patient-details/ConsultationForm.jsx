@@ -15,45 +15,43 @@ const ConsultationForm = ({
 }) => {
   console.log("consulting doctor", uploadedFiles);
 
-  // State for searchable dropdown
+  // Stan dla rozwijanej listy z wyszukiwaniem
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef(null);
 
-  // Treatment categories options
+  // Opcje kategorii leczenia
   const treatmentCategories = [
-    "Medication",
-    "Physical Therapy",
-    "Surgery",
-    "Psychological Therapy",
-    "Nutritional Counseling",
-    "Chiropractic Treatment",
-    "Acupuncture",
-    "Homeopathy",
-    "Occupational Therapy",
-    "Speech Therapy",
-    "Radiation Therapy",
-    "Chemotherapy",
-    "Alternative Medicine",
-    "Immunotherapy",
-    "Respiratory Therapy",
+    "Leki",
+    "Fizjoterapia",
+    "Chirurgia",
+    "Terapia psychologiczna",
+    "Poradnictwo żywieniowe",
+    "Leczenie chiropraktyczne",
+    "Akupunktura",
+    "Homeopatia",
+    "Terapia zajęciowa",
+    "Terapia mowy",
+    "Radioterapia",
+    "Chemioterapia",
+    "Medycyna alternatywna",
+    "Immunoterapia",
+    "Terapia oddechowa",
   ];
 
-  // Filtered options based on search term
+  // Filtrowanie opcji na podstawie wyszukiwania
   const filteredCategories = treatmentCategories.filter((category) =>
     category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Format date and time when component mounts or consultationData changes
+  // Formatowanie daty i czasu przy montowaniu komponentu lub zmianie consultationData
   useEffect(() => {
-    // Format date for input type="date" (YYYY-MM-DD)
     if (consultationData.date) {
       try {
         const dateObj = new Date(consultationData.date);
         if (!isNaN(dateObj.getTime())) {
           const formattedDate = dateObj.toISOString().split("T")[0];
 
-          // Only update if the format is different to avoid infinite loop
           if (formattedDate !== consultationData.date) {
             setConsultationData((prev) => ({
               ...prev,
@@ -62,14 +60,12 @@ const ConsultationForm = ({
           }
         }
       } catch (error) {
-        console.error("Error formatting date:", error);
+        console.error("Błąd formatowania daty:", error);
       }
     }
 
-    // Format time for input type="time" (HH:MM)
     if (consultationData.time) {
       try {
-        // Handle formats like "11:20 pm"
         if (
           consultationData.time.includes("am") ||
           consultationData.time.includes("pm")
@@ -82,19 +78,16 @@ const ConsultationForm = ({
             const minutes = timeParts[2];
             const period = timeParts[3].toLowerCase();
 
-            // Convert to 24-hour format
             if (period === "pm" && hours < 12) {
               hours += 12;
             } else if (period === "am" && hours === 12) {
               hours = 0;
             }
 
-            // Format as HH:MM
             const formattedTime = `${hours
               .toString()
               .padStart(2, "0")}:${minutes}`;
 
-            // Only update if the format is different to avoid infinite loop
             if (formattedTime !== consultationData.time) {
               setConsultationData((prev) => ({
                 ...prev,
@@ -104,11 +97,10 @@ const ConsultationForm = ({
           }
         }
       } catch (error) {
-        console.error("Error formatting time:", error);
+        console.error("Błąd formatowania czasu:", error);
       }
     }
 
-    // Handle click outside to close dropdown
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
@@ -142,18 +134,18 @@ const ConsultationForm = ({
   };
 
   const consultationTypes = [
-    "Clinic Consulting",
-    "Online Consultation",
-    "Home Visit",
+    "Konsultacja w przychodni",
+    "Konsultacja online",
+    "Wizyta domowa",
   ];
 
   return (
     <div className="w-full md:w-2/3 p-6">
-      {/* Doctor Form */}
+      {/* Formularz lekarza */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-gray-600 mb-1">
-            Attending doctor
+            Lekarz prowadzący
           </label>
           <input
             type="text"
@@ -164,7 +156,7 @@ const ConsultationForm = ({
         </div>
         <div>
           <label className="block text-sm text-gray-600 mb-1">
-            Consultation Type
+            Rodzaj konsultacji
           </label>
           <div className="relative">
             <select
@@ -175,7 +167,7 @@ const ConsultationForm = ({
               className="w-full p-2.5 border border-gray-200 rounded-lg appearance-none pr-8"
             >
               <option value="" disabled>
-                Select consultation type
+                Wybierz rodzaj konsultacji
               </option>
               {consultationTypes.map((type) => (
                 <option key={type} value={type}>
@@ -189,55 +181,53 @@ const ConsultationForm = ({
           </div>
         </div>
 
-        {/* Searchable Treatment Category Dropdown */}
+        {/* Rozwijana lista kategorii leczenia z wyszukiwaniem */}
         <div>
           <label className="block text-sm text-gray-600 mb-1">
-            Treatment Category
+            Kategoria leczenia
           </label>
           <div className="relative" ref={dropdownRef}>
             <div
               className="w-full p-2.5 border border-gray-200 rounded-lg flex justify-between items-center cursor-pointer"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
-              <span
-                className={
-                  consultationData.treatmentCategory
-                    ? "text-black"
-                    : "text-gray-400"
-                }
-              >
-                {consultationData.treatmentCategory ||
-                  "Select treatment category"}
+              <span>
+                {consultationData.treatmentCategory || "Wybierz kategorię"}
               </span>
               <ChevronDown size={16} className="text-gray-500" />
             </div>
 
             {isDropdownOpen && (
-              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg">
-                <div className="p-2 border-b border-gray-200 flex items-center">
-                  <Search size={16} className="text-gray-400 mr-2" />
-                  <input
-                    type="text"
-                    className="w-full outline-none"
-                    placeholder="Search categories..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
+                <div className="p-2 border-b">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Wyszukaj kategorię..."
+                      className="w-full p-2 pl-8 border border-gray-200 rounded-lg"
+                    />
+                    <Search
+                      size={16}
+                      className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    />
+                  </div>
                 </div>
-                <div className="max-h-60 overflow-y-auto">
-                  {filteredCategories.length > 0 ? (
-                    filteredCategories.map((category) => (
-                      <div
-                        key={category}
-                        className="p-2 hover:bg-gray-100 cursor-pointer"
-                        onClick={() => selectTreatmentCategory(category)}
-                      >
-                        {category}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-2 text-gray-500">No matches found</div>
+                <div className="max-h-48 overflow-y-auto">
+                  {filteredCategories.map((category) => (
+                    <div
+                      key={category}
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => selectTreatmentCategory(category)}
+                    >
+                      {category}
+                    </div>
+                  ))}
+                  {filteredCategories.length === 0 && (
+                    <div className="px-4 py-2 text-gray-500">
+                      Nie znaleziono wyników
+                    </div>
                   )}
                 </div>
               </div>
@@ -247,221 +237,94 @@ const ConsultationForm = ({
 
         <div>
           <label className="block text-sm text-gray-600 mb-1">
-            Patient Name
+            Miejsce konsultacji
           </label>
           <input
             type="text"
-            value={patientData.name}
+            value={consultationData.locationType}
+            onChange={(e) =>
+              handleConsultationChange("locationType", e.target.value)
+            }
             className="w-full p-2.5 border border-gray-200 rounded-lg"
-            readOnly
           />
         </div>
+
         <div>
-          <label className="block text-sm text-gray-600 mb-1">
-            In-person consultation at the clinic
-          </label>
-          <div className="flex items-center space-x-4 mt-1">
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="isOnline"
-                value="yes"
-                checked={!consultationData.isOnline}
-                onChange={() => handleConsultationChange("isOnline", false)}
-                className="mr-2"
+          <label className="block text-sm text-gray-600 mb-1">Data</label>
+          <input
+            type="date"
+            value={consultationData.date}
+            onChange={(e) => handleConsultationChange("date", e.target.value)}
+            className="w-full p-2.5 border border-gray-200 rounded-lg"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Godzina</label>
+          <input
+            type="time"
+            value={consultationData.time}
+            onChange={(e) => handleConsultationChange("time", e.target.value)}
+            className="w-full p-2.5 border border-gray-200 rounded-lg"
+          />
+        </div>
+      </div>
+
+      {/* Opis i notatki */}
+      <div className="mt-6">
+        <label className="block text-sm text-gray-600 mb-1">Opis</label>
+        <textarea
+          value={consultationData.description}
+          onChange={(e) =>
+            handleConsultationChange("description", e.target.value)
+          }
+          rows={3}
+          className="w-full p-2.5 border border-gray-200 rounded-lg resize-none"
+        />
+      </div>
+
+      <div className="mt-4">
+        <label className="block text-sm text-gray-600 mb-1">Notatki</label>
+        <textarea
+          value={consultationData.notes}
+          onChange={(e) => handleConsultationChange("notes", e.target.value)}
+          rows={3}
+          className="w-full p-2.5 border border-gray-200 rounded-lg resize-none"
+        />
+      </div>
+
+      {/* Przesyłanie plików */}
+      <div className="mt-6">
+        <h3 className="text-sm font-medium mb-2">Załączniki</h3>
+        <FileUploadArea onFileUpload={onFileUpload} />
+
+        {/* Lista przesłanych plików */}
+        {uploadedFiles && uploadedFiles.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {uploadedFiles.map((file, index) => (
+              <FileListItem
+                key={index}
+                file={file}
+                onRemove={() => onRemoveFile(file.name)}
               />
-              <span>Yes</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="isOnline"
-                value="no"
-                checked={consultationData.isOnline}
-                onChange={() => handleConsultationChange("isOnline", true)}
-                className="mr-2"
-              />
-              <span>No</span>
-            </label>
+            ))}
           </div>
-        </div>
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">
-            Consultation time
-          </label>
-          <div className="relative flex items-center border border-gray-200 rounded-lg">
-            <div className="pl-2.5">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-gray-400"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-            </div>
-            <input
-              type="time"
-              value={consultationData.time || ""}
-              onChange={(e) => handleConsultationChange("time", e.target.value)}
-              className="w-full p-2.5 border-none rounded-lg"
-            />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">
-            Consultation date
-          </label>
-          <div className="relative flex items-center border border-gray-200 rounded-lg">
-            <div className="pl-2.5">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-gray-400"
-              >
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-            </div>
-            <input
-              type="date"
-              value={consultationData.date || ""}
-              onChange={(e) => handleConsultationChange("date", e.target.value)}
-              className="w-full p-2.5 border-none rounded-lg"
-            />
-          </div>
-        </div>
+        )}
+      </div>
 
-        {/* Consultation Description */}
-        <div className="col-span-1 md:col-span-2">
-          <label className="block text-sm text-gray-600 mb-1">
-            Consultation description
-          </label>
-          <textarea
-            className="w-full p-2.5 border border-gray-200 rounded-lg h-24"
-            value={consultationData.description || ""}
-            onChange={(e) =>
-              handleConsultationChange("description", e.target.value)
-            }
+      {/* Opcje dodatkowe */}
+      <div className="mt-6">
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            checked={patientData?.isInternationalPatient || false}
+            onChange={handleInternationalPatientChange}
+            className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
           />
-        </div>
-
-        {/* New Fields */}
-        {/* 1. Interview with the patient */}
-        <div className="col-span-1 md:col-span-2">
-          <label className="block text-sm text-gray-600 mb-1">
-            Interview with the patient
-          </label>
-          <textarea
-            className="w-full p-2.5 border border-gray-200 rounded-lg h-24"
-            value={consultationData.interview || ""}
-            onChange={(e) =>
-              handleConsultationChange("interview", e.target.value)
-            }
-            placeholder="Enter patient interview details..."
-          />
-        </div>
-
-        {/* 2. Physical examination */}
-        <div className="col-span-1 md:col-span-2">
-          <label className="block text-sm text-gray-600 mb-1">
-            Physical examination
-          </label>
-          <textarea
-            className="w-full p-2.5 border border-gray-200 rounded-lg h-24"
-            value={consultationData.physicalExamination || ""}
-            onChange={(e) =>
-              handleConsultationChange("physicalExamination", e.target.value)
-            }
-            placeholder="Enter physical examination findings..."
-          />
-        </div>
-
-        {/* 3. The treatment used */}
-        <div className="col-span-1 md:col-span-2">
-          <label className="block text-sm text-gray-600 mb-1">
-            Treatment used
-          </label>
-          <textarea
-            className="w-full p-2.5 border border-gray-200 rounded-lg h-24"
-            value={consultationData.treatment || ""}
-            onChange={(e) =>
-              handleConsultationChange("treatment", e.target.value)
-            }
-            placeholder="Enter treatment details..."
-          />
-        </div>
-
-        {/* 4. Recommendations */}
-        <div className="col-span-1 md:col-span-2">
-          <label className="block text-sm text-gray-600 mb-1">
-            Recommendations
-          </label>
-          <textarea
-            className="w-full p-2.5 border border-gray-200 rounded-lg h-24"
-            value={consultationData.recommendations || ""}
-            onChange={(e) =>
-              handleConsultationChange("recommendations", e.target.value)
-            }
-            placeholder="Enter recommendations for the patient..."
-          />
-        </div>
-
-        {/* Notes */}
-        <div className="col-span-1 md:col-span-2">
-          <label className="block text-sm text-gray-600 mb-1">Notes</label>
-          <textarea
-            className="w-full p-2.5 border border-gray-200 rounded-lg h-24"
-            value={consultationData.notes || ""}
-            onChange={(e) => handleConsultationChange("notes", e.target.value)}
-          />
-        </div>
-
-        {/* International Patient */}
-        <div className="col-span-1 md:col-span-2 mt-1">
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              className="w-4 h-4 mr-2"
-              checked={patientData.isInternationalPatient || false}
-              onChange={handleInternationalPatientChange}
-            />
-            <label className="text-sm">International Patient</label>
-          </div>
-        </div>
-
-        {/* Review Notes */}
-        <div className="col-span-1 md:col-span-2 mt-2">
-          <label className="block text-sm text-gray-600 mb-1">
-            Upload Documents
-          </label>
-          <FileUploadArea onFileUpload={onFileUpload} />
-        </div>
-
-        {/* Uploaded Files */}
-        <div className="col-span-1 md:col-span-2 mt-2">
-          {uploadedFiles?.map((file, index) => (
-            <FileListItem
-              key={index}
-              file={file}
-              onRemove={() => onRemoveFile(file.name)}
-            />
-          ))}
-        </div>
+          <span className="ml-2 text-sm text-gray-600">
+            Pacjent międzynarodowy
+          </span>
+        </label>
       </div>
     </div>
   );

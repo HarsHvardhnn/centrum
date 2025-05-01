@@ -19,17 +19,17 @@ const ActionButtons = ({ patientId }) => {
         const downloadLink = document.createElement("a");
         downloadLink.href = data.data.url;
         downloadLink.target = "_blank";
-        downloadLink.download = `visit_card_${patientId}.pdf`;
+        downloadLink.download = `karta_wizyty_${patientId}.pdf`;
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
       } else {
-        console.error("Failed to generate visit card:", data.message);
-        alert("Failed to generate visit card. Please try again.");
+        console.error("Nie udało się wygenerować karty wizyty:", data.message);
+        alert("Nie udało się wygenerować karty wizyty. Spróbuj ponownie.");
       }
     } catch (error) {
-      console.error("Error downloading visit card:", error);
-      alert("Error downloading visit card. Please try again.");
+      console.error("Błąd podczas pobierania karty wizyty:", error);
+      alert("Błąd podczas pobierania karty wizyty. Spróbuj ponownie.");
     } finally {
       hideLoader();
     }
@@ -75,7 +75,7 @@ const ActionButtons = ({ patientId }) => {
           <polyline points="7 10 12 15 17 10" />
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
-        Download Visit Card
+        Pobierz kartę wizyty
       </button>
       {/* <button
         className="flex items-center justify-center border border-gray-200 rounded-lg px-4 py-2 text-sm"

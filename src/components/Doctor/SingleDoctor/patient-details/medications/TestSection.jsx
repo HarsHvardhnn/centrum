@@ -28,11 +28,9 @@ export const TestsSection = ({ tests = [], onUpdate }) => {
     let updatedTests;
 
     if (editingIndex >= 0) {
-      // Update existing test
       updatedTests = [...tests];
       updatedTests[editingIndex] = testData;
     } else {
-      // Add new test
       updatedTests = [...tests, testData];
     }
 
@@ -45,13 +43,13 @@ export const TestsSection = ({ tests = [], onUpdate }) => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return "Brak";
     const date = new Date(dateString);
     return date.toLocaleDateString();
   };
 
   const formatResults = (results) => {
-    if (!results) return "N/A";
+    if (!results) return "Brak";
     if (typeof results === "object") {
       return (
         JSON.stringify(results).substring(0, 30) +
@@ -64,7 +62,7 @@ export const TestsSection = ({ tests = [], onUpdate }) => {
   return (
     <div className="mt-6 bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-medium">Tests</h2>
+        <h2 className="text-xl font-medium">Badania</h2>
         <button
           onClick={handleAddClick}
           className="flex items-center text-sm bg-[#80c5c5] hover:bg-teal-500 text-white px-3 py-1 rounded-md"
@@ -83,7 +81,7 @@ export const TestsSection = ({ tests = [], onUpdate }) => {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          Add Test
+          Dodaj badanie
         </button>
       </div>
 
@@ -98,7 +96,7 @@ export const TestsSection = ({ tests = [], onUpdate }) => {
 
       {tests.length === 0 ? (
         <div className="text-center py-4 text-gray-500">
-          No tests have been added yet.
+          Nie dodano jeszcze żadnych badań.
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -106,19 +104,19 @@ export const TestsSection = ({ tests = [], onUpdate }) => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Test Name
+                  Nazwa badania
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
+                  Data
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Results
+                  Wyniki
                 </th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Akcje
                 </th>
               </tr>
             </thead>
@@ -137,13 +135,13 @@ export const TestsSection = ({ tests = [], onUpdate }) => {
                   <td className="px-3 py-3 whitespace-nowrap text-sm">
                     <span
                       className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                        test.status === "Normal"
+                        test.status === "Normalny"
                           ? "bg-green-100 text-green-800"
-                          : test.status === "Abnormal"
+                          : test.status === "Nieprawidłowy"
                           ? "bg-red-100 text-red-800"
-                          : test.status === "Pending"
+                          : test.status === "Oczekujący"
                           ? "bg-yellow-100 text-yellow-800"
-                          : test.status === "Completed"
+                          : test.status === "Zakończony"
                           ? "bg-blue-100 text-blue-800"
                           : "bg-gray-100 text-gray-800"
                       }`}
@@ -156,13 +154,13 @@ export const TestsSection = ({ tests = [], onUpdate }) => {
                       onClick={() => handleEditClick(test, index)}
                       className="text-indigo-600 hover:text-indigo-900 mr-3"
                     >
-                      Edit
+                      Edytuj
                     </button>
                     <button
                       onClick={() => handleDeleteClick(index)}
                       className="text-red-600 hover:text-red-900"
                     >
-                      Delete
+                      Usuń
                     </button>
                   </td>
                 </tr>

@@ -19,10 +19,10 @@ const DoctorDashboard = ({
   onBookAppointment,
   onPatientSelect,
   selectedPatient,
-  breadcrumbs ,
+  breadcrumbs,
 }) => {
   const navigate = useNavigate();
-console.log("patiend eta;same",patientDetails)
+  console.log("patiend eta;same",patientDetails)
 
   const handleViewDetails = () => {
     if (selectedPatient) {
@@ -44,7 +44,7 @@ console.log("patiend eta;same",patientDetails)
           <div className="relative">
             <input
               type="text"
-              placeholder="olivia@untitledui.com"
+              placeholder="Wyszukaj pacjenta..."
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
               onChange={(e) => onSearch && onSearch(e.target.value)}
             />
@@ -65,7 +65,7 @@ console.log("patiend eta;same",patientDetails)
             onClick={onBookAppointment}
             className="bg-teal-500 text-white px-4 py-2 rounded-lg"
           >
-            Book Appointment
+            Umów wizytę
           </button>
         </div>
       </div>
@@ -96,36 +96,36 @@ console.log("patiend eta;same",patientDetails)
               patientsData={patients}
               onPatientSelect={onPatientSelect}
               selectedPatient={selectedPatient}
-              title="Patients List"
+              title="Lista pacjentów"
             />
           </div>
 
           <div>
             <div className="rounded-lg p-4">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium">Patient Details</h2>
+                <h2 className="text-lg font-medium">Szczegóły pacjenta</h2>
                 {selectedPatient && (
                   <button
                     onClick={handleViewDetails}
                     className="text-white bg-teal-400 hover:bg-teal-500 px-4 py-2 font-medium rounded-md text-sm"
                   >
-                    View Details
+                    Zobacz szczegóły
                   </button>
                 )}
               </div>
 
-              {/* Display message when no patient is selected */}
+              {/* Wyświetl komunikat, gdy nie wybrano pacjenta */}
               {!selectedPatient && (
                 <div className="flex flex-col items-center justify-center p-6 text-gray-500">
-                  <p className="text-center mb-2">No patient selected</p>
+                  <p className="text-center mb-2">Nie wybrano pacjenta</p>
                   <p className="text-sm text-center text-gray-400">
-                    Select a patient from the list to view their details
+                    Wybierz pacjenta z listy, aby zobaczyć jego szczegóły
                   </p>
                 </div>
               )}
             </div>
             <div>
-              {/* Pass the patient details to PatientInfo component */}
+              {/* Przekaż szczegóły pacjenta do komponentu PatientInfo */}
               {patientDetails && <PatientInfo patientData={patientDetails} />}
             </div>
           </div>

@@ -54,15 +54,14 @@ export default function Hero() {
         {/* Left Side Content */}
         <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
           <h1 className="text-4xl sm:text-5xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight font-bold text-gray-900">
-            Find & Search Your
-            <span className="text-main block sm:inline"> Favourite</span> Doctor
+            Znajdź i wyszukaj swojego
+            <span className="text-main block sm:inline"> ulubionego</span> lekarza
           </h1>
           <p className="text-gray-600 mt-4 max-w-md mx-auto md:mx-0 px-2 sm:px-0">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sem velit
-            viverra amet faucibus.
+            Umów się na wizytę u wybranego specjalisty w dogodnym dla Ciebie terminie.
           </p>
           <h2 className="text-xl sm:text-2xl mt-8 md:mt-6 font-bold">
-            Book an Appointment
+            Zarezerwuj wizytę
           </h2>
 
           {/* Search Form */}
@@ -71,9 +70,9 @@ export default function Hero() {
             <div className="flex items-center w-full mb-3 sm:mb-0">
               <FaRegCircleUser className="text-gray-600 mr-2" />
               <select className="bg-transparent text-gray-700 outline-none flex-1 w-full">
-                <option value="">Doctor's Name</option>
+                <option value="">Imię i nazwisko lekarza</option>
                 {loading ? (
-                  <option>Loading doctors...</option>
+                  <option>Wczytywanie lekarzy...</option>
                 ) : (
                   doctors.map((doctor) => (
                     <option key={doctor.id} value={doctor.id}>
@@ -89,7 +88,7 @@ export default function Hero() {
               <IoLocationOutline className="text-lg text-gray-600 mr-2" />
               <input
                 type="text"
-                placeholder="Location"
+                placeholder="Lokalizacja"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 className="bg-transparent placeholder:text-gray-700 outline-none text-gray-700 flex-1 w-full"
@@ -111,7 +110,7 @@ export default function Hero() {
           {/* Hero Image */}
           <img
             src="/images/heroimg.png"
-            alt="Doctors"
+            alt="Lekarze"
             className="w-full max-w-[300px] sm:max-w-[400px] md:max-w-[350px] lg:max-w-[450px] xl:max-w-[600px] relative z-10"
           />
         </div>
@@ -141,7 +140,7 @@ export default function Hero() {
             <h3 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">
               24/7
             </h3>
-            <p className="text-sm sm:text-base lg:text-lg">Online Support</p>
+            <p className="text-sm sm:text-base lg:text-lg">Wsparcie online</p>
           </div>
 
           {/* Divider */}
@@ -152,7 +151,7 @@ export default function Hero() {
             <h3 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">
               100+
             </h3>
-            <p className="text-sm sm:text-base lg:text-lg">Doctors</p>
+            <p className="text-sm sm:text-base lg:text-lg">Lekarzy</p>
           </div>
 
           {/* Divider */}
@@ -163,7 +162,7 @@ export default function Hero() {
             <h3 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">
               1M+
             </h3>
-            <p className="text-sm sm:text-base lg:text-lg">Active Patients</p>
+            <p className="text-sm sm:text-base lg:text-lg">Aktywnych pacjentów</p>
           </div>
         </div>
       </div>

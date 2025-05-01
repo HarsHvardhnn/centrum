@@ -40,8 +40,8 @@ export default function Doctors({
 
         setDoctors(transformedDoctors);
       } catch (err) {
-        console.error("Error fetching doctors:", err);
-        setError("Failed to load doctors. Please try again later.");
+        console.error("Błąd podczas pobierania lekarzy:", err);
+        setError("Nie udało się załadować listy lekarzy. Spróbuj ponownie później.");
       } finally {
         setLoading(false);
       }
@@ -68,7 +68,7 @@ export default function Doctors({
     return (
       <section className="py-16 px-6 bg-white text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-main font-serif">
-          Loading Doctors...
+          Ładowanie lekarzy...
         </h2>
       </section>
     );
@@ -84,9 +84,9 @@ export default function Doctors({
 
   return (
     <section className="py-16 px-6 bg-white text-center">
-      <h3 className="md:text-xl font-bold text-neutral-800">TRUSTED CARE</h3>
+      <h3 className="md:text-xl font-bold text-neutral-800">ZAUFANA OPIEKA</h3>
       <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 sm:mb-12">
-        Our Doctors
+        Nasi Lekarze
       </h2>
 
       <div className="max-w-sm md:max-w-6xl mx-auto overflow-clip">
@@ -107,41 +107,14 @@ export default function Doctors({
                     </p>
                     {doctor.experience && (
                       <p className="text-sm mt-1">
-                        Experience: {doctor.experience}
+                        Doświadczenie: {doctor.experience}
                       </p>
                     )}
                     {doctor.consultationFee && (
                       <p className="text-sm font-medium mt-1">
-                        Fee: ${doctor.consultationFee}
+                        Cena konsultacji: {doctor.consultationFee} zł
                       </p>
                     )}
-
-                    {/* <div className="flex justify-center gap-4 mt-3">
-                      {doctor.social.linkedin && (
-                        <a
-                          href={doctor.social.linkedin}
-                          className="text-white p-2 bg-main rounded-full hover:bg-teal-700"
-                        >
-                          <FaLinkedinIn className="text-sm" />
-                        </a>
-                      )}
-                      {doctor.social.facebook && (
-                        <a
-                          href={doctor.social.facebook}
-                          className="text-white p-2 bg-main rounded-full hover:bg-teal-700"
-                        >
-                          <FaFacebookF className="text-sm" />
-                        </a>
-                      )}
-                      {doctor.social.instagram && (
-                        <a
-                          href={doctor.social.instagram}
-                          className="text-white p-2 bg-main rounded-full hover:bg-teal-700"
-                        >
-                          <FaInstagram className="text-sm" />
-                        </a>
-                      )}
-                    </div> */}
                   </div>
 
                   <button
@@ -153,7 +126,7 @@ export default function Doctors({
                     }}
                     className="bg-main text-white font-semibold text-lg py-3 w-full hover:bg-teal-700 transition-all"
                   >
-                    Book Appointment{" "}
+                    Umów wizytę
                   </button>
                 </div>
               </div>
@@ -161,7 +134,7 @@ export default function Doctors({
           </Slider>
         ) : (
           <p className="text-xl text-gray-600">
-            No doctors available at the moment.
+            Aktualnie brak dostępnych lekarzy.
           </p>
         )}
       </div>

@@ -38,11 +38,11 @@ export default function DoctorDetailPage() {
           const transformedData = transformDoctorData(response.doctor);
           setDoctorData(transformedData);
         } else {
-          setError("Failed to load doctor data");
+          setError("Nie udało się załadować danych lekarza");
         }
       } catch (err) {
-        console.error("Error fetching doctor data:", err);
-        setError("Error loading doctor data");
+        console.error("Błąd podczas pobierania danych lekarza:", err);
+        setError("Błąd ładowania danych lekarza");
       } finally {
         hideLoader();
       }
@@ -72,7 +72,7 @@ export default function DoctorDetailPage() {
 
     // Format experience
     const experienceText = apiDoctor.experience
-      ? `${apiDoctor.experience} Years Experience Overall`
+      ? `${apiDoctor.experience} Lat Ogólnego Doświadczenia`
       : "";
 
     return {
@@ -84,10 +84,10 @@ export default function DoctorDetailPage() {
       specialization: specialization,
       experience: experienceText,
       votes: apiDoctor.votes || 0, // Default or get from reviews if available
-      location: "Location", // Add if available in API
-      hospital: "Hospital", // Add if available in API
+      location: "Lokalizacja", // Add if available in API
+      hospital: "Szpital", // Add if available in API
       hospitalRating: 5, // Default or calculate if available
-      waitTime: "Max 15 mins wait", // Default or get from API if available
+      waitTime: "Maksymalny czas oczekiwania 15 minut", // Default or get from API if available
       price: `$${apiDoctor.consultationFee || 0}`,
       biography: apiDoctor.bio || "",
       education: [], // Empty array as it's not in the API response
@@ -100,13 +100,13 @@ export default function DoctorDetailPage() {
 
   if (error) return <div className="p-6 text-center text-red-500">{error}</div>;
   if (!doctorData)
-    return <div className="p-6 text-center">No doctor data available</div>;
+    return <div className="p-6 text-center">Brak dostępnych danych lekarza</div>;
 
   return (
     <>
       <h1 className="text-[#80c5c5] font-medium flex items-center gap-2 p-6 text-xl">
         <FaArrowLeftLong className="font-normal cursor-pointer" onClick={()=>{navigate("/doctors")}}/>
-        Doctor Appointment / {doctorData.name}
+        Wizyta Lekarska / {doctorData.name}
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
         <div className="md:col-span-1 space-y-4">
@@ -127,7 +127,7 @@ const DoctorCard = ({ data }) => (
     <div className="relative inline-block w-fit mx-auto rounded-full">
       <img
         src={data.profilePic}
-        alt="Doctor"
+        alt="Lekarz"
         className="mx-auto size-28 border border-white shadow-md object-cover rounded-full p-0.5"
       />
       <RiVerifiedBadgeFill className="absolute bottom-2 right-2 text-blue-500 text-xl" />
@@ -139,18 +139,18 @@ const DoctorCard = ({ data }) => (
       {data.rating}
     </p>
     <p className="text-sm">{data.qualification}</p>
-    <p className="text-sm">{data.specialization || "General"}</p>
+    <p className="text-sm">{data.specialization || "Ogólny"}</p>
     <p className="text-sm">{data.experience}</p>
     <p className="mt-4 font-medium text-sm flex items-center justify-center gap-2">
       <FiThumbsUp className="text-lg" />
-      98% ({data.votes} votes)
+      98% ({data.votes} głosów)
     </p>
     <p className="font-medium mb-4 text-sm flex items-center justify-center gap-2">
       <MdOutlineVerifiedUser className="text-lg" />
-      Medical Registration Verified
+      Rejestracja Medyczna Zweryfikowana
     </p>
     <button className="w-full font-medium text-[#99d1d1] underline">
-      Share your Feedback
+      Podziel się swoją opinią
     </button>
   </div>
 );
@@ -181,7 +181,7 @@ const AvailableTime = ({ data }) => {
           setAvailableSlots(response.data.data || []);
         
       } catch (err) {
-        console.error("Error fetching available slots:", err);
+        console.error("Błąd podczas pobierania dostępnych terminów:", err);
         setAvailableSlots([]);
       } finally {
         setIsLoading(false);
@@ -207,7 +207,7 @@ const AvailableTime = ({ data }) => {
 
   return (
     <div className="p-4 mt-4 shadow rounded-lg flex flex-col gap-2">
-      <h3 className="text-lg font-semibold pb-2 border-b">Available Time</h3>
+      <h3 className="text-lg font-semibold pb-2 border-b">Dostępne Terminy</h3>
       <p className="font-semibold">{data.hospital}</p>
       <div className="flex justify-between text-sm font-medium items-center">
         <div className="flex w-full gap-4 items-center">
@@ -223,7 +223,7 @@ const AvailableTime = ({ data }) => {
       <Calendar onDateSelect={handleDateSelect} />
 
       {isLoading ? (
-        <div className="text-center py-4">Loading available slots...</div>
+        <div className="text-center py-4">Ładowanie dostępnych terminów...</div>
       ) : availableSlots.length > 0 ? (
         <div className="grid grid-cols-3 gap-2 mt-2">
           {availableSlots.map((slot, i) => (
@@ -240,12 +240,12 @@ const AvailableTime = ({ data }) => {
           ))}
         </div>
       ) : (
-        <div className="text-center py-4">No available slots for this date</div>
+        <div className="text-center py-4">Brak dostępnych terminów dla tej daty</div>
       )}
 
       <button className="mt-4 py-2 px-4 rounded-lg text-white w-fit mx-auto bg-[#80c5c5] flex items-center justify-center gap-2">
         <FaPlus />
-        Book Appointment
+        Umów Wizytę
       </button>
     </div>
   );
@@ -267,14 +267,14 @@ const DoctorBackground = ({ data }) => {
   return (
     <div className="p-4 space-y-6">
       <section>
-        <h3 className="text-lg font-semibold mb-2">Biography</h3>
+        <h3 className="text-lg font-semibold mb-2">Biografia</h3>
         <p className="text-sm text-gray-700">{data.biography}</p>
       </section>
 
       {shouldShowSection(data.education) && (
         <section className="grid md:grid-cols-2 gap-8">
           <div>
-            <h3 className="text-lg font-semibold mb-4">Education</h3>
+            <h3 className="text-lg font-semibold mb-4">Edukacja</h3>
             {data.education.map((edu, idx) => (
               <div key={idx} className="flex items-start gap-2 mb-4">
                 <GoDotFill className="text-teal-600 " />
@@ -289,7 +289,7 @@ const DoctorBackground = ({ data }) => {
 
           {shouldShowSection(data.experienceList) && (
             <div>
-              <h3 className="text-lg font-semibold mb-4">Work & Experience</h3>
+              <h3 className="text-lg font-semibold mb-4">Praca i Doświadczenie</h3>
               {data.experienceList.map((exp, idx) => (
                 <div key={idx} className="flex items-start gap-2 mb-4">
                   <GoDotFill className="text-teal-600" />
@@ -309,7 +309,7 @@ const DoctorBackground = ({ data }) => {
       {shouldShowSection(data.achievements) && (
         <section className="border-b pb-4">
           <div>
-            <h3 className="text-lg font-semibold mb-4">Achievements</h3>
+            <h3 className="text-lg font-semibold mb-4">Osiągnięcia</h3>
             <div className="flex gap-4">
               {data.achievements.map((ach, idx) => (
                 <div key={idx} className="flex w-full items-start gap-4 mb-4">

@@ -61,13 +61,13 @@ const HealthMetric = ({ title, value, percentage, onUpdate }) => {
               onClick={handleSave}
               className="text-xs bg-teal-500 text-white px-2 py-0.5 rounded"
             >
-              Save
+              Zapisz
             </button>
             <button
               onClick={handleCancel}
               className="text-xs bg-gray-300 px-2 py-0.5 rounded"
             >
-              Cancel
+              Anuluj
             </button>
           </div>
         </div>

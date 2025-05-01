@@ -78,7 +78,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
       onComplete(appointmentSubmissionData);
     } else {
       // Show validation message
-      alert("Please select a patient, doctor and time slot to continue");
+      alert("Proszę wybrać pacjenta, lekarza i termin, aby kontynuować");
     }
   };
 
@@ -86,7 +86,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Add Appointment</h2>
+          <h2 className="text-xl font-bold text-gray-800">Dodaj wizytę</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
@@ -113,7 +113,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              About the patient
+              O pacjencie
             </label>
 
             <div className="bg-teal-50 p-3 inline-block rounded-lg mb-2 w-full">
@@ -123,7 +123,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
                   <input
                     type="text"
                     name="patientSource"
-                    placeholder="Select patient source"
+                    placeholder="Wybierz źródło pacjenta"
                     value={appointmentData.patientSource}
                     onChange={handleInputChange}
                     className="w-full p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
@@ -141,7 +141,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
                       onChange={handleInputChange}
                       className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                     />
-                    <span className="ml-2">First-Time Visit</span>
+                    <span className="ml-2">Pierwsza wizyta</span>
                   </label>
                   <label className="inline-flex items-center whitespace-nowrap">
                     <input
@@ -152,7 +152,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
                       onChange={handleInputChange}
                       className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                     />
-                    <span className="ml-2">Re-Visit</span>
+                    <span className="ml-2">Kolejna wizyta</span>
                   </label>
                 </div>
               </div>
@@ -169,7 +169,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
                   className="h-5 w-5 text-purple-600 border-gray-300 rounded-md focus:ring-purple-500"
                 />
                 <span className="ml-2 text-gray-700">
-                  International Patient
+                  Pacjent międzynarodowy
                 </span>
               </label>
             </div>
@@ -186,7 +186,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
           {/* Time section */}
           <div className="w-full md:w-1/2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date
+              Data
             </label>
 
             {/* Light teal background container */}
@@ -217,7 +217,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
                   className="h-4 w-4 text-gray-600 border-gray-300 rounded focus:ring-teal-500"
                 />
                 <span className="ml-2 text-sm text-gray-700">
-                  Mark Apt as Arrived
+                  Oznacz jako przybyły
                 </span>
               </label>
 
@@ -230,7 +230,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
                   onChange={handleInputChange}
                   className="h-4 w-4 text-gray-600 border-gray-300 rounded focus:ring-teal-500"
                 />
-                <span className="ml-2 text-sm text-gray-700">Is Walkin</span>
+                <span className="ml-2 text-sm text-gray-700">Bez rejestracji</span>
               </label>
 
               {/* Needs Attention */}
@@ -243,7 +243,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
                   className="h-4 w-4 text-gray-600 border-gray-300 rounded focus:ring-teal-500"
                 />
                 <span className="ml-2 text-sm text-gray-700">
-                  Needs Attention
+                  Wymaga uwagi
                 </span>
               </label>
             </div>
@@ -252,13 +252,13 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
           {/* Review Notes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Review Notes
+              Notatki
             </label>
             <textarea
               name="notes"
               value={appointmentData.notes}
               onChange={handleInputChange}
-              placeholder="Enter patient details..."
+              placeholder="Wprowadź szczegóły pacjenta..."
               className="w-full p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500 h-12 text-sm"
             ></textarea>
           </div>
@@ -272,17 +272,11 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
               className="h-4 w-4 text-teal-600 rounded mr-2"
             />
             <label htmlFor="enableRepeats" className="text-sm text-gray-700">
-              Enable repeats for patient
+              Włącz powtarzanie dla pacjenta
             </label>
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-            >
-              Cancel
-            </button>
+          <div className="text-right">
             <button
               onClick={handleSubmit}
               className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 inline-flex items-center text-sm"
@@ -292,7 +286,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
                 !appointmentData.selectedSlot
               }
             >
-              Add Appointment
+              Dodaj wizytę
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-4 w-4 ml-1"

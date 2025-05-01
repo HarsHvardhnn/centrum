@@ -48,7 +48,7 @@ const Sidebar = () => {
         <nav>
           <NavItem
             icon={<FiBarChart2 className="text-xl text-teal-400" />}
-            label="Dashboard"
+            label="Panel główny"
             to="/admin"
             isActive={currentPath === "/admin"}
             isEnabled={true}
@@ -56,7 +56,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<LuCalendarPlus2 className="text-xl text-teal-400" />}
-            label="Doctor Appointment"
+            label="Wizyty lekarskie"
             to={
               user?.role == "admin" || user?.role == "receptionist"
                 ? "/doctors"
@@ -71,7 +71,7 @@ const Sidebar = () => {
               icon={
                 <MdOutlineMedicalServices className="text-xl text-teal-400" />
               }
-              label="Services"
+              label="Usługi"
               to="/admin/services"
               isActive={currentPath === "/admin/services"}
               isEnabled={true}
@@ -82,7 +82,7 @@ const Sidebar = () => {
               icon={
                 <MdSms className="text-xl text-teal-400" />
               }
-              label="Sms Management"
+              label="Zarządzanie SMS"
               to="/admin/sms"
               isActive={currentPath === "/admin/sms"}
               isEnabled={true}
@@ -93,7 +93,7 @@ const Sidebar = () => {
               icon={
                 <MdOutlineMedicalServices className="text-xl text-teal-400" />
               }
-              label="News"
+              label="Aktualności"
               to="/admin/news"
               isActive={currentPath === "/admin/news"}
               isEnabled={true}
@@ -102,7 +102,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<FiUsers className="text-xl text-teal-400" />}
-            label="Patients List"
+            label="Lista pacjentów"
             to="/patients"
             isActive={currentPath === "/patients"}
             isEnabled={true}
@@ -111,7 +111,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<RiHomeLine className="text-xl text-teal-400" />}
-            label="Clinic IP"
+            label="Klinika IP"
             to="/clinic"
             isActive={currentPath === "/clinic"}
             isEnabled={true}
@@ -119,7 +119,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<LuFileChartColumn className="text-xl text-teal-400" />}
-            label="Billing"
+            label="Rozliczenia"
             to="/billing"
             isActive={currentPath === "/billing"}
             isEnabled={false}
@@ -127,7 +127,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<FiUser className="text-xl text-teal-400" />}
-            label="Account"
+            label="Konto"
             to="/admin/profile"
             isActive={currentPath === "/admin/profile"}
             isEnabled={true}
@@ -137,7 +137,7 @@ const Sidebar = () => {
 
      {user?.role!=="receptionist" &&     <NavItem
             icon={<FiSettings className="text-xl text-teal-400" />}
-            label="Settings"
+            label="Ustawienia"
             to={`${
               user?.role == "doctor" ? "/doctor/settings" : "/admin/accounts"
             }`}
@@ -147,7 +147,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}
-            label="Log Out"
+            label="Wyloguj"
             to="#"
             onClick={(e) => {
               e.preventDefault();
@@ -170,7 +170,7 @@ const Sidebar = () => {
                 </div>
               </div>
             </div>
-            <h3 className="text-center font-medium mb-1">Help center</h3>
+            <h3 className="text-center font-medium mb-1">Centrum pomocy</h3>
             <p className="text-center text-gray-700 text-xs mb-3">
               Etiam porta sem malesuada magna mollis euismod.
             </p>
@@ -180,7 +180,7 @@ const Sidebar = () => {
               }}
               className="w-full bg-teal-400 hover:bg-teal-600 text-white py-3 px-4 rounded-md font-medium"
             >
-              Go to help center
+              Przejdź do centrum pomocy
             </button>
           </div>
         </div>
@@ -213,7 +213,7 @@ const NavItem = ({ icon, label, to, isActive, isEnabled, onClick }) => {
         {icon}
       </span>
       <span className="text-sm">{label}</span>
-      {label === "Billing" && (
+      {label === "Rozliczenia" && (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-5 w-5 ml-auto text-gray-300"

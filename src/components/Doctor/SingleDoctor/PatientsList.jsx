@@ -72,6 +72,13 @@ const PatientsList = ({
         dotColor: "bg-red-600",
       },
     };
+    
+    const statusTranslations = {
+      Finished: "Zakończona",
+      Waiting: "Oczekuje",
+      Cancelled: "Anulowana"
+    };
+
     const { bgColor, textColor, dotColor } = statusStyles[status] || {
       bgColor: "bg-gray-50",
       textColor: "text-gray-700",
@@ -83,7 +90,7 @@ const PatientsList = ({
         className={`flex items-center px-4 text-sm h-fit py-1 rounded-full capitalize ${bgColor} ${textColor}`}
       >
         <div className={`w-2 h-2 rounded-full ${dotColor} mr-2`} />
-        {status}
+        {statusTranslations[status] || status}
       </div>
     );
   };
@@ -106,6 +113,14 @@ const PatientsList = ({
         dotColor: "bg-indigo-600",
       },
     };
+
+    const modeTranslations = {
+      online: "Online",
+      offline: "Stacjonarnie",
+      phone: "Telefon",
+      inPerson: "Osobista"
+    };
+
     const { bgColor, textColor, dotColor } = modeStyles[mode] || {
       bgColor: "bg-gray-50",
       textColor: "text-gray-700",
@@ -117,7 +132,7 @@ const PatientsList = ({
         className={`flex items-center px-4 text-sm h-fit py-1 rounded-full capitalize ${bgColor} ${textColor}`}
       >
         <div className={`w-2 h-2 rounded-full ${dotColor} mr-2`} />
-        {mode === "inPerson" ? "In Person" : mode}
+        {modeTranslations[mode] || mode}
       </div>
     );
   };
@@ -131,7 +146,7 @@ const PatientsList = ({
         className="flex items-center px-3 py-1 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors"
       >
         <Video size={16} className="mr-1" />
-        Join Now
+        Dołącz teraz
       </a>
     );
   };
@@ -139,10 +154,9 @@ const PatientsList = ({
   const EmptyState = () => (
     <div className="flex flex-col items-center justify-center py-16 text-gray-500">
       <UserX size={48} className="text-gray-400 mb-4" />
-      <h3 className="text-lg font-medium mb-2">No patients found</h3>
+      <h3 className="text-lg font-medium mb-2">Nie znaleziono pacjentów</h3>
       <p className="text-gray-400 text-center max-w-sm mb-6">
-        There are currently no patients in the system or matching your search
-        criteria.
+        Aktualnie nie ma żadnych pacjentów w systemie lub spełniających kryteria wyszukiwania.
       </p>
     </div>
   );
@@ -152,9 +166,9 @@ const PatientsList = ({
       {/* Header */}
       <div className="flex justify-between items-center p-4 border-b">
         <div className="flex gap-8 items-center">
-          <h2 className="text-lg font-semibold">Patients List</h2>
+          <h2 className="text-lg font-semibold">Lista pacjentów</h2>
           <span className="text-sm text-teal-400 bg-teal-100 rounded-full px-3 py-1">
-            {patientsData.length} {patientsData.length === 1 ? "user" : "users"}
+            {patientsData.length} {patientsData.length === 1 ? "użytkownik" : "użytkowników"}
           </span>
         </div>
         <div className="flex items-center space-x-4">
@@ -167,8 +181,8 @@ const PatientsList = ({
         <div>
           {/* Table Header */}
           <div className="w-full flex justify-evenly px-4 py-3 bg-gray-50 border-b">
-            <div className="col-span-2 flex items-center">Patients name</div>
-            <div className="text-center">Sex</div>
+            <div className="col-span-2 flex items-center">Imię i nazwisko</div>
+            <div className="text-center">Płeć</div>
             <div
               className="flex items-center cursor-pointer justify-center"
               onClick={() => requestSort("status")}
@@ -180,10 +194,10 @@ const PatientsList = ({
               className="flex items-center cursor-pointer justify-center"
               onClick={() => requestSort("appointmentMode")}
             >
-              Mode
+              Tryb
               <ChevronDown size={16} />
             </div>
-            <div className="text-center">Action</div>
+            <div className="text-center">Akcja</div>
           </div>
 
           {/* Table Body */}
@@ -200,25 +214,25 @@ const PatientsList = ({
                   className="w-4 h-4 mr-3"
                 />
                 <img
-                  src={patient.avatar || "/api/placeholder/32/32"}
-                  alt={`${patient.name} avatar`}
-                  className="w-8 h-8 rounded-full mr-3"
+                  src={patient.avatar || "https://via.placeholder.com/40"}
+                  alt={`Zdjęcie ${patient.name}`}
+                  className="w-10 h-10 rounded-full mr-3"
                 />
                 <div>
-                  <p>{patient.name}</p>
-                  <p className="text-sm text-gray-500">{patient.username}</p>
+                  <div className="font-medium">{patient.name}</div>
+                  <div className="text-sm text-gray-500">{patient.patient_id}</div>
                 </div>
               </div>
-              <div>{patient.sex}</div>
-              <div className="flex justify-center">
+              <div>{patient.gender}</div>
+              <div>
                 <StatusBadge status={patient.status} />
               </div>
-              <div className="flex justify-center">
-                <AppointmentModeBadge mode={patient.mode} />
+              <div>
+                <AppointmentModeBadge mode={patient.appointmentMode} />
               </div>
-              <div className="flex justify-center">
-                {patient.mode === "online" && patient.status === "booked" && (
-                  <JoinNowButton joiningLink={patient.joining_link} />
+              <div>
+                {patient.appointmentMode === "online" && patient.joiningLink && (
+                  <JoinNowButton joiningLink={patient.joiningLink} />
                 )}
               </div>
             </div>
@@ -230,55 +244,27 @@ const PatientsList = ({
 
       {/* Pagination - Only show if there are patients */}
       {patientsData.length > 0 && (
-        <div className="p-4 flex justify-between items-center">
-          <button
-            onClick={() => onPageChange && onPageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="flex items-center px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-100"
-          >
-            <ChevronLeft size={16} className="mr-2" />
-            Previous
-          </button>
-
-          {/* Pagination Numbers */}
-          <div className="flex space-x-2">
+        <div className="flex justify-between items-center px-4 py-3 border-t">
+          <div className="text-sm text-gray-500">
+            Pokazuje {patientsData.length} z {totalPatients} pacjentów
+          </div>
+          <div className="flex items-center space-x-2">
             <button
-              className={`px-3 py-2 rounded-md border ${
-                currentPage === 1 ? "bg-gray-200" : "hover:bg-gray-100"
-              }`}
-              onClick={() => onPageChange && onPageChange(1)}
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
             >
-              1
+              <ChevronLeft size={20} />
             </button>
+            <span className="text-sm">Strona {currentPage}</span>
             <button
-              className="px-3 py-2 rounded-md border hover:bg-gray-100"
-              onClick={() => onPageChange && onPageChange(2)}
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={patientsData.length < 10}
+              className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
             >
-              2
-            </button>
-            <span className="px-3 py-2 text-gray-500">...</span>
-            <button
-              className="px-3 py-2 rounded-md border hover:bg-gray-100"
-              onClick={() => onPageChange && onPageChange(8)}
-            >
-              8
-            </button>
-            <button
-              className="px-3 py-2 rounded-md border hover:bg-gray-100"
-              onClick={() => onPageChange && onPageChange(9)}
-            >
-              9
+              <ChevronRight size={20} />
             </button>
           </div>
-
-          <button
-            onClick={() => onPageChange && onPageChange(currentPage + 1)}
-            disabled={currentPage === totalPatients}
-            className="flex items-center px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-100"
-          >
-            Next
-            <ChevronRight size={16} className="ml-2" />
-          </button>
         </div>
       )}
     </div>

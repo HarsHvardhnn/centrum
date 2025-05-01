@@ -13,8 +13,8 @@ const ContactPage = () => {
   return (
     <>
       <PageHeader
-        title="Our Contacts"
-        path="Home / Contacts"
+        title="Kontakt"
+        path="Strona główna / Kontakt"
         bgurl="/images/about-header.jpg"
       />
       <Map />
@@ -27,14 +27,14 @@ const ContactPage = () => {
           <div className="flex max-md:flex-col flex-1 gap-4">
             <div className="flex-1 bg-main-light hover:bg-main hover:text-white p-8 rounded-lg text-center flex flex-col items-center transition duration-300">
               <FaPhoneAlt className="text-4xl mb-3" />
-              <h4 className="font-bold text-lg">EMERGENCY</h4>
+              <h4 className="font-bold text-lg">NAGŁE PRZYPADKI</h4>
               <p className="text-base">(237) 681-812-255</p>
               <p className="text-base">(237) 666-331-894</p>
             </div>
 
             <div className="flex-1 bg-main-light hover:bg-main hover:text-white p-8 rounded-lg text-center flex flex-col items-center transition duration-300">
               <FaMapMarkerAlt className="text-4xl mb-3" />
-              <h4 className="font-bold text-lg">LOCATION</h4>
+              <h4 className="font-bold text-lg">LOKALIZACJA</h4>
               <p className="text-base">0123 Some place</p>
               <p className="text-base">9876 Some country</p>
             </div>
@@ -49,9 +49,9 @@ const ContactPage = () => {
 
             <div className="flex-1 bg-main-light hover:bg-main hover:text-white p-8 rounded-lg text-center flex flex-col items-center transition duration-300">
               <FaClock className="text-4xl mb-3" />
-              <h4 className="font-bold text-lg">WORKING HOURS</h4>
-              <p className="text-base">Mon-Sat 09:00-20:00</p>
-              <p className="text-base">Sunday Emergency only</p>
+              <h4 className="font-bold text-lg">GODZINY PRACY</h4>
+              <p className="text-base">Pon-Sob 09:00-20:00</p>
+              <p className="text-base">Niedziela tylko nagłe przypadki</p>
             </div>
           </div>
         </div>

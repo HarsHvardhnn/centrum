@@ -34,17 +34,17 @@ export default function BookAppointment({
   };
 
   const validationSchema = Yup.object({
-    name: Yup.string().required("Required"),
-    gender: Yup.string().required("Required"),
-    email: Yup.string().email("Invalid email").required("Required"),
+    name: Yup.string().required("Wymagane"),
+    gender: Yup.string().required("Wymagane"),
+    email: Yup.string().email("Nieprawidłowy email").required("Wymagane"),
     phone: Yup.string()
-      .matches(/^[0-9]{10}$/, "Invalid phone number")
-      .required("Required"),
-    date: Yup.date().required("Required"),
-    time: Yup.string().required("Required"),
-    doctor: Yup.string().required("Required"),
-    specialization: Yup.string().required("Required"),
-    message: Yup.string().min(10, "Too short").required("Required"),
+      .matches(/^[0-9]{10}$/, "Nieprawidłowy numer telefonu")
+      .required("Wymagane"),
+    date: Yup.date().required("Wymagane"),
+    time: Yup.string().required("Wymagane"),
+    doctor: Yup.string().required("Wymagane"),
+    specialization: Yup.string().required("Wymagane"),
+    message: Yup.string().min(10, "Za krótka wiadomość").required("Wymagane"),
   });
 
   // Fetch doctors for preselected specialization when component mounts
@@ -113,14 +113,14 @@ export default function BookAppointment({
       resetForm();
 
       // Show success message to user
-      toast.success("Appointment booked successfully!");
+      toast.success("Wizyta została pomyślnie zarezerwowana!");
     } catch (error) {
-      console.error("Error booking appointment:", error);
+      console.error("Błąd podczas rezerwacji wizyty:", error);
 
       // Set error status and show error message
       const errorMessage =
         error.response?.data?.message ||
-        "Failed to book appointment. Please try again.";
+        "Nie udało się zarezerwować wizyty. Spróbuj ponownie.";
       setSubmitStatus({ success: false, error: errorMessage });
       toast.error(errorMessage);
     } finally {
@@ -149,11 +149,10 @@ export default function BookAppointment({
           }  flex flex-col justify-center text-center md:text-left`}
         >
           <h2 className="text-3xl md:text-4xl pt-10 font-serif font-bold text-gray-800">
-            Book an Appointment
+            Zarezerwuj wizytę
           </h2>
           <p className="text-neutral-800 mt-2 text-base md:text-lg">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque
-            placerat scelerisque tortor ornare ornare.
+            Zarezerwuj wizytę u wybranego specjalisty w dogodnym dla Ciebie terminie.
           </p>
         </div>
 
@@ -169,7 +168,7 @@ export default function BookAppointment({
                 {/* Show success or error message if available */}
                 {submitStatus.success && (
                   <div className="col-span-1 md:col-span-2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                    Appointment booked successfully!
+                    Wizyta została pomyślnie zarezerwowana!
                   </div>
                 )}
 
@@ -183,7 +182,7 @@ export default function BookAppointment({
                   <Field
                     name="name"
                     type="text"
-                    placeholder="Name"
+                    placeholder="Imię i nazwisko"
                     className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   />
                   <ErrorMessage
@@ -198,9 +197,10 @@ export default function BookAppointment({
                     name="gender"
                     className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   >
-                    <option value="">Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
+                    <option value="">Wybierz płeć</option>
+                    <option value="male">Mężczyzna</option>
+                    <option value="female">Kobieta</option>
+                    <option value="other">Inna</option>
                   </Field>
                   <ErrorMessage
                     name="gender"
@@ -225,8 +225,8 @@ export default function BookAppointment({
                 <div>
                   <Field
                     name="phone"
-                    type="text"
-                    placeholder="Phone"
+                    type="tel"
+                    placeholder="Numer telefonu"
                     className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   />
                   <ErrorMessage
@@ -265,26 +265,15 @@ export default function BookAppointment({
                   <Field
                     as="select"
                     name="specialization"
-                    onChange={(e) =>
-                      handleSpecializationChange(e, setFieldValue)
-                    }
+                    onChange={(e) => handleSpecializationChange(e, setFieldValue)}
                     className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
                   >
-                    <option value="">Select Specialization</option>
-                    {specializations && specializations.length > 0 ? (
-                      specializations.map((specialization) => (
-                        <option
-                          key={specialization._id}
-                          value={specialization._id}
-                        >
-                          {specialization.name}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="" disabled>
-                        Loading specializations...
+                    <option value="">Wybierz specjalizację</option>
+                    {specializations.map((spec) => (
+                      <option key={spec._id} value={spec._id}>
+                        {spec.name}
                       </option>
-                    )}
+                    ))}
                   </Field>
                   <ErrorMessage
                     name="specialization"
@@ -297,23 +286,12 @@ export default function BookAppointment({
                     as="select"
                     name="doctor"
                     className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded"
-                    disabled={!doctors.length && !values.specialization}
+                    disabled={!values.specialization}
                   >
-                    <option value="">
-                      {loading
-                        ? "Loading doctors..."
-                        : doctors.length === 0 && !values.specialization
-                        ? "Select Specialization First"
-                        : "Select Doctor"}
-                    </option>
+                    <option value="">Wybierz lekarza</option>
                     {doctors.map((doctor) => (
-                      <option
-                        key={doctor._id || doctor.id}
-                        value={doctor._id || doctor.id}
-                      >
-                        {doctor.name.first && doctor.name.last
-                          ? `${doctor.name.first} ${doctor.name.last}`
-                          : doctor.name}
+                      <option key={doctor._id} value={doctor._id}>
+                        {doctor.name}
                       </option>
                     ))}
                   </Field>
@@ -328,8 +306,8 @@ export default function BookAppointment({
                   <Field
                     as="textarea"
                     name="message"
-                    placeholder="Message"
-                    className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded h-24"
+                    placeholder="Opisz swój problem"
+                    className="p-3 outline-none w-full bg-main-lighter border border-main-light text-main placeholder:text-main rounded resize-none h-32"
                   />
                   <ErrorMessage
                     name="message"
@@ -341,9 +319,9 @@ export default function BookAppointment({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="col-span-1 md:col-span-2 bg-main text-white uppercase rounded-md py-3 font-bold hover:bg-teal-700 transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="col-span-1 md:col-span-2 bg-main text-white py-3 rounded hover:bg-main-dark transition-colors disabled:opacity-50"
                 >
-                  {isSubmitting ? "Submitting..." : "Submit"}
+                  {isSubmitting ? "Rezerwowanie..." : "Zarezerwuj wizytę"}
                 </button>
               </Form>
             )}

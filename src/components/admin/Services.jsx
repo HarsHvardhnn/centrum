@@ -46,7 +46,7 @@ const ServicesManagement = () => {
       setServices(response.data);
       setError(null);
     } catch (err) {
-      setError("Failed to fetch services. Please try again.");
+      setError("Nie udało się pobrać usług. Spróbuj ponownie.");
       console.error("Error fetching services:", err);
     } finally {
       setLoading(false);
@@ -113,8 +113,8 @@ const ServicesManagement = () => {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.title.trim()) errors.title = "Title is required";
-    if (!formData.price.trim()) errors.price = "Price is required";
+    if (!formData.title.trim()) errors.title = "Tytuł jest wymagany";
+    if (!formData.price.trim()) errors.price = "Cena jest wymagana";
   
 
     setFormErrors(errors);
@@ -162,7 +162,7 @@ const ServicesManagement = () => {
       setIsModalOpen(false);
       fetchServices();
     } catch (err) {
-      setError("Failed to save service. Please try again.");
+      setError("Nie udało się zapisać usługi. Spróbuj ponownie.");
       console.error("Error saving service:", err);
     } finally {
       setLoading(false);
@@ -197,7 +197,7 @@ const ServicesManagement = () => {
       setIsConfirmModalOpen(false);
       setServiceToDelete(null);
     } catch (err) {
-      setError("Failed to delete service. Please try again.");
+      setError("Nie udało się usunąć usługi. Spróbuj ponownie.");
       console.error("Error deleting service:", err);
     } finally {
       setLoading(false);
@@ -240,393 +240,351 @@ const ServicesManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">
-          Services Management
+          Zarządzanie Usługami
         </h1>
         <div className="flex items-center gap-4">
           <div className="relative">
             <input
               type="text"
-              placeholder="Search services..."
+              placeholder="Szukaj usług..."
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <Search
-              className="absolute left-3 top-2.5 text-gray-400"
-              size={18}
-            />
+            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
           <button
             onClick={openAddModal}
-            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg transition-colors duration-300"
+            className="flex items-center gap-2 bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600 transition-colors"
           >
-            <PlusCircle size={18} />
-            <span>Add Service</span>
+            <PlusCircle className="h-5 w-5" />
+            Dodaj Usługę
           </button>
         </div>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-md flex items-start">
-          <AlertCircle
-            className="text-red-500 mr-3 mt-0.5 flex-shrink-0"
-            size={20}
-          />
-          <p className="text-red-700">{error}</p>
+        <div className="mb-6 flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg">
+          <AlertCircle className="h-5 w-5" />
+          <p>{error}</p>
         </div>
       )}
 
-      {/* Services Table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Title
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Price
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Description
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Images
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {loading && !services.length ? (
-              <tr>
-                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                  Loading services...
-                </td>
-              </tr>
-            ) : filteredServices.length ? (
-              filteredServices.map((service) => (
-                <tr key={service._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {service.title}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{service.price || 0}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-500 truncate max-w-md">
-                      {service.shortDescription}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">
-                      {service.images?.length || 0} images
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => openEditModal(service)}
-                        className="p-1.5 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => openDeleteConfirmation(service)}
-                        className="p-1.5 rounded-full bg-red-50 text-red-600 hover:bg-red-100"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                  No services found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Services Grid */}
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-teal-500 border-r-transparent"></div>
+          <p className="mt-4 text-gray-600">Ładowanie usług...</p>
+        </div>
+      ) : filteredServices.length === 0 ? (
+        <div className="text-center py-12">
+          <FileText className="mx-auto h-12 w-12 text-gray-400" />
+          <p className="mt-4 text-gray-600">
+            {searchTerm
+              ? "Nie znaleziono usług pasujących do wyszukiwania"
+              : "Nie dodano jeszcze żadnych usług"}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredServices.map((service) => (
+            <div
+              key={service._id}
+              className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+            >
+              {service.images && service.images.length > 0 ? (
+                <img
+                  src={service.images[0]}
+                  alt={service.title}
+                  className="w-full h-48 object-cover"
+                />
+              ) : (
+                <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+                  <Image className="h-12 w-12 text-gray-400" />
+                </div>
+              )}
+              <div className="p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    {service.title}
+                  </h2>
+                  <p className="text-teal-600 font-semibold">{service.price} zł</p>
+                </div>
+                <p className="text-gray-600 text-sm mb-4">
+                  {service.shortDescription}
+                </p>
+                <div className="flex justify-between items-center">
+                  <button
+                    onClick={() => openEditModal(service)}
+                    className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                    Edytuj
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => openDeleteConfirmation(service)}
+                      className="flex items-center gap-1 text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Usuń
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* Add/Edit Service Modal */}
+      {/* Add/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-full overflow-auto">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">
-                {currentService ? "Edit Service" : "Add New Service"}
-              </h2>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Title */}
-                <div>
-                  <label
-                    htmlFor="title"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  {currentService ? "Edytuj Usługę" : "Dodaj Nową Usługę"}
+                </h2>
+                <button
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    resetForm();
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    Title*
-                  </label>
-                  <input
-                    type="text"
-                    id="title"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    className={`w-full p-2 border ${
-                      formErrors.title ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500`}
-                  />
-                  {formErrors.title && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {formErrors.title}
-                    </p>
-                  )}
-                </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
 
-                {/* Icon */}
-                <div>
-                  <label
-                    htmlFor="price"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Price*
-                  </label>
-                  <input
-                    type="text"
-                    id="price"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    placeholder="price..."
-                    className={`w-full p-2 border ${
-                      formErrors.price ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500`}
-                  />
-                  {formErrors.price && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {formErrors.price}
-                    </p>
-                  )}
-                </div>
-
-                {/* Short Description */}
-                <div className="md:col-span-2">
-                  <label
-                    htmlFor="shortDescription"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Short Description
-                  </label>
-                  <input
-                    type="text"
-                    id="shortDescription"
-                    name="shortDescription"
-                    value={formData.shortDescription}
-                    onChange={handleInputChange}
-                    className={`w-full p-2 border ${
-                      formErrors.shortDescription
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500`}
-                  />
-                  {formErrors.shortDescription && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {formErrors.shortDescription}
-                    </p>
-                  )}
-                </div>
-
-                {/* Full Description */}
-                <div className="md:col-span-2">
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Full Description
-                  </label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows="4"
-                    className={`w-full p-2 border ${
-                      formErrors.description
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500`}
-                  />
-                  {formErrors.description && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {formErrors.description}
-                    </p>
-                  )}
-                </div>
-
-                {/* Bullet Points */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Bullet Points
-                  </label>
-                  <div className="flex items-center mb-2">
+              <form onSubmit={handleSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="title"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Tytuł
+                    </label>
                     <input
                       type="text"
-                      value={tempBulletPoint}
-                      onChange={(e) => setTempBulletPoint(e.target.value)}
-                      onKeyPress={handleBulletPointKeyPress}
-                      placeholder="Add a bullet point and press Enter"
-                      className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      id="title"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      className={`mt-1 block w-full rounded-md shadow-sm ${
+                        formErrors.title
+                          ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                          : "border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+                      }`}
+                    />
+                    {formErrors.title && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.title}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="price"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Cena
+                    </label>
+                    <input
+                      type="text"
+                      id="price"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      className={`mt-1 block w-full rounded-md shadow-sm ${
+                        formErrors.price
+                          ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                          : "border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+                      }`}
+                    />
+                    {formErrors.price && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.price}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="shortDescription"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Krótki Opis
+                    </label>
+                    <input
+                      type="text"
+                      id="shortDescription"
+                      name="shortDescription"
+                      value={formData.shortDescription}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
                     />
                   </div>
 
-                  {formErrors.bulletPoints && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {formErrors.bulletPoints}
-                    </p>
-                  )}
-
-                  <ul className="mt-2 space-y-2">
-                    {formData.bulletPoints.map((point, index) => (
-                      <li
-                        key={index}
-                        className="flex items-center bg-gray-50 p-2 rounded"
-                      >
-                        <span className="flex-1 text-sm">{point}</span>
-                        <button
-                          type="button"
-                          onClick={() => removeBulletPoint(index)}
-                          className="ml-2 text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Images */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Images {currentService ? "" : "*"}
-                  </label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                    <div className="space-y-1 text-center">
-                      <Image className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="flex text-sm text-gray-600">
-                        <label
-                          htmlFor="images"
-                          className="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500"
-                        >
-                          <span>Upload files</span>
-                          <input
-                            id="images"
-                            name="images"
-                            type="file"
-                            multiple
-                            accept="image/*"
-                            className="sr-only"
-                            onChange={handleImageChange}
-                          />
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, GIF up to 10MB
-                      </p>
-                    </div>
+                  <div>
+                    <label
+                      htmlFor="description"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Pełny Opis
+                    </label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      rows={4}
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                    />
                   </div>
 
-                  {formErrors.images && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {formErrors.images}
-                    </p>
-                  )}
-
-                  {/* Image previews */}
-                  {imagePreview.length > 0 && (
-                    <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 gap-4">
-                      {imagePreview.map((src, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={src}
-                            alt={`Preview ${index + 1}`}
-                            className="h-24 w-full object-cover rounded-md"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      ))}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Punkty
+                    </label>
+                    <div className="mt-1">
+                      <input
+                        type="text"
+                        value={tempBulletPoint}
+                        onChange={(e) => setTempBulletPoint(e.target.value)}
+                        onKeyPress={handleBulletPointKeyPress}
+                        placeholder="Naciśnij Enter, aby dodać punkt"
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                      />
                     </div>
-                  )}
-
-                  {/* Existing images if editing */}
-                  {currentService &&
-                    currentService.images &&
-                    currentService.images.length > 0 && (
-                      <>
-                        <h4 className="mt-4 text-sm font-medium text-gray-700">
-                          Existing Images
-                        </h4>
-                        <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 gap-4">
-                          {currentService.images.map((src, index) => (
-                            <div key={`existing-${index}`} className="relative">
-                              <img
-                                src={src}
-                                alt={`Service image ${index + 1}`}
-                                className="h-24 w-full object-cover rounded-md"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                        <p className="mt-2 text-xs text-gray-500">
-                          Note: Uploading new images will replace the existing
-                          ones.
-                        </p>
-                      </>
+                    {formData.bulletPoints.length > 0 && (
+                      <ul className="mt-2 space-y-2">
+                        {formData.bulletPoints.map((point, index) => (
+                          <li
+                            key={index}
+                            className="flex items-center justify-between bg-gray-50 p-2 rounded"
+                          >
+                            <span className="text-sm text-gray-700">{point}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeBulletPoint(index)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     )}
-                </div>
-              </div>
+                  </div>
 
-              {/* Action Buttons */}
-              <div className="mt-8 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 flex items-center gap-2"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>{currentService ? "Update" : "Create"} Service</>
-                  )}
-                </button>
-              </div>
-            </form>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Zdjęcia
+                    </label>
+                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                      <div className="space-y-1 text-center">
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-400"
+                          stroke="currentColor"
+                          fill="none"
+                          viewBox="0 0 48 48"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        <div className="flex text-sm text-gray-600">
+                          <label
+                            htmlFor="images"
+                            className="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500"
+                          >
+                            <span>Prześlij pliki</span>
+                            <input
+                              id="images"
+                              name="images"
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              className="sr-only"
+                              onChange={handleImageChange}
+                            />
+                          </label>
+                          <p className="pl-1">lub przeciągnij i upuść</p>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          PNG, JPG, GIF do 10MB
+                        </p>
+                      </div>
+                    </div>
+                    {imagePreview.length > 0 && (
+                      <div className="mt-4 grid grid-cols-3 gap-4">
+                        {imagePreview.map((preview, index) => (
+                          <div
+                            key={index}
+                            className="relative rounded-lg overflow-hidden"
+                          >
+                            <img
+                              src={preview}
+                              alt={`Preview ${index + 1}`}
+                              className="h-24 w-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      resetForm();
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                  >
+                    Anuluj
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={`px-4 py-2 text-sm font-medium text-white bg-teal-600 border border-transparent rounded-md shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 ${
+                      loading ? "opacity-75 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    {loading ? "Zapisywanie..." : "Zapisz"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -634,38 +592,30 @@ const ServicesManagement = () => {
       {/* Delete Confirmation Modal */}
       {isConfirmModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-            <div className="flex items-center text-red-600 mb-4">
-              <AlertCircle className="mr-2" size={24} />
-              <h3 className="text-lg font-semibold">Confirm Deletion</h3>
-            </div>
-            <p className="text-gray-700 mb-6">
-              Are you sure you want to delete the service "
-              {serviceToDelete?.title}"? This action cannot be undone.
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Potwierdź usunięcie
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Czy na pewno chcesz usunąć tę usługę? Tej operacji nie można cofnąć.
             </p>
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end gap-3">
               <button
+                type="button"
                 onClick={() => setIsConfirmModalOpen(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
               >
-                Cancel
+                Anuluj
               </button>
               <button
+                type="button"
                 onClick={deleteService}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-2"
                 disabled={loading}
+                className={`px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
+                  loading ? "opacity-75 cursor-not-allowed" : ""
+                }`}
               >
-                {loading ? (
-                  <>
-                    <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                    <span>Deleting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={16} />
-                    <span>Delete</span>
-                  </>
-                )}
+                {loading ? "Usuwanie..." : "Usuń"}
               </button>
             </div>
           </div>

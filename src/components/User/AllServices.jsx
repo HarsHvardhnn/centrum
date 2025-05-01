@@ -16,7 +16,7 @@ const ServiceCard = ({ service }) => {
           <h3 className="text-2xl font-semibold text-main">{service.title}</h3>
           {/* Display the price */}
           <div className="text-lg font-bold text-main bg-neutral-100 px-3 py-1 rounded-lg">
-            ${service.price || "N/A"}
+            {service.price || "N/D"} zł
           </div>
         </div>
         <p className="text-gray-600 text-sm mt-2 line-clamp-3">
@@ -26,7 +26,7 @@ const ServiceCard = ({ service }) => {
           to={"/user/services/" + service.title}
           className="text-main flex items-center gap-1 mt-3 font-medium"
         >
-          Learn More <FaArrowRight />
+          Dowiedz się więcej <FaArrowRight />
         </Link>
       </div>
     </div>
@@ -37,7 +37,7 @@ const AllServices = () => {
   const { services, loading, error } = useServices();
 
   if (loading) {
-    return <div className="text-center py-20">Loading services...</div>;
+    return <div className="text-center py-20">Ładowanie usług...</div>;
   }
 
   if (error) {

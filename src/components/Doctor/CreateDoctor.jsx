@@ -19,32 +19,32 @@ import SpecializationDropdown from "./SpecializationDropdown";
 
 // Updated validation schema with department field
 const DoctorSchema = Yup.object().shape({
-  firstName: Yup.string().required("First name is required"),
-  lastName: Yup.string().required("Last name is required"),
+  firstName: Yup.string().required("Imię jest wymagane"),
+  lastName: Yup.string().required("Nazwisko jest wymagane"),
   email: Yup.string()
-    .email("Invalid email address")
-    .required("Email is required"),
+    .email("Nieprawidłowy adres email")
+    .required("Email jest wymagany"),
   phone: Yup.string(),
   password: Yup.string()
-    .min(8, "Password must be at least 8 characters")
-    .required("Password is required"),
+    .min(8, "Hasło musi zawierać co najmniej 8 znaków")
+    .required("Hasło jest wymagane"),
   confirmPassword: Yup.string()
-    .oneOf([Yup.ref("password"), null], "Passwords must match")
-    .required("Confirm password is required"),
+    .oneOf([Yup.ref("password"), null], "Hasła muszą być zgodne")
+    .required("Potwierdzenie hasła jest wymagane"),
   specialization: Yup.array()
-    .min(1, "At least one specialization is required")
-    .required("Specialization is required"),
+    .min(1, "Wymagana jest co najmniej jedna specjalizacja")
+    .required("Specjalizacja jest wymagana"),
   qualifications: Yup.array()
-    .min(1, "At least one qualification is required")
-    .required("Qualification is required"),
+    .min(1, "Wymagana jest co najmniej jedna kwalifikacja")
+    .required("Kwalifikacja jest wymagana"),
   experience: Yup.number()
-    .positive("Experience must be a positive number")
-    .required("Experience is required"),
-  bio: Yup.string().required("Bio is required"),
+    .positive("Doświadczenie musi być liczbą dodatnią")
+    .required("Doświadczenie jest wymagane"),
+  bio: Yup.string().required("Bio jest wymagane"),
   consultationFee: Yup.number()
-    .positive("Fee must be a positive number")
-    .required("Consultation fee is required"),
-  profilePicture: Yup.mixed().required("Profile picture is required"),
+    .positive("Opłata musi być liczbą dodatnią")
+    .required("Opłata za konsultację jest wymagana"),
+  profilePicture: Yup.mixed().required("Zdjęcie profilowe jest wymagane"),
 });
 
 export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
@@ -108,7 +108,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-800">
-            Add New Doctor
+            Dodaj Nowego Lekarza
           </h2>
           <button
             onClick={onClose}
@@ -146,7 +146,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
               // Set submitting to false if there was an error
               setSubmitting(false);
               // Modal stays open on error
-              console.error("Error in form submission:", error);
+              console.error("Błąd podczas przesyłania formularza:", error);
             }
           }}
         >
@@ -161,7 +161,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                         {profileImage ? (
                           <img
                             src={profileImage}
-                            alt="Profile Preview"
+                            alt="Podgląd Profilu"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -196,7 +196,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                         htmlFor="firstName"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        First Name*
+                        Imię*
                       </label>
                       <Field
                         type="text"
@@ -216,7 +216,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                         htmlFor="lastName"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Last Name*
+                        Nazwisko*
                       </label>
                       <Field
                         type="text"
@@ -263,7 +263,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                       htmlFor="phone"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Phone Number
+                      Numer Telefonu
                     </label>
                     <Field
                       type="text"
@@ -284,7 +284,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                         htmlFor="password"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Password*
+                        Hasło*
                       </label>
                       <Field
                         type="password"
@@ -304,7 +304,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                         htmlFor="confirmPassword"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Confirm Password*
+                        Potwierdź Hasło*
                       </label>
                       <Field
                         type="password"
@@ -328,7 +328,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                       htmlFor="department"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Department*
+                      Oddział*
                     </label>
                     <div className="relative">
                       <Field
@@ -337,7 +337,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                         id="department"
                         className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 appearance-none bg-white"
                       >
-                        <option value="">Select Department</option>
+                        <option value="">Wybierz Oddział</option>
                         {DEPARTMENTS.map((dept) => (
                           <option key={dept} value={dept}>
                             {dept}
@@ -375,7 +375,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Qualifications*
+                      Kwalifikacje*
                     </label>
                     <div className="flex items-center">
                       <div className="relative flex-grow">
@@ -386,7 +386,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                             setQualificationInput(e.target.value)
                           }
                           className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                          placeholder="Add qualification"
+                          placeholder="Dodaj kwalifikację"
                         />
                         <BookOpen
                           size={16}
@@ -400,7 +400,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                         }
                         className="ml-2 bg-teal-500 text-white p-2 rounded-md hover:bg-teal-600"
                       >
-                        Add
+                        Dodaj
                       </button>
                     </div>
                     {values.qualifications.length > 0 && (
@@ -441,7 +441,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                         htmlFor="experience"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Experience (years)*
+                        Doświadczenie (lata)*
                       </label>
                       <div className="relative">
                         <Field
@@ -468,7 +468,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                         htmlFor="consultationFee"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Online Consultation Price*
+                        Cena Konsultacji Online*
                       </label>
                       <div className="relative">
                         <Field
@@ -479,7 +479,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                           className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
                         />
                         <span className="absolute left-3 top-3 text-gray-400">
-                          $
+                          zł
                         </span>
                       </div>
                       <ErrorMessage
@@ -504,7 +504,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                         id="bio"
                         rows="4"
                         className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                        placeholder="Doctor's professional background and expertise..."
+                        placeholder="Doświadczenie zawodowe i specjalizacja lekarza..."
                       />
                       <FileText
                         size={16}
@@ -526,14 +526,14 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                   onClick={onClose}
                   className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                 >
-                  Cancel
+                  Anuluj
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="px-6 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:opacity-50"
                 >
-                  {isSubmitting ? "Saving..." : "Save Doctor"}
+                  {isSubmitting ? "Zapisywanie..." : "Zapisz Lekarza"}
                 </button>
               </div>
             </Form>

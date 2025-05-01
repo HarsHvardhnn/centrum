@@ -7,10 +7,10 @@ const ServicesMini = () => {
   return (
     <section className="py-12 px-4 md:px-8">
       <h2 className="text-lg md:text-xl font-bold text-neutral-800 text-center uppercase">
-        Care You Can Believe In
+        Opieka, której możesz zaufać
       </h2>
       <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 text-center mb-8 md:mb-16">
-        Our Services
+        Nasze usługi
       </h3>
 
       <div className="flex flex-col lg:flex-row gap-4 max-w-6xl mx-auto">
@@ -35,7 +35,7 @@ const ServicesMini = () => {
             );
           })}
           <div className="bg-main flex justify-center items-center max-md:text-sm text-white text-center p-4 ">
-            View All
+            Zobacz wszystkie
           </div>
         </div>
 
