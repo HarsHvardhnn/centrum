@@ -86,7 +86,7 @@ const Header = () => {
         </div>
       </div>
 
-      <div className="flex justify-between items-center px-6 md:px-8 py-3 bg-[#DEE2CF]">
+      <div className="flex justify-between items-center px-6 md:px-8 py-3 bg-[#F4F4F4]">
         <img src="/images/mainlogo.png" alt="website logo" className="h-10" />
 
         <nav className="hidden lg:flex gap-4 lg:gap-6 text-teal-900 font-medium text-sm">
