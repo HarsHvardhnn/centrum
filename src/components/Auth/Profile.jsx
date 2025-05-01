@@ -109,6 +109,10 @@ const ProfilePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      if (!formData.sex) {
+        toast.error("Please select your sex");
+        return;
+      }
       setIsSaving(true);
 
       // Add image file to form data if it exists
@@ -504,8 +508,10 @@ const ProfilePage = () => {
                       <div>
                         <h4 className="font-medium text-gray-800">Password</h4>
                         <button
-                          onClick={() =>
-                            (window.location.href = "/change-password")
+                            onClick={() =>
+                            {
+                              localStorage.clear();
+                            (window.location.href = "/forgot-password")}
                           }
                           className="text-teal-500 hover:text-teal-700 text-sm font-medium focus:outline-none mt-1"
                         >

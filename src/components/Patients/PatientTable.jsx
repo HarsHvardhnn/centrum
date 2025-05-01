@@ -8,6 +8,7 @@ import {
   Edit,
   Check,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function PatientsTable({
   patients,
@@ -17,6 +18,7 @@ function PatientsTable({
   clinic
 }) {
   // Pagination states
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [patientsPerPage] = useState(10);
   // Track open dropdown by patient ID instead of a single boolean
@@ -156,7 +158,7 @@ function PatientsTable({
           <tbody>
             {currentPatients.length > 0 ? (
               currentPatients.map((patient, index) => (
-                <tr key={index} className="border-b hover:bg-gray-50">
+                <tr key={index} className="border-b hover:bg-gray-50" onClick={()=>navigate(`/patients-details/${patient.id}`)}>
                   <td className="px-4 py-3">
                     <input type="checkbox" className="rounded" />
                   </td>
@@ -164,7 +166,7 @@ function PatientsTable({
                     <div className="flex items-center">
                       <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden mr-2">
                         <img
-                          src={`/api/placeholder/32/32`}
+                          src={patient.avatar}
                           alt={patient.name}
                           className="h-full w-full object-cover"
                         />

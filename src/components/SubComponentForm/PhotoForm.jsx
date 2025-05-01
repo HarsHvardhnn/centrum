@@ -4,6 +4,7 @@ import { useState } from "react";
 
 const ConsentDocumentUpload = () => {
   const { formData, updateFormData } = useFormContext();
+  console.log("formData", formData);
   const [activeTab, setActiveTab] = useState("consent");
   const [newConsent, setNewConsent] = useState("");
 

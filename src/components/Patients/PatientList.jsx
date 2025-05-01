@@ -32,7 +32,8 @@ function LabAppointmentsContent({clinic}) {
     const fetchPatients = async () => {
       try {
         showLoader();
-      const filter = user?.role === "doctor" ? { doctor: user?._id } : {};
+        const filter = user?.role == "doctor" ? { doctor: user?.id } : {};
+        console.log("applied filter", filter)
       const response = await patientService.getSimpliefiedPatientsList(filter);
 
         setAllPatients(response.patients || []);

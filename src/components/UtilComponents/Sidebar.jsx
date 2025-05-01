@@ -1,6 +1,6 @@
 import React from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { MdOutlineMedicalServices } from "react-icons/md";
+import { MdOutlineMedicalServices, MdSms } from "react-icons/md";
 import { RiHomeLine } from "react-icons/ri";
 import { LuFileChartColumn, LuCalendarPlus2 } from "react-icons/lu";
 import { CgLogOut } from "react-icons/cg";
@@ -80,6 +80,17 @@ const Sidebar = () => {
           {user?.role === "admin" && (
             <NavItem
               icon={
+                <MdSms className="text-xl text-teal-400" />
+              }
+              label="Sms Management"
+              to="/admin/sms"
+              isActive={currentPath === "/admin/sms"}
+              isEnabled={true}
+            />
+          )}
+          {user?.role === "admin" && (
+            <NavItem
+              icon={
                 <MdOutlineMedicalServices className="text-xl text-teal-400" />
               }
               label="News"
@@ -124,7 +135,7 @@ const Sidebar = () => {
 
           <div className="border-t border-teal-100 my-1"></div>
 
-          <NavItem
+     {user?.role!=="receptionist" &&     <NavItem
             icon={<FiSettings className="text-xl text-teal-400" />}
             label="Settings"
             to={`${
@@ -132,7 +143,7 @@ const Sidebar = () => {
             }`}
             isActive={currentPath === "/doctor/settings"}
             isEnabled={user?.role !== "receptionist"}
-          />
+          />}
 
           <NavItem
             icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}
