@@ -7,7 +7,7 @@ class AppointmentService {
     limit = 10,
     searchTerm = "",
     filters = {},
-    sortField = "appointmentDate",
+    sortBy = "date",
     sortOrder = "desc"
   ) {
     try {
@@ -15,15 +15,18 @@ class AppointmentService {
       const queryParams = new URLSearchParams({
         page,
         limit,
-        search: searchTerm,
-        sortField,
+        sortBy,
         sortOrder,
-        ...filters,
+        ...(searchTerm && { searchTerm }),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.startDate && { startDate: filters.startDate }),
+        ...(filters.endDate && { endDate: filters.endDate }),
+        ...(filters.doctorId && { doctorId: filters.doctorId }),
       });
 
       const response = await apiCaller(
         "GET",
-        `/appointments?${queryParams.toString()}`
+        `/appointments/details/list?${queryParams.toString()}`
       );
       return response.data;
     } catch (error) {

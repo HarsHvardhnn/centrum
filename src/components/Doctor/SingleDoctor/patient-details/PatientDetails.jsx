@@ -1,18 +1,20 @@
 // PatientDetailsPage.jsx - Updated with Medications, Tests, and Services
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import BreadcrumbNav from "./BreadcrumbNav";
 import PatientProfile from "./PatientProfile";
 import ConsultationForm from "./ConsultationForm";
 import ActionButtons from "./ActionButtons";
 import ServiceSelectionModal from "./ServiceSelectionModal";
+import ReportUploader from "./ReportUploader";
+import ReportsList from "./ReportsList";
 import patientService from "../../../../helpers/patientHelper";
 import patientServicesHelper from "../../../../helpers/patientServicesHelper";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
 import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
-import { Trash2, Calendar } from "lucide-react";
+import { Trash2, Calendar, PlusCircle } from "lucide-react";
 import { toast } from "sonner";
 
 // Confirmation Modal Component
@@ -48,6 +50,8 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
 
 const PatientDetailsPage = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const appointmentIdFromUrl = searchParams.get('appointmentId');
   const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
   const [isLoading, setIsLoading] = useState(true);
@@ -60,8 +64,9 @@ const PatientDetailsPage = () => {
 
   // Add appointment-related states
   const [appointments, setAppointments] = useState([]);
-  const [currentAppointmentId, setCurrentAppointmentId] = useState(null);
+  const [currentAppointmentId, setCurrentAppointmentId] = useState(appointmentIdFromUrl);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [showAllAppointments, setShowAllAppointments] = useState(!appointmentIdFromUrl);
 
   // Patient state
   const [patientData, setPatientData] = useState({
@@ -123,42 +128,63 @@ const PatientDetailsPage = () => {
   const [serviceToDelete, setServiceToDelete] = useState(null);
   const [isConfirmAllModalOpen, setIsConfirmAllModalOpen] = useState(false);
 
+  // Add reports state
+  const [reports, setReports] = useState([]);
+  const [showReportUploader, setShowReportUploader] = useState(false);
+
   // Fetch patient data and their appointments
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        showLoader();
         
         // Fetch patient basic data
         const patientResponse = await patientService.getPatientDetails(id);
+        console.log("patientResponse", patientResponse);
+
         setPatientData(patientResponse.patientData || {});
 
-        // Fetch patient's appointments
-        const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
-        setAppointments(appointmentsResponse.data || []);
+        // Fetch patient services
+        await fetchPatientServices();
 
-        // If there are appointments, select the most recent one
-        if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
-          const mostRecentAppointment = appointmentsResponse.data[0];
-          setCurrentAppointmentId(mostRecentAppointment._id);
-          setSelectedAppointment(mostRecentAppointment);
-          
-          // Fetch appointment details
-          await fetchAppointmentDetails(mostRecentAppointment._id);
+        if (appointmentIdFromUrl) {
+          // If we have a specific appointment ID, fetch only that appointment
+          const appointmentResponse = await appointmentHelper.getAppointmentById(appointmentIdFromUrl);
+          if (appointmentResponse.data) {
+            setAppointments([appointmentResponse.data]);
+            setCurrentAppointmentId(appointmentIdFromUrl);
+            setSelectedAppointment(appointmentResponse.data);
+            await fetchAppointmentDetails(appointmentIdFromUrl);
+          }
+        } else {
+          // Fetch all patient's appointments
+          const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
+          setAppointments(appointmentsResponse.data || []);
+
+          // If there are appointments, select the most recent one
+          if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
+            const mostRecentAppointment = appointmentsResponse.data[0];
+            setCurrentAppointmentId(mostRecentAppointment._id);
+            setSelectedAppointment(mostRecentAppointment);
+            await fetchAppointmentDetails(mostRecentAppointment._id);
+          }
         }
 
         setIsLoading(false);
+        hideLoader();
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to load patient data. Please try again.");
         setIsLoading(false);
+        hideLoader();
       }
     };
 
     if (id) {
       fetchData();
     }
-  }, [id]);
+  }, [id, appointmentIdFromUrl]);
 
   // Fetch appointment details
   const fetchAppointmentDetails = async (appointmentId) => {
@@ -167,11 +193,12 @@ const PatientDetailsPage = () => {
       const response = await appointmentHelper.getAppointmentById(appointmentId);
       
       if (response.data) {
-        const { consultation, medications: appointmentMedications, tests: appointmentTests } = response.data;
+        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports } = response.data;
         
         setConsultationData(consultation || {});
         setMedications(appointmentMedications || []);
         setTests(appointmentTests || []);
+        setReports(reports || []);
       }
     } catch (error) {
       console.error("Error fetching appointment details:", error);
@@ -287,12 +314,22 @@ const PatientDetailsPage = () => {
   };
 
   // Obsługa przycisków akcji
-  const handleAddMedicine = () => {
-    setShowMedicationForm(true);
+  const handleAddMedicine = (newMedication) => {
+    setMedications((prev) => [...prev, newMedication]);
+    setShowMedicationForm(false);
   };
 
-  const handleAddTest = () => {
-    setShowTestForm(true);
+  const handleAddTest = (newTest) => {
+    setTests((prev) => [...prev, newTest]);
+    setShowTestForm(false);
+  };
+
+  const handleRemoveMedication = (index) => {
+    setMedications((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveTest = (index) => {
+    setTests((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleAddServices = () => {
@@ -373,6 +410,18 @@ const PatientDetailsPage = () => {
       hideLoader();
       toast.error("Nie udało się usunąć wszystkich usług. Spróbuj ponownie.");
     }
+  };
+
+  // Handle report upload success
+  const handleReportUploadSuccess = (newReport) => {
+    setReports(prev => [...prev, newReport]);
+    setShowReportUploader(false);
+  };
+
+  // Handle report deletion
+  const handleReportDeleted = (remainingReports) => {
+    window.location.reload();
+    setReports(remainingReports);
   };
 
   const handleBack = () => {
@@ -525,136 +574,174 @@ const PatientDetailsPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-6 py-4">
-      <BreadcrumbNav onBack={handleBack} />
-
-      {/* Appointment Selection */}
-      <div className="mb-6">
-        {/* <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Appointments</h2>
-          <button
-            onClick={() => navigate(`/appointments/new?patientId=${id}`)}
-            className="flex items-center px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
-          >
-            <Calendar className="mr-2" size={16} />
-            New Appointment
-          </button>
-        </div>
-         */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {appointments.map((appointment) => (
-            <div
-              key={appointment._id}
-              onClick={() => handleAppointmentSelect(appointment._id)}
-              className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                currentAppointmentId === appointment._id
-                  ? 'border-teal-500 bg-teal-50'
-                  : 'border-gray-200 hover:border-teal-300'
-              }`}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium">
-                    {new Date(appointment.date).toLocaleDateString()}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {appointment.consultationType || 'Regular Consultation'}
-                  </p>
+    <div className="min-h-screen bg-gray-50">
+      <BreadcrumbNav patientName={patientData.name} />
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Patient Profile */}
+          <div className="lg:col-span-1">
+            <PatientProfile patient={patientData} setPatientData={setPatientData}/>
+            
+            {/* Show appointments section only if not viewing a specific appointment */}
+            {showAllAppointments && (
+              <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+                <h3 className="text-lg font-semibold mb-4">Historia Wizyt</h3>
+                <div className="space-y-4">
+                  {appointments.map((apt) => (
+                    <div
+                      key={apt._id}
+                      className={`p-4 rounded-lg cursor-pointer transition-all ${
+                        currentAppointmentId === apt._id
+                          ? "bg-teal-50 border-2 border-teal-500"
+                          : "bg-gray-50 hover:bg-gray-100"
+                      }`}
+                      onClick={() => handleAppointmentSelect(apt._id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">
+                            {new Date(apt.date).toLocaleDateString('pl-PL')}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {apt.consultationType || 'Konsultacja standardowa'}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            apt.status === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : apt.status === "cancelled"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {apt.status === "completed" 
+                            ? "Zakończona" 
+                            : apt.status === "cancelled" 
+                            ? "Anulowana" 
+                            : "Zaplanowana"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs ${
-                  appointment.status === 'completed'
-                    ? 'bg-green-100 text-green-800'
-                    : appointment.status === 'cancelled'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-blue-100 text-blue-800'
-                }`}>
-                  {appointment.status}
-                </span>
               </div>
-            </div>
-          ))}
+            )}
+          </div>
+
+          {/* Right Column - Consultation Form and Other Sections */}
+          <div className="lg:col-span-2">
+            {selectedAppointment && (
+              <>
+                <ConsultationForm
+                  consultationData={consultationData}
+                  setConsultationData={setConsultationData}
+                  uploadedFiles={uploadedFiles}
+                  onFileUpload={handleFileUpload}
+                  onRemoveFile={handleRemoveFile}
+                  patientData={patientData}
+                  setPatientData={setPatientData}
+                  onSave={handleSave}
+                  isSaving={isSaving}
+                  appointmentId={currentAppointmentId}
+                  className="bg-white rounded-lg shadow-sm p-4 w-full"
+                />
+                
+                {/* Medical Reports Section */}
+                <div className="mt-6">
+                  {!showReportUploader ? (
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Raporty Medyczne</h3>
+                      <button 
+                        onClick={() => setShowReportUploader(true)}
+                        className="flex items-center text-teal-600 hover:text-teal-800 text-sm font-medium"
+                      >
+                        <PlusCircle size={16} className="mr-1" />
+                        Dodaj Raport
+                      </button>
+                    </div>
+                  ) : (
+                    <ReportUploader 
+                      appointmentId={currentAppointmentId} 
+                      onSuccess={handleReportUploadSuccess}
+                    />
+                  )}
+                  
+                  {!showReportUploader && (
+                    <ReportsList 
+                      appointmentId={currentAppointmentId}
+                      reports={reports}
+                      onReportDeleted={handleReportDeleted}
+                    />
+                  )}
+                </div>
+                
+                <PatientServicesSection />
+                
+                <MedicationsSection
+                  medications={medications}
+                  setMedications={setMedications}
+                  showForm={showMedicationForm}
+                  setShowForm={setShowMedicationForm}
+                  onAddMedication={handleAddMedicine}
+                  onRemoveMedication={handleRemoveMedication}
+                  className="bg-white rounded-lg shadow-sm p-4 w-full"
+                />
+                
+                <TestsSection
+                  tests={tests}
+                  setTests={setTests}
+                  showForm={showTestForm}
+                  setShowForm={setShowTestForm}
+                  onAddTest={handleAddTest}
+                  onRemoveTest={handleRemoveTest}
+                  className="bg-white rounded-lg shadow-sm p-4 w-full"
+                />
+                
+                <ActionButtons
+                  patientId={id}
+                  onAddMedicine={handleAddMedicine}
+                  onAddTest={handleAddTest}
+                  onAddServicesClick={handleAddServices}
+                  onSave={handleSave}
+                  onBack={handleBack}
+                  isSaving={isSaving}
+                  saveError={saveError}
+                  notifyPatient={notifyPatient}
+                  setNotifyPatient={setNotifyPatient}
+                  className="mt-6"
+                  appointmentId={currentAppointmentId}
+                />
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {selectedAppointment ? (
-        <div className="flex flex-row gap-6 mt-4">
-          <PatientProfile patient={patientData} setPatientData={setPatientData} />
-
-          <div className="flex-1 space-y-4">
-            <ConsultationForm
-              consultationData={consultationData}
-              setConsultationData={setConsultationData}
-              uploadedFiles={uploadedFiles}
-              onFileUpload={handleFileUpload}
-              onRemoveFile={handleRemoveFile}
-              patientData={patientData}
-              setPatientData={setPatientData}
-              className="bg-white rounded-lg shadow-sm p-4 w-full"
-            />
-
-            <PatientServicesSection />
-
-            <MedicationsSection
-              medications={medications}
-              setMedications={setMedications}
-              showForm={showMedicationForm}
-              setShowForm={setShowMedicationForm}
-              className="bg-white rounded-lg shadow-sm p-4 w-full"
-            />
-
-            <TestsSection
-              tests={tests}
-              setTests={setTests}
-              showForm={showTestForm}
-              setShowForm={setShowTestForm}
-              className="bg-white rounded-lg shadow-sm p-4 w-full"
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          Select an appointment to view details
-        </div>
-      )}
-
-      {selectedAppointment && (
-        <ActionButtons
-          patientId={id}
-          onAddMedicine={handleAddMedicine}
-          onAddTest={handleAddTest}
-          onAddServicesClick={handleAddServices}
-          onSave={handleSave}
-          isSaving={isSaving}
-          saveError={saveError}
-          notifyPatient={notifyPatient}
-          setNotifyPatient={setNotifyPatient}
-          className="mt-6"
-        />
-      )}
-
-      {/* Service Selection Modal */}
+      {/* Existing modals */}
       <ServiceSelectionModal
         isOpen={showServiceModal}
         onClose={() => setShowServiceModal(false)}
         onSave={handleSaveServices}
         patientId={id}
+        existingServices={patientServices}
       />
       
-      {/* Confirmation Modals */}
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
         onConfirm={handleRemoveService}
-        title="Confirm Deletion"
-        message="Are you sure you want to delete this service? This action cannot be undone."
+        title="Confirm Service Removal"
+        message="Are you sure you want to remove this service?"
       />
       
       <ConfirmationModal
         isOpen={isConfirmAllModalOpen}
         onClose={() => setIsConfirmAllModalOpen(false)}
         onConfirm={handleRemoveAllServices}
-        title="Delete All Services"
-        message="Are you sure you want to delete all services for this patient? This action cannot be undone."
+        title="Confirm Remove All Services"
+        message="Are you sure you want to remove all services?"
       />
     </div>
   );

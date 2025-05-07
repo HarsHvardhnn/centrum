@@ -3,14 +3,14 @@ import { apiCaller } from "../../../../utils/axiosInstance";
 import { useLoader } from "../../../../context/LoaderContext";
 import { Download, Plus, FileText, Tag, Save } from "lucide-react";
 
-const ActionButtons = ({ patientId, onAddServicesClick, onSave }) => {
+const ActionButtons = ({ patientId, onAddServicesClick, onSave, appointmentId }) => {
   const {showLoader,hideLoader}=useLoader()
   const handleDownloadVisitCard = async () => {
     try {
       showLoader();
       const response = await apiCaller(
-        "GET",
-        `/visit-cards/generate/${patientId}`
+        "POST",
+        `/visit-cards/appointment/${appointmentId}`,{data:""}
       );
 
       const data = response.data;

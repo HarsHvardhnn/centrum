@@ -4,8 +4,9 @@ import { ChevronDown } from "lucide-react";
 import HealthMetric from "./HealthMetric";
 
 const PatientProfile = ({ patient, setPatientData }) => {
+  console.log("patient", patient);
   const [isEditingRoom, setIsEditingRoom] = useState(false);
-  const [roomNumber, setRoomNumber] = useState(patient.roomNumber || "28B");
+  const [roomNumber, setRoomNumber] = useState(patient?.roomNumber || "28B");
 
   // Opcje statusu ryzyka
   const riskStatusOptions = ["Normalny", "Ryzykowny", "Wysokie ryzyko", "Krytyczny"];
@@ -56,7 +57,7 @@ const PatientProfile = ({ patient, setPatientData }) => {
         <div className="relative mb-2">
           <div className="w-24 h-24 rounded-full bg-blue-100 overflow-hidden">
             <img
-              src={patient.avatar}
+              src={patient?.avatar}
               alt={patient.name}
               className="w-full h-full object-cover"
             />
