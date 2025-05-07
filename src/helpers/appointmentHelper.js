@@ -119,11 +119,17 @@ class AppointmentService {
   }
 
   // Get patient's appointment history
-  async getPatientAppointments(patientId, page = 1, limit = 10) {
+  async getPatientAppointments(patientId, filters = {}) {
     try {
+      const { status, startDate, endDate } = filters;
+      const queryParams = new URLSearchParams();
+      if (status) queryParams.append('status', status);
+      if (startDate) queryParams.append('startDate', startDate);
+      if (endDate) queryParams.append('endDate', endDate);
+
       const response = await apiCaller(
         "GET",
-        `/appointments/patient/${patientId}?page=${page}&limit=${limit}`
+        `/appointments/patient/${patientId}?${queryParams.toString()}`
       );
       return response.data;
     } catch (error) {
@@ -276,6 +282,36 @@ class AppointmentService {
         throw new Error("Appointment not found");
       }
 
+      throw error;
+    }
+  }
+
+  // Update appointment details (consultation, medications, tests)
+  async updateAppointmentDetails(appointmentId, data) {
+    try {
+      const response = await apiCaller(
+        "PUT",
+        `/appointments/${appointmentId}/details`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating appointment details:", error);
+      throw error;
+    }
+  }
+
+  // Create new appointment
+  async createAppointment(data) {
+    try {
+      const response = await apiCaller(
+        "POST",
+        "/appointments",
+        data
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error creating appointment:", error);
       throw error;
     }
   }

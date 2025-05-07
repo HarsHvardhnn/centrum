@@ -8,11 +8,12 @@ import ActionButtons from "./ActionButtons";
 import ServiceSelectionModal from "./ServiceSelectionModal";
 import patientService from "../../../../helpers/patientHelper";
 import patientServicesHelper from "../../../../helpers/patientServicesHelper";
+import appointmentHelper from "../../../../helpers/appointmentHelper";
 import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
-import { Trash2 } from "lucide-react";
-import {toast} from "sonner";
+import { Trash2, Calendar } from "lucide-react";
+import { toast } from "sonner";
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
@@ -52,7 +53,17 @@ const PatientDetailsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Stan główny pacjenta
+  // Add saving-related states
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Add appointment-related states
+  const [appointments, setAppointments] = useState([]);
+  const [currentAppointmentId, setCurrentAppointmentId] = useState(null);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+
+  // Patient state
   const [patientData, setPatientData] = useState({
     id: "",
     name: "",
@@ -74,26 +85,25 @@ const PatientDetailsPage = () => {
     height: "170 cm",
   });
 
-  // Stan konsultacji
+  // Consultation state (now tied to appointment)
   const [consultationData, setConsultationData] = useState({
-    doctor: "Dr. Stephen Conley",
     consultationType: "Konsultacja w przychodni",
     locationType: "Konsultacja online",
     time: "11:20",
     date: "16-12-2021",
-    description:
-      "Najlepsze badanie, jakie znalazłem, nie wykazało niczego szczególnego. Inne małe badanie dotyczyło osób prowadzących siedzący tryb życia bez cukrzycy, które miały nadwagę lub otyłość.",
-    notes:
-      "Czy istnieją dowody na korzyści, jeśli osoby bez cukrzycy monitorują poziom cukru we krwi za pomocą CGM? Istnieje niewiele opublikowanych badań, które pomogłyby odpowiedzieć na to pytanie.",
+    description: "",
+    notes: "",
+    treatmentCategory: "",
+    isOnline: false,
+    interview: "",
+    physicalExamination: "",
+    treatment: "",
+    recommendations: ""
   });
 
-  // Stan leków
+  // States for medications, tests, and files (now tied to appointment)
   const [medications, setMedications] = useState([]);
-
-  // Stan badań
   const [tests, setTests] = useState([]);
-
-  // Stan plików
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
   // Stan usług
@@ -113,45 +123,71 @@ const PatientDetailsPage = () => {
   const [serviceToDelete, setServiceToDelete] = useState(null);
   const [isConfirmAllModalOpen, setIsConfirmAllModalOpen] = useState(false);
 
-  // Pobierz dane pacjenta, gdy zmienia się ID
+  // Fetch patient data and their appointments
   useEffect(() => {
-    const fetchPatientData = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const data = await patientService.getPatientDetails(id);
-
-        console.log("otrzymane dane", data);
-        setPatientData(data.patientData || {});
-
-        if (data.medications) {
-          setMedications(data.medications);
-        }
-
-        if (data.tests) {
-          setTests(data.tests);
-        }
-        if (data.uploadedFiles) {
-          setUploadedFiles(data.uploadedFiles);
-        }
-
-        if (data.consultationData) {
-          setConsultationData(data.consultationData);
-        }
         
+        // Fetch patient basic data
+        const patientResponse = await patientService.getPatientDetails(id);
+        setPatientData(patientResponse.patientData || {});
+
+        // Fetch patient's appointments
+        const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
+        setAppointments(appointmentsResponse.data || []);
+
+        // If there are appointments, select the most recent one
+        if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
+          const mostRecentAppointment = appointmentsResponse.data[0];
+          setCurrentAppointmentId(mostRecentAppointment._id);
+          setSelectedAppointment(mostRecentAppointment);
+          
+          // Fetch appointment details
+          await fetchAppointmentDetails(mostRecentAppointment._id);
+        }
+
         setIsLoading(false);
-        // Fetch patient services separately
-        fetchPatientServices();
       } catch (err) {
-        console.error("Błąd podczas pobierania danych pacjenta:", err);
-        setError("Nie udało się załadować danych pacjenta. Spróbuj ponownie.");
+        console.error("Error fetching data:", err);
+        setError("Failed to load patient data. Please try again.");
         setIsLoading(false);
       }
     };
 
     if (id) {
-      fetchPatientData();
+      fetchData();
     }
   }, [id]);
+
+  // Fetch appointment details
+  const fetchAppointmentDetails = async (appointmentId) => {
+    try {
+      showLoader();
+      const response = await appointmentHelper.getAppointmentById(appointmentId);
+      
+      if (response.data) {
+        const { consultation, medications: appointmentMedications, tests: appointmentTests } = response.data;
+        
+        setConsultationData(consultation || {});
+        setMedications(appointmentMedications || []);
+        setTests(appointmentTests || []);
+      }
+    } catch (error) {
+      console.error("Error fetching appointment details:", error);
+      toast.error("Failed to load appointment details");
+    } finally {
+      hideLoader();
+    }
+  };
+
+  // Handle appointment selection
+  const handleAppointmentSelect = async (appointmentId) => {
+    setCurrentAppointmentId(appointmentId);
+    const selected = appointments.find(apt => apt._id === appointmentId);
+    setSelectedAppointment(selected);
+    await fetchAppointmentDetails(appointmentId);
+  };
 
   // Fetch patient services
   const fetchPatientServices = async () => {
@@ -184,14 +220,15 @@ const PatientDetailsPage = () => {
     }
   };
 
-  // Obsługa wysyłania formularza
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-
+  // Handle save functionality
   const handleSave = async () => {
+    if (!currentAppointmentId) {
+      toast.error("No appointment selected");
+      return;
+    }
+
     try {
-      console.log("Zapisywanie danych pacjenta...",patientData);
+      showLoader();
       setIsSaving(true);
       setSaveError(null);
       setSaveSuccess(false);
@@ -201,33 +238,38 @@ const PatientDetailsPage = () => {
       );
 
       if (hasUploadingFiles) {
-        console.log("Zapisywanie danych pacjenta...wywołanie api");
-        setSaveError("Poczekaj, aż wszystkie pliki zostaną przesłane");
+        setSaveError("Please wait for all files to finish uploading");
         setIsSaving(false);
         return;
       }
 
-      console.log("Zapisywanie danych pacjenta...wywołanie api");
-      const updatedPatient = await patientService.updatePatientDetails(
-        patientData.id,
-        patientData,
-        consultationData,
-        medications,
-        tests,
-        uploadedFiles,
-        notifyPatient
+      // Update appointment details using the correct function name
+      const response = await appointmentHelper.updateAppointmentDetails(
+        currentAppointmentId,
+        {
+          consultationData,
+          medications,
+          tests,
+          uploadedFiles
+        }
       );
 
-      toast.success("Dane pacjenta zostały zaktualizowane.");
-      setSaveSuccess(true);
-      setIsSaving(false);
+      if (response.success) {
+        toast.success("Appointment details updated successfully");
+        setSaveSuccess(true);
+        
+        // Refresh appointment details
+        await fetchAppointmentDetails(currentAppointmentId);
+      } else {
+        throw new Error(response.message || "Failed to update appointment details");
+      }
     } catch (error) {
-      console.error("Błąd podczas zapisywania danych pacjenta:", error);
-      setSaveError(
-        error.message || "Nie udało się zapisać danych pacjenta. Spróbuj ponownie."
-      );
-      toast.error("Nie udało się zapisać danych pacjenta.");
+      console.error("Error saving appointment details:", error);
+      setSaveError(error.message || "Failed to save appointment details. Please try again.");
+      toast.error("Failed to save appointment details");
+    } finally {
       setIsSaving(false);
+      hideLoader();
     }
   };
 
@@ -486,53 +528,109 @@ const PatientDetailsPage = () => {
     <div className="container mx-auto px-6 py-4">
       <BreadcrumbNav onBack={handleBack} />
 
-      <div className="flex flex-row gap-6 mt-4">
-        <PatientProfile patient={patientData} setPatientData={setPatientData} />
-
-        <div className="flex-1 space-y-4">
-          <ConsultationForm
-            consultationData={consultationData}
-            setConsultationData={setConsultationData}
-            uploadedFiles={uploadedFiles}
-            onFileUpload={handleFileUpload}
-            onRemoveFile={handleRemoveFile}
-            patientData={patientData}
-            setPatientData={setPatientData}
-            className="bg-white rounded-lg shadow-sm p-4 w-full"
-          />
-
-          <PatientServicesSection />
-
-          <MedicationsSection
-            medications={medications}
-            setMedications={setMedications}
-            showForm={showMedicationForm}
-            setShowForm={setShowMedicationForm}
-            className="bg-white rounded-lg shadow-sm p-4 w-full"
-          />
-
-          <TestsSection
-            tests={tests}
-            setTests={setTests}
-            showForm={showTestForm}
-            setShowForm={setShowTestForm}
-            className="bg-white rounded-lg shadow-sm p-4 w-full"
-          />
+      {/* Appointment Selection */}
+      <div className="mb-6">
+        {/* <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Appointments</h2>
+          <button
+            onClick={() => navigate(`/appointments/new?patientId=${id}`)}
+            className="flex items-center px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
+          >
+            <Calendar className="mr-2" size={16} />
+            New Appointment
+          </button>
+        </div>
+         */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {appointments.map((appointment) => (
+            <div
+              key={appointment._id}
+              onClick={() => handleAppointmentSelect(appointment._id)}
+              className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                currentAppointmentId === appointment._id
+                  ? 'border-teal-500 bg-teal-50'
+                  : 'border-gray-200 hover:border-teal-300'
+              }`}
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-medium">
+                    {new Date(appointment.date).toLocaleDateString()}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {appointment.consultationType || 'Regular Consultation'}
+                  </p>
+                </div>
+                <span className={`px-2 py-1 rounded-full text-xs ${
+                  appointment.status === 'completed'
+                    ? 'bg-green-100 text-green-800'
+                    : appointment.status === 'cancelled'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {appointment.status}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      <ActionButtons
-        patientId={id}
-        onAddMedicine={handleAddMedicine}
-        onAddTest={handleAddTest}
-        onAddServicesClick={handleAddServices}
-        onSave={handleSave}
-        isSaving={isSaving}
-        saveError={saveError}
-        notifyPatient={notifyPatient}
-        setNotifyPatient={setNotifyPatient}
-        className="mt-6"
-      />
+      {selectedAppointment ? (
+        <div className="flex flex-row gap-6 mt-4">
+          <PatientProfile patient={patientData} setPatientData={setPatientData} />
+
+          <div className="flex-1 space-y-4">
+            <ConsultationForm
+              consultationData={consultationData}
+              setConsultationData={setConsultationData}
+              uploadedFiles={uploadedFiles}
+              onFileUpload={handleFileUpload}
+              onRemoveFile={handleRemoveFile}
+              patientData={patientData}
+              setPatientData={setPatientData}
+              className="bg-white rounded-lg shadow-sm p-4 w-full"
+            />
+
+            <PatientServicesSection />
+
+            <MedicationsSection
+              medications={medications}
+              setMedications={setMedications}
+              showForm={showMedicationForm}
+              setShowForm={setShowMedicationForm}
+              className="bg-white rounded-lg shadow-sm p-4 w-full"
+            />
+
+            <TestsSection
+              tests={tests}
+              setTests={setTests}
+              showForm={showTestForm}
+              setShowForm={setShowTestForm}
+              className="bg-white rounded-lg shadow-sm p-4 w-full"
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          Select an appointment to view details
+        </div>
+      )}
+
+      {selectedAppointment && (
+        <ActionButtons
+          patientId={id}
+          onAddMedicine={handleAddMedicine}
+          onAddTest={handleAddTest}
+          onAddServicesClick={handleAddServices}
+          onSave={handleSave}
+          isSaving={isSaving}
+          saveError={saveError}
+          notifyPatient={notifyPatient}
+          setNotifyPatient={setNotifyPatient}
+          className="mt-6"
+        />
+      )}
 
       {/* Service Selection Modal */}
       <ServiceSelectionModal
@@ -542,22 +640,21 @@ const PatientDetailsPage = () => {
         patientId={id}
       />
       
-      {/* Confirmation Modal for Single Service Deletion */}
+      {/* Confirmation Modals */}
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
         onConfirm={handleRemoveService}
-        title="Potwierdź usunięcie"
-        message="Czy na pewno chcesz usunąć tę usługę? Ta operacja jest nieodwracalna."
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this service? This action cannot be undone."
       />
       
-      {/* Confirmation Modal for All Services Deletion */}
       <ConfirmationModal
         isOpen={isConfirmAllModalOpen}
         onClose={() => setIsConfirmAllModalOpen(false)}
         onConfirm={handleRemoveAllServices}
-        title="Usuń wszystkie usługi"
-        message="Czy na pewno chcesz usunąć wszystkie usługi tego pacjenta? Ta operacja jest nieodwracalna."
+        title="Delete All Services"
+        message="Are you sure you want to delete all services for this patient? This action cannot be undone."
       />
     </div>
   );
