@@ -148,7 +148,7 @@ class AppointmentService {
     endDate,
     status = "all",
     page = 1,
-    limit = 10
+    limit = 10,
   ) {
     try {
       const queryParams = new URLSearchParams({

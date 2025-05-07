@@ -132,6 +132,13 @@ const PatientDetailsPage = () => {
   const [reports, setReports] = useState([]);
   const [showReportUploader, setShowReportUploader] = useState(false);
 
+  // Add a specific useEffect to fetch patient services when appointment ID changes
+  useEffect(() => {
+    if (currentAppointmentId && id) {
+      fetchPatientServices();
+    }
+  }, [currentAppointmentId]);
+
   // Fetch patient data and their appointments
   useEffect(() => {
     const fetchData = async () => {
@@ -199,6 +206,9 @@ const PatientDetailsPage = () => {
         setMedications(appointmentMedications || []);
         setTests(appointmentTests || []);
         setReports(reports || []);
+        
+        // Note: We don't need to fetch services here as the useEffect will handle it
+        // when currentAppointmentId changes
       }
     } catch (error) {
       console.error("Error fetching appointment details:", error);
@@ -220,7 +230,8 @@ const PatientDetailsPage = () => {
   const fetchPatientServices = async () => {
     try {
       setIsServicesLoading(true);
-      const response = await patientServicesHelper.getPatientServices(id);
+      console.log("Fetching services for appointment ID:", currentAppointmentId);
+      const response = await patientServicesHelper.getPatientServices(id, { appointmentId: currentAppointmentId });
       
       if (response && response.data && response.data.services) {
         // Map services to format compatible with our UI
@@ -348,8 +359,8 @@ const PatientDetailsPage = () => {
         status: "active"
       }));
       
-      // Call API to add services
-      await patientServicesHelper.addServicesToPatient(id, servicesToAdd);
+      // Call API to add services - include appointmentId
+      await patientServicesHelper.addServicesToPatient(id, servicesToAdd, { appointmentId: currentAppointmentId });
       
       // Refresh the services
       await fetchPatientServices();
@@ -377,7 +388,7 @@ const PatientDetailsPage = () => {
     
     try {
       showLoader();
-      await patientServicesHelper.removeServiceFromPatient(id, serviceToDelete);
+      await patientServicesHelper.removeServiceFromPatient(id, serviceToDelete, { appointmentId: currentAppointmentId });
       
       // Update state after successful removal
       setPatientServices(patientServices.filter(service => service.serviceId !== serviceToDelete));
@@ -401,7 +412,7 @@ const PatientDetailsPage = () => {
   const handleRemoveAllServices = async () => {
     try {
       showLoader();
-      await patientServicesHelper.deleteAllPatientServices(id);
+      await patientServicesHelper.deleteAllPatientServices(id, { appointmentId: currentAppointmentId });
       setPatientServices([]);
       toast.success("Wszystkie usługi zostały usunięte.");
       hideLoader();
@@ -725,6 +736,7 @@ const PatientDetailsPage = () => {
         onClose={() => setShowServiceModal(false)}
         onSave={handleSaveServices}
         patientId={id}
+        appointmentId={currentAppointmentId}
         existingServices={patientServices}
       />
       

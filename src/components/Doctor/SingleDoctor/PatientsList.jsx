@@ -13,6 +13,7 @@ const PatientsList = ({
   currentPage = 1,
   onPageChange,
   onPatientSelect,
+  setAppointmentId,
   selectedPatient,
   patientsData = [],
 }) => {
@@ -210,7 +211,11 @@ const PatientsList = ({
                 <input
                   type="checkbox"
                   checked={selectedPatient === patient.patient_id}
-                  onChange={() => handlePatientSelect(patient.patient_id)}
+                  onChange={() =>{ 
+                    handlePatientSelect(patient.patient_id)
+                    console.log("patient id ",patient.id)
+                    setAppointmentId(patient.id)
+                  }}
                   className="w-4 h-4 mr-3"
                 />
                 <img
