@@ -13,7 +13,7 @@ import {
   FaChevronUp,
   FaCog,
 } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useUser } from "../../context/userContext";
 
 const Header = () => {
@@ -21,6 +21,7 @@ const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user, logout } = useUser();
   const navigate = useNavigate();
+  const location = useLocation(); // Get current location
   const dropdownRef = useRef(null);
 
   // Check if user is logged in and has the correct role
@@ -53,33 +54,51 @@ const Header = () => {
     navigate("/login");
   };
 
+  // Helper function to check if a link is active
+  const isActive = (path) => {
+    // For home page
+    if (path === "/user" && location.pathname === "/user") {
+      return true;
+    }
+    // For other pages, check if the location pathname starts with the path
+    return path !== "/user" && location.pathname.startsWith(path);
+  };
+
+  // Active link style
+  const activeLinkClass = "text-teal-500 font-bold border-b-2 border-teal-500";
+  // Default link style
+  const defaultLinkClass = "text-teal-900 hover:text-teal-600 transition-colors";
+
   return (
     <header className="bg-white fixed top-0 right-0 left-0 z-50 shadow-md">
-      <div className="hidden md:flex justify-end items-center px-6 lg:px-8 py-2 gap-6 lg:gap-12 text-teal-700 text-xs lg:text-sm">
-        <div className="flex items-start gap-2">
-          <FaPhoneAlt className="text-base" />
+      <div className="hidden md:flex w-full justify-between items-start px-6 lg:px-8 py-4 gap-4 lg:gap-8 text-teal-700 text-xs lg:text-sm bg-gray-50 border-b border-gray-200">
+        <div className="flex items-start gap-3">
+          <FaPhoneAlt className="text-base mt-1" />
           <div className="flex flex-col text-left">
-            <span className="font-semibold uppercase">Nagłe przypadki</span>
-            <span className="text-gray-800">(+48) 797 097 487</span>
+            <span className="font-semibold uppercase tracking-wide">Nagłe przypadki</span>
+            <div className="text-gray-800 mt-1 space-y-1">
+              <span>(+48) 797 097 487</span> , {"    "}
+              <span>(+48) 797 127 487</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-start gap-2">
-          <FaClock className="text-base" />
+        <div className="flex items-start gap-3">
+          <FaClock className="text-base mt-1" />
           <div className="flex flex-col text-left">
-            <span className="font-semibold uppercase">Godziny pracy</span>
-            <span className="text-gray-800">
+            <span className="font-semibold uppercase tracking-wide">Godziny pracy</span>
+            <span className="text-gray-800 mt-1">
               15:00-20:00 Poniedziałek-Piątek
             </span>
           </div>
         </div>
 
-        <div className="flex items-start gap-2">
-          <FaMapMarkerAlt className="text-base" />
+        <div className="flex items-start gap-3">
+          <FaMapMarkerAlt className="text-base mt-1" />
           <div className="flex flex-col text-left">
-            <span className="font-semibold uppercase">Lokalizacja</span>
-            <span className="text-gray-800">
-              Powstańców Warszawy 7/15, <br className="hidden lg:block" />{" "}
+            <span className="font-semibold uppercase tracking-wide">Lokalizacja</span>
+            <span className="text-gray-800 mt-1">
+              Powstańców Warszawy 7/1.5, <br className="hidden lg:block" />
               26-110 Skarżysko-Kamienna
             </span>
           </div>
@@ -89,16 +108,49 @@ const Header = () => {
       <div className="flex justify-between items-center px-6 md:px-8 py-3 bg-[#F4F4F4]">
         <img src="/images/mainlogo.png" alt="Logo strony" className="h-10" />
 
-        <nav className="hidden lg:flex gap-4 lg:gap-6 text-teal-900 font-medium text-sm">
-          <Link to="/user" className="text-teal-800 font-bold">
+        <nav className="hidden lg:flex gap-4 lg:gap-6 font-medium text-sm">
+          <Link 
+            to="/user" 
+            className={`py-2 ${isActive("/user") && location.pathname === "/user" ? activeLinkClass : defaultLinkClass}`}
+          >
             Strona główna
           </Link>
-          <Link to="/user/about">O nas</Link>
-          <Link to="/user/services">Usługi</Link>
-          <Link to="/user/doctors">Lekarze</Link>
-          <Link to="/user/news">Aktualności</Link>
-          <Link to="/user/blogs">Blog</Link>
-          {/* <Link to="/contact">Kontakt</Link> */}
+          <Link 
+            to="/user/about"
+            className={`py-2 ${isActive("/user/about") ? activeLinkClass : defaultLinkClass}`}
+          >
+            O nas
+          </Link>
+          <Link 
+            to="/user/services"
+            className={`py-2 ${isActive("/user/services") ? activeLinkClass : defaultLinkClass}`}
+          >
+            Usługi
+          </Link>
+          <Link 
+            to="/user/doctors"
+            className={`py-2 ${isActive("/user/doctors") ? activeLinkClass : defaultLinkClass}`}
+          >
+            Lekarze
+          </Link>
+          <Link 
+            to="/user/news"
+            className={`py-2 ${isActive("/user/news") ? activeLinkClass : defaultLinkClass}`}
+          >
+            Aktualności
+          </Link>
+          <Link 
+            to="/user/blogs"
+            className={`py-2 ${isActive("/user/blogs") ? activeLinkClass : defaultLinkClass}`}
+          >
+            Blog
+          </Link>
+          <Link 
+            to="/user/contact"
+            className={`py-2 ${isActive("/user/contact") ? activeLinkClass : defaultLinkClass}`}
+          >
+            Kontakt
+          </Link>
         </nav>
 
         <button
@@ -120,32 +172,56 @@ const Header = () => {
             <FaTimes />
           </button>
 
-          <nav className="flex flex-col items-center mt-16 gap-6 text-teal-900 font-medium text-lg">
+          <nav className="flex flex-col items-center mt-16 gap-6 font-medium text-lg">
             <Link
               to="/user"
-              className="text-teal-800 font-bold"
+              className={isActive("/user") && location.pathname === "/user" ? "text-teal-500 font-bold" : "text-teal-900"}
               onClick={() => setMenuOpen(false)}
             >
               Strona główna
             </Link>
-            <Link to="/user/about" onClick={() => setMenuOpen(false)}>
+            <Link 
+              to="/user/about" 
+              className={isActive("/user/about") ? "text-teal-500 font-bold" : "text-teal-900"}
+              onClick={() => setMenuOpen(false)}
+            >
               O nas
             </Link>
-            <Link to="/user/services" onClick={() => setMenuOpen(false)}>
+            <Link 
+              to="/user/services" 
+              className={isActive("/user/services") ? "text-teal-500 font-bold" : "text-teal-900"}
+              onClick={() => setMenuOpen(false)}
+            >
               Usługi
             </Link>
-            <Link to="/user/doctors" onClick={() => setMenuOpen(false)}>
+            <Link 
+              to="/user/doctors" 
+              className={isActive("/user/doctors") ? "text-teal-500 font-bold" : "text-teal-900"}
+              onClick={() => setMenuOpen(false)}
+            >
               Lekarze
             </Link>
-            <Link to="/user/news" onClick={() => setMenuOpen(false)}>
+            <Link 
+              to="/user/news" 
+              className={isActive("/user/news") ? "text-teal-500 font-bold" : "text-teal-900"}
+              onClick={() => setMenuOpen(false)}
+            >
               Aktualności
             </Link>
-            <Link to="/user/blogs" onClick={() => setMenuOpen(false)}>
+            <Link 
+              to="/user/blogs" 
+              className={isActive("/user/blogs") ? "text-teal-500 font-bold" : "text-teal-900"}
+              onClick={() => setMenuOpen(false)}
+            >
               Blog
             </Link>
-            {/* <Link to="/contact" onClick={() => setMenuOpen(false)}>
+            <Link 
+              to="/user/contact" 
+              className={isActive("/user/contact") ? "text-teal-500 font-bold" : "text-teal-900"}
+              onClick={() => setMenuOpen(false)}
+            >
               Kontakt
-            </Link> */}
+            </Link>
           </nav>
 
           <div className="flex flex-col items-center gap-3 mt-6">
@@ -154,7 +230,9 @@ const Header = () => {
                 <Link
                   to="/user/appointments"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 bg-teal-800 text-white w-48 py-2 text-sm rounded-full"
+                  className={`flex items-center justify-center gap-2 bg-teal-800 text-white w-48 py-2 text-sm rounded-full ${
+                    isActive("/user/appointments") ? "bg-teal-600" : ""
+                  }`}
                 >
                   <FaCalendarCheck />
                   Moje wizyty
@@ -162,7 +240,9 @@ const Header = () => {
                 <Link
                   to="/user/details"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 bg-teal-800 text-white w-48 py-2 text-sm rounded-full"
+                  className={`flex items-center justify-center gap-2 bg-teal-800 text-white w-48 py-2 text-sm rounded-full ${
+                    isActive("/user/details") ? "bg-teal-600" : ""
+                  }`}
                 >
                   <FaIdCard />
                   Moje recepty
@@ -170,7 +250,9 @@ const Header = () => {
                 <Link
                   to="/user/profile"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 bg-teal-800 text-white w-48 py-2 text-sm rounded-full"
+                  className={`flex items-center justify-center gap-2 bg-teal-800 text-white w-48 py-2 text-sm rounded-full ${
+                    isActive("/user/profile") ? "bg-teal-600" : ""
+                  }`}
                 >
                   <FaUser />
                   Mój profil
@@ -188,7 +270,7 @@ const Header = () => {
               </>
             ) : (
               <>
-                <button
+                {/* <button
                   onClick={() => {
                     setMenuOpen(false);
                     navigate("/login");
@@ -205,7 +287,7 @@ const Header = () => {
                   className="border border-teal-700 text-teal-700 w-32 py-2 text-sm rounded-full"
                 >
                   Zarejestruj się
-                </button>
+                </button> */}
               </>
             )}
           </div>
@@ -231,7 +313,9 @@ const Header = () => {
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                   <Link
                     to="/user/appointments"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 ${
+                      isActive("/user/appointments") ? "text-teal-500 font-medium" : "text-gray-700"
+                    }`}
                     onClick={() => setDropdownOpen(false)}
                   >
                     <FaCalendarCheck className="text-teal-800" />
@@ -239,7 +323,9 @@ const Header = () => {
                   </Link>
                   <Link
                     to="/user/details"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 ${
+                      isActive("/user/details") ? "text-teal-500 font-medium" : "text-gray-700"
+                    }`}
                     onClick={() => setDropdownOpen(false)}
                   >
                     <FaIdCard className="text-teal-800" />
@@ -247,7 +333,9 @@ const Header = () => {
                   </Link>
                   <Link
                     to="/user/profile"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 ${
+                      isActive("/user/profile") ? "text-teal-500 font-medium" : "text-gray-700"
+                    }`}
                     onClick={() => setDropdownOpen(false)}
                   >
                     <FaCog className="text-teal-800" />
@@ -268,7 +356,7 @@ const Header = () => {
             </div>
           ) : (
             <>
-              <Link
+              {/* <Link
                 to="/login"
                 className="bg-teal-800 text-white px-6 py-2 text-sm rounded-full"
               >
@@ -279,7 +367,7 @@ const Header = () => {
                 className="border border-teal-700 text-teal-700 px-6 py-2 text-sm rounded-full"
               >
                 Zarejestruj się
-              </Link>
+              </Link> */}
             </>
           )}
         </div>

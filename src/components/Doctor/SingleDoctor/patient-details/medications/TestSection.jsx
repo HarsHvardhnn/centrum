@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { TestForm } from "./TestForm";
 
-export const TestsSection = ({ tests = [], onUpdate }) => {
-  const [showForm, setShowForm] = useState(false);
+export const TestsSection = ({ tests = [], setTests, showForm, setShowForm, className = "" }) => {
   const [editingTest, setEditingTest] = useState(null);
   const [editingIndex, setEditingIndex] = useState(-1);
 
@@ -21,7 +20,7 @@ export const TestsSection = ({ tests = [], onUpdate }) => {
   const handleDeleteClick = (index) => {
     const updatedTests = [...tests];
     updatedTests.splice(index, 1);
-    onUpdate(updatedTests);
+    setTests(updatedTests);
   };
 
   const handleSave = (testData) => {
@@ -34,7 +33,7 @@ export const TestsSection = ({ tests = [], onUpdate }) => {
       updatedTests = [...tests, testData];
     }
 
-    onUpdate(updatedTests);
+    setTests(updatedTests);
     setShowForm(false);
   };
 
@@ -60,9 +59,9 @@ export const TestsSection = ({ tests = [], onUpdate }) => {
   };
 
   return (
-    <div className="mt-6 bg-white rounded-lg shadow-sm p-6">
+    <div className={`bg-white rounded-lg shadow-sm p-4 mb-4 w-full ${className}`}>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-medium">Badania</h2>
+        <h2 className="font-medium text-gray-800">Badania</h2>
         <button
           onClick={handleAddClick}
           className="flex items-center text-sm bg-[#80c5c5] hover:bg-teal-500 text-white px-3 py-1 rounded-md"

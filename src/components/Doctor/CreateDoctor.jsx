@@ -14,6 +14,7 @@ import {
 import { DEPARTMENTS } from "../../utils/departments";
 import { useSpecializations } from "../../context/SpecializationContext";
 import SpecializationDropdown from "./SpecializationDropdown";
+import ImageCropper from "../UtilComponents/ImageCropper";
 
 // List of departments
 
@@ -43,7 +44,10 @@ const DoctorSchema = Yup.object().shape({
   bio: Yup.string().required("Bio jest wymagane"),
   consultationFee: Yup.number()
     .positive("Opłata musi być liczbą dodatnią")
-    .required("Opłata za konsultację jest wymagana"),
+    .required("Opłata za konsultację online jest wymagana"),
+  offlineConsultationFee: Yup.number()
+    .positive("Opłata musi być liczbą dodatnią")
+    .required("Opłata za konsultację stacjonarną jest wymagana"),
   profilePicture: Yup.mixed().required("Zdjęcie profilowe jest wymagane"),
 });
 
@@ -52,19 +56,48 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
   const [specializationInput, setSpecializationInput] = useState("");
   const [qualificationInput, setQualificationInput] = useState("");
   const { specializations } = useSpecializations();
+  
+  // State for image cropping
+  const [showCropper, setShowCropper] = useState(false);
+  const [cropperImage, setCropperImage] = useState(null);
+  const [formikSetFieldValue, setFormikSetFieldValue] = useState(null);
 
   if (!isOpen) return null;
 
   const handleImageChange = (event, setFieldValue) => {
     const file = event.target.files[0];
     if (file) {
-      setFieldValue("profilePicture", file);
+      // Save the setFieldValue function for later use after cropping
+      setFormikSetFieldValue(() => setFieldValue);
+      
+      // Create a URL for the selected image and show the cropper
       const reader = new FileReader();
       reader.onload = () => {
-        setProfileImage(reader.result);
+        setCropperImage(reader.result);
+        setShowCropper(true);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedImage) => {
+    // Update the form with the cropped image
+    if (formikSetFieldValue) {
+      // Convert the data URL to a File object for form submission
+      fetch(croppedImage.url)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], "cropped_profile.jpg", { type: "image/jpeg" });
+          formikSetFieldValue("profilePicture", file);
+          setProfileImage(croppedImage.url);
+          setShowCropper(false);
+        });
+    }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setCropperImage(null);
   };
 
   const handleAddSpecialization = (values, setFieldValue) => {
@@ -132,6 +165,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
             experience: "",
             bio: "",
             consultationFee: "",
+            offlineConsultationFee: "",
             profilePicture: null,
           }}
           validationSchema={DoctorSchema}
@@ -492,6 +526,32 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
 
                   <div>
                     <label
+                      htmlFor="offlineConsultationFee"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Cena Konsultacji Stacjonarnej*
+                    </label>
+                    <div className="relative">
+                      <Field
+                        type="number"
+                        name="offlineConsultationFee"
+                        id="offlineConsultationFee"
+                        min="0"
+                        className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                      />
+                      <span className="absolute left-3 top-3 text-gray-400">
+                        zł
+                      </span>
+                    </div>
+                    <ErrorMessage
+                      name="offlineConsultationFee"
+                      component="div"
+                      className="text-red-500 text-xs mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <label
                       htmlFor="bio"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
@@ -539,6 +599,16 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
             </Form>
           )}
         </Formik>
+
+        {/* Image Cropper Modal */}
+        {showCropper && cropperImage && (
+          <ImageCropper
+            imageSrc={cropperImage}
+            onCropComplete={handleCropComplete}
+            onCancel={handleCropCancel}
+            aspect={1} // Square aspect ratio for profile picture
+          />
+        )}
       </div>
     </div>
   );

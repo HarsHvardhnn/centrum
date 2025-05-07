@@ -1,8 +1,9 @@
 import React from "react";
 import { apiCaller } from "../../../../utils/axiosInstance";
 import { useLoader } from "../../../../context/LoaderContext";
+import { Download, Plus, FileText, Tag, Save } from "lucide-react";
 
-const ActionButtons = ({ patientId }) => {
+const ActionButtons = ({ patientId, onAddServicesClick, onSave }) => {
   const {showLoader,hideLoader}=useLoader()
   const handleDownloadVisitCard = async () => {
     try {
@@ -60,21 +61,7 @@ const ActionButtons = ({ patientId }) => {
         className="flex items-center justify-center border border-gray-200 rounded-lg px-4 py-2 text-sm"
         onClick={handleDownloadVisitCard}
       >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="mr-2"
-        >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" y1="15" x2="12" y2="3" />
-        </svg>
+        <Download size={16} className="mr-2" />
         Pobierz kartę wizyty
       </button>
       {/* <button
@@ -133,6 +120,20 @@ const ActionButtons = ({ patientId }) => {
         </svg>
         Add Medicine
       </button> */}
+      <button
+        className="flex items-center justify-center border border-gray-200 bg-teal-500 text-white rounded-lg px-4 py-2 text-sm hover:bg-teal-600 transition-colors"
+        onClick={onAddServicesClick}
+      >
+        <Tag size={16} className="mr-2" />
+        Dodaj usługi
+      </button>
+      <button
+        className="flex items-center justify-center border border-gray-200 bg-teal-500 text-white rounded-lg px-4 py-2 text-sm hover:bg-teal-600 transition-colors"
+        onClick={onSave}
+      >
+        <Save size={16} className="mr-2" />
+        Save
+      </button>
     </div>
   );
 };

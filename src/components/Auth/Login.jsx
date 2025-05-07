@@ -61,7 +61,9 @@ const AuthForm = ({ isLogin = false }) => {
     password: Yup.string()
       .min(8, "Hasło musi mieć co najmniej 8 znaków")
       .required("Hasło jest wymagane"),
-    phone: Yup.string().optional(),
+    phone: Yup.string()
+      .matches(/^\d{9}$/, "Numer telefonu musi składać się z dokładnie 9 cyfr")
+      .optional(),
   });
 
   const otpSchema = Yup.object().shape({
@@ -149,20 +151,23 @@ const AuthForm = ({ isLogin = false }) => {
   // Signup submission handler
   const handleSignupSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
+      // Format phone number with +48 prefix if provided
+      const formattedPhone = values.phone ? `+48${values.phone}` : "";
+      
       const response = await apiCaller("POST", "/auth/signup", {
         email: values.email,
         password: values.password,
         firstName: values.firstName,
         lastName: values.lastName,
         role: "patient", // Default role for signup
-        phone: values.phone || "",
+        phone: formattedPhone,
       });
 
       console.log("Signup initiated:", response.data);
 
       // Store email for OTP verification
       setEmail(values.email);
-      setRegistrationData(values);
+      setRegistrationData({...values, phone: formattedPhone});
 
       // Show OTP verification screen
       setShowOtpScreen(true);
@@ -455,7 +460,7 @@ const AuthForm = ({ isLogin = false }) => {
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="2"
-                              d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                              d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
                             />
                           ) : (
                             // Icon for show password
@@ -498,13 +503,27 @@ const AuthForm = ({ isLogin = false }) => {
                       >
                         Telefon (opcjonalnie)
                       </label>
-                      <Field
-                        type="text"
-                        id="phone"
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                          <span className="text-gray-500">+48</span>
+                        </div>
+                        <Field
+                          type="text"
+                          id="phone"
+                          name="phone"
+                          placeholder="123456789"
+                          className="w-full pl-12 px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-[#80C5C5]"
+                          maxLength={9}
+                        />
+                      </div>
+                      <ErrorMessage
                         name="phone"
-                        placeholder="+48 123 456 789"
-                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-[#80C5C5]"
+                        component="p"
+                        className="text-xs text-red-500 mt-1"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Wprowadź 9 cyfr bez kierunkowego i spacji.
+                      </p>
                     </div>
                   )}
 

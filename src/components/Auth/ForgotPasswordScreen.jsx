@@ -1,5 +1,5 @@
 import React from "react";
-import forgotPasswordImage from "../../assets/ForgotPassword.png";
+import forgotPasswordImage from "../../assets/Forgetpassword.jpg";
 import ForgotPassword from "./Forgotpassword";
 
 const ForgotPasswordScreen = () => {

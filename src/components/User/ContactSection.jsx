@@ -29,8 +29,8 @@ export default function ContactSection() {
         <div className="bg-main-light hover:bg-main hover:text-white p-8 rounded-lg text-center flex flex-col items-center transition duration-300">
           <FaEnvelope className="text-4xl mb-3" />
           <h4 className="font-bold text-lg">EMAIL</h4>
-          <p className="text-base">kontakt@przychodnia.pl</p>
-          <p className="text-base">info@przychodnia.pl</p>
+          <p className="text-base">kontakt@centrummedyczne7.pl</p>
+          {/* <p className="text-base">info@przychodnia.pl</p> */}
         </div>
 
         <div className="bg-main-light hover:bg-main hover:text-white p-8 rounded-lg text-center flex flex-col items-center transition duration-300">

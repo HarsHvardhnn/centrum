@@ -86,13 +86,13 @@ export default function News() {
                         />
                       </div>
                       <div className="px-4 py-2 xl:p-4 w-2/3">
-                        <p className="text-neutral-700 max-md:text-xs max-xl:text-sm">
+                        {/* <p className="text-neutral-700 max-md:text-xs max-xl:text-sm">
                           {newsItem.date} | {newsItem.author}
-                        </p>
+                        </p> */}
                         <h4 className="mt-2 sm:text-lg xl:text-xl text-neutral-700">
                           {newsItem.title}
                         </h4>
-                        <div className="flex items-center gap-4 mt-4 max-md:text-sm">
+                        {/* <div className="flex items-center gap-4 mt-4 max-md:text-sm">
                           <span className="flex items-center gap-1">
                             <IoEyeOutline className="text-blue-600 sm:text-xl" />{" "}
                             {newsItem.views} wyświetleń
@@ -101,7 +101,7 @@ export default function News() {
                             <FaRegHeart className="text-red-500 text-sm sm:text-lg" />{" "}
                             {newsItem.likes} polubień
                           </span>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   ))}

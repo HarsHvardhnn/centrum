@@ -102,10 +102,10 @@ export default function Doctors({
                   />
                   <div className="bg-[#F4F4F4] text-main py-6 px-6">
                     <h4 className="text-lg font-semibold">{doctor.name}</h4>
-                    <p className="text-xl font-bold uppercase">
+                    <p className="text-xl font-bold uppercase text-black">
                       {doctor.department.name}
                     </p>
-                    {doctor.experience && (
+                    {/* {doctor.experience && (
                       <p className="text-sm mt-1">
                         Doświadczenie: {doctor.experience}
                       </p>
@@ -114,7 +114,7 @@ export default function Doctors({
                       <p className="text-sm font-medium mt-1">
                         Cena konsultacji: {doctor.consultationFee} zł
                       </p>
-                    )}
+                    )} */}
                   </div>
 
                   <button

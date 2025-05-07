@@ -4,6 +4,13 @@ import { Link } from "react-router-dom";
 import { useServices } from "../../context/serviceContext";
 
 const ServiceCard = ({ service }) => {
+  // Function to truncate text to specific length
+  const truncateText = (text, maxLength) => {
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength) + "...";
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden border">
       <img
@@ -13,15 +20,19 @@ const ServiceCard = ({ service }) => {
       />
       <div className="p-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-2xl font-semibold text-main">{service.title}</h3>
+          <h3 className="text-2xl font-semibold text-main h-14 line-clamp-2 overflow-hidden">
+            {truncateText(service.title, 50)}
+          </h3>
           {/* Display the price */}
           <div className="text-lg font-bold text-main bg-neutral-100 px-3 py-1 rounded-lg">
             {service.price || "N/D"} zł
           </div>
         </div>
-        <p className="text-gray-600 text-sm mt-2 line-clamp-3">
-          {service.description}
-        </p>
+        <div className="h-20 overflow-hidden">
+          <p className="text-gray-600 text-sm mt-2 line-clamp-3">
+            {truncateText(service.description, 150)}
+          </p>
+        </div>
         <Link
           to={"/user/services/" + service.title}
           className="text-main flex items-center gap-1 mt-3 font-medium"

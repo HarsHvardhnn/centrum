@@ -29,6 +29,7 @@ const NewsManagement = () => {
     author: "",
     date: "",
     description: "",
+    shortDescription: "",
     image: "",
     isNews: true,
     category: "",
@@ -148,8 +149,8 @@ const NewsManagement = () => {
   const validateForm = () => {
     const errors = {};
     if (!formData.title.trim()) errors.title = "Tytuł jest wymagany";
-    if (!formData.author.trim()) errors.author = "Autor jest wymagany";
     if (!formData.date.trim()) errors.date = "Data jest wymagana";
+    if (!formData.shortDescription.trim()) errors.shortDescription = "Krótki opis jest wymagany";
     if (!formData.description.trim()) errors.description = "Opis jest wymagany";
     if (!formData.category) errors.category = "Kategoria jest wymagana";
     if (!imageFile && !currentArticle) errors.image = "Zdjęcie jest wymagane";
@@ -177,6 +178,7 @@ const NewsManagement = () => {
     formDataToSend.append("title", formData.title);
     formDataToSend.append("author", formData.author);
     formDataToSend.append("date", formData.date);
+    formDataToSend.append("shortDescription", formData.shortDescription);
     formDataToSend.append("description", formData.description);
     formDataToSend.append("isNews", formData.isNews);
     formDataToSend.append("category", formData.category);
@@ -252,22 +254,18 @@ const NewsManagement = () => {
   const openEditModal = (article) => {
     setCurrentArticle(article);
     setFormData({
-      title: article.title,
-      author: article.author,
-      date: formatDateForInput(article.date),
+      title: article.title || "",
+      author: article.author || "",
+      date: formatDateForInput(article.date) || "",
+      shortDescription: article.shortDescription || "",
       description: article.description || "",
-      isNews: article.isNews !== undefined ? article.isNews : true,
-      category: article.category?._id || article.category || "",
+      image: article.image || "",
+      isNews: article.isNews,
+      category: article.category || "",
     });
-
-    // If there's an existing image, set it as preview
-    if (article.image) {
-      setImagePreview(article.image);
-    } else {
-      setImagePreview(null);
-    }
-
-    setImageFile(null); // Reset file input
+    setImagePreview(article.image ? article.image : null);
+    setImageFile(null);
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -305,17 +303,19 @@ const NewsManagement = () => {
       title: "",
       author: "",
       date: "",
+      shortDescription: "",
       description: "",
+      image: "",
       isNews: true,
       category: "",
     });
+    setImageFile(null);
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
     }
-    setImageFile(null);
     setImagePreview(null);
-    setFormErrors({});
     setCurrentArticle(null);
+    setFormErrors({});
   };
 
   const openAddModal = () => {
@@ -733,10 +733,37 @@ const NewsManagement = () => {
 
               <div>
                 <label
+                  htmlFor="shortDescription"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Krótki opis
+                </label>
+                <textarea
+                  name="shortDescription"
+                  id="shortDescription"
+                  rows={2}
+                  value={formData.shortDescription}
+                  onChange={handleInputChange}
+                  placeholder="Wprowadź krótki opis, który będzie widoczny na liście aktualności"
+                  className={`mt-1 block w-full rounded-md shadow-sm ${
+                    formErrors.shortDescription
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+                  }`}
+                />
+                {formErrors.shortDescription && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {formErrors.shortDescription}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
                   htmlFor="description"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Opis
+                  Pełny opis
                 </label>
                 <textarea
                   name="description"

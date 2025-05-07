@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { MedicationForm } from "./MedicationForm";
 
-export const MedicationsSection = ({ medications = [], onUpdate }) => {
-  const [showForm, setShowForm] = useState(false);
+export const MedicationsSection = ({ medications = [], setMedications, showForm, setShowForm, className = "" }) => {
   const [editingMedication, setEditingMedication] = useState(null);
   const [editingIndex, setEditingIndex] = useState(-1);
 
@@ -21,7 +20,7 @@ export const MedicationsSection = ({ medications = [], onUpdate }) => {
   const handleDeleteClick = (index) => {
     const updatedMedications = [...medications];
     updatedMedications.splice(index, 1);
-    onUpdate(updatedMedications);
+    setMedications(updatedMedications);
   };
 
   const handleSave = (medicationData) => {
@@ -34,7 +33,7 @@ export const MedicationsSection = ({ medications = [], onUpdate }) => {
       updatedMedications = [...medications, medicationData];
     }
 
-    onUpdate(updatedMedications);
+    setMedications(updatedMedications);
     setShowForm(false);
   };
 
@@ -49,9 +48,9 @@ export const MedicationsSection = ({ medications = [], onUpdate }) => {
   };
 
   return (
-    <div className="mt-6 bg-white rounded-lg shadow-sm p-6">
+    <div className={`bg-white rounded-lg shadow-sm p-4 mb-4 w-full ${className}`}>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-medium">Leki</h2>
+        <h2 className="font-medium text-gray-800">Leki</h2>
         <button
           onClick={handleAddClick}
           className="flex items-center text-sm bg-[#80c5c5] hover:bg-teal-500 text-white px-3 py-1 rounded-md"

@@ -12,6 +12,7 @@ const ConsultationForm = ({
   onFileUpload,
   onRemoveFile,
   setPatientData,
+  className = "",
 }) => {
   console.log("consulting doctor", uploadedFiles);
 
@@ -140,9 +141,10 @@ const ConsultationForm = ({
   ];
 
   return (
-    <div className="w-full md:w-2/3 p-6">
+    <div className={`bg-white rounded-lg shadow-sm p-4 mb-4 w-full ${className}`}>
+      <h3 className="font-medium text-gray-800 mb-6 text-lg">Szczegóły konsultacji</h3>
       {/* Formularz lekarza */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
         <div>
           <label className="block text-sm text-gray-600 mb-1">
             Lekarz prowadzący
@@ -253,7 +255,7 @@ const ConsultationForm = ({
           <label className="block text-sm text-gray-600 mb-1">Data</label>
           <input
             type="date"
-            value={consultationData.date}
+            value={consultationData.date || ""}
             onChange={(e) => handleConsultationChange("date", e.target.value)}
             className="w-full p-2.5 border border-gray-200 rounded-lg"
           />
@@ -263,68 +265,64 @@ const ConsultationForm = ({
           <label className="block text-sm text-gray-600 mb-1">Godzina</label>
           <input
             type="time"
-            value={consultationData.time}
+            value={consultationData.time || ""}
             onChange={(e) => handleConsultationChange("time", e.target.value)}
             className="w-full p-2.5 border border-gray-200 rounded-lg"
           />
         </div>
       </div>
 
+      {/* Międzynarodowy pacjent */}
+      <div className="mt-6 flex items-center">
+        <input
+          type="checkbox"
+          id="isInternationalPatient"
+          checked={patientData?.isInternationalPatient || false}
+          onChange={handleInternationalPatientChange}
+          className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+        />
+        <label
+          htmlFor="isInternationalPatient"
+          className="ml-2 block text-sm text-gray-900"
+        >
+          Pacjent międzynarodowy
+        </label>
+      </div>
+
       {/* Opis i notatki */}
       <div className="mt-6">
-        <label className="block text-sm text-gray-600 mb-1">Opis</label>
+        <label className="block text-sm text-gray-600 mb-1">Notatki</label>
         <textarea
-          value={consultationData.description}
+          value={consultationData.description || ""}
           onChange={(e) =>
             handleConsultationChange("description", e.target.value)
           }
-          rows={3}
-          className="w-full p-2.5 border border-gray-200 rounded-lg resize-none"
-        />
+          rows={5}
+          className="w-full p-2.5 border border-gray-200 rounded-lg"
+          placeholder="Dodaj notatki..."
+        ></textarea>
       </div>
 
-      <div className="mt-4">
-        <label className="block text-sm text-gray-600 mb-1">Notatki</label>
-        <textarea
-          value={consultationData.notes}
-          onChange={(e) => handleConsultationChange("notes", e.target.value)}
-          rows={3}
-          className="w-full p-2.5 border border-gray-200 rounded-lg resize-none"
-        />
-      </div>
-
-      {/* Przesyłanie plików */}
+      {/* Przesyłanie załączników */}
       <div className="mt-6">
-        <h3 className="text-sm font-medium mb-2">Załączniki</h3>
+        <label className="block text-sm text-gray-600 mb-2">Załączniki</label>
         <FileUploadArea onFileUpload={onFileUpload} />
 
         {/* Lista przesłanych plików */}
         {uploadedFiles && uploadedFiles.length > 0 && (
-          <div className="mt-4 space-y-2">
-            {uploadedFiles.map((file, index) => (
-              <FileListItem
-                key={index}
-                file={file}
-                onRemove={() => onRemoveFile(file.name)}
-              />
-            ))}
+          <div className="mt-4">
+            <h4 className="text-sm font-medium mb-2">Przesłane pliki</h4>
+            <div className="space-y-2">
+              {uploadedFiles.map((file, index) => (
+                <FileListItem
+                  key={index}
+                  file={file}
+                  onRemove={() => onRemoveFile(file.name)}
+                />
+              ))}
+            </div>
           </div>
         )}
-      </div>
-
-      {/* Opcje dodatkowe */}
-      <div className="mt-6">
-        <label className="flex items-center">
-          <input
-            type="checkbox"
-            checked={patientData?.isInternationalPatient || false}
-            onChange={handleInternationalPatientChange}
-            className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
-          />
-          <span className="ml-2 text-sm text-gray-600">
-            Pacjent międzynarodowy
-          </span>
-        </label>
       </div>
     </div>
   );

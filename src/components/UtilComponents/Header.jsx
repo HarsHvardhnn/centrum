@@ -64,12 +64,12 @@ const Header = () => {
     <div className="bg-primary text-white py-2 px-6 flex items-center justify-between w-full z-20 shadow-md">
       <div className="flex items-center border border-white rounded-xl py-2 px-4">
         <div className="flex items-center cursor-pointer">
-          <div className="bg-white rounded-full h-10 w-10 flex items-center justify-center">
-            <span className="text-primary font-bold text-xl">N</span>
+          <div className="h-10 w-10 flex items-center justify-center">
+            <img src="/images/logo.png" alt="Centrum Medyczne" className="h-8" />
           </div>
           <div className="ml-3">
-            <h1 className="font-semibold text-lg">Northern Central Clinic</h1>
-            <p className="text-xs text-white/80">Poland</p>
+            <h1 className="font-semibold text-lg">Centrum Medyczne</h1>
+            <p className="text-xs text-white/80">Polska</p>
           </div>
         </div>
         <button className="ml-2 hover:bg-primary rounded-full p-1">

@@ -11,6 +11,7 @@ import {
   FiHelpCircle,
   FiUser,
 } from "react-icons/fi";
+import { BsCalendarPlusFill } from "react-icons/bs";
 import { useUser } from "../../context/userContext";
 
 const Sidebar = () => {
@@ -63,6 +64,14 @@ const Sidebar = () => {
                 : `/doctors/appointments/${user?.d_id}`
             }
             isActive={currentPath === "/doctors"}
+            isEnabled={true}
+          />
+          
+          <NavItem
+            icon={<BsCalendarPlusFill className="text-xl text-teal-400" />}
+            label="Dodaj wizytę"
+            to="/appointment/create"
+            isActive={currentPath === "/appointment/create"}
             isEnabled={true}
           />
 

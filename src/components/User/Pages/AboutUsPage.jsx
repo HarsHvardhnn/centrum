@@ -17,7 +17,7 @@ const AboutUsPage = () => {
       <PageHeader
         title="O nas"
         path="Strona główna / O nas"
-        bgurl="/images/about-header.jpg"
+        bgurl="/images/abt_us.jpg"
       />
       <HospitalCareSection />
       <TestimonialSlider />

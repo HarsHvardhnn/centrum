@@ -12,7 +12,11 @@ export default function Footer() {
             <h2 className="text-2xl font-bold text-left">Centrum Medyczne</h2>
           </div>
           <p className="text-left text-base leading-relaxed">
-            Lider w doskonałości medycznej, zaufana opieka.
+          CM7– profesjonalna klinika,
+ przychodnia w województwie
+ świętokrzyskim, oferująca
+ kompleksową opiekę medyczną i
+ specjalistyczne usługi zdrowotne
           </p>
         </div>
 
@@ -47,7 +51,7 @@ export default function Footer() {
         <div className="flex flex-col items-start gap-3">
           <h3 className="font-semibold text-xl text-left">Kontakt</h3>
           <p>(+48) 797 097 487</p>
-          <p>kontakt@centrum.com</p>
+          <p>kontakt@centrummedyczne7.pl</p>
           <p>Powstańców Warszawy 7/15</p>
           <p>26-110 Skarżysko-Kamienna</p>
         </div>
@@ -74,20 +78,20 @@ export default function Footer() {
 
         {/* Social Media Icons */}
         <div className="flex space-x-4">
-          <a
+          {/* <a
             href="#"
             className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"
           >
             <FaLinkedinIn />
-          </a>
+          </a> */}
           <a
-            href="#"
+            href="https://www.facebook.com/klinikacm7/"
             className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"
           >
             <FaFacebookF />
           </a>
           <a
-            href="#"
+            href="https://www.instagram.com/centrummedyczne7/"
             className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"
           >
             <FaInstagram />

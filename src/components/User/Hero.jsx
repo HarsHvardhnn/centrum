@@ -49,7 +49,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="bg-teal-100 relative min-h-screen flex flex-col items-center pt-12 sm:pt-16">
+    <section className="bg-[#F0F7F7] relative min-h-screen flex flex-col items-center pt-12 sm:pt-16">
       <div className="container mx-auto flex-1 flex flex-col md:flex-row items-center justify-between px-4 sm:px-10 xl:px-20 pt-8 sm:pt-16">
         {/* Left Side Content */}
         <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
@@ -105,11 +105,11 @@ export default function Hero() {
         {/* Right Side Image */}
         <div className="md:w-1/2 relative z-0 flex justify-center">
           {/* Background semi-circle */}
-          <div className="hidden lg:block absolute w-[400px] h-[200px] xl:w-[840px] xl:h-[400px] bottom-0 bg-[#91cece] rounded-t-full"></div>
+          <div className="hidden lg:block absolute w-[400px] h-[200px] xl:w-[840px] xl:h-[400px] bottom-0 bg-[#008C8C]  rounded-t-full"></div>
 
           {/* Hero Image */}
           <img
-            src="/images/heroimg.png"
+            src="/images/doctors1.png"
             alt="Lekarze"
             className="w-full max-w-[300px] sm:max-w-[400px] md:max-w-[350px] lg:max-w-[450px] xl:max-w-[600px] relative z-10"
           />
