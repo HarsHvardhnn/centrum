@@ -88,7 +88,14 @@ const PatientInfo = ({ patientData }) => {
               </h3>
               <div
                 className="h-36 cursor-pointer"
-                onClick={() => openImageModal(report.fileUrl)}
+                onClick={() =>{
+                  if(report.fileType!="pdf"){
+                    openImageModal(report.fileUrl)
+                  }else{
+                    window.open(report.fileUrl, '_blank');
+                  }
+                                 
+                   }}
               >
                 <img
                   src={report.fileUrl}

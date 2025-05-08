@@ -2,11 +2,16 @@ import { useState, useEffect } from "react";
 import PatientSearchField from "../../AppointmentForm/PatientSearchField"
 import DoctorSelectionWithSlots from "../../admin/DoctorsAppointments";
 import userServiceHelper from "../../../helpers/userServiceHelper";
+import { Search, Plus, Minus, CheckCircle } from "lucide-react";
+import { useServices } from "../../../context/serviceContext.jsx";
 
-function AppointmentFormModal({ onClose, onComplete, doctorId }) {
+function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices = [], isLoadingServices = false }) {
+  const { services: contextServices, loading: contextLoading } = useServices();
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [doctorServices, setDoctorServices] = useState([]);
+  const [allServices, setAllServices] = useState(availableServices || []);
   const [loadingServices, setLoadingServices] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [appointmentData, setAppointmentData] = useState({
     patientSource: "",
     visitType: "",
@@ -28,6 +33,18 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
     newPatientDateOfBirth: "",
     newPatientSex: "", // Enum: ["Male", "Female", "Others"]
   });
+
+  // Update allServices when availableServices changes or use context services as fallback
+  useEffect(() => {
+    if (availableServices && availableServices.length > 0) {
+      setAllServices(availableServices);
+    } else if (contextServices && contextServices.length > 0) {
+      setAllServices(contextServices);
+    }
+    
+    // Update loading state based on both props and context
+    setLoadingServices(isLoadingServices || contextLoading);
+  }, [availableServices, contextServices, isLoadingServices, contextLoading]);
 
   const handlePatientSelect = (patient) => {
     setSelectedPatient(patient);
@@ -83,13 +100,22 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
 
   // Handle selecting/deselecting services
   const handleServiceToggle = (service) => {
+    // Normalize the service structure to ensure consistency
+    const normalizedService = {
+      id: service.id || service._id,
+      title: service.title || service.name,
+      price: service.price || "0",
+      description: service.description || service.shortDescription || "",
+      quantity: 1
+    };
+    
     setAppointmentData(prevData => {
       const currentServices = [...prevData.selectedServices];
-      const index = currentServices.findIndex(s => s.id === service.id);
+      const index = currentServices.findIndex(s => s.id === normalizedService.id);
       
       if (index === -1) {
         // Add service if not already selected
-        currentServices.push(service);
+        currentServices.push(normalizedService);
       } else {
         // Remove service if already selected
         currentServices.splice(index, 1);
@@ -98,6 +124,24 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
       return {
         ...prevData,
         selectedServices: currentServices
+      };
+    });
+  };
+
+  // Update service quantity
+  const updateServiceQuantity = (serviceId, newQuantity) => {
+    if (newQuantity < 1) return;
+    
+    setAppointmentData(prevData => {
+      const updatedServices = prevData.selectedServices.map(service => 
+        service.id === serviceId 
+          ? { ...service, quantity: newQuantity }
+          : service
+      );
+      
+      return {
+        ...prevData,
+        selectedServices: updatedServices
       };
     });
   };
@@ -116,6 +160,12 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
       selectedSlot: null, // Reset slot when date changes
     });
   };
+
+  // Filter services based on search term
+  const filteredServices = searchTerm 
+    ? doctorServices.filter(service => 
+        service.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    : doctorServices;
 
   // If doctorId is provided on component mount, fetch services
   useEffect(() => {
@@ -152,10 +202,11 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
         markAsArrived: appointmentData.markAsArrived,
         notes: appointmentData.notes,
         enableRepeats: appointmentData.enableRepeats,
-        // Add selected services
+        // Format selected services for API
         services: appointmentData.selectedServices.map(service => ({
-          serviceId: service.id,
-          price: service.price
+          serviceId: service.id || service._id,
+          price: service.price,
+          quantity: service.quantity || 1
         })),
       };
       
@@ -187,7 +238,173 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
 
   // Calculate total price of selected services
   const calculateTotalPrice = () => {
-    return appointmentData.selectedServices.reduce((total, service) => total + (parseFloat(service.price) || 0), 0);
+    return appointmentData.selectedServices.reduce((total, service) => 
+      total + ((parseFloat(service.price) || 0) * (service.quantity || 1)), 0);
+  };
+
+  // Update the ServiceSelectionSection to show all available services when no doctor is selected
+  const ServiceSelectionSection = () => {
+    // If loading services, show loading indicator
+    if (isLoadingServices || loadingServices) {
+      return (
+        <div className="p-4 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
+          <p>Ładowanie usług...</p>
+        </div>
+      );
+    }
+
+    // Determine which services to display
+    const servicesToDisplay = appointmentData.selectedDoctor 
+      ? doctorServices 
+      : allServices;
+
+    // If no services available
+    if (!servicesToDisplay || servicesToDisplay.length === 0) {
+      return (
+        <div className="p-4 bg-gray-50 rounded-lg text-center text-gray-500">
+          {appointmentData.selectedDoctor 
+            ? "Ten lekarz nie ma przypisanych usług" 
+            : "Brak dostępnych usług"}
+        </div>
+      );
+    }
+
+    // Filter services based on search term
+    const filteredServices = searchTerm 
+      ? servicesToDisplay.filter(service => 
+          service.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          service.name?.toLowerCase().includes(searchTerm.toLowerCase()))
+      : servicesToDisplay;
+
+    // Normalize service structure for display
+    const normalizeService = (service) => {
+      // Handle different service structures that might come from different sources
+      return {
+        id: service._id || service.id,
+        title: service.title || service.name,
+        price: service.price || "0",
+        description: service.description || service.shortDescription || "",
+      };
+    };
+
+    return (
+      <div className="space-y-4">
+        {/* Search input */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search size={18} className="text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Szukaj usług..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+          />
+        </div>
+
+        {/* Available services */}
+        <div className="bg-gray-50 rounded-lg p-3 max-h-60 overflow-y-auto">
+          <div className="space-y-2">
+            {filteredServices.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                Nie znaleziono usług
+              </div>
+            ) : (
+              filteredServices.map((service) => {
+                const normalizedService = normalizeService(service);
+                const isSelected = appointmentData.selectedServices.some(s => 
+                  s.id === normalizedService.id);
+                const selectedService = appointmentData.selectedServices.find(s => 
+                  s.id === normalizedService.id);
+                const quantity = selectedService ? (selectedService.quantity || 1) : 1;
+                
+                return (
+                  <div 
+                    key={normalizedService.id} 
+                    className={`p-3 rounded-lg border ${
+                      isSelected ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-teal-200'
+                    } transition-all`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div 
+                        className="flex-1 cursor-pointer"
+                        onClick={() => handleServiceToggle(normalizedService)}
+                      >
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}} // Handled by the div onClick
+                            className="h-4 w-4 text-teal-600 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 font-medium">{normalizedService.title}</span>
+                        </div>
+                        <div className="ml-6 mt-1 text-sm text-gray-600">{normalizedService.price} zł</div>
+                      </div>
+                      
+                      {isSelected && (
+                        <div className="flex items-center space-x-2">
+                          <button 
+                            onClick={() => updateServiceQuantity(normalizedService.id, quantity - 1)}
+                            className="h-6 w-6 flex items-center justify-center rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="text-sm font-medium w-6 text-center">{quantity}</span>
+                          <button 
+                            onClick={() => updateServiceQuantity(normalizedService.id, quantity + 1)}
+                            className="h-6 w-6 flex items-center justify-center rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Selected services summary */}
+        {appointmentData.selectedServices.length > 0 && (
+          <div className="bg-teal-50 rounded-lg p-4 border border-teal-100">
+            <h4 className="font-medium text-teal-800 mb-2 flex items-center">
+              <CheckCircle size={16} className="mr-2" />
+              Wybrane usługi
+            </h4>
+            <div className="space-y-2">
+              {appointmentData.selectedServices.map((service) => (
+                <div key={service.id} className="flex justify-between text-sm">
+                  <div>
+                    {service.title} 
+                    {(service.quantity && service.quantity > 1) && (
+                      <span className="text-gray-600 ml-1">x{service.quantity}</span>
+                    )}
+                  </div>
+                  <div className="font-medium">
+                    {((parseFloat(service.price) || 0) * (service.quantity || 1)).toFixed(2)} zł
+                  </div>
+                </div>
+              ))}
+              <div className="border-t border-teal-200 mt-2 pt-2 flex justify-between font-medium">
+                <div>Łącznie:</div>
+                <div>{calculateTotalPrice().toFixed(2)} zł</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Note about services */}
+        <div className="text-xs text-gray-500 italic px-1">
+          Wybrane usługi zostaną dodane bezpośrednio do wizyty. Możesz wybrać dowolną liczbę usług dostępnych w klinice, 
+          a następnie określić ilość dla każdej z nich. Całkowita cena zostanie automatycznie obliczona.
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -398,54 +615,16 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
             initialDoctorId={doctorId}
           />
 
-          {/* Service Selection Section */}
-          {appointmentData.selectedDoctor && doctorServices.length > 0 && (
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Usługi lekarza
-              </label>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                {loadingServices ? (
-                  <div className="text-center py-2 text-gray-500">Ładowanie usług...</div>
-                ) : doctorServices.length === 0 ? (
-                  <div className="text-center py-2 text-gray-500">Brak dostępnych usług</div>
-                ) : (
-                  <div className="space-y-2">
-                    {doctorServices.map((service) => (
-                      <div 
-                        key={service.id} 
-                        className={`p-2 rounded border ${
-                          appointmentData.selectedServices.some(s => s.id === service.id)
-                            ? 'border-teal-500 bg-teal-50'
-                            : 'border-gray-200'
-                        } flex justify-between items-center cursor-pointer hover:bg-gray-100`}
-                        onClick={() => handleServiceToggle(service)}
-                      >
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={appointmentData.selectedServices.some(s => s.id === service.id)}
-                            onChange={() => {}} // Handled by the div onClick
-                            className="h-4 w-4 text-teal-600 border-gray-300 rounded"
-                          />
-                          <span className="ml-2 font-medium">{service.title}</span>
-                        </div>
-                        <span className="text-gray-600">{service.price} zł</span>
-                      </div>
-                    ))}
-                    
-                    {/* Show total price if services are selected */}
-                    {appointmentData.selectedServices.length > 0 && (
-                      <div className="mt-3 p-2 bg-teal-50 rounded-lg flex justify-between items-center">
-                        <span className="font-medium">Łączna cena usług:</span>
-                        <span className="font-bold text-teal-700">{calculateTotalPrice().toFixed(2)} zł</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Enhanced Service Selection Section */}
+          <div className="mt-6 border border-teal-100 rounded-lg p-4 bg-teal-50/30">
+            <h3 className="text-lg font-medium text-gray-800 mb-3 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Wybierz usługi dla wizyty
+            </h3>
+            <ServiceSelectionSection />
+          </div>
 
           {/* Time section */}
           <div className="w-full md:w-1/2">
@@ -513,20 +692,23 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
             </div>
           </div>
 
-          {/* Review Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notatki
-            </label>
-            <textarea
-              name="notes"
-              value={appointmentData.notes}
-              onChange={handleInputChange}
-              placeholder="Wprowadź szczegóły pacjenta..."
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500 h-12 text-sm"
-            ></textarea>
+          <div className="flex items-start gap-3">
+            <div className="flex-grow">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Dodatkowe notatki do wizyty
+              </label>
+              <textarea
+                name="notes"
+                rows="3"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
+                placeholder="Opcjonalne notatki..."
+                value={appointmentData.notes}
+                onChange={handleInputChange}
+              ></textarea>
+            </div>
           </div>
 
+          {/* Enable Repeats Checkbox */}
           <div className="flex items-center mb-2">
             <input
               type="checkbox"
@@ -540,29 +722,23 @@ function AppointmentFormModal({ onClose, onComplete, doctorId }) {
             </label>
           </div>
 
-          <div className="text-right">
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Anuluj
+            </button>
             <button
               onClick={handleSubmit}
-              className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 inline-flex items-center text-sm"
+              className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
               disabled={
                 (!selectedPatient && !isNewPatientValid) ||
                 !appointmentData.selectedDoctor ||
                 !appointmentData.selectedSlot
               }
             >
-              Dodaj wizytę
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 ml-1"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
+              Zarezerwuj wizytę
             </button>
           </div>
         </div>

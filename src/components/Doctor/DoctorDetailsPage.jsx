@@ -245,28 +245,30 @@ export default function DoctorDetailPage() {
 
   return (
     <>
-      <h1 className="text-[#80c5c5] font-medium flex items-center gap-2 p-6 text-xl">
-        <FaArrowLeftLong
-          className="font-normal cursor-pointer"
-          onClick={() => {
-            navigate("/doctors");
-          }}
-        />
-        Wizyta Lekarska / {doctorData.name}
-      </h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
+      <div className="flex justify-between items-center p-6">
+        <h1 className="text-[#80c5c5] font-medium flex items-center gap-2 text-xl">
+          <FaArrowLeftLong
+            className="font-normal cursor-pointer"
+            onClick={() => {
+              navigate("/doctors");
+            }}
+          />
+          Wizyta Lekarska / {doctorData.name}
+        </h1>
+        
+        {/* Button to open services modal - moved to top right */}
+        <button
+          onClick={() => setIsServiceModalOpen(true)}
+          className="py-2.5 px-4 rounded-lg text-white bg-[#80c5c5] hover:bg-[#6ab3b3] transition-colors flex items-center justify-center gap-2 shadow-md text-sm font-medium"
+        >
+          <FaPlus size={14} />
+          Wybierz Usługi dla Lekarza
+        </button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 pt-0">
         <div className="md:col-span-1 space-y-4">
           <DoctorCard data={doctorData} />
           <AvailableTime data={doctorData} />
-
-          {/* Button to open services modal */}
-          <button
-            onClick={() => setIsServiceModalOpen(true)}
-            className="w-full py-3 px-4 rounded-lg text-white bg-[#80c5c5] hover:bg-[#6ab3b3] transition-colors flex items-center justify-center gap-2 mt-4 shadow-md"
-          >
-            <FaPlus />
-            Wybierz Usługi dla Lekarza
-          </button>
         </div>
         <div className="md:col-span-2">
           <DoctorBackground 
@@ -421,10 +423,10 @@ const AvailableTime = ({ data }) => {
         </div>
       )}
 
-      <button className="mt-4 py-2 px-4 rounded-lg text-white w-fit mx-auto bg-[#80c5c5] flex items-center justify-center gap-2">
+      {/* <button className="mt-4 py-2 px-4 rounded-lg text-white w-fit mx-auto bg-[#80c5c5] flex items-center justify-center gap-2">
         <FaPlus />
         Umów Wizytę
-      </button>
+      </button> */}
     </div>
   );
 };
@@ -510,7 +512,16 @@ const DoctorBackground = ({ data, onDeleteService }) => {
 
       {/* Selected Services Section */}
       <section className="bg-white shadow rounded-lg p-5">
-        <h3 className="text-lg font-semibold mb-4">Usługi Lekarza</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Usługi Lekarza</h3>
+          <button
+            onClick={() => setIsServiceModalOpen(true)}
+            className="text-sm text-[#80c5c5] hover:text-[#6ab3b3] flex items-center gap-1"
+          >
+            <FaPlus size={12} />
+            Dodaj usługi
+          </button>
+        </div>
         {data.selectedServices && data.selectedServices.length > 0 ? (
           <div className="overflow-hidden border border-gray-200 rounded-lg">
             <table className="w-full border-collapse">
@@ -551,7 +562,14 @@ const DoctorBackground = ({ data, onDeleteService }) => {
           </div>
         ) : (
           <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200 text-gray-500">
-            Brak wybranych usług dla tego lekarza
+            <p className="mb-3">Brak wybranych usług dla tego lekarza</p>
+            <button
+              onClick={() => setIsServiceModalOpen(true)}
+              className="text-sm text-white bg-[#80c5c5] hover:bg-[#6ab3b3] px-3 py-1.5 rounded inline-flex items-center gap-1"
+            >
+              <FaPlus size={12} />
+              Dodaj pierwsze usługi
+            </button>
           </div>
         )}
       </section>

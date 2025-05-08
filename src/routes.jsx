@@ -42,6 +42,8 @@ import { useUser } from "./context/userContext";
 import UserMessaging from "./components/admin/SmsPage";
 import AppointmentPage from "./components/Appointments/AppointmentPage";
 import ContactPage from "./components/User/Pages/ContactPage";
+import BillDetails from "./components/Billing/BillDetails";
+import BillingManagement from "./components/Billing/BillingManagement";
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -159,6 +161,9 @@ const routes = createBrowserRouter([
             path: "/help-center",
             element: <ChatComponent />,
           },
+          
+          { path: "/admin/billing", element: <BillingManagement /> },
+          { path: "/admin/billing/details/:billId", element: <BillDetails /> },
         ],
       },
     ],

@@ -1,14 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppointmentFormModal from "../Doctor/Appointments/AddAppointmentForm";
 import { toast } from "sonner";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { useLoader } from "../../context/LoaderContext";
 import { useNavigate } from "react-router-dom";
+import userServiceHelper from "../../helpers/userServiceHelper";
+import { useServices } from "../../context/serviceContext.jsx";
 
 function AppointmentPage() {
   const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
+  const { services, loading } = useServices(); // Use the services context
   const [appointmentData, setAppointmentData] = useState(null);
+  const [availableServices, setAvailableServices] = useState([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+
+  // Load services from context
+  useEffect(() => {
+    if (services && services.length > 0) {
+      setAvailableServices(services);
+      setIsLoadingServices(false);
+    } else {
+      setIsLoadingServices(loading);
+    }
+  }, [services, loading]);
 
   // Function to handle appointment form submission
   const handleAppointmentComplete = async (data) => {
@@ -54,6 +69,8 @@ function AppointmentPage() {
         onClose={handleClose}
         onComplete={handleAppointmentComplete}
         doctorId={null} // No doctorId means user can select any doctor
+        availableServices={availableServices}
+        isLoadingServices={isLoadingServices}
       />
     </div>
   );
