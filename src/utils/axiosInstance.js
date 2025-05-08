@@ -69,21 +69,31 @@ const validateAPIResponse = (response) => {
 };
 
 // API call function
-const apiCaller = async (method, url, data = {}, headers = {}) => {
+const apiCaller = async (method, url, data = {}, isFormData = false) => {
   try {
     // Handle POST/PUT data validation
     if (method === "POST" || method === "PUT") {
-      const isFormData = data instanceof FormData;
+      const dataIsFormData = data instanceof FormData;
 
       const isEmpty =
         !data ||
-        (isFormData
+        (dataIsFormData
           ? [...data.entries()].length === 0
           : Object.keys(data).length === 0);
 
       if (isEmpty) {
         throw new Error("Data must be provided for POST/PUT requests");
       }
+    }
+
+    // Set the proper headers for FormData requests
+    const headers = {};
+    if (isFormData || data instanceof FormData) {
+      // For FormData, don't set Content-Type as the browser will set it with the boundary
+      // The browser will automatically set the correct multipart/form-data content type with boundary
+    } else {
+      // For regular JSON requests
+      headers["Content-Type"] = "application/json";
     }
 
     const response = await axiosInstance({

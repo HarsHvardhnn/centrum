@@ -2,7 +2,8 @@ import { useState, useRef } from "react";
 import { X, Upload, AlertCircle, Check, Trash2 } from "lucide-react";
 import { apiCaller } from "../../utils/axiosInstance";
 
-const CheckInModal = ({ isOpen, setIsOpen, patientData = null }) => {
+const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = null }) => {
+  console.log("patientData", patientData);
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
@@ -81,7 +82,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null }) => {
       });
 
       // Prepare URL (assuming your backend route is `/api/patients/:patientId/upload-documents`)
-      const url = `/patients/documents/${patient._id}/upload`;
+      const url = `/patients/documents/${patient.id}/upload/${appointmentId}`;
 
       // Prepare headers
       const headers = {

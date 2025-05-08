@@ -12,6 +12,7 @@ const ConsultationForm = ({
   onFileUpload,
   onRemoveFile,
   setPatientData,
+  appointmentId,
   className = "",
 }) => {
   console.log("consulting doctor", uploadedFiles);
@@ -47,13 +48,13 @@ const ConsultationForm = ({
 
   // Formatowanie daty i czasu przy montowaniu komponentu lub zmianie consultationData
   useEffect(() => {
-    if (consultationData.date) {
+    if (consultationData.consultationDate) {
       try {
-        const dateObj = new Date(consultationData.date);
+        const dateObj = new Date(consultationData.consultationDate);
         if (!isNaN(dateObj.getTime())) {
           const formattedDate = dateObj.toISOString().split("T")[0];
 
-          if (formattedDate !== consultationData.date) {
+          if (formattedDate !== consultationData.consultationDate) {
             setConsultationData((prev) => ({
               ...prev,
               date: formattedDate,
@@ -151,7 +152,8 @@ const ConsultationForm = ({
           </label>
           <input
             type="text"
-            value={consultationData.doctor}
+            disabled
+            value={consultationData.consultationDoctor}
             onChange={(e) => handleConsultationChange("doctor", e.target.value)}
             className="w-full p-2.5 border border-gray-200 rounded-lg"
           />
@@ -272,6 +274,62 @@ const ConsultationForm = ({
         </div>
       </div>
 
+      {/* Wywiad z pacjentem */}
+      <div className="mt-6">
+        <label className="block text-sm text-gray-600 mb-1">Wywiad z pacjentem</label>
+        <textarea
+          value={consultationData.interview || ""}
+          onChange={(e) =>
+            handleConsultationChange("interview", e.target.value)
+          }
+          rows={4}
+          className="w-full p-2.5 border border-gray-200 rounded-lg"
+          placeholder="Wprowadź informacje z wywiadu z pacjentem..."
+        ></textarea>
+      </div>
+
+      {/* Badanie przedmiotowe */}
+      <div className="mt-6">
+        <label className="block text-sm text-gray-600 mb-1">Badanie przedmiotowe</label>
+        <textarea
+          value={consultationData.physicalExamination || ""}
+          onChange={(e) =>
+            handleConsultationChange("physicalExamination", e.target.value)
+          }
+          rows={4}
+          className="w-full p-2.5 border border-gray-200 rounded-lg"
+          placeholder="Wprowadź wyniki badania przedmiotowego..."
+        ></textarea>
+      </div>
+
+      {/* Zastosowane leczenie */}
+      <div className="mt-6">
+        <label className="block text-sm text-gray-600 mb-1">Zastosowane leczenie</label>
+        <textarea
+          value={consultationData.treatment || ""}
+          onChange={(e) =>
+            handleConsultationChange("treatment", e.target.value)
+          }
+          rows={4}
+          className="w-full p-2.5 border border-gray-200 rounded-lg"
+          placeholder="Wprowadź informacje o zastosowanym leczeniu..."
+        ></textarea>
+      </div>
+
+      {/* Zalecenia */}
+      <div className="mt-6">
+        <label className="block text-sm text-gray-600 mb-1">Zalecenia</label>
+        <textarea
+          value={consultationData.recommendations || ""}
+          onChange={(e) =>
+            handleConsultationChange("recommendations", e.target.value)
+          }
+          rows={4}
+          className="w-full p-2.5 border border-gray-200 rounded-lg"
+          placeholder="Wprowadź zalecenia dla pacjenta..."
+        ></textarea>
+      </div>
+
       {/* Międzynarodowy pacjent */}
       <div className="mt-6 flex items-center">
         <input
@@ -297,7 +355,7 @@ const ConsultationForm = ({
           onChange={(e) =>
             handleConsultationChange("description", e.target.value)
           }
-          rows={5}
+          rows={3}
           className="w-full p-2.5 border border-gray-200 rounded-lg"
           placeholder="Dodaj notatki..."
         ></textarea>
@@ -306,7 +364,7 @@ const ConsultationForm = ({
       {/* Przesyłanie załączników */}
       <div className="mt-6">
         <label className="block text-sm text-gray-600 mb-2">Załączniki</label>
-        <FileUploadArea onFileUpload={onFileUpload} />
+        <FileUploadArea onFileUpload={onFileUpload} appointmentId={appointmentId} />
 
         {/* Lista przesłanych plików */}
         {uploadedFiles && uploadedFiles.length > 0 && (

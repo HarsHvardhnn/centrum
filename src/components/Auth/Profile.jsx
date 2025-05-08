@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import userService from "../../helpers/profileHelper";
 import { toast } from "sonner";
 import { useUser } from "../../context/userContext";
+import ImageCropModal from "./ImageCropModal";
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState({
@@ -31,6 +32,10 @@ const ProfilePage = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
+
+  // Add new state for image cropping
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [tempImageUrl, setTempImageUrl] = useState("");
 
   // Fetch user profile data
   useEffect(() => {
@@ -84,6 +89,7 @@ const ProfilePage = () => {
     }));
   };
 
+  // Update handleImageChange to show crop modal
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -101,8 +107,28 @@ const ProfilePage = () => {
         return;
       }
 
-      setProfileImage(file);
-      setImagePreview(URL.createObjectURL(file));
+      // Create temporary URL for the crop modal
+      const tempUrl = URL.createObjectURL(file);
+      setTempImageUrl(tempUrl);
+      setShowCropModal(true);
+    }
+  };
+
+  // Handle cropped image
+  const handleCroppedImage = (blob) => {
+    // Create a File from the blob
+    const croppedFile = new File([blob], 'cropped-profile-picture.jpg', {
+      type: 'image/jpeg',
+    });
+
+    setProfileImage(croppedFile);
+    setImagePreview(URL.createObjectURL(blob));
+    setShowCropModal(false);
+    
+    // Clean up the temporary URL
+    if (tempImageUrl) {
+      URL.revokeObjectURL(tempImageUrl);
+      setTempImageUrl("");
     }
   };
 
@@ -526,6 +552,20 @@ const ProfilePage = () => {
           )}
         </div>
       </div>
+
+      {/* Add the ImageCropModal */}
+      <ImageCropModal
+        isOpen={showCropModal}
+        onClose={() => {
+          setShowCropModal(false);
+          if (tempImageUrl) {
+            URL.revokeObjectURL(tempImageUrl);
+            setTempImageUrl("");
+          }
+        }}
+        imageUrl={tempImageUrl}
+        onCropComplete={handleCroppedImage}
+      />
     </div>
   );
 };

@@ -20,6 +20,7 @@ const DoctorDashboard = ({
   onPatientSelect,
   selectedPatient,
   breadcrumbs,
+  setAppointmentId
 }) => {
   const navigate = useNavigate();
   console.log("patiend eta;same",patientDetails)
@@ -93,6 +94,7 @@ const DoctorDashboard = ({
           <div>
             <PatientsList
               variant="default"
+              setAppointmentId={setAppointmentId}
               patientsData={patients}
               onPatientSelect={onPatientSelect}
               selectedPatient={selectedPatient}

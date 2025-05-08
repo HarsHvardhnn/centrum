@@ -10,8 +10,10 @@ import {
   FileText,
 } from "lucide-react";
 import { apiCaller } from "../../utils/axiosInstance";
+import { useServices } from "../../context/serviceContext";
 
 const ServicesManagement = () => {
+ const{fetchServices:fetchServicesFromContext}= useServices()
   // State management
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,10 +57,24 @@ const ServicesManagement = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    
+    // Special handling for price to ensure it's numeric
+    if (name === 'price') {
+      // If input is empty or a valid number, update state
+      if (value === '' || (!isNaN(value) && Number(value) >= 0)) {
+        setFormData({
+          ...formData,
+          [name]: value,
+        });
+      }
+    } else {
+      // For other fields, update normally
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
+    
     // Clear error when user starts typing
     if (formErrors[name]) {
       setFormErrors({
@@ -114,8 +130,12 @@ const ServicesManagement = () => {
   const validateForm = () => {
     const errors = {};
     if (!formData.title.trim()) errors.title = "Tytuł jest wymagany";
-    if (!formData.price.trim()) errors.price = "Cena jest wymagana";
-  
+    
+    if (!formData.price) {
+      errors.price = "Cena jest wymagana";
+    } else if (isNaN(Number(formData.price)) || Number(formData.price) < 0) {
+      errors.price = "Cena musi być liczbą dodatnią";
+    }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -161,6 +181,7 @@ const ServicesManagement = () => {
       resetForm();
       setIsModalOpen(false);
       fetchServices();
+      fetchServicesFromContext()
     } catch (err) {
       setError("Nie udało się zapisać usługi. Spróbuj ponownie.");
       console.error("Error saving service:", err);
@@ -406,11 +427,13 @@ const ServicesManagement = () => {
                       Cena
                     </label>
                     <input
-                      type="text"
+                      type="number"
                       id="price"
                       name="price"
                       value={formData.price}
                       onChange={handleInputChange}
+                      min="0"
+                      step="0.01"
                       className={`mt-1 block w-full rounded-md shadow-sm ${
                         formErrors.price
                           ? "border-red-300 focus:border-red-500 focus:ring-red-500"

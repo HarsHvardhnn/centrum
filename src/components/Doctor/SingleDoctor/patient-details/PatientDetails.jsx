@@ -1,18 +1,21 @@
 // PatientDetailsPage.jsx - Updated with Medications, Tests, and Services
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import BreadcrumbNav from "./BreadcrumbNav";
 import PatientProfile from "./PatientProfile";
 import ConsultationForm from "./ConsultationForm";
 import ActionButtons from "./ActionButtons";
 import ServiceSelectionModal from "./ServiceSelectionModal";
+import ReportUploader from "./ReportUploader";
+import ReportsList from "./ReportsList";
 import patientService from "../../../../helpers/patientHelper";
 import patientServicesHelper from "../../../../helpers/patientServicesHelper";
+import appointmentHelper from "../../../../helpers/appointmentHelper";
 import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
-import { Trash2 } from "lucide-react";
-import {toast} from "sonner";
+import { Trash2, Calendar, PlusCircle } from "lucide-react";
+import { toast } from "sonner";
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
@@ -47,12 +50,25 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
 
 const PatientDetailsPage = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const appointmentIdFromUrl = searchParams.get('appointmentId');
   const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Stan główny pacjenta
+  // Add saving-related states
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Add appointment-related states
+  const [appointments, setAppointments] = useState([]);
+  const [currentAppointmentId, setCurrentAppointmentId] = useState(appointmentIdFromUrl);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [showAllAppointments, setShowAllAppointments] = useState(!appointmentIdFromUrl);
+
+  // Patient state
   const [patientData, setPatientData] = useState({
     id: "",
     name: "",
@@ -74,26 +90,25 @@ const PatientDetailsPage = () => {
     height: "170 cm",
   });
 
-  // Stan konsultacji
+  // Consultation state (now tied to appointment)
   const [consultationData, setConsultationData] = useState({
-    doctor: "Dr. Stephen Conley",
     consultationType: "Konsultacja w przychodni",
     locationType: "Konsultacja online",
     time: "11:20",
     date: "16-12-2021",
-    description:
-      "Najlepsze badanie, jakie znalazłem, nie wykazało niczego szczególnego. Inne małe badanie dotyczyło osób prowadzących siedzący tryb życia bez cukrzycy, które miały nadwagę lub otyłość.",
-    notes:
-      "Czy istnieją dowody na korzyści, jeśli osoby bez cukrzycy monitorują poziom cukru we krwi za pomocą CGM? Istnieje niewiele opublikowanych badań, które pomogłyby odpowiedzieć na to pytanie.",
+    description: "",
+    notes: "",
+    treatmentCategory: "",
+    isOnline: false,
+    interview: "",
+    physicalExamination: "",
+    treatment: "",
+    recommendations: ""
   });
 
-  // Stan leków
+  // States for medications, tests, and files (now tied to appointment)
   const [medications, setMedications] = useState([]);
-
-  // Stan badań
   const [tests, setTests] = useState([]);
-
-  // Stan plików
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
   // Stan usług
@@ -113,51 +128,110 @@ const PatientDetailsPage = () => {
   const [serviceToDelete, setServiceToDelete] = useState(null);
   const [isConfirmAllModalOpen, setIsConfirmAllModalOpen] = useState(false);
 
-  // Pobierz dane pacjenta, gdy zmienia się ID
+  // Add reports state
+  const [reports, setReports] = useState([]);
+  const [showReportUploader, setShowReportUploader] = useState(false);
+
+  // Add a specific useEffect to fetch patient services when appointment ID changes
   useEffect(() => {
-    const fetchPatientData = async () => {
+    if (currentAppointmentId && id) {
+      fetchPatientServices();
+    }
+  }, [currentAppointmentId]);
+
+  // Fetch patient data and their appointments
+  useEffect(() => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const data = await patientService.getPatientDetails(id);
-
-        console.log("otrzymane dane", data);
-        setPatientData(data.patientData || {});
-
-        if (data.medications) {
-          setMedications(data.medications);
-        }
-
-        if (data.tests) {
-          setTests(data.tests);
-        }
-        if (data.uploadedFiles) {
-          setUploadedFiles(data.uploadedFiles);
-        }
-
-        if (data.consultationData) {
-          setConsultationData(data.consultationData);
-        }
+        showLoader();
         
+        // Fetch patient basic data
+        const patientResponse = await patientService.getPatientDetails(id);
+        console.log("patientResponse", patientResponse);
+
+        setPatientData(patientResponse.patientData || {});
+
+        // Fetch patient services
+        await fetchPatientServices();
+
+        if (appointmentIdFromUrl) {
+          // If we have a specific appointment ID, fetch only that appointment
+          const appointmentResponse = await appointmentHelper.getAppointmentById(appointmentIdFromUrl);
+          if (appointmentResponse.data) {
+            setAppointments([appointmentResponse.data]);
+            setCurrentAppointmentId(appointmentIdFromUrl);
+            setSelectedAppointment(appointmentResponse.data);
+            await fetchAppointmentDetails(appointmentIdFromUrl);
+          }
+        } else {
+          // Fetch all patient's appointments
+          const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
+          setAppointments(appointmentsResponse.data || []);
+
+          // If there are appointments, select the most recent one
+          if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
+            const mostRecentAppointment = appointmentsResponse.data[0];
+            setCurrentAppointmentId(mostRecentAppointment._id);
+            setSelectedAppointment(mostRecentAppointment);
+            await fetchAppointmentDetails(mostRecentAppointment._id);
+          }
+        }
+
         setIsLoading(false);
-        // Fetch patient services separately
-        fetchPatientServices();
+        hideLoader();
       } catch (err) {
-        console.error("Błąd podczas pobierania danych pacjenta:", err);
-        setError("Nie udało się załadować danych pacjenta. Spróbuj ponownie.");
+        console.error("Error fetching data:", err);
+        setError("Failed to load patient data. Please try again.");
         setIsLoading(false);
+        hideLoader();
       }
     };
 
     if (id) {
-      fetchPatientData();
+      fetchData();
     }
-  }, [id]);
+  }, [id, appointmentIdFromUrl]);
+
+  // Fetch appointment details
+  const fetchAppointmentDetails = async (appointmentId) => {
+    try {
+      showLoader();
+      const response = await appointmentHelper.getAppointmentById(appointmentId);
+      
+      if (response.data) {
+        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports } = response.data;
+        
+        setConsultationData(consultation || {});
+        setMedications(appointmentMedications || []);
+        setTests(appointmentTests || []);
+        setReports(reports || []);
+        
+        // Note: We don't need to fetch services here as the useEffect will handle it
+        // when currentAppointmentId changes
+      }
+    } catch (error) {
+      console.error("Error fetching appointment details:", error);
+      toast.error("Failed to load appointment details");
+    } finally {
+      hideLoader();
+    }
+  };
+
+  // Handle appointment selection
+  const handleAppointmentSelect = async (appointmentId) => {
+    setCurrentAppointmentId(appointmentId);
+    const selected = appointments.find(apt => apt._id === appointmentId);
+    setSelectedAppointment(selected);
+    await fetchAppointmentDetails(appointmentId);
+  };
 
   // Fetch patient services
   const fetchPatientServices = async () => {
     try {
       setIsServicesLoading(true);
-      const response = await patientServicesHelper.getPatientServices(id);
+      console.log("Fetching services for appointment ID:", currentAppointmentId);
+      const response = await patientServicesHelper.getPatientServices(id, { appointmentId: currentAppointmentId });
       
       if (response && response.data && response.data.services) {
         // Map services to format compatible with our UI
@@ -184,14 +258,15 @@ const PatientDetailsPage = () => {
     }
   };
 
-  // Obsługa wysyłania formularza
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-
+  // Handle save functionality
   const handleSave = async () => {
+    if (!currentAppointmentId) {
+      toast.error("No appointment selected");
+      return;
+    }
+
     try {
-      console.log("Zapisywanie danych pacjenta...",patientData);
+      showLoader();
       setIsSaving(true);
       setSaveError(null);
       setSaveSuccess(false);
@@ -201,33 +276,38 @@ const PatientDetailsPage = () => {
       );
 
       if (hasUploadingFiles) {
-        console.log("Zapisywanie danych pacjenta...wywołanie api");
-        setSaveError("Poczekaj, aż wszystkie pliki zostaną przesłane");
+        setSaveError("Please wait for all files to finish uploading");
         setIsSaving(false);
         return;
       }
 
-      console.log("Zapisywanie danych pacjenta...wywołanie api");
-      const updatedPatient = await patientService.updatePatientDetails(
-        patientData.id,
-        patientData,
-        consultationData,
-        medications,
-        tests,
-        uploadedFiles,
-        notifyPatient
+      // Update appointment details using the correct function name
+      const response = await appointmentHelper.updateAppointmentDetails(
+        currentAppointmentId,
+        {
+          consultationData,
+          medications,
+          tests,
+          uploadedFiles
+        }
       );
 
-      toast.success("Dane pacjenta zostały zaktualizowane.");
-      setSaveSuccess(true);
-      setIsSaving(false);
+      if (response.success) {
+        toast.success("Appointment details updated successfully");
+        setSaveSuccess(true);
+        
+        // Refresh appointment details
+        await fetchAppointmentDetails(currentAppointmentId);
+      } else {
+        throw new Error(response.message || "Failed to update appointment details");
+      }
     } catch (error) {
-      console.error("Błąd podczas zapisywania danych pacjenta:", error);
-      setSaveError(
-        error.message || "Nie udało się zapisać danych pacjenta. Spróbuj ponownie."
-      );
-      toast.error("Nie udało się zapisać danych pacjenta.");
+      console.error("Error saving appointment details:", error);
+      setSaveError(error.message || "Failed to save appointment details. Please try again.");
+      toast.error("Failed to save appointment details");
+    } finally {
       setIsSaving(false);
+      hideLoader();
     }
   };
 
@@ -245,12 +325,22 @@ const PatientDetailsPage = () => {
   };
 
   // Obsługa przycisków akcji
-  const handleAddMedicine = () => {
-    setShowMedicationForm(true);
+  const handleAddMedicine = (newMedication) => {
+    setMedications((prev) => [...prev, newMedication]);
+    setShowMedicationForm(false);
   };
 
-  const handleAddTest = () => {
-    setShowTestForm(true);
+  const handleAddTest = (newTest) => {
+    setTests((prev) => [...prev, newTest]);
+    setShowTestForm(false);
+  };
+
+  const handleRemoveMedication = (index) => {
+    setMedications((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveTest = (index) => {
+    setTests((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleAddServices = () => {
@@ -269,8 +359,8 @@ const PatientDetailsPage = () => {
         status: "active"
       }));
       
-      // Call API to add services
-      await patientServicesHelper.addServicesToPatient(id, servicesToAdd);
+      // Call API to add services - include appointmentId
+      await patientServicesHelper.addServicesToPatient(id, servicesToAdd, { appointmentId: currentAppointmentId });
       
       // Refresh the services
       await fetchPatientServices();
@@ -298,7 +388,7 @@ const PatientDetailsPage = () => {
     
     try {
       showLoader();
-      await patientServicesHelper.removeServiceFromPatient(id, serviceToDelete);
+      await patientServicesHelper.removeServiceFromPatient(id, serviceToDelete, { appointmentId: currentAppointmentId });
       
       // Update state after successful removal
       setPatientServices(patientServices.filter(service => service.serviceId !== serviceToDelete));
@@ -322,7 +412,7 @@ const PatientDetailsPage = () => {
   const handleRemoveAllServices = async () => {
     try {
       showLoader();
-      await patientServicesHelper.deleteAllPatientServices(id);
+      await patientServicesHelper.deleteAllPatientServices(id, { appointmentId: currentAppointmentId });
       setPatientServices([]);
       toast.success("Wszystkie usługi zostały usunięte.");
       hideLoader();
@@ -331,6 +421,18 @@ const PatientDetailsPage = () => {
       hideLoader();
       toast.error("Nie udało się usunąć wszystkich usług. Spróbuj ponownie.");
     }
+  };
+
+  // Handle report upload success
+  const handleReportUploadSuccess = (newReport) => {
+    setReports(prev => [...prev, newReport]);
+    setShowReportUploader(false);
+  };
+
+  // Handle report deletion
+  const handleReportDeleted = (remainingReports) => {
+    window.location.reload();
+    setReports(remainingReports);
   };
 
   const handleBack = () => {
@@ -483,81 +585,175 @@ const PatientDetailsPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-6 py-4">
-      <BreadcrumbNav onBack={handleBack} />
+    <div className="min-h-screen bg-gray-50">
+      <BreadcrumbNav patientName={patientData.name} />
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Patient Profile */}
+          <div className="lg:col-span-1">
+            <PatientProfile patient={patientData} setPatientData={setPatientData}/>
+            
+            {/* Show appointments section only if not viewing a specific appointment */}
+            {showAllAppointments && (
+              <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+                <h3 className="text-lg font-semibold mb-4">Historia Wizyt</h3>
+                <div className="space-y-4">
+                  {appointments.map((apt) => (
+                    <div
+                      key={apt._id}
+                      className={`p-4 rounded-lg cursor-pointer transition-all ${
+                        currentAppointmentId === apt._id
+                          ? "bg-teal-50 border-2 border-teal-500"
+                          : "bg-gray-50 hover:bg-gray-100"
+                      }`}
+                      onClick={() => handleAppointmentSelect(apt._id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">
+                            {new Date(apt.date).toLocaleDateString('pl-PL')}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {apt.consultationType || 'Konsultacja standardowa'}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            apt.status === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : apt.status === "cancelled"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {apt.status === "completed" 
+                            ? "Zakończona" 
+                            : apt.status === "cancelled" 
+                            ? "Anulowana" 
+                            : "Zaplanowana"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
-      <div className="flex flex-row gap-6 mt-4">
-        <PatientProfile patient={patientData} setPatientData={setPatientData} />
-
-        <div className="flex-1 space-y-4">
-          <ConsultationForm
-            consultationData={consultationData}
-            setConsultationData={setConsultationData}
-            uploadedFiles={uploadedFiles}
-            onFileUpload={handleFileUpload}
-            onRemoveFile={handleRemoveFile}
-            patientData={patientData}
-            setPatientData={setPatientData}
-            className="bg-white rounded-lg shadow-sm p-4 w-full"
-          />
-
-          <PatientServicesSection />
-
-          <MedicationsSection
-            medications={medications}
-            setMedications={setMedications}
-            showForm={showMedicationForm}
-            setShowForm={setShowMedicationForm}
-            className="bg-white rounded-lg shadow-sm p-4 w-full"
-          />
-
-          <TestsSection
-            tests={tests}
-            setTests={setTests}
-            showForm={showTestForm}
-            setShowForm={setShowTestForm}
-            className="bg-white rounded-lg shadow-sm p-4 w-full"
-          />
+          {/* Right Column - Consultation Form and Other Sections */}
+          <div className="lg:col-span-2">
+            {selectedAppointment && (
+              <>
+                <ConsultationForm
+                  consultationData={consultationData}
+                  setConsultationData={setConsultationData}
+                  uploadedFiles={uploadedFiles}
+                  onFileUpload={handleFileUpload}
+                  onRemoveFile={handleRemoveFile}
+                  patientData={patientData}
+                  setPatientData={setPatientData}
+                  onSave={handleSave}
+                  isSaving={isSaving}
+                  appointmentId={currentAppointmentId}
+                  className="bg-white rounded-lg shadow-sm p-4 w-full"
+                />
+                
+                {/* Medical Reports Section */}
+                <div className="mt-6">
+                  {!showReportUploader ? (
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Raporty Medyczne</h3>
+                      <button 
+                        onClick={() => setShowReportUploader(true)}
+                        className="flex items-center text-teal-600 hover:text-teal-800 text-sm font-medium"
+                      >
+                        <PlusCircle size={16} className="mr-1" />
+                        Dodaj Raport
+                      </button>
+                    </div>
+                  ) : (
+                    <ReportUploader 
+                      appointmentId={currentAppointmentId} 
+                      onSuccess={handleReportUploadSuccess}
+                    />
+                  )}
+                  
+                  {!showReportUploader && (
+                    <ReportsList 
+                      appointmentId={currentAppointmentId}
+                      reports={reports}
+                      onReportDeleted={handleReportDeleted}
+                    />
+                  )}
+                </div>
+                
+                <PatientServicesSection />
+                
+                <MedicationsSection
+                  medications={medications}
+                  setMedications={setMedications}
+                  showForm={showMedicationForm}
+                  setShowForm={setShowMedicationForm}
+                  onAddMedication={handleAddMedicine}
+                  onRemoveMedication={handleRemoveMedication}
+                  className="bg-white rounded-lg shadow-sm p-4 w-full"
+                />
+                
+                <TestsSection
+                  tests={tests}
+                  setTests={setTests}
+                  showForm={showTestForm}
+                  setShowForm={setShowTestForm}
+                  onAddTest={handleAddTest}
+                  onRemoveTest={handleRemoveTest}
+                  className="bg-white rounded-lg shadow-sm p-4 w-full"
+                />
+                
+                <ActionButtons
+                  patientId={id}
+                  onAddMedicine={handleAddMedicine}
+                  onAddTest={handleAddTest}
+                  onAddServicesClick={handleAddServices}
+                  onSave={handleSave}
+                  onBack={handleBack}
+                  isSaving={isSaving}
+                  saveError={saveError}
+                  notifyPatient={notifyPatient}
+                  setNotifyPatient={setNotifyPatient}
+                  className="mt-6"
+                  appointmentId={currentAppointmentId}
+                />
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      <ActionButtons
-        patientId={id}
-        onAddMedicine={handleAddMedicine}
-        onAddTest={handleAddTest}
-        onAddServicesClick={handleAddServices}
-        onSave={handleSave}
-        isSaving={isSaving}
-        saveError={saveError}
-        notifyPatient={notifyPatient}
-        setNotifyPatient={setNotifyPatient}
-        className="mt-6"
-      />
-
-      {/* Service Selection Modal */}
+      {/* Existing modals */}
       <ServiceSelectionModal
         isOpen={showServiceModal}
         onClose={() => setShowServiceModal(false)}
         onSave={handleSaveServices}
         patientId={id}
+        appointmentId={currentAppointmentId}
+        existingServices={patientServices}
       />
       
-      {/* Confirmation Modal for Single Service Deletion */}
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
         onClose={() => setIsConfirmModalOpen(false)}
         onConfirm={handleRemoveService}
-        title="Potwierdź usunięcie"
-        message="Czy na pewno chcesz usunąć tę usługę? Ta operacja jest nieodwracalna."
+        title="Confirm Service Removal"
+        message="Are you sure you want to remove this service?"
       />
       
-      {/* Confirmation Modal for All Services Deletion */}
       <ConfirmationModal
         isOpen={isConfirmAllModalOpen}
         onClose={() => setIsConfirmAllModalOpen(false)}
         onConfirm={handleRemoveAllServices}
-        title="Usuń wszystkie usługi"
-        message="Czy na pewno chcesz usunąć wszystkie usługi tego pacjenta? Ta operacja jest nieodwracalna."
+        title="Confirm Remove All Services"
+        message="Are you sure you want to remove all services?"
       />
     </div>
   );

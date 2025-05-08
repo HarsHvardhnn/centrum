@@ -84,14 +84,21 @@ const PatientInfo = ({ patientData }) => {
           {patientData.reports.map((report, index) => (
             <div key={index} className="border rounded-2xl bg-white p-4">
               <h3 className="font-semibold mb-2 text-sm">
-                Raport medyczny {index + 1}
+                {report?.name || "Raport"} -{`type ${report?.type}` || "Raport"}
               </h3>
               <div
                 className="h-36 cursor-pointer"
-                onClick={() => openImageModal(report.url)}
+                onClick={() =>{
+                  if(report.fileType!="pdf"){
+                    openImageModal(report.fileUrl)
+                  }else{
+                    window.open(report.fileUrl, '_blank');
+                  }
+                                 
+                   }}
               >
                 <img
-                  src={report.url}
+                  src={report.fileUrl}
                   alt={`Raport medyczny ${index + 1}`}
                   className="rounded-lg w-full h-full object-cover"
                 />
