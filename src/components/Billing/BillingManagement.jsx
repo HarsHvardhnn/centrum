@@ -78,11 +78,11 @@ const BillingManagement = () => {
         setBills(response.data);
         setPagination(response.pagination);
       } else {
-        toast.error("Failed to fetch bills");
+        toast.error("Nie udało się pobrać faktur");
       }
     } catch (error) {
-      console.error("Error fetching bills:", error);
-      toast.error("Failed to load billing data");
+      console.error("Błąd podczas pobierania faktur:", error);
+      toast.error("Nie udało się załadować danych rozliczeniowych");
     } finally {
       hideLoader();
     }
@@ -90,27 +90,61 @@ const BillingManagement = () => {
   
   const fetchBillingStats = async () => {
     try {
-      const statsResponse = await billingHelper.getBillingStatistics({
+      // Instead of a separate API call, calculate stats from the bills data
+      let totalBilled = 0;
+      let totalPaid = 0;
+      let totalPending = 0;
+      let totalOverdue = 0;
+      
+      // Get all bills for calculation (without pagination)
+      const response = await billingHelper.getAllBills({
+        limit: 1000, // Get a large number of bills to ensure we get all
         ...(dateRange.startDate && { startDate: dateRange.startDate }),
         ...(dateRange.endDate && { endDate: dateRange.endDate })
       });
       
-      if (statsResponse.success) {
+      if (response.success && response.data) {
+        response.data.forEach(bill => {
+          const amount = parseFloat(bill.totalAmount);
+          
+          // Add to total billed
+          totalBilled += amount;
+          
+          // Add to appropriate category based on payment status
+          switch(bill.paymentStatus.toLowerCase()) {
+            case 'paid':
+              totalPaid += amount;
+              break;
+            case 'pending':
+              totalPending += amount;
+              break;
+            case 'overdue':
+              totalOverdue += amount;
+              break;
+            case 'partial':
+              // For partially paid bills, you might need more data from the API
+              // This is a simplified approach
+              totalPaid += amount * 0.5; // Assuming 50% paid
+              totalPending += amount * 0.5; // Assuming 50% pending
+              break;
+          }
+        });
+        
         setStats({
-          totalBilled: statsResponse.data.totalAmount || 0,
-          totalPaid: statsResponse.data.paidAmount || 0,
-          totalPending: statsResponse.data.pendingAmount || 0,
-          totalOverdue: statsResponse.data.overdueAmount || 0
+          totalBilled,
+          totalPaid,
+          totalPending,
+          totalOverdue
         });
       }
     } catch (error) {
-      console.error("Error fetching billing statistics:", error);
-      // Set default stats if API fails
+      console.error("Błąd podczas obliczania statystyk rozliczeniowych:", error);
+      // Set default stats if calculation fails
       setStats({
-        totalBilled: 12540.50,
-        totalPaid: 8450.75,
-        totalPending: 3200.25,
-        totalOverdue: 889.50
+        totalBilled: 0,
+        totalPaid: 0,
+        totalPending: 0,
+        totalOverdue: 0
       });
     }
   };
@@ -135,19 +169,19 @@ const BillingManagement = () => {
       
       const response = await billingHelper.updatePaymentStatus(billId, {
         paymentStatus: newStatus,
-        notes: `Status updated to ${newStatus}`
+        notes: `Status zaktualizowany na ${newStatus}`
       });
       
       if (response.success) {
-        toast.success(`Payment status updated to ${newStatus}`);
+        toast.success(`Status płatności zaktualizowany na ${newStatus}`);
         fetchBills(); // Refresh bills list
         fetchBillingStats(); // Refresh stats
       } else {
-        toast.error("Failed to update payment status");
+        toast.error("Nie udało się zaktualizować statusu płatności");
       }
     } catch (error) {
-      console.error("Error updating payment status:", error);
-      toast.error("Failed to update payment status");
+      console.error("Błąd podczas aktualizacji statusu płatności:", error);
+      toast.error("Nie udało się zaktualizować statusu płatności");
     } finally {
       hideLoader();
     }
@@ -171,13 +205,13 @@ const BillingManagement = () => {
       if (response.success) {
         // Open the invoice in a new tab
         window.open(response.data.invoiceUrl, '_blank');
-        toast.success("Invoice generated successfully");
+        toast.success("Pomyślnie wygenerowano fakturę");
       } else {
-        toast.error("Failed to generate invoice");
+        toast.error("Nie udało się wygenerować faktury");
       }
     } catch (error) {
-      console.error("Error generating invoice:", error);
-      toast.error("Failed to generate invoice");
+      console.error("Błąd podczas generowania faktury:", error);
+      toast.error("Nie udało się wygenerować faktury");
     } finally {
       hideLoader();
     }
@@ -185,7 +219,7 @@ const BillingManagement = () => {
   
   // Format currency
   const formatCurrency = (amount) => {
-    return `zł${parseFloat(amount).toFixed(2)}`;
+    return `${parseFloat(amount).toFixed(2)} zł`;
   };
   
   // Format date
@@ -213,14 +247,30 @@ const BillingManagement = () => {
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Polish translation for payment status
+  const translatePaymentStatus = (status) => {
+    switch(status.toLowerCase()) {
+      case 'paid':
+        return 'Opłacone';
+      case 'pending':
+        return 'Oczekujące';
+      case 'overdue':
+        return 'Zaległe';
+      case 'partial':
+        return 'Częściowo opłacone';
+      default:
+        return status;
+    }
+  };
   
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Billing Management</h1>
-          <p className="text-gray-600">View and manage patient bills</p>
+          <h1 className="text-2xl font-bold text-gray-900">Zarządzanie Fakturami</h1>
+          <p className="text-gray-600">Przeglądaj i zarządzaj fakturami pacjentów</p>
         </div>
         
         {/* Stats Cards */}
@@ -228,7 +278,7 @@ const BillingManagement = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Billed</p>
+                <p className="text-sm text-gray-500">Suma faktur</p>
                 <h3 className="text-2xl font-semibold mt-1">{formatCurrency(stats.totalBilled)}</h3>
               </div>
               <div className="p-3 bg-teal-100 rounded-full">
@@ -240,7 +290,7 @@ const BillingManagement = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Paid</p>
+                <p className="text-sm text-gray-500">Opłacone</p>
                 <h3 className="text-2xl font-semibold mt-1">{formatCurrency(stats.totalPaid)}</h3>
               </div>
               <div className="p-3 bg-green-100 rounded-full">
@@ -252,7 +302,7 @@ const BillingManagement = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Pending</p>
+                <p className="text-sm text-gray-500">Oczekujące</p>
                 <h3 className="text-2xl font-semibold mt-1">{formatCurrency(stats.totalPending)}</h3>
               </div>
               <div className="p-3 bg-yellow-100 rounded-full">
@@ -264,7 +314,7 @@ const BillingManagement = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Overdue</p>
+                <p className="text-sm text-gray-500">Zaległe</p>
                 <h3 className="text-2xl font-semibold mt-1">{formatCurrency(stats.totalOverdue)}</h3>
               </div>
               <div className="p-3 bg-red-100 rounded-full">
@@ -280,7 +330,7 @@ const BillingManagement = () => {
             <div className="relative w-full md:w-64">
               <input
                 type="text"
-                placeholder="Search by patient name or bill #"
+                placeholder="Szukaj po nazwisku pacjenta lub nr faktury"
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -294,17 +344,17 @@ const BillingManagement = () => {
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg"
               >
                 <Filter size={18} />
-                <span>Filters</span>
+                <span>Filtry</span>
                 <ChevronDown size={16} />
               </button>
-              
+              {/*               
               <button
                 onClick={() => navigate('/billing/new')}
                 className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg"
               >
                 <DollarSign size={18} />
                 <span>New Bill</span>
-              </button>
+              </button> */}
             </div>
           </div>
           
@@ -312,7 +362,7 @@ const BillingManagement = () => {
           {showFilters && (
             <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Zakres dat</label>
                 <div className="flex gap-2">
                   <input
                     type="date"
@@ -320,7 +370,7 @@ const BillingManagement = () => {
                     onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
                   />
-                  <span className="self-center text-gray-500">to</span>
+                  <span className="self-center text-gray-500">do</span>
                   <input
                     type="date"
                     value={dateRange.endDate}
@@ -331,17 +381,17 @@ const BillingManagement = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status płatności</label>
                 <select
                   value={paymentStatusFilter}
                   onChange={(e) => setPaymentStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  <option value="">All Statuses</option>
-                  <option value="paid">Paid</option>
-                  <option value="pending">Pending</option>
-                  <option value="overdue">Overdue</option>
-                  <option value="partial">Partially Paid</option>
+                  <option value="">Wszystkie statusy</option>
+                  <option value="paid">Opłacone</option>
+                  <option value="pending">Oczekujące</option>
+                  <option value="overdue">Zaległe</option>
+                  <option value="partial">Częściowo opłacone</option>
                 </select>
               </div>
               
@@ -354,7 +404,7 @@ const BillingManagement = () => {
                   }}
                   className="px-4 py-2 border border-gray-300 text-gray-600 rounded-md hover:bg-gray-50"
                 >
-                  Clear Filters
+                  Wyczyść filtry
                 </button>
               </div>
             </div>
@@ -373,7 +423,7 @@ const BillingManagement = () => {
                     onClick={() => handleSort("billNumber")}
                   >
                     <div className="flex items-center">
-                      Bill #
+                      Nr faktury
                       {sortConfig.key === "billNumber" && (
                         <ArrowUpDown size={16} className="ml-1" />
                       )}
@@ -385,7 +435,7 @@ const BillingManagement = () => {
                     onClick={() => handleSort("patientName")}
                   >
                     <div className="flex items-center">
-                      Patient
+                      Pacjent
                       {sortConfig.key === "patientName" && (
                         <ArrowUpDown size={16} className="ml-1" />
                       )}
@@ -397,7 +447,7 @@ const BillingManagement = () => {
                     onClick={() => handleSort("billedAt")}
                   >
                     <div className="flex items-center">
-                      Date
+                      Data
                       {sortConfig.key === "billedAt" && (
                         <ArrowUpDown size={16} className="ml-1" />
                       )}
@@ -409,7 +459,7 @@ const BillingManagement = () => {
                     onClick={() => handleSort("totalAmount")}
                   >
                     <div className="flex items-center">
-                      Amount
+                      Kwota
                       {sortConfig.key === "totalAmount" && (
                         <ArrowUpDown size={16} className="ml-1" />
                       )}
@@ -431,7 +481,7 @@ const BillingManagement = () => {
                     scope="col"
                     className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Actions
+                    Akcje
                   </th>
                 </tr>
               </thead>
@@ -465,7 +515,7 @@ const BillingManagement = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(bill.paymentStatus)}`}>
-                          {bill.paymentStatus}
+                          {translatePaymentStatus(bill.paymentStatus)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -473,14 +523,14 @@ const BillingManagement = () => {
                           <button
                             onClick={() => handleViewBillDetails(bill._id)}
                             className="text-indigo-600 hover:text-indigo-900"
-                            title="View Details"
+                            title="Zobacz szczegóły"
                           >
                             <Eye size={18} />
                           </button>
                           <button
                             onClick={() => handleGenerateInvoice(bill._id)}
                             className="text-gray-600 hover:text-gray-900"
-                            title="Generate Invoice"
+                            title="Generuj fakturę"
                           >
                             <FileText size={18} />
                           </button>
@@ -488,7 +538,7 @@ const BillingManagement = () => {
                             <button
                               onClick={() => handleUpdatePaymentStatus(bill._id, "paid")}
                               className="text-green-600 hover:text-green-900"
-                              title="Mark as Paid"
+                              title="Oznacz jako opłacone"
                             >
                               <DollarSign size={18} />
                             </button>
@@ -502,9 +552,9 @@ const BillingManagement = () => {
                     <td colSpan="6" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center">
                         <FileText size={48} className="text-gray-300 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-1">No bills found</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">Nie znaleziono faktur</h3>
                         <p className="text-gray-500 max-w-sm">
-                          No billing records match your search criteria. Try adjusting your filters or create a new bill.
+                          Brak faktur spełniających kryteria wyszukiwania. Spróbuj dostosować filtry lub utwórz nową fakturę.
                         </p>
                       </div>
                     </td>
@@ -518,11 +568,11 @@ const BillingManagement = () => {
           {pagination.totalPages > 1 && (
             <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
               <div className="text-sm text-gray-700">
-                Showing <span className="font-medium">{(pagination.currentPage - 1) * pagination.limit + 1}</span> to{" "}
+                Wyświetlanie <span className="font-medium">{(pagination.currentPage - 1) * pagination.limit + 1}</span> do{" "}
                 <span className="font-medium">
                   {Math.min(pagination.currentPage * pagination.limit, pagination.totalBills)}
                 </span>{" "}
-                of <span className="font-medium">{pagination.totalBills}</span> results
+                z <span className="font-medium">{pagination.totalBills}</span> wyników
               </div>
               <div className="flex gap-2">
                 <button

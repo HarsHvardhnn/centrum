@@ -124,7 +124,7 @@ const ServicesMini = () => {
                 <span className="text-2xl md:text-4xl">
                   <Icon />
                 </span>
-                {service.title}
+                {`${service.title.length > 18 ? service.title.slice(0, 18) + "..." : service.title}`}
               </button>
             );
           })}

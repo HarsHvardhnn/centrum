@@ -362,26 +362,7 @@ const ConsultationForm = ({
       </div>
 
       {/* Przesyłanie załączników */}
-      <div className="mt-6">
-        <label className="block text-sm text-gray-600 mb-2">Załączniki</label>
-        <FileUploadArea onFileUpload={onFileUpload} appointmentId={appointmentId} />
-
-        {/* Lista przesłanych plików */}
-        {uploadedFiles && uploadedFiles.length > 0 && (
-          <div className="mt-4">
-            <h4 className="text-sm font-medium mb-2">Przesłane pliki</h4>
-            <div className="space-y-2">
-              {uploadedFiles.map((file, index) => (
-                <FileListItem
-                  key={index}
-                  file={file}
-                  onRemove={() => onRemoveFile(file.name)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+   
     </div>
   );
 };
