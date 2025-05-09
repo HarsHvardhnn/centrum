@@ -31,7 +31,10 @@ const doctorService = {
       formData.append("signupMethod", doctorData.signupMethod || "email");
       formData.append("bio", doctorData.bio || "");
       formData.append("experience", doctorData.experience || 0);
-      formData.append("consultationFee", doctorData.consultationFee || 0);
+      
+      // Update consultation fee fields to include both online and offline fees
+      formData.append("onlineConsultationFee", doctorData.consultationFee || 0);
+      formData.append("offlineConsultationFee", doctorData.offlineConsultationFee || 0);
 
       // Handle arrays
       (doctorData.specializations || doctorData.specialization || []).forEach(

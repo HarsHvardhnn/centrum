@@ -502,19 +502,19 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                         htmlFor="consultationFee"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Cena Konsultacji Online*
+                        Opłata za konsultację online*
                       </label>
                       <div className="relative">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                          <span className="text-gray-500">PLN</span>
+                        </div>
                         <Field
                           type="number"
                           name="consultationFee"
                           id="consultationFee"
+                          className="w-full pl-14 p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
                           min="0"
-                          className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
                         />
-                        <span className="absolute left-3 top-3 text-gray-400">
-                          zł
-                        </span>
                       </div>
                       <ErrorMessage
                         name="consultationFee"
@@ -529,19 +529,19 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
                       htmlFor="offlineConsultationFee"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Cena Konsultacji Stacjonarnej*
+                      Opłata za konsultację stacjonarną*
                     </label>
                     <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <span className="text-gray-500">PLN</span>
+                      </div>
                       <Field
                         type="number"
                         name="offlineConsultationFee"
                         id="offlineConsultationFee"
+                        className="w-full pl-14 p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
                         min="0"
-                        className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
                       />
-                      <span className="absolute left-3 top-3 text-gray-400">
-                        zł
-                      </span>
                     </div>
                     <ErrorMessage
                       name="offlineConsultationFee"

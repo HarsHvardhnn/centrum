@@ -532,7 +532,7 @@ function LabAppointmentsContent({ clinic }) {
             {user?.role !== "doctor" && !clinic && (
               <button
                 className="bg-teal-500 text-white rounded-lg px-4 py-2 flex items-center gap-2"
-                onClick={() => navigate("/appointments/new")}
+                onClick={() => navigate("/appointment/create")}
               >
                 <Calendar size={18} />
                 Nowa wizyta

@@ -371,6 +371,13 @@ const BillDetails = () => {
                     <span className="font-medium">{formatCurrency(billData.taxAmount)}</span>
                   </div>
                   
+                  {billData.consultationCharges > 0 && (
+                    <div className="flex justify-between py-2 text-sm">
+                      <span className="text-gray-600">Opłata za konsultację</span>
+                      <span className="font-medium">{formatCurrency(billData.consultationCharges)}</span>
+                    </div>
+                  )}
+                  
                   {billData.additionalCharges > 0 && (
                     <div className="flex justify-between py-2 text-sm">
                       <span className="text-gray-600">Dodatkowe opłaty</span>

@@ -95,7 +95,9 @@ const BillingPage = () => {
           createdDoctor.specializations || doctorData.specialization || [],
         bio: createdDoctor.bio || doctorData.bio || "",
         consultationFee:
-          createdDoctor.consultationFee || doctorData.consultationFee || 0,
+          createdDoctor.onlineConsultationFee || doctorData.consultationFee || 0,
+        offlineConsultationFee:
+          createdDoctor.offlineConsultationFee || doctorData.offlineConsultationFee || 0,
       };
 
       setAllDoctors((prevDoctors) => [...prevDoctors, newDoctor]);
