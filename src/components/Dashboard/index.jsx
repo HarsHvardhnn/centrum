@@ -19,10 +19,8 @@ import { useLoader } from "../../context/LoaderContext";
 
 const MedicalDashboard = () => {
   const { user } = useUser();
-  const navigate=useNavigate()
-  if (user?.role == "doctor") {
-    navigate("/doctors")
-  }
+  const navigate = useNavigate();
+  
   return (
     <div className="bg-gray-50 min-h-screen p-6">
       <div className="">
@@ -39,6 +37,7 @@ const MedicalDashboard = () => {
 // Doctor Appointment Chart Component
 const DoctorAppointmentChart = () => {
   const { showLoader, hideLoader } = useLoader();
+  const { user } = useUser();
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState("");
   const [timeframe, setTimeframe] = useState("month");
@@ -79,8 +78,13 @@ const DoctorAppointmentChart = () => {
         
         if (response.success) {
           setDoctors(response.data);
-          // Set the first doctor as default if available
-          if (response.data && response.data.length > 0) {
+          
+          // If user is a doctor, set their own ID as the selected doctor
+          if (user?.role === "doctor" && user?._id) {
+            setSelectedDoctor(user._id);
+          }
+          // Otherwise set the first doctor as default if available
+          else if (response.data && response.data.length > 0) {
             setSelectedDoctor(response.data[0]._id);
           }
         } else {
@@ -211,35 +215,42 @@ const DoctorAppointmentChart = () => {
         <h2 className="text-lg font-medium">Wizyty lekarskie</h2>
         
         <div className="flex items-center gap-2">
-          {/* Doctor selector */}
-          <div className="relative">
-            <button 
-              className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-1"
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            >
+          {/* Doctor selector - only visible if user is not a doctor */}
+          {user?.role !== "doctor" ? (
+            <div className="relative">
+              <button 
+                className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-1"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              >
+                <span className="text-sm">{getSelectedDoctorName()}</span>
+                <ChevronDown size={16} />
+              </button>
+              
+              {isDropdownOpen && (
+                <div className="absolute z-10 right-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-100">
+                  <ul className="py-1 max-h-60 overflow-y-auto">
+                    {doctors.map((doctor) => (
+                      <li 
+                        key={doctor._id}
+                        className={`px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm ${selectedDoctor === doctor._id ? 'bg-teal-50 text-teal-700' : ''}`}
+                        onClick={() => {
+                          setSelectedDoctor(doctor._id);
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        {doctor.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : (
+            // For doctors, just display their name without dropdown
+            <div className="border border-gray-200 rounded-md px-3 py-1">
               <span className="text-sm">{getSelectedDoctorName()}</span>
-              <ChevronDown size={16} />
-            </button>
-            
-            {isDropdownOpen && (
-              <div className="absolute z-10 right-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-100">
-                <ul className="py-1 max-h-60 overflow-y-auto">
-                  {doctors.map((doctor) => (
-                    <li 
-                      key={doctor._id}
-                      className={`px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm ${selectedDoctor === doctor._id ? 'bg-teal-50 text-teal-700' : ''}`}
-                      onClick={() => {
-                        setSelectedDoctor(doctor._id);
-                        setIsDropdownOpen(false);
-                      }}
-                    >
-                      {doctor.name}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
           
           {/* Timeframe selector */}
           <div className="relative">
@@ -516,6 +527,7 @@ const LabAppointmentsCard = () => {
 
 // Patient List Component
 const PatientList = () => {
+  const { user } = useUser();
   const [selectedPatients, setSelectedPatients] = useState([]);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -526,17 +538,26 @@ const PatientList = () => {
     pages: 1,
   });
 
-  const navigate=useNavigate()
+  const navigate = useNavigate();
 
   // Fetch patients on component mount and when page changes
   useEffect(() => {
     const fetchPatients = async () => {
       try {
         setLoading(true);
-        const response = await patientService.getSimpliefiedPatientsList({
+        
+        // Prepare parameters for the API call
+        const params = {
           page: pagination.currentPage,
           limit: 10,
-        });
+        };
+        
+        // If user is a doctor, include their doctor ID to filter patients
+        if (user?.role === "doctor" && user?.id) {
+          params.doctor = user.id;
+        }
+        
+        const response = await patientService.getSimpliefiedPatientsList(params);
 
         setPatients(response.patients);
         setPagination({
@@ -554,7 +575,7 @@ const PatientList = () => {
     };
 
     fetchPatients();
-  }, [pagination.currentPage]);
+  }, [pagination.currentPage, user]);
 
   const toggleSelectAll = () => {
     if (selectedPatients.length === patients.length) {
@@ -828,6 +849,7 @@ const ChevronDown = ({ size }) => (
 
 // Upcoming Appointments Component
 const UpcomingAppointments = () => {
+  const { user } = useUser();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -840,16 +862,25 @@ const UpcomingAppointments = () => {
 
   useEffect(() => {
     fetchAppointments();
-  }, [page]);
+  }, [page, user]);
 
   const fetchAppointments = async () => {
     try {
       setLoading(true);
+      
+      // Default filter object
+      const filters = {};
+      
+      // If user is a doctor, include doctor ID filter
+      if (user?.role === "doctor" && user?._id) {
+        filters.doctorId = user._id;
+      }
+      
       const response = await appointmentHelper.getAppointmentsDashboard(
         page,
         pagination.limit,
         "",
-        {},
+        filters,
         "date",
         "asc"
       );

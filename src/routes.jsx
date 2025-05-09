@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import App from "./App";
 import LoginScreen from "./components/Auth/AuthScreen";
 import LoginImage from "./assets/new_login.jpg";
 import SignupImage from "./assets/Signup.png";
 import ForgotPasswordScreen from "./components/Auth/ForgotPasswordScreen";
 
-import { createBrowserRouter, Outlet } from "react-router-dom";
+import { createBrowserRouter, Outlet, Navigate } from "react-router-dom";
 import Sidebar from "./components/UtilComponents/Sidebar";
 import BillingPage from "./components/Doctor/Doctor";
 import DoctorsPage from "./components/Doctor/SingleDoctor/DoctorPage";
@@ -44,6 +44,17 @@ import AppointmentPage from "./components/Appointments/AppointmentPage";
 import ContactPage from "./components/User/Pages/ContactPage";
 import BillDetails from "./components/Billing/BillDetails";
 import BillingManagement from "./components/Billing/BillingManagement";
+
+// Root route component that clears localStorage and redirects to /user
+const RootRoute = () => {
+  useEffect(() => {
+    // Clear all items from localStorage
+    localStorage.clear();
+  }, []);
+
+  // Redirect to /user
+  return <Navigate to="/user" replace />;
+};
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -93,6 +104,12 @@ function MainLayout() {
 }
 
 const routes = createBrowserRouter([
+  // Root route - will clear localStorage and redirect to /user
+  {
+    path: "/",
+    element: <RootRoute />
+  },
+
   // Public routes group
   {
     element: <PublicRoute />,
