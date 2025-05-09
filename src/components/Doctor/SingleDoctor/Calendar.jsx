@@ -15,7 +15,6 @@ const Calendar = ({ viewMode = "week", onDateSelect }) => {
       );
       setCurrentDate(newDate);
     } else if (viewMode === "week") {
-      // Create a new date object to avoid mutation
       newDate = new Date(currentDate);
       newDate.setDate(newDate.getDate() + direction * 7);
       setCurrentDate(newDate);
@@ -32,7 +31,6 @@ const Calendar = ({ viewMode = "week", onDateSelect }) => {
   };
 
   const generateWeekDays = () => {
-    // Create a new date object to avoid mutation
     const dateCopy = new Date(currentDate);
     const startOfWeek = new Date(
       dateCopy.setDate(dateCopy.getDate() - dateCopy.getDay())
@@ -55,7 +53,6 @@ const Calendar = ({ viewMode = "week", onDateSelect }) => {
   const handleDateSelect = (day) => {
     setSelectedDay(day);
 
-    // Create the selected date object
     let selectedDate;
     if (viewMode === "month") {
       selectedDate = new Date(
@@ -64,15 +61,11 @@ const Calendar = ({ viewMode = "week", onDateSelect }) => {
         day
       );
     } else {
-      // For week view, find the actual date object from the week array
       selectedDate = generateWeekDays().find((date) => date.getDate() === day);
     }
 
-          console.log("Selectsed date:", onDateSelect);
-
-    // Call the onDateSelect prop with the updated date object
     if (onDateSelect && selectedDate) {
-      console.log("Selected date:", selectedDate);
+      console.log("Wybrana data:", selectedDate);
       onDateSelect(selectedDate);
     }
   };
@@ -81,8 +74,8 @@ const Calendar = ({ viewMode = "week", onDateSelect }) => {
     <div className="flex flex-col items-center justify-center w-full bg-gradient-to-b from-[#CCD0F86B] to-white rounded-xl px-2 py-3 shadow-sm border-[0.85px] border-[#D9EEEE]">
       <div className="text-gray-700 items-center justify-start px-4 text-md flex w-full font-bold">
         {viewMode === "month"
-          ? currentDate.toLocaleString("default", { month: "long" })
-          : `Week of ${new Date(currentDate).toLocaleString("default", {
+          ? currentDate.toLocaleString("pl-PL", { month: "long" })
+          : `Tydzień ${new Date(currentDate).toLocaleString("pl-PL", {
               month: "long",
               day: "numeric",
             })}`}
@@ -108,13 +101,13 @@ const Calendar = ({ viewMode = "week", onDateSelect }) => {
                 : generateWeekDays()[index].getDay();
 
             const weekdayName = [
-              "Sun",
-              "Mon",
-              "Tue",
-              "Wed",
-              "Thu",
-              "Fri",
-              "Sat",
+              "Ndz",
+              "Pon",
+              "Wt",
+              "Śr",
+              "Czw",
+              "Pt",
+              "Sob",
             ][dayOfWeek];
 
             return (

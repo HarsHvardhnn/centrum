@@ -9,9 +9,9 @@ const NewsPage = ({isNews=true}) => {
   return (
     <>
       <PageHeader
-        title={isNews ? "News" : "Blog"}
-        path={isNews ? "/HOME / NEWS" : "/HOME / BLOGS"}
-        bgurl="/images/about-header.jpg"
+        title={isNews ? "Aktualności" : "Blog"}
+        path={isNews ? "STRONA GŁÓWNA / AKTUALNOŚCI" : "STRONA GŁÓWNA / BLOG"}
+        bgurl={isNews ? "/images/news.jpg" : "/images/blogs.jpg"}
       />
       <div className="flex max-w-6xl mx-auto mt-16">
         <div>

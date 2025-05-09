@@ -64,13 +64,13 @@ const doctorService = {
     }
   },
 
-   getPatientDetailsAndReports: async (patientId) => {
+   getPatientDetailsAndReports: async (patientId,appointmentId) => {
   try {
     if (!patientId) {
       throw new Error("Patient ID is required");
     }
 
-    const response = await apiCaller("GET", `/patients/det/reports/${patientId}`);
+    const response = await apiCaller("GET", `/patients/det/reports/${patientId}?appointmentId=${appointmentId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching patient details with ID ${patientId}:`, error);

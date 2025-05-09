@@ -19,7 +19,7 @@ const HealthMetric = ({ title, value, percentage, onUpdate }) => {
   };
 
   return (
-    <div className="bg-teal-50 p-3 rounded-lg">
+    <div className="bg-teal-50 p-3 rounded-lg w-full">
       <div className="flex justify-between items-center">
         <p className="text-sm font-medium">{title}</p>
         {!isEditing && (
@@ -61,18 +61,18 @@ const HealthMetric = ({ title, value, percentage, onUpdate }) => {
               onClick={handleSave}
               className="text-xs bg-teal-500 text-white px-2 py-0.5 rounded"
             >
-              Save
+              Zapisz
             </button>
             <button
               onClick={handleCancel}
               className="text-xs bg-gray-300 px-2 py-0.5 rounded"
             >
-              Cancel
+              Anuluj
             </button>
           </div>
         </div>
       ) : (
-        <p className="text-xs mt-1">{value}</p>
+        <p className="text-xs mt-1 font-medium">{value}</p>
       )}
     </div>
   );

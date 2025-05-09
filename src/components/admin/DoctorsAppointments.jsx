@@ -26,7 +26,7 @@ const DoctorSelectionWithSlots = ({
         const response = await doctorService.getAllDoctors(filters);
         setDoctors(response.doctors || []);
       } catch (error) {
-        console.error("Error fetching doctors:", error);
+        console.error("Błąd podczas pobierania lekarzy:", error);
       } finally {
         setIsLoading(false);
       }
@@ -48,7 +48,7 @@ const DoctorSelectionWithSlots = ({
         );
         setAvailableSlots(response.data.data || []);
       } catch (error) {
-        console.error("Error fetching available slots:", error);
+        console.error("Błąd podczas pobierania dostępnych terminów:", error);
       } finally {
         setIsLoading(false);
       }
@@ -140,7 +140,7 @@ const DoctorSelectionWithSlots = ({
   const renderLoadingState = () => (
     <div className="flex items-center justify-center py-8">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
-      <span className="ml-2 text-gray-600">Loading...</span>
+      <span className="ml-2 text-gray-600">Ładowanie...</span>
     </div>
   );
 
@@ -181,7 +181,7 @@ const DoctorSelectionWithSlots = ({
             >
               1
             </div>
-            <span className="ml-2 text-sm font-medium">Specialization</span>
+            <span className="ml-2 text-sm font-medium">Specjalizacja</span>
           </div>
           <div className="h-px w-12 bg-gray-200"></div>
           <div className="flex items-center">
@@ -194,7 +194,7 @@ const DoctorSelectionWithSlots = ({
             >
               2
             </div>
-            <span className="ml-2 text-sm font-medium">Doctor</span>
+            <span className="ml-2 text-sm font-medium">Lekarz</span>
           </div>
           <div className="h-px w-12 bg-gray-200"></div>
           <div className="flex items-center">
@@ -207,7 +207,7 @@ const DoctorSelectionWithSlots = ({
             >
               3
             </div>
-            <span className="ml-2 text-sm font-medium">Time Slot</span>
+            <span className="ml-2 text-sm font-medium">Termin</span>
           </div>
         </div>
       </div>
@@ -216,7 +216,7 @@ const DoctorSelectionWithSlots = ({
         {/* Specialization Selection */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Specialization
+            Wybierz Specjalizację
           </label>
           <div className="relative">
             <select
@@ -224,7 +224,7 @@ const DoctorSelectionWithSlots = ({
               value={selectedSpecialization}
               onChange={handleSpecializationChange}
             >
-              <option value="">Choose a specialization</option>
+              <option value="">Wybierz specjalizację</option>
               {specializations &&
                 specializations.map((spec) => (
                   <option key={spec._id} value={spec._id}>

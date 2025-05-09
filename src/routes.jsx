@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import App from "./App";
 import LoginScreen from "./components/Auth/AuthScreen";
-import LoginImage from "./assets/Login.png";
+import LoginImage from "./assets/new_login.jpg";
 import SignupImage from "./assets/Signup.png";
 import ForgotPasswordScreen from "./components/Auth/ForgotPasswordScreen";
 
-import { createBrowserRouter, Outlet } from "react-router-dom";
+import { createBrowserRouter, Outlet, Navigate } from "react-router-dom";
 import Sidebar from "./components/UtilComponents/Sidebar";
 import BillingPage from "./components/Doctor/Doctor";
 import DoctorsPage from "./components/Doctor/SingleDoctor/DoctorPage";
@@ -40,6 +40,21 @@ import NewsDetail from "./components/User/NewsDetail";
 import PatientMedicalDetails from "./components/User/MyDetails";
 import { useUser } from "./context/userContext";
 import UserMessaging from "./components/admin/SmsPage";
+import AppointmentPage from "./components/Appointments/AppointmentPage";
+import ContactPage from "./components/User/Pages/ContactPage";
+import BillDetails from "./components/Billing/BillDetails";
+import BillingManagement from "./components/Billing/BillingManagement";
+
+// Root route component that clears localStorage and redirects to /user
+const RootRoute = () => {
+  useEffect(() => {
+    // Clear all items from localStorage
+    localStorage.clear();
+  }, []);
+
+  // Redirect to /user
+  return <Navigate to="/user" replace />;
+};
 
 // Modified App component to include the sidebar
 function MainLayout() {
@@ -89,6 +104,12 @@ function MainLayout() {
 }
 
 const routes = createBrowserRouter([
+  // Root route - will clear localStorage and redirect to /user
+  {
+    path: "/",
+    element: <RootRoute />
+  },
+
   // Public routes group
   {
     element: <PublicRoute />,
@@ -124,6 +145,8 @@ const routes = createBrowserRouter([
       { path: "blogs", element: <NewsPage isNews={false} /> },
       { path: "news/single/:id", element: <NewsDetail /> },
       { path: "profile", element: <ProfilePage /> },
+      { path: "contact", element: <ContactPage /> },
+
 
       { path: "*", element: <NotFound404 /> },
     ],
@@ -141,7 +164,7 @@ const routes = createBrowserRouter([
           { path: "/doctor-details/:id", element: <DoctorDetailPage /> },
           { path: "/patients", element: <LabAppointments clinic={false} /> },
           { path: "/clinic", element: <LabAppointments clinic={true} /> },
-
+          { path: "/appointment/create", element: <AppointmentPage /> },
           { path: "/patients-details/:id", element: <PatientDetailsPage /> },
           { path: "/admin", element: <MedicalDashboard /> },
           { path: "/admin/sms", element: <UserMessaging /> },
@@ -155,6 +178,9 @@ const routes = createBrowserRouter([
             path: "/help-center",
             element: <ChatComponent />,
           },
+          
+          { path: "/admin/billing", element: <BillingManagement /> },
+          { path: "/admin/billing/details/:billId", element: <BillDetails /> },
         ],
       },
     ],

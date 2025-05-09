@@ -31,7 +31,7 @@ const PatientInfo = ({ patientData }) => {
                   patientData.avatar ||
                   "https://randomuser.me/api/portraits/men/75.jpg"
                 }
-                alt="User"
+                alt="Użytkownik"
                 className="size-10 rounded-full"
               />
               <div>
@@ -44,30 +44,30 @@ const PatientInfo = ({ patientData }) => {
               <span className="font-semibold">Email:</span> {patientData.email}
             </p>
             <p className="text-sm w-full flex flex-col border-l px-2">
-              <span className="font-semibold">Phone:</span> {patientData.phone}
+              <span className="font-semibold">Telefon:</span> {patientData.phone}
             </p>
           </div>
 
           <div className="flex gap-4 text-sm">
             <div className="flex flex-col gap-8 w-1/3 border-r">
               <div className="flex flex-col gap-4">
-                <div>BP: {patientData.bp}</div>
-                <div>Pulse: {patientData.pulseRate}</div>
-                <div>Weight: {patientData.weight}</div>
+                <div>Ciśnienie krwi: {patientData.bp}</div>
+                <div>Tętno: {patientData.pulseRate}</div>
+                <div>Waga: {patientData.weight}</div>
               </div>
               <div className="mb-6">
-                <h3 className="font-semibold mb-2">Patient ID:</h3>
+                <h3 className="font-semibold mb-2">ID Pacjenta:</h3>
                 <p>{patientData.patientId}</p>
               </div>
             </div>
             <div className="flex flex-col gap-8 w-2/3">
               <div className="flex flex-col gap-4">
-                <div>Last Checked: {patientData.lastChecked}</div>
-                <div>Prescription ID: {patientData.prescription}</div>
-                <div>Observation: {patientData.observation}</div>
+                <div>Ostatnie badanie: {patientData.lastChecked}</div>
+                <div>ID Recepty: {patientData.prescription}</div>
+                <div>Obserwacje: {patientData.observation}</div>
               </div>
               <div className="mb-6 flex gap-2">
-                <h3 className="mb-2">Medications:</h3>
+                <h3 className="mb-2">Leki:</h3>
                 <div className="list-disc list-inside space-y-4">
                   {patientData.medications.map((med, i) => (
                     <p key={i}>
@@ -84,15 +84,22 @@ const PatientInfo = ({ patientData }) => {
           {patientData.reports.map((report, index) => (
             <div key={index} className="border rounded-2xl bg-white p-4">
               <h3 className="font-semibold mb-2 text-sm">
-                Medical Report {index + 1}
+                {report?.name || "Raport"} -{`type ${report?.type}` || "Raport"}
               </h3>
               <div
                 className="h-36 cursor-pointer"
-                onClick={() => openImageModal(report.url)}
+                onClick={() =>{
+                  if(report.fileType!="pdf"){
+                    openImageModal(report.fileUrl)
+                  }else{
+                    window.open(report.fileUrl, '_blank');
+                  }
+                                 
+                   }}
               >
                 <img
-                  src={report.url}
-                  alt={`Medical Report ${index + 1}`}
+                  src={report.fileUrl}
+                  alt={`Raport medyczny ${index + 1}`}
                   className="rounded-lg w-full h-full object-cover"
                 />
               </div>
@@ -100,7 +107,7 @@ const PatientInfo = ({ patientData }) => {
           ))}
         </div>
 
-        {/* Image Modal */}
+        {/* Modal ze zdjęciem */}
         {selectedImage && (
           <div
             className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -133,7 +140,7 @@ const PatientInfo = ({ patientData }) => {
               </div>
               <img
                 src={selectedImage}
-                alt="Full size medical report"
+                alt="Pełnowymiarowy raport medyczny"
                 className="max-h-screen max-w-full object-contain"
               />
             </div>

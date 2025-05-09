@@ -118,9 +118,9 @@ function PatientsTable({
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="flex justify-between items-center px-6 py-4 border-b">
         <div className="flex items-center">
-          <h2 className="text-lg font-semibold mr-2">Patients List</h2>
+          <h2 className="text-lg font-semibold mr-2">Lista Pacjentów</h2>
           <span className="bg-blue-100 text-blue-600 rounded-full text-xs px-2 py-1">
-            {patients.length} users
+            {patients.length} użytkowników
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -138,21 +138,21 @@ function PatientsTable({
               <th className="px-4 py-3 w-12">
                 <input type="checkbox" className="rounded" />
               </th>
-              <th className="px-4 py-3">Patients name</th>
-              <th className="px-4 py-3">Patient ID</th>
+              <th className="px-4 py-3">Imię i nazwisko</th>
+              <th className="px-4 py-3">ID Pacjenta</th>
               <th className="px-4 py-3 flex items-center">
-                Date <ChevronDown size={16} className="ml-1" />
+                Data <ChevronDown size={16} className="ml-1" />
               </th>
-              <th className="px-4 py-3">Sex</th>
+              <th className="px-4 py-3">Płeć</th>
               <th className="px-4 py-3 flex items-center">
-                Age <ChevronDown size={16} className="ml-1" />
+                Wiek <ChevronDown size={16} className="ml-1" />
               </th>
-              <th className="px-4 py-3">Diseases</th>
+              <th className="px-4 py-3">Choroby</th>
               <th className="px-4 py-3 flex items-center">
                 Status <ChevronDown size={16} className="ml-1" />
               </th>
-              <th className="px-4 py-3">Doctor name</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="px-4 py-3">Lekarz</th>
+              <th className="px-4 py-3">Akcje</th>
             </tr>
           </thead>
           <tbody>
@@ -228,7 +228,7 @@ function PatientsTable({
                                 }}
                               >
                                 <Check size={14} className="inline mr-2" />
-                                Check In
+                                Zarejestruj
                               </button>
                             </li>
                           )}
@@ -242,7 +242,7 @@ function PatientsTable({
                               }}
                             >
                               <Edit size={14} className="inline mr-2" />
-                              Edit
+                              Edytuj
                             </button>
                           </li>
                           {/* <li>

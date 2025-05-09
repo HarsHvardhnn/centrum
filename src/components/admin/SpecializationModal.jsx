@@ -37,7 +37,7 @@ const SpecializationModal = ({ isOpen, onClose }) => {
 
     try {
       if (!name || !description) {
-        toast.error("Please fill all fields");
+        toast.error("Proszę wypełnić wszystkie pola");
         return;
       }
 
@@ -51,7 +51,7 @@ const SpecializationModal = ({ isOpen, onClose }) => {
       if (editId) {
         result = await updateSpecialization(editId, specializationData);
         if (result.success) {
-          toast.success("Specialization updated successfully");
+          toast.success("Specjalizacja została zaktualizowana pomyślnie");
           resetForm();
         } else {
           toast.error(result.message);
@@ -59,14 +59,14 @@ const SpecializationModal = ({ isOpen, onClose }) => {
       } else {
         result = await addSpecialization(specializationData);
         if (result.success) {
-          toast.success("Specialization added successfully");
+          toast.success("Specjalizacja została dodana pomyślnie");
           resetForm();
         } else {
           toast.error(result.message);
         }
       }
     } catch (err) {
-      toast.error("An error occurred");
+      toast.error("Wystąpił błąd");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -81,11 +81,11 @@ const SpecializationModal = ({ isOpen, onClose }) => {
 
   const handleDelete = async (id) => {
     if (
-      window.confirm("Are you sure you want to delete this specialization?")
+      window.confirm("Czy na pewno chcesz usunąć tę specjalizację?")
     ) {
       const result = await deleteSpecialization(id);
       if (result.success) {
-        toast.success("Specialization deleted successfully");
+        toast.success("Specjalizacja została usunięta pomyślnie");
       } else {
         toast.error(result.message);
       }
@@ -99,7 +99,7 @@ const SpecializationModal = ({ isOpen, onClose }) => {
       <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-auto">
         <div className="p-5 border-b flex justify-between items-center">
           <h2 className="text-2xl font-bold text-main">
-            Manage Specializations
+            Zarządzaj Specjalizacjami
           </h2>
           <button
             onClick={onClose}
@@ -113,12 +113,12 @@ const SpecializationModal = ({ isOpen, onClose }) => {
           {/* Form Section */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <h3 className="text-xl font-semibold mb-4">
-              {editId ? "Edit Specialization" : "Add New Specialization"}
+              {editId ? "Edytuj Specjalizację" : "Dodaj Nową Specjalizację"}
             </h3>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label htmlFor="name" className="block text-gray-700 mb-1">
-                  Name
+                  Nazwa
                 </label>
                 <input
                   type="text"
@@ -126,7 +126,7 @@ const SpecializationModal = ({ isOpen, onClose }) => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-main"
-                  placeholder="Enter specialization name"
+                  placeholder="Wprowadź nazwę specjalizacji"
                 />
               </div>
 
@@ -135,14 +135,14 @@ const SpecializationModal = ({ isOpen, onClose }) => {
                   htmlFor="description"
                   className="block text-gray-700 mb-1"
                 >
-                  Description
+                  Opis
                 </label>
                 <textarea
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-main"
-                  placeholder="Enter description"
+                  placeholder="Wprowadź opis"
                   rows="4"
                 ></textarea>
               </div>
@@ -154,14 +154,14 @@ const SpecializationModal = ({ isOpen, onClose }) => {
                   className="bg-main text-white px-4 py-2 rounded-md hover:bg-main/90 flex items-center gap-1"
                 >
                   {isLoading ? (
-                    "Processing..."
+                    "Przetwarzanie..."
                   ) : editId ? (
                     <>
-                      <FaEdit /> Update
+                      <FaEdit /> Aktualizuj
                     </>
                   ) : (
                     <>
-                      <FaPlus /> Add
+                      <FaPlus /> Dodaj
                     </>
                   )}
                 </button>
@@ -171,7 +171,7 @@ const SpecializationModal = ({ isOpen, onClose }) => {
                     onClick={resetForm}
                     className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
                   >
-                    Cancel
+                    Anuluj
                   </button>
                 )}
               </div>
@@ -180,13 +180,13 @@ const SpecializationModal = ({ isOpen, onClose }) => {
 
           {/* List Section */}
           <div>
-            <h3 className="text-xl font-semibold mb-4">All Specializations</h3>
+            <h3 className="text-xl font-semibold mb-4">Wszystkie Specjalizacje</h3>
             {loading ? (
-              <p className="text-center py-4">Loading...</p>
+              <p className="text-center py-4">Ładowanie...</p>
             ) : error ? (
               <p className="text-center py-4 text-red-500">{error}</p>
             ) : specializations.length === 0 ? (
-              <p className="text-center py-4">No specializations found</p>
+              <p className="text-center py-4">Nie znaleziono specjalizacji</p>
             ) : (
               <div className="max-h-[400px] overflow-y-auto">
                 {specializations.map((spec) => (
@@ -200,12 +200,14 @@ const SpecializationModal = ({ isOpen, onClose }) => {
                         <button
                           onClick={() => handleEdit(spec)}
                           className="text-blue-500 hover:text-blue-700"
+                          title="Edytuj"
                         >
                           <FaEdit />
                         </button>
                         <button
                           onClick={() => handleDelete(spec._id)}
                           className="text-red-500 hover:text-red-700"
+                          title="Usuń"
                         >
                           <FaTrash />
                         </button>

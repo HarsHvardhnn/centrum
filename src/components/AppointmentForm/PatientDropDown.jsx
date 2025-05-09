@@ -16,10 +16,10 @@ const PatientDropdown = ({
     <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
       <div className="flex justify-between items-center px-4 py-3 border-b">
         <div className="flex items-center">
-          <h3 className="font-medium">Patients List</h3>
+          <h3 className="font-medium">Lista pacjentów</h3>
           <span className="text-xs bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full ml-2">
-            {pagination ? pagination.totalPatients : patients.length} Patient
-            {(pagination?.totalPatients !== 1 || patients.length !== 1) && "s"}
+            {pagination ? pagination.totalPatients : patients.length} Pacjent
+            {(pagination?.totalPatients !== 1 || patients.length !== 1) && "ów"}
           </span>
         </div>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -36,13 +36,13 @@ const PatientDropdown = ({
 
       {loading && patients.length === 0 && (
         <div className="px-4 py-8 text-center text-gray-500">
-          Loading patients...
+          Wczytywanie pacjentów...
         </div>
       )}
 
       {!loading && patients.length === 0 && (
         <div className="px-4 py-8 text-center text-gray-500">
-          No patients found
+          Nie znaleziono pacjentów
         </div>
       )}
 
@@ -56,11 +56,11 @@ const PatientDropdown = ({
                 className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
               />
             </div>
-            <div className="w-1/3">Patient Name</div>
-            <div className="w-1/4">Patient ID</div>
-            <div className="w-1/6">Sex</div>
+            <div className="w-1/3">Imię i nazwisko</div>
+            <div className="w-1/4">ID Pacjenta</div>
+            <div className="w-1/6">Płeć</div>
             <div className="w-1/6 flex items-center">
-              Age
+              Wiek
               <svg
                 className="w-4 h-4 ml-1"
                 fill="none"
@@ -124,7 +124,7 @@ const PatientDropdown = ({
                   onClick={() => onSelect(patient)}
                   className="px-4 py-1.5 rounded-md bg-teal-100 text-teal-700 hover:bg-teal-200 text-sm"
                 >
-                  Select
+                  Wybierz
                 </button>
               </div>
             </div>
@@ -137,7 +137,7 @@ const PatientDropdown = ({
                 onClick={onLoadMore}
                 className="px-4 py-2 text-sm font-medium text-teal-600 hover:text-teal-800"
               >
-                Load more patients
+                Wczytaj więcej pacjentów
               </button>
             </div>
           )}

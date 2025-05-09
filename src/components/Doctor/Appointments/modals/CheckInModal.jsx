@@ -17,7 +17,7 @@ const PatientModal = ({ isOpen, onClose, patientDetails }) => {
       <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
         {/* Modal Header */}
         <div className="flex justify-between items-center border-b pb-3">
-          <h2 className="text-lg font-semibold">Check In</h2>
+          <h2 className="text-lg font-semibold">Zameldowanie</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
@@ -28,11 +28,11 @@ const PatientModal = ({ isOpen, onClose, patientDetails }) => {
 
         {/* Patient Details */}
         <div className="mt-4">
-          <h3 className="text-sm font-semibold text-gray-600">Patient Details</h3>
+          <h3 className="text-sm font-semibold text-gray-600">Dane pacjenta</h3>
           <div className="flex items-center mt-2">
             <img
               src={patientDetails.image}
-              alt="Patient"
+              alt="Pacjent"
               className="w-12 h-12 rounded-full border"
             />
             <div className="ml-4">
@@ -45,14 +45,14 @@ const PatientModal = ({ isOpen, onClose, patientDetails }) => {
               <span className="font-semibold">Email:</span> {patientDetails.email}
             </div>
             <div>
-              <span className="font-semibold">Phone:</span> {patientDetails.phone}
+              <span className="font-semibold">Telefon:</span> {patientDetails.phone}
             </div>
             <div>
-              <span className="font-semibold">Date of Birth:</span>{" "}
+              <span className="font-semibold">Data urodzenia:</span>{" "}
               {patientDetails.dob}
             </div>
             <div>
-              <span className="font-semibold">Diseases:</span>{" "}
+              <span className="font-semibold">Choroby:</span>{" "}
               {patientDetails.diseases}
             </div>
           </div>
@@ -82,7 +82,7 @@ const PatientModal = ({ isOpen, onClose, patientDetails }) => {
               <p>{uploadedFile.name}</p>
             ) : (
               <>
-                <p>Upload document signed by patient</p>
+                <p>Prześlij dokument podpisany przez pacjenta</p>
                 <input
                   id="file-upload"
                   type="file"
@@ -100,10 +100,10 @@ const PatientModal = ({ isOpen, onClose, patientDetails }) => {
             onClick={onClose}
             className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg mr-2 hover:bg-gray-300"
           >
-            Cancel
+            Anuluj
           </button>
           <button
-            onClick={() => alert("Checked In")}
+            onClick={() => alert("Zameldowano")}
             disabled={!uploadedFile}
             className={`px-4 py-2 rounded-lg ${
               uploadedFile
@@ -111,7 +111,7 @@ const PatientModal = ({ isOpen, onClose, patientDetails }) => {
                 : "bg-teal-300 text-white cursor-not-allowed"
             }`}
           >
-            Check In →
+            Zamelduj →
           </button>
         </div>
       </div>

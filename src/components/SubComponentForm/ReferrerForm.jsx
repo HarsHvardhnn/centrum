@@ -26,7 +26,7 @@ const ReferrerForm = () => {
         setDoctors(response.doctors || []);
       } catch (err) {
         console.error("Failed to fetch doctors:", err);
-        setError("Failed to load doctors. Please try again.");
+        setError("Nie udało się załadować listy lekarzy. Spróbuj ponownie.");
       } finally {
         setLoading(false);
       }
@@ -45,7 +45,7 @@ const ReferrerForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Referrer Type
+            Typ Skierowania
           </label>
           <div className="relative">
             <select
@@ -55,12 +55,12 @@ const ReferrerForm = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none bg-white"
             >
               <option value="" disabled>
-                Select referrer type
+                Wybierz typ skierowania
               </option>
-              <option value="doctor">Doctor</option>
-              <option value="hospital">Hospital</option>
-              <option value="clinic">Clinic</option>
-              <option value="patient">Patient</option>
+              <option value="doctor">Lekarz</option>
+              <option value="hospital">Szpital</option>
+              <option value="clinic">Przychodnia</option>
+              <option value="patient">Pacjent</option>
             </select>
             <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
               <svg
@@ -82,14 +82,14 @@ const ReferrerForm = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Main Complaint
+            Główna Dolegliwość
           </label>
           <input
             type="text"
             name="mainComplaint"
             value={formData.mainComplaint}
             onChange={handleChange}
-            placeholder="Enter your complaint"
+            placeholder="Wprowadź dolegliwość"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -98,42 +98,42 @@ const ReferrerForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Referrer Name
+            Nazwa Kierującego
           </label>
           <input
             type="text"
             name="referrerName"
             value={formData.referrerName}
             onChange={handleChange}
-            placeholder="Type to get suggestions"
+            placeholder="Wpisz, aby uzyskać sugestie"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Referrer Number
+            Numer Telefonu Kierującego
           </label>
           <input
             type="tel"
             name="referrerNumber"
             value={formData.referrerNumber}
             onChange={handleChange}
-            placeholder="Enter referrer number"
+            placeholder="Wprowadź numer telefonu"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Referrer Email
+            Email Kierującego
           </label>
           <input
             type="email"
             name="referrerEmail"
             value={formData.referrerEmail}
             onChange={handleChange}
-            placeholder="Enter referrer e-mail"
+            placeholder="Wprowadź adres email"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -141,7 +141,7 @@ const ReferrerForm = () => {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Consulting doctor
+          Lekarz Prowadzący
         </label>
         <div className="bg-primary-lighter p-4 rounded-xl">
           <div className="flex items-center gap-4">
@@ -154,7 +154,7 @@ const ReferrerForm = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none bg-white"
                 >
                   <option value="" disabled>
-                    Select specialization
+                    Wybierz specjalizację
                   </option>
                   {specializations && specializations.length > 0 ? (
                     specializations.map((specialization) => (
@@ -167,7 +167,7 @@ const ReferrerForm = () => {
                     ))
                   ) : (
                     <option value="" disabled>
-                      Loading specializations...
+                      Ładowanie specjalizacji...
                     </option>
                   )}
                 </select>
@@ -201,7 +201,7 @@ const ReferrerForm = () => {
                   disabled={!formData.consultingSpecialization || loading}
                 >
                   <option value="" disabled>
-                    {loading ? "Loading doctors..." : "Select doctor name"}
+                    {loading ? "Ładowanie lekarzy..." : "Wybierz lekarza"}
                   </option>
                   {doctors.map((doctor) => (
                     <option key={doctor._id} value={doctor._id}>
@@ -225,7 +225,7 @@ const ReferrerForm = () => {
                   </svg>
                 </div>
               </div>
-              {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+              {error && <p className="mt-1 text-sm text-red-600">Nie udało się załadować listy lekarzy. Spróbuj ponownie.</p>}
             </div>
           </div>
         </div>

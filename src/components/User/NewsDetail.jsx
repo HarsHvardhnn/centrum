@@ -15,7 +15,7 @@ const NewsDetail = () => {
         const response = await apiCaller("GET", `/news/${id}`);
         setNews(response.data);
       } catch (error) {
-        console.error("Failed to fetch news:", error);
+        console.error("Nie udało się pobrać aktualności:", error);
         navigate("/user/news");
       } finally {
         setLoading(false);
@@ -25,7 +25,7 @@ const NewsDetail = () => {
     fetchNews();
   }, [id, navigate]);
 
-  if (loading) return <p className="text-center p-6">Loading...</p>;
+  if (loading) return <p className="text-center p-6">Wczytywanie...</p>;
   if (!news) return null;
 
   return (
@@ -34,7 +34,7 @@ const NewsDetail = () => {
         onClick={() => navigate(-1)}
         className="mb-4 inline-flex items-center gap-2 bg-teal-800 text-white px-4 py-2 rounded-full hover:bg-teal-700 transition"
       >
-        ← Back
+        ← Powrót
       </button>
       <img
         src={news.image}
@@ -51,8 +51,8 @@ const NewsDetail = () => {
       <p className="text-gray-700 leading-relaxed mb-6">{news.description}</p>
 
       <div className="flex gap-4 text-sm text-gray-600">
-        <span>👁️ {news.views}</span>
-        <span>❤️ {news.likes}</span>
+        <span>👁️ {news.views} wyświetleń</span>
+        <span>❤️ {news.likes} polubień</span>
       </div>
     </div>
   );

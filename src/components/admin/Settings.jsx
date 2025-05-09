@@ -52,12 +52,12 @@ export default function UserManagement() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentPatientId, setCurrentPatientId] = useState(null);
   const subStepTitles = [
-    "Demographics",
-    "Referrer",
-    "Address",
-    "Photo",
-    "Details",
-    "Notes",
+    "Dane demograficzne",
+    "Skierowanie",
+    "Adres",
+    "Zdjęcie",
+    "Szczegóły",
+    "Notatki",
   ];
 
   const fetchUsers = async () => {
@@ -77,7 +77,7 @@ export default function UserManagement() {
       setIsLoading(false);
       hideLoader();
     } catch (error) {
-      setError("Failed to fetch users");
+      setError("Nie udało się pobrać użytkowników");
       setIsLoading(false);
       hideLoader();
     }
@@ -131,7 +131,7 @@ export default function UserManagement() {
       showLoader();
       await adminHelper.markUserAsDeleted(selectedUser._id);
       setSuccess(
-        `User ${selectedUser.name.first} ${selectedUser.name.last} successfully deleted`
+        `Użytkownik ${selectedUser.name.first} ${selectedUser.name.last} został pomyślnie usunięty`
       );
       setShowDeleteModal(false);
       hideLoader();
@@ -142,7 +142,7 @@ export default function UserManagement() {
         setSuccess("");
       }, 3000);
     } catch (error) {
-      setError("Failed to delete user");
+      setError("Nie udało się usunąć użytkownika");
       hideLoader();
     }
   };
@@ -151,7 +151,7 @@ export default function UserManagement() {
     try {
       showLoader();
       await adminHelper.reviveUser(userId);
-      setSuccess("User successfully revived");
+      setSuccess("Użytkownik został pomyślnie przywrócony");
       hideLoader();
       fetchUsers();
 
@@ -160,7 +160,7 @@ export default function UserManagement() {
         setSuccess("");
       }, 3000);
     } catch (error) {
-      setError("Failed to revive user");
+      setError("Nie udało się przywrócić użytkownika");
       hideLoader();
     }
   };
@@ -179,7 +179,7 @@ export default function UserManagement() {
       showLoader();
       await adminHelper.addReceptionist(formData);
       setError("");
-      setSuccess("Receptionist added successfully");
+      setSuccess("Recepcjonista został dodany pomyślnie");
       setShowAddModal(false);
       setFormData({
         firstName: "",
@@ -197,12 +197,11 @@ export default function UserManagement() {
         setSuccess("");
       }, 3000);
     } catch (error) {
-      console.log("error", error);
       setError(
-        "Failed to add receptionist: " +
+        "Nie udało się dodać recepcjonisty: " +
           (error.response?.data?.error ||
             error.response?.data?.message ||
-            "Unknown error")
+            "Nieznany błąd")
       );
       hideLoader();
     }
@@ -215,7 +214,7 @@ export default function UserManagement() {
       // Call your doctor service here
       const response = await doctorService.createDoctor(doctorData);
 
-      setSuccess("Doctor added successfully");
+      setSuccess("Lekarz został dodany pomyślnie");
       hideLoader();
       fetchUsers(); // Refresh the users list
 
@@ -229,10 +228,10 @@ export default function UserManagement() {
       closeModal();
     } catch (error) {
       setError(
-        "Failed to add doctor: " +
+        "Nie udało się dodać lekarza: " +
           (error.response?.data?.error ||
             error.response?.data?.message ||
-            "Unknown error")
+            "Nieznany błąd")
       );
       hideLoader();
     }
@@ -243,7 +242,7 @@ export default function UserManagement() {
     try {
       showLoader();
       const createdPatient = await patientService.createPatient(formData);
-      setSuccess("Patient added successfully");
+      setSuccess("Pacjent został dodany pomyślnie");
       hideLoader();
       fetchUsers(); // Refresh the users list
       setShowAddPatientModal(false);
@@ -312,7 +311,7 @@ export default function UserManagement() {
       {/* Header */}
       <SpecializationModal isOpen={showSpecsModal} onClose={()=>{setShowSpecsModal(false)}}/>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-teal-700">User Management</h1>
+        <h1 className="text-2xl font-bold text-teal-700">Zarządzanie Użytkownikami</h1>
 
         {/* Add User Dropdown Button */}
         <div className="flex gap-4">

@@ -1,9 +1,9 @@
 import { useState, useRef } from "react";
 import { X, Upload, AlertCircle, Check, Trash2 } from "lucide-react";
-import { format } from "date-fns";
 import { apiCaller } from "../../utils/axiosInstance";
 
-const CheckInModal = ({ isOpen, setIsOpen, patientData = null }) => {
+const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = null }) => {
+  console.log("patientData", patientData);
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
@@ -15,11 +15,11 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null }) => {
   const patient = patientData || {
     name: "Demi Wilkinson",
     age: "22",
-    sex: "Male",
+    sex: "Mężczyzna",
     email: "wilkinson87@gmail.com",
     phone: "(704) 555-0783",
-    dateOfBirth: "14 February 2003",
-    disease: "Cardiology",
+    dateOfBirth: "14 Luty 2003",
+    disease: "Kardiologia",
     id: "#PT-0025",
     photo: "/api/placeholder/48/48", // Placeholder for patient photo
   };
@@ -64,53 +64,53 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null }) => {
     }
   };
 
-const handleSubmit = async () => {
-  if (files.length === 0) {
-    setUploadError("Please upload at least one document");
-    return;
-  }
+  const handleSubmit = async () => {
+    if (files.length === 0) {
+      setUploadError("Proszę przesłać co najmniej jeden dokument");
+      return;
+    }
 
-  setUploading(true);
-  setUploadError(null);
+    setUploading(true);
+    setUploadError(null);
 
-  try {
-    // Create FormData
-    const formData = new FormData();
+    try {
+      // Create FormData
+      const formData = new FormData();
 
-    files.forEach((fileObj) => {
-      formData.append("files", fileObj.file);
-    });
+      files.forEach((fileObj) => {
+        formData.append("files", fileObj.file);
+      });
 
-    // Prepare URL (assuming your backend route is `/api/patients/:patientId/upload-documents`)
-    const url = `/patients/documents/${patient._id}/upload`;
+      // Prepare URL (assuming your backend route is `/api/patients/:patientId/upload-documents`)
+      const url = `/patients/documents/${patient.id}/upload/${appointmentId}`;
 
-    // Prepare headers
-    const headers = {
-      "Content-Type": "multipart/form-data",
-      // If your apiCaller auto-attaches token, no need to add Authorization here manually
-    };
+      // Prepare headers
+      const headers = {
+        "Content-Type": "multipart/form-data",
+        // If your apiCaller auto-attaches token, no need to add Authorization here manually
+      };
 
-    // Call your apiCaller
-    const response = await apiCaller("POST",url, formData, headers);
+      // Call your apiCaller
+      const response = await apiCaller("POST", url, formData, headers);
 
-    if (response) {
-      setUploadSuccess(true);
+      if (response) {
+        setUploadSuccess(true);
 
         setIsOpen(false);
         setFiles([]);
         setUploadSuccess(false);
-    } else {
-      throw new Error(response.message || "Upload failed");
+      } else {
+        throw new Error(response.message || "Przesyłanie nie powiodło się");
+      }
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      setUploadError(
+        error.message || "Nie udało się przesłać plików. Spróbuj ponownie."
+      );
+    } finally {
+      setUploading(false);
     }
-  } catch (error) {
-    console.error("Error uploading files:", error);
-    setUploadError(
-      error.message || "Failed to upload files. Please try again."
-    );
-  } finally {
-    setUploading(false);
-  }
-};
+  };
 
   if (!isOpen) return null;
 
@@ -119,7 +119,7 @@ const handleSubmit = async () => {
       <div className="bg-white rounded-lg w-full max-w-md overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-center border-b p-4">
-          <h2 className="text-lg font-medium">Check In</h2>
+          <h2 className="text-lg font-medium">Zameldowanie</h2>
           <button
             className="text-gray-500 hover:text-gray-700"
             onClick={() => {
@@ -136,7 +136,7 @@ const handleSubmit = async () => {
         <div className="p-4">
           {/* Patient Details - New Compact Layout */}
           <div className="mb-6">
-            <h3 className="text-md font-medium mb-3">Patient Details</h3>
+            <h3 className="text-md font-medium mb-3">Dane Pacjenta</h3>
             <div className="flex items-start mb-2">
               <div className="h-12 w-12 rounded-full overflow-hidden mr-3">
                 <img
@@ -153,7 +153,7 @@ const handleSubmit = async () => {
                   </div>
                 </div>
                 <p className="text-gray-500 text-sm">
-                  {patient.age} Years, {patient.sex}
+                  {patient.age} Lat, {patient.sex}
                 </p>
               </div>
             </div>
@@ -164,15 +164,15 @@ const handleSubmit = async () => {
                 <p>{patient.email}</p>
               </div>
               <div>
-                <p className="text-gray-500">Phone</p>
+                <p className="text-gray-500">Telefon</p>
                 <p>{patient.phone}</p>
               </div>
               {/* <div>
-                <p className="text-gray-500">Date of Birth</p>
+                <p className="text-gray-500">Data urodzenia</p>
                 <p>{format(patient?.dateOfBirth,"dd-mm-yyyy")}</p>
               </div> */}
               <div>
-                <p className="text-gray-500">Diseases</p>
+                <p className="text-gray-500">Schorzenia</p>
                 <p>{patient.disease}</p>
               </div>
             </div>
@@ -181,10 +181,10 @@ const handleSubmit = async () => {
           {/* File Upload Section - Simplified */}
           <div className="mb-5">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="text-md font-medium">Upload Documents</h3>
+              <h3 className="text-md font-medium">Prześlij Dokumenty</h3>
             </div>
             <p className="text-gray-500 text-sm mb-3">
-              Upload document signed by patient
+              Prześlij dokument podpisany przez pacjenta
             </p>
 
             {/* Upload Area - Simplified */}
@@ -199,10 +199,10 @@ const handleSubmit = async () => {
                   <Upload size={24} />
                 </div>
                 <p className="text-gray-700 text-sm mb-1">
-                  Drop your files here or click to browse
+                  Upuść pliki tutaj lub kliknij, aby przeglądać
                 </p>
                 <p className="text-gray-500 text-xs">
-                  Accepted file types: PDF, JPG, PNG (Max: 10MB)
+                  Akceptowane formaty plików: PDF, JPG, PNG (Max: 10MB)
                 </p>
               </div>
               <input
@@ -218,7 +218,7 @@ const handleSubmit = async () => {
             {/* File List */}
             {files.length > 0 && (
               <div className="mb-3">
-                <h4 className="text-sm font-medium mb-2">Uploaded Files</h4>
+                <h4 className="text-sm font-medium mb-2">Przesłane Pliki</h4>
                 <div className="space-y-2">
                   {files.map((fileObj) => (
                     <div
@@ -252,7 +252,7 @@ const handleSubmit = async () => {
                         </div>
                       </div>
                       <button
-                        className="text-gray-400 hover:text-red-500"
+                        className="text-gray-500 hover:text-red-500"
                         onClick={(e) => {
                           e.stopPropagation();
                           removeFile(fileObj.id);
@@ -268,9 +268,9 @@ const handleSubmit = async () => {
 
             {/* Error message */}
             {uploadError && (
-              <div className="flex items-center text-red-500 mb-3">
+              <div className="flex items-center text-red-600 text-sm mb-3">
                 <AlertCircle size={16} className="mr-1" />
-                <p className="text-sm">{uploadError}</p>
+                {uploadError}
               </div>
             )}
 
@@ -278,56 +278,32 @@ const handleSubmit = async () => {
             {uploadSuccess && (
               <div className="flex items-center text-green-500 mb-3">
                 <Check size={16} className="mr-1" />
-                <p className="text-sm">Files uploaded successfully!</p>
+                <p className="text-sm">Pliki zostały pomyślnie przesłane!</p>
               </div>
             )}
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-2 mt-2">
+          <div className="flex justify-end space-x-3">
             <button
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 text-sm"
+              className="px-4 py-2 text-gray-600 hover:text-gray-800"
               onClick={() => {
                 setIsOpen(false);
                 setFiles([]);
+                setUploadError(null);
+                setUploadSuccess(false);
               }}
             >
-              Cancel
+              Anuluj
             </button>
             <button
-              className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center text-sm"
+              className={`px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 ${
+                uploading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
               onClick={handleSubmit}
               disabled={uploading}
             >
-              {uploading ? (
-                <>
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  Check In <span className="ml-1">→</span>
-                </>
-              )}
+              {uploading ? "Przesyłanie..." : "Prześlij"}
             </button>
           </div>
         </div>

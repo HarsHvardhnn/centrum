@@ -9,27 +9,27 @@ export default function SpecializationsComponent({ data }) {
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Sample list of common specializations that could be selected
+  // Lista popularnych specjalizacji do wyboru
   const commonSpecializations = [
-    "Web Development",
-    "Mobile Apps",
-    "UI/UX Design",
-    "Data Science",
-    "Cloud Solutions",
-    "DevOps",
-    "AI/ML",
-    "Blockchain",
-    "E-commerce",
-    "Digital Marketing",
-    "SEO",
-    "Content Creation",
-    "Social Media",
-    "Graphic Design",
-    "Video Production",
-    "Photography",
+    "Medycyna rodzinna",
+    "Pediatria",
+    "Kardiologia",
+    "Dermatologia",
+    "Neurologia",
+    "Ortopedia",
+    "Ginekologia",
+    "Okulistyka",
+    "Laryngologia",
+    "Psychiatria",
+    "Endokrynologia",
+    "Urologia",
+    "Chirurgia ogólna",
+    "Alergologia",
+    "Diabetologia",
+    "Onkologia"
   ];
 
-  // Filter specializations based on input
+  // Filtrowanie specjalizacji na podstawie wprowadzonego tekstu
   const filteredSpecializations = newSpecialization.trim()
     ? commonSpecializations.filter(
         (spec) =>
@@ -38,7 +38,7 @@ export default function SpecializationsComponent({ data }) {
       )
     : commonSpecializations.filter((spec) => !specializations.includes(spec));
 
-  // Close dropdown when clicking outside
+  // Zamknij dropdown po kliknięciu poza nim
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -79,9 +79,9 @@ export default function SpecializationsComponent({ data }) {
 
   return (
     <section>
-      <h3 className="text-lg font-semibold mb-4">Specializations</h3>
+      <h3 className="text-lg font-semibold mb-4">Specjalizacje</h3>
 
-      {/* Display current specializations */}
+      {/* Wyświetl obecne specjalizacje */}
       <div className="flex flex-wrap gap-2 mb-6">
         {specializations.map((spec, idx) => (
           <span
@@ -99,12 +99,12 @@ export default function SpecializationsComponent({ data }) {
         ))}
         {specializations.length === 0 && (
           <span className="text-gray-500 text-sm">
-            No specializations selected
+            Nie wybrano żadnych specjalizacji
           </span>
         )}
       </div>
 
-      {/* Add new specialization with dropdown */}
+      {/* Dodaj nową specjalizację z rozwijaną listą */}
       <div className="mb-6 relative">
         <div className="flex gap-2">
           <div className="flex-1 relative">
@@ -118,10 +118,10 @@ export default function SpecializationsComponent({ data }) {
               }}
               onFocus={() => setIsDropdownOpen(true)}
               className="w-full border rounded px-3 py-2"
-              placeholder="Enter or select a specialization"
+              placeholder="Wpisz lub wybierz specjalizację"
             />
 
-            {/* Dropdown menu */}
+            {/* Menu rozwijane */}
             {isDropdownOpen && (
               <div
                 ref={dropdownRef}
@@ -141,7 +141,7 @@ export default function SpecializationsComponent({ data }) {
                   </ul>
                 ) : (
                   <div className="px-3 py-2 text-gray-500">
-                    No matching specializations
+                    Brak pasujących specjalizacji
                   </div>
                 )}
               </div>
@@ -151,7 +151,7 @@ export default function SpecializationsComponent({ data }) {
             onClick={handleAddSpecialization}
             className="bg-primary-light text-white px-4 py-2 rounded hover:bg-primary"
           >
-            Add
+            Dodaj
           </button>
         </div>
       </div>

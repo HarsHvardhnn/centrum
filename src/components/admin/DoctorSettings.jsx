@@ -11,7 +11,7 @@ const DoctorScheduleSettings = () => {
 
   // Form states for adding weekly shifts
   const [newShift, setNewShift] = useState({
-    dayOfWeek: "Monday",
+    dayOfWeek: "Poniedziałek",
     startTime: "09:00",
     endTime: "17:00",
   });
@@ -29,13 +29,13 @@ const DoctorScheduleSettings = () => {
 
   // Days of week array for dropdown
   const daysOfWeek = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
+    "Poniedziałek",
+    "Wtorek",
+    "Środa",
+    "Czwartek",
+    "Piątek",
+    "Sobota",
+    "Niedziela",
   ];
 
   // Load doctor's schedule data
@@ -59,7 +59,7 @@ const DoctorScheduleSettings = () => {
         }
       } catch (err) {
         console.error("Error fetching doctor schedule:", err);
-        setError("Failed to load schedule data. Please try again.");
+        setError("Nie udało się załadować harmonogramu. Spróbuj ponownie.");
       } finally {
         setLoading(false);
       }
@@ -103,14 +103,14 @@ const DoctorScheduleSettings = () => {
         setWeeklyShifts(updatedShifts);
         // Reset form to default values
         setNewShift({
-          dayOfWeek: "Monday",
+          dayOfWeek: "Poniedziałek",
           startTime: "09:00",
           endTime: "17:00",
         });
       }
     } catch (err) {
       console.error("Error adding weekly shift:", err);
-      setError("Failed to add weekly shift. Please try again.");
+      setError("Nie udało się dodać zmiany tygodniowej. Spróbuj ponownie.");
     }
   };
 
@@ -130,7 +130,7 @@ const DoctorScheduleSettings = () => {
       }
     } catch (err) {
       console.error("Error deleting weekly shift:", err);
-      setError("Failed to delete weekly shift. Please try again.");
+      setError("Nie udało się usunąć zmiany tygodniowej. Spróbuj ponownie.");
     }
   };
 
@@ -200,7 +200,7 @@ const DoctorScheduleSettings = () => {
       }
     } catch (err) {
       console.error("Error adding off time:", err);
-      setError("Failed to add off time. Please try again.");
+      setError("Nie udało się dodać czasu wolnego. Spróbuj ponownie.");
     }
   };
 
@@ -214,7 +214,7 @@ const DoctorScheduleSettings = () => {
       }
     } catch (err) {
       console.error("Error deleting off time:", err);
-      setError("Failed to delete off time. Please try again.");
+      setError("Nie udało się usunąć czasu wolnego. Spróbuj ponownie.");
     }
   };
 
@@ -273,7 +273,7 @@ const DoctorScheduleSettings = () => {
           <div className="flex-1">
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h1 className="text-2xl font-bold text-gray-800 mb-6">
-                Schedule Settings
+                Ustawienia Harmonogramu
               </h1>
 
               {error && (
@@ -294,7 +294,7 @@ const DoctorScheduleSettings = () => {
                           : "border-transparent hover:text-gray-600 hover:border-gray-300"
                       }`}
                     >
-                      Weekly Shifts
+                      Zmiany Tygodniowe
                     </button>
                   </li>
                   <li className="mr-2">
@@ -306,7 +306,7 @@ const DoctorScheduleSettings = () => {
                           : "border-transparent hover:text-gray-600 hover:border-gray-300"
                       }`}
                     >
-                      Time Off
+                      Czas Wolny
                     </button>
                   </li>
                 </ul>
@@ -316,14 +316,14 @@ const DoctorScheduleSettings = () => {
               {activeTab === "weeklyShifts" && (
                 <div>
                   <h2 className="text-lg font-semibold mb-4">
-                    Your Weekly Schedule
+                    Twój Harmonogram Tygodniowy
                   </h2>
 
                   {loading ? (
-                    <p>Loading shifts...</p>
+                    <p>Ładowanie zmian...</p>
                   ) : weeklyShifts.length === 0 ? (
                     <p className="text-gray-500 italic">
-                      No weekly shifts have been set.
+                      Nie ustawiono jeszcze żadnych zmian tygodniowych.
                     </p>
                   ) : (
                     <div className="overflow-x-auto">
@@ -331,16 +331,16 @@ const DoctorScheduleSettings = () => {
                         <thead className="bg-gray-50">
                           <tr>
                             <th className="py-2 px-4 text-left text-sm font-medium text-gray-500">
-                              Day of Week
+                              Dzień Tygodnia
                             </th>
                             <th className="py-2 px-4 text-left text-sm font-medium text-gray-500">
-                              Start Time
+                              Godzina Rozpoczęcia
                             </th>
                             <th className="py-2 px-4 text-left text-sm font-medium text-gray-500">
-                              End Time
+                              Godzina Zakończenia
                             </th>
                             <th className="py-2 px-4 text-left text-sm font-medium text-gray-500">
-                              Actions
+                              Akcje
                             </th>
                           </tr>
                         </thead>
@@ -363,7 +363,7 @@ const DoctorScheduleSettings = () => {
                                   }
                                   className="text-red-600 hover:text-red-800"
                                 >
-                                  Delete
+                                  Usuń
                                 </button>
                               </td>
                             </tr>
@@ -375,7 +375,7 @@ const DoctorScheduleSettings = () => {
 
                   <div className="mt-8">
                     <h3 className="text-lg font-semibold mb-4">
-                      Add or Update Shift
+                      Dodaj lub Zaktualizuj Zmianę
                     </h3>
                     <form
                       onSubmit={handleAddShift}
@@ -384,7 +384,7 @@ const DoctorScheduleSettings = () => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Day of Week
+                            Dzień Tygodnia
                           </label>
                           <select
                             name="dayOfWeek"
@@ -401,7 +401,7 @@ const DoctorScheduleSettings = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Start Time
+                            Godzina Rozpoczęcia
                           </label>
                           <input
                             type="time"
@@ -413,7 +413,7 @@ const DoctorScheduleSettings = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            End Time
+                            Godzina Zakończenia
                           </label>
                           <input
                             type="time"
@@ -429,7 +429,7 @@ const DoctorScheduleSettings = () => {
                           type="submit"
                           className="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500"
                         >
-                          Save Shift
+                          Zapisz Zmianę
                         </button>
                       </div>
                     </form>
@@ -441,14 +441,14 @@ const DoctorScheduleSettings = () => {
               {activeTab === "offTime" && (
                 <div>
                   <h2 className="text-lg font-semibold mb-4">
-                    Your Time Off Schedule
+                    Twój Harmonogram Czasu Wolnego
                   </h2>
 
                   {loading ? (
-                    <p>Loading time off schedule...</p>
+                    <p>Ładowanie harmonogramu czasu wolnego...</p>
                   ) : offSchedule.length === 0 ? (
                     <p className="text-gray-500 italic">
-                      No time off has been scheduled.
+                      Nie zaplanowano jeszcze czasu wolnego.
                     </p>
                   ) : (
                     <div className="overflow-x-auto">
@@ -456,13 +456,13 @@ const DoctorScheduleSettings = () => {
                         <thead className="bg-gray-50">
                           <tr>
                             <th className="py-2 px-4 text-left text-sm font-medium text-gray-500">
-                              Date
+                              Data
                             </th>
                             <th className="py-2 px-4 text-left text-sm font-medium text-gray-500">
-                              Time Ranges
+                              Przedziały Czasowe
                             </th>
                             <th className="py-2 px-4 text-left text-sm font-medium text-gray-500">
-                              Actions
+                              Akcje
                             </th>
                           </tr>
                         </thead>
@@ -470,7 +470,7 @@ const DoctorScheduleSettings = () => {
                           {offSchedule.map((offDay, index) => (
                             <tr key={index} className="hover:bg-gray-50">
                               <td className="py-3 px-4 text-sm text-gray-900">
-                                {format(new Date(offDay.date), "MMM dd, yyyy")}
+                                {format(new Date(offDay.date), "dd MMM yyyy")}
                               </td>
                               <td className="py-3 px-4 text-sm text-gray-900">
                                 {offDay.timeRanges.map((range, idx) => (
@@ -486,7 +486,7 @@ const DoctorScheduleSettings = () => {
                                   }
                                   className="text-red-600 hover:text-red-800"
                                 >
-                                  Delete
+                                  Usuń
                                 </button>
                               </td>
                             </tr>
@@ -497,79 +497,85 @@ const DoctorScheduleSettings = () => {
                   )}
 
                   <div className="mt-8">
-                    <h3 className="text-lg font-semibold mb-4">Add Time Off</h3>
+                    <h3 className="text-lg font-semibold mb-4">Dodaj Czas Wolny</h3>
                     <form
                       onSubmit={handleAddOffTime}
                       className="bg-gray-50 p-4 rounded"
                     >
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Date
-                        </label>
-                        <input
-                          type="date"
-                          name="date"
-                          value={newOffTime.date}
-                          onChange={handleOffTimeChange}
-                          className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Time Ranges
-                        </label>
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Data
+                          </label>
+                          <input
+                            type="date"
+                            name="date"
+                            value={newOffTime.date}
+                            onChange={handleOffTimeChange}
+                            min={format(new Date(), "yyyy-MM-dd")}
+                            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
 
                         {newOffTime.timeRanges.map((range, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center mb-2 space-x-2"
-                          >
-                            <input
-                              type="time"
-                              value={range.startTime}
-                              onChange={(e) =>
-                                handleTimeRangeChange(
-                                  index,
-                                  "startTime",
-                                  e.target.value
-                                )
-                              }
-                              className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                            <span>to</span>
-                            <input
-                              type="time"
-                              value={range.endTime}
-                              onChange={(e) =>
-                                handleTimeRangeChange(
-                                  index,
-                                  "endTime",
-                                  e.target.value
-                                )
-                              }
-                              className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-
-                            {newOffTime.timeRanges.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeTimeRange(index)}
-                                className="text-red-600 hover:text-red-800 ml-2"
-                              >
-                                Remove
-                              </button>
-                            )}
+                          <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Godzina Rozpoczęcia
+                              </label>
+                              <input
+                                type="time"
+                                value={range.startTime}
+                                onChange={(e) =>
+                                  handleTimeRangeChange(
+                                    index,
+                                    "startTime",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Godzina Zakończenia
+                              </label>
+                              <input
+                                type="time"
+                                value={range.endTime}
+                                onChange={(e) =>
+                                  handleTimeRangeChange(
+                                    index,
+                                    "endTime",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div className="flex items-end">
+                              {index > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeTimeRange(index)}
+                                  className="text-red-600 hover:text-red-800"
+                                >
+                                  Usuń Przedział
+                                </button>
+                              )}
+                            </div>
                           </div>
                         ))}
 
-                        <button
-                          type="button"
-                          onClick={addTimeRange}
-                          className="text-blue-600 hover:text-blue-800 text-sm mt-2"
-                        >
-                          + Add another time range
-                        </button>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={addTimeRange}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            + Dodaj Kolejny Przedział Czasowy
+                          </button>
+                        </div>
                       </div>
 
                       <div className="mt-4">
@@ -577,7 +583,7 @@ const DoctorScheduleSettings = () => {
                           type="submit"
                           className="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500"
                         >
-                          Save Time Off
+                          Zapisz Czas Wolny
                         </button>
                       </div>
                     </form>
