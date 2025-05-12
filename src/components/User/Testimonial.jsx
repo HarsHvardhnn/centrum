@@ -26,7 +26,8 @@ export default function Testimonial() {
             Co <span className="text-teal-600">nasi pacjenci<br /></span> mówią o nas
           </h3>
           <p className="text-neutral-700 mt-4 text-lg">
-            Poznaj opinie naszych pacjentów na temat jakości świadczonych przez nas usług.
+             Zdrowie i zadowolenie pacjentów
+ są dla nas najważniejsze
           </p>
 
           <div className="flex justify-center md:justify-start items-center gap-4 mt-6">

@@ -53,21 +53,27 @@ export default function Hero() {
       <div className="container mx-auto flex-1 flex flex-col md:flex-row items-center justify-between px-4 sm:px-10 xl:px-20 pt-8 sm:pt-16">
         {/* Left Side Content */}
         <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
-          <h1 className="text-4xl sm:text-5xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight font-bold text-gray-900">
-            Znajdź i wyszukaj swojego
-            <span className="text-main block sm:inline"> ulubionego</span> lekarza
+          <h1 className="text-2xl sm:text-2xl md:text-4xl lg:text-2xl xl:text-5xl leading-tight font-bold text-gray-900">
+            Zadbaj o Zdrowie
+            <span className="text-teal-600 block sm:inline">
+              {" "}
+              Najlepszymi
+            </span>{" "}
+            Specjalistami
           </h1>
-          <p className="text-gray-600 mt-4 max-w-md mx-auto md:mx-0 px-2 sm:px-0">
-            Umów się na wizytę u wybranego specjalisty w dogodnym dla Ciebie terminie.
+          <p className="text-gray-600 mt-4 max-w-md mx-auto md:mx-0 px-2 sm:px-0 text-md">
+            Tworzymy nową jakość opieki medycznej — bez kolejek, bez stresu, z
+            pełnym dostępem do najlepszych specjalistów. Wybierz lekarza i
+            zarezerwuj wizytę w kilka sekund.
           </p>
           <h2 className="text-xl sm:text-2xl mt-8 md:mt-6 font-bold">
-            Zarezerwuj wizytę
+            Znajdź termin
           </h2>
 
           {/* Search Form */}
           <div className="mt-3 mb-6 relative z-10 bg-white flex flex-col sm:flex-row items-center p-3 sm:p-4 rounded-xl sm:rounded-full shadow-lg max-w-md mx-auto md:mx-0">
             {/* Doctor Selection */}
-            <div className="flex items-center w-full mb-3 sm:mb-0">
+            <div className="flex items-center w-full mb-3 sm:mb-0 ">
               <FaRegCircleUser className="text-gray-600 mr-2" />
               <select className="bg-transparent text-gray-700 outline-none flex-1 w-full">
                 <option value="">Imię i nazwisko lekarza</option>
@@ -162,7 +168,9 @@ export default function Hero() {
             <h3 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">
               1M+
             </h3>
-            <p className="text-sm sm:text-base lg:text-lg">Aktywnych pacjentów</p>
+            <p className="text-sm sm:text-base lg:text-lg">
+              Aktywnych pacjentów
+            </p>
           </div>
         </div>
       </div>

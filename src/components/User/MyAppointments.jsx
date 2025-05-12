@@ -29,6 +29,7 @@ const MyAppointments = () => {
 
   useEffect(() => {
     const fetchAppointments = async () => {
+      console.log("user", user);
       if (!user || !user.id) return;
 
       try {
@@ -153,10 +154,10 @@ const MyAppointments = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16 px-6 flex justify-center relative top-[20%]">
-        <div className="w-full max-w-6xl">
+      <div className="min-h-screen bg-gray-50 pt-24 px-4 md:px-6">
+        <div className="w-full max-w-6xl mx-auto">
           <div className="flex items-center mb-6">
-            <button className="text-teal-600 mr-2 flex items-center">
+            <button className="text-teal-600 mr-2 flex items-center hover:text-teal-700 transition-colors">
               <FaChevronLeft size={14} className="mr-1" /> Powrót
             </button>
             <h1 className="text-2xl font-medium text-gray-800">
@@ -174,10 +175,10 @@ const MyAppointments = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16 px-6 flex justify-center top-[20%]">
-        <div className="w-full max-w-6xl">
+      <div className="min-h-screen bg-gray-50 pt-24 px-4 md:px-6">
+        <div className="w-full max-w-6xl mx-auto">
           <div className="flex items-center mb-6">
-            <button className="text-teal-600 mr-2 flex items-center">
+            <button className="text-teal-600 mr-2 flex items-center hover:text-teal-700 transition-colors">
               <FaChevronLeft size={14} className="mr-1" /> Powrót
             </button>
             <h1 className="text-2xl font-medium text-gray-800">
@@ -196,103 +197,105 @@ const MyAppointments = () => {
   const stats = calculateStats();
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16 px-6 flex justify-center pb-12 mt-6">
-      <div className="w-full max-w-6xl">
-        <div className="flex items-center mb-6">
-          <button className="text-teal-600 mr-2 flex items-center">
+    <div className="min-h-screen bg-gray-50 px-4 md:px-6 pb-12 pt-24">
+      <div className="w-full max-w-6xl mx-auto">
+        <div className="flex items-center mb-8">
+          <button className="text-teal-600 mr-2 flex items-center hover:text-teal-700 transition-colors">
             <FaChevronLeft size={14} className="mr-1" /> Powrót
           </button>
           <h1 className="text-2xl font-medium text-gray-800">Moje wizyty</h1>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Zarezerwowane wizyty</p>
-                <h3 className="text-2xl font-medium">{stats.zarezerwowane}</h3>
+                <p className="text-sm text-gray-500 mb-1">Zarezerwowane wizyty</p>
+                <h3 className="text-2xl font-semibold text-gray-800">{stats.zarezerwowane}</h3>
               </div>
               <div className="bg-teal-100 p-3 rounded-full">
-                <FaCalendarAlt className="text-teal-600" />
+                <FaCalendarAlt className="text-teal-600 text-xl" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow-sm">
+          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Zakończone wizyty</p>
-                <h3 className="text-2xl font-medium">{stats.zakonczone}</h3>
+                <p className="text-sm text-gray-500 mb-1">Zakończone wizyty</p>
+                <h3 className="text-2xl font-semibold text-gray-800">{stats.zakonczone}</h3>
               </div>
               <div className="bg-green-100 p-3 rounded-full">
-                <FaCheck className="text-green-600" />
+                <FaCheck className="text-green-600 text-xl" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow-sm">
+          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Anulowane wizyty</p>
-                <h3 className="text-2xl font-medium">{stats.anulowane}</h3>
+                <p className="text-sm text-gray-500 mb-1">Anulowane wizyty</p>
+                <h3 className="text-2xl font-semibold text-gray-800">{stats.anulowane}</h3>
               </div>
               <div className="bg-red-100 p-3 rounded-full">
-                <FaTimes className="text-red-600" />
+                <FaTimes className="text-red-600 text-xl" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow-sm">
+          <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Nieobecności</p>
-                <h3 className="text-2xl font-medium">{stats.nieobecnosci}</h3>
+                <p className="text-sm text-gray-500 mb-1">Nieobecności</p>
+                <h3 className="text-2xl font-semibold text-gray-800">{stats.nieobecnosci}</h3>
               </div>
               <div className="bg-yellow-100 p-3 rounded-full">
-                <FaExclamation className="text-yellow-600" />
+                <FaExclamation className="text-yellow-600 text-xl" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Appointments List */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="p-4 border-b">
-            <h2 className="text-lg font-medium">Lista wizyt</h2>
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-800">Lista wizyt</h2>
           </div>
 
           {appointments.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <FaCalendarAlt size={48} className="mx-auto mb-4 text-gray-400" />
-              <p className="text-lg font-medium mb-2">Brak wizyt</p>
-              <p className="text-sm">Nie masz jeszcze żadnych umówionych wizyt.</p>
+            <div className="p-12 text-center">
+              <div className="bg-gray-50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                <FaCalendarAlt size={32} className="text-gray-400" />
+              </div>
+              <p className="text-lg font-medium text-gray-800 mb-2">Brak wizyt</p>
+              <p className="text-gray-500">Nie masz jeszcze żadnych umówionych wizyt.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Data i godzina
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Lekarz
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Typ wizyty
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Akcje
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {appointments.map((appointment) => (
-                    <tr key={appointment._id} className="hover:bg-gray-50">
+                    <tr key={appointment._id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           {formatAppointmentDate(appointment.date)}
@@ -303,28 +306,25 @@ const MyAppointments = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {appointment.doctor.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {appointment.doctor.specialization}
+                          {appointment.doctor.name.first} {appointment.doctor.name.last}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           {appointment.type === "online" ? (
-                            <span className="flex items-center">
-                              <FaVideo className="mr-1" /> Wizyta online
+                            <span className="flex items-center text-blue-600">
+                              <FaVideo className="mr-2" /> Wizyta online
                             </span>
                           ) : (
-                            <span className="flex items-center">
-                              <FaHospital className="mr-1" /> Wizyta w przychodni
+                            <span className="flex items-center text-gray-600">
+                              <FaHospital className="mr-2" /> Wizyta w przychodni
                             </span>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                             getStatusColor(appointment.status).bg
                           } ${getStatusColor(appointment.status).text}`}
                         >
@@ -340,14 +340,14 @@ const MyAppointments = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() => handleViewDetails(appointment)}
-                          className="text-teal-600 hover:text-teal-900 mr-4"
+                          className="text-teal-600 hover:text-teal-700 mr-4 transition-colors"
                         >
                           Szczegóły
                         </button>
                         {appointment.status === "zarezerwowana" && (
                           <button
                             onClick={() => handleCancelAppointment(appointment._id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-700 transition-colors"
                             disabled={cancellationLoading}
                           >
                             {cancellationLoading ? "Anulowanie..." : "Anuluj"}
@@ -364,30 +364,30 @@ const MyAppointments = () => {
 
         {/* Appointment Details Modal */}
         {showModal && selectedAppointment && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center p-4 z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
             <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-              <div className="border-b border-gray-100 px-6 py-4 flex justify-between items-center">
+              <div className="border-b border-gray-100 px-6 py-4 flex justify-between items-center sticky top-0 bg-white z-10">
                 <div className="flex items-center">
                   <div className="flex h-10 w-10 rounded-full bg-teal-100 items-center justify-center mr-3">
                     <FaCalendarAlt className="text-teal-600" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-800">
-                    Appointment Details
+                    Szczegóły wizyty
                   </h3>
                 </div>
                 <button
                   onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-gray-600 p-1"
+                  className="text-gray-400 hover:text-gray-600 p-1 transition-colors"
                 >
                   <FaTimes size={20} />
                 </button>
               </div>
 
               <div className="p-6">
-                <div className="bg-teal-50 rounded-lg p-4 mb-6 flex items-center justify-between">
+                <div className="bg-teal-50 rounded-xl p-6 mb-6 flex items-center justify-between">
                   <div>
-                    <div className="text-sm text-teal-600 font-medium">
-                      Appointment with
+                    <div className="text-sm text-teal-600 font-medium mb-1">
+                      Wizyta z lekarzem
                     </div>
                     <div className="text-lg font-medium text-gray-800">
                       Dr. {selectedAppointment.doctor.name.first}{" "}
@@ -414,9 +414,9 @@ const MyAppointments = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div className="bg-white border border-gray-100 rounded-lg p-4">
+                  <div className="bg-white border border-gray-100 rounded-xl p-6">
                     <h4 className="text-sm font-medium text-gray-500 mb-4">
-                      Appointment Information
+                      Informacje o wizycie
                     </h4>
 
                     <div className="space-y-4">
@@ -425,7 +425,7 @@ const MyAppointments = () => {
                           <FaCalendarAlt className="text-teal-600" />
                         </div>
                         <div>
-                          <div className="text-xs text-gray-500">Date</div>
+                          <div className="text-xs text-gray-500">Data</div>
                           <div className="font-medium text-gray-800">
                             {formatAppointmentDate(selectedAppointment.date)}
                           </div>
@@ -437,7 +437,7 @@ const MyAppointments = () => {
                           <FaClock className="text-teal-600" />
                         </div>
                         <div>
-                          <div className="text-xs text-gray-500">Time</div>
+                          <div className="text-xs text-gray-500">Godzina</div>
                           <div className="font-medium text-gray-800">
                             {selectedAppointment.startTime} -{" "}
                             {selectedAppointment.endTime}
@@ -454,7 +454,7 @@ const MyAppointments = () => {
                           )}
                         </div>
                         <div>
-                          <div className="text-xs text-gray-500">Mode</div>
+                          <div className="text-xs text-gray-500">Tryb</div>
                           <div
                             className={`font-medium ${
                               selectedAppointment.type === "online"
@@ -462,18 +462,16 @@ const MyAppointments = () => {
                                 : "text-gray-800"
                             }`}
                           >
-                            {selectedAppointment.type.charAt(0).toUpperCase() +
-                              selectedAppointment.type.slice(1)}{" "}
-                            Appointment
+                            {selectedAppointment.type === "online" ? "Wizyta online" : "Wizyta w przychodni"}
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-white border border-gray-100 rounded-lg p-4">
+                  <div className="bg-white border border-gray-100 rounded-xl p-6">
                     <h4 className="text-sm font-medium text-gray-500 mb-4">
-                      Additional Information
+                      Dodatkowe informacje
                     </h4>
 
                     <div className="space-y-4">
@@ -482,7 +480,7 @@ const MyAppointments = () => {
                           <FaUser className="text-teal-600" />
                         </div>
                         <div>
-                          <div className="text-xs text-gray-500">Patient</div>
+                          <div className="text-xs text-gray-500">Pacjent</div>
                           <div className="font-medium text-gray-800">
                             {user?.name || "You"}
                           </div>
@@ -495,7 +493,7 @@ const MyAppointments = () => {
                         </div>
                         <div>
                           <div className="text-xs text-gray-500">
-                            Department
+                            Oddział
                           </div>
                           <div className="font-medium text-gray-800">
                             {selectedAppointment.doctor.department ||
@@ -509,9 +507,9 @@ const MyAppointments = () => {
                           <FaNotesMedical className="text-teal-600" />
                         </div>
                         <div>
-                          <div className="text-xs text-gray-500">Notes</div>
+                          <div className="text-xs text-gray-500">Notatki</div>
                           <div className="font-medium text-gray-800">
-                            {selectedAppointment.notes || "No notes available"}
+                            {selectedAppointment.notes || "Brak notatek"}
                           </div>
                         </div>
                       </div>
@@ -521,15 +519,14 @@ const MyAppointments = () => {
 
                 {selectedAppointment.status === "zarezerwowana" &&
                   selectedAppointment.type === "online" && (
-                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
-                      <div className="flex justify-between items-center">
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                           <h4 className="text-blue-700 font-medium mb-1">
-                            Online Meeting Information
+                            Informacje o wizycie online
                           </h4>
                           <p className="text-sm text-blue-600">
-                            Your virtual appointment is scheduled. Click the
-                            button to join when it's time.
+                            Twoja wizyta online jest zaplanowana. Kliknij przycisk, aby dołączyć, gdy nadejdzie czas.
                           </p>
                         </div>
                         {selectedAppointment.joining_link && (
@@ -537,9 +534,9 @@ const MyAppointments = () => {
                             href={selectedAppointment.joining_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center"
+                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center whitespace-nowrap"
                           >
-                            <span className="mr-2">Join Meeting</span>
+                            <span className="mr-2">Dołącz do spotkania</span>
                             <FaExternalLinkAlt size={12} />
                           </a>
                         )}
@@ -553,20 +550,20 @@ const MyAppointments = () => {
                       onClick={() =>
                         handleCancelAppointment(selectedAppointment._id)
                       }
-                      className="border border-red-200 bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition duration-300"
+                      className="border border-red-200 bg-red-50 text-red-600 px-6 py-2 rounded-lg hover:bg-red-100 transition-colors"
                       disabled={cancellationLoading}
                     >
                       {cancellationLoading
                         ? "Anulowanie..."
-                        : "Anuluj"}
+                        : "Anuluj wizytę"}
                     </button>
                   )}
 
                   <button
                     onClick={handleCloseModal}
-                    className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition duration-300"
+                    className="bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors"
                   >
-                    Close
+                    Zamknij
                   </button>
                 </div>
               </div>

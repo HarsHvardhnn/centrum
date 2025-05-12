@@ -242,7 +242,7 @@ export default function BookAppointment({
                       onChange={(value, data, event) => handlePhoneChange(value, data, event, { setFieldValue })}
                       inputProps={{
                         name: 'phone',
-                        placeholder: '123456789',
+                        placeholder: '(+48) 123456789',
                       }}
                       containerClass="w-full"
                       inputClass="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"

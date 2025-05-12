@@ -27,7 +27,8 @@ export default function Doctors({
     email: "",
     phone: "",
     gender: "male",
-    message: ""
+    message: "",
+    consultationType: "offline"
   });
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -200,7 +201,8 @@ export default function Doctors({
         message: bookingForm.message,
         name: bookingForm.name,
         phone: phone,
-        time: selectedSlot.startTime
+        time: selectedSlot.startTime,
+        consultationType: bookingForm.consultationType
       };
       
       // Make API call to book appointment
@@ -220,7 +222,8 @@ export default function Doctors({
         email: "",
         phone: "",
         gender: "male",
-        message: ""
+        message: "",
+        consultationType: "offline"
       });
       setSelectedSlot(null);
       
@@ -285,7 +288,7 @@ export default function Doctors({
     <section className="py-16 px-6 bg-white text-center">
       <h3 className="md:text-xl font-bold text-neutral-800">ZAUFANA OPIEKA</h3>
       <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 sm:mb-12">
-        Nasi Lekarze
+        Nasi Specjaliści 
       </h2>
 
       <div className="max-w-sm md:max-w-6xl mx-auto overflow-clip">
@@ -544,6 +547,37 @@ export default function Doctors({
                             <option value="female">Kobieta</option>
                             <option value="other">Inna</option>
                           </select>
+                        </div>
+                      </div>
+
+                      {/* Add Consultation Type Toggle */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Typ konsultacji
+                        </label>
+                        <div className="flex items-center space-x-4">
+                          <button
+                            type="button"
+                            onClick={() => setBookingForm({ ...bookingForm, consultationType: 'offline' })}
+                            className={`px-4 py-2 rounded-md border ${
+                              bookingForm.consultationType === 'offline'
+                                ? 'bg-main text-white border-main'
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            Wizyta stacjonarna
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBookingForm({ ...bookingForm, consultationType: 'online' })}
+                            className={`px-4 py-2 rounded-md border ${
+                              bookingForm.consultationType === 'online'
+                                ? 'bg-main text-white border-main'
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            Wizyta online
+                          </button>
                         </div>
                       </div>
                       

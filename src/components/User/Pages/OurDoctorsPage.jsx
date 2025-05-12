@@ -12,7 +12,7 @@ const OurDoctorsPage = () => {
   return (
     <>
       <PageHeader
-        title="Nasi lekarze"
+        title="Nasi Specjaliści "
         path="Strona główna / Lekarze"
         bgurl="/images/about-header.jpg"
       />

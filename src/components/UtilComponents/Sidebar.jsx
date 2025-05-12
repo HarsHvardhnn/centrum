@@ -10,22 +10,21 @@ import {
   FiSettings,
   FiHelpCircle,
   FiUser,
+  FiMessageCircle,
 } from "react-icons/fi";
 import { BsCalendarPlusFill } from "react-icons/bs";
 import { useUser } from "../../context/userContext";
 
 const Sidebar = () => {
-  const { user } = useUser()
-  const navigate= useNavigate()
+  const { user } = useUser();
+  const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
-  const handleLogout =  () => {
+  const handleLogout = () => {
     localStorage.clear();
-    window.location.href="/login"
-    
-  }
-  console.log('user',user)
-
+    window.location.href = "/login";
+  };
+  console.log("user", user);
 
   return (
     <div className="w-64 ml-6 h-[calc(100vh-64px)] bg-white shadow-md fixed left-0 top-16 flex flex-col mt-2">
@@ -66,7 +65,7 @@ const Sidebar = () => {
             isActive={currentPath === "/doctors"}
             isEnabled={true}
           />
-          
+
           <NavItem
             icon={<BsCalendarPlusFill className="text-xl text-teal-400" />}
             label="Dodaj wizytę"
@@ -88,9 +87,7 @@ const Sidebar = () => {
           )}
           {user?.role === "admin" && (
             <NavItem
-              icon={
-                <MdSms className="text-xl text-teal-400" />
-              }
+              icon={<MdSms className="text-xl text-teal-400" />}
               label="Zarządzanie SMS"
               to="/admin/sms"
               isActive={currentPath === "/admin/sms"}
@@ -137,6 +134,14 @@ const Sidebar = () => {
           )}
 
           <NavItem
+            icon={<FiMessageCircle className="text-xl text-teal-400" />}
+            label="Kontakty"
+            to="/admin/contact-messages"
+            isActive={currentPath === "/admin/contact-messages"}
+            isEnabled={true}
+          />
+
+          <NavItem
             icon={<FiUser className="text-xl text-teal-400" />}
             label="Konto"
             to="/admin/profile"
@@ -146,15 +151,17 @@ const Sidebar = () => {
 
           <div className="border-t border-teal-100 my-1"></div>
 
-     {user?.role!=="receptionist" &&     <NavItem
-            icon={<FiSettings className="text-xl text-teal-400" />}
-            label="Ustawienia"
-            to={`${
-              user?.role == "doctor" ? "/doctor/settings" : "/admin/accounts"
-            }`}
-            isActive={currentPath === "/doctor/settings"}
-            isEnabled={user?.role !== "receptionist"}
-          />}
+          {user?.role !== "receptionist" && (
+            <NavItem
+              icon={<FiSettings className="text-xl text-teal-400" />}
+              label="Ustawienia"
+              to={`${
+                user?.role == "doctor" ? "/doctor/settings" : "/admin/accounts"
+              }`}
+              isActive={currentPath === "/doctor/settings"}
+              isEnabled={user?.role !== "receptionist"}
+            />
+          )}
 
           <NavItem
             icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}

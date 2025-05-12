@@ -21,10 +21,10 @@ export default function Specialties() {
   return (
     <section className="py-12 text-center px-4 md:px-8 lg:px-16">
       <h3 className="text-lg md:text-xl font-bold text-neutral-800">
-        ZAWSZE Z TROSKĄ
+        PASJA DO LECZENIA, EMPATIA W DZIAŁANIU
       </h3>
       <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8">
-        Nasze specjalizacje
+        Nasi Specjaliści
       </h2>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">

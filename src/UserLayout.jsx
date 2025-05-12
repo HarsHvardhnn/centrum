@@ -10,7 +10,7 @@ const UserLayout = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-1 pt-[180px]">
+      <main className="flex-1 pt-[15px]">
         <Outlet
           context={{
             selectedDepartment,

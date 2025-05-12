@@ -131,7 +131,7 @@ const Header = () => {
             to="/user/doctors"
             className={`py-2 ${isActive("/user/doctors") ? activeLinkClass : defaultLinkClass}`}
           >
-            Lekarze
+            Specjaliści
           </Link>
           <Link 
             to="/user/news"
@@ -143,7 +143,7 @@ const Header = () => {
             to="/user/blogs"
             className={`py-2 ${isActive("/user/blogs") ? activeLinkClass : defaultLinkClass}`}
           >
-            Blog
+            Wiedza Medyczna
           </Link>
           <Link 
             to="/user/contact"
@@ -199,7 +199,7 @@ const Header = () => {
               className={isActive("/user/doctors") ? "text-teal-500 font-bold" : "text-teal-900"}
               onClick={() => setMenuOpen(false)}
             >
-              Lekarze
+              Specjaliści
             </Link>
             <Link 
               to="/user/news" 
@@ -213,7 +213,7 @@ const Header = () => {
               className={isActive("/user/blogs") ? "text-teal-500 font-bold" : "text-teal-900"}
               onClick={() => setMenuOpen(false)}
             >
-              Blog
+              Wiedza Medyczna
             </Link>
             <Link 
               to="/user/contact" 

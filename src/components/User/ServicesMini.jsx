@@ -52,7 +52,7 @@ const ServicesMini = () => {
     return (
       <section className="py-12 px-4 md:px-8 text-center">
         <h2 className="text-lg md:text-xl font-bold text-neutral-800 uppercase">
-          Opieka, której możesz zaufać
+          JESTEŚMY TU DLA CIEBIE
         </h2>
         <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 md:mb-16">
           Nasze usługi
@@ -69,7 +69,7 @@ const ServicesMini = () => {
     return (
       <section className="py-12 px-4 md:px-8 text-center">
         <h2 className="text-lg md:text-xl font-bold text-neutral-800 uppercase">
-          Opieka, której możesz zaufać
+          JESTEŚMY TU DLA CIEBIE
         </h2>
         <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 md:mb-16">
           Nasze usługi
@@ -86,7 +86,7 @@ const ServicesMini = () => {
     return (
       <section className="py-12 px-4 md:px-8 text-center">
         <h2 className="text-lg md:text-xl font-bold text-neutral-800 uppercase">
-          Opieka, której możesz zaufać
+          JESTEŚMY TU DLA CIEBIE
         </h2>
         <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 md:mb-16">
           Nasze usługi
@@ -101,7 +101,7 @@ const ServicesMini = () => {
   return (
     <section className="py-12 px-4 md:px-8">
       <h2 className="text-lg md:text-xl font-bold text-neutral-800 text-center uppercase">
-        Opieka, której możesz zaufać
+      JESTEŚMY TU DLA CIEBIE
       </h2>
       <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 text-center mb-8 md:mb-16">
         Nasze usługi

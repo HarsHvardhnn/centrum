@@ -59,7 +59,7 @@ export default function News() {
   return (
     <section className="py-12 md:px-6">
       <h3 className="md:text-xl font-bold text-neutral-800 text-center">
-        LEPSZA INFORMACJA, LEPSZE ZDROWIE
+        WIEDZA, KTÓRA MA ZNACZENIE
       </h3>
       <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 sm:mb-12 text-center">
         Aktualności

@@ -40,7 +40,7 @@ const RecentPosts = ({ isNews }) => {
       </div>
 
       <h2 className="text-3xl font-semibold font-serif text-main mb-4">
-        Ostatnie posty
+         Najnowsze artykuły
       </h2>
 
       {loading ? (

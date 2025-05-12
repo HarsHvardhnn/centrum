@@ -14,36 +14,38 @@ const HospitalCareSection = () => {
 
       <div className="md:w-3/5 md:pl-10 text-gray-800">
         <h4 className="font-semibold uppercase mb-2">
-          Witamy w Centrum Medycznym
+          WITAMY W CENTRUM MEDYCZNE 7
         </h4>
         <h2 className="text-main font-serif font-bold text-3xl md:text-4xl lg:text-5xl mb-4">
-          Najlepsza opieka dla Twojego zdrowia
+           Profesjonalna Opieka Zdrowotna 
+dla Ciebie i Twojej Rodziny
         </h2>
 
         <div className="grid grid-cols-2 gap-3 lg:text-lg text-gray-700 mb-6">
           <p className="flex items-center gap-2">
             <FaCircle className="text-main text-[10px]" />
-            Pasja do leczenia
+            Indywidualne podejście do pacjenta
           </p>
           <p className="flex items-center gap-2">
             <FaCircle className="text-main text-[10px]" />
-            5-gwiazdkowa opieka
+            Nowoczesna opieka medyczna
           </p>
           <p className="flex items-center gap-2">
             <FaCircle className="text-main text-[10px]" />
-            Dajemy z siebie wszystko
+            Specjaliści z doświadczeniem
           </p>
           <p className="flex items-center gap-2">
             <FaCircle className="text-main text-[10px]" />
-            Zaufaj nam
+            Nowoczesne metody leczenia 
           </p>
           <p className="flex items-center gap-2">
             <FaCircle className="text-main text-[10px]" />
-            Zawsze z troską
+            Wiedza oparta na nauce i
+            doświadczeniu
           </p>
           <p className="flex items-center gap-2">
             <FaCircle className="text-main text-[10px]" />
-            Tradycja doskonałości
+            Polecana klinika w Świętokrzyskim
           </p>
         </div>
 

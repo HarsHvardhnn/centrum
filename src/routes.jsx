@@ -44,6 +44,7 @@ import AppointmentPage from "./components/Appointments/AppointmentPage";
 import ContactPage from "./components/User/Pages/ContactPage";
 import BillDetails from "./components/Billing/BillDetails";
 import BillingManagement from "./components/Billing/BillingManagement";
+import AdminContactMessages from "./components/Admin/AdminContactMessages";
 
 // Root route component that clears localStorage and redirects to /user
 const RootRoute = () => {
@@ -181,6 +182,7 @@ const routes = createBrowserRouter([
           
           { path: "/admin/billing", element: <BillingManagement /> },
           { path: "/admin/billing/details/:billId", element: <BillDetails /> },
+          { path: "/admin/contact-messages", element: <AdminContactMessages /> },
         ],
       },
     ],
