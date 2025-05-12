@@ -31,8 +31,7 @@ import DoctorScheduleSettings from "./components/admin/DoctorSettings";
 import ProfilePage from "./components/Auth/Profile";
 import MyAppointments from "./components/User/MyAppointments";
 import ServicesManagement from "./components/admin/Services";
-import NewsList from "./components/User/NewsList";
-import News from "./components/User/News";
+
 import NewsPage from "./components/User/Pages/NewsPage";
 import PatientDetailsPage from "./components/Doctor/SingleDoctor/patient-details/PatientDetails";
 import NewsManagement from "./components/admin/NewManagement";
