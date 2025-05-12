@@ -3,7 +3,7 @@ import { apiCaller } from "../../utils/axiosInstance";
 
 const PAGE_SIZE = 10;
 
-const AdminContactMessages = () => {
+const Adminmsgs = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -93,4 +93,4 @@ const AdminContactMessages = () => {
   );
 };
 
-export default AdminContactMessages; 
+export default Adminmsgs; 
