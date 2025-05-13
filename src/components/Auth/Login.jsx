@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import LogoMark from "../../assets/Logomark.png";
+import LogoMark from "../../assets/logo_new.png";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
@@ -245,12 +245,12 @@ const AuthForm = ({ isLogin = false }) => {
   };
 
   return (
-    <div className="w-full px-4 flex flex-col items-center gap-14 py-8">
+    <div className="w-full px-4 flex flex-col items-center gap-6 py-8">
       <div className="flex items-center justify-center w-full">
-        <img src={LogoMark} alt="Centrum Medyczne" className="h-8" />
-        <span className="ml-2 text-gray-800 font-bold text-xl">
+        <img src={LogoMark} alt="Centrum Medyczne" className="h-16" />
+        {/* <span className="ml-2 text-gray-800 font-bold text-xl">
           Centrum Medyczne
-        </span>
+        </span> */}
       </div>
 
       <div className="flex flex-col gap-2 w-full max-w-md">

@@ -124,13 +124,13 @@ export default function Hero() {
         {/* Social Media Icons */}
         <div className="hidden sm:flex absolute top-1/2 right-0 rounded-l-full p-2 gap-4 items-center bg-white">
           <a
-            href="#"
+            href="https://www.facebook.com/share/16Sb5NkqZt/?mibextid=wwXIfr"
             className="text-teal-600 hover:text-teal-800 transition-colors"
           >
             <FaFacebookF />
           </a>
           <a
-            href="#"
+            href="https://www.instagram.com/centrummedyczne7?igsh=MTE1N2JoemM0ZG94YQ%3D%3D&utm_source=qr"
             className="text-teal-600 hover:text-teal-800 transition-colors"
           >
             <FaInstagram />
