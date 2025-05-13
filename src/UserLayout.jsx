@@ -3,6 +3,7 @@ import Header from "./components/User/Header";
 import Footer from "./components/User/Footer";
 import { Outlet, useOutletContext } from "react-router-dom";
 import TawkToWidget from "./components/UtilComponents/TawkToWidget";
+import CookieConsent from "./components/User/CookieConsent";
 
 const UserLayout = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -23,6 +24,7 @@ const UserLayout = () => {
         />
       </main>
       <Footer />
+      <CookieConsent />
     </div>
   );
 };
