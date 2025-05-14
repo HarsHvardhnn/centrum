@@ -43,14 +43,16 @@ const ServiceDetail = ({ serviceName }) => {
               <Link
                 to={"/user/services/" + item.title}
                 key={item._id}
-                className={`flex max-md:flex-col text-center items-center gap-2 cursor-pointer px-8 py-7 ${
+                className={`flex max-md:flex-col text-start items-center gap-2 cursor-pointer px-8 py-7 ${
                   item.title === serviceName ? "bg-main text-white" : ""
                 }`}
               >
-                <RandomIcon className="text-xl" />
+               <div className="flex items-center gap-2 w-full">
+               <RandomIcon className="text-xl" />
                 <div className="flex flex-col">
-                  <span>{item.title}</span>
+                  <span>{item.title.length > 20 ? item.title.slice(0, 20) + "..." : item.title}</span>
                 </div>
+               </div>
               </Link>
             );
           })}

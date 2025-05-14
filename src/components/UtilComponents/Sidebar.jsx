@@ -165,6 +165,14 @@ const Sidebar = () => {
 
           <NavItem
             icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}
+            label="e-ZLA"
+            to="https://www.zus.pl/ezus/logowanie?logout-manually=true"
+            // isActive={currentPath === "/logout"}
+            isEnabled={true}
+          />
+
+          <NavItem
+            icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}
             label="Wyloguj"
             to="#"
             onClick={(e) => {

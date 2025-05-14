@@ -12,25 +12,25 @@ const ServiceCard = ({ service }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden border">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden border flex flex-col h-full">
       <img
         src={service.images[0]}
         alt={service.title}
-        className="w-full h-80 object-cover rounded-t-md"
+        className="w-full h-52 object-cover rounded-t-md"
       />
-      <div className="p-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-2xl font-semibold text-main h-14 line-clamp-2 overflow-hidden">
-            {truncateText(service.title, 50)}
+      <div className="p-4 flex flex-col flex-grow">
+        <div className="mb-2 flex justify-between items-center">
+          <h3 className="text-xl font-semibold text-main mb-2">
+            {service.title}
           </h3>
           {/* Display the price */}
-          <div className="text-lg font-bold text-main bg-neutral-100 px-3 py-1 rounded-lg">
+          <div className="inline-block text-lg font-bold text-main bg-neutral-100 px-3 py-1 rounded-lg whitespace-nowrap">
             {service.price || "N/D"} zł
           </div>
         </div>
-        <div className="h-20 overflow-hidden">
+        <div className="flex-grow">
           <p className="text-gray-600 text-sm mt-2 line-clamp-3">
-            {truncateText(service.description, 150)}
+            {truncateText(service.description, 120)}
           </p>
         </div>
         <Link
@@ -56,7 +56,7 @@ const AllServices = () => {
   }
 
   return (
-    <div className="grid md:grid-cols-3 max-w-6xl mx-auto gap-6 pt-16 p-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-6xl mx-auto gap-6 pt-16 p-6">
       {services.map((service) => (
         <ServiceCard key={service._id} service={service} />
       ))}

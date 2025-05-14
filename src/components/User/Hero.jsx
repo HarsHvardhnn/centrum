@@ -144,20 +144,23 @@ export default function Hero() {
           {/* Online Support */}
           <div className="flex flex-col items-center w-full sm:w-auto sm:flex-1 text-center">
             <h3 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">
-              24/7
+              100%
             </h3>
-            <p className="text-sm sm:text-base lg:text-lg">Wsparcie online</p>
+            <p className="text-sm sm:text-base lg:text-lg">Pozytywnych Opinii
+            </p>
           </div>
 
           {/* Divider */}
           <div className="hidden sm:block border-l border-white h-12 my-auto"></div>
 
           {/* Doctors */}
+      
           <div className="flex flex-col items-center w-full sm:w-auto sm:flex-1 text-center">
             <h3 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">
-              100+
+              24/7
             </h3>
-            <p className="text-sm sm:text-base lg:text-lg">Lekarzy</p>
+            <p className="text-sm sm:text-base lg:text-lg">Asystent AI
+            </p>
           </div>
 
           {/* Divider */}
@@ -166,10 +169,10 @@ export default function Hero() {
           {/* Active Patients */}
           <div className="flex flex-col items-center w-full sm:w-auto sm:flex-1 text-center">
             <h3 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">
-              1M+
+              +20
             </h3>
             <p className="text-sm sm:text-base lg:text-lg">
-              Aktywnych pacjentów
+            Lat Doświadczenia
             </p>
           </div>
         </div>

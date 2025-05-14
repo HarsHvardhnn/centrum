@@ -71,14 +71,14 @@ const Header = () => {
 
   return (
     <header className="bg-white fixed top-0 right-0 left-0 z-50 shadow-md">
-      <div className="hidden md:flex w-full justify-between items-start px-6 lg:px-8 py-4 gap-4 lg:gap-8 text-teal-700 text-xs lg:text-sm bg-gray-50 border-b border-gray-200">
+      <div className="hidden md:flex w-full justify-between items-start px-6 lg:px-8 py-2 gap-4 lg:gap-8 text-teal-700 text-xs lg:text-sm bg-gray-50 border-b border-gray-200">
         <div className="flex items-start gap-3">
           <FaPhoneAlt className="text-base mt-1" />
           <div className="flex flex-col text-left">
             <span className="font-semibold uppercase tracking-wide">Nagłe przypadki</span>
             <div className="text-gray-800 mt-1 space-y-1">
               <span>(+48) 797 097 487</span> , {"    "}
-              <span>(+48) 797 127 487</span>
+              <p>(+48) 797 127 487</p>
             </div>
           </div>
         </div>
@@ -88,8 +88,9 @@ const Header = () => {
           <div className="flex flex-col text-left">
             <span className="font-semibold uppercase tracking-wide">Godziny pracy</span>
             <span className="text-gray-800 mt-1">
-              15:00-20:00 Poniedziałek-Piątek
+              15:00-20:00 
             </span>
+            <p>Poniedziałek-Piątek</p>
           </div>
         </div>
 
