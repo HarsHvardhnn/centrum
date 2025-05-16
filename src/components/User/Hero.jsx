@@ -49,11 +49,11 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="bg-[#F0F7F7] relative min-h-screen flex flex-col items-center pt-12 sm:pt-16">
-      <div className="container mx-auto flex-1 flex flex-col md:flex-row items-center justify-between px-4 sm:px-10 xl:px-20 pt-8 sm:pt-16">
+    <section className="bg-[#F0F7F7] relative flex flex-col items-center pt-12 sm:pt-16">
+      <div className=" flex-1 flex flex-col md:flex-row items-center justify-between px-4 sm:px-10 xl:px-20 pt-8 sm:pt-16">
         {/* Left Side Content */}
         <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
-          <h1 className="text-2xl sm:text-2xl md:text-4xl lg:text-2xl xl:text-5xl leading-tight font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-2xl md:text-2xl lg:text-4xl xl:text-5xl leading-tight font-bold text-gray-900">
             Zadbaj o Zdrowie
             <span className="text-teal-600 block sm:inline">
               {" "}
@@ -139,14 +139,13 @@ export default function Hero() {
       </div>
 
       {/* Stats Section */}
-      <div className="bg-main w-full text-white py-6 mt-8 md:mt-0 px-4">
+      <div className="bg-main w-full text-white py-8 mt-8 md:mt-0 px-4">
         <div className="container mx-auto flex justify-center flex-wrap gap-6 sm:gap-0">
           {/* Online Support */}
           <div className="flex flex-col items-center w-full sm:w-auto sm:flex-1 text-center">
-            <h3 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">
-              100%
-            </h3>
-            <p className="text-sm sm:text-base lg:text-lg">Pozytywnych Opinii
+            <h3 className="text-3xl md:text-4xl font-bold">100%</h3>
+            <p className="text-sm sm:text-base lg:text-lg">
+              Pozytywnych Opinii
             </p>
           </div>
 
@@ -154,13 +153,10 @@ export default function Hero() {
           <div className="hidden sm:block border-l border-white h-12 my-auto"></div>
 
           {/* Doctors */}
-      
+
           <div className="flex flex-col items-center w-full sm:w-auto sm:flex-1 text-center">
-            <h3 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">
-              24/7
-            </h3>
-            <p className="text-sm sm:text-base lg:text-lg">Asystent AI
-            </p>
+            <h3 className="text-3xl md:text-4xl font-bold">24/7</h3>
+            <p className="text-sm sm:text-base lg:text-lg">Asystent AI</p>
           </div>
 
           {/* Divider */}
@@ -168,12 +164,8 @@ export default function Hero() {
 
           {/* Active Patients */}
           <div className="flex flex-col items-center w-full sm:w-auto sm:flex-1 text-center">
-            <h3 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">
-              +20
-            </h3>
-            <p className="text-sm sm:text-base lg:text-lg">
-            Lat Doświadczenia
-            </p>
+            <h3 className="text-3xl md:text-4xl font-bold">+20</h3>
+            <p className="text-sm sm:text-base lg:text-lg">Lat Doświadczenia</p>
           </div>
         </div>
       </div>
