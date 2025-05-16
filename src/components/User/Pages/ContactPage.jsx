@@ -29,34 +29,50 @@ const ContactPage = () => {
               <FaPhoneAlt className="text-4xl mb-3" />
               <h4 className="font-bold text-lg">NAGŁE PRZYPADKI</h4>
               <div className="text-gray-800 mt-1 space-y-1">
-            <span>(+48) 797 097 487</span> , {"    "}
-            <span>(+48) 797 127 487</span>
-          </div>
+                <a
+                  href="tel:+48797097487"
+                  className=" transition-colors"
+                >
+                  (+48) 797 097 487
+                </a>{" "}
+                , {"    "}
+                <a
+                  href="tel:+48797127487"
+                  className=" transition-colors"
+                >
+                  (+48) 797 127 487
+                </a>
+              </div>
             </div>
 
             <div className="flex-1 bg-main-light hover:bg-main hover:text-white p-8 rounded-lg text-center flex flex-col items-center transition duration-300">
               <FaMapMarkerAlt className="text-4xl mb-3" />
               <h4 className="font-bold text-lg">LOKALIZACJA</h4>
               <span className="text-gray-800 mt-1">
-            Powstańców Warszawy 7/1.5, <br className="hidden lg:block" />
-            26-110 Skarżysko-Kamienna
-          </span>
+                Powstańców Warszawy 7/1.5, <br className="hidden lg:block" />
+                26-110 Skarżysko-Kamienna
+              </span>
             </div>
           </div>
           <div className="flex flex-1 max-md:flex-col gap-4">
             <div className="flex-1 bg-main-light hover:bg-main hover:text-white p-8 rounded-lg text-center flex flex-col items-center transition duration-300">
               <FaEnvelope className="text-4xl mb-3" />
               <h4 className="font-bold text-lg">EMAIL</h4>
-              <p className="text-base">kontakt@centrummedyczne7.pl</p>
+              <a
+                href="mailto:kontakt@centrummedyczne7.pl"
+                className="text-base  transition-colors"
+              >
+                kontakt@centrum medyczne7.pl
+              </a>
               {/* <p className="text-base">myebstudios@gmail.com</p> */}
             </div>
 
             <div className="flex-1 bg-main-light hover:bg-main hover:text-white p-8 rounded-lg text-center flex flex-col items-center transition duration-300">
               <FaClock className="text-4xl mb-3" />
               <h4 className="font-bold text-lg">GODZINY PRACY</h4>
-              <span className="text-gray-800 mt-1">
-            15:00-20:00 Poniedziałek-Piątek
-          </span>
+              <p className="text-gray-800 mt-1">
+                15:00-20:00 Poniedziałek-Piątek
+              </p>
             </div>
           </div>
         </div>
