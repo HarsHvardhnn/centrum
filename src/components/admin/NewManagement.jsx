@@ -45,6 +45,7 @@ const NewsManagement = () => {
     image: "",
     isNews: true,
     category: "",
+    file: null,
   });
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);
@@ -140,9 +141,24 @@ const NewsManagement = () => {
     }
   };
 
-  const handleImageChange = () => {};
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        file: file,
+        image: URL.createObjectURL(file)
+      }));
+    }
+  };
 
-  const removeImage = () => {};
+  const removeImage = () => {
+    setFormData(prev => ({
+      ...prev,
+      file: null,
+      image: ""
+    }));
+  };
 
   const validateForm = () => {
     const errors = {};
@@ -179,17 +195,11 @@ const NewsManagement = () => {
     formDataToSend.append("description", formData.description);
     formDataToSend.append("isNews", formData.isNews);
     formDataToSend.append("category", formData.category);
-
-    // Log the form data for debugging
-    console.log("Form Data being sent:", {
-      title: formData.title,
-      author: formData.author,
-      date: formData.date,
-      shortDescription: formData.shortDescription,
-      description: formData.description,
-      isNews: formData.isNews,
-      category: formData.category
-    });
+    
+    // Append the file if it exists
+    if (formData.file) {
+      formDataToSend.append("file", formData.file);
+    }
 
     try {
       if (currentArticle) {
@@ -265,6 +275,7 @@ const NewsManagement = () => {
       image: article.image || "",
       isNews: article.isNews,
       category: article.category || "",
+      file: null,
     });
     setIsModalOpen(true);
   };
@@ -308,6 +319,7 @@ const NewsManagement = () => {
       image: "",
       isNews: true,
       category: "",
+      file: null,
     });
     setCurrentArticle(null);
     setFormErrors({});
@@ -781,6 +793,43 @@ const NewsManagement = () => {
                       {formErrors.description}
                     </p>
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Zdjęcie okładkowe
+                  </label>
+                  <div className="mt-1 flex items-center space-x-4">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-md file:border-0
+                        file:text-sm file:font-medium
+                        file:bg-teal-50 file:text-teal-700
+                        hover:file:bg-teal-100"
+                    />
+                    {formData.image && (
+                      <div className="relative">
+                        <img
+                          src={formData.image}
+                          alt="Preview"
+                          className="h-20 w-20 object-cover rounded-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeImage}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center">
