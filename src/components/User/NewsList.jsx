@@ -7,8 +7,8 @@ import { apiCaller } from "../../utils/axiosInstance";
 import DOMPurify from "dompurify";
 
 const NewsCard = ({ article }) => {
-  // Function to truncate HTML content
   const truncateHTML = (html, maxLength) => {
+    if (!html) return '';
     const div = document.createElement('div');
     div.innerHTML = DOMPurify.sanitize(html);
     const text = div.textContent || div.innerText;
@@ -32,10 +32,10 @@ const NewsCard = ({ article }) => {
           <span className="flex items-center">
             <Eye className="size-3 sm:size-4 lg:size-5 mr-1" /> {article.views} wyświetleń
           </span>
-          {/* <span className="flex items-center">
+          <span className="flex items-center">
             <Heart className="size-3 sm:size-4 lg:size-5 mr-1 text-red-500" />{" "}
             {article.likes} polubień
-          </span> */}
+          </span>
         </div>
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif font-semibold text-main mt-2">
           {article.title}

@@ -27,7 +27,7 @@ const NewsDetail = () => {
   }, [id, navigate]);
 
   const createMarkup = (html) => {
-    return { __html: DOMPurify.sanitize(html) };
+    return { __html: DOMPurify.sanitize(html || '') };
   };
 
   if (loading) return <p className="text-center p-6">Wczytywanie...</p>;
@@ -57,8 +57,6 @@ const NewsDetail = () => {
         className="prose prose-lg max-w-none mb-6"
         dangerouslySetInnerHTML={createMarkup(news.description)}
       />
-
-     
     </div>
   );
 };
