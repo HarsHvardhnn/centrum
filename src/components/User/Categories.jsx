@@ -42,9 +42,9 @@ const Categories = ({ selectedCategory, onCategorySelect }) => {
         {categories.map((category) => (
           <button
             key={category._id}
-            onClick={() => onCategorySelect(category._id)}
+            onClick={() => onCategorySelect(category.categoryId)}
             className={`text-left px-4 py-2 rounded-lg transition-colors ${
-              selectedCategory === category._id
+              selectedCategory === category.categoryId
                 ? "bg-main text-white"
                 : "hover:bg-gray-100"
             }`}
