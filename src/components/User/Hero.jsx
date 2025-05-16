@@ -90,7 +90,7 @@ export default function Hero() {
             </div>
 
             {/* Location Input */}
-            <div className="flex items-center w-full sm:border-l sm:pl-3">
+            {/* <div className="flex items-center w-full sm:border-l sm:pl-3">
               <IoLocationOutline className="text-lg text-gray-600 mr-2" />
               <input
                 type="text"
@@ -99,11 +99,14 @@ export default function Hero() {
                 onChange={(e) => setLocation(e.target.value)}
                 className="bg-transparent placeholder:text-gray-700 outline-none text-gray-700 flex-1 w-full"
               />
-            </div>
+            </div> */}
 
             {/* Search Button */}
             <button className="bg-main text-white p-3 rounded-full mt-3 sm:mt-0 sm:ml-2">
-              <FaSearch />
+              <FaSearch  onClick={(e) => {
+                    e.preventDefault();
+                    window.scrollTo({ top: 2500, behavior: "smooth" });
+                  }} />
             </button>
           </div>
         </div>

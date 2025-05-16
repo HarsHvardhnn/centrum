@@ -4,8 +4,20 @@ import ReactPaginate from "react-paginate";
 import { Eye, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
+import DOMPurify from "dompurify";
 
 const NewsCard = ({ article }) => {
+  // Function to truncate HTML content
+  const truncateHTML = (html, maxLength) => {
+    const div = document.createElement('div');
+    div.innerHTML = DOMPurify.sanitize(html);
+    const text = div.textContent || div.innerText;
+    if (text.length <= maxLength) return html;
+    return text.slice(0, maxLength).trim() + '...';
+  };
+
+  const sanitizedDescription = article.shortDescription || truncateHTML(article.description, 200);
+
   return (
     <div className="bg-white overflow-hidden mb-6">
       <img
@@ -20,15 +32,17 @@ const NewsCard = ({ article }) => {
           <span className="flex items-center">
             <Eye className="size-3 sm:size-4 lg:size-5 mr-1" /> {article.views} wyświetleń
           </span>
-          <span className="flex items-center">
+          {/* <span className="flex items-center">
             <Heart className="size-3 sm:size-4 lg:size-5 mr-1 text-red-500" />{" "}
             {article.likes} polubień
-          </span>
+          </span> */}
         </div>
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif font-semibold text-main mt-2">
           {article.title}
         </h2>
-        <p className="text-gray-600 mt-2">{article.description}</p>
+        <p className="text-gray-600 mt-2">
+          {sanitizedDescription}
+        </p>
         <div className="flex justify-between items-center mt-4">
           <Link
             to={`/user/news/single/${article._id}`}
@@ -42,7 +56,7 @@ const NewsCard = ({ article }) => {
   );
 };
 
-const NewsList = ({ isNews }) => {
+const NewsList = ({ isNews, selectedCategory }) => {
   const [newsData, setNewsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -52,8 +66,13 @@ const NewsList = ({ isNews }) => {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const response = await apiCaller("GET", `/news?isNews=${isNews}`);
+        let url = `/news?isNews=${isNews}`;
+        if (selectedCategory) {
+          url += `&category=${selectedCategory}`;
+        }
+        const response = await apiCaller("GET", url);
         setNewsData(response.data);
+        setCurrentPage(0); // Reset to first page when category changes
       } catch (err) {
         console.error("Nie udało się pobrać aktualności:", err);
         setError("Nie udało się załadować postów");
@@ -63,7 +82,7 @@ const NewsList = ({ isNews }) => {
     };
 
     fetchNews();
-  }, []);
+  }, [isNews, selectedCategory]);
 
   const pageCount = Math.ceil(newsData.length / articlesPerPage);
   const currentArticles = newsData.slice(
