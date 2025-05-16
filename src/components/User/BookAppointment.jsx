@@ -194,34 +194,34 @@ export default function BookAppointment({
 
   return (
     <section
-      className={`px-4 flex justify-center items-center ${
+      className={`px-4 sm:px-6 flex justify-center items-center ${
         page === "home"
-          ? "bg-[url('/images/bookappointment.jpg')] py-12 lg:px-16 bg-cover bg-center bg-no-repeat"
-          : "bg-[#f5f7fa]"
-      }  relative`}
+          ? "bg-[url('/images/bookappointment.jpg')] py-8 sm:py-12 bg-cover bg-center bg-no-repeat"
+          : "bg-[#f5f7fa] py-6"
+      } relative`}
     >
       <div className="absolute inset-0 bg-white bg-opacity-70"></div>
 
       <div
-        className={`max-w-6xl lg:p-6 md:p-8 rounded-lg flex ${
-          page === "home" ? "flex-col md:flex-row" : "flex-col"
-        } gap-6 md:gap-8 relative z-10 w-full`}
+        className={`max-w-6xl w-full lg:p-6 rounded-lg flex ${
+          page === "home" ? "flex-col lg:flex-row" : "flex-col"
+        } gap-6 relative z-10`}
       >
         <div
           className={`${
-            page === "home" ? "md:w-1/2" : "w-full"
-          }  flex flex-col justify-center text-center md:text-left`}
+            page === "home" ? "lg:w-1/2" : "w-full"
+          } flex flex-col justify-center text-center lg:text-left space-y-4`}
         >
-          <h2 className="text-3xl md:text-4xl pt-10 font-serif font-bold text-primary">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-primary">
             Zarezerwuj wizytę
           </h2>
-          <p className="text-neutral-800 mt-2 text-base md:text-lg">
+          <p className="text-neutral-800 text-sm sm:text-base md:text-lg max-w-2xl mx-auto lg:mx-0">
             Wybierz dogodny termin i umów się na konsultację z naszym specjalistą.
             To szybkie, proste i wygodne — bez dzwonienia i kolejek.
           </p>
         </div>
 
-        <div className={`${page === "home" ? "md:w-1/2 w-full" : "w-full"} `}>
+        <div className={`${page === "home" ? "lg:w-1/2" : "w-full"}`}>
           <Formik
             initialValues={initialValues}
             validationSchema={validationSchema}
@@ -229,38 +229,40 @@ export default function BookAppointment({
             enableReinitialize={true}
           >
             {({ setFieldValue, isSubmitting, values, errors, touched }) => (
-              <Form className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#f5f7fa] rounded-md border border-[#062b47] p-4">
-                {/* Show success or error message if available */}
+              <Form className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#f5f7fa] rounded-md border border-[#062b47] p-4 sm:p-6">
+                {/* Status Messages */}
                 {submitStatus.success && (
-                  <div className="col-span-1 md:col-span-2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                  <div className="col-span-1 sm:col-span-2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-sm sm:text-base">
                     Wizyta została pomyślnie zarezerwowana!
                   </div>
                 )}
 
                 {submitStatus.error && (
-                  <div className="col-span-1 md:col-span-2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                  <div className="col-span-1 sm:col-span-2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-sm sm:text-base">
                     {submitStatus.error}
                   </div>
                 )}
 
-                <div>
+                {/* Form Fields */}
+                <div className="col-span-1">
                   <Field
                     name="name"
                     type="text"
                     placeholder="Imię i nazwisko"
-                    className="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
                   />
                   <ErrorMessage
                     name="name"
                     component="div"
-                    className="text-red-600 text-sm mt-1"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
                   />
                 </div>
-                <div>
+
+                <div className="col-span-1">
                   <Field
                     as="select"
                     name="gender"
-                    className="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
                   >
                     <option value="">Wybierz płeć</option>
                     <option value="male">Mężczyzna</option>
@@ -270,24 +272,25 @@ export default function BookAppointment({
                   <ErrorMessage
                     name="gender"
                     component="div"
-                    className="text-red-600 text-sm mt-1"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
                   />
                 </div>
 
-                <div>
+                <div className="col-span-1">
                   <Field
                     name="email"
                     type="email"
                     placeholder="Email"
-                    className="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
                   />
                   <ErrorMessage
                     name="email"
                     component="div"
-                    className="text-red-600 text-sm mt-1"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
                   />
                 </div>
-                <div>
+
+                <div className="col-span-1">
                   <div className="phone-input-container">
                     <PhoneInput
                       country={'pl'}
@@ -296,9 +299,10 @@ export default function BookAppointment({
                       inputProps={{
                         name: 'phone',
                         placeholder: '(+48) 123456789',
+                        className: 'text-sm sm:text-base'
                       }}
                       containerClass="w-full"
-                      inputClass="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
+                      inputClass="p-2.5 sm:p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
                       buttonClass="border-[#062b47]"
                       preferredCountries={['pl']}
                       disableDropdown={true}
@@ -307,18 +311,18 @@ export default function BookAppointment({
                     />
                   </div>
                   {errors.phone && touched.phone && (
-                    <div className="text-red-600 text-sm mt-1">
+                    <div className="text-red-600 text-xs sm:text-sm mt-1">
                       {errors.phone}
                     </div>
                   )}
                 </div>
 
-                <div>
+                <div className="col-span-1">
                   <Field
                     as="select"
                     name="specialization"
                     onChange={(e) => handleSpecializationChange(e, setFieldValue)}
-                    className="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
                   >
                     <option value="">Wybierz specjalizację</option>
                     {specializations.map((spec) => (
@@ -330,16 +334,16 @@ export default function BookAppointment({
                   <ErrorMessage
                     name="specialization"
                     component="div"
-                    className="text-red-600 text-sm mt-1"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
                   />
                 </div>
 
-                <div>
+                <div className="col-span-1">
                   <Field
                     as="select"
                     name="doctor"
                     onChange={(e) => handleDoctorChange(e, values.date, setFieldValue)}
-                    className="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
                     disabled={!values.specialization}
                   >
                     <option value="">Wybierz lekarza</option>
@@ -352,35 +356,36 @@ export default function BookAppointment({
                   <ErrorMessage
                     name="doctor"
                     component="div"
-                    className="text-red-600 text-sm mt-1"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
                   />
                 </div>
 
-                <div>
+                <div className="col-span-1">
                   <Field
                     name="date"
                     type="date"
                     onChange={(e) => handleDateChange(e, values.doctor, setFieldValue)}
-                    className="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
                     min={new Date().toISOString().split('T')[0]}
                     disabled={!values.doctor}
                   />
                   <ErrorMessage
                     name="date"
                     component="div"
-                    className="text-red-600 text-sm mt-1"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
                   />
                 </div>
 
-                <div className="col-span-2">
+                {/* Consultation Type */}
+                <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Typ konsultacji
                   </label>
-                  <div className="flex items-center space-x-4">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                     <button
                       type="button"
                       onClick={() => setFieldValue("consultationType", "offline")}
-                      className={`px-4 py-2 rounded-md border ${
+                      className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
                         values.consultationType === "offline"
                           ? "bg-main text-white border-main"
                           : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -391,7 +396,7 @@ export default function BookAppointment({
                     <button
                       type="button"
                       onClick={() => setFieldValue("consultationType", "online")}
-                      className={`px-4 py-2 rounded-md border ${
+                      className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
                         values.consultationType === "online"
                           ? "bg-main text-white border-main"
                           : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -401,31 +406,32 @@ export default function BookAppointment({
                     </button>
                   </div>
                   {errors.consultationType && touched.consultationType && (
-                    <div className="text-red-600 text-sm mt-1">
+                    <div className="text-red-600 text-xs sm:text-sm mt-1">
                       {errors.consultationType}
                     </div>
                   )}
                 </div>
 
-                <div className="col-span-2">
+                {/* Available Time Slots */}
+                <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Dostępne godziny
                   </label>
                   
                   {slotsLoading ? (
-                    <div className="flex justify-center py-8">
-                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-500"></div>
+                    <div className="flex justify-center py-6 sm:py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-b-2 border-teal-500"></div>
                     </div>
                   ) : values.date && values.doctor ? (
                     availableSlots.length > 0 ? (
-                      <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                         {availableSlots.map((slot, index) => (
                           <button
                             key={index}
                             type="button"
                             onClick={() => handleSlotSelect(slot, setFieldValue)}
                             disabled={!slot.available}
-                            className={`px-4 py-2 rounded-lg border text-sm ${
+                            className={`px-3 py-2 rounded-lg border text-xs sm:text-sm ${
                               values.time === slot.startTime
                                 ? "bg-main text-white border-main"
                                 : slot.available
@@ -438,16 +444,16 @@ export default function BookAppointment({
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-6 bg-gray-50 rounded-lg">
-                        <FaCalendarAlt className="mx-auto text-gray-400 mb-2" size={24} />
-                        <p className="text-gray-700">
+                      <div className="text-center py-4 sm:py-6 bg-gray-50 rounded-lg">
+                        <FaCalendarAlt className="mx-auto text-gray-400 mb-2" size={20} />
+                        <p className="text-gray-700 text-sm sm:text-base">
                           Brak dostępnych terminów w wybranym dniu
                         </p>
                       </div>
                     )
                   ) : (
-                    <div className="text-center py-6 bg-gray-50 rounded-lg">
-                      <p className="text-gray-700">
+                    <div className="text-center py-4 sm:py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-700 text-sm sm:text-base">
                         {!values.doctor 
                           ? "Wybierz specjalizację i lekarza"
                           : "Wybierz datę, aby zobaczyć dostępne terminy"}
@@ -458,28 +464,30 @@ export default function BookAppointment({
                   <ErrorMessage
                     name="time"
                     component="div"
-                    className="text-red-600 text-sm mt-1"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
                   />
                 </div>
 
-                <div className="col-span-2">
+                {/* Message Textarea */}
+                <div className="col-span-1 sm:col-span-2">
                   <Field
                     as="textarea"
                     name="message"
                     placeholder="Opisz swój problem"
-                    className="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded resize-none h-32"
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded resize-none h-24 sm:h-32"
                   />
                   <ErrorMessage
                     name="message"
                     component="div"
-                    className="text-red-600 text-sm mt-1"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
                   />
                 </div>
 
+                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="col-span-2 bg-main text-white py-3 rounded hover:bg-main-dark transition-colors disabled:opacity-50"
+                  className="col-span-1 sm:col-span-2 bg-main text-white py-2.5 sm:py-3 rounded text-sm sm:text-base hover:bg-main-dark transition-colors disabled:opacity-50"
                 >
                   {isSubmitting ? "Rezerwowanie..." : "Zarezerwuj wizytę"}
                 </button>
@@ -518,28 +526,22 @@ export default function BookAppointment({
         /* Phone input style customizations */
         .phone-input-container .react-tel-input .form-control {
           width: 100% !important;
-          height: 48px !important;
-          font-size: 16px !important;
-          border: 1px solid #062b47 !important;
-          border-radius: 0.25rem !important;
-          background-color: white !important;
-          color: #062b47 !important;
+          height: auto !important;
+          padding: 0.625rem 0.75rem 0.625rem 3.625rem !important;
+          font-size: 0.875rem !important;
+          
+          @media (min-width: 640px) {
+            padding: 0.75rem 1rem 0.75rem 3.875rem !important;
+            font-size: 1rem !important;
+          }
         }
         
         .phone-input-container .react-tel-input .flag-dropdown {
-          background-color: white !important;
-          border-color: #062b47 !important;
-          border-radius: 0.25rem 0 0 0.25rem !important;
-        }
-        
-        .phone-input-container .react-tel-input .selected-flag {
-          background-color: white !important;
-          border-radius: 0.25rem 0 0 0.25rem !important;
-        }
-        
-        .phone-input-container .react-tel-input .flag-dropdown.open {
-          background-color: white !important;
-          border-radius: 0.25rem 0 0 0 !important;
+          width: 3rem !important;
+          
+          @media (min-width: 640px) {
+            width: 3.25rem !important;
+          }
         }
       `}</style>
     </section>

@@ -220,10 +220,7 @@ export default function Doctors({
       };
 
       // Make API call to book appointment
-      const response = await axios.post(
-        "http://localhost:5000/appointments/book",
-        appointmentData
-      );
+      const response = await apiCaller  ("POST", "appointments/book", appointmentData);
 
       // Handle success
       console.log("Appointment booked successfully:", response.data);
