@@ -274,6 +274,7 @@ export default function DoctorDetailPage() {
           <DoctorBackground 
             data={{ ...doctorData, selectedServices }} 
             onDeleteService={initiateServiceDeletion}
+            setIsServiceModalOpen={setIsServiceModalOpen}
           />
         </div>
       </div>
@@ -431,7 +432,7 @@ const AvailableTime = ({ data }) => {
   );
 };
 
-const DoctorBackground = ({ data, onDeleteService }) => {
+const DoctorBackground = ({ data, onDeleteService ,setIsServiceModalOpen}) => {
   const [docData, setData] = useState(
     data || {
       services: [],

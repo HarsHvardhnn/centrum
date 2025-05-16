@@ -163,13 +163,17 @@ const Sidebar = () => {
             />
           )}
 
-          <NavItem
-            icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}
-            label="e-ZLA"
-            to="https://www.zus.pl/ezus/logowanie?logout-manually=true"
-            // isActive={currentPath === "/logout"}
-            isEnabled={true}
-          />
+          <a
+            href="https://www.zus.pl/ezus/logowanie?logout-manually=true"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center px-3 py-1.5 rounded-md text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+          >
+            <span className="mr-3 text-teal-400 text-xl rotate-180">
+              <CgLogOut />
+            </span>
+            <span className="text-sm">e-ZLA</span>
+          </a>
 
           <NavItem
             icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}

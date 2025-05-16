@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useSpecializations } from "../../context/SpecializationContext";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import { FaCalendarAlt } from "react-icons/fa";
 
 export default function BookAppointment({
   page,
@@ -22,6 +23,8 @@ export default function BookAppointment({
     success: false,
     error: null,
   });
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
 
   const initialValues = {
     name: "",
@@ -33,6 +36,7 @@ export default function BookAppointment({
     doctor: selectedDoctorId || "",
     specialization: selectedSpecialization || "",
     message: "",
+    consultationType: "offline",
   };
 
   const validationSchema = Yup.object({
@@ -47,6 +51,7 @@ export default function BookAppointment({
     doctor: Yup.string().required("Wymagane"),
     specialization: Yup.string().required("Wymagane"),
     message: Yup.string().min(10, "Za krótka wiadomość").required("Wymagane"),
+    consultationType: Yup.string().oneOf(['online', 'offline']).required("Wymagane"),
   });
 
   // Fetch doctors for preselected specialization when component mounts
@@ -76,19 +81,68 @@ export default function BookAppointment({
     }
   };
 
-  // Fetch doctors based on selected specialization
+  // Handle specialization change
   const handleSpecializationChange = async (e, setFieldValue) => {
     const newSpecialization = e.target.value;
     setFieldValue("specialization", newSpecialization);
-
-    // Reset doctor selection when specialization changes
-    setFieldValue("doctor", "");
+    setFieldValue("doctor", ""); // Reset doctor when specialization changes
+    setFieldValue("time", ""); // Reset time when specialization changes
+    setAvailableSlots([]); // Reset available slots
 
     if (newSpecialization) {
       fetchDoctorsForSpecialization(newSpecialization);
     } else {
       setDoctors([]);
     }
+  };
+
+  // Fetch available slots when date or doctor changes
+  const fetchAvailableSlots = async (doctorId, date) => {
+    if (!doctorId || !date) return;
+    
+    try {
+      setSlotsLoading(true);
+      const response = await apiCaller(
+        "GET",
+        `docs/schedule/available-slots/${doctorId}?date=${date}`
+      );
+      if (response.data.success) {
+        setAvailableSlots(response.data.data);
+      } else {
+        console.error("Failed to fetch available slots");
+        setAvailableSlots([]);
+      }
+    } catch (error) {
+      console.error("Error fetching available slots:", error);
+      setAvailableSlots([]);
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  // Handle date change
+  const handleDateChange = async (e, doctorId, setFieldValue) => {
+    const newDate = e.target.value;
+    setFieldValue("date", newDate);
+    setFieldValue("time", ""); // Reset time when date changes
+    if (newDate && doctorId) {
+      fetchAvailableSlots(doctorId, newDate);
+    }
+  };
+
+  // Handle doctor change
+  const handleDoctorChange = async (e, date, setFieldValue) => {
+    const newDoctorId = e.target.value;
+    setFieldValue("doctor", newDoctorId);
+    setFieldValue("time", ""); // Reset time when doctor changes
+    if (newDoctorId && date) {
+      fetchAvailableSlots(newDoctorId, date);
+    }
+  };
+
+  // Handle slot selection
+  const handleSlotSelect = (slot, setFieldValue) => {
+    setFieldValue("time", `${slot.startTime}`);
   };
 
   // Handle phone number change
@@ -162,9 +216,8 @@ export default function BookAppointment({
             Zarezerwuj wizytę
           </h2>
           <p className="text-neutral-800 mt-2 text-base md:text-lg">
-          Wybierz dogodny termin i umów się na konsultację
- z naszym specjalistą. To szybkie, proste i wygodne
- — bez dzwonienia i kolejek.
+            Wybierz dogodny termin i umów się na konsultację z naszym specjalistą.
+            To szybkie, proste i wygodne — bez dzwonienia i kolejek.
           </p>
         </div>
 
@@ -262,31 +315,6 @@ export default function BookAppointment({
 
                 <div>
                   <Field
-                    name="date"
-                    type="date"
-                    className="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
-                  />
-                  <ErrorMessage
-                    name="date"
-                    component="div"
-                    className="text-red-600 text-sm mt-1"
-                  />
-                </div>
-                <div>
-                  <Field
-                    name="time"
-                    type="time"
-                    className="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
-                  />
-                  <ErrorMessage
-                    name="time"
-                    component="div"
-                    className="text-red-600 text-sm mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Field
                     as="select"
                     name="specialization"
                     onChange={(e) => handleSpecializationChange(e, setFieldValue)}
@@ -305,10 +333,12 @@ export default function BookAppointment({
                     className="text-red-600 text-sm mt-1"
                   />
                 </div>
+
                 <div>
                   <Field
                     as="select"
                     name="doctor"
+                    onChange={(e) => handleDoctorChange(e, values.date, setFieldValue)}
                     className="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
                     disabled={!values.specialization}
                   >
@@ -326,7 +356,113 @@ export default function BookAppointment({
                   />
                 </div>
 
-                <div className="col-span-1 md:col-span-2">
+                <div>
+                  <Field
+                    name="date"
+                    type="date"
+                    onChange={(e) => handleDateChange(e, values.doctor, setFieldValue)}
+                    className="p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
+                    min={new Date().toISOString().split('T')[0]}
+                    disabled={!values.doctor}
+                  />
+                  <ErrorMessage
+                    name="date"
+                    component="div"
+                    className="text-red-600 text-sm mt-1"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Typ konsultacji
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => setFieldValue("consultationType", "offline")}
+                      className={`px-4 py-2 rounded-md border ${
+                        values.consultationType === "offline"
+                          ? "bg-main text-white border-main"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      Wizyta stacjonarna
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFieldValue("consultationType", "online")}
+                      className={`px-4 py-2 rounded-md border ${
+                        values.consultationType === "online"
+                          ? "bg-main text-white border-main"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      Wizyta online
+                    </button>
+                  </div>
+                  {errors.consultationType && touched.consultationType && (
+                    <div className="text-red-600 text-sm mt-1">
+                      {errors.consultationType}
+                    </div>
+                  )}
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Dostępne godziny
+                  </label>
+                  
+                  {slotsLoading ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-500"></div>
+                    </div>
+                  ) : values.date && values.doctor ? (
+                    availableSlots.length > 0 ? (
+                      <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                        {availableSlots.map((slot, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleSlotSelect(slot, setFieldValue)}
+                            disabled={!slot.available}
+                            className={`px-4 py-2 rounded-lg border text-sm ${
+                              values.time === slot.startTime
+                                ? "bg-main text-white border-main"
+                                : slot.available
+                                ? "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                                : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                            }`}
+                          >
+                            {slot.startTime} - {slot.endTime}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 bg-gray-50 rounded-lg">
+                        <FaCalendarAlt className="mx-auto text-gray-400 mb-2" size={24} />
+                        <p className="text-gray-700">
+                          Brak dostępnych terminów w wybranym dniu
+                        </p>
+                      </div>
+                    )
+                  ) : (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <p className="text-gray-700">
+                        {!values.doctor 
+                          ? "Wybierz specjalizację i lekarza"
+                          : "Wybierz datę, aby zobaczyć dostępne terminy"}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <ErrorMessage
+                    name="time"
+                    component="div"
+                    className="text-red-600 text-sm mt-1"
+                  />
+                </div>
+
+                <div className="col-span-2">
                   <Field
                     as="textarea"
                     name="message"
@@ -343,7 +479,7 @@ export default function BookAppointment({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="col-span-1 md:col-span-2 bg-main text-white py-3 rounded hover:bg-main-dark transition-colors disabled:opacity-50"
+                  className="col-span-2 bg-main text-white py-3 rounded hover:bg-main-dark transition-colors disabled:opacity-50"
                 >
                   {isSubmitting ? "Rezerwowanie..." : "Zarezerwuj wizytę"}
                 </button>
