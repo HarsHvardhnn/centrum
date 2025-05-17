@@ -9,7 +9,7 @@ const AppointmentPage = () => {
   return (
     <>
       <PageHeader
-        title="Zarezerwuj wizytę"
+        title="Zarezerwuj Wizytę"
         path="Strona główna / Rezerwacja"
         bgurl="/images/about-header.jpg"
       />

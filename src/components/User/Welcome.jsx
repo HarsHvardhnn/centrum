@@ -11,8 +11,12 @@ export default function Welcome() {
         Twoje Zdrowie w Dobrych Rękach
       </h2>
       <p className="max-w-3xl mx-auto text-neutral-900 text-lg md:text-xl mt-4">
-        Naszą misją jest zapewnienie opieki medycznej na najwyższym poziomie — z
-        szacunkiem, empatią i pełnym zaangażowaniem.
+        Naszą misją jest zapewnienie opieki medycznej na najwyższym poziomie
+       
+      </p>
+      <p className="max-w-3xl mx-auto text-neutral-900 text-lg md:text-xl mt-4">
+      — z
+      szacunkiem, empatią i pełnym zaangażowaniem.       
       </p>
 
       <div className="mt-6">

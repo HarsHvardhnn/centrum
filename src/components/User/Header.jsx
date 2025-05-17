@@ -213,6 +213,7 @@ const Header = () => {
             >
               Strona główna
             </Link>
+          
             <Link
               to="/user/about"
               className={
@@ -279,6 +280,20 @@ const Header = () => {
             >
               Kontakt
             </Link>
+            <div className="flex items-center gap-2">
+           <FaPhoneAlt className="text-base mt-1" />
+            <div className="flex flex-col text-left">
+              <div className="text-gray-800 mt-1 space-y-1">
+                <a href="tel:+48797097487" className="hover:text-blue-600">
+                  797 097 487
+                </a>
+                ,  {"     "} {" "}
+                <a href="tel:+48797127487" className="hover:text-blue-600">
+                  797 127 487
+                </a>
+              </div>
+            </div>
+            </div>
           </nav>
 
           <div className="flex flex-col items-center gap-3 mt-6">
@@ -368,6 +383,7 @@ const Header = () => {
 
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                  
                   <Link
                     to="/user/appointments"
                     className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 ${
@@ -414,6 +430,7 @@ const Header = () => {
                     <FaSignOutAlt className="text-teal-800" />
                     Wyloguj
                   </button>
+                  
                 </div>
               )}
             </div>

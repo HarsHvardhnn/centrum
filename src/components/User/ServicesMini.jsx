@@ -55,7 +55,7 @@ const ServicesMini = () => {
           JESTEŚMY TU DLA CIEBIE
         </h2>
         <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 md:mb-16">
-          Nasze usługi
+          Nasze Usługi
         </h3>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-main"></div>
@@ -72,7 +72,7 @@ const ServicesMini = () => {
           JESTEŚMY TU DLA CIEBIE
         </h2>
         <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 md:mb-16">
-          Nasze usługi
+          Nasze Usługi
         </h3>
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
           <span className="block sm:inline">{error}</span>
@@ -89,7 +89,7 @@ const ServicesMini = () => {
           JESTEŚMY TU DLA CIEBIE
         </h2>
         <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 md:mb-16">
-          Nasze usługi
+          Nasze Usługi
         </h3>
         <div className="bg-gray-100 p-8 rounded-lg">
           <p className="text-lg text-gray-600">Aktualnie brak dostępnych usług.</p>
@@ -104,7 +104,7 @@ const ServicesMini = () => {
       JESTEŚMY TU DLA CIEBIE
       </h2>
       <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 text-center mb-8 md:mb-16">
-        Nasze usługi
+        Nasze Usługi
       </h3>
 
       <div className="flex flex-col lg:flex-row gap-4 max-w-6xl mx-auto">

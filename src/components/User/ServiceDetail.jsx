@@ -1,28 +1,7 @@
 import React, { useEffect } from "react";
 import { GoDotFill } from "react-icons/go";
 import { Link, useNavigate } from "react-router-dom";
-import { 
-  FaHospital, 
-  FaStethoscope, 
-  FaUserMd, 
-  FaNotesMedical, 
-  FaHeartbeat, 
-  FaFileMedical, 
-  FaLungs, 
-  FaPills, 
-  FaBriefcaseMedical, 
-  FaHandHoldingMedical,
-  FaClinicMedical,
-  FaXRay,
-  FaAmbulance,
-  FaBrain,
-  FaTeeth,
-  FaEye,
-  FaWheelchair,
-  FaBaby,
-  FaBone,
-  FaAllergies
-} from "react-icons/fa";
+import { FaHospital } from "react-icons/fa";
 import { useServices } from "../../context/serviceContext";
 
 const ServiceDetail = ({ serviceName }) => {
@@ -45,68 +24,26 @@ const ServiceDetail = ({ serviceName }) => {
     return null;
   }
 
-  // Array of medical/hospital related icons
-  const medicalIcons = [
-    FaHospital, 
-    FaStethoscope, 
-    FaUserMd, 
-    FaNotesMedical, 
-    FaHeartbeat, 
-    FaFileMedical, 
-    FaLungs, 
-    FaPills, 
-    FaBriefcaseMedical,
-    FaHandHoldingMedical,
-    FaClinicMedical,
-    FaXRay,
-    FaAmbulance,
-    FaBrain,
-    FaTeeth,
-    FaEye,
-    FaWheelchair,
-    FaBaby,
-    FaBone,
-    FaAllergies
-  ];
-
-  // Get a random medical icon
-  const getRandomMedicalIcon = () => {
-    const randomIndex = Math.floor(Math.random() * medicalIcons.length);
-    return medicalIcons[randomIndex];
-  };
-
-  // Create a map of service IDs to icons to keep them consistent
-  const serviceIconMap = React.useMemo(() => {
-    const iconMap = {};
-    services.forEach((item) => {
-      iconMap[item._id] = getRandomMedicalIcon();
-    });
-    return iconMap;
-  }, [services]);
-
   return (
     <div className="flex flex-col md:flex-row gap-6 p-6 mx-auto pt-16 max-w-6xl">
       <div className="w-full md:w-1/4 rounded-lg">
         <div className="border max-md:flex max-md:overflow-scroll border-neutral-200 rounded-lg overflow-hidden">
-          {services.map((item) => {
-            const ServiceIcon = serviceIconMap[item._id];
-            return (
-              <Link
-                to={"/user/services/" + item.title}
-                key={item._id}
-                className={`flex max-md:flex-col text-start items-center gap-2 cursor-pointer px-8 py-7 ${
-                  item.title === serviceName ? "bg-main text-white" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2 w-full">
-                  <ServiceIcon className="text-xl" />
-                  <div className="flex flex-col">
-                    <span>{item.title.length > 20 ? item.title.slice(0, 20) + "..." : item.title}</span>
-                  </div>
+          {services.map((item) => (
+            <Link
+              to={"/user/services/" + item.title}
+              key={item._id}
+              className={`flex max-md:flex-col text-start items-center gap-2 cursor-pointer px-8 py-7 ${
+                item.title === serviceName ? "bg-main text-white" : ""
+              }`}
+            >
+              <div className="flex items-center gap-2 w-full">
+                <FaHospital className="text-xl" />
+                <div className="flex flex-col">
+                  <span>{item.title.length > 20 ? item.title.slice(0, 20) + "..." : item.title}</span>
                 </div>
-              </Link>
-            );
-          })}
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
 

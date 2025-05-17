@@ -738,7 +738,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
                 !appointmentData.selectedSlot
               }
             >
-              Zarezerwuj wizytę
+              Zarezerwuj Wizytę
             </button>
           </div>
         </div>

@@ -670,7 +670,7 @@ export default function Doctors({
                           onChange={handleInputChange}
                           rows="3"
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
-                          placeholder="Opisz swój problem lub podaj dodatkowe informacje dla lekarza..."
+                          placeholder="Prosimy opisać krótko swój problem zdrowotny oraz wskazać usługę, którą są Państwo zainteresowani (np. konsultacja chirurgiczna, usunięcie zmiany skórnej)."
                         ></textarea>
                       </div>
 

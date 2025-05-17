@@ -7,7 +7,7 @@ const OurServicesPage = () => {
   return (
     <>
       <PageHeader
-        title="Nasze usługi"
+        title="Nasze Usługi"
         path="Strona główna / Usługi"
         bgurl="/images/uslugi.jpg"
       />

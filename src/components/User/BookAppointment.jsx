@@ -232,7 +232,7 @@ export default function BookAppointment({
           } flex flex-col justify-center text-center lg:text-left space-y-4`}
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-primary">
-            Zarezerwuj wizytę
+            Zarezerwuj Wizytę
           </h2>
           <p className="text-neutral-800 text-sm sm:text-base md:text-lg max-w-2xl mx-auto lg:mx-0">
             Wybierz dogodny termin i umów się na konsultację z naszym specjalistą.
@@ -501,7 +501,7 @@ export default function BookAppointment({
                   <Field
                     as="textarea"
                     name="message"
-                    placeholder="Opisz swój problem"
+                    placeholder="Prosimy opisać krótko swój problem zdrowotny oraz wskazać usługę, którą są Państwo zainteresowani (np. konsultacja chirurgiczna, usunięcie zmiany skórnej)."
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded resize-none h-24 sm:h-32"
                   />
                   <ErrorMessage
@@ -531,7 +531,7 @@ export default function BookAppointment({
                   disabled={isSubmitting}
                   className="col-span-1 sm:col-span-2 bg-main text-white py-2.5 sm:py-3 rounded text-sm sm:text-base hover:bg-main-dark transition-colors disabled:opacity-50"
                 >
-                  {isSubmitting ? "Rezerwowanie..." : "Zarezerwuj wizytę"}
+                  {isSubmitting ? "Rezerwowanie..." : "Zarezerwuj Wizytę"}
                 </button>
               </Form>
             )}
