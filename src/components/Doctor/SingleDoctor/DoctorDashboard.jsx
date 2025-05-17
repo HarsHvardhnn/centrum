@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import DoctorInfoCard from "./DoctorInfo";
 import PatientsList from "./PatientsList";
@@ -20,7 +20,11 @@ const DoctorDashboard = ({
   onPatientSelect,
   selectedPatient,
   breadcrumbs,
-  setAppointmentId
+  setAppointmentId,
+  currentPage,
+  onPageChange,
+  totalPatients,
+  itemsPerPage
 }) => {
   const navigate = useNavigate();
   console.log("patiend eta;same",patientDetails)
@@ -99,6 +103,10 @@ const DoctorDashboard = ({
               onPatientSelect={onPatientSelect}
               selectedPatient={selectedPatient}
               title="Lista pacjentów"
+              currentPage={currentPage}
+              onPageChange={onPageChange}
+              totalPatients={totalPatients}
+              itemsPerPage={itemsPerPage}
             />
           </div>
 

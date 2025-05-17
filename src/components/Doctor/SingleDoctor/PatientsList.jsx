@@ -18,14 +18,15 @@ const PatientsList = ({
   setAppointmentId,
   selectedPatient,
   patientsData = [],
+  itemsPerPage = 10,
 }) => {
-  // Use the selectedPatient from props instead of local state
-
-  console.log("patients data",patientsData)
   const [sortConfig, setSortConfig] = React.useState({
     key: null,
     direction: null,
   });
+
+  // Calculate total pages
+  const totalPages = Math.ceil(totalPatients / itemsPerPage);
 
   // Notify parent component when selection changes
   const handlePatientSelect = (patientId) => {
@@ -173,6 +174,39 @@ const PatientsList = ({
     }
   };
 
+  // Generate pagination numbers
+  const renderPaginationNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    const halfVisible = Math.floor(maxVisiblePages / 2);
+
+    let startPage = Math.max(1, currentPage - halfVisible);
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Always show first page
+    if (startPage > 1) {
+      pages.push(1);
+      if (startPage > 2) pages.push('...');
+    }
+
+    // Show middle pages
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    // Always show last page
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) pages.push('...');
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
   return (
     <div className="bg-white border rounded-lg shadow-sm">
       {/* Header */}
@@ -180,7 +214,7 @@ const PatientsList = ({
         <div className="flex gap-8 items-center">
           <h2 className="text-lg font-semibold">Lista pacjentów</h2>
           <span className="text-sm text-teal-400 bg-teal-100 rounded-full px-3 py-1">
-            {patientsData.length} {patientsData.length === 1 ? "użytkownik" : "użytkowników"}
+            {totalPatients} {totalPatients === 1 ? "użytkownik" : "użytkowników"}
           </span>
         </div>
         <div className="flex items-center space-x-4">
@@ -190,7 +224,7 @@ const PatientsList = ({
 
       {/* Table or Empty State */}
       <div className="overflow-x-auto">
-        <div className="min-w-[1000px]"> {/* Minimum width to prevent squishing */}
+        <div className="min-w-[1000px]">
           {patientsData.length > 0 ? (
             <div>
               {/* Table Header */}
@@ -274,21 +308,39 @@ const PatientsList = ({
       {patientsData.length > 0 && (
         <div className="flex justify-between items-center px-4 py-3 border-t">
           <div className="text-sm text-gray-500">
-            Pokazuje {patientsData.length} z {totalPatients} pacjentów
+            Pokazuje {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, totalPatients)} z {totalPatients} pacjentów
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
+              className="p-2 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft size={20} />
             </button>
-            <span className="text-sm">Strona {currentPage}</span>
+            
+            {renderPaginationNumbers().map((page, index) => (
+              page === '...' ? (
+                <span key={`ellipsis-${index}`} className="px-2">...</span>
+              ) : (
+                <button
+                  key={page}
+                  onClick={() => onPageChange(page)}
+                  className={`w-8 h-8 rounded-md ${
+                    currentPage === page
+                      ? 'bg-teal-50 text-teal-600 font-medium'
+                      : 'hover:bg-gray-100'
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            ))}
+
             <button
               onClick={() => onPageChange(currentPage + 1)}
-              disabled={patientsData.length < 10}
-              className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
+              disabled={currentPage >= totalPages}
+              className="p-2 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronRight size={20} />
             </button>

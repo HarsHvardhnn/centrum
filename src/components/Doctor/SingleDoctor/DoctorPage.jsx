@@ -10,7 +10,7 @@ import { formatDateToYYYYMMDD } from "../../../utils/formatDate";
 
 function DoctorsPage() {
   const router = useParams();
-  const navigate=useNavigate()
+  const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
   const [error, setError] = useState(null);
   const [doctorInfo, setDoctorInfo] = useState({});
@@ -21,6 +21,10 @@ function DoctorsPage() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientDetails, setPatientDetails] = useState(null);
   const [appointmentId, setAppointmentId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPatients, setTotalPatients] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchDoctorData = async () => {
@@ -56,7 +60,7 @@ function DoctorsPage() {
     if (doctorInfo && doctorInfo.id) {
       fetchPatientsByDoctor(doctorInfo.id);
     }
-  }, [selectedDate, doctorInfo]);
+  }, [selectedDate, doctorInfo, currentPage, searchQuery]);
 
   // New effect to fetch patient details when a patient is selected
   useEffect(() => {
@@ -69,17 +73,20 @@ function DoctorsPage() {
 
   const fetchPatientsByDoctor = async (doctorId) => {
     try {
+      showLoader();
       const response = await appointmentHelper.getDoctorAppointments(
         doctorId,
         formatDateToYYYYMMDD(selectedDate),
         formatDateToYYYYMMDD(selectedDate),
         "all",
-        1,
-        10,
+        currentPage,
+        itemsPerPage,
+        searchQuery
       );
 
-      if (response && response.success && response.data) {
+      if (response && response.success) {
         setPatients(response.data);
+        setTotalPatients(response.total || response.data.length);
       } else {
         console.error("Failed to load patients data");
       }
@@ -92,7 +99,7 @@ function DoctorsPage() {
   };
 
   // New function to fetch patient details
-  const fetchPatientDetails = async (patientId,appointmentId) => {
+  const fetchPatientDetails = async (patientId, appointmentId) => {
     try {
       showLoader();
       // Make API call to get patient details using the patient service
@@ -102,7 +109,7 @@ function DoctorsPage() {
       );
 
       console.log("patient response", response);
-      if (response ) {
+      if (response) {
         setPatientDetails(response);
       } else {
         toast.error("Failed to load patient details");
@@ -192,6 +199,17 @@ function DoctorsPage() {
     setSelectedPatient(patientId);
   };
 
+  // Handle search
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Handle page change
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
   return (
     <>
       <DoctorDashboard
@@ -199,18 +217,21 @@ function DoctorsPage() {
         patients={patients}
         stats={stats}
         selectedPatient={selectedPatient}
-        patientDetails={patientDetails} // Pass the patient details to DoctorDashboard
+        patientDetails={patientDetails}
         onPatientSelect={handlePatientSelect}
         setAppointmentId={setAppointmentId}
         onDateSelect={setSelectedDate}
         breadcrumbs={[
-            { label: "Dashboard", onClick: () => navigate("/admin") },
-            { label: "Doctor Appointment", onClick: null },
-          ]
-        }
-        onSearch={(query) => console.log(`Search query: ${query}`)}
+          { label: "Dashboard", onClick: () => navigate("/admin") },
+          { label: "Doctor Appointment", onClick: null },
+        ]}
+        onSearch={handleSearch}
         onFilter={() => console.log("Filter clicked")}
         onBookAppointment={() => setShowAppointmentModal(true)}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+        totalPatients={totalPatients}
+        itemsPerPage={itemsPerPage}
       />
 
       {/* Appointment Form Modal */}

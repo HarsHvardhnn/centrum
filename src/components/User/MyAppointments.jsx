@@ -40,6 +40,7 @@ const MyAppointments = () => {
         );
 
         if (response && response.data && response.data.data) {
+          console.log("response", response);
           setAppointments(response.data.data);
         }
       } catch (err) {
@@ -311,9 +312,20 @@ const MyAppointments = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {appointment.type === "online" ? (
+                          {appointment.mode === "online" ? (
                             <span className="flex items-center text-blue-600">
                               <FaVideo className="mr-2" /> Wizyta online
+                              {appointment.joining_link && (
+                                <a
+                                  href={appointment.joining_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="ml-2 bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs hover:bg-blue-200 transition-colors inline-flex items-center"
+                                >
+                                  <FaVideo className="mr-1" size={12} />
+                                  Dołącz
+                                </a>
+                              )}
                             </span>
                           ) : (
                             <span className="flex items-center text-gray-600">

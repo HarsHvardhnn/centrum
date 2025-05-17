@@ -85,7 +85,7 @@ const Sidebar = () => {
               isEnabled={true}
             />
           )}
-          {user?.role === "admin" && (
+          {user?.role === "admin" || user?.role === "receptionist" && (
             <NavItem
               icon={<MdSms className="text-xl text-teal-400" />}
               label="Zarządzanie SMS"
