@@ -38,6 +38,7 @@ export default function Doctors({
     gender: "male",
     message: "",
     consultationType: "offline",
+    smsConsentAgreed: false,
   });
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -217,6 +218,7 @@ export default function Doctors({
         phone: phone,
         time: selectedSlot.startTime,
         consultationType: bookingForm.consultationType,
+        smsConsentAgreed: bookingForm.smsConsentAgreed,
       };
 
       // Make API call to book appointment
@@ -235,6 +237,7 @@ export default function Doctors({
         gender: "male",
         message: "",
         consultationType: "offline",
+        smsConsentAgreed: false,
       });
       setSelectedSlot(null);
 
@@ -669,6 +672,25 @@ export default function Doctors({
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
                           placeholder="Opisz swój problem lub podaj dodatkowe informacje dla lekarza..."
                         ></textarea>
+                      </div>
+
+                      {/* Add SMS Consent Checkbox */}
+                      <div className="mb-4">
+                        <label className="flex items-start space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            name="smsConsentAgreed"
+                            checked={bookingForm.smsConsentAgreed}
+                            onChange={(e) => setBookingForm({
+                              ...bookingForm,
+                              smsConsentAgreed: e.target.checked
+                            })}
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                          />
+                          <span className="text-sm text-gray-700">
+                            Wyrażam zgodę na otrzymywanie powiadomień SMS dotyczących mojej wizyty (np. przypomnienia, zmiany terminu)
+                          </span>
+                        </label>
                       </div>
 
                       <div className="text-xs text-gray-500 mt-2">

@@ -35,6 +35,7 @@ export default function BookAppointment({
     specialization: selectedSpecialization || "",
     message: "",
     consultationType: "offline",
+    smsConsentAgreed: false,
   };
 
   const validationSchema = Yup.object({
@@ -50,6 +51,7 @@ export default function BookAppointment({
     specialization: Yup.string().required("Wymagane"),
     message: Yup.string().min(10, "Za krótka wiadomość").required("Wymagane"),
     consultationType: Yup.string().oneOf(['online', 'offline']).required("Wymagane"),
+    smsConsentAgreed: Yup.boolean(),
   });
 
   // Fetch doctors for preselected specialization when component mounts
@@ -507,6 +509,20 @@ export default function BookAppointment({
                     component="div"
                     className="text-red-600 text-xs sm:text-sm mt-1"
                   />
+                </div>
+
+                {/* SMS Consent Checkbox */}
+                <div className="col-span-1 sm:col-span-2">
+                  <label className="flex items-start space-x-2 cursor-pointer">
+                    <Field
+                      type="checkbox"
+                      name="smsConsentAgreed"
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Wyrażam zgodę na otrzymywanie powiadomień SMS dotyczących mojej wizyty (np. przypomnienia, zmiany terminu)
+                    </span>
+                  </label>
                 </div>
 
                 {/* Submit Button */}

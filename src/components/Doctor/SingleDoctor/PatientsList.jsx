@@ -149,7 +149,6 @@ const PatientsList = ({
         className="flex items-center px-3 py-1 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors"
       >
         <Video size={16} className="mr-1" />
-        Dołącz teraz
       </a>
     );
   };
@@ -250,8 +249,8 @@ const PatientsList = ({
                     <AppointmentModeBadge mode={patient.mode} />
                   </div>
                   <div className="flex items-center justify-center gap-2">
-                    {patient.mode === "online" && patient.joiningLink && (
-                      <JoinNowButton joiningLink={patient.joiningLink} />
+                    {patient.mode === "online" && patient.joining_link && (
+                      <JoinNowButton joiningLink={patient.joining_link} />
                     )}
                     <button
                       onClick={() => handleCancelAppointment(patient.id)}

@@ -33,10 +33,8 @@ const patientService = {
       formData.append("fullName", patientData.fullName);
       formData.append("govtId", patientData.govtId);
       formData.append("hospId", patientData.hospId);
-      formData.append(
-        "isInternationalPatient",
-        patientData.isInternationalPatient
-      );
+      formData.append("isInternationalPatient", patientData.isInternationalPatient);
+      formData.append("smsConsentAgreed", patientData.smsConsentAgreed);
       formData.append("ivrLanguage", patientData.ivrLanguage);
       formData.append("mainComplaint", patientData.mainComplaint);
       formData.append("maritalStatus", patientData.maritalStatus);
