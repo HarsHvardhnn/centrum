@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import doctorService from "../../helpers/doctorHelper";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { useSpecializations } from "../../context/SpecializationContext";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
 import { FaCalendarAlt } from "react-icons/fa";
 
 export default function BookAppointment({
@@ -44,7 +42,7 @@ export default function BookAppointment({
     gender: Yup.string().required("Wymagane"),
     email: Yup.string().email("Nieprawidłowy email").required("Wymagane"),
     phone: Yup.string()
-      .matches(/^\d{9}$|^\+48\d{9}$/, "Wprowadź 9-cyfrowy numer telefonu")
+      .matches(/^\d{9}$/, "Wprowadź dokładnie 9 cyfr")
       .required("Wymagane"),
     date: Yup.date().required("Wymagane"),
     time: Yup.string().required("Wymagane"),
@@ -145,11 +143,30 @@ export default function BookAppointment({
     setFieldValue("time", `${slot.startTime}`);
   };
 
-  // Handle phone number change
-  const handlePhoneChange = (value, data, event, formik) => {
-    // Extract just the number part (remove +48 prefix if present)
-    const numberOnly = value.replace(/^\+48/, '');
-    formik.setFieldValue("phone", numberOnly);
+  // Custom phone input handler
+  const handlePhoneChange = (e, setFieldValue) => {
+    // Only allow numeric characters
+    const inputValue = e.target.value.replace(/\D/g, '');
+    
+    // Limit to 9 digits
+    const limitedValue = inputValue.substring(0, 9);
+    
+    // Update the field value
+    setFieldValue("phone", limitedValue);
+  };
+
+  // Format phone to display with +48 prefix
+  const formatPhoneDisplay = (phone) => {
+    if (!phone) return '';
+    
+    // For better readability: +48 XXX XXX XXX
+    if (phone.length <= 3) {
+      return phone;
+    } else if (phone.length <= 6) {
+      return `${phone.slice(0, 3)} ${phone.slice(3)}`;
+    } else {
+      return `${phone.slice(0, 3)} ${phone.slice(3, 6)} ${phone.slice(6)}`;
+    }
   };
 
   // Updated handleSubmit function to use the apiCaller
@@ -161,8 +178,8 @@ export default function BookAppointment({
       // Format date and time if needed
       const formattedValues = {
         ...values,
-        // You can add any additional formatting here if needed
-        phone: values.phone.length === 9 ? `+48${values.phone}` : values.phone,
+        // Add +48 prefix to phone
+        phone: `+48${values.phone}`,
       };
 
       // Make API call to book appointment
@@ -291,28 +308,37 @@ export default function BookAppointment({
                 </div>
 
                 <div className="col-span-1">
-                  <div className="phone-input-container">
-                    <PhoneInput
-                      country={'pl'}
+                  <div className="custom-phone-input relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                      {/* Polish flag */}
+                      <div className="flex items-center">
+                        <div className="flag-icon w-5 h-3.5 mr-2">
+                          {/* Simple CSS-based Polish flag */}
+                          <div className="w-full h-full flex flex-col">
+                            <div className="bg-white h-1/2 w-full"></div>
+                            <div className="bg-red-600 h-1/2 w-full"></div>
+                          </div>
+                        </div>
+                        <span className="text-gray-500 text-sm sm:text-base">+48</span>
+                      </div>
+                    </div>
+                    <input
+                      type="text"
                       value={values.phone}
-                      onChange={(value, data, event) => handlePhoneChange(value, data, event, { setFieldValue })}
-                      inputProps={{
-                        name: 'phone',
-                        placeholder: '(+48) 123456789',
-                        className: 'text-sm sm:text-base'
-                      }}
-                      containerClass="w-full"
-                      inputClass="p-2.5 sm:p-3 outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
-                      buttonClass="border-[#062b47]"
-                      preferredCountries={['pl']}
-                      disableDropdown={true}
-                      disableCountryCode={true}
-                      masks={{pl: '.........'}}
+                      onChange={(e) => handlePhoneChange(e, setFieldValue)}
+                      placeholder="123 456 789"
+                      className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-gray-400 rounded pl-16 sm:pl-20"
                     />
                   </div>
                   {errors.phone && touched.phone && (
                     <div className="text-red-600 text-xs sm:text-sm mt-1">
                       {errors.phone}
+                    </div>
+                  )}
+                  {/* Visual formatter - shows formatted number below input */}
+                  {values.phone && !errors.phone && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      +48 {formatPhoneDisplay(values.phone)}
                     </div>
                   )}
                 </div>
@@ -508,39 +534,6 @@ export default function BookAppointment({
               background-position-y: 50%;
               padding-right: 30px;
             }
-            
-            .phone-input-container .react-tel-input .form-control {
-              width: 100% !important;
-              height: auto !important;
-              padding-left: 58px !important;
-            }
-            
-            .phone-input-container .react-tel-input .flag-dropdown {
-              background-color: white !important;
-              border-color: #062b47 !important;
-              border-right: 1px solid #062b47 !important;
-            }
-          }
-        }
-        
-        /* Phone input style customizations */
-        .phone-input-container .react-tel-input .form-control {
-          width: 100% !important;
-          height: auto !important;
-          padding: 0.625rem 0.75rem 0.625rem 3.625rem !important;
-          font-size: 0.875rem !important;
-          
-          @media (min-width: 640px) {
-            padding: 0.75rem 1rem 0.75rem 3.875rem !important;
-            font-size: 1rem !important;
-          }
-        }
-        
-        .phone-input-container .react-tel-input .flag-dropdown {
-          width: 3rem !important;
-          
-          @media (min-width: 640px) {
-            width: 3.25rem !important;
           }
         }
       `}</style>

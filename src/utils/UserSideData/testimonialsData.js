@@ -1,7 +1,7 @@
 const testimonialsData = [
   {
     id: 1,
-    image: "/images/avatar1.png",
+    image: "/images/testimonials.jpg",
     name: "Hipokrates",
     date: "Ancient Greece",
     stars: 5,
@@ -9,7 +9,7 @@ const testimonialsData = [
   },
   {
     id: 2,
-    image: "/images/avatar2.png",
+    image: "/images/testimonials.jpg",
     name: "Jan Kochanowski",
     date: "16th century",
     stars: 5,
@@ -17,15 +17,15 @@ const testimonialsData = [
   },
   {
     id: 3,
-    image: "/images/avatar2.png",
+    image: "/images/testimonials.jpg",
     name: "Pliniusz Starszy",
     date: "23-79 AD",
     stars: 5,
     text: "Dziś zadbaj o zdrowie, byś nie musiał o nim marzyć, gdy będziesz w niemocy.",
   },
-  {
+  { 
     id: 4,
-    image: "/images/avatar2.png",
+    image: "/images/testimonials.jpg",
     name: "Hipokrates",
     date: "Ancient Greece",
     stars: 5,

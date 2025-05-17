@@ -92,11 +92,11 @@ const Header = () => {
             <div className="flex flex-col text-left">
               <div className="text-gray-800 mt-1 space-y-1">
                 <a href="tel:+48797097487" className="hover:text-blue-600">
-                  (+48) 797 097 487
+                  797 097 487
                 </a>
-                ,{" "}
+                ,  {"     "} {" "}
                 <a href="tel:+48797127487" className="hover:text-blue-600">
-                  (+48) 797 127 487
+                  797 127 487
                 </a>
               </div>
             </div>

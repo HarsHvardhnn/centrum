@@ -15,7 +15,7 @@ const ContactPage = () => {
       <PageHeader
         title="Kontakt"
         path="Strona główna / Kontakt"
-        bgurl="/images/about-header.jpg"
+        bgurl="/images/contact.jpg"
       />
       <Map />
       <div className="flex max-xl:flex-col gap-4 max-w-6xl mx-auto pt-12 px-4 md:px-16">

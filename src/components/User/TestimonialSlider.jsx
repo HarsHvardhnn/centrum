@@ -17,7 +17,7 @@ const TestimonialSlider = () => {
     arrows: false,
   };
   return (
-    <div className="bg-[url('/images/testimonialsliderbg.jfif')] bg-cover bg-no-repeat bg-center relative mx-auto p-6 bg-teal-800 text-white rounded-lg">
+    <div className="bg-[url('/images/testimonials.jpg')] bg-cover bg-no-repeat bg-center relative mx-auto p-6 bg-teal-800 text-white rounded-lg">
       <div className="absolute inset-0 bg-main bg-opacity-70"></div>
 
       <Slider {...settings}>

@@ -1,7 +1,28 @@
 import React, { useEffect } from "react";
 import { GoDotFill } from "react-icons/go";
 import { Link, useNavigate } from "react-router-dom";
-import * as Icons from "react-icons/fa";
+import { 
+  FaHospital, 
+  FaStethoscope, 
+  FaUserMd, 
+  FaNotesMedical, 
+  FaHeartbeat, 
+  FaFileMedical, 
+  FaLungs, 
+  FaPills, 
+  FaBriefcaseMedical, 
+  FaHandHoldingMedical,
+  FaClinicMedical,
+  FaXRay,
+  FaAmbulance,
+  FaBrain,
+  FaTeeth,
+  FaEye,
+  FaWheelchair,
+  FaBaby,
+  FaBone,
+  FaAllergies
+} from "react-icons/fa";
 import { useServices } from "../../context/serviceContext";
 
 const ServiceDetail = ({ serviceName }) => {
@@ -24,21 +45,51 @@ const ServiceDetail = ({ serviceName }) => {
     return null;
   }
 
-  // Get a random icon from the Icons object
-  const getRandomIcon = () => {
-    const iconKeys = Object.keys(Icons);
-    const randomIndex = Math.floor(Math.random() * iconKeys.length);
-    const randomIconName = iconKeys[randomIndex];
-    return Icons[randomIconName];
+  // Array of medical/hospital related icons
+  const medicalIcons = [
+    FaHospital, 
+    FaStethoscope, 
+    FaUserMd, 
+    FaNotesMedical, 
+    FaHeartbeat, 
+    FaFileMedical, 
+    FaLungs, 
+    FaPills, 
+    FaBriefcaseMedical,
+    FaHandHoldingMedical,
+    FaClinicMedical,
+    FaXRay,
+    FaAmbulance,
+    FaBrain,
+    FaTeeth,
+    FaEye,
+    FaWheelchair,
+    FaBaby,
+    FaBone,
+    FaAllergies
+  ];
+
+  // Get a random medical icon
+  const getRandomMedicalIcon = () => {
+    const randomIndex = Math.floor(Math.random() * medicalIcons.length);
+    return medicalIcons[randomIndex];
   };
+
+  // Create a map of service IDs to icons to keep them consistent
+  const serviceIconMap = React.useMemo(() => {
+    const iconMap = {};
+    services.forEach((item) => {
+      iconMap[item._id] = getRandomMedicalIcon();
+    });
+    return iconMap;
+  }, [services]);
 
   return (
     <div className="flex flex-col md:flex-row gap-6 p-6 mx-auto pt-16 max-w-6xl">
       <div className="w-full md:w-1/4 rounded-lg">
         <div className="border max-md:flex max-md:overflow-scroll border-neutral-200 rounded-lg overflow-hidden">
           {services.map((item) => {
-            // Use a random icon for each service
-            const RandomIcon = getRandomIcon();
+            const ServiceIcon = serviceIconMap[item._id];
             return (
               <Link
                 to={"/user/services/" + item.title}
@@ -47,12 +98,12 @@ const ServiceDetail = ({ serviceName }) => {
                   item.title === serviceName ? "bg-main text-white" : ""
                 }`}
               >
-               <div className="flex items-center gap-2 w-full">
-               <RandomIcon className="text-xl" />
-                <div className="flex flex-col">
-                  <span>{item.title.length > 20 ? item.title.slice(0, 20) + "..." : item.title}</span>
+                <div className="flex items-center gap-2 w-full">
+                  <ServiceIcon className="text-xl" />
+                  <div className="flex flex-col">
+                    <span>{item.title.length > 20 ? item.title.slice(0, 20) + "..." : item.title}</span>
+                  </div>
                 </div>
-               </div>
               </Link>
             );
           })}
@@ -64,7 +115,7 @@ const ServiceDetail = ({ serviceName }) => {
           <img
             src={service.images[0]}
             alt={service.title}
-            className="rounded-lg shadow-lg w-full h-80 md:h-[500px] object-cover"
+            className="rounded-lg shadow-lg w-full h-80 md:h-96 object-cover"
           />
         </div>
 
@@ -80,7 +131,7 @@ const ServiceDetail = ({ serviceName }) => {
 
         <ul className="grid md:grid-cols-2 gap-2 mt-4 text-xl text-neutral-900">
           {service.bulletPoints.map((point, index) => (
-            <li key={index} className="flex items-center gap-2 ">
+            <li key={index} className="flex items-center gap-2">
               <GoDotFill className="text-main text-2xl" />
               {point}
             </li>

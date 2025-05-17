@@ -8,8 +8,7 @@ export default function Footer() {
         {/* Logo and Description */}
         <div className="flex flex-col gap-4 w-full max-w-xs">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
-            <img src="/images/logo.png" className="w-12 h-12" alt="Logo" />
-            <h2 className="text-2xl font-bold text-left">Centrum Medyczne</h2>
+            <img src="/images/białe.png" height={140} width={140}  alt="Logo" />
           </div>
           <p className="text-left text-base leading-relaxed">
             CM7– profesjonalna klinika, przychodnia w województwie

@@ -59,7 +59,10 @@ const RecentPosts = ({ isNews }) => {
                 />
               </div>
               <div className="w-4/5">
-                <p className="text-sm text-blue-500">{news.date}</p>
+              <p className="text-sm text-blue-500">
+  {new Date(news.date).toLocaleDateString('pl-PL')}
+</p>
+
                 <p className="text-sm text-gray-700 font-semibold">
                   {news.title}
                 </p>

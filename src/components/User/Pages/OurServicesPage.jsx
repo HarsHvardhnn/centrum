@@ -9,7 +9,7 @@ const OurServicesPage = () => {
       <PageHeader
         title="Nasze usługi"
         path="Strona główna / Usługi"
-        bgurl="/images/services-header.jfif"
+        bgurl="/images/uslugi.jpg"
       />
       <AllServices />
       <ContactSection />

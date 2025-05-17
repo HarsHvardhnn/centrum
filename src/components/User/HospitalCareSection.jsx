@@ -49,15 +49,29 @@ dla Ciebie i Twojej Rodziny
           </p>
         </div>
 
-        <p className="text-gray-600 leading-relaxed mb-4">
-          Zapewniamy kompleksową opiekę medyczną na najwyższym poziomie. Nasz
-          zespół doświadczonych specjalistów jest gotowy, aby zapewnić Ci
-          profesjonalną pomoc i wsparcie w każdej sytuacji zdrowotnej.
+        <p className="text-gray-600 leading-relaxed mb-1">
+        Centrum Medyczne 7 to nowoczesna klinika i przychodnia, mieszcząca się w województwie świętokrzyskim, w
+Skarżysku-Kamiennej.
+
         </p>
-        <p className="text-gray-600 leading-relaxed">
-          Stawiamy na indywidualne podejście do każdego pacjenta, łącząc
-          najnowocześniejsze metody leczenia z empatią i zrozumieniem potrzeb
-          naszych pacjentów.
+        <p  className="text-gray-600 leading-relaxed mb-1">
+        Oferujemy kompleksową opiekę zdrowotną opartą na doświadczeniu, wiedzy i indywidualnym podejściu do każdego
+        pacjenta
+        </p>
+        <p className="text-gray-600 leading-relaxed mb-1">
+        W naszej klinice pracuje m.in. doświadczony specjalista z zakresu chirurgii i proktologi – lek. Michał Szczubkowski,
+        znany i ceniony w mieście za profesjonalizm oraz skuteczność leczenia.
+        </p>
+        <p className="text-gray-600 leading-relaxed mb-1">
+        Nasz zespół lekarzy świadczy fachowe konsultacje oraz zabiegi ambulatoryjne bez konieczności hospitalizacji.
+        Zapewniamy bezpieczeństwo, skuteczność i wysoki standard opieki medycznej.
+        </p>
+        <p className="text-gray-600 leading-relaxed mb-1">
+        Pacjenci doceniają nas za jakość obsługi, szybki dostęp do specjalistów oraz atmosferę opartą na zaufaniu. Centrum
+        Medyczne 7 to sprawdzona klinika, której możesz powierzyć swoje zdrowie.
+        </p>
+        <p className="text-gray-600 leading-relaxed mb-1">
+        Zadbaj o siebie – wybierz nowoczesną opiekę w Centrum Medyczne 7 w Skarżysku-Kamiennej.
         </p>
       </div>
     </div>

@@ -34,3 +34,23 @@
  .animate-wave {
    animation: wave 1s ease-in-out infinite;
  }
+
+
+ .only-mobile {
+  display: block;
+}
+@media (min-width: 640px) {
+  .only-mobile {
+    display: none;
+  }
+}
+
+/* Show only on desktop (640px and up) */
+.only-desktop {
+  display: none;
+}
+@media (min-width: 640px) {
+  .only-desktop {
+    display: block;
+  }
+}
