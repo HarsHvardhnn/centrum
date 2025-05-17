@@ -6,7 +6,9 @@ import {
   MoreVertical,
   UserX,
   Video,
+  X,
 } from "lucide-react";
+import { apiCaller } from "../../../utils/axiosInstance";
 
 const PatientsList = ({
   totalPatients = 0,
@@ -62,7 +64,7 @@ const PatientsList = ({
         textColor: "text-green-700",
         dotColor: "bg-green-600",
       },
-      Waiting: {
+      booked: {
         bgColor: "bg-yellow-50",
         textColor: "text-yellow-700",
         dotColor: "bg-yellow-600",
@@ -76,7 +78,7 @@ const PatientsList = ({
     
     const statusTranslations = {
       Finished: "Zakończona",
-      Waiting: "Oczekuje",
+      booked: "Oczekuje",
       Cancelled: "Anulowana"
     };
 
@@ -162,6 +164,16 @@ const PatientsList = ({
     </div>
   );
 
+  const handleCancelAppointment = async (id) => {
+    try {
+      await apiCaller('PATCH',`/appointments/cancel/${id}`);
+      // Refresh the page or update the list after cancellation
+      window.location.reload();
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+    }
+  };
+
   return (
     <div className="bg-white border rounded-lg shadow-sm">
       {/* Header */}
@@ -178,74 +190,86 @@ const PatientsList = ({
       </div>
 
       {/* Table or Empty State */}
-      {patientsData.length > 0 ? (
-        <div>
-          {/* Table Header */}
-          <div className="w-full flex justify-evenly px-4 py-3 bg-gray-50 border-b">
-            <div className="col-span-2 flex items-center">Imię i nazwisko</div>
-            <div className="text-center">Płeć</div>
-            <div
-              className="flex items-center cursor-pointer justify-center"
-              onClick={() => requestSort("status")}
-            >
-              Status
-              <ChevronDown size={16} />
-            </div>
-            <div
-              className="flex items-center cursor-pointer justify-center"
-              onClick={() => requestSort("appointmentMode")}
-            >
-              Tryb
-              <ChevronDown size={16} />
-            </div>
-            <div className="text-center">Akcja</div>
-          </div>
-
-          {/* Table Body */}
-          {sortedPatients.map((patient) => (
-            <div
-              key={patient.id}
-              className="w-full flex justify-evenly px-4 py-3 border-b hover:bg-gray-50 text-center"
-            >
-              <div className="col-span-2 flex items-center text-left">
-                <input
-                  type="checkbox"
-                  checked={selectedPatient === patient.patient_id}
-                  onChange={() =>{ 
-                    handlePatientSelect(patient.patient_id)
-                    console.log("patient id ",patient.id)
-                    setAppointmentId(patient.id)
-                  }}
-                  className="w-4 h-4 mr-3"
-                />
-                <img
-                  src={patient.avatar || "https://via.placeholder.com/40"}
-                  alt={`Zdjęcie ${patient.name}`}
-                  className="w-10 h-10 rounded-full mr-3"
-                />
-                <div>
-                  <div className="font-medium">{patient.name}</div>
-                  <div className="text-sm text-gray-500">{patient.patient_id}</div>
+      <div className="overflow-x-auto">
+        <div className="min-w-[1000px]"> {/* Minimum width to prevent squishing */}
+          {patientsData.length > 0 ? (
+            <div>
+              {/* Table Header */}
+              <div className="w-full grid grid-cols-6 px-4 py-3 bg-gray-50 border-b">
+                <div className="col-span-2">Imię i nazwisko</div>
+                <div className="text-center">Płeć</div>
+                <div
+                  className="flex items-center cursor-pointer justify-center"
+                  onClick={() => requestSort("status")}
+                >
+                  Status
+                  <ChevronDown size={16} />
                 </div>
+                <div
+                  className="flex items-center cursor-pointer justify-center"
+                  onClick={() => requestSort("appointmentMode")}
+                >
+                  Tryb
+                  <ChevronDown size={16} />
+                </div>
+                <div className="text-center">Akcja</div>
               </div>
-              <div>{patient.gender}</div>
-              <div>
-                <StatusBadge status={patient.status} />
-              </div>
-              <div>
-                <AppointmentModeBadge mode={patient.appointmentMode} />
-              </div>
-              <div>
-                {patient.appointmentMode === "online" && patient.joiningLink && (
-                  <JoinNowButton joiningLink={patient.joiningLink} />
-                )}
-              </div>
+
+              {/* Table Body */}
+              {sortedPatients.map((patient) => (
+                <div
+                  key={patient.id}
+                  className="w-full grid grid-cols-6 px-4 py-3 border-b hover:bg-gray-50"
+                >
+                  <div className="col-span-2 flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedPatient === patient.patient_id}
+                      onChange={() => {
+                        handlePatientSelect(patient.patient_id)
+                        console.log("patient id ", patient.id)
+                        setAppointmentId(patient.id)
+                      }}
+                      className="w-4 h-4 mr-3"
+                    />
+                    <img
+                      src={patient.avatar || "https://via.placeholder.com/40"}
+                      alt={`Zdjęcie ${patient.name}`}
+                      className="w-10 h-10 rounded-full mr-3"
+                    />
+                    <div>
+                      <div className="font-medium">{patient.name}</div>
+                      <div className="text-sm text-gray-500">{patient.patient_id}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center">{patient.sex}</div>
+                  <div className="flex items-center justify-center">
+                    <StatusBadge status={patient.status} />
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <AppointmentModeBadge mode={patient.mode} />
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    {patient.mode === "online" && patient.joiningLink && (
+                      <JoinNowButton joiningLink={patient.joiningLink} />
+                    )}
+                    <button
+                      onClick={() => handleCancelAppointment(patient.id)}
+                      disabled={patient.status !== "booked"}
+                      className={`flex items-center px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors ${patient.status !== "booked" ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      <X size={16} className="mr-1" />
+                      Anuluj
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            <EmptyState />
+          )}
         </div>
-      ) : (
-        <EmptyState />
-      )}
+      </div>
 
       {/* Pagination - Only show if there are patients */}
       {patientsData.length > 0 && (
