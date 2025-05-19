@@ -135,10 +135,48 @@ export default function BookAppointment({
     const newDoctorId = e.target.value;
     setFieldValue("doctor", newDoctorId);
     setFieldValue("time", ""); // Reset time when doctor changes
-    if (newDoctorId && date) {
-      fetchAvailableSlots(newDoctorId, date);
+
+    if (newDoctorId) {
+      try {
+        // Fetch next available date
+        const nextAvailableResponse = await doctorService.getNextAvailableDate(newDoctorId);
+        
+        if (nextAvailableResponse.success && nextAvailableResponse.data) {
+          // Set the next available date
+          setFieldValue("date", nextAvailableResponse.data.nextAvailableDate);
+          // Set available slots
+          setAvailableSlots(nextAvailableResponse.data.availableSlots);
+        } else {
+          // If no available date found, use current date
+          const currentDate = new Date().toISOString().split("T")[0];
+          setFieldValue("date", currentDate);
+          // Fetch slots for current date
+          await fetchAvailableSlots(newDoctorId, currentDate);
+        }
+      } catch (error) {
+        console.error("Error fetching next available date:", error);
+        toast.error("Nie udało się pobrać dostępnych terminów. Spróbuj ponownie później.");
+      }
+    } else {
+      setAvailableSlots([]);
     }
   };
+
+  // Update useEffect to handle initial doctor selection
+  useEffect(() => {
+    if (selectedDoctorId) {
+      handleDoctorChange(
+        { target: { value: selectedDoctorId } },
+        null,
+        (field, value) => {
+          const formik = document.querySelector('form').__formik;
+          if (formik) {
+            formik.setFieldValue(field, value);
+          }
+        }
+      );
+    }
+  }, [selectedDoctorId]);
 
   // Handle slot selection
   const handleSlotSelect = (slot, setFieldValue) => {
