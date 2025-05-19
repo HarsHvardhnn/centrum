@@ -123,7 +123,7 @@ const Sidebar = () => {
             isEnabled={true}
           />
 
-          {user?.role !== "doctor" && (
+      
             <NavItem
               icon={<LuFileChartColumn className="text-xl text-teal-400" />}
               label="Rozliczenia"
@@ -131,8 +131,7 @@ const Sidebar = () => {
               isActive={currentPath === "/admin/billing"}
               isEnabled={true}
             />
-          )}
-
+          
           <NavItem
             icon={<FiMessageCircle className="text-xl text-teal-400" />}
             label="Kontakty"

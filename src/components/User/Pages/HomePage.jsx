@@ -42,7 +42,7 @@ console.log("selected doctor id",selectedDoctorId)
 
   return (
     <>
-      <Hero />
+      <Hero selectedDoctorId={selectedDoctorId} setSelectedDoctorId={setSelectedDoctorId}  />
       <Welcome />
       <ServicesMini />
       <Specialties />
@@ -52,6 +52,7 @@ console.log("selected doctor id",selectedDoctorId)
         selectedDoctorId={selectedDoctorId}
       />
       <Doctors
+        selectedDoctorId={selectedDoctorId}
         setSelectedDepartment={setSelectedDepartment}
         setSelectedDoctorId={setSelectedDoctorId}
       />

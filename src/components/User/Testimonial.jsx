@@ -22,19 +22,15 @@ export default function Testimonial() {
       <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center gap-12">
         <div className="w-full lg:w-1/2 text-center md:text-left">
           <h3 className="text-4xl md:text-[54px] font-bold text-gray-900 leading-tight">
-            Co{" "}
-            <span className="text-teal-600">
-              nasi pacjenci
-              <br />
-            </span>{" "}
-            mówią o nas
+            Co Mówią o Nas
           </h3>
+          <span className="text-teal-600 text-2xl font-semibold block mb-2">Nasi Pacjenci</span>
           <p className="text-neutral-700 mt-4 text-lg">
-            Zdrowie i zadowolenie pacjentów są dla nas najważniejsze
+            Zdrowie i zadowolenie pacjentów są dla nas najważniejsze.
           </p>
 
-          <div className="flex justify-center md:justify-start items-center gap-4 mt-6">
-            <div className="flex -space-x-2">
+          <div className="flex flex-col items-center md:items-start gap-1 mt-6">
+            <div className="flex -space-x-2 mb-1">
               {Array(7)
                 .fill()
                 .map((_, i) => (
@@ -44,9 +40,15 @@ export default function Testimonial() {
                   />
                 ))}
             </div>
-            <p className="text-neutral-900 text-lg font-bold">
-              Ponad 100 opinii
-            </p>
+            <span className="text-neutral-900 text-2xl font-bold">150+ Opinii</span>
+            <a 
+              href="https://www.google.com/maps/place/lek.+Michał+Szczubkowski+%7C+Chirurg+%7C+Proktolog+%7C+Leczenie+ran+przewlekłych/@51.1263237,20.876852,17z/data=!4m8!3m7!1s0x4718391f2a385e57:0x40e9db5b8218c35b!8m2!3d51.1263237!4d20.876852!9m1!1b1!16s%2Fg%2F11rcwlzvlw?entry=ttu&g_ep=EgoyMDI1MDUxMy4xIKXMDSoASAFQAw%3D%3D"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors duration-300 mt-2"
+            >
+              Sprawdź lokalizację
+            </a>
           </div>
         </div>
 

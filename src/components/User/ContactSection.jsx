@@ -29,8 +29,8 @@ export default function ContactSection() {
                 </a>
         </div>
 
-        <div className="bg-main-light hover:bg-main hover:text-white p-8 rounded-lg text-center flex flex-col items-center transition duration-300">
-          <FaMapMarkerAlt className="text-4xl mb-3" />
+        <div onClick={() => window.open("https://www.google.com/maps?q=51.1191680,20.8649307&entry=gps&lucs=,94224825,94227247,94227248,94231188,47071704,47069508,94218641,94203019,47084304,94208458,94208447&g_ep=CAISEjI1LjE2LjEuNzQ3NTI2NjMwMBgAIIgnKmMsOTQyMjQ4MjUsOTQyMjcyNDcsOTQyMjcyNDgsOTQyMzExODgsNDcwNzE3MDQsNDcwNjk1MDgsOTQyMTg2NDEsOTQyMDMwMTksNDcwODQzMDQsOTQyMDg0NTgsOTQyMDg0NDdCAlBM&skid=70261bec-fc59-4059-957e-4cbe04309fe1&g_st=com.google.maps.preview.copy", "_blank")} className="bg-main-light hover:bg-main hover:text-white p-8 rounded-lg text-center flex flex-col items-center transition duration-300 cursor-pointer">
+          <FaMapMarkerAlt className="text-4xl mb-3 " />
           <h4 className="font-bold text-lg">LOKALIZACJA</h4>
               <span className="text-gray-800 mt-1">
                 Powstańców Warszawy 7/1.5, <br className="hidden lg:block" />

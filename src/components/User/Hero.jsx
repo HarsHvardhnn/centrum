@@ -10,7 +10,7 @@ import { useIsMobile } from "./useIsMobile";
 // import doctorService from '../services/doctorService';
 
 // This is a mock for demonstration - replace with your actual import
-export default function Hero() {
+export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState("New York"); // Hardcoded location
@@ -80,7 +80,20 @@ export default function Hero() {
   {/* Doctor Selection */}
   <div className="flex items-center flex-1">
     <FaRegCircleUser className="text-gray-600 mr-2" />
-    <select className="bg-transparent text-gray-700 outline-none w-full">
+    <select 
+      className="bg-transparent text-gray-700 outline-none w-full"
+      value={selectedDoctorId || ""}
+      onChange={(e) => {
+        setSelectedDoctorId(e.target.value);
+        // Scroll to doctors section after a short delay
+        setTimeout(() => {
+          const doctorsSection = document.querySelector('.doctors-section');
+          if (doctorsSection) {
+            doctorsSection.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      }}
+    >
       <option value="">Imię i nazwisko lekarza</option>
       {loading ? (
         <option>Wczytywanie lekarzy...</option>

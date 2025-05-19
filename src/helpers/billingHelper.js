@@ -39,7 +39,8 @@ const billingHelper = {
         patientId,
         startDate,
         endDate,
-        paymentStatus
+        paymentStatus,
+
       } = options;
 
       let queryParams = new URLSearchParams({
@@ -53,6 +54,7 @@ const billingHelper = {
       if (startDate) queryParams.append("startDate", startDate);
       if (endDate) queryParams.append("endDate", endDate);
       if (paymentStatus) queryParams.append("paymentStatus", paymentStatus);
+
 
       const response = await apiCaller(
         "GET",
