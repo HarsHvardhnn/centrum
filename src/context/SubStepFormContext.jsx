@@ -3,8 +3,8 @@ import { createContext, useContext, useState } from 'react';
 
 const FormContext = createContext(null);
 
-export const FormProvider = ({ children }) => {
-  const [formData, setFormData] = useState({
+export const FormProvider = ({ children, initialData }) => {
+  const [formData, setFormData] = useState(initialData || {
     // Demographics
     fullName: "",
     email: "",
