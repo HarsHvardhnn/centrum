@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Slider from "react-slick";
 import {
   FaInstagram,
@@ -6,28 +6,42 @@ import {
   FaLinkedinIn,
   FaTimes,
   FaCalendarAlt,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import doctorService from "../../helpers/doctorHelper";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "sonner";
 import { apiCaller } from "../../utils/axiosInstance";
 
 export default function Doctors({
+  selectedDoctorId,
   setSelectedDoctorId,
   setSelectedDepartment,
 }) {
+
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [selectedDoctor, setSelectedDoctor] = useState(selectedDoctorId);
+
+  useEffect(()=>{
+    if(selectedDoctorId) {
+      const selectedDoctor = doctors.find(doctor => doctor.id === selectedDoctorId);
+      if (selectedDoctor) {
+        setSelectedDoctor(selectedDoctor);
+        handleBookAppointment(selectedDoctor);
+      }
+    }
+  },[selectedDoctorId, doctors])
   const [doctorProfile, setDoctorProfile] = useState(null);
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
+  const [weekOffset, setWeekOffset] = useState(0);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -44,6 +58,7 @@ export default function Doctors({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
+  const sliderRef = useRef(null);
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -115,11 +130,32 @@ export default function Doctors({
     }
   };
 
-  const handleBookAppointment = (doctor) => {
+  const handleBookAppointment = async (doctor) => {
     setSelectedDoctor(doctor);
-    fetchDoctorProfile(doctor.id);
-    fetchAvailableSlots(doctor.id, selectedDate);
     setShowModal(true);
+    
+    try {
+      // Fetch doctor profile
+      await fetchDoctorProfile(doctor.id);
+      
+      // Fetch next available date
+      const nextAvailableResponse = await doctorService.getNextAvailableDate(doctor.id);
+      
+      if (nextAvailableResponse.success && nextAvailableResponse.data) {
+        // Set the next available date
+        setSelectedDate(nextAvailableResponse.data.nextAvailableDate);
+        // Set available slots
+        setAvailableSlots(nextAvailableResponse.data.availableSlots);
+      } else {
+        // If no available date found, use current date
+        setSelectedDate(new Date().toISOString().split("T")[0]);
+        // Fetch slots for current date
+        await fetchAvailableSlots(doctor.id, new Date().toISOString().split("T")[0]);
+      }
+    } catch (error) {
+      console.error("Error fetching doctor availability:", error);
+      toast.error("Nie udało się pobrać dostępnych terminów. Spróbuj ponownie później.");
+    }
   };
 
   const handleDateChange = (date) => {
@@ -272,6 +308,21 @@ export default function Doctors({
     ],
   };
 
+  // Calculate dates for the next 7 days based on weekOffset
+  const nextDays = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() + i + (weekOffset * 7));
+    return date.toISOString().split("T")[0];
+  });
+
+  const handleWeekChange = (direction) => {
+    setWeekOffset(prev => prev + direction);
+    setSelectedDate(nextDays[0]); // Reset to first day of new week
+    if (selectedDoctor) {
+      fetchAvailableSlots(selectedDoctor.id, nextDays[0]);
+    }
+  };
+
   if (loading) {
     return (
       <section className="py-16 px-6 bg-white text-center">
@@ -290,23 +341,32 @@ export default function Doctors({
     );
   }
 
-  // Calculate dates for the next 7 days
-  const nextDays = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() + i);
-    return date.toISOString().split("T")[0];
-  });
-
   return (
-    <section className="py-16 px-6 bg-white text-center">
+    <section className="py-16 px-6 bg-white text-center relative doctors-section">
       <h3 className="md:text-xl font-bold text-neutral-800">ZAUFANA OPIEKA</h3>
       <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 sm:mb-12">
         Nasi Specjaliści
       </h2>
 
-      <div className="max-w-sm md:max-w-6xl mx-auto overflow-clip">
+      <div className="max-w-sm md:max-w-6xl mx-auto overflow-clip relative">
+        {/* Custom Navigation Buttons */}
+        <button
+          onClick={() => sliderRef.current?.slickPrev()}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white text-main p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+          aria-label="Previous slide"
+        >
+          <FaChevronLeft size={24} />
+        </button>
+        <button
+          onClick={() => sliderRef.current?.slickNext()}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white text-main p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+          aria-label="Next slide"
+        >
+          <FaChevronRight size={24} />
+        </button>
+
         {doctors.length > 0 ? (
-          <Slider {...settings}>
+          <Slider ref={sliderRef} {...settings}>
             {doctors.map((doctor) => (
               <div key={doctor.id} className="px-4">
                 <div className="bg-white shadow-lg rounded-lg overflow-hidden">
@@ -444,6 +504,23 @@ export default function Doctors({
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Data
                     </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <button
+                        onClick={() => handleWeekChange(-1)}
+                        className="px-3 py-1 text-sm text-main hover:bg-gray-100 rounded-md flex items-center"
+                        disabled={weekOffset === 0}
+                      >
+                        <FaChevronLeft className="mr-1" />
+                        Poprzedni tydzień
+                      </button>
+                      <button
+                        onClick={() => handleWeekChange(1)}
+                        className="px-3 py-1 text-sm text-main hover:bg-gray-100 rounded-md flex items-center"
+                      >
+                        Następny tydzień
+                        <FaChevronRight className="ml-1" />
+                      </button>
+                    </div>
                     <div className="grid grid-cols-3 md:grid-cols-7 gap-2">
                       {nextDays.map((date) => {
                         const dayDate = new Date(date);

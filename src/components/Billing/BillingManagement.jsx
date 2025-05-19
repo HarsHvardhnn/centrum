@@ -18,9 +18,11 @@ import billingHelper from "../../helpers/billingHelper";
 import { toast } from "sonner";
 import { useLoader } from "../../context/LoaderContext";
 import { formatDateToYYYYMMDD } from "../../utils/formatDate";
+import { useUser } from "../../context/userContext";
 
 const BillingManagement = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const { showLoader, hideLoader } = useLoader();
   
   // State for bills data and pagination
@@ -62,6 +64,7 @@ const BillingManagement = () => {
   const fetchBills = async () => {
     try {
       showLoader();
+
       
       const response = await billingHelper.getAllBills({
         page: pagination.currentPage,
@@ -71,7 +74,8 @@ const BillingManagement = () => {
         ...(searchQuery && { searchTerm: searchQuery }),
         ...(dateRange.startDate && { startDate: dateRange.startDate }),
         ...(dateRange.endDate && { endDate: dateRange.endDate }),
-        ...(paymentStatusFilter && { paymentStatus: paymentStatusFilter })
+        ...(paymentStatusFilter && { paymentStatus: paymentStatusFilter }),
+ 
       });
       
       if (response.success) {

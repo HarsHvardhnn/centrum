@@ -84,10 +84,10 @@ const AuthForm = ({ isLogin = false }) => {
       localStorage.setItem("user", JSON.stringify(response.data.user));
       console.log("response.data.user", response.data.user);
       setUser(response.data.user || {});
-      if (response.data.user?.role == "doctor") {
-        navigate("/doctors");
-        return;
-      }
+      // if (response.data.user?.role == "doctor") {
+      //   navigate("/admin");
+      //   return;
+      // }
       if (response.data.user.role == "patient") {
         navigate("/user");
         return;
@@ -118,11 +118,11 @@ const AuthForm = ({ isLogin = false }) => {
       setUser(response.data.user || {});
       console.log("response.data.user", response.data.user);
 
-      if (response.data.user?.role == "doctor") {
-        navigate("/doctors");
-        console.log(":doctor");
-        return;
-      }
+      // if (response.data.user?.role == "doctor") {
+      //   navigate("/doctors");
+      //   console.log(":doctor");
+      //   return;
+      // }
       if (response.data.user.role == "patient") {
         navigate("/user");
         console.log(":pattients");

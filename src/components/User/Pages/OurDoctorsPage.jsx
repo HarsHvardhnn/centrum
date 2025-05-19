@@ -14,7 +14,7 @@ const OurDoctorsPage = () => {
       <PageHeader
         title="Nasi Specjaliści "
         path="Strona główna / Lekarze"
-        bgurl="/images/about-header.jpg"
+        bgurl="/images/Specialities.jpg"
       />
       <Doctors
         setSelectedDoctorId={setSelectedDoctorId}

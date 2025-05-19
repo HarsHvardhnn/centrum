@@ -47,7 +47,7 @@ const NewsDetail = () => {
         className="w-full h-64 sm:h-96 object-cover mb-2"
       />
 
-      <h1 className="text-2xl sm:text-3xl font-bold mb-4">{news.title}</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-[#008C8C]">{news.title}</h1>
 
       <p className="text-gray-500 text-sm mb-1">
         {news.date} <GoDotFill className="inline text-main" /> {news.author}

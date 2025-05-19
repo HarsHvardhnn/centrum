@@ -276,6 +276,28 @@ const doctorService = {
       }
     );
   },
+
+  /**
+   * Get next available date and slots for a doctor
+   * @param {string} doctorId - Doctor ID
+   * @returns {Promise} - API response with next available date and slots
+   */
+  getNextAvailableDate: async (doctorId) => {
+    try {
+      if (!doctorId) {
+        throw new Error("Doctor ID is required");
+      }
+
+      const response = await apiCaller(
+        "GET",
+        `/docs/schedule/next-available/${doctorId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching next available date:", error);
+      throw error;
+    }
+  },
 };
 
 export default doctorService;
