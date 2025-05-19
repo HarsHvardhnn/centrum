@@ -75,7 +75,7 @@ export default function Doctors({
             doctor.name.first && doctor.name.last
               ? `${doctor.name.first} ${doctor.name.last}`
               : doctor.name, // Handle both object and string format
-          department: doctor.specialty,
+          department: doctor?.specializations?.slice(0,2).map((spec)=>spec.name),
           image: doctor.image || "https://via.placeholder.com/400x500",
           experience: doctor.experience || "",
           social: {
@@ -86,6 +86,7 @@ export default function Doctors({
           consultationFee: doctor.consultationFee,
         }));
 
+        console.log("trans",transformedDoctors)
         setDoctors(transformedDoctors);
       } catch (err) {
         console.error("Błąd podczas pobierania lekarzy:", err);
@@ -391,8 +392,8 @@ export default function Doctors({
                   />
                   <div className="bg-[#F4F4F4] text-main py-6 px-6">
                     <h4 className="text-lg font-semibold">{doctor.name}</h4>
-                    <p className="text-xl font-bold uppercase text-black">
-                      {doctor.department.name}
+                    <p className="text-lg font-semibold uppercase text-black">
+                      {doctor.department.join(', ')}
                     </p>
                     {/* {doctor.experience && (
                       <p className="text-sm mt-1">
