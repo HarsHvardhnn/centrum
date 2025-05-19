@@ -15,12 +15,14 @@ import doctorService from "../../helpers/doctorHelper";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { apiCaller } from "../../utils/axiosInstance";
+import { useUser } from "../../context/userContext";
 
 export default function Doctors({
   selectedDoctorId,
   setSelectedDoctorId,
   setSelectedDepartment,
 }) {
+  const { user } = useUser();
 
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,9 +48,9 @@ export default function Doctors({
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [bookingForm, setBookingForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
     gender: "male",
     message: "",
     consultationType: "offline",
@@ -97,6 +99,18 @@ export default function Doctors({
 
     fetchDoctors();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setBookingForm(prev => ({
+        ...prev,
+        name: user.name || "",
+        email: user.email || "",
+        phone: user?.phone?.startsWith("+48") ? user.phone.slice(3) : user?.phone || "",
+
+      }));
+    }
+  }, [user]);
 
   const fetchDoctorProfile = async (doctorId) => {
     try {

@@ -6,15 +6,15 @@ import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { useSpecializations } from "../../context/SpecializationContext";
 import { FaCalendarAlt } from "react-icons/fa";
+import { useUser } from "../../context/userContext";
 
 export default function BookAppointment({
   page,
   selectedSpecialization = "",
   selectedDoctorId = "",
 }) {
-  console.log("selectedDoctorId", selectedDoctorId);
+  const { user } = useUser();
   const { specializations } = useSpecializations();
-  console.log("specializations", specializations);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({
@@ -25,10 +25,10 @@ export default function BookAppointment({
   const [slotsLoading, setSlotsLoading] = useState(false);
 
   const initialValues = {
-    name: "",
+    name: user?.name || "",
     gender: "",
-    email: "",
-    phone: "",
+    email: user?.email || "",
+    phone: user?.phone?.startsWith("+48") ? user.phone.slice(3) : user?.phone || "",
     date: "",
     time: "",
     doctor: selectedDoctorId || "",
