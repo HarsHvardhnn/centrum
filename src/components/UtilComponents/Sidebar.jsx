@@ -150,7 +150,7 @@ const Sidebar = () => {
 
           <div className="border-t border-teal-100 my-1"></div>
 
-          {user?.role !== "receptionist" && (
+    
             <NavItem
               icon={<FiSettings className="text-xl text-teal-400" />}
               label="Ustawienia"
@@ -158,9 +158,9 @@ const Sidebar = () => {
                 user?.role == "doctor" ? "/doctor/settings" : "/admin/accounts"
               }`}
               isActive={currentPath === "/doctor/settings"}
-              isEnabled={user?.role !== "receptionist"}
+              isEnabled={true}
             />
-          )}
+    
 
           <a
             href="https://www.zus.pl/ezus/logowanie?logout-manually=true"

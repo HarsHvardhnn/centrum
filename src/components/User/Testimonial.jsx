@@ -47,7 +47,8 @@ export default function Testimonial() {
               rel="noopener noreferrer"
               className="inline-block bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors duration-300 mt-2"
             >
-              Sprawdź lokalizację
+              Sprawdź opinie
+
             </a>
           </div>
         </div>

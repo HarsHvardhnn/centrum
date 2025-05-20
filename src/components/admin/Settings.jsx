@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import adminHelper from "../../helpers/adminHelper";
 import { useLoader } from "../../context/LoaderContext";
+import { useUser } from "../../context/userContext";
 import DoctorScheduleManager from "./DoctorScheduleEditor";
 import { ChevronDown } from "lucide-react"; // For dropdown icon
 import PatientStepForm from "../SubComponentForm/PatientStepForm";
@@ -12,6 +13,7 @@ import SpecializationModal from "./SpecializationModal";
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
+  const { user } = useUser();
   const { showLoader, hideLoader } = useLoader();
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,6 +61,9 @@ export default function UserManagement() {
     "Szczegóły",
     "Notatki",
   ];
+
+  // Add this function to check if user is admin
+  const isAdmin = user?.role === 'admin';
 
   const fetchUsers = async () => {
     try {
@@ -306,6 +311,14 @@ export default function UserManagement() {
     };
   }, [showAddDropdown]);
 
+  // Add handleEditUser function
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setShowAddPatientModal(true);
+    setIsEditMode(true);
+    setCurrentPatientId(user._id);
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -313,15 +326,16 @@ export default function UserManagement() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-teal-700">Zarządzanie Użytkownikami</h1>
 
-        {/* Add User Dropdown Button */}
+        {/* Add User Dropdown Button - Modified for role-based access */}
         <div className="flex gap-4">
-          {" "}
-          <button
-            onClick={() => setShowSpecsModal(true)}
-            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
-          >
-           Manage Specializations
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setShowSpecsModal(true)}
+              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+            >
+              Manage Specializations
+            </button>
+          )}
           <div className="dropdown-container relative">
             <button
               onClick={() => setShowAddDropdown(!showAddDropdown)}
@@ -333,24 +347,28 @@ export default function UserManagement() {
             {showAddDropdown && (
               <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                 <div className="py-1" role="menu" aria-orientation="vertical">
-                  <button
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => {
-                      setShowAddDropdown(false);
-                      setShowAddDoctorModal(true);
-                    }}
-                  >
-                    Add Doctor
-                  </button>
-                  <button
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => {
-                      setShowAddDropdown(false);
-                      setShowAddModal(true);
-                    }}
-                  >
-                    Add Receptionist
-                  </button>
+                  {isAdmin && (
+                    <>
+                      <button
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => {
+                          setShowAddDropdown(false);
+                          setShowAddDoctorModal(true);
+                        }}
+                      >
+                        Add Doctor
+                      </button>
+                      <button
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => {
+                          setShowAddDropdown(false);
+                          setShowAddModal(true);
+                        }}
+                      >
+                        Add Receptionist
+                      </button>
+                    </>
+                  )}
                   <button
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={() => {
@@ -576,15 +594,25 @@ export default function UserManagement() {
                               Schedule
                             </button>
                           )}
-                          <button
-                            onClick={() => handleDeleteClick(user)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Delete
-                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDeleteClick(user)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Delete
+                            </button>
+                          )}
+                          {user.role === "patient" && (
+                            <button
+                              onClick={() => handleEditUser(user)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              Edit
+                            </button>
+                          )}
                         </>
                       )}
-                      {user.deleted && (
+                      {user.deleted && isAdmin && (
                         <button
                           onClick={() => handleReviveUser(user._id)}
                           className="text-green-600 hover:text-green-900"

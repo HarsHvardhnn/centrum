@@ -588,6 +588,66 @@ export default function BookAppointment({
               background-position-y: 50%;
               padding-right: 30px;
             }
+
+            /* Date input fixes for Safari */
+            input[type="date"] {
+              -webkit-appearance: none;
+              appearance: none;
+              background-color: white;
+              padding-right: 1rem;
+              position: relative;
+            }
+
+            input[type="date"]::-webkit-calendar-picker-indicator {
+              background: transparent;
+              bottom: 0;
+              color: transparent;
+              cursor: pointer;
+              height: auto;
+              left: 0;
+              position: absolute;
+              right: 0;
+              top: 0;
+              width: auto;
+              padding: 0;
+              margin: 0;
+            }
+
+            input[type="date"]::-webkit-inner-spin-button,
+            input[type="date"]::-webkit-clear-button {
+              display: none;
+              -webkit-appearance: none;
+            }
+
+            /* Add custom calendar icon */
+            input[type="date"] {
+              background-image: url("data:image/svg+xml;utf8,<svg fill='%23062b47' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5zm2 4h10v2H7v-2zm0 4h7v2H7v-2z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+              background-repeat: no-repeat;
+              background-position-x: calc(100% - 10px);
+              background-position-y: 50%;
+              padding-right: 2.5rem;
+            }
+
+            /* Ensure text color is consistent */
+            input[type="date"]::-webkit-datetime-edit {
+              color: #062b47;
+            }
+
+            input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+              color: #062b47;
+            }
+
+            input[type="date"]::-webkit-datetime-edit-text {
+              color: #062b47;
+              padding: 0 0.2em;
+            }
+
+            input[type="date"]::-webkit-datetime-edit-year-field,
+            input[type="date"]::-webkit-datetime-edit-month-field,
+            input[type="date"]::-webkit-datetime-edit-day-field {
+              color: #062b47;
+              padding: 0 0.2em;
+            }
           }
         }
       `}</style>
