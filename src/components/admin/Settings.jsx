@@ -22,6 +22,7 @@ export default function UserManagement() {
   const [sortField, setSortField] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
   const [showSpecsModal,setShowSpecsModal]=useState(false)
+  const [patientFormData, setPatientFormData] = useState({});
 
   // Add User dropdowns and modals
   const [showAddDropdown, setShowAddDropdown] = useState(false);
@@ -46,7 +47,6 @@ export default function UserManagement() {
   // State for doctor schedule modal
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
-  const [patientFormData, setPatientFormData] = useState({});
 
   // Patient form states
   const [currentSubStep, setCurrentSubStep] = useState(0);
@@ -242,26 +242,106 @@ export default function UserManagement() {
     }
   };
 
-  // Function to handle adding a patient - Modified to work with FormProvider context
+  // Add this function to handle edit click
+  const handleEditPatient = async (userId) => {
+    try {
+      showLoader();
+      const patientData = await patientService.getPatientById(userId);
+      let patientDetails=patientData;
+      console.log(patientData, "patient data")
+      const mappedFormData = {
+        // Demographics
+        fullName:
+          patientDetails.name?.first + " " + (patientDetails.name?.last || ""),
+        email: patientDetails.email,
+        mobileNumber: patientDetails.phone,
+        dateOfBirth: patientDetails.dateOfBirth,
+        motherTongue: patientDetails.motherTongue,
+        govtId: patientDetails.govtId,
+        hospId: patientDetails.hospId,
+        sex: patientDetails.sex,
+        maritalStatus: patientDetails.maritalStatus,
+        ethnicity: patientDetails.ethnicity,
+        otherHospitalIds: patientDetails.otherHospitalIds,
+
+        consents: patientDetails.consents || [],
+        documents: patientDetails.documents || [],
+
+        // Referrer
+        referrerType: patientDetails.referrerType,
+        mainComplaint: patientDetails.mainComplaint,
+        referrerName: patientDetails.referrerName,
+        referrerNumber: patientDetails.referrerNumber,
+        referrerEmail: patientDetails.referrerEmail,
+        consultingDepartment: patientDetails.consultingDepartment,
+        consultingDoctor: patientDetails.consultingDoctor,
+
+        // Address
+        address: patientDetails.address,
+        city: patientDetails.city,
+        pinCode: patientDetails.pinCode,
+        state: patientDetails.state,
+        country: patientDetails.country,
+        district: patientDetails.district,
+        isInternationalPatient: patientDetails.isInternationalPatient || false,
+
+        // Photo
+        photo: patientDetails.photo || null,
+
+        // Details
+        fatherName: patientDetails.fatherName,
+        motherName: patientDetails.motherName,
+        spouseName: patientDetails.spouseName,
+        education: patientDetails.education,
+        alternateContact: patientDetails.alternateContact,
+        birthWeight: patientDetails.birthWeight,
+        occupation: patientDetails.occupation,
+        religion: patientDetails.religion,
+        ivrLanguage: patientDetails.ivrLanguage,
+
+        // Notes
+        reviewNotes: patientDetails.reviewNotes,
+      };
+      console.log(mappedFormData, "mapped form data")
+      setPatientFormData(mappedFormData);
+      setCurrentPatientId(userId);
+      setIsEditMode(true);
+      setShowAddPatientModal(true);
+      hideLoader();
+    } catch (error) {
+      setError("Failed to fetch patient details: " + error.message);
+      hideLoader();
+    }
+  };
+
+  // Modify handleAddPatient to handle both create and update
   const handleAddPatient = async (formData) => {
     try {
       showLoader();
-      const createdPatient = await patientService.createPatient(formData);
-      setSuccess("Pacjent został dodany pomyślnie");
+      let response;
+      
+      if (isEditMode && currentPatientId) {
+        response = await patientService.updatePatient(currentPatientId, formData);
+        setSuccess("Patient updated successfully");
+      } else {
+        response = await patientService.createPatient(formData);
+        setSuccess("Patient added successfully");
+      }
+      
       hideLoader();
-      fetchUsers(); // Refresh the users list
+      fetchUsers();
       setShowAddPatientModal(false);
+      setIsEditMode(false);
+      setCurrentPatientId(null);
+      setPatientFormData({});
 
-      // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess("");
       }, 3000);
     } catch (err) {
       setError(
-        "Failed to add patient: " +
-          (err.response?.data?.error ||
-            err.response?.data?.message ||
-            "Unknown error")
+        "Failed to " + (isEditMode ? "update" : "add") + " patient: " +
+        (err.response?.data?.error || err.response?.data?.message || "Unknown error")
       );
       hideLoader();
     }
@@ -594,22 +674,20 @@ export default function UserManagement() {
                               Schedule
                             </button>
                           )}
-                          {isAdmin && (
-                            <button
-                              onClick={() => handleDeleteClick(user)}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              Delete
-                            </button>
-                          )}
                           {user.role === "patient" && (
                             <button
-                              onClick={() => handleEditUser(user)}
+                              onClick={() => handleEditPatient(user._id)}
                               className="text-blue-600 hover:text-blue-900"
                             >
                               Edit
                             </button>
                           )}
+                          <button
+                            onClick={() => handleDeleteClick(user)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
                         </>
                       )}
                       {user.deleted && isAdmin && (
@@ -831,10 +909,17 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg w-3/4 max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b p-4">
-              <h2 className="text-xl font-bold">Add New Patient</h2>
+              <h2 className="text-xl font-bold">
+                {isEditMode ? "Edit Patient" : "Add New Patient"}
+              </h2>
               <button
                 className="text-gray-500 hover:text-gray-700"
-                onClick={() => setShowAddPatientModal(false)}
+                onClick={() => {
+                  setShowAddPatientModal(false);
+                  setIsEditMode(false);
+                  setCurrentPatientId(null);
+                  setPatientFormData({});
+                }}
               >
                 <svg
                   className="w-6 h-6"
@@ -853,8 +938,7 @@ export default function UserManagement() {
             </div>
 
             <div className="p-6">
-              {/* Wrap PatientStepForm with FormProvider here */}
-              <FormProvider>
+              <FormProvider initialData={patientFormData}>
                 <PatientStepFormWrapper
                   currentSubStep={currentSubStep}
                   goToSubStep={goToSubStep}
@@ -862,6 +946,7 @@ export default function UserManagement() {
                   subStepTitles={subStepTitles}
                   isEditMode={isEditMode}
                   handleAddPatient={handleAddPatient}
+                  patientFormData={patientFormData}
                 />
               </FormProvider>
             </div>
@@ -923,12 +1008,28 @@ function PatientStepFormWrapper({
   markStepAsCompleted,
   subStepTitles,
   isEditMode,
-  handleAddPatient
+  handleAddPatient,
+  patientFormData
 }) {
-   const [completedSteps, setCompletedSteps] = useState([]);
-  const { formData } = useFormContext();
-    // const [currentSubStep, setCurrentSubStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState([]);
+  const { formData, updateFormData } = useFormContext();
+  const [isInitialized, setIsInitialized] = useState(false);
+  console.log('Form Data:', patientFormData);
 
+  // Effect to pre-populate form data when in edit mode - only run once when entering edit mode
+  useEffect(() => {
+    if (isEditMode && patientFormData && !isInitialized) {
+      console.log('Updating form data with:', JSON.stringify(patientFormData, null, 2));
+      updateFormData(patientFormData);
+      setCompletedSteps(Array.from({ length: subStepTitles.length }, (_, i) => i));
+      setIsInitialized(true);
+    }
+    
+    // Reset initialization when exiting edit mode
+    if (!isEditMode) {
+      setIsInitialized(false);
+    }
+  }, [isEditMode, patientFormData, isInitialized, subStepTitles.length]);
 
   // This function connects the context's form data to the parent component
   const handleStepCompleted = () => {
@@ -939,7 +1040,7 @@ function PatientStepFormWrapper({
     if (currentSubStep === subStepTitles.length - 1) {
       handleAddPatient(formData);
     } else {
-      setCurrentSubStep(currentSubStep + 1);
+      goToSubStep(currentSubStep + 1);
     }
   };
 
@@ -950,6 +1051,7 @@ function PatientStepFormWrapper({
       markStepAsCompleted={handleStepCompleted}
       subStepTitles={subStepTitles}
       isEditMode={isEditMode}
+      completedSteps={completedSteps}
     />
   );
 }
