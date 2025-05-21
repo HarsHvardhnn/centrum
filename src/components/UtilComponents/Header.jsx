@@ -72,9 +72,9 @@ const Header = () => {
             <p className="text-xs text-white/80">Polska</p>
           </div>
         </div>
-        <button className="ml-2 hover:bg-primary rounded-full p-1">
+        {/* <button className="ml-2 hover:bg-primary rounded-full p-1">
           <ChevronDown size={18} />
-        </button>
+        </button> */}
       </div>
 
       <div className="flex items-center gap-4">

@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import HealthMetric from "./HealthMetric";
 
 const PatientProfile = ({ patient, setPatientData }) => {
-  console.log("patient", patient);
+  console.log("patien datast", patient);
   const [isEditingRoom, setIsEditingRoom] = useState(false);
   const [roomNumber, setRoomNumber] = useState(patient?.roomNumber || "28B");
 
@@ -56,11 +56,18 @@ const PatientProfile = ({ patient, setPatientData }) => {
       <div className="mb-6 flex flex-col items-center">
         <div className="relative mb-2">
           <div className="w-24 h-24 rounded-full bg-blue-100 overflow-hidden">
-            <img
-              src={patient?.avatar}
-              alt={patient.name}
-              className="w-full h-full object-cover"
-            />
+          {patient?.avatar ? (
+  <img
+    src={patient.avatar}
+    alt={patient.name}
+    className="w-full h-full object-cover"
+  />
+) : (
+  <div className="w-full h-full flex items-center justify-center bg-gray-300 text-white text-2xl font-semibold rounded-full">
+    {patient?.name?.charAt(0)?.toUpperCase() || "?"}
+  </div>
+)}
+
           </div>
           <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1 border-2 border-white">
             <div className="bg-white rounded-full p-0.5">

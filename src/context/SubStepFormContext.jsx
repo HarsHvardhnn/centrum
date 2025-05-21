@@ -18,6 +18,7 @@ export const FormProvider = ({ children, initialData }) => {
     ethnicity: "",
     otherHospitalIds: "",
     smsConsentAgreed: false,
+    appointmentSpecificDocument:"",
 
     consents: [],
     documents: [],

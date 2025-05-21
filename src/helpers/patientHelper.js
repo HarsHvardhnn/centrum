@@ -128,6 +128,7 @@ const patientService = {
     if (patientData.spouseName !== undefined) formData.append("spouseName", patientData.spouseName);
     if (patientData.state !== undefined) formData.append("state", patientData.state);
     if (patientData.treatmentCategory !== undefined) formData.append("treatmentCategory", patientData.treatmentCategory);
+    if (patientData.appointmentSpecificDocument !== undefined) formData.append("appointmentSpecificDocument", patientData.appointmentSpecificDocument);
 
     // Handle new documents to add (if any)
     if (patientData?.documents?.length) {

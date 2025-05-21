@@ -255,6 +255,7 @@ export default function UserManagement() {
           patientDetails.name?.first + " " + (patientDetails.name?.last || ""),
         email: patientDetails.email,
         mobileNumber: patientDetails.phone,
+        patient_id: patientDetails._id,
         dateOfBirth: patientDetails.dateOfBirth,
         motherTongue: patientDetails.motherTongue,
         govtId: patientDetails.govtId,
@@ -436,7 +437,7 @@ export default function UserManagement() {
                           setShowAddDoctorModal(true);
                         }}
                       >
-                        Add Doctor
+                        Dodaj  specjalista
                       </button>
                       <button
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
