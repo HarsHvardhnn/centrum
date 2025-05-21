@@ -130,6 +130,12 @@ const patientService = {
     if (patientData.treatmentCategory !== undefined) formData.append("treatmentCategory", patientData.treatmentCategory);
     if (patientData.appointmentSpecificDocument !== undefined) formData.append("appointmentSpecificDocument", patientData.appointmentSpecificDocument);
 
+    // Add health metrics
+    if (patientData.bloodPressure !== undefined) formData.append("bloodPressure", patientData.bloodPressure);
+    if (patientData.temperature !== undefined) formData.append("temperature", patientData.temperature);
+    if (patientData.weight !== undefined) formData.append("weight", patientData.weight);
+    if (patientData.height !== undefined) formData.append("height", patientData.height);
+
     // Handle new documents to add (if any)
     if (patientData?.documents?.length) {
       patientData.documents.forEach((file) => {

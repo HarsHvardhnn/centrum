@@ -47,7 +47,15 @@ const PatientProfile = ({ patient, setPatientData }) => {
     };
 
     const field = mappings[metric] || metric;
-    handleStatusChange(field, value);
+    
+    // Update the patient data with the new value
+    const updatedData = {
+      ...patient,
+      [field]: value
+    };
+    
+    // Update local state
+    setPatientData(updatedData);
   };
 
   return (
@@ -202,32 +210,28 @@ const PatientProfile = ({ patient, setPatientData }) => {
         <div className="col-span-1">
           <HealthMetric
             title="Ciśnienie krwi"
-            value={patient.bloodPressure}
-            percentage={30}
+            value={patient.bloodPressure || "N/A"}
             onUpdate={handleMetricUpdate}
           />
         </div>
         <div className="col-span-1">
           <HealthMetric
             title="Temperatura"
-            value={patient.temperature}
-            percentage={45}
+            value={patient.temperature || "N/A"}
             onUpdate={handleMetricUpdate}
           />
         </div>
         <div className="col-span-1">
           <HealthMetric
             title="Waga"
-            value={patient.weight}
-            percentage={60}
+            value={patient.weight || "N/A"}
             onUpdate={handleMetricUpdate}
           />
         </div>
         <div className="col-span-1">
           <HealthMetric
             title="Wzrost"
-            value={patient.height}
-            percentage={75}
+            value={patient.height || "N/A"}
             onUpdate={handleMetricUpdate}
           />
         </div>

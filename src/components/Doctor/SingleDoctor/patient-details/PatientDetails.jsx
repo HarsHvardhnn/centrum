@@ -285,6 +285,7 @@ const PatientDetailsPage = () => {
       const response = await appointmentHelper.updateAppointmentDetails(
         currentAppointmentId,
         {
+          patientData,
           consultationData,
           medications,
           tests,

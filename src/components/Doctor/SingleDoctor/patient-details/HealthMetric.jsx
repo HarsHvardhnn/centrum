@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const HealthMetric = ({ title, value, percentage, onUpdate }) => {
+const HealthMetric = ({ title, value, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
 
@@ -38,13 +38,6 @@ const HealthMetric = ({ title, value, percentage, onUpdate }) => {
             <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
           </svg>
         )}
-      </div>
-      <p className="text-xs text-gray-500">{percentage}%</p>
-      <div className="relative w-full h-1.5 bg-gray-200 rounded-full mt-1">
-        <div
-          className="absolute h-1.5 bg-[#99d1d1] rounded-full"
-          style={{ width: `${percentage}%` }}
-        ></div>
       </div>
 
       {isEditing ? (
