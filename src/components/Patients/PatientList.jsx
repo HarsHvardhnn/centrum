@@ -23,40 +23,57 @@ import { useNavigate } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
 
 // Billing Confirmation Modal Component
-const BillingConfirmationModal = ({ isOpen, onClose, onConfirm, patientServicesData, patientName, appointmentId }) => {
+const BillingConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  patientServicesData,
+  patientName,
+  appointmentId,
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [taxPercentage, setTaxPercentage] = useState(18); // Default tax rate (e.g., GST)
   const [additionalCharges, setAdditionalCharges] = useState(0);
   const [additionalChargeNote, setAdditionalChargeNote] = useState("");
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("cash"); // Default payment method
-  
+
   if (!isOpen) return null;
-  
+
   // Extract services from the API response format
   const services = patientServicesData?.data?.services || [];
-  
+
   // Calculate subtotal from services
   const subtotal = services.reduce((sum, serviceItem) => {
     const servicePrice = parseFloat(serviceItem.service.price || 0);
     return sum + servicePrice;
   }, 0);
-  
+
   // Calculate tax amount
   const taxAmount = (subtotal * taxPercentage) / 100;
-  
+
   // Calculate total with tax, additional charges, and discount
-  const totalAmount = (subtotal + taxAmount + parseFloat(additionalCharges || 0) - parseFloat(discount || 0)).toFixed(2);
-  
+  const totalAmount = (
+    subtotal +
+    taxAmount +
+    parseFloat(additionalCharges || 0) -
+    parseFloat(discount || 0)
+  ).toFixed(2);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Generuj rachunek dla {patientServicesData?.data?.patient?.name?.first} {patientServicesData?.data?.patient?.name?.last}</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Generuj rachunek dla{" "}
+            {patientServicesData?.data?.patient?.name?.first}{" "}
+            {patientServicesData?.data?.patient?.name?.last}
+          </h3>
           <p className="text-sm text-gray-500 mb-4">
-            Utworzy to rachunek dla pacjenta na podstawie wybranych przez niego usług.
+            Utworzy to rachunek dla pacjenta na podstawie wybranych przez niego
+            usług.
           </p>
-          
+
           {isLoading ? (
             <div className="py-4 flex justify-center">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-500"></div>
@@ -67,19 +84,28 @@ const BillingConfirmationModal = ({ isOpen, onClose, onConfirm, patientServicesD
                 <div className="bg-gray-50 px-4 py-2 border-b">
                   <h4 className="font-medium text-sm">Usługi</h4>
                 </div>
-                
+
                 {services && services.length > 0 ? (
                   <div className="divide-y">
                     {services.map((serviceItem, index) => (
-                      <div key={index} className="px-4 py-2 flex justify-between items-center">
+                      <div
+                        key={index}
+                        className="px-4 py-2 flex justify-between items-center"
+                      >
                         <div>
-                          <p className="font-medium text-sm">{serviceItem.service.title}</p>
-                          <p className="text-xs text-gray-500">Status: {serviceItem.status}</p>
+                          <p className="font-medium text-sm">
+                            {serviceItem.service.title}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Status: {serviceItem.status}
+                          </p>
                         </div>
-                        <p className="text-sm">zł{parseFloat(serviceItem.service.price).toFixed(2)}</p>
+                        <p className="text-sm">
+                          zł{parseFloat(serviceItem.service.price).toFixed(2)}
+                        </p>
                       </div>
                     ))}
-                    
+
                     <div className="px-4 py-2 flex justify-between items-center bg-gray-50">
                       <p className="font-medium">Suma częściowa</p>
                       <p className="font-medium">zł{subtotal.toFixed(2)}</p>
@@ -91,7 +117,7 @@ const BillingConfirmationModal = ({ isOpen, onClose, onConfirm, patientServicesD
                   </div>
                 )}
               </div>
-              
+
               {/* Tax, Additional Charges, and Discount Fields */}
               <div className="space-y-3 mb-4">
                 <div>
@@ -104,7 +130,9 @@ const BillingConfirmationModal = ({ isOpen, onClose, onConfirm, patientServicesD
                       min="0"
                       max="100"
                       value={taxPercentage}
-                      onChange={(e) => setTaxPercentage(parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        setTaxPercentage(parseFloat(e.target.value) || 0)
+                      }
                       className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                     />
                     <span className="ml-2 text-sm text-gray-500">
@@ -112,7 +140,7 @@ const BillingConfirmationModal = ({ isOpen, onClose, onConfirm, patientServicesD
                     </span>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Dodatkowe opłaty (zł)
@@ -122,7 +150,9 @@ const BillingConfirmationModal = ({ isOpen, onClose, onConfirm, patientServicesD
                       type="number"
                       min="0"
                       value={additionalCharges}
-                      onChange={(e) => setAdditionalCharges(parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        setAdditionalCharges(parseFloat(e.target.value) || 0)
+                      }
                       className="block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                     />
                     <input
@@ -134,7 +164,7 @@ const BillingConfirmationModal = ({ isOpen, onClose, onConfirm, patientServicesD
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Rabat (zł)
@@ -143,11 +173,13 @@ const BillingConfirmationModal = ({ isOpen, onClose, onConfirm, patientServicesD
                     type="number"
                     min="0"
                     value={discount}
-                    onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setDiscount(parseFloat(e.target.value) || 0)
+                    }
                     className="block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                   />
                 </div>
-                
+
                 {/* Payment Method */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -166,17 +198,19 @@ const BillingConfirmationModal = ({ isOpen, onClose, onConfirm, patientServicesD
                   </select>
                 </div>
               </div>
-              
+
               {/* Total */}
               <div className="bg-gray-100 p-4 rounded-lg mb-4">
                 <div className="flex justify-between items-center">
                   <p className="font-semibold text-lg">Łączna kwota</p>
-                  <p className="font-bold text-lg text-teal-600">zł{totalAmount}</p>
+                  <p className="font-bold text-lg text-teal-600">
+                    zł{totalAmount}
+                  </p>
                 </div>
               </div>
             </>
           )}
-          
+
           <div className="flex justify-end gap-2 mt-4">
             <button
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
@@ -186,16 +220,18 @@ const BillingConfirmationModal = ({ isOpen, onClose, onConfirm, patientServicesD
             </button>
             <button
               className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center"
-              onClick={() => onConfirm({
-                subtotal,
-                taxPercentage,
-                taxAmount,
-                additionalCharges,
-                additionalChargeNote,
-                discount,
-                totalAmount,
-                paymentMethod
-              })}
+              onClick={() =>
+                onConfirm({
+                  subtotal,
+                  taxPercentage,
+                  taxAmount,
+                  additionalCharges,
+                  additionalChargeNote,
+                  discount,
+                  totalAmount,
+                  paymentMethod,
+                })
+              }
               disabled={isLoading || services.length === 0}
             >
               <DollarSign size={16} className="mr-1" />
@@ -211,37 +247,35 @@ const BillingConfirmationModal = ({ isOpen, onClose, onConfirm, patientServicesD
 // ActionDropdown component using portal
 const ActionDropdown = ({ isOpen, onClose, position, children }) => {
   const dropdownRef = useRef(null);
-  
+
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         onClose();
       }
     };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    
+
+    document.addEventListener("mousedown", handleClickOutside);
+
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, onClose]);
-  
+
   if (!isOpen) return null;
-  
+
   return createPortal(
-    <div 
+    <div
       className="fixed w-48 bg-white rounded-md shadow-lg z-50 border"
-      style={{ 
-        top: `${position.y}px`, 
-        left: `${position.x}px`
+      style={{
+        top: `${position.y}px`,
+        left: `${position.x}px`,
       }}
       ref={dropdownRef}
     >
-      <div className="py-1">
-        {children}
-      </div>
+      <div className="py-1">{children}</div>
     </div>,
     document.body
   );
@@ -261,7 +295,7 @@ const billingHelper = {
       console.error("Error generating bill:", error);
       throw error;
     }
-  }
+  },
 };
 
 function LabAppointmentsContent({ clinic }) {
@@ -279,7 +313,7 @@ function LabAppointmentsContent({ clinic }) {
     total: 0,
     page: 1,
     pages: 1,
-    limit: 10
+    limit: 10,
   });
 
   // Search and filter states
@@ -288,7 +322,7 @@ function LabAppointmentsContent({ clinic }) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [dateRange, setDateRange] = useState({
     startDate: null,
-    endDate: null
+    endDate: null,
   });
 
   // State for tracking which dropdown is open
@@ -302,7 +336,8 @@ function LabAppointmentsContent({ clinic }) {
         ...(statusFilter !== "All" && { status: statusFilter }),
         ...(dateRange.startDate && { startDate: dateRange.startDate }),
         ...(dateRange.endDate && { endDate: dateRange.endDate }),
-        ...(user?.role === "doctor" && { doctorId: user?.id })
+        ...(user?.role === "doctor" && { doctorId: user?.id }),
+        ...(clinic && { isClinicIp: clinic }),
       };
 
       const response = await appointmentHelper.getAllAppointments(
@@ -313,6 +348,7 @@ function LabAppointmentsContent({ clinic }) {
       );
 
       if (response.success) {
+        console.log(response.data);
         setAppointments(response.data);
         setPagination(response.pagination);
       } else {
@@ -328,19 +364,26 @@ function LabAppointmentsContent({ clinic }) {
 
   useEffect(() => {
     fetchAppointments();
-  }, [searchQuery, statusFilter, dateRange, user?.id]);
+  }, [searchQuery, statusFilter, dateRange, user?.id, clinic]);
 
   // Filter appointments based on search query and status filter
   const filteredAppointments = useMemo(() => {
     return appointments.filter((appointment) => {
       const matchesSearch = searchQuery
-        ? appointment.patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          appointment.patient.patientId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (appointment.patient.disease || "").toLowerCase().includes(searchQuery.toLowerCase())
+        ? appointment.patient?.name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          appointment.patient?.patientId
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          (appointment.patient.disease || "")
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())
         : true;
 
       const matchesStatus =
-        statusFilter === "All" || appointment.status === statusFilter.toLowerCase();
+        statusFilter === "All" ||
+        appointment.status === statusFilter.toLowerCase();
 
       return matchesSearch && matchesStatus;
     });
@@ -351,8 +394,11 @@ function LabAppointmentsContent({ clinic }) {
     try {
       showLoader();
       // Fetch patient services for this appointment
-      const response = await patientServicesHelper.getPatientServices(patientId, { appointmentId });
-      
+      const response = await patientServicesHelper.getPatientServices(
+        patientId,
+        { appointmentId }
+      );
+
       // Store the entire response data
       setBillingServices(response);
       setShowBillingModal(true);
@@ -368,15 +414,16 @@ function LabAppointmentsContent({ clinic }) {
   const confirmBilling = async (billingData) => {
     try {
       showLoader();
-      
+
       // Format services data
-      const formattedServices = billingServices?.data?.services?.map(service => ({
-        serviceId: service.service._id,
-        title: service.service.title,
-        price: service.service.price,
-        status: service.status
-      })) || [];
-      
+      const formattedServices =
+        billingServices?.data?.services?.map((service) => ({
+          serviceId: service.service._id,
+          title: service.service.title,
+          price: service.service.price,
+          status: service.status,
+        })) || [];
+
       // Prepare billing payload according to the API documentation
       const billingPayload = {
         services: formattedServices,
@@ -387,22 +434,28 @@ function LabAppointmentsContent({ clinic }) {
         additionalCharges: parseFloat(billingData.additionalCharges) || 0,
         additionalChargeNote: billingData.additionalChargeNote || "",
         totalAmount: billingData.totalAmount,
-        paymentMethod: billingData.paymentMethod
+        paymentMethod: billingData.paymentMethod,
       };
-      
+
       // Call the API to generate the bill
       await billingHelper.generateBill(selectedAppointment.id, billingPayload);
-      
+
       // Update local state
-      setAppointments(appointments.map(apt => 
-        apt.id === selectedAppointment.id ? { 
-          ...apt, 
-          status: "billed",
-          billingDetails: billingData
-        } : apt
-      ));
-      
-      toast.success(`Rachunek wygenerowany pomyślnie na kwotę zł${billingData.totalAmount}`);
+      setAppointments(
+        appointments.map((apt) =>
+          apt.id === selectedAppointment.id
+            ? {
+                ...apt,
+                status: "billed",
+                billingDetails: billingData,
+              }
+            : apt
+        )
+      );
+
+      toast.success(
+        `Rachunek wygenerowany pomyślnie na kwotę zł${billingData.totalAmount}`
+      );
       setShowBillingModal(false);
       hideLoader();
     } catch (error) {
@@ -415,7 +468,7 @@ function LabAppointmentsContent({ clinic }) {
   // Toggle dropdown menu with position calculation
   const toggleActionMenu = (id, event) => {
     event.stopPropagation();
-    
+
     if (openActionMenu === id) {
       setOpenActionMenu(null);
     } else {
@@ -423,7 +476,7 @@ function LabAppointmentsContent({ clinic }) {
       // Calculate position so dropdown appears to the right of the button
       setDropdownPosition({
         x: Math.min(rect.right - 20, window.innerWidth - 200), // Ensure it doesn't go off-screen
-        y: rect.bottom + window.scrollY + 5 // Position below the button with a small gap
+        y: rect.bottom + window.scrollY + 5, // Position below the button with a small gap
       });
       setOpenActionMenu(id);
     }
@@ -437,9 +490,7 @@ function LabAppointmentsContent({ clinic }) {
             <h1 className="text-2xl font-bold mb-1">
               {clinic ? "Wizyty w Przychodni" : "Wizyty w Laboratorium"}
             </h1>
-            <p className="text-gray-600 mb-4">
-              Wyświetlane: Wszystkie wizyty
-            </p>
+            <p className="text-gray-600 mb-4">Wyświetlane: Wszystkie wizyty</p>
           </div>
 
           <div className="flex items-center gap-2 mb-6 w-[50%]">
@@ -469,56 +520,75 @@ function LabAppointmentsContent({ clinic }) {
               {isFilterOpen && (
                 <div className="absolute right-0 mt-2 bg-white border rounded-md shadow-lg z-10 min-w-[200px]">
                   <div className="p-2">
-                    <h3 className="font-medium px-3 py-2">Filtruj według statusu</h3>
+                    <h3 className="font-medium px-3 py-2">
+                      Filtruj według statusu
+                    </h3>
                     <div className="space-y-2 px-3 py-1">
-                      {["All", "Booked", "Cancelled", "Completed"].map((status) => (
-                        <label
-                          key={status}
-                          className="flex items-center gap-2 cursor-pointer"
-                        >
-                          <input
-                            type="radio"
-                            name="status"
-                            checked={statusFilter === status}
-                            onChange={() => {
-                              setStatusFilter(status);
-                              setIsFilterOpen(false);
-                            }}
-                            className="rounded-full"
-                          />
-                          <span>{status === "All" ? "Wszystkie" : 
-                                 status === "Booked" ? "Zarezerwowane" : 
-                                 status === "Cancelled" ? "Anulowane" : 
-                                 status === "Completed" ? "Zakończone" : status}</span>
-                        </label>
-                      ))}
+                      {["All", "Booked", "Cancelled", "Completed"].map(
+                        (status) => (
+                          <label
+                            key={status}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="radio"
+                              name="status"
+                              checked={statusFilter === status}
+                              onChange={() => {
+                                setStatusFilter(status);
+                                setIsFilterOpen(false);
+                              }}
+                              className="rounded-full"
+                            />
+                            <span>
+                              {status === "All"
+                                ? "Wszystkie"
+                                : status === "Booked"
+                                ? "Zarezerwowane"
+                                : status === "Cancelled"
+                                ? "Anulowane"
+                                : status === "Completed"
+                                ? "Zakończone"
+                                : status}
+                            </span>
+                          </label>
+                        )
+                      )}
                     </div>
 
                     <div className="border-t mt-2 pt-2">
                       <h3 className="font-medium px-3 py-2">Zakres dat</h3>
                       <div className="space-y-2 px-3 py-1">
                         <div>
-                          <label className="text-sm text-gray-600">Data początkowa</label>
+                          <label className="text-sm text-gray-600">
+                            Data początkowa
+                          </label>
                           <input
                             type="date"
                             className="w-full mt-1 p-2 border rounded"
                             value={dateRange.startDate || ""}
-                            onChange={(e) => setDateRange(prev => ({
-                              ...prev,
-                              startDate: e.target.value
-                            }))}
+                            onChange={(e) =>
+                              setDateRange((prev) => ({
+                                ...prev,
+                                startDate: e.target.value,
+                              }))
+                            }
                           />
                         </div>
                         <div>
-                          <label className="text-sm text-gray-600">Data końcowa</label>
+                          <label className="text-sm text-gray-600">
+                            Data końcowa
+                          </label>
                           <input
                             type="date"
                             className="w-full mt-1 p-2 border rounded"
                             value={dateRange.endDate || ""}
-                            onChange={(e) => setDateRange(prev => ({
-                              ...prev,
-                              endDate: e.target.value
-                            }))}
+                            onChange={(e) =>
+                              setDateRange((prev) => ({
+                                ...prev,
+                                endDate: e.target.value,
+                              }))
+                            }
                           />
                         </div>
                       </div>
@@ -547,7 +617,9 @@ function LabAppointmentsContent({ clinic }) {
             <thead>
               <tr className="text-left text-gray-500 border-b bg-gray-50">
                 <th className="px-4 py-3 w-[16%] font-medium">Pacjent</th>
-                <th className="px-4 py-3 w-[12%] font-medium">Data i godzina</th>
+                <th className="px-4 py-3 w-[12%] font-medium">
+                  Data i godzina
+                </th>
                 <th className="px-4 py-3 w-[7%] font-medium">Tryb</th>
                 <th className="px-4 py-3 w-[8%] font-medium">Choroba</th>
                 <th className="px-4 py-3 w-[16%] font-medium">Lekarz</th>
@@ -560,17 +632,26 @@ function LabAppointmentsContent({ clinic }) {
             <tbody>
               {filteredAppointments.map((appointment) => (
                 <tr key={appointment.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3 truncate">
+                  <td
+                    className="px-4 py-3 truncate cursor-pointer"
+                    onClick={() =>
+                      navigate(
+                        `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                      )
+                    }
+                  >
                     <div className="flex items-center">
                       <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden mr-2 flex-shrink-0">
                         <img
-                          src={appointment.patient.profilePicture || "/assets/images/default-avatar.png"}
-                          alt={appointment.patient.name}
+                          src={appointment.patient?.profilePicture || ""}
+                          alt={appointment.patient?.name}
                           className="h-full w-full object-cover"
                         />
                       </div>
                       <div className="min-w-0">
-                        <div className="font-medium truncate">{appointment.patient.name}</div>
+                        <div className="font-medium truncate">
+                          {appointment.patient?.name}
+                        </div>
                         <div className="text-sm text-gray-500 truncate">
                           {appointment.patient.patientId}
                         </div>
@@ -586,22 +667,40 @@ function LabAppointmentsContent({ clinic }) {
                     </div>
                   </td>
                   <td className="px-4 py-3 truncate">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-                      appointment.mode === 'online' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : appointment.mode === 'offline'
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {appointment.mode === 'online' ? 'Online' : 
-                       appointment.mode === 'offline' ? 'Stacjonarnie' : appointment.mode}
+                    <span
+                      title={
+                        appointment.mode === "online"
+                          ? "Click to join meeting"
+                          : ""
+                      }
+                      onClick={() => {
+                        if (appointment.mode === "online") {
+                          window.open(appointment.meetLink, "_blank");
+                        }
+                      }}
+                      className={`px-2 py-1 rounded-full text-xs font-medium inline-block transition-colors ${
+                        appointment.mode === "online"
+                          ? "bg-blue-100 text-blue-800 cursor-pointer hover:bg-blue-200"
+                          : appointment.mode === "offline"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {appointment.mode === "online"
+                        ? "Online"
+                        : appointment.mode === "offline"
+                        ? "Stacjonarnie"
+                        : appointment.mode}
                     </span>
                   </td>
+
                   <td className="px-4 py-3 truncate">
                     {appointment.patient.disease || "-"}
                   </td>
                   <td className="px-4 py-3 truncate">
-                    <div className="font-medium truncate">{appointment.doctor?.name || "-"}</div>
+                    <div className="font-medium truncate">
+                      {appointment.doctor?.name || "-"}
+                    </div>
                   </td>
                   <td className="px-4 py-3 truncate text-center">
                     {appointment.patient.age || "N/A"} lat
@@ -620,28 +719,35 @@ function LabAppointmentsContent({ clinic }) {
                     </span>
                   </td> */}
                   <td className="px-4 py-3 text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-                      appointment.status === 'booked' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : appointment.status === 'completed'
-                        ? 'bg-green-100 text-green-800'
-                        : appointment.status === 'cancelled'
-                        ? 'bg-red-100 text-red-800'
-                        : appointment.status === 'billed'
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {appointment.status === 'booked' ? 'Zarezerwowana' :
-                       appointment.status === 'completed' ? 'Zakończona' :
-                       appointment.status === 'cancelled' ? 'Anulowana' :
-                       appointment.status === 'billed' ? 'Rozliczona' :
-                       appointment.status === 'checkedIn' ? 'W trakcie leczenia' :
-                       appointment.status}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
+                        appointment.status === "booked"
+                          ? "bg-blue-100 text-blue-800"
+                          : appointment.status === "completed"
+                          ? "bg-green-100 text-green-800"
+                          : appointment.status === "cancelled"
+                          ? "bg-red-100 text-red-800"
+                          : appointment.status === "billed"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {appointment.status === "booked"
+                        ? "Zarezerwowana"
+                        : appointment.status === "completed"
+                        ? "Zakończona"
+                        : appointment.status === "cancelled"
+                        ? "Anulowana"
+                        : appointment.status === "billed"
+                        ? "Rozliczona"
+                        : appointment.status === "checkedIn"
+                        ? "W trakcie leczenia"
+                        : appointment.status}
                     </span>
                   </td>
                   <td className="px-4 py-3 relative">
                     <div className="flex justify-center">
-                      <button 
+                      <button
                         className="text-gray-500 hover:text-gray-700 focus:outline-none"
                         onClick={(e) => toggleActionMenu(appointment.id, e)}
                       >
@@ -686,7 +792,7 @@ function LabAppointmentsContent({ clinic }) {
           clinic={clinic}
           appointmentId={selectedAppointment?.id}
         />
-        
+
         {/* Billing Confirmation Modal */}
         <BillingConfirmationModal
           isOpen={showBillingModal}
@@ -708,20 +814,27 @@ function LabAppointmentsContent({ clinic }) {
               <button
                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                 onClick={() => {
-                  const appointment = appointments.find(apt => apt.id === openActionMenu);
-                  navigate(`/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`);
+                  const appointment = appointments.find(
+                    (apt) => apt.id === openActionMenu
+                  );
+                  navigate(
+                    `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                  );
                   setOpenActionMenu(null);
                 }}
               >
                 <Eye size={16} className="mr-2" />
                 Zobacz szczegóły
               </button>
-              
-              {appointments.find(apt => apt.id === openActionMenu)?.status === 'booked' && (
+
+              {appointments.find((apt) => apt.id === openActionMenu)?.status ===
+                "booked" && (
                 <button
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                   onClick={() => {
-                    const appointment = appointments.find(apt => apt.id === openActionMenu);
+                    const appointment = appointments.find(
+                      (apt) => apt.id === openActionMenu
+                    );
                     setSelectedAppointment(appointment);
                     setShowCheckin(true);
                     setOpenActionMenu(null);
@@ -731,12 +844,16 @@ function LabAppointmentsContent({ clinic }) {
                   Zamelduj
                 </button>
               )}
-              
-              {['checkedIn', 'booked'].includes(appointments.find(apt => apt.id === openActionMenu)?.status) && (
+
+              {["checkedIn", "booked"].includes(
+                appointments.find((apt) => apt.id === openActionMenu)?.status
+              ) && (
                 <button
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                   onClick={() => {
-                    const appointment = appointments.find(apt => apt.id === openActionMenu);
+                    const appointment = appointments.find(
+                      (apt) => apt.id === openActionMenu
+                    );
                     setSelectedAppointment(appointment);
                     handleBillPatient(appointment.id, appointment.patient.id);
                     setOpenActionMenu(null);
