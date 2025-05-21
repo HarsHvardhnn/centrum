@@ -78,16 +78,13 @@ const PatientDetailsPage = () => {
     phone: "",
     birthDate: "",
     disease: "",
-    avatar: "https://randomuser.me/api/portraits/men/75.jpg",
+    avatar: null,
     isInternationalPatient: false,
     notes: "",
-    roomNumber: "",
-    riskStatus: "Ryzykowny",
-    treatmentStatus: "W trakcie leczenia",
-    bloodPressure: "141/90 mmHg",
-    temperature: "29°C",
-    weight: "78kg",
-    height: "170 cm",
+    bloodPressure: null,
+    temperature: null,
+    weight: null,
+    height: null
   });
 
   // Consultation state (now tied to appointment)
@@ -150,7 +147,14 @@ const PatientDetailsPage = () => {
         const patientResponse = await patientService.getPatientDetails(id);
         console.log("patientResponse", patientResponse);
 
-        setPatientData(patientResponse.patientData || {});
+        setPatientData(prevData => ({
+          ...prevData,
+          ...patientResponse.patientData,
+          bloodPressure: patientResponse.patientData?.bloodPressure || null,
+          temperature: patientResponse.patientData?.temperature || null,
+          weight: patientResponse.patientData?.weight || null,
+          height: patientResponse.patientData?.height || null
+        }));
 
         // Fetch patient services
         await fetchPatientServices();
@@ -200,15 +204,26 @@ const PatientDetailsPage = () => {
       const response = await appointmentHelper.getAppointmentById(appointmentId);
       
       if (response.data) {
-        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports } = response.data;
+        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports, patientData: appointmentPatientData } = response.data;
         
+        // Update consultation data
         setConsultationData(consultation || {});
         setMedications(appointmentMedications || []);
         setTests(appointmentTests || []);
         setReports(reports || []);
-        
-        // Note: We don't need to fetch services here as the useEffect will handle it
-        // when currentAppointmentId changes
+
+        // Update patient data if it exists in appointment, preserving existing data
+        if (appointmentPatientData) {
+          setPatientData(prevData => ({
+            ...prevData,
+            ...appointmentPatientData,
+            // Explicitly set health metrics from appointment data
+            bloodPressure: appointmentPatientData.bloodPressure || prevData.bloodPressure || null,
+            temperature: appointmentPatientData.temperature || prevData.temperature || null,
+            weight: appointmentPatientData.weight || prevData.weight || null,
+            height: appointmentPatientData.height || prevData.height || null
+          }));
+        }
       }
     } catch (error) {
       console.error("Error fetching appointment details:", error);

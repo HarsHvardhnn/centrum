@@ -39,23 +39,32 @@ const PatientProfile = ({ patient, setPatientData }) => {
 
   // Obsługa aktualizacji parametrów zdrowotnych
   const handleMetricUpdate = (metric, value) => {
-    const mappings = {
-      "blood pressure": "bloodPressure",
-      temperature: "temperature",
-      weight: "weight",
-      height: "height",
+    const fieldMappings = {
+      "Ciśnienie krwi": "bloodPressure",
+      "Temperatura": "temperature",
+      "Waga": "weight",
+      "Wzrost": "height"
     };
 
-    const field = mappings[metric] || metric;
-    
-    // Update the patient data with the new value
-    const updatedData = {
+    const field = fieldMappings[metric];
+    if (!field) return;
+
+    // Convert empty string to null, otherwise keep the numeric value
+    const numericValue = value === '' ? null : value;
+
+    const updatedPatient = {
       ...patient,
-      [field]: value
+      [field]: numericValue
     };
-    
-    // Update local state
-    setPatientData(updatedData);
+
+    // Update both local state and parent state
+    setPatientData(updatedPatient);
+  };
+
+  // Function to format display value with unit
+  const formatDisplayValue = (value, unit) => {
+    if (!value) return '';
+    return value;
   };
 
   return (
@@ -197,7 +206,8 @@ const PatientProfile = ({ patient, setPatientData }) => {
         </div>
         <div className="flex flex-col">
           <p className="text-xs text-gray-500">Data urodzenia</p>
-          <p className="text-sm">{patient.birthDate}</p>
+          <p className="text-sm">{new Date(patient.birthDate).toLocaleDateString("pl-PL")}</p>
+
         </div>
         <div className="flex flex-col">
           <p className="text-xs text-gray-500">Choroby</p>
@@ -205,34 +215,33 @@ const PatientProfile = ({ patient, setPatientData }) => {
         </div>
       </div>
 
-      {/* Parametry zdrowotne - edytowalne */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="col-span-1">
-          <HealthMetric
+      {/* Parametry zdrowotne */}
+      <div className="mt-6">
+        <h4 className="text-sm font-medium mb-3 text-gray-700">Parametry zdrowotne</h4>
+        <div className="space-y-3">
+          {/* <HealthMetric
             title="Ciśnienie krwi"
-            value={patient.bloodPressure || "N/A"}
+            value={formatDisplayValue(patient?.bloodPressure)}
             onUpdate={handleMetricUpdate}
-          />
-        </div>
-        <div className="col-span-1">
+            unit="mmHg"
+          /> */}
           <HealthMetric
             title="Temperatura"
-            value={patient.temperature || "N/A"}
+            value={formatDisplayValue(patient?.temperature)}
             onUpdate={handleMetricUpdate}
+            unit="°C"
           />
-        </div>
-        <div className="col-span-1">
           <HealthMetric
             title="Waga"
-            value={patient.weight || "N/A"}
+            value={formatDisplayValue(patient?.weight)}
             onUpdate={handleMetricUpdate}
+            unit="kg"
           />
-        </div>
-        <div className="col-span-1">
           <HealthMetric
             title="Wzrost"
-            value={patient.height || "N/A"}
+            value={formatDisplayValue(patient?.height)}
             onUpdate={handleMetricUpdate}
+            unit="cm"
           />
         </div>
       </div>
