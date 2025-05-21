@@ -532,6 +532,8 @@ const PatientList = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     total: 0,
@@ -539,6 +541,30 @@ const PatientList = () => {
   });
 
   const navigate = useNavigate();
+
+  const handleCancelClick = (e, appointmentId) => {
+    e.stopPropagation();
+    setSelectedAppointment(appointmentId);
+    setShowCancelModal(true);
+  };
+
+  const handleCancelAppointment = async () => {
+    try {
+      await appointmentHelper.cancelAppointment(selectedAppointment, "Canceled by user");
+      setShowCancelModal(false);
+      setSelectedAppointment(null);
+      // Refresh the patient list after cancellation
+      const response = await patientService.getSimpliefiedAppointmentsList({
+        page: pagination.currentPage,
+        limit: 10,
+        ...(user?.role === "doctor" && user?.id ? { doctor: user.id } : {})
+      });
+      setPatients(response.appointments);
+    } catch (err) {
+      console.error("Error canceling appointment:", err);
+      setError("Failed to cancel appointment. Please try again.");
+    }
+  };
 
   // Fetch patients on component mount and when page changes
   useEffect(() => {
@@ -557,9 +583,9 @@ const PatientList = () => {
           params.doctor = user.id;
         }
         
-        const response = await patientService.getSimpliefiedPatientsList(params);
+        const response = await patientService.getSimpliefiedAppointmentsList(params);
 
-        setPatients(response.patients);
+        setPatients(response.appointments);
         setPagination({
           currentPage: response.currentPage,
           total: response.total,
@@ -649,6 +675,32 @@ const PatientList = () => {
         </button>
       </div>
 
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-medium mb-4">Potwierdź anulowanie</h3>
+            <p className="text-gray-600 mb-6">Czy na pewno chcesz anulować tę wizytę? Tej operacji nie można cofnąć.</p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setSelectedAppointment(null);
+                }}
+              >
+                Anuluj
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                onClick={handleCancelAppointment}
+              >
+                Potwierdź
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="p-8 text-center text-gray-500">Loading patients...</div>
       ) : error ? (
@@ -660,7 +712,7 @@ const PatientList = () => {
           <table className="w-full">
             <thead>
               <tr>
-                <th className="py-3 px-4 text-left">
+                {/* <th className="py-3 px-4 text-left">
                   <input
                     type="checkbox"
                     className="rounded border-gray-300"
@@ -670,7 +722,7 @@ const PatientList = () => {
                     }
                     onChange={toggleSelectAll}
                   />
-                </th>
+                </th> */}
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   Imię i Nazwisko Pacjenta
                 </th>
@@ -697,16 +749,16 @@ const PatientList = () => {
             </thead>
             <tbody>
               {patients.map((patient) => (
-                <tr key={patient.id} className="hover:bg-gray-50" onClick={() => navigate(`/patients-details/${patient._id}`)}>
-                  <td className="py-4 px-4">
+                <tr key={patient.id} className="hover:bg-gray-50" >
+                  {/* <td className="py-4 px-4">
                     <input
                       type="checkbox"
                       className="rounded border-gray-300"
                       checked={selectedPatients.includes(patient.id)}
                       onChange={() => toggleSelectPatient(patient.id)}
                     />
-                  </td>
-                  <td className="py-4 px-4">
+                  </td> */}
+                  <td className="py-4 px-4 cursor-pointer" onClick={() => navigate(`/patients-details/${patient.patient_id}?appointmentId=${patient._id}`)} >
                     <div className="font-medium">{patient.name || "N/A"}</div>
                     <div className="text-sm text-gray-500">
                       {patient.username || "N/A"}
@@ -729,6 +781,12 @@ const PatientList = () => {
                             ? "bg-blue-100 text-blue-800"
                             : patient.status === "recovered"
                             ? "bg-green-100 text-green-800"
+                            : patient.status === "booked"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : patient.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : patient.status === "canceled"
+                            ? "bg-red-100 text-red-800"
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
@@ -745,14 +803,16 @@ const PatientList = () => {
                     {patient.date || "N/A"}
                   </td>
                   <td className="py-4 px-4">
-                    <div className="flex gap-2">
-                      <button className="text-gray-500">
+                   {
+                    patient.status === "booked" && (
+                      <button 
+                        className="text-red-500 hover:text-red-700"
+                        onClick={(e) => handleCancelClick(e, patient._id)}
+                      >
                         <Trash2 size={16} />
                       </button>
-                      <button className="text-gray-500">
-                        <Edit size={16} />
-                      </button>
-                    </div>
+                    )
+                   }
                   </td>
                 </tr>
               ))}

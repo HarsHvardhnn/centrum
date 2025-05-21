@@ -29,13 +29,13 @@ const NewsCard = ({ article }) => {
         <div className="text-xs sm:text-sm text-gray-500 flex gap-4 items-center">
           <span>{article.date}</span>
           <span>{article.author}</span>
-          <span className="flex items-center">
+          {/* <span className="flex items-center">
             <Eye className="size-3 sm:size-4 lg:size-5 mr-1" /> {article.views} wyświetleń
           </span>
           <span className="flex items-center">
             <Heart className="size-3 sm:size-4 lg:size-5 mr-1 text-red-500" />{" "}
             {article.likes} polubień
-          </span>
+          </span> */}
         </div>
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif font-semibold text-main mt-2">
           {article.title}
@@ -85,7 +85,7 @@ const NewsList = ({ isNews, selectedCategory }) => {
   }, [isNews, selectedCategory]);
 
   const pageCount = Math.ceil(newsData.length / articlesPerPage);
-  const currentArticles = newsData.slice(
+  const  currentArticles = newsData.slice(
     currentPage * articlesPerPage,
     (currentPage + 1) * articlesPerPage
   );

@@ -30,15 +30,17 @@ export default function Doctors({
   const [showModal, setShowModal] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState(selectedDoctorId);
 
-  useEffect(()=>{
-    if(selectedDoctorId) {
-      const selectedDoctor = doctors.find(doctor => doctor.id === selectedDoctorId);
+  useEffect(() => {
+    if (selectedDoctorId) {
+      const selectedDoctor = doctors.find(
+        (doctor) => doctor.id === selectedDoctorId
+      );
       if (selectedDoctor) {
         setSelectedDoctor(selectedDoctor);
         handleBookAppointment(selectedDoctor);
       }
     }
-  },[selectedDoctorId, doctors])
+  }, [selectedDoctorId, doctors]);
   const [doctorProfile, setDoctorProfile] = useState(null);
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -75,7 +77,9 @@ export default function Doctors({
             doctor.name.first && doctor.name.last
               ? `${doctor.name.first} ${doctor.name.last}`
               : doctor.name, // Handle both object and string format
-          department: doctor?.specializations?.slice(0,2).map((spec)=>spec.name),
+          department: doctor?.specializations
+            ?.slice(0, 2)
+            .map((spec) => spec.name),
           image: doctor.image || "https://via.placeholder.com/400x500",
           experience: doctor.experience || "",
           social: {
@@ -86,7 +90,7 @@ export default function Doctors({
           consultationFee: doctor.consultationFee,
         }));
 
-        console.log("trans",transformedDoctors)
+        console.log("trans", transformedDoctors);
         setDoctors(transformedDoctors);
       } catch (err) {
         console.error("Błąd podczas pobierania lekarzy:", err);
@@ -103,12 +107,13 @@ export default function Doctors({
 
   useEffect(() => {
     if (user) {
-      setBookingForm(prev => ({
+      setBookingForm((prev) => ({
         ...prev,
         name: user.name || "",
         email: user.email || "",
-        phone: user?.phone?.startsWith("+48") ? user.phone.slice(3) : user?.phone || "",
-
+        phone: user?.phone?.startsWith("+48")
+          ? user.phone.slice(3)
+          : user?.phone || "",
       }));
     }
   }, [user]);
@@ -118,6 +123,7 @@ export default function Doctors({
       const response = await apiCaller("GET", `docs/profile/${doctorId}`);
       if (response.data.success) {
         setDoctorProfile(response.data.data);
+        console.log("doctorProfile", response.data.data);
       } else {
         console.error("Failed to fetch doctor profile");
       }
@@ -148,14 +154,16 @@ export default function Doctors({
   const handleBookAppointment = async (doctor) => {
     setSelectedDoctor(doctor);
     setShowModal(true);
-    
+
     try {
       // Fetch doctor profile
       await fetchDoctorProfile(doctor.id);
-      
+
       // Fetch next available date
-      const nextAvailableResponse = await doctorService.getNextAvailableDate(doctor.id);
-      
+      const nextAvailableResponse = await doctorService.getNextAvailableDate(
+        doctor.id
+      );
+
       if (nextAvailableResponse.success && nextAvailableResponse.data) {
         // Set the next available date
         setSelectedDate(nextAvailableResponse.data.nextAvailableDate);
@@ -165,11 +173,16 @@ export default function Doctors({
         // If no available date found, use current date
         setSelectedDate(new Date().toISOString().split("T")[0]);
         // Fetch slots for current date
-        await fetchAvailableSlots(doctor.id, new Date().toISOString().split("T")[0]);
+        await fetchAvailableSlots(
+          doctor.id,
+          new Date().toISOString().split("T")[0]
+        );
       }
     } catch (error) {
       console.error("Error fetching doctor availability:", error);
-      toast.error("Nie udało się pobrać dostępnych terminów. Spróbuj ponownie później.");
+      toast.error(
+        "Nie udało się pobrać dostępnych terminów. Spróbuj ponownie później."
+      );
     }
   };
 
@@ -273,7 +286,11 @@ export default function Doctors({
       };
 
       // Make API call to book appointment
-      const response = await apiCaller  ("POST", "appointments/book", appointmentData);
+      const response = await apiCaller(
+        "POST",
+        "appointments/book",
+        appointmentData
+      );
 
       // Handle success
       console.log("Appointment booked successfully:", response.data);
@@ -326,12 +343,12 @@ export default function Doctors({
   // Calculate dates for the next 7 days based on weekOffset
   const nextDays = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
-    date.setDate(date.getDate() + i + (weekOffset * 7));
+    date.setDate(date.getDate() + i + weekOffset * 7);
     return date.toISOString().split("T")[0];
   });
 
   const handleWeekChange = (direction) => {
-    setWeekOffset(prev => prev + direction);
+    setWeekOffset((prev) => prev + direction);
     setSelectedDate(nextDays[0]); // Reset to first day of new week
     if (selectedDoctor) {
       fetchAvailableSlots(selectedDoctor.id, nextDays[0]);
@@ -393,7 +410,7 @@ export default function Doctors({
                   <div className="bg-[#F4F4F4] text-main py-6 px-6">
                     <h4 className="text-lg font-semibold">{doctor.name}</h4>
                     <p className="text-lg font-semibold uppercase text-black">
-                      {doctor.department.join(', ')}
+                      {doctor.department.join(", ")}
                     </p>
                     {/* {doctor.experience && (
                       <p className="text-sm mt-1">
@@ -484,19 +501,27 @@ export default function Doctors({
                             {doctorProfile.education}
                           </p>
                         )}
-                        {doctorProfile.languages && (
-                          <p className="text-sm mt-2">
-                            <span className="font-semibold">Języki:</span>{" "}
-                            {doctorProfile.languages.join(", ")}
+                        {doctorProfile.onlineConsultationPrice !==
+                          undefined && (
+                          <p className="text-sm font-medium mt-2">
+                            <span className="font-semibold">
+                              Cena wizyty online:
+                            </span>{" "}
+                            {doctorProfile.onlineConsultationPrice === 0
+                              ? "Darmowa"
+                              : `${doctorProfile.onlineConsultationPrice} zł`}
                           </p>
                         )}
 
-                        {selectedDoctor.consultationFee && (
+                        {doctorProfile.offlineConsultationPrice !==
+                          undefined && (
                           <p className="text-sm font-medium mt-2">
                             <span className="font-semibold">
-                              Cena konsultacji:
+                              Cena wizyty stacjonarnej:
                             </span>{" "}
-                            {selectedDoctor.consultationFee} zł
+                            {doctorProfile.offlineConsultationPrice === 0
+                              ? "Darmowa"
+                              : `${doctorProfile.offlineConsultationPrice} zł`}
                           </p>
                         )}
                       </div>
@@ -773,14 +798,18 @@ export default function Doctors({
                             type="checkbox"
                             name="smsConsentAgreed"
                             checked={bookingForm.smsConsentAgreed}
-                            onChange={(e) => setBookingForm({
-                              ...bookingForm,
-                              smsConsentAgreed: e.target.checked
-                            })}
+                            onChange={(e) =>
+                              setBookingForm({
+                                ...bookingForm,
+                                smsConsentAgreed: e.target.checked,
+                              })
+                            }
                             className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
                           />
                           <span className="text-sm text-gray-700">
-                            Wyrażam zgodę na otrzymywanie powiadomień SMS dotyczących mojej wizyty (np. przypomnienia, zmiany terminu)
+                            Wyrażam zgodę na otrzymywanie powiadomień SMS
+                            dotyczących mojej wizyty (np. przypomnienia, zmiany
+                            terminu)
                           </span>
                         </label>
                       </div>

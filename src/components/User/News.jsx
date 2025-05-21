@@ -5,12 +5,13 @@ import "slick-carousel/slick/slick-theme.css";
 import { IoEyeOutline } from "react-icons/io5";
 import { FaRegHeart } from "react-icons/fa";
 import { apiCaller } from "../../utils/axiosInstance";
-
+import { useNavigate } from "react-router-dom";
 export default function News() {
   const [news, setNews] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -131,7 +132,8 @@ export default function News() {
                   {group.map((newsItem) => (
                     <div
                       key={newsItem._id}
-                      className="bg-white shadow-md rounded-lg overflow-hidden flex"
+                      className="bg-white shadow-md rounded-lg overflow-hidden flex cursor-pointer"
+                      onClick={() => navigate(`/user/news/single/${newsItem._id}`)}
                     >
                       <div className="w-1/3">
                         <img

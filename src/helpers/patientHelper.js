@@ -311,6 +311,46 @@ const patientService = {
     }
   },
 
+
+  getSimpliefiedAppointmentsList: async (options = {}) => {
+    try {
+      const {
+        search = "",
+        page = 1,
+        limit = 10,
+        sortBy = "date",
+        sortOrder = "desc",
+        status,
+        doctor,
+        sex,
+        minAge,
+        maxAge,
+      } = options;
+
+      const queryParams = new URLSearchParams();
+
+      // Add all parameters that have values
+      if (search) queryParams.append("search", search);
+      if (page) queryParams.append("page", page);
+      if (limit) queryParams.append("limit", limit);
+      if (sortBy) queryParams.append("sortBy", sortBy);
+      if (sortOrder) queryParams.append("sortOrder", sortOrder);
+      if (status) queryParams.append("status", status);
+      if (doctor) queryParams.append("doctor", doctor);
+      if (sex) queryParams.append("sex", sex);
+      if (minAge) queryParams.append("minAge", minAge);
+      if (maxAge) queryParams.append("maxAge", maxAge);
+
+      const url = `/patients/data/appointments?${queryParams.toString()}`;
+
+      const response = await apiCaller("GET", url);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+      throw error;
+    }
+  },
+
   /**
    * Get a single patient by ID
    * @param {string} id - Patient ID
