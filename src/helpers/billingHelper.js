@@ -179,6 +179,26 @@ const billingHelper = {
       console.error("Error fetching billing statistics:", error);
       throw error;
     }
+  },
+
+  /**
+   * Update a bill
+   * @param {string} billId - Bill ID
+   * @param {Object} updateData - Data to update the bill with
+   * @returns {Promise} - API response
+   */
+  updateBill: async (billId, updateData) => {
+    try {
+      const response = await apiCaller(
+        "PUT",
+        `/patient-bills/${billId}`,
+        updateData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating bill:", error);
+      throw error;
+    }
   }
 };
 
