@@ -58,38 +58,45 @@ const AddressForm = () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           >
             <option value="" disabled>Wybierz województwo</option>
-            <option value="state1">Województwo 1</option>
-            <option value="state2">Województwo 2</option>
-            <option value="state3">Województwo 3</option>
+            <option value="dolnoslaskie">Dolnośląskie</option>
+            <option value="kujawsko-pomorskie">Kujawsko-Pomorskie</option>
+            <option value="lubelskie">Lubelskie</option>
+            <option value="lubuskie">Lubuskie</option>
+            <option value="lodzkie">Łódzkie</option>
+            <option value="malopolskie">Małopolskie</option>
+            <option value="mazowieckie">Mazowieckie</option>
+            <option value="opolskie">Opolskie</option>
+            <option value="podkarpackie">Podkarpackie</option>
+            <option value="podlaskie">Podlaskie</option>
+            <option value="pomorskie">Pomorskie</option>
+            <option value="slaskie">Śląskie</option>
+            <option value="swietokrzyskie">Świętokrzyskie</option>
+            <option value="warminsko-mazurskie">Warmińsko-Mazurskie</option>
+            <option value="wielkopolskie">Wielkopolskie</option>
+            <option value="zachodniopomorskie">Zachodniopomorskie</option>
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Kraj</label>
-          <select 
+          <input
+            type="text"
             name="country"
             value={formData.country}
             onChange={handleChange}
+            placeholder="Wprowadź nazwę kraju"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          >
-            <option value="" disabled>Wybierz kraj</option>
-            <option value="country1">Kraj 1</option>
-            <option value="country2">Kraj 2</option>
-            <option value="country3">Kraj 3</option>
-          </select>
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Powiat</label>
-          <select 
+          <label className="block text-sm font-medium text-gray-700 mb-1">Powiat (opcjonalnie)</label>
+          <input
+            type="text"
             name="district"
             value={formData.district}
             onChange={handleChange}
+            placeholder="Wprowadź nazwę powiatu"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          >
-            <option value="" disabled>Wybierz powiat</option>
-            <option value="district1">Powiat 1</option>
-            <option value="district2">Powiat 2</option>
-            <option value="district3">Powiat 3</option>
-          </select>
+          />
         </div>
       </div>
       

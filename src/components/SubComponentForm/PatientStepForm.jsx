@@ -24,19 +24,19 @@ const PatientStepForm = ({
         hideButtons={hideButtons}
         subStepTitles={subStepTitles}
       >
-        <SubStep title="Demographics">
+        <SubStep title="Dane Podstawowe">
           <DemographicsForm />
         </SubStep>
-        <SubStep title="Referrer">
+        <SubStep title="Dane Wizyty">
           <ReferrerForm />
         </SubStep>
         <SubStep title="Address">
           <AddressForm />
         </SubStep>
-        <SubStep title="Consent">
+        <SubStep title="Zgody">
           <ConsentDocumentUpload />
         </SubStep>
-        <SubStep title="Details">
+        <SubStep title="Szczegóły">
           <DetailsForm />
         </SubStep>
         <SubStep title="Notes">

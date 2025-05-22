@@ -30,14 +30,14 @@ const DemographicsForm = () => {
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Pełna Nazwa
+          Imię i Nazwisko
         </label>
         <input
           type="text"
           name="fullName"
           value={formData.fullName || ""}
           onChange={handleChange}
-          placeholder="Wprowadź swoje pełne imię i nazwisko"
+          placeholder="Wprowadź imię i nazwisko"
           className="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
       </div>
@@ -52,7 +52,7 @@ const DemographicsForm = () => {
             name="email"
             value={formData.email || ""}
             onChange={handleChange}
-            placeholder="Wprowadź swój e-mail"
+            placeholder="Wprowadź adres e-mail"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -66,7 +66,7 @@ const DemographicsForm = () => {
             name="mobileNumber"
             value={formData.mobileNumber || ""}
             onChange={handleChange}
-            placeholder="Wprowadź swój numer telefonu"
+            placeholder="Wprowadź numer telefonu"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -78,9 +78,9 @@ const DemographicsForm = () => {
           <input
             type="date"
             name="dateOfBirth"
-            value={formatDateForInput(formData.dateOfBirth)}
+            value={formData.dateOfBirth || ""}
             onChange={handleChange}
-            placeholder="Wprowadź datę"
+            placeholder=""
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -89,28 +89,28 @@ const DemographicsForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Język Ojczysty
+            Język ojczysty
           </label>
           <input
             type="text"
             name="motherTongue"
             value={formData.motherTongue || ""}
             onChange={handleChange}
-            placeholder="Wprowadź swój język ojczysty"
+            placeholder="Wprowadź język ojczysty"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            ID Rządowe
+            Numer PESEL
           </label>
           <input
             type="text"
             name="govtId"
             value={formData.govtId || ""}
             onChange={handleChange}
-            placeholder="Wprowadź ID rządowe"
+            placeholder="Wprowadź numer PESEL"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -235,14 +235,14 @@ const DemographicsForm = () => {
         </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Inne ID Szpitalne
+          ID Pacjenta
         </label>
         <input
           type="text"
           name="otherHospitalIds"
           value={formData.otherHospitalIds || ""}
           onChange={handleChange}
-          placeholder="Wprowadź ID"
+          placeholder="Wprowadź ID- auogenerate?"
           className="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
       </div>

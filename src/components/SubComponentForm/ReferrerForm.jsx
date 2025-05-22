@@ -54,13 +54,12 @@ const ReferrerForm = () => {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none bg-white"
             >
-              <option value="" disabled>
-                Wybierz typ skierowania
-              </option>
-              <option value="doctor">Lekarz</option>
-              <option value="hospital">Szpital</option>
-              <option value="clinic">Przychodnia</option>
-              <option value="patient">Pacjent</option>
+              <option value="bez-skierowania">Bez skierowania (samodzielne zgłoszenie)</option>
+              <option value="lekarz-poz">Lekarz POZ / rodzinny</option>
+              <option value="lekarz-specjalista">Lekarz specjalista</option>
+              <option value="inna-placowka">Inna placówka medyczna</option>
+              <option value="badania-diagnostyczne">Badania diagnostyczne</option>
+              <option value="inne">Inne</option>
             </select>
             <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
               <svg
@@ -82,14 +81,14 @@ const ReferrerForm = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Główna Dolegliwość
+            Główna Dolegliwość/ Cel wizyty
           </label>
           <input
             type="text"
             name="mainComplaint"
             value={formData.mainComplaint}
             onChange={handleChange}
-            placeholder="Wprowadź dolegliwość"
+            placeholder="Wprowadź dolegliwość/ cel wizyty"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -98,14 +97,14 @@ const ReferrerForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nazwa Kierującego
+            Lekarz Kierujący
           </label>
           <input
             type="text"
             name="referrerName"
             value={formData.referrerName}
             onChange={handleChange}
-            placeholder="Wpisz, aby uzyskać sugestie"
+            placeholder="Wprowadź imię i nazwisko l"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -126,14 +125,14 @@ const ReferrerForm = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email Kierującego
+            Numer Skierowania
           </label>
           <input
-            type="email"
-            name="referrerEmail"
-            value={formData.referrerEmail}
+            type="text"
+            name="referralNumber"
+            value={formData.referralNumber}
             onChange={handleChange}
-            placeholder="Wprowadź adres email"
+            placeholder="Wprowadź numer skierowania"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>

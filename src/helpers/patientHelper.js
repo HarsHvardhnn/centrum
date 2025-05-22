@@ -53,6 +53,14 @@ const patientService = {
       formData.append("sex", patientData.sex);
       formData.append("spouseName", patientData.spouseName);
       formData.append("state", patientData.state);
+      formData.append("isAdult", patientData.isAdult);
+      formData.append("contactPerson", patientData.contactPerson);
+      formData.append("fatherPhone", patientData.fatherPhone);
+      formData.append("motherPhone", patientData.motherPhone);
+      formData.append("relationToPatient", patientData.relationToPatient);
+      formData.append("allergies", patientData.allergies);
+      formData.append("nationality", patientData.nationality);
+      formData.append("preferredLanguage", patientData.preferredLanguage);
 
       // Append documents (multiple files)
       if (patientData.documents?.length) {
@@ -129,6 +137,14 @@ const patientService = {
     if (patientData.state !== undefined) formData.append("state", patientData.state);
     if (patientData.treatmentCategory !== undefined) formData.append("treatmentCategory", patientData.treatmentCategory);
     if (patientData.appointmentSpecificDocument !== undefined) formData.append("appointmentSpecificDocument", patientData.appointmentSpecificDocument);
+    if (patientData.isAdult !== undefined) formData.append("isAdult", patientData.isAdult==="TAK");
+    if (patientData.contactPerson !== undefined) formData.append("contactPerson", patientData.contactPerson);
+    if (patientData.fatherPhone !== undefined) formData.append("fatherPhone", patientData.fatherPhone);
+    if (patientData.motherPhone !== undefined) formData.append("motherPhone", patientData.motherPhone);
+    if (patientData.relationToPatient !== undefined) formData.append("relationToPatient", patientData.relationToPatient);
+    if (patientData.allergies !== undefined) formData.append("allergies", patientData.allergies);
+    if (patientData.nationality !== undefined) formData.append("nationality", patientData.nationality);
+    if (patientData.preferredLanguage !== undefined) formData.append("preferredLanguage", patientData.preferredLanguage);
 
     // Add health metrics
     if (patientData.bloodPressure !== undefined) formData.append("bloodPressure", patientData.bloodPressure);

@@ -46,13 +46,14 @@ export const FormProvider = ({ children, initialData }) => {
     // Details
     fatherName: "",
     motherName: "",
-    spouseName: "",
-    education: "",
-    alternateContact: "",
-    birthWeight: "",
-    occupation: "",
-    religion: "",
-    ivrLanguage: "",
+    isAdult: "",
+    contactPerson: "",
+    fatherPhone: "",
+    motherPhone: "",
+    relationToPatient: "",
+    allergies: "",
+    nationality: "",
+    preferredLanguage: "",
 
     // Notes
     reviewNotes: "",

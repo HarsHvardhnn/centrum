@@ -292,13 +292,14 @@ export default function UserManagement() {
         // Details
         fatherName: patientDetails.fatherName,
         motherName: patientDetails.motherName,
-        spouseName: patientDetails.spouseName,
-        education: patientDetails.education,
-        alternateContact: patientDetails.alternateContact,
-        birthWeight: patientDetails.birthWeight,
-        occupation: patientDetails.occupation,
-        religion: patientDetails.religion,
-        ivrLanguage: patientDetails.ivrLanguage,
+        isAdult: patientDetails.isAdult === true ? 'TAK' : 'NIE',
+        contactPerson: patientDetails.contactPerson,
+        fatherPhone: patientDetails.fatherPhone,
+        motherPhone: patientDetails.motherPhone,
+        relationToPatient: patientDetails.relationToPatient,
+        allergies: patientDetails.allergies,
+        nationality: patientDetails.nationality,
+        preferredLanguage: patientDetails.preferredLanguage,
 
         // Notes
         reviewNotes: patientDetails.reviewNotes,
