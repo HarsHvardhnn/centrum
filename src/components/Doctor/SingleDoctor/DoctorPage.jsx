@@ -64,12 +64,16 @@ function DoctorsPage() {
 
   // New effect to fetch patient details when a patient is selected
   useEffect(() => {
-    if (selectedPatient) {
-      fetchPatientDetails(selectedPatient, appointmentId);
+    if (appointmentId) {
+      // Find the selected appointment from patients array
+      const selectedAppointment = patients.find(p => p.id === appointmentId);
+      if (selectedAppointment) {
+        fetchPatientDetails(selectedAppointment.patient_id, appointmentId);
+      }
     } else {
       setPatientDetails(null);
     }
-  }, [selectedPatient, appointmentId]);
+  }, [appointmentId, patients]);
 
   const fetchPatientsByDoctor = async (doctorId) => {
     try {
@@ -194,9 +198,8 @@ function DoctorsPage() {
   };
 
   // Function to handle patient selection
-  const handlePatientSelect = (patientId) => {
-    console.log(`Selected patient: ${patientId}`);
-    setSelectedPatient(patientId);
+  const handlePatientSelect = (patientId, appointmentId) => {
+    setAppointmentId(appointmentId);
   };
 
   // Handle search
@@ -216,7 +219,7 @@ function DoctorsPage() {
         doctor={doctorInfo}
         patients={patients}
         stats={stats}
-        selectedPatient={selectedPatient}
+        selectedPatient={appointmentId}
         patientDetails={patientDetails}
         onPatientSelect={handlePatientSelect}
         setAppointmentId={setAppointmentId}

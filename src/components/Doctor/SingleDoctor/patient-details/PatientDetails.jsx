@@ -614,7 +614,7 @@ const PatientDetailsPage = () => {
             {showAllAppointments && (
               <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
                 <h3 className="text-lg font-semibold mb-4">Historia Wizyt</h3>
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                   {appointments.map((apt) => (
                     <div
                       key={apt._id}

@@ -314,24 +314,30 @@ const DoctorCard = ({ data }) => (
     </div>
 
     <h2 className="text-lg font-semibold">{data.name}</h2>
+    {/* Commenting out rating section as it's not being used
     <p className="text-sm font-medium text-gray-700 bg-[#e6f4f4] rounded w-fit mx-auto px-3 py-1 flex gap-2 items-center">
       <IoIosStar className="text-[#deae37] " />
       {data.rating}
     </p>
+    */}
     <p className="text-sm">{data.qualification}</p>
     <p className="text-sm">{data.specialization || "Ogólny"}</p>
     <p className="text-sm">{data.experience}</p>
+    {/* Commenting out votes and reviews section as it's not being used
     <p className="mt-4 font-medium text-sm flex items-center justify-center gap-2">
       <FiThumbsUp className="text-lg" />
       98% ({data.votes} głosów)
     </p>
+    */}
     <p className="font-medium mb-4 text-sm flex items-center justify-center gap-2">
       <MdOutlineVerifiedUser className="text-lg" />
       Rejestracja Medyczna Zweryfikowana
     </p>
+    {/* Commenting out share review button as it's not being used
     <button className="w-full font-medium text-[#99d1d1] underline">
       Podziel się swoją opinią
     </button>
+    */}
   </div>
 );
 

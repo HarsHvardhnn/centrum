@@ -14,9 +14,11 @@ import {
 } from "react-icons/fi";
 import { BsCalendarPlusFill } from "react-icons/bs";
 import { useUser } from "../../context/userContext";
+import { Calendar1 } from "lucide-react";
 
 const Sidebar = () => {
   const { user } = useUser();
+  console.log("user", user);
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -85,7 +87,7 @@ const Sidebar = () => {
               isEnabled={true}
             />
           )}
-          {user?.role === "admin" || user?.role === "receptionist" && (
+          {(user?.role === "admin" || user?.role === "receptionist" )&& (
             <NavItem
               icon={<MdSms className="text-xl text-teal-400" />}
               label="Zarządzanie SMS"
@@ -94,6 +96,13 @@ const Sidebar = () => {
               isEnabled={true}
             />
           )}
+               <NavItem
+              icon={<Calendar1 className=" text-teal-400" />}
+              label="Kalendarz"
+              to="/admin/calendar"
+              isActive={currentPath === "/admin/calendar"}
+              isEnabled={true}
+            />
           {user?.role === "admin" && (
             <NavItem
               icon={

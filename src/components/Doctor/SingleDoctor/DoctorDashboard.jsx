@@ -31,7 +31,11 @@ const DoctorDashboard = ({
 
   const handleViewDetails = () => {
     if (selectedPatient) {
-      navigate(`/patients-details/${selectedPatient}`);
+      // Find the selected appointment from patients array
+      const selectedAppointment = patients.find(p => p.id === selectedPatient);
+      if (selectedAppointment) {
+        navigate(`/patients-details/${selectedAppointment.patient_id}`);
+      }
     }
   };
 

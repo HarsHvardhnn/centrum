@@ -4,6 +4,7 @@ import LoginScreen from "./components/Auth/AuthScreen";
 import LoginImage from "./assets/new_login.jpg";
 import SignupImage from "./assets/Signup.png";
 import ForgotPasswordScreen from "./components/Auth/ForgotPasswordScreen";
+import DoctorCalendar from "./components/admin/DoctorCalendar";
 
 import { createBrowserRouter, Outlet, Navigate } from "react-router-dom";
 import Sidebar from "./components/UtilComponents/Sidebar";
@@ -175,6 +176,7 @@ const routes = createBrowserRouter([
           { path: "/admin/news", element: <NewsManagement /> },
           { path: "/doctor/settings", element: <DoctorScheduleSettings /> },
           { path: "/admin/profile", element: <ProfilePage /> },
+          { path: "/admin/calendar", element: <DoctorCalendar /> },
           {
             path: "/help-center",
             element: <ChatComponent />,

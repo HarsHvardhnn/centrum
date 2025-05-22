@@ -29,12 +29,14 @@ const PatientsList = ({
   const totalPages = Math.ceil(totalPatients / itemsPerPage);
 
   // Notify parent component when selection changes
-  const handlePatientSelect = (patientId) => {
-    // If the same patient is clicked again, unselect it
-    if (selectedPatient === patientId) {
+  const handlePatientSelect = (patientId, appointmentId) => {
+    // If the same appointment is clicked again, unselect it
+    if (selectedPatient === appointmentId) {
       if (onPatientSelect) onPatientSelect(null);
+      if (setAppointmentId) setAppointmentId(null);
     } else {
       if (onPatientSelect) onPatientSelect(patientId);
+      if (setAppointmentId) setAppointmentId(appointmentId);
     }
   };
 
@@ -257,11 +259,9 @@ const PatientsList = ({
                   <div className="col-span-2 flex items-center">
                     <input
                       type="checkbox"
-                      checked={selectedPatient === patient.patient_id}
+                      checked={selectedPatient === patient.id}
                       onChange={() => {
-                        handlePatientSelect(patient.patient_id)
-                        console.log("patient id ", patient.id)
-                        setAppointmentId(patient.id)
+                        handlePatientSelect(patient.patient_id, patient.id);
                       }}
                       className="w-4 h-4 mr-3"
                     />

@@ -42,6 +42,10 @@ const BillingManagement = () => {
   const { services } = useServices();
   const [isLoading, setIsLoading] = useState(false);
   
+  // Add state for confirmation modal
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [billToUpdate, setBillToUpdate] = useState(null);
+  
   // State for bills data and pagination
   const [bills, setBills] = useState([]);
   const [pagination, setPagination] = useState({
@@ -552,7 +556,54 @@ const BillingManagement = () => {
     }));
   };
   
+  // Add ConfirmationModal component
+  const ConfirmationModal = ({ isOpen, onClose, onConfirm, bill }) => {
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
+          <div className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Potwierdź zmianę statusu płatności
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Czy na pewno chcesz oznaczyć fakturę nr {bill?._id} jako opłaconą?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Anuluj
+              </button>
+              <button
+                onClick={onConfirm}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+              >
+                Potwierdź
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Update handleUpdatePaymentStatus to use confirmation modal
   const handleUpdatePaymentStatus = async (billId, newStatus) => {
+    if (newStatus === "paid") {
+      const bill = bills.find(b => b._id === billId);
+      setBillToUpdate(bill);
+      setIsConfirmModalOpen(true);
+      return;
+    }
+
+    await updatePaymentStatus(billId, newStatus);
+  };
+
+  // Add new function to handle the actual update
+  const updatePaymentStatus = async (billId, newStatus) => {
     try {
       setIsLoading(true);
       
@@ -655,6 +706,22 @@ const BillingManagement = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {isLoading && <LoaderOverlay />}
+      
+      {/* Add ConfirmationModal */}
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => {
+          setIsConfirmModalOpen(false);
+          setBillToUpdate(null);
+        }}
+        onConfirm={() => {
+          updatePaymentStatus(billToUpdate._id, "paid");
+          setIsConfirmModalOpen(false);
+          setBillToUpdate(null);
+        }}
+        bill={billToUpdate}
+      />
+
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
@@ -916,13 +983,16 @@ const BillingManagement = () => {
                           >
                             <Eye size={18} />
                           </button>
-                          <button
+                          {
+                            bill.paymentStatus == "paid" && (
+                              <button
                             onClick={() => handleGenerateInvoice(bill._id)}
                             className="text-gray-600 hover:text-gray-900"
                             title="Generuj fakturę"
                           >
                             <FileText size={18} />
-                          </button>
+                          </button>)
+                          }
                           {bill.paymentStatus !== "paid" && (
                             <>
                               <button
