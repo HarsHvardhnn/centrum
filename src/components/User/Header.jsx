@@ -87,18 +87,19 @@ const Header = () => {
             </span>
           </a>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col md:flex-row items-center gap-2">
             <div className="flex items-center gap-2">
-              <FaPhoneAlt className="text-base mt-1" />
-              <a href="tel:+48797097487" className="text-gray-800 hover:text-blue-600">
-                797 097 487
-              </a>
-            </div>
-            <div className="flex items-center gap-2">
-              <FaPhoneAlt className="text-base mt-1" />
-              <a href="tel:+48797127487" className="text-gray-800 hover:text-blue-600">
-                797 127 487
-              </a>
+              <FaPhoneAlt className="text-base mt-1 hidden md:block" />
+              <div className="flex flex-col md:flex-row md:gap-4">
+                <a href="tel:+48797097487" className="text-gray-800 hover:text-blue-600 flex items-center gap-2">
+                  <FaPhoneAlt className="text-base mt-1 md:hidden" />
+                  797 097 487
+                </a>
+                <a href="tel:+48797127487" className="text-gray-800 hover:text-blue-600 flex items-center gap-2">
+                  <FaPhoneAlt className="text-base mt-1 md:hidden" />
+                  797 127 487
+                </a>
+              </div>
             </div>
           </div>
         </div>
