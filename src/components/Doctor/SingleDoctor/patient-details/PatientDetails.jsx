@@ -14,7 +14,7 @@ import appointmentHelper from "../../../../helpers/appointmentHelper";
 import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
-import { Trash2, Calendar, PlusCircle } from "lucide-react";
+import { Trash2, Calendar, PlusCircle, Info, X, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 // Confirmation Modal Component
@@ -42,6 +42,153 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
           >
             Usuń
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Add PatientDetailsModal component
+const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
+  if (!isOpen || !patientData) return null;
+
+  // Helper function to check if a value is empty
+  const isEmpty = (value) => {
+    if (value === undefined || value === null) return true;
+    if (typeof value === 'string' && value.trim() === '') return true;
+    if (Array.isArray(value) && value.length === 0) return true;
+    return false;
+  };
+
+  // Helper function to filter out empty fields
+  const filterEmptyFields = (fields) => {
+    return Object.entries(fields).reduce((acc, [key, value]) => {
+      if (!isEmpty(value)) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+  };
+
+  const sections = {
+    "Dane osobowe": filterEmptyFields({
+      "Imię i nazwisko": `${patientData.name?.first || ""} ${patientData.name?.last || ""}`,
+      "Email": patientData.email,
+      "Telefon": patientData.phone,
+      "Płeć": patientData.sex === "Male" ? "Mężczyzna" : patientData.sex === "Female" ? "Kobieta" : patientData.sex,
+      "Data urodzenia": patientData.dateOfBirth ? new Date(patientData.dateOfBirth).toLocaleDateString("pl-PL") : null,
+      "Wiek": patientData.age,
+      "Narodowość": patientData.nationality,
+      "Język preferowany": patientData.preferredLanguage,
+      "Język ojczysty": patientData.motherTongue,
+      "Religia": patientData.religion,
+      "Etnos": patientData.ethnicity,
+      "Wykształcenie": patientData.education,
+      "Zawód": patientData.occupation,
+      "Stan cywilny": patientData.maritalStatus,
+    }),
+    "Dane rodzinne": filterEmptyFields({
+      "Imię ojca": patientData.fatherName,
+      "Telefon ojca": patientData.fatherPhone,
+      "Imię matki": patientData.motherName,
+      "Telefon matki": patientData.motherPhone,
+      "Imię małżonka": patientData.spouseName,
+      "Osoba kontaktowa": patientData.contactPerson,
+      "Relacja z pacjentem": patientData.relationToPatient,
+    }),
+    "Dane medyczne": filterEmptyFields({
+      "Alergie": patientData.allergies,
+      "Główny problem": patientData.mainComplaint,
+      "Notatki": patientData.reviewNotes,
+      "Status": patientData.status,
+      "Pacjent międzynarodowy": patientData.isInternationalPatient ? "Tak" : "Nie",
+      "Zgoda na SMS": patientData.smsConsentAgreed ? "Tak" : "Nie",
+    }),
+    "Dane adresowe": filterEmptyFields({
+      "Adres": patientData.address,
+      "Miasto": patientData.city,
+      "Dzielnica": patientData.district,
+      "Województwo": patientData.state,
+      "Kraj": patientData.country,
+      "Kod pocztowy": patientData.pinCode,
+      "Kontakt alternatywny": patientData.alternateContact,
+    }),
+    "Dane identyfikacyjne": filterEmptyFields({
+      "ID pacjenta": patientData.patientId,
+      "ID szpitala": patientData.hospId,
+      "ID rządowe": patientData.govtId,
+      "Inne ID szpitali": patientData.otherHospitalIds,
+    }),
+    "Dane referencyjne": filterEmptyFields({
+      "Typ referenta": patientData.referrerType,
+      "Nazwa referenta": patientData.referrerName,
+      "Email referenta": patientData.referrerEmail,
+      "Telefon referenta": patientData.referrerNumber,
+    })
+  };
+
+  // Add documents section if there are any documents
+  if (patientData.documents && patientData.documents.length > 0) {
+    sections["Dokumenty"] = {
+      "Dokumenty": (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {patientData.documents.map((doc, index) => (
+            <div key={doc.id || index} className="bg-white rounded-lg p-3 shadow-sm">
+              <div className="flex items-center gap-3">
+                {doc.isPdf ? (
+                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <FileText className="text-red-500" size={24} />
+                  </div>
+                ) : (
+                  <img 
+                    src={doc.preview} 
+                    alt={doc.name}
+                    className="w-12 h-12 object-cover rounded-lg"
+                  />
+                )}
+                <div>
+                  <p className="text-sm font-medium">{doc.name}</p>
+                  <p className="text-xs text-gray-500">{doc.type}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    };
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold">Szczegóły pacjenta</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={24} />
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {Object.entries(sections).map(([sectionTitle, fields]) => (
+            <div key={sectionTitle} className="bg-gray-50 rounded-lg p-4">
+              <h3 className="font-medium text-gray-800 mb-3">{sectionTitle}</h3>
+              <div className="space-y-2">
+                {Object.entries(fields).map(([label, value]) => (
+                  <div key={label} className="flex flex-col">
+                    <span className="text-sm text-gray-500">{label}</span>
+                    {typeof value === 'object' && value !== null ? (
+                      value
+                    ) : (
+                      <span className="text-sm font-medium">{value}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -128,6 +275,10 @@ const PatientDetailsPage = () => {
   // Add reports state
   const [reports, setReports] = useState([]);
   const [showReportUploader, setShowReportUploader] = useState(false);
+
+  // Add new states for PatientDetailsModal
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailedPatientData, setDetailedPatientData] = useState(null);
 
   // Add a specific useEffect to fetch patient services when appointment ID changes
   useEffect(() => {
@@ -590,6 +741,22 @@ const PatientDetailsPage = () => {
     );
   };
 
+  // Add function to fetch detailed patient data
+  const handleShowDetails = async () => {
+    try {
+      showLoader();
+      const response = await patientService.getPatientById(id);
+      console.log(response, "response deails");
+      setDetailedPatientData(response);
+      setShowDetailsModal(true);
+      hideLoader();
+    } catch (error) {
+      console.error("Error fetching detailed patient data:", error);
+      toast.error("Nie udało się pobrać szczegółowych danych pacjenta");
+      hideLoader();
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
@@ -608,7 +775,23 @@ const PatientDetailsPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Patient Profile */}
           <div className="lg:col-span-1">
-            <PatientProfile patient={patientData} setPatientData={setPatientData}/>
+            <div className="w-[300px] min-w-[300px] bg-slate-50 rounded-lg p-4 flex flex-col items-center">
+              <PatientProfile 
+                patient={{
+                  ...patientData,
+                  gender: patientData.gender === "Male" ? "Mężczyzna" : patientData.gender === "Female" ? "Kobieta" : patientData.sex
+                }} 
+                setPatientData={setPatientData}
+              />
+              <button
+                onClick={handleShowDetails}
+                className="mt-2 mb-4 bg-teal-500 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-teal-600 transition-colors shadow"
+                style={{ alignSelf: 'center' }}
+              >
+                <Info size={16} />
+                Pokaż szczegóły
+              </button>
+            </div>
             
             {/* Show appointments section only if not viewing a specific appointment */}
             {showAllAppointments && (
@@ -770,6 +953,13 @@ const PatientDetailsPage = () => {
         onConfirm={handleRemoveAllServices}
         title="Confirm Remove All Services"
         message="Are you sure you want to remove all services?"
+      />
+
+      {/* Add PatientDetailsModal */}
+      <PatientDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        patientData={detailedPatientData}
       />
     </div>
   );

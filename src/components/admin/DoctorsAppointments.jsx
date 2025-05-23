@@ -91,13 +91,10 @@ const DoctorSelectionWithSlots = ({
     }),
   };
 
-  // Format time to 12-hour format
+  // Format time to 24-hour format for display
   const formatTime = (time) => {
     const [hours, minutes] = time.split(":");
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? "PM" : "AM";
-    const formattedHour = hour % 12 || 12;
-    return `${formattedHour}:${minutes} ${ampm}`;
+    return `${hours}:${minutes}`;
   };
 
   const TimeSlotSection = ({ title, slots }) => {

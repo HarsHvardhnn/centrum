@@ -186,7 +186,7 @@ const ConsultationForm = ({
         </div>
 
         {/* Rozwijana lista kategorii leczenia z wyszukiwaniem */}
-        <div>
+        {/* <div>
           <label className="block text-sm text-gray-600 mb-1">
             Kategoria leczenia
           </label>
@@ -237,8 +237,8 @@ const ConsultationForm = ({
               </div>
             )}
           </div>
-        </div>
-
+        </div> */}
+{/* 
         <div>
           <label className="block text-sm text-gray-600 mb-1">
             Miejsce konsultacji
@@ -251,7 +251,7 @@ const ConsultationForm = ({
             }
             className="w-full p-2.5 border border-gray-200 rounded-lg"
           />
-        </div>
+        </div> */}
 
         <div>
           <label className="block text-sm text-gray-600 mb-1">Data</label>

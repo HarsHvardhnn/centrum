@@ -23,7 +23,13 @@ const ReferrerForm = () => {
         console.log("form data", formData);
         const response = await doctorService.getAllDoctors(filters);
         console.log("response", response.doctors);
-        setDoctors(response.doctors || []);
+        const fetchedDoctors = response.doctors || [];
+        setDoctors(fetchedDoctors);
+
+        // If we have doctors and no consultingDoctor is set, set the first doctor
+        if (fetchedDoctors.length > 0 && !formData.consultingDoctor) {
+          updateFormData('consultingDoctor', fetchedDoctors[0]._id);
+        }
       } catch (err) {
         console.error("Failed to fetch doctors:", err);
         setError("Nie udało się załadować listy lekarzy. Spróbuj ponownie.");

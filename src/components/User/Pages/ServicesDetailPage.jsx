@@ -13,7 +13,7 @@ const ServicesDetailPage = () => {
       <PageHeader
         title={service}
         path="Strona główna / Usługi"
-        bgurl="/images/services-header.jfif"
+        bgurl="/images/name_services.jpg"
         />
       <ServiceDetail serviceName={service} />
       <Doctors />

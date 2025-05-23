@@ -122,7 +122,7 @@ const ServicesMini = () => {
                 onClick={() => setSelectedService(service)}
               >
                 <span className="text-xl sm:text-2xl md:text-4xl">
-                  <Icon />
+                  <FaStethoscope />
                 </span>
                 <span className="line-clamp-2 text-center w-full px-1">
                   {service.title}

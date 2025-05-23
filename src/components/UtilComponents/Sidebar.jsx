@@ -141,13 +141,13 @@ const Sidebar = () => {
               isEnabled={true}
             />
           
-          <NavItem
+         {user?.role !== "doctor" && <NavItem
             icon={<FiMessageCircle className="text-xl text-teal-400" />}
             label="Kontakty"
             to="/admin/contact-messages"
             isActive={currentPath === "/admin/contact-messages"}
             isEnabled={true}
-          />
+          />}
 
           <NavItem
             icon={<FiUser className="text-xl text-teal-400" />}
@@ -210,7 +210,7 @@ const Sidebar = () => {
             </div>
             <h3 className="text-center font-medium mb-1">Centrum pomocy</h3>
             <p className="text-center text-gray-700 text-xs mb-3">
-              Etiam porta sem malesuada magna mollis euismod.
+            W razie pytań lub problemów, rozpocznij rozmowę na czacie klikając poniższy przycisk
             </p>
             <button
               onClick={() => {

@@ -25,6 +25,9 @@ import { useNavigate } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
 import { translateStatus, getStatusStyle } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
+import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
+import PatientStepForm from "../SubComponentForm/PatientStepForm";
+import patientService from "../../helpers/patientHelper";
 
 // Add billingHelper with the generateBill function
 const billingHelper = {
@@ -70,6 +73,22 @@ function LabAppointmentsContent({ clinic }) {
     startDate: null,
     endDate: null,
   });
+
+  // Add new state for patient form
+  const [showAddPatientModal, setShowAddPatientModal] = useState(false);
+  const [currentSubStep, setCurrentSubStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentPatientId, setCurrentPatientId] = useState(null);
+  const [patientFormData, setPatientFormData] = useState({});
+  const subStepTitles = [
+    "Dane demograficzne",
+    "Skierowanie",
+    "Adres",
+    "Zdjęcie",
+    "Szczegóły",
+    "Notatki",
+  ];
 
   const fetchAppointments = async (page = 1) => {
     try {
@@ -275,6 +294,54 @@ function LabAppointmentsContent({ clinic }) {
     }
   };
 
+  // Add patient form functions
+  const goToSubStep = (step) => {
+    setCurrentSubStep(step);
+  };
+
+  const markStepAsCompleted = (formData) => {
+    if (!completedSteps.includes(currentSubStep)) {
+      setCompletedSteps([...completedSteps, currentSubStep]);
+    }
+
+    setPatientFormData(formData);
+
+    if (currentSubStep === subStepTitles.length - 1) {
+      handleAddPatient(formData);
+    } else {
+      setCurrentSubStep(currentSubStep + 1);
+    }
+  };
+
+  const handleAddPatient = async (formData) => {
+    try {
+      showLoader();
+      let response;
+      
+      if (isEditMode && currentPatientId) {
+        response = await patientService.updatePatient(currentPatientId, formData);
+        toast.success("Pacjent został zaktualizowany");
+      } else {
+        response = await patientService.createPatient(formData);
+        toast.success("Pacjent został dodany");
+      }
+      
+      hideLoader();
+      setShowAddPatientModal(false);
+      setIsEditMode(false);
+      setCurrentPatientId(null);
+      setPatientFormData({});
+      fetchAppointments(); // Refresh the appointments list
+
+    } catch (err) {
+      toast.error(
+        "Nie udało się " + (isEditMode ? "zaktualizować" : "dodać") + " pacjenta: " +
+        (err.response?.data?.error || err.response?.data?.message || "Nieznany błąd")
+      );
+      hideLoader();
+    }
+  };
+
   return (
     <div className="bg-white min-h-screen">
       <div className="w-full mx-auto px-4 py-8">
@@ -391,14 +458,14 @@ function LabAppointmentsContent({ clinic }) {
               )}
             </div>
 
-            {/* Add Appointment Button */}
+            {/* Replace Add Appointment Button with Add Patient Button */}
             {user?.role !== "doctor" && !clinic && (
               <button
                 className="bg-teal-500 text-white rounded-lg px-4 py-2 flex items-center gap-2"
-                onClick={() => navigate("/appointment/create")}
+                onClick={() => setShowAddPatientModal(true)}
               >
-                <Calendar size={18} />
-                Nowa wizyta
+                <UserCheck size={18} />
+                Dodaj Pacjenta
               </button>
             )}
           </div>
@@ -533,7 +600,7 @@ function LabAppointmentsContent({ clinic }) {
                     Data i godzina
                   </th>
                   <th className="px-4 py-3 w-[7%] font-medium">Tryb</th>
-                  <th className="px-4 py-3 w-[8%] font-medium">Choroba</th>
+                  <th className="px-4 py-3 w-[8%] font-medium">Telefon</th>
                   <th className="px-4 py-3 w-[16%] font-medium">Lekarz</th>
                   <th className="px-4 py-3 w-[7%] font-medium">Wiek pacjenta</th>
                   {/* <th className="px-4 py-3 w-[12%] font-medium">Status pacjenta</th> */}
@@ -613,7 +680,7 @@ function LabAppointmentsContent({ clinic }) {
                     </td>
 
                     <td className="px-4 py-3 truncate">
-                      {appointment.patient.disease || "-"}
+                      {appointment.patient.phoneNumber || "-"}
                     </td>
                     <td className="px-4 py-3 truncate">
                       <div className="font-medium truncate">
@@ -763,8 +830,108 @@ function LabAppointmentsContent({ clinic }) {
           appointmentId={selectedAppointment?.id}
           patientId={selectedAppointment?.patient?.id}
         />
+
+        {/* Add Patient Modal */}
+        {showAddPatientModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg w-3/4 max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center border-b p-4">
+                <h2 className="text-xl font-bold">
+                  {isEditMode ? "Edytuj Pacjenta" : "Dodaj Pacjenta"}
+                </h2>
+                <button
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => {
+                    setShowAddPatientModal(false);
+                    setIsEditMode(false);
+                    setCurrentPatientId(null);
+                    setPatientFormData({});
+                  }}
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6">
+                <FormProvider initialData={patientFormData}>
+                  <PatientStepFormWrapper
+                    currentSubStep={currentSubStep}
+                    goToSubStep={goToSubStep}
+                    markStepAsCompleted={markStepAsCompleted}
+                    subStepTitles={subStepTitles}
+                    isEditMode={isEditMode}
+                    handleAddPatient={handleAddPatient}
+                    patientFormData={patientFormData}
+                  />
+                </FormProvider>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+// Add PatientStepFormWrapper component
+function PatientStepFormWrapper({
+  currentSubStep,
+  goToSubStep,
+  markStepAsCompleted,
+  subStepTitles,
+  isEditMode,
+  handleAddPatient,
+  patientFormData
+}) {
+  const [completedSteps, setCompletedSteps] = useState([]);
+  const { formData, updateFormData } = useFormContext();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    if (isEditMode && patientFormData && !isInitialized) {
+      updateFormData(patientFormData);
+      setCompletedSteps(Array.from({ length: subStepTitles.length }, (_, i) => i));
+      setIsInitialized(true);
+    }
+    
+    if (!isEditMode) {
+      setIsInitialized(false);
+    }
+  }, [isEditMode, patientFormData, isInitialized, subStepTitles.length]);
+
+  const handleStepCompleted = () => {
+    if (!completedSteps.includes(currentSubStep)) {
+      setCompletedSteps([...completedSteps, currentSubStep]);
+    }
+
+    if (currentSubStep === subStepTitles.length - 1) {
+      handleAddPatient(formData);
+    } else {
+      goToSubStep(currentSubStep + 1);
+    }
+  };
+
+  return (
+    <PatientStepForm
+      currentSubStep={currentSubStep}
+      goToSubStep={goToSubStep}
+      markStepAsCompleted={handleStepCompleted}
+      subStepTitles={subStepTitles}
+      isEditMode={isEditMode}
+      completedSteps={completedSteps}
+    />
   );
 }
 

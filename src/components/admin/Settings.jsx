@@ -12,6 +12,18 @@ import patientService from "../../helpers/patientHelper";
 import SpecializationModal from "./SpecializationModal";
 
 export default function UserManagement() {
+  // Add these translation mappings at the top of the component
+  const roleTranslations = {
+    doctor: "Lekarz",
+    patient: "Pacjent",
+    receptionist: "Recepcjonista"
+  };
+
+  const statusTranslations = {
+    active: "Aktywny",
+    deleted: "Usunięty"
+  };
+
   const [users, setUsers] = useState([]);
   const { user } = useUser();
   const { showLoader, hideLoader } = useLoader();
@@ -646,7 +658,7 @@ export default function UserManagement() {
                           : "bg-green-100 text-green-800"
                       }`}
                     >
-                      {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                      {roleTranslations[user.role.toLowerCase()] || user.role}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
@@ -661,7 +673,7 @@ export default function UserManagement() {
                           : "bg-green-100 text-green-800"
                       }`}
                     >
-                      {user.deleted ? "Deleted" : "Active"}
+                      {statusTranslations[user.deleted ? "deleted" : "active"]}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

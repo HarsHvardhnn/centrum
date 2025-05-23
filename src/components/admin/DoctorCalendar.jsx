@@ -68,7 +68,7 @@ const DoctorCalendar = () => {
       const [startDate, endDate] = dateRange;
       const response = await apiCaller(
         'GET',
-        `/appointments/doctor/${selectedDoctor}/by-date?startDate=${startDate.format('YYYY-MM-DD')}&endDate=${endDate.format('YYYY-MM-DD')}&status=booked`
+        `/appointments/doctor/${selectedDoctor}/by-date?startDate=${startDate.format('YYYY-MM-DD')}&endDate=${endDate.format('YYYY-MM-DD')}`
       );
       setAppointments(response.data.data);
       formatAppointmentsToEvents(response.data.data);
@@ -98,7 +98,7 @@ const DoctorCalendar = () => {
 
   const handleDoctorChange = (value) => {
     // Only allow doctor change if user is admin
-    if (user?.role === 'admin') {
+    if (user?.role === 'admin' || user?.role === 'receptionist') {
       setSelectedDoctor(value);
     }
   };
@@ -226,7 +226,7 @@ const DoctorCalendar = () => {
       <Card>
         <Title level={4}>Kalendarz lekarza</Title>
         <div style={{ marginBottom: '24px', display: 'flex', gap: '16px' }}>
-          {user?.role === 'admin' && (
+          {user?.role === 'admin' || user?.role === 'receptionist' && (
             <Select
               style={{ width: '300px' }}
               placeholder="Wybierz lekarza"
