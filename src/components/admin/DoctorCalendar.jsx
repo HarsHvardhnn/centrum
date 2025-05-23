@@ -31,7 +31,7 @@ const localizer = dateFnsLocalizer({
 const DoctorCalendar = () => {
   const { user } = useUser();
   const [doctors, setDoctors] = useState([]);
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [selectedDoctor, setSelectedDoctor] = useState(user?.role === 'doctor' ? user.id : null);
   const [dateRange, setDateRange] = useState([dayjs(), dayjs().add(30, 'days')]);
   const [appointments, setAppointments] = useState([]);
   const [events, setEvents] = useState([]);
@@ -40,10 +40,13 @@ const DoctorCalendar = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   useEffect(() => {
-    fetchDoctors();
-  }, []);
+    if (user?.role !== 'doctor') {
+      fetchDoctors();
+    }
+  }, [user]);
 
   useEffect(() => {
+    console.log("selectedDoctor", selectedDoctor)
     if (selectedDoctor && dateRange) {
       fetchAppointments();
     }
@@ -53,11 +56,6 @@ const DoctorCalendar = () => {
     try {
       const response = await doctorStatsHelper.getDoctorsList();
       setDoctors(response.data);
-      
-      // If user is a doctor, automatically select their ID
-      if (user?.role === 'doctor') {
-        setSelectedDoctor(user._id);
-      }
     } catch (error) {
       console.error('Error fetching doctors:', error);
     }
@@ -97,7 +95,6 @@ const DoctorCalendar = () => {
   };
 
   const handleDoctorChange = (value) => {
-    // Only allow doctor change if user is admin
     if (user?.role === 'admin' || user?.role === 'receptionist') {
       setSelectedDoctor(value);
     }
