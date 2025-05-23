@@ -1,0 +1,2 @@
+ID wiadomości,Numer telefonu,ID odbiorcy,Treść,Status,Kod błędu,Opis błędu,Data utworzenia,Data wysłania,Data dostarczenia/niepowodzenia
+,+918000561485,681b8f1954074a484dc61ec2,"Informujemy, że Państwa wizyta w dniu [data] została odwołana. Prosimy o kontakt w celu ustalenia nowego terminu.",FAILED,UNKNOWN,Cannot read properties of undefined (reading '0'),"08 maj 2025, 09:08:01",N/A,"08 maj 2025, 09:08:03"

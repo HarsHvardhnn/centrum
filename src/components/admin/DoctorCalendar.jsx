@@ -226,7 +226,7 @@ const DoctorCalendar = () => {
       <Card>
         <Title level={4}>Kalendarz lekarza</Title>
         <div style={{ marginBottom: '24px', display: 'flex', gap: '16px' }}>
-          {user?.role === 'admin' || user?.role === 'receptionist' && (
+          {(user?.role === 'admin' || user?.role === 'receptionist') && (
             <Select
               style={{ width: '300px' }}
               placeholder="Wybierz lekarza"
