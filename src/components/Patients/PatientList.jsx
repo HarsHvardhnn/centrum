@@ -420,11 +420,17 @@ function LabAppointmentsContent({ clinic }) {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                           <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                            <img
-                              src={appointment.patient?.profilePicture || ""}
-                              alt={appointment.patient?.name}
-                              className="h-full w-full object-cover"
-                            />
+                            {appointment.patient?.profilePicture ? (
+                              <img
+                                src={appointment.patient.profilePicture}
+                                alt={appointment.patient?.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center bg-gray-200 text-gray-500">
+                                <UserCheck size={24} />
+                              </div>
+                            )}
                           </div>
                           <div>
                             <div className="font-medium text-gray-900">{appointment.patient?.name}</div>
@@ -548,11 +554,17 @@ function LabAppointmentsContent({ clinic }) {
                     >
                       <div className="flex items-center">
                         <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden mr-2 flex-shrink-0">
-                          <img
-                            src={appointment.patient?.profilePicture || ""}
-                            alt={appointment.patient?.name}
-                            className="h-full w-full object-cover"
-                          />
+                          {appointment.patient?.profilePicture ? (
+                            <img
+                              src={appointment.patient.profilePicture}
+                              alt={appointment.patient?.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center bg-gray-200 text-gray-500">
+                              <UserCheck size={16} />
+                            </div>
+                          )}
                         </div>
                         <div className="min-w-0">
                           <div className="font-medium truncate">
@@ -749,7 +761,7 @@ function LabAppointmentsContent({ clinic }) {
           patientServicesData={billingServices}
           patientName={selectedAppointment?.patient?.name}
           appointmentId={selectedAppointment?.id}
-          patientId={selectedAppointment?.patient_id}
+          patientId={selectedAppointment?.patient?.id}
         />
       </div>
     </div>
