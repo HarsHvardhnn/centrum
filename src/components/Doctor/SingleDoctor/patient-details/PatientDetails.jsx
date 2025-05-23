@@ -14,7 +14,7 @@ import appointmentHelper from "../../../../helpers/appointmentHelper";
 import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
-import { Trash2, Calendar, PlusCircle, Info, X, FileText } from "lucide-react";
+import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity } from "lucide-react";
 import { toast } from "sonner";
 
 // Confirmation Modal Component
@@ -287,7 +287,7 @@ const PatientDetailsPage = () => {
     }
   }, [currentAppointmentId]);
 
-  // Fetch patient data and their appointments
+  // Modify the useEffect to handle appointmentId from query params
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -310,27 +310,24 @@ const PatientDetailsPage = () => {
         // Fetch patient services
         await fetchPatientServices();
 
+        // Always fetch all patient's appointments
+        const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
+        setAppointments(appointmentsResponse.data || []);
+
+        // If we have a specific appointment ID from URL, select that one
         if (appointmentIdFromUrl) {
-          // If we have a specific appointment ID, fetch only that appointment
-          const appointmentResponse = await appointmentHelper.getAppointmentById(appointmentIdFromUrl);
-          if (appointmentResponse.data) {
-            setAppointments([appointmentResponse.data]);
+          const appointmentFromUrl = appointmentsResponse.data?.find(apt => apt._id === appointmentIdFromUrl);
+          if (appointmentFromUrl) {
             setCurrentAppointmentId(appointmentIdFromUrl);
-            setSelectedAppointment(appointmentResponse.data);
+            setSelectedAppointment(appointmentFromUrl);
             await fetchAppointmentDetails(appointmentIdFromUrl);
           }
-        } else {
-          // Fetch all patient's appointments
-          const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
-          setAppointments(appointmentsResponse.data || []);
-
-          // If there are appointments, select the most recent one
-          if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
-            const mostRecentAppointment = appointmentsResponse.data[0];
-            setCurrentAppointmentId(mostRecentAppointment._id);
-            setSelectedAppointment(mostRecentAppointment);
-            await fetchAppointmentDetails(mostRecentAppointment._id);
-          }
+        } else if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
+          // Otherwise select the most recent one
+          const mostRecentAppointment = appointmentsResponse.data[0];
+          setCurrentAppointmentId(mostRecentAppointment._id);
+          setSelectedAppointment(mostRecentAppointment);
+          await fetchAppointmentDetails(mostRecentAppointment._id);
         }
 
         setIsLoading(false);
@@ -757,6 +754,81 @@ const PatientDetailsPage = () => {
     }
   };
 
+  // Add AppointmentDetails component
+  const AppointmentDetails = ({ appointment }) => {
+    if (!appointment) return null;
+
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+        <h3 className="text-lg font-semibold mb-4">Szczegóły wizyty</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Calendar size={16} className="text-teal-500" />
+              <span className="text-sm text-gray-600">Data:</span>
+              <span className="text-sm font-medium">
+                {new Date(appointment.date).toLocaleDateString('pl-PL')}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <Clock size={16} className="text-teal-500" />
+              <span className="text-sm text-gray-600">Godzina:</span>
+              <span className="text-sm font-medium">
+                {appointment.startTime} - {appointment.endTime}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <User size={16} className="text-teal-500" />
+              <span className="text-sm text-gray-600">Lekarz:</span>
+              <span className="text-sm font-medium">
+                Dr. {appointment.doctor?.name?.first} {appointment.doctor?.name?.last}
+              </span>
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Video size={16} className="text-teal-500" />
+              <span className="text-sm text-gray-600">Tryb wizyty:</span>
+              <span className="text-sm font-medium">
+                {appointment.mode === "online" ? "Wizyta online" : "Wizyta w przychodni"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <Activity size={16} className="text-teal-500" />
+              <span className="text-sm text-gray-600">Status:</span>
+              <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                appointment.status === "completed"
+                  ? "bg-green-100 text-green-800"
+                  : appointment.status === "scheduled"
+                  ? "bg-blue-100 text-blue-800"
+                  : appointment.status === "cancelled"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-gray-100 text-gray-800"
+              }`}>
+                {appointment.status === "completed" 
+                  ? "Zakończona" 
+                  : appointment.status === "scheduled" 
+                  ? "Zaplanowana" 
+                  : appointment.status === "cancelled" 
+                  ? "Anulowana" 
+                  : appointment.status}
+              </span>
+            </div>
+            {appointment.consultationType && (
+              <div className="flex items-center gap-2 mb-2">
+                <FileText size={16} className="text-teal-500" />
+                <span className="text-sm text-gray-600">Typ konsultacji:</span>
+                <span className="text-sm font-medium">
+                  {appointment.consultationType}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
@@ -793,57 +865,56 @@ const PatientDetailsPage = () => {
               </button>
             </div>
             
-            {/* Show appointments section only if not viewing a specific appointment */}
-            {showAllAppointments && (
-              <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
-                <h3 className="text-lg font-semibold mb-4">Historia Wizyt</h3>
-                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-                  {appointments.map((apt) => (
-                    <div
-                      key={apt._id}
-                      className={`p-4 rounded-lg cursor-pointer transition-all ${
-                        currentAppointmentId === apt._id
-                          ? "bg-teal-50 border-2 border-teal-500"
-                          : "bg-gray-50 hover:bg-gray-100"
-                      }`}
-                      onClick={() => handleAppointmentSelect(apt._id)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">
-                            {new Date(apt.date).toLocaleDateString('pl-PL')}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {apt.consultationType || 'Konsultacja standardowa'}
-                          </p>
-                        </div>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            apt.status === "completed"
-                              ? "bg-green-100 text-green-800"
-                              : apt.status === "cancelled"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {apt.status === "completed" 
-                            ? "Zakończona" 
-                            : apt.status === "cancelled" 
-                            ? "Anulowana" 
-                            : "Zaplanowana"}
-                        </span>
+            {/* Always show appointments section */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+              <h3 className="text-lg font-semibold mb-4">Historia Wizyt</h3>
+              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                {appointments.map((apt) => (
+                  <div
+                    key={apt._id}
+                    className={`p-4 rounded-lg cursor-pointer transition-all ${
+                      currentAppointmentId === apt._id
+                        ? "bg-teal-50 border-2 border-teal-500"
+                        : "bg-gray-50 hover:bg-gray-100"
+                    }`}
+                    onClick={() => handleAppointmentSelect(apt._id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">
+                          {new Date(apt.date).toLocaleDateString('pl-PL')}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {apt.consultationType || 'Konsultacja standardowa'}
+                        </p>
                       </div>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          apt.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : apt.status === "cancelled"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {apt.status === "completed" 
+                          ? "Zakończona" 
+                          : apt.status === "cancelled" 
+                          ? "Anulowana" 
+                          : "Zaplanowana"}
+                      </span>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Right Column - Consultation Form and Other Sections */}
           <div className="lg:col-span-2">
             {selectedAppointment && (
               <>
+                <AppointmentDetails appointment={selectedAppointment} />
                 <ConsultationForm
                   consultationData={consultationData}
                   setConsultationData={setConsultationData}
