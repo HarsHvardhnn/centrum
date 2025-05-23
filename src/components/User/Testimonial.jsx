@@ -24,7 +24,7 @@ export default function Testimonial() {
           <h3 className="text-4xl md:text-[54px] font-bold text-gray-900 leading-tight">
             Co Mówią o Nas
           </h3>
-          <span className="text-teal-600 text-2xl font-semibold block mb-2">Nasi Pacjenci</span>
+          <span className="text-teal-600 text-4xl font-semibold block mb-2">Nasi Pacjenci</span>
           <p className="text-neutral-700 mt-4 text-lg">
             Zdrowie i zadowolenie pacjentów są dla nas najważniejsze.
           </p>

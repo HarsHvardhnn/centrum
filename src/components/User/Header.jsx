@@ -87,18 +87,18 @@ const Header = () => {
             </span>
           </a>
 
-          <div className="flex items-center gap-4 cursor-pointer">
-            <FaPhoneAlt className="text-base mt-1" />
-            <div className="flex flex-col text-left">
-              <div className="text-gray-800 mt-1 space-y-1">
-                <a href="tel:+48797097487" className="hover:text-blue-600">
-                  797 097 487
-                </a>
-                ,  {"     "} {" "}
-                <a href="tel:+48797127487" className="hover:text-blue-600">
-                  797 127 487
-                </a>
-              </div>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <FaPhoneAlt className="text-base mt-1" />
+              <a href="tel:+48797097487" className="text-gray-800 hover:text-blue-600">
+                797 097 487
+              </a>
+            </div>
+            <div className="flex items-center gap-2">
+              <FaPhoneAlt className="text-base mt-1" />
+              <a href="tel:+48797127487" className="text-gray-800 hover:text-blue-600">
+                797 127 487
+              </a>
             </div>
           </div>
         </div>
@@ -280,19 +280,19 @@ const Header = () => {
             >
               Kontakt
             </Link>
-            <div className="flex items-center gap-2">
-           <FaPhoneAlt className="text-base mt-1" />
-            <div className="flex flex-col text-left">
-              <div className="text-gray-800 mt-1 space-y-1">
-                <a href="tel:+48797097487" className="hover:text-blue-600">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <FaPhoneAlt className="text-base mt-1" />
+                <a href="tel:+48797097487" className="text-gray-800 hover:text-blue-600">
                   797 097 487
                 </a>
-                ,  {"     "} {" "}
-                <a href="tel:+48797127487" className="hover:text-blue-600">
+              </div>
+              <div className="flex items-center gap-2">
+                <FaPhoneAlt className="text-base mt-1" />
+                <a href="tel:+48797127487" className="text-gray-800 hover:text-blue-600">
                   797 127 487
                 </a>
               </div>
-            </div>
             </div>
           </nav>
 
