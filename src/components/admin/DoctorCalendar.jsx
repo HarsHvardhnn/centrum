@@ -6,7 +6,7 @@ import startOfWeek from 'date-fns/startOfWeek';
 import getDay from 'date-fns/getDay';
 import enUS from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Select, DatePicker, Card, Typography, Button, Tooltip, Badge } from 'antd';
+import { Select, DatePicker, Card, Typography, Button, Tooltip, Badge, Modal, Descriptions } from 'antd';
 import { VideoCameraOutlined, ClockCircleOutlined, DesktopOutlined, UserOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { apiCaller } from '../../utils/axiosInstance';
@@ -36,6 +36,8 @@ const DoctorCalendar = () => {
   const [appointments, setAppointments] = useState([]);
   const [events, setEvents] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   useEffect(() => {
     fetchDoctors();
@@ -106,9 +108,8 @@ const DoctorCalendar = () => {
   };
 
   const handleEventClick = (event) => {
-    if (event.appointment.mode === 'online' && event.appointment.meetLink) {
-      window.open(event.appointment.meetLink, '_blank');
-    }
+    setSelectedAppointment(event.appointment);
+    setIsModalVisible(true);
   };
 
   // Handler for calendar navigation (next, prev, today)
@@ -172,6 +173,54 @@ const DoctorCalendar = () => {
     );
   };
 
+  const AppointmentModal = ({ appointment, visible, onClose }) => {
+    if (!appointment) return null;
+
+    return (
+      <Modal
+        title="Szczegóły wizyty"
+        open={visible}
+        onCancel={onClose}
+        footer={[
+          appointment.meetLink && (
+            <Button
+              key="meet"
+              type="primary"
+              icon={<VideoCameraOutlined />}
+              onClick={() => window.open(appointment.meetLink, '_blank')}
+            >
+              Dołącz do spotkania
+            </Button>
+          ),
+          <Button key="close" onClick={onClose}>
+            Zamknij
+          </Button>
+        ]}
+      >
+        <Descriptions column={1}>
+          <Descriptions.Item label="Pacjent">{appointment.patientName}</Descriptions.Item>
+          <Descriptions.Item label="Wiek">
+            {appointment.age ? `${appointment.age} lat` : 'Nie podano'}
+          </Descriptions.Item>
+          <Descriptions.Item label="Płeć">
+            {appointment.gender === 'Male' ? 'Mężczyzna' : 
+             appointment.gender === 'Female' ? 'Kobieta' : 
+             appointment.gender === 'Others' ? 'Inna' : 'Nie podano'}
+          </Descriptions.Item>
+          <Descriptions.Item label="Godzina">
+            {appointment.appointmentTime}
+          </Descriptions.Item>
+          <Descriptions.Item label="Status">
+            {appointment.status === 'booked' ? 'Zarezerwowana' : appointment.status}
+          </Descriptions.Item>
+          <Descriptions.Item label="Tryb wizyty">
+            {appointment.mode === 'online' ? 'Online' : 'W gabinecie'}
+          </Descriptions.Item>
+        </Descriptions>
+      </Modal>
+    );
+  };
+
   return (
     <div style={{ padding: '24px' }}>
       <Card>
@@ -230,6 +279,11 @@ const DoctorCalendar = () => {
           />
         </div>
       </Card>
+      <AppointmentModal
+        appointment={selectedAppointment}
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+      />
     </div>
   );
 };

@@ -15,7 +15,7 @@ const HospitalCareSection = () => {
     autoplay: true,
     autoplaySpeed: 3000,
     arrows: true,
-    adaptiveHeight: false,
+    adaptiveHeight: true,
     fade: true,
   };
 
@@ -23,16 +23,16 @@ const HospitalCareSection = () => {
   const images = [1, 2, 3, 4, 5];
 
   return (
-    <div className="flex flex-col md:flex-row items-start max-w-5xl mx-auto p-6 mt-10">
-      <div className="md:w-2/5 md:mr-6 md:mt-1">
-        <div className="slider-container relative" style={{ width: "100%" }}>
+    <div className="flex flex-col md:flex-row items-start max-w-5xl mx-auto p-4 md:p-6 mt-4 md:mt-10">
+      <div className="w-full md:w-2/5 md:mr-6 mb-6 md:mb-0">
+        <div className="slider-container relative w-full h-[250px] md:h-[384px]">
           <Slider {...settings}>
             {images.map((num) => (
               <div key={num} className="slider-item">
                 <img
                   src={`/images/about_us/${num}.jpg`}
                   alt={`Centrum Medyczne ${num}`}
-                  className="w-full h-96 object-cover rounded-sm shadow-md"
+                  className="w-full h-[250px] md:h-96 object-cover rounded-sm shadow-md"
                 />
               </div>
             ))}
@@ -60,6 +60,12 @@ const HospitalCareSection = () => {
           }
           .slick-next {
             right: 10px;
+          }
+          .slick-slider {
+            height: 100%;
+          }
+          .slick-list, .slick-track {
+            height: 100%;
           }
         `}</style>
       </div>

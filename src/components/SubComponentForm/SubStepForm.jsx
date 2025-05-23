@@ -30,10 +30,10 @@ const SubStepForm = ({
   const getPreviousButtonText = () => {
     if (currentSubStep > 0) {
       const prevSubStepTitle = subStepTitles[currentSubStep - 1] || 
-                              (subSteps[currentSubStep - 1]?.props.title || "Previous");
-      return `← Back to ${prevSubStepTitle}`;
+                              (subSteps[currentSubStep - 1]?.props.title || "Poprzedni");
+      return `Wróć do ${prevSubStepTitle}`;
     }
-    return "Previous";
+    return "Poprzedni";
   };
 
   return (
@@ -85,7 +85,7 @@ const SubStepForm = ({
               }} 
               className="px-4 py-2 bg-primary text-white rounded"
             >
-              {currentSubStep === subSteps.length - 1 ? "Complete Step" : "Next"}
+              {currentSubStep === subSteps.length - 1 ? "Zakończ rejestrację" : "Następna"}
             </button>
           </div>
         )}

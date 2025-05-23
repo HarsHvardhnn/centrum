@@ -212,7 +212,7 @@ const BillDetails = () => {
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex items-center">
             <button
-              onClick={() => navigate('/billing')}
+              onClick={() => navigate('/admin/billing')}
               className="mr-4 text-gray-500 hover:text-gray-700"
             >
               <ChevronLeft size={20} />

@@ -254,13 +254,13 @@ const DoctorSelectionWithSlots = ({
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Select Doctor
+                Wybierz Lekarza
               </label>
 
               {/* Doctor count badge */}
               {!isLoading && doctors.length > 0 && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
-                  {doctors.length} available
+                  {doctors.length} dostępnych
                 </span>
               )}
             </div>
@@ -268,7 +268,7 @@ const DoctorSelectionWithSlots = ({
             {isLoading && doctors.length === 0 ? (
               renderLoadingState()
             ) : doctors.length === 0 ? (
-              renderEmptyState("No doctors available in this specialization")
+              renderEmptyState("Brak dostępnych lekarzy w tej specjalizacji")
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {doctors.map((doctor) => (
@@ -301,14 +301,14 @@ const DoctorSelectionWithSlots = ({
                       </div>
                       <div>
                         <h3 className="font-medium text-gray-900">
-                          Dr. {doctor.name || "NA"}
+                          Dr {doctor.name || "NA"}
                         </h3>
                         <p className="text-sm text-gray-500">
                           {doctor.specialization?.join(", ")}
                         </p>
                         {doctor.experience && (
                           <p className="text-xs text-gray-400 mt-1">
-                            {doctor.experience} years experience
+                            {doctor.experience} lat doświadczenia
                           </p>
                         )}
                       </div>
@@ -342,13 +342,13 @@ const DoctorSelectionWithSlots = ({
           <div className="mb-3">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Available Time Slots
+                Dostępne Terminy
               </label>
               <span className="text-xs text-gray-500">
                 {selectedDate && (
                   <>
-                    For{" "}
-                    {new Date(selectedDate).toLocaleDateString("en-US", {
+                    Na dzień{" "}
+                    {new Date(selectedDate).toLocaleDateString("pl-PL", {
                       weekday: "long",
                       year: "numeric",
                       month: "long",
@@ -364,20 +364,20 @@ const DoctorSelectionWithSlots = ({
                 renderLoadingState()
               ) : availableSlots.length === 0 ? (
                 renderEmptyState(
-                  "No available slots for this doctor on the selected date"
+                  "Brak dostępnych terminów dla tego lekarza w wybranym dniu"
                 )
               ) : (
                 <div className="space-y-6">
                   <TimeSlotSection
-                    title="Morning"
+                    title="Rano"
                     slots={groupedSlots.morning}
                   />
                   <TimeSlotSection
-                    title="Afternoon"
+                    title="Popołudnie"
                     slots={groupedSlots.afternoon}
                   />
                   <TimeSlotSection
-                    title="Evening"
+                    title="Wieczór"
                     slots={groupedSlots.evening}
                   />
                 </div>
@@ -390,11 +390,11 @@ const DoctorSelectionWithSlots = ({
         {selectedSlot && (
           <div className="mt-6 p-4 bg-teal-50 border border-teal-100 rounded-lg">
             <h4 className="text-sm font-medium text-teal-800 mb-2">
-              Appointment Summary
+              Podsumowanie Wizyty
             </h4>
             <div className="flex flex-wrap gap-y-2">
               <div className="w-full md:w-1/2">
-                <span className="text-xs text-gray-500">Specialization</span>
+                <span className="text-xs text-gray-500">Specjalizacja</span>
                 <p className="text-sm font-medium">
                   {
                     specializations?.find(
@@ -404,22 +404,21 @@ const DoctorSelectionWithSlots = ({
                 </p>
               </div>
               <div className="w-full md:w-1/2">
-                <span className="text-xs text-gray-500">Doctor</span>
+                <span className="text-xs text-gray-500">Lekarz</span>
                 <p className="text-sm font-medium">
-                  Dr. {selectedDoctor?.name}
+                  Dr {selectedDoctor?.name}
                 </p>
               </div>
               <div className="w-full md:w-1/2">
-                <span className="text-xs text-gray-500">Date</span>
+                <span className="text-xs text-gray-500">Data</span>
                 <p className="text-sm font-medium">
-                  {selectedDate && new Date(selectedDate).toLocaleDateString()}
+                  {selectedDate && new Date(selectedDate).toLocaleDateString("pl-PL")}
                 </p>
               </div>
               <div className="w-full md:w-1/2">
-                <span className="text-xs text-gray-500">Time</span>
+                <span className="text-xs text-gray-500">Godzina</span>
                 <p className="text-sm font-medium">
-                  {formatTime(selectedSlot.startTime)} -{" "}
-                  {formatTime(selectedSlot.endTime)}
+                  {formatTime(selectedSlot.startTime)} - {formatTime(selectedSlot.endTime)}
                 </p>
               </div>
             </div>

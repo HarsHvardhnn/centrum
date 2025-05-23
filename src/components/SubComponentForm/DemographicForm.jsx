@@ -161,7 +161,7 @@ const DemographicsForm = () => {
             </label>
           </div>
         </div>
-
+{/* 
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Stan Cywilny
@@ -201,9 +201,9 @@ const DemographicsForm = () => {
               <span className="ml-2">Wdowiec/Wdowa</span>
             </label>
           </div>
-        </div>
+        </div> */}
       </div>
-
+{/* 
       <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Pochodzenie Etniczne
@@ -232,7 +232,7 @@ const DemographicsForm = () => {
               <span className="ml-2">Bengalskie</span>
             </label>
           </div>
-        </div>
+        </div> */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           ID Pacjenta

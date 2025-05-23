@@ -24,228 +24,7 @@ import CheckInModal from "../admin/CheckinModal";
 import { useNavigate } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
 import { translateStatus, getStatusStyle } from '../../utils/statusHelper';
-
-// Billing Confirmation Modal Component
-const BillingConfirmationModal = ({
-  isOpen,
-  onClose,
-  onConfirm,
-  patientServicesData,
-  patientName,
-  appointmentId,
-}) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [taxPercentage, setTaxPercentage] = useState(18); // Default tax rate (e.g., GST)
-  const [additionalCharges, setAdditionalCharges] = useState(0);
-  const [additionalChargeNote, setAdditionalChargeNote] = useState("");
-  const [discount, setDiscount] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState("cash"); // Default payment method
-
-  if (!isOpen) return null;
-
-  // Extract services from the API response format
-  const services = patientServicesData?.data?.services || [];
-
-  // Calculate subtotal from services
-  const subtotal = services.reduce((sum, serviceItem) => {
-    const servicePrice = parseFloat(serviceItem.service.price || 0);
-    return sum + servicePrice;
-  }, 0);
-
-  // Calculate tax amount
-  const taxAmount = (subtotal * taxPercentage) / 100;
-
-  // Calculate total with tax, additional charges, and discount
-  const totalAmount = (
-    subtotal +
-    taxAmount +
-    parseFloat(additionalCharges || 0) -
-    parseFloat(discount || 0)
-  ).toFixed(2);
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Generuj rachunek dla{" "}
-            {patientServicesData?.data?.patient?.name?.first}{" "}
-            {patientServicesData?.data?.patient?.name?.last}
-          </h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Utworzy to rachunek dla pacjenta na podstawie wybranych przez niego
-            usług.
-          </p>
-
-          {isLoading ? (
-            <div className="py-4 flex justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-500"></div>
-            </div>
-          ) : (
-            <>
-              <div className="border rounded-lg overflow-hidden mb-4">
-                <div className="bg-gray-50 px-4 py-2 border-b">
-                  <h4 className="font-medium text-sm">Usługi</h4>
-                </div>
-
-                {services && services.length > 0 ? (
-                  <div className="divide-y">
-                    {services.map((serviceItem, index) => (
-                      <div
-                        key={index}
-                        className="px-4 py-2 flex justify-between items-center"
-                      >
-                        <div>
-                          <p className="font-medium text-sm">
-                            {serviceItem.service.title}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Status: {serviceItem.status}
-                          </p>
-                        </div>
-                        <p className="text-sm">
-                          zł{parseFloat(serviceItem.service.price).toFixed(2)}
-                        </p>
-                      </div>
-                    ))}
-
-                    <div className="px-4 py-2 flex justify-between items-center bg-gray-50">
-                      <p className="font-medium">Suma częściowa</p>
-                      <p className="font-medium">zł{subtotal.toFixed(2)}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-4 text-center text-gray-500">
-                    Nie znaleziono usług dla tej wizyty.
-                  </div>
-                )}
-              </div>
-
-              {/* Tax, Additional Charges, and Discount Fields */}
-              <div className="space-y-3 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Podatek (%)
-                  </label>
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={taxPercentage}
-                      onChange={(e) =>
-                        setTaxPercentage(parseFloat(e.target.value) || 0)
-                      }
-                      className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                    />
-                    <span className="ml-2 text-sm text-gray-500">
-                      (zł{taxAmount.toFixed(2)})
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Dodatkowe opłaty (zł)
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="number"
-                      min="0"
-                      value={additionalCharges}
-                      onChange={(e) =>
-                        setAdditionalCharges(parseFloat(e.target.value) || 0)
-                      }
-                      className="block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Notatka (opcjonalna)"
-                      value={additionalChargeNote}
-                      onChange={(e) => setAdditionalChargeNote(e.target.value)}
-                      className="block flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Rabat (zł)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={discount}
-                    onChange={(e) =>
-                      setDiscount(parseFloat(e.target.value) || 0)
-                    }
-                    className="block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                  />
-                </div>
-
-                {/* Payment Method */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Metoda płatności
-                  </label>
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                  >
-                    <option value="cash">Gotówka</option>
-                    <option value="card">Karta kredytowa/debetowa</option>
-                    <option value="insurance">Ubezpieczenie</option>
-                    <option value="bank_transfer">Przelew bankowy</option>
-                    <option value="mobile_payment">Płatność mobilna</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Total */}
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <div className="flex justify-between items-center">
-                  <p className="font-semibold text-lg">Łączna kwota</p>
-                  <p className="font-bold text-lg text-teal-600">
-                    zł{totalAmount}
-                  </p>
-                </div>
-              </div>
-            </>
-          )}
-
-          <div className="flex justify-end gap-2 mt-4">
-            <button
-              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-              onClick={onClose}
-            >
-              Anuluj
-            </button>
-            <button
-              className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center"
-              onClick={() =>
-                onConfirm({
-                  subtotal,
-                  taxPercentage,
-                  taxAmount,
-                  additionalCharges,
-                  additionalChargeNote,
-                  discount,
-                  totalAmount,
-                  paymentMethod,
-                })
-              }
-              disabled={isLoading || services.length === 0}
-            >
-              <DollarSign size={16} className="mr-1" />
-              Generuj rachunek
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 
 // Add billingHelper with the generateBill function
 const billingHelper = {
@@ -271,6 +50,7 @@ function LabAppointmentsContent({ clinic }) {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [billingServices, setBillingServices] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
   // Appointments data
@@ -438,6 +218,63 @@ function LabAppointmentsContent({ clinic }) {
     ));
   };
 
+  // Add new function to group appointments by date
+  const groupAppointmentsByDate = (appointments) => {
+    const grouped = {};
+    appointments.forEach(appointment => {
+      const date = new Date(appointment.date).toLocaleDateString();
+      if (!grouped[date]) {
+        grouped[date] = [];
+      }
+      grouped[date].push(appointment);
+    });
+    return grouped;
+  };
+
+  // Add function to format date header
+  const formatDateHeader = (dateStr) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+      return "Dzisiaj";
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return "Jutro";
+    }
+    return date.toLocaleDateString('pl-PL', { 
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'long'
+    });
+  };
+
+  // Add handleCancelClick function
+  const handleCancelClick = async (e, appointmentId) => {
+    e.preventDefault();
+    try {
+      showLoader();
+      const response = await appointmentHelper.updateAppointmentStatus(appointmentId, "cancelled");
+      if (response.success) {
+        toast.success("Wizyta została anulowana");
+        // Update the appointments list
+        setAppointments(appointments.map(apt => 
+          apt.id === appointmentId 
+            ? { ...apt, status: "cancelled" }
+            : apt
+        ));
+      } else {
+        toast.error("Nie udało się anulować wizyty");
+      }
+    } catch (error) {
+      console.error("Failed to cancel appointment:", error);
+      toast.error("Nie udało się anulować wizyty");
+    } finally {
+      hideLoader();
+    }
+  };
+
   return (
     <div className="bg-white min-h-screen">
       <div className="w-full mx-auto px-4 py-8">
@@ -567,195 +404,310 @@ function LabAppointmentsContent({ clinic }) {
           </div>
         </div>
 
-        {/* Appointments Table */}
-        <div className="overflow-x-auto shadow-sm border rounded-lg">
-          <table className="w-full table-fixed border-collapse">
-            <thead>
-              <tr className="text-left text-gray-500 border-b bg-gray-50">
-                <th className="px-4 py-3 w-[16%] font-medium">Pacjent</th>
-                <th className="px-4 py-3 w-[12%] font-medium">
-                  Data i godzina
-                </th>
-                <th className="px-4 py-3 w-[7%] font-medium">Tryb</th>
-                <th className="px-4 py-3 w-[8%] font-medium">Choroba</th>
-                <th className="px-4 py-3 w-[16%] font-medium">Lekarz</th>
-                <th className="px-4 py-3 w-[7%] font-medium">Wiek pacjenta</th>
-                {/* <th className="px-4 py-3 w-[12%] font-medium">Status pacjenta</th> */}
-                <th className="px-4 py-3 w-[14%] font-medium">Status wizyty</th>
-                <th className="px-4 py-3 w-[8%] font-medium">Akcje</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAppointments.map((appointment) => (
-                <tr key={appointment.id} className="border-b hover:bg-gray-50">
-                  <td
-                    className="px-4 py-3 truncate cursor-pointer"
-                    onClick={() =>
-                      navigate(
-                        `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
-                      )
-                    }
-                  >
-                    <div className="flex items-center">
-                      <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden mr-2 flex-shrink-0">
-                        <img
-                          src={appointment.patient?.profilePicture || ""}
-                          alt={appointment.patient?.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-medium truncate">
-                          {appointment.patient?.name}
+        {clinic ? (
+          // Clinic appointments - Date focused layout
+          <div className="space-y-6">
+            {Object.entries(groupAppointmentsByDate(filteredAppointments)).map(([date, appointments]) => (
+              <div key={date} className="bg-white rounded-lg shadow-sm border">
+                <div className="bg-gray-50 px-6 py-4 border-b">
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    {formatDateHeader(date)}
+                  </h2>
+                </div>
+                <div className="divide-y">
+                  {appointments.map((appointment) => (
+                    <div key={appointment.id} className="p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                            <img
+                              src={appointment.patient?.profilePicture || ""}
+                              alt={appointment.patient?.name}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">{appointment.patient?.name}</div>
+                            <div className="text-sm text-gray-500">{appointment.patient.patientId}</div>
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500 truncate">
-                          {appointment.patient.patientId}
+                        <div className="text-right">
+                          <div className="font-medium text-gray-900">
+                            {appointment.startTime} - {appointment.endTime}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {appointment.doctor?.name || "-"}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusStyle(appointment.status)}`}>
+                            {translateStatus(appointment.status)}
+                          </span>
+                          <DropdownMenu.Root>
+                            <DropdownMenu.Trigger asChild>
+                              <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
+                                <MoreVertical size={18} />
+                              </button>
+                            </DropdownMenu.Trigger>
+
+                            <DropdownMenu.Portal>
+                              <DropdownMenu.Content
+                                className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
+                                sideOffset={5}
+                              >
+                                <DropdownMenu.Item
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                  onClick={() => {
+                                    navigate(
+                                      `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                                    );
+                                  }}
+                                >
+                                  <Eye size={16} className="mr-2" />
+                                  Zobacz szczegóły
+                                </DropdownMenu.Item>
+
+                                {appointment.status === "booked" && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={() => {
+                                      setSelectedAppointment(appointment);
+                                      setShowCheckin(true);
+                                    }}
+                                  >
+                                    <UserCheck size={16} className="mr-2" />
+                                    Zamelduj
+                                  </DropdownMenu.Item>
+                                )}
+
+                                {["checkedIn", "booked"].includes(appointment.status) && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={() => {
+                                      setSelectedAppointment(appointment);
+                                      handleBillPatient(appointment.id, appointment.patient.id);
+                                    }}
+                                  >
+                                    <DollarSign size={16} className="mr-2" />
+                                    Wystaw rachunek
+                                  </DropdownMenu.Item>
+                                )}
+
+                                {/* Only show cancel button for lab appointments and if status is booked */}
+                                {/* {!clinic && appointment.status === "booked" && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={(e) => {
+                                      handleCancelClick(e, appointment.id);
+                                    }}
+                                  >
+                                    <Trash2 size={16} className="mr-2" />
+                                    Anuluj wizytę
+                                  </DropdownMenu.Item>
+                                )} */}
+                              </DropdownMenu.Content>
+                            </DropdownMenu.Portal>
+                          </DropdownMenu.Root>
                         </div>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-4 py-3 truncate">
-                    <div className="font-medium">
-                      {new Date(appointment.date).toLocaleDateString()}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {appointment.startTime} - {appointment.endTime}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 truncate">
-                    <span
-                      title={
-                        appointment.mode === "online"
-                          ? "Click to join meeting"
-                          : ""
-                      }
-                      onClick={() => {
-                        if (appointment.mode === "online") {
-                          window.open(appointment.meetLink, "_blank");
-                        }
-                      }}
-                      className={`px-2 py-1 rounded-full text-xs font-medium inline-block transition-colors ${
-                        appointment.mode === "online"
-                          ? "bg-blue-100 text-blue-800 cursor-pointer hover:bg-blue-200"
-                          : appointment.mode === "offline"
-                          ? "bg-purple-100 text-purple-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {appointment.mode === "online"
-                        ? "Online"
-                        : appointment.mode === "offline"
-                        ? "Stacjonarnie"
-                        : appointment.mode}
-                    </span>
-                  </td>
-
-                  <td className="px-4 py-3 truncate">
-                    {appointment.patient.disease || "-"}
-                  </td>
-                  <td className="px-4 py-3 truncate">
-                    <div className="font-medium truncate">
-                      {appointment.doctor?.name || "-"}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 truncate text-center">
-                    {appointment.patient.age || "N/A"} lat
-                  </td>
-                  {/* <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-                      appointment.patient.patient_status === 'in-treatment' 
-                        ? 'bg-yellow-100 text-yellow-800' 
-                        : appointment.patient.patient_status === 'recovered'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {appointment.patient.patient_status === 'in-treatment' ? 'W trakcie leczenia' :
-                       appointment.patient.patient_status === 'recovered' ? 'Wyzdrowiał' :
-                       appointment.patient.patient_status || "N/A"}
-                    </span>
-                  </td> */}
-                  <td className="px-4 py-3 text-center">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getStatusStyle(appointment.status)}`}
-                    >
-                      {translateStatus(appointment.status)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 relative">
-                    <div className="flex justify-center">
-                      <DropdownMenu.Root>
-                        <DropdownMenu.Trigger asChild>
-                          <button
-                            className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                          >
-                            <MoreVertical size={18} />
-                          </button>
-                        </DropdownMenu.Trigger>
-
-                        <DropdownMenu.Portal>
-                          <DropdownMenu.Content
-                            className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
-                            sideOffset={5}
-                          >
-                            <DropdownMenu.Item
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                              onClick={() => {
-                                navigate(
-                                  `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
-                                );
-                              }}
-                            >
-                              <Eye size={16} className="mr-2" />
-                              Zobacz szczegóły
-                            </DropdownMenu.Item>
-
-                            {appointment.status === "booked" && (
-                              <DropdownMenu.Item
-                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                onClick={() => {
-                                  setSelectedAppointment(appointment);
-                                  setShowCheckin(true);
-                                }}
-                              >
-                                <UserCheck size={16} className="mr-2" />
-                                Zamelduj
-                              </DropdownMenu.Item>
-                            )}
-
-                            {["checkedIn", "booked"].includes(appointment.status) && (
-                              <DropdownMenu.Item
-                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                onClick={() => {
-                                  setSelectedAppointment(appointment);
-                                  handleBillPatient(appointment.id, appointment.patient.id);
-                                }}
-                              >
-                                <DollarSign size={16} className="mr-2" />
-                                Wystaw rachunek
-                              </DropdownMenu.Item>
-                            )}
-
-                            {appointment.status === "booked" && (
-                              <DropdownMenu.Item
-                                className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md cursor-pointer"
-                                onClick={(e) => {
-                                  handleCancelClick(e, appointment.id);
-                                }}
-                              >
-                                <Trash2 size={16} className="mr-2" />
-                                Anuluj wizytę
-                              </DropdownMenu.Item>
-                            )}
-                          </DropdownMenu.Content>
-                        </DropdownMenu.Portal>
-                      </DropdownMenu.Root>
-                    </div>
-                  </td>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // Original Lab appointments table layout
+          <div className="overflow-x-auto shadow-sm border rounded-lg">
+            <table className="w-full table-fixed border-collapse">
+              <thead>
+                <tr className="text-left text-gray-500 border-b bg-gray-50">
+                  <th className="px-4 py-3 w-[16%] font-medium">Pacjent</th>
+                  <th className="px-4 py-3 w-[12%] font-medium">
+                    Data i godzina
+                  </th>
+                  <th className="px-4 py-3 w-[7%] font-medium">Tryb</th>
+                  <th className="px-4 py-3 w-[8%] font-medium">Choroba</th>
+                  <th className="px-4 py-3 w-[16%] font-medium">Lekarz</th>
+                  <th className="px-4 py-3 w-[7%] font-medium">Wiek pacjenta</th>
+                  {/* <th className="px-4 py-3 w-[12%] font-medium">Status pacjenta</th> */}
+                  <th className="px-4 py-3 w-[14%] font-medium">Status wizyty</th>
+                  <th className="px-4 py-3 w-[8%] font-medium">Akcje</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredAppointments.map((appointment) => (
+                  <tr key={appointment.id} className="border-b hover:bg-gray-50">
+                    <td
+                      className="px-4 py-3 truncate cursor-pointer"
+                      onClick={() =>
+                        navigate(
+                          `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                        )
+                      }
+                    >
+                      <div className="flex items-center">
+                        <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden mr-2 flex-shrink-0">
+                          <img
+                            src={appointment.patient?.profilePicture || ""}
+                            alt={appointment.patient?.name}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">
+                            {appointment.patient?.name}
+                          </div>
+                          <div className="text-sm text-gray-500 truncate">
+                            {appointment.patient.patientId}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 truncate">
+                      <div className="font-medium">
+                        {new Date(appointment.date).toLocaleDateString()}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {appointment.startTime} - {appointment.endTime}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 truncate">
+                      <span
+                        title={
+                          appointment.mode === "online"
+                            ? "Click to join meeting"
+                            : ""
+                        }
+                        onClick={() => {
+                          if (appointment.mode === "online") {
+                            window.open(appointment.meetLink, "_blank");
+                          }
+                        }}
+                        className={`px-2 py-1 rounded-full text-xs font-medium inline-block transition-colors ${
+                          appointment.mode === "online"
+                            ? "bg-blue-100 text-blue-800 cursor-pointer hover:bg-blue-200"
+                            : appointment.mode === "offline"
+                            ? "bg-purple-100 text-purple-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {appointment.mode === "online"
+                          ? "Online"
+                          : appointment.mode === "offline"
+                          ? "Stacjonarnie"
+                          : appointment.mode}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-3 truncate">
+                      {appointment.patient.disease || "-"}
+                    </td>
+                    <td className="px-4 py-3 truncate">
+                      <div className="font-medium truncate">
+                        {appointment.doctor?.name || "-"}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 truncate text-center">
+                      {appointment.patient.age || "N/A"} lat
+                    </td>
+                    {/* <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
+                        appointment.patient.patient_status === 'in-treatment' 
+                          ? 'bg-yellow-100 text-yellow-800' 
+                          : appointment.patient.patient_status === 'recovered'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {appointment.patient.patient_status === 'in-treatment' ? 'W trakcie leczenia' :
+                         appointment.patient.patient_status === 'recovered' ? 'Wyzdrowiał' :
+                         appointment.patient.patient_status || "N/A"}
+                      </span>
+                    </td> */}
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getStatusStyle(appointment.status)}`}
+                      >
+                        {translateStatus(appointment.status)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 relative">
+                      <div className="flex justify-center">
+                        <DropdownMenu.Root>
+                          <DropdownMenu.Trigger asChild>
+                            <button
+                              className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                            >
+                              <MoreVertical size={18} />
+                            </button>
+                          </DropdownMenu.Trigger>
+
+                          <DropdownMenu.Portal>
+                            <DropdownMenu.Content
+                              className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
+                              sideOffset={5}
+                            >
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={() => {
+                                  navigate(
+                                    `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                                  );
+                                }}
+                              >
+                                <Eye size={16} className="mr-2" />
+                                Zobacz szczegóły
+                              </DropdownMenu.Item>
+
+                              {appointment.status === "booked" && (
+                                <DropdownMenu.Item
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedAppointment(appointment);
+                                    setShowCheckin(true);
+                                  }}
+                                >
+                                  <UserCheck size={16} className="mr-2" />
+                                  Zamelduj
+                                </DropdownMenu.Item>
+                              )}
+
+                              {["checkedIn", "booked"].includes(appointment.status) && (
+                                <DropdownMenu.Item
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedAppointment(appointment);
+                                    handleBillPatient(appointment.id, appointment.patient.id);
+                                  }}
+                                >
+                                  <DollarSign size={16} className="mr-2" />
+                                  Wystaw rachunek
+                                </DropdownMenu.Item>
+                              )}
+
+                              {/* Only show cancel button for lab appointments and if status is booked */}
+                              {/* {!clinic && appointment.status === "booked" && (
+                                <DropdownMenu.Item
+                                  className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md cursor-pointer"
+                                  onClick={(e) => {
+                                    handleCancelClick(e, appointment.id);
+                                  }}
+                                >
+                                  <Trash2 size={16} className="mr-2" />
+                                  Anuluj wizytę
+                                </DropdownMenu.Item>
+                              )} */}
+                            </DropdownMenu.Content>
+                          </DropdownMenu.Portal>
+                        </DropdownMenu.Root>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Pagination */}
         {pagination.pages > 1 && (
@@ -797,6 +749,7 @@ function LabAppointmentsContent({ clinic }) {
           patientServicesData={billingServices}
           patientName={selectedAppointment?.patient?.name}
           appointmentId={selectedAppointment?.id}
+          patientId={selectedAppointment?.patient_id}
         />
       </div>
     </div>

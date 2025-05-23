@@ -415,7 +415,7 @@ export default function UserManagement() {
               onClick={() => setShowSpecsModal(true)}
               className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
             >
-              Manage Specializations
+              Zarządzaj Specjalizacjami
             </button>
           )}
           <div className="dropdown-container relative">
@@ -423,7 +423,7 @@ export default function UserManagement() {
               onClick={() => setShowAddDropdown(!showAddDropdown)}
               className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
             >
-              Add User <ChevronDown size={16} />
+              Dodaj Użytkownika <ChevronDown size={16} />
             </button>
 
             {showAddDropdown && (
@@ -438,7 +438,7 @@ export default function UserManagement() {
                           setShowAddDoctorModal(true);
                         }}
                       >
-                        Dodaj  specjalista
+                        Dodaj Specjalistę
                       </button>
                       <button
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -447,7 +447,7 @@ export default function UserManagement() {
                           setShowAddModal(true);
                         }}
                       >
-                        Add Receptionist
+                        Dodaj Recepcjonistę
                       </button>
                     </>
                   )}
@@ -458,7 +458,7 @@ export default function UserManagement() {
                       setShowAddPatientModal(true);
                     }}
                   >
-                    Add Patient
+                    Dodaj Pacjenta
                   </button>
                 </div>
               </div>
@@ -472,7 +472,7 @@ export default function UserManagement() {
         <form onSubmit={handleSearch} className="flex mb-4">
           <input
             type="text"
-            placeholder="Search by name, email, or phone..."
+            placeholder="Szukaj po nazwie, email lub telefonie..."
             className="p-2 border border-gray-300 rounded-l-md w-full"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -481,27 +481,27 @@ export default function UserManagement() {
             type="submit"
             className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-r-md"
           >
-            Search
+            Szukaj
           </button>
         </form>
 
         {searchTerm && (
           <div className="flex items-center mb-4">
             <span className="text-sm text-gray-600 mr-2">
-              Searching for: "{searchTerm}"
+              Wyszukiwanie: "{searchTerm}"
             </span>
             <button
               onClick={handleClearSearch}
               className="text-sm text-teal-600 hover:text-teal-800"
             >
-              Clear Search
+              Wyczyść
             </button>
           </div>
         )}
 
         <div className="flex justify-end items-center">
           <label htmlFor="usersPerPage" className="mr-2 text-sm text-gray-600">
-            Users per page:
+            Użytkowników na stronę:
           </label>
           <select
             id="usersPerPage"
@@ -539,7 +539,7 @@ export default function UserManagement() {
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("name.first")}
               >
-                User {getSortIcon("name.first")}
+                Użytkownik {getSortIcon("name.first")}
               </th>
               <th
                 scope="col"
@@ -552,21 +552,21 @@ export default function UserManagement() {
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("phone")}
               >
-                Contact {getSortIcon("phone")}
+                Kontakt {getSortIcon("phone")}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("role")}
               >
-                Role {getSortIcon("role")}
+                Rola {getSortIcon("role")}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("signupMethod")}
               >
-                Signup Method {getSortIcon("signupMethod")}
+                Metoda Rejestracji {getSortIcon("signupMethod")}
               </th>
               <th
                 scope="col"
@@ -579,7 +579,7 @@ export default function UserManagement() {
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Actions
+                Akcje
               </th>
             </tr>
           </thead>
@@ -595,7 +595,7 @@ export default function UserManagement() {
             ) : users.length === 0 ? (
               <tr>
                 <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                  No users found
+                  Nie znaleziono użytkowników
                 </td>
               </tr>
             ) : (
@@ -673,7 +673,7 @@ export default function UserManagement() {
                               onClick={() => handleManageSchedule(user)}
                               className="text-blue-600 hover:text-blue-900"
                             >
-                              Schedule
+                              Harmonogram
                             </button>
                           )}
                           {user.role === "patient" && (
@@ -681,14 +681,14 @@ export default function UserManagement() {
                               onClick={() => handleEditPatient(user._id)}
                               className="text-blue-600 hover:text-blue-900"
                             >
-                              Edit
+                              Edytuj
                             </button>
                           )}
                           <button
                             onClick={() => handleDeleteClick(user)}
                             className="text-red-600 hover:text-red-900"
                           >
-                            Delete
+                            Usuń
                           </button>
                         </>
                       )}
@@ -697,7 +697,7 @@ export default function UserManagement() {
                           onClick={() => handleReviveUser(user._id)}
                           className="text-green-600 hover:text-green-900"
                         >
-                          Revive
+                          Przywróć
                         </button>
                       )}
                     </div>
@@ -713,7 +713,7 @@ export default function UserManagement() {
       <div className="mt-4 flex justify-between items-center">
         <div>
           <p className="text-sm text-gray-700">
-            Showing page {currentPage} of {totalPages}
+            Strona {currentPage} z {totalPages}
           </p>
         </div>
         <div className="flex space-x-2">
@@ -726,7 +726,7 @@ export default function UserManagement() {
                 : "bg-teal-100 text-teal-700 hover:bg-teal-200"
             }`}
           >
-            First
+            Pierwsza
           </button>
           <button
             onClick={() => handlePageChange(currentPage - 1)}
@@ -737,38 +737,8 @@ export default function UserManagement() {
                 : "bg-teal-100 text-teal-700 hover:bg-teal-200"
             }`}
           >
-            Previous
+            Poprzednia
           </button>
-
-          {/* Generate page buttons dynamically */}
-          {(() => {
-            const buttons = [];
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-
-            // Adjust start page if end page is maxed out
-            if (endPage === totalPages) {
-              startPage = Math.max(1, endPage - 4);
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-              buttons.push(
-                <button
-                  key={i}
-                  onClick={() => handlePageChange(i)}
-                  className={`px-3 py-1 rounded ${
-                    currentPage === i
-                      ? "bg-teal-600 text-white"
-                      : "bg-teal-100 text-teal-700 hover:bg-teal-200"
-                  }`}
-                >
-                  {i}
-                </button>
-              );
-            }
-            return buttons;
-          })()}
-
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
@@ -778,7 +748,7 @@ export default function UserManagement() {
                 : "bg-teal-100 text-teal-700 hover:bg-teal-200"
             }`}
           >
-            Next
+            Następna
           </button>
           <button
             onClick={() => handlePageChange(totalPages)}
@@ -789,7 +759,7 @@ export default function UserManagement() {
                 : "bg-teal-100 text-teal-700 hover:bg-teal-200"
             }`}
           >
-            Last
+            Ostatnia
           </button>
         </div>
       </div>
@@ -799,13 +769,13 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm transition-opacity duration-300">
           <div className="bg-white rounded-lg p-8 w-full max-w-md shadow-xl transform transition-all duration-300 border border-teal-100">
             <h2 className="text-2xl font-bold mb-6 text-teal-700 border-b pb-2 border-teal-200">
-              Add New Receptionist
+              Dodaj Nowego Recepcjonistę
             </h2>
             <form onSubmit={handleAddReceptionist}>
               <div className="space-y-5">
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    First Name
+                    Imię
                   </label>
                   <input
                     type="text"
@@ -819,7 +789,7 @@ export default function UserManagement() {
 
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    Last Name
+                    Nazwisko
                   </label>
                   <input
                     type="text"
@@ -847,7 +817,7 @@ export default function UserManagement() {
 
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    Phone
+                    Telefon
                   </label>
                   <input
                     type="tel"
@@ -860,7 +830,7 @@ export default function UserManagement() {
 
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    Password
+                    Hasło
                   </label>
                   <input
                     type="password"
@@ -879,13 +849,13 @@ export default function UserManagement() {
                   onClick={() => setShowAddModal(false)}
                   className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-5 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
-                  Cancel
+                  Anuluj
                 </button>
                 <button
                   type="submit"
                   className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-5 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
-                  Add Receptionist
+                  Dodaj Recepcjonistę
                 </button>
               </div>
             </form>
@@ -912,7 +882,7 @@ export default function UserManagement() {
           <div className="bg-white rounded-lg w-3/4 max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b p-4">
               <h2 className="text-xl font-bold">
-                {isEditMode ? "Edit Patient" : "Add New Patient"}
+                {isEditMode ? "Edytuj Pacjenta" : "Dodaj Pacjenta"}
               </h2>
               <button
                 className="text-gray-500 hover:text-gray-700"
@@ -961,27 +931,27 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4 text-red-600">
-              Confirm Deletion
+              Potwierdź Usunięcie
             </h2>
             <p className="mb-6">
-              Are you sure you want to delete user{" "}
+              Czy na pewno chcesz usunąć użytkownika{" "}
               <span className="font-bold">
                 {selectedUser.name.first} {selectedUser.name.last}
               </span>
-              ? This action cannot be undone.
+              ? Tej operacji nie można cofnąć.
             </p>
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
               >
-                Cancel
+                Anuluj
               </button>
               <button
                 onClick={confirmDelete}
                 className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
               >
-                Delete
+                Usuń
               </button>
             </div>
           </div>
