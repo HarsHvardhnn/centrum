@@ -1,13 +1,17 @@
 import { useState, useRef } from "react";
 import { X, Upload, AlertCircle, Check, Trash2 } from "lucide-react";
 import { apiCaller } from "../../utils/axiosInstance";
+import { toast } from "sonner";
+import appointmentHelper from "../../helpers/appointmentHelper";
 
-const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = null }) => {
+
+const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = null, onCheckinSuccess, onAppointmentUpdate }) => {
   console.log("patientData", patientData);
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
   console.log("patientData", patientData);
 
@@ -99,6 +103,15 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
         setIsOpen(false);
         setFiles([]);
         setUploadSuccess(false);
+
+        // Update the parent component's state by calling a callback
+        if (typeof onCheckinSuccess === 'function') {
+          onCheckinSuccess(appointmentId);
+        }
+        // Update the appointments list in the parent component
+        if (typeof onAppointmentUpdate === 'function') {
+          onAppointmentUpdate(appointmentId, 'checkedIn');
+        }
       } else {
         throw new Error(response.message || "Przesyłanie nie powiodło się");
       }
@@ -109,6 +122,33 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
       );
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleCheckin = async () => {
+    try {
+      setLoading(true);
+      const response = await appointmentHelper.checkInPatient(appointmentId);
+      
+      if (response.success) {
+        toast.success("Pacjent został pomyślnie zameldowany");
+        // Update the parent component's state by calling a callback
+        if (typeof onCheckinSuccess === 'function') {
+          onCheckinSuccess(appointmentId);
+        }
+        // Update the appointments list in the parent component
+        if (typeof onAppointmentUpdate === 'function') {
+          onAppointmentUpdate(appointmentId, 'checkedIn');
+        }
+        setIsOpen(false);
+      } else {
+        toast.error("Nie udało się zameldować pacjenta");
+      }
+    } catch (error) {
+      console.error("Error during check-in:", error);
+      toast.error("Wystąpił błąd podczas meldowania pacjenta");
+    } finally {
+      setLoading(false);
     }
   };
 

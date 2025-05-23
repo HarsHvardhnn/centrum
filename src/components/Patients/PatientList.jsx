@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
   Search,
   Filter,
@@ -12,6 +13,7 @@ import {
   Eye,
   UserCheck,
   DollarSign,
+  Trash2
 } from "lucide-react";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
@@ -21,6 +23,7 @@ import { useUser } from "../../context/userContext";
 import CheckInModal from "../admin/CheckinModal";
 import { useNavigate } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
+import { translateStatus, getStatusStyle } from '../../utils/statusHelper';
 
 // Billing Confirmation Modal Component
 const BillingConfirmationModal = ({
@@ -244,43 +247,6 @@ const BillingConfirmationModal = ({
   );
 };
 
-// ActionDropdown component using portal
-const ActionDropdown = ({ isOpen, onClose, position, children }) => {
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  return createPortal(
-    <div
-      className="fixed w-48 bg-white rounded-md shadow-lg z-50 border"
-      style={{
-        top: `${position.y}px`,
-        left: `${position.x}px`,
-      }}
-      ref={dropdownRef}
-    >
-      <div className="py-1">{children}</div>
-    </div>,
-    document.body
-  );
-};
-
 // Add billingHelper with the generateBill function
 const billingHelper = {
   generateBill: async (appointmentId, billData) => {
@@ -324,10 +290,6 @@ function LabAppointmentsContent({ clinic }) {
     startDate: null,
     endDate: null,
   });
-
-  // State for tracking which dropdown is open
-  const [openActionMenu, setOpenActionMenu] = useState(null);
-  const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
 
   const fetchAppointments = async (page = 1) => {
     try {
@@ -413,7 +375,7 @@ function LabAppointmentsContent({ clinic }) {
   // Function to confirm billing
   const confirmBilling = async (billingData) => {
     try {
-      showLoader();
+      setIsLoading(true);
 
       // Format services data
       const formattedServices =
@@ -424,7 +386,7 @@ function LabAppointmentsContent({ clinic }) {
           status: service.status,
         })) || [];
 
-      // Prepare billing payload according to the API documentation
+      // Prepare billing payload
       const billingPayload = {
         services: formattedServices,
         subtotal: billingData.subtotal,
@@ -438,7 +400,7 @@ function LabAppointmentsContent({ clinic }) {
       };
 
       // Call the API to generate the bill
-      await billingHelper.generateBill(selectedAppointment.id, billingPayload);
+      const response = await billingHelper.generateBill(selectedAppointment.id, billingPayload);
 
       // Update local state
       setAppointments(
@@ -457,29 +419,23 @@ function LabAppointmentsContent({ clinic }) {
         `Rachunek wygenerowany pomyślnie na kwotę zł${billingData.totalAmount}`
       );
       setShowBillingModal(false);
-      hideLoader();
+      setIsLoading(false);
+      
+      // Redirect to billing details
+      navigate(`/admin/billing/details/${response.data._id}`);
     } catch (error) {
       console.error("Failed to generate bill:", error);
       toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
-      hideLoader();
+      setIsLoading(false);
     }
   };
 
-  // Toggle dropdown menu with position calculation
-  const toggleActionMenu = (id, event) => {
-    event.stopPropagation();
-
-    if (openActionMenu === id) {
-      setOpenActionMenu(null);
-    } else {
-      const rect = event.currentTarget.getBoundingClientRect();
-      // Calculate position so dropdown appears to the right of the button
-      setDropdownPosition({
-        x: Math.min(rect.right - 20, window.innerWidth - 200), // Ensure it doesn't go off-screen
-        y: rect.bottom + window.scrollY + 5, // Position below the button with a small gap
-      });
-      setOpenActionMenu(id);
-    }
+  const handleAppointmentUpdate = (appointmentId, newStatus) => {
+    setAppointments(appointments.map(apt => 
+      apt.id === appointmentId 
+        ? { ...apt, status: newStatus }
+        : apt
+    ));
   };
 
   return (
@@ -720,39 +676,79 @@ function LabAppointmentsContent({ clinic }) {
                   </td> */}
                   <td className="px-4 py-3 text-center">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-                        appointment.status === "booked"
-                          ? "bg-blue-100 text-blue-800"
-                          : appointment.status === "completed"
-                          ? "bg-green-100 text-green-800"
-                          : appointment.status === "cancelled"
-                          ? "bg-red-100 text-red-800"
-                          : appointment.status === "billed"
-                          ? "bg-purple-100 text-purple-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
+                      className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getStatusStyle(appointment.status)}`}
                     >
-                      {appointment.status === "booked"
-                        ? "Zarezerwowana"
-                        : appointment.status === "completed"
-                        ? "Zakończona"
-                        : appointment.status === "cancelled"
-                        ? "Anulowana"
-                        : appointment.status === "billed"
-                        ? "Rozliczona"
-                        : appointment.status === "checkedIn"
-                        ? "W trakcie leczenia"
-                        : appointment.status}
+                      {translateStatus(appointment.status)}
                     </span>
                   </td>
                   <td className="px-4 py-3 relative">
                     <div className="flex justify-center">
-                      <button
-                        className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                        onClick={(e) => toggleActionMenu(appointment.id, e)}
-                      >
-                        <MoreVertical size={18} />
-                      </button>
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger asChild>
+                          <button
+                            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                          >
+                            <MoreVertical size={18} />
+                          </button>
+                        </DropdownMenu.Trigger>
+
+                        <DropdownMenu.Portal>
+                          <DropdownMenu.Content
+                            className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
+                            sideOffset={5}
+                          >
+                            <DropdownMenu.Item
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                              onClick={() => {
+                                navigate(
+                                  `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                                );
+                              }}
+                            >
+                              <Eye size={16} className="mr-2" />
+                              Zobacz szczegóły
+                            </DropdownMenu.Item>
+
+                            {appointment.status === "booked" && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={() => {
+                                  setSelectedAppointment(appointment);
+                                  setShowCheckin(true);
+                                }}
+                              >
+                                <UserCheck size={16} className="mr-2" />
+                                Zamelduj
+                              </DropdownMenu.Item>
+                            )}
+
+                            {["checkedIn", "booked"].includes(appointment.status) && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={() => {
+                                  setSelectedAppointment(appointment);
+                                  handleBillPatient(appointment.id, appointment.patient.id);
+                                }}
+                              >
+                                <DollarSign size={16} className="mr-2" />
+                                Wystaw rachunek
+                              </DropdownMenu.Item>
+                            )}
+
+                            {appointment.status === "booked" && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={(e) => {
+                                  handleCancelClick(e, appointment.id);
+                                }}
+                              >
+                                <Trash2 size={16} className="mr-2" />
+                                Anuluj wizytę
+                              </DropdownMenu.Item>
+                            )}
+                          </DropdownMenu.Content>
+                        </DropdownMenu.Portal>
+                      </DropdownMenu.Root>
                     </div>
                   </td>
                 </tr>
@@ -788,9 +784,9 @@ function LabAppointmentsContent({ clinic }) {
         <CheckInModal
           isOpen={showCheckin}
           setIsOpen={setShowCheckin}
-          patientData={selectedAppointment?.patient || {}}
-          clinic={clinic}
+          patientData={selectedAppointment || {}}
           appointmentId={selectedAppointment?.id}
+          onAppointmentUpdate={handleAppointmentUpdate}
         />
 
         {/* Billing Confirmation Modal */}
@@ -802,70 +798,6 @@ function LabAppointmentsContent({ clinic }) {
           patientName={selectedAppointment?.patient?.name}
           appointmentId={selectedAppointment?.id}
         />
-
-        {/* Action Dropdown Portal */}
-        <ActionDropdown
-          isOpen={openActionMenu !== null}
-          position={dropdownPosition}
-          onClose={() => setOpenActionMenu(null)}
-        >
-          {openActionMenu && (
-            <>
-              <button
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                onClick={() => {
-                  const appointment = appointments.find(
-                    (apt) => apt.id === openActionMenu
-                  );
-                  navigate(
-                    `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
-                  );
-                  setOpenActionMenu(null);
-                }}
-              >
-                <Eye size={16} className="mr-2" />
-                Zobacz szczegóły
-              </button>
-
-              {appointments.find((apt) => apt.id === openActionMenu)?.status ===
-                "booked" && (
-                <button
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  onClick={() => {
-                    const appointment = appointments.find(
-                      (apt) => apt.id === openActionMenu
-                    );
-                    setSelectedAppointment(appointment);
-                    setShowCheckin(true);
-                    setOpenActionMenu(null);
-                  }}
-                >
-                  <UserCheck size={16} className="mr-2" />
-                  Zamelduj
-                </button>
-              )}
-
-              {["checkedIn", "booked"].includes(
-                appointments.find((apt) => apt.id === openActionMenu)?.status
-              ) && (
-                <button
-                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  onClick={() => {
-                    const appointment = appointments.find(
-                      (apt) => apt.id === openActionMenu
-                    );
-                    setSelectedAppointment(appointment);
-                    handleBillPatient(appointment.id, appointment.patient.id);
-                    setOpenActionMenu(null);
-                  }}
-                >
-                  <DollarSign size={16} className="mr-2" />
-                  Wystaw rachunek
-                </button>
-              )}
-            </>
-          )}
-        </ActionDropdown>
       </div>
     </div>
   );

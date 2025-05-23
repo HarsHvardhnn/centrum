@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
   Calendar,
   ChevronLeft,
@@ -8,7 +9,10 @@ import {
   Edit,
   Trash2,
   RefreshCcw,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  UserCheck,
+  DollarSign
 } from "lucide-react";
 import patientService from "../../helpers/patientHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
@@ -16,6 +20,12 @@ import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 import { useUser } from "../../context/userContext";
 import { useNavigate } from "react-router-dom";
 import { useLoader } from "../../context/LoaderContext";
+import { toast } from "sonner";
+import patientServicesHelper from "../../helpers/patientServicesHelper";
+import billingHelper from "../../helpers/billingHelper";
+import { createPortal } from "react-dom";
+import CheckInModal from "../admin/CheckinModal";
+import { translateStatus, getStatusStyle } from '../../utils/statusHelper';
 
 const MedicalDashboard = () => {
   const { user } = useUser();
@@ -525,6 +535,225 @@ const LabAppointmentsCard = () => {
   );
 };
 
+// Billing Confirmation Modal Component
+const BillingConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  patientServicesData,
+  patientName,
+  appointmentId,
+}) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [taxPercentage, setTaxPercentage] = useState(18); // Default tax rate (e.g., GST)
+  const [additionalCharges, setAdditionalCharges] = useState(0);
+  const [additionalChargeNote, setAdditionalChargeNote] = useState("");
+  const [discount, setDiscount] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState("cash"); // Default payment method
+
+  if (!isOpen) return null;
+
+  // Extract services from the API response format
+  const services = patientServicesData?.data?.services || [];
+
+  // Calculate subtotal from services
+  const subtotal = services.reduce((sum, serviceItem) => {
+    const servicePrice = parseFloat(serviceItem.service.price || 0);
+    return sum + servicePrice;
+  }, 0);
+
+  // Calculate tax amount
+  const taxAmount = (subtotal * taxPercentage) / 100;
+
+  // Calculate total with tax, additional charges, and discount
+  const totalAmount = (
+    subtotal +
+    taxAmount +
+    parseFloat(additionalCharges || 0) -
+    parseFloat(discount || 0)
+  ).toFixed(2);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Generuj rachunek dla {patientName}
+          </h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Utworzy to rachunek dla pacjenta na podstawie wybranych przez niego usług.
+          </p>
+
+          {isLoading ? (
+            <div className="py-4 flex justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-500"></div>
+            </div>
+          ) : (
+            <>
+              <div className="border rounded-lg overflow-hidden mb-4">
+                <div className="bg-gray-50 px-4 py-2 border-b">
+                  <h4 className="font-medium text-sm">Usługi</h4>
+                </div>
+
+                {services && services.length > 0 ? (
+                  <div className="divide-y">
+                    {services.map((serviceItem, index) => (
+                      <div
+                        key={index}
+                        className="px-4 py-2 flex justify-between items-center"
+                      >
+                        <div>
+                          <p className="font-medium text-sm">
+                            {serviceItem.service.title}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Status: {serviceItem.status}
+                          </p>
+                        </div>
+                        <p className="text-sm">
+                          zł{parseFloat(serviceItem.service.price).toFixed(2)}
+                        </p>
+                      </div>
+                    ))}
+
+                    <div className="px-4 py-2 flex justify-between items-center bg-gray-50">
+                      <p className="font-medium">Suma częściowa</p>
+                      <p className="font-medium">zł{subtotal.toFixed(2)}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-gray-500">
+                    Nie znaleziono usług dla tej wizyty.
+                  </div>
+                )}
+              </div>
+
+              {/* Tax, Additional Charges, and Discount Fields */}
+              <div className="space-y-3 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Podatek (%)
+                  </label>
+                  <div className="flex items-center">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={taxPercentage}
+                      onChange={(e) =>
+                        setTaxPercentage(parseFloat(e.target.value) || 0)
+                      }
+                      className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                    />
+                    <span className="ml-2 text-sm text-gray-500">
+                      (zł{taxAmount.toFixed(2)})
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Dodatkowe opłaty (zł)
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="number"
+                      min="0"
+                      value={additionalCharges}
+                      onChange={(e) =>
+                        setAdditionalCharges(parseFloat(e.target.value) || 0)
+                      }
+                      className="block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Notatka (opcjonalna)"
+                      value={additionalChargeNote}
+                      onChange={(e) => setAdditionalChargeNote(e.target.value)}
+                      className="block flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Rabat (zł)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={discount}
+                    onChange={(e) =>
+                      setDiscount(parseFloat(e.target.value) || 0)
+                    }
+                    className="block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                  />
+                </div>
+
+                {/* Payment Method */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Metoda płatności
+                  </label>
+                  <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                  >
+                    <option value="cash">Gotówka</option>
+                    <option value="card">Karta kredytowa/debetowa</option>
+                    <option value="insurance">Ubezpieczenie</option>
+                    <option value="bank_transfer">Przelew bankowy</option>
+                    <option value="mobile_payment">Płatność mobilna</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Total */}
+              <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                <div className="flex justify-between items-center">
+                  <p className="font-semibold text-lg">Łączna kwota</p>
+                  <p className="font-bold text-lg text-teal-600">
+                    zł{totalAmount}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+              onClick={onClose}
+            >
+              Anuluj
+            </button>
+            <button
+              className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center"
+              onClick={() =>
+                onConfirm({
+                  subtotal,
+                  taxPercentage,
+                  taxAmount,
+                  additionalCharges,
+                  additionalChargeNote,
+                  discount,
+                  totalAmount,
+                  paymentMethod,
+                })
+              }
+              disabled={isLoading || services.length === 0}
+            >
+              <DollarSign size={16} className="mr-1" />
+              Generuj rachunek
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Patient List Component
 const PatientList = () => {
   const { user } = useUser();
@@ -533,7 +762,10 @@ const PatientList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showCheckin, setShowCheckin] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [showBillingModal, setShowBillingModal] = useState(false);
+  const [billingServices, setBillingServices] = useState([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     total: 0,
@@ -541,6 +773,85 @@ const PatientList = () => {
   });
 
   const navigate = useNavigate();
+
+  // Function to handle billing confirmation
+  const handleBillPatient = async (appointmentId, patientId) => {
+    try {
+      setLoading(true);
+      // Fetch patient services for this appointment
+      const response = await patientServicesHelper.getPatientServices(
+        patientId,
+        { appointmentId }
+      );
+
+      // Store the entire response data
+      setBillingServices(response);
+      setShowBillingModal(true);
+      setLoading(false);
+    } catch (error) {
+      console.error("Failed to fetch patient services:", error);
+      toast.error("Nie udało się pobrać informacji o płatnościach");
+      setLoading(false);
+    }
+  };
+
+  // Function to confirm billing
+  const confirmBilling = async (billingData) => {
+    try {
+      setLoading(true);
+
+      // Format services data
+      const formattedServices =
+        billingServices?.data?.services?.map((service) => ({
+          serviceId: service.service._id,
+          title: service.service.title,
+          price: service.service.price,
+          status: service.status,
+        })) || [];
+
+      // Prepare billing payload
+      const billingPayload = {
+        services: formattedServices,
+        subtotal: billingData.subtotal,
+        taxPercentage: billingData.taxPercentage,
+        taxAmount: billingData.taxAmount,
+        discount: parseFloat(billingData.discount) || 0,
+        additionalCharges: parseFloat(billingData.additionalCharges) || 0,
+        additionalChargeNote: billingData.additionalChargeNote || "",
+        totalAmount: billingData.totalAmount,
+        paymentMethod: billingData.paymentMethod,
+      };
+
+      // Call the API to generate the bill
+      const response = await billingHelper.generateBill(selectedAppointment._id, billingPayload);
+
+      // Update local state
+      setPatients(
+        patients.map((apt) =>
+          apt._id === selectedAppointment._id
+            ? {
+                ...apt,
+                status: "billed",
+                billingDetails: billingData,
+              }
+            : apt
+        )
+      );
+
+      toast.success(
+        `Rachunek wygenerowany pomyślnie na kwotę zł${billingData.totalAmount}`
+      );
+      setShowBillingModal(false);
+      setLoading(false);
+      
+      // Redirect to billing details
+      navigate(`/admin/billing/details/${response.data._id}`);
+    } catch (error) {
+      console.error("Failed to generate bill:", error);
+      toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
+      setLoading(false);
+    }
+  };
 
   const handleCancelClick = (e, appointmentId) => {
     e.stopPropagation();
@@ -564,6 +875,14 @@ const PatientList = () => {
       console.error("Error canceling appointment:", err);
       setError("Failed to cancel appointment. Please try again.");
     }
+  };
+
+  const handleAppointmentUpdate = (appointmentId, newStatus) => {
+    setPatients(patients.map(patient => 
+      patient._id === appointmentId 
+        ? { ...patient, status: newStatus }
+        : patient
+    ));
   };
 
   // Fetch patients on component mount and when page changes
@@ -744,12 +1063,14 @@ const PatientList = () => {
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   Data wizyty
                 </th>
-                <th className="py-3 px-4"></th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                  Akcje
+                </th>
               </tr>
             </thead>
             <tbody>
               {patients.map((patient) => (
-                <tr key={patient.id} className="hover:bg-gray-50" >
+                <tr key={patient.id} className="hover:bg-gray-50">
                   {/* <td className="py-4 px-4">
                     <input
                       type="checkbox"
@@ -776,21 +1097,9 @@ const PatientList = () => {
                   <td className="py-4 px-4">
                     {patient.status ? (
                       <span
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          patient.status === "in-treatment"
-                            ? "bg-blue-100 text-blue-800"
-                            : patient.status === "recovered"
-                            ? "bg-green-100 text-green-800"
-                            : patient.status === "booked"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : patient.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : patient.status === "canceled"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
+                        className={`px-2 py-1 rounded-full text-xs ${getStatusStyle(patient.status)}`}
                       >
-                        {patient.status}
+                        {translateStatus(patient.status)}
                       </span>
                     ) : (
                       "N/A"
@@ -803,16 +1112,74 @@ const PatientList = () => {
                     {patient.date || "N/A"}
                   </td>
                   <td className="py-4 px-4">
-                   {
-                    patient.status === "booked" && (
-                      <button 
-                        className="text-red-500 hover:text-red-700"
-                        onClick={(e) => handleCancelClick(e, patient._id)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )
-                   }
+                    <div className="flex justify-center">
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger asChild>
+                          <button
+                            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                          >
+                            <MoreVertical size={18} />
+                          </button>
+                        </DropdownMenu.Trigger>
+
+                        <DropdownMenu.Portal>
+                          <DropdownMenu.Content
+                            className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
+                            sideOffset={5}
+                          >
+                            <DropdownMenu.Item
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                              onClick={() => {
+                                navigate(
+                                  `/patients-details/${patient.patient_id}?appointmentId=${patient._id}`
+                                );
+                              }}
+                            >
+                              <Eye size={16} className="mr-2" />
+                              Zobacz szczegóły
+                            </DropdownMenu.Item>
+
+                            {patient.status === "booked" && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={() => {
+                                  setSelectedAppointment(patient);
+                                  setShowCheckin(true);
+                                }}
+                              >
+                                <UserCheck size={16} className="mr-2" />
+                                Zamelduj
+                              </DropdownMenu.Item>
+                            )}
+
+                            {["checkedIn", "booked"].includes(patient.status) && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={() => {
+                                  setSelectedAppointment(patient);
+                                  handleBillPatient(patient._id, patient.patient_id);
+                                }}
+                              >
+                                <DollarSign size={16} className="mr-2" />
+                                Wystaw rachunek
+                              </DropdownMenu.Item>
+                            )}
+
+                            {patient.status === "booked" && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={(e) => {
+                                  handleCancelClick(e, patient._id);
+                                }}
+                              >
+                                <Trash2 size={16} className="mr-2" />
+                                Anuluj wizytę
+                              </DropdownMenu.Item>
+                            )}
+                          </DropdownMenu.Content>
+                        </DropdownMenu.Portal>
+                      </DropdownMenu.Root>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -820,6 +1187,25 @@ const PatientList = () => {
           </table>
         </div>
       )}
+
+      {/* Billing Confirmation Modal */}
+      <BillingConfirmationModal
+        isOpen={showBillingModal}
+        onClose={() => setShowBillingModal(false)}
+        onConfirm={confirmBilling}
+        patientServicesData={billingServices}
+        patientName={selectedAppointment?.name}
+        appointmentId={selectedAppointment?._id}
+      />
+
+      {/* Check-in Modal */}
+      <CheckInModal
+        isOpen={showCheckin}
+        setIsOpen={setShowCheckin}
+        patientData={{ ...selectedAppointment, id: selectedAppointment?.patient_id } || {}}
+        appointmentId={selectedAppointment?._id}
+        onAppointmentUpdate={handleAppointmentUpdate}
+      />
 
       <div className="p-4 flex items-center justify-between border-t border-gray-200">
         <button
