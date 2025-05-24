@@ -172,8 +172,8 @@ const BillingPage = () => {
     <div className="container mx-auto px-4 h-screen flex flex-col">
       {/* Reusable Header */}
       <Header
-        title="Przegląd rozliczeń"
-        subtitle="Wszystkie konsultacje wszystkich świadczeniodawców"
+        title="Lista Lekarzy"
+        subtitle="Wszystkie konsultacje Lekarzy"
         onSearch={(term) => setSearchTerm(term)}
         onFilter={(filters) => setActiveFilters(filters)}
         onAddDoctor={() => setShowAddDoctorModal(true)}

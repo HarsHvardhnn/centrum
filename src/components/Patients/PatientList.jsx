@@ -348,7 +348,7 @@ function LabAppointmentsContent({ clinic }) {
         <div className="flex w-full justify-between">
           <div>
             <h1 className="text-2xl font-bold mb-1">
-              {clinic ? "Wizyty w Przychodni" : "Wizyty w Laboratorium"}
+              {clinic ? "Wizyty w Przychodni" : "Lista pacjentow"}
             </h1>
             <p className="text-gray-600 mb-4">Wyświetlane: Wszystkie wizyty</p>
           </div>

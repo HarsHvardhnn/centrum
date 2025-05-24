@@ -329,6 +329,7 @@ const UserMessaging = () => {
   };
 
   const translateRoleToPolish = (role) => {
+    console.log("role is", role)
     switch (role) {
       case "patient":
         return "Pacjent";
@@ -336,6 +337,8 @@ const UserMessaging = () => {
         return "Lekarz";
       case "receptionist":
         return "Recepcjonista";
+      case "admin":
+        return "Administrator";
       default:
         return "Nieznana rola";
     }

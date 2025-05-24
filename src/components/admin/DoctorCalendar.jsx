@@ -362,14 +362,13 @@ const DoctorCalendar = () => {
             date={currentDate}
             onNavigate={handleNavigate}
             formats={{
-              weekdayFormat: (date, culture, localizer) => 
-                localizer.format(date, 'EEEE', culture),
-              timeGutterFormat: (date, culture, localizer) =>
-                localizer.format(date, 'HH:mm', culture),
-              eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
-                `${localizer.format(start, 'HH:mm', culture)} - ${localizer.format(end, 'HH:mm', culture)}`,
-              dayRangeHeaderFormat: ({ start, end }, culture, localizer) =>
-                `${localizer.format(start, 'd MMMM', culture)} - ${localizer.format(end, 'd MMMM', culture)}`,
+              weekdayFormat: (date) => format(date, 'EEEE', { locale: pl }),
+              dayFormat: (date) => format(date, 'd EEE', { locale: pl }),
+              timeGutterFormat: (date) => format(date, 'HH:mm', { locale: pl }),
+              eventTimeRangeFormat: ({ start, end }) =>
+                `${format(start, 'HH:mm', { locale: pl })} - ${format(end, 'HH:mm', { locale: pl })}`,
+              dayRangeHeaderFormat: ({ start, end }) =>
+                `${format(start, 'd MMMM', { locale: pl })} - ${format(end, 'd MMMM', { locale: pl })}`,
             }}
             eventPropGetter={(event) => ({
               style: {

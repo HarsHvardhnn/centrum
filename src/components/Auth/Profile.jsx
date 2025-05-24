@@ -114,6 +114,22 @@ const ProfilePage = () => {
     }
   };
 
+  const translateRoleToPolish = (role) => {
+    console.log("role is", role)
+    switch (role) {
+      case "patient":
+        return "Pacjent";
+      case "doctor":
+        return "Lekarz";
+      case "receptionist":
+        return "Recepcjonista";
+      case "admin":
+        return "Administrator";
+      default:
+        return "Nieznana rola";
+    }
+  };
+
   // Handle cropped image
   const handleCroppedImage = (blob) => {
     // Create a File from the blob
@@ -287,7 +303,7 @@ const ProfilePage = () => {
             </h2>
             <div className="flex items-center justify-center mt-2">
               <span className="bg-teal-100 text-teal-800 text-sm font-medium px-3 py-1 rounded-full capitalize">
-                {profile.role || "User"}
+                {translateRoleToPolish(profile.role )|| "User"}
               </span>
             </div>
             <p className="text-gray-500 mt-2 text-sm">
@@ -496,7 +512,7 @@ const ProfilePage = () => {
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Rola</h4>
                   <p className="mt-1 text-gray-900 font-medium capitalize">
-                    {profile.role || "-"}
+                    {/* {transferRole(profile.role) || "-"} */}
                   </p>
                 </div>
                 <div>

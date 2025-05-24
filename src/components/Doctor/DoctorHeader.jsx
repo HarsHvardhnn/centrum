@@ -135,7 +135,7 @@ const Header = ({
                         }
                         className="mr-2"
                       />
-                      <span>Pokaż tylko dostępnych specjalistów</span>
+                      <span>Pokaż tylko dostępnych Lekarzy</span>
                     </label>
                   </div>
                 </div>

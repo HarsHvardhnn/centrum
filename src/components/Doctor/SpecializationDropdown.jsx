@@ -15,7 +15,9 @@ export default function SpecializationDropdown({
 
   // Filter specializations based on search term
   const filteredSpecializations = specializations.filter((spec) =>
-    spec.name.toLowerCase().includes(searchTerm.toLowerCase())
+    spec.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(
+      searchTerm.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    )
   );
 
   // Handle selecting a specialization
@@ -57,7 +59,7 @@ export default function SpecializationDropdown({
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">
-        Specialization*
+        Specjalizacja*
       </label>
 
       {/* Dropdown container */}
@@ -72,7 +74,7 @@ export default function SpecializationDropdown({
             }}
             onFocus={() => setIsOpen(true)}
             className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-            placeholder="Search specializations..."
+            placeholder="Wyszukaj specjalizacje..."
           />
           <Search size={16} className="absolute left-3 top-3 text-gray-400" />
         </div>
@@ -92,7 +94,7 @@ export default function SpecializationDropdown({
               ))
             ) : (
               <div className="px-4 py-2 text-gray-500">
-                No specializations found
+                Nie znaleziono specjalizacji
               </div>
             )}
           </div>

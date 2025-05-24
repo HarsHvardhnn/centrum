@@ -171,7 +171,7 @@ const Sidebar = () => {
             />
     
 
-          <a
+       {user?.role === "doctor" && <a
             href="https://www.zus.pl/ezus/logowanie?logout-manually=true"
             target="_blank"
             rel="noopener noreferrer"
@@ -181,7 +181,7 @@ const Sidebar = () => {
               <CgLogOut />
             </span>
             <span className="text-sm">e-ZLA</span>
-          </a>
+          </a>}
 
           <NavItem
             icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}

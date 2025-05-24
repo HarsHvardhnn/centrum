@@ -393,8 +393,8 @@ const AvailableTime = ({ data }) => {
   return (
     <div className="p-4 mt-4 shadow rounded-lg flex flex-col gap-2">
       <h3 className="text-lg font-semibold pb-2 border-b">Dostępne Terminy</h3>
-      <p className="font-semibold">{data.hospital}</p>
-      <div className="flex justify-between text-sm font-medium items-center">
+      {/* <p className="font-semibold">{data.hospital}</p> */}
+      {/* <div className="flex justify-between text-sm font-medium items-center">
         <div className="flex w-full gap-4 items-center">
           <p className="text-gray-700 bg-[#e6f4f4] rounded px-3 py-1 flex gap-2 items-center">
             {data.hospitalRating}
@@ -403,8 +403,8 @@ const AvailableTime = ({ data }) => {
           <p>{data.waitTime}</p>
         </div>
         <p className="text-right">{data.price}</p>
-      </div>
-      <p className="text-sm mb-4">{data.location}</p>
+      </div> */}
+      {/* <p className="text-sm  mb-4">{data.location}</p> */}
       <Calendar onDateSelect={handleDateSelect} />
 
       {isLoading ? (
