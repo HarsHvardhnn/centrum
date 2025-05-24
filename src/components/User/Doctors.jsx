@@ -806,11 +806,25 @@ export default function Doctors({
                             }
                             className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
                           />
-                          <span className="text-sm text-gray-700">
-                            Wyrażam zgodę na otrzymywanie powiadomień SMS
-                            dotyczących mojej wizyty (np. przypomnienia, zmiany
-                            terminu)
-                          </span>
+                        <span className="text-sm text-gray-700">
+                      Wyrażam zgodę na otrzymywanie powiadomień SMS dotyczących mojej wizyty (np. przypomnienia, zmiany terminu) oraz potwierdzam, że zapoznałem(-am) się z{" "}
+                      <button
+                        type="button"
+                        onClick={() => window.open('/images/tos.docx', '_blank')}
+                        className="text-main hover:text-main-dark underline"
+                      >
+                        Regulaminem
+                      </button>{" "}
+                      i{" "}
+                      <button
+                        type="button"
+                        onClick={() => window.open('/images/ts.docx', '_blank')}
+                        className="text-main hover:text-main-dark underline"
+                      >
+                        Polityką Prywatności
+                      </button>
+                      .
+                    </span>
                         </label>
                       </div>
 
