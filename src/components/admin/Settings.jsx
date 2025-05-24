@@ -65,6 +65,7 @@ export default function UserManagement() {
   const [completedSteps, setCompletedSteps] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentPatientId, setCurrentPatientId] = useState(null);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
   const subStepTitles = [
     "Dane demograficzne",
     "Skierowanie",
@@ -224,14 +225,23 @@ export default function UserManagement() {
     }
   };
 
-  // Function to handle adding a doctor
+  // Function to handle adding/updating a doctor
   const handleAddDoctor = async (doctorData, resetForm, closeModal) => {
     try {
+      console.log("doctorData",doctorData)
       showLoader();
-      // Call your doctor service here
-      const response = await doctorService.createDoctor(doctorData);
+      let response;
+      
+      if (selectedDoctor) {
+        // Update existing doctor
+        response = await doctorService.updateDoctor(selectedDoctor.id, doctorData);
+        setSuccess("Lekarz został zaktualizowany pomyślnie");
+      } else {
+        // Create new doctor
+        response = await doctorService.createDoctor(doctorData);
+        setSuccess("Lekarz został dodany pomyślnie");
+      }
 
-      setSuccess("Lekarz został dodany pomyślnie");
       hideLoader();
       fetchUsers(); // Refresh the users list
 
@@ -245,10 +255,10 @@ export default function UserManagement() {
       closeModal();
     } catch (error) {
       setError(
-        "Nie udało się dodać lekarza: " +
-          (error.response?.data?.error ||
-            error.response?.data?.message ||
-            "Nieznany błąd")
+        "Nie udało się " + (selectedDoctor ? "zaktualizować" : "dodać") + " lekarza: " +
+        (error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Nieznany błąd")
       );
       hideLoader();
     }
@@ -411,6 +421,21 @@ export default function UserManagement() {
     setShowAddPatientModal(true);
     setIsEditMode(true);
     setCurrentPatientId(user._id);
+  };
+
+  // Add handleEditDoctor function
+  const handleEditDoctor = async (userId) => {
+    try {
+      showLoader();
+      const response = await doctorService.getDoctorDetailsById(userId);
+      // Map specializations to {id, name}
+      setSelectedDoctor(response.data);
+      setShowAddDoctorModal(true);
+      hideLoader();
+    } catch (error) {
+      setError("Failed to fetch doctor details: " + error.message);
+      hideLoader();
+    }
   };
 
   return (
@@ -681,12 +706,20 @@ export default function UserManagement() {
                       {!user.deleted && (
                         <>
                           {user.role === "doctor" && (
-                            <button
-                              onClick={() => handleManageSchedule(user)}
-                              className="text-blue-600 hover:text-blue-900"
-                            >
-                              Harmonogram
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleManageSchedule(user)}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                Harmonogram
+                              </button>
+                              <button
+                                onClick={() => handleEditDoctor(user._id)}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                Edytuj
+                              </button>
+                            </>
                           )}
                           {user.role === "patient" && (
                             <button
@@ -879,12 +912,18 @@ export default function UserManagement() {
       {showAddDoctorModal && (
         <AddDoctorForm
           isOpen={showAddDoctorModal}
-          onClose={() => setShowAddDoctorModal(false)}
+          onClose={() => {
+            setShowAddDoctorModal(false);
+            setSelectedDoctor(null);
+          }}
           onAddDoctor={(doctorData, resetForm) =>
-            handleAddDoctor(doctorData, resetForm, () =>
-              setShowAddDoctorModal(false)
-            )
+            handleAddDoctor(doctorData, resetForm, () => {
+              setShowAddDoctorModal(false);
+              setSelectedDoctor(null);
+            })
           }
+          initialData={selectedDoctor}
+          isEditMode={!!selectedDoctor}
         />
       )}
 

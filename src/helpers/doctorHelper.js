@@ -38,7 +38,7 @@ const doctorService = {
 
       // Handle arrays
       (doctorData.specializations || doctorData.specialization || []).forEach(
-        (item) => formData.append("specialization[]", item.id)
+        (item) => formData.append("specialization[]", item)
       );
       (doctorData.qualifications || []).forEach((item) =>
         formData.append("qualifications[]", item)
@@ -136,6 +136,19 @@ const doctorService = {
     }
   },
 
+  getDoctorDetailsById: async (id) => {
+    try {
+      if (!id) {
+        throw new Error("Doctor ID is required");
+      }
+
+      const response = await apiCaller("GET", `/docs/details/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching doctor with ID ${id}:`, error);
+      throw error;
+    }
+  },
   /**
    * Check doctor availability for a specific date and time
    * @param {string} doctorId - Doctor ID
@@ -172,7 +185,55 @@ const doctorService = {
         throw new Error("Doctor ID is required");
       }
 
-      const response = await apiCaller("PUT", `/api/doctors/${id}`, updateData);
+      const formData = new FormData();
+
+      // Handle name fields
+      if (updateData.firstName || updateData.lastName) {
+        formData.append("name[first]", updateData.firstName || "");
+        formData.append("name[last]", updateData.lastName || "");
+      }
+
+      // Handle other fields
+      if (updateData.email) formData.append("email", updateData.email);
+      if (updateData.phone) formData.append("phone", updateData.phone);
+      if (updateData.bio) formData.append("bio", updateData.bio);
+      if (updateData.experience) formData.append("experience", updateData.experience);
+      if (updateData.consultationFee) formData.append("onlineConsultationFee", updateData.consultationFee);
+      if (updateData.offlineConsultationFee) formData.append("offlineConsultationFee", updateData.offlineConsultationFee);
+
+      // Handle arrays
+      if (updateData.specialization) {
+        updateData.specialization.forEach(item => {
+          formData.append("specialization[]", item);
+        });
+      }
+      if (updateData.qualifications) {
+        updateData.qualifications.forEach(item => {
+          formData.append("qualifications[]", item);
+        });
+      }
+      if (updateData.weeklyShifts) {
+        updateData.weeklyShifts.forEach(item => {
+          formData.append("weeklyShifts[]", JSON.stringify(item));
+        });
+      }
+      if (updateData.offSchedule) {
+        updateData.offSchedule.forEach(item => {
+          formData.append("offSchedule[]", JSON.stringify(item));
+        });
+      }
+
+      // Handle profile picture
+      if (updateData.profilePicture) {
+        formData.append("file", updateData.profilePicture);
+      }
+
+      const response = await apiCaller("PATCH", `/docs/details/${id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
       return response.data;
     } catch (error) {
       console.error(`Error updating doctor with ID ${id}:`, error);

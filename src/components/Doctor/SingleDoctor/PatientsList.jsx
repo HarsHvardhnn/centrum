@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreVertical,
+  UserCheck,
   UserX,
   Video,
   X,
@@ -101,7 +102,7 @@ const PatientsList = ({
     );
   };
 
-  const AppointmentModeBadge = ({ mode }) => {
+  const AppointmentModeBadge = ({ mode, joiningLink }) => {
     const modeStyles = {
       online: {
         bgColor: "bg-blue-50",
@@ -133,27 +134,30 @@ const PatientsList = ({
       dotColor: "bg-gray-600",
     };
 
-    return (
+    const BadgeContent = () => (
       <div
-        className={`flex items-center px-4 text-sm h-fit py-1 rounded-full capitalize ${bgColor} ${textColor}`}
+        className={`flex items-center px-4 text-sm h-fit py-1 rounded-full capitalize ${bgColor} ${textColor} ${mode === "online" && joiningLink ? "cursor-pointer hover:bg-blue-100" : ""}`}
       >
         <div className={`w-2 h-2 rounded-full ${dotColor} mr-2`} />
+        {mode === "online" && <Video size={14} className="mr-1" />}
         {modeTranslations[mode] || mode}
       </div>
     );
-  };
 
-  const JoinNowButton = ({ joiningLink }) => {
-    return (
-      <a
-        href={joiningLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center px-3 py-1 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors"
-      >
-        <Video size={16} className="mr-1" />
-      </a>
-    );
+    if (mode === "online" && joiningLink) {
+      return (
+        <a
+          href={joiningLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+        >
+          <BadgeContent />
+        </a>
+      );
+    }
+
+    return <BadgeContent />;
   };
 
   const EmptyState = () => (
@@ -265,11 +269,20 @@ const PatientsList = ({
                       }}
                       className="w-4 h-4 mr-3"
                     />
-                    <img
-                      src={patient.avatar || "https://via.placeholder.com/40"}
-                      alt={`Zdjęcie ${patient.name}`}
-                      className="w-10 h-10 rounded-full mr-3"
-                    />
+                    <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                            {patient?.avatar ? (
+                              <img
+                                src={patient.avatar}
+                                alt={patient?.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center bg-gray-200 text-gray-500">
+                                <UserCheck
+                                 size={24} />
+                              </div>
+                            )}
+                          </div>
                     <div>
                       <div className="font-medium">{patient.name}</div>
                       <div className="text-sm text-gray-500">{patient.patient_id}</div>
@@ -280,12 +293,9 @@ const PatientsList = ({
                     <StatusBadge status={patient.status} />
                   </div>
                   <div className="flex items-center justify-center">
-                    <AppointmentModeBadge mode={patient.mode} />
+                    <AppointmentModeBadge mode={patient.mode} joiningLink={patient.joining_link} />
                   </div>
                   <div className="flex items-center justify-center gap-2">
-                    {patient.mode === "online" && patient.joining_link && (
-                      <JoinNowButton joiningLink={patient.joining_link} />
-                    )}
                     <button
                       onClick={() => handleCancelAppointment(patient.id)}
                       disabled={patient.status !== "booked"}
