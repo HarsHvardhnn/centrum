@@ -704,6 +704,20 @@ const PatientList = () => {
     fetchPatients();
   }, [pagination.currentPage, user]);
 
+
+  const translateSexToPolish = (sex) => {
+    switch (sex) {
+      case "Male":
+        return "Mężczyzna";
+      case "Female":
+        return "Kobieta";
+      case "Others":
+        return "Inna";
+      default:
+        return "Nieznany";
+    }
+  };
+  
   const toggleSelectAll = () => {
     if (selectedPatients.length === patients.length) {
       setSelectedPatients([]);
@@ -871,7 +885,7 @@ const PatientList = () => {
                     {patient.id || "N/A"}
                   </td>
                   <td className="py-4 px-4 text-gray-600">
-                    {patient.sex || "N/A"}
+                    {translateSexToPolish(patient.sex) || "N/A"}
                   </td>
                   <td className="py-4 px-4 text-gray-600">
                     {patient.age || "N/A"}
@@ -891,7 +905,7 @@ const PatientList = () => {
                     {patient.doctor || "N/A"}
                   </td>
                   <td className="py-4 px-4 text-gray-600">
-                    {patient.date || "N/A"}
+                    {new Date(patient.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }) || "N/A"}
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex justify-center">

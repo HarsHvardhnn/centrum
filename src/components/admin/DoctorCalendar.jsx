@@ -4,7 +4,7 @@ import format from 'date-fns/format';
 import parse from 'date-fns/parse';
 import startOfWeek from 'date-fns/startOfWeek';
 import getDay from 'date-fns/getDay';
-import enUS from 'date-fns/locale/en-US';
+import pl from 'date-fns/locale/pl';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Select, DatePicker, Card, Typography, Button, Tooltip, Badge, Modal, Descriptions } from 'antd';
 import { VideoCameraOutlined, ClockCircleOutlined, DesktopOutlined, UserOutlined } from '@ant-design/icons';
@@ -17,7 +17,7 @@ const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
 const locales = {
-  'en-US': enUS,
+  'pl': pl,
 };
 
 const localizer = dateFnsLocalizer({
@@ -27,6 +27,72 @@ const localizer = dateFnsLocalizer({
   getDay,
   locales,
 });
+
+const messages = {
+  allDay: 'Cały dzień',
+  previous: 'Poprzedni',
+  next: 'Następny',
+  today: 'Dziś',
+  month: 'Miesiąc',
+  week: 'Tydzień',
+  day: 'Dzień',
+  agenda: 'Agenda',
+  date: 'Data',
+  time: 'Czas',
+  event: 'Wydarzenie',
+  noEventsInRange: 'Brak wydarzeń w tym zakresie',
+  showMore: (total) => `+${total} więcej`,
+  work_week: 'Tydzień roboczy',
+  day_header: 'Nagłówek dnia',
+  week_header: 'Nagłówek tygodnia',
+  month_header: 'Nagłówek miesiąca',
+  agenda_header: 'Nagłówek agendy',
+  date_range: 'Zakres dat',
+  time_range: 'Zakres czasu',
+  event_range: 'Zakres wydarzeń',
+  all_day: 'Cały dzień',
+  more: 'Więcej',
+  no_events: 'Brak wydarzeń',
+  loading: 'Ładowanie...',
+  select: 'Wybierz',
+  event_click: 'Kliknij wydarzenie',
+  event_double_click: 'Podwójne kliknięcie wydarzenia',
+  event_key_press: 'Naciśnij klawisz wydarzenia',
+  event_key_down: 'Naciśnij klawisz w dół',
+  event_key_up: 'Naciśnij klawisz w górę',
+  event_key_enter: 'Naciśnij klawisz Enter',
+  event_key_escape: 'Naciśnij klawisz Escape',
+  event_key_space: 'Naciśnij klawisz Spacja',
+  event_key_delete: 'Naciśnij klawisz Delete',
+  event_key_backspace: 'Naciśnij klawisz Backspace',
+  event_key_tab: 'Naciśnij klawisz Tab',
+  event_key_shift: 'Naciśnij klawisz Shift',
+  event_key_ctrl: 'Naciśnij klawisz Ctrl',
+  event_key_alt: 'Naciśnij klawisz Alt',
+  event_key_meta: 'Naciśnij klawisz Meta',
+  event_key_win: 'Naciśnij klawisz Windows',
+  event_key_cmd: 'Naciśnij klawisz Command',
+  event_key_option: 'Naciśnij klawisz Option',
+  event_key_arrow_left: 'Naciśnij klawisz strzałki w lewo',
+  event_key_arrow_right: 'Naciśnij klawisz strzałki w prawo',
+  event_key_arrow_up: 'Naciśnij klawisz strzałki w górę',
+  event_key_arrow_down: 'Naciśnij klawisz strzałki w dół',
+  event_key_page_up: 'Naciśnij klawisz Page Up',
+  event_key_page_down: 'Naciśnij klawisz Page Down',
+  event_key_home: 'Naciśnij klawisz Home',
+  event_key_end: 'Naciśnij klawisz End',
+  event_key_insert: 'Naciśnij klawisz Insert',
+  event_key_delete_forward: 'Naciśnij klawisz Delete Forward',
+  event_key_delete_backward: 'Naciśnij klawisz Delete Backward',
+  event_key_clear: 'Naciśnij klawisz Clear',
+  event_key_help: 'Naciśnij klawisz Help',
+  event_key_pause: 'Naciśnij klawisz Pause',
+  event_key_break: 'Naciśnij klawisz Break',
+  event_key_print_screen: 'Naciśnij klawisz Print Screen',
+  event_key_scroll_lock: 'Naciśnij klawisz Scroll Lock',
+  event_key_num_lock: 'Naciśnij klawisz Num Lock',
+  event_key_caps_lock: 'Naciśnij klawisz Caps Lock',
+};
 
 const DoctorCalendar = () => {
   const { user } = useUser();
@@ -118,7 +184,6 @@ const DoctorCalendar = () => {
     const isCurrentTimeNear = Math.abs(new Date().getTime() - event.start.getTime()) < 30 * 60000; // Within 30 minutes
     const isOnline = event.appointment.mode === 'online';
     const hasMeetLink = event.appointment.meetLink;
-    console.log("event ", event)
 
     return (
       <div
@@ -138,7 +203,7 @@ const DoctorCalendar = () => {
         <div>
           <div style={{ fontWeight: 'bold', color: '#222' }}>{event.title}</div>
           <div style={{ fontSize: '0.8em', display: 'flex', alignItems: 'center', gap: '4px', color: '#222' }}>
-            <ClockCircleOutlined /> {format(event.start, 'h:mm a')}
+            <ClockCircleOutlined /> {format(event.start, 'HH:mm')}
           </div>
         </div>
         <div style={{ fontSize: '0.8em', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px', color: isOnline ? '#1890ff' : '#52c41a' }}>
@@ -162,7 +227,7 @@ const DoctorCalendar = () => {
             </>
           ) : (
             <>
-              <UserOutlined /> Offline
+              <UserOutlined /> W gabinecie
             </>
           )}
         </div>
@@ -208,7 +273,9 @@ const DoctorCalendar = () => {
             {appointment.appointmentTime}
           </Descriptions.Item>
           <Descriptions.Item label="Status">
-            {appointment.status === 'booked' ? 'Zarezerwowana' : appointment.status}
+            {appointment.status === 'booked' ? 'Zarezerwowana' : 
+             appointment.status === 'completed' ? 'Zakończona' :
+             appointment.status === 'cancelled' ? 'Anulowana' : appointment.status}
           </Descriptions.Item>
           <Descriptions.Item label="Tryb wizyty">
             {appointment.mode === 'online' ? 'Online' : 'W gabinecie'}
@@ -241,6 +308,37 @@ const DoctorCalendar = () => {
             value={dateRange}
             onChange={handleDateRangeChange}
             style={{ width: '300px' }}
+            locale={{
+              lang: {
+                locale: 'pl',
+                today: 'Dziś',
+                now: 'Teraz',
+                backToToday: 'Powrót do dziś',
+                ok: 'OK',
+                clear: 'Wyczyść',
+                month: 'Miesiąc',
+                year: 'Rok',
+                timeSelect: 'Wybierz czas',
+                dateSelect: 'Wybierz datę',
+                monthSelect: 'Wybierz miesiąc',
+                yearSelect: 'Wybierz rok',
+                decadeSelect: 'Wybierz dekadę',
+                yearFormat: 'YYYY',
+                dateFormat: 'D/M/YYYY',
+                dayFormat: 'D',
+                dateTimeFormat: 'D/M/YYYY HH:mm:ss',
+                monthFormat: 'MMMM',
+                monthBeforeYear: true,
+                previousMonth: 'Poprzedni miesiąc (PageUp)',
+                nextMonth: 'Następny miesiąc (PageDown)',
+                previousYear: 'Poprzedni rok (Control + left)',
+                nextYear: 'Następny rok (Control + right)',
+                previousDecade: 'Poprzednia dekada',
+                nextDecade: 'Następna dekada',
+                previousCentury: 'Poprzedni wiek',
+                nextCentury: 'Następny wiek',
+              },
+            }}
           />
         </div>
         <div style={{ height: '700px' }}>
@@ -250,6 +348,7 @@ const DoctorCalendar = () => {
             startAccessor="start"
             endAccessor="end"
             style={{ height: '100%' }}
+            messages={messages}
             components={{
               event: EventComponent,
               week: { event: EventComponent },
@@ -262,6 +361,16 @@ const DoctorCalendar = () => {
             defaultView="week"
             date={currentDate}
             onNavigate={handleNavigate}
+            formats={{
+              weekdayFormat: (date, culture, localizer) => 
+                localizer.format(date, 'EEEE', culture),
+              timeGutterFormat: (date, culture, localizer) =>
+                localizer.format(date, 'HH:mm', culture),
+              eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
+                `${localizer.format(start, 'HH:mm', culture)} - ${localizer.format(end, 'HH:mm', culture)}`,
+              dayRangeHeaderFormat: ({ start, end }, culture, localizer) =>
+                `${localizer.format(start, 'd MMMM', culture)} - ${localizer.format(end, 'd MMMM', culture)}`,
+            }}
             eventPropGetter={(event) => ({
               style: {
                 backgroundColor: event.appointment.mode === 'online' ? '#e6f7ff' : '#f6ffed',

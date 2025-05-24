@@ -12,6 +12,19 @@ const PatientDropdown = ({
 }) => {
   if (!isOpen) return null;
 
+  const translateSexToPolish = (sex) => {
+    switch (sex) {
+      case "Male":
+        return "Mężczyzna";
+      case "Female":
+        return "Kobieta";
+      case "Others":
+        return "Inna";
+      default:
+        return "Nieznany";
+    }
+  };
+  
   return (
     <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
       <div className="flex justify-between items-center px-4 py-3 border-b">
@@ -117,7 +130,7 @@ const PatientDropdown = ({
                 </div>
               </div>
               <div className="w-1/4">{patient.id}</div>
-              <div className="w-1/6">{patient.sex}</div>
+              <div className="w-1/6">{translateSexToPolish(patient.sex)}</div>
               <div className="w-1/6">{patient.age}</div>
               <div className="w-1/6 text-right">
                 <button

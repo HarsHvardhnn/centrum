@@ -212,6 +212,19 @@ const PatientsList = ({
 
     return pages;
   };
+  const translateSexToPolish = (sex) => {
+    switch (sex) {
+      case "Male":
+        return "Mężczyzna";
+      case "Female":
+        return "Kobieta";
+      case "Others":
+        return "Inna";
+      default:
+        return "Nieznany";
+    }
+  };
+  
 
   return (
     <div className="bg-white border rounded-lg shadow-sm">
@@ -288,7 +301,7 @@ const PatientsList = ({
                       <div className="text-sm text-gray-500">{patient.patient_id}</div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-center">{patient.sex}</div>
+                  <div className="flex items-center justify-center">{translateSexToPolish(patient.sex)}</div>
                   <div className="flex items-center justify-center">
                     <StatusBadge status={patient.status} />
                   </div>

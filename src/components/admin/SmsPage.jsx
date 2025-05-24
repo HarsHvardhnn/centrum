@@ -328,6 +328,18 @@ const UserMessaging = () => {
     return Math.ceil(characterCount / characterLimit);
   };
 
+  const translateRoleToPolish = (role) => {
+    switch (role) {
+      case "patient":
+        return "Pacjent";
+      case "doctor":
+        return "Lekarz";
+      case "receptionist":
+        return "Recepcjonista";
+      default:
+        return "Nieznana rola";
+    }
+  };
   return (
     <div className="flex flex-col bg-white rounded-lg shadow-md p-6 max-w-6xl mx-auto">
       {/* Header */}
@@ -460,7 +472,7 @@ const UserMessaging = () => {
                       <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{user.phone}</td>
                       <td className="px-6 py-4 whitespace-nowrap capitalize">
-                        {user.role}
+                        {translateRoleToPolish(user.role)}
                       </td>
                     </tr>
                   ))
