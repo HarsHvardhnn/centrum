@@ -888,6 +888,18 @@ const BillingManagement = () => {
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort("billNumber")}
+                  >
+                    <div className="flex items-center">
+                    numer faktury
+                      {sortConfig.key === "billNumber" && (
+                        <ArrowUpDown size={16} className="ml-1" />
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort("patientName")}
                   >
                     <div className="flex items-center">
@@ -946,7 +958,10 @@ const BillingManagement = () => {
                   bills.map((bill) => (
                     <tr key={bill._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {bill?.invoiceId}
+                        {bill?._id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {bill?.invoiceId ? bill?.invoiceId : "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">

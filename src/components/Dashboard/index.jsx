@@ -422,119 +422,119 @@ const DoctorAppointmentChart = () => {
 };
 
 // Lab Appointments Card Component
-const LabAppointmentsCard = () => {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium">Wizyty laboratoryjne</h2>
-        <button className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-1">
-          <span className="text-sm">Miesiąc</span>
-          <ChevronDown size={16} />
-        </button>
-      </div>
+// const LabAppointmentsCard = () => {
+//   return (
+//     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+//       <div className="flex justify-between items-center mb-4">
+//         <h2 className="text-lg font-medium">Wizyty laboratoryjne</h2>
+//         <button className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-1">
+//           <span className="text-sm">Miesiąc</span>
+//           <ChevronDown size={16} />
+//         </button>
+//       </div>
 
-      <div className="flex justify-center py-4">
-        <div className="relative w-48 h-48">
-          {/* Circular multi-ring progress chart */}
-          <svg className="w-full h-full" viewBox="0 0 100 100">
-            {/* Outer background ring */}
-            <circle
-              cx="50"
-              cy="50"
-              r="42"
-              fill="none"
-              stroke="#E6F7F5"
-              strokeWidth="8"
-            />
+//       <div className="flex justify-center py-4">
+//         <div className="relative w-48 h-48">
+//           {/* Circular multi-ring progress chart */}
+//           <svg className="w-full h-full" viewBox="0 0 100 100">
+//             {/* Outer background ring */}
+//             <circle
+//               cx="50"
+//               cy="50"
+//               r="42"
+//               fill="none"
+//               stroke="#E6F7F5"
+//               strokeWidth="8"
+//             />
 
-            {/* Middle background ring */}
-            <circle
-              cx="50"
-              cy="50"
-              r="32"
-              fill="none"
-              stroke="#E6F7F5"
-              strokeWidth="8"
-            />
+//             {/* Middle background ring */}
+//             <circle
+//               cx="50"
+//               cy="50"
+//               r="32"
+//               fill="none"
+//               stroke="#E6F7F5"
+//               strokeWidth="8"
+//             />
 
-            {/* Inner background ring */}
-            <circle
-              cx="50"
-              cy="50"
-              r="22"
-              fill="none"
-              stroke="#E6F7F5"
-              strokeWidth="8"
-            />
+//             {/* Inner background ring */}
+//             <circle
+//               cx="50"
+//               cy="50"
+//               r="22"
+//               fill="none"
+//               stroke="#E6F7F5"
+//               strokeWidth="8"
+//             />
 
-            {/* Outer progress ring */}
-            <circle
-              cx="50"
-              cy="50"
-              r="42"
-              fill="none"
-              stroke="#5BBFB5"
-              strokeWidth="8"
-              strokeDasharray="264"
-              strokeDashoffset="70"
-              strokeLinecap="round"
-              transform="rotate(-90 50 50)"
-            />
+//             {/* Outer progress ring */}
+//             <circle
+//               cx="50"
+//               cy="50"
+//               r="42"
+//               fill="none"
+//               stroke="#5BBFB5"
+//               strokeWidth="8"
+//               strokeDasharray="264"
+//               strokeDashoffset="70"
+//               strokeLinecap="round"
+//               transform="rotate(-90 50 50)"
+//             />
 
-            {/* Middle progress ring */}
-            <circle
-              cx="50"
-              cy="50"
-              r="32"
-              fill="none"
-              stroke="#5BBFB5"
-              strokeWidth="8"
-              strokeDasharray="201"
-              strokeDashoffset="100"
-              strokeLinecap="round"
-              transform="rotate(-90 50 50)"
-            />
+//             {/* Middle progress ring */}
+//             <circle
+//               cx="50"
+//               cy="50"
+//               r="32"
+//               fill="none"
+//               stroke="#5BBFB5"
+//               strokeWidth="8"
+//               strokeDasharray="201"
+//               strokeDashoffset="100"
+//               strokeLinecap="round"
+//               transform="rotate(-90 50 50)"
+//             />
 
-            {/* Inner progress ring */}
-            <circle
-              cx="50"
-              cy="50"
-              r="22"
-              fill="none"
-              stroke="#5BBFB5"
-              strokeWidth="8"
-              strokeDasharray="138"
-              strokeDashoffset="50"
-              strokeLinecap="round"
-              transform="rotate(-90 50 50)"
-            />
-          </svg>
+//             {/* Inner progress ring */}
+//             <circle
+//               cx="50"
+//               cy="50"
+//               r="22"
+//               fill="none"
+//               stroke="#5BBFB5"
+//               strokeWidth="8"
+//               strokeDasharray="138"
+//               strokeDashoffset="50"
+//               strokeLinecap="round"
+//               transform="rotate(-90 50 50)"
+//             />
+//           </svg>
 
-          {/* Center content */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-sm text-gray-600">Appointment</div>
-            <div className="text-3xl font-bold">2,350</div>
-          </div>
-        </div>
-      </div>
+//           {/* Center content */}
+//           <div className="absolute inset-0 flex flex-col items-center justify-center">
+//             <div className="text-sm text-gray-600">Appointment</div>
+//             <div className="text-3xl font-bold">2,350</div>
+//           </div>
+//         </div>
+//       </div>
 
-      <div className="flex items-center justify-center gap-4 mt-2">
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-          <span className="text-xs text-gray-600">12 Completed</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-teal-700"></div>
-          <span className="text-xs text-gray-600">Series 2</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-teal-300"></div>
-          <span className="text-xs text-gray-600">60 Completed</span>
-        </div>
-      </div>
-    </div>
-  );
-};
+//       <div className="flex items-center justify-center gap-4 mt-2">
+//         <div className="flex items-center gap-1">
+//           <div className="w-2 h-2 rounded-full bg-teal-500"></div>
+//           <span className="text-xs text-gray-600">12 Completed</span>
+//         </div>
+//         <div className="flex items-center gap-1">
+//           <div className="w-2 h-2 rounded-full bg-teal-700"></div>
+//           <span className="text-xs text-gray-600">Series 2</span>
+//         </div>
+//         <div className="flex items-center gap-1">
+//           <div className="w-2 h-2 rounded-full bg-teal-300"></div>
+//           <span className="text-xs text-gray-600">60 Completed</span>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 
 // Patient List Component
 const PatientList = () => {
@@ -1226,11 +1226,11 @@ const UpcomingAppointments = () => {
               <div className="flex items-center gap-4 mb-6">
                 <div className="flex items-center text-gray-600 text-sm">
                   <Calendar size={16} className="mr-2 text-teal-500" />
-                  {appointment.date}
+                  {new Date(appointment.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                 </div>
                 <div className="flex items-center text-gray-600 text-sm">
                   <Clock size={16} className="mr-2 text-teal-500" />
-                  {appointment.time}
+                  {(appointment.time)}
                 </div>
               </div>
 
