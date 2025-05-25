@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { X, Upload, AlertCircle, Check, Trash2 } from "lucide-react";
+import { X, Upload, AlertCircle, Check, Trash2, UserCheck } from "lucide-react";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import appointmentHelper from "../../helpers/appointmentHelper";
@@ -15,6 +15,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
   const fileInputRef = useRef(null);
   console.log("patientData", patientData);
 
+
   // Default patient data if none provided
   const patient = patientData || {
     name: "Demi Wilkinson",
@@ -28,6 +29,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
     photo: "/api/placeholder/48/48", // Placeholder for patient photo
   };
 
+  console.log("poatuinet", patient)
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     setFiles((prev) => [
@@ -85,8 +87,13 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
         formData.append("files", fileObj.file);
       });
 
+      let url ='' ;
       // Prepare URL (assuming your backend route is `/api/patients/:patientId/upload-documents`)
-      const url = `/patients/documents/${patient.id}/upload/${appointmentId}`;
+      if(patientData.patient){
+        url = `/patients/documents/${patientData.patient.id}/upload/${appointmentId}`;
+      }else{
+        url = `/patients/documents/${patientData.patient_id}/upload/${appointmentId}`;
+      }
 
       // Prepare headers
       const headers = {
@@ -178,16 +185,21 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
           <div className="mb-6">
             <h3 className="text-md font-medium mb-3">Dane Pacjenta</h3>
             <div className="flex items-start mb-2">
-              <div className="h-12 w-12 rounded-full overflow-hidden mr-3">
-                <img
-                  src={patient.photo}
-                  alt={patient.name}
-                  className="h-full w-full object-cover"
-                />
-              </div>
+            {patient?.avatar ? (
+                              <img
+                                src={patient.avatar}
+                                alt={patient?.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-14 w-14 rounded-full overflow-hidden mr-3">
+                                <UserCheck
+                                 size={24} />
+                              </div>
+                            )}
               <div>
                 <div className="flex items-center">
-                  <h4 className="font-medium">{patient.name}</h4>
+                  <h4 className="font-medium">{patient.name ?? patient.patient.name}</h4>
                   <div className="ml-2 bg-blue-100 text-blue-600 p-1 rounded-full">
                     <Check size={12} />
                   </div>
@@ -201,11 +213,11 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 text-sm">
               <div>
                 <p className="text-gray-500">Email</p>
-                <p>{patient.email}</p>
+                <p>{patient.email ?? patient.patient.email}</p>
               </div>
               <div>
                 <p className="text-gray-500">Telefon</p>
-                <p>{patient.phone}</p>
+                <p>{patient.phone ?? patient.patient.phone}</p>
               </div>
               {/* <div>
                 <p className="text-gray-500">Data urodzenia</p>
@@ -213,7 +225,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
               </div> */}
               <div>
                 <p className="text-gray-500">Schorzenia</p>
-                <p>{patient.disease}</p>
+                <p>{patient.disease ?? patient.patient.disease}</p>
               </div>
             </div>
           </div>
