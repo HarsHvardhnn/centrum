@@ -75,31 +75,31 @@ const HospitalCareSection = () => {
           Profesjonalna Opieka Zdrowotna dla Ciebie i Twojej Rodziny
         </h2>
 
-        <div className="grid grid-cols-2 gap-y-4 gap-x-6 mt-8 mb-8">
-          <div className="flex items-start gap-2">
-            <FaCircle className="text-teal-600 text-xs mt-1.5" />
+        <div className="grid grid-cols-2 gap-y-4 gap-x-14 mt-8 mb-8">
+          <div className="flex items-start gap-2 min-h-[48px]">
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5" />
             <p className="text-gray-700">Indywidualne podejście do pacjenta</p>
           </div>
-          <div className="flex items-start gap-2">
-            <FaCircle className="text-teal-600 text-xs mt-1.5" />
+          <div className="flex items-start gap-2 min-h-[48px]">
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5" />
             <p className="text-gray-700">Nowoczesna opieka medyczna</p>
           </div>
-          <div className="flex items-start gap-2">
-            <FaCircle className="text-teal-600 text-xs mt-1.5" />
+          <div className="flex items-start gap-2 min-h-[48px]">
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5" />
             <p className="text-gray-700">Specjaliści z doświadczeniem</p>
           </div>
-          <div className="flex items-start gap-2">
-            <FaCircle className="text-teal-600 text-xs mt-1.5" />
+          <div className="flex items-start gap-2 min-h-[48px]">
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5" />
             <p className="text-gray-700">Nowoczesne metody leczenia</p>
           </div>
-          <div className="flex items-start gap-2">
-            <FaCircle className="text-teal-600 text-xs mt-1.5" />
+          <div className="flex items-start gap-2 min-h-[48px]">
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5" />
             <p className="text-gray-700">
               Wiedza oparta na nauce i doświadczeniu
             </p>
           </div>
-          <div className="flex items-start gap-2">
-            <FaCircle className="text-teal-600 text-xs mt-1.5" />
+          <div className="flex items-start gap-2 min-h-[48px]">
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5" />
             <p className="text-gray-700">Polecana klinika w Świętokrzyskim</p>
           </div>
         </div>
