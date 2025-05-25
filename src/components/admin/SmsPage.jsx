@@ -432,6 +432,9 @@ const UserMessaging = () => {
                   <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Rola
                   </th>
+                  <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Zgoda na SMS
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -476,6 +479,9 @@ const UserMessaging = () => {
                       <td className="px-6 py-4 whitespace-nowrap">{user.phone}</td>
                       <td className="px-6 py-4 whitespace-nowrap capitalize">
                         {translateRoleToPolish(user.role)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap capitalize">
+                        {user.smsConsentAgreed ? "Tak" : "Nie"}
                       </td>
                     </tr>
                   ))
