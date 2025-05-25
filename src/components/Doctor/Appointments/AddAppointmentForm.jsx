@@ -220,7 +220,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
   const isNewPatientValid = isFirstTimeVisit && 
     appointmentData.newPatientFirstName.trim() !== "" && 
     appointmentData.newPatientLastName.trim() !== "" &&
-    appointmentData.newPatientEmail.trim() !== "" &&
+    appointmentData.newPatientPhone.trim() !== "" &&
     appointmentData.newPatientDateOfBirth.trim() !== "" &&
     appointmentData.newPatientSex.trim() !== "";
 

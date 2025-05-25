@@ -41,7 +41,7 @@ export default function BookAppointment({
   const validationSchema = Yup.object({
     name: Yup.string().required("Wymagane"),
     gender: Yup.string().required("Wymagane"),
-    email: Yup.string().email("Nieprawidłowy email").required("Wymagane"),
+    email: Yup.string().email("Nieprawidłowy email"),
     phone: Yup.string()
       .matches(/^\d{9}$/, "Wprowadź dokładnie 9 cyfr")
       .required("Wymagane"),
