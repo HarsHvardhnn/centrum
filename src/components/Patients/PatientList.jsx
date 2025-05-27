@@ -241,32 +241,69 @@ function LabAppointmentsContent({ clinic }) {
   const groupAppointmentsByDate = (appointments) => {
     const grouped = {};
     appointments.forEach(appointment => {
-      const date = new Date(appointment.date).toLocaleDateString();
-      if (!grouped[date]) {
-        grouped[date] = [];
+      // Ensure we create a valid date object
+      const appointmentDate = new Date(appointment.date);
+      if (isNaN(appointmentDate.getTime())) {
+        // If date is invalid, use current date as fallback
+        console.warn('Invalid date found for appointment:', appointment);
+        return;
       }
-      grouped[date].push(appointment);
+      
+      // Format date as YYYY-MM-DD to use as key
+      const dateKey = appointmentDate.toISOString().split('T')[0];
+      
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(appointment);
     });
+
+    // Sort appointments within each date group by start time
+    Object.keys(grouped).forEach(date => {
+      grouped[date].sort((a, b) => {
+        const timeA = a.startTime || '';
+        const timeB = b.startTime || '';
+        return timeA.localeCompare(timeB);
+      });
+    });
+
     return grouped;
   };
 
   // Add function to format date header
   const formatDateHeader = (dateStr) => {
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date in formatDateHeader:', dateStr);
+      return 'Data nieznana';
+    }
+
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     
-    if (date.toDateString() === today.toDateString()) {
+    // Reset time part for accurate date comparison
+    today.setHours(0, 0, 0, 0);
+    tomorrow.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    
+    if (date.getTime() === today.getTime()) {
       return "Dzisiaj";
-    } else if (date.toDateString() === tomorrow.toDateString()) {
+    } else if (date.getTime() === tomorrow.getTime()) {
       return "Jutro";
     }
-    return date.toLocaleDateString('pl-PL', { 
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'long'
-    });
+
+    try {
+      return date.toLocaleDateString('pl-PL', { 
+        weekday: 'long', 
+        day: 'numeric', 
+        month: 'long',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Data nieznana';
+    }
   };
 
   // Add handleCancelClick function
