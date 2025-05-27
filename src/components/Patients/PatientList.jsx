@@ -520,10 +520,11 @@ function LabAppointmentsContent({ clinic }) {
                 </div>
                 <div className="divide-y">
                   {appointments.map((appointment) => (
-                    <div key={appointment.id} className="p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                    <div key={appointment.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                      <div className="grid grid-cols-12 gap-4 items-center h-[60px]">
+                        {/* Patient Info - 5 columns */}
+                        <div className="col-span-5 flex items-center gap-3 min-w-0">
+                          <div className="h-10 w-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
                             {appointment.patient?.profilePicture ? (
                               <img
                                 src={appointment.patient.profilePicture}
@@ -532,30 +533,42 @@ function LabAppointmentsContent({ clinic }) {
                               />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center bg-gray-200 text-gray-500">
-                                <UserCheck size={24} />
+                                <UserCheck size={20} />
                               </div>
                             )}
                           </div>
-                          <div>
-                            <div className="font-medium text-gray-900">{appointment.patient?.name}</div>
-                            <div className="text-sm text-gray-500">{appointment.patient.patientId}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-900 truncate max-w-[250px]">
+                              {appointment.patient?.name}
+                            </div>
+                            <div className="text-sm text-gray-500 truncate max-w-[250px]">
+                              {appointment.patient.patientId}
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-medium text-gray-900">
+
+                        {/* Time and Doctor - 4 columns */}
+                        <div className="col-span-4 flex flex-col min-w-0">
+                          <div className="font-medium text-gray-900 truncate">
                             {appointment.startTime} - {appointment.endTime}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 truncate">
                             {appointment.doctor?.name || "-"}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusStyle(appointment.status)}`}>
+
+                        {/* Status - 2 columns */}
+                        <div className="col-span-2 flex items-center justify-end">
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${getStatusStyle(appointment.status)}`}>
                             {translateStatus(appointment.status)}
                           </span>
+                        </div>
+
+                        {/* Actions - 1 column */}
+                        <div className="col-span-1 flex justify-end">
                           <DropdownMenu.Root>
                             <DropdownMenu.Trigger asChild>
-                              <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
+                              <button className="text-gray-500 hover:text-gray-700 focus:outline-none p-1">
                                 <MoreVertical size={18} />
                               </button>
                             </DropdownMenu.Trigger>
@@ -564,6 +577,7 @@ function LabAppointmentsContent({ clinic }) {
                               <DropdownMenu.Content
                                 className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
                                 sideOffset={5}
+                                align="end"
                               >
                                 <DropdownMenu.Item
                                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
@@ -573,7 +587,7 @@ function LabAppointmentsContent({ clinic }) {
                                     );
                                   }}
                                 >
-                                  <Eye size={16} className="mr-2" />
+                                  <Eye size={16} className="mr-2 flex-shrink-0" />
                                   Zobacz szczegóły
                                 </DropdownMenu.Item>
 
@@ -585,7 +599,7 @@ function LabAppointmentsContent({ clinic }) {
                                       setShowCheckin(true);
                                     }}
                                   >
-                                    <UserCheck size={16} className="mr-2" />
+                                    <UserCheck size={16} className="mr-2 flex-shrink-0" />
                                     Zamelduj
                                   </DropdownMenu.Item>
                                 )}
@@ -598,23 +612,10 @@ function LabAppointmentsContent({ clinic }) {
                                       handleBillPatient(appointment.id, appointment.patient.id);
                                     }}
                                   >
-                                    <DollarSign size={16} className="mr-2" />
+                                    <DollarSign size={16} className="mr-2 flex-shrink-0" />
                                     Wystaw rachunek
                                   </DropdownMenu.Item>
                                 )}
-
-                                {/* Only show cancel button for lab appointments and if status is booked */}
-                                {/* {!clinic && appointment.status === "booked" && (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={(e) => {
-                                      handleCancelClick(e, appointment.id);
-                                    }}
-                                  >
-                                    <Trash2 size={16} className="mr-2" />
-                                    Anuluj wizytę
-                                  </DropdownMenu.Item>
-                                )} */}
                               </DropdownMenu.Content>
                             </DropdownMenu.Portal>
                           </DropdownMenu.Root>

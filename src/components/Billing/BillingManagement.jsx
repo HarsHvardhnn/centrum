@@ -600,6 +600,7 @@ const BillingManagement = () => {
     }
 
     await updatePaymentStatus(billId, newStatus);
+    window.location.reload();
   };
 
   // Add new function to handle the actual update
@@ -873,7 +874,7 @@ const BillingManagement = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th
+                  {/* <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort("billNumber")}
@@ -884,7 +885,7 @@ const BillingManagement = () => {
                         <ArrowUpDown size={16} className="ml-1" />
                       )}
                     </div>
-                  </th>
+                  </th> */}
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
@@ -957,9 +958,9 @@ const BillingManagement = () => {
                 {bills.length > 0 ? (
                   bills.map((bill) => (
                     <tr key={bill._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {bill?._id}
-                      </td>
+                      </td> */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {bill?.invoiceId ? bill?.invoiceId : "N/A"}
                       </td>

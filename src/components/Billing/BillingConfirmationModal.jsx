@@ -73,7 +73,7 @@ const BillingConfirmationModal = ({
       await patientServicesHelper.addServicesToPatient(patientId, servicesToAdd, { appointmentId });
       await fetchPatientServices();
       setShowServiceModal(false);
-      toast.success("Services added successfully");
+      toast.success("Usługi dodane pomyślnie");
     } catch (error) {
       console.error("Error adding services:", error);
       toast.error("Failed to add services");

@@ -218,7 +218,7 @@ const BillDetails = () => {
               <ChevronLeft size={20} />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Faktura #{billData._id}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Faktura #{(billData?.invoiceId && billData.invoiceId !== "") ? billData.invoiceId : billData._id}</h1>
               <p className="text-gray-600">
                 Wygenerowano dnia {formatDate(billData.billedAt)}
               </p>
@@ -253,7 +253,7 @@ const BillDetails = () => {
             <div className="flex flex-wrap justify-between items-start mb-8">
               <div>
                 <h2 className="text-xl font-bold text-gray-900 mb-1">Faktura</h2>
-                <p className="text-sm text-gray-600 mb-3">Faktura #{billData._id}</p>
+                <p className="text-sm text-gray-600 mb-3">Faktura #{(billData?.invoiceId && billData.invoiceId !== "") ? billData.invoiceId : billData._id}</p>
                 
                 <div className="flex items-center text-sm text-gray-600 mb-1">
                   <Calendar size={16} className="mr-2 text-gray-400" />
