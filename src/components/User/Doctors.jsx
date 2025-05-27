@@ -222,11 +222,11 @@ export default function Doctors({
       errors.name = "Imię i nazwisko jest wymagane";
     }
 
-    if (!bookingForm.email.trim()) {
-      errors.email = "Email jest wymagany";
-    } else if (!/\S+@\S+\.\S+/.test(bookingForm.email)) {
-      errors.email = "Email jest nieprawidłowy";
-    }
+    // if (!bookingForm.email.trim()) {
+    //   errors.email = "Email jest wymagany";
+    // } else if (!/\S+@\S+\.\S+/.test(bookingForm.email)) {
+    //   errors.email = "Email jest nieprawidłowy";
+    // }
 
     if (!bookingForm.phone.trim()) {
       errors.phone = "Numer telefonu jest wymagany";
@@ -668,7 +668,7 @@ export default function Doctors({
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Adres email*
+                            Adres email
                           </label>
                           <input
                             type="email"
