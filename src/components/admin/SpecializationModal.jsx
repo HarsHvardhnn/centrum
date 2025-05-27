@@ -54,7 +54,8 @@ const SpecializationModal = ({ isOpen, onClose }) => {
           toast.success("Specjalizacja została zaktualizowana pomyślnie");
           resetForm();
         } else {
-          toast.error(result.message);
+          toast.error("Wystąpił błąd");
+
         }
       } else {
         result = await addSpecialization(specializationData);
@@ -62,7 +63,8 @@ const SpecializationModal = ({ isOpen, onClose }) => {
           toast.success("Specjalizacja została dodana pomyślnie");
           resetForm();
         } else {
-          toast.error(result.message);
+          toast.error("Wystąpił błąd");
+
         }
       }
     } catch (err) {

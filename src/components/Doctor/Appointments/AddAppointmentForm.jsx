@@ -332,23 +332,25 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Email*</label>
+                    <label className="block text-sm text-gray-600 mb-1">Email</label>
                     <input
                       type="email"
                       name="newPatientEmail"
                       value={appointmentData.newPatientEmail}
                       onChange={handleInputChange}
                       className="w-full p-2 border rounded-lg"
+                      placeholder="Opcjonalny"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Telefon</label>
+                    <label className="block text-sm text-gray-600 mb-1">Telefon*</label>
                     <input
                       type="tel"
                       name="newPatientPhone"
                       value={appointmentData.newPatientPhone}
                       onChange={handleInputChange}
                       className="w-full p-2 border rounded-lg"
+                      required
                     />
                   </div>
                   <div>
@@ -681,49 +683,32 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
     ) {
       // Collect all data for backend submission
       const appointmentSubmissionData = {
-        doctor: appointmentData.selectedDoctor._id,
         date: appointmentData.selectedDate,
+        doctorId: appointmentData.selectedDoctor._id,
         startTime: appointmentData.selectedSlot.startTime,
-        endTime: appointmentData.selectedSlot.endTime,
-        patientSource: appointmentData.patientSource,
-        visitType: appointmentData.visitType,
-        isInternational: appointmentData.isInternational,
-        isWalkin: appointmentData.isWalkin,
-        needsAttention: appointmentData.needsAttention,
-        markAsArrived: appointmentData.markAsArrived,
-        notes: appointmentData.notes,
-        enableRepeats: appointmentData.enableRepeats,
-        // Format selected services for API
-        services: appointmentData.selectedServices.map(service => ({
-          serviceId: service.id || service._id,
-          price: service.price,
-          quantity: service.quantity || 1
-        })),
+        consultationType: "offline",
+        message: appointmentData.notes || "",
+        smsConsentAgreed: true
       };
       
       // Add patient information based on selection type
       if (isFirstTimeVisit && isNewPatientValid) {
         // For new patients, add their details directly
-        appointmentSubmissionData.newPatient = {
-          firstName: appointmentData.newPatientFirstName,
-          lastName: appointmentData.newPatientLastName,
-          email: appointmentData.newPatientEmail,
-          phone: appointmentData.newPatientPhone || "",
-          dateOfBirth: appointmentData.newPatientDateOfBirth,
-          sex: appointmentData.newPatientSex
-        };
-        appointmentSubmissionData.isNewPatient = true;
+        appointmentSubmissionData.firstName = appointmentData.newPatientFirstName;
+        appointmentSubmissionData.lastName = appointmentData.newPatientLastName;
+        appointmentSubmissionData.email = appointmentData.newPatientEmail || "";
+        appointmentSubmissionData.phone = appointmentData.newPatientPhone;
+        appointmentSubmissionData.dob = appointmentData.newPatientDateOfBirth;
       } else {
         // For existing patients, use their ID
         appointmentSubmissionData.patient = selectedPatient._id;
-        appointmentSubmissionData.isNewPatient = false;
       }
 
       console.log("Appointment data to submit:", appointmentSubmissionData);
       onComplete(appointmentSubmissionData);
     } else {
       // Show validation message
-      alert("Proszę uzupełnić wszystkie wymagane pola");
+      toast.error("Proszę uzupełnić wszystkie wymagane pola");
     }
   };
 

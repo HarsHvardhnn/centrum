@@ -116,11 +116,11 @@ function DoctorsPage() {
       if (response) {
         setPatientDetails(response);
       } else {
-        toast.error("Failed to load patient details");
+        toast.error("Wystąpił błąd");
       }
     } catch (err) {
       console.error("Error fetching patient details:", err);
-      toast.error("Error loading patient details");
+      toast.error("Wystąpił błąd");
     } finally {
       hideLoader();
     }
@@ -182,7 +182,8 @@ function DoctorsPage() {
         setShowAppointmentModal(false);
       } else {
         // Handle error from API that returns success: false
-        toast.error(response.message || "Failed to book appointment");
+        toast.error("Wystąpił błąd");
+
       }
     } catch (error) {
       // Handle exception from the API call

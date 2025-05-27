@@ -375,7 +375,8 @@ const PatientDetailsPage = () => {
       }
     } catch (error) {
       console.error("Error fetching appointment details:", error);
-      toast.error("Failed to load appointment details");
+      toast.error("Wystąpił błąd");
+
     } finally {
       hideLoader();
     }

@@ -74,7 +74,8 @@ const ProfilePage = () => {
         toast.error(response.message || "Failed to load profile");
       }
     } catch (error) {
-      toast.error("Failed to load profile information");
+      toast.error("Wystąpił błąd");
+
       console.error("Error loading profile:", error);
     } finally {
       setIsLoading(false);
@@ -96,14 +97,16 @@ const ProfilePage = () => {
 
       // Check file size (limit to 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB");
+        toast.error("Wystąpił błąd");
+
         return;
       }
 
       // Check file type
       const validTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
       if (!validTypes.includes(file.type)) {
-        toast.error("Please select a valid image file (JPEG, PNG, GIF)");
+        toast.error("Wystąpił błąd");
+
         return;
       }
 
