@@ -30,7 +30,7 @@ const PatientStepForm = ({
         <SubStep title="Dane Wizyty">
           <ReferrerForm />
         </SubStep>
-        <SubStep title="Address">
+        <SubStep title="Addres">
           <AddressForm />
         </SubStep>
         <SubStep title="Zgody">

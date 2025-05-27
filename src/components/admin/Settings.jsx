@@ -70,7 +70,7 @@ export default function UserManagement() {
     "Dane demograficzne",
     "Skierowanie",
     "Adres",
-    "Zdjęcie",
+    "Zgody",
     "Szczegóły",
     "Notatki",
   ];

@@ -225,8 +225,8 @@ function DoctorsPage() {
         setAppointmentId={setAppointmentId}
         onDateSelect={setSelectedDate}
         breadcrumbs={[
-          { label: "Dashboard", onClick: () => navigate("/admin") },
-          { label: "Doctor Appointment", onClick: null },
+          { label: "Panel główny", onClick: () => navigate("/admin") },
+          { label: "Wizyty lekarskie", onClick: null },
         ]}
         onSearch={handleSearch}
         onFilter={() => console.log("Filter clicked")}

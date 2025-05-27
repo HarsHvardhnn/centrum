@@ -50,7 +50,7 @@ const DoctorDashboard = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
-          <div className="relative">
+          {/* <div className="relative">
             <input
               type="text"
               placeholder="Wyszukaj pacjenta..."
@@ -61,14 +61,14 @@ const DoctorDashboard = ({
               className="absolute left-3 top-2.5 text-gray-400"
               size={18}
             />
-          </div>
+          </div> */}
 
-          <button
+          {/* <button
             onClick={onFilter}
             className="p-2 border border-gray-300 rounded-lg"
           >
             <Filter size={18} className="text-gray-600" />
-          </button>
+          </button> */}
 
           <button
             onClick={onBookAppointment}

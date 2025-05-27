@@ -371,10 +371,10 @@ const BillDetails = () => {
                     <span className="font-medium">{formatCurrency(billData.taxAmount)}</span>
                   </div>
                   
-                  {billData.consultationCharges > 0 && (
+                  {billData.appointment?.mode === 'online' && billData.consultationCharges > 0 && (
                     <div className="flex justify-between py-2 text-sm">
-                      <span className="text-gray-600">Opłata za konsultację</span>
-                      <span className="font-medium">{formatCurrency(billData.consultationCharges)}</span>
+                      <span className="text-gray-600">Opłata za konsultację </span>
+                      <span className="font-medium">OPŁACONE</span>
                     </div>
                   )}
                   

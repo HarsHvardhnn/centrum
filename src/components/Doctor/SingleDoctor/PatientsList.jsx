@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { apiCaller } from "../../../utils/axiosInstance";
+import { translateStatus } from "../../../utils/statusHelper";
 
 const PatientsList = ({
   totalPatients = 0,
@@ -303,7 +304,7 @@ const PatientsList = ({
                   </div>
                   <div className="flex items-center justify-center">{translateSexToPolish(patient.sex)}</div>
                   <div className="flex items-center justify-center">
-                    <StatusBadge status={patient.status} />
+                    <StatusBadge status={translateStatus(patient.status)} />
                   </div>
                   <div className="flex items-center justify-center">
                     <AppointmentModeBadge mode={patient.mode} joiningLink={patient.joining_link} />

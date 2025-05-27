@@ -28,7 +28,7 @@ const BillingPage = () => {
             name: `Dr. ${doc.name}`,
             specialty: doc.specialty || doc.specializations?.[0] || "Ogólny",
             timing: "9:30 - 13:00", 
-            date: format(new Date(doc.date), "MMM dd, yyyy"),
+            date: format( new Date(doc.date), "dd.MM.yyyy"),
             description:
               doc.bio ||
               "Centrum Chorób Zakaźnych ma na celu dostarczanie aktualnych, istotnych badań dotyczących aspektów mikrobiologii, wirusologii i parazytologii.",

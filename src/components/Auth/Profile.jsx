@@ -309,7 +309,7 @@ const ProfilePage = () => {
             <p className="text-gray-500 mt-2 text-sm">
               Członek od{" "}
               {profile.createdAt
-                ? new Date(profile.createdAt).toLocaleDateString("en-US", {
+                ? new Date(profile.createdAt).toLocaleDateString("pl-PL", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
