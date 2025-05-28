@@ -67,7 +67,7 @@ export default function UserManagement() {
   const [currentPatientId, setCurrentPatientId] = useState(null);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const subStepTitles = [
-    "Dane demograficzne",
+    "Dane Podstawowe",
     "Skierowanie",
     "Adres",
     "Zgody",

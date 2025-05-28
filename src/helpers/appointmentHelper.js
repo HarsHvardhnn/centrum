@@ -248,16 +248,9 @@ class AppointmentService {
 
       // You can add additional success handling here if needed
       console.log("Appointment successfully canceled");
-
       return response.data;
     } catch (error) {
       console.error("Error canceling appointment:", error);
-
-      // You can add specific error handling based on error types
-      if (error.response && error.response.status === 404) {
-        throw new Error("Appointment not found");
-      }
-
       throw error;
     }
   }
@@ -319,6 +312,22 @@ class AppointmentService {
       throw error;
     }
   }
+
+  async generateVisitCard(appointmentId) {
+    try {
+      const response = await apiCaller(
+        'GET',
+        `/visit-cards/appointment/${appointmentId}`,
+        { data: '' }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error generating visit card:', error);
+      throw error;
+    }
+  }
 }
 
-export default new AppointmentService();
+const appointmentHelper = new AppointmentService();
+
+export default appointmentHelper;

@@ -8,9 +8,12 @@ import {
   UserX,
   Video,
   X,
+  FileText,
 } from "lucide-react";
 import { apiCaller } from "../../../utils/axiosInstance";
 import { translateStatus } from "../../../utils/statusHelper";
+import appointmentHelper from "../../../helpers/appointmentHelper";
+import { toast } from "sonner";
 
 const PatientsList = ({
   totalPatients = 0,
@@ -181,6 +184,20 @@ const PatientsList = ({
     }
   };
 
+  const handleGenerateVisitCard = async (appointmentId) => {
+    try {
+      const response = await appointmentHelper.generateVisitCard(appointmentId);
+      if (response.success && response.data.url) {
+        window.open(response.data.url, '_blank');
+      } else {
+        toast.error("Nie udało się wygenerować karty wizyty");
+      }
+    } catch (error) {
+      console.error("Error generating visit card:", error);
+      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+    }
+  };
+
   // Generate pagination numbers
   const renderPaginationNumbers = () => {
     const pages = [];
@@ -310,6 +327,15 @@ const PatientsList = ({
                     <AppointmentModeBadge mode={patient.mode} joiningLink={patient.joining_link} />
                   </div>
                   <div className="flex items-center justify-center gap-2">
+                    {/* {true && (
+                      <button
+                        onClick={() => handleGenerateVisitCard(patient.id)}
+                        className="flex items-center px-3 py-1 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors"
+                      >
+                        <FileText size={16} className="mr-1" />
+                        Karta wizyty
+                      </button>
+                    )} */}
                     <button
                       onClick={() => handleCancelAppointment(patient.id)}
                       disabled={patient.status !== "booked"}

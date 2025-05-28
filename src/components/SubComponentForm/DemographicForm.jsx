@@ -4,6 +4,12 @@ import { useState, useEffect } from "react";
 
 const DemographicsForm = () => {
   const { formData, updateFormData } = useFormContext();
+  const [touched, setTouched] = useState({
+    email: false,
+    mobileNumber: false,
+    dateOfBirth: false,
+    sex: false
+  });
   const [errors, setErrors] = useState({
     email: "",
     mobileNumber: "",
@@ -40,31 +46,44 @@ const DemographicsForm = () => {
     return "";
   };
 
+  const handleBlur = (fieldName) => {
+    setTouched(prev => ({
+      ...prev,
+      [fieldName]: true
+    }));
+  };
+
   const handleChange = (e) => {
     const { name, value, type } = e.target;
     
     if (name === "mobileNumber") {
-      // Only allow numbers and limit to 9 characters
       const numbersOnly = value.replace(/\D/g, "").slice(0, 9);
       updateFormData(name, numbersOnly);
-      setErrors(prev => ({
-        ...prev,
-        mobileNumber: validatePhone(numbersOnly)
-      }));
+      if (touched[name]) {
+        setErrors(prev => ({
+          ...prev,
+          mobileNumber: validatePhone(numbersOnly)
+        }));
+      }
     } else if (name === "email") {
       updateFormData(name, value);
-      setErrors(prev => ({
-        ...prev,
-        email: validateEmail(value)
-      }));
+      if (touched[name]) {
+        setErrors(prev => ({
+          ...prev,
+          email: validateEmail(value)
+        }));
+      }
     } else if (name === "dateOfBirth") {
       updateFormData(name, value);
-      setErrors(prev => ({
-        ...prev,
-        dateOfBirth: validateDateOfBirth(value)
-      }));
+      if (touched[name]) {
+        setErrors(prev => ({
+          ...prev,
+          dateOfBirth: validateDateOfBirth(value)
+        }));
+      }
     } else if (name === "sex") {
       updateFormData(name, value);
+      setTouched(prev => ({ ...prev, sex: true }));
       setErrors(prev => ({
         ...prev,
         sex: validateSex(value)
@@ -90,16 +109,6 @@ const DemographicsForm = () => {
       return "";
     }
   };
-
-  // Initial validation
-  useEffect(() => {
-    setErrors(prev => ({
-      ...prev,
-      dateOfBirth: validateDateOfBirth(formData.dateOfBirth),
-      sex: validateSex(formData.sex),
-      mobileNumber: validatePhone(formData.mobileNumber)
-    }));
-  }, []);
 
   return (
     <div className="space-y-4">
@@ -127,10 +136,11 @@ const DemographicsForm = () => {
             name="email"
             value={formData.email || ""}
             onChange={handleChange}
+            onBlur={() => handleBlur("email")}
             placeholder="Wprowadź adres e-mail"
-            className={`w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md`}
+            className={`w-full px-3 py-2 border ${touched.email && errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md`}
           />
-          {errors.email && (
+          {touched.email && errors.email && (
             <p className="mt-1 text-sm text-red-500">{errors.email}</p>
           )}
         </div>
@@ -144,11 +154,12 @@ const DemographicsForm = () => {
             name="mobileNumber"
             value={formData.mobileNumber || ""}
             onChange={handleChange}
+            onBlur={() => handleBlur("mobileNumber")}
             placeholder="Wprowadź 9 cyfr"
-            className={`w-full px-3 py-2 border ${errors.mobileNumber ? 'border-red-500' : 'border-gray-300'} rounded-md`}
+            className={`w-full px-3 py-2 border ${touched.mobileNumber && errors.mobileNumber ? 'border-red-500' : 'border-gray-300'} rounded-md`}
             required
           />
-          {errors.mobileNumber && (
+          {touched.mobileNumber && errors.mobileNumber && (
             <p className="mt-1 text-sm text-red-500">{errors.mobileNumber}</p>
           )}
         </div>
@@ -162,10 +173,11 @@ const DemographicsForm = () => {
             name="dateOfBirth"
             value={formatDateForInput(formData.dateOfBirth) || ""}
             onChange={handleChange}
+            onBlur={() => handleBlur("dateOfBirth")}
             required
-            className={`w-full px-3 py-2 border ${errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md`}
+            className={`w-full px-3 py-2 border ${touched.dateOfBirth && errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md`}
           />
-          {errors.dateOfBirth && (
+          {touched.dateOfBirth && errors.dateOfBirth && (
             <p className="mt-1 text-sm text-red-500">{errors.dateOfBirth}</p>
           )}
         </div>
@@ -221,7 +233,7 @@ const DemographicsForm = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Płeć <span className="text-red-500">*</span>
           </label>
-          <div className={`flex gap-4 p-3 bg-primary-lighter rounded-xl ${errors.sex ? 'border border-red-500' : ''}`}>
+          <div className={`flex gap-4 p-3 bg-primary-lighter rounded-xl ${touched.sex && errors.sex ? 'border border-red-500' : ''}`}>
             <label className="inline-flex items-center">
               <input
                 type="radio"
@@ -245,7 +257,7 @@ const DemographicsForm = () => {
               <span className="ml-2">Kobieta</span>
             </label>
           </div>
-          {errors.sex && (
+          {touched.sex && errors.sex && (
             <p className="mt-1 text-sm text-red-500">{errors.sex}</p>
           )}
         </div>

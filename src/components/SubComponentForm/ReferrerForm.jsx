@@ -11,6 +11,10 @@ const ReferrerForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [validationError, setValidationError] = useState("");
+  const [touched, setTouched] = useState({
+    consultingDoctor: false,
+    consultingSpecialization: false
+  });
 
   // Fetch doctors when specialization changes
   useEffect(() => {
@@ -47,18 +51,31 @@ const ReferrerForm = () => {
     const { name, value, type, checked } = e.target;
     updateFormData(name, type === "checkbox" ? checked : value);
     
+    // Mark field as touched when changed
+    setTouched(prev => ({
+      ...prev,
+      [name]: true
+    }));
+
     // Clear validation error when doctor is selected
     if (name === 'consultingDoctor' && value) {
       setValidationError("");
     }
   };
 
-  // Initial validation check
-  useEffect(() => {
-    if (!formData.consultingDoctor && !loading) {
+  const handleBlur = (fieldName) => {
+    setTouched(prev => ({
+      ...prev,
+      [fieldName]: true
+    }));
+
+    // Only validate if the field has been touched
+    if (fieldName === 'consultingDoctor' && !formData.consultingDoctor) {
       setValidationError("Wybór lekarza jest wymagany");
     }
-  }, []);
+  };
+
+  // Remove initial validation check since we only want to validate after user interaction
 
   return (
     <div className="space-y-6">
@@ -162,7 +179,7 @@ const ReferrerForm = () => {
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Lekarz Prowadzący <span className="text-red-500">*</span>
         </label>
-        <div className={`bg-primary-lighter p-4 rounded-xl ${validationError ? 'border border-red-500' : ''}`}>
+        <div className={`bg-primary-lighter p-4 rounded-xl ${touched.consultingDoctor && validationError ? 'border border-red-500' : ''}`}>
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -170,6 +187,7 @@ const ReferrerForm = () => {
                   name="consultingSpecialization"
                   value={formData.consultingSpecialization || ""}
                   onChange={handleChange}
+                  onBlur={() => handleBlur("consultingSpecialization")}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none bg-white"
                 >
                   <option value="">Wybierz specjalizację</option>
@@ -214,7 +232,8 @@ const ReferrerForm = () => {
                   name="consultingDoctor"
                   value={formData.consultingDoctor || ""}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border ${validationError ? 'border-red-500' : 'border-gray-300'} rounded-md appearance-none bg-white`}
+                  onBlur={() => handleBlur("consultingDoctor")}
+                  className={`w-full px-3 py-2 border ${touched.consultingDoctor && validationError ? 'border-red-500' : 'border-gray-300'} rounded-md appearance-none bg-white`}
                   disabled={!formData.consultingSpecialization || loading}
                   required
                 >
@@ -244,7 +263,9 @@ const ReferrerForm = () => {
                 </div>
               </div>
               {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-              {validationError && <p className="mt-1 text-sm text-red-500">{validationError}</p>}
+              {touched.consultingDoctor && validationError && (
+                <p className="mt-1 text-sm text-red-500">{validationError}</p>
+              )}
             </div>
           </div>
         </div>

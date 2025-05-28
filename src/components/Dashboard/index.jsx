@@ -12,7 +12,8 @@ import {
   AlertCircle,
   Eye,
   UserCheck,
-  DollarSign
+  DollarSign,
+  FileText
 } from "lucide-react";
 import patientService from "../../helpers/patientHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
@@ -776,6 +777,20 @@ const PatientList = () => {
     return buttons;
   };
 
+  const handleGenerateVisitCard = async (appointmentId) => {
+    try {
+      const response = await appointmentHelper.generateVisitCard(appointmentId);
+      if (response.success && response.data.url) {
+        window.open(response.data.url, '_blank');
+      } else {
+        toast.error("Nie udało się wygenerować karty wizyty");
+      }
+    } catch (error) {
+      console.error("Error generating visit card:", error);
+      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
       <div className="p-4 flex items-center justify-between">
@@ -1176,6 +1191,20 @@ const UpcomingAppointments = () => {
     // navigate(`/appointments/${appointmentId}/reschedule`);
   };
 
+  const handleGenerateVisitCard = async (appointmentId) => {
+    try {
+      const response = await appointmentHelper.generateVisitCard(appointmentId);
+      if (response.success && response.data.url) {
+        window.open(response.data.url, '_blank');
+      } else {
+        toast.error("Nie udało się wygenerować karty wizyty");
+      }
+    } catch (error) {
+      console.error("Error generating visit card:", error);
+      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+    }
+  };
+
   return (
     <div className="mt-6">
       <div className="flex justify-between items-center mb-4">
@@ -1238,20 +1267,61 @@ const UpcomingAppointments = () => {
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  className="flex-1 bg-teal-50 text-teal-600 py-2 rounded-md text-sm font-medium"
-                  onClick={() => handleCancelAppointment(appointment.id)}
-                >
-                  Anuluj wizytę
-                </button>
-                {/* <button
-                  className="flex-1 bg-teal-50 text-teal-600 py-2 rounded-md text-sm font-medium flex items-center justify-center"
-                  onClick={() => handleRescheduleAppointment(appointment.id)}
-                >
-                  <Calendar size={16} className="mr-2" />
-                  Zmień termin
-                </button> */}
+              <div className="flex items-center justify-between">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(appointment.status)}`}>
+                  {translateStatus(appointment.status)}
+                </span>
+                
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
+                      <MoreVertical size={18} />
+                    </button>
+                  </DropdownMenu.Trigger>
+
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
+                      sideOffset={5}
+                      align="end"
+                    >
+                      <DropdownMenu.Item
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                        onClick={() => {
+                          navigate(
+                            `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                          );
+                        }}
+                      >
+                        <Eye size={16} className="mr-2 flex-shrink-0" />
+                        Zobacz szczegóły
+                      </DropdownMenu.Item>
+
+                      {appointment.status === "booked" && (
+                        <DropdownMenu.Item
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                          onClick={() => {
+                            setSelectedAppointment(appointment);
+                            setShowCheckin(true);
+                          }}
+                        >
+                          <UserCheck size={16} className="mr-2 flex-shrink-0" />
+                          Zamelduj
+                        </DropdownMenu.Item>
+                      )}
+
+                      {appointment.status === "completed" && appointment.isAppointment && (
+                        <DropdownMenu.Item
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                          onClick={() => handleGenerateVisitCard(appointment.id)}
+                        >
+                          <FileText size={16} className="mr-2 flex-shrink-0" />
+                          Generuj kartę wizyty
+                        </DropdownMenu.Item>
+                      )}
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
               </div>
             </div>
           ))}

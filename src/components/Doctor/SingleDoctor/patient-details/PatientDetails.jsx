@@ -141,8 +141,13 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
             <div 
               key={doc.id || index} 
               className="bg-white rounded-lg p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => window.open(doc.url, '_blank')}
-            >
+              onClick={() => {
+                if (doc.url) {
+                  window.open(doc.url, '_blank');
+                } else {
+                  window.open(doc.preview, '_blank');                }
+              }}
+                          >
               <div className="flex items-center gap-3">
                 {doc.isPdf ? (
                   <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
@@ -841,6 +846,21 @@ const PatientDetailsPage = () => {
     );
   };
 
+  const handleGenerateVisitCard = async (appointmentId, e) => {
+    e.stopPropagation(); // Prevent appointment selection when clicking the button
+    try {
+      const response = await appointmentHelper.generateVisitCard(appointmentId);
+      if (response.success && response.data.url) {
+        window.open(response.data.url, '_blank');
+      } else {
+        toast.error("Nie udało się wygenerować karty wizyty");
+      }
+    } catch (error) {
+      console.error("Error generating visit card:", error);
+      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
@@ -900,21 +920,32 @@ const PatientDetailsPage = () => {
                           {apt.consultationType || 'Konsultacja standardowa'}
                         </p>
                       </div>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          apt.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : apt.status === "cancelled"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {apt.status === "completed" 
-                          ? "Zakończona" 
-                          : apt.status === "cancelled" 
-                          ? "Anulowana" 
-                          : "Zaplanowana"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            apt.status === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : apt.status === "cancelled"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {apt.status === "completed" 
+                            ? "Zakończona" 
+                            : apt.status === "cancelled" 
+                            ? "Anulowana" 
+                            : "Zaplanowana"}
+                        </span>
+                        {apt.status === "completed" && (
+                          <button
+                            onClick={(e) => handleGenerateVisitCard(apt._id, e)}
+                            className="flex items-center p-1 text-teal-600 hover:text-teal-700 transition-colors"
+                            title="Generuj kartę wizyty"
+                          >
+                            <FileText size={16} />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

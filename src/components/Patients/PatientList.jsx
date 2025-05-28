@@ -82,10 +82,10 @@ function LabAppointmentsContent({ clinic }) {
   const [currentPatientId, setCurrentPatientId] = useState(null);
   const [patientFormData, setPatientFormData] = useState({});
   const subStepTitles = [
-    "Dane Podstawowee",
+    "Dane Podstawowe",
     "Skierowanie",
     "Adres",
-    "Zdjęcie",
+    "Zgody",
     "Szczegóły",
     "Notatki",
   ];
@@ -377,6 +377,20 @@ function LabAppointmentsContent({ clinic }) {
     }
   };
 
+  const handleGenerateVisitCard = async (appointmentId) => {
+    try {
+      const response = await appointmentHelper.generateVisitCard(appointmentId);
+      if (response.success && response.data.url) {
+        window.open(response.data.url, '_blank');
+      } else {
+        toast.error("Nie udało się wygenerować karty wizyty");
+      }
+    } catch (error) {
+      console.error("Error generating visit card:", error);
+      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+    }
+  };
+
   return (
     <div className="bg-white min-h-screen">
       <div className="w-full mx-auto px-4 py-8">
@@ -620,8 +634,18 @@ function LabAppointmentsContent({ clinic }) {
                                         handleBillPatient(appointment.id, appointment.patient.id);
                                       }}
                                     >
-                                      <DollarSign size={16} className="mr-2 flex-shrink-0" />
+                                      <DollarSign size={16} className="mr-2" />
                                       Wystaw rachunek
+                                    </DropdownMenu.Item>
+                                  )}
+
+                                  {appointment.status === "completed" && (
+                                    <DropdownMenu.Item
+                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                      onClick={() => handleGenerateVisitCard(appointment.id)}
+                                    >
+                                      <FileText size={16} className="mr-2" />
+                                      Karta wizyty
                                     </DropdownMenu.Item>
                                   )}
                                 </DropdownMenu.Content>
@@ -797,6 +821,16 @@ function LabAppointmentsContent({ clinic }) {
                                   >
                                     <DollarSign size={16} className="mr-2" />
                                     Wystaw rachunek
+                                  </DropdownMenu.Item>
+                                )}
+
+                                {appointment.status === "completed" && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={() => handleGenerateVisitCard(appointment.id)}
+                                  >
+                                    <FileText size={16} className="mr-2" />
+                                    Karta wizyty
                                   </DropdownMenu.Item>
                                 )}
                               </DropdownMenu.Content>
