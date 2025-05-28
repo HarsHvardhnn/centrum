@@ -5,7 +5,8 @@ export const translateStatus = (status) => {
     cancelled: "Anulowana",
     booked: "Zarezerwowana",
     billed: "Rozliczona",
-    no_appointment: "Brak wizyty"
+    no_appointment: "Brak wizyty",
+    "in-treatment": "W trakcie"
   };
   
   return statusMap[status] || status;

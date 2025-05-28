@@ -58,6 +58,7 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
     if (value === undefined || value === null) return true;
     if (typeof value === 'string' && value.trim() === '') return true;
     if (Array.isArray(value) && value.length === 0) return true;
+    if (typeof value === 'object' && Object.keys(value).length === 0) return true;
     return false;
   };
 
@@ -71,62 +72,65 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
     }, {});
   };
 
+  // Helper function to format date
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString("pl-PL", {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
   const sections = {
     "Dane osobowe": filterEmptyFields({
-      "Imię i nazwisko": `${patientData.name?.first || ""} ${patientData.name?.last || ""}`,
+      "Imię i nazwisko": `${patientData.name?.first || ""} ${patientData.name?.last || ""}`.trim(),
       "Email": patientData.email,
       "Telefon": patientData.phone,
       "Płeć": patientData.sex === "Male" ? "Mężczyzna" : patientData.sex === "Female" ? "Kobieta" : patientData.sex,
-      "Data urodzenia": patientData.dateOfBirth ? new Date(patientData.dateOfBirth).toLocaleDateString("pl-PL") : null,
+      "Data urodzenia": patientData.dateOfBirth ? formatDate(patientData.dateOfBirth) : null,
       "Wiek": patientData.age,
-      "Narodowość": patientData.nationality,
-      "Język preferowany": patientData.preferredLanguage,
-      "Język ojczysty": patientData.motherTongue,
-      "Religia": patientData.religion,
-      "Etnos": patientData.ethnicity,
-      "Wykształcenie": patientData.education,
-      "Zawód": patientData.occupation,
-      "Stan cywilny": patientData.maritalStatus,
-    }),
-    "Dane rodzinne": filterEmptyFields({
-      "Imię ojca": patientData.fatherName,
-      "Telefon ojca": patientData.fatherPhone,
-      "Imię matki": patientData.motherName,
-      "Telefon matki": patientData.motherPhone,
-      "Imię małżonka": patientData.spouseName,
-      "Osoba kontaktowa": patientData.contactPerson,
-      "Relacja z pacjentem": patientData.relationToPatient,
+      "Nazwa użytkownika": patientData.username,
+      "Dorosły": patientData.isAdult ? "Tak" : "Nie",
+      "Zameldowany": patientData.checkedIn ? "Tak" : "Nie",
     }),
     "Dane medyczne": filterEmptyFields({
       "Alergie": patientData.allergies,
-      "Główny problem": patientData.mainComplaint,
-      "Notatki": patientData.reviewNotes,
-      "Status": patientData.status,
+      "Status": translateStatus(patientData.status),
       "Pacjent międzynarodowy": patientData.isInternationalPatient ? "Tak" : "Nie",
       "Zgoda na SMS": patientData.smsConsentAgreed ? "Tak" : "Nie",
-    }),
-    "Dane adresowe": filterEmptyFields({
-      "Adres": patientData.address,
-      "Miasto": patientData.city,
-      "Dzielnica": patientData.district,
-      "Województwo": patientData.state,
-      "Kraj": patientData.country,
-      "Kod pocztowy": patientData.pinCode,
-      "Kontakt alternatywny": patientData.alternateContact,
+      "Schorzenia przewlekłe": patientData.chronicConditions?.length > 0 ? patientData.chronicConditions.join(", ") : null,
+      "Cele": patientData.goals?.length > 0 ? patientData.goals.join(", ") : null,
+      "Historia medyczna": patientData.medicalHistory?.length > 0 ? patientData.medicalHistory.join(", ") : null,
     }),
     "Dane identyfikacyjne": filterEmptyFields({
       "ID pacjenta": patientData.patientId,
       "ID szpitala": patientData.hospId,
-      "ID rządowe": patientData.govtId,
-      "Inne ID szpitali": patientData.otherHospitalIds,
+      "Data utworzenia": formatDate(patientData.createdAt),
+      "Ostatnia aktualizacja": formatDate(patientData.updatedAt),
     }),
-    "Dane referencyjne": filterEmptyFields({
-      "Typ referenta": patientData.referrerType,
-      "Nazwa referenta": patientData.referrerName,
-      "Email referenta": patientData.referrerEmail,
-      "Telefon referenta": patientData.referrerNumber,
-    })
   };
+
+  // Add consents section if there are any consents
+  if (patientData.consents && patientData.consents.length > 0) {
+    sections["Zgody pacjenta"] = {
+      "Zgody": (
+        <div className="space-y-2">
+          {patientData.consents.map((consent) => (
+            <div key={consent.id} className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${consent.agreed ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className="text-sm">{consent.text}</span>
+            </div>
+          ))}
+        </div>
+      )
+    };
+  }
 
   // Add documents section if there are any documents
   if (patientData.documents && patientData.documents.length > 0) {
@@ -134,7 +138,11 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
       "Dokumenty": (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {patientData.documents.map((doc, index) => (
-            <div key={doc.id || index} className="bg-white rounded-lg p-3 shadow-sm">
+            <div 
+              key={doc.id || index} 
+              className="bg-white rounded-lg p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => window.open(doc.url, '_blank')}
+            >
               <div className="flex items-center gap-3">
                 {doc.isPdf ? (
                   <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
@@ -142,7 +150,7 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
                   </div>
                 ) : (
                   <img 
-                    src={doc.preview} 
+                    src={doc.preview || doc.url} 
                     alt={doc.name}
                     className="w-12 h-12 object-cover rounded-lg"
                   />
@@ -159,6 +167,14 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
     };
   }
 
+  // Filter out sections with no data
+  const filteredSections = Object.entries(sections).reduce((acc, [key, value]) => {
+    if (!isEmpty(value)) {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
       <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -173,7 +189,7 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Object.entries(sections).map(([sectionTitle, fields]) => (
+          {Object.entries(filteredSections).map(([sectionTitle, fields]) => (
             <div key={sectionTitle} className="bg-gray-50 rounded-lg p-4">
               <h3 className="font-medium text-gray-800 mb-3">{sectionTitle}</h3>
               <div className="space-y-2">

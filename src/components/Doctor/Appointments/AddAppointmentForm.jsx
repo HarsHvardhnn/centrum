@@ -15,6 +15,10 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
   const [loadingServices, setLoadingServices] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
+  const [validationErrors, setValidationErrors] = useState({
+    email: "",
+    phone: ""
+  });
   const [appointmentData, setAppointmentData] = useState({
     patientSource: "",
     visitType: "",
@@ -53,12 +57,49 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
     setSelectedPatient(patient);
   };
 
+  // Email validation function
+  const validateEmail = (email) => {
+    if (!email) return ""; // Empty is allowed
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email) ? "" : "Nieprawidłowy format adresu email";
+  };
+
+  // Phone validation function
+  const validatePhone = (phone) => {
+    if (!phone) return "Numer telefonu jest wymagany";
+    const phoneRegex = /^\d{9}$/;
+    return phoneRegex.test(phone) ? "" : "Numer telefonu musi mieć dokładnie 9 cyfr";
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setAppointmentData({
-      ...appointmentData,
-      [name]: type === "checkbox" ? checked : value,
-    });
+    
+    if (name === "newPatientPhone") {
+      // Only allow numbers and limit to 9 characters
+      const numbersOnly = value.replace(/\D/g, "").slice(0, 9);
+      setAppointmentData(prev => ({
+        ...prev,
+        [name]: numbersOnly
+      }));
+      setValidationErrors(prev => ({
+        ...prev,
+        phone: validatePhone(numbersOnly)
+      }));
+    } else if (name === "newPatientEmail") {
+      setAppointmentData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+      setValidationErrors(prev => ({
+        ...prev,
+        email: validateEmail(value)
+      }));
+    } else {
+      setAppointmentData(prev => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value
+      }));
+    }
   };
 
   // Fetch doctor services when a doctor is selected
@@ -220,7 +261,9 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
   const isNewPatientValid = isFirstTimeVisit && 
     appointmentData.newPatientFirstName.trim() !== "" && 
     appointmentData.newPatientLastName.trim() !== "" &&
-    appointmentData.newPatientPhone.trim() !== "" &&
+    appointmentData.newPatientPhone.trim().length === 9 &&
+    !validationErrors.phone &&
+    (!appointmentData.newPatientEmail || !validationErrors.email) && // Email is optional but must be valid if provided
     appointmentData.newPatientDateOfBirth.trim() !== "" &&
     appointmentData.newPatientSex.trim() !== "";
 
@@ -338,9 +381,12 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
                       name="newPatientEmail"
                       value={appointmentData.newPatientEmail}
                       onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg"
+                      className={`w-full p-2 border rounded-lg ${validationErrors.email ? 'border-red-500' : ''}`}
                       placeholder="Opcjonalny"
                     />
+                    {validationErrors.email && (
+                      <p className="text-red-500 text-xs mt-1">{validationErrors.email}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm text-gray-600 mb-1">Telefon*</label>
@@ -349,9 +395,13 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
                       name="newPatientPhone"
                       value={appointmentData.newPatientPhone}
                       onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg"
+                      className={`w-full p-2 border rounded-lg ${validationErrors.phone ? 'border-red-500' : ''}`}
                       required
+                      placeholder="Wprowadź 9 cyfr"
                     />
+                    {validationErrors.phone && (
+                      <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm text-gray-600 mb-1">Data urodzenia*</label>

@@ -1,13 +1,77 @@
 // components/AppointmentForm/DemographicForm.jsx
 import { useFormContext } from "../../context/SubStepFormContext";
+import { useState, useEffect } from "react";
 
 const DemographicsForm = () => {
   const { formData, updateFormData } = useFormContext();
+  const [errors, setErrors] = useState({
+    email: "",
+    mobileNumber: "",
+    dateOfBirth: "",
+    sex: ""
+  });
 
-  console.log("formData in dob", formData)
+  // Email validation function
+  const validateEmail = (email) => {
+    if (!email) return ""; // Empty is allowed
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email) ? "" : "Nieprawidłowy format adresu email";
+  };
+
+  // Phone number validation function
+  const validatePhone = (phone) => {
+    if (!phone) return "Numer telefonu jest wymagany";
+    const phoneRegex = /^\d{9}$/;
+    return phoneRegex.test(phone) ? "" : "Numer telefonu musi mieć dokładnie 9 cyfr";
+  };
+
+  // Date of birth validation function
+  const validateDateOfBirth = (date) => {
+    if (!date) return "Data urodzenia jest wymagana";
+    const selectedDate = new Date(date);
+    const today = new Date();
+    if (selectedDate > today) return "Data urodzenia nie może być w przyszłości";
+    return "";
+  };
+
+  // Sex validation function
+  const validateSex = (sex) => {
+    if (!sex) return "Płeć jest wymagana";
+    return "";
+  };
+
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    updateFormData(name, type === "checkbox" ? checked : value);
+    const { name, value, type } = e.target;
+    
+    if (name === "mobileNumber") {
+      // Only allow numbers and limit to 9 characters
+      const numbersOnly = value.replace(/\D/g, "").slice(0, 9);
+      updateFormData(name, numbersOnly);
+      setErrors(prev => ({
+        ...prev,
+        mobileNumber: validatePhone(numbersOnly)
+      }));
+    } else if (name === "email") {
+      updateFormData(name, value);
+      setErrors(prev => ({
+        ...prev,
+        email: validateEmail(value)
+      }));
+    } else if (name === "dateOfBirth") {
+      updateFormData(name, value);
+      setErrors(prev => ({
+        ...prev,
+        dateOfBirth: validateDateOfBirth(value)
+      }));
+    } else if (name === "sex") {
+      updateFormData(name, value);
+      setErrors(prev => ({
+        ...prev,
+        sex: validateSex(value)
+      }));
+    } else {
+      updateFormData(name, type === "checkbox" ? e.target.checked : value);
+    }
   };
 
   // Format the date to YYYY-MM-DD for date input
@@ -26,6 +90,16 @@ const DemographicsForm = () => {
       return "";
     }
   };
+
+  // Initial validation
+  useEffect(() => {
+    setErrors(prev => ({
+      ...prev,
+      dateOfBirth: validateDateOfBirth(formData.dateOfBirth),
+      sex: validateSex(formData.sex),
+      mobileNumber: validatePhone(formData.mobileNumber)
+    }));
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -54,36 +128,46 @@ const DemographicsForm = () => {
             value={formData.email || ""}
             onChange={handleChange}
             placeholder="Wprowadź adres e-mail"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            className={`w-full px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md`}
           />
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Numer Telefonu
+            Numer Telefonu <span className="text-red-500">*</span>
           </label>
           <input
             type="tel"
             name="mobileNumber"
             value={formData.mobileNumber || ""}
             onChange={handleChange}
-            placeholder="Wprowadź numer telefonu"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            placeholder="Wprowadź 9 cyfr"
+            className={`w-full px-3 py-2 border ${errors.mobileNumber ? 'border-red-500' : 'border-gray-300'} rounded-md`}
+            required
           />
+          {errors.mobileNumber && (
+            <p className="mt-1 text-sm text-red-500">{errors.mobileNumber}</p>
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Data Urodzenia
+            Data Urodzenia <span className="text-red-500">*</span>
           </label>
           <input
             type="date"
             name="dateOfBirth"
             value={formatDateForInput(formData.dateOfBirth) || ""}
             onChange={handleChange}
-            placeholder=""
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            required
+            className={`w-full px-3 py-2 border ${errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md`}
           />
+          {errors.dateOfBirth && (
+            <p className="mt-1 text-sm text-red-500">{errors.dateOfBirth}</p>
+          )}
         </div>
       </div>
 
@@ -135,9 +219,9 @@ const DemographicsForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Płeć
+            Płeć <span className="text-red-500">*</span>
           </label>
-          <div className="flex gap-4 p-3 bg-primary-lighter rounded-xl">
+          <div className={`flex gap-4 p-3 bg-primary-lighter rounded-xl ${errors.sex ? 'border border-red-500' : ''}`}>
             <label className="inline-flex items-center">
               <input
                 type="radio"
@@ -161,6 +245,9 @@ const DemographicsForm = () => {
               <span className="ml-2">Kobieta</span>
             </label>
           </div>
+          {errors.sex && (
+            <p className="mt-1 text-sm text-red-500">{errors.sex}</p>
+          )}
         </div>
 {/* 
         <div className="md:col-span-2">

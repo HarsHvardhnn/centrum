@@ -782,7 +782,11 @@ const PatientList = () => {
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Lista pacjentów</h2>
           <span className="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
-            {pagination.total} member{pagination.total !== 1 ? "s" : ""}
+          {pagination.total} {pagination.total === 1 
+  ? "członek" 
+  : pagination.total > 1 && pagination.total < 5 
+    ? "członkowie" 
+    : "członków"}
           </span>
         </div>
         <button>
@@ -1241,13 +1245,13 @@ const UpcomingAppointments = () => {
                 >
                   Anuluj wizytę
                 </button>
-                <button
+                {/* <button
                   className="flex-1 bg-teal-50 text-teal-600 py-2 rounded-md text-sm font-medium flex items-center justify-center"
                   onClick={() => handleRescheduleAppointment(appointment.id)}
                 >
                   <Calendar size={16} className="mr-2" />
                   Zmień termin
-                </button>
+                </button> */}
               </div>
             </div>
           ))}
