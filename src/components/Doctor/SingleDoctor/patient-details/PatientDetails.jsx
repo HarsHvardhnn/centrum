@@ -16,6 +16,7 @@ import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
 import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity } from "lucide-react";
 import { toast } from "sonner";
+import { translateStatus } from "../../../../utils/statusHelper";
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
@@ -425,7 +426,7 @@ const PatientDetailsPage = () => {
   // Handle save functionality
   const handleSave = async () => {
     if (!currentAppointmentId) {
-      toast.error("No appointment selected");
+      toast.error("Nie wybrano spotkania");
       return;
     }
 
@@ -440,7 +441,7 @@ const PatientDetailsPage = () => {
       );
 
       if (hasUploadingFiles) {
-        setSaveError("Please wait for all files to finish uploading");
+        setSaveError("Proszę poczekać na zakończenie wszystkich plików");
         setIsSaving(false);
         return;
       }
@@ -458,18 +459,18 @@ const PatientDetailsPage = () => {
       );
 
       if (response.success) {
-        toast.success("Appointment details updated successfully");
+        toast.success("Szczegóły spotkania zaktualizowane pomyślnie");
         setSaveSuccess(true);
         
         // Refresh appointment details
         await fetchAppointmentDetails(currentAppointmentId);
       } else {
-        throw new Error(response.message || "Failed to update appointment details");
+        throw new Error(response.message || "Nie udało się zaktualizować szczegółów spotkania");
       }
     } catch (error) {
       console.error("Error saving appointment details:", error);
-      setSaveError(error.message || "Failed to save appointment details. Please try again.");
-      toast.error("Failed to save appointment details");
+      setSaveError(error.message || "Nie udało się zapisać szczegółów spotkania. Proszę spróbować ponownie.");
+      toast.error("Nie udało się zapisać szczegółów spotkania");
     } finally {
       setIsSaving(false);
       hideLoader();
@@ -806,13 +807,7 @@ const PatientDetailsPage = () => {
                   ? "bg-red-100 text-red-800"
                   : "bg-gray-100 text-gray-800"
               }`}>
-                {appointment.status === "completed" 
-                  ? "Zakończona" 
-                  : appointment.status === "scheduled" 
-                  ? "Zaplanowana" 
-                  : appointment.status === "cancelled" 
-                  ? "Anulowana" 
-                  : appointment.status}
+                {translateStatus(appointment.status)}
               </span>
             </div>
             {appointment.consultationType && (

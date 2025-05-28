@@ -333,7 +333,7 @@ export default function UserManagement() {
       setShowAddPatientModal(true);
       hideLoader();
     } catch (error) {
-      setError("Failed to fetch patient details: " + error.message);
+      setError("Nie udało się pobrać danych pacjenta: " + error.message);
       hideLoader();
     }
   };
@@ -346,10 +346,10 @@ export default function UserManagement() {
       
       if (isEditMode && currentPatientId) {
         response = await patientService.updatePatient(currentPatientId, formData);
-        setSuccess("Patient updated successfully");
+        setSuccess("Pacjent zaktualizowany pomyślnie");
       } else {
         response = await patientService.createPatient(formData);
-        setSuccess("Patient added successfully");
+        setSuccess("Pacjent dodany pomyślnie");
       }
       
       hideLoader();
@@ -364,8 +364,8 @@ export default function UserManagement() {
       }, 3000);
     } catch (err) {
       setError(
-        "Failed to " + (isEditMode ? "update" : "add") + " patient: " +
-        (err.response?.data?.error || err.response?.data?.message || "Unknown error")
+        "Nie udało się " + (isEditMode ? "zaktualizować" : "dodać") + " pacjenta: " +
+        (err.response?.data?.error || err.response?.data?.message || "Nieznany błąd")
       );
       hideLoader();
     }
@@ -433,7 +433,7 @@ export default function UserManagement() {
       setShowAddDoctorModal(true);
       hideLoader();
     } catch (error) {
-      setError("Failed to fetch doctor details: " + error.message);
+      setError("Nie udało się pobrać danych lekarza: " + error.message);
       hideLoader();
     }
   };

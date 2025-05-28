@@ -132,7 +132,7 @@ const ActionButtons = ({ patientId, onAddServicesClick, onSave, appointmentId })
         onClick={onSave}
       >
         <Save size={16} className="mr-2" />
-        Save
+        Zapisz wizytę
       </button>
     </div>
   );

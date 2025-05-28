@@ -173,7 +173,7 @@ function DoctorsPage() {
 
       if (response) {
         // Show success notification
-        toast.success("Appointment booked successfully!");
+        toast.success("Wizyta zarezerwowana pomyślnie!");
 
         // Update local state with the new appointment data
         setAppointmentData(response.data);
@@ -190,7 +190,7 @@ function DoctorsPage() {
       console.error("Error creating appointment:", error);
       toast.error(
         error.response?.data?.message ||
-          "An error occurred while booking your appointment"
+          "Wystąpił błąd podczas rezerwacji wizyty"
       );
     } finally {
       // Hide loading indicator

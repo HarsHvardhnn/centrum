@@ -31,7 +31,7 @@ const LoaderOverlay = () => (
   <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
     <div className="bg-white p-4 rounded-lg flex items-center gap-2">
       <Loader className="animate-spin" size={24} />
-      <span>Loading...</span>
+      <span>Ładowanie...</span>
     </div>
   </div>
 );
@@ -452,7 +452,7 @@ const BillingManagement = () => {
         limit: pagination.limit,
         sortBy: sortConfig.key,
         sortOrder: sortConfig.direction === "desc" ? -1 : 1,
-        ...(searchQuery && { searchTerm: searchQuery }),
+        ...(searchQuery && { search: searchQuery }),
         ...(dateRange.startDate && { startDate: dateRange.startDate }),
         ...(dateRange.endDate && { endDate: dateRange.endDate }),
         ...(paymentStatusFilter && { paymentStatus: paymentStatusFilter }),

@@ -53,7 +53,7 @@ const BillingConfirmationModal = ({
       }
     } catch (error) {
       console.error("Error fetching patient services:", error);
-      toast.error("Failed to load patient services");
+      toast.error("Nie udało się załadować usług pacjenta");
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +76,7 @@ const BillingConfirmationModal = ({
       toast.success("Usługi dodane pomyślnie");
     } catch (error) {
       console.error("Error adding services:", error);
-      toast.error("Failed to add services");
+      toast.error("Nie udało się dodać usług");
     } finally {
       setIsLoading(false);
     }
@@ -87,10 +87,10 @@ const BillingConfirmationModal = ({
       setIsLoading(true);
       await patientServicesHelper.removeServiceFromPatient(patientId, serviceId, { appointmentId });
       await fetchPatientServices();
-      toast.success("Service removed successfully");
+      toast.success("Usługa usunięta pomyślnie");
     } catch (error) {
       console.error("Error removing service:", error);
-      toast.error("Failed to remove service");
+      toast.error("Nie udało się usunąć usługi");
     } finally {
       setIsLoading(false);
     }

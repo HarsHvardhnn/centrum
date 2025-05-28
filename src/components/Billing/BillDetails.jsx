@@ -89,9 +89,10 @@ const BillDetails = () => {
       
       const response = await billingHelper.generateInvoice(billId);
       
+      console.log("response", response);
       if (response.success) {
-        // Open the invoice in a new tab
         window.open(response.data.invoiceUrl, '_blank');
+        // Open the invoice in a new tab
         toast.success("Pomyślnie wygenerowano fakturę");
       } else {
         toast.error("Nie udało się wygenerować faktury");

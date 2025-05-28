@@ -71,7 +71,7 @@ const ProfilePage = () => {
         setFormData(newFormData);
         setInitialFormData(newFormData);
       } else {
-        toast.error(response.message || "Failed to load profile");
+        toast.error(response.message || "Nie udało się załadować profilu");
       }
     } catch (error) {
       toast.error("Wystąpił błąd");
@@ -155,7 +155,7 @@ const ProfilePage = () => {
     e.preventDefault();
     try {
       if (!formData.sex) {
-        toast.error("Please select your sex");
+        toast.error("Proszę wybrać swoją płeć");
         return;
       }
       setIsSaving(true);
@@ -170,7 +170,7 @@ const ProfilePage = () => {
 
       if (response.success) {
         setProfile(response.data);
-        toast.success("Profile updated successfully");
+        toast.success("Profil zaktualizowany pomyślnie");
         setIsEditing(false);
         refreshUserProfile();
         // Reset image file state
@@ -179,11 +179,11 @@ const ProfilePage = () => {
         setInitialFormData({ ...formData });
         setHasChanges(false);
       } else {
-        toast.error(response.message || "Failed to update profile");
+        toast.error(response.message || "Nie udało się zaktualizować profilu");
       }
     } catch (error) {
       const errorMsg =
-        error.response?.data?.message || "Failed to update profile";
+        error.response?.data?.message || "Nie udało się zaktualizować profilu";
       toast.error(errorMsg);
     } finally {
       setIsSaving(false);

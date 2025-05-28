@@ -126,7 +126,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<RiHomeLine className="text-xl text-teal-400" />}
-            label="Klinika IP"
+            label="Historia wizyt"
             to="/clinic"
             isActive={currentPath === "/clinic"}
             isEnabled={true}
@@ -251,7 +251,7 @@ const NavItem = ({ icon, label, to, isActive, isEnabled, onClick }) => {
         {icon}
       </span>
       <span className="text-sm">{label}</span>
-      {label === "Rozliczenia" && (
+      {/* {label === "Rozliczenia" && (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-5 w-5 ml-auto text-gray-300"
@@ -264,7 +264,7 @@ const NavItem = ({ icon, label, to, isActive, isEnabled, onClick }) => {
             clipRule="evenodd"
           />
         </svg>
-      )}
+      )} */}
     </Component>
   );
 };

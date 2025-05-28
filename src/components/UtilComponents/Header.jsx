@@ -65,7 +65,11 @@ const Header = () => {
       <div className="flex items-center border border-white rounded-xl py-2 px-4">
         <div className="flex items-center cursor-pointer">
           <div className="h-10 w-10 flex items-center justify-center">
-            <img src="/images/logo.png" alt="Centrum Medyczne" className="h-8" />
+            <img
+              src="/images/logo.png"
+              alt="Centrum Medyczne"
+              className="h-8"
+            />
           </div>
           <div className="ml-3">
             <h1 className="font-semibold text-lg">Centrum Medyczne</h1>
@@ -142,14 +146,15 @@ const Header = () => {
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 <User size={16} className="mr-2" />
-                View Profile
+                Zobacz profil
               </button>
+
               <button
                 onClick={handleLogout}
                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
               >
                 <LogOut size={16} className="mr-2" />
-                Logout
+                Wyloguj 
               </button>
             </div>
           )}

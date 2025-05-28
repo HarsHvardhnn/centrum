@@ -72,7 +72,7 @@ const PatientProfile = ({ patient, setPatientData }) => {
       {/* Informacje o profilu */}
       <div className="mb-6 flex flex-col items-center">
         <div className="relative mb-2">
-          {/* <div className="w-24 h-24 rounded-full bg-blue-100 overflow-hidden">
+          <div className="w-24 h-24 rounded-full bg-blue-100 overflow-hidden">
           {patient?.avatar ? (
   <img
     src={patient.avatar}
@@ -85,7 +85,7 @@ const PatientProfile = ({ patient, setPatientData }) => {
   </div>
 )}
 
-          </div> */}
+          </div>
           <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1 border-2 border-white">
             <div className="bg-white rounded-full p-0.5">
               <svg
@@ -206,12 +206,16 @@ const PatientProfile = ({ patient, setPatientData }) => {
         </div>
         <div className="flex flex-col">
           <p className="text-xs text-gray-500">Data urodzenia</p>
-          <p className="text-sm">{new Date(patient.birthDate).toLocaleDateString("pl-PL")}</p>
+          <p className="text-sm">
+  {isNaN(new Date(patient.birthDate)) 
+    ? "Nieprawidłowa data" 
+    : new Date(patient.birthDate).toLocaleDateString("pl-PL")}
+</p>
 
         </div>
         <div className="flex flex-col">
-          <p className="text-xs text-gray-500">Choroby</p>
-          <p className="text-sm">{patient.disease || "Nie określono"}</p>
+          <p className="text-xs text-gray-500">Alergie</p>
+          <p className="text-sm">{patient.allergies || "Nie określono"}</p>
         </div>
       </div>
 

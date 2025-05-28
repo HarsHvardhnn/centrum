@@ -36,7 +36,7 @@ const billingHelper = {
         limit = 10,
         sortBy = "billedAt",
         sortOrder = -1,
-        patientId,
+        search,
         startDate,
         endDate,
         paymentStatus,
@@ -50,7 +50,7 @@ const billingHelper = {
         sortOrder
       });
 
-      if (patientId) queryParams.append("patientId", patientId);
+      if (search) queryParams.append("search", search);
       if (startDate) queryParams.append("startDate", startDate);
       if (endDate) queryParams.append("endDate", endDate);
       if (paymentStatus) queryParams.append("paymentStatus", paymentStatus);

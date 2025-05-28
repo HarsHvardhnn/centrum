@@ -82,7 +82,7 @@ function LabAppointmentsContent({ clinic }) {
   const [currentPatientId, setCurrentPatientId] = useState(null);
   const [patientFormData, setPatientFormData] = useState({});
   const subStepTitles = [
-    "Dane demograficzne",
+    "Dane Podstawowee",
     "Skierowanie",
     "Adres",
     "Zdjęcie",
@@ -124,27 +124,25 @@ function LabAppointmentsContent({ clinic }) {
   };
 
   useEffect(() => {
-    fetchAppointments();
+    const debounceTimeout = setTimeout(() => {
+      fetchAppointments();
+    }, 300); // Add 300ms debounce
+
+    return () => clearTimeout(debounceTimeout);
   }, [searchQuery, statusFilter, dateRange, user?.id, clinic]);
 
   // Filter appointments based on search query and status filter
   const filteredAppointments = useMemo(() => {
     return appointments.filter((appointment) => {
-      const matchesSearch = searchQuery
-        ? appointment.patient?.name
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          appointment.patient?.patientId
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          (appointment.patient.disease || "")
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase())
-        : true;
+      const matchesSearch = !searchQuery || (
+        (appointment?.patient?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (appointment?.patient?.patientId || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ((appointment?.patient?.disease || '')).toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
       const matchesStatus =
         statusFilter === "All" ||
-        appointment.status === statusFilter.toLowerCase();
+        appointment?.status === statusFilter.toLowerCase();
 
       return matchesSearch && matchesStatus;
     });
@@ -523,7 +521,16 @@ function LabAppointmentsContent({ clinic }) {
                     <div key={appointment.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
                       <div className="grid grid-cols-12 gap-4 items-center h-[60px]">
                         {/* Patient Info - 5 columns */}
-                        <div className="col-span-5 flex items-center gap-3 min-w-0">
+                        <div 
+                          className={`col-span-5 flex items-center gap-3 min-w-0 ${appointment.isAppointment !== false ? 'cursor-pointer' : ''}`}
+                          onClick={() => {
+                            if (appointment.isAppointment !== false) {
+                              navigate(
+                                `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                              );
+                            }
+                          }}
+                        >
                           <div className="h-10 w-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
                             {appointment.patient?.profilePicture ? (
                               <img
@@ -566,59 +573,61 @@ function LabAppointmentsContent({ clinic }) {
 
                         {/* Actions - 1 column */}
                         <div className="col-span-1 flex justify-end">
-                          <DropdownMenu.Root>
-                            <DropdownMenu.Trigger asChild>
-                              <button className="text-gray-500 hover:text-gray-700 focus:outline-none p-1">
-                                <MoreVertical size={18} />
-                              </button>
-                            </DropdownMenu.Trigger>
+                          {appointment.isAppointment !== false && (
+                            <DropdownMenu.Root>
+                              <DropdownMenu.Trigger asChild>
+                                <button className="text-gray-500 hover:text-gray-700 focus:outline-none p-1">
+                                  <MoreVertical size={18} />
+                                </button>
+                              </DropdownMenu.Trigger>
 
-                            <DropdownMenu.Portal>
-                              <DropdownMenu.Content
-                                className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
-                                sideOffset={5}
-                                align="end"
-                              >
-                                <DropdownMenu.Item
-                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                  onClick={() => {
-                                    navigate(
-                                      `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
-                                    );
-                                  }}
+                              <DropdownMenu.Portal>
+                                <DropdownMenu.Content
+                                  className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
+                                  sideOffset={5}
+                                  align="end"
                                 >
-                                  <Eye size={16} className="mr-2 flex-shrink-0" />
-                                  Zobacz szczegóły
-                                </DropdownMenu.Item>
-
-                                {appointment.status === "booked" && (
                                   <DropdownMenu.Item
                                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                     onClick={() => {
-                                      setSelectedAppointment(appointment);
-                                      setShowCheckin(true);
+                                      navigate(
+                                        `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                                      );
                                     }}
                                   >
-                                    <UserCheck size={16} className="mr-2 flex-shrink-0" />
-                                    Zamelduj
+                                    <Eye size={16} className="mr-2 flex-shrink-0" />
+                                    Zobacz szczegóły
                                   </DropdownMenu.Item>
-                                )}
 
-                                {["checkedIn", "booked"].includes(appointment.status) && (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={() => {
-                                      setSelectedAppointment(appointment);
-                                      handleBillPatient(appointment.id, appointment.patient.id);
-                                    }}
-                                  >
-                                    <DollarSign size={16} className="mr-2 flex-shrink-0" />
-                                    Wystaw rachunek
-                                  </DropdownMenu.Item>
-                                )}
-                              </DropdownMenu.Content>
-                            </DropdownMenu.Portal>
-                          </DropdownMenu.Root>
+                                  {appointment.status === "booked" && (
+                                    <DropdownMenu.Item
+                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedAppointment(appointment);
+                                        setShowCheckin(true);
+                                      }}
+                                    >
+                                      <UserCheck size={16} className="mr-2 flex-shrink-0" />
+                                      Zamelduj
+                                    </DropdownMenu.Item>
+                                  )}
+
+                                  {["checkedIn", "booked"].includes(appointment.status) && (
+                                    <DropdownMenu.Item
+                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedAppointment(appointment);
+                                        handleBillPatient(appointment.id, appointment.patient.id);
+                                      }}
+                                    >
+                                      <DollarSign size={16} className="mr-2 flex-shrink-0" />
+                                      Wystaw rachunek
+                                    </DropdownMenu.Item>
+                                  )}
+                                </DropdownMenu.Content>
+                              </DropdownMenu.Portal>
+                            </DropdownMenu.Root>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -641,7 +650,6 @@ function LabAppointmentsContent({ clinic }) {
                   <th className="px-4 py-3 w-[8%] font-medium">Telefon</th>
                   <th className="px-4 py-3 w-[16%] font-medium">Lekarz</th>
                   <th className="px-4 py-3 w-[7%] font-medium">Wiek pacjenta</th>
-                  {/* <th className="px-4 py-3 w-[12%] font-medium">Status pacjenta</th> */}
                   <th className="px-4 py-3 w-[14%] font-medium">Status wizyty</th>
                   <th className="px-4 py-3 w-[8%] font-medium">Akcje</th>
                 </tr>
@@ -650,12 +658,14 @@ function LabAppointmentsContent({ clinic }) {
                 {filteredAppointments.map((appointment) => (
                   <tr key={appointment.id} className="border-b hover:bg-gray-50">
                     <td
-                      className="px-4 py-3 truncate cursor-pointer"
-                      onClick={() =>
-                        navigate(
-                          `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
-                        )
-                      }
+                      className={`px-4 py-3 truncate ${appointment.isAppointment !== false ? 'cursor-pointer' : ''}`}
+                      onClick={() => {
+                        if (appointment.isAppointment !== false) {
+                          navigate(
+                            `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                          );
+                        }
+                      }}
                     >
                       <div className="flex items-center">
                         <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden mr-2 flex-shrink-0">
@@ -713,7 +723,7 @@ function LabAppointmentsContent({ clinic }) {
                           ? "Online"
                           : appointment.mode === "offline"
                           ? "Stacjonarnie"
-                          : appointment.mode}
+                          : "Brak"}
                       </span>
                     </td>
 
@@ -728,19 +738,6 @@ function LabAppointmentsContent({ clinic }) {
                     <td className="px-4 py-3 truncate text-center">
                       {appointment.patient.age || "N/A"} lat
                     </td>
-                    {/* <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-                        appointment.patient.patient_status === 'in-treatment' 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : appointment.patient.patient_status === 'recovered'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {appointment.patient.patient_status === 'in-treatment' ? 'W trakcie leczenia' :
-                         appointment.patient.patient_status === 'recovered' ? 'Wyzdrowiał' :
-                         appointment.patient.patient_status || "N/A"}
-                      </span>
-                    </td> */}
                     <td className="px-4 py-3 text-center">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getStatusStyle(appointment.status)}`}
@@ -750,73 +747,62 @@ function LabAppointmentsContent({ clinic }) {
                     </td>
                     <td className="px-4 py-3 relative">
                       <div className="flex justify-center">
-                        <DropdownMenu.Root>
-                          <DropdownMenu.Trigger asChild>
-                            <button
-                              className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                            >
-                              <MoreVertical size={18} />
-                            </button>
-                          </DropdownMenu.Trigger>
-
-                          <DropdownMenu.Portal>
-                            <DropdownMenu.Content
-                              className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
-                              sideOffset={5}
-                            >
-                              <DropdownMenu.Item
-                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                onClick={() => {
-                                  navigate(
-                                    `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
-                                  );
-                                }}
+                        {appointment.isAppointment !== false && (
+                          <DropdownMenu.Root>
+                            <DropdownMenu.Trigger asChild>
+                              <button
+                                className="text-gray-500 hover:text-gray-700 focus:outline-none"
                               >
-                                <Eye size={16} className="mr-2" />
-                                Zobacz szczegóły
-                              </DropdownMenu.Item>
+                                <MoreVertical size={18} />
+                              </button>
+                            </DropdownMenu.Trigger>
 
-                              {appointment.status === "booked" && (
+                            <DropdownMenu.Portal>
+                              <DropdownMenu.Content
+                                className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
+                                sideOffset={5}
+                              >
                                 <DropdownMenu.Item
                                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                   onClick={() => {
-                                    setSelectedAppointment(appointment);
-                                    setShowCheckin(true);
+                                    navigate(
+                                      `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                                    );
                                   }}
                                 >
-                                  <UserCheck size={16} className="mr-2" />
-                                  Zamelduj
+                                  <Eye size={16} className="mr-2" />
+                                  Zobacz szczegóły
                                 </DropdownMenu.Item>
-                              )}
 
-                              {["checkedIn", "booked"].includes(appointment.status) && (
-                                <DropdownMenu.Item
-                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                  onClick={() => {
-                                    setSelectedAppointment(appointment);
-                                    handleBillPatient(appointment.id, appointment.patient.id);
-                                  }}
-                                >
-                                  <DollarSign size={16} className="mr-2" />
-                                  Wystaw rachunek
-                                </DropdownMenu.Item>
-                              )}
+                                {appointment.status === "booked" && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={() => {
+                                      setSelectedAppointment(appointment);
+                                      setShowCheckin(true);
+                                    }}
+                                  >
+                                    <UserCheck size={16} className="mr-2" />
+                                    Zamelduj
+                                  </DropdownMenu.Item>
+                                )}
 
-                              {/* Only show cancel button for lab appointments and if status is booked */}
-                              {/* {!clinic && appointment.status === "booked" && (
-                                <DropdownMenu.Item
-                                  className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md cursor-pointer"
-                                  onClick={(e) => {
-                                    handleCancelClick(e, appointment.id);
-                                  }}
-                                >
-                                  <Trash2 size={16} className="mr-2" />
-                                  Anuluj wizytę
-                                </DropdownMenu.Item>
-                              )} */}
-                            </DropdownMenu.Content>
-                          </DropdownMenu.Portal>
-                        </DropdownMenu.Root>
+                                {["checkedIn", "booked"].includes(appointment.status) && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={() => {
+                                      setSelectedAppointment(appointment);
+                                      handleBillPatient(appointment.id, appointment.patient.id);
+                                    }}
+                                  >
+                                    <DollarSign size={16} className="mr-2" />
+                                    Wystaw rachunek
+                                  </DropdownMenu.Item>
+                                )}
+                              </DropdownMenu.Content>
+                            </DropdownMenu.Portal>
+                          </DropdownMenu.Root>
+                        )}
                       </div>
                     </td>
                   </tr>
