@@ -10,6 +10,7 @@ import AddDoctorForm from "../Doctor/CreateDoctor";
 import doctorService from "../../helpers/doctorHelper";
 import patientService from "../../helpers/patientHelper";
 import SpecializationModal from "./SpecializationModal";
+import { toast } from "sonner";
 
 export default function UserManagement() {
   // Add these translation mappings at the top of the component
@@ -215,6 +216,10 @@ export default function UserManagement() {
         setSuccess("");
       }, 3000);
     } catch (error) {
+      toast.error( "Nie udało się dodać recepcjonisty: " +
+        (error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Nieznany błąd"))
       setError(
         "Nie udało się dodać recepcjonisty: " +
           (error.response?.data?.error ||
@@ -260,6 +265,10 @@ export default function UserManagement() {
           error.response?.data?.message ||
           "Nieznany błąd")
       );
+      toast.error(  "Nie udało się " + (selectedDoctor ? "zaktualizować" : "dodać") + " lekarza: " +
+      (error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Nieznany błąd"))
       hideLoader();
     }
   };
@@ -333,6 +342,7 @@ export default function UserManagement() {
       setShowAddPatientModal(true);
       hideLoader();
     } catch (error) {
+      toast.error("Nie udało się pobrać danych pacjenta: " + error.message)
       setError("Nie udało się pobrać danych pacjenta: " + error.message);
       hideLoader();
     }
@@ -367,6 +377,8 @@ export default function UserManagement() {
         "Nie udało się " + (isEditMode ? "zaktualizować" : "dodać") + " pacjenta: " +
         (err.response?.data?.error || err.response?.data?.message || "Nieznany błąd")
       );
+      toast.error(    "Nie udało się " + (isEditMode ? "zaktualizować" : "dodać") + " pacjenta: " +
+      (err.response?.data?.error || err.response?.data?.message || "Nieznany błąd"))
       hideLoader();
     }
   };
