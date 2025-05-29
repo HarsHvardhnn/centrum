@@ -97,6 +97,7 @@ function LabAppointmentsContent({ clinic }) {
         ...(statusFilter !== "All" && { status: statusFilter }),
         ...(dateRange.startDate && { startDate: dateRange.startDate }),
         ...(dateRange.endDate && { endDate: dateRange.endDate }),
+        ...(searchQuery && { search: searchQuery }),
         ...(user?.role === "doctor" && { doctorId: user?.id }),
         ...(clinic && { isClinicIp: clinic }),
       };
@@ -109,7 +110,6 @@ function LabAppointmentsContent({ clinic }) {
       );
 
       if (response.success) {
-        console.log(response.data);
         setAppointments(response.data);
         setPagination(response.pagination);
       } else {
@@ -125,28 +125,40 @@ function LabAppointmentsContent({ clinic }) {
 
   useEffect(() => {
     const debounceTimeout = setTimeout(() => {
-      fetchAppointments();
-    }, 300); // Add 300ms debounce
+      fetchAppointments(1); // Reset to first page when filters change
+    }, 300);
 
     return () => clearTimeout(debounceTimeout);
   }, [searchQuery, statusFilter, dateRange, user?.id, clinic]);
 
-  // Filter appointments based on search query and status filter
-  const filteredAppointments = useMemo(() => {
-    return appointments.filter((appointment) => {
-      const matchesSearch = !searchQuery || (
-        (appointment?.patient?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (appointment?.patient?.patientId || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ((appointment?.patient?.disease || '')).toLowerCase().includes(searchQuery.toLowerCase())
-      );
-
-      const matchesStatus =
-        statusFilter === "All" ||
-        appointment?.status === statusFilter.toLowerCase();
-
-      return matchesSearch && matchesStatus;
+  // Remove the frontend filtering logic and use the appointments directly from backend
+  const groupAppointmentsByDate = (appointments) => {
+    const grouped = {};
+    appointments.forEach(appointment => {
+      const appointmentDate = new Date(appointment.date);
+      if (isNaN(appointmentDate.getTime())) {
+        console.warn('Invalid date found for appointment:', appointment);
+        return;
+      }
+      
+      const dateKey = appointmentDate.toISOString().split('T')[0];
+      
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(appointment);
     });
-  }, [appointments, searchQuery, statusFilter]);
+
+    Object.keys(grouped).forEach(date => {
+      grouped[date].sort((a, b) => {
+        const timeA = a.startTime || '';
+        const timeB = b.startTime || '';
+        return timeA.localeCompare(timeB);
+      });
+    });
+
+    return grouped;
+  };
 
   // Function to handle billing confirmation
   const handleBillPatient = async (appointmentId, patientId) => {
@@ -233,39 +245,6 @@ function LabAppointmentsContent({ clinic }) {
         ? { ...apt, status: newStatus }
         : apt
     ));
-  };
-
-  // Add new function to group appointments by date
-  const groupAppointmentsByDate = (appointments) => {
-    const grouped = {};
-    appointments.forEach(appointment => {
-      // Ensure we create a valid date object
-      const appointmentDate = new Date(appointment.date);
-      if (isNaN(appointmentDate.getTime())) {
-        // If date is invalid, use current date as fallback
-        console.warn('Invalid date found for appointment:', appointment);
-        return;
-      }
-      
-      // Format date as YYYY-MM-DD to use as key
-      const dateKey = appointmentDate.toISOString().split('T')[0];
-      
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = [];
-      }
-      grouped[dateKey].push(appointment);
-    });
-
-    // Sort appointments within each date group by start time
-    Object.keys(grouped).forEach(date => {
-      grouped[date].sort((a, b) => {
-        const timeA = a.startTime || '';
-        const timeB = b.startTime || '';
-        return timeA.localeCompare(timeB);
-      });
-    });
-
-    return grouped;
   };
 
   // Add function to format date header
@@ -433,7 +412,7 @@ function LabAppointmentsContent({ clinic }) {
                       Filtruj według statusu
                     </h3>
                     <div className="space-y-2 px-3 py-1">
-                      {["All", "Booked", "CheckedIn", "Cancelled", "Completed"].map(
+                      {["All", "Booked", "checkedIn", "Cancelled", "Completed"].map(
                         (status) => (
                           <label
                             key={status}
@@ -454,7 +433,7 @@ function LabAppointmentsContent({ clinic }) {
                                 ? "Wszystkie"
                                 : status === "Booked"
                                 ? "Zarezerwowane"
-                                : status === "CheckedIn"
+                                : status === "checkedIn"
                                 ? "Zameldowany"
                                 : status === "Cancelled"
                                 ? "Anulowane"
@@ -525,7 +504,7 @@ function LabAppointmentsContent({ clinic }) {
         {clinic ? (
           // Clinic appointments - Date focused layout
           <div className="space-y-6">
-            {Object.entries(groupAppointmentsByDate(filteredAppointments)).map(([date, appointments]) => (
+            {Object.entries(groupAppointmentsByDate(appointments)).map(([date, appointments]) => (
               <div key={date} className="bg-white rounded-lg shadow-sm border">
                 <div className="bg-gray-50 px-6 py-4 border-b">
                   <h2 className="text-lg font-semibold text-gray-800">
@@ -681,7 +660,7 @@ function LabAppointmentsContent({ clinic }) {
                 </tr>
               </thead>
               <tbody>
-                {filteredAppointments.map((appointment) => (
+                {appointments.map((appointment) => (
                   <tr key={appointment.id} className="border-b hover:bg-gray-50">
                     <td
                       className={`px-4 py-3 truncate ${appointment.isAppointment !== false ? 'cursor-pointer' : ''}`}
