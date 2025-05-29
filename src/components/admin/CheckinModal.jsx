@@ -12,6 +12,18 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
+  const translateSexToPolish = (sex) => {
+    switch (sex) {
+      case "Male":
+        return "Mężczyzna";
+      case "Female":
+        return "Kobieta";
+      case "Others":
+        return "Inna";
+      default:
+        return "Nieznany";
+    }
+  };
 
   // Normalize patient data structure
   const normalizedPatient = (() => {
@@ -221,7 +233,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
                   </div>
                 </div>
                 <p className="text-gray-500 text-sm">
-                  {patient.age} Lat, {patient.sex}
+                  {patient.age} Lat, {translateSexToPolish(patient.sex)}
                 </p>
               </div>
             </div>

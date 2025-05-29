@@ -433,7 +433,7 @@ function LabAppointmentsContent({ clinic }) {
                       Filtruj według statusu
                     </h3>
                     <div className="space-y-2 px-3 py-1">
-                      {["All", "Booked", "Cancelled", "Completed"].map(
+                      {["All", "Booked", "CheckedIn", "Cancelled", "Completed"].map(
                         (status) => (
                           <label
                             key={status}
@@ -454,6 +454,8 @@ function LabAppointmentsContent({ clinic }) {
                                 ? "Wszystkie"
                                 : status === "Booked"
                                 ? "Zarezerwowane"
+                                : status === "CheckedIn"
+                                ? "Zameldowany"
                                 : status === "Cancelled"
                                 ? "Anulowane"
                                 : status === "Completed"

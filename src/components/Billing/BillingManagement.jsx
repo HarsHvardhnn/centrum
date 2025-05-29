@@ -404,13 +404,13 @@ const BillingManagement = () => {
             </div>
 
             {/* Add a debug section to verify calculations */}
-            <div className="mt-4 text-xs text-gray-500">
+            {/* <div className="mt-4 text-xs text-gray-500">
               <div>Subtotal: {selectedServices.reduce((sum, service) => sum + Number(service.price), 0)} zł</div>
               <div>Tax ({taxPercentage}%): {((selectedServices.reduce((sum, service) => sum + Number(service.price), 0) * taxPercentage) / 100).toFixed(2)} zł</div>
               <div>Consultation: {consultationCharges} zł</div>
               <div>Additional: {additionalCharges} zł</div>
               <div>Discount: {discount} zł</div>
-            </div>
+            </div> */}
           </div>
 
           <div className="border-t p-4 flex justify-end gap-3">

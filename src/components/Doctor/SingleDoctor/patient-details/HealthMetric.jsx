@@ -1,13 +1,15 @@
 import React from "react";
 
+const placeholderTranslations = {
+  Temperatura: "Wprowadź temperaturę",
+  Waga: "Wprowadź wagę",
+  Wzrost: "Wprowadź wzrost"
+};
+
 const HealthMetric = ({ title, value, onUpdate, unit }) => {
   const handleChange = (e) => {
-    // Only allow numbers and decimal point
     const numericValue = e.target.value.replace(/[^\d.]/g, '');
-    
-    // Prevent multiple decimal points
     if (numericValue.split('.').length > 2) return;
-    
     onUpdate(title, numericValue);
   };
 
@@ -21,7 +23,7 @@ const HealthMetric = ({ title, value, onUpdate, unit }) => {
             value={value || ''}
             onChange={handleChange}
             className="w-full text-sm p-2 pr-10 border border-teal-200 rounded focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
-            placeholder={`Enter ${title.toLowerCase()}`}
+            placeholder={placeholderTranslations[title] || "Wprowadź wartość"}
           />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
             {unit}
