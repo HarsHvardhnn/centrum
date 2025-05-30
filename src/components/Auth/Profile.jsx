@@ -223,7 +223,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-white rounded-xl shadow-lg p-8 mx-auto mt-8 border border-gray-100">
+    <div className="bg-gradient-to-b from-gray-50 to-white rounded-xl shadow-lg p-8 mx-auto mt-16 border border-gray-100">
       <div className="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
         <h1 className="text-2xl font-bold text-gray-800">Mój Profil</h1>
         <button
