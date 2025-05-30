@@ -163,12 +163,20 @@ const Sidebar = () => {
             <NavItem
               icon={<FiSettings className="text-xl text-teal-400" />}
               label="Ustawienia"
-              to={`${
-                user?.role == "doctor" ? "/doctor/settings" : "/admin/accounts"
-              }`}
+              to={`/admin/accounts`}
+              isActive={currentPath === "/admin/accounts"}
+              isEnabled={true}
+            />
+            {
+              user?.role == "doctor" &&    <NavItem
+              icon={<FiSettings className="text-xl text-teal-400" />}
+              label="Harmonogram"
+              to={`/doctor/settings`}
               isActive={currentPath === "/doctor/settings"}
               isEnabled={true}
             />
+    
+            }
     
 
        {user?.role === "doctor" && <a
