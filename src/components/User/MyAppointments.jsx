@@ -20,6 +20,7 @@ import { useUser } from "../../context/userContext";
 import { apiCaller } from "../../utils/axiosInstance";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { toast } from "sonner";
+import { translateStatus } from "../../utils/statusHelper";
 
 const MyAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -156,9 +157,9 @@ const MyAppointments = () => {
 
   // Calculate stats
   const calculateStats = () => {
-    const zarezerwowane = appointments.filter((app) => app.status === "zarezerwowana").length;
-    const zakonczone = appointments.filter((app) => app.status === "zakończona").length;
-    const anulowane = appointments.filter((app) => app.status === "anulowana").length;
+    const zarezerwowane = appointments.filter((app) => app.status === "booked").length;
+    const zakonczone = appointments.filter((app) => app.status === "completed").length;
+    const anulowane = appointments.filter((app) => app.status === "cancelled").length;
     const nieobecnosci = appointments.filter((app) => app.status === "nieobecność").length;
 
     return { 
@@ -316,7 +317,7 @@ const MyAppointments = () => {
                     <tr key={appointment._id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {formatAppointmentDate(appointment.date)}
+                          {new Date(appointment.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                         </div>
                         <div className="text-sm text-gray-500">
                           {appointment.time}
@@ -363,7 +364,7 @@ const MyAppointments = () => {
                               getStatusColor(appointment.status).dot
                             }`}
                           />
-                          {appointment.status}
+                          {translateStatus(appointment.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -417,7 +418,7 @@ const MyAppointments = () => {
                     </div>
                     <div className="text-sm text-gray-500">
                       {selectedAppointment.doctor.department ||
-                        "Medical Doctor"}
+                        "Nieznany"}
                     </div>
                   </div>
                   <div
@@ -428,9 +429,8 @@ const MyAppointments = () => {
                     } px-4 py-2 rounded-lg`}
                   >
                     <div className="text-xs font-medium">Status</div>
-                    <div className="font-medium">
-                      {selectedAppointment.status.charAt(0).toUpperCase() +
-                        selectedAppointment.status.slice(1)}
+                    <div className="font-medium"> 
+                        {translateStatus(selectedAppointment.status)}
                     </div>
                   </div>
                 </div>
@@ -449,7 +449,7 @@ const MyAppointments = () => {
                         <div>
                           <div className="text-xs text-gray-500">Data</div>
                           <div className="font-medium text-gray-800">
-                            {formatAppointmentDate(selectedAppointment.date)}
+                            {new Date(selectedAppointment.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                           </div>
                         </div>
                       </div>
@@ -519,7 +519,7 @@ const MyAppointments = () => {
                           </div>
                           <div className="font-medium text-gray-800">
                             {selectedAppointment.doctor.department ||
-                              "General Practice"}
+                              "Nieznany"}
                           </div>
                         </div>
                       </div>

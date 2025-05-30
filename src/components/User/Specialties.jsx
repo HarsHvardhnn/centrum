@@ -1,5 +1,6 @@
 import React from "react";
 import { useSpecializations } from "../../context/SpecializationContext";
+import { useNavigate } from "react-router-dom";
 
 // const specialtiesData = [
 //   { id: 1, name: "Neurology" },
@@ -18,6 +19,7 @@ import { useSpecializations } from "../../context/SpecializationContext";
 
 export default function Specialties() {
   const { specializations: specialtiesData } = useSpecializations();
+  const navigate = useNavigate();
   return (
     <section className="py-12 text-center px-4 md:px-8 lg:px-16">
       <h3 className="text-lg md:text-xl font-bold text-neutral-800">
@@ -31,6 +33,7 @@ export default function Specialties() {
         {specialtiesData.map((specialty) => (
           <div
             key={specialty.id}
+            onClick={() => navigate(`/user/doctors`)}
             className="border-2 rounded-lg p-6 md:p-8 flex flex-col items-center cursor-pointer transition-all duration-300 hover:bg-main text-neutral-900 hover:text-white"
           >
             <img src="/images/speciality.png" className="size-8 md:size-10" alt={specialty.name} />

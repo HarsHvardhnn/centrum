@@ -319,8 +319,7 @@ const Header = () => {
                   }`}
                 >
                   <FaIdCard />
-                  Moje recepty
-                </Link>
+                  Dokumentacja medyczna                </Link>
                 <Link
                   to="/user/profile"
                   onClick={() => setMenuOpen(false)}
@@ -384,7 +383,7 @@ const Header = () => {
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                <div className="absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 z-50">
                   
                   <Link
                     to="/user/appointments"
@@ -407,8 +406,8 @@ const Header = () => {
                     }`}
                     onClick={() => setDropdownOpen(false)}
                   >
-                    <FaIdCard className="text-teal-800" />
-                    Moje recepty
+                      <FaIdCard className="text-teal-800" />
+                        Dokumentacja medyczna
                   </Link>
                   <Link
                     to="/user/profile"

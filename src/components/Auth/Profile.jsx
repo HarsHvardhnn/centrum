@@ -201,6 +201,19 @@ const ProfilePage = () => {
     setIsEditing(!isEditing);
   };
 
+  const translateSexToPolish = (sex) => {
+    switch (sex) {
+      case "Male":
+        return "Mężczyzna";
+      case "Female":
+        return "Kobieta";
+      case "Others":
+        return "Inna";
+      default:
+        return "Nieznany";
+    }
+  };
+
   if (isLoading && !profile.email) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -509,13 +522,13 @@ const ProfilePage = () => {
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Płeć</h4>
                   <p className="mt-1 text-gray-900 font-medium">
-                    {profile.sex || "-"}
+                    {translateSexToPolish(profile.sex) || "-"}
                   </p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Rola</h4>
                   <p className="mt-1 text-gray-900 font-medium capitalize">
-                    {/* {transferRole(profile.role) || "-"} */}
+                    {translateRoleToPolish(profile.role) || "-"}
                   </p>
                 </div>
                 <div>
