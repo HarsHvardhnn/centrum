@@ -11,6 +11,7 @@ const ConsentDocumentUpload = () => {
   // Initialize consents array if not exists
   if (!formData.consents) {
     updateFormData("consents", []);
+    updateFormData("smsConsentAgreed", false);
   }
 
   // Add a new consent
@@ -30,9 +31,17 @@ const ConsentDocumentUpload = () => {
 
   // Toggle consent agreement
   const toggleConsent = (id) => {
-    const updatedConsents = formData.consents.map((consent) =>
-      consent.id === id ? { ...consent, agreed: !consent.agreed } : consent
-    );
+    const updatedConsents = formData.consents.map((consent) => {
+      if (consent.id === id) {
+        const newAgreedValue = !consent.agreed;
+        // Check if this is the SMS consent
+        if (consent.text === "Pacjent wyraża zgodę na otrzymywanie powiadomień SMS") {
+          updateFormData("smsConsentAgreed", newAgreedValue);
+        }
+        return { ...consent, agreed: newAgreedValue };
+      }
+      return consent;
+    });
 
     updateFormData("consents", updatedConsents);
   };

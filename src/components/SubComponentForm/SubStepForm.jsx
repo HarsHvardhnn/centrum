@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "../../context/SubStepFormContext";
 
 export const SubStepFormContext = createContext(null);
@@ -19,6 +19,8 @@ const SubStepForm = ({
   hideButtons = false, // Prop to optionally hide navigation buttons
   subStepTitles = [] // Array of sub-step titles for back button text
 }) => {
+  const { formData } = useFormContext();
+  const [hasValidationErrors, setHasValidationErrors] = useState(false);
   const subSteps = useMemo(() => Array.isArray(children) ? children : [children], [children]);
     // Extract sub-step titles from children if not provided
   useEffect(() => {
@@ -27,13 +29,29 @@ const SubStepForm = ({
     }
   }, [subSteps, subStepTitles]);
 
+  // Validate current step
+  useEffect(() => {
+    if (currentSubStep === 0) { // Demographics form
+      const emailError = formData.email ? !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) : false;
+      const phoneError = formData.mobileNumber ? !/^\d{9}$/.test(formData.mobileNumber) : false;
+      const dateError = !formData.dateOfBirth;
+      const sexError = !formData.sex;
+      setHasValidationErrors(emailError || phoneError || dateError || sexError);
+    } else if (currentSubStep === 1) { // Referrer form
+      const doctorError = !formData.consultingDoctor;
+      setHasValidationErrors(doctorError);
+    } else {
+      setHasValidationErrors(false);
+    }
+  }, [currentSubStep, formData.email, formData.mobileNumber, formData.dateOfBirth, formData.sex, formData.consultingDoctor]);
+
   const getPreviousButtonText = () => {
     if (currentSubStep > 0) {
       const prevSubStepTitle = subStepTitles[currentSubStep - 1] || 
-                              (subSteps[currentSubStep - 1]?.props.title || "Previous");
-      return `← Back to ${prevSubStepTitle}`;
+                              (subSteps[currentSubStep - 1]?.props.title || "Poprzedni");
+      return `Wróć do ${prevSubStepTitle}`;
     }
-    return "Previous";
+    return "Poprzedni";
   };
 
   return (
@@ -44,12 +62,15 @@ const SubStepForm = ({
             {subSteps.map((_, index) => (
               <button
                 key={index}
-                onClick={() => goToSubStep(index)}
+                onClick={() => !hasValidationErrors && goToSubStep(index)}
                 className={`p-2 text-center rounded-md transition-all font-medium ${
                   currentSubStep === index
                     ? "bg-primary-light text-white font-medium"
+                    : hasValidationErrors
+                    ? "text-gray-400 cursor-not-allowed"
                     : "text-gray hover:bg-gray-200"
                 }`}
+                disabled={hasValidationErrors}
               >
                 {subSteps[index].props.title}
               </button>
@@ -80,12 +101,17 @@ const SubStepForm = ({
                 if (currentSubStep < subSteps.length - 1) {
                   goToSubStep(currentSubStep + 1);
                 } else {
-                  onComplete(); // Mark as completed when reaching the last sub-step
+                  onComplete();
                 }
-              }} 
-              className="px-4 py-2 bg-primary text-white rounded"
+              }}
+              disabled={hasValidationErrors}
+              className={`px-4 py-2 rounded ${
+                hasValidationErrors
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-primary text-white hover:bg-primary-dark"
+              }`}
             >
-              {currentSubStep === subSteps.length - 1 ? "Complete Step" : "Next"}
+              {currentSubStep === subSteps.length - 1 ? "Zakończ rejestrację" : "Następna"}
             </button>
           </div>
         )}

@@ -1,18 +1,68 @@
 import { useState, useRef } from "react";
-import { X, Upload, AlertCircle, Check, Trash2 } from "lucide-react";
+import { X, Upload, AlertCircle, Check, Trash2, UserCheck } from "lucide-react";
 import { apiCaller } from "../../utils/axiosInstance";
+import { toast } from "sonner";
+import appointmentHelper from "../../helpers/appointmentHelper";
 
-const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = null }) => {
+const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = null, onCheckinSuccess, onAppointmentUpdate }) => {
   console.log("patientData", patientData);
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
-  console.log("patientData", patientData);
+  const translateSexToPolish = (sex) => {
+    switch (sex) {
+      case "Male":
+        return "Mężczyzna";
+      case "Female":
+        return "Kobieta";
+      case "Others":
+        return "Inna";
+      default:
+        return "Nieznany";
+    }
+  };
+
+  // Normalize patient data structure
+  const normalizedPatient = (() => {
+    if (!patientData) return null;
+
+    console.log("actual patient data", patientData)
+    // If patientData has a nested patient object (first format)
+    if (patientData.patient) {
+      return {
+        name: patientData.patient.name,
+        age: patientData.patient.age || 0,
+        sex: patientData.patient.sex || "Nieokreślony",
+        email: patientData.patient.email || "Nieokreślony",
+        phone: patientData.patient.phoneNumber || "Nieokreślony",
+        disease: patientData.patient.disease || "Nieokreślony",
+        id: patientData.patient.id,
+        avatar: patientData.patient.profilePicture,
+        patient_id: patientData.patient.id
+      };
+    }
+
+    // If patientData is flat structure (second format)
+    return {
+      name: patientData.name,
+      age: patientData.age || 0,
+      sex: patientData.sex || "Nieokreślony",
+      email: patientData.email || "Nieokreślony",
+      phone: patientData.phone || patientData.phoneNumber || "Nieokreślony",
+      disease: patientData.disease || "Nieokreślony",
+      id: patientData.patient_id || patientData.id,
+      avatar: patientData.avatar || patientData.profilePicture,
+      patient_id: patientData.patient_id || patientData.id
+    };
+  })();
+
+  console.log("normilised",normalizedPatient)
 
   // Default patient data if none provided
-  const patient = patientData || {
+  const patient = normalizedPatient || {
     name: "Demi Wilkinson",
     age: "22",
     sex: "Mężczyzna",
@@ -21,7 +71,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
     dateOfBirth: "14 Luty 2003",
     disease: "Kardiologia",
     id: "#PT-0025",
-    photo: "/api/placeholder/48/48", // Placeholder for patient photo
+    avatar: null
   };
 
   const handleFileChange = (e) => {
@@ -74,31 +124,32 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
     setUploadError(null);
 
     try {
-      // Create FormData
       const formData = new FormData();
-
       files.forEach((fileObj) => {
         formData.append("files", fileObj.file);
       });
 
-      // Prepare URL (assuming your backend route is `/api/patients/:patientId/upload-documents`)
-      const url = `/patients/documents/${patient.id}/upload/${appointmentId}`;
+      // Use normalized patient ID for the URL
+      const url = `/patients/documents/${patient.patient_id}/upload/${appointmentId}`;
 
-      // Prepare headers
       const headers = {
         "Content-Type": "multipart/form-data",
-        // If your apiCaller auto-attaches token, no need to add Authorization here manually
       };
 
-      // Call your apiCaller
       const response = await apiCaller("POST", url, formData, headers);
 
       if (response) {
         setUploadSuccess(true);
-
         setIsOpen(false);
         setFiles([]);
         setUploadSuccess(false);
+
+        if (typeof onCheckinSuccess === 'function') {
+          onCheckinSuccess(appointmentId);
+        }
+        if (typeof onAppointmentUpdate === 'function') {
+          onAppointmentUpdate(appointmentId, 'checkedIn');
+        }
       } else {
         throw new Error(response.message || "Przesyłanie nie powiodło się");
       }
@@ -109,6 +160,31 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
       );
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleCheckin = async () => {
+    try {
+      setLoading(true);
+      const response = await appointmentHelper.checkInPatient(appointmentId);
+      
+      if (response.success) {
+        toast.success("Pacjent został pomyślnie zameldowany");
+        if (typeof onCheckinSuccess === 'function') {
+          onCheckinSuccess(appointmentId);
+        }
+        if (typeof onAppointmentUpdate === 'function') {
+          onAppointmentUpdate(appointmentId, 'checkedIn');
+        }
+        setIsOpen(false);
+      } else {
+        toast.error("Nie udało się zameldować pacjenta");
+      }
+    } catch (error) {
+      console.error("Error during check-in:", error);
+      toast.error("Wystąpił błąd podczas meldowania pacjenta");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,13 +214,17 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
           <div className="mb-6">
             <h3 className="text-md font-medium mb-3">Dane Pacjenta</h3>
             <div className="flex items-start mb-2">
-              <div className="h-12 w-12 rounded-full overflow-hidden mr-3">
+              {patient.avatar ? (
                 <img
-                  src={patient.photo}
+                  src={patient.avatar}
                   alt={patient.name}
-                  className="h-full w-full object-cover"
+                  className="h-14 w-14 rounded-full object-cover mr-3"
                 />
-              </div>
+              ) : (
+                <div className="h-14 w-14 rounded-full overflow-hidden mr-3 bg-gray-100 flex items-center justify-center">
+                  <UserCheck size={24} className="text-gray-400" />
+                </div>
+              )}
               <div>
                 <div className="flex items-center">
                   <h4 className="font-medium">{patient.name}</h4>
@@ -153,7 +233,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
                   </div>
                 </div>
                 <p className="text-gray-500 text-sm">
-                  {patient.age} Lat, {patient.sex}
+                  {patient.age} Lat, {translateSexToPolish(patient.sex)}
                 </p>
               </div>
             </div>
@@ -168,13 +248,9 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
                 <p>{patient.phone}</p>
               </div>
               {/* <div>
-                <p className="text-gray-500">Data urodzenia</p>
-                <p>{format(patient?.dateOfBirth,"dd-mm-yyyy")}</p>
-              </div> */}
-              <div>
                 <p className="text-gray-500">Schorzenia</p>
                 <p>{patient.disease}</p>
-              </div>
+              </div> */}
             </div>
           </div>
 

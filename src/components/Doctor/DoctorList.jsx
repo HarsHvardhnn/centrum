@@ -48,7 +48,7 @@ const DoctorListing = ({ doctors = [] }) => {
             className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-500 bg-white hover:bg-gray-50 gap-2 disabled:opacity-50"
           >
             <ArrowLeft size={20} />
-            Previous
+            Poprzednia
           </button>
 
           <div className="flex mx-2">
@@ -127,7 +127,7 @@ const DoctorListing = ({ doctors = [] }) => {
             disabled={currentPage === totalPages}
             className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-500 bg-white hover:bg-gray-50 gap-2 disabled:opacity-50"
           >
-            Next
+            Następna
             <ArrowRight size={20} />
           </button>
         </div>

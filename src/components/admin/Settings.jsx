@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import adminHelper from "../../helpers/adminHelper";
 import { useLoader } from "../../context/LoaderContext";
+import { useUser } from "../../context/userContext";
 import DoctorScheduleManager from "./DoctorScheduleEditor";
 import { ChevronDown } from "lucide-react"; // For dropdown icon
 import PatientStepForm from "../SubComponentForm/PatientStepForm";
@@ -9,9 +10,23 @@ import AddDoctorForm from "../Doctor/CreateDoctor";
 import doctorService from "../../helpers/doctorHelper";
 import patientService from "../../helpers/patientHelper";
 import SpecializationModal from "./SpecializationModal";
+import { toast } from "sonner";
 
 export default function UserManagement() {
+  // Add these translation mappings at the top of the component
+  const roleTranslations = {
+    doctor: "Lekarz",
+    patient: "Pacjent",
+    receptionist: "Recepcjonista"
+  };
+
+  const statusTranslations = {
+    active: "Aktywny",
+    deleted: "Usunięty"
+  };
+
   const [users, setUsers] = useState([]);
+  const { user } = useUser();
   const { showLoader, hideLoader } = useLoader();
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,6 +35,7 @@ export default function UserManagement() {
   const [sortField, setSortField] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
   const [showSpecsModal,setShowSpecsModal]=useState(false)
+  const [patientFormData, setPatientFormData] = useState({});
 
   // Add User dropdowns and modals
   const [showAddDropdown, setShowAddDropdown] = useState(false);
@@ -44,21 +60,24 @@ export default function UserManagement() {
   // State for doctor schedule modal
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
-  const [patientFormData, setPatientFormData] = useState({});
 
   // Patient form states
   const [currentSubStep, setCurrentSubStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentPatientId, setCurrentPatientId] = useState(null);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
   const subStepTitles = [
-    "Dane demograficzne",
+    "Dane Podstawowe",
     "Skierowanie",
     "Adres",
-    "Zdjęcie",
+    "Zgody",
     "Szczegóły",
     "Notatki",
   ];
+
+  // Add this function to check if user is admin
+  const isAdmin = user?.role === 'admin';
 
   const fetchUsers = async () => {
     try {
@@ -197,6 +216,10 @@ export default function UserManagement() {
         setSuccess("");
       }, 3000);
     } catch (error) {
+      toast.error( "Nie udało się dodać recepcjonisty: " +
+        (error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Nieznany błąd"))
       setError(
         "Nie udało się dodać recepcjonisty: " +
           (error.response?.data?.error ||
@@ -207,14 +230,23 @@ export default function UserManagement() {
     }
   };
 
-  // Function to handle adding a doctor
+  // Function to handle adding/updating a doctor
   const handleAddDoctor = async (doctorData, resetForm, closeModal) => {
     try {
+      console.log("doctorData",doctorData)
       showLoader();
-      // Call your doctor service here
-      const response = await doctorService.createDoctor(doctorData);
+      let response;
+      
+      if (selectedDoctor) {
+        // Update existing doctor
+        response = await doctorService.updateDoctor(selectedDoctor.id, doctorData);
+        setSuccess("Lekarz został zaktualizowany pomyślnie");
+      } else {
+        // Create new doctor
+        response = await doctorService.createDoctor(doctorData);
+        setSuccess("Lekarz został dodany pomyślnie");
+      }
 
-      setSuccess("Lekarz został dodany pomyślnie");
       hideLoader();
       fetchUsers(); // Refresh the users list
 
@@ -228,36 +260,125 @@ export default function UserManagement() {
       closeModal();
     } catch (error) {
       setError(
-        "Nie udało się dodać lekarza: " +
-          (error.response?.data?.error ||
-            error.response?.data?.message ||
-            "Nieznany błąd")
+        "Nie udało się " + (selectedDoctor ? "zaktualizować" : "dodać") + " lekarza: " +
+        (error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Nieznany błąd")
       );
+      toast.error(  "Nie udało się " + (selectedDoctor ? "zaktualizować" : "dodać") + " lekarza: " +
+      (error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Nieznany błąd"))
       hideLoader();
     }
   };
 
-  // Function to handle adding a patient - Modified to work with FormProvider context
+  // Add this function to handle edit click
+  const handleEditPatient = async (userId) => {
+    try {
+      showLoader();
+      const patientData = await patientService.getPatientById(userId);
+      let patientDetails=patientData;
+      console.log(patientData, "patient data")
+      const mappedFormData = {
+        // Demographics
+        fullName:
+          patientDetails.name?.first + " " + (patientDetails.name?.last || ""),
+        email: patientDetails.email,
+        mobileNumber: patientDetails.phone,
+        patient_id: patientDetails._id,
+        dateOfBirth: patientDetails.dateOfBirth,
+        motherTongue: patientDetails.motherTongue,
+        govtId: patientDetails.govtId,
+        hospId: patientDetails.hospId,
+        sex: patientDetails.sex,
+        maritalStatus: patientDetails.maritalStatus,
+        ethnicity: patientDetails.ethnicity,
+        otherHospitalIds: patientDetails.otherHospitalIds,
+
+        consents: patientDetails.consents || [],
+        documents: patientDetails.documents || [],
+
+        // Referrer
+        referrerType: patientDetails.referrerType,
+        mainComplaint: patientDetails.mainComplaint,
+        referrerName: patientDetails.referrerName,
+        referrerNumber: patientDetails.referrerNumber,
+        referrerEmail: patientDetails.referrerEmail,
+        consultingDepartment: patientDetails.consultingDepartment,
+        consultingDoctor: patientDetails.consultingDoctor,
+
+        // Address
+        address: patientDetails.address,
+        city: patientDetails.city,
+        pinCode: patientDetails.pinCode,
+        state: patientDetails.state,
+        country: patientDetails.country,
+        district: patientDetails.district,
+        isInternationalPatient: patientDetails.isInternationalPatient || false,
+
+        // Photo
+        photo: patientDetails.photo || null,
+
+        // Details
+        fatherName: patientDetails.fatherName,
+        motherName: patientDetails.motherName,
+        isAdult: patientDetails.isAdult === true ? 'TAK' : 'NIE',
+        contactPerson: patientDetails.contactPerson,
+        fatherPhone: patientDetails.fatherPhone,
+        motherPhone: patientDetails.motherPhone,
+        relationToPatient: patientDetails.relationToPatient,
+        allergies: patientDetails.allergies,
+        nationality: patientDetails.nationality,
+        preferredLanguage: patientDetails.preferredLanguage,
+
+        // Notes
+        reviewNotes: patientDetails.reviewNotes,
+      };
+      console.log(mappedFormData, "mapped form data")
+      setPatientFormData(mappedFormData);
+      setCurrentPatientId(userId);
+      setIsEditMode(true);
+      setShowAddPatientModal(true);
+      hideLoader();
+    } catch (error) {
+      toast.error("Nie udało się pobrać danych pacjenta: " + error.message)
+      setError("Nie udało się pobrać danych pacjenta: " + error.message);
+      hideLoader();
+    }
+  };
+
+  // Modify handleAddPatient to handle both create and update
   const handleAddPatient = async (formData) => {
     try {
       showLoader();
-      const createdPatient = await patientService.createPatient(formData);
-      setSuccess("Pacjent został dodany pomyślnie");
+      let response;
+      
+      if (isEditMode && currentPatientId) {
+        response = await patientService.updatePatient(currentPatientId, formData);
+        setSuccess("Pacjent zaktualizowany pomyślnie");
+      } else {
+        response = await patientService.createPatient(formData);
+        setSuccess("Pacjent dodany pomyślnie");
+      }
+      
       hideLoader();
-      fetchUsers(); // Refresh the users list
+      fetchUsers();
       setShowAddPatientModal(false);
+      setIsEditMode(false);
+      setCurrentPatientId(null);
+      setPatientFormData({});
 
-      // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccess("");
       }, 3000);
     } catch (err) {
       setError(
-        "Failed to add patient: " +
-          (err.response?.data?.error ||
-            err.response?.data?.message ||
-            "Unknown error")
+        "Nie udało się " + (isEditMode ? "zaktualizować" : "dodać") + " pacjenta: " +
+        (err.response?.data?.error || err.response?.data?.message || "Nieznany błąd")
       );
+      toast.error(    "Nie udało się " + (isEditMode ? "zaktualizować" : "dodać") + " pacjenta: " +
+      (err.response?.data?.error || err.response?.data?.message || "Nieznany błąd"))
       hideLoader();
     }
   };
@@ -306,6 +427,29 @@ export default function UserManagement() {
     };
   }, [showAddDropdown]);
 
+  // Add handleEditUser function
+  const handleEditUser = (user) => {
+    setSelectedUser(user);
+    setShowAddPatientModal(true);
+    setIsEditMode(true);
+    setCurrentPatientId(user._id);
+  };
+
+  // Add handleEditDoctor function
+  const handleEditDoctor = async (userId) => {
+    try {
+      showLoader();
+      const response = await doctorService.getDoctorDetailsById(userId);
+      // Map specializations to {id, name}
+      setSelectedDoctor(response.data);
+      setShowAddDoctorModal(true);
+      hideLoader();
+    } catch (error) {
+      setError("Nie udało się pobrać danych lekarza: " + error.message);
+      hideLoader();
+    }
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -313,44 +457,49 @@ export default function UserManagement() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-teal-700">Zarządzanie Użytkownikami</h1>
 
-        {/* Add User Dropdown Button */}
+        {/* Add User Dropdown Button - Modified for role-based access */}
         <div className="flex gap-4">
-          {" "}
-          <button
-            onClick={() => setShowSpecsModal(true)}
-            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
-          >
-           Manage Specializations
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setShowSpecsModal(true)}
+              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
+            >
+              Zarządzaj Specjalizacjami
+            </button>
+          )}
           <div className="dropdown-container relative">
             <button
               onClick={() => setShowAddDropdown(!showAddDropdown)}
               className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
             >
-              Add User <ChevronDown size={16} />
+              Dodaj Użytkownika <ChevronDown size={16} />
             </button>
 
             {showAddDropdown && (
               <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                 <div className="py-1" role="menu" aria-orientation="vertical">
-                  <button
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => {
-                      setShowAddDropdown(false);
-                      setShowAddDoctorModal(true);
-                    }}
-                  >
-                    Add Doctor
-                  </button>
-                  <button
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => {
-                      setShowAddDropdown(false);
-                      setShowAddModal(true);
-                    }}
-                  >
-                    Add Receptionist
-                  </button>
+                  {isAdmin && (
+                    <>
+                      <button
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => {
+                          setShowAddDropdown(false);
+                          setShowAddDoctorModal(true);
+                        }}
+                      >
+                        Dodaj Specjalistę
+                      </button>
+                      <button
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => {
+                          setShowAddDropdown(false);
+                          setShowAddModal(true);
+                        }}
+                      >
+                        Dodaj Recepcjonistę
+                      </button>
+                    </>
+                  )}
                   <button
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={() => {
@@ -358,7 +507,7 @@ export default function UserManagement() {
                       setShowAddPatientModal(true);
                     }}
                   >
-                    Add Patient
+                    Dodaj Pacjenta
                   </button>
                 </div>
               </div>
@@ -372,7 +521,7 @@ export default function UserManagement() {
         <form onSubmit={handleSearch} className="flex mb-4">
           <input
             type="text"
-            placeholder="Search by name, email, or phone..."
+            placeholder="Szukaj po nazwie, email lub telefonie..."
             className="p-2 border border-gray-300 rounded-l-md w-full"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -381,27 +530,27 @@ export default function UserManagement() {
             type="submit"
             className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-r-md"
           >
-            Search
+            Szukaj
           </button>
         </form>
 
         {searchTerm && (
           <div className="flex items-center mb-4">
             <span className="text-sm text-gray-600 mr-2">
-              Searching for: "{searchTerm}"
+              Wyszukiwanie: "{searchTerm}"
             </span>
             <button
               onClick={handleClearSearch}
               className="text-sm text-teal-600 hover:text-teal-800"
             >
-              Clear Search
+              Wyczyść
             </button>
           </div>
         )}
 
         <div className="flex justify-end items-center">
           <label htmlFor="usersPerPage" className="mr-2 text-sm text-gray-600">
-            Users per page:
+            Użytkowników na stronę:
           </label>
           <select
             id="usersPerPage"
@@ -439,7 +588,7 @@ export default function UserManagement() {
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("name.first")}
               >
-                User {getSortIcon("name.first")}
+                Użytkownik {getSortIcon("name.first")}
               </th>
               <th
                 scope="col"
@@ -452,21 +601,21 @@ export default function UserManagement() {
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("phone")}
               >
-                Contact {getSortIcon("phone")}
+                Kontakt {getSortIcon("phone")}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("role")}
               >
-                Role {getSortIcon("role")}
+                Rola {getSortIcon("role")}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("signupMethod")}
               >
-                Signup Method {getSortIcon("signupMethod")}
+                Metoda Rejestracji {getSortIcon("signupMethod")}
               </th>
               <th
                 scope="col"
@@ -479,7 +628,7 @@ export default function UserManagement() {
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Actions
+                Akcje
               </th>
             </tr>
           </thead>
@@ -495,7 +644,7 @@ export default function UserManagement() {
             ) : users.length === 0 ? (
               <tr>
                 <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                  No users found
+                  Nie znaleziono użytkowników
                 </td>
               </tr>
             ) : (
@@ -546,7 +695,7 @@ export default function UserManagement() {
                           : "bg-green-100 text-green-800"
                       }`}
                     >
-                      {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                      {roleTranslations[user.role.toLowerCase()] || user.role}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
@@ -561,7 +710,7 @@ export default function UserManagement() {
                           : "bg-green-100 text-green-800"
                       }`}
                     >
-                      {user.deleted ? "Deleted" : "Active"}
+                      {statusTranslations[user.deleted ? "deleted" : "active"]}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -569,27 +718,43 @@ export default function UserManagement() {
                       {!user.deleted && (
                         <>
                           {user.role === "doctor" && (
+                            <>
+                              <button
+                                onClick={() => handleManageSchedule(user)}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                Harmonogram
+                              </button>
+                              <button
+                                onClick={() => handleEditDoctor(user._id)}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                Edytuj
+                              </button>
+                            </>
+                          )}
+                          {user.role === "patient" && (
                             <button
-                              onClick={() => handleManageSchedule(user)}
+                              onClick={() => handleEditPatient(user._id)}
                               className="text-blue-600 hover:text-blue-900"
                             >
-                              Schedule
+                              Edytuj
                             </button>
                           )}
                           <button
                             onClick={() => handleDeleteClick(user)}
                             className="text-red-600 hover:text-red-900"
                           >
-                            Delete
+                            Usuń
                           </button>
                         </>
                       )}
-                      {user.deleted && (
+                      {user.deleted && isAdmin && (
                         <button
                           onClick={() => handleReviveUser(user._id)}
                           className="text-green-600 hover:text-green-900"
                         >
-                          Revive
+                          Przywróć
                         </button>
                       )}
                     </div>
@@ -605,7 +770,7 @@ export default function UserManagement() {
       <div className="mt-4 flex justify-between items-center">
         <div>
           <p className="text-sm text-gray-700">
-            Showing page {currentPage} of {totalPages}
+            Strona {currentPage} z {totalPages}
           </p>
         </div>
         <div className="flex space-x-2">
@@ -618,7 +783,7 @@ export default function UserManagement() {
                 : "bg-teal-100 text-teal-700 hover:bg-teal-200"
             }`}
           >
-            First
+            Pierwsza
           </button>
           <button
             onClick={() => handlePageChange(currentPage - 1)}
@@ -629,38 +794,8 @@ export default function UserManagement() {
                 : "bg-teal-100 text-teal-700 hover:bg-teal-200"
             }`}
           >
-            Previous
+            Poprzednia
           </button>
-
-          {/* Generate page buttons dynamically */}
-          {(() => {
-            const buttons = [];
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-
-            // Adjust start page if end page is maxed out
-            if (endPage === totalPages) {
-              startPage = Math.max(1, endPage - 4);
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-              buttons.push(
-                <button
-                  key={i}
-                  onClick={() => handlePageChange(i)}
-                  className={`px-3 py-1 rounded ${
-                    currentPage === i
-                      ? "bg-teal-600 text-white"
-                      : "bg-teal-100 text-teal-700 hover:bg-teal-200"
-                  }`}
-                >
-                  {i}
-                </button>
-              );
-            }
-            return buttons;
-          })()}
-
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
@@ -670,7 +805,7 @@ export default function UserManagement() {
                 : "bg-teal-100 text-teal-700 hover:bg-teal-200"
             }`}
           >
-            Next
+            Następna
           </button>
           <button
             onClick={() => handlePageChange(totalPages)}
@@ -681,7 +816,7 @@ export default function UserManagement() {
                 : "bg-teal-100 text-teal-700 hover:bg-teal-200"
             }`}
           >
-            Last
+            Ostatnia
           </button>
         </div>
       </div>
@@ -691,13 +826,13 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm transition-opacity duration-300">
           <div className="bg-white rounded-lg p-8 w-full max-w-md shadow-xl transform transition-all duration-300 border border-teal-100">
             <h2 className="text-2xl font-bold mb-6 text-teal-700 border-b pb-2 border-teal-200">
-              Add New Receptionist
+              Dodaj Nowego Recepcjonistę
             </h2>
             <form onSubmit={handleAddReceptionist}>
               <div className="space-y-5">
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    First Name
+                    Imię
                   </label>
                   <input
                     type="text"
@@ -711,7 +846,7 @@ export default function UserManagement() {
 
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    Last Name
+                    Nazwisko
                   </label>
                   <input
                     type="text"
@@ -739,7 +874,7 @@ export default function UserManagement() {
 
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    Phone
+                    Telefon
                   </label>
                   <input
                     type="tel"
@@ -752,7 +887,7 @@ export default function UserManagement() {
 
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    Password
+                    Hasło
                   </label>
                   <input
                     type="password"
@@ -771,13 +906,13 @@ export default function UserManagement() {
                   onClick={() => setShowAddModal(false)}
                   className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-5 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
-                  Cancel
+                  Anuluj
                 </button>
                 <button
                   type="submit"
                   className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-5 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
-                  Add Receptionist
+                  Dodaj Recepcjonistę
                 </button>
               </div>
             </form>
@@ -789,12 +924,18 @@ export default function UserManagement() {
       {showAddDoctorModal && (
         <AddDoctorForm
           isOpen={showAddDoctorModal}
-          onClose={() => setShowAddDoctorModal(false)}
+          onClose={() => {
+            setShowAddDoctorModal(false);
+            setSelectedDoctor(null);
+          }}
           onAddDoctor={(doctorData, resetForm) =>
-            handleAddDoctor(doctorData, resetForm, () =>
-              setShowAddDoctorModal(false)
-            )
+            handleAddDoctor(doctorData, resetForm, () => {
+              setShowAddDoctorModal(false);
+              setSelectedDoctor(null);
+            })
           }
+          initialData={selectedDoctor}
+          isEditMode={!!selectedDoctor}
         />
       )}
 
@@ -803,10 +944,17 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg w-3/4 max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b p-4">
-              <h2 className="text-xl font-bold">Add New Patient</h2>
+              <h2 className="text-xl font-bold">
+                {isEditMode ? "Edytuj Pacjenta" : "Dodaj Pacjenta"}
+              </h2>
               <button
                 className="text-gray-500 hover:text-gray-700"
-                onClick={() => setShowAddPatientModal(false)}
+                onClick={() => {
+                  setShowAddPatientModal(false);
+                  setIsEditMode(false);
+                  setCurrentPatientId(null);
+                  setPatientFormData({});
+                }}
               >
                 <svg
                   className="w-6 h-6"
@@ -825,8 +973,7 @@ export default function UserManagement() {
             </div>
 
             <div className="p-6">
-              {/* Wrap PatientStepForm with FormProvider here */}
-              <FormProvider>
+              <FormProvider initialData={patientFormData}>
                 <PatientStepFormWrapper
                   currentSubStep={currentSubStep}
                   goToSubStep={goToSubStep}
@@ -834,6 +981,7 @@ export default function UserManagement() {
                   subStepTitles={subStepTitles}
                   isEditMode={isEditMode}
                   handleAddPatient={handleAddPatient}
+                  patientFormData={patientFormData}
                 />
               </FormProvider>
             </div>
@@ -846,27 +994,27 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4 text-red-600">
-              Confirm Deletion
+              Potwierdź Usunięcie
             </h2>
             <p className="mb-6">
-              Are you sure you want to delete user{" "}
+              Czy na pewno chcesz usunąć użytkownika{" "}
               <span className="font-bold">
                 {selectedUser.name.first} {selectedUser.name.last}
               </span>
-              ? This action cannot be undone.
+              ? Tej operacji nie można cofnąć.
             </p>
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
               >
-                Cancel
+                Anuluj
               </button>
               <button
                 onClick={confirmDelete}
                 className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
               >
-                Delete
+                Usuń
               </button>
             </div>
           </div>
@@ -895,12 +1043,28 @@ function PatientStepFormWrapper({
   markStepAsCompleted,
   subStepTitles,
   isEditMode,
-  handleAddPatient
+  handleAddPatient,
+  patientFormData
 }) {
-   const [completedSteps, setCompletedSteps] = useState([]);
-  const { formData } = useFormContext();
-    // const [currentSubStep, setCurrentSubStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState([]);
+  const { formData, updateFormData } = useFormContext();
+  const [isInitialized, setIsInitialized] = useState(false);
+  console.log('Form Data:', patientFormData);
 
+  // Effect to pre-populate form data when in edit mode - only run once when entering edit mode
+  useEffect(() => {
+    if (isEditMode && patientFormData && !isInitialized) {
+      console.log('Updating form data with:', JSON.stringify(patientFormData, null, 2));
+      updateFormData(patientFormData);
+      setCompletedSteps(Array.from({ length: subStepTitles.length }, (_, i) => i));
+      setIsInitialized(true);
+    }
+    
+    // Reset initialization when exiting edit mode
+    if (!isEditMode) {
+      setIsInitialized(false);
+    }
+  }, [isEditMode, patientFormData, isInitialized, subStepTitles.length]);
 
   // This function connects the context's form data to the parent component
   const handleStepCompleted = () => {
@@ -911,7 +1075,7 @@ function PatientStepFormWrapper({
     if (currentSubStep === subStepTitles.length - 1) {
       handleAddPatient(formData);
     } else {
-      setCurrentSubStep(currentSubStep + 1);
+      goToSubStep(currentSubStep + 1);
     }
   };
 
@@ -922,6 +1086,7 @@ function PatientStepFormWrapper({
       markStepAsCompleted={handleStepCompleted}
       subStepTitles={subStepTitles}
       isEditMode={isEditMode}
+      completedSteps={completedSteps}
     />
   );
 }

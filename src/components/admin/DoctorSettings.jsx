@@ -470,7 +470,7 @@ const DoctorScheduleSettings = () => {
                           {offSchedule.map((offDay, index) => (
                             <tr key={index} className="hover:bg-gray-50">
                               <td className="py-3 px-4 text-sm text-gray-900">
-                                {format(new Date(offDay.date), "dd MMM yyyy")}
+                                {new Date(offDay.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                               </td>
                               <td className="py-3 px-4 text-sm text-gray-900">
                                 {offDay.timeRanges.map((range, idx) => (

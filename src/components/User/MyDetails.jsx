@@ -17,6 +17,7 @@ import {
 import { apiCaller } from "../../utils/axiosInstance";
 import { format } from "date-fns";
 import { useUser } from "../../context/userContext";
+import { translateStatus } from "../../utils/statusHelper";
 
 // Format date helper function
 const formatDate = (dateString) => {
@@ -152,7 +153,7 @@ export default function PatientMedicalDetails() {
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {formatDate(appointment.date)}
+                        {new Date(appointment.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                       </div>
                       <div className="text-sm text-gray-500">
                         {appointment.startTime} - {appointment.endTime}
@@ -188,7 +189,7 @@ export default function PatientMedicalDetails() {
                             : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                        {translateStatus(appointment.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -278,7 +279,7 @@ export default function PatientMedicalDetails() {
                                       : "bg-gray-100 text-gray-800"
                                   }`}
                                 >
-                                  {medication.status}
+                                  {translateStatus(medication.status)}
                                 </span>
                               </td>
                             </tr>
@@ -351,7 +352,7 @@ export default function PatientMedicalDetails() {
                                       : "bg-gray-100 text-gray-800"
                                   }`}
                                 >
-                                  {test.status}
+                                  {translateStatus(test.status)}
                                 </span>
                               </td>
                             </tr>
@@ -425,7 +426,7 @@ export default function PatientMedicalDetails() {
                                 : "bg-gray-100 text-gray-800"
                             }`}
                           >
-                            {medicalData.consultation.consultationStatus}
+                            {translateStatus(medicalData.consultation.consultationStatus)}
                           </span>
                         </li>
                       </ul>

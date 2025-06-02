@@ -67,7 +67,7 @@ export const SpecializationProvider = ({ children }) => {
       return { success: true, data };
     } catch (err) {
       const message =
-        err.response?.data?.message || "Failed to update specialization";
+        err.response?.data?.message || "Nie udało się zaktualizować specjalizacji";
       console.error("Error updating specialization:", err);
       return { success: false, message };
     } finally {

@@ -14,9 +14,11 @@ import {
 } from "react-icons/fi";
 import { BsCalendarPlusFill } from "react-icons/bs";
 import { useUser } from "../../context/userContext";
+import { Calendar1 } from "lucide-react";
 
 const Sidebar = () => {
   const { user } = useUser();
+  console.log("user", user);
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -85,7 +87,7 @@ const Sidebar = () => {
               isEnabled={true}
             />
           )}
-          {user?.role === "admin" && (
+          {(user?.role === "admin" || user?.role === "receptionist" )&& (
             <NavItem
               icon={<MdSms className="text-xl text-teal-400" />}
               label="Zarządzanie SMS"
@@ -94,6 +96,13 @@ const Sidebar = () => {
               isEnabled={true}
             />
           )}
+               <NavItem
+              icon={<Calendar1 className=" text-teal-400" />}
+              label="Kalendarz"
+              to="/admin/calendar"
+              isActive={currentPath === "/admin/calendar"}
+              isEnabled={true}
+            />
           {user?.role === "admin" && (
             <NavItem
               icon={
@@ -117,13 +126,13 @@ const Sidebar = () => {
 
           <NavItem
             icon={<RiHomeLine className="text-xl text-teal-400" />}
-            label="Klinika IP"
+            label="Historia wizyt"
             to="/clinic"
             isActive={currentPath === "/clinic"}
             isEnabled={true}
           />
 
-          {user?.role !== "doctor" && (
+      
             <NavItem
               icon={<LuFileChartColumn className="text-xl text-teal-400" />}
               label="Rozliczenia"
@@ -131,15 +140,14 @@ const Sidebar = () => {
               isActive={currentPath === "/admin/billing"}
               isEnabled={true}
             />
-          )}
-
-          <NavItem
+          
+         {user?.role !== "doctor" && <NavItem
             icon={<FiMessageCircle className="text-xl text-teal-400" />}
             label="Kontakty"
             to="/admin/contact-messages"
             isActive={currentPath === "/admin/contact-messages"}
             isEnabled={true}
-          />
+          />}
 
           <NavItem
             icon={<FiUser className="text-xl text-teal-400" />}
@@ -151,25 +159,37 @@ const Sidebar = () => {
 
           <div className="border-t border-teal-100 my-1"></div>
 
-          {user?.role !== "receptionist" && (
+    
             <NavItem
               icon={<FiSettings className="text-xl text-teal-400" />}
               label="Ustawienia"
-              to={`${
-                user?.role == "doctor" ? "/doctor/settings" : "/admin/accounts"
-              }`}
-              isActive={currentPath === "/doctor/settings"}
-              isEnabled={user?.role !== "receptionist"}
+              to={`/admin/accounts`}
+              isActive={currentPath === "/admin/accounts"}
+              isEnabled={true}
             />
-          )}
+            {
+              user?.role == "doctor" &&    <NavItem
+              icon={<FiSettings className="text-xl text-teal-400" />}
+              label="Harmonogram"
+              to={`/doctor/settings`}
+              isActive={currentPath === "/doctor/settings"}
+              isEnabled={true}
+            />
+    
+            }
+    
 
-          <NavItem
-            icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}
-            label="e-ZLA"
-            to="https://www.zus.pl/ezus/logowanie?logout-manually=true"
-            // isActive={currentPath === "/logout"}
-            isEnabled={true}
-          />
+       {user?.role === "doctor" && <a
+            href="https://www.zus.pl/ezus/logowanie?logout-manually=true"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center px-3 py-1.5 rounded-md text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+          >
+            <span className="mr-3 text-teal-400 text-xl rotate-180">
+              <CgLogOut />
+            </span>
+            <span className="text-sm">e-ZLA</span>
+          </a>}
 
           <NavItem
             icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}
@@ -198,7 +218,7 @@ const Sidebar = () => {
             </div>
             <h3 className="text-center font-medium mb-1">Centrum pomocy</h3>
             <p className="text-center text-gray-700 text-xs mb-3">
-              Etiam porta sem malesuada magna mollis euismod.
+            W razie pytań lub problemów, rozpocznij rozmowę na czacie klikając poniższy przycisk
             </p>
             <button
               onClick={() => {
@@ -239,7 +259,7 @@ const NavItem = ({ icon, label, to, isActive, isEnabled, onClick }) => {
         {icon}
       </span>
       <span className="text-sm">{label}</span>
-      {label === "Rozliczenia" && (
+      {/* {label === "Rozliczenia" && (
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-5 w-5 ml-auto text-gray-300"
@@ -252,7 +272,7 @@ const NavItem = ({ icon, label, to, isActive, isEnabled, onClick }) => {
             clipRule="evenodd"
           />
         </svg>
-      )}
+      )} */}
     </Component>
   );
 };

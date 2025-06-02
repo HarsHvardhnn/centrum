@@ -4,8 +4,9 @@ import LoginScreen from "./components/Auth/AuthScreen";
 import LoginImage from "./assets/new_login.jpg";
 import SignupImage from "./assets/Signup.png";
 import ForgotPasswordScreen from "./components/Auth/ForgotPasswordScreen";
+import DoctorCalendar from "./components/admin/DoctorCalendar";
 
-import { createBrowserRouter, Outlet, Navigate } from "react-router-dom";
+import { createBrowserRouter, Outlet, Navigate, useLocation } from "react-router-dom";
 import Sidebar from "./components/UtilComponents/Sidebar";
 import BillingPage from "./components/Doctor/Doctor";
 import DoctorsPage from "./components/Doctor/SingleDoctor/DoctorPage";
@@ -45,6 +46,24 @@ import BillDetails from "./components/Billing/BillDetails";
 import BillingManagement from "./components/Billing/BillingManagement";
 import Adminmsgs from "./components/admin/Contact";
 
+// Protected image route component
+const ProtectedImage = () => {
+  const location = useLocation();
+  const imagePath = location.pathname.replace('/protected-image/', '');
+  
+  // Here you would typically verify the user's session/token
+  // and serve the image from a protected directory
+  
+  return (
+    <img 
+      src={`/api/images/${imagePath}`} 
+      alt="Protected content"
+      style={{ pointerEvents: 'none' }}
+      onContextMenu={(e) => e.preventDefault()}
+      onDragStart={(e) => e.preventDefault()}
+    />
+  );
+};
 
 // Root route component that clears localStorage and redirects to /user
 const RootRoute = () => {
@@ -157,6 +176,7 @@ const routes = createBrowserRouter([
   {
     element: <ProtectedRoute allowedRoles={["doctor", "admin"]} />,
     children: [
+      
       {
         element: <MainLayout />,
         children: [
@@ -175,6 +195,7 @@ const routes = createBrowserRouter([
           { path: "/admin/news", element: <NewsManagement /> },
           { path: "/doctor/settings", element: <DoctorScheduleSettings /> },
           { path: "/admin/profile", element: <ProfilePage /> },
+          { path: "/admin/calendar", element: <DoctorCalendar /> },
           {
             path: "/help-center",
             element: <ChatComponent />,
@@ -201,6 +222,12 @@ const routes = createBrowserRouter([
   //     },
   //   ],
   // },
+
+  // Protected image route
+  {
+    path: "/protected-image/*",
+    element: <ProtectedImage />
+  },
 
   // Catch all route
   {

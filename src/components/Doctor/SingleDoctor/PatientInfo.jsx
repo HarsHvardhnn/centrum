@@ -1,3 +1,4 @@
+import { UserCheck } from "lucide-react";
 import React, { useState } from "react";
 
 
@@ -26,14 +27,20 @@ const PatientInfo = ({ patientData }) => {
         <div className="border rounded-2xl p-4 bg-white">
           <div className="flex items-center space-x-6 mb-6 border-b pb-2">
             <div className="flex gap-2 w-full">
-              <img
-                src={
-                  patientData.avatar ||
-                  "https://randomuser.me/api/portraits/men/75.jpg"
-                }
-                alt="Użytkownik"
-                className="size-10 rounded-full"
-              />
+            <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                            {patientData?.avatar ? (
+                              <img
+                                src={patientData.avatar}
+                                alt={patientData?.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center bg-gray-200 text-gray-500">
+                                <UserCheck
+                                 size={24} />
+                              </div>
+                            )}
+                          </div>
               <div>
                 <h2 className="font-semibold">{`${patientData.name?.first || ""} ${patientData.name?.last || ""}`}</h2>
                 <p className="text-xs">{patientData.patientId}</p>

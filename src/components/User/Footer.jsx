@@ -8,15 +8,12 @@ export default function Footer() {
         {/* Logo and Description */}
         <div className="flex flex-col gap-4 w-full max-w-xs">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
-            <img src="/images/logo.png" className="w-12 h-12" alt="Logo" />
-            <h2 className="text-2xl font-bold text-left">Centrum Medyczne</h2>
+            <img src="/images/białe.png" height={140} width={140}  alt="Logo" />
           </div>
           <p className="text-left text-base leading-relaxed">
-          CM7– profesjonalna klinika,
- przychodnia w województwie
- świętokrzyskim, oferująca
- kompleksową opiekę medyczną i
- specjalistyczne usługi zdrowotne
+            CM7– profesjonalna klinika, przychodnia w województwie
+            świętokrzyskim, oferująca kompleksową opiekę medyczną i
+            specjalistyczne usługi zdrowotne
           </p>
         </div>
 
@@ -25,22 +22,31 @@ export default function Footer() {
           <h3 className="font-semibold text-xl text-left">Ważne linki</h3>
           <ul className="mt-2 flex flex-col gap-2 text-left">
             <li>
-              <a href="#" className="hover:underline">
-                Umów wizytę
+              <li>
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.scrollTo({ top: 2500, behavior: "smooth" });
+                  }}
+                  className="hover:underline"
+                >
+                  Umów wizytę
+                </a>
+              </li>
+            </li>
+            <li>
+              <a href="/user/doctors" className="hover:underline">
+                Specjaliści
               </a>
             </li>
             <li>
-              <a href="#" className="hover:underline">
-                Lekarze
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:underline">
+              <a href="/user/services" className="hover:underline">
                 Usługi
               </a>
             </li>
             <li>
-              <a href="#" className="hover:underline">
+              <a href="/user/about" className="hover:underline">
                 O nas
               </a>
             </li>

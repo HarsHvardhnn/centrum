@@ -4,15 +4,19 @@ import { FaFacebookF, FaInstagram } from "react-icons/fa";
 import { FaRegCircleUser } from "react-icons/fa6";
 import { IoLocationOutline } from "react-icons/io5";
 import doctorService from "../../helpers/doctorHelper";
+import { useIsMobile } from "./useIsMobile";
 
 // Import your actual doctor service here
 // import doctorService from '../services/doctorService';
 
 // This is a mock for demonstration - replace with your actual import
-export default function Hero() {
+export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState("New York"); // Hardcoded location
+
+  const isMobile = useIsMobile();
+  console.log("is mobile",isMobile)
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -54,58 +58,67 @@ export default function Hero() {
         {/* Left Side Content */}
         <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
           <h1 className="text-2xl sm:text-2xl md:text-2xl lg:text-4xl xl:text-5xl leading-tight font-bold text-gray-900">
-            Zadbaj o Zdrowie
-            <span className="text-teal-600 block sm:inline">
-              {" "}
-              Najlepszymi
-            </span>{" "}
-            Specjalistami
+            Zadbaj o Zdrowie          
+            
+          
           </h1>
+          <h1 className="text-2xl sm:text-2xl md:text-2xl lg:text-4xl xl:text-5xl leading-tight font-bold text-gray-900">
+              {" "}
+              z <span className="text-teal-600">Najlepszymi Specjalistami</span>
+            </h1>
           <p className="text-gray-600 mt-4 max-w-md mx-auto md:mx-0 px-2 sm:px-0 text-md">
             Tworzymy nową jakość opieki medycznej — bez kolejek, bez stresu, z
-            pełnym dostępem do najlepszych specjalistów. Wybierz lekarza i
-            zarezerwuj wizytę w kilka sekund.
+            pełnym dostępem do najlepszych specjalistów. Wybierz lekarza 
+            i Zarezerwuj Wizytę w kilka sekund.
           </p>
           <h2 className="text-xl sm:text-2xl mt-8 md:mt-6 font-bold">
             Znajdź termin
           </h2>
 
           {/* Search Form */}
-          <div className="mt-3 mb-6 relative z-10 bg-white flex flex-col sm:flex-row items-center p-3 sm:p-4 rounded-xl sm:rounded-full shadow-lg max-w-md mx-auto md:mx-0">
-            {/* Doctor Selection */}
-            <div className="flex items-center w-full mb-3 sm:mb-0 ">
-              <FaRegCircleUser className="text-gray-600 mr-2" />
-              <select className="bg-transparent text-gray-700 outline-none flex-1 w-full">
-                <option value="">Imię i nazwisko lekarza</option>
-                {loading ? (
-                  <option>Wczytywanie lekarzy...</option>
-                ) : (
-                  doctors.map((doctor) => (
-                    <option key={doctor.id} value={doctor.id}>
-                      {doctor.name}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
+          <div className="mt-3 mb-6 relative z-10 bg-white flex items-center p-3 sm:p-4 rounded-xl sm:rounded-full shadow-lg max-w-md mx-auto md:mx-0 space-x-3">
+  {/* Doctor Selection */}
+  <div className="flex items-center flex-1">
+    <FaRegCircleUser className="text-gray-600 mr-2" />
+    <select 
+      className="bg-transparent text-gray-700 outline-none w-full"
+      value={selectedDoctorId || ""}
+      onChange={(e) => {
+        setSelectedDoctorId(e.target.value);
+        // Scroll to doctors section after a short delay
+        setTimeout(() => {
+          const doctorsSection = document.querySelector('.doctors-section');
+          if (doctorsSection) {
+            doctorsSection.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      }}
+    >
+      <option value="">Imię i nazwisko lekarza</option>
+      {loading ? (
+        <option>Wczytywanie lekarzy...</option>
+      ) : (
+        doctors.map((doctor) => (
+          <option key={doctor.id} value={doctor.id}>
+            {doctor.name}
+          </option>
+        ))
+      )}
+    </select>
+  </div>
 
-            {/* Location Input */}
-            <div className="flex items-center w-full sm:border-l sm:pl-3">
-              <IoLocationOutline className="text-lg text-gray-600 mr-2" />
-              <input
-                type="text"
-                placeholder="Lokalizacja"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="bg-transparent placeholder:text-gray-700 outline-none text-gray-700 flex-1 w-full"
-              />
-            </div>
+  {/* Search Button */}
+  <button
+    className="bg-main text-white p-3 rounded-full flex-shrink-0"
+    onClick={(e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 2500, behavior: "smooth" });
+    }}
+  >
+    <FaSearch />
+  </button>
+</div>
 
-            {/* Search Button */}
-            <button className="bg-main text-white p-3 rounded-full mt-3 sm:mt-0 sm:ml-2">
-              <FaSearch />
-            </button>
-          </div>
         </div>
 
         {/* Right Side Image */}
@@ -113,16 +126,23 @@ export default function Hero() {
           {/* Background semi-circle */}
           <div className="hidden lg:block absolute w-[400px] h-[200px] xl:w-[840px] xl:h-[400px] bottom-0 bg-[#008C8C]  rounded-t-full"></div>
 
-          {/* Hero Image */}
-          <img
-            src="/images/doctors1.png"
-            alt="Lekarze"
-            className="w-full max-w-[300px] sm:max-w-[400px] md:max-w-[350px] lg:max-w-[450px] xl:max-w-[600px] relative z-10"
-          />
+          {/* Hero Image for larger screens */}
+{!isMobile       &&    <img
+          src="/images/doctors1.png"
+          alt="Desktop"
+          className="w-full max-w-[600px] relative z-10"
+        />}
         </div>
 
+        {/* Hero Image for mobile screens */}
+   { isMobile &&    <img
+          src="/images/doctors1.png"
+          alt="Desktop"
+          className="w-full top-8 max-w-[600px] relative z-10"
+        />}
+
         {/* Social Media Icons */}
-        <div className="hidden sm:flex absolute top-1/2 right-0 rounded-l-full p-2 gap-4 items-center bg-white">
+        {/* <div className="hidden sm:flex absolute top-1/2 right-0 rounded-l-full p-2 gap-4 items-center bg-white">
           <a
             href="https://www.facebook.com/share/16Sb5NkqZt/?mibextid=wwXIfr"
             className="text-teal-600 hover:text-teal-800 transition-colors"
@@ -135,11 +155,12 @@ export default function Hero() {
           >
             <FaInstagram />
           </a>
-        </div>
+        </div> */}
       </div>
 
+      
       {/* Stats Section */}
-      <div className="bg-main w-full text-white py-8 mt-8 md:mt-0 px-4">
+      <div className="bg-main w-full text-white py-4 mt-8 md:mt-0 px-4">
         <div className="container mx-auto flex justify-center flex-wrap gap-6 sm:gap-0">
           {/* Online Support */}
           <div className="flex flex-col items-center w-full sm:w-auto sm:flex-1 text-center">

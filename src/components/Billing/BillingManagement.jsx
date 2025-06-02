@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -12,16 +12,39 @@ import {
   DollarSign,
   FileText,
   Printer,
-  Eye
+  Eye,
+  Edit,
+  X,
+  Plus,
+  Minus,
+  Save,
+  Loader
 } from "lucide-react";
 import billingHelper from "../../helpers/billingHelper";
 import { toast } from "sonner";
-import { useLoader } from "../../context/LoaderContext";
 import { formatDateToYYYYMMDD } from "../../utils/formatDate";
+import { useUser } from "../../context/userContext";
+import { useServices } from "../../context/serviceContext";
+
+// Simple Loader Component
+const LoaderOverlay = () => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+    <div className="bg-white p-4 rounded-lg flex items-center gap-2">
+      <Loader className="animate-spin" size={24} />
+      <span>Ładowanie...</span>
+    </div>
+  </div>
+);
 
 const BillingManagement = () => {
   const navigate = useNavigate();
-  const { showLoader, hideLoader } = useLoader();
+  const { user } = useUser();
+  const { services } = useServices();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Add state for confirmation modal
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [billToUpdate, setBillToUpdate] = useState(null);
   
   // State for bills data and pagination
   const [bills, setBills] = useState([]);
@@ -53,25 +76,386 @@ const BillingManagement = () => {
     totalOverdue: 0
   });
   
-  // Load bills on initial render and when filters/pagination change
-  useEffect(() => {
-    fetchBills();
-    fetchBillingStats();
-  }, [pagination.currentPage, sortConfig, searchQuery, dateRange, paymentStatusFilter]);
+  // Add EditBillModal component
+  const EditBillModal = ({ isOpen, onClose, billId, onUpdate }) => {
+    const { services } = useServices();
+    const [modalLoading, setModalLoading] = useState(false);
+    const [billData, setBillData] = useState(null);
+    const [selectedServices, setSelectedServices] = useState([]);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [consultationCharges, setConsultationCharges] = useState(0);
+    const [discount, setDiscount] = useState(0);
+    const [additionalCharges, setAdditionalCharges] = useState(0);
+    const [additionalChargeNote, setAdditionalChargeNote] = useState("");
+    const [taxPercentage, setTaxPercentage] = useState(5);
+
+    // Fetch bill details only once when modal opens
+    useEffect(() => {
+      let isMounted = true;
+
+      const fetchData = async () => {
+        if (!isOpen || !billId || modalLoading) return;
+
+        try {
+          setModalLoading(true);
+          const response = await billingHelper.getBillDetails(billId);
+          
+          if (!isMounted) return;
+          
+          if (response.success) {
+            setBillData(response.data);
+            // Transform services data to match the required format
+            const transformedServices = response.data.services.map(service => ({
+              serviceId: service.serviceId._id || service.serviceId,
+              title: service.title,
+              price: service.price,
+              status: service.status
+            }));
+            setSelectedServices(transformedServices);
+            console.log("consulatioonchrges ;", response.data.consultationCharges)
+            setConsultationCharges(response.data.consultationCharges || 0);
+            setDiscount(response.data.discount || 0);
+            setAdditionalCharges(response.data.additionalCharges || 0);
+            setAdditionalChargeNote(response.data.additionalChargeNote || "");
+            setTaxPercentage(response.data.taxPercentage || 5);
+          } else {
+            toast.error("Nie udało się pobrać szczegółów faktury");
+          }
+        } catch (error) {
+          console.error("Error fetching bill details:", error);
+          if (isMounted) {
+            toast.error("Nie udało się pobrać szczegółów faktury");
+          }
+        } finally {
+          if (isMounted) {
+            setModalLoading(false);
+          }
+        }
+      };
+
+      fetchData();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [billId, isOpen]);
+
+    const handleServiceToggle = (service) => {
+      const exists = selectedServices.find(s => s.serviceId === service._id);
+      if (exists) {
+        // If service exists, don't add it again
+        return;
+      }
+      setSelectedServices([...selectedServices, {
+        serviceId: service._id,
+        title: service.title,
+        price: service.price,
+        status: "active"
+      }]);
+    };
+
+    const handleRemoveService = (serviceId) => {
+      setSelectedServices(selectedServices.filter(s => s.serviceId !== serviceId));
+    };
+
+    const calculateSubtotal = () => {
+      const servicesTotal = selectedServices.reduce((sum, service) => sum + parseFloat(service.price), 0);
+      return servicesTotal;
+    };
+
+    const calculateTotal = () => {
+      const subtotal = calculateSubtotal();
+      const taxAmount = (subtotal * taxPercentage) / 100;
+      return subtotal + taxAmount + parseFloat(additionalCharges) - parseFloat(discount)  + parseFloat(consultationCharges);
+    };
+
+    const handleSave = useCallback(async () => {
+      try {
+        setModalLoading(true);
+        const updateData = {
+          services: selectedServices,
+          consultationCharges: parseFloat(consultationCharges),
+          subtotal: calculateSubtotal(),
+          taxPercentage,
+          taxAmount: (calculateSubtotal() * taxPercentage) / 100,
+          discount: parseFloat(discount),
+          additionalCharges: parseFloat(additionalCharges),
+          additionalChargeNote,
+          totalAmount: calculateTotal().toString(),
+          paymentMethod: billData.paymentMethod,
+          paymentStatus: billData.paymentStatus,
+          notes: billData.notes
+        };
+
+        const response = await billingHelper.updateBill(billId, updateData);
+        if (response.success) {
+          toast.success("Faktura została zaktualizowana");
+          onUpdate();
+          onClose();
+        } else {
+          toast.error("Nie udało się zaktualizować faktury");
+        }
+      } catch (error) {
+        console.error("Error updating bill:", error);
+        toast.error("Nie udało się zaktualizować faktury");
+      } finally {
+        setModalLoading(false);
+      }
+    }, [billId, selectedServices, consultationCharges, taxPercentage, discount, additionalCharges, additionalChargeNote, billData]);
+
+    if (!isOpen || !billData) return null;
+
+    const filteredServices = searchTerm
+      ? services.filter(service => service.title.toLowerCase().includes(searchTerm.toLowerCase()))
+      : services;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        {modalLoading && <LoaderOverlay />}
+        <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
+          <div className="flex justify-between items-center border-b p-4">
+            <h3 className="text-lg font-medium">Edytuj fakturę</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4">
+            {/* Selected Services Section */}
+            <div className="mb-6">
+              <h4 className="font-medium mb-2">Wybrane usługi</h4>
+              <div className="space-y-2 mb-4">
+                {selectedServices.map((service) => (
+                  <div
+                    key={service.serviceId}
+                    className="flex justify-between items-center p-3 rounded-lg border border-gray-200"
+                  >
+                    <div>
+                      <span className="font-medium">{service.title}</span>
+                      <span className="ml-4">{service.price} zł</span>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveService(service.serviceId)}
+                      className="text-red-600 hover:text-red-800"
+                      title="Usuń usługę"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                ))}
+                {selectedServices.length === 0 && (
+                  <p className="text-gray-500 text-center py-4">Brak wybranych usług</p>
+                )}
+              </div>
+
+              {/* Available Services Section */}
+              <h4 className="font-medium mb-2">Dodaj usługi</h4>
+              <input
+                type="text"
+                placeholder="Szukaj usług..."
+                className="w-full px-3 py-2 border rounded-lg mb-3"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {services
+                  .filter(service => 
+                    service.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                    !selectedServices.some(s => s.serviceId === service._id)
+                  )
+                  .map(service => (
+                    <div
+                      key={service._id}
+                      onClick={() => handleServiceToggle(service)}
+                      className="p-3 rounded-lg cursor-pointer border border-gray-200 hover:border-teal-500 hover:bg-teal-50"
+                    >
+                      <div className="flex justify-between">
+                        <span>{service.title}</span>
+                        <span className="font-medium">{service.price} zł</span>
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+
+            {/* Charges Section */}
+            <div className="mb-6">
+              <h4 className="font-medium mb-4">Opłaty i zniżki</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Opłata za konsultację (zł)
+                  </label>
+                  <input
+                    type="number"
+                    value={consultationCharges}
+                    onChange={(e) => setConsultationCharges(Number(e.target.value))}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Zniżka (zł)
+                  </label>
+                  <input
+                    type="number"
+                    value={discount}
+                    onChange={(e) => setDiscount(Number(e.target.value))}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Dodatkowe opłaty (zł)
+                  </label>
+                  <input
+                    type="number"
+                    value={additionalCharges}
+                    onChange={(e) => setAdditionalCharges(Number(e.target.value))}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Notatka do dodatkowych opłat
+                  </label>
+                  <input
+                    type="text"
+                    value={additionalChargeNote}
+                    onChange={(e) => setAdditionalChargeNote(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="Np. dodatkowe materiały"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Podatek VAT (%)
+                  </label>
+                  <input
+                    type="number"
+                    value={taxPercentage}
+                    onChange={(e) => setTaxPercentage(Number(e.target.value))}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    min="0"
+                    max="100"
+                    step="1"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Summary Section */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="font-medium mb-3">Podsumowanie</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Suma usług</span>
+                  <span>{selectedServices.reduce((sum, service) => sum + Number(service.price), 0)} zł</span>
+                </div>
+                <div className="flex justify-between text-sm font-medium border-t pt-2">
+                  <span>Suma częściowa</span>
+                  <span>
+                    {(selectedServices.reduce((sum, service) => sum + Number(service.price), 0)).toFixed(2)} zł
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Podatek ({taxPercentage}%)</span>
+                  <span>
+                    {((selectedServices.reduce((sum, service) => sum + Number(service.price), 0) * taxPercentage) / 100).toFixed(2)} zł
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Opłata za konsultację</span>
+                  <span>{consultationCharges} zł</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Dodatkowe opłaty</span>
+                  <span>{additionalCharges} zł</span>
+                </div>
+                {Number(discount) > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span>Zniżka</span>
+                    <span className="text-red-600">-{discount} zł</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-medium text-lg pt-2 border-t mt-2">
+                  <span>Suma całkowita</span>
+                  <span>
+                    {(
+                      selectedServices.reduce((sum, service) => sum + Number(service.price), 0) + // Services subtotal
+                      ((selectedServices.reduce((sum, service) => sum + Number(service.price), 0) * taxPercentage) / 100) + // Tax amount
+                      Number(consultationCharges) + // Consultation fee
+                      Number(additionalCharges) // Additional charges
+                    ).toFixed(2)} zł
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Add a debug section to verify calculations */}
+            {/* <div className="mt-4 text-xs text-gray-500">
+              <div>Subtotal: {selectedServices.reduce((sum, service) => sum + Number(service.price), 0)} zł</div>
+              <div>Tax ({taxPercentage}%): {((selectedServices.reduce((sum, service) => sum + Number(service.price), 0) * taxPercentage) / 100).toFixed(2)} zł</div>
+              <div>Consultation: {consultationCharges} zł</div>
+              <div>Additional: {additionalCharges} zł</div>
+              <div>Discount: {discount} zł</div>
+            </div> */}
+          </div>
+
+          <div className="border-t p-4 flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+            >
+              Anuluj
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center gap-2"
+            >
+              <Save size={18} />
+              Zapisz zmiany
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Add state for edit modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedBillId, setSelectedBillId] = useState(null);
+
+  // Add handleEditBill function
+  const handleEditBill = (billId) => {
+    setSelectedBillId(billId);
+    setIsEditModalOpen(true);
+  };
   
-  const fetchBills = async () => {
+  // Load bills on initial render and when filters/pagination change
+  const fetchBills = useCallback(async () => {
     try {
-      showLoader();
-      
+      setIsLoading(true);
       const response = await billingHelper.getAllBills({
         page: pagination.currentPage,
         limit: pagination.limit,
         sortBy: sortConfig.key,
         sortOrder: sortConfig.direction === "desc" ? -1 : 1,
-        ...(searchQuery && { searchTerm: searchQuery }),
+        ...(searchQuery && { search: searchQuery }),
         ...(dateRange.startDate && { startDate: dateRange.startDate }),
         ...(dateRange.endDate && { endDate: dateRange.endDate }),
-        ...(paymentStatusFilter && { paymentStatus: paymentStatusFilter })
+        ...(paymentStatusFilter && { paymentStatus: paymentStatusFilter }),
       });
       
       if (response.success) {
@@ -84,70 +468,79 @@ const BillingManagement = () => {
       console.error("Błąd podczas pobierania faktur:", error);
       toast.error("Nie udało się załadować danych rozliczeniowych");
     } finally {
-      hideLoader();
+      setIsLoading(false);
     }
-  };
+  }, [pagination.currentPage, pagination.limit, sortConfig, searchQuery, dateRange, paymentStatusFilter]);
+
+  useEffect(() => {
+    fetchBills();
+  }, [fetchBills]);
   
-  const fetchBillingStats = async () => {
-    try {
-      // Instead of a separate API call, calculate stats from the bills data
-      let totalBilled = 0;
-      let totalPaid = 0;
-      let totalPending = 0;
-      let totalOverdue = 0;
-      
-      // Get all bills for calculation (without pagination)
-      const response = await billingHelper.getAllBills({
-        limit: 1000, // Get a large number of bills to ensure we get all
-        ...(dateRange.startDate && { startDate: dateRange.startDate }),
-        ...(dateRange.endDate && { endDate: dateRange.endDate })
-      });
-      
-      if (response.success && response.data) {
-        response.data.forEach(bill => {
-          const amount = parseFloat(bill.totalAmount);
-          
-          // Add to total billed
-          totalBilled += amount;
-          
-          // Add to appropriate category based on payment status
-          switch(bill.paymentStatus.toLowerCase()) {
-            case 'paid':
-              totalPaid += amount;
-              break;
-            case 'pending':
-              totalPending += amount;
-              break;
-            case 'overdue':
-              totalOverdue += amount;
-              break;
-            case 'partial':
-              // For partially paid bills, you might need more data from the API
-              // This is a simplified approach
-              totalPaid += amount * 0.5; // Assuming 50% paid
-              totalPending += amount * 0.5; // Assuming 50% pending
-              break;
-          }
+  // Separate useEffect for billing stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Get all bills for calculation (without pagination)
+        const response = await billingHelper.getAllBills({
+          limit: 1000, // Get a large number of bills to ensure we get all
+          ...(dateRange.startDate && { startDate: dateRange.startDate }),
+          ...(dateRange.endDate && { endDate: dateRange.endDate })
         });
         
+        if (response.success && response.data) {
+          let totalBilled = 0;
+          let totalPaid = 0;
+          let totalPending = 0;
+          let totalOverdue = 0;
+
+          response.data.forEach(bill => {
+            const amount = parseFloat(bill.totalAmount);
+            
+            // Add to total billed
+            totalBilled += amount;
+            
+            // Add to appropriate category based on payment status
+            switch(bill.paymentStatus.toLowerCase()) {
+              case 'paid':
+                totalPaid += amount;
+                break;
+              case 'pending':
+                totalPending += amount;
+                break;
+              case 'overdue':
+                totalOverdue += amount;
+                break;
+              case 'partial':
+                // For partially paid bills, you might need more data from the API
+                // This is a simplified approach
+                totalPaid += amount * 0.5; // Assuming 50% paid
+                totalPending += amount * 0.5; // Assuming 50% pending
+                break;
+              default:
+                break;
+            }
+          });
+          
+          setStats({
+            totalBilled,
+            totalPaid,
+            totalPending,
+            totalOverdue
+          });
+        }
+      } catch (error) {
+        console.error("Error calculating billing stats:", error);
         setStats({
-          totalBilled,
-          totalPaid,
-          totalPending,
-          totalOverdue
+          totalBilled: 0,
+          totalPaid: 0,
+          totalPending: 0,
+          totalOverdue: 0
         });
       }
-    } catch (error) {
-      console.error("Błąd podczas obliczania statystyk rozliczeniowych:", error);
-      // Set default stats if calculation fails
-      setStats({
-        totalBilled: 0,
-        totalPaid: 0,
-        totalPending: 0,
-        totalOverdue: 0
-      });
-    }
-  };
+    };
+
+    fetchStats();
+  }, [dateRange.startDate, dateRange.endDate]); // Only depend on date range for stats
   
   const handleSort = (key) => {
     setSortConfig(prev => ({
@@ -163,9 +556,57 @@ const BillingManagement = () => {
     }));
   };
   
+  // Add ConfirmationModal component
+  const ConfirmationModal = ({ isOpen, onClose, onConfirm, bill }) => {
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
+          <div className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Potwierdź zmianę statusu płatności
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Czy na pewno chcesz oznaczyć fakturę nr {bill?._id} jako opłaconą?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Anuluj
+              </button>
+              <button
+                onClick={onConfirm}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+              >
+                Potwierdź
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Update handleUpdatePaymentStatus to use confirmation modal
   const handleUpdatePaymentStatus = async (billId, newStatus) => {
+    if (newStatus === "paid") {
+      const bill = bills.find(b => b._id === billId);
+      setBillToUpdate(bill);
+      setIsConfirmModalOpen(true);
+      return;
+    }
+
+    await updatePaymentStatus(billId, newStatus);
+    window.location.reload();
+  };
+
+  // Add new function to handle the actual update
+  const updatePaymentStatus = async (billId, newStatus) => {
     try {
-      showLoader();
+      setIsLoading(true);
       
       const response = await billingHelper.updatePaymentStatus(billId, {
         paymentStatus: newStatus,
@@ -175,7 +616,6 @@ const BillingManagement = () => {
       if (response.success) {
         toast.success(`Status płatności zaktualizowany na ${newStatus}`);
         fetchBills(); // Refresh bills list
-        fetchBillingStats(); // Refresh stats
       } else {
         toast.error("Nie udało się zaktualizować statusu płatności");
       }
@@ -183,7 +623,7 @@ const BillingManagement = () => {
       console.error("Błąd podczas aktualizacji statusu płatności:", error);
       toast.error("Nie udało się zaktualizować statusu płatności");
     } finally {
-      hideLoader();
+      setIsLoading(false);
     }
   };
   
@@ -198,7 +638,7 @@ const BillingManagement = () => {
   
   const handleGenerateInvoice = async (billId) => {
     try {
-      showLoader();
+      setIsLoading(true);
       
       const response = await billingHelper.generateInvoice(billId);
       
@@ -213,7 +653,7 @@ const BillingManagement = () => {
       console.error("Błąd podczas generowania faktury:", error);
       toast.error("Nie udało się wygenerować faktury");
     } finally {
-      hideLoader();
+      setIsLoading(false);
     }
   };
   
@@ -263,9 +703,26 @@ const BillingManagement = () => {
         return status;
     }
   };
-  
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
+      {isLoading && <LoaderOverlay />}
+      
+      {/* Add ConfirmationModal */}
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => {
+          setIsConfirmModalOpen(false);
+          setBillToUpdate(null);
+        }}
+        onConfirm={() => {
+          updatePaymentStatus(billToUpdate._id, "paid");
+          setIsConfirmModalOpen(false);
+          setBillToUpdate(null);
+        }}
+        bill={billToUpdate}
+      />
+
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
@@ -417,13 +874,25 @@ const BillingManagement = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th
+                  {/* <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort("billNumber")}
                   >
                     <div className="flex items-center">
                       Nr faktury
+                      {sortConfig.key === "billNumber" && (
+                        <ArrowUpDown size={16} className="ml-1" />
+                      )}
+                    </div>
+                  </th> */}
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort("billNumber")}
+                  >
+                    <div className="flex items-center">
+                    numer faktury
                       {sortConfig.key === "billNumber" && (
                         <ArrowUpDown size={16} className="ml-1" />
                       )}
@@ -489,8 +958,11 @@ const BillingManagement = () => {
                 {bills.length > 0 ? (
                   bills.map((bill) => (
                     <tr key={bill._id} className="hover:bg-gray-50">
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {bill?._id}
+                      </td> */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {bill._id}
+                        {bill?.invoiceId ? bill?.invoiceId : "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -527,21 +999,33 @@ const BillingManagement = () => {
                           >
                             <Eye size={18} />
                           </button>
-                          <button
+                          {
+                            bill.paymentStatus == "paid" && (
+                              <button
                             onClick={() => handleGenerateInvoice(bill._id)}
                             className="text-gray-600 hover:text-gray-900"
                             title="Generuj fakturę"
                           >
                             <FileText size={18} />
-                          </button>
-                          {bill.paymentStatus === "pending" && (
-                            <button
-                              onClick={() => handleUpdatePaymentStatus(bill._id, "paid")}
-                              className="text-green-600 hover:text-green-900"
-                              title="Oznacz jako opłacone"
-                            >
-                              <DollarSign size={18} />
-                            </button>
+                          </button>)
+                          }
+                          {bill.paymentStatus !== "paid" && (
+                            <>
+                              <button
+                                onClick={() => handleEditBill(bill._id)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Edytuj fakturę"
+                              >
+                                <Edit size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleUpdatePaymentStatus(bill._id, "paid")}
+                                className="text-green-600 hover:text-green-900"
+                                title="Oznacz jako opłacone"
+                              >
+                                <DollarSign size={18} />
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -594,6 +1078,16 @@ const BillingManagement = () => {
           )}
         </div>
       </div>
+
+      {/* EditBillModal */}
+      {isEditModalOpen && (
+        <EditBillModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          billId={selectedBillId}
+          onUpdate={fetchBills}
+        />
+      )}
     </div>
   );
 };

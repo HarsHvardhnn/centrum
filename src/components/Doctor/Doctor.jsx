@@ -28,7 +28,7 @@ const BillingPage = () => {
             name: `Dr. ${doc.name}`,
             specialty: doc.specialty || doc.specializations?.[0] || "Ogólny",
             timing: "9:30 - 13:00", 
-            date: format(new Date(doc.date), "MMM dd, yyyy"),
+            date: format( new Date(doc.date), "dd.MM.yyyy"),
             description:
               doc.bio ||
               "Centrum Chorób Zakaźnych ma na celu dostarczanie aktualnych, istotnych badań dotyczących aspektów mikrobiologii, wirusologii i parazytologii.",
@@ -172,8 +172,8 @@ const BillingPage = () => {
     <div className="container mx-auto px-4 h-screen flex flex-col">
       {/* Reusable Header */}
       <Header
-        title="Przegląd rozliczeń"
-        subtitle="Wszystkie konsultacje wszystkich świadczeniodawców"
+        title="Lista Lekarzy"
+        subtitle="Wszystkie konsultacje Lekarzy"
         onSearch={(term) => setSearchTerm(term)}
         onFilter={(filters) => setActiveFilters(filters)}
         onAddDoctor={() => setShowAddDoctorModal(true)}

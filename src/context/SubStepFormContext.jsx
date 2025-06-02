@@ -3,8 +3,8 @@ import { createContext, useContext, useState } from 'react';
 
 const FormContext = createContext(null);
 
-export const FormProvider = ({ children }) => {
-  const [formData, setFormData] = useState({
+export const FormProvider = ({ children, initialData }) => {
+  const [formData, setFormData] = useState(initialData || {
     // Demographics
     fullName: "",
     email: "",
@@ -17,6 +17,8 @@ export const FormProvider = ({ children }) => {
     maritalStatus: "",
     ethnicity: "",
     otherHospitalIds: "",
+    smsConsentAgreed: false,
+    appointmentSpecificDocument:"",
 
     consents: [],
     documents: [],
@@ -44,13 +46,14 @@ export const FormProvider = ({ children }) => {
     // Details
     fatherName: "",
     motherName: "",
-    spouseName: "",
-    education: "",
-    alternateContact: "",
-    birthWeight: "",
-    occupation: "",
-    religion: "",
-    ivrLanguage: "",
+    isAdult: "",
+    contactPerson: "",
+    fatherPhone: "",
+    motherPhone: "",
+    relationToPatient: "",
+    allergies: "",
+    nationality: "",
+    preferredLanguage: "",
 
     // Notes
     reviewNotes: "",

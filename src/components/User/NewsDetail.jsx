@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { GoDotFill } from "react-icons/go";
 import { apiCaller } from "../../utils/axiosInstance";
+import DOMPurify from "dompurify";
 
 const NewsDetail = () => {
   const { id } = useParams();
@@ -25,6 +26,10 @@ const NewsDetail = () => {
     fetchNews();
   }, [id, navigate]);
 
+  const createMarkup = (html) => {
+    return { __html: DOMPurify.sanitize(html || '') };
+  };
+
   if (loading) return <p className="text-center p-6">Wczytywanie...</p>;
   if (!news) return null;
 
@@ -42,18 +47,16 @@ const NewsDetail = () => {
         className="w-full h-64 sm:h-96 object-cover mb-2"
       />
 
-      <h1 className="text-2xl sm:text-3xl font-bold mb-4">{news.title}</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-[#008C8C]">{news.title}</h1>
 
       <p className="text-gray-500 text-sm mb-1">
         {news.date} <GoDotFill className="inline text-main" /> {news.author}
       </p>
 
-      <p className="text-gray-700 leading-relaxed mb-6">{news.description}</p>
-
-      <div className="flex gap-4 text-sm text-gray-600">
-        <span>👁️ {news.views} wyświetleń</span>
-        <span>❤️ {news.likes} polubień</span>
-      </div>
+      <div 
+        className="prose prose-lg max-w-none mb-6"
+        dangerouslySetInnerHTML={createMarkup(news.description)}
+      />
     </div>
   );
 };

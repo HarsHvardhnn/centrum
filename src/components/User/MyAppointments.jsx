@@ -13,10 +13,14 @@ import {
   FaCircle,
   FaCheck,
   FaExclamation,
+  FaFilePdf,
 } from "react-icons/fa";
 import { format, parseISO } from "date-fns";
 import { useUser } from "../../context/userContext";
 import { apiCaller } from "../../utils/axiosInstance";
+import appointmentHelper from "../../helpers/appointmentHelper";
+import { toast } from "sonner";
+import { translateStatus } from "../../utils/statusHelper";
 
 const MyAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -40,6 +44,7 @@ const MyAppointments = () => {
         );
 
         if (response && response.data && response.data.data) {
+          console.log("response", response);
           setAppointments(response.data.data);
         }
       } catch (err) {
@@ -91,6 +96,20 @@ const MyAppointments = () => {
     }
   };
 
+  const handleGenerateVisitCard = async (appointmentId) => {
+    try {
+      const response = await appointmentHelper.generateVisitCard(appointmentId);
+      if (response.success && response.data.url) {
+        window.open(response.data.url, '_blank');
+      } else {
+        toast.error("Nie udało się wygenerować karty wizyty");
+      }
+    } catch (error) {
+      console.error("Error generating visit card:", error);
+      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+    }
+  };
+
   // Format date for display
   const formatAppointmentDate = (dateString) => {
     try {
@@ -138,9 +157,9 @@ const MyAppointments = () => {
 
   // Calculate stats
   const calculateStats = () => {
-    const zarezerwowane = appointments.filter((app) => app.status === "zarezerwowana").length;
-    const zakonczone = appointments.filter((app) => app.status === "zakończona").length;
-    const anulowane = appointments.filter((app) => app.status === "anulowana").length;
+    const zarezerwowane = appointments.filter((app) => app.status === "booked").length;
+    const zakonczone = appointments.filter((app) => app.status === "completed").length;
+    const anulowane = appointments.filter((app) => app.status === "cancelled").length;
     const nieobecnosci = appointments.filter((app) => app.status === "nieobecność").length;
 
     return { 
@@ -298,7 +317,7 @@ const MyAppointments = () => {
                     <tr key={appointment._id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {formatAppointmentDate(appointment.date)}
+                          {new Date(appointment.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                         </div>
                         <div className="text-sm text-gray-500">
                           {appointment.time}
@@ -311,9 +330,20 @@ const MyAppointments = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {appointment.type === "online" ? (
+                          {appointment.mode === "online" ? (
                             <span className="flex items-center text-blue-600">
                               <FaVideo className="mr-2" /> Wizyta online
+                              {appointment.joining_link && (
+                                <a
+                                  href={appointment.joining_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="ml-2 bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs hover:bg-blue-200 transition-colors inline-flex items-center"
+                                >
+                                  <FaVideo className="mr-1" size={12} />
+                                  Dołącz
+                                </a>
+                              )}
                             </span>
                           ) : (
                             <span className="flex items-center text-gray-600">
@@ -334,7 +364,7 @@ const MyAppointments = () => {
                               getStatusColor(appointment.status).dot
                             }`}
                           />
-                          {appointment.status}
+                          {translateStatus(appointment.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -364,26 +394,19 @@ const MyAppointments = () => {
 
         {/* Appointment Details Modal */}
         {showModal && selectedAppointment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-            <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-              <div className="border-b border-gray-100 px-6 py-4 flex justify-between items-center sticky top-0 bg-white z-10">
-                <div className="flex items-center">
-                  <div className="flex h-10 w-10 rounded-full bg-teal-100 items-center justify-center mr-3">
-                    <FaCalendarAlt className="text-teal-600" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-800">
-                    Szczegóły wizyty
-                  </h3>
-                </div>
-                <button
-                  onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-gray-600 p-1 transition-colors"
-                >
-                  <FaTimes size={20} />
-                </button>
-              </div>
-
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full mx-4 overflow-hidden">
               <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-medium">Szczegóły wizyty</h3>
+                  <button
+                    onClick={handleCloseModal}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+
                 <div className="bg-teal-50 rounded-xl p-6 mb-6 flex items-center justify-between">
                   <div>
                     <div className="text-sm text-teal-600 font-medium mb-1">
@@ -395,7 +418,7 @@ const MyAppointments = () => {
                     </div>
                     <div className="text-sm text-gray-500">
                       {selectedAppointment.doctor.department ||
-                        "Medical Doctor"}
+                        "Nieznany"}
                     </div>
                   </div>
                   <div
@@ -406,9 +429,8 @@ const MyAppointments = () => {
                     } px-4 py-2 rounded-lg`}
                   >
                     <div className="text-xs font-medium">Status</div>
-                    <div className="font-medium">
-                      {selectedAppointment.status.charAt(0).toUpperCase() +
-                        selectedAppointment.status.slice(1)}
+                    <div className="font-medium"> 
+                        {translateStatus(selectedAppointment.status)}
                     </div>
                   </div>
                 </div>
@@ -427,7 +449,7 @@ const MyAppointments = () => {
                         <div>
                           <div className="text-xs text-gray-500">Data</div>
                           <div className="font-medium text-gray-800">
-                            {formatAppointmentDate(selectedAppointment.date)}
+                            {new Date(selectedAppointment.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                           </div>
                         </div>
                       </div>
@@ -497,7 +519,7 @@ const MyAppointments = () => {
                           </div>
                           <div className="font-medium text-gray-800">
                             {selectedAppointment.doctor.department ||
-                              "General Practice"}
+                              "Nieznany"}
                           </div>
                         </div>
                       </div>
@@ -544,24 +566,19 @@ const MyAppointments = () => {
                     </div>
                   )}
 
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
-                  {selectedAppointment.status === "zarezerwowana" && (
+                <div className="flex justify-end gap-4 mt-6">
+                  {selectedAppointment.status === "completed" && (
                     <button
-                      onClick={() =>
-                        handleCancelAppointment(selectedAppointment._id)
-                      }
-                      className="border border-red-200 bg-red-50 text-red-600 px-6 py-2 rounded-lg hover:bg-red-100 transition-colors"
-                      disabled={cancellationLoading}
+                      onClick={() => handleGenerateVisitCard(selectedAppointment._id)}
+                      className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
                     >
-                      {cancellationLoading
-                        ? "Anulowanie..."
-                        : "Anuluj wizytę"}
+                      <FaFilePdf className="mr-2" />
+                      Generuj kartę wizyty
                     </button>
                   )}
-
                   <button
                     onClick={handleCloseModal}
-                    className="bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors"
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                   >
                     Zamknij
                   </button>

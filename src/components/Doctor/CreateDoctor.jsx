@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import {
@@ -11,7 +11,6 @@ import {
   FileText,
   Briefcase,
 } from "lucide-react";
-import { DEPARTMENTS } from "../../utils/departments";
 import { useSpecializations } from "../../context/SpecializationContext";
 import SpecializationDropdown from "./SpecializationDropdown";
 import ImageCropper from "../UtilComponents/ImageCropper";
@@ -48,10 +47,16 @@ const DoctorSchema = Yup.object().shape({
   offlineConsultationFee: Yup.number()
     .positive("Opłata musi być liczbą dodatnią")
     .required("Opłata za konsultację stacjonarną jest wymagana"),
-  profilePicture: Yup.mixed().required("Zdjęcie profilowe jest wymagane"),
+  // profilePicture: Yup.mixed().when('$isEditMode', {
+  //   is: true,
+  //   then: () => Yup.mixed(), // no validation
+  //   otherwise: () => Yup.mixed().required("Zdjęcie profilowe jest wymagane"),
+  // }),
 });
 
-export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
+
+export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode }) {
+  console.log("doctors",initialData)
   const [profileImage, setProfileImage] = useState(null);
   const [specializationInput, setSpecializationInput] = useState("");
   const [qualificationInput, setQualificationInput] = useState("");
@@ -61,6 +66,17 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
   const [showCropper, setShowCropper] = useState(false);
   const [cropperImage, setCropperImage] = useState(null);
   const [formikSetFieldValue, setFormikSetFieldValue] = useState(null);
+
+  // Show current profile picture as preview when editing
+  useEffect(() => {
+    if (isOpen && isEditMode && initialData?.profilePicture && !profileImage) {
+      setProfileImage(initialData.profilePicture);
+    }
+    // Reset preview when modal closes
+    if (!isOpen) {
+      setProfileImage(null);
+    }
+  }, [isOpen, isEditMode, initialData?.profilePicture]);
 
   if (!isOpen) return null;
 
@@ -136,12 +152,16 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
     setFieldValue("qualifications", updatedQualifications);
   };
 
+  // Helper to normalize specializations to {id, name}
+  const normalizeSpecs = (specs) =>
+    (specs || []).map(spec => ({ id: spec._id || spec.id, name: spec.name }));
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-800">
-            Dodaj Nowego Lekarza
+            {isEditMode ? "Edytuj Lekarza" : "Dodaj Nowego Lekarza"}
           </h2>
           <button
             onClick={onClose}
@@ -153,33 +173,33 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor }) {
 
         <Formik
           initialValues={{
-            firstName: "",
-            lastName: "",
-            email: "",
-            phone: "",
+            firstName: initialData?.name?.first || "",
+            lastName: initialData?.name?.last || "",
+            email: initialData?.email || "",
+            phone: initialData?.phone || "",
             password: "",
             confirmPassword: "",
-            department: "", // New department field
-            specialization: [],
-            qualifications: [],
-            experience: "",
-            bio: "",
-            consultationFee: "",
-            offlineConsultationFee: "",
-            profilePicture: null,
+            department: initialData?.department || "",
+            specialization: normalizeSpecs(initialData?.specializations),
+            qualifications: initialData?.qualifications || [],
+            experience: initialData?.experience || "",
+            bio: initialData?.bio || "",
+            consultationFee: initialData?.onlineConsultationFee || "",
+            offlineConsultationFee: initialData?.offlineConsultationFee || "",
+            profilePicture: null, // Always null initially, we handle preview separately
           }}
           validationSchema={DoctorSchema}
           onSubmit={async (values, { setSubmitting, resetForm }) => {
             try {
-              // Pass resetForm and onClose functions to handleAddDoctor
-              await onAddDoctor(values, resetForm, onClose);
+              // Always map specialization to array of ids for backend
+              const submitValues = {
+                ...values,
+                specialization: (values.specialization || []).map(spec => spec.id),
+              };
+              await onAddDoctor(submitValues, resetForm, onClose);
               setSubmitting(false);
-              // Note: We're not calling onClose() here anymore
-              // onClose will be called by handleAddDoctor only on success
             } catch (error) {
-              // Set submitting to false if there was an error
               setSubmitting(false);
-              // Modal stays open on error
               console.error("Błąd podczas przesyłania formularza:", error);
             }
           }}

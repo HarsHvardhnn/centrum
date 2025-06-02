@@ -4,9 +4,16 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreVertical,
+  UserCheck,
   UserX,
   Video,
+  X,
+  FileText,
 } from "lucide-react";
+import { apiCaller } from "../../../utils/axiosInstance";
+import { translateStatus } from "../../../utils/statusHelper";
+import appointmentHelper from "../../../helpers/appointmentHelper";
+import { toast } from "sonner";
 
 const PatientsList = ({
   totalPatients = 0,
@@ -16,22 +23,25 @@ const PatientsList = ({
   setAppointmentId,
   selectedPatient,
   patientsData = [],
+  itemsPerPage = 10,
 }) => {
-  // Use the selectedPatient from props instead of local state
-
-  console.log("patients data",patientsData)
   const [sortConfig, setSortConfig] = React.useState({
     key: null,
     direction: null,
   });
 
+  // Calculate total pages
+  const totalPages = Math.ceil(totalPatients / itemsPerPage);
+
   // Notify parent component when selection changes
-  const handlePatientSelect = (patientId) => {
-    // If the same patient is clicked again, unselect it
-    if (selectedPatient === patientId) {
+  const handlePatientSelect = (patientId, appointmentId) => {
+    // If the same appointment is clicked again, unselect it
+    if (selectedPatient === appointmentId) {
       if (onPatientSelect) onPatientSelect(null);
+      if (setAppointmentId) setAppointmentId(null);
     } else {
       if (onPatientSelect) onPatientSelect(patientId);
+      if (setAppointmentId) setAppointmentId(appointmentId);
     }
   };
 
@@ -62,7 +72,7 @@ const PatientsList = ({
         textColor: "text-green-700",
         dotColor: "bg-green-600",
       },
-      Waiting: {
+      booked: {
         bgColor: "bg-yellow-50",
         textColor: "text-yellow-700",
         dotColor: "bg-yellow-600",
@@ -76,7 +86,7 @@ const PatientsList = ({
     
     const statusTranslations = {
       Finished: "Zakończona",
-      Waiting: "Oczekuje",
+      booked: "Oczekuje",
       Cancelled: "Anulowana"
     };
 
@@ -96,7 +106,7 @@ const PatientsList = ({
     );
   };
 
-  const AppointmentModeBadge = ({ mode }) => {
+  const AppointmentModeBadge = ({ mode, joiningLink }) => {
     const modeStyles = {
       online: {
         bgColor: "bg-blue-50",
@@ -128,28 +138,30 @@ const PatientsList = ({
       dotColor: "bg-gray-600",
     };
 
-    return (
+    const BadgeContent = () => (
       <div
-        className={`flex items-center px-4 text-sm h-fit py-1 rounded-full capitalize ${bgColor} ${textColor}`}
+        className={`flex items-center px-4 text-sm h-fit py-1 rounded-full capitalize ${bgColor} ${textColor} ${mode === "online" && joiningLink ? "cursor-pointer hover:bg-blue-100" : ""}`}
       >
         <div className={`w-2 h-2 rounded-full ${dotColor} mr-2`} />
+        {mode === "online" && <Video size={14} className="mr-1" />}
         {modeTranslations[mode] || mode}
       </div>
     );
-  };
 
-  const JoinNowButton = ({ joiningLink }) => {
-    return (
-      <a
-        href={joiningLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center px-3 py-1 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors"
-      >
-        <Video size={16} className="mr-1" />
-        Dołącz teraz
-      </a>
-    );
+    if (mode === "online" && joiningLink) {
+      return (
+        <a
+          href={joiningLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+        >
+          <BadgeContent />
+        </a>
+      );
+    }
+
+    return <BadgeContent />;
   };
 
   const EmptyState = () => (
@@ -162,6 +174,76 @@ const PatientsList = ({
     </div>
   );
 
+  const handleCancelAppointment = async (id) => {
+    try {
+      await apiCaller('PATCH',`/appointments/cancel/${id}`);
+      // Refresh the page or update the list after cancellation
+      window.location.reload();
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+    }
+  };
+
+  const handleGenerateVisitCard = async (appointmentId) => {
+    try {
+      const response = await appointmentHelper.generateVisitCard(appointmentId);
+      if (response.success && response.data.url) {
+        window.open(response.data.url, '_blank');
+      } else {
+        toast.error("Nie udało się wygenerować karty wizyty");
+      }
+    } catch (error) {
+      console.error("Error generating visit card:", error);
+      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+    }
+  };
+
+  // Generate pagination numbers
+  const renderPaginationNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    const halfVisible = Math.floor(maxVisiblePages / 2);
+
+    let startPage = Math.max(1, currentPage - halfVisible);
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // Always show first page
+    if (startPage > 1) {
+      pages.push(1);
+      if (startPage > 2) pages.push('...');
+    }
+
+    // Show middle pages
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    // Always show last page
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) pages.push('...');
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+  const translateSexToPolish = (sex) => {
+    switch (sex) {
+      case "Male":
+        return "Mężczyzna";
+      case "Female":
+        return "Kobieta";
+      case "Others":
+        return "Inna";
+      default:
+        return "Nieznany";
+    }
+  };
+  
+
   return (
     <div className="bg-white border rounded-lg shadow-sm">
       {/* Header */}
@@ -169,7 +251,7 @@ const PatientsList = ({
         <div className="flex gap-8 items-center">
           <h2 className="text-lg font-semibold">Lista pacjentów</h2>
           <span className="text-sm text-teal-400 bg-teal-100 rounded-full px-3 py-1">
-            {patientsData.length} {patientsData.length === 1 ? "użytkownik" : "użytkowników"}
+            {totalPatients} {totalPatients === 1 ? "użytkownik" : "użytkowników"}
           </span>
         </div>
         <div className="flex items-center space-x-4">
@@ -178,94 +260,137 @@ const PatientsList = ({
       </div>
 
       {/* Table or Empty State */}
-      {patientsData.length > 0 ? (
-        <div>
-          {/* Table Header */}
-          <div className="w-full flex justify-evenly px-4 py-3 bg-gray-50 border-b">
-            <div className="col-span-2 flex items-center">Imię i nazwisko</div>
-            <div className="text-center">Płeć</div>
-            <div
-              className="flex items-center cursor-pointer justify-center"
-              onClick={() => requestSort("status")}
-            >
-              Status
-              <ChevronDown size={16} />
-            </div>
-            <div
-              className="flex items-center cursor-pointer justify-center"
-              onClick={() => requestSort("appointmentMode")}
-            >
-              Tryb
-              <ChevronDown size={16} />
-            </div>
-            <div className="text-center">Akcja</div>
-          </div>
-
-          {/* Table Body */}
-          {sortedPatients.map((patient) => (
-            <div
-              key={patient.id}
-              className="w-full flex justify-evenly px-4 py-3 border-b hover:bg-gray-50 text-center"
-            >
-              <div className="col-span-2 flex items-center text-left">
-                <input
-                  type="checkbox"
-                  checked={selectedPatient === patient.patient_id}
-                  onChange={() =>{ 
-                    handlePatientSelect(patient.patient_id)
-                    console.log("patient id ",patient.id)
-                    setAppointmentId(patient.id)
-                  }}
-                  className="w-4 h-4 mr-3"
-                />
-                <img
-                  src={patient.avatar || "https://via.placeholder.com/40"}
-                  alt={`Zdjęcie ${patient.name}`}
-                  className="w-10 h-10 rounded-full mr-3"
-                />
-                <div>
-                  <div className="font-medium">{patient.name}</div>
-                  <div className="text-sm text-gray-500">{patient.patient_id}</div>
+      <div className="overflow-x-auto">
+        <div className="min-w-[1000px]">
+          {patientsData.length > 0 ? (
+            <div>
+              {/* Table Header */}
+              <div className="w-full grid grid-cols-6 px-4 py-3 bg-gray-50 border-b">
+                <div className="col-span-2">Imię i nazwisko</div>
+                <div className="text-center">Płeć</div>
+                <div
+                  className="flex items-center cursor-pointer justify-center"
+                  onClick={() => requestSort("status")}
+                >
+                  Status
+                  <ChevronDown size={16} />
                 </div>
+                <div
+                  className="flex items-center cursor-pointer justify-center"
+                  onClick={() => requestSort("appointmentMode")}
+                >
+                  Tryb
+                  <ChevronDown size={16} />
+                </div>
+                <div className="text-center">Akcja</div>
               </div>
-              <div>{patient.gender}</div>
-              <div>
-                <StatusBadge status={patient.status} />
-              </div>
-              <div>
-                <AppointmentModeBadge mode={patient.appointmentMode} />
-              </div>
-              <div>
-                {patient.appointmentMode === "online" && patient.joiningLink && (
-                  <JoinNowButton joiningLink={patient.joiningLink} />
-                )}
-              </div>
+
+              {/* Table Body */}
+              {sortedPatients.map((patient) => (
+                <div
+                  key={patient.id}
+                  className="w-full grid grid-cols-6 px-4 py-3 border-b hover:bg-gray-50"
+                >
+                  <div className="col-span-2 flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedPatient === patient.id}
+                      onChange={() => {
+                        handlePatientSelect(patient.patient_id, patient.id);
+                      }}
+                      className="w-4 h-4 mr-3"
+                    />
+                    <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                            {patient?.avatar ? (
+                              <img
+                                src={patient.avatar}
+                                alt={patient?.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center bg-gray-200 text-gray-500">
+                                <UserCheck
+                                 size={24} />
+                              </div>
+                            )}
+                          </div>
+                    <div>
+                      <div className="font-medium">{patient.name}</div>
+                      <div className="text-sm text-gray-500">{patient.patient_id}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center">{translateSexToPolish(patient.sex)}</div>
+                  <div className="flex items-center justify-center">
+                    <StatusBadge status={translateStatus(patient.status)} />
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <AppointmentModeBadge mode={patient.mode} joiningLink={patient.joining_link} />
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    {/* {true && (
+                      <button
+                        onClick={() => handleGenerateVisitCard(patient.id)}
+                        className="flex items-center px-3 py-1 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors"
+                      >
+                        <FileText size={16} className="mr-1" />
+                        Karta wizyty
+                      </button>
+                    )} */}
+                    <button
+                      onClick={() => handleCancelAppointment(patient.id)}
+                      disabled={patient.status !== "booked"}
+                      className={`flex items-center px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors ${patient.status !== "booked" ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      <X size={16} className="mr-1" />
+                      Anuluj
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            <EmptyState />
+          )}
         </div>
-      ) : (
-        <EmptyState />
-      )}
+      </div>
 
       {/* Pagination - Only show if there are patients */}
       {patientsData.length > 0 && (
         <div className="flex justify-between items-center px-4 py-3 border-t">
           <div className="text-sm text-gray-500">
-            Pokazuje {patientsData.length} z {totalPatients} pacjentów
+            Pokazuje {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, totalPatients)} z {totalPatients} pacjentów
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
+              className="p-2 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft size={20} />
             </button>
-            <span className="text-sm">Strona {currentPage}</span>
+            
+            {renderPaginationNumbers().map((page, index) => (
+              page === '...' ? (
+                <span key={`ellipsis-${index}`} className="px-2">...</span>
+              ) : (
+                <button
+                  key={page}
+                  onClick={() => onPageChange(page)}
+                  className={`w-8 h-8 rounded-md ${
+                    currentPage === page
+                      ? 'bg-teal-50 text-teal-600 font-medium'
+                      : 'hover:bg-gray-100'
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            ))}
+
             <button
               onClick={() => onPageChange(currentPage + 1)}
-              disabled={patientsData.length < 10}
-              className="p-1 rounded hover:bg-gray-100 disabled:opacity-50"
+              disabled={currentPage >= totalPages}
+              className="p-2 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronRight size={20} />
             </button>

@@ -71,10 +71,11 @@ const ProfilePage = () => {
         setFormData(newFormData);
         setInitialFormData(newFormData);
       } else {
-        toast.error(response.message || "Failed to load profile");
+        toast.error(response.message || "Nie udało się załadować profilu");
       }
     } catch (error) {
-      toast.error("Failed to load profile information");
+      toast.error("Wystąpił błąd");
+
       console.error("Error loading profile:", error);
     } finally {
       setIsLoading(false);
@@ -96,14 +97,16 @@ const ProfilePage = () => {
 
       // Check file size (limit to 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB");
+        toast.error("Wystąpił błąd");
+
         return;
       }
 
       // Check file type
       const validTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
       if (!validTypes.includes(file.type)) {
-        toast.error("Please select a valid image file (JPEG, PNG, GIF)");
+        toast.error("Wystąpił błąd");
+
         return;
       }
 
@@ -111,6 +114,22 @@ const ProfilePage = () => {
       const tempUrl = URL.createObjectURL(file);
       setTempImageUrl(tempUrl);
       setShowCropModal(true);
+    }
+  };
+
+  const translateRoleToPolish = (role) => {
+    console.log("role is", role)
+    switch (role) {
+      case "patient":
+        return "Pacjent";
+      case "doctor":
+        return "Lekarz";
+      case "receptionist":
+        return "Recepcjonista";
+      case "admin":
+        return "Administrator";
+      default:
+        return "Nieznana rola";
     }
   };
 
@@ -136,7 +155,7 @@ const ProfilePage = () => {
     e.preventDefault();
     try {
       if (!formData.sex) {
-        toast.error("Please select your sex");
+        toast.error("Proszę wybrać swoją płeć");
         return;
       }
       setIsSaving(true);
@@ -151,7 +170,7 @@ const ProfilePage = () => {
 
       if (response.success) {
         setProfile(response.data);
-        toast.success("Profile updated successfully");
+        toast.success("Profil zaktualizowany pomyślnie");
         setIsEditing(false);
         refreshUserProfile();
         // Reset image file state
@@ -160,11 +179,11 @@ const ProfilePage = () => {
         setInitialFormData({ ...formData });
         setHasChanges(false);
       } else {
-        toast.error(response.message || "Failed to update profile");
+        toast.error(response.message || "Nie udało się zaktualizować profilu");
       }
     } catch (error) {
       const errorMsg =
-        error.response?.data?.message || "Failed to update profile";
+        error.response?.data?.message || "Nie udało się zaktualizować profilu";
       toast.error(errorMsg);
     } finally {
       setIsSaving(false);
@@ -182,6 +201,19 @@ const ProfilePage = () => {
     setIsEditing(!isEditing);
   };
 
+  const translateSexToPolish = (sex) => {
+    switch (sex) {
+      case "Male":
+        return "Mężczyzna";
+      case "Female":
+        return "Kobieta";
+      case "Others":
+        return "Inna";
+      default:
+        return "Nieznany";
+    }
+  };
+
   if (isLoading && !profile.email) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -191,7 +223,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="bg-gradient-to-b from-gray-50 to-white rounded-xl shadow-lg p-8 mx-auto mt-8 border border-gray-100">
+    <div className="bg-gradient-to-b from-gray-50 to-white rounded-xl shadow-lg p-8 mx-auto mt-16 border border-gray-100">
       <div className="flex justify-between items-center mb-8 border-b border-gray-200 pb-4">
         <h1 className="text-2xl font-bold text-gray-800">Mój Profil</h1>
         <button
@@ -287,13 +319,13 @@ const ProfilePage = () => {
             </h2>
             <div className="flex items-center justify-center mt-2">
               <span className="bg-teal-100 text-teal-800 text-sm font-medium px-3 py-1 rounded-full capitalize">
-                {profile.role || "User"}
+                {translateRoleToPolish(profile.role )|| "User"}
               </span>
             </div>
             <p className="text-gray-500 mt-2 text-sm">
               Członek od{" "}
               {profile.createdAt
-                ? new Date(profile.createdAt).toLocaleDateString("en-US", {
+                ? new Date(profile.createdAt).toLocaleDateString("pl-PL", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
@@ -490,13 +522,13 @@ const ProfilePage = () => {
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Płeć</h4>
                   <p className="mt-1 text-gray-900 font-medium">
-                    {profile.sex || "-"}
+                    {translateSexToPolish(profile.sex) || "-"}
                   </p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Rola</h4>
                   <p className="mt-1 text-gray-900 font-medium capitalize">
-                    {profile.role || "-"}
+                    {translateRoleToPolish(profile.role) || "-"}
                   </p>
                 </div>
                 <div>

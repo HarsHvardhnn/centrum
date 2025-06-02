@@ -14,8 +14,9 @@ import appointmentHelper from "../../../../helpers/appointmentHelper";
 import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
-import { Trash2, Calendar, PlusCircle } from "lucide-react";
+import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity } from "lucide-react";
 import { toast } from "sonner";
+import { translateStatus } from "../../../../utils/statusHelper";
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
@@ -42,6 +43,174 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
           >
             Usuń
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Add PatientDetailsModal component
+const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
+  if (!isOpen || !patientData) return null;
+
+  // Helper function to check if a value is empty
+  const isEmpty = (value) => {
+    if (value === undefined || value === null) return true;
+    if (typeof value === 'string' && value.trim() === '') return true;
+    if (Array.isArray(value) && value.length === 0) return true;
+    if (typeof value === 'object' && Object.keys(value).length === 0) return true;
+    return false;
+  };
+
+  // Helper function to filter out empty fields
+  const filterEmptyFields = (fields) => {
+    return Object.entries(fields).reduce((acc, [key, value]) => {
+      if (!isEmpty(value)) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {});
+  };
+
+  // Helper function to format date
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString("pl-PL", {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const sections = {
+    "Dane osobowe": filterEmptyFields({
+      "Imię i nazwisko": `${patientData.name?.first || ""} ${patientData.name?.last || ""}`.trim(),
+      "Email": patientData.email,
+      "Telefon": patientData.phone,
+      "Płeć": patientData.sex === "Male" ? "Mężczyzna" : patientData.sex === "Female" ? "Kobieta" : patientData.sex,
+      "Data urodzenia": patientData.dateOfBirth ? formatDate(patientData.dateOfBirth) : null,
+      "Wiek": patientData.age,
+      "Nazwa użytkownika": patientData.username,
+      "Dorosły": patientData.isAdult ? "Tak" : "Nie",
+      "Zameldowany": patientData.checkedIn ? "Tak" : "Nie",
+    }),
+    "Dane medyczne": filterEmptyFields({
+      "Alergie": patientData.allergies,
+      "Status": translateStatus(patientData.status),
+      "Pacjent międzynarodowy": patientData.isInternationalPatient ? "Tak" : "Nie",
+      "Zgoda na SMS": patientData.smsConsentAgreed ? "Tak" : "Nie",
+      "Schorzenia przewlekłe": patientData.chronicConditions?.length > 0 ? patientData.chronicConditions.join(", ") : null,
+      "Cele": patientData.goals?.length > 0 ? patientData.goals.join(", ") : null,
+      "Historia medyczna": patientData.medicalHistory?.length > 0 ? patientData.medicalHistory.join(", ") : null,
+    }),
+    "Dane identyfikacyjne": filterEmptyFields({
+      "ID pacjenta": patientData.patientId,
+      "ID szpitala": patientData.hospId,
+      "Data utworzenia": formatDate(patientData.createdAt),
+      "Ostatnia aktualizacja": formatDate(patientData.updatedAt),
+    }),
+  };
+
+  // Add consents section if there are any consents
+  if (patientData.consents && patientData.consents.length > 0) {
+    sections["Zgody pacjenta"] = {
+      "Zgody": (
+        <div className="space-y-2">
+          {patientData.consents.map((consent) => (
+            <div key={consent.id} className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${consent.agreed ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className="text-sm">{consent.text}</span>
+            </div>
+          ))}
+        </div>
+      )
+    };
+  }
+
+  // Add documents section if there are any documents
+  if (patientData.documents && patientData.documents.length > 0) {
+    sections["Dokumenty"] = {
+      "Dokumenty": (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {patientData.documents.map((doc, index) => (
+            <div 
+              key={doc.id || index} 
+              className="bg-white rounded-lg p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => {
+                if (doc.url) {
+                  window.open(doc.url, '_blank');
+                } else {
+                  window.open(doc.preview, '_blank');                }
+              }}
+                          >
+              <div className="flex items-center gap-3">
+                {doc.isPdf ? (
+                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <FileText className="text-red-500" size={24} />
+                  </div>
+                ) : (
+                  <img 
+                    src={doc.preview || doc.url} 
+                    alt={doc.name}
+                    className="w-12 h-12 object-cover rounded-lg"
+                  />
+                )}
+                <div>
+                  <p className="text-sm font-medium">{doc.name}</p>
+                  <p className="text-xs text-gray-500">{doc.type}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    };
+  }
+
+  // Filter out sections with no data
+  const filteredSections = Object.entries(sections).reduce((acc, [key, value]) => {
+    if (!isEmpty(value)) {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold">Szczegóły pacjenta</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={24} />
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {Object.entries(filteredSections).map(([sectionTitle, fields]) => (
+            <div key={sectionTitle} className="bg-gray-50 rounded-lg p-4">
+              <h3 className="font-medium text-gray-800 mb-3">{sectionTitle}</h3>
+              <div className="space-y-2">
+                {Object.entries(fields).map(([label, value]) => (
+                  <div key={label} className="flex flex-col">
+                    <span className="text-sm text-gray-500">{label}</span>
+                    {typeof value === 'object' && value !== null ? (
+                      value
+                    ) : (
+                      <span className="text-sm font-medium">{value}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -78,16 +247,13 @@ const PatientDetailsPage = () => {
     phone: "",
     birthDate: "",
     disease: "",
-    avatar: "https://randomuser.me/api/portraits/men/75.jpg",
+    avatar: null,
     isInternationalPatient: false,
     notes: "",
-    roomNumber: "",
-    riskStatus: "Ryzykowny",
-    treatmentStatus: "W trakcie leczenia",
-    bloodPressure: "141/90 mmHg",
-    temperature: "29°C",
-    weight: "78kg",
-    height: "170 cm",
+    bloodPressure: null,
+    temperature: null,
+    weight: null,
+    height: null
   });
 
   // Consultation state (now tied to appointment)
@@ -132,6 +298,10 @@ const PatientDetailsPage = () => {
   const [reports, setReports] = useState([]);
   const [showReportUploader, setShowReportUploader] = useState(false);
 
+  // Add new states for PatientDetailsModal
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailedPatientData, setDetailedPatientData] = useState(null);
+
   // Add a specific useEffect to fetch patient services when appointment ID changes
   useEffect(() => {
     if (currentAppointmentId && id) {
@@ -139,7 +309,7 @@ const PatientDetailsPage = () => {
     }
   }, [currentAppointmentId]);
 
-  // Fetch patient data and their appointments
+  // Modify the useEffect to handle appointmentId from query params
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -150,32 +320,36 @@ const PatientDetailsPage = () => {
         const patientResponse = await patientService.getPatientDetails(id);
         console.log("patientResponse", patientResponse);
 
-        setPatientData(patientResponse.patientData || {});
+        setPatientData(prevData => ({
+          ...prevData,
+          ...patientResponse.patientData,
+          bloodPressure: patientResponse.patientData?.bloodPressure || null,
+          temperature: patientResponse.patientData?.temperature || null,
+          weight: patientResponse.patientData?.weight || null,
+          height: patientResponse.patientData?.height || null
+        }));
 
         // Fetch patient services
         await fetchPatientServices();
 
+        // Always fetch all patient's appointments
+        const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
+        setAppointments(appointmentsResponse.data || []);
+
+        // If we have a specific appointment ID from URL, select that one
         if (appointmentIdFromUrl) {
-          // If we have a specific appointment ID, fetch only that appointment
-          const appointmentResponse = await appointmentHelper.getAppointmentById(appointmentIdFromUrl);
-          if (appointmentResponse.data) {
-            setAppointments([appointmentResponse.data]);
+          const appointmentFromUrl = appointmentsResponse.data?.find(apt => apt._id === appointmentIdFromUrl);
+          if (appointmentFromUrl) {
             setCurrentAppointmentId(appointmentIdFromUrl);
-            setSelectedAppointment(appointmentResponse.data);
+            setSelectedAppointment(appointmentFromUrl);
             await fetchAppointmentDetails(appointmentIdFromUrl);
           }
-        } else {
-          // Fetch all patient's appointments
-          const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
-          setAppointments(appointmentsResponse.data || []);
-
-          // If there are appointments, select the most recent one
-          if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
-            const mostRecentAppointment = appointmentsResponse.data[0];
-            setCurrentAppointmentId(mostRecentAppointment._id);
-            setSelectedAppointment(mostRecentAppointment);
-            await fetchAppointmentDetails(mostRecentAppointment._id);
-          }
+        } else if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
+          // Otherwise select the most recent one
+          const mostRecentAppointment = appointmentsResponse.data[0];
+          setCurrentAppointmentId(mostRecentAppointment._id);
+          setSelectedAppointment(mostRecentAppointment);
+          await fetchAppointmentDetails(mostRecentAppointment._id);
         }
 
         setIsLoading(false);
@@ -200,19 +374,31 @@ const PatientDetailsPage = () => {
       const response = await appointmentHelper.getAppointmentById(appointmentId);
       
       if (response.data) {
-        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports } = response.data;
+        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports, patientData: appointmentPatientData } = response.data;
         
+        // Update consultation data
         setConsultationData(consultation || {});
         setMedications(appointmentMedications || []);
         setTests(appointmentTests || []);
         setReports(reports || []);
-        
-        // Note: We don't need to fetch services here as the useEffect will handle it
-        // when currentAppointmentId changes
+
+        // Update patient data if it exists in appointment, preserving existing data
+        if (appointmentPatientData) {
+          setPatientData(prevData => ({
+            ...prevData,
+            ...appointmentPatientData,
+            // Explicitly set health metrics from appointment data
+            bloodPressure: appointmentPatientData.bloodPressure || prevData.bloodPressure || null,
+            temperature: appointmentPatientData.temperature || prevData.temperature || null,
+            weight: appointmentPatientData.weight || prevData.weight || null,
+            height: appointmentPatientData.height || prevData.height || null
+          }));
+        }
       }
     } catch (error) {
       console.error("Error fetching appointment details:", error);
-      toast.error("Failed to load appointment details");
+      toast.error("Wystąpił błąd");
+
     } finally {
       hideLoader();
     }
@@ -261,7 +447,7 @@ const PatientDetailsPage = () => {
   // Handle save functionality
   const handleSave = async () => {
     if (!currentAppointmentId) {
-      toast.error("No appointment selected");
+      toast.error("Nie wybrano spotkania");
       return;
     }
 
@@ -276,7 +462,7 @@ const PatientDetailsPage = () => {
       );
 
       if (hasUploadingFiles) {
-        setSaveError("Please wait for all files to finish uploading");
+        setSaveError("Proszę poczekać na zakończenie wszystkich plików");
         setIsSaving(false);
         return;
       }
@@ -285,6 +471,7 @@ const PatientDetailsPage = () => {
       const response = await appointmentHelper.updateAppointmentDetails(
         currentAppointmentId,
         {
+          patientData,
           consultationData,
           medications,
           tests,
@@ -293,18 +480,18 @@ const PatientDetailsPage = () => {
       );
 
       if (response.success) {
-        toast.success("Appointment details updated successfully");
+        toast.success("Szczegóły spotkania zaktualizowane pomyślnie");
         setSaveSuccess(true);
         
         // Refresh appointment details
         await fetchAppointmentDetails(currentAppointmentId);
       } else {
-        throw new Error(response.message || "Failed to update appointment details");
+        throw new Error(response.message || "Nie udało się zaktualizować szczegółów spotkania");
       }
     } catch (error) {
       console.error("Error saving appointment details:", error);
-      setSaveError(error.message || "Failed to save appointment details. Please try again.");
-      toast.error("Failed to save appointment details");
+      setSaveError(error.message || "Nie udało się zapisać szczegółów spotkania. Proszę spróbować ponownie.");
+      toast.error("Nie udało się zapisać szczegółów spotkania");
     } finally {
       setIsSaving(false);
       hideLoader();
@@ -574,6 +761,106 @@ const PatientDetailsPage = () => {
     );
   };
 
+  // Add function to fetch detailed patient data
+  const handleShowDetails = async () => {
+    try {
+      showLoader();
+      const response = await patientService.getPatientById(id);
+      console.log(response, "response deails");
+      setDetailedPatientData(response);
+      setShowDetailsModal(true);
+      hideLoader();
+    } catch (error) {
+      console.error("Error fetching detailed patient data:", error);
+      toast.error("Nie udało się pobrać szczegółowych danych pacjenta");
+      hideLoader();
+    }
+  };
+
+  // Add AppointmentDetails component
+  const AppointmentDetails = ({ appointment }) => {
+    if (!appointment) return null;
+
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+        <h3 className="text-lg font-semibold mb-4">Szczegóły wizyty</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Calendar size={16} className="text-teal-500" />
+              <span className="text-sm text-gray-600">Data:</span>
+              <span className="text-sm font-medium">
+                {new Date(appointment.date).toLocaleDateString('pl-PL')}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <Clock size={16} className="text-teal-500" />
+              <span className="text-sm text-gray-600">Godzina:</span>
+              <span className="text-sm font-medium">
+                {appointment.startTime} - {appointment.endTime}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <User size={16} className="text-teal-500" />
+              <span className="text-sm text-gray-600">Lekarz:</span>
+              <span className="text-sm font-medium">
+                Dr. {appointment.doctor?.name?.first} {appointment.doctor?.name?.last}
+              </span>
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Video size={16} className="text-teal-500" />
+              <span className="text-sm text-gray-600">Tryb wizyty:</span>
+              <span className="text-sm font-medium">
+                {appointment.mode === "online" ? "Wizyta online" : "Wizyta w przychodni"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <Activity size={16} className="text-teal-500" />
+              <span className="text-sm text-gray-600">Status:</span>
+              <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                appointment.status === "completed"
+                  ? "bg-green-100 text-green-800"
+                  : appointment.status === "scheduled"
+                  ? "bg-blue-100 text-blue-800"
+                  : appointment.status === "cancelled"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-gray-100 text-gray-800"
+              }`}>
+                {translateStatus(appointment.status)}
+              </span>
+            </div>
+            {appointment.consultationType && (
+              <div className="flex items-center gap-2 mb-2">
+                <FileText size={16} className="text-teal-500" />
+                <span className="text-sm text-gray-600">Typ konsultacji:</span>
+                <span className="text-sm font-medium">
+                  {appointment.consultationType}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const handleGenerateVisitCard = async (appointmentId, e) => {
+    e.stopPropagation(); // Prevent appointment selection when clicking the button
+    try {
+      const response = await appointmentHelper.generateVisitCard(appointmentId);
+      if (response.success && response.data.url) {
+        window.open(response.data.url, '_blank');
+      } else {
+        toast.error("Nie udało się wygenerować karty wizyty");
+      }
+    } catch (error) {
+      console.error("Error generating visit card:", error);
+      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
@@ -592,32 +879,48 @@ const PatientDetailsPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Patient Profile */}
           <div className="lg:col-span-1">
-            <PatientProfile patient={patientData} setPatientData={setPatientData}/>
+            <div className="w-[300px] min-w-[300px] bg-slate-50 rounded-lg p-4 flex flex-col items-center">
+              <PatientProfile 
+                patient={{
+                  ...patientData,
+                  gender: patientData.gender === "Male" ? "Mężczyzna" : patientData.gender === "Female" ? "Kobieta" : patientData.sex
+                }} 
+                setPatientData={setPatientData}
+              />
+              <button
+                onClick={handleShowDetails}
+                className="mt-2 mb-4 bg-teal-500 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-teal-600 transition-colors shadow"
+                style={{ alignSelf: 'center' }}
+              >
+                <Info size={16} />
+                Pokaż szczegóły
+              </button>
+            </div>
             
-            {/* Show appointments section only if not viewing a specific appointment */}
-            {showAllAppointments && (
-              <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
-                <h3 className="text-lg font-semibold mb-4">Historia Wizyt</h3>
-                <div className="space-y-4">
-                  {appointments.map((apt) => (
-                    <div
-                      key={apt._id}
-                      className={`p-4 rounded-lg cursor-pointer transition-all ${
-                        currentAppointmentId === apt._id
-                          ? "bg-teal-50 border-2 border-teal-500"
-                          : "bg-gray-50 hover:bg-gray-100"
-                      }`}
-                      onClick={() => handleAppointmentSelect(apt._id)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">
-                            {new Date(apt.date).toLocaleDateString('pl-PL')}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {apt.consultationType || 'Konsultacja standardowa'}
-                          </p>
-                        </div>
+            {/* Always show appointments section */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+              <h3 className="text-lg font-semibold mb-4">Historia Wizyt</h3>
+              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                {appointments.map((apt) => (
+                  <div
+                    key={apt._id}
+                    className={`p-4 rounded-lg cursor-pointer transition-all ${
+                      currentAppointmentId === apt._id
+                        ? "bg-teal-50 border-2 border-teal-500"
+                        : "bg-gray-50 hover:bg-gray-100"
+                    }`}
+                    onClick={() => handleAppointmentSelect(apt._id)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">
+                          {new Date(apt.date).toLocaleDateString('pl-PL')}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {apt.consultationType || 'Konsultacja standardowa'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
                             apt.status === "completed"
@@ -633,18 +936,28 @@ const PatientDetailsPage = () => {
                             ? "Anulowana" 
                             : "Zaplanowana"}
                         </span>
+                        {apt.status === "completed" && (
+                          <button
+                            onClick={(e) => handleGenerateVisitCard(apt._id, e)}
+                            className="flex items-center p-1 text-teal-600 hover:text-teal-700 transition-colors"
+                            title="Generuj kartę wizyty"
+                          >
+                            <FileText size={16} />
+                          </button>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Right Column - Consultation Form and Other Sections */}
           <div className="lg:col-span-2">
             {selectedAppointment && (
               <>
+                <AppointmentDetails appointment={selectedAppointment} />
                 <ConsultationForm
                   consultationData={consultationData}
                   setConsultationData={setConsultationData}
@@ -754,6 +1067,13 @@ const PatientDetailsPage = () => {
         onConfirm={handleRemoveAllServices}
         title="Confirm Remove All Services"
         message="Are you sure you want to remove all services?"
+      />
+
+      {/* Add PatientDetailsModal */}
+      <PatientDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        patientData={detailedPatientData}
       />
     </div>
   );

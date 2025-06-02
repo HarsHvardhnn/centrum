@@ -55,7 +55,7 @@ const ServicesMini = () => {
           JESTEŚMY TU DLA CIEBIE
         </h2>
         <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 md:mb-16">
-          Nasze usługi
+          Nasze Usługi
         </h3>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-main"></div>
@@ -72,7 +72,7 @@ const ServicesMini = () => {
           JESTEŚMY TU DLA CIEBIE
         </h2>
         <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 md:mb-16">
-          Nasze usługi
+          Nasze Usługi
         </h3>
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
           <span className="block sm:inline">{error}</span>
@@ -89,7 +89,7 @@ const ServicesMini = () => {
           JESTEŚMY TU DLA CIEBIE
         </h2>
         <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 md:mb-16">
-          Nasze usługi
+          Nasze Usługi
         </h3>
         <div className="bg-gray-100 p-8 rounded-lg">
           <p className="text-lg text-gray-600">Aktualnie brak dostępnych usług.</p>
@@ -104,7 +104,7 @@ const ServicesMini = () => {
       JESTEŚMY TU DLA CIEBIE
       </h2>
       <h3 className="text-2xl md:text-4xl font-bold text-main font-serif mt-2 text-center mb-8 md:mb-16">
-        Nasze usługi
+        Nasze Usługi
       </h3>
 
       <div className="flex flex-col lg:flex-row gap-4 max-w-6xl mx-auto">
@@ -114,21 +114,23 @@ const ServicesMini = () => {
             return (
               <button
                 key={service._id}
-                className={`flex flex-col gap-2 items-center text-base md:text-xl p-4 h-28 md:h-32 justify-center w-1/3 md:w-full text-left whitespace-nowrap ${
+                className={`flex flex-col gap-2 items-center text-sm sm:text-base md:text-xl p-2 sm:p-4 min-h-[7rem] sm:min-h-[8rem] md:min-h-[9rem] justify-center flex-1 lg:w-full text-center ${
                   selectedService && selectedService._id === service._id
                     ? "bg-main text-white"
                     : "text-neutral-800"
                 }`}
                 onClick={() => setSelectedService(service)}
               >
-                <span className="text-2xl md:text-4xl">
-                  <Icon />
+                <span className="text-xl sm:text-2xl md:text-4xl">
+                  <FaStethoscope />
                 </span>
-                {`${service.title.length > 18 ? service.title.slice(0, 18) + "..." : service.title}`}
+                <span className="line-clamp-2 text-center w-full px-1">
+                  {service.title}
+                </span>
               </button>
             );
           })}
-          <div className="bg-main flex justify-center items-center max-md:text-sm text-white text-center p-4 cursor-pointer">
+          <div className="bg-main flex justify-center items-center text-xs sm:text-sm md:text-base text-white text-center p-2 sm:p-4 cursor-pointer whitespace-normal min-h-[3rem]">
             Zobacz wszystkie
           </div>
         </div>
@@ -136,24 +138,24 @@ const ServicesMini = () => {
         {selectedService && (
           <div className="lg:w-4/5 w-full flex flex-col md:flex-row gap-4 p-4 md:p-6 bg-white rounded-lg shadow-md">
             <div className="md:w-3/5 w-full">
-              <p className="text-xl md:text-3xl text-neutral-900 font-semibold my-2">
+              <p className="text-lg sm:text-xl md:text-3xl text-neutral-900 font-semibold my-2">
                 {selectedService.shortDescription || selectedService.title}
               </p>
 
               {selectedService.bulletPoints && selectedService.bulletPoints.length > 0 && (
-                <ul className="list-disc pl-5 text-gray-800 text-base md:text-xl my-4">
+                <ul className="list-disc pl-5 text-gray-800 text-sm sm:text-base md:text-xl my-4">
                   {selectedService.bulletPoints.map((point, index) => (
-                    <li key={index}>{point}</li>
+                    <li key={index} className="mb-1">{point}</li>
                   ))}
                 </ul>
               )}
 
-              <p className="text-neutral-800 text-base md:text-xl">
+              <p className="text-neutral-800 text-sm sm:text-base md:text-xl">
                 {selectedService.description || "Brak opisu dla tej usługi."}
               </p>
               
               {selectedService.price && (
-                <p className="text-main text-xl md:text-2xl font-bold mt-4">
+                <p className="text-main text-lg sm:text-xl md:text-2xl font-bold mt-4">
                   Cena: {selectedService.price} zł
                 </p>
               )}
@@ -166,11 +168,11 @@ const ServicesMini = () => {
                     key={index}
                     src={img}
                     alt={selectedService.title}
-                    className="w-full h-60 object-cover rounded-lg"
+                    className="w-full h-48 sm:h-60 object-cover rounded-lg"
                   />
                 ))
               ) : (
-                <div className="w-full h-60 bg-gray-200 rounded-lg flex items-center justify-center">
+                <div className="w-full h-48 sm:h-60 bg-gray-200 rounded-lg flex items-center justify-center">
                   <p className="text-gray-500">Brak zdjęć</p>
                 </div>
               )}

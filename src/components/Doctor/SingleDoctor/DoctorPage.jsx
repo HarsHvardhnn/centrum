@@ -10,7 +10,7 @@ import { formatDateToYYYYMMDD } from "../../../utils/formatDate";
 
 function DoctorsPage() {
   const router = useParams();
-  const navigate=useNavigate()
+  const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
   const [error, setError] = useState(null);
   const [doctorInfo, setDoctorInfo] = useState({});
@@ -21,6 +21,10 @@ function DoctorsPage() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientDetails, setPatientDetails] = useState(null);
   const [appointmentId, setAppointmentId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPatients, setTotalPatients] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchDoctorData = async () => {
@@ -56,30 +60,37 @@ function DoctorsPage() {
     if (doctorInfo && doctorInfo.id) {
       fetchPatientsByDoctor(doctorInfo.id);
     }
-  }, [selectedDate, doctorInfo]);
+  }, [selectedDate, doctorInfo, currentPage, searchQuery]);
 
   // New effect to fetch patient details when a patient is selected
   useEffect(() => {
-    if (selectedPatient) {
-      fetchPatientDetails(selectedPatient, appointmentId);
+    if (appointmentId) {
+      // Find the selected appointment from patients array
+      const selectedAppointment = patients.find(p => p.id === appointmentId);
+      if (selectedAppointment) {
+        fetchPatientDetails(selectedAppointment.patient_id, appointmentId);
+      }
     } else {
       setPatientDetails(null);
     }
-  }, [selectedPatient, appointmentId]);
+  }, [appointmentId, patients]);
 
   const fetchPatientsByDoctor = async (doctorId) => {
     try {
+      showLoader();
       const response = await appointmentHelper.getDoctorAppointments(
         doctorId,
         formatDateToYYYYMMDD(selectedDate),
         formatDateToYYYYMMDD(selectedDate),
         "all",
-        1,
-        10,
+        currentPage,
+        itemsPerPage,
+        searchQuery
       );
 
-      if (response && response.success && response.data) {
+      if (response && response.success) {
         setPatients(response.data);
+        setTotalPatients(response.total || response.data.length);
       } else {
         console.error("Failed to load patients data");
       }
@@ -92,7 +103,7 @@ function DoctorsPage() {
   };
 
   // New function to fetch patient details
-  const fetchPatientDetails = async (patientId,appointmentId) => {
+  const fetchPatientDetails = async (patientId, appointmentId) => {
     try {
       showLoader();
       // Make API call to get patient details using the patient service
@@ -102,14 +113,14 @@ function DoctorsPage() {
       );
 
       console.log("patient response", response);
-      if (response ) {
+      if (response) {
         setPatientDetails(response);
       } else {
-        toast.error("Failed to load patient details");
+        toast.error("Wystąpił błąd");
       }
     } catch (err) {
       console.error("Error fetching patient details:", err);
-      toast.error("Error loading patient details");
+      toast.error("Wystąpił błąd");
     } finally {
       hideLoader();
     }
@@ -162,7 +173,7 @@ function DoctorsPage() {
 
       if (response) {
         // Show success notification
-        toast.success("Appointment booked successfully!");
+        toast.success("Wizyta zarezerwowana pomyślnie!");
 
         // Update local state with the new appointment data
         setAppointmentData(response.data);
@@ -171,14 +182,15 @@ function DoctorsPage() {
         setShowAppointmentModal(false);
       } else {
         // Handle error from API that returns success: false
-        toast.error(response.message || "Failed to book appointment");
+        toast.error("Wystąpił błąd");
+
       }
     } catch (error) {
       // Handle exception from the API call
       console.error("Error creating appointment:", error);
       toast.error(
         error.response?.data?.message ||
-          "An error occurred while booking your appointment"
+          "Wystąpił błąd podczas rezerwacji wizyty"
       );
     } finally {
       // Hide loading indicator
@@ -187,9 +199,19 @@ function DoctorsPage() {
   };
 
   // Function to handle patient selection
-  const handlePatientSelect = (patientId) => {
-    console.log(`Selected patient: ${patientId}`);
-    setSelectedPatient(patientId);
+  const handlePatientSelect = (patientId, appointmentId) => {
+    setAppointmentId(appointmentId);
+  };
+
+  // Handle search
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Handle page change
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -198,19 +220,22 @@ function DoctorsPage() {
         doctor={doctorInfo}
         patients={patients}
         stats={stats}
-        selectedPatient={selectedPatient}
-        patientDetails={patientDetails} // Pass the patient details to DoctorDashboard
+        selectedPatient={appointmentId}
+        patientDetails={patientDetails}
         onPatientSelect={handlePatientSelect}
         setAppointmentId={setAppointmentId}
         onDateSelect={setSelectedDate}
         breadcrumbs={[
-            { label: "Dashboard", onClick: () => navigate("/admin") },
-            { label: "Doctor Appointment", onClick: null },
-          ]
-        }
-        onSearch={(query) => console.log(`Search query: ${query}`)}
+          { label: "Panel główny", onClick: () => navigate("/admin") },
+          { label: "Wizyty lekarskie", onClick: null },
+        ]}
+        onSearch={handleSearch}
         onFilter={() => console.log("Filter clicked")}
         onBookAppointment={() => setShowAppointmentModal(true)}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
+        totalPatients={totalPatients}
+        itemsPerPage={itemsPerPage}
       />
 
       {/* Appointment Form Modal */}

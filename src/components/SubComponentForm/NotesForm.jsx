@@ -23,7 +23,7 @@ const NotesForm = () => {
         ></textarea>
       </div>
       
-      <div className="flex items-center mt-4">
+      {/* <div className="flex items-center mt-4">
         <input 
           type="checkbox" 
           id="international-patient" 
@@ -35,7 +35,7 @@ const NotesForm = () => {
         <label htmlFor="international-patient" className="ml-2 text-sm text-gray-700">
           Pacjent Zagraniczny
         </label>
-      </div>
+      </div> */}
     </div>
   );
 };

@@ -4,7 +4,7 @@ import axios from "axios";
 const axiosInstance = axios.create({
   baseURL:
     import.meta.env.VITE_REACT_APP_API_BASE_URL || "https://api.example.com", // Use environment variable for base URL
-  timeout: 10000, // Timeout for requests
+  timeout: 100000, // Timeout for requests
 });
 
 // Request interceptor

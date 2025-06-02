@@ -36,10 +36,11 @@ const billingHelper = {
         limit = 10,
         sortBy = "billedAt",
         sortOrder = -1,
-        patientId,
+        search,
         startDate,
         endDate,
-        paymentStatus
+        paymentStatus,
+
       } = options;
 
       let queryParams = new URLSearchParams({
@@ -49,10 +50,11 @@ const billingHelper = {
         sortOrder
       });
 
-      if (patientId) queryParams.append("patientId", patientId);
+      if (search) queryParams.append("search", search);
       if (startDate) queryParams.append("startDate", startDate);
       if (endDate) queryParams.append("endDate", endDate);
       if (paymentStatus) queryParams.append("paymentStatus", paymentStatus);
+
 
       const response = await apiCaller(
         "GET",
@@ -175,6 +177,26 @@ const billingHelper = {
       return response.data;
     } catch (error) {
       console.error("Error fetching billing statistics:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update a bill
+   * @param {string} billId - Bill ID
+   * @param {Object} updateData - Data to update the bill with
+   * @returns {Promise} - API response
+   */
+  updateBill: async (billId, updateData) => {
+    try {
+      const response = await apiCaller(
+        "PUT",
+        `/patient-bills/${billId}`,
+        updateData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating bill:", error);
       throw error;
     }
   }

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
   Calendar,
   ChevronLeft,
@@ -8,7 +9,11 @@ import {
   Edit,
   Trash2,
   RefreshCcw,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  UserCheck,
+  DollarSign,
+  FileText
 } from "lucide-react";
 import patientService from "../../helpers/patientHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
@@ -16,6 +21,13 @@ import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 import { useUser } from "../../context/userContext";
 import { useNavigate } from "react-router-dom";
 import { useLoader } from "../../context/LoaderContext";
+import { toast } from "sonner";
+import patientServicesHelper from "../../helpers/patientServicesHelper";
+import billingHelper from "../../helpers/billingHelper";
+import { createPortal } from "react-dom";
+import CheckInModal from "../admin/CheckinModal";
+import { translateStatus, getStatusStyle } from '../../utils/statusHelper';
+import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 
 const MedicalDashboard = () => {
   const { user } = useUser();
@@ -411,119 +423,119 @@ const DoctorAppointmentChart = () => {
 };
 
 // Lab Appointments Card Component
-const LabAppointmentsCard = () => {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium">Wizyty laboratoryjne</h2>
-        <button className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-1">
-          <span className="text-sm">Miesiąc</span>
-          <ChevronDown size={16} />
-        </button>
-      </div>
+// const LabAppointmentsCard = () => {
+//   return (
+//     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+//       <div className="flex justify-between items-center mb-4">
+//         <h2 className="text-lg font-medium">Wizyty laboratoryjne</h2>
+//         <button className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-1">
+//           <span className="text-sm">Miesiąc</span>
+//           <ChevronDown size={16} />
+//         </button>
+//       </div>
 
-      <div className="flex justify-center py-4">
-        <div className="relative w-48 h-48">
-          {/* Circular multi-ring progress chart */}
-          <svg className="w-full h-full" viewBox="0 0 100 100">
-            {/* Outer background ring */}
-            <circle
-              cx="50"
-              cy="50"
-              r="42"
-              fill="none"
-              stroke="#E6F7F5"
-              strokeWidth="8"
-            />
+//       <div className="flex justify-center py-4">
+//         <div className="relative w-48 h-48">
+//           {/* Circular multi-ring progress chart */}
+//           <svg className="w-full h-full" viewBox="0 0 100 100">
+//             {/* Outer background ring */}
+//             <circle
+//               cx="50"
+//               cy="50"
+//               r="42"
+//               fill="none"
+//               stroke="#E6F7F5"
+//               strokeWidth="8"
+//             />
 
-            {/* Middle background ring */}
-            <circle
-              cx="50"
-              cy="50"
-              r="32"
-              fill="none"
-              stroke="#E6F7F5"
-              strokeWidth="8"
-            />
+//             {/* Middle background ring */}
+//             <circle
+//               cx="50"
+//               cy="50"
+//               r="32"
+//               fill="none"
+//               stroke="#E6F7F5"
+//               strokeWidth="8"
+//             />
 
-            {/* Inner background ring */}
-            <circle
-              cx="50"
-              cy="50"
-              r="22"
-              fill="none"
-              stroke="#E6F7F5"
-              strokeWidth="8"
-            />
+//             {/* Inner background ring */}
+//             <circle
+//               cx="50"
+//               cy="50"
+//               r="22"
+//               fill="none"
+//               stroke="#E6F7F5"
+//               strokeWidth="8"
+//             />
 
-            {/* Outer progress ring */}
-            <circle
-              cx="50"
-              cy="50"
-              r="42"
-              fill="none"
-              stroke="#5BBFB5"
-              strokeWidth="8"
-              strokeDasharray="264"
-              strokeDashoffset="70"
-              strokeLinecap="round"
-              transform="rotate(-90 50 50)"
-            />
+//             {/* Outer progress ring */}
+//             <circle
+//               cx="50"
+//               cy="50"
+//               r="42"
+//               fill="none"
+//               stroke="#5BBFB5"
+//               strokeWidth="8"
+//               strokeDasharray="264"
+//               strokeDashoffset="70"
+//               strokeLinecap="round"
+//               transform="rotate(-90 50 50)"
+//             />
 
-            {/* Middle progress ring */}
-            <circle
-              cx="50"
-              cy="50"
-              r="32"
-              fill="none"
-              stroke="#5BBFB5"
-              strokeWidth="8"
-              strokeDasharray="201"
-              strokeDashoffset="100"
-              strokeLinecap="round"
-              transform="rotate(-90 50 50)"
-            />
+//             {/* Middle progress ring */}
+//             <circle
+//               cx="50"
+//               cy="50"
+//               r="32"
+//               fill="none"
+//               stroke="#5BBFB5"
+//               strokeWidth="8"
+//               strokeDasharray="201"
+//               strokeDashoffset="100"
+//               strokeLinecap="round"
+//               transform="rotate(-90 50 50)"
+//             />
 
-            {/* Inner progress ring */}
-            <circle
-              cx="50"
-              cy="50"
-              r="22"
-              fill="none"
-              stroke="#5BBFB5"
-              strokeWidth="8"
-              strokeDasharray="138"
-              strokeDashoffset="50"
-              strokeLinecap="round"
-              transform="rotate(-90 50 50)"
-            />
-          </svg>
+//             {/* Inner progress ring */}
+//             <circle
+//               cx="50"
+//               cy="50"
+//               r="22"
+//               fill="none"
+//               stroke="#5BBFB5"
+//               strokeWidth="8"
+//               strokeDasharray="138"
+//               strokeDashoffset="50"
+//               strokeLinecap="round"
+//               transform="rotate(-90 50 50)"
+//             />
+//           </svg>
 
-          {/* Center content */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-sm text-gray-600">Appointment</div>
-            <div className="text-3xl font-bold">2,350</div>
-          </div>
-        </div>
-      </div>
+//           {/* Center content */}
+//           <div className="absolute inset-0 flex flex-col items-center justify-center">
+//             <div className="text-sm text-gray-600">Appointment</div>
+//             <div className="text-3xl font-bold">2,350</div>
+//           </div>
+//         </div>
+//       </div>
 
-      <div className="flex items-center justify-center gap-4 mt-2">
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-          <span className="text-xs text-gray-600">12 Completed</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-teal-700"></div>
-          <span className="text-xs text-gray-600">Series 2</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-teal-300"></div>
-          <span className="text-xs text-gray-600">60 Completed</span>
-        </div>
-      </div>
-    </div>
-  );
-};
+//       <div className="flex items-center justify-center gap-4 mt-2">
+//         <div className="flex items-center gap-1">
+//           <div className="w-2 h-2 rounded-full bg-teal-500"></div>
+//           <span className="text-xs text-gray-600">12 Completed</span>
+//         </div>
+//         <div className="flex items-center gap-1">
+//           <div className="w-2 h-2 rounded-full bg-teal-700"></div>
+//           <span className="text-xs text-gray-600">Series 2</span>
+//         </div>
+//         <div className="flex items-center gap-1">
+//           <div className="w-2 h-2 rounded-full bg-teal-300"></div>
+//           <span className="text-xs text-gray-600">60 Completed</span>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 
 // Patient List Component
 const PatientList = () => {
@@ -532,6 +544,11 @@ const PatientList = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showCheckin, setShowCheckin] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [showBillingModal, setShowBillingModal] = useState(false);
+  const [billingServices, setBillingServices] = useState([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     total: 0,
@@ -539,6 +556,117 @@ const PatientList = () => {
   });
 
   const navigate = useNavigate();
+
+  // Function to handle billing confirmation
+  const handleBillPatient = async (appointmentId, patientId) => {
+    try {
+      setLoading(true);
+      // Fetch patient services for this appointment
+      const response = await patientServicesHelper.getPatientServices(
+        patientId,
+        { appointmentId }
+      );
+
+      // Store the entire response data
+      setBillingServices(response);
+      setShowBillingModal(true);
+      setLoading(false);
+    } catch (error) {
+      console.error("Failed to fetch patient services:", error);
+      toast.error("Nie udało się pobrać informacji o płatnościach");
+      setLoading(false);
+    }
+  };
+
+  // Function to confirm billing
+  const confirmBilling = async (billingData) => {
+    try {
+      setLoading(true);
+
+      // Format services data
+      const formattedServices =
+        billingServices?.data?.services?.map((service) => ({
+          serviceId: service.service._id,
+          title: service.service.title,
+          price: service.service.price,
+          status: service.status,
+        })) || [];
+
+      // Prepare billing payload
+      const billingPayload = {
+        services: formattedServices,
+        subtotal: billingData.subtotal,
+        taxPercentage: billingData.taxPercentage,
+        taxAmount: billingData.taxAmount,
+        discount: parseFloat(billingData.discount) || 0,
+        additionalCharges: parseFloat(billingData.additionalCharges) || 0,
+        additionalChargeNote: billingData.additionalChargeNote || "",
+        totalAmount: billingData.totalAmount,
+        paymentMethod: billingData.paymentMethod,
+      };
+
+      // Call the API to generate the bill
+      const response = await billingHelper.generateBill(selectedAppointment._id, billingPayload);
+
+      // Update local state
+      setPatients(
+        patients.map((apt) =>
+          apt._id === selectedAppointment._id
+            ? {
+                ...apt,
+                status: "billed",
+                billingDetails: billingData,
+              }
+            : apt
+        )
+      );
+
+      toast.success(
+        `Rachunek wygenerowany pomyślnie na kwotę zł${billingData.totalAmount}`
+      );
+      setShowBillingModal(false);
+      setLoading(false);
+      
+      // Redirect to billing details
+      navigate(`/admin/billing/details/${response.data._id}`);
+    } catch (error) {
+      console.error("Failed to generate bill:", error);
+      toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
+      setLoading(false);
+    }
+  };
+
+  const handleCancelClick = (e, appointmentId) => {
+    e.stopPropagation();
+    setSelectedAppointment(appointmentId);
+    setShowCancelModal(true);
+  };
+
+  const handleCancelAppointment = async () => {
+    try {
+      await appointmentHelper.cancelAppointment(selectedAppointment, "Canceled by user");
+      setShowCancelModal(false);
+      setSelectedAppointment(null);
+      // Refresh the patient list after cancellation
+      const response = await patientService.getSimpliefiedAppointmentsList({
+        page: pagination.currentPage,
+        limit: 10,
+        ...(user?.role === "doctor" && user?.id ? { doctor: user.id } : {})
+      });
+      setPatients(response.appointments);
+    } catch (err) {
+      console.error("Error canceling appointment:", err);
+      setError("Failed to cancel appointment. Please try again.");
+    }
+  };
+
+  const handleAppointmentUpdate = (appointmentId, newStatus) => {
+    setPatients(patients.map(patient => 
+      patient._id === appointmentId 
+        ? { ...patient, status: newStatus }
+        : patient
+    ));
+  };
 
   // Fetch patients on component mount and when page changes
   useEffect(() => {
@@ -557,9 +685,9 @@ const PatientList = () => {
           params.doctor = user.id;
         }
         
-        const response = await patientService.getSimpliefiedPatientsList(params);
+        const response = await patientService.getSimpliefiedAppointmentsList(params);
 
-        setPatients(response.patients);
+        setPatients(response.appointments);
         setPagination({
           currentPage: response.currentPage,
           total: response.total,
@@ -577,6 +705,20 @@ const PatientList = () => {
     fetchPatients();
   }, [pagination.currentPage, user]);
 
+
+  const translateSexToPolish = (sex) => {
+    switch (sex) {
+      case "Male":
+        return "Mężczyzna";
+      case "Female":
+        return "Kobieta";
+      case "Others":
+        return "Inna";
+      default:
+        return "Nieznany";
+    }
+  };
+  
   const toggleSelectAll = () => {
     if (selectedPatients.length === patients.length) {
       setSelectedPatients([]);
@@ -635,19 +777,63 @@ const PatientList = () => {
     return buttons;
   };
 
+  const handleGenerateVisitCard = async (appointmentId) => {
+    try {
+      const response = await appointmentHelper.generateVisitCard(appointmentId);
+      if (response.success && response.data.url) {
+        window.open(response.data.url, '_blank');
+      } else {
+        toast.error("Nie udało się wygenerować karty wizyty");
+      }
+    } catch (error) {
+      console.error("Error generating visit card:", error);
+      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Lista pacjentów</h2>
           <span className="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
-            {pagination.total} member{pagination.total !== 1 ? "s" : ""}
+          {pagination.total} {pagination.total === 1 
+  ? "członek" 
+  : pagination.total > 1 && pagination.total < 5 
+    ? "członkowie" 
+    : "członków"}
           </span>
         </div>
         <button>
           <MoreVertical size={20} className="text-gray-500" />
         </button>
       </div>
+
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-medium mb-4">Potwierdź anulowanie</h3>
+            <p className="text-gray-600 mb-6">Czy na pewno chcesz anulować tę wizytę? Tej operacji nie można cofnąć.</p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setSelectedAppointment(null);
+                }}
+              >
+                Anuluj
+              </button>
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                onClick={handleCancelAppointment}
+              >
+                Potwierdź
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="p-8 text-center text-gray-500">Loading patients...</div>
@@ -660,7 +846,7 @@ const PatientList = () => {
           <table className="w-full">
             <thead>
               <tr>
-                <th className="py-3 px-4 text-left">
+                {/* <th className="py-3 px-4 text-left">
                   <input
                     type="checkbox"
                     className="rounded border-gray-300"
@@ -670,7 +856,7 @@ const PatientList = () => {
                     }
                     onChange={toggleSelectAll}
                   />
-                </th>
+                </th> */}
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   Imię i Nazwisko Pacjenta
                 </th>
@@ -692,21 +878,23 @@ const PatientList = () => {
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   Data wizyty
                 </th>
-                <th className="py-3 px-4"></th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                  Akcje
+                </th>
               </tr>
             </thead>
             <tbody>
               {patients.map((patient) => (
-                <tr key={patient.id} className="hover:bg-gray-50" onClick={() => navigate(`/patients-details/${patient._id}`)}>
-                  <td className="py-4 px-4">
+                <tr key={patient.id} className="hover:bg-gray-50">
+                  {/* <td className="py-4 px-4">
                     <input
                       type="checkbox"
                       className="rounded border-gray-300"
                       checked={selectedPatients.includes(patient.id)}
                       onChange={() => toggleSelectPatient(patient.id)}
                     />
-                  </td>
-                  <td className="py-4 px-4">
+                  </td> */}
+                  <td className="py-4 px-4 cursor-pointer" onClick={() => navigate(`/patients-details/${patient.patient_id}?appointmentId=${patient._id}`)} >
                     <div className="font-medium">{patient.name || "N/A"}</div>
                     <div className="text-sm text-gray-500">
                       {patient.username || "N/A"}
@@ -716,7 +904,7 @@ const PatientList = () => {
                     {patient.id || "N/A"}
                   </td>
                   <td className="py-4 px-4 text-gray-600">
-                    {patient.sex || "N/A"}
+                    {translateSexToPolish(patient.sex) || "N/A"}
                   </td>
                   <td className="py-4 px-4 text-gray-600">
                     {patient.age || "N/A"}
@@ -724,15 +912,9 @@ const PatientList = () => {
                   <td className="py-4 px-4">
                     {patient.status ? (
                       <span
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          patient.status === "in-treatment"
-                            ? "bg-blue-100 text-blue-800"
-                            : patient.status === "recovered"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
+                        className={`px-2 py-1 rounded-full text-xs ${getStatusStyle(patient.status)}`}
                       >
-                        {patient.status}
+                        {translateStatus(patient.status)}
                       </span>
                     ) : (
                       "N/A"
@@ -742,16 +924,76 @@ const PatientList = () => {
                     {patient.doctor || "N/A"}
                   </td>
                   <td className="py-4 px-4 text-gray-600">
-                    {patient.date || "N/A"}
+                    {new Date(patient.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }) || "N/A"}
                   </td>
                   <td className="py-4 px-4">
-                    <div className="flex gap-2">
-                      <button className="text-gray-500">
-                        <Trash2 size={16} />
-                      </button>
-                      <button className="text-gray-500">
-                        <Edit size={16} />
-                      </button>
+                    <div className="flex justify-center">
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger asChild>
+                          <button
+                            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                          >
+                            <MoreVertical size={18} />
+                          </button>
+                        </DropdownMenu.Trigger>
+
+                        <DropdownMenu.Portal>
+                          <DropdownMenu.Content
+                            className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
+                            sideOffset={5}
+                          >
+                            <DropdownMenu.Item
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                              onClick={() => {
+                                navigate(
+                                  `/patients-details/${patient.patient_id}?appointmentId=${patient._id}`
+                                );
+                              }}
+                            >
+                              <Eye size={16} className="mr-2" />
+                              Zobacz szczegóły
+                            </DropdownMenu.Item>
+
+                            {patient.status === "booked" && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={() => {
+                                  setSelectedAppointment(patient);
+                                  setShowCheckin(true);
+                                }}
+                              >
+                                <UserCheck size={16} className="mr-2" />
+                                Zamelduj
+                              </DropdownMenu.Item>
+                            )}
+
+                            {["checkedIn", "booked"].includes(patient.status) && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={() => {
+                                  setSelectedAppointment(patient);
+                                  handleBillPatient(patient._id, patient.patient_id);
+                                }}
+                              >
+                                <DollarSign size={16} className="mr-2" />
+                                Wystaw rachunek
+                              </DropdownMenu.Item>
+                            )}
+
+                            {patient.status === "booked" && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={(e) => {
+                                  handleCancelClick(e, patient._id);
+                                }}
+                              >
+                                <Trash2 size={16} className="mr-2" />
+                                Anuluj wizytę
+                              </DropdownMenu.Item>
+                            )}
+                          </DropdownMenu.Content>
+                        </DropdownMenu.Portal>
+                      </DropdownMenu.Root>
                     </div>
                   </td>
                 </tr>
@@ -760,6 +1002,26 @@ const PatientList = () => {
           </table>
         </div>
       )}
+
+      {/* Billing Confirmation Modal */}
+      <BillingConfirmationModal
+        isOpen={showBillingModal}
+        onClose={() => setShowBillingModal(false)}
+        onConfirm={confirmBilling}
+        patientServicesData={billingServices}
+        patientName={selectedAppointment?.patient?.name}
+        appointmentId={selectedAppointment?.id}
+        patientId={selectedAppointment?.patient_id}
+      />
+
+      {/* Check-in Modal */}
+      <CheckInModal
+        isOpen={showCheckin}
+        setIsOpen={setShowCheckin}
+        patientData={{ ...selectedAppointment, id: selectedAppointment?.patient_id } || {}}
+        appointmentId={selectedAppointment?._id}
+        onAppointmentUpdate={handleAppointmentUpdate}
+      />
 
       <div className="p-4 flex items-center justify-between border-t border-gray-200">
         <button
@@ -929,6 +1191,20 @@ const UpcomingAppointments = () => {
     // navigate(`/appointments/${appointmentId}/reschedule`);
   };
 
+  const handleGenerateVisitCard = async (appointmentId) => {
+    try {
+      const response = await appointmentHelper.generateVisitCard(appointmentId);
+      if (response.success && response.data.url) {
+        window.open(response.data.url, '_blank');
+      } else {
+        toast.error("Nie udało się wygenerować karty wizyty");
+      }
+    } catch (error) {
+      console.error("Error generating visit card:", error);
+      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+    }
+  };
+
   return (
     <div className="mt-6">
       <div className="flex justify-between items-center mb-4">
@@ -983,28 +1259,69 @@ const UpcomingAppointments = () => {
               <div className="flex items-center gap-4 mb-6">
                 <div className="flex items-center text-gray-600 text-sm">
                   <Calendar size={16} className="mr-2 text-teal-500" />
-                  {appointment.date}
+                  {new Date(appointment.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                 </div>
                 <div className="flex items-center text-gray-600 text-sm">
                   <Clock size={16} className="mr-2 text-teal-500" />
-                  {appointment.time}
+                  {(appointment.time)}
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  className="flex-1 bg-teal-50 text-teal-600 py-2 rounded-md text-sm font-medium"
-                  onClick={() => handleCancelAppointment(appointment.id)}
-                >
-                  Anuluj wizytę
-                </button>
-                <button
-                  className="flex-1 bg-teal-50 text-teal-600 py-2 rounded-md text-sm font-medium flex items-center justify-center"
-                  onClick={() => handleRescheduleAppointment(appointment.id)}
-                >
-                  <Calendar size={16} className="mr-2" />
-                  Zmień termin
-                </button>
+              <div className="flex items-center justify-between">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(appointment.status)}`}>
+                  {translateStatus(appointment.status)}
+                </span>
+                
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
+                      <MoreVertical size={18} />
+                    </button>
+                  </DropdownMenu.Trigger>
+
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
+                      sideOffset={5}
+                      align="end"
+                    >
+                      <DropdownMenu.Item
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                        onClick={() => {
+                          navigate(
+                            `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                          );
+                        }}
+                      >
+                        <Eye size={16} className="mr-2 flex-shrink-0" />
+                        Zobacz szczegóły
+                      </DropdownMenu.Item>
+
+                      {appointment.status === "booked" && (
+                        <DropdownMenu.Item
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                          onClick={() => {
+                            setSelectedAppointment(appointment);
+                            setShowCheckin(true);
+                          }}
+                        >
+                          <UserCheck size={16} className="mr-2 flex-shrink-0" />
+                          Zamelduj
+                        </DropdownMenu.Item>
+                      )}
+
+                      {appointment.status === "completed" && appointment.isAppointment && (
+                        <DropdownMenu.Item
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                          onClick={() => handleGenerateVisitCard(appointment.id)}
+                        >
+                          <FileText size={16} className="mr-2 flex-shrink-0" />
+                          Generuj kartę wizyty
+                        </DropdownMenu.Item>
+                      )}
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
               </div>
             </div>
           ))}

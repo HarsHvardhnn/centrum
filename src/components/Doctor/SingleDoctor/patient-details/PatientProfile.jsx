@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import HealthMetric from "./HealthMetric";
 
 const PatientProfile = ({ patient, setPatientData }) => {
-  console.log("patient", patient);
+  console.log("patien datast", patient);
   const [isEditingRoom, setIsEditingRoom] = useState(false);
   const [roomNumber, setRoomNumber] = useState(patient?.roomNumber || "28B");
 
@@ -39,15 +39,32 @@ const PatientProfile = ({ patient, setPatientData }) => {
 
   // Obsługa aktualizacji parametrów zdrowotnych
   const handleMetricUpdate = (metric, value) => {
-    const mappings = {
-      "blood pressure": "bloodPressure",
-      temperature: "temperature",
-      weight: "weight",
-      height: "height",
+    const fieldMappings = {
+      "Ciśnienie krwi": "bloodPressure",
+      "Temperatura": "temperature",
+      "Waga": "weight",
+      "Wzrost": "height"
     };
 
-    const field = mappings[metric] || metric;
-    handleStatusChange(field, value);
+    const field = fieldMappings[metric];
+    if (!field) return;
+
+    // Convert empty string to null, otherwise keep the numeric value
+    const numericValue = value === '' ? null : value;
+
+    const updatedPatient = {
+      ...patient,
+      [field]: numericValue
+    };
+
+    // Update both local state and parent state
+    setPatientData(updatedPatient);
+  };
+
+  // Function to format display value with unit
+  const formatDisplayValue = (value, unit) => {
+    if (!value) return '';
+    return value;
   };
 
   return (
@@ -56,11 +73,18 @@ const PatientProfile = ({ patient, setPatientData }) => {
       <div className="mb-6 flex flex-col items-center">
         <div className="relative mb-2">
           <div className="w-24 h-24 rounded-full bg-blue-100 overflow-hidden">
-            <img
-              src={patient?.avatar}
-              alt={patient.name}
-              className="w-full h-full object-cover"
-            />
+          {patient?.avatar ? (
+  <img
+    src={patient.avatar}
+    alt={patient.name}
+    className="w-full h-full object-cover"
+  />
+) : (
+  <div className="w-full h-full flex items-center justify-center bg-gray-300 text-white text-2xl font-semibold rounded-full">
+    {patient?.name?.charAt(0)?.toUpperCase() || "?"}
+  </div>
+)}
+
           </div>
           <div className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1 border-2 border-white">
             <div className="bg-white rounded-full p-0.5">
@@ -182,46 +206,46 @@ const PatientProfile = ({ patient, setPatientData }) => {
         </div>
         <div className="flex flex-col">
           <p className="text-xs text-gray-500">Data urodzenia</p>
-          <p className="text-sm">{patient.birthDate}</p>
+          <p className="text-sm">
+  {isNaN(new Date(patient.birthDate)) 
+    ? "Nieprawidłowa data" 
+    : new Date(patient.birthDate).toLocaleDateString("pl-PL")}
+</p>
+
         </div>
         <div className="flex flex-col">
-          <p className="text-xs text-gray-500">Choroby</p>
-          <p className="text-sm">{patient.disease || "Nie określono"}</p>
+          <p className="text-xs text-gray-500">Alergie</p>
+          <p className="text-sm">{patient.allergies || "Nie określono"}</p>
         </div>
       </div>
 
-      {/* Parametry zdrowotne - edytowalne */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="col-span-1">
-          <HealthMetric
+      {/* Parametry zdrowotne */}
+      <div className="mt-6">
+        <h4 className="text-sm font-medium mb-3 text-gray-700">Parametry zdrowotne</h4>
+        <div className="space-y-3">
+          {/* <HealthMetric
             title="Ciśnienie krwi"
-            value={patient.bloodPressure}
-            percentage={30}
+            value={formatDisplayValue(patient?.bloodPressure)}
             onUpdate={handleMetricUpdate}
-          />
-        </div>
-        <div className="col-span-1">
+            unit="mmHg"
+          /> */}
           <HealthMetric
             title="Temperatura"
-            value={patient.temperature}
-            percentage={45}
+            value={formatDisplayValue(patient?.temperature)}
             onUpdate={handleMetricUpdate}
+            unit="°C"
           />
-        </div>
-        <div className="col-span-1">
           <HealthMetric
             title="Waga"
-            value={patient.weight}
-            percentage={60}
+            value={formatDisplayValue(patient?.weight)}
             onUpdate={handleMetricUpdate}
+            unit="kg"
           />
-        </div>
-        <div className="col-span-1">
           <HealthMetric
             title="Wzrost"
-            value={patient.height}
-            percentage={75}
+            value={formatDisplayValue(patient?.height)}
             onUpdate={handleMetricUpdate}
+            unit="cm"
           />
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import DoctorInfoCard from "./DoctorInfo";
 import PatientsList from "./PatientsList";
@@ -20,14 +20,22 @@ const DoctorDashboard = ({
   onPatientSelect,
   selectedPatient,
   breadcrumbs,
-  setAppointmentId
+  setAppointmentId,
+  currentPage,
+  onPageChange,
+  totalPatients,
+  itemsPerPage
 }) => {
   const navigate = useNavigate();
   console.log("patiend eta;same",patientDetails)
 
   const handleViewDetails = () => {
     if (selectedPatient) {
-      navigate(`/patients-details/${selectedPatient}`);
+      // Find the selected appointment from patients array
+      const selectedAppointment = patients.find(p => p.id === selectedPatient);
+      if (selectedAppointment) {
+        navigate(`/patients-details/${selectedAppointment.patient_id}`);
+      }
     }
   };
 
@@ -42,7 +50,7 @@ const DoctorDashboard = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
-          <div className="relative">
+          {/* <div className="relative">
             <input
               type="text"
               placeholder="Wyszukaj pacjenta..."
@@ -53,14 +61,14 @@ const DoctorDashboard = ({
               className="absolute left-3 top-2.5 text-gray-400"
               size={18}
             />
-          </div>
+          </div> */}
 
-          <button
+          {/* <button
             onClick={onFilter}
             className="p-2 border border-gray-300 rounded-lg"
           >
             <Filter size={18} className="text-gray-600" />
-          </button>
+          </button> */}
 
           <button
             onClick={onBookAppointment}
@@ -99,6 +107,10 @@ const DoctorDashboard = ({
               onPatientSelect={onPatientSelect}
               selectedPatient={selectedPatient}
               title="Lista pacjentów"
+              currentPage={currentPage}
+              onPageChange={onPageChange}
+              totalPatients={totalPatients}
+              itemsPerPage={itemsPerPage}
             />
           </div>
 

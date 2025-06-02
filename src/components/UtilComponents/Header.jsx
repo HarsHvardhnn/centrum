@@ -72,9 +72,9 @@ const Header = () => {
             <p className="text-xs text-white/80">Polska</p>
           </div>
         </div>
-        <button className="ml-2 hover:bg-primary rounded-full p-1">
+        {/* <button className="ml-2 hover:bg-primary rounded-full p-1">
           <ChevronDown size={18} />
-        </button>
+        </button> */}
       </div>
 
       <div className="flex items-center gap-4">
@@ -142,14 +142,15 @@ const Header = () => {
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 <User size={16} className="mr-2" />
-                View Profile
+                Zobacz profil
               </button>
+
               <button
                 onClick={handleLogout}
                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
               >
                 <LogOut size={16} className="mr-2" />
-                Logout
+                Wyloguj 
               </button>
             </div>
           )}

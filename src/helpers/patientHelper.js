@@ -15,51 +15,67 @@ const patientService = {
     try {
       const formData = new FormData();
 
-      // Append all fields manually
-      formData.append("address", patientData.address);
-      formData.append("alternateContact", patientData.alternateContact);
-      formData.append("birthWeight", patientData.birthWeight);
-      formData.append("city", patientData.city);
-      formData.append("consents", JSON.stringify(patientData.consents)); // Assuming consents is an array
-      formData.append("consultingDepartment", patientData.consultingDepartment);
-      formData.append("consultingDoctor", patientData.consultingDoctor);
-      formData.append("country", patientData.country);
-      formData.append("dateOfBirth", patientData.dateOfBirth);
-      formData.append("district", patientData.district);
-      formData.append("education", patientData.education);
-      formData.append("email", patientData.email);
-      formData.append("ethnicity", patientData.ethnicity);
-      formData.append("fatherName", patientData.fatherName);
-      formData.append("fullName", patientData.fullName);
-      formData.append("govtId", patientData.govtId);
-      formData.append("hospId", patientData.hospId);
-      formData.append(
-        "isInternationalPatient",
-        patientData.isInternationalPatient
-      );
-      formData.append("ivrLanguage", patientData.ivrLanguage);
-      formData.append("mainComplaint", patientData.mainComplaint);
-      formData.append("maritalStatus", patientData.maritalStatus);
-      formData.append("mobileNumber", patientData.mobileNumber);
-      formData.append("motherName", patientData.motherName);
-      formData.append("motherTongue", patientData.motherTongue);
-      formData.append("occupation", patientData.occupation);
-      formData.append("otherHospitalIds", patientData.otherHospitalIds);
-      formData.append("pinCode", patientData.pinCode);
-      formData.append("referrerEmail", patientData.referrerEmail);
-      formData.append("referrerName", patientData.referrerName);
-      formData.append("referrerNumber", patientData.referrerNumber);
-      formData.append("referrerType", patientData.referrerType);
-      formData.append("religion", patientData.religion);
-      formData.append("reviewNotes", patientData.reviewNotes);
-      formData.append("sex", patientData.sex);
-      formData.append("spouseName", patientData.spouseName);
-      formData.append("state", patientData.state);
+      // Helper function to append only if value exists and is not null/undefined
+      const appendIfExists = (key, value) => {
+        if (value !== undefined && value !== null && value !== '') {
+          formData.append(key, value);
+        }
+      };
+
+      // Append all fields only if they exist
+      appendIfExists("address", patientData.address);
+      appendIfExists("alternateContact", patientData.alternateContact);
+      appendIfExists("birthWeight", patientData.birthWeight);
+      appendIfExists("city", patientData.city);
+      // Special handling for consents array
+      if (patientData.consents?.length) {
+        formData.append("consents", JSON.stringify(patientData.consents));
+      }
+      appendIfExists("consultingDepartment", patientData.consultingDepartment);
+      appendIfExists("consultingDoctor", patientData.consultingDoctor);
+      appendIfExists("country", patientData.country);
+      appendIfExists("dateOfBirth", patientData.dateOfBirth);
+      appendIfExists("district", patientData.district);
+      appendIfExists("education", patientData.education);
+      appendIfExists("email", patientData.email);
+      appendIfExists("ethnicity", patientData.ethnicity);
+      appendIfExists("fatherName", patientData.fatherName);
+      appendIfExists("fullName", patientData.fullName);
+      appendIfExists("govtId", patientData.govtId);
+      appendIfExists("hospId", patientData.hospId);
+      appendIfExists("isInternationalPatient", patientData.isInternationalPatient);
+      appendIfExists("smsConsentAgreed", patientData.smsConsentAgreed);
+      appendIfExists("ivrLanguage", patientData.ivrLanguage);
+      appendIfExists("mainComplaint", patientData.mainComplaint);
+      appendIfExists("maritalStatus", patientData.maritalStatus);
+      appendIfExists("mobileNumber", patientData.mobileNumber);
+      appendIfExists("motherName", patientData.motherName);
+      appendIfExists("motherTongue", patientData.motherTongue);
+      appendIfExists("occupation", patientData.occupation);
+      appendIfExists("otherHospitalIds", patientData.otherHospitalIds);
+      appendIfExists("pinCode", patientData.pinCode);
+      appendIfExists("referrerEmail", patientData.referrerEmail);
+      appendIfExists("referrerName", patientData.referrerName);
+      appendIfExists("referrerNumber", patientData.referrerNumber);
+      appendIfExists("referrerType", patientData.referrerType);
+      appendIfExists("religion", patientData.religion);
+      appendIfExists("reviewNotes", patientData.reviewNotes);
+      appendIfExists("sex", patientData.sex);
+      appendIfExists("spouseName", patientData.spouseName);
+      appendIfExists("state", patientData.state);
+      appendIfExists("isAdult", patientData.isAdult);
+      appendIfExists("contactPerson", patientData.contactPerson);
+      appendIfExists("fatherPhone", patientData.fatherPhone);
+      appendIfExists("motherPhone", patientData.motherPhone);
+      appendIfExists("relationToPatient", patientData.relationToPatient);
+      appendIfExists("allergies", patientData.allergies);
+      appendIfExists("nationality", patientData.nationality);
+      appendIfExists("preferredLanguage", patientData.preferredLanguage);
 
       // Append documents (multiple files)
       if (patientData.documents?.length) {
         patientData.documents.forEach((file) => {
-          formData.append("files", file.file); // Backend should use `upload.array("Files")`
+          formData.append("files", file.file);
         });
       }
 
@@ -130,6 +146,21 @@ const patientService = {
     if (patientData.spouseName !== undefined) formData.append("spouseName", patientData.spouseName);
     if (patientData.state !== undefined) formData.append("state", patientData.state);
     if (patientData.treatmentCategory !== undefined) formData.append("treatmentCategory", patientData.treatmentCategory);
+    if (patientData.appointmentSpecificDocument !== undefined) formData.append("appointmentSpecificDocument", patientData.appointmentSpecificDocument);
+    if (patientData.isAdult !== undefined) formData.append("isAdult", patientData.isAdult==="TAK");
+    if (patientData.contactPerson !== undefined) formData.append("contactPerson", patientData.contactPerson);
+    if (patientData.fatherPhone !== undefined) formData.append("fatherPhone", patientData.fatherPhone);
+    if (patientData.motherPhone !== undefined) formData.append("motherPhone", patientData.motherPhone);
+    if (patientData.relationToPatient !== undefined) formData.append("relationToPatient", patientData.relationToPatient);
+    if (patientData.allergies !== undefined) formData.append("allergies", patientData.allergies);
+    if (patientData.nationality !== undefined) formData.append("nationality", patientData.nationality);
+    if (patientData.preferredLanguage !== undefined) formData.append("preferredLanguage", patientData.preferredLanguage);
+
+    // Add health metrics
+    if (patientData.bloodPressure !== undefined) formData.append("bloodPressure", patientData.bloodPressure);
+    if (patientData.temperature !== undefined) formData.append("temperature", patientData.temperature);
+    if (patientData.weight !== undefined) formData.append("weight", patientData.weight);
+    if (patientData.height !== undefined) formData.append("height", patientData.height);
 
     // Handle new documents to add (if any)
     if (patientData?.documents?.length) {
@@ -304,6 +335,46 @@ const patientService = {
       if (maxAge) queryParams.append("maxAge", maxAge);
 
       const url = `/patients/data/simple?${queryParams.toString()}`;
+
+      const response = await apiCaller("GET", url);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+      throw error;
+    }
+  },
+
+
+  getSimpliefiedAppointmentsList: async (options = {}) => {
+    try {
+      const {
+        search = "",
+        page = 1,
+        limit = 10,
+        sortBy = "date",
+        sortOrder = "desc",
+        status,
+        doctor,
+        sex,
+        minAge,
+        maxAge,
+      } = options;
+
+      const queryParams = new URLSearchParams();
+
+      // Add all parameters that have values
+      if (search) queryParams.append("search", search);
+      if (page) queryParams.append("page", page);
+      if (limit) queryParams.append("limit", limit);
+      if (sortBy) queryParams.append("sortBy", sortBy);
+      if (sortOrder) queryParams.append("sortOrder", sortOrder);
+      if (status) queryParams.append("status", status);
+      if (doctor) queryParams.append("doctor", doctor);
+      if (sex) queryParams.append("sex", sex);
+      if (minAge) queryParams.append("minAge", minAge);
+      if (maxAge) queryParams.append("maxAge", maxAge);
+
+      const url = `/patients/data/appointments?${queryParams.toString()}`;
 
       const response = await apiCaller("GET", url);
       return response.data;

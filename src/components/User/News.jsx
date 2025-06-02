@@ -5,15 +5,34 @@ import "slick-carousel/slick/slick-theme.css";
 import { IoEyeOutline } from "react-icons/io5";
 import { FaRegHeart } from "react-icons/fa";
 import { apiCaller } from "../../utils/axiosInstance";
-
+import { useNavigate } from "react-router-dom";
 export default function News() {
   const [news, setNews] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await apiCaller("GET", "/news/category/list");
+        setCategories(response.data);
+      } catch (error) {
+        console.error("Nie udało się pobrać kategorii:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const response = await apiCaller("GET", "/news");
+        const url = selectedCategory 
+          ? `/news?category=${selectedCategory}` 
+          : "/news";
+        const response = await apiCaller("GET", url);
         setNews(response.data);
       } catch (error) {
         console.error("Nie udało się pobrać aktualności:", error);
@@ -23,7 +42,7 @@ export default function News() {
     };
 
     fetchNews();
-  }, []);
+  }, [selectedCategory]);
 
   // Only enable infinite scrolling if we have more than 4 news items
   const settings = {
@@ -48,6 +67,10 @@ export default function News() {
     groupedNews.push(news.slice(i, i + 2));
   }
 
+  const handleCategoryClick = (categoryId) => {
+    setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
+  };
+
   if (loading) {
     return (
       <section className="py-12 md:px-6">
@@ -61,12 +84,45 @@ export default function News() {
       <h3 className="md:text-xl font-bold text-neutral-800 text-center">
         WIEDZA, KTÓRA MA ZNACZENIE
       </h3>
-      <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 sm:mb-12 text-center">
+      <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 text-center">
         Aktualności
       </h2>
 
+      {/* Categories Section */}
+      <div className="max-w-6xl mx-auto mb-8">
+        <div className="flex flex-wrap justify-center gap-3">
+          <button
+            onClick={() => handleCategoryClick(null)}
+            className={`px-4 py-2 rounded-full transition-colors ${
+              !selectedCategory
+                ? "bg-main text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            Wszystkie
+          </button>
+          {categories.map((category) => (
+            <button
+              key={category._id}
+              onClick={() => handleCategoryClick(category._id)}
+              className={`px-4 py-2 rounded-full transition-colors ${
+                selectedCategory === category._id
+                  ? "bg-main text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {news.length === 0 ? (
-        <div className="max-w-6xl mx-auto text-center">Brak dostępnych aktualności.</div>
+        <div className="max-w-6xl mx-auto text-center">
+          {selectedCategory 
+            ? "Brak aktualności w wybranej kategorii."
+            : "Brak dostępnych aktualności."}
+        </div>
       ) : (
         <div className="max-w-6xl mx-auto overflow-clip">
           <Slider {...settings}>
@@ -76,7 +132,8 @@ export default function News() {
                   {group.map((newsItem) => (
                     <div
                       key={newsItem._id}
-                      className="bg-white shadow-md rounded-lg overflow-hidden flex"
+                      className="bg-white shadow-md rounded-lg overflow-hidden flex cursor-pointer"
+                      onClick={() => navigate(`/user/news/single/${newsItem._id}`)}
                     >
                       <div className="w-1/3">
                         <img

@@ -89,9 +89,10 @@ const BillDetails = () => {
       
       const response = await billingHelper.generateInvoice(billId);
       
+      console.log("response", response);
       if (response.success) {
-        // Open the invoice in a new tab
         window.open(response.data.invoiceUrl, '_blank');
+        // Open the invoice in a new tab
         toast.success("Pomyślnie wygenerowano fakturę");
       } else {
         toast.error("Nie udało się wygenerować faktury");
@@ -212,13 +213,13 @@ const BillDetails = () => {
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex items-center">
             <button
-              onClick={() => navigate('/billing')}
+              onClick={() => navigate('/admin/billing')}
               className="mr-4 text-gray-500 hover:text-gray-700"
             >
               <ChevronLeft size={20} />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Faktura #{billData._id}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Faktura #{(billData?.invoiceId && billData.invoiceId !== "") ? billData.invoiceId : billData._id}</h1>
               <p className="text-gray-600">
                 Wygenerowano dnia {formatDate(billData.billedAt)}
               </p>
@@ -253,7 +254,7 @@ const BillDetails = () => {
             <div className="flex flex-wrap justify-between items-start mb-8">
               <div>
                 <h2 className="text-xl font-bold text-gray-900 mb-1">Faktura</h2>
-                <p className="text-sm text-gray-600 mb-3">Faktura #{billData._id}</p>
+                <p className="text-sm text-gray-600 mb-3">Faktura #{(billData?.invoiceId && billData.invoiceId !== "") ? billData.invoiceId : billData._id}</p>
                 
                 <div className="flex items-center text-sm text-gray-600 mb-1">
                   <Calendar size={16} className="mr-2 text-gray-400" />
@@ -371,10 +372,10 @@ const BillDetails = () => {
                     <span className="font-medium">{formatCurrency(billData.taxAmount)}</span>
                   </div>
                   
-                  {billData.consultationCharges > 0 && (
+                  {billData.appointment?.mode === 'online' && billData.consultationCharges > 0 && (
                     <div className="flex justify-between py-2 text-sm">
-                      <span className="text-gray-600">Opłata za konsultację</span>
-                      <span className="font-medium">{formatCurrency(billData.consultationCharges)}</span>
+                      <span className="text-gray-600">Opłata za konsultację </span>
+                      <span className="font-medium">OPŁACONE</span>
                     </div>
                   )}
                   
