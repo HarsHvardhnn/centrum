@@ -65,7 +65,7 @@ const Header = () => {
       <div className="flex items-center border border-white rounded-xl py-2 px-4">
         <div className="flex items-center cursor-pointer">
           <div className="h-10 w-10 flex items-center justify-center">
-            <img src="/images/logo.png" alt="Centrum Medyczne" className="h-8" />
+            <img src="/images/logo.png" alt="Centrum Medyczne" className="h-8" onClick={()=>window.location.reload()} />
           </div>
           <div className="ml-3">
             <h1 className="font-semibold text-lg">Centrum Medyczne</h1>
