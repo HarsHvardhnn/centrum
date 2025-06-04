@@ -656,7 +656,7 @@ const PatientList = () => {
       setPatients(response.appointments);
     } catch (err) {
       console.error("Error canceling appointment:", err);
-      setError("Failed to cancel appointment. Please try again.");
+      setError("błąd serwera");
     }
   };
 
@@ -695,7 +695,7 @@ const PatientList = () => {
         });
         setError(null);
       } catch (err) {
-        setError("Failed to load patients. Please try again later.");
+        setError("błąd serwera");
         console.error("Error fetching patients:", err);
       } finally {
         setLoading(false);
@@ -1152,7 +1152,7 @@ const UpcomingAppointments = () => {
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch appointments:", err);
-      setError("Failed to load appointments. Please try again later.");
+      setError("błąd serwera");
       setLoading(false);
     }
   };
@@ -1179,7 +1179,7 @@ const UpcomingAppointments = () => {
       fetchAppointments();
     } catch (err) {
       console.error("Failed to cancel appointment:", err);
-      setError("Failed to cancel appointment. Please try again.");
+      setError("błąd serwera");
     }
   };
 

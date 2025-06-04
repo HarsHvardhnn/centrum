@@ -43,7 +43,7 @@ function DoctorsPage() {
           setDoctorInfo(transformedData);
           console.log("doctor data", transformedData);
         } else {
-          setError("Failed to load doctor data");
+          setError("błąd serwera");
         }
       } catch (err) {
         console.error("Error fetching doctor data:", err);

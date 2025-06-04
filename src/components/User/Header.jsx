@@ -121,7 +121,7 @@ const Header = () => {
       </div>
 
       <div className="flex justify-between items-center px-6 md:px-8 py-3 bg-[#F4F4F4]">
-      <img src="/images/mainlogo.png" alt="Logo strony" className="h-10" />
+      <img src="/images/mainlogo.png" alt="Logo strony" className="h-10 cursor-pointer" onClick={()=>window.location.reload()} />
 
         <nav className="hidden lg:flex gap-4 lg:gap-6 font-medium text-sm">
           <Link

@@ -49,7 +49,7 @@ const MyAppointments = () => {
         }
       } catch (err) {
         console.error("Error fetching appointments:", err);
-        setError("Failed to load your appointments. Please try again later.");
+        setError("błąd serwera");
       } finally {
         setLoading(false);
       }
@@ -90,7 +90,7 @@ const MyAppointments = () => {
       alert("Appointment cancelled successfully");
     } catch (err) {
       console.error("Error cancelling appointment:", err);
-      alert("Failed to cancel appointment. Please try again later.");
+      alert("błąd serwera");
     } finally {
       setCancellationLoading(false);
     }

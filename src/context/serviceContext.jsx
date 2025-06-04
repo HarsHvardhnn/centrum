@@ -19,7 +19,7 @@ export const ServicesProvider = ({ children }) => {
       setError(null);
     } catch (err) {
       console.error("Error fetching services:", err);
-      setError("Failed to load services. Please try again later.");
+      setError("błąd serwera.");
     } finally {
       setLoading(false);
     }

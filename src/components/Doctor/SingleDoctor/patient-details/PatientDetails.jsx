@@ -356,7 +356,7 @@ const PatientDetailsPage = () => {
         hideLoader();
       } catch (err) {
         console.error("Error fetching data:", err);
-        setError("Failed to load patient data. Please try again.");
+        setError("błąd serwera");
         setIsLoading(false);
         hideLoader();
       }

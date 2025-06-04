@@ -124,10 +124,25 @@ function MainLayout() {
 }
 
 const routes = createBrowserRouter([
-  // Root route - will clear localStorage and redirect to /user
+  // Root route - will show the same content as /user
   {
     path: "/",
-    element: <RootRoute />
+    element: <UserLayout />,
+    children: [
+      { path: "", element: <HomePage /> },
+      { path: "about", element: <AboutUsPage /> },
+      { path: "doctors", element: <OurDoctorsPage /> },
+      { path: "services", element: <OurServicesPage /> },
+      { path: "services/:service", element: <ServicesDetailPage /> },
+      { path: "appointments", element: <MyAppointments /> },
+      { path: "details", element: <PatientMedicalDetails /> },
+      { path: "news", element: <NewsPage /> },
+      { path: "blogs", element: <NewsPage isNews={false} /> },
+      { path: "news/single/:id", element: <NewsDetail /> },
+      { path: "profile", element: <ProfilePage /> },
+      { path: "contact", element: <ContactPage /> },
+      { path: "*", element: <NotFound404 /> },
+    ],
   },
 
   // Public routes group
@@ -166,8 +181,6 @@ const routes = createBrowserRouter([
       { path: "news/single/:id", element: <NewsDetail /> },
       { path: "profile", element: <ProfilePage /> },
       { path: "contact", element: <ContactPage /> },
-
-
       { path: "*", element: <NotFound404 /> },
     ],
   },

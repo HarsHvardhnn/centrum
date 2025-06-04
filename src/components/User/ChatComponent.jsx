@@ -392,7 +392,7 @@ export default function ChatComponent() {
       }
     } catch (error) {
       console.error("Error uploading file:", error);
-      alert("Failed to upload file. Please try again.");
+      alert("błąd serwera.");
     } finally {
       setIsUploading(false);
     }
