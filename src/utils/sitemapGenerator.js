@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NODE_ENV === 'development' 
+const BASE_URL = import.meta.env.NODE_ENV === 'development' 
   ? 'http://localhost:5173' 
   : 'https://centrummedyczne7.pl';
 
