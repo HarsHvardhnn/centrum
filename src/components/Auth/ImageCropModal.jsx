@@ -50,7 +50,7 @@ const ImageCropModal = ({ isOpen, onClose, imageUrl, onCropComplete }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Crop Image</h3>
+          <h3 className="text-lg font-semibold text-gray-900">Przyciąć obraz</h3>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-500"
@@ -84,13 +84,12 @@ const ImageCropModal = ({ isOpen, onClose, imageUrl, onCropComplete }) => {
               onClick={handleCropComplete}
               className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
             >
-              Apply Crop
-            </button>
+Zastosuj uprawę            </button>
             <button
               onClick={onClose}
               className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
             >
-              Cancel
+              Anuluj
             </button>
           </div>
         </div>
