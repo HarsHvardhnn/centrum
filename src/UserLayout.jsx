@@ -4,6 +4,7 @@ import Footer from "./components/User/Footer";
 import { Outlet, useOutletContext } from "react-router-dom";
 import TawkToWidget from "./components/UtilComponents/TawkToWidget";
 import CookieConsent from "./components/User/CookieConsent";
+import SEO from "./components/SEO/SEO";
 
 const UserLayout = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -11,6 +12,7 @@ const UserLayout = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <SEO />
       <TawkToWidget />
       <Header />
       <main className="flex-1 pt-[15px]">
