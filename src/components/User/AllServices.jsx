@@ -34,7 +34,7 @@ const ServiceCard = ({ service }) => {
           </p>
         </div>
         <Link
-          to={"/user/services/" + service.title}
+          to={"/uslugi/" + service.title}
           className="text-main flex items-center gap-1 mt-3 font-medium"
         >
           Dowiedz się więcej <FaArrowRight />

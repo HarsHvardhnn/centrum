@@ -45,7 +45,7 @@ const NewsCard = ({ article }) => {
         </p>
         <div className="flex justify-between items-center mt-4">
           <Link
-            to={`/user/news/single/${article._id}`}
+            to={`/aktualnosci/single/${article._id}`}
             className="text-main max-sm:text-sm px-6 py-2 rounded-full bg-main-light transition"
           >
             Czytaj więcej »

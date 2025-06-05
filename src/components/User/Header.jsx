@@ -135,49 +135,49 @@ const Header = () => {
             Strona główna
           </Link>
           <Link
-            to="/user/about"
+            to="/o-nas"
             className={`py-2 ${
-              isActive("/user/about") ? activeLinkClass : defaultLinkClass
+              isActive("/o-nas") ? activeLinkClass : defaultLinkClass
             }`}
           >
             O nas
           </Link>
           <Link
-            to="/user/services"
+            to="/uslugi"
             className={`py-2 ${
-              isActive("/user/services") ? activeLinkClass : defaultLinkClass
+              isActive("/uslugi") ? activeLinkClass : defaultLinkClass
             }`}
           >
             Usługi
           </Link>
           <Link
-            to="/user/doctors"
+            to="/lekarze"
             className={`py-2 ${
-              isActive("/user/doctors") ? activeLinkClass : defaultLinkClass
+              isActive("/lekarze") ? activeLinkClass : defaultLinkClass
             }`}
           >
             Specjaliści
           </Link>
           <Link
-            to="/user/news"
+            to="/aktualnosci"
             className={`py-2 ${
-              isActive("/user/news") ? activeLinkClass : defaultLinkClass
+              isActive("/aktualnosci") ? activeLinkClass : defaultLinkClass
             }`}
           >
             Aktualności
           </Link>
           <Link
-            to="/user/blogs"
+            to="/poradnik"
             className={`py-2 ${
-              isActive("/user/blogs") ? activeLinkClass : defaultLinkClass
+              isActive("/poradnik") ? activeLinkClass : defaultLinkClass
             }`}
           >
             Wiedza Medyczna
           </Link>
           <Link
-            to="/user/contact"
+            to="/kontakt"
             className={`py-2 ${
-              isActive("/user/contact") ? activeLinkClass : defaultLinkClass
+              isActive("/kontakt") ? activeLinkClass : defaultLinkClass
             }`}
           >
             Kontakt
@@ -217,9 +217,9 @@ const Header = () => {
             </Link>
           
             <Link
-              to="/user/about"
+              to="/o-nas"
               className={
-                isActive("/user/about")
+                isActive("/o-nas")
                   ? "text-teal-500 font-bold"
                   : "text-teal-900"
               }
@@ -228,9 +228,9 @@ const Header = () => {
               O nas
             </Link>
             <Link
-              to="/user/services"
+              to="/uslugi"
               className={
-                isActive("/user/services")
+                isActive("/uslugi")
                   ? "text-teal-500 font-bold"
                   : "text-teal-900"
               }
@@ -239,9 +239,9 @@ const Header = () => {
               Usługi
             </Link>
             <Link
-              to="/user/doctors"
+              to="/lekarze"
               className={
-                isActive("/user/doctors")
+                isActive("/lekarze")
                   ? "text-teal-500 font-bold"
                   : "text-teal-900"
               }
@@ -250,9 +250,9 @@ const Header = () => {
               Specjaliści
             </Link>
             <Link
-              to="/user/news"
+              to="/aktualnosci"
               className={
-                isActive("/user/news")
+                isActive("/aktualnosci")
                   ? "text-teal-500 font-bold"
                   : "text-teal-900"
               }
@@ -261,9 +261,9 @@ const Header = () => {
               Aktualności
             </Link>
             <Link
-              to="/user/blogs"
+              to="/poradnik"
               className={
-                isActive("/user/blogs")
+                isActive("/poradnik")
                   ? "text-teal-500 font-bold"
                   : "text-teal-900"
               }
@@ -272,9 +272,9 @@ const Header = () => {
               Wiedza Medyczna
             </Link>
             <Link
-              to="/user/contact"
+              to="/kontakt"
               className={
-                isActive("/user/contact")
+                isActive("/kontakt")
                   ? "text-teal-500 font-bold"
                   : "text-teal-900"
               }

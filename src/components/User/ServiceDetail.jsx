@@ -12,7 +12,7 @@ const ServiceDetail = ({ serviceName }) => {
 
   useEffect(() => {
     if (!loading && !service) {
-      navigate("/user/services");
+      navigate("/uslugi");
     }
   }, [service, navigate, loading]);
 
@@ -30,7 +30,7 @@ const ServiceDetail = ({ serviceName }) => {
         <div className="border max-md:flex max-md:overflow-scroll border-neutral-200 rounded-lg overflow-hidden">
           {services.map((item) => (
             <Link
-              to={"/user/services/" + item.title}
+              to={"/uslugi/" + item.title}
               key={item._id}
               className={`flex max-md:flex-col text-start items-center gap-2 cursor-pointer px-8 py-7 ${
                 item.title === serviceName ? "bg-main text-white" : ""

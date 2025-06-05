@@ -17,7 +17,7 @@ const NewsDetail = () => {
         setNews(response.data);
       } catch (error) {
         console.error("Nie udało się pobrać aktualności:", error);
-        navigate("/user/news");
+        navigate("/aktualnosci");
       } finally {
         setLoading(false);
       }

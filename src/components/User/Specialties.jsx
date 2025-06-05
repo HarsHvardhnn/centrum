@@ -33,7 +33,7 @@ export default function Specialties() {
         {specialtiesData.map((specialty) => (
           <div
             key={specialty.id}
-            onClick={() => navigate(`/user/doctors`)}
+            onClick={() => navigate(`/lekarze`)}
             className="border-2 rounded-lg p-6 md:p-8 flex flex-col items-center cursor-pointer transition-all duration-300 hover:bg-main text-neutral-900 hover:text-white"
           >
             <img src="/images/speciality.png" className="size-8 md:size-10" alt={specialty.name} />

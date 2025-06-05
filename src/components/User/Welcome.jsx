@@ -21,7 +21,7 @@ export default function Welcome() {
 
       <div className="mt-6">
         <a
-          href="/user/about"
+          href="/o-nas"
           className="text-neutral-900 gap-4 text-lg md:text-xl inline-flex items-center hover:underline"
         >
           Dowiedz się więcej <FaArrowRight className="text-main mt-1" />

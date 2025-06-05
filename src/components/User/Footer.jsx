@@ -36,17 +36,17 @@ export default function Footer() {
               </li>
             </li>
             <li>
-              <a href="/user/doctors" className="hover:underline">
+              <a href="/lekarze" className="hover:underline">
                 Specjaliści
               </a>
             </li>
             <li>
-              <a href="/user/services" className="hover:underline">
+              <a href="/uslugi" className="hover:underline">
                 Usługi
               </a>
             </li>
             <li>
-              <a href="/user/about" className="hover:underline">
+              <a href="/o-nas" className="hover:underline">
                 O nas
               </a>
             </li>
