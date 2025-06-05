@@ -28,7 +28,7 @@ const UserLayout = () => {
       </main>
       <Footer />
       <CookieConsent />
-      <SEOTester />
+      {/* <SEOTester /> */}
     </div>
   );
 };

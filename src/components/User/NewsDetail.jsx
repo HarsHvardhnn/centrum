@@ -5,7 +5,7 @@ import { apiCaller } from "../../utils/axiosInstance";
 import DOMPurify from "dompurify";
 
 const NewsDetail = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const [news, setNews] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,7 +13,7 @@ const NewsDetail = () => {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const response = await apiCaller("GET", `/news/${id}`);
+        const response = await apiCaller("GET", `/news/slug/${slug}`);
         setNews(response.data);
       } catch (error) {
         console.error("Nie udało się pobrać aktualności:", error);
@@ -24,7 +24,7 @@ const NewsDetail = () => {
     };
 
     fetchNews();
-  }, [id, navigate]);
+  }, [slug, navigate]);
 
   const createMarkup = (html) => {
     return { __html: DOMPurify.sanitize(html || '') };
@@ -50,7 +50,7 @@ const NewsDetail = () => {
       <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-[#008C8C]">{news.title}</h1>
 
       <p className="text-gray-500 text-sm mb-1">
-        {news.date} <GoDotFill className="inline text-main" /> {news.author}
+        {new Date(news.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })} <GoDotFill className="inline text-main" /> {news.author}
       </p>
 
       <div 

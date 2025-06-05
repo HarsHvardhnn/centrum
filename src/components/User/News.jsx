@@ -133,7 +133,7 @@ export default function News() {
                     <div
                       key={newsItem._id}
                       className="bg-white shadow-md rounded-lg overflow-hidden flex cursor-pointer"
-                      onClick={() => navigate(`/aktualnosci/single/${newsItem._id}`)}
+                      onClick={() => navigate(`/aktualnosci/${newsItem.slug}`)}
                     >
                       <div className="w-1/3">
                         <img

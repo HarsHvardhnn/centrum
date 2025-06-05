@@ -2,6 +2,7 @@ import React from "react";
 import { FaArrowRight } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useServices } from "../../context/serviceContext";
+import { generateServiceSlug } from "../../utils/slugUtils";
 
 const ServiceCard = ({ service }) => {
   // Function to truncate text to specific length
@@ -34,7 +35,7 @@ const ServiceCard = ({ service }) => {
           </p>
         </div>
         <Link
-          to={"/uslugi/" + service.title}
+          to={"/uslugi/" + generateServiceSlug(service.title)}
           className="text-main flex items-center gap-1 mt-3 font-medium"
         >
           Dowiedz się więcej <FaArrowRight />

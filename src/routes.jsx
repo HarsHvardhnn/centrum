@@ -139,7 +139,7 @@ const routes = createBrowserRouter([
       { path: "uslugi/:service", element: <ServicesDetailPage /> },
       { path: "appointments", element: <MyAppointments /> },
       { path: "details", element: <PatientMedicalDetails /> },
-      { path: "aktualnosci/single/:id", element: <NewsDetail /> },
+      { path: "aktualnosci/:slug", element: <NewsDetail /> },
       { path: "profile", element: <ProfilePage /> },
       { path: "*", element: <NotFound404 /> },
     ],

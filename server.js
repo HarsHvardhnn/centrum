@@ -4,6 +4,31 @@ import { fileURLToPath } from 'url'
 import express from 'express'
 import { createServer as createViteServer } from 'vite'
 
+// Import slug utility function
+const generateServiceSlug = (title) => {
+  if (!title) return '';
+  
+  return title
+    .toLowerCase()
+    .trim()
+    // Replace Polish characters with ASCII equivalents
+    .replace(/ą/g, 'a')
+    .replace(/ć/g, 'c')
+    .replace(/ę/g, 'e')
+    .replace(/ł/g, 'l')
+    .replace(/ń/g, 'n')
+    .replace(/ó/g, 'o')
+    .replace(/ś/g, 's')
+    .replace(/ź/g, 'z')
+    .replace(/ż/g, 'z')
+    // Replace spaces and special characters with hyphens
+    .replace(/[^a-z0-9]+/g, '-')
+    // Remove leading/trailing hyphens
+    .replace(/^-+|-+$/g, '')
+    // Remove multiple consecutive hyphens
+    .replace(/-+/g, '-');
+};
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 async function createServer() {
@@ -45,7 +70,7 @@ async function createServer() {
     try {
       // Check if this is a route that needs SSR
       const ssrRoutes = [
-        /^\/aktualnosci\/single\/[^\/]+$/,  // News detail pages
+        /^\/aktualnosci\/[^\/]+$/,          // News detail pages (now using slugs)
         /^\/uslugi\/[^\/]+$/,               // Service detail pages
       ]
 
@@ -77,10 +102,10 @@ async function createServer() {
       let initialData = {}
       
       // Extract route parameters
-      if (url.includes('/aktualnosci/single/')) {
-        const newsId = url.split('/aktualnosci/single/')[1]
+      if (url.includes('/aktualnosci/') && !url.includes('/aktualnosci/single/')) {
+        const newsSlug = url.split('/aktualnosci/')[1]
         try {
-          const newsResponse = await fetch(`${import.meta.env.VITE_REACT_APP_API_BASE_URL || 'http://localhost:5000'}/api/news/${newsId}`)
+          const newsResponse = await fetch(`${import.meta.env.VITE_REACT_APP_API_BASE_URL || 'http://localhost:5000'}/api/news/slug/${newsSlug}`)
           if (newsResponse.ok) {
             initialData.news = await newsResponse.json()
           }
@@ -90,12 +115,15 @@ async function createServer() {
       }
 
       if (url.includes('/uslugi/')) {
-        const serviceName = decodeURIComponent(url.split('/uslugi/')[1])
+        const serviceSlug = decodeURIComponent(url.split('/uslugi/')[1])
         try {
           const servicesResponse = await fetch(`${import.meta.env.VITE_REACT_APP_API_BASE_URL || 'http://localhost:5000'}/api/services`)
           if (servicesResponse.ok) {
             const services = await servicesResponse.json()
-            const service = services.find(s => s.title === serviceName)
+            // Try to find by slug first, then fallback to title
+            const service = services.find(s => 
+              generateServiceSlug(s.title) === serviceSlug || s.title === serviceSlug
+            )
             if (service) {
               initialData.service = service
             }

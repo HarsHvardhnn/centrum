@@ -27,7 +27,7 @@ const NewsCard = ({ article }) => {
       />
       <div className="py-5">
         <div className="text-xs sm:text-sm text-gray-500 flex gap-4 items-center">
-          <span>{article.date}</span>
+          <span>{new Date(article.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
           <span>{article.author}</span>
           {/* <span className="flex items-center">
             <Eye className="size-3 sm:size-4 lg:size-5 mr-1" /> {article.views} wyświetleń
@@ -45,7 +45,7 @@ const NewsCard = ({ article }) => {
         </p>
         <div className="flex justify-between items-center mt-4">
           <Link
-            to={`/aktualnosci/single/${article._id}`}
+            to={`/aktualnosci/${article.slug}`}
             className="text-main max-sm:text-sm px-6 py-2 rounded-full bg-main-light transition"
           >
             Czytaj więcej »

@@ -3,12 +3,16 @@ import { GoDotFill } from "react-icons/go";
 import { Link, useNavigate } from "react-router-dom";
 import { FaHospital } from "react-icons/fa";
 import { useServices } from "../../context/serviceContext";
+import { generateServiceSlug } from "../../utils/slugUtils";
 
 const ServiceDetail = ({ serviceName }) => {
   const navigate = useNavigate();
   const { services, loading } = useServices();
 
-  const service = services.find((s) => s.title === serviceName);
+  // Find service by slug (URL-friendly version) or fallback to title
+  const service = services.find((s) => 
+    generateServiceSlug(s.title) === serviceName || s.title === serviceName
+  );
 
   useEffect(() => {
     if (!loading && !service) {
@@ -30,10 +34,10 @@ const ServiceDetail = ({ serviceName }) => {
         <div className="border max-md:flex max-md:overflow-scroll border-neutral-200 rounded-lg overflow-hidden">
           {services.map((item) => (
             <Link
-              to={"/uslugi/" + item.title}
+              to={"/uslugi/" + generateServiceSlug(item.title)}
               key={item._id}
               className={`flex max-md:flex-col text-start items-center gap-2 cursor-pointer px-8 py-7 ${
-                item.title === serviceName ? "bg-main text-white" : ""
+                generateServiceSlug(item.title) === serviceName ? "bg-main text-white" : ""
               }`}
             >
               <div className="flex items-center gap-2 w-full">
