@@ -5,6 +5,7 @@ import { Outlet, useOutletContext } from "react-router-dom";
 import TawkToWidget from "./components/UtilComponents/TawkToWidget";
 import CookieConsent from "./components/User/CookieConsent";
 import SEO from "./components/SEO/SEO";
+import SEOTester from "./components/SEO/SEOTester";
 
 const UserLayout = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -27,6 +28,7 @@ const UserLayout = () => {
       </main>
       <Footer />
       <CookieConsent />
+      <SEOTester />
     </div>
   );
 };
