@@ -127,7 +127,7 @@ export default function ImageCropper({
             onClick={handleCropComplete}
             className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600"
           >
-            Zastosuj
+            Zapisz zdjęcie
           </button>
         </div>
       </div>
