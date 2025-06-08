@@ -36,6 +36,10 @@ export default function BookAppointment({
     message: "",
     consultationType: "offline",
     smsConsentAgreed: false,
+    privacyPolicyAgreed: false,
+    medicalDataProcessingAgreed: false,
+    teleportationConfirmed: false,
+    contactConsentAgreed: false,
   };
 
   const validationSchema = Yup.object({
@@ -52,6 +56,22 @@ export default function BookAppointment({
     message: Yup.string().min(10, "Za krótka wiadomość").required("Wymagane"),
     consultationType: Yup.string().oneOf(['online', 'offline']).required("Wymagane"),
     smsConsentAgreed: Yup.boolean(),
+    privacyPolicyAgreed: Yup.boolean().oneOf([true], "Akceptacja regulaminu i polityki prywatności jest wymagana"),
+    medicalDataProcessingAgreed: Yup.boolean().when('consultationType', {
+      is: 'online',
+      then: (schema) => schema.oneOf([true], "Zgoda na przetwarzanie danych medycznych jest wymagana dla konsultacji online"),
+      otherwise: (schema) => schema
+    }),
+    teleportationConfirmed: Yup.boolean().when('consultationType', {
+      is: 'online',
+      then: (schema) => schema.oneOf([true], "Potwierdzenie formy konsultacji online jest wymagane"),
+      otherwise: (schema) => schema
+    }),
+    contactConsentAgreed: Yup.boolean().when('consultationType', {
+      is: 'online',
+      then: (schema) => schema.oneOf([true], "Zgoda na kontakt jest wymagana dla konsultacji online"),
+      otherwise: (schema) => schema
+    }),
   });
 
   // Fetch doctors for preselected specialization when component mounts
@@ -442,8 +462,8 @@ export default function BookAppointment({
                   />
                 </div>
 
-                {/* Consultation Type */}
-                <div className="col-span-1 sm:col-span-2">
+                {/* Consultation Type - Hidden for now */}
+                <div className="col-span-1 sm:col-span-2 hidden">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Typ konsultacji
                   </label>
@@ -539,7 +559,7 @@ export default function BookAppointment({
                   <Field
                     as="textarea"
                     name="message"
-                    placeholder="Prosimy opisać krótko swój problem zdrowotny oraz wskazać usługę, którą są Państwo zainteresowani (np. konsultacja chirurgiczna, usunięcie zmiany skórnej)."
+                    placeholder="Prosimy opisać krótko swój problem zdrowotny oraz wskazać usługę, którą są Państwo zainteresowani (np. konsultacja chirurgiczna, usunięcie zmiany skórnej)."
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded resize-none h-24 sm:h-32"
                   />
                   <ErrorMessage
@@ -549,34 +569,118 @@ export default function BookAppointment({
                   />
                 </div>
 
-                {/* SMS Consent Checkbox */}
-                <div className="col-span-1 sm:col-span-2">
-                  <label className="flex items-start space-x-2 cursor-pointer">
-                    <Field
-                      type="checkbox"
-                      name="smsConsentAgreed"
-                      className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                {/* Consent Checkboxes */}
+                <div className="col-span-1 sm:col-span-2 space-y-4">
+                  {/* Mandatory Privacy Policy Consent */}
+                  <div>
+                    <label className="flex items-start space-x-2 cursor-pointer">
+                      <Field
+                        type="checkbox"
+                        name="privacyPolicyAgreed"
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                      />
+                      <span className="text-sm text-gray-700">
+                        Zapoznałem(-am) się z{" "}
+                        <button
+                          type="button"
+                          onClick={() => window.open('/images/tos.docx', '_blank')}
+                          className="text-main hover:text-main-dark underline"
+                        >
+                          Regulaminem
+                        </button>{" "}
+                        i{" "}
+                        <button
+                          type="button"
+                          onClick={() => window.open('/images/ts.docx', '_blank')}
+                          className="text-main hover:text-main-dark underline"
+                        >
+                          Polityką Prywatności
+                        </button>{" "}
+                        i akceptuję ich postanowienia. <span className="text-red-500">*</span>
+                      </span>
+                    </label>
+                    <ErrorMessage
+                      name="privacyPolicyAgreed"
+                      component="div"
+                      className="text-red-600 text-xs sm:text-sm mt-1 ml-6"
                     />
-                    <span className="text-sm text-gray-700">
-                      Wyrażam zgodę na otrzymywanie powiadomień SMS dotyczących mojej wizyty (np. przypomnienia, zmiany terminu) oraz potwierdzam, że zapoznałem(-am) się z{" "}
-                      <button
-                        type="button"
-                        onClick={() => window.open('/images/tos.docx', '_blank')}
-                        className="text-main hover:text-main-dark underline"
-                      >
-                        Regulaminem
-                      </button>{" "}
-                      i{" "}
-                      <button
-                        type="button"
-                        onClick={() => window.open('/images/ts.docx', '_blank')}
-                        className="text-main hover:text-main-dark underline"
-                      >
-                        Polityką Prywatności
-                      </button>
-                      .
-                    </span>
-                  </label>
+                  </div>
+
+                  {/* Online consultation specific consents */}
+                  {values.consultationType === "online" && (
+                    <>
+                      {/* Medical Data Processing Consent */}
+                      <div>
+                        <label className="flex items-start space-x-2 cursor-pointer">
+                          <Field
+                            type="checkbox"
+                            name="medicalDataProcessingAgreed"
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                          />
+                          <span className="text-sm text-gray-700">
+                            Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym danych medycznych, w celu realizacji konsultacji medycznej online, zgodnie z art. 9 ust. 2 lit. h RODO. <span className="text-red-500">*</span>
+                          </span>
+                        </label>
+                        <ErrorMessage
+                          name="medicalDataProcessingAgreed"
+                          component="div"
+                          className="text-red-600 text-xs sm:text-sm mt-1 ml-6"
+                        />
+                      </div>
+
+                      {/* Teleportation Confirmation */}
+                      <div>
+                        <label className="flex items-start space-x-2 cursor-pointer">
+                          <Field
+                            type="checkbox"
+                            name="teleportationConfirmed"
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                          />
+                          <span className="text-sm text-gray-700">
+                            Potwierdzam, że konsultacja medyczna odbędzie się w formie zdalnej (online) i jestem świadomy(-a) tej formy świadczenia zdrowotnego. <span className="text-red-500">*</span>
+                          </span>
+                        </label>
+                        <ErrorMessage
+                          name="teleportationConfirmed"
+                          component="div"
+                          className="text-red-600 text-xs sm:text-sm mt-1 ml-6"
+                        />
+                      </div>
+
+                      {/* Contact Consent */}
+                      <div>
+                        <label className="flex items-start space-x-2 cursor-pointer">
+                          <Field
+                            type="checkbox"
+                            name="contactConsentAgreed"
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                          />
+                          <span className="text-sm text-gray-700">
+                            Wyrażam zgodę na kontakt telefoniczny lub e-mailowy w celu realizacji konsultacji online, w tym przesłania linku do spotkania. <span className="text-red-500">*</span>
+                          </span>
+                        </label>
+                        <ErrorMessage
+                          name="contactConsentAgreed"
+                          component="div"
+                          className="text-red-600 text-xs sm:text-sm mt-1 ml-6"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Voluntary SMS Consent */}
+                  <div>
+                    <label className="flex items-start space-x-2 cursor-pointer">
+                      <Field
+                        type="checkbox"
+                        name="smsConsentAgreed"
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                      />
+                      <span className="text-sm text-gray-700">
+                        Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).
+                      </span>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Submit Button */}

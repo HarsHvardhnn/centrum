@@ -57,6 +57,10 @@ export default function Doctors({
     message: "",
     consultationType: "offline",
     smsConsentAgreed: false,
+    privacyPolicyAgreed: false,
+    medicalDataProcessingAgreed: false,
+    teleportationConfirmed: false,
+    contactConsentAgreed: false,
   });
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -234,6 +238,24 @@ export default function Doctors({
       errors.phone = "Numer telefonu musi składać się z 9 cyfr";
     }
 
+    // Privacy policy is always mandatory
+    if (!bookingForm.privacyPolicyAgreed) {
+      errors.privacyPolicyAgreed = "Akceptacja regulaminu i polityki prywatności jest wymagana";
+    }
+
+    // Additional mandatory consents for online consultation
+    if (bookingForm.consultationType === "online") {
+      if (!bookingForm.medicalDataProcessingAgreed) {
+        errors.medicalDataProcessingAgreed = "Zgoda na przetwarzanie danych medycznych jest wymagana dla konsultacji online";
+      }
+      if (!bookingForm.teleportationConfirmed) {
+        errors.teleportationConfirmed = "Potwierdzenie formy konsultacji online jest wymagane";
+      }
+      if (!bookingForm.contactConsentAgreed) {
+        errors.contactConsentAgreed = "Zgoda na kontakt jest wymagana dla konsultacji online";
+      }
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -299,13 +321,19 @@ export default function Doctors({
       // Close modal and reset form
       setShowModal(false);
       setBookingForm({
-        name: "",
-        email: "",
-        phone: "",
+        name: user?.name || "",
+        email: user?.email || "",
+        phone: user?.phone?.startsWith("+48")
+          ? user.phone.slice(3)
+          : user?.phone || "",
         gender: "male",
         message: "",
         consultationType: "offline",
         smsConsentAgreed: false,
+        privacyPolicyAgreed: false,
+        medicalDataProcessingAgreed: false,
+        teleportationConfirmed: false,
+        contactConsentAgreed: false,
       });
       setSelectedSlot(null);
 
@@ -736,8 +764,8 @@ export default function Doctors({
                         </div>
                       </div>
 
-                      {/* Add Consultation Type Toggle */}
-                      <div className="mb-4">
+                      {/* Consultation Type Toggle - Hidden for now */}
+                      <div className="mb-4 hidden">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Typ konsultacji
                         </label>
@@ -787,45 +815,157 @@ export default function Doctors({
                           onChange={handleInputChange}
                           rows="3"
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
-                          placeholder="Prosimy opisać krótko swój problem zdrowotny oraz wskazać usługę, którą są Państwo zainteresowani (np. konsultacja chirurgiczna, usunięcie zmiany skórnej)."
+                          placeholder="Prosimy opisać krótko swój problem zdrowotny oraz wskazać usługę, którą są Państwo zainteresowani (np. konsultacja chirurgiczna, usunięcie zmiany skórnej)."
                         ></textarea>
                       </div>
 
-                      {/* Add SMS Consent Checkbox */}
-                      <div className="mb-4">
-                        <label className="flex items-start space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            name="smsConsentAgreed"
-                            checked={bookingForm.smsConsentAgreed}
-                            onChange={(e) =>
-                              setBookingForm({
-                                ...bookingForm,
-                                smsConsentAgreed: e.target.checked,
-                              })
-                            }
-                            className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
-                          />
-                        <span className="text-sm text-gray-700">
-                      Wyrażam zgodę na otrzymywanie powiadomień SMS dotyczących mojej wizyty (np. przypomnienia, zmiany terminu) oraz potwierdzam, że zapoznałem(-am) się z{" "}
-                      <button
-                        type="button"
-                        onClick={() => window.open('/images/tos.docx', '_blank')}
-                        className="text-main hover:text-main-dark underline"
-                      >
-                        Regulaminem
-                      </button>{" "}
-                      i{" "}
-                      <button
-                        type="button"
-                        onClick={() => window.open('/images/ts.docx', '_blank')}
-                        className="text-main hover:text-main-dark underline"
-                      >
-                        Polityką Prywatności
-                      </button>
-                      .
-                    </span>
-                        </label>
+                      {/* Consent Checkboxes */}
+                      <div className="mb-4 space-y-4">
+                        {/* Mandatory Privacy Policy Consent */}
+                        <div>
+                          <label className="flex items-start space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="privacyPolicyAgreed"
+                              checked={bookingForm.privacyPolicyAgreed}
+                              onChange={(e) =>
+                                setBookingForm({
+                                  ...bookingForm,
+                                  privacyPolicyAgreed: e.target.checked,
+                                })
+                              }
+                              className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                            />
+                            <span className="text-sm text-gray-700">
+                              Zapoznałem(-am) się z{" "}
+                              <button
+                                type="button"
+                                onClick={() => window.open('/images/tos.docx', '_blank')}
+                                className="text-main hover:text-main-dark underline"
+                              >
+                                Regulaminem
+                              </button>{" "}
+                              i{" "}
+                              <button
+                                type="button"
+                                onClick={() => window.open('/images/ts.docx', '_blank')}
+                                className="text-main hover:text-main-dark underline"
+                              >
+                                Polityką Prywatności
+                              </button>{" "}
+                              i akceptuję ich postanowienia. <span className="text-red-500">*</span>
+                            </span>
+                          </label>
+                          {formErrors.privacyPolicyAgreed && (
+                            <p className="text-red-500 text-xs mt-1 ml-6">
+                              {formErrors.privacyPolicyAgreed}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Online consultation specific consents */}
+                        {bookingForm.consultationType === "online" && (
+                          <>
+                            {/* Medical Data Processing Consent */}
+                            <div>
+                              <label className="flex items-start space-x-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  name="medicalDataProcessingAgreed"
+                                  checked={bookingForm.medicalDataProcessingAgreed}
+                                  onChange={(e) =>
+                                    setBookingForm({
+                                      ...bookingForm,
+                                      medicalDataProcessingAgreed: e.target.checked,
+                                    })
+                                  }
+                                  className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                                />
+                                <span className="text-sm text-gray-700">
+                                  Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym danych medycznych, w celu realizacji konsultacji medycznej online, zgodnie z art. 9 ust. 2 lit. h RODO. <span className="text-red-500">*</span>
+                                </span>
+                              </label>
+                              {formErrors.medicalDataProcessingAgreed && (
+                                <p className="text-red-500 text-xs mt-1 ml-6">
+                                  {formErrors.medicalDataProcessingAgreed}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Teleportation Confirmation */}
+                            <div>
+                              <label className="flex items-start space-x-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  name="teleportationConfirmed"
+                                  checked={bookingForm.teleportationConfirmed}
+                                  onChange={(e) =>
+                                    setBookingForm({
+                                      ...bookingForm,
+                                      teleportationConfirmed: e.target.checked,
+                                    })
+                                  }
+                                  className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                                />
+                                <span className="text-sm text-gray-700">
+                                  Potwierdzam, że konsultacja medyczna odbędzie się w formie zdalnej (online) i jestem świadomy(-a) tej formy świadczenia zdrowotnego. <span className="text-red-500">*</span>
+                                </span>
+                              </label>
+                              {formErrors.teleportationConfirmed && (
+                                <p className="text-red-500 text-xs mt-1 ml-6">
+                                  {formErrors.teleportationConfirmed}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Contact Consent */}
+                            <div>
+                              <label className="flex items-start space-x-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  name="contactConsentAgreed"
+                                  checked={bookingForm.contactConsentAgreed}
+                                  onChange={(e) =>
+                                    setBookingForm({
+                                      ...bookingForm,
+                                      contactConsentAgreed: e.target.checked,
+                                    })
+                                  }
+                                  className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                                />
+                                <span className="text-sm text-gray-700">
+                                  Wyrażam zgodę na kontakt telefoniczny lub e-mailowy w celu realizacji konsultacji online, w tym przesłania linku do spotkania. <span className="text-red-500">*</span>
+                                </span>
+                              </label>
+                              {formErrors.contactConsentAgreed && (
+                                <p className="text-red-500 text-xs mt-1 ml-6">
+                                  {formErrors.contactConsentAgreed}
+                                </p>
+                              )}
+                            </div>
+                          </>
+                        )}
+
+                        {/* Voluntary SMS Consent */}
+                        <div>
+                          <label className="flex items-start space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="smsConsentAgreed"
+                              checked={bookingForm.smsConsentAgreed}
+                              onChange={(e) =>
+                                setBookingForm({
+                                  ...bookingForm,
+                                  smsConsentAgreed: e.target.checked,
+                                })
+                              }
+                              className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
+                            />
+                            <span className="text-sm text-gray-700">
+                              Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).
+                            </span>
+                          </label>
+                        </div>
                       </div>
 
                       <div className="text-xs text-gray-500 mt-2">
