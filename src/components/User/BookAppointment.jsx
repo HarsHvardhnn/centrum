@@ -5,8 +5,9 @@ import doctorService from "../../helpers/doctorHelper";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { useSpecializations } from "../../context/SpecializationContext";
-import { FaCalendarAlt } from "react-icons/fa";
+import { FaCalendarAlt, FaShare } from "react-icons/fa";
 import { useUser } from "../../context/userContext";
+import { useSearchParams, useLocation } from "react-router-dom";
 
 export default function BookAppointment({
   page,
@@ -15,6 +16,9 @@ export default function BookAppointment({
 }) {
   const { user } = useUser();
   const { specializations } = useSpecializations();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({
@@ -24,15 +28,23 @@ export default function BookAppointment({
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
+  // Share functionality - removed modal states since we're copying directly
+
+  // Parse URL parameters for pre-filling form
+  const doctorIdFromUrl = searchParams.get('doctor') || selectedDoctorId;
+  const dateFromUrl = searchParams.get('date');
+  const timeFromUrl = searchParams.get('time');
+  const specializationFromUrl = searchParams.get('specialization') || selectedSpecialization;
+
   const initialValues = {
     name: user?.name || "",
     gender: "",
     email: user?.email || "",
     phone: user?.phone?.startsWith("+48") ? user.phone.slice(3) : user?.phone || "",
-    date: "",
-    time: "",
-    doctor: selectedDoctorId || "",
-    specialization: selectedSpecialization || "",
+    date: dateFromUrl || "",
+    time: timeFromUrl || "",
+    doctor: doctorIdFromUrl || "",
+    specialization: specializationFromUrl || "",
     message: "",
     consultationType: "offline",
     smsConsentAgreed: false,
@@ -101,20 +113,15 @@ export default function BookAppointment({
     }
   };
 
-  // Handle specialization change
-  const handleSpecializationChange = async (e, setFieldValue) => {
-    const newSpecialization = e.target.value;
-    setFieldValue("specialization", newSpecialization);
-    setFieldValue("doctor", ""); // Reset doctor when specialization changes
-    setFieldValue("time", ""); // Reset time when specialization changes
-    setAvailableSlots([]); // Reset available slots
-
-    if (newSpecialization) {
-      fetchDoctorsForSpecialization(newSpecialization);
-    } else {
-      setDoctors([]);
+  // Load pre-selected data from URL parameters
+  useEffect(() => {
+    if (doctorIdFromUrl && doctors.length > 0) {
+      const doctor = doctors.find(d => d._id === doctorIdFromUrl);
+      if (doctor && dateFromUrl) {
+        fetchAvailableSlots(doctorIdFromUrl, dateFromUrl);
+      }
     }
-  };
+  }, [doctorIdFromUrl, dateFromUrl, doctors]);
 
   // Fetch available slots when date or doctor changes
   const fetchAvailableSlots = async (doctorId, date) => {
@@ -140,21 +147,41 @@ export default function BookAppointment({
     }
   };
 
-  // Handle date change
-  const handleDateChange = async (e, doctorId, setFieldValue) => {
+  // Handle specialization change with URL update
+  const handleSpecializationChangeWithUpdate = async (e, setFieldValue, values) => {
+    const newSpecialization = e.target.value;
+    setFieldValue("specialization", newSpecialization);
+    setFieldValue("doctor", ""); // Reset doctor when specialization changes
+    setFieldValue("time", ""); // Reset time when specialization changes
+    setAvailableSlots([]); // Reset available slots
+
+    updateUrlWithSelections("", newSpecialization, values.date, "");
+
+    if (newSpecialization) {
+      fetchDoctorsForSpecialization(newSpecialization);
+    } else {
+      setDoctors([]);
+    }
+  };
+
+  // Handle date change with URL update
+  const handleDateChangeWithUpdate = async (e, doctorId, setFieldValue, values) => {
     const newDate = e.target.value;
     setFieldValue("date", newDate);
     setFieldValue("time", ""); // Reset time when date changes
     if (newDate && doctorId) {
       fetchAvailableSlots(doctorId, newDate);
+      updateUrlWithSelections(values.doctor, values.specialization, newDate, "");
     }
   };
 
-  // Handle doctor change
-  const handleDoctorChange = async (e, date, setFieldValue) => {
+  // Handle doctor change with URL update
+  const handleDoctorChangeWithUpdate = async (e, date, setFieldValue, values) => {
     const newDoctorId = e.target.value;
     setFieldValue("doctor", newDoctorId);
     setFieldValue("time", ""); // Reset time when doctor changes
+
+    updateUrlWithSelections(newDoctorId, values.specialization, date, "");
 
     if (newDoctorId) {
       try {
@@ -166,12 +193,14 @@ export default function BookAppointment({
           setFieldValue("date", nextAvailableResponse.data.nextAvailableDate);
           // Set available slots
           setAvailableSlots(nextAvailableResponse.data.availableSlots);
+          updateUrlWithSelections(newDoctorId, values.specialization, nextAvailableResponse.data.nextAvailableDate, "");
         } else {
           // If no available date found, use current date
           const currentDate = new Date().toISOString().split("T")[0];
           setFieldValue("date", currentDate);
           // Fetch slots for current date
           await fetchAvailableSlots(newDoctorId, currentDate);
+          updateUrlWithSelections(newDoctorId, values.specialization, currentDate, "");
         }
       } catch (error) {
         console.error("Error fetching next available date:", error);
@@ -182,25 +211,10 @@ export default function BookAppointment({
     }
   };
 
-  // Update useEffect to handle initial doctor selection
-  useEffect(() => {
-    if (selectedDoctorId) {
-      handleDoctorChange(
-        { target: { value: selectedDoctorId } },
-        null,
-        (field, value) => {
-          const formik = document.querySelector('form').__formik;
-          if (formik) {
-            formik.setFieldValue(field, value);
-          }
-        }
-      );
-    }
-  }, [selectedDoctorId]);
-
-  // Handle slot selection
-  const handleSlotSelect = (slot, setFieldValue) => {
+  // Handle slot selection with URL update
+  const handleSlotSelectWithUpdate = (slot, setFieldValue, values) => {
     setFieldValue("time", `${slot.startTime}`);
+    updateUrlWithSelections(values.doctor, values.specialization, values.date, slot.startTime);
   };
 
   // Custom phone input handler
@@ -269,6 +283,60 @@ export default function BookAppointment({
     }
   };
 
+  // Function to update URL with current selections
+  const updateUrlWithSelections = (doctor, specialization, date, time) => {
+    const params = new URLSearchParams();
+    
+    if (doctor) params.set('doctor', doctor);
+    if (specialization) params.set('specialization', specialization);
+    if (date) params.set('date', date);
+    if (time) params.set('time', time);
+    
+    // Update URL without triggering navigation
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  };
+
+  // Function to generate shareable link
+  const generateShareableLink = (values) => {
+    if (!values.doctor || !values.date || !values.time) {
+      toast.error("Najpierw wybierz lekarza, datę i godzinę");
+      return "";
+    }
+    
+    const params = new URLSearchParams();
+    params.set('doctor', values.doctor);
+    params.set('specialization', values.specialization);
+    params.set('date', values.date);
+    params.set('time', values.time);
+    
+    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  };
+
+  // Handle share button click - directly copy to clipboard
+  const handleShare = async (values) => {
+    const shareableLink = generateShareableLink(values);
+    if (shareableLink) {
+      try {
+        await navigator.clipboard.writeText(shareableLink);
+        toast.success("Link skopiowany do schowka!");
+      } catch (err) {
+        // Fallback for browsers that don't support clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = shareableLink;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          toast.success("Link skopiowany do schowka!");
+        } catch (fallbackErr) {
+          toast.error("Nie udało się skopiować linku");
+        }
+        document.body.removeChild(textArea);
+      }
+    }
+  };
+
   return (
     <section
       className={`px-4 sm:px-6 flex justify-center items-center ${
@@ -307,6 +375,20 @@ export default function BookAppointment({
           >
             {({ setFieldValue, isSubmitting, values, errors, touched }) => (
               <Form className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#f5f7fa] rounded-md border border-[#062b47] p-4 sm:p-6">
+                {/* Share Button - Only show when we have complete selection */}
+                {values.doctor && values.date && values.time && (
+                  <div className="col-span-1 sm:col-span-2 flex justify-end mb-2">
+                    <button
+                      type="button"
+                      onClick={() => handleShare(values)}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center text-sm"
+                    >
+                      <FaShare className="mr-2" />
+                      Udostępnij wizytę
+                    </button>
+                  </div>
+                )}
+
                 {/* Status Messages */}
                 {submitStatus.success && (
                   <div className="col-span-1 sm:col-span-2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-sm sm:text-base">
@@ -407,7 +489,7 @@ export default function BookAppointment({
                   <Field
                     as="select"
                     name="specialization"
-                    onChange={(e) => handleSpecializationChange(e, setFieldValue)}
+                    onChange={(e) => handleSpecializationChangeWithUpdate(e, setFieldValue, values)}
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
                   >
                     <option value="">Wybierz specjalizację</option>
@@ -428,7 +510,7 @@ export default function BookAppointment({
                   <Field
                     as="select"
                     name="doctor"
-                    onChange={(e) => handleDoctorChange(e, values.date, setFieldValue)}
+                    onChange={(e) => handleDoctorChangeWithUpdate(e, values.date, setFieldValue, values)}
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
                     disabled={!values.specialization}
                   >
@@ -450,7 +532,7 @@ export default function BookAppointment({
                   <Field
                     name="date"
                     type="date"
-                    onChange={(e) => handleDateChange(e, values.doctor, setFieldValue)}
+                    onChange={(e) => handleDateChangeWithUpdate(e, values.doctor, setFieldValue, values)}
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
                     min={new Date().toISOString().split('T')[0]}
                     disabled={!values.doctor}
@@ -515,7 +597,7 @@ export default function BookAppointment({
                           <button
                             key={index}
                             type="button"
-                            onClick={() => handleSlotSelect(slot, setFieldValue)}
+                            onClick={() => handleSlotSelectWithUpdate(slot, setFieldValue, values)}
                             disabled={!slot.available}
                             className={`px-3 py-2 rounded-lg border text-xs sm:text-sm ${
                               values.time === slot.startTime
@@ -696,6 +778,8 @@ export default function BookAppointment({
           </Formik>
         </div>
       </div>
+
+
 
       <style jsx>{`
         /* Safari-specific fixes */

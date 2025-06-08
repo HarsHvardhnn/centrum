@@ -8,11 +8,12 @@ import {
   FaCalendarAlt,
   FaChevronLeft,
   FaChevronRight,
+  FaShare,
 } from "react-icons/fa";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import doctorService from "../../helpers/doctorHelper";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { apiCaller } from "../../utils/axiosInstance";
 import { useUser } from "../../context/userContext";
@@ -23,6 +24,9 @@ export default function Doctors({
   setSelectedDepartment,
 }) {
   const { user } = useUser();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
 
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,8 +69,95 @@ export default function Doctors({
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const navigate = useNavigate();
   const sliderRef = useRef(null);
+
+  // Add state for share functionality - removed modal states since we're copying directly
+
+  // Parse URL parameters on component mount
+  useEffect(() => {
+    const doctorIdFromUrl = searchParams.get('doctor');
+    const dateFromUrl = searchParams.get('date');
+    const timeFromUrl = searchParams.get('time');
+    
+    if (doctorIdFromUrl && doctors.length > 0) {
+      const doctor = doctors.find(d => d.id === doctorIdFromUrl);
+      if (doctor) {
+        handleBookAppointment(doctor);
+        
+        if (dateFromUrl) {
+          setSelectedDate(dateFromUrl);
+        }
+        
+        if (timeFromUrl && dateFromUrl) {
+          // Wait a bit for slots to load, then select the time
+          setTimeout(() => {
+            const slot = availableSlots.find(s => s.startTime === timeFromUrl);
+            if (slot && slot.available) {
+              setSelectedSlot(slot);
+            }
+          }, 1000);
+        }
+      }
+    }
+  }, [doctors, searchParams]);
+
+  // Function to update URL with current selections
+  const updateUrlWithSelections = (doctorId, date, time) => {
+    const params = new URLSearchParams();
+    
+    if (doctorId) {
+      params.set('doctor', doctorId);
+    }
+    if (date) {
+      params.set('date', date);
+    }
+    if (time) {
+      params.set('time', time);
+    }
+    
+    // Update URL without triggering navigation
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  };
+
+  // Function to generate shareable link
+  const generateShareableLink = () => {
+    if (!selectedDoctor || !selectedDate || !selectedSlot) {
+      toast.error("Najpierw wybierz lekarza, datę i godzinę");
+      return "";
+    }
+    
+    const params = new URLSearchParams();
+    params.set('doctor', selectedDoctor.id);
+    params.set('date', selectedDate);
+    params.set('time', selectedSlot.startTime);
+    
+    return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  };
+
+  // Handle share button click - directly copy to clipboard
+  const handleShare = async () => {
+    const shareableLink = generateShareableLink();
+    if (shareableLink) {
+      try {
+        await navigator.clipboard.writeText(shareableLink);
+        toast.success("Link skopiowany do schowka!");
+      } catch (err) {
+        // Fallback for browsers that don't support clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = shareableLink;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          toast.success("Link skopiowany do schowka!");
+        } catch (fallbackErr) {
+          toast.error("Nie udało się skopiować linku");
+        }
+        document.body.removeChild(textArea);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -195,12 +286,16 @@ export default function Doctors({
     setSelectedSlot(null); // Reset selected slot when date changes
     if (selectedDoctor) {
       fetchAvailableSlots(selectedDoctor.id, date);
+      updateUrlWithSelections(selectedDoctor.id, date, "");
     }
   };
 
   const handleSelectSlot = (slot) => {
     if (slot.available) {
       setSelectedSlot(slot);
+      if (selectedDoctor && selectedDate) {
+        updateUrlWithSelections(selectedDoctor.id, selectedDate, slot.startTime);
+      }
     }
   };
 
@@ -476,12 +571,24 @@ export default function Doctors({
             {/* Modal Header */}
             <div className="bg-main text-white px-6 py-4 flex justify-between items-center sticky top-0 z-10">
               <h3 className="text-xl font-semibold">Umów wizytę</h3>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-white hover:text-gray-200"
-              >
-                <FaTimes size={24} />
-              </button>
+              <div className="flex items-center space-x-2">
+                {/* Share Button */}
+                {selectedDate && selectedSlot && (
+                  <button
+                    onClick={handleShare}
+                    className="text-white hover:text-gray-200 p-2 rounded-full hover:bg-white/10 transition-colors"
+                    title="Udostępnij link do wizyty"
+                  >
+                    <FaShare size={20} />
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="text-white hover:text-gray-200 p-2 rounded-full hover:bg-white/10 transition-colors"
+                >
+                  <FaTimes size={24} />
+                </button>
+              </div>
             </div>
 
             {/* Modal Body */}
@@ -1003,6 +1110,8 @@ export default function Doctors({
           </div>
         </div>
       )}
+
+
     </section>
   );
 }
