@@ -130,7 +130,7 @@ const ServicesMini = () => {
               </button>
             );
           })}
-          <div className="bg-main flex justify-center items-center text-xs sm:text-sm md:text-base text-white text-center p-2 sm:p-4 cursor-pointer whitespace-normal min-h-[3rem]">
+          <div onClick={() => window.location.href = "/uslugi"} className="bg-main flex justify-center items-center text-xs sm:text-sm md:text-base text-white text-center p-2 sm:p-4 cursor-pointer whitespace-normal min-h-[3rem]">
             Zobacz wszystkie
           </div>
         </div>

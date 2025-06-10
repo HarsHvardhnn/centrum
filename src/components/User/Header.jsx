@@ -107,12 +107,16 @@ const Header = () => {
         <div className=" flex items-center gap-2">
           <a
             href="https://www.facebook.com/share/16Sb5NkqZt/?mibextid=wwXIfr"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-teal-600 hover:text-teal-800 transition-colors"
           >
             <FaFacebookF className="text-xl" />
           </a>
           <a
             href="https://www.instagram.com/centrummedyczne7?igsh=MTE1N2JoemM0ZG94YQ%3D%3D&utm_source=qr"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-teal-600 hover:text-teal-800 transition-colors"
           >
             <FaInstagram className="text-xl" />

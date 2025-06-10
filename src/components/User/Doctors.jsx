@@ -400,6 +400,7 @@ export default function Doctors({
         time: selectedSlot.startTime,
         consultationType: bookingForm.consultationType,
         smsConsentAgreed: bookingForm.smsConsentAgreed,
+        privacyPolicyAgreed: bookingForm.privacyPolicyAgreed,
       };
 
       // Make API call to book appointment
@@ -946,20 +947,20 @@ export default function Doctors({
                             <span className="text-sm text-gray-700">
                               Zapoznałem(-am) się z{" "}
                               <button
-                                type="button"
-                                onClick={() => window.open('/images/tos.docx', '_blank')}
-                                className="text-main hover:text-main-dark underline"
-                              >
-                                Regulaminem
-                              </button>{" "}
-                              i{" "}
-                              <button
-                                type="button"
-                                onClick={() => window.open('/images/ts.docx', '_blank')}
-                                className="text-main hover:text-main-dark underline"
-                              >
-                                Polityką Prywatności
-                              </button>{" "}
+                          type="button"
+                          onClick={() => window.open('/regulamin.pdf', '_blank')}
+                          className="text-main hover:text-main-dark underline"
+                        >
+                          Regulaminem
+                        </button>{" "}
+                        i{" "}
+                        <button
+                          type="button"
+                          onClick={() => window.open('/polityka-prywatnosci.pdf', '_blank')}
+                          className="text-main hover:text-main-dark underline"
+                        >
+                          Polityką Prywatności
+                        </button>{" "}
                               i akceptuję ich postanowienia. <span className="text-red-500">*</span>
                             </span>
                           </label>

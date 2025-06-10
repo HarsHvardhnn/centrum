@@ -11,7 +11,7 @@ const PageHeader = ({ title, path, bgurl }) => {
       <div className="relative z-10 text-center md:text-left">
         <h4 className="text-sm md:text-lg text-main">{path}</h4>
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-main font-serif">
-          {title}
+          {title?.replace(/-/g, " ")}
         </h2>
       </div>
     </div>

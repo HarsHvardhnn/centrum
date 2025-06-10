@@ -153,14 +153,14 @@ const routes = createBrowserRouter([
         path: "/login",
         element: <LoginScreen screenImg={LoginImage} isLogin={true} />,
       },
-      {
-        path: "/signup",
-        element: <LoginScreen screenImg={SignupImage} isLogin={false} />,
-      },
-      {
-        path: "/forgot-password",
-        element: <ForgotPasswordScreen />,
-      },
+      // {
+      //   path: "/signup",
+      //   element: <LoginScreen screenImg={SignupImage} isLogin={false} />,
+      // },
+      // {
+      //   path: "/forgot-password",
+      //   element: <ForgotPasswordScreen />,
+      // },
     ],
   },
 

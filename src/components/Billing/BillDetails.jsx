@@ -368,7 +368,7 @@ const BillDetails = () => {
                   </div>
                   
                   <div className="flex justify-between py-2 text-sm">
-                    <span className="text-gray-600">Podatek ({billData.taxPercentage}%)</span>
+                    <span className="text-gray-600">Podatek ({billData.taxPercentage}%{billData.taxPercentage === 0 ? ' ZW' : ''})</span>
                     <span className="font-medium">{formatCurrency(billData.taxAmount)}</span>
                   </div>
                   

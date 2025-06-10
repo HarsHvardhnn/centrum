@@ -528,7 +528,7 @@ const AuthForm = ({ isLogin = false }) => {
                   )}
 
                   {/* Forgot Password - Only show for login */}
-                  {isLogin && (
+                  {/* {isLogin && (
                     <div className="flex justify-end">
                       <button
                         type="button"
@@ -538,7 +538,7 @@ const AuthForm = ({ isLogin = false }) => {
                         Zapomniałeś hasła?
                       </button>
                     </div>
-                  )}
+                  )} */}
 
                   {errors.submit && (
                     <div className="text-red-500 text-sm">{errors.submit}</div>
@@ -625,7 +625,7 @@ const AuthForm = ({ isLogin = false }) => {
             </div>
 
             {/* Toggle Link */}
-            <p className="mt-4 text-center text-sm text-gray-600">
+            {/* <p className="mt-4 text-center text-sm text-gray-600">
               {isLogin ? "Nie masz konta? " : "Masz już konto? "}
               <button
                 type="button"
@@ -634,7 +634,7 @@ const AuthForm = ({ isLogin = false }) => {
               >
                 {isLogin ? "Zarejestruj się" : "Zaloguj się"}
               </button>
-            </p>
+            </p> */}
           </>
         )}
       </div>

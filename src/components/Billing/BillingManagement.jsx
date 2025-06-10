@@ -87,7 +87,7 @@ const BillingManagement = () => {
     const [discount, setDiscount] = useState(0);
     const [additionalCharges, setAdditionalCharges] = useState(0);
     const [additionalChargeNote, setAdditionalChargeNote] = useState("");
-    const [taxPercentage, setTaxPercentage] = useState(5);
+    const [taxPercentage, setTaxPercentage] = useState(0);
 
     // Fetch bill details only once when modal opens
     useEffect(() => {
@@ -117,7 +117,7 @@ const BillingManagement = () => {
             setDiscount(response.data.discount || 0);
             setAdditionalCharges(response.data.additionalCharges || 0);
             setAdditionalChargeNote(response.data.additionalChargeNote || "");
-            setTaxPercentage(response.data.taxPercentage || 5);
+            setTaxPercentage(response.data.taxPercentage ?? 0);
           } else {
             toast.error("Nie udało się pobrać szczegółów faktury");
           }
@@ -342,15 +342,22 @@ const BillingManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Podatek VAT (%)
                   </label>
-                  <input
-                    type="number"
-                    value={taxPercentage}
-                    onChange={(e) => setTaxPercentage(Number(e.target.value))}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                    min="0"
-                    max="100"
-                    step="1"
-                  />
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={taxPercentage}
+                      onChange={(e) => setTaxPercentage(Number(e.target.value))}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      min="0"
+                      max="100"
+                      step="1"
+                    />
+                    {taxPercentage === 0 && (
+                      <span className="absolute right-3 top-2 text-sm text-gray-500 bg-white px-1">
+                        ZW
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -370,7 +377,7 @@ const BillingManagement = () => {
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Podatek ({taxPercentage}%)</span>
+                  <span>Podatek ({taxPercentage}%{taxPercentage === 0 ? ' ZW' : ''})</span>
                   <span>
                     {((selectedServices.reduce((sum, service) => sum + Number(service.price), 0) * taxPercentage) / 100).toFixed(2)} zł
                   </span>

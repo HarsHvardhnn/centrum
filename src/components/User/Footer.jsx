@@ -1,5 +1,6 @@
 import { FaFacebookF, FaInstagram, FaLinkedinIn } from "react-icons/fa";
 import { IoSend } from "react-icons/io5";
+import CookieSettingsLink from "./CookieSettingsLink";
 
 export default function Footer() {
   return (
@@ -49,6 +50,14 @@ export default function Footer() {
               <a href="/o-nas" className="hover:underline">
                 O nas
               </a>
+            </li>
+            <li>
+              <a href="/privacy-policy" className="hover:underline">
+                Polityka prywatności
+              </a>
+            </li>
+            <li>
+              <CookieSettingsLink className="hover:underline text-left" />
             </li>
           </ul>
         </div>

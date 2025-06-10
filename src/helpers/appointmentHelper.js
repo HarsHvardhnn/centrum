@@ -313,11 +313,12 @@ class AppointmentService {
     }
   }
 
-  async generateVisitCard(appointmentId) {
+  async generateVisitCard(appointmentId, forceNew = false) {
     try {
+      const queryParams = forceNew ? '?forceNew=true' : '';
       const response = await apiCaller(
-        'GET',
-        `/visit-cards/appointment/${appointmentId}`,
+        'POST',
+        `/visit-cards/appointment/${appointmentId}${queryParams}`,
         { data: '' }
       );
       return response.data;

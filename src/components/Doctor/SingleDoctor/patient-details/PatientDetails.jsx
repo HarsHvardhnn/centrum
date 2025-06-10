@@ -4,7 +4,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import BreadcrumbNav from "./BreadcrumbNav";
 import PatientProfile from "./PatientProfile";
 import ConsultationForm from "./ConsultationForm";
-import ActionButtons from "./ActionButtons";
+import ActionButtons from "./ActionButtons"
 import ServiceSelectionModal from "./ServiceSelectionModal";
 import ReportUploader from "./ReportUploader";
 import ReportsList from "./ReportsList";
@@ -42,6 +42,51 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
             className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
           >
             Usuń
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Visit Card Confirmation Modal Component
+const VisitCardConfirmationModal = ({ isOpen, onClose, onViewExisting, onGenerateNew, existingUrl }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        <div className="flex items-center mb-4">
+          <FileText className="text-teal-500 mr-3" size={24} />
+          <h2 className="text-xl font-semibold">Karta wizyty już istnieje</h2>
+        </div>
+        <p className="text-gray-600 mb-6">
+          Dla tej wizyty została już wygenerowana karta wizyty. Czy chcesz wyświetlić istniejącą kartę, czy wygenerować nową?
+        </p>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Anuluj
+          </button>
+          <button
+            onClick={() => {
+              onGenerateNew();
+              onClose();
+            }}
+            className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
+          >
+            Wygeneruj nową
+          </button>
+          <button
+            onClick={() => {
+              onViewExisting();
+              onClose();
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Wyświetl istniejącą
           </button>
         </div>
       </div>
@@ -302,6 +347,10 @@ const PatientDetailsPage = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailedPatientData, setDetailedPatientData] = useState(null);
 
+  // Add states for Visit Card Confirmation Modal
+  const [showVisitCardModal, setShowVisitCardModal] = useState(false);
+  const [pendingVisitCardData, setPendingVisitCardData] = useState(null);
+
   // Add a specific useEffect to fetch patient services when appointment ID changes
   useEffect(() => {
     if (currentAppointmentId && id) {
@@ -347,6 +396,7 @@ const PatientDetailsPage = () => {
         } else if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
           // Otherwise select the most recent one
           const mostRecentAppointment = appointmentsResponse.data[0];
+          console.log("mostRecentAppointment", mostRecentAppointment);
           setCurrentAppointmentId(mostRecentAppointment._id);
           setSelectedAppointment(mostRecentAppointment);
           await fetchAppointmentDetails(mostRecentAppointment._id);
@@ -846,12 +896,26 @@ const PatientDetailsPage = () => {
     );
   };
 
-  const handleGenerateVisitCard = async (appointmentId, e) => {
+  const handleGenerateVisitCard = async (appointmentId, e, forceNew = false) => {
     e.stopPropagation(); // Prevent appointment selection when clicking the button
     try {
-      const response = await appointmentHelper.generateVisitCard(appointmentId);
+      const response = await appointmentHelper.generateVisitCard(appointmentId, forceNew);
+      
+      console.log("response", response);
       if (response.success && response.data.url) {
-        window.open(response.data.url, '_blank');
+        // Check if visit card already exists
+        if (response.message === "Karta wizyty już istnieje" && !forceNew) {
+          // Store the data for the modal
+          setPendingVisitCardData({
+            appointmentId,
+            url: response.data.url,
+            event: e
+          });
+          setShowVisitCardModal(true);
+        } else {
+          // Normal case - open the visit card
+          window.open(response.data.url, '_blank');
+        }
       } else {
         toast.error("Nie udało się wygenerować karty wizyty");
       }
@@ -859,6 +923,22 @@ const PatientDetailsPage = () => {
       console.error("Error generating visit card:", error);
       toast.error("Wystąpił błąd podczas generowania karty wizyty");
     }
+  };
+
+  // Handle viewing existing visit card
+  const handleViewExistingCard = () => {
+    if (pendingVisitCardData?.url) {
+      window.open(pendingVisitCardData.url, '_blank');
+    }
+    setPendingVisitCardData(null);
+  };
+
+  // Handle generating new visit card
+  const handleGenerateNewCard = async () => {
+    if (pendingVisitCardData) {
+      await handleGenerateVisitCard(pendingVisitCardData.appointmentId, pendingVisitCardData.event, true);
+    }
+    setPendingVisitCardData(null);
   };
 
   if (isLoading) {
@@ -1074,6 +1154,18 @@ const PatientDetailsPage = () => {
         isOpen={showDetailsModal}
         onClose={() => setShowDetailsModal(false)}
         patientData={detailedPatientData}
+      />
+
+      {/* Add Visit Card Confirmation Modal */}
+      <VisitCardConfirmationModal
+        isOpen={showVisitCardModal}
+        onClose={() => {
+          setShowVisitCardModal(false);
+          setPendingVisitCardData(null);
+        }}
+        onViewExisting={handleViewExistingCard}
+        onGenerateNew={handleGenerateNewCard}
+        existingUrl={pendingVisitCardData?.url}
       />
     </div>
   );
