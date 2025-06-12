@@ -165,7 +165,10 @@ const patientService = {
     // Handle new documents to add (if any)
     if (patientData?.documents?.length) {
       patientData.documents.forEach((file) => {
-        formData.append("files", file.file);
+        console.log("file", file);
+        if (file.file) {
+          formData.append("files", file.file);
+        } 
       });
     }
 

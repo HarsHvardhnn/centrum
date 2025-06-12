@@ -75,9 +75,9 @@ export default function Doctors({
 
   // Parse URL parameters on component mount
   useEffect(() => {
-    const doctorIdFromUrl = searchParams.get('doctor');
-    const dateFromUrl = searchParams.get('date');
-    const timeFromUrl = searchParams.get('time');
+    const doctorIdFromUrl = searchParams.get('lekarz');
+    const dateFromUrl = searchParams.get('data');
+    const timeFromUrl = searchParams.get('godzina');
     
     if (doctorIdFromUrl && doctors.length > 0) {
       const doctor = doctors.find(d => d.id === doctorIdFromUrl);
@@ -106,13 +106,13 @@ export default function Doctors({
     const params = new URLSearchParams();
     
     if (doctorId) {
-      params.set('doctor', doctorId);
+      params.set('lekarz', doctorId);
     }
     if (date) {
-      params.set('date', date);
+      params.set('data', date);
     }
     if (time) {
-      params.set('time', time);
+      params.set('godzina', time);
     }
     
     // Update URL without triggering navigation
@@ -122,15 +122,16 @@ export default function Doctors({
 
   // Function to generate shareable link
   const generateShareableLink = () => {
-    if (!selectedDoctor || !selectedDate || !selectedSlot) {
-      toast.error("Najpierw wybierz lekarza, datę i godzinę");
+    if (!selectedDoctor) {
+      toast.error("Najpierw wybierz lekarza");
       return "";
     }
     
     const params = new URLSearchParams();
-    params.set('doctor', selectedDoctor.id);
-    params.set('date', selectedDate);
-    params.set('time', selectedSlot.startTime);
+    params.set('lekarz', selectedDoctor.id);
+    params.set('nazwisko-lekarza', selectedDoctor.name);
+    if (selectedDate) params.set('data', selectedDate);
+    if (selectedSlot) params.set('godzina', selectedSlot.startTime);
     
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   };
@@ -574,7 +575,7 @@ export default function Doctors({
               <h3 className="text-xl font-semibold">Umów wizytę</h3>
               <div className="flex items-center space-x-2">
                 {/* Share Button */}
-                {selectedDate && selectedSlot && (
+                {selectedDoctor && (
                   <button
                     onClick={handleShare}
                     className="text-white hover:text-gray-200 p-2 rounded-full hover:bg-white/10 transition-colors"

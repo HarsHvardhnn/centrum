@@ -908,6 +908,7 @@ function LabAppointmentsContent({ clinic }) {
                   <PatientStepFormWrapper
                     currentSubStep={currentSubStep}
                     goToSubStep={goToSubStep}
+                    currentPatientId={currentPatientId}
                     markStepAsCompleted={markStepAsCompleted}
                     subStepTitles={subStepTitles}
                     isEditMode={isEditMode}
@@ -928,6 +929,7 @@ function LabAppointmentsContent({ clinic }) {
 function PatientStepFormWrapper({
   currentSubStep,
   goToSubStep,
+  currentPatientId,
   markStepAsCompleted,
   subStepTitles,
   isEditMode,
@@ -969,6 +971,7 @@ function PatientStepFormWrapper({
       markStepAsCompleted={handleStepCompleted}
       subStepTitles={subStepTitles}
       isEditMode={isEditMode}
+      currentPatientId={currentPatientId}
       completedSteps={completedSteps}
     />
   );

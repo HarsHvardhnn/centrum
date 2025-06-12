@@ -980,6 +980,7 @@ export default function UserManagement() {
                   markStepAsCompleted={markStepAsCompleted}
                   subStepTitles={subStepTitles}
                   isEditMode={isEditMode}
+                  currentPatientId={currentPatientId}
                   handleAddPatient={handleAddPatient}
                   patientFormData={patientFormData}
                 />
@@ -1040,6 +1041,7 @@ export default function UserManagement() {
 function PatientStepFormWrapper({
   currentSubStep,
   goToSubStep,
+  currentPatientId,
   markStepAsCompleted,
   subStepTitles,
   isEditMode,
@@ -1086,6 +1088,7 @@ function PatientStepFormWrapper({
       markStepAsCompleted={handleStepCompleted}
       subStepTitles={subStepTitles}
       isEditMode={isEditMode}
+      currentPatientId={currentPatientId}
       completedSteps={completedSteps}
     />
   );

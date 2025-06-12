@@ -31,10 +31,10 @@ export default function BookAppointment({
   // Share functionality - removed modal states since we're copying directly
 
   // Parse URL parameters for pre-filling form
-  const doctorIdFromUrl = searchParams.get('doctor') || selectedDoctorId;
-  const dateFromUrl = searchParams.get('date');
-  const timeFromUrl = searchParams.get('time');
-  const specializationFromUrl = searchParams.get('specialization') || selectedSpecialization;
+  const doctorIdFromUrl = searchParams.get('lekarz') || selectedDoctorId;
+  const dateFromUrl = searchParams.get('data');
+  const timeFromUrl = searchParams.get('godzina');
+  const specializationFromUrl = searchParams.get('specjalizacja') || selectedSpecialization;
 
   const initialValues = {
     name: user?.name || "",
@@ -287,10 +287,10 @@ export default function BookAppointment({
   const updateUrlWithSelections = (doctor, specialization, date, time) => {
     const params = new URLSearchParams();
     
-    if (doctor) params.set('doctor', doctor);
-    if (specialization) params.set('specialization', specialization);
-    if (date) params.set('date', date);
-    if (time) params.set('time', time);
+    if (doctor) params.set('lekarz', doctor);
+    if (specialization) params.set('specjalizacja', specialization);
+    if (date) params.set('data', date);
+    if (time) params.set('godzina', time);
     
     // Update URL without triggering navigation
     const newUrl = `${window.location.pathname}?${params.toString()}`;
@@ -299,16 +299,22 @@ export default function BookAppointment({
 
   // Function to generate shareable link
   const generateShareableLink = (values) => {
-    if (!values.doctor || !values.date || !values.time) {
-      toast.error("Najpierw wybierz lekarza, datę i godzinę");
+    if (!values.doctor) {
+      toast.error("Najpierw wybierz lekarza");
       return "";
     }
     
+    const selectedDoctor = doctors.find(d => d._id === values.doctor);
+    const doctorName = selectedDoctor ? (selectedDoctor.name.first && selectedDoctor.name.last 
+      ? `${selectedDoctor.name.first} ${selectedDoctor.name.last}` 
+      : selectedDoctor.name) : '';
+    
     const params = new URLSearchParams();
-    params.set('doctor', values.doctor);
-    params.set('specialization', values.specialization);
-    params.set('date', values.date);
-    params.set('time', values.time);
+    params.set('lekarz', values.doctor);
+    if (doctorName) params.set('nazwisko-lekarza', doctorName);
+    if (values.specialization) params.set('specjalizacja', values.specialization);
+    if (values.date) params.set('data', values.date);
+    if (values.time) params.set('godzina', values.time);
     
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
   };
@@ -375,8 +381,8 @@ export default function BookAppointment({
           >
             {({ setFieldValue, isSubmitting, values, errors, touched }) => (
               <Form className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#f5f7fa] rounded-md border border-[#062b47] p-4 sm:p-6">
-                {/* Share Button - Only show when we have complete selection */}
-                {values.doctor && values.date && values.time && (
+                {/* Share Button - Only show when we have doctor selected */}
+                {values.doctor && (
                   <div className="col-span-1 sm:col-span-2 flex justify-end mb-2">
                     <button
                       type="button"

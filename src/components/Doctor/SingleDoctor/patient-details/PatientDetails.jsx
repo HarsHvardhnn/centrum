@@ -206,8 +206,8 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
                   />
                 )}
                 <div>
-                  <p className="text-sm font-medium">{doc.name}</p>
-                  <p className="text-xs text-gray-500">{doc.type}</p>
+                  <p className="text-sm font-medium truncate">{doc?.fileName?.split(".")[0] || doc?.name || "Bez nazwy"}</p>
+                  {/* <p className="text-xs text-gray-500">{doc.type}</p> */}
                 </div>
               </div>
             </div>

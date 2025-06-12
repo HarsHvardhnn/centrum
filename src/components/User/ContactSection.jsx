@@ -53,8 +53,8 @@ export default function ContactSection() {
           <FaClock className="text-4xl mb-3" />
           <h4 className="font-bold text-lg">GODZINY PRACY</h4>
               <p className="text-gray-800 mt-1">
-                15:00-20:00 Poniedziałek-Piątek
-              </p>
+              Poniedziałek – Piątek 15:00 – 20:00 <br />
+              Sobota – umówione wizyty              </p>
         </div>
       </div>
     </section>

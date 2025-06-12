@@ -8,6 +8,20 @@ const PatientInfo = ({ patientData }) => {
   
   const [selectedImage, setSelectedImage] = useState(null);
 
+  // Function to translate report types to Polish
+  const getReportTypeInPolish = (type) => {
+    const typeTranslations = {
+      'visit-card': 'Karta wizyty',
+      'lab-report': 'Raport laboratoryjny',
+      'x-ray': 'Zdjęcie rentgenowskie',
+      'prescription': 'Recepta',
+      'diagnosis': 'Diagnoza',
+      'medical-certificate': 'Zaświadczenie lekarskie'
+    };
+    
+    return typeTranslations[type] || 'Raport';
+  };
+
   const openImageModal = (imageUrl) => {
     setSelectedImage(imageUrl);
   };
@@ -91,25 +105,35 @@ const PatientInfo = ({ patientData }) => {
           {patientData.reports.map((report, index) => (
             <div key={index} className="border rounded-2xl bg-white p-4">
               <h3 className="font-semibold mb-2 text-sm">
-                {report?.name || "Raport"} -{`type ${report?.type}` || "Raport"}
+                {report?.name || "Raport"} - {getReportTypeInPolish(report?.type)}
               </h3>
-              <div
-                className="h-36 cursor-pointer"
-                onClick={() =>{
-                  if(report.fileType!="pdf"){
-                    openImageModal(report.fileUrl)
-                  }else{
-                    window.open(report.fileUrl, '_blank');
-                  }
-                                 
-                   }}
-              >
-                <img
-                  src={report.fileUrl}
-                  alt={`Raport medyczny ${index + 1}`}
-                  className="rounded-lg w-full h-full object-cover"
-                />
-              </div>
+              
+              {report.isPdf ? (
+                // Show button for PDF files
+                <div className="h-36 flex items-center justify-center">
+                  <button
+                    onClick={() => window.open(report.fileUrl, '_blank')}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Otwórz PDF
+                  </button>
+                </div>
+              ) : (
+                // Show image preview for non-PDF files
+                <div
+                  className="h-36 cursor-pointer"
+                  onClick={() => openImageModal(report.fileUrl)}
+                >
+                  <img
+                    src={report.fileUrl}
+                    alt={`Raport medyczny ${index + 1}`}
+                    className="rounded-lg w-full h-full object-cover"
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>

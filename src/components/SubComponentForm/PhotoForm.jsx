@@ -1,12 +1,17 @@
-import { X, Plus, Check } from "lucide-react";
+import { X, Plus, Check, Trash2 } from "lucide-react";
 import { useFormContext } from "../../context/SubStepFormContext";
 import { useState } from "react";
+import { apiCaller } from "../../utils/axiosInstance";
+import { toast } from "sonner";
 
-const ConsentDocumentUpload = () => {
+const ConsentDocumentUpload = ({currentPatientId}) => {
   const { formData, updateFormData } = useFormContext();
   console.log("formData", formData);
   const [activeTab, setActiveTab] = useState("consent");
   const [newConsent, setNewConsent] = useState("");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Initialize consents array if not exists
   if (!formData.consents) {
@@ -74,6 +79,7 @@ const ConsentDocumentUpload = () => {
       };
 
       newDocuments.push(document);
+      console.log("newDocuments", newDocuments);
       updateFormData("documents", newDocuments);
     }
   };
@@ -92,7 +98,8 @@ const ConsentDocumentUpload = () => {
       const document = {
         id: Date.now(),
         file: file,
-        name: file.name,
+        name: file.name || file.fileName,
+
         type: file.type,
         // Create preview URL for images only
         preview: file.type.startsWith("image/")
@@ -106,17 +113,83 @@ const ConsentDocumentUpload = () => {
     }
   };
 
-  const removeDocument = (id) => {
-    const newDocuments = formData.documents.filter((doc) => doc.id !== id);
-    updateFormData("documents", newDocuments);
+  const removeDocument = (document) => {
+    setDocumentToDelete(document);
+    setDeleteModalOpen(true);
   };
 
-  // Handle PDF click to open in new tab
-  const openPdfInNewTab = (document) => {
-    if (document.isPdf && document.file) {
-      const pdfUrl = URL.createObjectURL(document.file);
-      window.open(pdfUrl, "_blank");
+  const confirmDeleteDocument = async () => {
+    if (!documentToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      console.log("documentToDelete", documentToDelete._id , currentPatientId);
+      // If document has _id, it's from the server and needs API call
+      if (documentToDelete._id && currentPatientId) {
+        await apiCaller("DELETE", `/patients/${currentPatientId}/documents/${documentToDelete._id}`);
+        toast.success("Dokument został pomyślnie usunięty");
+      }
+
+      // Remove from local state - identify document by _id if it exists, otherwise by id
+      const newDocuments = formData.documents.filter((doc) => {
+        // For server documents, compare by _id
+        if (documentToDelete._id) {
+          return doc._id !== documentToDelete._id;
+        }
+        // For local documents, compare by id
+        return doc.id !== documentToDelete.id;
+      });
+      updateFormData("documents", newDocuments);
+      
+      setDeleteModalOpen(false);
+      setDocumentToDelete(null);
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast.error("Nie udało się usunąć dokumentu. Spróbuj ponownie.");
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const cancelDeleteDocument = () => {
+    setDeleteModalOpen(false);
+    setDocumentToDelete(null);
+  };
+
+  // Handle PDF click to open in new tab or show image preview
+  const openPdfInNewTab = (document) => {
+    console.log("document", document);
+    
+    if (document.isPdf || document.type === "application/pdf") {
+      if (document.file) {
+        const pdfUrl = URL.createObjectURL(document.file);
+        window.open(pdfUrl, "_blank");
+      } else if (document.preview || document.path) {
+        window.open(document.preview || document.path, "_blank");
+      }
+    } else if (isImageFile(document)) {
+      // For images, open the preview or path URL in new tab
+      const imageUrl = document.preview || document.path || (document.file ? URL.createObjectURL(document.file) : null);
+      if (imageUrl) {
+        window.open(imageUrl, "_blank");
+      }
+    }
+  };
+
+  // Helper function to check if document is an image
+  const isImageFile = (document) => {
+    const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    return imageTypes.includes(document.type) || 
+           imageTypes.includes(document.mimeType) || 
+           imageTypes.includes(document.fileType);
+  };
+
+  // Get the appropriate image source URL
+  const getImageSrc = (document) => {
+    if (document.preview) return document.preview;
+    if (document.path) return document.path;
+    if (document.file && document.file instanceof File) return URL.createObjectURL(document.file);
+    return document; // Fallback for direct URL strings
   };
 
   // Common consent options
@@ -314,17 +387,18 @@ const ConsentDocumentUpload = () => {
 
           {formData?.documents && formData?.documents.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-md font-medium mb-3">Uploaded Documents</h3>
+              <h3 className="text-md font-medium mb-3">Przesłane dokumenty</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {formData?.documents.map((document) => (
                   <div
                     key={document?.id}
                     className="relative border border-gray-200 rounded-lg p-3 bg-white"
                   >
-                    {document?.isPdf ? (
+                    {(document?.isPdf || document?.type === "application/pdf") ? (
                       <div
                         onClick={() => openPdfInNewTab(document)}
-                        className="flex items-center p-2 cursor-pointer hover:bg-gray-50 rounded"
+                        className="flex items-center p-2 cursor-pointer hover:bg-gray-50 rounded transition-colors"
+                        title="Kliknij, aby otworzyć PDF"
                       >
                         <div className="bg-red-100 p-2 rounded-lg mr-3">
                           <svg
@@ -346,49 +420,110 @@ const ConsentDocumentUpload = () => {
                         </div>
                         <div className="truncate flex-1">
                           <p className="font-medium truncate">
-                            {document.name}
+                            {document?.fileName?.split(".")[0] || document?.name || 'Dokument PDF'}
                           </p>
                           <p className="text-sm text-gray-500">
-                            Click to view PDF
+                            Kliknij, aby otworzyć PDF w nowej karcie
                           </p>
                         </div>
                       </div>
                     ) : (
                       <div className="flex flex-col">
-                        <div className="aspect-[4/3] overflow-hidden flex items-center justify-center bg-gray-100 rounded-lg mb-2">
-                          {document?.preview ? (
+                        <div 
+                          className="aspect-[4/3] overflow-hidden flex items-center justify-center bg-gray-100 rounded-lg mb-2 cursor-pointer hover:bg-gray-200 transition-colors"
+                          onClick={() => openPdfInNewTab(document)}
+                          title="Kliknij, aby zobaczyć pełny rozmiar"
+                        >
+                          {isImageFile(document) ? (
                             <img
-                              src={document.preview}
-                              alt={document.name}
+                              src={getImageSrc(document)}
+                              alt={document?.name || 'Obraz'}
                               className="max-w-full max-h-full object-contain"
+                              onError={(e) => {
+                                e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIxIDE5VjVDMjEgMy45IDIwLjEgMyAxOSAzSDVDMy45IDMgMyAzLjkgMyA1VjE5QzMgMjAuMSAzLjkgMjEgNSAyMUgxOUMyMC4xIDIxIDIxIDIwLjEgMjEgMTlaIiBzdHJva2U9IiM5Q0E3QkEiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjxjaXJjbGUgY3g9IjguNSIgY3k9IjguNSIgcj0iMS41IiBzdHJva2U9IiM5Q0E3QkEiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjxwYXRoIGQ9Ik0yMSAxNUwxNiAxMEw1IDIxIiBzdHJva2U9IiM5Q0E3QkEiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=';
+                              }}
                             />
-                            ):
-                            (
-                            <img
-                              src={document}
-                              alt={document}
-                              className="max-w-full max-h-full object-contain"
-                            />
-                            )
-                          }
+                          ) : (
+                            <div className="flex flex-col items-center text-gray-500">
+                              <svg className="w-8 h-8 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clipRule="evenodd" />
+                              </svg>
+                              <span className="text-xs">Nieobsługiwany format</span>
+                            </div>
+                          )}
                         </div>
                         <p className="text-sm truncate font-medium text-center">
-                          {document?.name}
+                          {document?.fileName?.split(".")[0] || document?.name || 'Bez nazwy'}
                         </p>
                       </div>
                     )}
                     <button
-                      onClick={() => removeDocument(document?.id)}
-                      className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
+                      onClick={() => removeDocument(document)}
+                      className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md hover:bg-red-50 hover:text-red-600 transition-colors"
                       aria-label="Remove document"
+                      title="Usuń dokument"
                     >
-                      <X size={16} className="text-gray-700" />
+                      <Trash2 size={16} className="text-gray-700 hover:text-red-600" />
                     </button>
                   </div>
                 ))}
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center mb-4">
+              <div className="bg-red-100 p-2 rounded-full mr-3">
+                <Trash2 size={24} className="text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Potwierdź usunięcie
+              </h3>
+            </div>
+            
+            <p className="text-gray-600 mb-6">
+              Czy na pewno chcesz usunąć dokument{" "}
+              <span className="font-medium">
+                "{documentToDelete?.fileName || documentToDelete?.name || 'Bez nazwy'}"
+              </span>?
+              <br />
+              <span className="text-sm text-red-600 mt-2 block">
+                Ta operacja jest nieodwracalna.
+              </span>
+            </p>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelDeleteDocument}
+                disabled={isDeleting}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Anuluj
+              </button>
+              <button
+                onClick={confirmDeleteDocument}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Usuwanie...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} className="mr-2" />
+                    Usuń
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

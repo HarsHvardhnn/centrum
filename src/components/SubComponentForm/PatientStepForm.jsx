@@ -14,6 +14,7 @@ const PatientStepForm = ({
   markStepAsCompleted,
   hideButtons = false,
   subStepTitles = [],
+  currentPatientId = null
 }) => {
   return (
     <div>
@@ -34,7 +35,7 @@ const PatientStepForm = ({
           <AddressForm />
         </SubStep>
         <SubStep title="Zgody">
-          <ConsentDocumentUpload />
+          <ConsentDocumentUpload currentPatientId={currentPatientId} />
         </SubStep>
         <SubStep title="Szczegóły">
           <DetailsForm />

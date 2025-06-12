@@ -89,7 +89,7 @@ export default function Footer() {
 
       {/* Footer Bottom */}
       <div className="border-t border-white py-6 flex flex-col md:flex-row justify-center md:justify-between items-center text-center space-y-4 md:space-y-0">
-        <p>© 2025 Centrum Medyczne. Wszelkie prawa zastrzeżone</p>
+        <p>© 2025 Centrum Medyczne 7 Sp. z o.o. Wszelkie prawa zastrzeżone.</p>
 
         {/* Social Media Icons */}
         <div className="flex space-x-4">
