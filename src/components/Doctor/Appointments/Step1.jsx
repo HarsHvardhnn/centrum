@@ -44,7 +44,7 @@ const AppointmentModal = ({ isOpen, onClose }) => {
     }
     
     // Process form data
-    console.log("Form submitted:", formData);
+    //("Form submitted:", formData);
     onClose();
   };
   

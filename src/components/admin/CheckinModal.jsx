@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import appointmentHelper from "../../helpers/appointmentHelper";
 
 const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = null, onCheckinSuccess, onAppointmentUpdate }) => {
-  console.log("patientData", patientData);
+  //("patientData", patientData);
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
@@ -29,7 +29,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
   const normalizedPatient = (() => {
     if (!patientData) return null;
 
-    console.log("actual patient data", patientData)
+    //("actual patient data", patientData)
     // If patientData has a nested patient object (first format)
     if (patientData.patient) {
       return {
@@ -59,7 +59,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
     };
   })();
 
-  console.log("normilised",normalizedPatient)
+  //("normilised",normalizedPatient)
 
   // Default patient data if none provided
   const patient = normalizedPatient || {

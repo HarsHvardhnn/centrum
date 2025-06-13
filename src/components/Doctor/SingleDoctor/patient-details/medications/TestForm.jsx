@@ -50,7 +50,7 @@ export const TestForm = ({ test = {}, isEditing = false, onSave, onCancel }) => 
         formattedData.results = JSON.parse(formData.results);
       } catch (e) {
         // If parsing fails, keep it as string
-        console.log("Parsowanie wyników nie powiodło się, zachowuję jako tekst");
+        //("Parsowanie wyników nie powiodło się, zachowuję jako tekst");
       }
     }
 

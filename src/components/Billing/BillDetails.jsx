@@ -89,7 +89,7 @@ const BillDetails = () => {
       
       const response = await billingHelper.generateInvoice(billId);
       
-      console.log("response", response);
+      //("response", response);
       if (response.success) {
         window.open(response.data.invoiceUrl, '_blank');
         // Open the invoice in a new tab

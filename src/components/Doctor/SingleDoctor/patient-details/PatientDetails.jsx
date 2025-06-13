@@ -367,7 +367,7 @@ const PatientDetailsPage = () => {
         
         // Fetch patient basic data
         const patientResponse = await patientService.getPatientDetails(id);
-        console.log("patientResponse", patientResponse);
+        //("patientResponse", patientResponse);
 
         setPatientData(prevData => ({
           ...prevData,
@@ -396,7 +396,7 @@ const PatientDetailsPage = () => {
         } else if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
           // Otherwise select the most recent one
           const mostRecentAppointment = appointmentsResponse.data[0];
-          console.log("mostRecentAppointment", mostRecentAppointment);
+          //("mostRecentAppointment", mostRecentAppointment);
           setCurrentAppointmentId(mostRecentAppointment._id);
           setSelectedAppointment(mostRecentAppointment);
           await fetchAppointmentDetails(mostRecentAppointment._id);
@@ -466,7 +466,7 @@ const PatientDetailsPage = () => {
   const fetchPatientServices = async () => {
     try {
       setIsServicesLoading(true);
-      console.log("Fetching services for appointment ID:", currentAppointmentId);
+      //("Fetching services for appointment ID:", currentAppointmentId);
       const response = await patientServicesHelper.getPatientServices(id, { appointmentId: currentAppointmentId });
       
       if (response && response.data && response.data.services) {
@@ -550,7 +550,7 @@ const PatientDetailsPage = () => {
 
   // Obsługa przesyłania plików
   const handleFileUpload = (files) => {
-    console.log("Przesłane pliki:", files);
+    //("Przesłane pliki:", files);
     setUploadedFiles((prev) => [...prev, files]);
   };
 
@@ -816,7 +816,7 @@ const PatientDetailsPage = () => {
     try {
       showLoader();
       const response = await patientService.getPatientById(id);
-      console.log(response, "response deails");
+      //(response, "response deails");
       setDetailedPatientData(response);
       setShowDetailsModal(true);
       hideLoader();
@@ -901,7 +901,7 @@ const PatientDetailsPage = () => {
     try {
       const response = await appointmentHelper.generateVisitCard(appointmentId, forceNew);
       
-      console.log("response", response);
+      //("response", response);
       if (response.success && response.data.url) {
         // Check if visit card already exists
         if (response.message === "Karta wizyty już istnieje" && !forceNew) {

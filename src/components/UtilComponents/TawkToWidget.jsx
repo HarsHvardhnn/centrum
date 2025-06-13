@@ -6,11 +6,11 @@ const TawkToWidget = () => {
   useEffect(() => {
     
     if (window.Tawk_API) return; // Prevent multiple injections
-    console.log("TawkToWidget0tst", window);
+    //("TawkToWidget0tst", window);
     const s1 = document.createElement("script");
 
     // s1.onload = () => {
-    //   console.log("TawkToWidget", window.Tawk_API.getStatus);
+    //   //("TawkToWidget", window.Tawk_API.getStatus);
     // };
 
     s1.async = true;
@@ -25,7 +25,7 @@ const TawkToWidget = () => {
       }
     `;
     document.head.appendChild(style);
-    console.log("TawkToWidget", document.head);
+    //("TawkToWidget", document.head);
     // No cleanup needed, widget handles itself
   }, []);
   return null;

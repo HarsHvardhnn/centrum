@@ -65,7 +65,7 @@ const Calendar = ({ viewMode = "week", onDateSelect }) => {
     }
 
     if (onDateSelect && selectedDate) {
-      console.log("Wybrana data:", selectedDate);
+      //("Wybrana data:", selectedDate);
       onDateSelect(selectedDate);
     }
   };

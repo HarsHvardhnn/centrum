@@ -14,7 +14,7 @@ const ActionButtons = ({ patientId, onAddServicesClick, onSave, appointmentId })
       showLoader();
       const response = await appointmentHelper.generateVisitCard(appointmentId, forceNew);
       
-      console.log("response", response);
+      //("response", response);
       if (response.success && response.data.url) {
         // Check if visit card already exists
         if (response.message === "Karta wizyty już istnieje" && !forceNew) {

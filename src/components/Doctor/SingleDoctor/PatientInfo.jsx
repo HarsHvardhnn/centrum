@@ -4,7 +4,7 @@ import React, { useState } from "react";
 
 
 const PatientInfo = ({ patientData }) => {
-  console.log("Patient Data in info:", patientData);
+  //("Patient Data in info:", patientData);
   
   const [selectedImage, setSelectedImage] = useState(null);
 

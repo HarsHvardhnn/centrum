@@ -27,7 +27,7 @@ const DoctorDashboard = ({
   itemsPerPage
 }) => {
   const navigate = useNavigate();
-  console.log("patiend eta;same",patientDetails)
+  //("patiend eta;same",patientDetails)
 
   const handleViewDetails = () => {
     if (selectedPatient) {

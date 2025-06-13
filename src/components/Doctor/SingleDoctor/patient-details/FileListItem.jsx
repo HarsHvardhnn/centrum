@@ -5,7 +5,7 @@ const FileListItem = ({ file, onRemove }) => {
   // Check if file is an image
   // const isImage = file.type && file.type.startsWith("image/");
 
-  console.log("FileListItem file:", file);
+  //("FileListItem file:", file);
   // Format file size
   return (
     <div className="flex items-center p-3 border rounded-lg mb-2 bg-white shadow-sm">

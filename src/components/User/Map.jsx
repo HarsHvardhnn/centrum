@@ -17,7 +17,7 @@ const Map = () => {
 
   return (
     <div className="w-full flex justify-center mt-12 px-4">
-      <LoadScript googleMapsApiKey="YOUR_GOOGLE_MAPS_API_KEY">
+      <LoadScript googleMapsApiKey="AIzaSyAkANE_IGxTkKT_yeQM3-_nMQ_j_Sm1Vi4">
         <GoogleMap
           mapContainerStyle={mapStyles}
           zoom={15}

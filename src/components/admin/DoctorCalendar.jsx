@@ -112,7 +112,7 @@ const DoctorCalendar = () => {
   }, [user]);
 
   useEffect(() => {
-    console.log("selectedDoctor", selectedDoctor)
+    //("selectedDoctor", selectedDoctor)
     if (selectedDoctor && dateRange) {
       fetchAppointments();
     }

@@ -77,7 +77,7 @@ const PatientSelectionStep = () => {
         enableRepeats: appointmentData.enableRepeats,
       };
 
-      console.log("Appointment data to submit:", appointmentSubmissionData);
+      //("Appointment data to submit:", appointmentSubmissionData);
       nextStep();
     } else {
       // Show validation message

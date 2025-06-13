@@ -43,7 +43,7 @@ export default function PatientMedicalDetails() {
 
   useEffect(() => {
     const fetchAppointments = async () => {
-      console.log("user", user);
+      //("user", user);
       if (!user || !user.id) return;
       try {
         const response = await apiCaller("GET", `/appointments/patient/${user.id}`);

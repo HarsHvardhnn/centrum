@@ -53,7 +53,7 @@ export default function ChatComponent() {
 
     // Debug socket connection
     socketInstance.on("connect", () => {
-      console.log("Socket connected:", socketInstance.id);
+      //("Socket connected:", socketInstance.id);
     });
 
     socketInstance.on("connect_error", (err) => {
@@ -81,7 +81,7 @@ export default function ChatComponent() {
         const response = await apiCaller("GET", endpoint);
         const data = response.data;
 
-        console.log("data", data);
+        //("data", data);
 
         // Get current user's ID for comparing with sender
         const currentUserId = user.id || user._id;

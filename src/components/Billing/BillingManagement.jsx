@@ -112,7 +112,7 @@ const BillingManagement = () => {
               status: service.status
             }));
             setSelectedServices(transformedServices);
-            console.log("consulatioonchrges ;", response.data.consultationCharges)
+            //("consulatioonchrges ;", response.data.consultationCharges)
             setConsultationCharges(response.data.consultationCharges || 0);
             setDiscount(response.data.discount || 0);
             setAdditionalCharges(response.data.additionalCharges || 0);

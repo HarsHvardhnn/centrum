@@ -118,7 +118,7 @@ const ProfilePage = () => {
   };
 
   const translateRoleToPolish = (role) => {
-    console.log("role is", role)
+    //("role is", role)
     switch (role) {
       case "patient":
         return "Pacjent";

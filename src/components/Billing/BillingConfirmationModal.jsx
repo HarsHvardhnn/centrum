@@ -14,7 +14,7 @@ const BillingConfirmationModal = ({
   patientId,
 
 }) => {
-  console.log(appointmentId,patientId, "patientServicesData");
+  //(appointmentId,patientId, "patientServicesData");
   const [isLoading, setIsLoading] = useState(false);
   const [taxPercentage, setTaxPercentage] = useState(0);
   const [additionalCharges, setAdditionalCharges] = useState(0);
@@ -26,7 +26,7 @@ const BillingConfirmationModal = ({
 
   useEffect(() => {
     if (isOpen && patientId && appointmentId) {
-      console.log(patientId,appointmentId, "patientId,appointmentId");
+      //(patientId,appointmentId, "patientId,appointmentId");
       fetchPatientServices();
     }
   }, [isOpen, patientId, appointmentId]);
@@ -36,7 +36,7 @@ const BillingConfirmationModal = ({
       setIsLoading(true);
       const response = await patientServicesHelper.getPatientServices(patientId, { appointmentId });
       
-      console.log(response.data.services,response,response.data, "response.data.services");
+      //(response.data.services,response,response.data, "response.data.services");
       if (response && response.data && response.data.services) {
         const formattedServices = response.data.services.map(serviceItem => ({
           serviceId: serviceItem.service._id,

@@ -263,7 +263,7 @@ export default function BookAppointment({
         formattedValues
       );
 
-      console.log("Appointment booked successfully:", response.data);
+      //("Appointment booked successfully:", response.data);
       setSubmitStatus({ success: true, error: null });
       resetForm();
 

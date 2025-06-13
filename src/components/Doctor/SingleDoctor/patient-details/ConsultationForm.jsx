@@ -15,7 +15,7 @@ const ConsultationForm = ({
   appointmentId,
   className = "",
 }) => {
-  console.log("consulting doctor", uploadedFiles);
+  //("consulting doctor", uploadedFiles);
 
   // Stan dla rozwijanej listy z wyszukiwaniem
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);

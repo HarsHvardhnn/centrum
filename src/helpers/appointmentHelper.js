@@ -247,7 +247,7 @@ class AppointmentService {
       );
 
       // You can add additional success handling here if needed
-      console.log("Appointment successfully canceled");
+      //("Appointment successfully canceled");
       return response.data;
     } catch (error) {
       console.error("Error canceling appointment:", error);
@@ -268,7 +268,7 @@ class AppointmentService {
       );
 
       // You can add additional success handling here if needed
-      console.log("Appointment successfully completed");
+      //("Appointment successfully completed");
 
       return response.data;
     } catch (error) {

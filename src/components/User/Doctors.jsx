@@ -186,7 +186,7 @@ export default function Doctors({
           consultationFee: doctor.consultationFee,
         }));
 
-        console.log("trans", transformedDoctors);
+        //("trans", transformedDoctors);
         setDoctors(transformedDoctors);
       } catch (err) {
         console.error("Błąd podczas pobierania lekarzy:", err);
@@ -219,7 +219,7 @@ export default function Doctors({
       const response = await apiCaller("GET", `docs/profile/${doctorId}`);
       if (response.data.success) {
         setDoctorProfile(response.data.data);
-        console.log("doctorProfile", response.data.data);
+        //("doctorProfile", response.data.data);
       } else {
         console.error("Failed to fetch doctor profile");
       }
@@ -412,7 +412,7 @@ export default function Doctors({
       );
 
       // Handle success
-      console.log("Appointment booked successfully:", response.data);
+      //("Appointment booked successfully:", response.data);
       toast.success("Wizyta została pomyślnie zarezerwowana!");
 
       // Close modal and reset form

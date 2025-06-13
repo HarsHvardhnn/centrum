@@ -20,7 +20,7 @@ const LoadingScreen = () => (
  */
 export const ProtectedRoute = ({ allowedRoles, redirectPath = "/login" }) => {
   const { user, loading } = useUser();
-  // console.log("role is :{}",user.role)
+  // //("role is :{}",user.role)
   const location = useLocation();
   const [authChecked, setAuthChecked] = useState(false);
 

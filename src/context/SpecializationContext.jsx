@@ -19,7 +19,7 @@ export const SpecializationProvider = ({ children }) => {
       setLoading(true);
       const { data } = await apiCaller("GET","/admin/specs");
       setSpecializations(data);
-      console.log("Specializations:", data);
+      //("Specializations:", data);
       setError(null);
     } catch (err) {
       setError(

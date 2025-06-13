@@ -233,7 +233,7 @@ export default function UserManagement() {
   // Function to handle adding/updating a doctor
   const handleAddDoctor = async (doctorData, resetForm, closeModal) => {
     try {
-      console.log("doctorData",doctorData)
+      //("doctorData",doctorData)
       showLoader();
       let response;
       
@@ -279,7 +279,7 @@ export default function UserManagement() {
       showLoader();
       const patientData = await patientService.getPatientById(userId);
       let patientDetails=patientData;
-      console.log(patientData, "patient data")
+      //(patientData, "patient data")
       const mappedFormData = {
         // Demographics
         fullName:
@@ -335,7 +335,7 @@ export default function UserManagement() {
         // Notes
         reviewNotes: patientDetails.reviewNotes,
       };
-      console.log(mappedFormData, "mapped form data")
+      //(mappedFormData, "mapped form data")
       setPatientFormData(mappedFormData);
       setCurrentPatientId(userId);
       setIsEditMode(true);
@@ -1051,12 +1051,12 @@ function PatientStepFormWrapper({
   const [completedSteps, setCompletedSteps] = useState([]);
   const { formData, updateFormData } = useFormContext();
   const [isInitialized, setIsInitialized] = useState(false);
-  console.log('Form Data:', patientFormData);
+  //('Form Data:', patientFormData);
 
   // Effect to pre-populate form data when in edit mode - only run once when entering edit mode
   useEffect(() => {
     if (isEditMode && patientFormData && !isInitialized) {
-      console.log('Updating form data with:', JSON.stringify(patientFormData, null, 2));
+      //('Updating form data with:', JSON.stringify(patientFormData, null, 2));
       updateFormData(patientFormData);
       setCompletedSteps(Array.from({ length: subStepTitles.length }, (_, i) => i));
       setIsInitialized(true);

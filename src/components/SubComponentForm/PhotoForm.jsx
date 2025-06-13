@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 const ConsentDocumentUpload = ({currentPatientId}) => {
   const { formData, updateFormData } = useFormContext();
-  console.log("formData", formData);
+  //("formData", formData);
   const [activeTab, setActiveTab] = useState("consent");
   const [newConsent, setNewConsent] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -79,7 +79,7 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
       };
 
       newDocuments.push(document);
-      console.log("newDocuments", newDocuments);
+      //("newDocuments", newDocuments);
       updateFormData("documents", newDocuments);
     }
   };
@@ -123,7 +123,7 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
 
     setIsDeleting(true);
     try {
-      console.log("documentToDelete", documentToDelete._id , currentPatientId);
+      //("documentToDelete", documentToDelete._id , currentPatientId);
       // If document has _id, it's from the server and needs API call
       if (documentToDelete._id && currentPatientId) {
         await apiCaller("DELETE", `/patients/${currentPatientId}/documents/${documentToDelete._id}`);
@@ -158,7 +158,7 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
 
   // Handle PDF click to open in new tab or show image preview
   const openPdfInNewTab = (document) => {
-    console.log("document", document);
+    //("document", document);
     
     if (document.isPdf || document.type === "application/pdf") {
       if (document.file) {

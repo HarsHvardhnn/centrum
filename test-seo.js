@@ -37,18 +37,18 @@ const urls = [
   'https://centrummedyczne7.pl/kontakt'
 ];
 
-console.log('🔍 Testing SEO for Centrum Medyczne 7...\n');
+//('🔍 Testing SEO for Centrum Medyczne 7...\n');
 
 Promise.all(urls.map(testSEO))
   .then(results => {
     results.forEach(result => {
-      console.log(`📄 ${result.url}`);
-      console.log(`   Title: ${result.title}`);
-      console.log(`   Description: ${result.description.substring(0, 100)}...`);
-      console.log(`   OG Image: ${result.ogImage}`);
-      console.log(`   Canonical: ${result.canonical}`);
-      console.log(`   Structured Data: ${result.hasStructuredData ? '✅' : '❌'}`);
-      console.log('');
+      //(`📄 ${result.url}`);
+      //(`   Title: ${result.title}`);
+      //(`   Description: ${result.description.substring(0, 100)}...`);
+      //(`   OG Image: ${result.ogImage}`);
+      //(`   Canonical: ${result.canonical}`);
+      //(`   Structured Data: ${result.hasStructuredData ? '✅' : '❌'}`);
+      //('');
     });
   })
   .catch(err => {

@@ -27,7 +27,7 @@ function AppointmentPage() {
 
   // Function to handle appointment form submission
   const handleAppointmentComplete = async (data) => {
-    console.log("Appointment data submitted:", data);
+    //("Appointment data submitted:", data);
     setAppointmentData(data);
 
     try {

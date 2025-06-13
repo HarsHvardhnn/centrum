@@ -82,7 +82,7 @@ const AuthForm = ({ isLogin = false }) => {
 
       localStorage.setItem("authToken", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
-      console.log("response.data.user", response.data.user);
+      //("response.data.user", response.data.user);
       setUser(response.data.user || {});
       // if (response.data.user?.role == "doctor") {
       //   navigate("/admin");
@@ -94,7 +94,7 @@ const AuthForm = ({ isLogin = false }) => {
       }
       navigate("/admin");
     } catch (error) {
-      console.log("error", error);
+      //("error", error);
       toast.error(
         "Logowanie przez Google nie powiodło się:",
         error.response.data.message
@@ -110,27 +110,27 @@ const AuthForm = ({ isLogin = false }) => {
         password: values.password,
       });
 
-      console.log("Login successful:", response.data);
+      //("Login successful:", response.data);
 
       // Store authentication token
       localStorage.setItem("authToken", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
       setUser(response.data.user || {});
-      console.log("response.data.user", response.data.user);
+      //("response.data.user", response.data.user);
 
       // if (response.data.user?.role == "doctor") {
       //   navigate("/doctors");
-      //   console.log(":doctor");
+      //   //(":doctor");
       //   return;
       // }
       if (response.data.user.role == "patient") {
         navigate("/user");
-        console.log(":pattients");
+        //(":pattients");
 
         return;
       }
       navigate("/admin");
-      console.log(":nilll");
+      //(":nilll");
 
       // Navigate to home page
     } catch (error) {
@@ -163,7 +163,7 @@ const AuthForm = ({ isLogin = false }) => {
         phone: formattedPhone,
       });
 
-      console.log("Signup initiated:", response.data);
+      //("Signup initiated:", response.data);
 
       // Store email for OTP verification
       setEmail(values.email);
@@ -198,7 +198,7 @@ const AuthForm = ({ isLogin = false }) => {
         role: "patient",
       });
 
-      console.log("OTP verification successful:", response.data);
+      //("OTP verification successful:", response.data);
 
       localStorage.setItem("authToken", response.data.token);
 
@@ -233,7 +233,7 @@ const AuthForm = ({ isLogin = false }) => {
         phone: registrationData.phone || "",
       });
 
-      console.log("OTP resent:", response.data);
+      //("OTP resent:", response.data);
       alert("Kod OTP wysłany ponownie!");
     } catch (error) {
       console.error(
@@ -578,7 +578,7 @@ const AuthForm = ({ isLogin = false }) => {
                   <GoogleLogin
                     onSuccess={handleGoogleLogin}
                     onError={() => {
-                      console.log("Google Login Failed");
+                      //("Google Login Failed");
                       alert(
                         "Logowanie przez Google nie powiodło się. Spróbuj ponownie."
                       );

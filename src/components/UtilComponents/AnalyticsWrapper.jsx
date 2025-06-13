@@ -23,7 +23,7 @@ const AnalyticsWrapper = ({ children }) => {
   // Custom tracking function that respects consent
   const trackEvent = (eventName, parameters = {}) => {
     if (!hasUserConsent || !consentData?.analytics) {
-      console.log('Analytics tracking blocked - no consent');
+      //('Analytics tracking blocked - no consent');
       return;
     }
 
@@ -56,7 +56,7 @@ export const useAnalyticsTracking = () => {
 
   const trackEvent = (eventName, parameters = {}) => {
     if (!hasUserConsent || !consentData?.analytics) {
-      console.log('Analytics tracking blocked - no consent');
+      //('Analytics tracking blocked - no consent');
       return;
     }
 

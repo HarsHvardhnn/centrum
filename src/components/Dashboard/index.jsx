@@ -1186,7 +1186,7 @@ const UpcomingAppointments = () => {
   const handleRescheduleAppointment = async (appointmentId) => {
     // This would typically open a modal or navigate to a reschedule page
     // For now, we'll just console log the action
-    console.log("Reschedule appointment:", appointmentId);
+    //("Reschedule appointment:", appointmentId);
     // You could implement navigation like:
     // navigate(`/appointments/${appointmentId}/reschedule`);
   };

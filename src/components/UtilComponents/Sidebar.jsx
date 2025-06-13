@@ -18,7 +18,7 @@ import { Calendar1 } from "lucide-react";
 
 const Sidebar = () => {
   const { user } = useUser();
-  console.log("user", user);
+  //("user", user);
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -26,7 +26,7 @@ const Sidebar = () => {
     localStorage.clear();
     window.location.href = "/login";
   };
-  console.log("user", user);
+  //("user", user);
 
   return (
     <div className="w-64 ml-6 h-[calc(100vh-64px)] bg-white shadow-md fixed left-0 top-16 flex flex-col mt-2">

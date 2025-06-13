@@ -14,7 +14,7 @@ export const ServicesProvider = ({ children }) => {
     try {
       setLoading(true);
       const response = await apiCaller("GET", "/services");
-      console.log("response",response)
+      //("response",response)
       setServices(response.data);
       setError(null);
     } catch (err) {

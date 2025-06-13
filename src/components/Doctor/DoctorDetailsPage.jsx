@@ -82,16 +82,16 @@ export default function DoctorDetailPage() {
           const servicesResponse = await userServiceHelper.getDoctorServices(
             transformedData.id
           );
-          console.log("servicesResponse", servicesResponse);
+          //("servicesResponse", servicesResponse);
           if (
             servicesResponse.data &&
             servicesResponse.data.data.services &&
             servicesResponse.data.data.services.length > 0
           ) {
-            console.log(
-              "servicesResponse.data.data.services",
-              servicesResponse.data.data.services
-            );
+            // //(
+            //   "servicesResponse.data.data.services",
+            //   servicesResponse.data.data.services
+            // );
             setSelectedServices(
               servicesResponse.data.data.services.map((s) => ({
                 serviceId: s.service._id,
@@ -120,11 +120,11 @@ export default function DoctorDetailPage() {
 
   // Transform API response to match component data structure
   const transformDoctorData = (apiDoctor) => {
-    console.log(
-      "apiDoctor.specialization",
-      apiDoctor.specialization.map((spec) => spec.name)
-    );
-    // console.log("")
+    // //(
+    //   "apiDoctor.specialization",
+    //   apiDoctor.specialization.map((spec) => spec.name)
+    // );
+    // //("")
     const fullName = `${apiDoctor.name.first} ${apiDoctor.name.last}`;
 
     // Create qualification string from the array
@@ -175,7 +175,7 @@ export default function DoctorDetailPage() {
         notes: service.notes || "",
       }));
 
-      console.log("doctor data", doctorData);
+      //("doctor data", doctorData);
 
       // Call API to save doctor services
       const response = await userServiceHelper.addDoctorServices(
@@ -358,7 +358,7 @@ const AvailableTime = ({ data }) => {
         // Format date as YYYY-MM-DD for API
         const formattedDate = selectedDate.toISOString().split("T")[0];
 
-        console.log("date", selectedDate, formattedDate);
+        //("date", selectedDate, formattedDate);
         const response = await doctorService.getDoctorAvailableSlots(
           data.id,
           formattedDate

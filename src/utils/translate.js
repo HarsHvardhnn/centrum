@@ -21,7 +21,7 @@ export const translateText = async (text, targetLang = "fr") => {
       }
     );
 
-    console.log('response',response)
+    //('response',response)
     return response.data[0][0][0]; // Extract the translated text
   } catch (error) {
     console.error("Translation Error:", error);

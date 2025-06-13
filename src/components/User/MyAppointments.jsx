@@ -33,7 +33,7 @@ const MyAppointments = () => {
 
   useEffect(() => {
     const fetchAppointments = async () => {
-      console.log("user", user);
+      //("user", user);
       if (!user || !user.id) return;
 
       try {
@@ -44,7 +44,7 @@ const MyAppointments = () => {
         );
 
         if (response && response.data && response.data.data) {
-          console.log("response", response);
+          //("response", response);
           setAppointments(response.data.data);
         }
       } catch (err) {

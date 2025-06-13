@@ -754,7 +754,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
         appointmentSubmissionData.patient = selectedPatient._id;
       }
 
-      console.log("Appointment data to submit:", appointmentSubmissionData);
+      //("Appointment data to submit:", appointmentSubmissionData);
       onComplete(appointmentSubmissionData);
     } else {
       // Show validation message

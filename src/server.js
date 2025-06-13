@@ -20,5 +20,5 @@ app.get('*', (req, res) => {
 
 const PORT = import.meta.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  //(`Server is running on port ${PORT}`);
 }); 

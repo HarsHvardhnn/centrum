@@ -165,7 +165,7 @@ const patientService = {
     // Handle new documents to add (if any)
     if (patientData?.documents?.length) {
       patientData.documents.forEach((file) => {
-        console.log("file", file);
+        //("file", file);
         if (file.file) {
           formData.append("files", file.file);
         } 
@@ -296,7 +296,7 @@ const patientService = {
         headers,
       });
 
-      console.log("Response from updatePatientDetails:", response.data);
+      //("Response from updatePatientDetails:", response.data);
       return response.data.data;
     } catch (error) {
       return error.response?.data || error.message;

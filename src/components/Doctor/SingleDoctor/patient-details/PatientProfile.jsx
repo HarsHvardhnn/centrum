@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import HealthMetric from "./HealthMetric";
 
 const PatientProfile = ({ patient, setPatientData }) => {
-  console.log("patien datast", patient);
+  //("patien datast", patient);
   const [isEditingRoom, setIsEditingRoom] = useState(false);
   const [roomNumber, setRoomNumber] = useState(patient?.roomNumber || "28B");
 

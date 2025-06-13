@@ -41,7 +41,7 @@ function DoctorsPage() {
           // Transform the API data to match our component structure
           const transformedData = transformToDoctorInfo(response.doctor);
           setDoctorInfo(transformedData);
-          console.log("doctor data", transformedData);
+          //("doctor data", transformedData);
         } else {
           setError("błąd serwera");
         }
@@ -112,7 +112,7 @@ function DoctorsPage() {
         appointmentId
       );
 
-      console.log("patient response", response);
+      //("patient response", response);
       if (response) {
         setPatientDetails(response);
       } else {
@@ -162,7 +162,7 @@ function DoctorsPage() {
 
   // Function to handle appointment form submission
   const handleAppointmentComplete = async (data) => {
-    console.log("Appointment data submitted:", data);
+    //("Appointment data submitted:", data);
     setAppointmentData(data);
 
     try {
@@ -230,7 +230,7 @@ function DoctorsPage() {
           { label: "Wizyty lekarskie", onClick: null },
         ]}
         onSearch={handleSearch}
-        onFilter={() => console.log("Filter clicked")}
+        onFilter={() => {}}
         onBookAppointment={() => setShowAppointmentModal(true)}
         currentPage={currentPage}
         onPageChange={handlePageChange}

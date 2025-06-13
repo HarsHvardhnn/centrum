@@ -18,7 +18,7 @@ const HomePage = () => {
     setSelectedDoctorId,
   } = useAppointmentContext();
 
-console.log("selected doctor id",selectedDoctorId)
+//("selected doctor id",selectedDoctorId)
   useEffect(() => {
     if (selectedDoctorId) {
       // Short timeout to ensure the component is rendered

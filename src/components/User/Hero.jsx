@@ -16,7 +16,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
   const [location, setLocation] = useState("New York"); // Hardcoded location
 
   const isMobile = useIsMobile();
-  console.log("is mobile",isMobile)
+  //("is mobile",isMobile)
 
   useEffect(() => {
     const fetchDoctors = async () => {

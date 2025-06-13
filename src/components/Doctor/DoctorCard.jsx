@@ -3,7 +3,7 @@ import { FaStethoscope } from "react-icons/fa6";
 import { useNavigation } from "../../utils/useNavigate";
 
 const DoctorCard = ({ doctor }) => {
-  console.log("informacje o lekarzu",doctor)
+  //("informacje o lekarzu",doctor)
   const {navigateReplace,navigateWithParams} = useNavigation();
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 flex justify-between items-start border border-gray-100 mb-4">

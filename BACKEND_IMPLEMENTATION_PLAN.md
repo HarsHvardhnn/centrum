@@ -567,7 +567,7 @@ const performanceMonitor = (req, res, next) => {
   
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(`Cookie consent API ${req.method} ${req.path}: ${duration}ms`);
+    //(`Cookie consent API ${req.method} ${req.path}: ${duration}ms`);
     
     // Log slow queries (over 500ms)
     if (duration > 500) {
@@ -815,7 +815,7 @@ app.get('/api/health/cookie-consent', async (req, res) => {
 2. **Authentication Middleware Errors**
    ```javascript
    // Ensure auth middleware provides req.user.id
-   console.log('User ID:', req.user.id);
+   //('User ID:', req.user.id);
    ```
 
 3. **CORS Issues**
