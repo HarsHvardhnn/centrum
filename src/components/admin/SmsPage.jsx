@@ -156,11 +156,23 @@ const UserMessaging = () => {
   });
   const [showResults, setShowResults] = useState(false);
 
+  // Function to convert Polish characters to their non-accented equivalents
+  const convertPolishCharacters = (text) => {
+    const polishCharMap = {
+      'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
+      'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z'
+    };
+    
+    return text.replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, (match) => polishCharMap[match] || match);
+  };
+
   // Handle message content change with validation
   const handleMessageChange = (e) => {
     const value = e.target.value;
+    // Convert Polish characters to non-accented equivalents
+    const convertedValue = convertPolishCharacters(value);
     // Only allow alphanumeric characters, spaces, and basic punctuation
-    const sanitizedValue = value.replace(/[^\wąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s.,!?()-]/g, '');
+    const sanitizedValue = convertedValue.replace(/[^\w\s.,!?()-]/g, '');
     setMessageContent(sanitizedValue);
   };
 
@@ -173,7 +185,9 @@ const UserMessaging = () => {
   // Handle adding new template
   const handleAddTemplate = () => {
     if (newTemplate.name.trim() && newTemplate.content.trim()) {
-      const sanitizedContent = newTemplate.content.replace(/[^\wąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s.,!?()-]/g, '');
+      // Convert Polish characters and sanitize content
+      const convertedContent = convertPolishCharacters(newTemplate.content);
+      const sanitizedContent = convertedContent.replace(/[^\w\s.,!?()-]/g, '');
       
       if (editingTemplate) {
         // Update existing template
@@ -579,7 +593,9 @@ const UserMessaging = () => {
                       value={newTemplate.content}
                       onChange={(e) => {
                         const value = e.target.value;
-                        const sanitizedValue = value.replace(/[^\wąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s.,!?()-]/g, '');
+                        // Convert Polish characters to non-accented equivalents
+                        const convertedValue = convertPolishCharacters(value);
+                        const sanitizedValue = convertedValue.replace(/[^\w\s.,!?()-]/g, '');
                         setNewTemplate({...newTemplate, content: sanitizedValue});
                       }}
                       placeholder="Treść szablonu..."

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { apiCaller } from "../../utils/axiosInstance";
 
 function ContactForm() {
@@ -10,6 +10,22 @@ function ContactForm() {
   });
   const [status, setStatus] = useState({ type: "", message: "" });
   const [loading, setLoading] = useState(false);
+  const [csrfToken, setCsrfToken] = useState("");
+
+  useEffect(() => {
+    // Get CSRF token from cookie
+    const getCsrfToken = () => {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrf') {
+          return value;
+        }
+      }
+      return '';
+    };
+    setCsrfToken(getCsrfToken());
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,7 +36,10 @@ function ContactForm() {
     setLoading(true);
     setStatus({ type: "", message: "" });
     try {
-      await apiCaller("POST", "/api/contact", form);
+      await apiCaller("POST", "/api/contact", {
+        ...form,
+        _csrf: csrfToken
+      });
       setStatus({ type: "success", message: "Wiadomość została wysłana!" });
       setForm({ name: "", email: "", subject: "", message: "" });
     } catch (err) {
@@ -37,6 +56,7 @@ function ContactForm() {
         Kontakt
       </h2>
       <form className="space-y-4" onSubmit={handleSubmit}>
+        <input type="hidden" name="_csrf" value={csrfToken} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
