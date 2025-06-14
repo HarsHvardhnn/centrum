@@ -31,7 +31,8 @@ const SEOTester = () => {
     setMetaTags(tags);
   }, [location.pathname]);
 
-  if (import.meta.env.NODE_ENV === 'production') {
+  // console.log("import.meta.env.VITE_NODE_ENV", import.meta.env.VITE_NODE_ENV);
+  if (import.meta.env.VITE_NODE_ENV === 'production') {
     return null; // Don't show in production
   }
 

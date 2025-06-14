@@ -11,6 +11,7 @@ const DoctorCard = ({ doctor }) => {
         <img
           src={doctor.image}
           alt={doctor.name}
+          loading="lazy"
           className="w-20 h-20 rounded-lg object-cover"
         />
         <div>

@@ -1,21 +1,32 @@
 export const testSEO = () => {
-  // Test meta tags
-  const metaTags = document.getElementsByTagName('meta');
+  // Only run in development mode
+  if (import.meta.env.VITE_NODE_ENV !== 'development') {
+    return;
+  }
+
+  // Get page title
   const title = document.title;
-  const canonical = document.querySelector('link[rel="canonical"]');
   
-  // console.group('SEO Test Results');
-  // console.log('Page Title:', title);
-  // console.log('Canonical URL:', canonical?.href);
+  // Get canonical URL
+  const canonical = document.querySelector('link[rel="canonical"]')?.href;
+  
+  // Get all meta tags
+  const metaTags = document.getElementsByTagName('meta');
+  
+  console.group('SEO Test Results');
+  console.log('Page Title:', title);
+  console.log('Canonical URL:', canonical);
+  console.log('Meta Tags:');
   
   // Log all meta tags
-  // Array.from(metaTags).forEach(tag => {
-  //   if (tag.name || tag.property) {
-  //     console.log(
-  //       `${tag.name || tag.property}:`,
-  //       tag.content
-  //     );
-  //   }
-  // });
-  // console.groupEnd();
+  for (let i = 0; i < metaTags.length; i++) {
+    const tag = metaTags[i];
+    const name = tag.getAttribute('name') || tag.getAttribute('property');
+    const content = tag.getAttribute('content');
+    if (name && content) {
+      console.log(`${name}:`, content);
+    }
+  }
+  
+  console.groupEnd();
 }; 

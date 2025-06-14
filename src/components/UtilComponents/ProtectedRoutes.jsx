@@ -19,6 +19,7 @@ const LoadingScreen = () => (
  * - Redirect preservation
  */
 export const ProtectedRoute = ({ allowedRoles, redirectPath = "/login" }) => {
+  
   const { user, loading } = useUser();
   // //("role is :{}",user.role)
   const location = useLocation();
@@ -36,6 +37,7 @@ export const ProtectedRoute = ({ allowedRoles, redirectPath = "/login" }) => {
     return <LoadingScreen />;
   }
 
+  console.log("user is :", user);
   // Not logged in - redirect to login with return path
   if (!user) {
     return (

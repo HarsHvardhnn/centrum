@@ -553,21 +553,18 @@ const AuthForm = ({ isLogin = false }) => {
 
             {/* Social Login */}
             <div className="mt-6 text-center w-full relative">
-              <div className="relative flex items-center justify-center">
+              {/* <div className="relative flex items-center justify-center">
                 <div className="w-full border-t border-gray-300"></div>
                 <div className="absolute bg-white px-4">
                   <span className="text-sm text-gray-500">LUB</span>
                 </div>
-              </div>
+              </div> */}
 
-              {/* Social Login Buttons Container */}
               <div className="mt-6 flex flex-col items-center space-y-4">
-                {/* Google Login Button */}
-                <div className="w-full max-w-xs mx-auto">
+                {/* <div className="w-full max-w-xs mx-auto">
                   <GoogleLogin
                     onSuccess={handleGoogleLogin}
                     onError={() => {
-                      //("Google Login Failed");
                       alert(
                         "Logowanie przez Google nie powiodło się. Spróbuj ponownie."
                       );
@@ -579,7 +576,7 @@ const AuthForm = ({ isLogin = false }) => {
                     locale="pl"
                     width="100%"
                   />
-                </div>
+                </div> */}
 
                 {/* Other Social Login Buttons */}
                 {/* <div className="flex justify-center space-x-4 w-full max-w-xs mx-auto">

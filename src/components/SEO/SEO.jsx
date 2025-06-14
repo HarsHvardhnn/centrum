@@ -1,17 +1,60 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { testSEO } from '../../utils/testSEO';
 
 const SEO = () => {
   const location = useLocation();
-  const BASE_URL = import.meta.env.NODE_ENV === 'development' 
+  const params = useParams();
+  const BASE_URL = import.meta.env.VITE_NODE_ENV === 'development' 
     ? 'https://centrummedyczne7.pl' 
     : 'https://centrummedyczne7.pl';
 
+  // Get the current page data from the DOM
+  const getPageData = () => {
+    const pageData = document.querySelector('script[type="application/json"][data-page-data]');
+    return pageData ? JSON.parse(pageData.textContent) : null;
+  };
+
   const getMetaInfo = (path) => {
+    const pageData = getPageData();
+    const shortDescription = pageData?.shortDescription;
+
+    // Handle dynamic routes first
+    if (path.startsWith('/aktualnosci/') && params.slug) {
+      return {
+        title: `${params.slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} | Aktualności – Centrum Medyczne 7`,
+        description: shortDescription || 'Bądź na bieżąco z informacjami w CM7. Ogłoszenia, zmiany godzin pracy, wydarzenia i komunikaty.',
+        keywords: 'aktualności, centrum medyczne 7, news, ogłoszenia',
+        canonicalUrl: `${BASE_URL}${path}`,
+        ogImage: '/images/news.jpg'
+      };
+    }
+
+    if (path.startsWith('/poradnik/') && params.slug) {
+      return {
+        title: `${params.slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} | Poradnik – Centrum Medyczne 7`,
+        description: shortDescription || 'Sprawdzone porady zdrowotne i artykuły medyczne od specjalistów CM7 w Skarżysku-Kamiennej.',
+        keywords: 'poradnik, porady medyczne, zdrowie, centrum medyczne 7',
+        canonicalUrl: `${BASE_URL}${path}`,
+        ogImage: '/images/blogs.jpg'
+      };
+    }
+
+    if (path.startsWith('/uslugi/') && params.service) {
+      return {
+        title: `${params.service.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} – Centrum Medyczne 7 Skarżysko-Kamienna`,
+        description: shortDescription || 'Szczegółowy opis usługi medycznej w Centrum Medycznym 7 w Skarżysku-Kamiennej.',
+        keywords: 'usługi medyczne, centrum medyczne 7, ' + params.service,
+        canonicalUrl: `${BASE_URL}${path}`,
+        ogImage: '/images/uslugi.jpg'
+      };
+    }
+
+    // Handle static routes
     switch (path) {
       case '/':
+      case '':
         return {
           title: 'CM7 – Przychodnia specjalistyczna Skarżysko-Kamienna',
           description: 'Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści. Umów wizytę w Centrum Medyczne 7.',
@@ -51,21 +94,21 @@ const SEO = () => {
           canonicalUrl: `${BASE_URL}/aktualnosci`,
           ogImage: '/images/news.jpg'
         };
-      case '/kontakt':
-        return {
-          title: 'Kontakt – Centrum Medyczne 7 Skarżysko-Kamienna | Umów wizytę',
-          description: 'Skontaktuj się z Centrum Medyczne 7. Adres, telefon, godziny pracy. Umów wizytę online lub telefonicznie.',
-          keywords: 'kontakt centrum medyczne 7, umów wizytę, telefon cm7, adres Skarżysko-Kamienna, godziny pracy',
-          canonicalUrl: `${BASE_URL}/kontakt`,
-          ogImage: '/images/contact.jpg'
-        };
       case '/poradnik':
         return {
-          title: 'Poradnik zdrowia – Centrum Medyczne 7 | Porady medyczne',
-          description: 'Praktyczne porady zdrowotne od specjalistów CM7. Artykuły medyczne, wskazówki profilaktyczne i informacje o zdrowiu.',
+          title: 'CM7 – Artykuły i porady zdrowotne | Poradnik medyczny',
+          description: 'Sprawdzone porady zdrowotne i artykuły medyczne od specjalistów CM7 w Skarżysku-Kamiennej. Praktyczna wiedza i wskazówki dla pacjentów.',
           keywords: 'poradnik zdrowia, porady medyczne, artykuły medyczne, profilaktyka, zdrowie, centrum medyczne 7',
           canonicalUrl: `${BASE_URL}/poradnik`,
           ogImage: '/images/blogs.jpg'
+        };
+      case '/kontakt':
+        return {
+          title: 'Kontakt – Centrum Medyczne 7 Skarżysko-Kamienna | Rejestracja i telefon',
+          description: 'Zadzwoń: 797-097-487. Skontaktuj się z CM7 – telefon, e-mail, godziny otwarcia i rejestracja.',
+          keywords: 'kontakt centrum medyczne 7, umów wizytę, telefon cm7, adres Skarżysko-Kamienna, godziny pracy',
+          canonicalUrl: `${BASE_URL}/kontakt`,
+          ogImage: '/images/contact.jpg'
         };
       default:
         return {
@@ -113,61 +156,61 @@ const SEO = () => {
 
   // Test SEO in development
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.VITE_NODE_ENV === 'development') {
       // Wait for Helmet to update the document
       setTimeout(testSEO, 100);
     }
   }, [location.pathname]);
 
   return (
-    <Helmet>
+    <Helmet prioritizeSeoTags>
       {/* Basic Meta Tags */}
       <title>{title}</title>
-      <meta name="description" content={description} />
-      <meta name="keywords" content={keywords} />
-      <meta name="author" content="Centrum Medyczne 7" />
-      <meta name="theme-color" content="#008c8c" />
+      <meta name="description" content={description} data-react-helmet="true" />
+      <meta name="keywords" content={keywords} data-react-helmet="true" />
+      <meta name="author" content="Centrum Medyczne 7" data-react-helmet="true" />
+      <meta name="theme-color" content="#008c8c" data-react-helmet="true" />
       
       {/* Canonical URL */}
-      <link rel="canonical" href={canonicalUrl} />
+      <link rel="canonical" href={canonicalUrl} data-react-helmet="true" />
       
       {/* Favicon and Icons */}
-      <link rel="icon" type="image/png" href="/images/fav_new.png" />
-      <link rel="apple-touch-icon" href="/images/fav_new.png" />
+      <link rel="icon" type="image/png" href="/images/fav_new.png" data-react-helmet="true" />
+      <link rel="apple-touch-icon" href="/images/fav_new.png" data-react-helmet="true" />
       
       {/* Open Graph Meta Tags */}
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
-      <meta property="og:type" content="website" />
-      <meta property="og:url" content={canonicalUrl} />
-      <meta property="og:image" content={`${BASE_URL}${ogImage}`} />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={title} />
-      <meta property="og:site_name" content="Centrum Medyczne 7" />
-      <meta property="og:locale" content="pl_PL" />
+      <meta property="og:title" content={title} data-react-helmet="true" />
+      <meta property="og:description" content={description} data-react-helmet="true" />
+      <meta property="og:type" content="website" data-react-helmet="true" />
+      <meta property="og:url" content={canonicalUrl} data-react-helmet="true" />
+      <meta property="og:image" content={`${BASE_URL}${ogImage}`} data-react-helmet="true" />
+      <meta property="og:image:width" content="1200" data-react-helmet="true" />
+      <meta property="og:image:height" content="630" data-react-helmet="true" />
+      <meta property="og:image:alt" content={title} data-react-helmet="true" />
+      <meta property="og:site_name" content="Centrum Medyczne 7" data-react-helmet="true" />
+      <meta property="og:locale" content="pl_PL" data-react-helmet="true" />
       
       {/* Twitter Card Meta Tags */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title} />
-      <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={`${BASE_URL}${ogImage}`} />
-      <meta name="twitter:image:alt" content={title} />
+      <meta name="twitter:card" content="summary_large_image" data-react-helmet="true" />
+      <meta name="twitter:title" content={title} data-react-helmet="true" />
+      <meta name="twitter:description" content={description} data-react-helmet="true" />
+      <meta name="twitter:image" content={`${BASE_URL}${ogImage}`} data-react-helmet="true" />
+      <meta name="twitter:image:alt" content={title} data-react-helmet="true" />
       
       {/* Additional Meta Tags */}
-      <meta name="robots" content="index, follow" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
-      <meta name="format-detection" content="telephone=no" />
-      <meta name="language" content="Polish" />
-      <meta name="geo.region" content="PL-26" />
-      <meta name="geo.placename" content="Skarżysko-Kamienna" />
+      <meta name="robots" content="index, follow" data-react-helmet="true" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" data-react-helmet="true" />
+      <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" data-react-helmet="true" />
+      <meta name="format-detection" content="telephone=no" data-react-helmet="true" />
+      <meta name="language" content="Polish" data-react-helmet="true" />
+      <meta name="geo.region" content="PL-26" data-react-helmet="true" />
+      <meta name="geo.placename" content="Skarżysko-Kamienna" data-react-helmet="true" />
       
       {/* Mobile App Meta */}
-      <meta name="apple-mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-      <meta name="apple-mobile-web-app-title" content="CM7" />
-      <meta name="msapplication-TileColor" content="#008c8c" />
+      <meta name="apple-mobile-web-app-capable" content="yes" data-react-helmet="true" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="default" data-react-helmet="true" />
+      <meta name="apple-mobile-web-app-title" content="CM7" data-react-helmet="true" />
+      <meta name="msapplication-TileColor" content="#008c8c" data-react-helmet="true" />
       
       {/* Structured Data */}
       <script type="application/ld+json">

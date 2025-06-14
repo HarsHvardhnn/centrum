@@ -1,6 +1,7 @@
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import { HelmetProvider } from 'react-helmet-async'
+import MetaDebug from './components/UtilComponents/MetaDebug'
 
 function App() {
   return (
@@ -167,6 +168,7 @@ function App() {
             </div>
           </div>
         </footer>
+        <MetaDebug />
       </div>
     </HelmetProvider>
   )

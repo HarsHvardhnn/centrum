@@ -17,6 +17,7 @@ const ServiceCard = ({ service }) => {
       <img
         src={service.images[0]}
         alt={service.title}
+         loading="lazy"
         className="w-full h-52 object-cover rounded-t-md"
       />
       <div className="p-4 flex flex-col flex-grow">

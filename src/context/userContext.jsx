@@ -14,49 +14,52 @@ export const UserProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const checkAuth = () => {
-      // First try to get token from cookie
-      const token = getCookie('authToken');
-      let storedUser = null;
-
-      if (token) {
-        // If token exists in cookie, try to get user from cookie
-        const userCookie = getCookie('user');
-        if (userCookie) {
-          try {
-            storedUser = JSON.parse(userCookie);
-          } catch (error) {
-            console.error("Error parsing user cookie:", error);
-            removeCookie('user');
-          }
+    const checkAuth = async () => {
+      try {
+        // Get token from cookie for API calls
+        let token = getCookie('authToken');
+        if(!token){
+          token = localStorage.getItem('authToken');
         }
-      } else {
-        // Fallback to localStorage if cookie doesn't exist
-        const localToken = localStorage.getItem("authToken");
-        const localUser = localStorage.getItem("user");
+        // Get user data from localStorage
+        const storedUser = localStorage.getItem('user');
 
-        if (localToken && localUser) {
+        if (token && storedUser) {
           try {
-            storedUser = JSON.parse(localUser);
-            // Migrate to cookies
-            setCookie('authToken', localToken, 7);
-            setCookie('user', localUser, 7);
-            // Clear localStorage
-            localStorage.removeItem("authToken");
-            localStorage.removeItem("user");
+            // Verify token validity with backend
+            const response = await apiCaller("GET", "/auth/profile/user");
+            const { name, role, profilePicture, _id, email } = response.data.data;
+            const freshUserData = {
+              id: _id,
+              name: `${name.first} ${name.last}`,
+              role,
+              profilePicture,
+              email
+            };
+            
+            // Update localStorage with fresh data
+            localStorage.setItem('user', JSON.stringify(freshUserData));
+            setUser(freshUserData);
+            setIsAuthenticated(true);
           } catch (error) {
-            console.error("Error parsing stored user data:", error);
-            localStorage.removeItem("user");
+            console.error("Error verifying token:", error);
+            // If token is invalid, clear everything
+            removeCookie('authToken');
+            localStorage.removeItem('user');
+            setUser(null);
+            setIsAuthenticated(false);
           }
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
         }
+      } catch (error) {
+        console.error("Error in checkAuth:", error);
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
       }
-
-      if (token && storedUser) {
-        setUser(storedUser);
-        setIsAuthenticated(true);
-      }
-
-      setLoading(false);
     };
 
     checkAuth();
@@ -67,7 +70,7 @@ export const UserProvider = ({ children }) => {
 
     try {
       setLoading(true);
-      const token = getCookie('authToken') || localStorage.getItem("authToken");
+      const token = getCookie('authToken');
 
       if (!token) {
         setLoading(false);
@@ -85,11 +88,7 @@ export const UserProvider = ({ children }) => {
       };
 
       setUser(updatedUser);
-
-      // Update both cookie and localStorage
-      const userStr = JSON.stringify(updatedUser);
-      setCookie('user', userStr, 7);
-      localStorage.setItem("user", userStr);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
     } catch (error) {
       console.error("Failed to refresh user profile:", error);
       if (error.response?.status === 401) {
@@ -108,11 +107,7 @@ export const UserProvider = ({ children }) => {
     };
 
     setUser(updatedUser);
-    const userStr = JSON.stringify(updatedUser);
-    
-    // Update both cookie and localStorage
-    setCookie('user', userStr, 7);
-    localStorage.setItem("user", userStr);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
   const updateProfilePicture = async (imageFile) => {
@@ -148,25 +143,18 @@ export const UserProvider = ({ children }) => {
   const login = (userData, token) => {
     setUser(userData);
     setIsAuthenticated(true);
-    
-    const userStr = JSON.stringify(userData);
-    
-    // Set both cookie and localStorage
+    // Store token in cookie for API calls
     setCookie('authToken', token, 7);
-    setCookie('user', userStr, 7);
-    localStorage.setItem("user", userStr);
-    localStorage.setItem("authToken", token);
+    // Store user data in localStorage
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    
     // Clear both cookie and localStorage
     removeCookie('authToken');
-    removeCookie('user');
-    localStorage.removeItem("user");
-    localStorage.removeItem("authToken");
+    localStorage.removeItem('user');
   };
 
   const hasRole = (allowedRoles) => {

@@ -82,7 +82,7 @@ async function createServer() {
 
       let template, render
 
-      if (import.meta.env.NODE_ENV === 'production') {
+      if (import.meta.env.VITE_NODE_ENV === 'production') {
         template = fs.readFileSync(
           path.resolve(__dirname, 'dist/client/index.html'),
           'utf-8'

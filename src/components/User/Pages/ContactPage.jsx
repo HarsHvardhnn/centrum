@@ -8,10 +8,16 @@ import {
 import News from "../News";
 import PageHeader from "../PageHeader";
 import Map from "../Map";
+import MetaTags from '../../UtilComponents/MetaTags';
 
 const ContactPage = () => {
   return (
     <>
+      <MetaTags 
+        title="Kontakt – Centrum Medyczne 7 Skarżysko-Kamienna | Rejestracja i telefon"
+        description="Zadzwoń: 797-097-487. Skontaktuj się z CM7 – telefon, e-mail, godziny otwarcia i rejestracja."
+        path="/kontakt"
+      />
       <PageHeader
         title="Kontakt"
         path="Strona główna / Kontakt"

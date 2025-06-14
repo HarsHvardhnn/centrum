@@ -32,7 +32,7 @@ const UserLayout = () => {
         <Footer />
         <CookieConsent />
         <CookiePreferences />
-        {/* <SEOTester /> */}
+        <SEOTester />
       </div>
     </CookieConsentProvider>
   );

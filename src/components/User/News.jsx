@@ -137,6 +137,7 @@ export default function News() {
                     >
                       <div className="w-1/3">
                         <img
+                         loading="lazy"
                           src={newsItem.image}
                           alt={newsItem.title}
                           className="w-full h-40 object-cover"

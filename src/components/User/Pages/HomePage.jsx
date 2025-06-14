@@ -9,6 +9,7 @@ import Welcome from "../Welcome";
 import Hero from "../Hero";
 import ServicesMini from "../ServicesMini";
 import { useAppointmentContext } from "../../../UserLayout";
+import MetaTags from '../../UtilComponents/MetaTags';
 
 const HomePage = () => {
   const {
@@ -42,6 +43,11 @@ const HomePage = () => {
 
   return (
     <>
+      <MetaTags 
+        title="CM7 – Przychodnia specjalistyczna Skarżysko-Kamienna"
+        description="Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści. Umów wizytę w Centrum Medyczne 7."
+        path="/"
+      />
       <Hero selectedDoctorId={selectedDoctorId} setSelectedDoctorId={setSelectedDoctorId}  />
       <Welcome />
       <ServicesMini />
