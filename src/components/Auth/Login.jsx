@@ -5,7 +5,7 @@ import LogoMark from "../../assets/logo_new.png";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import { apiCaller } from "../../utils/axiosInstance";
+import { apiCaller, setCookie } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { useUser } from "../../context/userContext";
 
@@ -80,21 +80,20 @@ const AuthForm = ({ isLogin = false }) => {
       });
       toast.success("Logowanie przez Google powiodło się");
 
+      // Store auth data in both cookie and localStorage
+      const userStr = JSON.stringify(response.data.user);
+      setCookie('authToken', response.data.token, 7);
+      setCookie('user', userStr, 7);
       localStorage.setItem("authToken", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-      //("response.data.user", response.data.user);
+      localStorage.setItem("user", userStr);
       setUser(response.data.user || {});
-      // if (response.data.user?.role == "doctor") {
-      //   navigate("/admin");
-      //   return;
-      // }
+
       if (response.data.user.role == "patient") {
         navigate("/user");
         return;
       }
       navigate("/admin");
     } catch (error) {
-      //("error", error);
       toast.error(
         "Logowanie przez Google nie powiodło się:",
         error.response.data.message
@@ -110,29 +109,19 @@ const AuthForm = ({ isLogin = false }) => {
         password: values.password,
       });
 
-      //("Login successful:", response.data);
-
-      // Store authentication token
+      // Store auth data in both cookie and localStorage
+      const userStr = JSON.stringify(response.data.user);
+      setCookie('authToken', response.data.token, 7);
+      setCookie('user', userStr, 7);
       localStorage.setItem("authToken", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      localStorage.setItem("user", userStr);
       setUser(response.data.user || {});
-      //("response.data.user", response.data.user);
 
-      // if (response.data.user?.role == "doctor") {
-      //   navigate("/doctors");
-      //   //(":doctor");
-      //   return;
-      // }
       if (response.data.user.role == "patient") {
         navigate("/user");
-        //(":pattients");
-
         return;
       }
       navigate("/admin");
-      //(":nilll");
-
-      // Navigate to home page
     } catch (error) {
       console.error(
         "Login failed:",

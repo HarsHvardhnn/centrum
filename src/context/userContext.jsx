@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
-import { apiCaller } from "../utils/axiosInstance";
+import { apiCaller, setCookie, getCookie, removeCookie } from "../utils/axiosInstance";
 
 // Create the context
 const UserContext = createContext(null);
@@ -15,18 +15,45 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = () => {
-      const token = localStorage.getItem("authToken");
-      const storedUser = localStorage.getItem("user");
+      // First try to get token from cookie
+      const token = getCookie('authToken');
+      let storedUser = null;
+
+      if (token) {
+        // If token exists in cookie, try to get user from cookie
+        const userCookie = getCookie('user');
+        if (userCookie) {
+          try {
+            storedUser = JSON.parse(userCookie);
+          } catch (error) {
+            console.error("Error parsing user cookie:", error);
+            removeCookie('user');
+          }
+        }
+      } else {
+        // Fallback to localStorage if cookie doesn't exist
+        const localToken = localStorage.getItem("authToken");
+        const localUser = localStorage.getItem("user");
+
+        if (localToken && localUser) {
+          try {
+            storedUser = JSON.parse(localUser);
+            // Migrate to cookies
+            setCookie('authToken', localToken, 7);
+            setCookie('user', localUser, 7);
+            // Clear localStorage
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("user");
+          } catch (error) {
+            console.error("Error parsing stored user data:", error);
+            localStorage.removeItem("user");
+          }
+        }
+      }
 
       if (token && storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-          setIsAuthenticated(true);
-        } catch (error) {
-          console.error("Error parsing stored user data:", error);
-          // Clear invalid data
-          localStorage.removeItem("user");
-        }
+        setUser(storedUser);
+        setIsAuthenticated(true);
       }
 
       setLoading(false);
@@ -36,21 +63,19 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   const refreshUserProfile = async () => {
-    // Only fetch if authenticated
     if (!isAuthenticated) return;
 
     try {
       setLoading(true);
-      const token = localStorage.getItem("authToken");
+      const token = getCookie('authToken') || localStorage.getItem("authToken");
 
       if (!token) {
         setLoading(false);
         return;
       }
 
-      // Using apiCaller instead of direct axios call
       const response = await apiCaller("GET", "/auth/profile/user");
-      const { name, role, profilePicture, _id ,email } = response.data.data;
+      const { name, role, profilePicture, _id, email } = response.data.data;
       const updatedUser = {
         id: _id,
         name: `${name.first} ${name.last}`,
@@ -61,13 +86,15 @@ export const UserProvider = ({ children }) => {
 
       setUser(updatedUser);
 
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      // Update both cookie and localStorage
+      const userStr = JSON.stringify(updatedUser);
+      setCookie('user', userStr, 7);
+      localStorage.setItem("user", userStr);
     } catch (error) {
       console.error("Failed to refresh user profile:", error);
       if (error.response?.status === 401) {
         logout();
       }
-    } finally {
       setLoading(false);
     }
   };
@@ -81,7 +108,11 @@ export const UserProvider = ({ children }) => {
     };
 
     setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+    const userStr = JSON.stringify(updatedUser);
+    
+    // Update both cookie and localStorage
+    setCookie('user', userStr, 7);
+    localStorage.setItem("user", userStr);
   };
 
   const updateProfilePicture = async (imageFile) => {
@@ -93,7 +124,6 @@ export const UserProvider = ({ children }) => {
       const formData = new FormData();
       formData.append("profilePicture", imageFile);
 
-      // Using apiCaller instead of direct axios call
       const response = await apiCaller(
         "POST",
         "/api/user/update-profile-picture",
@@ -118,28 +148,30 @@ export const UserProvider = ({ children }) => {
   const login = (userData, token) => {
     setUser(userData);
     setIsAuthenticated(true);
-    localStorage.setItem("user", JSON.stringify(userData));
-
-    if (token) {
-      localStorage.setItem("authToken", token);
-    }
+    
+    const userStr = JSON.stringify(userData);
+    
+    // Set both cookie and localStorage
+    setCookie('authToken', token, 7);
+    setCookie('user', userStr, 7);
+    localStorage.setItem("user", userStr);
+    localStorage.setItem("authToken", token);
   };
 
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
+    
+    // Clear both cookie and localStorage
+    removeCookie('authToken');
+    removeCookie('user');
     localStorage.removeItem("user");
     localStorage.removeItem("authToken");
   };
 
-  // Check if user has required roles
   const hasRole = (allowedRoles) => {
     if (!user || !isAuthenticated) return false;
-
-    // If no specific roles required, just check authentication
     if (!allowedRoles || allowedRoles.length === 0) return isAuthenticated;
-
-    // Check if user's role is included in allowed roles
     return user.role && allowedRoles.includes(user.role);
   };
 
