@@ -319,6 +319,7 @@ export default function UserManagement() {
         referrerNumber: patientDetails.referrerNumber,
         referrerEmail: patientDetails.referrerEmail,
         consultingDepartment: patientDetails.consultingDepartment,
+        consultingSpecialization: patientDetails.consultingSpecialization,
         consultingDoctor: patientDetails.consultingDoctor,
 
         // Address

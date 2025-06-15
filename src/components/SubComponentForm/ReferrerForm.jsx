@@ -16,6 +16,15 @@ const ReferrerForm = () => {
     consultingSpecialization: false
   });
 
+  // Debug: Log when formData changes for consulting fields
+  useEffect(() => {
+    console.log('ReferrerForm - Form data updated:', {
+      consultingSpecialization: formData.consultingSpecialization,
+      consultingDoctor: formData.consultingDoctor,
+      doctorsCount: doctors.length
+    });
+  }, [formData.consultingSpecialization, formData.consultingDoctor, doctors.length]);
+
   // Fetch doctors when specialization changes
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -27,6 +36,12 @@ const ReferrerForm = () => {
         const filters = { specialization: formData.consultingSpecialization };
         const response = await doctorService.getAllDoctors(filters);
         const fetchedDoctors = response.doctors || [];
+        console.log('ReferrerForm - Fetched doctors for specialization:', {
+          specializationId: formData.consultingSpecialization,
+          doctorsCount: fetchedDoctors.length,
+          doctors: fetchedDoctors.map(d => ({ id: d._id, name: d.name })),
+          currentSelectedDoctor: formData.consultingDoctor
+        });
         setDoctors(fetchedDoctors);
 
         // If we have doctors and no consultingDoctor is set, set the first doctor
@@ -35,6 +50,19 @@ const ReferrerForm = () => {
           setValidationError("");
         } else if (fetchedDoctors.length === 0) {
           setValidationError("Brak dostępnych lekarzy dla wybranej specjalizacji");
+        } else if (formData.consultingDoctor && fetchedDoctors.length > 0) {
+          // In edit mode: verify that the selected doctor exists in the fetched doctors list
+          const selectedDoctorExists = fetchedDoctors.some(doctor => doctor._id === formData.consultingDoctor);
+          if (!selectedDoctorExists) {
+            // If the selected doctor doesn't exist in the current specialization, 
+            // this might indicate data inconsistency - clear the selection
+            console.warn('Selected doctor not found in the current specialization doctors list');
+            updateFormData('consultingDoctor', '');
+            setValidationError("Wybrany lekarz nie jest dostępny dla tej specjalizacji");
+          } else {
+            // Clear any validation errors if the doctor exists
+            setValidationError("");
+          }
         }
       } catch (err) {
         console.error("Failed to fetch doctors:", err);
@@ -238,13 +266,24 @@ const ReferrerForm = () => {
                   required
                 >
                   <option value="">
-                    {loading ? "Ładowanie lekarzy..." : "Wybierz lekarza"}
+                    {loading 
+                      ? "Ładowanie lekarzy..." 
+                      : !formData.consultingSpecialization 
+                        ? "Najpierw wybierz specjalizację"
+                        : "Wybierz lekarza"
+                    }
                   </option>
                   {doctors.map((doctor) => (
                     <option key={doctor._id} value={doctor._id}>
-                      Dr. {doctor.name || ""}
+                      Dr. {doctor.name || `Lekarz ${doctor._id}`}
                     </option>
                   ))}
+                  {/* Show a message if the selected doctor is not in the current list */}
+                  {formData.consultingDoctor && doctors.length > 0 && !doctors.some(d => d._id === formData.consultingDoctor) && (
+                    <option value={formData.consultingDoctor} disabled>
+                      (Wybrany lekarz nie jest dostępny w tej specjalizacji)
+                    </option>
+                  )}
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                   <svg

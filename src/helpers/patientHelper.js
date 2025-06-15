@@ -32,6 +32,7 @@ const patientService = {
         formData.append("consents", JSON.stringify(patientData.consents));
       }
       appendIfExists("consultingDepartment", patientData.consultingDepartment);
+      appendIfExists("consultingSpecialization", patientData.consultingSpecialization);
       appendIfExists("consultingDoctor", patientData.consultingDoctor);
       appendIfExists("country", patientData.country);
       appendIfExists("dateOfBirth", patientData.dateOfBirth);
