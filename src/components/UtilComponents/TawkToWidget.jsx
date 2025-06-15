@@ -4,6 +4,11 @@ const TAWKTO_SRC = "https://embed.tawk.to/6816e275f496ef1910abd5c8/1iqcm96v9";
 
 const TawkToWidget = () => {
   useEffect(() => {
+    // Only load Tawk.to in production to avoid CORS issues in development
+    if (import.meta.env.VITE_NODE_ENV === 'development') {
+      console.log('🔧 Tawk.to widget disabled in development mode');
+      return;
+    }
     
     if (window.Tawk_API) return; // Prevent multiple injections
     //("TawkToWidget0tst", window);

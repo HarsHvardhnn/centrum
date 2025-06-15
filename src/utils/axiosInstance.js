@@ -24,6 +24,15 @@ const axiosInstance = axios.create({
     import.meta.env.VITE_REACT_APP_API_BASE_URL || "https://api.example.com", // Use environment variable for base URL
   timeout: 100000, // Timeout for requests
   withCredentials: true, // Enable sending cookies with requests
+  headers: {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"
+  }
 });
 
 // Request interceptor
@@ -34,6 +43,18 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
+
+    // Ensure security headers are present in every request
+    config.headers = {
+      ...config.headers,
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"
+    };
 
     return config;
   },
@@ -108,7 +129,16 @@ const apiCaller = async (method, url, data = {}, isFormData = false) => {
     }
 
     // Set the proper headers for FormData requests
-    const headers = {};
+    const headers = {
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"
+    };
+
     if (isFormData || data instanceof FormData) {
       // For FormData, don't set Content-Type as the browser will set it with the boundary
       // The browser will automatically set the correct multipart/form-data content type with boundary

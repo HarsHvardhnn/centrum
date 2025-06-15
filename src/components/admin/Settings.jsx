@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import adminHelper from "../../helpers/adminHelper";
 import { useLoader } from "../../context/LoaderContext";
 import { useUser } from "../../context/userContext";
@@ -28,6 +29,7 @@ export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const { user } = useUser();
   const { showLoader, hideLoader } = useLoader();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -105,6 +107,17 @@ export default function UserManagement() {
   useEffect(() => {
     fetchUsers();
   }, [currentPage, usersPerPage, sortField, sortOrder]);
+
+  // Handle URL parameter for editing patient
+  useEffect(() => {
+    const editPatientId = searchParams.get('edytujPacjenta');
+    console.log("editPatientId", editPatientId);
+    if (editPatientId) {
+      handleEditPatient(editPatientId);
+      // Clear the URL parameter after handling
+      setSearchParams({});
+    }
+  }, [searchParams]);
 
   const handleSearch = (e) => {
     e.preventDefault();

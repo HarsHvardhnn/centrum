@@ -13,7 +13,8 @@ import {
   Eye,
   UserCheck,
   DollarSign,
-  Trash2
+  Trash2,
+  Pen
 } from "lucide-react";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
@@ -620,16 +621,27 @@ function LabAppointmentsContent({ clinic }) {
                                     </DropdownMenu.Item>
                                   )}
 
-                                  {appointment.status === "completed" && (
-                                    <DropdownMenu.Item
-                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                      onClick={() => handleGenerateVisitCard(appointment.id)}
-                                    >
-                                      <FileText size={16} className="mr-2" />
-                                      Karta wizyty
-                                    </DropdownMenu.Item>
-                                  )}
-                                </DropdownMenu.Content>
+                                                                  {appointment.status === "completed" && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={() => handleGenerateVisitCard(appointment.id)}
+                                  >
+                                    <FileText size={16} className="mr-2" />
+                                    Karta wizyty
+                                  </DropdownMenu.Item>
+                                )}
+
+                                {/* Edit Patient button for non-clinic cases */}
+                                <DropdownMenu.Item
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                  onClick={() => {
+                                    navigate(`/admin/accounts?edytujPacjenta=${appointment.patient.id}`);
+                                  }}
+                                >
+                                  <Eye size={16} className="mr-2" />
+                                  Edytuj pacjenta
+                                </DropdownMenu.Item>
+                              </DropdownMenu.Content>
                               </DropdownMenu.Portal>
                             </DropdownMenu.Root>
                           )}
@@ -812,6 +824,19 @@ function LabAppointmentsContent({ clinic }) {
                                   >
                                     <FileText size={16} className="mr-2" />
                                     Karta wizyty
+                                  </DropdownMenu.Item>
+                                )}
+
+                                {/* Edit Patient button for non-clinic cases */}
+                                {!clinic && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={() => {
+                                      navigate(`/admin/accounts?edytujPacjenta=${appointment.patient.id}`);
+                                    }}
+                                  >
+                                    <Pen size={16} className="mr-2" />
+                                    Edytuj pacjenta
                                   </DropdownMenu.Item>
                                 )}
                               </DropdownMenu.Content>
