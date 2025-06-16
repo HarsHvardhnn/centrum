@@ -14,7 +14,7 @@ function removeTrailingSlash(url) {
 }
 
 // API base URL - adjust this to your backend URL  
-const API_BASE_URL = removeTrailingSlash('https://backend.centrummedyczne7.pl/');
+const API_BASE_URL = removeTrailingSlash('http://localhost:5000/');
 
 console.log("API_BASE_URL", API_BASE_URL);
 // Bot detection function
@@ -130,12 +130,12 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       } else if (path.startsWith('/uslugi/')) {
         if (dynamicData && dynamicData.title && dynamicData.shortDescription) {
           title = `${dynamicData.title} – Centrum Medyczne 7 Skarżysko-Kamienna`;
-          description = dynamicData?.shortDescription;
+          description = dynamicData?.shortDescription || dynamicData?.description;
           keywords = `usługi medyczne, centrum medyczne 7, ${dynamicData.title}`;
-          ogImage = dynamicData.image || '/images/uslugi.jpg';
+          ogImage = (dynamicData.images && dynamicData.images[0]) || dynamicData.image || '/images/uslugi.jpg';
         } else {
           title = 'Usługa medyczna – Centrum Medyczne 7 Skarżysko-Kamienna';
-          description = 'Szczegółowy opis usługi medycznej w Centrum Medyczym 7.';
+          description = 'Szczegółowy opis usługi medycznej w Centrum Medycznym 7.';
           keywords = 'usługi medyczne, centrum medyczne 7';
           ogImage = '/images/uslugi.jpg';
         }
@@ -200,6 +200,22 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <link rel="apple-touch-icon" href="/images/fav_new.png">
     <link rel="shortcut icon" href="/images/fav_new.png">
     
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YOUR_GA4_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        // Initial load without consent
+        gtag('consent', 'default', {
+            'analytics_storage': 'denied',
+            'ad_storage': 'denied'
+        });
+        gtag('config', 'G-YOUR_GA4_ID', {
+            'anonymize_ip': true
+        });
+    </script>
+    
     <!-- Structured Data -->
     <script type="application/ld+json">
     {
@@ -219,7 +235,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     </script>
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-DJBVSEdD.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BNdLKOyk.css">
 </head>
 <body>
     <!-- SEO Content for crawlers -->
@@ -232,7 +248,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-tkJDEVmf.js"></script>
+    <script type="module" crossorigin src="/assets/index-mUjGiP90.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -252,6 +268,9 @@ const fetchDynamicData = async (path) => {
     } else if (path.startsWith('/poradnik/')) {
       slug = path.replace('/poradnik/', '');
       endpoint = `${API_BASE_URL}/blogs/slug/${slug}`;
+    } else if (path.startsWith('/uslugi/')) {
+      slug = path.replace('/uslugi/', '');
+      endpoint = `${API_BASE_URL}/services/slug/${slug}`;
     } else {
       return null;
     }
@@ -276,7 +295,7 @@ const seoMiddleware = async (req, res, next) => {
   
   // Fetch dynamic data for dynamic routes
   let dynamicData = null;
-  if (path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/')) {
+  if (path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/') || path.startsWith('/uslugi/')) {
     dynamicData = await fetchDynamicData(path);
   }
   

@@ -175,10 +175,11 @@ export const CookieConsentProvider = ({ children }) => {
   const loadAnalyticsScripts = () => {
     // Google Analytics 4
     if (!document.getElementById('google-analytics')) {
+      const GA_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-YOUR_GA4_ID';
       const script = document.createElement('script');
       script.id = 'google-analytics';
       script.async = true;
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${import.meta.env.VITE_GA_MEASUREMENT_ID}`;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
       document.head.appendChild(script);
 
       script.onload = () => {
@@ -186,10 +187,20 @@ export const CookieConsentProvider = ({ children }) => {
         function gtag(){dataLayer.push(arguments);}
         window.gtag = gtag;
         gtag('js', new Date());
-        gtag('config', import.meta.env.VITE_GA_MEASUREMENT_ID, {
-          anonymize_ip: true,
-          cookie_flags: 'SameSite=Strict;Secure'
+        
+        // Update consent to granted since user consented
+        gtag('consent', 'update', {
+          'analytics_storage': 'granted'
         });
+        
+        gtag('config', GA_ID, {
+          anonymize_ip: true,
+          cookie_flags: 'SameSite=Strict;Secure',
+          page_title: document.title,
+          page_location: window.location.href
+        });
+        
+        console.log('📊 Google Analytics loaded with user consent');
       };
     }
   };

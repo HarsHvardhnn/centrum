@@ -843,6 +843,18 @@ function LabAppointmentsContent({ clinic }) {
                             </DropdownMenu.Portal>
                           </DropdownMenu.Root>
                         )}
+
+{(!clinic && !appointment.isAppointment) && (
+                                  <div
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={() => {
+                                      navigate(`/admin/accounts?edytujPacjenta=${appointment.patient.id}`);
+                                    }}
+                                  >
+                                    <Pen size={16} className="mr-2" />
+                                    Edytuj pacjenta
+                                  </div>
+                                )}
                       </div>
                     </td>
                   </tr>

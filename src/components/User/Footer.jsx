@@ -52,9 +52,7 @@ export default function Footer() {
               </a>
             </li>
             <li>
-              <a href="/privacy-policy" className="hover:underline">
-                Polityka prywatności
-              </a>
+            
             </li>
             <li>
               <CookieSettingsLink className="hover:underline text-left" />
@@ -92,13 +90,13 @@ export default function Footer() {
         <p>© 2025 Centrum Medyczne 7 Sp. z o.o. Wszelkie prawa zastrzeżone.</p>
 
         {/* Social Media Icons */}
-        <div className="flex space-x-4">
-          {/* <a
-            href="#"
-            className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"
-          >
-            <FaLinkedinIn />
-          </a> */}
+        <div className="flex space-x-4 items-center">
+        <a href="/regulamin.pdf" className="hover:underline">
+                Regulamin
+              </a>
+              <a href="https://centrummedyczne7.pl/polityka-prywatnosci.pdf" className="hover:underline">
+                Polityka prywatności
+              </a>
           <a
             href="https://www.facebook.com/klinikacm7/"
             className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"

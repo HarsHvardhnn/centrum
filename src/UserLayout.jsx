@@ -8,6 +8,7 @@ import CookiePreferences from "./components/User/CookiePreferences";
 import { CookieConsentProvider } from "./context/CookieConsentContext";
 import SEO from "./components/SEO/SEO";
 import SEOTester from "./components/SEO/SEOTester";
+import GoogleAnalytics from "./components/Analytics/GoogleAnalytics";
 
 const UserLayout = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -17,6 +18,7 @@ const UserLayout = () => {
     <CookieConsentProvider>
       <div className="flex flex-col min-h-screen">
         <SEO />
+        <GoogleAnalytics />
         <TawkToWidget />
         <Header />
         <main className="flex-1 pt-[15px]">

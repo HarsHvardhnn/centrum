@@ -4,10 +4,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaHospital } from "react-icons/fa";
 import { useServices } from "../../context/serviceContext";
 import { generateServiceSlug } from "../../utils/slugUtils";
+import { useGoogleAnalytics } from "../Analytics/GoogleAnalytics";
 
 const ServiceDetail = ({ serviceName }) => {
   const navigate = useNavigate();
   const { services, loading } = useServices();
+  const { trackServiceView } = useGoogleAnalytics();
 
   // Find service by slug (URL-friendly version) or fallback to title
   const service = services.find((s) => 
@@ -19,6 +21,13 @@ const ServiceDetail = ({ serviceName }) => {
       navigate("/uslugi");
     }
   }, [service, navigate, loading]);
+
+  // Track service view when component loads
+  useEffect(() => {
+    if (service) {
+      trackServiceView(service.title, service.price, 'medical_service');
+    }
+  }, [service, trackServiceView]);
 
   if (loading) {
     return <div className="text-center py-20">Wczytywanie szczegółów usługi...</div>;
@@ -42,7 +51,7 @@ const ServiceDetail = ({ serviceName }) => {
             >
               <div className="flex items-center gap-2 w-full">
                 <FaHospital className="text-xl" />
-                <div className="flex flex-col">
+                <div className="flex flex-col capitalize">
                   <span>{item.title.length > 20 ? item.title.slice(0, 20) + "..." : item.title}</span>
                 </div>
               </div>
@@ -61,7 +70,7 @@ const ServiceDetail = ({ serviceName }) => {
         </div>
 
         <div className="flex justify-between items-center mt-6">
-          <h2 className="text-3xl md:text-4xl font-serif font-bold text-main">
+          <h2 className="text-3xl md:text-4xl font-serif font-bold text-main capitalize">
             {service.title}
           </h2>
           {/* Display the price prominently */}

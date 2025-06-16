@@ -14,6 +14,22 @@
     <link rel="icon" type="image/png" href="/images/fav_new.png" />
     <link rel="apple-touch-icon" href="/images/fav_new.png" />
     <link rel="shortcut icon" href="/images/fav_new.png" />
+    
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YOUR_GA4_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        // Initial load without consent
+        gtag('consent', 'default', {
+            'analytics_storage': 'denied',
+            'ad_storage': 'denied'
+        });
+        gtag('config', 'G-YOUR_GA4_ID', {
+            'anonymize_ip': true
+        });
+    </script>
   </head>
   <body>
     <div id="root"></div>
