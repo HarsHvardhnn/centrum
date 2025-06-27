@@ -306,29 +306,29 @@ const Header = () => {
             {user && user.role === "patient" ? (
               <>
                 <Link
-                  to="/user/appointments"
+                  to="/appointments"
                   onClick={() => setMenuOpen(false)}
                   className={`flex items-center justify-center gap-2 bg-teal-800 text-white w-48 py-2 text-sm rounded-full ${
-                    isActive("/user/appointments") ? "bg-teal-600" : ""
+                    isActive("/appointments") ? "bg-teal-600" : ""
                   }`}
                 >
                   <FaCalendarCheck />
                   Moje wizyty
                 </Link>
                 <Link
-                  to="/user/details"
+                  to="/details"
                   onClick={() => setMenuOpen(false)}
                   className={`flex items-center justify-center gap-2 bg-teal-800 text-white w-48 py-2 text-sm rounded-full ${
-                    isActive("/user/details") ? "bg-teal-600" : ""
+                    isActive("/details") ? "bg-teal-600" : ""
                   }`}
                 >
                   <FaIdCard />
                   Dokumentacja medyczna                </Link>
                 <Link
-                  to="/user/profile"
+                  to="/profile"
                   onClick={() => setMenuOpen(false)}
                   className={`flex items-center justify-center gap-2 bg-teal-800 text-white w-48 py-2 text-sm rounded-full ${
-                    isActive("/user/profile") ? "bg-teal-600" : ""
+                    isActive("/profile") ? "bg-teal-600" : ""
                   }`}
                 >
                   <FaUser />
@@ -390,9 +390,9 @@ const Header = () => {
                 <div className="absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 z-50">
                   
                   <Link
-                    to="/user/appointments"
+                    to="/appointments"
                     className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 ${
-                      isActive("/user/appointments")
+                      isActive("/appointments")
                         ? "text-teal-500 font-medium"
                         : "text-gray-700"
                     }`}
@@ -402,9 +402,9 @@ const Header = () => {
                     Moje wizyty
                   </Link>
                   <Link
-                    to="/user/details"
+                    to="/details"
                     className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 ${
-                      isActive("/user/details")
+                      isActive("/details")
                         ? "text-teal-500 font-medium"
                         : "text-gray-700"
                     }`}
@@ -414,9 +414,9 @@ const Header = () => {
                         Dokumentacja medyczna
                   </Link>
                   <Link
-                    to="/user/profile"
+                    to="/profile"
                     className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 ${
-                      isActive("/user/profile")
+                      isActive("/profile")
                         ? "text-teal-500 font-medium"
                         : "text-gray-700"
                     }`}

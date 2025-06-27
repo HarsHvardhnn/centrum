@@ -874,7 +874,7 @@ export default function Doctors({
                       </div>
 
                       {/* Consultation Type Toggle - Hidden for now */}
-                      <div className="mb-4 hidden">
+                      <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Typ konsultacji
                         </label>

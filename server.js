@@ -201,7 +201,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <link rel="shortcut icon" href="/images/fav_new.png">
     
     <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YOUR_GA4_ID"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RP3DKDVE2M"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
@@ -248,7 +248,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-mUjGiP90.js"></script>
+    <script type="module" crossorigin src="/assets/index-CQZA0G47.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
