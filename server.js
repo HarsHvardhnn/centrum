@@ -14,7 +14,7 @@ function removeTrailingSlash(url) {
 }
 
 // API base URL - adjust this to your backend URL  
-const API_BASE_URL = removeTrailingSlash('http://localhost:5000/');
+const API_BASE_URL = removeTrailingSlash('https://backend.centrummedyczne7.pl/');
 
 console.log("API_BASE_URL", API_BASE_URL);
 // Bot detection function
@@ -200,19 +200,14 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <link rel="apple-touch-icon" href="/images/fav_new.png">
     <link rel="shortcut icon" href="/images/fav_new.png">
     
-    <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YOUR_GA4_ID"></script>
+    <!-- Google Analytics 4 - GDPR Compliant Loading -->
     <script>
+        // Consent defaults - actual GA loading happens after user consent via CookieConsentContext
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        // Initial load without consent
         gtag('consent', 'default', {
             'analytics_storage': 'denied',
             'ad_storage': 'denied'
-        });
-        gtag('config', 'G-YOUR_GA4_ID', {
-            'anonymize_ip': true
         });
     </script>
     
@@ -235,7 +230,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     </script>
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-BNdLKOyk.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-DsnUzCmj.css">
 </head>
 <body>
     <!-- SEO Content for crawlers -->
@@ -248,7 +243,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-mUjGiP90.js"></script>
+    <script type="module" crossorigin src="/assets/index-BB9tb1Sx.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -264,12 +259,33 @@ const fetchDynamicData = async (path) => {
     
     if (path.startsWith('/aktualnosci/')) {
       slug = path.replace('/aktualnosci/', '');
+      
+      // Validate slug before making API call
+      if (!slug || slug === 'undefined' || slug.trim() === '') {
+        console.log(`❌ Invalid slug for aktualnosci: "${slug}"`);
+        return null;
+      }
+      
       endpoint = `${API_BASE_URL}/news/slug/${slug}`;
     } else if (path.startsWith('/poradnik/')) {
       slug = path.replace('/poradnik/', '');
+      
+      // Validate slug before making API call  
+      if (!slug || slug === 'undefined' || slug.trim() === '') {
+        console.log(`❌ Invalid slug for poradnik: "${slug}"`);
+        return null;
+      }
+      
       endpoint = `${API_BASE_URL}/blogs/slug/${slug}`;
     } else if (path.startsWith('/uslugi/')) {
       slug = path.replace('/uslugi/', '');
+      
+      // Validate slug before making API call
+      if (!slug || slug === 'undefined' || slug.trim() === '') {
+        console.log(`❌ Invalid slug for uslugi: "${slug}"`);
+        return null;
+      }
+      
       endpoint = `${API_BASE_URL}/services/slug/${slug}`;
     } else {
       return null;
@@ -283,6 +299,59 @@ const fetchDynamicData = async (path) => {
     console.log(`❌ Failed to fetch data for ${path}:`, error.message);
     return null;
   }
+};
+
+// Middleware to handle tel: and mailto: URLs that shouldn't be treated as internal routes
+const handleExternalProtocols = (req, res, next) => {
+  const path = req.path;
+  
+  // Check if the path starts with tel: or mailto: protocols
+  if (path.startsWith('/tel:') || path.startsWith('/mailto:')) {
+    console.log(`🚫 Blocking external protocol URL: ${path}`);
+    // Return 404 for these URLs as they shouldn't be accessible via HTTP
+    return res.status(404).json({ 
+      error: 'Not Found',
+      message: 'External protocol URLs are not valid HTTP endpoints',
+      path: path
+    });
+  }
+  
+  // Also handle malformed URLs that might include these protocols
+  if (path.includes('tel:') || path.includes('mailto:')) {
+    console.log(`🚫 Blocking malformed URL containing external protocol: ${path}`);
+    return res.status(404).json({ 
+      error: 'Not Found',
+      message: 'Malformed URL containing external protocol',
+      path: path
+    });
+  }
+  
+  next();
+};
+
+// Middleware to handle invalid/undefined slugs
+const handleInvalidSlugs = (req, res, next) => {
+  const path = req.path;
+  
+  // Check for undefined slugs in news URLs
+  if (path === '/aktualnosci/undefined' || 
+      path === '/poradnik/undefined' || 
+      path === '/uslugi/undefined') {
+    console.log(`🚫 Redirecting invalid URL: ${path}`);
+    return res.redirect(301, path.startsWith('/aktualnosci/') ? '/aktualnosci' : 
+                           path.startsWith('/poradnik/') ? '/poradnik' : '/uslugi');
+  }
+  
+  // Check for empty slugs (trailing slash after section)
+  if (path.endsWith('/aktualnosci/') || 
+      path.endsWith('/poradnik/') || 
+      path.endsWith('/uslugi/')) {
+    const redirectTo = path.slice(0, -1); // Remove trailing slash
+    console.log(`🚫 Redirecting trailing slash URL: ${path} -> ${redirectTo}`);
+    return res.redirect(301, redirectTo);
+  }
+  
+  next();
 };
 
 // SEO Middleware - Return SEO HTML for EVERYONE (bots and users)
@@ -303,9 +372,156 @@ const seoMiddleware = async (req, res, next) => {
   return res.send(seoHTML);
 };
 
+// Dynamic sitemap generator
+const generateDynamicSitemap = async () => {
+  const BASE_URL = 'https://centrummedyczne7.pl';
+  const now = new Date().toISOString();
+  
+  // Static routes
+  const staticRoutes = [
+    { url: '/', priority: '1.0', changefreq: 'weekly' },
+    { url: '/o-nas', priority: '0.8', changefreq: 'monthly' },
+    { url: '/lekarze', priority: '0.8', changefreq: 'weekly' },
+    { url: '/uslugi', priority: '0.8', changefreq: 'weekly' },
+    { url: '/aktualnosci', priority: '0.8', changefreq: 'daily' },
+    { url: '/poradnik', priority: '0.8', changefreq: 'weekly' },
+    { url: '/kontakt', priority: '0.7', changefreq: 'monthly' }
+  ];
+  
+  let dynamicRoutes = [];
+  
+  try {
+    // Helper function to validate slug
+    const isValidSlug = (slug) => {
+      return slug && 
+             slug.trim() !== '' && 
+             slug !== 'undefined' && 
+             slug !== 'null' &&
+             !slug.includes('undefined') &&
+             !slug.includes('tel:') &&
+             !slug.includes('mailto:');
+    };
+    
+    // Fetch news articles
+    try {
+      console.log('📰 Fetching news for sitemap...');
+      const newsResponse = await axios.get(`${API_BASE_URL}/news`, { timeout: 5000 });
+      const newsItems = newsResponse.data || [];
+      
+      const validNewsUrls = newsItems
+        .filter(item => isValidSlug(item.slug))
+        .map(item => ({
+          url: `/aktualnosci/${item.slug}`,
+          lastmod: item.updatedAt || item.date || now,
+          priority: '0.6',
+          changefreq: 'monthly'
+        }));
+      
+      dynamicRoutes = [...dynamicRoutes, ...validNewsUrls];
+      console.log(`✅ Added ${validNewsUrls.length} news articles to sitemap`);
+    } catch (newsError) {
+      console.log('⚠️ Could not fetch news for sitemap:', newsError.message);
+    }
+    
+    // Fetch blog articles
+    try {
+      console.log('📝 Fetching blog articles for sitemap...');
+      const blogResponse = await axios.get(`${API_BASE_URL}/blogs`, { timeout: 5000 });
+      const blogItems = blogResponse.data || [];
+      
+      const validBlogUrls = blogItems
+        .filter(item => isValidSlug(item.slug))
+        .map(item => ({
+          url: `/poradnik/${item.slug}`,
+          lastmod: item.updatedAt || item.date || now,
+          priority: '0.6',
+          changefreq: 'monthly'
+        }));
+      
+      dynamicRoutes = [...dynamicRoutes, ...validBlogUrls];
+      console.log(`✅ Added ${validBlogUrls.length} blog articles to sitemap`);
+    } catch (blogError) {
+      console.log('⚠️ Could not fetch blogs for sitemap:', blogError.message);
+    }
+    
+    // Fetch services if available
+    try {
+      console.log('🏥 Fetching services for sitemap...');
+      const servicesResponse = await axios.get(`${API_BASE_URL}/services`, { timeout: 5000 });
+      const serviceItems = servicesResponse.data || [];
+      
+      const validServiceUrls = serviceItems
+        .filter(item => isValidSlug(item.slug))
+        .map(item => ({
+          url: `/uslugi/${item.slug}`,
+          lastmod: item.updatedAt || item.date || now,
+          priority: '0.7',
+          changefreq: 'monthly'
+        }));
+      
+      dynamicRoutes = [...dynamicRoutes, ...validServiceUrls];
+      console.log(`✅ Added ${validServiceUrls.length} services to sitemap`);
+    } catch (serviceError) {
+      console.log('⚠️ Could not fetch services for sitemap:', serviceError.message);
+    }
+    
+  } catch (error) {
+    console.error('❌ Error generating dynamic sitemap content:', error.message);
+    // Continue with static routes only
+  }
+  
+  // Combine all routes
+  const allRoutes = [...staticRoutes, ...dynamicRoutes];
+  
+  // Generate XML
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${allRoutes.map(route => `  <url>
+    <loc>${BASE_URL}${route.url}</loc>
+    <lastmod>${route.lastmod ? new Date(route.lastmod).toISOString() : now}</lastmod>
+    <changefreq>${route.changefreq}</changefreq>
+    <priority>${route.priority}</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+  console.log(`📋 Generated sitemap with ${allRoutes.length} URLs (${staticRoutes.length} static + ${dynamicRoutes.length} dynamic)`);
+  return sitemap;
+};
+
+// Dynamic sitemap endpoint
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    console.log('🗺️ Generating dynamic sitemap...');
+    const sitemap = await generateDynamicSitemap();
+    
+    res.set({
+      'Content-Type': 'application/xml',
+      'Cache-Control': 'public, max-age=3600' // Cache for 1 hour
+    });
+    
+    res.send(sitemap);
+  } catch (error) {
+    console.error('❌ Error generating sitemap:', error);
+    
+    // Fallback to static sitemap if dynamic generation fails
+    try {
+      const staticSitemap = fs.readFileSync(path.join(__dirname, 'public', 'sitemap.xml'), 'utf8');
+      res.set('Content-Type', 'application/xml');
+      res.send(staticSitemap);
+    } catch (fallbackError) {
+      console.error('❌ Could not serve fallback sitemap:', fallbackError);
+      res.status(500).json({ error: 'Could not generate sitemap' });
+    }
+  }
+});
+
 // Serve static assets (CSS, JS, images) but not HTML files
 app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'dist', 'images')));
+
+// Apply middleware in correct order
+app.use(handleExternalProtocols); // First: block external protocols
+app.use(handleInvalidSlugs);      // Second: handle undefined slugs
 
 // Apply SEO middleware for ALL routes (HTML requests)
 app.get('*', seoMiddleware);

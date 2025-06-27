@@ -18,5 +18,17 @@ Disallow: /appointments
 Disallow: /details
 Disallow: /profile
 
+# Disallow external protocol URLs that shouldn't be crawled
+Disallow: /tel:*
+Disallow: /mailto:*
+Disallow: /*tel:*
+Disallow: /*mailto:*
+
+# Disallow undefined or invalid URLs
+Disallow: /*/undefined
+Disallow: /aktualnosci/undefined
+Disallow: /poradnik/undefined
+Disallow: /uslugi/undefined
+
 # Sitemap
 Sitemap: https://centrummedyczne7.pl/sitemap.xml 

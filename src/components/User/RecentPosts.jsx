@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { apiCaller } from "../../utils/axiosInstance";
+import { useNavigate } from "react-router-dom";
 
 const RecentPosts = ({ isNews }) => {
   const [newsData, setNewsData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchRecentNews = async () => {
@@ -40,7 +42,7 @@ const RecentPosts = ({ isNews }) => {
       </div>
 
       <h2 className="text-3xl font-semibold font-serif text-main mb-4">
-         Najnowsze artykuły
+        Najnowsze artykuły
       </h2>
 
       {loading ? (
@@ -58,10 +60,17 @@ const RecentPosts = ({ isNews }) => {
                   className="rounded h-full w-16 object-cover"
                 />
               </div>
-              <div className="w-4/5">
-              <p className="text-sm text-blue-500">
-  {new Date(news.date).toLocaleDateString('pl-PL')}
-</p>
+              <div
+                className="w-4/5 cursor-pointer"
+                onClick={() =>
+                  isNews
+                    ? navigate(`/aktualnosci/${news.slug}`)
+                    : navigate(`/aktualnosci/${news.slug}`)
+                }
+              >
+                <p className="text-sm text-blue-500">
+                  {new Date(news.date).toLocaleDateString("pl-PL")}
+                </p>
 
                 <p className="text-sm text-gray-700 font-semibold">
                   {news.title}

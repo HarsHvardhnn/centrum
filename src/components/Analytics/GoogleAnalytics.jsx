@@ -15,7 +15,7 @@ const GoogleAnalytics = () => {
       });
 
       // Track page view
-      window.gtag('config', 'G-YOUR_GA4_ID', {
+      window.gtag('config', import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-YOUR_GA4_ID', {
         page_title: document.title,
         page_location: window.location.href,
         anonymize_ip: true,

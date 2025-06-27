@@ -92,8 +92,8 @@ const DoctorAppointmentChart = () => {
           setDoctors(response.data);
           
           // If user is a doctor, set their own ID as the selected doctor
-          if (user?.role === "doctor" && user?._id) {
-            setSelectedDoctor(user._id);
+          if (user?.role === "doctor" && (user?._id || user?.id)) {
+            setSelectedDoctor(user._id || user.id);
           }
           // Otherwise set the first doctor as default if available
           else if (response.data && response.data.length > 0) {

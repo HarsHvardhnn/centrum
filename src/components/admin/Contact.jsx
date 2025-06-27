@@ -10,7 +10,20 @@ const Adminmsgs = () => {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
-  
+  // Function to convert privacy policy acceptance to Polish
+  const getPrivacyPolicyStatus = (accepted) => {
+    if (accepted === true) return "Tak";
+    if (accepted === false) return "Nie";
+    return "Brak danych";
+  };
+
+  // Function to get status color
+  const getStatusColor = (accepted) => {
+    if (accepted === true) return "text-green-600";
+    if (accepted === false) return "text-red-600";
+    return "text-gray-500";
+  };
+
   useEffect(() => {
     const fetchMessages = async () => {
       setLoading(true);
@@ -31,7 +44,7 @@ const Adminmsgs = () => {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Wiadomości kontaktowe</h1>
       {loading ? (
         <div className="text-center py-12">Ładowanie...</div>
@@ -47,12 +60,13 @@ const Adminmsgs = () => {
                   <th className="px-4 py-3 border-b text-left">Email</th>
                   <th className="px-4 py-3 border-b text-left">Temat</th>
                   <th className="px-4 py-3 border-b text-left">Wiadomość</th>
+                  <th className="px-4 py-3 border-b text-left">Zgoda RODO</th>
                 </tr>
               </thead>
               <tbody>
                 {messages.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-8 text-gray-500">Brak wiadomości</td>
+                    <td colSpan={5} className="text-center py-8 text-gray-500">Brak wiadomości</td>
                   </tr>
                 ) : (
                   messages.map((msg, idx) => (
@@ -61,6 +75,9 @@ const Adminmsgs = () => {
                       <td className="px-4 py-3 border-b">{msg.email}</td>
                       <td className="px-4 py-3 border-b">{msg.subject}</td>
                       <td className="px-4 py-3 border-b whitespace-pre-line">{msg.message}</td>
+                      <td className={`px-4 py-3 border-b font-medium ${getStatusColor(msg.privacyPolicyAccepted)}`}>
+                        {getPrivacyPolicyStatus(msg.privacyPolicyAccepted)}
+                      </td>
                     </tr>
                   ))
                 )}

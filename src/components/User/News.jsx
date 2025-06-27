@@ -6,6 +6,8 @@ import { IoEyeOutline } from "react-icons/io5";
 import { FaRegHeart } from "react-icons/fa";
 import { apiCaller } from "../../utils/axiosInstance";
 import { useNavigate } from "react-router-dom";
+import { generateNewsSlug } from "../../utils/slugUtils";
+
 export default function News() {
   const [news, setNews] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -71,6 +73,33 @@ export default function News() {
     setSelectedCategory(categoryId === selectedCategory ? null : categoryId);
   };
 
+  // Helper function to get valid slug for navigation
+  const getValidSlug = (newsItem) => {
+    // If slug exists and is not empty, use it
+    if (newsItem.slug && newsItem.slug.trim() !== '') {
+      return newsItem.slug;
+    }
+    
+    // If no slug, generate one from title
+    if (newsItem.title) {
+      return generateNewsSlug(newsItem.title);
+    }
+    
+    // Fallback to _id if both slug and title are missing
+    return newsItem._id || 'undefined-article';
+  };
+
+  const handleNewsClick = (newsItem) => {
+    const slug = getValidSlug(newsItem);
+    // Only navigate if we have a valid slug
+    if (slug && slug !== 'undefined-article') {
+      navigate(`/aktualnosci/${slug}`);
+    } else {
+      console.error('Cannot navigate: Invalid news item data', newsItem);
+      // Optionally show an error message to the user
+    }
+  };
+
   if (loading) {
     return (
       <section className="py-12 md:px-6">
@@ -133,7 +162,7 @@ export default function News() {
                     <div
                       key={newsItem._id}
                       className="bg-white shadow-md rounded-lg overflow-hidden flex cursor-pointer"
-                      onClick={() => navigate(`/aktualnosci/${newsItem.slug}`)}
+                      onClick={() => handleNewsClick(newsItem)}
                     >
                       <div className="w-1/3">
                         <img

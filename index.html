@@ -15,21 +15,23 @@
     <link rel="apple-touch-icon" href="/images/fav_new.png" />
     <link rel="shortcut icon" href="/images/fav_new.png" />
     
-    <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YOUR_GA4_ID"></script>
+    <!-- Google Analytics 4 - Will be replaced by environment variable -->
+    <!-- Script loading is handled by CookieConsentContext for GDPR compliance -->
     <script>
+        // Consent defaults - actual GA loading happens after user consent
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        // Initial load without consent
         gtag('consent', 'default', {
             'analytics_storage': 'denied',
             'ad_storage': 'denied'
         });
-        gtag('config', 'G-YOUR_GA4_ID', {
-            'anonymize_ip': true
-        });
     </script>
+    
+    <!-- reCAPTCHA Scripts -->
+    <!-- v3 for invisible verification - using environment variable or test key -->
+    <script src="https://www.google.com/recaptcha/api.js?render=%VITE_RECAPTCHA_V3_SITE_KEY%" async defer></script>
+    <!-- v2 for fallback verification -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   </head>
   <body>
     <div id="root"></div>

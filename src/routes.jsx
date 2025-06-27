@@ -45,6 +45,7 @@ import ContactPage from "./components/User/Pages/ContactPage";
 import BillDetails from "./components/Billing/BillDetails";
 import BillingManagement from "./components/Billing/BillingManagement";
 import Adminmsgs from "./components/admin/Contact";
+import IPConfigPage from "./components/admin/IPConfigPage";
 
 // Protected image route component
 const ProtectedImage = () => {
@@ -206,6 +207,7 @@ const routes = createBrowserRouter([
           { path: "/admin/billing", element: <BillingManagement /> },
           { path: "/admin/billing/details/:billId", element: <BillDetails /> },
           { path: "/admin/contact-messages", element: <Adminmsgs /> },
+          { path: "/admin/ip-config", element: <IPConfigPage /> },
         ],
       },
     ],

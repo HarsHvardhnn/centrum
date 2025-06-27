@@ -372,6 +372,7 @@ const PatientDetailsPage = () => {
         setPatientData(prevData => ({
           ...prevData,
           ...patientResponse.patientData,
+          age: patientResponse.patientData?.age || null,
           bloodPressure: patientResponse.patientData?.bloodPressure || null,
           temperature: patientResponse.patientData?.temperature || null,
           weight: patientResponse.patientData?.weight || null,

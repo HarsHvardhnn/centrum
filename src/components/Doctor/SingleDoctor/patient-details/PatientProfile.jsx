@@ -106,7 +106,7 @@ const PatientProfile = ({ patient, setPatientData }) => {
         </div>
         <h3 className="font-medium text-base text-center">{patient.name}</h3>
         <p className="text-xs text-gray-500 text-center">
-          {patient.age} lat, {patient.gender}
+          {patient?.age} lat, {patient.gender}
         </p>
       </div>
 

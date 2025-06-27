@@ -5,6 +5,7 @@ import { Eye, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
 import DOMPurify from "dompurify";
+import { generateNewsSlug } from "../../utils/slugUtils";
 
 const NewsCard = ({ article }) => {
   const truncateHTML = (html, maxLength) => {
@@ -17,6 +18,55 @@ const NewsCard = ({ article }) => {
   };
 
   const sanitizedDescription = article.shortDescription || truncateHTML(article.description, 200);
+
+  // Helper function to get valid slug for the link
+  const getValidSlug = (article) => {
+    // If slug exists and is not empty, use it
+    if (article.slug && article.slug.trim() !== '') {
+      return article.slug;
+    }
+    
+    // If no slug, generate one from title
+    if (article.title) {
+      return generateNewsSlug(article.title);
+    }
+    
+    // Fallback to _id if both slug and title are missing
+    return article._id || 'undefined-article';
+  };
+
+  const validSlug = getValidSlug(article);
+
+  // Don't render the link if we don't have a valid slug
+  if (!validSlug || validSlug === 'undefined-article') {
+    console.error('Cannot create link: Invalid article data', article);
+    return (
+      <div className="bg-white overflow-hidden mb-6">
+        <img
+          src={article.image}
+          alt={article.title}
+          className="w-full h-64 sm:h-96 object-cover"
+        />
+        <div className="py-5">
+          <div className="text-xs sm:text-sm text-gray-500 flex gap-4 items-center">
+            <span>{new Date(article.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+            <span>{article.author}</span>
+          </div>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif font-semibold text-main mt-2">
+            {article.title}
+          </h2>
+          <p className="text-gray-600 mt-2">
+            {sanitizedDescription}
+          </p>
+          <div className="flex justify-between items-center mt-4">
+            <span className="text-gray-500 max-sm:text-sm px-6 py-2 rounded-full bg-gray-200">
+              Artykuł niedostępny
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white overflow-hidden mb-6">
@@ -45,7 +95,7 @@ const NewsCard = ({ article }) => {
         </p>
         <div className="flex justify-between items-center mt-4">
           <Link
-            to={`/aktualnosci/${article.slug}`}
+            to={`/aktualnosci/${validSlug}`}
             className="text-main max-sm:text-sm px-6 py-2 rounded-full bg-main-light transition"
           >
             Czytaj więcej »
