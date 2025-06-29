@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import App from "./App";
 import LoginScreen from "./components/Auth/AuthScreen";
-import LoginImage from "./assets/new_login.jpg";
+import LoginImage from "/images/new_login_wp.png";
 import SignupImage from "./assets/Signup.png";
 import ForgotPasswordScreen from "./components/Auth/ForgotPasswordScreen";
 import DoctorCalendar from "./components/admin/DoctorCalendar";

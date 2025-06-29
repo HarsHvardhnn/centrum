@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import LogoMark from "../../assets/logo_new.png";
+import LogoMark from "/images/new_logo_cm7.png";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
@@ -432,15 +432,15 @@ const AuthForm = ({ isLogin = false }) => {
 
   return (
     <div className="w-full px-4 flex flex-col items-center gap-6 py-8">
-      <div className="flex items-center justify-center w-full">
-        <img src={LogoMark} alt="Centrum Medyczne" className="h-16" />
+      <div className="flex items-center justify-center w-full ">
+        <img src={LogoMark} alt="Centrum Medyczne" className="h-44 w-auto max-w-sm" />
       </div>
 
       <div className="flex flex-col gap-2 w-full max-w-md">
         {showTwoFactor ? (
           // 2FA Verification Screen
           <div className="two-factor-form">
-            <h2 className="text-3xl font-semibold text-gray-800 mb-2 text-center">
+            <h2 className="text-3xl font-bold text-[#003f78] mb-2 text-center">
               Weryfikacja dwuskładnikowa
             </h2>
             <p className="text-gray-500 mb-6 text-center">
@@ -453,7 +453,7 @@ const AuthForm = ({ isLogin = false }) => {
                 <button
                   className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === 'sms' 
-                      ? 'border-[#80C5C5] text-[#80C5C5]' 
+                      ? 'border-[#089090] text-[#089090]' 
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                   onClick={() => setActiveTab('sms')}
@@ -465,7 +465,7 @@ const AuthForm = ({ isLogin = false }) => {
                 <button
                   className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === 'email' 
-                      ? 'border-[#80C5C5] text-[#80C5C5]' 
+                      ? 'border-[#089090] text-[#089090]' 
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                   onClick={() => setActiveTab('email')}
@@ -477,7 +477,7 @@ const AuthForm = ({ isLogin = false }) => {
                 <button
                   className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === 'backup' 
-                      ? 'border-[#80C5C5] text-[#80C5C5]' 
+                      ? 'border-[#089090] text-[#089090]' 
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                   onClick={() => setActiveTab('backup')}
@@ -500,7 +500,7 @@ const AuthForm = ({ isLogin = false }) => {
                     value={codes.sms}
                     onChange={(e) => handleCodeChange('sms', e.target.value)}
                     maxLength="6"
-                    className="w-full px-4 py-3 text-center text-xl tracking-widest border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#80C5C5] focus:border-transparent"
+                    className="w-full px-4 py-3 text-center text-xl tracking-widest border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#089090] focus:border-[#003f78]"
                     required
                   />
                   <div className="flex flex-col gap-2 mt-4">
@@ -508,7 +508,7 @@ const AuthForm = ({ isLogin = false }) => {
                       type="button"
                       onClick={() => handleResendCode('sms')}
                       disabled={resendCooldown > 0 || isVerifying}
-                      className="text-sm text-[#80C5C5] hover:underline disabled:text-gray-400 disabled:no-underline"
+                      className="text-sm text-[#089090] hover:text-[#067a7a] hover:underline disabled:text-gray-400 disabled:no-underline"
                     >
                       {resendCooldown > 0 ? `Wyślij ponownie (${resendCooldown}s)` : 'Wyślij ponownie SMS'}
                     </button>
@@ -536,14 +536,14 @@ const AuthForm = ({ isLogin = false }) => {
                     value={codes.email}
                     onChange={(e) => handleCodeChange('email', e.target.value)}
                     maxLength="6"
-                    className="w-full px-4 py-3 text-center text-xl tracking-widest border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#80C5C5] focus:border-transparent"
+                    className="w-full px-4 py-3 text-center text-xl tracking-widest border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#089090] focus:border-[#003f78]"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => handleResendCode('email')}
                     disabled={resendCooldown > 0 || isVerifying}
-                    className="text-sm text-[#80C5C5] hover:underline disabled:text-gray-400 disabled:no-underline mt-4"
+                    className="text-sm text-[#089090] hover:text-[#067a7a] hover:underline disabled:text-gray-400 disabled:no-underline mt-4"
                   >
                     {resendCooldown > 0 ? `Wyślij ponownie (${resendCooldown}s)` : 'Wyślij ponownie email'}
                   </button>
@@ -562,7 +562,7 @@ const AuthForm = ({ isLogin = false }) => {
                     value={codes.backup}
                     onChange={(e) => handleCodeChange('backup', e.target.value.toUpperCase())}
                     maxLength="8"
-                    className="w-full px-4 py-3 text-center text-lg tracking-widest font-mono border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#80C5C5] focus:border-transparent uppercase"
+                    className="w-full px-4 py-3 text-center text-lg tracking-widest font-mono border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#089090] focus:border-[#003f78] uppercase"
                     required
                   />
                   <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -590,7 +590,7 @@ const AuthForm = ({ isLogin = false }) => {
                 <button
                   type="submit"
                   disabled={isVerifying}
-                  className="flex-1 bg-[#80C5C5] text-white py-2 px-4 rounded-md hover:bg-[#66b3b3] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="flex-1 bg-[#089090] border-2 border-[#003F78] text-white py-2 px-4 rounded-lg hover:bg-[#067a7a] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center font-semibold"
                 >
                   {isVerifying ? (
                     <>
@@ -607,7 +607,7 @@ const AuthForm = ({ isLogin = false }) => {
         ) : showOtpScreen ? (
           // OTP Verification Screen (for registration)
           <>
-            <h2 className="text-3xl font-semibold text-gray-800 mb-2 text-center">
+            <h2 className="text-3xl font-bold text-[#003f78] mb-2 text-center">
               Zweryfikuj swój email
             </h2>
             <p className="text-gray-500 mb-6 text-center">
@@ -624,7 +624,7 @@ const AuthForm = ({ isLogin = false }) => {
                   <div>
                     <label
                       htmlFor="otp"
-                      className="block text-sm font-medium text-gray-600 mb-1"
+                      className="block text-[#003f78] font-medium mb-2"
                     >
                       Kod weryfikacyjny*
                     </label>
@@ -633,10 +633,10 @@ const AuthForm = ({ isLogin = false }) => {
                       id="otp"
                       name="otp"
                       placeholder="Wprowadź 6-cyfrowy kod"
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
+                      className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none bg-gray-50 ${
                         errors.otp && touched.otp
                           ? "border-red-500"
-                          : "focus:ring-1 focus:ring-[#80C5C5]"
+                          : "border-gray-200 focus:border-[#003f78] focus:bg-white"
                       }`}
                     />
                     <ErrorMessage
@@ -653,7 +653,7 @@ const AuthForm = ({ isLogin = false }) => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-[#80C5C5] text-white py-2 px-4 rounded-md hover:bg-[#66b3b3] transition duration-200"
+                    className="w-full bg-[#089090] border-2 border-[#003F78] text-white py-3 px-4 rounded-lg hover:bg-[#067a7a] transition duration-200 font-semibold"
                   >
                     {isSubmitting ? "Weryfikowanie..." : "Zweryfikuj kod"}
                   </button>
@@ -662,7 +662,7 @@ const AuthForm = ({ isLogin = false }) => {
                     <button
                       type="button"
                       onClick={handleResendOTP}
-                      className="text-sm text-[#80C5C5] hover:underline"
+                      className="text-sm text-[#089090] hover:text-[#067a7a] hover:underline"
                     >
                       Nie otrzymałeś kodu? Wyślij ponownie
                     </button>
@@ -674,15 +674,15 @@ const AuthForm = ({ isLogin = false }) => {
         ) : (
           // Login/Signup Screen
           <>
-            <h2 className="text-3xl font-semibold text-gray-800 mb-2 text-center">
+            <h2 className="text-3xl font-bold text-black mb-2 text-center">
               {isLogin
-                ? `${t("Zaloguj się do swojego konta")}`
+                ? "Logowanie dla personelu"
                 : "Utwórz konto"}
             </h2>
 
             {isLogin && (
-              <p className="text-gray-500 mb-6 text-lg text-center">
-                Witaj ponownie! Wprowadź swoje dane.
+              <p className="text-gray-600 mb-8 text-center">
+                Dostęp tylko dla uprawnionych pracowników. Proszę wprowadzić dane logowania.
               </p>
             )}
 
@@ -699,7 +699,7 @@ const AuthForm = ({ isLogin = false }) => {
                       <div>
                         <label
                           htmlFor="firstName"
-                          className="block text-sm font-medium text-gray-600 mb-1"
+                          className="block text-[#003f78] font-medium mb-2"
                         >
                           Imię*
                         </label>
@@ -708,10 +708,10 @@ const AuthForm = ({ isLogin = false }) => {
                           id="firstName"
                           name="firstName"
                           placeholder="Jan"
-                          className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none bg-gray-50 ${
                             errors.firstName && touched.firstName
                               ? "border-red-500"
-                              : "focus:ring-1 focus:ring-[#80C5C5]"
+                              : "border-gray-200 focus:border-[#003f78] focus:bg-white"
                           }`}
                         />
                         <ErrorMessage
@@ -723,7 +723,7 @@ const AuthForm = ({ isLogin = false }) => {
                       <div>
                         <label
                           htmlFor="lastName"
-                          className="block text-sm font-medium text-gray-600 mb-1"
+                          className="block text-[#003f78] font-medium mb-2"
                         >
                           Nazwisko*
                         </label>
@@ -732,10 +732,10 @@ const AuthForm = ({ isLogin = false }) => {
                           id="lastName"
                           name="lastName"
                           placeholder="Kowalski"
-                          className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none bg-gray-50 ${
                             errors.lastName && touched.lastName
                               ? "border-red-500"
-                              : "focus:ring-1 focus:ring-[#80C5C5]"
+                              : "border-gray-200 focus:border-[#003f78] focus:bg-white"
                           }`}
                         />
                         <ErrorMessage
@@ -747,23 +747,23 @@ const AuthForm = ({ isLogin = false }) => {
                     </div>
                   )}
 
-                  {/* Email Field */}
+                  {/* Email/Username Field */}
                   <div>
                     <label
                       htmlFor="email"
-                      className="block text-sm font-medium text-gray-600 mb-1"
+                      className="block text-[#003f78] font-medium mb-2"
                     >
-                      Email*
+                      {isLogin ? "Nazwa użytkownika" : "Email*"}
                     </label>
                     <Field
                       type="email"
                       id="email"
                       name="email"
-                      placeholder="hello@example.com"
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
+                      placeholder={isLogin ? "Wprowadź nazwę użytkownika (adres email przypisany do konta)" : "hello@example.com"}
+                      className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none bg-gray-50 ${
                         errors.email && touched.email
                           ? "border-red-500"
-                          : "focus:ring-1 focus:ring-[#80C5C5]"
+                          : "border-gray-200 focus:border-[#003f78] focus:bg-white"
                       }`}
                     />
                     <ErrorMessage
@@ -777,29 +777,29 @@ const AuthForm = ({ isLogin = false }) => {
                   <div>
                     <label
                       htmlFor="password"
-                      className="block text-sm font-medium text-gray-600 mb-1"
+                      className="block text-[#003f78] font-medium mb-2"
                     >
-                      Hasło*
+                      Hasło
                     </label>
                     <div className="relative">
                       <Field
                         type={showPassword ? "text" : "password"}
                         id="password"
                         name="password"
-                        placeholder="••••••••"
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
+                        placeholder="Wprowadź hasło"
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none bg-gray-50 pr-12 ${
                           errors.password && touched.password
                             ? "border-red-500"
-                            : "focus:ring-1 focus:ring-[#80C5C5]"
+                            : "border-gray-200 focus:border-[#003f78] focus:bg-white"
                         }`}
                       />
                       <button
                         type="button"
                         onClick={togglePasswordVisibility}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-[#003f78]"
                       >
                         <svg
-                          className="h-5 w-5 text-gray-400"
+                          className="h-5 w-5"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -847,20 +847,20 @@ const AuthForm = ({ isLogin = false }) => {
                     <div>
                       <label
                         htmlFor="phone"
-                        className="block text-sm font-medium text-gray-600 mb-1"
+                        className="block text-[#003f78] font-medium mb-2"
                       >
                         Telefon (opcjonalnie)
                       </label>
                       <div className="relative">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                          <span className="text-gray-500">+48</span>
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                          <span className="text-gray-500 font-medium">+48</span>
                         </div>
                         <Field
                           type="text"
                           id="phone"
                           name="phone"
                           placeholder="123456789"
-                          className="w-full pl-12 px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-[#80C5C5]"
+                          className="w-full pl-14 px-4 py-3 border-2 rounded-lg focus:outline-none bg-gray-50 border-gray-200 focus:border-[#003f78] focus:bg-white"
                           maxLength={9}
                         />
                       </div>
@@ -883,7 +883,7 @@ const AuthForm = ({ isLogin = false }) => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-[#80C5C5] text-white py-2 px-4 rounded-md hover:bg-[#66b3b3] transition duration-200"
+                    className="w-full bg-[#089090] border-2 border-[#003F78] text-white py-3 px-4 rounded-lg hover:bg-[#067a7a] transition duration-200 font-semibold"
                   >
                     {isSubmitting
                       ? isLogin
@@ -893,6 +893,31 @@ const AuthForm = ({ isLogin = false }) => {
                       ? "Zaloguj się"
                       : "Utwórz konto"}
                   </button>
+
+                  {/* Forgot Password and Contact Links */}
+                  {isLogin && (
+                    <div className="text-center space-y-3">
+                      <div>
+                        <button
+                          type="button"
+                          onClick={handleForgotPassword}
+                          className="text-gray-600 hover:text-[#003f78] text-sm"
+                        >
+                          Nie pamiętasz hasła?
+                        </button>
+                      </div>
+                      
+                      <div className="text-sm text-gray-600">
+                        Nie masz konta?{" "}
+                        <a 
+                          href="/kontakt" 
+                          className="text-[#089090] hover:text-[#067a7a] underline"
+                        >
+                          Skontaktuj się z nami
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </Form>
               )}
             </Formik>
