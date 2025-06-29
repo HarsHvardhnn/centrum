@@ -9,12 +9,37 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Utility function to generate URL-friendly slugs
+const generateSlug = (text) => {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .trim()
+    // Replace Polish characters
+    .replace(/ą/g, 'a')
+    .replace(/ć/g, 'c')
+    .replace(/ę/g, 'e')
+    .replace(/ł/g, 'l')
+    .replace(/ń/g, 'n')
+    .replace(/ó/g, 'o')
+    .replace(/ś/g, 's')
+    .replace(/ź/g, 'z')
+    .replace(/ż/g, 'z')
+    // Replace spaces and special characters with hyphens
+    .replace(/[^a-z0-9]/g, '-')
+    // Remove multiple consecutive hyphens
+    .replace(/-+/g, '-')
+    // Remove leading/trailing hyphens
+    .replace(/^-|-$/g, '');
+};
 function removeTrailingSlash(url) {
   return url?.endsWith('/') && url.length > 1 ? url.slice(0, -1) : url;
 }
 
 // API base URL - adjust this to your backend URL  
 const API_BASE_URL = removeTrailingSlash('https://backend.centrummedyczne7.pl/');
+// const API_BASE_URL = removeTrailingSlash('http://localhost:5000/');
 
 console.log("API_BASE_URL", API_BASE_URL);
 // Bot detection function
@@ -151,6 +176,29 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           keywords = 'poradnik zdrowia, porady medyczne, artykuły medyczne';
           ogImage = '/images/blogs.jpg';
         }
+      } else if (path.startsWith('/lekarze/')) {
+        // console.log("dynamicData",dynamicData.name& dynamicData.specializations);
+
+        if (dynamicData.data && dynamicData.data.name && dynamicData.data.specializations) {
+          const doctorName = `${dynamicData.data.name.first} ${dynamicData.data.name.last}`;
+          const specializations = dynamicData.data.specializations.map(spec => spec.name).join(", ");
+          const experience = dynamicData.data.experience ? `${dynamicData.data.experience} lat doświadczenia` : "";
+          console.log("dynamicData", dynamicData);
+          
+          title = `${doctorName} – ${specializations}${experience ? ` | ${experience}` : ""} | Centrum Medyczne 7`;
+          description = `Umów wizytę z ${doctorName}, ${specializations.toLowerCase()}${experience ? ` z ${experience}` : ""}. ${
+            dynamicData.data.onlineConsultationPrice !== undefined 
+              ? `Konsultacje online od ${dynamicData.data.onlineConsultationPrice} zł` 
+              : "Konsultacje dostępne"
+          } w Centrum Medycznym 7.`;
+          keywords = `${doctorName}, ${specializations}, lekarz, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna`;
+          ogImage = dynamicData.data.image || '/images/doctors1.png';
+        } else {
+          title = 'Lekarz – Centrum Medyczne 7 Skarżysko-Kamienna';
+          description = 'Profil lekarza w Centrum Medycznym 7. Umów wizytę z doświadczonym specjalistą.';
+          keywords = 'lekarz, centrum medyczne 7, wizyta lekarska, specjalista medyczny';
+          ogImage = '/images/doctors1.png';
+        }
       } else {
         title = 'Centrum Medyczne 7 Skarżysko-Kamienna';
         description = 'Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści.';
@@ -230,7 +278,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     </script>
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-DsnUzCmj.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-10JtnC3K.css">
 </head>
 <body>
     <!-- SEO Content for crawlers -->
@@ -243,7 +291,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-BB9tb1Sx.js"></script>
+    <script type="module" crossorigin src="/assets/index-CvdFd1Ei.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -287,6 +335,16 @@ const fetchDynamicData = async (path) => {
       }
       
       endpoint = `${API_BASE_URL}/services/slug/${slug}`;
+    } else if (path.startsWith('/lekarze/')) {
+      slug = path.replace('/lekarze/', '');
+      
+      // Validate slug before making API call
+      if (!slug || slug === 'undefined' || slug.trim() === '') {
+        console.log(`❌ Invalid slug for lekarze: "${slug}"`);
+        return null;
+      }
+      
+      endpoint = `${API_BASE_URL}/docs/profile/slug/${slug}`;
     } else {
       return null;
     }
@@ -333,19 +391,22 @@ const handleExternalProtocols = (req, res, next) => {
 const handleInvalidSlugs = (req, res, next) => {
   const path = req.path;
   
-  // Check for undefined slugs in news URLs
+  // Check for undefined slugs in URLs
   if (path === '/aktualnosci/undefined' || 
       path === '/poradnik/undefined' || 
-      path === '/uslugi/undefined') {
+      path === '/uslugi/undefined' ||
+      path === '/lekarze/undefined') {
     console.log(`🚫 Redirecting invalid URL: ${path}`);
     return res.redirect(301, path.startsWith('/aktualnosci/') ? '/aktualnosci' : 
-                           path.startsWith('/poradnik/') ? '/poradnik' : '/uslugi');
+                           path.startsWith('/poradnik/') ? '/poradnik' : 
+                           path.startsWith('/uslugi/') ? '/uslugi' : '/lekarze');
   }
   
   // Check for empty slugs (trailing slash after section)
   if (path.endsWith('/aktualnosci/') || 
       path.endsWith('/poradnik/') || 
-      path.endsWith('/uslugi/')) {
+      path.endsWith('/uslugi/') ||
+      path.endsWith('/lekarze/')) {
     const redirectTo = path.slice(0, -1); // Remove trailing slash
     console.log(`🚫 Redirecting trailing slash URL: ${path} -> ${redirectTo}`);
     return res.redirect(301, redirectTo);
@@ -364,7 +425,7 @@ const seoMiddleware = async (req, res, next) => {
   
   // Fetch dynamic data for dynamic routes
   let dynamicData = null;
-  if (path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/') || path.startsWith('/uslugi/')) {
+  if (path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/') || path.startsWith('/uslugi/') || path.startsWith('/lekarze/')) {
     dynamicData = await fetchDynamicData(path);
   }
   
@@ -463,6 +524,116 @@ const generateDynamicSitemap = async () => {
       console.log(`✅ Added ${validServiceUrls.length} services to sitemap`);
     } catch (serviceError) {
       console.log('⚠️ Could not fetch services for sitemap:', serviceError.message);
+    }
+    
+    // Fetch doctor profiles - Enhanced with better debugging and structure handling
+    try {
+      console.log('👨‍⚕️ Fetching doctor profiles for sitemap from:', `${API_BASE_URL}/docs`);
+      const doctorsResponse = await axios.get(`${API_BASE_URL}/docs`, { timeout: 5000 });
+      
+      console.log('👨‍⚕️ Doctors API Response status:', doctorsResponse.status);
+      console.log('👨‍⚕️ Doctors API Response structure:', {
+        hasData: !!doctorsResponse.data,
+        dataType: typeof doctorsResponse.data,
+        isArray: Array.isArray(doctorsResponse.data),
+        hasDataProperty: !!doctorsResponse.data?.data,
+        dataDataType: typeof doctorsResponse.data?.data,
+        isDataArray: Array.isArray(doctorsResponse.data?.data),
+        sampleKeys: doctorsResponse.data ? Object.keys(doctorsResponse.data).slice(0, 5) : []
+      });
+      
+             // Handle different response structures
+       let doctorItems = [];
+       if (Array.isArray(doctorsResponse.data)) {
+         // Direct array response
+         doctorItems = doctorsResponse.data;
+       } else if (doctorsResponse.data?.data && Array.isArray(doctorsResponse.data.data)) {
+         // Nested data structure
+         doctorItems = doctorsResponse.data.data;
+       } else if (doctorsResponse.data?.docs && Array.isArray(doctorsResponse.data.docs)) {
+         // docs array structure
+         doctorItems = doctorsResponse.data.docs;
+       } else if (doctorsResponse.data?.doctors && Array.isArray(doctorsResponse.data.doctors)) {
+         // doctors array structure (actual API response)
+         doctorItems = doctorsResponse.data.doctors;
+       } else {
+         console.log('⚠️ Unexpected doctors API response structure');
+         doctorItems = [];
+       }
+      
+      console.log(`👨‍⚕️ Found ${doctorItems.length} doctor items`);
+      
+             if (doctorItems.length > 0) {
+         console.log('👨‍⚕️ Sample doctor item structure:', {
+           hasSlug: !!doctorItems[0].slug,
+           hasName: !!doctorItems[0].name,
+           hasUpdatedAt: !!doctorItems[0].updatedAt,
+           keys: Object.keys(doctorItems[0]).slice(0, 10)
+         });
+       }
+       
+       const validDoctorUrls = doctorItems
+         .filter(item => {
+           // Check if doctor has a name to generate slug from
+           const hasName = item.name && item.name.trim();
+           if (!hasName) {
+             console.log('👨‍⚕️ Skipping doctor without name:', {
+               id: item._id || item.id,
+               name: item.name
+             });
+             return false;
+           }
+           return true;
+         })
+         .map(item => {
+           // Generate slug from doctor name if not present
+           let doctorSlug = item.slug;
+           if (!doctorSlug) {
+             doctorSlug = generateSlug(item.name);
+             console.log(`👨‍⚕️ Generated slug for ${item.name}: ${doctorSlug}`);
+           }
+           
+           // Validate generated/existing slug
+           if (!doctorSlug || !isValidSlug(doctorSlug)) {
+             console.log('👨‍⚕️ Invalid slug generated for doctor:', {
+               name: item.name,
+               generatedSlug: doctorSlug,
+               id: item._id || item.id
+             });
+             return null;
+           }
+           
+           const doctorUrl = {
+             url: `/lekarze/${doctorSlug}`,
+             lastmod: item.updatedAt || item.createdAt || now,
+             priority: '0.8',
+             changefreq: 'monthly'
+           };
+           console.log('👨‍⚕️ Adding doctor to sitemap:', doctorUrl.url);
+           return doctorUrl;
+         })
+         .filter(Boolean); // Remove null entries
+      
+      dynamicRoutes = [...dynamicRoutes, ...validDoctorUrls];
+      console.log(`✅ Added ${validDoctorUrls.length} doctor profiles to sitemap`);
+      
+             if (validDoctorUrls.length === 0 && doctorItems.length > 0) {
+         console.log('⚠️ Warning: Found doctors but none could generate valid URLs. Doctor items:', 
+           doctorItems.map(item => ({
+             name: item.name,
+             existingSlug: item.slug,
+             generatedSlug: item.name ? generateSlug(item.name) : 'no-name',
+             id: item._id || item.id
+           }))
+         );
+       }
+      
+    } catch (doctorError) {
+      console.error('❌ Error fetching doctor profiles for sitemap:');
+      console.error('Error message:', doctorError.message);
+      console.error('Error response status:', doctorError.response?.status);
+      console.error('Error response data:', doctorError.response?.data);
+      console.error('Request URL:', doctorError.config?.url);
     }
     
   } catch (error) {

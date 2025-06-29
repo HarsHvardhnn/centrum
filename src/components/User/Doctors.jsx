@@ -17,6 +17,7 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { apiCaller } from "../../utils/axiosInstance";
 import { useUser } from "../../context/userContext";
+import { generateDoctorProfileUrl } from "../../utils/slugUtils";
 
 export default function Doctors({
   selectedDoctorId,
@@ -549,12 +550,20 @@ export default function Doctors({
                     )} */}
                   </div>
 
-                  <button
-                    onClick={() => handleBookAppointment(doctor)}
-                    className="bg-main text-white font-semibold text-lg py-3 w-full hover:bg-teal-700 transition-all"
-                  >
-                    Umów wizytę
-                  </button>
+                  <div className="flex flex-col">
+                    <button
+                      onClick={() => navigate(generateDoctorProfileUrl({ name: { first: doctor.name.split(' ')[0], last: doctor.name.split(' ').slice(1).join(' ') } }))}
+                      className="bg-gray-100 text-main font-semibold text-lg py-3 w-full hover:bg-gray-200 transition-all border-b border-gray-200"
+                    >
+                      Zobacz profil
+                    </button>
+                    <button
+                      onClick={() => handleBookAppointment(doctor)}
+                      className="bg-main text-white font-semibold text-lg py-3 w-full hover:bg-teal-700 transition-all"
+                    >
+                      Umów wizytę
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

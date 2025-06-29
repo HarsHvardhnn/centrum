@@ -47,6 +47,7 @@ import BillingManagement from "./components/Billing/BillingManagement";
 import Adminmsgs from "./components/admin/Contact";
 import IPConfigPage from "./components/admin/IPConfigPage";
 import TwoFactorSettings from "./components/Auth/TwoFactorSettings";
+import DoctorProfilePage from "./components/User/Pages/DoctorProfilePage";
 
 // Protected image route component
 const ProtectedImage = () => {
@@ -134,6 +135,7 @@ const routes = createBrowserRouter([
       { path: "", element: <HomePage /> },
       { path: "o-nas", element: <AboutUsPage /> },
       { path: "lekarze", element: <OurDoctorsPage /> },
+      { path: "lekarze/:doctorSlug", element: <DoctorProfilePage /> },
       { path: "uslugi", element: <OurServicesPage /> },
       { path: "uslugi/:service", element: <ServicesDetailPage /> },
       { path: "aktualnosci", element: <NewsPage /> },
