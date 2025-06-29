@@ -334,6 +334,16 @@ const Header = () => {
                   <FaUser />
                   Mój profil
                 </Link>
+                <Link
+                  to="/security/2fa"
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center justify-center gap-2 bg-teal-800 text-white w-48 py-2 text-sm rounded-full ${
+                    isActive("/security/2fa") ? "bg-teal-600" : ""
+                  }`}
+                >
+                  <FaCog />
+                  Bezpieczeństwo 2FA
+                </Link>
                 <button
                   onClick={() => {
                     setMenuOpen(false);
@@ -424,6 +434,18 @@ const Header = () => {
                   >
                     <FaCog className="text-teal-800" />
                     Ustawienia
+                  </Link>
+                  <Link
+                    to="/security/2fa"
+                    className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 ${
+                      isActive("/security/2fa")
+                        ? "text-teal-500 font-medium"
+                        : "text-gray-700"
+                    }`}
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <FaCog className="text-teal-800" />
+                    Bezpieczeństwo 2FA
                   </Link>
                   <button
                     onClick={() => {

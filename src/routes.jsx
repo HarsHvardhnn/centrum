@@ -46,6 +46,7 @@ import BillDetails from "./components/Billing/BillDetails";
 import BillingManagement from "./components/Billing/BillingManagement";
 import Adminmsgs from "./components/admin/Contact";
 import IPConfigPage from "./components/admin/IPConfigPage";
+import TwoFactorSettings from "./components/Auth/TwoFactorSettings";
 
 // Protected image route component
 const ProtectedImage = () => {
@@ -142,6 +143,7 @@ const routes = createBrowserRouter([
       { path: "appointments", element: <MyAppointments /> },
       { path: "details", element: <PatientMedicalDetails /> },
       { path: "profile", element: <ProfilePage /> },
+      { path: "security/2fa", element: <TwoFactorSettings /> },
       { path: "*", element: <NotFound404 /> },
     ],
   },
@@ -208,6 +210,7 @@ const routes = createBrowserRouter([
           { path: "/admin/billing/details/:billId", element: <BillDetails /> },
           { path: "/admin/contact-messages", element: <Adminmsgs /> },
           { path: "/admin/ip-config", element: <IPConfigPage /> },
+          { path: "/admin/security/2fa", element: <TwoFactorSettings /> },
         ],
       },
     ],

@@ -157,6 +157,14 @@ const Sidebar = () => {
             isEnabled={true}
           />
 
+          <NavItem
+            icon={<Shield className="text-xl text-teal-400" />}
+            label="Uwierzytelnianie 2FA"
+            to="/admin/security/2fa"
+            isActive={currentPath === "/admin/security/2fa"}
+            isEnabled={true}
+          />
+
           <div className="border-t border-teal-100 my-1"></div>
 
           {user?.role === "admin" && (

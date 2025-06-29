@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import userService from "../../helpers/profileHelper";
 import { toast } from "sonner";
 import { useUser } from "../../context/userContext";
+import { useNavigate } from "react-router-dom";
 import ImageCropModal from "./ImageCropModal";
 
 const ProfilePage = () => {
@@ -16,7 +17,8 @@ const ProfilePage = () => {
     createdAt: "",
   });
 
-  const { refreshUserProfile } = useUser();
+  const { refreshUserProfile, user } = useUser();
+  const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -575,6 +577,31 @@ const ProfilePage = () => {
                         >
                           Zmień Hasło
                         </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all cursor-pointer" onClick={() => navigate(user?.role === "patient" ? "/security/2fa" : "/admin/security/2fa")}>
+                    <div className="flex items-center">
+                      <div className="bg-teal-100 p-2 rounded-full mr-3">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 text-teal-600"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-800">Uwierzytelnianie 2FA</h4>
+                        <p className="text-teal-500 hover:text-teal-700 text-sm font-medium mt-1">
+                          Zarządzaj bezpieczeństwem konta
+                        </p>
                       </div>
                     </div>
                   </div>
