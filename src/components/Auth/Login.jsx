@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import LogoMark from "../../assets/logo_new.png";
@@ -15,10 +15,41 @@ const AuthForm = ({ isLogin = false }) => {
   const [showOtpScreen, setShowOtpScreen] = useState(false);
   const [registrationData, setRegistrationData] = useState(null);
   const [email, setEmail] = useState("");
-  // Add state for password visibility
   const [showPassword, setShowPassword] = useState(false);
+  
+  // 2FA States
+  const [showTwoFactor, setShowTwoFactor] = useState(false);
+  const [twoFactorData, setTwoFactorData] = useState(null);
+  const [activeTab, setActiveTab] = useState('sms');
+  const [codes, setCodes] = useState({
+    sms: '',
+    email: '',
+    backup: ''
+  });
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [twoFactorError, setTwoFactorError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const { setUser } = useUser();
+
+  // Cooldown timer effect
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [resendCooldown]);
 
   // Initial form values
   const initialValues = {
@@ -27,19 +58,17 @@ const AuthForm = ({ isLogin = false }) => {
     email: "",
     password: "",
     phone: "",
-    role: "patient", // Default role
+    role: "patient",
+  };
+
+  // OTP form values
+  const otpInitialValues = {
+    otp: "",
   };
 
   // Toggle password visibility
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
-  };
-
-  // Rest of the component remains the same...
-
-  // OTP form values
-  const otpInitialValues = {
-    otp: "",
   };
 
   // Validation schemas
@@ -72,6 +101,93 @@ const AuthForm = ({ isLogin = false }) => {
       .length(6, "Kod OTP musi mieć 6 cyfr"),
   });
 
+  // 2FA API Functions
+  const verify2FA = async (tempToken, verificationData) => {
+    try {
+      const response = await apiCaller("POST", "/auth/2fa/verify", {
+        tempToken,
+        ...verificationData
+      });
+
+      if (response.data.success !== false) {
+        // Success - store token and redirect
+        const userStr = JSON.stringify(response.data.user);
+        setCookie('authToken', response.data.token, 7);
+        setCookie('user', userStr, 7);
+        localStorage.setItem("authToken", response.data.token);
+        localStorage.setItem("user", userStr);
+        setUser(response.data.user || {});
+
+        toast.success("Logowanie zakończone sukcesem!");
+
+        if (response.data.user.role === "patient") {
+          navigate("/user");
+        } else {
+          navigate("/admin");
+        }
+
+        return { success: true, user: response.data.user };
+      } else {
+        return { 
+          success: false, 
+          error: response.data.message, 
+          attemptsLeft: response.data.attemptsLeft 
+        };
+      }
+    } catch (error) {
+      console.error('2FA verification error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Błąd podczas weryfikacji kodu" 
+      };
+    }
+  };
+
+  const resend2FACode = async (tempToken, method = 'sms') => {
+    try {
+      const response = await apiCaller("POST", "/auth/2fa/resend", {
+        tempToken,
+        method
+      });
+
+      if (response.data.success !== false) {
+        return { success: true, message: response.data.message, method: response.data.method };
+      } else {
+        return { 
+          success: false, 
+          error: response.data.message, 
+          canResendAt: response.data.canResendAt 
+        };
+      }
+    } catch (error) {
+      console.error('Resend code error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Błąd podczas wysyłania kodu" 
+      };
+    }
+  };
+
+  const requestEmailFallback = async (tempToken) => {
+    try {
+      const response = await apiCaller("POST", "/auth/2fa/email-fallback", {
+        tempToken
+      });
+
+      if (response.data.success !== false) {
+        return { success: true, message: response.data.message, email: response.data.email };
+      } else {
+        return { success: false, error: response.data.message };
+      }
+    } catch (error) {
+      console.error('Email fallback error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Błąd podczas wysyłania kodu email" 
+      };
+    }
+  };
+
   // Google OAuth handler
   const handleGoogleLogin = async (credentialResponse) => {
     try {
@@ -80,7 +196,6 @@ const AuthForm = ({ isLogin = false }) => {
       });
       toast.success("Logowanie przez Google powiodło się");
 
-      // Store auth data in both cookie and localStorage
       const userStr = JSON.stringify(response.data.user);
       setCookie('authToken', response.data.token, 7);
       setCookie('user', userStr, 7);
@@ -88,20 +203,20 @@ const AuthForm = ({ isLogin = false }) => {
       localStorage.setItem("user", userStr);
       setUser(response.data.user || {});
 
-      if (response.data.user.role == "patient") {
+      if (response.data.user.role === "patient") {
         navigate("/user");
         return;
       }
       navigate("/admin");
     } catch (error) {
       toast.error(
-        "Logowanie przez Google nie powiodło się:",
-        error.response.data.message
+        "Logowanie przez Google nie powiodło się: " + 
+        (error.response?.data?.message || error.message)
       );
     }
   };
 
-  // Login submission handler
+  // Enhanced login submission handler with 2FA support
   const handleLoginSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
       const response = await apiCaller("POST", "/auth/login", {
@@ -109,19 +224,39 @@ const AuthForm = ({ isLogin = false }) => {
         password: values.password,
       });
 
-      // Store auth data in both cookie and localStorage
-      const userStr = JSON.stringify(response.data.user);
-      setCookie('authToken', response.data.token, 7);
-      setCookie('user', userStr, 7);
-      localStorage.setItem("authToken", response.data.token);
-      localStorage.setItem("user", userStr);
-      setUser(response.data.user || {});
+      // Check if 2FA is required
+      if (response.data.requiresTwoFactor) {
+        // Show 2FA verification form with multiple options
+        setTwoFactorData({
+          tempToken: response.data.tempToken,
+          phone: response.data.phone,
+          email: response.data.email,
+          availableMethods: response.data.availableMethods || ['sms', 'email', 'backup']
+        });
+        
+        // Set default tab based on available methods
+        const defaultMethod = response.data.availableMethods?.includes('sms') ? 'sms' : 'email';
+        setActiveTab(defaultMethod);
+        setShowTwoFactor(true);
+        
+        toast.info("Kod weryfikacyjny został wysłany");
+      } else {
+        // Normal login - store token and redirect
+        const userStr = JSON.stringify(response.data.user);
+        setCookie('authToken', response.data.token, 7);
+        setCookie('user', userStr, 7);
+        localStorage.setItem("authToken", response.data.token);
+        localStorage.setItem("user", userStr);
+        setUser(response.data.user || {});
 
-      if (response.data.user.role == "patient") {
-        navigate("/user");
-        return;
+        toast.success("Logowanie zakończone sukcesem!");
+
+        if (response.data.user.role === "patient") {
+          navigate("/user");
+        } else {
+          navigate("/admin");
+        }
       }
-      navigate("/admin");
     } catch (error) {
       console.error(
         "Login failed:",
@@ -137,10 +272,81 @@ const AuthForm = ({ isLogin = false }) => {
     }
   };
 
+  // 2FA verification handler
+  const handleVerify2FA = async (e) => {
+    e.preventDefault();
+    setIsVerifying(true);
+    setTwoFactorError('');
+
+    try {
+      let verificationData = {};
+      
+      switch (activeTab) {
+        case 'sms':
+          verificationData = { smsCode: codes.sms };
+          break;
+        case 'email':
+          verificationData = { emailCode: codes.email };
+          break;
+        case 'backup':
+          verificationData = { backupCode: codes.backup };
+          break;
+      }
+
+      const result = await verify2FA(twoFactorData.tempToken, verificationData);
+      
+      if (!result.success) {
+        setTwoFactorError(result.error);
+      }
+    } catch (error) {
+      setTwoFactorError('Błąd podczas weryfikacji kodu');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // Resend code handler
+  const handleResendCode = async (method) => {
+    try {
+      const result = await resend2FACode(twoFactorData.tempToken, method);
+      
+      if (result.success) {
+        setResendCooldown(60);
+        toast.success(`Kod ${method === 'sms' ? 'SMS' : 'email'} został wysłany ponownie`);
+        setTwoFactorError('');
+      } else {
+        setTwoFactorError(result.error);
+      }
+    } catch (error) {
+      setTwoFactorError('Błąd podczas wysyłania kodu');
+    }
+  };
+
+  // Email fallback handler
+  const handleEmailFallback = async () => {
+    try {
+      const result = await requestEmailFallback(twoFactorData.tempToken);
+      
+      if (result.success) {
+        setActiveTab('email');
+        setTwoFactorError('');
+        toast.success('Kod został wysłany na email');
+      } else {
+        setTwoFactorError(result.error);
+      }
+    } catch (error) {
+      setTwoFactorError('Błąd podczas wysyłania kodu email');
+    }
+  };
+
+  // Handle code input changes
+  const handleCodeChange = (method, value) => {
+    setCodes(prev => ({ ...prev, [method]: value }));
+  };
+
   // Signup submission handler
   const handleSignupSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
-      // Format phone number with +48 prefix if provided
       const formattedPhone = values.phone ? `+48${values.phone}` : "";
       
       const response = await apiCaller("POST", "/auth/signup", {
@@ -148,17 +354,12 @@ const AuthForm = ({ isLogin = false }) => {
         password: values.password,
         firstName: values.firstName,
         lastName: values.lastName,
-        role: "patient", // Default role for signup
+        role: "patient",
         phone: formattedPhone,
       });
 
-      //("Signup initiated:", response.data);
-
-      // Store email for OTP verification
       setEmail(values.email);
       setRegistrationData({...values, phone: formattedPhone});
-
-      // Show OTP verification screen
       setShowOtpScreen(true);
     } catch (error) {
       console.error(
@@ -187,10 +388,7 @@ const AuthForm = ({ isLogin = false }) => {
         role: "patient",
       });
 
-      //("OTP verification successful:", response.data);
-
       localStorage.setItem("authToken", response.data.token);
-
       navigate("/admin");
     } catch (error) {
       console.error(
@@ -222,7 +420,6 @@ const AuthForm = ({ isLogin = false }) => {
         phone: registrationData.phone || "",
       });
 
-      //("OTP resent:", response.data);
       alert("Kod OTP wysłany ponownie!");
     } catch (error) {
       console.error(
@@ -237,14 +434,178 @@ const AuthForm = ({ isLogin = false }) => {
     <div className="w-full px-4 flex flex-col items-center gap-6 py-8">
       <div className="flex items-center justify-center w-full">
         <img src={LogoMark} alt="Centrum Medyczne" className="h-16" />
-        {/* <span className="ml-2 text-gray-800 font-bold text-xl">
-          Centrum Medyczne
-        </span> */}
       </div>
 
       <div className="flex flex-col gap-2 w-full max-w-md">
-        {showOtpScreen ? (
-          // OTP Verification Screen
+        {showTwoFactor ? (
+          // 2FA Verification Screen
+          <div className="two-factor-form">
+            <h2 className="text-3xl font-semibold text-gray-800 mb-2 text-center">
+              Weryfikacja dwuskładnikowa
+            </h2>
+            <p className="text-gray-500 mb-6 text-center">
+              Wybierz metodę weryfikacji:
+            </p>
+            
+            {/* Method Tabs */}
+            <div className="method-tabs flex mb-6 border-b border-gray-200">
+              {twoFactorData?.availableMethods?.includes('sms') && (
+                <button
+                  className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === 'sms' 
+                      ? 'border-[#80C5C5] text-[#80C5C5]' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                  onClick={() => setActiveTab('sms')}
+                >
+                  SMS ({twoFactorData.phone})
+                </button>
+              )}
+              {twoFactorData?.availableMethods?.includes('email') && (
+                <button
+                  className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === 'email' 
+                      ? 'border-[#80C5C5] text-[#80C5C5]' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                  onClick={() => setActiveTab('email')}
+                >
+                  Email ({twoFactorData.email})
+                </button>
+              )}
+              {twoFactorData?.availableMethods?.includes('backup') && (
+                <button
+                  className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === 'backup' 
+                      ? 'border-[#80C5C5] text-[#80C5C5]' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                  onClick={() => setActiveTab('backup')}
+                >
+                  Kod zapasowy
+                </button>
+              )}
+            </div>
+
+            <form onSubmit={handleVerify2FA} className="space-y-6">
+              {/* SMS Tab */}
+              {activeTab === 'sms' && (
+                <div className="tab-content">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Kod został wysłany na numer {twoFactorData.phone}
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Wprowadź kod SMS"
+                    value={codes.sms}
+                    onChange={(e) => handleCodeChange('sms', e.target.value)}
+                    maxLength="6"
+                    className="w-full px-4 py-3 text-center text-xl tracking-widest border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#80C5C5] focus:border-transparent"
+                    required
+                  />
+                  <div className="flex flex-col gap-2 mt-4">
+                    <button
+                      type="button"
+                      onClick={() => handleResendCode('sms')}
+                      disabled={resendCooldown > 0 || isVerifying}
+                      className="text-sm text-[#80C5C5] hover:underline disabled:text-gray-400 disabled:no-underline"
+                    >
+                      {resendCooldown > 0 ? `Wyślij ponownie (${resendCooldown}s)` : 'Wyślij ponownie SMS'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleEmailFallback}
+                      disabled={isVerifying}
+                      className="text-sm bg-yellow-100 text-yellow-800 py-2 px-3 rounded-md hover:bg-yellow-200 transition-colors"
+                    >
+                      Nie otrzymałem SMS - wyślij email
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Email Tab */}
+              {activeTab === 'email' && (
+                <div className="tab-content">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Kod został wysłany na adres {twoFactorData.email}
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Wprowadź kod z email"
+                    value={codes.email}
+                    onChange={(e) => handleCodeChange('email', e.target.value)}
+                    maxLength="6"
+                    className="w-full px-4 py-3 text-center text-xl tracking-widest border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#80C5C5] focus:border-transparent"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleResendCode('email')}
+                    disabled={resendCooldown > 0 || isVerifying}
+                    className="text-sm text-[#80C5C5] hover:underline disabled:text-gray-400 disabled:no-underline mt-4"
+                  >
+                    {resendCooldown > 0 ? `Wyślij ponownie (${resendCooldown}s)` : 'Wyślij ponownie email'}
+                  </button>
+                </div>
+              )}
+
+              {/* Backup Code Tab */}
+              {activeTab === 'backup' && (
+                <div className="tab-content">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Wprowadź jeden z kodów zapasowych otrzymanych podczas włączania 2FA
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Wprowadź kod zapasowy (np. A1B2C3D4)"
+                    value={codes.backup}
+                    onChange={(e) => handleCodeChange('backup', e.target.value.toUpperCase())}
+                    maxLength="8"
+                    className="w-full px-4 py-3 text-center text-lg tracking-widest font-mono border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#80C5C5] focus:border-transparent uppercase"
+                    required
+                  />
+                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p className="text-xs text-yellow-800">
+                      ⚠️ Każdy kod zapasowy można użyć tylko raz
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {twoFactorError && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                  <p className="text-sm text-red-800">{twoFactorError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowTwoFactor(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Wstecz
+                </button>
+                <button
+                  type="submit"
+                  disabled={isVerifying}
+                  className="flex-1 bg-[#80C5C5] text-white py-2 px-4 rounded-md hover:bg-[#66b3b3] transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {isVerifying ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Weryfikacja...
+                    </>
+                  ) : (
+                    'Zweryfikuj kod'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        ) : showOtpScreen ? (
+          // OTP Verification Screen (for registration)
           <>
             <h2 className="text-3xl font-semibold text-gray-800 mb-2 text-center">
               Zweryfikuj swój email
@@ -444,7 +805,6 @@ const AuthForm = ({ isLogin = false }) => {
                           stroke="currentColor"
                         >
                           {showPassword ? (
-                            // Icon for hide password
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -452,7 +812,6 @@ const AuthForm = ({ isLogin = false }) => {
                               d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
                             />
                           ) : (
-                            // Icon for show password
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -516,19 +875,6 @@ const AuthForm = ({ isLogin = false }) => {
                     </div>
                   )}
 
-                  {/* Forgot Password - Only show for login */}
-                  {/* {isLogin && (
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={handleForgotPassword}
-                        className="text-sm text-[#80C5C5] hover:underline"
-                      >
-                        Zapomniałeś hasła?
-                      </button>
-                    </div>
-                  )} */}
-
                   {errors.submit && (
                     <div className="text-red-500 text-sm">{errors.submit}</div>
                   )}
@@ -553,74 +899,10 @@ const AuthForm = ({ isLogin = false }) => {
 
             {/* Social Login */}
             <div className="mt-6 text-center w-full relative">
-              {/* <div className="relative flex items-center justify-center">
-                <div className="w-full border-t border-gray-300"></div>
-                <div className="absolute bg-white px-4">
-                  <span className="text-sm text-gray-500">LUB</span>
-                </div>
-              </div> */}
-
               <div className="mt-6 flex flex-col items-center space-y-4">
-                {/* <div className="w-full max-w-xs mx-auto">
-                  <GoogleLogin
-                    onSuccess={handleGoogleLogin}
-                    onError={() => {
-                      alert(
-                        "Logowanie przez Google nie powiodło się. Spróbuj ponownie."
-                      );
-                    }}
-                    useOneTap
-                    theme="outline"
-                    shape="rectangular"
-                    text={isLogin ? "sign_in_with" : "signup_with"}
-                    locale="pl"
-                    width="100%"
-                  />
-                </div> */}
-
-                {/* Other Social Login Buttons */}
-                {/* <div className="flex justify-center space-x-4 w-full max-w-xs mx-auto">
-                  <button
-                    type="button"
-                    className="flex-1 border border-gray-300 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-blue-600"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    className="flex-1 border border-gray-300 h-11 rounded-md hover:bg-gray-50 transition duration-200 flex items-center justify-center"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zm3.47-3.345c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
-                    </svg>
-                  </button>
-                </div> */}
+                {/* Google Login and other social buttons would go here */}
               </div>
             </div>
-
-            {/* Toggle Link */}
-            {/* <p className="mt-4 text-center text-sm text-gray-600">
-              {isLogin ? "Nie masz konta? " : "Masz już konto? "}
-              <button
-                type="button"
-                onClick={() => navigate(isLogin ? "/signup" : "/login")}
-                className="text-[#80C5C5] hover:underline"
-              >
-                {isLogin ? "Zarejestruj się" : "Zaloguj się"}
-              </button>
-            </p> */}
           </>
         )}
       </div>
