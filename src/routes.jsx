@@ -128,27 +128,10 @@ function MainLayout() {
 }
 
 const routes = createBrowserRouter([
-  // Root route - will show the same content as /user
+  // Root route - redirects to login
   {
     path: "/",
-    // element: <UserLayout />,
-    children: [
-      // { path: "", element: <HomePage /> },
-      // { path: "o-nas", element: <AboutUsPage /> },
-      // { path: "lekarze", element: <OurDoctorsPage /> },
-      // { path: "lekarze/:doctorSlug", element: <DoctorProfilePage /> },
-      // { path: "uslugi", element: <OurServicesPage /> },
-      // { path: "uslugi/:service", element: <ServicesDetailPage /> },
-      // { path: "aktualnosci", element: <NewsPage /> },
-      // { path: "poradnik", element: <NewsPage isNews={false} /> },
-      // { path: "kontakt", element: <ContactPage /> },
-      // { path: "aktualnosci/:slug", element: <NewsDetail /> },
-      // { path: "appointments", element: <MyAppointments /> },
-      // { path: "details", element: <PatientMedicalDetails /> },
-      // { path: "profile", element: <ProfilePage /> },
-      // { path: "security/2fa", element: <TwoFactorSettings /> },
-      // { path: "*", element: <NotFound404 /> },
-    ],
+    element: <Navigate to="/login" replace />,
   },
 
   // Public routes group
