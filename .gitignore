@@ -24,10 +24,10 @@ dist-ssr
 *.sw?
 
 
-/.env
+# /.env
 
-/env
+# /env
 
 
-env
-.env
+# env
+# .env
