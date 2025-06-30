@@ -48,6 +48,7 @@ import Adminmsgs from "./components/admin/Contact";
 import IPConfigPage from "./components/admin/IPConfigPage";
 import TwoFactorSettings from "./components/Auth/TwoFactorSettings";
 import DoctorProfilePage from "./components/User/Pages/DoctorProfilePage";
+import ReportsDashboard from "./components/Reports/ReportsDashboard";
 
 // Protected image route component
 const ProtectedImage = () => {
@@ -207,12 +208,14 @@ const routes = createBrowserRouter([
             path: "/help-center",
             element: <ChatComponent />,
           },
+          { path: "/admin/data", element: <ReportsDashboard /> },
           
           { path: "/admin/billing", element: <BillingManagement /> },
           { path: "/admin/billing/details/:billId", element: <BillDetails /> },
           { path: "/admin/contact-messages", element: <Adminmsgs /> },
           { path: "/admin/ip-config", element: <IPConfigPage /> },
           { path: "/admin/security/2fa", element: <TwoFactorSettings /> },
+          // { path: "/admin/data", element: <ReportsDashboard /> },
         ],
       },
     ],

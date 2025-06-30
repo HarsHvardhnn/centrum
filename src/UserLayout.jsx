@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "./components/User/Header";
 import Footer from "./components/User/Footer";
 import { Outlet, useOutletContext } from "react-router-dom";
@@ -13,6 +13,20 @@ import GoogleAnalytics from "./components/Analytics/GoogleAnalytics";
 const UserLayout = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
+
+  useEffect(() => {
+    const disableImageRightClick = (e) => {
+      if (e.target.tagName === "IMG") {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("contextmenu", disableImageRightClick);
+
+    return () => {
+      document.removeEventListener("contextmenu", disableImageRightClick);
+    };
+  }, []);
 
   return (
     <CookieConsentProvider>

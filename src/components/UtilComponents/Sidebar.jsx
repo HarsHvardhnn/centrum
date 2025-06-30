@@ -14,7 +14,7 @@ import {
 } from "react-icons/fi";
 import { BsCalendarPlusFill } from "react-icons/bs";
 import { useUser } from "../../context/userContext";
-import { Calendar1, Shield } from "lucide-react";
+import { Calendar1, Shield, BarChart3 } from "lucide-react";
 
 const Sidebar = () => {
   const { user } = useUser();
@@ -138,6 +138,14 @@ const Sidebar = () => {
               label="Rozliczenia"
               to="/admin/billing"
               isActive={currentPath === "/admin/billing"}
+              isEnabled={true}
+            />
+
+            <NavItem
+              icon={<BarChart3 className="text-xl text-teal-400" />}
+              label="Raporty"
+              to="/admin/data"
+              isActive={currentPath === "/admin/data"}
               isEnabled={true}
             />
           
