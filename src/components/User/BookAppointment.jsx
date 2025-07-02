@@ -52,6 +52,9 @@ export default function BookAppointment({
     medicalDataProcessingAgreed: false,
     teleportationConfirmed: false,
     contactConsentAgreed: false,
+    govtId: "", // PESEL number
+    address: "", // Residential address
+    dateOfBirth: "", // Date of birth
   };
 
   const validationSchema = Yup.object({
@@ -67,6 +70,19 @@ export default function BookAppointment({
     specialization: Yup.string().required("Wymagane"),
     message: Yup.string().min(10, "Za krótka wiadomość").required("Wymagane"),
     consultationType: Yup.string().oneOf(['online', 'offline']).required("Wymagane"),
+    govtId: Yup.string()
+      .required("Numer PESEL jest wymagany")
+      .max(15, "Numer PESEL nie może być dłuższy niż 15 znaków")
+      .matches(/^[a-zA-Z0-9]+$/, "Numer PESEL może zawierać tylko litery i cyfry"),
+    address: Yup.string()
+      .required("Adres zamieszkania jest wymagany")
+      .min(10, "Adres jest za krótki")
+      .trim(),
+    dateOfBirth: Yup.date()
+      .required("Data urodzenia jest wymagana")
+      .max(new Date(), "Data urodzenia nie może być w przyszłości")
+      .nullable()
+      .transform((curr, orig) => orig === '' ? null : curr),
     smsConsentAgreed: Yup.boolean(),
     privacyPolicyAgreed: Yup.boolean().oneOf([true], "Akceptacja regulaminu i polityki prywatności jest wymagana"),
     medicalDataProcessingAgreed: Yup.boolean().when('consultationType', {
@@ -243,11 +259,24 @@ export default function BookAppointment({
     }
   };
 
+  // Handle PESEL input to allow only numbers and limit to 11 digits
+  const handlePeselChange = (e, setFieldValue) => {
+    const value = e.target.value.replace(/\D/g, ""); // Remove non-digits
+    if (value.length <= 11) {
+      setFieldValue("govtId", value);
+    }
+  };
+
   // Updated handleSubmit function to use the apiCaller
   const handleSubmit = async (values, { resetForm, setSubmitting }) => {
     try {
       setSubmitting(true);
       setSubmitStatus({ success: false, error: null });
+
+      // Additional validation for required fields
+      if (!values.govtId || !values.address || !values.dateOfBirth) {
+        throw new Error("Wszystkie wymagane pola muszą być wypełnione");
+      }
 
       // Format date and time if needed
       const formattedValues = {
@@ -274,7 +303,7 @@ export default function BookAppointment({
 
       // Set error status and show error message
       const errorMessage =
-        error.response?.data?.message ||
+        error.response?.data?.message || error.message ||
         "Nie udało się zarezerwować wizyty. Spróbuj ponownie.";
       setSubmitStatus({ success: false, error: errorMessage });
       toast.error(errorMessage);
@@ -771,6 +800,166 @@ export default function BookAppointment({
                   </div>
                 </div>
 
+                {/* Patient Information Form */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Imię i nazwisko*
+                    </label>
+                    <Field
+                      type="text"
+                      name="name"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      placeholder="Jan Kowalski"
+                    />
+                    <ErrorMessage
+                      name="name"
+                      component="p"
+                      className="text-red-500 text-xs mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      PESEL*
+                    </label>
+                    <Field name="govtId">
+                      {({ field, form }) => (
+                        <input
+                          type="text"
+                          {...field}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
+                            form.setFieldValue('govtId', value);
+                          }}
+                          className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                          placeholder="Wprowadź numer PESEL"
+                          maxLength="15"
+                        />
+                      )}
+                    </Field>
+                    <ErrorMessage
+                      name="govtId"
+                      component="p"
+                      className="text-red-500 text-xs mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Telefon* (9 cyfr)
+                    </label>
+                    <Field name="phone">
+                      {({ field, form }) => (
+                        <input
+                          type="tel"
+                          {...field}
+                          onChange={(e) => handlePhoneChange(e, form.setFieldValue)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
+                          placeholder="123456789"
+                          maxLength="9"
+                        />
+                      )}
+                    </Field>
+                    <ErrorMessage
+                      name="phone"
+                      component="p"
+                      className="text-red-500 text-xs mt-1"
+                    />
+                    <p className="text-gray-500 text-xs mt-1">
+                      Format: 9 cyfr bez spacji i znaków specjalnych
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Data urodzenia*
+                    </label>
+                    <Field name="dateOfBirth">
+                      {({ field, form }) => (
+                        <input
+                          type="date"
+                          {...field}
+                          className={`w-full px-3 py-2 border ${form.touched.dateOfBirth && form.errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                          max={new Date().toISOString().split("T")[0]}
+                        />
+                      )}
+                    </Field>
+                    <ErrorMessage
+                      name="dateOfBirth"
+                      component="p"
+                      className="text-red-500 text-xs mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Adres email
+                    </label>
+                    <Field
+                      type="email"
+                      name="email"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      placeholder="jan.kowalski@example.com"
+                    />
+                    <ErrorMessage
+                      name="email"
+                      component="p"
+                      className="text-red-500 text-xs mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Płeć*
+                    </label>
+                    <Field
+                      as="select"
+                      name="gender"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
+                    >
+                      <option value="">Wybierz płeć</option>
+                      <option value="male">Mężczyzna</option>
+                      <option value="female">Kobieta</option>
+                      <option value="other">Inna</option>
+                    </Field>
+                    <ErrorMessage
+                      name="gender"
+                      component="p"
+                      className="text-red-500 text-xs mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Adres zamieszkania*
+                  </label>
+                  <Field name="address">
+                    {({ field, form }) => (
+                      <textarea
+                        {...field}
+                        rows="2"
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          form.setFieldValue('address', value.trim());
+                        }}
+                        className={`w-full px-3 py-2 border ${form.touched.address && form.errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                        placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
+                      />
+                    )}
+                  </Field>
+                  <ErrorMessage
+                    name="address"
+                    component="p"
+                    className="text-red-500 text-xs mt-1"
+                  />
+                </div>
+
                 {/* Submit Button */}
                 <button
                   type="submit"
@@ -784,8 +973,6 @@ export default function BookAppointment({
           </Formik>
         </div>
       </div>
-
-
 
       <style jsx>{`
         /* Safari-specific fixes */

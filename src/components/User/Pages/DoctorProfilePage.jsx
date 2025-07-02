@@ -40,6 +40,9 @@ const DoctorProfilePage = () => {
     medicalDataProcessingAgreed: false,
     teleportationConfirmed: false,
     contactConsentAgreed: false,
+    govtId: "",
+    address: "",
+    dateOfBirth: "",
   });
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -188,6 +191,23 @@ const DoctorProfilePage = () => {
       errors.phone = "Numer telefonu musi składać się z 9 cyfr";
     }
 
+    // Validate PESEL (govtId)
+    if (!bookingForm.govtId.trim()) {
+      errors.govtId = "Numer PESEL jest wymagany";
+    } else if (bookingForm.govtId.length > 15) {
+      errors.govtId = "Numer PESEL nie może być dłuższy niż 15 znaków";
+    }
+
+    // Validate address
+    if (!bookingForm.address.trim()) {
+      errors.address = "Adres zamieszkania jest wymagany";
+    }
+
+    // Validate date of birth
+    if (!bookingForm.dateOfBirth) {
+      errors.dateOfBirth = "Data urodzenia jest wymagana";
+    }
+
     // Privacy policy is always mandatory
     if (!bookingForm.privacyPolicyAgreed) {
       errors.privacyPolicyAgreed = "Akceptacja regulaminu i polityki prywatności jest wymagana";
@@ -293,6 +313,9 @@ const DoctorProfilePage = () => {
         medicalDataProcessingAgreed: false,
         teleportationConfirmed: false,
         contactConsentAgreed: false,
+        govtId: "",
+        address: "",
+        dateOfBirth: "",
       });
       setSelectedSlot(null);
 
@@ -875,23 +898,24 @@ const DoctorProfilePage = () => {
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Adres email
+                              PESEL*
                             </label>
                             <input
-                              type="email"
-                              name="email"
-                              value={bookingForm.email}
+                              type="text"
+                              name="govtId"
+                              value={bookingForm.govtId}
                               onChange={handleInputChange}
                               className={`w-full px-3 py-2 border ${
-                                formErrors.email
+                                formErrors.govtId
                                   ? "border-red-500"
                                   : "border-gray-300"
                               } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                              placeholder="jan.kowalski@example.com"
+                              placeholder="Wprowadź numer PESEL"
+                              maxLength="15"
                             />
-                            {formErrors.email && (
+                            {formErrors.govtId && (
                               <p className="text-red-500 text-xs mt-1">
-                                {formErrors.email}
+                                {formErrors.govtId}
                               </p>
                             )}
                           </div>
@@ -928,6 +952,54 @@ const DoctorProfilePage = () => {
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Data urodzenia*
+                            </label>
+                            <input
+                              type="date"
+                              name="dateOfBirth"
+                              value={bookingForm.dateOfBirth}
+                              onChange={handleInputChange}
+                              className={`w-full px-3 py-2 border ${
+                                formErrors.dateOfBirth
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                              max={new Date().toISOString().split("T")[0]}
+                            />
+                            {formErrors.dateOfBirth && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {formErrors.dateOfBirth}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Adres email
+                            </label>
+                            <input
+                              type="email"
+                              name="email"
+                              value={bookingForm.email}
+                              onChange={handleInputChange}
+                              className={`w-full px-3 py-2 border ${
+                                formErrors.email
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                              placeholder="jan.kowalski@example.com"
+                            />
+                            {formErrors.email && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {formErrors.email}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
                               Płeć
                             </label>
                             <select
@@ -941,6 +1013,29 @@ const DoctorProfilePage = () => {
                               <option value="other">Inna</option>
                             </select>
                           </div>
+                        </div>
+
+                        <div className="mb-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Adres zamieszkania*
+                          </label>
+                          <textarea
+                            name="address"
+                            value={bookingForm.address}
+                            onChange={handleInputChange}
+                            rows="2"
+                            className={`w-full px-3 py-2 border ${
+                              formErrors.address
+                                ? "border-red-500"
+                                : "border-gray-300"
+                            } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                            placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
+                          />
+                          {formErrors.address && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {formErrors.address}
+                            </p>
+                          )}
                         </div>
 
                         <div className="mb-4">
