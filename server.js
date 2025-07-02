@@ -14,7 +14,7 @@ function removeTrailingSlash(url) {
 }
 
 // API base URL - adjust this to your backend URL  
-const API_BASE_URL = removeTrailingSlash('http://localhost:5000/');
+const API_BASE_URL = removeTrailingSlash('https://backend.centrummedyczne7.pl/');
 
 console.log("API_BASE_URL", API_BASE_URL);
 // Bot detection function
@@ -248,7 +248,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-CQZA0G47.js"></script>
+    <script type="module" crossorigin src="/assets/index-CQZA0G4.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
