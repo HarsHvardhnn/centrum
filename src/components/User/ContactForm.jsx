@@ -7,6 +7,7 @@ function ContactForm() {
     email: "",
     subject: "",
     message: "",
+    privacyPolicyAgreed: false,
   });
   const [status, setStatus] = useState({ type: "", message: "" });
   const [loading, setLoading] = useState(false);
@@ -28,7 +29,8 @@ function ContactForm() {
   }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setForm({ ...form, [e.target.name]: value });
   };
 
   const handleSubmit = async (e) => {
@@ -41,7 +43,7 @@ function ContactForm() {
         _csrf: csrfToken
       });
       setStatus({ type: "success", message: "Wiadomość została wysłana!" });
-      setForm({ name: "", email: "", subject: "", message: "" });
+      setForm({ name: "", email: "", subject: "", message: "", privacyPolicyAgreed: false });
     } catch (err) {
       setStatus({ type: "error", message: "Wystąpił błąd podczas wysyłania. Spróbuj ponownie." });
     } finally {
@@ -94,6 +96,41 @@ function ContactForm() {
           onChange={handleChange}
           required
         />
+        
+        {/* Required Consent Checkbox */}
+        <div className="flex items-start space-x-3">
+          <input
+            type="checkbox"
+            name="privacyPolicyAgreed"
+            id="privacyPolicyAgreed"
+            className="mt-1 h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 focus:ring-2"
+            checked={form.privacyPolicyAgreed}
+            onChange={handleChange}
+            required
+          />
+          <label htmlFor="privacyPolicyAgreed" className="text-sm text-gray-700 leading-5">
+            <span className="font-medium text-red-600">*</span> Wyrażam zgodę na przetwarzanie moich danych osobowych przez Centrum Medyczne 7 Sp. z o.o. w celu obsługi zapytania przesłanego za pośrednictwem formularza kontaktowego oraz weryfikacji bezpieczeństwa. Zapoznałem(-am) się z{" "}
+            <a 
+              href="/regulamin.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal-600 hover:text-teal-700 underline"
+            >
+              Regulaminem
+            </a>{" "}
+            i{" "}
+            <a 
+              href="/polityka-prywatnosci.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal-600 hover:text-teal-700 underline"
+            >
+              Polityką Prywatności
+            </a>{" "}
+            i akceptuję ich postanowienia.
+          </label>
+        </div>
+
         <button
           type="submit"
           className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-lg transition-colors text-lg"
