@@ -28,7 +28,77 @@ export default function BookAppointment({
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
-  // Share functionality - removed modal states since we're copying directly
+  // reCAPTCHA state
+  const [showV2Captcha, setShowV2Captcha] = useState(false);
+  const [v2CaptchaResponse, setV2CaptchaResponse] = useState("");
+  const recaptchaRef = useRef(null);
+
+  // Add this effect at the top of your component, after the state declarations
+  useEffect(() => {
+    // Check if reCAPTCHA is loaded
+    const checkRecaptcha = () => {
+      if (!window.grecaptcha) {
+        console.warn('reCAPTCHA not loaded yet, retrying...');
+        setTimeout(checkRecaptcha, 500);
+        return;
+      }
+      console.log('reCAPTCHA loaded successfully');
+    };
+
+    checkRecaptcha();
+  }, []);
+
+  // Execute reCAPTCHA v3
+  const executeRecaptchaV3 = async () => {
+    if (!window.grecaptcha) {
+      throw new Error('reCAPTCHA not loaded');
+    }
+
+    try {
+      console.log('Executing reCAPTCHA v3...');
+      const token = await window.grecaptcha.execute('6Led3nUrAAAAAGbxFJkTZbB-JDzwTQf7kf-PBzGm', { 
+        action: 'book_appointment' 
+      });
+      console.log('reCAPTCHA v3 token obtained');
+      return token;
+    } catch (error) {
+      console.error('Error executing reCAPTCHA v3:', error);
+      throw error;
+    }
+  };
+
+  // Setup v2 reCAPTCHA when needed
+  useEffect(() => {
+    if (showV2Captcha && recaptchaRef.current) {
+      const loadCaptcha = () => {
+        if (!window.grecaptcha || !window.grecaptcha.render) {
+          setTimeout(loadCaptcha, 100);
+          return;
+        }
+        
+        try {
+          window.grecaptcha.render(recaptchaRef.current, {
+            sitekey: '6Led3nUrAAAAAGbxFJkTZbB-JDzwTQf7kf-PBzGm',
+            callback: (response) => {
+              setV2CaptchaResponse(response);
+              setSubmitStatus({ success: false, error: null });
+            },
+            'expired-callback': () => {
+              setV2CaptchaResponse("");
+              setSubmitStatus({ 
+                success: false, 
+                error: "CAPTCHA wygasła. Proszę spróbować ponownie." 
+              });
+            }
+          });
+        } catch (error) {
+          console.warn('Error rendering reCAPTCHA:', error);
+        }
+      };
+
+      loadCaptcha();
+    }
+  }, [showV2Captcha]);
 
   // Parse URL parameters for pre-filling form
   const doctorIdFromUrl = searchParams.get('lekarz') || selectedDoctorId;
@@ -267,7 +337,7 @@ export default function BookAppointment({
     }
   };
 
-  // Updated handleSubmit function to use the apiCaller
+  // Updated handleSubmit function with reCAPTCHA
   const handleSubmit = async (values, { resetForm, setSubmitting }) => {
     try {
       setSubmitting(true);
@@ -278,35 +348,96 @@ export default function BookAppointment({
         throw new Error("Wszystkie wymagane pola muszą być wypełnione");
       }
 
+      let recaptchaToken;
+      let isV2Fallback = false;
+
+      try {
+        if (showV2Captcha) {
+          if (!v2CaptchaResponse) {
+            setSubmitStatus({ 
+              success: false, 
+              error: "Proszę potwierdzić CAPTCHA." 
+            });
+            setSubmitting(false);
+            return;
+          }
+          recaptchaToken = v2CaptchaResponse;
+          isV2Fallback = true;
+        } else {
+          // Try v3 first
+          recaptchaToken = await executeRecaptchaV3();
+          isV2Fallback = false;
+        }
+      } catch (error) {
+        console.warn('reCAPTCHA error:', error);
+        setShowV2Captcha(true);
+        setSubmitStatus({ 
+          success: false, 
+          error: "Proszę potwierdzić swoją tożsamość za pomocą CAPTCHA poniżej." 
+        });
+        setSubmitting(false);
+        return;
+      }
+
       // Format date and time if needed
-      const formattedValues = {
+      const formData = {
         ...values,
-        // Add +48 prefix to phone
         phone: `+48${values.phone}`,
+        recaptchaToken,
+        isV2Fallback,
+        consent: true // Add consent field for CAPTCHA verification
       };
+
+      console.log('Sending form data with captcha:', { 
+        ...formData, 
+        recaptchaToken: recaptchaToken ? 'present' : 'missing' 
+      });
 
       // Make API call to book appointment
       const response = await apiCaller(
         "POST",
         "/appointments/book",
-        formattedValues
+        formData
       );
 
-      //("Appointment booked successfully:", response.data);
+      if (response.data.requiresV2) {
+        setShowV2Captcha(true);
+        setSubmitStatus({ 
+          success: false, 
+          error: "Proszę potwierdzić swoją tożsamość za pomocą CAPTCHA poniżej." 
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      // Success case
       setSubmitStatus({ success: true, error: null });
       resetForm();
-
-      // Show success message to user
+      setShowV2Captcha(false);
+      setV2CaptchaResponse("");
       toast.success("Wizyta została pomyślnie zarezerwowana!");
+
     } catch (error) {
       console.error("Błąd podczas rezerwacji wizyty:", error);
 
-      // Set error status and show error message
-      const errorMessage =
-        error.response?.data?.message || error.message ||
-        "Nie udało się zarezerwować wizyty. Spróbuj ponownie.";
-      setSubmitStatus({ success: false, error: errorMessage });
-      toast.error(errorMessage);
+      if (error.response?.data?.code === 'RECAPTCHA_V2_REQUIRED') {
+        setShowV2Captcha(true);
+        setSubmitStatus({ 
+          success: false, 
+          error: "Proszę potwierdzić swoją tożsamość za pomocą CAPTCHA poniżej." 
+        });
+      } else if (error.response?.data?.code === 'RATE_LIMIT_EXCEEDED') {
+        setSubmitStatus({ 
+          success: false, 
+          error: "Przekroczono limit prób. Proszę spróbować ponownie za godzinę." 
+        });
+      } else {
+        const errorMessage =
+          error.response?.data?.message || error.message ||
+          "Nie udało się zarezerwować wizyty. Spróbuj ponownie.";
+        setSubmitStatus({ success: false, error: errorMessage });
+        toast.error(errorMessage);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -958,6 +1089,36 @@ export default function BookAppointment({
                     component="p"
                     className="text-red-500 text-xs mt-1"
                   />
+                </div>
+
+                {/* Add reCAPTCHA container before submit button */}
+                {showV2Captcha && (
+                  <div className="col-span-1 sm:col-span-2 flex justify-center my-4">
+                    <div ref={recaptchaRef}></div>
+                  </div>
+                )}
+
+                {/* reCAPTCHA Privacy Notice */}
+                <div className="col-span-1 sm:col-span-2 text-xs text-gray-500 text-center bg-gray-50 p-3 rounded-lg">
+                  🔒 Ten formularz jest chroniony przez reCAPTCHA. Obowiązują{" "}
+                  <a 
+                    href="https://policies.google.com/privacy" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-teal-600 underline"
+                  >
+                    Polityka prywatności
+                  </a>{" "}
+                  i{" "}
+                  <a 
+                    href="https://policies.google.com/terms" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-teal-600 underline"
+                  >
+                    Warunki korzystania
+                  </a>{" "}
+                  Google.
                 </div>
 
                 {/* Submit Button */}

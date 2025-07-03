@@ -7,7 +7,7 @@ function ContactForm() {
     email: "",
     subject: "",
     message: "",
-    consent: false, // Required for CAPTCHA system
+    consent: false,
   });
   
   const [status, setStatus] = useState({ type: "", message: "" });
@@ -15,11 +15,6 @@ function ContactForm() {
   const [csrfToken, setCsrfToken] = useState("");
   
   // reCAPTCHA state
-  const [recaptchaConfig, setRecaptchaConfig] = useState({
-    v3SiteKey: import.meta.env.VITE_RECAPTCHA_V3_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Test key fallback
-    v2SiteKey: import.meta.env.VITE_RECAPTCHA_V2_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // Test key fallback
-    isEnabled: true
-  });
   const [showV2Captcha, setShowV2Captcha] = useState(false);
   const [v2CaptchaResponse, setV2CaptchaResponse] = useState("");
   const recaptchaRef = useRef(null);
@@ -37,21 +32,7 @@ function ContactForm() {
       return '';
     };
     setCsrfToken(getCsrfToken());
-
-    // Load reCAPTCHA configuration from backend
-    loadCaptchaConfig();
   }, []);
-
-  const loadCaptchaConfig = async () => {
-    try {
-      const response = await apiCaller("GET", "/api/captcha/config");
-      if (response.data.success) {
-        setRecaptchaConfig(response.data.data);
-      }
-    } catch (error) {
-      console.warn('Could not load CAPTCHA config, using defaults');
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -73,7 +54,7 @@ function ContactForm() {
         return;
       }
 
-      window.grecaptcha.execute(recaptchaConfig.v3SiteKey, { action: 'contact_form' })
+      window.grecaptcha.execute('6Led3nUrAAAAAGbxFJkTZbB-JDzwTQf7kf-PBzGm', { action: 'contact_form' })
         .then(token => {
           resolve(token);
         })
@@ -83,35 +64,34 @@ function ContactForm() {
     });
   };
 
-  const setupV2Captcha = () => {
-    if (!window.grecaptcha || !window.grecaptcha.render) {
-      setTimeout(setupV2Captcha, 100);
-      return;
-    }
-
-    if (recaptchaRef.current && !recaptchaRef.current.hasChildNodes()) {
-      window.grecaptcha.render(recaptchaRef.current, {
-        sitekey: recaptchaConfig.v2SiteKey,
-        callback: (response) => {
-          setV2CaptchaResponse(response);
-          setStatus({ type: "", message: "" });
-        },
-        'expired-callback': () => {
-          setV2CaptchaResponse("");
-          setStatus({ type: "error", message: "CAPTCHA wygasła. Proszę spróbować ponownie." });
-        },
-        'error-callback': () => {
-          setStatus({ type: "error", message: "Błąd CAPTCHA. Proszę odświeżyć stronę." });
-        }
-      });
-    }
-  };
-
   useEffect(() => {
-    if (showV2Captcha) {
-      setupV2Captcha();
+    if (showV2Captcha && recaptchaRef.current) {
+      const loadCaptcha = () => {
+        if (!window.grecaptcha || !window.grecaptcha.render) {
+          setTimeout(loadCaptcha, 100);
+          return;
+        }
+        
+        try {
+          window.grecaptcha.render(recaptchaRef.current, {
+            sitekey: '6Led3nUrAAAAAGbxFJkTZbB-JDzwTQf7kf-PBzGm',
+            callback: (response) => {
+              setV2CaptchaResponse(response);
+              setStatus({ type: "", message: "" });
+            },
+            'expired-callback': () => {
+              setV2CaptchaResponse("");
+              setStatus({ type: "error", message: "CAPTCHA wygasła. Proszę spróbować ponownie." });
+            }
+          });
+        } catch (error) {
+          console.warn('Error rendering reCAPTCHA:', error);
+        }
+      };
+
+      loadCaptcha();
     }
-  }, [showV2Captcha, recaptchaConfig.v2SiteKey]);
+  }, [showV2Captcha]);
 
   const validateForm = () => {
     if (!form.name.trim()) {
@@ -156,52 +136,55 @@ function ContactForm() {
       let recaptchaToken = "";
       let isV2Fallback = false;
 
-      if (recaptchaConfig.isEnabled) {
-        if (showV2Captcha) {
-          // Using v2 fallback
-          if (!v2CaptchaResponse) {
-            setStatus({ type: "error", message: "Proszę potwierdzić CAPTCHA." });
-            setLoading(false);
-            return;
-          }
-          recaptchaToken = v2CaptchaResponse;
-          isV2Fallback = true;
-        } else {
-          // Try v3 first
-          try {
-            recaptchaToken = await executeRecaptchaV3();
-            isV2Fallback = false;
-          } catch (error) {
-            console.warn('reCAPTCHA v3 failed, falling back to v2');
-            setShowV2Captcha(true);
-            setLoading(false);
-            setStatus({ 
-              type: "info", 
-              message: "Proszę potwierdzić swoją tożsamość za pomocą CAPTCHA poniżej." 
-            });
-            return;
-          }
+      if (showV2Captcha) {
+        // Using v2 fallback
+        if (!v2CaptchaResponse) {
+          setStatus({ type: "error", message: "Proszę potwierdzić CAPTCHA." });
+          setLoading(false);
+          return;
+        }
+        recaptchaToken = v2CaptchaResponse;
+        isV2Fallback = true;
+      } else {
+        // Try v3 first
+        try {
+          recaptchaToken = await executeRecaptchaV3();
+          isV2Fallback = false;
+        } catch (error) {
+          console.warn('reCAPTCHA v3 failed, falling back to v2');
+          setShowV2Captcha(true);
+          setLoading(false);
+          setStatus({ 
+            type: "info", 
+            message: "Proszę potwierdzić swoją tożsamość za pomocą CAPTCHA poniżej." 
+          });
+          return;
         }
       }
 
-      // Submit form with CAPTCHA data
       const formData = {
         name: form.name,
         email: form.email,
         subject: form.subject,
         message: form.message,
         consent: form.consent,
-        _csrf: csrfToken
+        _csrf: csrfToken,
+        recaptchaToken,
+        isV2Fallback
       };
 
-      // Add CAPTCHA data if enabled
-      if (recaptchaConfig.isEnabled) {
-        formData.recaptchaToken = recaptchaToken;
-        formData.isV2Fallback = isV2Fallback;
+      const response = await apiCaller("POST", "/api/contact", formData);
+      
+      if (response.data.requiresV2) {
+        setShowV2Captcha(true);
+        setStatus({ 
+          type: "info", 
+          message: "Proszę potwierdzić swoją tożsamość za pomocą CAPTCHA poniżej." 
+        });
+        setLoading(false);
+        return;
       }
 
-      await apiCaller("POST", "/api/contact", formData);
-      
       // Success
       setStatus({ type: "success", message: "Wiadomość została wysłana pomyślnie!" });
       setForm({ 
@@ -224,70 +207,21 @@ function ContactForm() {
     } catch (error) {
       console.error('Contact form error:', error);
       
-      // Handle specific error responses
-      if (error.response?.data?.error) {
-        const errorCode = error.response.data.error;
-        
-        switch (errorCode) {
-          case 'RECAPTCHA_V2_REQUIRED':
-            setShowV2Captcha(true);
-            setStatus({ 
-              type: "info", 
-              message: "Proszę potwierdzić swoją tożsamość za pomocą CAPTCHA poniżej." 
-            });
-            break;
-            
-          case 'RATE_LIMIT_EXCEEDED':
-            setStatus({ 
-              type: "error", 
-              message: "Przekroczono limit prób. Proszę spróbować ponownie za godzinę." 
-            });
-            break;
-            
-          case 'CONSENT_REQUIRED':
-            setStatus({ 
-              type: "error", 
-              message: "Musisz wyrazić zgodę na przetwarzanie danych osobowych." 
-            });
-            break;
-            
-          case 'RECAPTCHA_MISSING':
-            setStatus({ 
-              type: "error", 
-              message: "Brak wymaganej weryfikacji CAPTCHA." 
-            });
-            break;
-            
-          case 'RECAPTCHA_FAILED':
-            if (!showV2Captcha) {
-              setShowV2Captcha(true);
-              setStatus({ 
-                type: "info", 
-                message: "Proszę potwierdzić swoją tożsamość za pomocą CAPTCHA poniżej." 
-              });
-            } else {
-              setStatus({ 
-                type: "error", 
-                message: "Weryfikacja CAPTCHA nie powiodła się. Proszę spróbować ponownie." 
-              });
-              // Reset v2 CAPTCHA
-              if (window.grecaptcha) {
-                window.grecaptcha.reset();
-              }
-              setV2CaptchaResponse("");
-            }
-            break;
-            
-          default:
-            setStatus({ 
-              type: "error", 
-              message: error.response.data.message || "Wystąpił błąd podczas wysyłania. Spróbuj ponownie." 
-            });
-        }
+      if (error.response?.data?.code === 'RECAPTCHA_V2_REQUIRED') {
+        setShowV2Captcha(true);
+        setStatus({ 
+          type: "info", 
+          message: "Proszę potwierdzić swoją tożsamość za pomocą CAPTCHA poniżej." 
+        });
+      } else if (error.response?.data?.code === 'RATE_LIMIT_EXCEEDED') {
+        setStatus({ 
+          type: "error", 
+          message: "Przekroczono limit prób. Proszę spróbować ponownie za godzinę." 
+        });
       } else {
         setStatus({ 
           type: "error", 
-          message: "Wystąpił błąd podczas wysyłania. Spróbuj ponownie." 
+          message: error.response?.data?.message || "Wystąpił błąd podczas wysyłania wiadomości." 
         });
       }
     } finally {
@@ -391,29 +325,27 @@ function ContactForm() {
         )}
 
         {/* Security Info */}
-        {recaptchaConfig.isEnabled && (
-          <div className="text-xs text-gray-500 text-center bg-gray-50 p-3 rounded-lg">
-            🔒 Ten formularz jest chroniony przez reCAPTCHA. Obowiązują{" "}
-            <a 
-              href="https://policies.google.com/privacy" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-teal-600 underline"
-            >
-              Polityka prywatności
-            </a>{" "}
-            i{" "}
-            <a 
-              href="https://policies.google.com/terms" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-teal-600 underline"
-            >
-              Warunki korzystania
-            </a>{" "}
-            Google.
-          </div>
-        )}
+        <div className="text-xs text-gray-500 text-center bg-gray-50 p-3 rounded-lg">
+          🔒 Ten formularz jest chroniony przez reCAPTCHA. Obowiązują{" "}
+          <a 
+            href="https://policies.google.com/privacy" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-teal-600 underline"
+          >
+            Polityka prywatności
+          </a>{" "}
+          i{" "}
+          <a 
+            href="https://policies.google.com/terms" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-teal-600 underline"
+          >
+            Warunki korzystania
+          </a>{" "}
+          Google.
+        </div>
         
         <button
           type="submit"
