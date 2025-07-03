@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Download, FileText, Eye, TrendingUp, Users, DollarSign, Activity } from 'lucide-react';
 import { useUser } from '../../context/userContext';
+import doctorService from '../../helpers/doctorHelper';
 import { 
   generateReport, 
   getAppointmentDetails, 
@@ -25,6 +26,8 @@ const ReportsDashboard = () => {
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [doctors, setDoctors] = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
   
   const [filters, setFilters] = useState({
     startDate: '',
@@ -37,6 +40,23 @@ const ReportsDashboard = () => {
 
   // Get user permissions
   const permissions = getUserPermissions('admin');
+
+  // Fetch doctors list
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      setLoadingDoctors(true);
+      try {
+        const response = await doctorService.getAllDoctors();
+        setDoctors(response?.doctors);
+      } catch (error) {
+        showMessage('Błąd podczas pobierania listy lekarzy: ' + error.message, 'error');
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
 
   // Auto-set default date range (last 30 days)
   useEffect(() => {
@@ -181,7 +201,7 @@ const ReportsDashboard = () => {
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Filtry raportu</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {/* Date Range */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -205,6 +225,26 @@ const ReportsDashboard = () => {
               onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
+          </div>
+
+          {/* Doctor Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Lekarz
+            </label>
+            <select
+              value={filters.doctorId}
+              onChange={(e) => setFilters(prev => ({ ...prev, doctorId: e.target.value }))}
+              disabled={loadingDoctors}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+            >
+              <option value="">Wszyscy lekarze</option>
+              {doctors.map(doctor => (
+                <option key={doctor._id} value={doctor._id}>
+                  {doctor.name} 
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Status Filter */}
