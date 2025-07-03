@@ -8,16 +8,22 @@ import NotFound404 from '../../UtilComponents/NotFound';
 import Doctors from '../Doctors';
 import doctorService from '../../../helpers/doctorHelper';
 import { useUser } from '../../../context/userContext';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const DoctorProfilePage = () => {
   const { doctorSlug } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
+  const { executeRecaptcha } = useGoogleReCaptcha();
   
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
+  const [recaptchaToken, setRecaptchaToken] = useState(null);
+  const [showRecaptchaV2, setShowRecaptchaV2] = useState(false);
+  const [recaptchaV2Ref, setRecaptchaV2Ref] = useState(null);
 
   // Booking modal states
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -250,6 +256,36 @@ const DoctorProfilePage = () => {
     }
   };
 
+  // reCAPTCHA handlers
+  const handleRecaptchaV2Change = (token) => {
+    setRecaptchaToken(token);
+    if (token) {
+      setShowRecaptchaV2(false);
+    }
+  };
+
+  const handleRecaptchaV2Expire = () => {
+    setRecaptchaToken(null);
+    setShowRecaptchaV2(true);
+  };
+
+  const handleRecaptchaV3 = async () => {
+    if (!executeRecaptcha) {
+      console.error('Execute recaptcha not yet available');
+      setShowRecaptchaV2(true);
+      return null;
+    }
+
+    try {
+      const token = await executeRecaptcha('appointment_booking');
+      return token;
+    } catch (error) {
+      console.error('Error executing reCAPTCHA v3:', error);
+      setShowRecaptchaV2(true);
+      return null;
+    }
+  };
+
   const handleConfirmAppointment = async () => {
     if (!validateForm() || !selectedSlot) {
       return;
@@ -257,6 +293,13 @@ const DoctorProfilePage = () => {
 
     try {
       setIsSubmitting(true);
+
+      // Get reCAPTCHA token
+      const token = await handleRecaptchaV3();
+      if (!token && !recaptchaToken) {
+        setShowRecaptchaV2(true);
+        return;
+      }
 
       // Format phone number by adding the Polish country code
       const phone = `+48${bookingForm.phone}`;
@@ -285,6 +328,12 @@ const DoctorProfilePage = () => {
         consultationType: bookingForm.consultationType,
         smsConsentAgreed: bookingForm.smsConsentAgreed,
         privacyPolicyAgreed: bookingForm.privacyPolicyAgreed,
+        recaptchaToken: token || recaptchaToken,
+        consent: true, // Required by backend middleware
+        // Adding the new fields
+        govtId: bookingForm.govtId,
+        address: bookingForm.address,
+        dateOfBirth: bookingForm.dateOfBirth
       };
 
       // Make API call to book appointment
@@ -318,6 +367,7 @@ const DoctorProfilePage = () => {
         dateOfBirth: "",
       });
       setSelectedSlot(null);
+      setRecaptchaToken(null);
 
     } catch (error) {
       console.error("Błąd podczas rezerwacji wizyty:", error);
@@ -327,6 +377,11 @@ const DoctorProfilePage = () => {
         error.response?.data?.message ||
         "Nie udało się zarezerwować wizyty. Spróbuj ponownie.";
       toast.error(errorMessage);
+
+      // If reCAPTCHA verification failed, show v2
+      if (error.response?.status === 400 && error.response?.data?.error?.includes('recaptcha')) {
+        setShowRecaptchaV2(true);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -1126,6 +1181,17 @@ const DoctorProfilePage = () => {
                   </div>
                 </div>
               </div>
+
+              {/* reCAPTCHA v2 */}
+              {showRecaptchaV2 && (
+                <div className="px-6 py-4 flex justify-center">
+                  <ReCAPTCHA
+                    sitekey="6Led3nUrAAAAAGbxFJkTZbB-JDzwTQf7kf-PBzGm"
+                    onChange={handleRecaptchaV2Change}
+                    onExpired={handleRecaptchaV2Expire}
+                  />
+                </div>
+              )}
 
               {/* Modal Footer */}
               <div className="bg-gray-50 px-6 py-4 flex justify-end sticky bottom-0">

@@ -18,6 +18,8 @@ import { toast } from "sonner";
 import { apiCaller } from "../../utils/axiosInstance";
 import { useUser } from "../../context/userContext";
 import { generateDoctorProfileUrl } from "../../utils/slugUtils";
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 export default function Doctors({
   selectedDoctorId,
@@ -72,8 +74,41 @@ export default function Doctors({
   });
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState(null);
+  const [showRecaptchaV2, setShowRecaptchaV2] = useState(false);
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const sliderRef = useRef(null);
+
+  // reCAPTCHA handlers
+  const handleRecaptchaV2Change = (token) => {
+    setRecaptchaToken(token);
+    if (token) {
+      setShowRecaptchaV2(false);
+    }
+  };
+
+  const handleRecaptchaV2Expire = () => {
+    setRecaptchaToken(null);
+    setShowRecaptchaV2(true);
+  };
+
+  const handleRecaptchaV3 = async () => {
+    if (!executeRecaptcha) {
+      console.error('Execute recaptcha not yet available');
+      setShowRecaptchaV2(true);
+      return null;
+    }
+
+    try {
+      const token = await executeRecaptcha('appointment_booking');
+      return token;
+    } catch (error) {
+      console.error('Error executing reCAPTCHA v3:', error);
+      setShowRecaptchaV2(true);
+      return null;
+    }
+  };
 
   // Add state for share functionality - removed modal states since we're copying directly
 
@@ -402,6 +437,13 @@ export default function Doctors({
       // Format phone number by adding the Polish country code
       const phone = `+48${bookingForm.phone}`;
 
+      // Get reCAPTCHA token
+      const token = await handleRecaptchaV3();
+      if (!token && !recaptchaToken) {
+        setShowRecaptchaV2(true);
+        return;
+      }
+
       // Prepare request data
       const appointmentData = {
         date: selectedDate,
@@ -417,6 +459,11 @@ export default function Doctors({
         consultationType: bookingForm.consultationType,
         smsConsentAgreed: bookingForm.smsConsentAgreed,
         privacyPolicyAgreed: bookingForm.privacyPolicyAgreed,
+        govtId: bookingForm.govtId,
+        address: bookingForm.address,
+        dateOfBirth: bookingForm.dateOfBirth,
+        recaptchaToken: token || recaptchaToken,
+        consent: true // Required by backend middleware
       };
 
       // Make API call to book appointment
@@ -1183,6 +1230,17 @@ export default function Doctors({
                 </div>
               </div>
             </div>
+
+            {/* reCAPTCHA v2 */}
+            {showRecaptchaV2 && (
+              <div className="px-6 py-4 flex justify-center">
+                <ReCAPTCHA
+                  sitekey="6Led3nUrAAAAAGbxFJkTZbB-JDzwTQf7kf-PBzGm"
+                  onChange={handleRecaptchaV2Change}
+                  onExpired={handleRecaptchaV2Expire}
+                />
+              </div>
+            )}
 
             {/* Modal Footer */}
             <div className="bg-gray-50 px-6 py-4 flex justify-end sticky bottom-0">

@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { HelmetProvider } from "react-helmet-async";
+import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import routes from "./routes";
 import "./index.css";
 import "./i18n";
@@ -21,10 +22,20 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <GoogleOAuthProvider
               clientId={import.meta.env.VITE_REACT_APP_GOOGLE_CLIENT_ID}
             >
-              <SpecializationProvider>
-                <RouterProvider router={routes} />
-                <Toaster richColors position="top-right" />
-              </SpecializationProvider>
+              <GoogleReCaptchaProvider
+                reCaptchaKey="6Led3nUrAAAAAGbxFJkTZbB-JDzwTQf7kf-PBzGm"
+                scriptProps={{
+                  async: false,
+                  defer: false,
+                  appendTo: 'head',
+                  nonce: undefined,
+                }}
+              >
+                <SpecializationProvider>
+                  <RouterProvider router={routes} />
+                  <Toaster richColors position="top-right" />
+                </SpecializationProvider>
+              </GoogleReCaptchaProvider>
             </GoogleOAuthProvider>
           </ServicesProvider>
         </UserProvider>
