@@ -24,7 +24,9 @@ const DoctorSchema = Yup.object().shape({
   email: Yup.string()
     .email("Nieprawidłowy adres email")
     .required("Email jest wymagany"),
-  phone: Yup.string(),
+  phone: Yup.string()
+    .required("Numer telefonu jest wymagany")
+    .matches(/^\d{9}$/, "Numer telefonu musi składać się z dokładnie 9 cyfr"),
   password: Yup.string()
     .min(8, "Hasło musi zawierać co najmniej 8 znaków")
     .required("Hasło jest wymagane"),
@@ -47,11 +49,11 @@ const DoctorSchema = Yup.object().shape({
   offlineConsultationFee: Yup.number()
     .positive("Opłata musi być liczbą dodatnią")
     .required("Opłata za konsultację stacjonarną jest wymagana"),
-  // profilePicture: Yup.mixed().when('$isEditMode', {
-  //   is: true,
-  //   then: () => Yup.mixed(), // no validation
-  //   otherwise: () => Yup.mixed().required("Zdjęcie profilowe jest wymagane"),
-  // }),
+  profilePicture: Yup.mixed().when('$isEditMode', {
+    is: true,
+    then: () => Yup.mixed(), // no validation in edit mode
+    otherwise: () => Yup.mixed().required("Zdjęcie profilowe jest wymagane"),
+  }),
 });
 
 
@@ -317,7 +319,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       htmlFor="phone"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Numer Telefonu
+                      Numer Telefonu*
                     </label>
                     <Field
                       type="text"
