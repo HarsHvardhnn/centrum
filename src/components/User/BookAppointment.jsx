@@ -618,10 +618,8 @@ export default function BookAppointment({
                 <div className="col-span-1">
                   <div className="custom-phone-input relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      {/* Polish flag */}
                       <div className="flex items-center">
                         <div className="flag-icon w-5 h-3.5 mr-2">
-                          {/* Simple CSS-based Polish flag */}
                           <div className="w-full h-full flex flex-col">
                             <div className="bg-white h-1/2 w-full"></div>
                             <div className="bg-red-600 h-1/2 w-full"></div>
@@ -643,12 +641,77 @@ export default function BookAppointment({
                       {errors.phone}
                     </div>
                   )}
-                  {/* Visual formatter - shows formatted number below input */}
                   {values.phone && !errors.phone && (
                     <div className="text-xs text-gray-500 mt-1">
                       +48 {formatPhoneDisplay(values.phone)}
                     </div>
                   )}
+                </div>
+
+                {/* PESEL field */}
+                <div className="col-span-1">
+                  <Field name="govtId">
+                    {({ field, form }) => (
+                      <input
+                        type="text"
+                        {...field}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
+                          form.setFieldValue('govtId', value);
+                        }}
+                        className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                        placeholder="Wprowadź numer PESEL"
+                        maxLength="15"
+                      />
+                    )}
+                  </Field>
+                  <ErrorMessage
+                    name="govtId"
+                    component="div"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
+                  />
+                </div>
+
+                {/* Data urodzenia field */}
+                <div className="col-span-1">
+                  <Field name="dateOfBirth">
+                    {({ field, form }) => (
+                      <input
+                        type="date"
+                        {...field}
+                        className={`w-full px-3 py-2 border ${form.touched.dateOfBirth && form.errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                        max={new Date().toISOString().split("T")[0]}
+                      />
+                    )}
+                  </Field>
+                  <ErrorMessage
+                    name="dateOfBirth"
+                    component="div"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
+                  />
+                </div>
+
+                {/* Adres zamieszkania field */}
+                <div className="col-span-1 sm:col-span-2">
+                  <Field name="address">
+                    {({ field, form }) => (
+                      <textarea
+                        {...field}
+                        rows="2"
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          form.setFieldValue('address', value.trim());
+                        }}
+                        className={`w-full px-3 py-2 border ${form.touched.address && form.errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                        placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
+                      />
+                    )}
+                  </Field>
+                  <ErrorMessage
+                    name="address"
+                    component="div"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
+                  />
                 </div>
 
                 <div className="col-span-1">
@@ -929,166 +992,6 @@ export default function BookAppointment({
                       </span>
                     </label>
                   </div>
-                </div>
-
-                {/* Patient Information Form */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Imię i nazwisko*
-                    </label>
-                    <Field
-                      type="text"
-                      name="name"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
-                      placeholder="Jan Kowalski"
-                    />
-                    <ErrorMessage
-                      name="name"
-                      component="p"
-                      className="text-red-500 text-xs mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      PESEL*
-                    </label>
-                    <Field name="govtId">
-                      {({ field, form }) => (
-                        <input
-                          type="text"
-                          {...field}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
-                            form.setFieldValue('govtId', value);
-                          }}
-                          className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                          placeholder="Wprowadź numer PESEL"
-                          maxLength="15"
-                        />
-                      )}
-                    </Field>
-                    <ErrorMessage
-                      name="govtId"
-                      component="p"
-                      className="text-red-500 text-xs mt-1"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Telefon* (9 cyfr)
-                    </label>
-                    <Field name="phone">
-                      {({ field, form }) => (
-                        <input
-                          type="tel"
-                          {...field}
-                          onChange={(e) => handlePhoneChange(e, form.setFieldValue)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
-                          placeholder="123456789"
-                          maxLength="9"
-                        />
-                      )}
-                    </Field>
-                    <ErrorMessage
-                      name="phone"
-                      component="p"
-                      className="text-red-500 text-xs mt-1"
-                    />
-                    <p className="text-gray-500 text-xs mt-1">
-                      Format: 9 cyfr bez spacji i znaków specjalnych
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Data urodzenia*
-                    </label>
-                    <Field name="dateOfBirth">
-                      {({ field, form }) => (
-                        <input
-                          type="date"
-                          {...field}
-                          className={`w-full px-3 py-2 border ${form.touched.dateOfBirth && form.errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                          max={new Date().toISOString().split("T")[0]}
-                        />
-                      )}
-                    </Field>
-                    <ErrorMessage
-                      name="dateOfBirth"
-                      component="p"
-                      className="text-red-500 text-xs mt-1"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Adres email
-                    </label>
-                    <Field
-                      type="email"
-                      name="email"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
-                      placeholder="jan.kowalski@example.com"
-                    />
-                    <ErrorMessage
-                      name="email"
-                      component="p"
-                      className="text-red-500 text-xs mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Płeć*
-                    </label>
-                    <Field
-                      as="select"
-                      name="gender"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
-                    >
-                      <option value="">Wybierz płeć</option>
-                      <option value="male">Mężczyzna</option>
-                      <option value="female">Kobieta</option>
-                      <option value="other">Inna</option>
-                    </Field>
-                    <ErrorMessage
-                      name="gender"
-                      component="p"
-                      className="text-red-500 text-xs mt-1"
-                    />
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Adres zamieszkania*
-                  </label>
-                  <Field name="address">
-                    {({ field, form }) => (
-                      <textarea
-                        {...field}
-                        rows="2"
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          form.setFieldValue('address', value.trim());
-                        }}
-                        className={`w-full px-3 py-2 border ${form.touched.address && form.errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                        placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
-                      />
-                    )}
-                  </Field>
-                  <ErrorMessage
-                    name="address"
-                    component="p"
-                    className="text-red-500 text-xs mt-1"
-                  />
                 </div>
 
                 {/* Add reCAPTCHA container before submit button */}

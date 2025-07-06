@@ -515,7 +515,7 @@ const DoctorProfilePage = () => {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(generateStructuredData()) }}
       />
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pt-20">
         {/* Hero Section */}
         <div className="bg-gradient-to-r from-teal-600 to-teal-700 text-white py-16">
           <div className="max-w-6xl mx-auto px-6">
@@ -589,6 +589,18 @@ const DoctorProfilePage = () => {
                   <div className="text-gray-700">
                     {doctor.education}
                   </div>
+                </div>
+              )}
+
+              {/* Qualifications */}
+              {doctor?.qualifications && doctor?.qualifications?.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm p-8">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">Kwalifikacje</h2>
+                  <ul className="list-disc pl-6 text-gray-700">
+                    {doctor?.qualifications?.map((q, idx) => (
+                      <li key={idx}>{q}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
 

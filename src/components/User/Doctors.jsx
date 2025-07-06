@@ -994,45 +994,6 @@ export default function Doctors({
                           </select>
                         </div>
                       </div>
-
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Adres zamieszkania*
-                        </label>
-                        <textarea
-                          name="address"
-                          value={bookingForm.address}
-                          onChange={handleInputChange}
-                          rows="2"
-                          className={`w-full px-3 py-2 border ${
-                            formErrors.address
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                          placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
-                        />
-                        {formErrors.address && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {formErrors.address}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Dodatkowe informacje
-                        </label>
-                        <textarea
-                          name="message"
-                          value={bookingForm.message}
-                          onChange={handleInputChange}
-                          rows="3"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
-                          placeholder="Prosimy opisać krótko swój problem zdrowotny oraz wskazać usługę, którą są Państwo zainteresowani (np. konsultacja chirurgiczna, usunięcie zmiany skórnej)."
-                        ></textarea>
-                      </div>
-
-                      {/* Consultation Type Toggle - Hidden for now */}
                       <div className="mb-4 ">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Typ konsultacji
@@ -1072,6 +1033,46 @@ export default function Doctors({
                           </button>
                         </div>
                       </div>
+
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Adres zamieszkania*
+                        </label>
+                        <textarea
+                          name="address"
+                          value={bookingForm.address}
+                          onChange={handleInputChange}
+                          rows="2"
+                          className={`w-full px-3 py-2 border ${
+                            formErrors.address
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                          placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
+                        />
+                        {formErrors.address && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {formErrors.address}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Dodatkowe informacje
+                        </label>
+                        <textarea
+                          name="message"
+                          value={bookingForm.message}
+                          onChange={handleInputChange}
+                          rows="3"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
+                          placeholder="Prosimy opisać krótko swój problem zdrowotny oraz wskazać usługę, którą są Państwo zainteresowani (np. konsultacja chirurgiczna, usunięcie zmiany skórnej)."
+                        ></textarea>
+                      </div>
+
+                      {/* Consultation Type Toggle - Hidden for now */}
+          
 
                       {/* Consent Checkboxes */}
                       <div className="mb-4 space-y-4">
