@@ -94,6 +94,7 @@ const BillingPage = () => {
         specializations:
           createdDoctor.specializations || doctorData.specialization || [],
         bio: createdDoctor.bio || doctorData.bio || "",
+        description: createdDoctor.bio || doctorData.description || "",
         consultationFee:
           createdDoctor.onlineConsultationFee || doctorData.consultationFee || 0,
         offlineConsultationFee:

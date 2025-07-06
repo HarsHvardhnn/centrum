@@ -320,9 +320,9 @@ const DoctorCard = ({ data }) => (
       {data.rating}
     </p>
     */}
-    <p className="text-sm">{data.qualification}</p>
-    <p className="text-sm">{data.specialization || "Ogólny"}</p>
-    <p className="text-sm">{data.experience}</p>
+    <p className="text-sm">{data?.qualification}</p>
+    <p className="text-sm">{data?.specialization || "Ogólny"}</p>
+    <p className="text-sm">{data?.experience}</p>
     {/* Commenting out votes and reviews section as it's not being used
     <p className="mt-4 font-medium text-sm flex items-center justify-center gap-2">
       <FiThumbsUp className="text-lg" />
