@@ -140,19 +140,31 @@ export default function BookAppointment({
     specialization: Yup.string().required("Wymagane"),
     message: Yup.string().min(10, "Za krótka wiadomość").required("Wymagane"),
     consultationType: Yup.string().oneOf(['online', 'offline']).required("Wymagane"),
-    govtId: Yup.string()
-      .required("Numer PESEL jest wymagany")
-      .max(15, "Numer PESEL nie może być dłuższy niż 15 znaków")
-      .matches(/^[a-zA-Z0-9]+$/, "Numer PESEL może zawierać tylko litery i cyfry"),
-    address: Yup.string()
-      .required("Adres zamieszkania jest wymagany")
-      .min(10, "Adres jest za krótki")
-      .trim(),
-    dateOfBirth: Yup.date()
-      .required("Data urodzenia jest wymagana")
-      .max(new Date(), "Data urodzenia nie może być w przyszłości")
-      .nullable()
-      .transform((curr, orig) => orig === '' ? null : curr),
+    govtId: Yup.string().when('consultationType', {
+      is: 'online',
+      then: (schema) => schema
+        .required("Numer PESEL jest wymagany")
+        .max(15, "Numer PESEL nie może być dłuższy niż 15 znaków")
+        .matches(/^[a-zA-Z0-9]+$/, "Numer PESEL może zawierać tylko litery i cyfry"),
+      otherwise: (schema) => schema
+    }),
+    address: Yup.string().when('consultationType', {
+      is: 'online',
+      then: (schema) => schema
+        .required("Adres zamieszkania jest wymagany")
+        .min(10, "Adres jest za krótki")
+        .trim(),
+      otherwise: (schema) => schema
+    }),
+    dateOfBirth: Yup.date().when('consultationType', {
+      is: 'online',
+      then: (schema) => schema
+        .required("Data urodzenia jest wymagana")
+        .max(new Date(), "Data urodzenia nie może być w przyszłości")
+        .nullable()
+        .transform((curr, orig) => orig === '' ? null : curr),
+      otherwise: (schema) => schema
+    }),
     smsConsentAgreed: Yup.boolean(),
     privacyPolicyAgreed: Yup.boolean().oneOf([true], "Akceptacja regulaminu i polityki prywatności jest wymagana"),
     medicalDataProcessingAgreed: Yup.boolean().when('consultationType', {
@@ -648,71 +660,76 @@ export default function BookAppointment({
                   )}
                 </div>
 
-                {/* PESEL field */}
-                <div className="col-span-1">
-                  <Field name="govtId">
-                    {({ field, form }) => (
-                      <input
-                        type="text"
-                        {...field}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
-                          form.setFieldValue('govtId', value);
-                        }}
-                        className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                        placeholder="Wprowadź numer PESEL"
-                        maxLength="15"
+                {/* Online consultation specific fields */}
+                {values.consultationType === "online" && (
+                  <>
+                    {/* PESEL field */}
+                    <div className="col-span-1">
+                      <Field name="govtId">
+                        {({ field, form }) => (
+                          <input
+                            type="text"
+                            {...field}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
+                              form.setFieldValue('govtId', value);
+                            }}
+                            className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                            placeholder="Wprowadź numer PESEL"
+                            maxLength="15"
+                          />
+                        )}
+                      </Field>
+                      <ErrorMessage
+                        name="govtId"
+                        component="div"
+                        className="text-red-600 text-xs sm:text-sm mt-1"
                       />
-                    )}
-                  </Field>
-                  <ErrorMessage
-                    name="govtId"
-                    component="div"
-                    className="text-red-600 text-xs sm:text-sm mt-1"
-                  />
-                </div>
+                    </div>
 
-                {/* Data urodzenia field */}
-                <div className="col-span-1">
-                  <Field name="dateOfBirth">
-                    {({ field, form }) => (
-                      <input
-                        type="date"
-                        {...field}
-                        className={`w-full px-3 py-2 border ${form.touched.dateOfBirth && form.errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                        max={new Date().toISOString().split("T")[0]}
+                    {/* Data urodzenia field */}
+                    <div className="col-span-1">
+                      <Field name="dateOfBirth">
+                        {({ field, form }) => (
+                          <input
+                            type="date"
+                            {...field}
+                            className={`w-full px-3 py-2 border ${form.touched.dateOfBirth && form.errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                            max={new Date().toISOString().split("T")[0]}
+                          />
+                        )}
+                      </Field>
+                      <ErrorMessage
+                        name="dateOfBirth"
+                        component="div"
+                        className="text-red-600 text-xs sm:text-sm mt-1"
                       />
-                    )}
-                  </Field>
-                  <ErrorMessage
-                    name="dateOfBirth"
-                    component="div"
-                    className="text-red-600 text-xs sm:text-sm mt-1"
-                  />
-                </div>
+                    </div>
 
-                {/* Adres zamieszkania field */}
-                <div className="col-span-1 sm:col-span-2">
-                  <Field name="address">
-                    {({ field, form }) => (
-                      <textarea
-                        {...field}
-                        rows="2"
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          form.setFieldValue('address', value.trim());
-                        }}
-                        className={`w-full px-3 py-2 border ${form.touched.address && form.errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                        placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
+                    {/* Adres zamieszkania field */}
+                    <div className="col-span-1 sm:col-span-2">
+                      <Field name="address">
+                        {({ field, form }) => (
+                          <textarea
+                            {...field}
+                            rows="2"
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              form.setFieldValue('address', value.trim());
+                            }}
+                            className={`w-full px-3 py-2 border ${form.touched.address && form.errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                            placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
+                          />
+                        )}
+                      </Field>
+                      <ErrorMessage
+                        name="address"
+                        component="div"
+                        className="text-red-600 text-xs sm:text-sm mt-1"
                       />
-                    )}
-                  </Field>
-                  <ErrorMessage
-                    name="address"
-                    component="div"
-                    className="text-red-600 text-xs sm:text-sm mt-1"
-                  />
-                </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="col-span-1">
                   <Field

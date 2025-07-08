@@ -197,21 +197,23 @@ const DoctorProfilePage = () => {
       errors.phone = "Numer telefonu musi składać się z 9 cyfr";
     }
 
-    // Validate PESEL (govtId)
-    if (!bookingForm.govtId.trim()) {
-      errors.govtId = "Numer PESEL jest wymagany";
-    } else if (bookingForm.govtId.length > 15) {
-      errors.govtId = "Numer PESEL nie może być dłuższy niż 15 znaków";
-    }
+    // Validate PESEL (govtId) only for online consultation
+    if (bookingForm.consultationType === "online") {
+      if (!bookingForm.govtId.trim()) {
+        errors.govtId = "Numer PESEL jest wymagany";
+      } else if (bookingForm.govtId.length > 15) {
+        errors.govtId = "Numer PESEL nie może być dłuższy niż 15 znaków";
+      }
 
-    // Validate address
-    if (!bookingForm.address.trim()) {
-      errors.address = "Adres zamieszkania jest wymagany";
-    }
+      // Validate address only for online consultation
+      if (!bookingForm.address.trim()) {
+        errors.address = "Adres zamieszkania jest wymagany";
+      }
 
-    // Validate date of birth
-    if (!bookingForm.dateOfBirth) {
-      errors.dateOfBirth = "Data urodzenia jest wymagana";
+      // Validate date of birth only for online consultation
+      if (!bookingForm.dateOfBirth) {
+        errors.dateOfBirth = "Data urodzenia jest wymagana";
+      }
     }
 
     // Privacy policy is always mandatory
@@ -965,32 +967,6 @@ const DoctorProfilePage = () => {
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              PESEL*
-                            </label>
-                            <input
-                              type="text"
-                              name="govtId"
-                              value={bookingForm.govtId}
-                              onChange={handleInputChange}
-                              className={`w-full px-3 py-2 border ${
-                                formErrors.govtId
-                                  ? "border-red-500"
-                                  : "border-gray-300"
-                              } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                              placeholder="Wprowadź numer PESEL"
-                              maxLength="15"
-                            />
-                            {formErrors.govtId && (
-                              <p className="text-red-500 text-xs mt-1">
-                                {formErrors.govtId}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
                               Telefon* (9 cyfr)
                             </label>
                             <input
@@ -1016,30 +992,84 @@ const DoctorProfilePage = () => {
                               </p>
                             )}
                           </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Data urodzenia*
-                            </label>
-                            <input
-                              type="date"
-                              name="dateOfBirth"
-                              value={bookingForm.dateOfBirth}
-                              onChange={handleInputChange}
-                              className={`w-full px-3 py-2 border ${
-                                formErrors.dateOfBirth
-                                  ? "border-red-500"
-                                  : "border-gray-300"
-                              } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                              max={new Date().toISOString().split("T")[0]}
-                            />
-                            {formErrors.dateOfBirth && (
-                              <p className="text-red-500 text-xs mt-1">
-                                {formErrors.dateOfBirth}
-                              </p>
-                            )}
-                          </div>
                         </div>
+
+                        {/* Online consultation specific fields */}
+                        {bookingForm.consultationType === "online" && (
+                          <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  PESEL*
+                                </label>
+                                <input
+                                  type="text"
+                                  name="govtId"
+                                  value={bookingForm.govtId}
+                                  onChange={handleInputChange}
+                                  className={`w-full px-3 py-2 border ${
+                                    formErrors.govtId
+                                      ? "border-red-500"
+                                      : "border-gray-300"
+                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                                  placeholder="Wprowadź numer PESEL"
+                                  maxLength="15"
+                                />
+                                {formErrors.govtId && (
+                                  <p className="text-red-500 text-xs mt-1">
+                                    {formErrors.govtId}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Data urodzenia*
+                                </label>
+                                <input
+                                  type="date"
+                                  name="dateOfBirth"
+                                  value={bookingForm.dateOfBirth}
+                                  onChange={handleInputChange}
+                                  className={`w-full px-3 py-2 border ${
+                                    formErrors.dateOfBirth
+                                      ? "border-red-500"
+                                      : "border-gray-300"
+                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                                  max={new Date().toISOString().split("T")[0]}
+                                />
+                                {formErrors.dateOfBirth && (
+                                  <p className="text-red-500 text-xs mt-1">
+                                    {formErrors.dateOfBirth}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="mb-4">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Adres zamieszkania*
+                              </label>
+                              <textarea
+                                name="address"
+                                value={bookingForm.address}
+                                onChange={handleInputChange}
+                                rows="2"
+                                className={`w-full px-3 py-2 border ${
+                                  formErrors.address
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                                placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
+                              />
+                              {formErrors.address && (
+                                <p className="text-red-500 text-xs mt-1">
+                                  {formErrors.address}
+                                </p>
+                              )}
+                            </div>
+                          </>
+                        )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                           <div>
@@ -1082,27 +1112,45 @@ const DoctorProfilePage = () => {
                           </div>
                         </div>
 
+                        {/* Consultation Type Toggle */}
                         <div className="mb-4">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Adres zamieszkania*
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Typ konsultacji
                           </label>
-                          <textarea
-                            name="address"
-                            value={bookingForm.address}
-                            onChange={handleInputChange}
-                            rows="2"
-                            className={`w-full px-3 py-2 border ${
-                              formErrors.address
-                                ? "border-red-500"
-                                : "border-gray-300"
-                            } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                            placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
-                          />
-                          {formErrors.address && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {formErrors.address}
-                            </p>
-                          )}
+                          <div className="flex items-center space-x-4">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setBookingForm({
+                                  ...bookingForm,
+                                  consultationType: "offline",
+                                })
+                              }
+                              className={`px-4 py-2 rounded-md border ${
+                                bookingForm.consultationType === "offline"
+                                  ? "bg-teal-600 text-white border-teal-600"
+                                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                              }`}
+                            >
+                              Wizyta stacjonarna
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setBookingForm({
+                                  ...bookingForm,
+                                  consultationType: "online",
+                                })
+                              }
+                              className={`px-4 py-2 rounded-md border ${
+                                bookingForm.consultationType === "online"
+                                  ? "bg-teal-600 text-white border-teal-600"
+                                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                              }`}
+                            >
+                              Wizyta online
+                            </button>
+                          </div>
                         </div>
 
                         <div className="mb-4">
