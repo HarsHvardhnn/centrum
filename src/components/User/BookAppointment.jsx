@@ -356,8 +356,10 @@ export default function BookAppointment({
       setSubmitStatus({ success: false, error: null });
 
       // Additional validation for required fields
-      if (!values.govtId || !values.address || !values.dateOfBirth) {
-        throw new Error("Wszystkie wymagane pola muszą być wypełnione");
+      if (values.consultationType === "online") {
+        if (!values.govtId || !values.address || !values.dateOfBirth) {
+          throw new Error("Wszystkie wymagane pola muszą być wypełnione dla konsultacji online");
+        }
       }
 
       let recaptchaToken;
@@ -580,7 +582,45 @@ export default function BookAppointment({
                   </div>
                 )}
 
-                {/* Form Fields */}
+                {/* Step 1: Consultation Type */}
+                <div className="col-span-1 sm:col-span-2 mb-4">
+                  <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 1: Typ konsultacji</h5>
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setFieldValue("consultationType", "offline")}
+                      className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
+                        values.consultationType === "offline"
+                          ? "bg-main text-white border-main"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      Wizyta stacjonarna
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFieldValue("consultationType", "online")}
+                      className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
+                        values.consultationType === "online"
+                          ? "bg-main text-white border-main"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      Wizyta online
+                    </button>
+                  </div>
+                  {errors.consultationType && touched.consultationType && (
+                    <div className="text-red-600 text-xs sm:text-sm mt-1">
+                      {errors.consultationType}
+                    </div>
+                  )}
+                </div>
+
+                {/* Step 2: Basic Information */}
+                <div className="col-span-1 sm:col-span-2 mb-4 mt-6">
+                  <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 2: Podstawowe informacje</h5>
+                </div>
+
                 <div className="col-span-1">
                   <Field
                     name="name"
@@ -660,9 +700,77 @@ export default function BookAppointment({
                   )}
                 </div>
 
-                {/* Online consultation specific fields */}
+                {/* Step 3: Specialization and Doctor Selection */}
+                <div className="col-span-1 sm:col-span-2 mb-4 mt-6">
+                  <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 3: Wybór specjalizacji i lekarza</h5>
+                </div>
+
+                <div className="col-span-1">
+                  <Field
+                    as="select"
+                    name="specialization"
+                    onChange={(e) => handleSpecializationChangeWithUpdate(e, setFieldValue, values)}
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
+                  >
+                    <option value="">Wybierz specjalizację</option>
+                    {specializations.map((spec) => (
+                      <option key={spec._id} value={spec._id}>
+                        {spec.name}
+                      </option>
+                    ))}
+                  </Field>
+                  <ErrorMessage
+                    name="specialization"
+                    component="div"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
+                  />
+                </div>
+
+                <div className="col-span-1">
+                  <Field
+                    as="select"
+                    name="doctor"
+                    onChange={(e) => handleDoctorChangeWithUpdate(e, values.date, setFieldValue, values)}
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
+                    disabled={!values.specialization}
+                  >
+                    <option value="">Wybierz lekarza</option>
+                    {doctors.map((doctor) => (
+                      <option key={doctor._id} value={doctor._id}>
+                        {doctor.name}
+                      </option>
+                    ))}
+                  </Field>
+                  <ErrorMessage
+                    name="doctor"
+                    component="div"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
+                  />
+                </div>
+
+                <div className="col-span-1">
+                  <Field
+                    name="date"
+                    type="date"
+                    onChange={(e) => handleDateChangeWithUpdate(e, values.doctor, setFieldValue, values)}
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
+                    min={new Date().toISOString().split('T')[0]}
+                    disabled={!values.doctor}
+                  />
+                  <ErrorMessage
+                    name="date"
+                    component="div"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
+                  />
+                </div>
+
+                {/* Step 4: Additional Information (only for online) */}
                 {values.consultationType === "online" && (
                   <>
+                    <div className="col-span-1 sm:col-span-2 mb-4 mt-6">
+                      <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 4: Dodatkowe informacje (wymagane dla konsultacji online)</h5>
+                    </div>
+
                     {/* PESEL field */}
                     <div className="col-span-1">
                       <Field name="govtId">
@@ -730,101 +838,6 @@ export default function BookAppointment({
                     </div>
                   </>
                 )}
-
-                <div className="col-span-1">
-                  <Field
-                    as="select"
-                    name="specialization"
-                    onChange={(e) => handleSpecializationChangeWithUpdate(e, setFieldValue, values)}
-                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
-                  >
-                    <option value="">Wybierz specjalizację</option>
-                    {specializations.map((spec) => (
-                      <option key={spec._id} value={spec._id}>
-                        {spec.name}
-                      </option>
-                    ))}
-                  </Field>
-                  <ErrorMessage
-                    name="specialization"
-                    component="div"
-                    className="text-red-600 text-xs sm:text-sm mt-1"
-                  />
-                </div>
-
-                <div className="col-span-1">
-                  <Field
-                    as="select"
-                    name="doctor"
-                    onChange={(e) => handleDoctorChangeWithUpdate(e, values.date, setFieldValue, values)}
-                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
-                    disabled={!values.specialization}
-                  >
-                    <option value="">Wybierz lekarza</option>
-                    {doctors.map((doctor) => (
-                      <option key={doctor._id} value={doctor._id}>
-                        {doctor.name}
-                      </option>
-                    ))}
-                  </Field>
-                  <ErrorMessage
-                    name="doctor"
-                    component="div"
-                    className="text-red-600 text-xs sm:text-sm mt-1"
-                  />
-                </div>
-
-                <div className="col-span-1">
-                  <Field
-                    name="date"
-                    type="date"
-                    onChange={(e) => handleDateChangeWithUpdate(e, values.doctor, setFieldValue, values)}
-                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
-                    min={new Date().toISOString().split('T')[0]}
-                    disabled={!values.doctor}
-                  />
-                  <ErrorMessage
-                    name="date"
-                    component="div"
-                    className="text-red-600 text-xs sm:text-sm mt-1"
-                  />
-                </div>
-
-                {/* Consultation Type - Hidden for now */}
-                <div className="col-span-1 sm:col-span-2 hidden">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Typ konsultacji
-                  </label>
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setFieldValue("consultationType", "offline")}
-                      className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
-                        values.consultationType === "offline"
-                          ? "bg-main text-white border-main"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      Wizyta stacjonarna
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFieldValue("consultationType", "online")}
-                      className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
-                        values.consultationType === "online"
-                          ? "bg-main text-white border-main"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      Wizyta online
-                    </button>
-                  </div>
-                  {errors.consultationType && touched.consultationType && (
-                    <div className="text-red-600 text-xs sm:text-sm mt-1">
-                      {errors.consultationType}
-                    </div>
-                  )}
-                </div>
 
                 {/* Available Time Slots */}
                 <div className="col-span-1 sm:col-span-2">

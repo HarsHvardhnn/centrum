@@ -330,6 +330,9 @@ const DoctorProfilePage = () => {
         consultationType: bookingForm.consultationType,
         smsConsentAgreed: bookingForm.smsConsentAgreed,
         privacyPolicyAgreed: bookingForm.privacyPolicyAgreed,
+        medicalDataProcessingAgreed: bookingForm.medicalDataProcessingAgreed,
+        teleportationConfirmed: bookingForm.teleportationConfirmed,
+        contactConsentAgreed: bookingForm.contactConsentAgreed,
         recaptchaToken: token || recaptchaToken,
         consent: true, // Required by backend middleware
         // Adding the new fields
@@ -941,62 +944,149 @@ const DoctorProfilePage = () => {
                           Dane pacjenta
                         </h4>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Imię i nazwisko*
-                            </label>
-                            <input
-                              type="text"
-                              name="name"
-                              value={bookingForm.name}
-                              onChange={handleInputChange}
-                              className={`w-full px-3 py-2 border ${
-                                formErrors.name
-                                  ? "border-red-500"
-                                  : "border-gray-300"
-                              } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                              placeholder="Jan Kowalski"
-                            />
-                            {formErrors.name && (
-                              <p className="text-red-500 text-xs mt-1">
-                                {formErrors.name}
-                              </p>
-                            )}
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Telefon* (9 cyfr)
-                            </label>
-                            <input
-                              type="tel"
-                              name="phone"
-                              value={bookingForm.phone}
-                              onChange={handlePhoneChange}
-                              className={`w-full px-3 py-2 border ${
-                                formErrors.phone
-                                  ? "border-red-500"
-                                  : "border-gray-300"
-                              } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                              placeholder="123456789"
-                              maxLength="9"
-                            />
-                            {formErrors.phone ? (
-                              <p className="text-red-500 text-xs mt-1">
-                                {formErrors.phone}
-                              </p>
-                            ) : (
-                              <p className="text-gray-500 text-xs mt-1">
-                                Format: 9 cyfr bez spacji i znaków specjalnych
-                              </p>
-                            )}
+                        {/* Step 1: Consultation Type Selection */}
+                        <div className="mb-6">
+                          <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 1: Typ konsultacji</h5>
+                          <div className="flex items-center space-x-4">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setBookingForm({
+                                  ...bookingForm,
+                                  consultationType: "offline",
+                                })
+                              }
+                              className={`px-4 py-2 rounded-md border ${
+                                bookingForm.consultationType === "offline"
+                                  ? "bg-teal-600 text-white border-teal-600"
+                                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                              }`}
+                            >
+                              Wizyta stacjonarna
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setBookingForm({
+                                  ...bookingForm,
+                                  consultationType: "online",
+                                })
+                              }
+                              className={`px-4 py-2 rounded-md border ${
+                                bookingForm.consultationType === "online"
+                                  ? "bg-teal-600 text-white border-teal-600"
+                                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                              }`}
+                            >
+                              Wizyta online
+                            </button>
                           </div>
                         </div>
 
-                        {/* Online consultation specific fields */}
+                        {/* Step 2: Basic Information */}
+                        <div className="mb-6">
+                          <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 2: Podstawowe informacje</h5>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Imię i nazwisko*
+                              </label>
+                              <input
+                                type="text"
+                                name="name"
+                                value={bookingForm.name}
+                                onChange={handleInputChange}
+                                className={`w-full px-3 py-2 border ${
+                                  formErrors.name
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                                placeholder="Jan Kowalski"
+                              />
+                              {formErrors.name && (
+                                <p className="text-red-500 text-xs mt-1">
+                                  {formErrors.name}
+                                </p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Telefon* (9 cyfr)
+                              </label>
+                              <input
+                                type="tel"
+                                name="phone"
+                                value={bookingForm.phone}
+                                onChange={handlePhoneChange}
+                                className={`w-full px-3 py-2 border ${
+                                  formErrors.phone
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                                placeholder="123456789"
+                                maxLength="9"
+                              />
+                              {formErrors.phone ? (
+                                <p className="text-red-500 text-xs mt-1">
+                                  {formErrors.phone}
+                                </p>
+                              ) : (
+                                <p className="text-gray-500 text-xs mt-1">
+                                  Format: 9 cyfr bez spacji i znaków specjalnych
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Adres email
+                              </label>
+                              <input
+                                type="email"
+                                name="email"
+                                value={bookingForm.email}
+                                onChange={handleInputChange}
+                                className={`w-full px-3 py-2 border ${
+                                  formErrors.email
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                                placeholder="jan.kowalski@example.com"
+                              />
+                              {formErrors.email && (
+                                <p className="text-red-500 text-xs mt-1">
+                                  {formErrors.email}
+                                </p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Płeć
+                              </label>
+                              <select
+                                name="gender"
+                                value={bookingForm.gender}
+                                onChange={handleInputChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
+                              >
+                                <option value="male">Mężczyzna</option>
+                                <option value="female">Kobieta</option>
+                                <option value="other">Inna</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Step 3: Additional Information (only for online) */}
                         {bookingForm.consultationType === "online" && (
-                          <>
+                          <div className="mb-6">
+                            <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 3: Dodatkowe informacje (wymagane dla konsultacji online)</h5>
+                            
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1068,91 +1158,10 @@ const DoctorProfilePage = () => {
                                 </p>
                               )}
                             </div>
-                          </>
+                          </div>
                         )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Adres email
-                            </label>
-                            <input
-                              type="email"
-                              name="email"
-                              value={bookingForm.email}
-                              onChange={handleInputChange}
-                              className={`w-full px-3 py-2 border ${
-                                formErrors.email
-                                  ? "border-red-500"
-                                  : "border-gray-300"
-                              } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                              placeholder="jan.kowalski@example.com"
-                            />
-                            {formErrors.email && (
-                              <p className="text-red-500 text-xs mt-1">
-                                {formErrors.email}
-                              </p>
-                            )}
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Płeć
-                            </label>
-                            <select
-                              name="gender"
-                              value={bookingForm.gender}
-                              onChange={handleInputChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
-                            >
-                              <option value="male">Mężczyzna</option>
-                              <option value="female">Kobieta</option>
-                              <option value="other">Inna</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        {/* Consultation Type Toggle */}
-                        <div className="mb-4">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Typ konsultacji
-                          </label>
-                          <div className="flex items-center space-x-4">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setBookingForm({
-                                  ...bookingForm,
-                                  consultationType: "offline",
-                                })
-                              }
-                              className={`px-4 py-2 rounded-md border ${
-                                bookingForm.consultationType === "offline"
-                                  ? "bg-teal-600 text-white border-teal-600"
-                                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                              }`}
-                            >
-                              Wizyta stacjonarna
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setBookingForm({
-                                  ...bookingForm,
-                                  consultationType: "online",
-                                })
-                              }
-                              className={`px-4 py-2 rounded-md border ${
-                                bookingForm.consultationType === "online"
-                                  ? "bg-teal-600 text-white border-teal-600"
-                                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                              }`}
-                            >
-                              Wizyta online
-                            </button>
-                          </div>
-                        </div>
-
+                        {/* Additional Information */}
                         <div className="mb-4">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Dodatkowe informacje
@@ -1231,6 +1240,89 @@ const DoctorProfilePage = () => {
                               </span>
                             </label>
                           </div>
+
+                          {/* Online consultation specific consents */}
+                          {bookingForm.consultationType === "online" && (
+                            <>
+                              {/* Medical Data Processing Consent */}
+                              <div>
+                                <label className="flex items-start space-x-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    name="medicalDataProcessingAgreed"
+                                    checked={bookingForm.medicalDataProcessingAgreed}
+                                    onChange={(e) =>
+                                      setBookingForm({
+                                        ...bookingForm,
+                                        medicalDataProcessingAgreed: e.target.checked,
+                                      })
+                                    }
+                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                  />
+                                  <span className="text-sm text-gray-700">
+                                    Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym danych medycznych, w celu realizacji konsultacji medycznej online, zgodnie z art. 9 ust. 2 lit. h RODO. <span className="text-red-500">*</span>
+                                  </span>
+                                </label>
+                                {formErrors.medicalDataProcessingAgreed && (
+                                  <p className="text-red-500 text-xs mt-1 ml-6">
+                                    {formErrors.medicalDataProcessingAgreed}
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* Teleportation Confirmation */}
+                              <div>
+                                <label className="flex items-start space-x-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    name="teleportationConfirmed"
+                                    checked={bookingForm.teleportationConfirmed}
+                                    onChange={(e) =>
+                                      setBookingForm({
+                                        ...bookingForm,
+                                        teleportationConfirmed: e.target.checked,
+                                      })
+                                    }
+                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                  />
+                                  <span className="text-sm text-gray-700">
+                                    Potwierdzam, że konsultacja medyczna odbędzie się w formie zdalnej (online) i jestem świadomy(-a) tej formy świadczenia zdrowotnego. <span className="text-red-500">*</span>
+                                  </span>
+                                </label>
+                                {formErrors.teleportationConfirmed && (
+                                  <p className="text-red-500 text-xs mt-1 ml-6">
+                                    {formErrors.teleportationConfirmed}
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* Contact Consent */}
+                              <div>
+                                <label className="flex items-start space-x-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    name="contactConsentAgreed"
+                                    checked={bookingForm.contactConsentAgreed}
+                                    onChange={(e) =>
+                                      setBookingForm({
+                                        ...bookingForm,
+                                        contactConsentAgreed: e.target.checked,
+                                      })
+                                    }
+                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                  />
+                                  <span className="text-sm text-gray-700">
+                                    Wyrażam zgodę na kontakt telefoniczny lub e-mailowy w celu realizacji konsultacji online, w tym przesłania linku do spotkania. <span className="text-red-500">*</span>
+                                  </span>
+                                </label>
+                                {formErrors.contactConsentAgreed && (
+                                  <p className="text-red-500 text-xs mt-1 ml-6">
+                                    {formErrors.contactConsentAgreed}
+                                  </p>
+                                )}
+                              </div>
+                            </>
+                          )}
                         </div>
 
                         <div className="text-xs text-gray-500 mt-2">

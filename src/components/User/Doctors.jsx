@@ -461,6 +461,9 @@ export default function Doctors({
         consultationType: bookingForm.consultationType,
         smsConsentAgreed: bookingForm.smsConsentAgreed,
         privacyPolicyAgreed: bookingForm.privacyPolicyAgreed,
+        medicalDataProcessingAgreed: bookingForm.medicalDataProcessingAgreed,
+        teleportationConfirmed: bookingForm.teleportationConfirmed,
+        contactConsentAgreed: bookingForm.contactConsentAgreed,
         govtId: bookingForm.govtId,
         address: bookingForm.address,
         dateOfBirth: bookingForm.dateOfBirth,
@@ -854,7 +857,50 @@ export default function Doctors({
                         Dane pacjenta
                       </h4>
 
-                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      {/* Step 1: Consultation Type Selection */}
+                      <div className="mb-6">
+                        <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 1: Typ konsultacji</h5>
+                        <div className="flex items-center space-x-4">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBookingForm({
+                                ...bookingForm,
+                                consultationType: "offline",
+                              })
+                            }
+                            className={`px-4 py-2 rounded-md border ${
+                              bookingForm.consultationType === "offline"
+                                ? "bg-main text-white border-main"
+                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            Wizyta stacjonarna
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBookingForm({
+                                ...bookingForm,
+                                consultationType: "online",
+                              })
+                            }
+                            className={`px-4 py-2 rounded-md border ${
+                              bookingForm.consultationType === "online"
+                                ? "bg-main text-white border-main"
+                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            Wizyta online
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Step 2: Basic Information */}
+                      <div className="mb-6">
+                        <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 2: Podstawowe informacje</h5>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Imię i nazwisko*
@@ -907,186 +953,128 @@ export default function Doctors({
                           </div>
                         </div>
 
-                        {/* Online consultation specific fields */}
-                        {bookingForm.consultationType === "online" && (
-                          <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  PESEL*
-                                </label>
-                                <input
-                                  type="text"
-                                  name="govtId"
-                                  value={bookingForm.govtId}
-                                  onChange={handleInputChange}
-                                  className={`w-full px-3 py-2 border ${
-                                    formErrors.govtId
-                                      ? "border-red-500"
-                                      : "border-gray-300"
-                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                  placeholder="Wprowadź numer PESEL"
-                                  maxLength="15"
-                                />
-                                {formErrors.govtId && (
-                                  <p className="text-red-500 text-xs mt-1">
-                                    {formErrors.govtId}
-                                  </p>
-                                )}
-                              </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Adres email
+                            </label>
+                            <input
+                              type="email"
+                              name="email"
+                              value={bookingForm.email}
+                              onChange={handleInputChange}
+                              className={`w-full px-3 py-2 border ${
+                                formErrors.email
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                              placeholder="jan.kowalski@example.com"
+                            />
+                            {formErrors.email && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {formErrors.email}
+                              </p>
+                            )}
+                          </div>
 
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  Data urodzenia*
-                                </label>
-                                <input
-                                  type="date"
-                                  name="dateOfBirth"
-                                  value={bookingForm.dateOfBirth}
-                                  onChange={handleInputChange}
-                                  className={`w-full px-3 py-2 border ${
-                                    formErrors.dateOfBirth
-                                      ? "border-red-500"
-                                      : "border-gray-300"
-                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                  max={new Date().toISOString().split("T")[0]}
-                                />
-                                {formErrors.dateOfBirth && (
-                                  <p className="text-red-500 text-xs mt-1">
-                                    {formErrors.dateOfBirth}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Płeć
+                            </label>
+                            <select
+                              name="gender"
+                              value={bookingForm.gender}
+                              onChange={handleInputChange}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
+                            >
+                              <option value="male">Mężczyzna</option>
+                              <option value="female">Kobieta</option>
+                              <option value="other">Inna</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
 
-                            <div className="mb-4">
+                      {/* Step 3: Additional Information (only for online) */}
+                      {bookingForm.consultationType === "online" && (
+                        <div className="mb-6">
+                          <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 3: Dodatkowe informacje (wymagane dla konsultacji online)</h5>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Adres zamieszkania*
+                                PESEL*
                               </label>
-                              <textarea
-                                name="address"
-                                value={bookingForm.address}
+                              <input
+                                type="text"
+                                name="govtId"
+                                value={bookingForm.govtId}
                                 onChange={handleInputChange}
-                                rows="2"
                                 className={`w-full px-3 py-2 border ${
-                                  formErrors.address
+                                  formErrors.govtId
                                     ? "border-red-500"
                                     : "border-gray-300"
                                 } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
+                                placeholder="Wprowadź numer PESEL"
+                                maxLength="15"
                               />
-                              {formErrors.address && (
+                              {formErrors.govtId && (
                                 <p className="text-red-500 text-xs mt-1">
-                                  {formErrors.address}
+                                  {formErrors.govtId}
                                 </p>
                               )}
                             </div>
-                          </>
-                        )}
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Adres email
-                          </label>
-                          <input
-                            type="email"
-                            name="email"
-                            value={bookingForm.email}
-                            onChange={handleInputChange}
-                            className={`w-full px-3 py-2 border ${
-                              formErrors.email
-                                ? "border-red-500"
-                                : "border-gray-300"
-                            } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                            placeholder="jan.kowalski@example.com"
-                          />
-                          {formErrors.email && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {formErrors.email}
-                            </p>
-                          )}
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Data urodzenia*
+                              </label>
+                              <input
+                                type="date"
+                                name="dateOfBirth"
+                                value={bookingForm.dateOfBirth}
+                                onChange={handleInputChange}
+                                className={`w-full px-3 py-2 border ${
+                                  formErrors.dateOfBirth
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                                max={new Date().toISOString().split("T")[0]}
+                              />
+                              {formErrors.dateOfBirth && (
+                                <p className="text-red-500 text-xs mt-1">
+                                  {formErrors.dateOfBirth}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Adres zamieszkania*
+                            </label>
+                            <textarea
+                              name="address"
+                              value={bookingForm.address}
+                              onChange={handleInputChange}
+                              rows="2"
+                              className={`w-full px-3 py-2 border ${
+                                formErrors.address
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                              placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
+                            />
+                            {formErrors.address && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {formErrors.address}
+                              </p>
+                            )}
+                          </div>
                         </div>
+                      )}
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Płeć
-                          </label>
-                          <select
-                            name="gender"
-                            value={bookingForm.gender}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
-                          >
-                            <option value="male">Mężczyzna</option>
-                            <option value="female">Kobieta</option>
-                            <option value="other">Inna</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="mb-4 ">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Typ konsultacji
-                        </label>
-                        <div className="flex items-center space-x-4">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setBookingForm({
-                                ...bookingForm,
-                                consultationType: "offline",
-                              })
-                            }
-                            className={`px-4 py-2 rounded-md border ${
-                              bookingForm.consultationType === "offline"
-                                ? "bg-main text-white border-main"
-                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                            }`}
-                          >
-                            Wizyta stacjonarna
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setBookingForm({
-                                ...bookingForm,
-                                consultationType: "online",
-                              })
-                            }
-                            className={`px-4 py-2 rounded-md border ${
-                              bookingForm.consultationType === "online"
-                                ? "bg-main text-white border-main"
-                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                            }`}
-                          >
-                            Wizyta online
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Adres zamieszkania*
-                        </label>
-                        <textarea
-                          name="address"
-                          value={bookingForm.address}
-                          onChange={handleInputChange}
-                          rows="2"
-                          className={`w-full px-3 py-2 border ${
-                            formErrors.address
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                          placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
-                        />
-                        {formErrors.address && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {formErrors.address}
-                          </p>
-                        )}
-                      </div>
-
+                      {/* Additional Information */}
                       <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Dodatkowe informacje
@@ -1100,9 +1088,6 @@ export default function Doctors({
                           placeholder="Prosimy opisać krótko swój problem zdrowotny oraz wskazać usługę, którą są Państwo zainteresowani (np. konsultacja chirurgiczna, usunięcie zmiany skórnej)."
                         ></textarea>
                       </div>
-
-                      {/* Consultation Type Toggle - Hidden for now */}
-          
 
                       {/* Consent Checkboxes */}
                       <div className="mb-4 space-y-4">
