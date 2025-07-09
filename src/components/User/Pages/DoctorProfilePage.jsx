@@ -744,7 +744,7 @@ const DoctorProfilePage = () => {
         </div>
 
         {/* Floating Booking Button */}
-        <div className="fixed bottom-6 right-6 z-40">
+        <div className="fixed bottom-6 left-6 z-40">
           <button
             onClick={handleBookAppointment}
             className="bg-teal-600 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:bg-teal-700 transition-all hover:scale-105 flex items-center gap-2"
@@ -1346,27 +1346,36 @@ const DoctorProfilePage = () => {
               )}
 
               {/* Modal Footer */}
-              <div className="bg-gray-50 px-6 py-4 flex justify-end sticky bottom-0">
-                <button
-                  onClick={() => setShowBookingModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 mr-2 hover:bg-gray-100"
-                >
-                  Anuluj
-                </button>
-                <button
-                  onClick={handleConfirmAppointment}
-                  disabled={!selectedSlot || isSubmitting}
-                  className={`px-4 py-2 rounded-md text-white flex items-center ${
-                    selectedSlot && !isSubmitting
-                      ? "bg-teal-600 hover:bg-teal-700"
-                      : "bg-gray-400 cursor-not-allowed"
-                  }`}
-                >
-                  {isSubmitting && (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  )}
-                  Potwierdź wizytę
-                </button>
+              <div className="bg-gray-50 px-6 py-4 flex flex-col md:flex-row md:justify-end md:items-center sticky bottom-0 gap-2">
+                <div className="text-xs text-gray-500 md:mr-auto md:mb-0 mb-2">
+                  Ta strona jest chroniona przez reCAPTCHA. Obowiązują
+                  <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline ml-1">Polityka prywatności</a>
+                  oraz
+                  <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline ml-1">Warunki korzystania z usług</a>
+                  Google.
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowBookingModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
+                  >
+                    Anuluj
+                  </button>
+                  <button
+                    onClick={handleConfirmAppointment}
+                    disabled={!selectedSlot || isSubmitting}
+                    className={`px-4 py-2 rounded-md text-white flex items-center ${
+                      selectedSlot && !isSubmitting
+                        ? "bg-teal-600 hover:bg-teal-700"
+                        : "bg-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    {isSubmitting && (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    )}
+                    Potwierdź wizytę
+                  </button>
+                </div>
               </div>
             </div>
           </div>

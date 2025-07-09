@@ -54,3 +54,7 @@
     display: block;
   }
 }
+
+.grecaptcha-badge {
+  visibility: hidden !important;
+}

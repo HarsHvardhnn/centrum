@@ -185,7 +185,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           const experience = dynamicData.data.experience ? `${dynamicData.data.experience} lat doświadczenia` : "";
           console.log("dynamicData", dynamicData);
           
-          title = `${doctorName} – ${specializations}${experience ? ` | ${experience}` : ""} | Centrum Medyczne 7`;
+          title = `${doctorName} – ${specializations} Skarżysko-Kamienna | Centrum Medyczne 7`;
           description = `Umów wizytę z ${doctorName}, ${specializations.toLowerCase()}${experience ? ` z ${experience}` : ""}. ${
             dynamicData.data.onlineConsultationPrice !== undefined 
               ? `Konsultacje online od ${dynamicData.data.onlineConsultationPrice} zł` 
@@ -278,7 +278,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     </script>
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-DHxfE0Po.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-DaRS4nSr.css">
 </head>
 <body>
     <!-- SEO Content for crawlers -->
@@ -291,7 +291,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-B5nRmq6J.js"></script>
+    <script type="module" crossorigin src="/assets/index-C_W_9-e6.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
