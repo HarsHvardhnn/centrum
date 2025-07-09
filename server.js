@@ -185,7 +185,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           const experience = dynamicData.data.experience ? `${dynamicData.data.experience} lat doświadczenia` : "";
           console.log("dynamicData", dynamicData);
           
-          title = `${doctorName} – ${specializations}${experience ? ` | ${experience}` : ""} | Centrum Medyczne 7`;
+          title = `${doctorName} – ${specializations} Skarżysko-Kamienna | Centrum Medyczne 7`;
           description = `Umów wizytę z ${doctorName}, ${specializations.toLowerCase()}${experience ? ` z ${experience}` : ""}. ${
             dynamicData.data.onlineConsultationPrice !== undefined 
               ? `Konsultacje online od ${dynamicData.data.onlineConsultationPrice} zł` 

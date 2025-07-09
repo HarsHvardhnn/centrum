@@ -181,33 +181,44 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
   if (patientData.documents && patientData.documents.length > 0) {
     sections["Dokumenty"] = {
       "Dokumenty": (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {patientData.documents.map((doc, index) => (
-            <div 
-              key={doc.id || index} 
-              className="bg-white rounded-lg p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+            <div
+              key={doc.id || index}
+              className="bg-white rounded-lg p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow w-64 max-w-full relative group"
               onClick={() => {
                 if (doc.url) {
                   window.open(doc.url, '_blank');
                 } else {
-                  window.open(doc.preview, '_blank');                }
+                  window.open(doc.preview, '_blank');
+                }
               }}
-                          >
+            >
               <div className="flex items-center gap-3">
                 {doc.isPdf ? (
                   <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                     <FileText className="text-red-500" size={24} />
                   </div>
                 ) : (
-                  <img 
-                    src={doc.preview || doc.url} 
+                  <img
+                    src={doc.preview || doc.url}
                     alt={doc.name}
                     className="w-12 h-12 object-cover rounded-lg"
                   />
                 )}
-                <div>
-                  <p className="text-sm font-medium truncate">{doc?.fileName?.split(".")[0] || doc?.name || "Bez nazwy"}</p>
-                  {/* <p className="text-xs text-gray-500">{doc.type}</p> */}
+                <div className="flex-1 min-w-0 relative">
+                  <p
+                    className="text-sm font-medium truncate w-full"
+                  >
+                    {doc?.fileName?.split(".")[0] || doc?.name || "Bez nazwy"}
+                  </p>
+                  {/* Tooltip for full file name */}
+                  <span
+                    className="absolute left-0 top-full mt-1 z-20 hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-pre-line max-w-xs break-words shadow-lg"
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    {doc?.fileName || doc?.name || "Bez nazwy"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -225,6 +236,12 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
     return acc;
   }, {});
 
+  // Separate documents section from others
+  const entries = Object.entries(filteredSections);
+  const docIndex = entries.findIndex(([sectionTitle]) => sectionTitle === "Dokumenty");
+  const docSection = docIndex !== -1 ? entries[docIndex] : null;
+  const otherSections = docIndex !== -1 ? entries.filter((_, i) => i !== docIndex) : entries;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
       <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -237,9 +254,9 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
             <X size={24} />
           </button>
         </div>
-        
+        {/* Main info grid (excluding documents) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Object.entries(filteredSections).map(([sectionTitle, fields]) => (
+          {otherSections.map(([sectionTitle, fields]) => (
             <div key={sectionTitle} className="bg-gray-50 rounded-lg p-4">
               <h3 className="font-medium text-gray-800 mb-3">{sectionTitle}</h3>
               <div className="space-y-2">
@@ -257,6 +274,17 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
             </div>
           ))}
         </div>
+        {/* Full-width documents section */}
+        {docSection && (
+          <div className="mt-8">
+            <h3 className="font-medium text-gray-800 mb-3">{docSection[0]}</h3>
+            {Object.entries(docSection[1]).map(([label, value]) => (
+              <div key={label} className="mb-2">
+                {typeof value === 'object' && value !== null ? value : <span className="text-sm font-medium">{value}</span>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

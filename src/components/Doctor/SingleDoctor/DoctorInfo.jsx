@@ -14,7 +14,7 @@ const DoctorInfoCard = ({ doctor }) => {
   return (
     <div className="flex items-start p-2  rounded-lg">
       {/* Doctor Avatar */}
-      <div className="mr-3">
+      <div className="mr-3 flex-shrink-0">
         <img
           src={avatarUrl}
           alt={`Dr. ${name}`}
@@ -72,7 +72,9 @@ const DoctorInfoCard = ({ doctor }) => {
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             ></path>
           </svg>
-          <p className="text-gray-600 text-sm leading-snug">{description}</p>
+          <p className="text-gray-600 text-sm leading-snug line-clamp-4">
+            {description}
+          </p>
         </div>
       </div>
     </div>
