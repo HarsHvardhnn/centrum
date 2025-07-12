@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaCalendarAlt, FaPhone, FaEnvelope, FaGraduationCap, FaClock, FaMapMarkerAlt, FaShare, FaTimes, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaCalendarAlt, FaPhone, FaEnvelope, FaGraduationCap, FaClock, FaMapMarkerAlt, FaShare, FaTimes, FaChevronLeft, FaChevronRight, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { apiCaller } from '../../../utils/axiosInstance';
 import MetaTags from '../../UtilComponents/MetaTags';
@@ -52,6 +52,7 @@ const DoctorProfilePage = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAllServices, setShowAllServices] = useState(false);
 
   useEffect(() => {
     fetchDoctorBySlug();
@@ -569,6 +570,69 @@ const DoctorProfilePage = () => {
           </div>
         </div>
 
+        {/* Services Quick View Section */}
+        {doctor.services && doctor.services.length > 0 && (
+          <div className="bg-white shadow-lg -mt-8 relative z-10 max-w-6xl mx-auto rounded-xl overflow-hidden">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">Dostępne usługi</h2>
+                <button
+                  onClick={() => setShowAllServices(!showAllServices)}
+                  className="flex items-center gap-2 text-teal-600 hover:text-teal-700 font-medium"
+                >
+                  {showAllServices ? (
+                    <>
+                      Pokaż mniej <FaChevronUp />
+                    </>
+                  ) : (
+                    <>
+                      Pokaż więcej <FaChevronDown />
+                    </>
+                  )}
+                </button>
+              </div>
+              
+              <div className="grid gap-6">
+                {doctor.services
+                  .filter(service => service.status === "active")
+                  .slice(0, showAllServices ? undefined : 1)
+                  .map((service, index) => {
+                    const serviceName = service.name || 
+                      (service.description && service.description.split('.')[0]) || 
+                      `Konsultacja ${index + 1}`;
+
+                    return (
+                      <div 
+                        key={service.id || index}
+                        className="bg-gray-50 rounded-lg p-6 transition-all hover:shadow-md"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+                          <h3 className="text-lg font-semibold text-teal-800">
+                            {serviceName}
+                          </h3>
+                          <div className="text-xl font-bold text-teal-600 whitespace-nowrap">
+                            {service.price ? `${service.price} zł` : 'Cena do ustalenia'}
+                          </div>
+                        </div>
+                        {service.description && (
+                          <p className="text-gray-600 text-sm leading-relaxed">
+                            {service.description}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+              
+              {doctor.services.length > 3 && !showAllServices && (
+                <div className="mt-4 text-center text-gray-500 text-sm">
+                  {doctor.services.length - 3} więcej usług dostępnych
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Main Content */}
         <div className="max-w-6xl mx-auto px-6 py-12">
           <div className="grid lg:grid-cols-3 gap-8">
@@ -625,6 +689,9 @@ const DoctorProfilePage = () => {
                   </div>
                 </div>
               )}
+
+              {/* Services */}
+              {/* This section is now handled by the quick view */}
             </div>
 
             {/* Right Column - Quick Info & Booking */}
