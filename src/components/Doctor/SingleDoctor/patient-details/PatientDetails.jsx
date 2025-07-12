@@ -332,10 +332,9 @@ const PatientDetailsPage = () => {
   // Consultation state (now tied to appointment)
   const [consultationData, setConsultationData] = useState({
     consultationType: "Konsultacja w przychodni",
-    locationType: "Konsultacja online",
-    time: "11:20",
-    date: "16-12-2021",
-    description: "",
+    consultationDoctor: "",
+    time: "",
+    consultationDate: "",
     notes: "",
     treatmentCategory: "",
     isOnline: false,
@@ -453,10 +452,14 @@ const PatientDetailsPage = () => {
       const response = await appointmentHelper.getAppointmentById(appointmentId);
       
       if (response.data) {
-        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports, patientData: appointmentPatientData } = response.data;
+        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports, patientData: appointmentPatientData, notes } = response.data;
         
-        // Update consultation data
-        setConsultationData(consultation || {});
+        // Update consultation data with notes
+        setConsultationData(prevConsultation => ({
+          ...prevConsultation,
+          ...consultation,
+          notes: notes || "" // Add notes from appointment
+        }));
         setMedications(appointmentMedications || []);
         setTests(appointmentTests || []);
         setReports(reports || []);
@@ -554,7 +557,8 @@ const PatientDetailsPage = () => {
           consultationData,
           medications,
           tests,
-          uploadedFiles
+          uploadedFiles,
+          notes: consultationData.notes // Add notes to the save payload
         }
       );
 

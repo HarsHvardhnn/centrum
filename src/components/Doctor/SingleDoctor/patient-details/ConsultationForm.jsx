@@ -351,13 +351,12 @@ const ConsultationForm = ({
       <div className="mt-6">
         <label className="block text-sm text-gray-600 mb-1">Notatki</label>
         <textarea
-          value={consultationData.description || ""}
-          onChange={(e) =>
-            handleConsultationChange("description", e.target.value)
-          }
+          value={consultationData.notes || ""}
+          onChange={(e) => handleConsultationChange("notes", e.target.value)}
           rows={3}
           className="w-full p-2.5 border border-gray-200 rounded-lg"
           placeholder="Dodaj notatki..."
+          disabled={false}
         ></textarea>
       </div>
 
