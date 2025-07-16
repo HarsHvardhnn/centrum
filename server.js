@@ -39,7 +39,7 @@ function removeTrailingSlash(url) {
 
 // API base URL - adjust this to your backend URL  
 const API_BASE_URL = removeTrailingSlash('https://backend.centrummedyczne7.pl/');
-// const API_BASE_URL = removeTrailingSlash('http://localhost:5000/');
+// const API_BASE_URL = removeTrailingSlash('https://backend.centrummedyczne7.pl/');
 
 console.log("API_BASE_URL", API_BASE_URL);
 // Bot detection function
@@ -278,7 +278,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     </script>
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-CjkqyNnG.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-5-rwqqmM.css">
 </head>
 <body>
     <!-- SEO Content for crawlers -->
@@ -291,7 +291,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-DB_F1Ntc.js"></script>
+    <script type="module" crossorigin src="/assets/index-DNbjgfSw.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
