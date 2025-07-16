@@ -129,7 +129,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
           {/* Hero Image for larger screens */}
 {!isMobile       &&    <img
           loading="lazy"
-          src="/images/doctors1.png"
+          src="https://res.cloudinary.com/dca740eqo/image/upload/v1752645543/hospital_app/images/cm1feqqrhygkltnrb9hx.webp"
           alt="Desktop"
           className="w-full max-w-[600px] relative z-10"
         />}
@@ -138,7 +138,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
         {/* Hero Image for mobile screens */}
    { isMobile &&    <img
    loading="lazy"
-          src="/images/doctors1.png"
+          src="https://res.cloudinary.com/dca740eqo/image/upload/v1752645543/hospital_app/images/cm1feqqrhygkltnrb9hx.webp"
           alt="Desktop"
           className="w-full top-8 max-w-[600px] relative z-10"
         />}

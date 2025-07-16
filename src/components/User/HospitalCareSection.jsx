@@ -19,19 +19,56 @@ const HospitalCareSection = () => {
     fade: true,
   };
 
-  // Array of images from about_us folder
-  const images = [1, 2, 3, 4, 5];
+  // Array of images from Cloudinary
+  const images = [
+    {
+      "url": "https://res.cloudinary.com/dca740eqo/image/upload/v1752646765/hospital_app/images/o4dcquip1vytxyeq2p5a.jpg",
+      "public_id": "hospital_app/images/o4dcquip1vytxyeq2p5a",
+      "originalName": "1_about us.jpg",
+      "mimetype": "image/jpeg",
+      "size": 15411,
+      "uploadDate": "2025-07-16T06:19:30.990Z",
+      "secure_url": "https://res.cloudinary.com/dca740eqo/image/upload/v1752646765/hospital_app/images/o4dcquip1vytxyeq2p5a.jpg"
+    },
+    {
+      "url": "https://res.cloudinary.com/dca740eqo/image/upload/v1752646767/hospital_app/images/b2livnveykm8aophmq7p.jpg",
+      "public_id": "hospital_app/images/b2livnveykm8aophmq7p",
+      "originalName": "2_about us.jpg",
+      "mimetype": "image/jpeg",
+      "size": 22796,
+      "uploadDate": "2025-07-16T06:19:30.990Z",
+      "secure_url": "https://res.cloudinary.com/dca740eqo/image/upload/v1752646767/hospital_app/images/b2livnveykm8aophmq7p.jpg"
+    },
+    {
+      "url": "https://res.cloudinary.com/dca740eqo/image/upload/v1752646767/hospital_app/images/ojw0xfou8jfgasachjxo.jpg",
+      "public_id": "hospital_app/images/ojw0xfou8jfgasachjxo",
+      "originalName": "3_about us.jpg",
+      "mimetype": "image/jpeg",
+      "size": 23547,
+      "uploadDate": "2025-07-16T06:19:30.990Z",
+      "secure_url": "https://res.cloudinary.com/dca740eqo/image/upload/v1752646767/hospital_app/images/ojw0xfou8jfgasachjxo.jpg"
+    },
+    {
+      "url": "https://res.cloudinary.com/dca740eqo/image/upload/v1752646768/hospital_app/images/odfdmt6qwy97ismuos9n.jpg",
+      "public_id": "hospital_app/images/odfdmt6qwy97ismuos9n",
+      "originalName": "4_about us.jpg",
+      "mimetype": "image/jpeg",
+      "size": 20493,
+      "uploadDate": "2025-07-16T06:19:30.990Z",
+      "secure_url": "https://res.cloudinary.com/dca740eqo/image/upload/v1752646768/hospital_app/images/odfdmt6qwy97ismuos9n.jpg"
+    }
+  ];
 
   return (
     <div className="flex flex-col md:flex-row items-start max-w-5xl mx-auto p-4 md:p-6 mt-4 md:mt-10">
       <div className="w-full md:w-2/5 md:mr-6 mb-6 md:mb-0">
         <div className="slider-container relative w-full h-[250px] md:h-[384px]">
           <Slider {...settings}>
-            {images.map((num) => (
-              <div key={num} className="slider-item">
+            {images.map((image, index) => (
+              <div key={index} className="slider-item">
                 <img
-                  src={`/images/about_us/${num}.jpg`}
-                  alt={`Centrum Medyczne ${num}`}
+                  src={image.secure_url}
+                  alt={`Centrum Medyczne ${image.originalName}`}
                   className="w-full h-[250px] md:h-96 object-cover rounded-sm shadow-md"
                 />
               </div>

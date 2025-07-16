@@ -924,7 +924,7 @@ export default function BookAppointment({
                         Zapoznałem(-am) się z{" "}
                         <button
                           type="button"
-                          onClick={() => window.open('/regulamin.pdf', '_blank')}
+                          onClick={() => window.open('/regulamin', '_blank')}
                           className="text-main hover:text-main-dark underline"
                         >
                           Regulaminem
@@ -932,7 +932,7 @@ export default function BookAppointment({
                         i{" "}
                         <button
                           type="button"
-                          onClick={() => window.open('/polityka-prywatnosci.pdf', '_blank')}
+                          onClick={() => window.open('/polityka-prywatnosci', '_blank')}
                           className="text-main hover:text-main-dark underline"
                         >
                           Polityką Prywatności

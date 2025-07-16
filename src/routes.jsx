@@ -17,6 +17,9 @@ import NewsDetail from "./components/User/NewsDetail";
 import PatientMedicalDetails from "./components/User/MyDetails";
 import TwoFactorSettings from "./components/Auth/TwoFactorSettings";
 import DoctorProfilePage from "./components/User/Pages/DoctorProfilePage";
+import TermsPage from "./components/User/Pages/TermsPage";
+import PrivacyPolicyPage from "./components/User/Pages/PrivacyPolicyPage";
+import ContactPage from "./components/User/Pages/ContactPage";
 
 // Protected image route component
 const ProtectedImage = () => {
@@ -69,6 +72,8 @@ const routes = createBrowserRouter([
       { path: "details", element: <PatientMedicalDetails /> },
       { path: "profile", element: <ProfilePage /> },
       { path: "security/2fa", element: <TwoFactorSettings /> },
+      { path: "regulamin", element: <TermsPage /> },
+      { path: "polityka-prywatnosci", element: <PrivacyPolicyPage /> },
       { path: "*", element: <NotFound404 /> },
     ],
   },

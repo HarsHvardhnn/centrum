@@ -91,12 +91,12 @@ export default function Footer() {
 
         {/* Social Media Icons */}
         <div className="flex space-x-4 items-center">
-        <a href="/regulamin.pdf" className="hover:underline">
-                Regulamin
-              </a>
-              <a href="https://centrummedyczne7.pl/polityka-prywatnosci.pdf" className="hover:underline">
-                Polityka prywatności
-              </a>
+                        <a href="/regulamin" className="hover:underline">
+                  Regulamin
+                </a>
+                <a href="/polityka-prywatnosci" className="hover:underline">
+                  Polityka prywatności
+                </a>
           <a
             href="https://www.facebook.com/klinikacm7/"
             className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"

@@ -293,7 +293,7 @@ function ContactForm() {
           <label htmlFor="consent" className="text-sm text-gray-700 leading-5">
             <span className="font-medium text-red-600">*</span> Wyrażam zgodę na przetwarzanie moich danych osobowych przez Centrum Medyczne 7 Sp. z o.o. w celu obsługi zapytania przesłanego za pośrednictwem formularza kontaktowego oraz weryfikacji bezpieczeństwa. Zapoznałem(-am) się z{" "}
             <a 
-              href="/regulamin.pdf" 
+                              href="/regulamin" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-teal-600 hover:text-teal-700 underline"
@@ -302,7 +302,7 @@ function ContactForm() {
             </a>{" "}
             i{" "}
             <a 
-              href="/polityka-prywatnosci.pdf" 
+              href="/polityka-prywatnosci" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-teal-600 hover:text-teal-700 underline"

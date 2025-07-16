@@ -1264,21 +1264,21 @@ const DoctorProfilePage = () => {
                               />
                               <span className="text-sm text-gray-700">
                                 Zapoznałem(-am) się z{" "}
-                                <button
-                                  type="button"
-                                  onClick={() => window.open('/regulamin.pdf', '_blank')}
-                                  className="text-teal-600 hover:text-teal-800 underline"
-                                >
-                                  Regulaminem
-                                </button>{" "}
-                                i{" "}
-                                <button
-                                  type="button"
-                                  onClick={() => window.open('/polityka-prywatnosci.pdf', '_blank')}
-                                  className="text-teal-600 hover:text-teal-800 underline"
-                                >
-                                  Polityką Prywatności
-                                </button>{" "}
+                                                        <button
+                          type="button"
+                          onClick={() => window.open('/regulamin', '_blank')}
+                          className="text-teal-600 hover:text-teal-800 underline"
+                        >
+                          Regulaminem
+                        </button>{" "}
+                        i{" "}
+                        <button
+                          type="button"
+                          onClick={() => window.open('/polityka-prywatnosci', '_blank')}
+                          className="text-teal-600 hover:text-teal-800 underline"
+                        >
+                          Polityką Prywatności
+                        </button>{" "}
                                 i akceptuję ich postanowienia. <span className="text-red-500">*</span>
                               </span>
                             </label>

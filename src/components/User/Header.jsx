@@ -58,6 +58,21 @@ const Header = () => {
     navigate("/login");
   };
 
+  // Custom navigation handler for aktualnosci and poradnik
+  const handleSpecialNavigation = (targetPath) => {
+    const currentPath = location.pathname;
+    
+    // Check if navigating between aktualnosci and poradnik
+    if ((currentPath === "/aktualnosci" && targetPath === "/poradnik") ||
+        (currentPath === "/poradnik" && targetPath === "/aktualnosci")) {
+      // Reload the page for this specific case
+      window.location.href = targetPath;
+    } else {
+      // Use normal navigation for other cases
+      navigate(targetPath);
+    }
+  };
+
   // Helper function to check if a link is active
   const isActive = (path) => {
     // For home page
@@ -162,22 +177,22 @@ const Header = () => {
           >
             Specjaliści
           </Link>
-          <Link
-            to="/aktualnosci"
+          <button
+            onClick={() => handleSpecialNavigation("/aktualnosci")}
             className={`py-2 ${
               isActive("/aktualnosci") ? activeLinkClass : defaultLinkClass
             }`}
           >
             Aktualności
-          </Link>
-          <Link
-            to="/poradnik"
+          </button>
+          <button
+            onClick={() => handleSpecialNavigation("/poradnik")}
             className={`py-2 ${
               isActive("/poradnik") ? activeLinkClass : defaultLinkClass
             }`}
           >
             Wiedza Medyczna
-          </Link>
+          </button>
           <Link
             to="/kontakt"
             className={`py-2 ${
@@ -253,28 +268,32 @@ const Header = () => {
             >
               Specjaliści
             </Link>
-            <Link
-              to="/aktualnosci"
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                handleSpecialNavigation("/aktualnosci");
+              }}
               className={
                 isActive("/aktualnosci")
                   ? "text-teal-500 font-bold"
                   : "text-teal-900"
               }
-              onClick={() => setMenuOpen(false)}
             >
               Aktualności
-            </Link>
-            <Link
-              to="/poradnik"
+            </button>
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                handleSpecialNavigation("/poradnik");
+              }}
               className={
                 isActive("/poradnik")
                   ? "text-teal-500 font-bold"
                   : "text-teal-900"
               }
-              onClick={() => setMenuOpen(false)}
             >
               Wiedza Medyczna
-            </Link>
+            </button>
             <Link
               to="/kontakt"
               className={
