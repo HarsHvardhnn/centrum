@@ -571,7 +571,7 @@ const DoctorProfilePage = () => {
         </div>
 
         {/* Services Quick View Section */}
-        {doctor.services && doctor.services.length > 0 && (
+        {doctor.doctorServices && doctor.doctorServices.services && doctor.doctorServices.services.length > 0 && (
           <div className="bg-white shadow-lg -mt-8 relative z-10 max-w-6xl mx-auto rounded-xl overflow-hidden">
             <div className="p-8">
               <div className="flex justify-between items-center mb-6">
@@ -593,40 +593,42 @@ const DoctorProfilePage = () => {
               </div>
               
               <div className="grid gap-6">
-                {doctor.services
+                {doctor.doctorServices.services
                   .filter(service => service.status === "active")
                   .slice(0, showAllServices ? undefined : 1)
                   .map((service, index) => {
-                    const serviceName = service.name || 
-                      (service.description && service.description.split('.')[0]) || 
+                    const serviceName = service.service.title || 
+                      (service.service.shortDescription && service.service.shortDescription.split('.')[0]) || 
                       `Konsultacja ${index + 1}`;
 
                     return (
                       <div 
-                        key={service.id || index}
+                        key={service._id || index}
                         className="bg-gray-50 rounded-lg p-6 transition-all hover:shadow-md"
                       >
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-teal-800">
-                            {serviceName}
-                          </h3>
-                          <div className="text-xl font-bold text-teal-600 whitespace-nowrap">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-3">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-teal-800 mb-1">
+                              {serviceName}
+                            </h3>
+                            {service.service.shortDescription && (
+                              <p className="text-gray-600 text-sm leading-relaxed">
+                                {service.service.shortDescription}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-xl font-bold text-teal-600 whitespace-nowrap flex-shrink-0">
                             {service.price ? `${service.price} zł` : 'Cena do ustalenia'}
                           </div>
                         </div>
-                        {service.description && (
-                          <p className="text-gray-600 text-sm leading-relaxed">
-                            {service.description}
-                          </p>
-                        )}
                       </div>
                     );
                   })}
               </div>
               
-              {doctor.services.length > 3 && !showAllServices && (
+              {doctor.doctorServices.services.filter(service => service.status === "active").length > 3 && !showAllServices && (
                 <div className="mt-4 text-center text-gray-500 text-sm">
-                  {doctor.services.length - 3} więcej usług dostępnych
+                  {doctor.doctorServices.services.filter(service => service.status === "active").length - 3} więcej usług dostępnych
                 </div>
               )}
             </div>

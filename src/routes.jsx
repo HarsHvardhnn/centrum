@@ -1,54 +1,22 @@
-import React, { useState, useEffect } from "react";
-import App from "./App";
-import LoginScreen from "./components/Auth/AuthScreen";
-import LoginImage from "/images/new_login_wp.png";
-import SignupImage from "./assets/Signup.png";
-import ForgotPasswordScreen from "./components/Auth/ForgotPasswordScreen";
-import DoctorCalendar from "./components/admin/DoctorCalendar";
+import React, {useEffect } from "react";
 
-import { createBrowserRouter, Outlet, Navigate, useLocation } from "react-router-dom";
-import Sidebar from "./components/UtilComponents/Sidebar";
-import BillingPage from "./components/Doctor/Doctor";
-import DoctorsPage from "./components/Doctor/SingleDoctor/DoctorPage";
+import { createBrowserRouter, Navigate, useLocation } from "react-router-dom";
 import UserLayout from "./UserLayout";
 import HomePage from "./components/User/Pages/HomePage";
 import AboutUsPage from "./components/User/Pages/AboutUsPage";
 import OurDoctorsPage from "./components/User/Pages/OurDoctorsPage";
 import OurServicesPage from "./components/User/Pages/OurServicesPage";
 import ServicesDetailPage from "./components/User/Pages/ServicesDetailPage";
-import MedicalDashboard from "./components/Dashboard";
-import Header from "./components/UtilComponents/Header";
-import DoctorDetailPage from "./components/Doctor/DoctorDetailsPage";
 import NotFound404 from "./components/UtilComponents/NotFound";
-import {
-  ProtectedRoute,
-  PublicRoute,
-} from "./components/UtilComponents/ProtectedRoutes";
-import AddDoctorForm from "./components/Doctor/CreateDoctor";
-import LabAppointments from "./components/Patients/PatientList";
-import UserManagement from "./components/admin/Settings";
-import ChatComponent from "./components/User/ChatComponent";
-import DoctorScheduleSettings from "./components/admin/DoctorSettings";
+import { PublicRoute } from "./components/UtilComponents/ProtectedRoutes";
 import ProfilePage from "./components/Auth/Profile";
 import MyAppointments from "./components/User/MyAppointments";
-import ServicesManagement from "./components/admin/Services";
 
 import NewsPage from "./components/User/Pages/NewsPage";
-import PatientDetailsPage from "./components/Doctor/SingleDoctor/patient-details/PatientDetails";
-import NewsManagement from "./components/admin/NewManagement";
 import NewsDetail from "./components/User/NewsDetail";
 import PatientMedicalDetails from "./components/User/MyDetails";
-import { useUser } from "./context/userContext";
-import UserMessaging from "./components/admin/SmsPage";
-import AppointmentPage from "./components/Appointments/AppointmentPage";
-import ContactPage from "./components/User/Pages/ContactPage";
-import BillDetails from "./components/Billing/BillDetails";
-import BillingManagement from "./components/Billing/BillingManagement";
-import Adminmsgs from "./components/admin/Contact";
-import IPConfigPage from "./components/admin/IPConfigPage";
 import TwoFactorSettings from "./components/Auth/TwoFactorSettings";
 import DoctorProfilePage from "./components/User/Pages/DoctorProfilePage";
-import ReportsDashboard from "./components/Reports/ReportsDashboard";
 
 // Protected image route component
 const ProtectedImage = () => {
@@ -80,52 +48,6 @@ const RootRoute = () => {
   return <Navigate to="/user" replace />;
 };
 
-// Modified App component to include the sidebar
-function MainLayout() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { user }=useUser()
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-  };
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  return (
-    <div className={isDarkMode ? "dark" : ""}>
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-10">
-        <Header />
-      </div>
-
-      <div className="flex bg-gray-50">
-        {/* Sidebar with adjusted positioning */}
-        {user?.role != "patient" && (
-          <Sidebar
-            isDarkMode={isDarkMode}
-            toggleTheme={toggleTheme}
-            isOpen={isSidebarOpen}
-            toggleSidebar={toggleSidebar}
-          />
-        )}
-
-        {/* Main content with proper spacing */}
-        <div
-          className={`transition-all duration-300 ${
-            isSidebarOpen ? "ml-72" : "ml-20"
-          } flex-1 min-h-screen pt-16 ${
-            isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-800"
-          }`}
-        >
-          <Outlet />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const routes = createBrowserRouter([
   // Root route - will show the same content as /user
@@ -173,7 +95,6 @@ const routes = createBrowserRouter([
     element: <Navigate to="/" replace />,
   },
 
-  // Doctor & Admin protected routes - disabled and redirecting to root
   {
     path: "/doctors/*",
     element: <Navigate to="/" replace />,
