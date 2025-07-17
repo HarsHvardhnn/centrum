@@ -206,7 +206,8 @@ export default function Doctors({
         const response = await doctorService.getAllDoctors();
 
         // Transform the API response to match the component's expected format
-        const transformedDoctors = response.doctors.map((doctor) => ({
+        const doctorsArray = Array.isArray(response.doctors) ? response.doctors : [];
+        const transformedDoctors = doctorsArray.map((doctor) => ({
           id: doctor._id || doctor.id,
           name:
             doctor.name.first && doctor.name.last

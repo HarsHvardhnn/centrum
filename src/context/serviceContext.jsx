@@ -15,7 +15,8 @@ export const ServicesProvider = ({ children }) => {
       setLoading(true);
       const response = await apiCaller("GET", "/services");
       //("response",response)
-      setServices(response.data);
+      const servicesArray = Array.isArray(response.data) ? response.data : [];
+      setServices(servicesArray);
       setError(null);
     } catch (err) {
       console.error("Error fetching services:", err);

@@ -59,9 +59,13 @@ const AllServices = () => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-6xl mx-auto gap-6 pt-16 p-6">
-      {services.map((service) => (
+      {Array.isArray(services) ? services.map((service) => (
         <ServiceCard key={service._id} service={service} />
-      ))}
+      )) : (
+        <div className="col-span-full text-center py-20 text-gray-500">
+          Brak dostępnych usług
+        </div>
+      )}
     </div>
   );
 };

@@ -18,7 +18,8 @@ export const SpecializationProvider = ({ children }) => {
     try {
       setLoading(true);
       const { data } = await apiCaller("GET","/admin/specs");
-      setSpecializations(data);
+      const specializationsArray = Array.isArray(data) ? data : [];
+      setSpecializations(specializationsArray);
       //("Specializations:", data);
       setError(null);
     } catch (err) {

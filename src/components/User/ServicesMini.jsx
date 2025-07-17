@@ -24,7 +24,8 @@ const ServicesMini = () => {
         const response = await axiosInstance.get("/services");
         
         // Add a random icon to each service
-        const servicesWithIcons = response.data.map(service => ({
+        const servicesArray = Array.isArray(response.data) ? response.data : [];
+        const servicesWithIcons = servicesArray.map(service => ({
           ...service,
           icon: icons[Math.floor(Math.random() * icons.length)]
         }));

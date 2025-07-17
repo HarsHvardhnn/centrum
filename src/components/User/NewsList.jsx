@@ -121,7 +121,8 @@ const NewsList = ({ isNews, selectedCategory }) => {
           url += `&category=${selectedCategory}`;
         }
         const response = await apiCaller("GET", url);
-        setNewsData(response.data);
+        const newsArray = Array.isArray(response.data) ? response.data : [];
+        setNewsData(newsArray);
         setCurrentPage(0); // Reset to first page when category changes
       } catch (err) {
         console.error("Nie udało się pobrać aktualności:", err);

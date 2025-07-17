@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Failure Test</title>
+</head>
+<body>
+    <h1>Testing API Failures</h1>
+    <button onclick="testMapFunction()">Test Map Function</button>
+    <div id="results"></div>
+
+    <script>
+        // Simulate the data structures your components might receive
+        const testCases = [
+            { name: 'null data', data: null },
+            { name: 'undefined data', data: undefined },
+            { name: 'string data', data: 'not an array' },
+            { name: 'object data', data: { key: 'value' } },
+            { name: 'empty array', data: [] },
+            { name: 'valid array', data: [{ id: 1, name: 'test' }] }
+        ];
+
+        function testMapFunction() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+
+            testCases.forEach(testCase => {
+                try {
+                    // Simulate what your components do
+                    const dataArray = Array.isArray(testCase.data) ? testCase.data : [];
+                    const mapped = dataArray.map(item => item.name);
+                    
+                    results.innerHTML += `
+                        <div style="margin: 10px; padding: 10px; border: 1px solid #ccc;">
+                            <strong>${testCase.name}:</strong> 
+                            <span style="color: green;">✓ PASSED</span>
+                            <br>Result: ${JSON.stringify(mapped)}
+                        </div>
+                    `;
+                } catch (error) {
+                    results.innerHTML += `
+                        <div style="margin: 10px; padding: 10px; border: 1px solid red;">
+                            <strong>${testCase.name}:</strong> 
+                            <span style="color: red;">✗ FAILED</span>
+                            <br>Error: ${error.message}
+                        </div>
+                    `;
+                }
+            });
+        }
+    </script>
+</body>
+</html> 

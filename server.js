@@ -136,6 +136,18 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       keywords = 'kontakt centrum medyczne 7, umów wizytę, telefon cm7, adres Skarżysko-Kamienna, godziny pracy';
       ogImage = '/images/contact.jpg';
       break;
+    case '/regulamin':
+      title = 'Regulamin – Centrum Medyczne 7 Skarżysko-Kamienna | Warunki świadczenia usług';
+      description = 'Regulamin świadczenia usług medycznych w Centrum Medycznym 7 w Skarżysku-Kamiennej. Zapoznaj się z warunkami korzystania z naszych usług.';
+      keywords = 'regulamin centrum medyczne 7, warunki usług medycznych, regulamin cm7, zasady korzystania z usług';
+      ogImage = '/images/mainlogo.png';
+      break;
+    case '/polityka-prywatnosci':
+      title = 'Polityka Prywatności – Centrum Medyczne 7 Skarżysko-Kamienna | Ochrona danych';
+      description = 'Polityka ochrony danych osobowych w Centrum Medycznym 7 w Skarżysku-Kamiennej. Dowiedz się jak chronimy Twoje dane osobowe.';
+      keywords = 'polityka prywatności centrum medyczne 7, ochrona danych osobowych, rodo cm7, prywatność pacjentów';
+      ogImage = '/images/mainlogo.png';
+      break;
     default:
       // Handle dynamic routes with real data
       if (path.startsWith('/aktualnosci/')) {
@@ -278,7 +290,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     </script>
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-5-rwqqmM.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-C1Sj6bGh.css">
 </head>
 <body>
     <!-- SEO Content for crawlers -->
@@ -291,7 +303,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-DNbjgfSw.js"></script>
+    <script type="module" crossorigin src="/assets/index-LP3M0tw7.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -446,7 +458,9 @@ const generateDynamicSitemap = async () => {
     { url: '/uslugi', priority: '0.8', changefreq: 'weekly' },
     { url: '/aktualnosci', priority: '0.8', changefreq: 'daily' },
     { url: '/poradnik', priority: '0.8', changefreq: 'weekly' },
-    { url: '/kontakt', priority: '0.7', changefreq: 'monthly' }
+    { url: '/kontakt', priority: '0.7', changefreq: 'monthly' },
+    { url: '/regulamin', priority: '0.6', changefreq: 'monthly' },
+    { url: '/polityka-prywatnosci', priority: '0.6', changefreq: 'monthly' }
   ];
   
   let dynamicRoutes = [];
@@ -686,16 +700,26 @@ app.get('/sitemap.xml', async (req, res) => {
   }
 });
 
-// Serve static assets (CSS, JS, images) but not HTML files
-app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
-app.use('/images', express.static(path.join(__dirname, 'dist', 'images')));
-
 // Apply middleware in correct order
 app.use(handleExternalProtocols); // First: block external protocols
 app.use(handleInvalidSlugs);      // Second: handle undefined slugs
 
-// Apply SEO middleware for ALL routes (HTML requests)
-app.get('*', seoMiddleware);
+// Serve static assets (CSS, JS, images, PDFs) BEFORE SEO middleware
+app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
+app.use('/images', express.static(path.join(__dirname, 'dist', 'images')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/', express.static(path.join(__dirname, 'public')));
+
+// Apply SEO middleware for HTML routes only (not for static files)
+app.get('*', (req, res, next) => {
+  // Skip SEO middleware for static files
+  if (req.path.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|pdf|xml|txt)$/)) {
+    return next();
+  }
+  
+  // Apply SEO middleware for HTML routes
+  return seoMiddleware(req, res, next);
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

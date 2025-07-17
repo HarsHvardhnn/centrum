@@ -30,7 +30,7 @@ export default function Specialties() {
       </h2>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
-        {specialtiesData.map((specialty) => (
+        {Array.isArray(specialtiesData) ? specialtiesData.map((specialty) => (
           <div
             key={specialty.id}
             onClick={() => navigate(`/lekarze`)}
@@ -41,7 +41,11 @@ export default function Specialties() {
               {specialty.name}
             </p>
           </div>
-        ))}
+        )) : (
+          <div className="col-span-full text-center py-20 text-gray-500">
+            Brak dostępnych specjalizacji
+          </div>
+        )}
       </div>
     </section>
   );
