@@ -780,7 +780,8 @@ export default function Doctors({
                     <div className="grid grid-cols-3 md:grid-cols-7 gap-2">
                       {nextDays.map((date) => {
                         const dayDate = new Date(date);
-                        const isToday = date === nextDays[0];
+                        const today = new Date().toISOString().split("T")[0];
+                        const isToday = date === today;
                         const isActive = date === selectedDate;
 
                         return (
