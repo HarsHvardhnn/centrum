@@ -35,6 +35,7 @@ const ServicesManagement = () => {
   const [tempBulletPoint, setTempBulletPoint] = useState("");
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch all services on component mount
   useEffect(() => {
@@ -117,8 +118,13 @@ const ServicesManagement = () => {
     const updatedFiles = [...imageFiles];
     const updatedPreviews = [...imagePreview];
 
-    // Revoke the object URL to avoid memory leaks
-    URL.revokeObjectURL(updatedPreviews[index]);
+    // Check if this is a new file (has object URL) or existing image
+    const isNewFile = updatedPreviews[index] && updatedPreviews[index].startsWith('blob:');
+    
+    if (isNewFile) {
+      // Revoke the object URL to avoid memory leaks
+      URL.revokeObjectURL(updatedPreviews[index]);
+    }
 
     updatedFiles.splice(index, 1);
     updatedPreviews.splice(index, 1);
@@ -146,7 +152,7 @@ const ServicesManagement = () => {
 
     if (!validateForm()) return;
 
-    setLoading(true);
+    setIsSubmitting(true);
 
     // Create FormData object for file uploads
     const formDataToSend = new FormData();
@@ -159,10 +165,23 @@ const ServicesManagement = () => {
       JSON.stringify(formData.bulletPoints)
     );
 
-    // Append all image files
+    // Append all new image files
     imageFiles.forEach((file) => {
       formDataToSend.append("images", file);
     });
+
+    // If editing, also send the remaining existing images
+    if (currentService) {
+      // Filter out images that were removed (not in current preview)
+      const existingImages = currentService.images || [];
+      const remainingImages = existingImages.filter(img => 
+        imagePreview.includes(img)
+      );
+      
+      if (remainingImages.length > 0) {
+        formDataToSend.append("existingImages", JSON.stringify(remainingImages));
+      }
+    }
 
     try {
       if (currentService) {
@@ -186,7 +205,7 @@ const ServicesManagement = () => {
       setError("Nie udało się zapisać usługi. Spróbuj ponownie.");
       console.error("Error saving service:", err);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -200,6 +219,16 @@ const ServicesManagement = () => {
       bulletPoints: service.bulletPoints || [],
       images: service.images || [],
     });
+    
+    // Set existing images as previews
+    if (service.images && service.images.length > 0) {
+      setImagePreview(service.images);
+    } else {
+      setImagePreview([]);
+    }
+    
+    // Clear any new image files
+    setImageFiles([]);
     setIsModalOpen(true);
   };
 
@@ -598,12 +627,22 @@ const ServicesManagement = () => {
                   </button>
                   <button
                     type="submit"
-                    disabled={loading}
-                    className={`px-4 py-2 text-sm font-medium text-white bg-teal-600 border border-transparent rounded-md shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 ${
-                      loading ? "opacity-75 cursor-not-allowed" : ""
+                    disabled={isSubmitting}
+                    className={`px-4 py-2 text-sm font-medium text-white bg-teal-600 border border-transparent rounded-md shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 flex items-center gap-2 ${
+                      isSubmitting ? "opacity-75 cursor-not-allowed" : ""
                     }`}
                   >
-                    {loading ? "Zapisywanie..." : "Zapisz"}
+                    {isSubmitting ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Zapisywanie...
+                      </>
+                    ) : (
+                      "Zapisz"
+                    )}
                   </button>
                 </div>
               </form>
