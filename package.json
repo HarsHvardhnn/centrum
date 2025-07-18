@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "start": "node server.js",
     "start:simple": "node server-simple.js",
-    "build:prod": "npm run build && npm run start"
+    "build:prod": "npm run build && npm run start",
+    "build:update": "node build-update.js"
   },
   "dependencies": {
     "@babel/parser": "^7.27.1",
