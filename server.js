@@ -169,7 +169,24 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           title = `${dynamicData.title} – Centrum Medyczne 7 Skarżysko-Kamienna`;
           description = dynamicData?.shortDescription || dynamicData?.description;
           keywords = `usługi medyczne, centrum medyczne 7, ${dynamicData.title}`;
-          ogImage = (dynamicData.images && dynamicData.images[0]) || dynamicData.image || '/images/uslugi.jpg';
+         // ogImage = (dynamicData.images && dynamicData.images[0]) || dynamicData.image || '/images/uslugi.jpg';
+          
+          // Handle images with proper null checks and empty array checks
+          let serviceImage = '/images/uslugi.jpg'; // Default fallback
+          if (dynamicData.images && Array.isArray(dynamicData.images) && dynamicData.images.length > 0) {
+            // Use the first image from the array
+            serviceImage = dynamicData.images[0];
+          } else if (dynamicData.image) {
+            // Fallback to single image field
+            serviceImage = dynamicData.image;
+          }
+          
+          // Check if the image URL is already absolute (starts with http/https)
+          if (serviceImage && (serviceImage.startsWith('http://') || serviceImage.startsWith('https://'))) {
+            ogImage = serviceImage; // Use the full URL as is
+          } else {
+            ogImage = serviceImage; // Will be prepended with BASE_URL later
+          }
         } else {
           title = 'Usługa medyczna – Centrum Medyczne 7 Skarżysko-Kamienna';
           description = 'Szczegółowy opis usługi medycznej w Centrum Medycznym 7.';
@@ -197,7 +214,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           const experience = dynamicData.data.experience ? `${dynamicData.data.experience} lat doświadczenia` : "";
           console.log("dynamicData", dynamicData);
           
-          title = `${doctorName} – ${specializations} | CM7 Skarżysko-Kamienna`;
+          title = `${specializations} – ${doctorName} | CM7 Skarżysko-Kamienna`;
           description = `Umów wizytę z ${doctorName}, ${specializations.toLowerCase()}${experience ? ` z ${experience}` : ""}. ${
             dynamicData.data.onlineConsultationPrice !== undefined 
               ? `Konsultacje online od ${dynamicData.data.onlineConsultationPrice} zł` 
@@ -220,7 +237,10 @@ const generateSEOHTML = async (path, dynamicData = null) => {
   }
 
   const canonicalUrl = `${BASE_URL}${path}`;
-  const fullOgImage = `${BASE_URL}${ogImage}`;
+  // Handle both absolute and relative image URLs
+  const fullOgImage = ogImage && (ogImage.startsWith('http://') || ogImage.startsWith('https://')) 
+    ? ogImage 
+    : `${BASE_URL}${ogImage}`;
 
   return `<!DOCTYPE html>
 <html lang="pl">
@@ -303,7 +323,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-DocPdeaw.js"></script>
+    <script type="module" crossorigin src="/assets/index-CIadkHC4.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
