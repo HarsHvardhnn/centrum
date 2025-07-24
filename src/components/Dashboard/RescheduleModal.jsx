@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Clock, User, AlertCircle, CheckCircle, X } from "lucide-react";
+import { Calendar, Clock, User, AlertCircle, CheckCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiCaller } from "../../utils/axiosInstance";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ const RescheduleModal = ({
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [consultationType, setConsultationType] = useState("offline");
   const [error, setError] = useState("");
+  const [currentWeek, setCurrentWeek] = useState(0); // 0 = current week, 1 = next week, etc.
 
   // Reset state when modal opens
   useEffect(() => {
@@ -26,6 +27,7 @@ const RescheduleModal = ({
       setAvailableSlots([]);
       setError("");
       setConsultationType(appointment.mode || "offline");
+      setCurrentWeek(0); // Reset to current week
       
       // Debug logging
       console.log("RescheduleModal opened with appointment:", appointment);
@@ -160,15 +162,52 @@ const RescheduleModal = ({
     }
   };
 
-  // Generate next 7 days for date picker (including today)
-  const getNextDays = () => {
+  // Generate days for the selected week
+  const getDaysForWeek = (weekOffset = 0) => {
     const days = [];
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() + (weekOffset * 7));
+    
     for (let i = 0; i <= 6; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
       days.push(date.toISOString().split("T")[0]);
     }
     return days;
+  };
+
+  // Get current week's days
+  const getCurrentWeekDays = () => {
+    return getDaysForWeek(currentWeek);
+  };
+
+  // Navigate to previous week
+  const goToPreviousWeek = () => {
+    if (currentWeek > 0) {
+      setCurrentWeek(currentWeek - 1);
+      setSelectedDate(""); // Reset selected date when changing weeks
+      setSelectedSlot(null);
+      setAvailableSlots([]);
+    }
+  };
+
+  // Navigate to next week
+  const goToNextWeek = () => {
+    setCurrentWeek(currentWeek + 1);
+    setSelectedDate(""); // Reset selected date when changing weeks
+    setSelectedSlot(null);
+    setAvailableSlots([]);
+  };
+
+  // Get week display text
+  const getWeekDisplayText = () => {
+    if (currentWeek === 0) {
+      return "Ten tydzień";
+    } else if (currentWeek === 1) {
+      return "Następny tydzień";
+    } else {
+      return `${currentWeek + 1}. tydzień`;
+    }
   };
 
   // Format time for display
@@ -266,11 +305,35 @@ const RescheduleModal = ({
 
           {/* Date Selection */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Wybierz nową datę
-            </label>
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Wybierz nową datę
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={goToPreviousWeek}
+                  disabled={currentWeek === 0}
+                  className={`p-2 rounded-lg border transition-colors ${
+                    currentWeek === 0
+                      ? "text-gray-300 border-gray-200 cursor-not-allowed"
+                      : "text-gray-600 border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-sm font-medium text-gray-700 px-3 py-1 bg-gray-100 rounded-lg">
+                  {getWeekDisplayText()}
+                </span>
+                <button
+                  onClick={goToNextWeek}
+                  className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
             <div className="grid grid-cols-7 gap-2">
-              {getNextDays().map((date) => (
+              {getCurrentWeekDays().map((date) => (
                 <button
                   key={date}
                   onClick={() => handleDateChange({ target: { value: date } })}
