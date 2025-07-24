@@ -13,7 +13,7 @@ import {
   Eye,
   UserCheck,
   DollarSign,
-  FileText
+  FileText,
 } from "lucide-react";
 import patientService from "../../helpers/patientHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
@@ -28,6 +28,7 @@ import { createPortal } from "react-dom";
 import CheckInModal from "../admin/CheckinModal";
 import { translateStatus, getStatusStyle } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
+import RescheduleModal from "./RescheduleModal";
 
 const MedicalDashboard = () => {
   const { user } = useUser();
@@ -549,6 +550,7 @@ const PatientList = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [billingServices, setBillingServices] = useState([]);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     total: 0,
@@ -791,6 +793,58 @@ const PatientList = () => {
     }
   };
 
+  const handleRescheduleClick = (appointment) => {
+    setSelectedAppointment(appointment);
+    setShowRescheduleModal(true);
+  };
+
+  const handleRescheduleSuccess = (rescheduledData) => {
+    // Update the appointment in the list with new data
+    setPatients(patients.map(patient => 
+      patient._id === selectedAppointment._id 
+        ? {
+            ...patient,
+            date: rescheduledData.appointment.date,
+            startTime: rescheduledData.appointment.startTime,
+            mode: rescheduledData.appointment.mode
+          }
+        : patient
+    ));
+    
+    // Refresh the patient list
+    const fetchPatients = async () => {
+      try {
+        setLoading(true);
+        
+        const params = {
+          page: pagination.currentPage,
+          limit: 10,
+        };
+        
+        if (user?.role === "doctor" && user?.id) {
+          params.doctor = user.id;
+        }
+        
+        const response = await patientService.getSimpliefiedAppointmentsList(params);
+
+        setPatients(response.appointments);
+        setPagination({
+          currentPage: response.currentPage,
+          total: response.total,
+          pages: response.pages,
+        });
+        setError(null);
+      } catch (err) {
+        setError("błąd serwera");
+        console.error("Error fetching patients:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatients();
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
       <div className="p-4 flex items-center justify-between">
@@ -967,6 +1021,17 @@ const PatientList = () => {
                               </DropdownMenu.Item>
                             )}
 
+                            {/* Reschedule option for admin and receptionist */}
+                            {(user?.role === "admin" || user?.role === "receptionist") && patient.status === "booked" && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={() => handleRescheduleClick(patient)}
+                              >
+                                <Clock size={16} className="mr-2" />
+                                Przełóż wizytę
+                              </DropdownMenu.Item>
+                            )}
+
                             {["checkedIn", "booked"].includes(patient.status) && (
                               <DropdownMenu.Item
                                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
@@ -1021,6 +1086,14 @@ const PatientList = () => {
         patientData={{ ...selectedAppointment, id: selectedAppointment?.patient_id } || {}}
         appointmentId={selectedAppointment?._id}
         onAppointmentUpdate={handleAppointmentUpdate}
+      />
+
+      {/* Reschedule Modal */}
+      <RescheduleModal
+        isOpen={showRescheduleModal}
+        onClose={() => setShowRescheduleModal(false)}
+        appointment={selectedAppointment}
+        onRescheduleSuccess={handleRescheduleSuccess}
       />
 
       <div className="p-4 flex items-center justify-between border-t border-gray-200">
