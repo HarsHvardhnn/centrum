@@ -39,7 +39,7 @@ function removeTrailingSlash(url) {
 
 // API base URL - adjust this to your backend URL  
 const API_BASE_URL = removeTrailingSlash('https://backend.centrummedyczne7.pl/');
-// const API_BASE_URL = removeTrailingSlash('https://backend.centrummedyczne7.pl/');
+// const API_BASE_URL = removeTrailingSlash('http://localhost:5000/');
 
 console.log("API_BASE_URL", API_BASE_URL);
 // Bot detection function
@@ -215,11 +215,13 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           console.log("dynamicData", dynamicData);
           
           title = `${specializations} – ${doctorName} | CM7 Skarżysko-Kamienna`;
-          description = `Umów wizytę z ${doctorName}, ${specializations.toLowerCase()}${experience ? ` z ${experience}` : ""}. ${
+
+          const shortDescription = dynamicData.data.shortDescription || `Umów wizytę z ${doctorName}, ${specializations.toLowerCase()}${experience ? ` z ${experience}` : ""}. ${
             dynamicData.data.onlineConsultationPrice !== undefined 
               ? `Konsultacje online od ${dynamicData.data.onlineConsultationPrice} zł` 
               : "Konsultacje dostępne"
           } w Centrum Medycznym 7.`;
+          description = shortDescription;
           keywords = `${doctorName}, ${specializations}, lekarz, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna`;
           ogImage = dynamicData.data.image || '/images/doctors1.png';
         } else {
@@ -310,7 +312,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     </script>
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-C1Sj6bGh.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-CoUReqJo.css">
 </head>
 <body>
     <!-- SEO Content for crawlers -->
@@ -323,7 +325,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-CIadkHC4.js"></script>
+    <script type="module" crossorigin src="/assets/index-DsUrrSz-.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>

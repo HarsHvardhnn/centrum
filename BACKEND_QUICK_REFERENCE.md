@@ -76,10 +76,10 @@ Your API must return these fields:
 
 ```bash
 # Test the new endpoint
-curl "https://backend.centrummedyczne7.pl/docs/profile/slug/jan-kowalski"
+curl "http://localhost:5000/docs/profile/slug/jan-kowalski"
 
 # Test existing endpoint includes slugs
-curl "https://backend.centrummedyczne7.pl/docs"
+curl "http://localhost:5000/docs"
 ```
 
 ---

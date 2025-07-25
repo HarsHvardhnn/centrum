@@ -30,10 +30,10 @@ export default function Welcome() {
 
       <div className="mt-10 relative max-w-5xl mx-auto">
         <img
-          src="/images/welcome.jfif"
+          src="https://res.cloudinary.com/dca740eqo/image/upload/v1753429968/hospital_app/images/cfskl4vvjqaet2k3hnmv.jpg"
           alt="Personel medyczny podczas operacji"
-          className="h-60 md:h-72 rounded-lg shadow-lg w-full object-cover object-top"
-        />
+          className="h-72 md:h-96 rounded-lg shadow-lg w-full object-cover object-top"
+        />  
       </div>
     </section>
   );

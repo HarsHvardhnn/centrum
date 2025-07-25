@@ -249,7 +249,7 @@ Test the new endpoint:
 
 ```bash
 # Test fetching doctor by slug
-curl -X GET "https://backend.centrummedyczne7.pl/docs/profile/slug/jan-kowalski"
+curl -X GET "http://localhost:5000/docs/profile/slug/jan-kowalski"
 
 # Expected response:
 {
