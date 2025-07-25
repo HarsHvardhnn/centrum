@@ -196,7 +196,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             bio: initialData?.bio || "",
             consultationFee: initialData?.onlineConsultationFee || "",
             offlineConsultationFee: initialData?.offlineConsultationFee || "",
-            profilePicture: initialData?.profilePicture || null, // Always null initially, we handle preview separately
+            profilePicture:  null, // Always null initially, we handle preview separately
           }}
           validationSchema={DoctorSchema}
           context={{ isEditMode, initialData }}
