@@ -7,6 +7,77 @@ import getDay from 'date-fns/getDay';
 import pl from 'date-fns/locale/pl';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Select, DatePicker, Card, Typography, Button, Tooltip, Badge, Modal, Descriptions } from 'antd';
+
+// Custom CSS to improve calendar appearance
+const calendarStyles = `
+  .rbc-time-slot {
+    min-height: 60px !important;
+  }
+  .rbc-event {
+    min-height: 60px !important;
+    margin: 2px 4px !important;
+  }
+  .rbc-time-content {
+    min-height: 60px !important;
+  }
+  .rbc-timeslot-group {
+    min-height: 60px !important;
+  }
+  .rbc-time-gutter {
+    min-height: 60px !important;
+  }
+  .rbc-time-header {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-content {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-single-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-multi-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-single-day + .rbc-time-header-cell-single-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-multi-day + .rbc-time-header-cell-multi-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-single-day + .rbc-time-header-cell-multi-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-multi-day + .rbc-time-header-cell-single-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-single-day + .rbc-time-header-cell-single-day + .rbc-time-header-cell-single-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-single-day + .rbc-time-header-cell-single-day + .rbc-time-header-cell-multi-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-single-day + .rbc-time-header-cell-multi-day + .rbc-time-header-cell-single-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-single-day + .rbc-time-header-cell-multi-day + .rbc-time-header-cell-multi-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-multi-day + .rbc-time-header-cell-single-day + .rbc-time-header-cell-single-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-multi-day + .rbc-time-header-cell-single-day + .rbc-time-header-cell-multi-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-multi-day + .rbc-time-header-cell-multi-day + .rbc-time-header-cell-single-day {
+    min-height: 60px !important;
+  }
+  .rbc-time-header-cell-multi-day + .rbc-time-header-cell-multi-day + .rbc-time-header-cell-multi-day {
+    min-height: 60px !important;
+  }
+`;
 import { VideoCameraOutlined, ClockCircleOutlined, DesktopOutlined, UserOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { apiCaller } from '../../utils/axiosInstance';
@@ -188,25 +259,53 @@ const DoctorCalendar = () => {
     return (
       <div
         style={{
-          padding: '4px',
+          padding: '8px',
           backgroundColor: isOnline ? '#e6f7ff' : '#f6ffed',
           border: isCurrentTimeNear ? '2px solid #1890ff' : isOnline ? '2px solid #1890ff' : '2px solid #52c41a',
-          borderRadius: '4px',
+          borderRadius: '6px',
           height: '100%',
+          minHeight: '60px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           color: '#222',
           fontWeight: 500,
+          fontSize: '12px',
+          lineHeight: '1.3',
         }}
       >
         <div>
-          <div style={{ fontWeight: 'bold', color: '#222' }}>{event.title}</div>
-          <div style={{ fontSize: '0.8em', display: 'flex', alignItems: 'center', gap: '4px', color: '#222' }}>
+          <div style={{ 
+            fontWeight: 'bold', 
+            color: '#222',
+            fontSize: '13px',
+            marginBottom: '4px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {event.title}
+          </div>
+          <div style={{ 
+            fontSize: '11px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '4px', 
+            color: '#666',
+            marginBottom: '4px'
+          }}>
             <ClockCircleOutlined /> {format(event.start, 'HH:mm')}
           </div>
         </div>
-        <div style={{ fontSize: '0.8em', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px', color: isOnline ? '#1890ff' : '#52c41a' }}>
+        <div style={{ 
+          fontSize: '11px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '4px', 
+          marginTop: '4px', 
+          color: isOnline ? '#1890ff' : '#52c41a',
+          flexWrap: 'wrap'
+        }}>
           {isOnline ? (
             <>
               <DesktopOutlined /> Online
@@ -215,7 +314,7 @@ const DoctorCalendar = () => {
                   type="link"
                   icon={<VideoCameraOutlined />}
                   size="small"
-                  style={{ padding: 0, marginLeft: 4 }}
+                  style={{ padding: 0, marginLeft: 4, fontSize: '10px' }}
                   onClick={(e) => {
                     e.stopPropagation();
                     window.open(event.appointment.meetLink, '_blank');
@@ -287,6 +386,7 @@ const DoctorCalendar = () => {
 
   return (
     <div style={{ padding: '24px' }}>
+      <style>{calendarStyles}</style>
       <Card>
         <Title level={4}>Kalendarz lekarza</Title>
         <div style={{ marginBottom: '24px', display: 'flex', gap: '16px' }}>
@@ -361,6 +461,10 @@ const DoctorCalendar = () => {
             defaultView="week"
             date={currentDate}
             onNavigate={handleNavigate}
+            step={30}
+            timeslots={1}
+            min={new Date(0, 0, 0, 8, 0, 0)}
+            max={new Date(0, 0, 0, 20, 0, 0)}
             formats={{
               weekdayFormat: (date) => format(date, 'EEEE', { locale: pl }),
               dayFormat: (date) => format(date, 'd EEE', { locale: pl }),
@@ -376,9 +480,10 @@ const DoctorCalendar = () => {
                 borderColor: event.appointment.mode === 'online' ? '#1890ff' : '#52c41a',
                 borderWidth: '2px',
                 borderStyle: 'solid',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 color: '#222',
                 fontWeight: 500,
+                minHeight: '60px',
               },
             })}
           />
