@@ -65,7 +65,7 @@ const DoctorSchema = Yup.object().shape({
 export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode }) {
   //("doctors",initialData)
 
-  console.log("intitial data", initialData.profilePicture)
+  console.log("intitial data", initialData?.profilePicture)
   const [profileImage, setProfileImage] = useState(null);
   const [specializationInput, setSpecializationInput] = useState("");
   const [qualificationInput, setQualificationInput] = useState("");
