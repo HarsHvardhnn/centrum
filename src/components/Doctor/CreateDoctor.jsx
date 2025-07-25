@@ -10,6 +10,7 @@ import {
   Clock,
   FileText,
   Briefcase,
+  Camera,
 } from "lucide-react";
 import { useSpecializations } from "../../context/SpecializationContext";
 import SpecializationDropdown from "./SpecializationDropdown";
@@ -42,6 +43,10 @@ const DoctorSchema = Yup.object().shape({
   experience: Yup.number()
     .positive("Doświadczenie musi być liczbą dodatnią")
     .required("Doświadczenie jest wymagane"),
+  shortDescription: Yup.string()
+    .required("Krótki opis jest wymagany")
+    .min(10, "Krótki opis musi zawierać co najmniej 10 znaków")
+    .max(200, "Krótki opis nie może przekraczać 200 znaków"),
   bio: Yup.string().required("Bio jest wymagane"),
   consultationFee: Yup.number()
     .positive("Opłata musi być liczbą dodatnią")
@@ -59,6 +64,8 @@ const DoctorSchema = Yup.object().shape({
 
 export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode }) {
   //("doctors",initialData)
+
+  console.log("intitial data", initialData.profilePicture)
   const [profileImage, setProfileImage] = useState(null);
   const [specializationInput, setSpecializationInput] = useState("");
   const [qualificationInput, setQualificationInput] = useState("");
@@ -185,12 +192,14 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             specialization: normalizeSpecs(initialData?.specializations),
             qualifications: initialData?.qualifications || [],
             experience: initialData?.experience || "",
+            shortDescription: initialData?.shortDescription || "",
             bio: initialData?.bio || "",
             consultationFee: initialData?.onlineConsultationFee || "",
             offlineConsultationFee: initialData?.offlineConsultationFee || "",
-            profilePicture: null, // Always null initially, we handle preview separately
+            profilePicture: initialData?.profilePicture || null, // Always null initially, we handle preview separately
           }}
           validationSchema={DoctorSchema}
+          context={{ isEditMode, initialData }}
           onSubmit={async (values, { setSubmitting, resetForm }) => {
             try {
               // Always map specialization to array of ids for backend
@@ -226,7 +235,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       </div>
                       <label
                         htmlFor="profilePicture"
-                        className="absolute bottom-0 right-0 bg-teal-500 rounded-full p-2 cursor-pointer"
+                        className="absolute bottom-0 right-0 bg-teal-500 rounded-full p-2 cursor-pointer hover:bg-teal-600 transition-colors"
+                        title={isEditMode && initialData?.profilePicture ? "Zmień zdjęcie profilowe" : "Dodaj zdjęcie profilowe"}
                       >
                         <input
                           id="profilePicture"
@@ -236,13 +246,22 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                           className="hidden"
                           onChange={(e) => handleImageChange(e, setFieldValue)}
                         />
-                        <User size={16} className="text-white" />
+                        {isEditMode && initialData?.profilePicture ? (
+                          <Camera size={16} className="text-white" />
+                        ) : (
+                          <User size={16} className="text-white" />
+                        )}
                       </label>
                     </div>
                   </div>
                   {errors.profilePicture && touched.profilePicture && (
                     <div className="text-red-500 text-xs text-center">
                       {errors.profilePicture}
+                    </div>
+                  )}
+                  {isEditMode && initialData?.profilePicture && !errors.profilePicture && (
+                    <div className="text-green-600 text-xs text-center">
+                      Zdjęcie profilowe już istnieje. Kliknij ikonę, aby zmienić.
                     </div>
                   )}
 
@@ -574,6 +593,39 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
 
                   <div>
                     <label
+                      htmlFor="shortDescription"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Krótki Opis*
+                    </label>
+                    <div className="relative">
+                      <Field
+                        as="textarea"
+                        name="shortDescription"
+                        id="shortDescription"
+                        rows="2"
+                        className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                        placeholder="Krótki opis lekarza (np. specjalizacja, doświadczenie)"
+                      />
+                      <FileText
+                        size={16}
+                        className="absolute left-3 top-3 text-gray-400"
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs mt-1">
+                      <ErrorMessage
+                        name="shortDescription"
+                        component="div"
+                        className="text-red-500"
+                      />
+                      <span className={`text-gray-500 ${values.shortDescription?.length > 180 ? 'text-yellow-600' : ''}`}>
+                        {values.shortDescription?.length || 0}/200
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
                       htmlFor="bio"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
@@ -593,11 +645,16 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         className="absolute left-3 top-3 text-gray-400"
                       />
                     </div>
-                    <ErrorMessage
-                      name="bio"
-                      component="div"
-                      className="text-red-500 text-xs mt-1"
-                    />
+                    <div className="flex justify-between text-xs mt-1">
+                      <ErrorMessage
+                        name="bio"
+                        component="div"
+                        className="text-red-500"
+                      />
+                      <span className="text-gray-500">
+                        {values.bio?.length || 0} znaków
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

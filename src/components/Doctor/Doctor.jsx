@@ -97,6 +97,7 @@ const BillingPage = () => {
         description: createdDoctor.bio || doctorData.description || "",
         consultationFee:
           createdDoctor.onlineConsultationFee || doctorData.consultationFee || 0,
+        shortDescription: createdDoctor.shortDescription || doctorData.shortDescription || "",
         offlineConsultationFee:
           createdDoctor.offlineConsultationFee || doctorData.offlineConsultationFee || 0,
       };

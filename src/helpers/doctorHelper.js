@@ -31,6 +31,7 @@ const doctorService = {
       formData.append("signupMethod", doctorData.signupMethod || "email");
       formData.append("bio", doctorData.bio || "");
       formData.append("experience", doctorData.experience || 0);
+      formData.append("shortDescription", doctorData.shortDescription || "");
       
       // Update consultation fee fields to include both online and offline fees
       formData.append("onlineConsultationFee", doctorData.consultationFee || 0);
@@ -200,7 +201,7 @@ const doctorService = {
       if (updateData.experience) formData.append("experience", updateData.experience);
       if (updateData.consultationFee) formData.append("onlineConsultationFee", updateData.consultationFee);
       if (updateData.offlineConsultationFee) formData.append("offlineConsultationFee", updateData.offlineConsultationFee);
-
+      if (updateData.shortDescription) formData.append("shortDescription", updateData.shortDescription);
       // Handle arrays
       if (updateData.specialization) {
         updateData.specialization.forEach(item => {

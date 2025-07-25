@@ -2,6 +2,25 @@ import { useState, useEffect } from "react";
 import { apiCaller } from "../../utils/axiosInstance";
 import SmsHistory from "./SmsHistory";
 
+/**
+ * SMS Page Component
+ * 
+ * Features:
+ * - Send bulk SMS messages to selected users
+ * - Dynamic SMS templates from backend API
+ * - Template management (create, edit, delete, toggle status)
+ * - User selection with pagination and filtering
+ * - SMS history tracking
+ * 
+ * API Endpoints used:
+ * - GET /api/sms-templates - Fetch all templates
+ * - POST /api/sms-templates - Create new template
+ * - PUT /api/sms-templates/:id - Update template
+ * - DELETE /api/sms-templates/:id - Delete template
+ * - PATCH /api/sms-templates/:id/toggle - Toggle template status
+ * - POST /sms/send-bulk-sms - Send bulk SMS
+ */
+
 const UserMessaging = () => {
   // Add tab state
   const [activeTab, setActiveTab] = useState("send");
@@ -16,14 +35,12 @@ const UserMessaging = () => {
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   
-  // Message templates state
-  const [templates, setTemplates] = useState([
-    { id: 1, name: "Przypomnienie o wizycie", content: "Przypominamy o wizycie w Centrum Medycznym w dniu [data] o godzinie [godzina]. W razie pytań prosimy o kontakt." },
-    { id: 2, name: "Potwierdzenie rejestracji", content: "Dziękujemy za rejestrację w Centrum Medycznym. Twoje konto zostało pomyślnie utworzone." },
-    { id: 3, name: "Odwołanie wizyty", content: "Informujemy, że Państwa wizyta w dniu [data] została odwołana. Prosimy o kontakt w celu ustalenia nowego terminu." }
-  ]);
+  // Message templates state - now using backend API
+  const [templates, setTemplates] = useState([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [templateSubmitting, setTemplateSubmitting] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [newTemplate, setNewTemplate] = useState({ name: "", content: "" });
+  const [newTemplate, setNewTemplate] = useState({ title: "", description: "" });
   const [editingTemplate, setEditingTemplate] = useState(null);
   
   // Character counter state
@@ -44,6 +61,26 @@ const UserMessaging = () => {
     sort: "createdAt",
     order: "desc",
   });
+
+  // Load SMS templates from backend
+  const fetchTemplates = async () => {
+    setTemplatesLoading(true);
+    try {
+      const response = await apiCaller("GET", "/api/sms-templates");
+      
+      if (response.data.success) {
+        setTemplates(response.data.data);
+      } else {
+        setError("Nie udało się pobrać szablonów SMS");
+      }
+    } catch (err) {
+      console.error("Error fetching templates:", err);
+      // Don't show error for template loading as it's not critical
+      // setError("Błąd podczas pobierania szablonów SMS");
+    } finally {
+      setTemplatesLoading(false);
+    }
+  };
 
   // Load users with pagination and filters
   const fetchUsers = async () => {
@@ -84,6 +121,7 @@ const UserMessaging = () => {
   useEffect(() => {
     if (activeTab === "send") {
       fetchUsers();
+      fetchTemplates(); // Load templates when send tab is active
     }
   }, [pagination.page, pagination.limit, filters.sort, filters.order, activeTab]);
 
@@ -177,52 +215,118 @@ const UserMessaging = () => {
   };
 
   // Handle template selection
-  const handleTemplateSelect = (templateContent) => {
-    setMessageContent(templateContent);
+  const handleTemplateSelect = (templateDescription) => {
+    setMessageContent(templateDescription);
     setShowTemplates(false);
   };
 
   // Handle adding new template
-  const handleAddTemplate = () => {
-    if (newTemplate.name.trim() && newTemplate.content.trim()) {
+  const handleAddTemplate = async () => {
+    if (newTemplate.title.trim() && newTemplate.description.trim()) {
       // Convert Polish characters and sanitize content
-      const convertedContent = convertPolishCharacters(newTemplate.content);
-      const sanitizedContent = convertedContent.replace(/[^\w\s.,!?()-]/g, '');
+      const convertedDescription = convertPolishCharacters(newTemplate.description);
+      const sanitizedDescription = convertedDescription.replace(/[^\w\s.,!?()-]/g, '');
       
-      if (editingTemplate) {
-        // Update existing template
-        setTemplates(templates.map(template => 
-          template.id === editingTemplate.id 
-            ? { ...template, name: newTemplate.name, content: sanitizedContent }
-            : template
-        ));
-        setEditingTemplate(null);
-      } else {
-        // Add new template
-        const newId = Math.max(0, ...templates.map(t => t.id)) + 1;
-        setTemplates([...templates, { 
-          id: newId, 
-          name: newTemplate.name, 
-          content: sanitizedContent 
-        }]);
+      setTemplateSubmitting(true);
+      try {
+        if (editingTemplate) {
+          // Update existing template
+          const response = await apiCaller(
+            "PUT",
+            `/api/sms-templates/${editingTemplate._id}`,
+            {
+              title: newTemplate.title,
+              description: sanitizedDescription,
+              isActive: true
+            }
+          );
+
+          if (response.data.success) {
+            setSuccessMessage("Szablon został zaktualizowany pomyślnie");
+            await fetchTemplates(); // Refresh templates
+            setEditingTemplate(null);
+          } else {
+            setError(response.data.message || "Nie udało się zaktualizować szablonu");
+          }
+        } else {
+          // Create new template
+          const response = await apiCaller(
+            "POST",
+            "/api/sms-templates",
+            {
+              title: newTemplate.title,
+              description: sanitizedDescription
+            }
+          );
+
+          if (response.data.success) {
+            setSuccessMessage("Szablon został utworzony pomyślnie");
+            await fetchTemplates(); // Refresh templates
+          } else {
+            setError(response.data.message || "Nie udało się utworzyć szablonu");
+          }
+        }
+        
+        setNewTemplate({ title: "", description: "" });
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } catch (err) {
+        setError(err.message || "Błąd podczas operacji na szablonie");
+        setTimeout(() => setError(null), 3000);
+      } finally {
+        setTemplateSubmitting(false);
       }
-      
-      setNewTemplate({ name: "", content: "" });
     }
   };
 
   // Handle editing template
   const handleEditTemplate = (template) => {
-    setNewTemplate({ name: template.name, content: template.content });
+    setNewTemplate({ title: template.title, description: template.description });
     setEditingTemplate(template);
   };
 
   // Handle deleting template
-  const handleDeleteTemplate = (templateId) => {
-    setTemplates(templates.filter(template => template.id !== templateId));
-    if (editingTemplate && editingTemplate.id === templateId) {
-      setEditingTemplate(null);
-      setNewTemplate({ name: "", content: "" });
+  const handleDeleteTemplate = async (templateId) => {
+    setTemplateSubmitting(true);
+    try {
+      const response = await apiCaller("DELETE", `/api/sms-templates/${templateId}`);
+      
+      if (response.data.success) {
+        setSuccessMessage("Szablon został usunięty pomyślnie");
+        await fetchTemplates(); // Refresh templates
+        if (editingTemplate && editingTemplate._id === templateId) {
+          setEditingTemplate(null);
+          setNewTemplate({ title: "", description: "" });
+        }
+      } else {
+        setError(response.data.message || "Nie udało się usunąć szablonu");
+      }
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (err) {
+      setError(err.message || "Błąd podczas usuwania szablonu");
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setTemplateSubmitting(false);
+    }
+  };
+
+  // Handle template status toggle
+  const handleToggleTemplateStatus = async (templateId) => {
+    setTemplateSubmitting(true);
+    try {
+      const response = await apiCaller("PATCH", `/api/sms-templates/${templateId}/toggle`);
+      
+      if (response.data.success) {
+        setSuccessMessage("Status szablonu został zmieniony pomyślnie");
+        await fetchTemplates(); // Refresh templates
+      } else {
+        setError(response.data.message || "Nie udało się zmienić statusu szablonu");
+      }
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (err) {
+      setError(err.message || "Błąd podczas zmiany statusu szablonu");
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setTemplateSubmitting(false);
     }
   };
 
@@ -577,26 +681,31 @@ const UserMessaging = () => {
                     <div className="flex gap-2 mb-2">
                       <input
                         type="text"
-                        value={newTemplate.name}
-                        onChange={(e) => setNewTemplate({...newTemplate, name: e.target.value})}
+                        value={newTemplate.title}
+                        onChange={(e) => setNewTemplate({...newTemplate, title: e.target.value})}
                         placeholder="Nazwa szablonu"
                         className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <button
                         onClick={handleAddTemplate}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                        disabled={templateSubmitting}
+                        className={`px-4 py-2 rounded-lg ${
+                          templateSubmitting
+                            ? "bg-gray-300 cursor-not-allowed"
+                            : "bg-blue-500 hover:bg-blue-600 text-white"
+                        }`}
                       >
-                        {editingTemplate ? "Zapisz zmiany" : "Dodaj"}
+                        {templateSubmitting ? "Przetwarzanie..." : (editingTemplate ? "Zapisz zmiany" : "Dodaj")}
                       </button>
                     </div>
                     <textarea
-                      value={newTemplate.content}
+                      value={newTemplate.description}
                       onChange={(e) => {
                         const value = e.target.value;
                         // Convert Polish characters to non-accented equivalents
                         const convertedValue = convertPolishCharacters(value);
                         const sanitizedValue = convertedValue.replace(/[^\w\s.,!?()-]/g, '');
-                        setNewTemplate({...newTemplate, content: sanitizedValue});
+                        setNewTemplate({...newTemplate, description: sanitizedValue});
                       }}
                       placeholder="Treść szablonu..."
                       rows="3"
@@ -607,34 +716,59 @@ const UserMessaging = () => {
                   <div>
                     <h4 className="text-md font-medium mb-2">Dostępne szablony</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {templates.map((template) => (
-                        <div key={template.id} className="border rounded-lg p-3 bg-white hover:shadow-md">
-                          <div className="flex justify-between items-center mb-1">
-                            <h5 className="font-medium">{template.name}</h5>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleEditTemplate(template)}
-                                className="text-blue-600 text-sm hover:text-blue-800"
-                              >
-                                Edytuj
-                              </button>
-                              <button
-                                onClick={() => handleDeleteTemplate(template.id)}
-                                className="text-red-600 text-sm hover:text-red-800"
-                              >
-                                Usuń
-                              </button>
+                      {templatesLoading ? (
+                        <p className="text-gray-500">Ładowanie szablonów...</p>
+                      ) : templates.length === 0 ? (
+                        <p className="text-gray-500">Brak dostępnych szablonów. Utwórz nowy!</p>
+                      ) : (
+                        templates.map((template) => (
+                          <div key={template._id} className={`border rounded-lg p-3 hover:shadow-md ${
+                            template.isActive ? 'bg-white' : 'bg-gray-50'
+                          }`}>
+                            <div className="flex justify-between items-center mb-1">
+                              <div className="flex items-center gap-2">
+                                <h5 className="font-medium">{template.title}</h5>
+                                {!template.isActive && (
+                                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
+                                    Nieaktywny
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditTemplate(template)}
+                                  disabled={templateSubmitting}
+                                  className={`text-sm ${templateSubmitting ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:text-blue-800'}`}
+                                >
+                                  Edytuj
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteTemplate(template._id)}
+                                  disabled={templateSubmitting}
+                                  className={`text-sm ${templateSubmitting ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-800'}`}
+                                >
+                                  Usuń
+                                </button>
+                                <button
+                                  onClick={() => handleToggleTemplateStatus(template._id)}
+                                  disabled={templateSubmitting}
+                                  className={`text-sm ${templateSubmitting ? 'text-gray-400 cursor-not-allowed' : (template.isActive ? 'text-green-600 hover:text-green-800' : 'text-gray-600 hover:text-gray-800')}`}
+                                >
+                                  {template.isActive ? 'Aktywny' : 'Nieaktywny'}
+                                </button>
+                              </div>
                             </div>
+                            <p className="text-sm text-gray-600 mb-2">{template.description}</p>
+                            <button
+                              onClick={() => handleTemplateSelect(template.description)}
+                              disabled={templateSubmitting}
+                              className={`text-sm ${templateSubmitting ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:text-blue-800'}`}
+                            >
+                              Użyj tego szablonu
+                            </button>
                           </div>
-                          <p className="text-sm text-gray-600 mb-2">{template.content}</p>
-                          <button
-                            onClick={() => handleTemplateSelect(template.content)}
-                            className="text-sm text-blue-600 hover:text-blue-800"
-                          >
-                            Użyj tego szablonu
-                          </button>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
