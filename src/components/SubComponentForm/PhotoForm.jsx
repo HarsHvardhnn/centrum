@@ -193,11 +193,17 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
   };
 
   // Common consent options
+  // const commonConsents = [
+  //   "Pacjent wyraża zgodę na otrzymywanie powiadomień SMS",
+  //   "Pacjent wyraża zgodę na udostępnienie informacji medycznych lekarzowi kierującemu",
+  //   "Pacjent wyraża zgodę na usługi telemedyczne",
+  //   "Pacjent wyraża zgodę na kontakt w sprawie wizyt kontrolnych",
+  // ];
   const commonConsents = [
-    "Pacjent wyraża zgodę na otrzymywanie powiadomień SMS",
-    "Pacjent wyraża zgodę na udostępnienie informacji medycznych lekarzowi kierującemu",
-    "Pacjent wyraża zgodę na usługi telemedyczne",
-    "Pacjent wyraża zgodę na kontakt w sprawie wizyt kontrolnych",
+    "Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).",
+    "Zapoznałem(-am) się z Regulaminem i Polityką Prywatności i akceptuję ich postanowienia.",
+    "Potwierdzam, że konsultacja medyczna odbędzie się w formie zdalnej (online) i jestem świadomy(-a) tej formy świadczenia zdrowotnego",
+    "Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).",
   ];
 
   // Add a common consent
