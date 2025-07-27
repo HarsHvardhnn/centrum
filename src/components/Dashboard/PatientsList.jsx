@@ -80,7 +80,7 @@ const PatientList = ({ patients }) => {
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Lista pacjentów</h2>
           <span className="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
-            363 member
+            363 członków
           </span>
         </div>
         <button>
@@ -101,7 +101,7 @@ const PatientList = ({ patients }) => {
                 />
               </th>
               <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                Imię i Nazwisko Pacjenta
+                Imię i nazwisko pacjenta
               </th>
               <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                 ID Pacjenta

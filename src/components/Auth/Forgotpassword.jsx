@@ -19,7 +19,7 @@ const ForgotPassword = () => {
     setError("");
 
     if (!email) {
-      setError("Please enter your email address");
+      setError("Proszę wprowadzić adres email");
       return;
     }
 
@@ -31,7 +31,7 @@ const ForgotPassword = () => {
       });
       setStep(2);
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong");
+      setError(err.response?.data?.message || "Coś poszło nie tak");
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,9 @@ const ForgotPassword = () => {
       });
       // Show success message if needed
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to resend email");
+      setError(
+        err.response?.data?.message || "Nie udało się ponownie wysłać emaila"
+      );
     } finally {
       setLoading(false);
     }
@@ -59,17 +61,17 @@ const ForgotPassword = () => {
 
     // Password validation
     if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError("Hasło musi mieć co najmniej 6 znaków");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords don't match");
+      setError("Hasła nie pasują do siebie");
       return;
     }
 
     if (!otp) {
-      setError("Please enter the OTP from your email");
+      setError("Proszę wprowadzić kod OTP z emaila");
       return;
     }
 
@@ -79,11 +81,11 @@ const ForgotPassword = () => {
       await apiCaller("POST", "/auth/reset-password", {
         resetToken: otp, // Using OTP as the reset token
         newPassword,
-        email
+        email,
       });
       setStep(4);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to reset password");
+      setError(err.response?.data?.message || "Nie udało się zresetować hasła");
     } finally {
       setLoading(false);
     }
@@ -126,9 +128,9 @@ const ForgotPassword = () => {
               </svg>
             </div>
 
-            <h1 className="text-2xl font-bold mb-2">Forgot password?</h1>
+            <h1 className="text-2xl font-bold mb-2">Zapomniałeś hasła?</h1>
             <p className="text-gray-500 text-center mb-6">
-              No worries, we'll send you reset instructions.
+              Nie martw się, wyślemy Ci instrukcje resetowania.
             </p>
 
             <form onSubmit={handleEmailSubmit} className="w-full">
@@ -143,7 +145,7 @@ const ForgotPassword = () => {
                   <input
                     type="email"
                     id="email"
-                    placeholder="Enter your email"
+                    placeholder="Wprowadź swój email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#80C5C5]"
@@ -159,7 +161,7 @@ const ForgotPassword = () => {
                 disabled={loading}
                 className="w-full bg-[#80C5C5] text-white py-2 rounded-md hover:bg-[#6eb6b6] transition-colors mb-4"
               >
-                {loading ? "Processing..." : "Reset password"}
+                {loading ? "Przetwarzanie..." : "Zresetuj hasło"}
               </button>
             </form>
 
@@ -167,7 +169,7 @@ const ForgotPassword = () => {
               onClick={() => (window.location.href = "/login")}
               className="flex items-center text-gray-500 hover:text-gray-700"
             >
-              <ArrowLeft size={16} className="mr-1" /> Log in
+              <ArrowLeft size={16} className="mr-1" /> Zaloguj się
             </button>
           </div>
         );
@@ -200,9 +202,9 @@ const ForgotPassword = () => {
               </svg>
             </div>
 
-            <h1 className="text-2xl font-bold mb-2">Check your email</h1>
+            <h1 className="text-2xl font-bold mb-2">Sprawdź swój email</h1>
             <p className="text-gray-500 text-center mb-2">
-              We sent a password reset OTP to
+              Wysłaliśmy kod OTP do resetowania hasła na
             </p>
             <p className="text-[#80C5C5] mb-6">{email}</p>
 
@@ -212,17 +214,17 @@ const ForgotPassword = () => {
               }}
               className="w-full bg-[#80C5C5] text-white py-2 rounded-md hover:bg-[#6eb6b6] transition-colors mb-4"
             >
-              Open email app
+              Otwórz aplikację email
             </button>
 
             <div className="flex items-center text-gray-500 mb-4">
-              <p>Didn't receive the email?</p>
+              <p>Nie otrzymałeś emaila?</p>
               <button
                 onClick={handleResendEmail}
                 className="ml-1 text-[#80C5C5] hover:underline"
                 disabled={loading}
               >
-                {loading ? "Sending..." : "resend"}
+                {loading ? "Wysyłanie..." : "wyślij ponownie"}
               </button>
             </div>
 
@@ -230,7 +232,7 @@ const ForgotPassword = () => {
               onClick={() => (window.location.href = "/login")}
               className="flex items-center text-gray-500 hover:text-gray-700"
             >
-              <ArrowLeft size={16} className="mr-1" /> Log in
+              <ArrowLeft size={16} className="mr-1" /> Zaloguj się
             </button>
           </div>
         );
@@ -270,9 +272,9 @@ const ForgotPassword = () => {
               </svg>
             </div>
 
-            <h1 className="text-2xl font-bold mb-2">Set new password</h1>
+            <h1 className="text-2xl font-bold mb-2">Ustaw nowe hasło</h1>
             <p className="text-gray-500 text-center mb-6">
-              Your new password must be different to previously used passwords.
+              Twoje nowe hasło musi być inne niż wcześniej używane hasła.
             </p>
 
             <form onSubmit={handlePasswordReset} className="w-full">
@@ -282,13 +284,13 @@ const ForgotPassword = () => {
                   htmlFor="otp"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Enter OTP*
+                  Wprowadź kod OTP*
                 </label>
                 <div className="relative">
                   <input
                     type="text"
                     id="otp"
-                    placeholder="Enter the OTP from your email"
+                    placeholder="Wprowadź kod OTP z emaila"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#80C5C5]"
@@ -302,13 +304,13 @@ const ForgotPassword = () => {
                   htmlFor="newPassword"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Enter New Password*
+                  Wprowadź nowe hasło*
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     id="newPassword"
-                    placeholder="Enter your password"
+                    placeholder="Wprowadź swoje hasło"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#80C5C5]"
@@ -323,7 +325,7 @@ const ForgotPassword = () => {
                   </button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Must be at least 6 characters
+                  Musi mieć co najmniej 6 znaków
                 </p>
               </div>
 
@@ -332,13 +334,13 @@ const ForgotPassword = () => {
                   htmlFor="confirmPassword"
                   className="block text-sm font-medium text-gray-700 mb-1"
                 >
-                  Confirm Password*
+                  Potwierdź hasło*
                 </label>
                 <div className="relative">
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     id="confirmPassword"
-                    placeholder="Enter your password"
+                    placeholder="Wprowadź swoje hasło"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#80C5C5]"
@@ -365,7 +367,7 @@ const ForgotPassword = () => {
                 disabled={loading}
                 className="w-full bg-[#80C5C5] text-white py-2 rounded-md hover:bg-[#6eb6b6] transition-colors mb-4"
               >
-                {loading ? "Processing..." : "Reset password"}
+                {loading ? "Przetwarzanie..." : "Zresetuj hasło"}
               </button>
             </form>
 
@@ -373,7 +375,7 @@ const ForgotPassword = () => {
               onClick={() => (window.location.href = "/login")}
               className="flex items-center text-gray-500 hover:text-gray-700"
             >
-              <ArrowLeft size={16} className="mr-1" /> Log in
+              <ArrowLeft size={16} className="mr-1" /> Zaloguj się
             </button>
           </div>
         );
@@ -419,16 +421,16 @@ const ForgotPassword = () => {
               </div>
             </div>
 
-            <h1 className="text-2xl font-bold mb-2">Password reset</h1>
+            <h1 className="text-2xl font-bold mb-2">Hasło zresetowane</h1>
             <p className="text-gray-500 text-center mb-6">
-              Your password has been successfully reset.
+              Twoje hasło zostało pomyślnie zresetowane.
             </p>
 
             <button
               onClick={() => (window.location.href = "/login")}
               className="w-full bg-[#80C5C5] text-white py-2 rounded-md hover:bg-[#6eb6b6] transition-colors mb-4"
             >
-              Back to login
+              Powrót do logowania
             </button>
           </div>
         );

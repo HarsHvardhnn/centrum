@@ -11,6 +11,8 @@ import {
   FaChevronLeft,
   FaMapMarkerAlt,
   FaCircle,
+  FaCheck,
+  FaExclamation,
 } from "react-icons/fa";
 import { format, parseISO } from "date-fns";
 import { useUser } from "../../context/userContext";
@@ -100,25 +102,25 @@ const MyAppointments = () => {
   // Get status color
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
-      case "booked":
+      case "zarezerwowana":
         return {
           bg: "bg-teal-100",
           text: "text-teal-700",
           dot: "text-teal-500",
         };
-      case "completed":
+      case "zakończona":
         return {
           bg: "bg-green-100",
           text: "text-green-700",
           dot: "text-green-500",
         };
-      case "cancelled":
+      case "anulowana":
         return {
           bg: "bg-red-100",
           text: "text-red-700",
           dot: "text-red-500",
         };
-      case "no-show":
+      case "nieobecność":
         return {
           bg: "bg-yellow-100",
           text: "text-yellow-700",
@@ -135,18 +137,18 @@ const MyAppointments = () => {
 
   // Calculate stats
   const calculateStats = () => {
-    const booked = appointments.filter((app) => app.status === "booked").length;
-    const completed = appointments.filter(
-      (app) => app.status === "completed"
-    ).length;
-    const cancelled = appointments.filter(
-      (app) => app.status === "cancelled"
-    ).length;
-    const noShow = appointments.filter(
-      (app) => app.status === "no-show"
-    ).length;
+    const zarezerwowane = appointments.filter((app) => app.status === "zarezerwowana").length;
+    const zakonczone = appointments.filter((app) => app.status === "zakończona").length;
+    const anulowane = appointments.filter((app) => app.status === "anulowana").length;
+    const nieobecnosci = appointments.filter((app) => app.status === "nieobecność").length;
 
-    return { booked, completed, cancelled, noShow, total: appointments.length };
+    return { 
+      zarezerwowane, 
+      zakonczone, 
+      anulowane, 
+      nieobecnosci, 
+      total: appointments.length 
+    };
   };
 
   if (loading) {
@@ -155,10 +157,10 @@ const MyAppointments = () => {
         <div className="w-full max-w-6xl">
           <div className="flex items-center mb-6">
             <button className="text-teal-600 mr-2 flex items-center">
-              <FaChevronLeft size={14} className="mr-1" /> Back
+              <FaChevronLeft size={14} className="mr-1" /> Powrót
             </button>
             <h1 className="text-2xl font-medium text-gray-800">
-              My Appointments
+              Moje wizyty
             </h1>
           </div>
 
@@ -172,14 +174,14 @@ const MyAppointments = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16 px-6 flex justify-center  top-[20%]">
+      <div className="min-h-screen bg-gray-50 pt-16 px-6 flex justify-center top-[20%]">
         <div className="w-full max-w-6xl">
           <div className="flex items-center mb-6">
             <button className="text-teal-600 mr-2 flex items-center">
-              <FaChevronLeft size={14} className="mr-1" /> Back
+              <FaChevronLeft size={14} className="mr-1" /> Powrót
             </button>
             <h1 className="text-2xl font-medium text-gray-800">
-              My Appointments
+              Moje wizyty
             </h1>
           </div>
 
@@ -194,222 +196,171 @@ const MyAppointments = () => {
   const stats = calculateStats();
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16 px-6 flex justify-center pb-12  mt-6">
+    <div className="min-h-screen bg-gray-50 pt-16 px-6 flex justify-center pb-12 mt-6">
       <div className="w-full max-w-6xl">
         <div className="flex items-center mb-6">
           <button className="text-teal-600 mr-2 flex items-center">
-            <FaChevronLeft size={14} className="mr-1" /> Back
+            <FaChevronLeft size={14} className="mr-1" /> Powrót
           </button>
-          <h1 className="text-2xl font-medium text-gray-800">
-            My Appointments
-          </h1>
+          <h1 className="text-2xl font-medium text-gray-800">Moje wizyty</h1>
         </div>
 
-        {appointments.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-teal-500">
-              <div className="text-sm text-gray-500 mb-1">
-                Total Appointments
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Zarezerwowane wizyty</p>
+                <h3 className="text-2xl font-medium">{stats.zarezerwowane}</h3>
               </div>
-              <div className="text-2xl font-medium">{stats.total}</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
-              <div className="text-sm text-gray-500 mb-1">Upcoming</div>
-              <div className="text-2xl font-medium">{stats.booked}</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
-              <div className="text-sm text-gray-500 mb-1">Completed</div>
-              <div className="text-2xl font-medium">{stats.completed}</div>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm p-4 border-l-4 border-red-500">
-              <div className="text-sm text-gray-500 mb-1">Cancelled</div>
-              <div className="text-2xl font-medium">{stats.cancelled}</div>
-            </div>
-          </div>
-        )}
-
-        {appointments.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <div className="text-7xl text-teal-200 flex justify-center mb-4">
-              <FaCalendarAlt />
-            </div>
-            <h3 className="text-xl font-medium text-gray-700 mb-2">
-              No Appointments Found
-            </h3>
-            <p className="text-gray-500 mb-6">
-              You haven't booked any appointments yet.
-            </p>
-            <a
-              href="/user/doctors"
-              className="bg-teal-600 text-white px-6 py-3 rounded-lg inline-block hover:bg-teal-700 transition duration-300"
-            >
-              Book an Appointment
-            </a>
-          </div>
-        ) : (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-gray-700">
-                All Appointments
-              </h2>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search appointments..."
-                    className="py-2 px-4 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  />
-                  <span className="absolute right-3 top-2.5 text-gray-400">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </span>
-                </div>
-                <button className="bg-white border border-gray-300 p-2 rounded-lg">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                    />
-                  </svg>
-                </button>
+              <div className="bg-teal-100 p-3 rounded-full">
+                <FaCalendarAlt className="text-teal-600" />
               </div>
             </div>
+          </div>
 
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 text-left text-sm font-medium text-gray-500">
-                    <th className="py-3 px-4">Doctor</th>
-                    <th className="py-3 px-4">Date & Time</th>
-                    <th className="py-3 px-4">Mode</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4">Actions</th>
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Zakończone wizyty</p>
+                <h3 className="text-2xl font-medium">{stats.zakonczone}</h3>
+              </div>
+              <div className="bg-green-100 p-3 rounded-full">
+                <FaCheck className="text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Anulowane wizyty</p>
+                <h3 className="text-2xl font-medium">{stats.anulowane}</h3>
+              </div>
+              <div className="bg-red-100 p-3 rounded-full">
+                <FaTimes className="text-red-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Nieobecności</p>
+                <h3 className="text-2xl font-medium">{stats.nieobecnosci}</h3>
+              </div>
+              <div className="bg-yellow-100 p-3 rounded-full">
+                <FaExclamation className="text-yellow-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Appointments List */}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="p-4 border-b">
+            <h2 className="text-lg font-medium">Lista wizyt</h2>
+          </div>
+
+          {appointments.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              <FaCalendarAlt size={48} className="mx-auto mb-4 text-gray-400" />
+              <p className="text-lg font-medium mb-2">Brak wizyt</p>
+              <p className="text-sm">Nie masz jeszcze żadnych umówionych wizyt.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Data i godzina
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Lekarz
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Typ wizyty
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Akcje
+                    </th>
                   </tr>
                 </thead>
-                <tbody>
-                  {appointments.map((appointment, index) => (
-                    <tr
-                      key={appointment._id}
-                      className={`border-t border-gray-100 ${
-                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                      }`}
-                    >
-                      <td className="py-4 px-4">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-medium mr-3">
-                            {appointment.doctor.name.first.charAt(0)}
-                            {appointment.doctor.name.last.charAt(0)}
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-800">
-                              Dr. {appointment.doctor.name.first}{" "}
-                              {appointment.doctor.name.last}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {appointment.doctor.department ||
-                                "Medical Doctor"}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="font-medium text-gray-800">
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {appointments.map((appointment) => (
+                    <tr key={appointment._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
                           {formatAppointmentDate(appointment.date)}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {appointment.startTime} - {appointment.endTime}
+                          {appointment.time}
                         </div>
                       </td>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center">
-                          {appointment.mode === "online" ? (
-                            <span className="flex items-center text-blue-600">
-                              <FaVideo className="mr-1" /> Online
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {appointment.doctor.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {appointment.doctor.specialization}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {appointment.type === "online" ? (
+                            <span className="flex items-center">
+                              <FaVideo className="mr-1" /> Wizyta online
                             </span>
                           ) : (
-                            <span className="flex items-center text-gray-600">
-                              <FaMapMarkerAlt className="mr-1" /> In-person
+                            <span className="flex items-center">
+                              <FaHospital className="mr-1" /> Wizyta w przychodni
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-4">
-                        <div
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             getStatusColor(appointment.status).bg
                           } ${getStatusColor(appointment.status).text}`}
                         >
                           <FaCircle
-                            className={`${
+                            size={8}
+                            className={`mr-1.5 ${
                               getStatusColor(appointment.status).dot
-                            } mr-1.5 text-xs`}
+                            }`}
                           />
-                          {appointment.status.charAt(0).toUpperCase() +
-                            appointment.status.slice(1)}
-                        </div>
+                          {appointment.status}
+                        </span>
                       </td>
-                      <td className="py-4 px-4">
-                        <div className="flex space-x-2">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleViewDetails(appointment)}
+                          className="text-teal-600 hover:text-teal-900 mr-4"
+                        >
+                          Szczegóły
+                        </button>
+                        {appointment.status === "zarezerwowana" && (
                           <button
-                            onClick={() => handleViewDetails(appointment)}
-                            className="text-teal-600 hover:text-teal-800 p-1"
+                            onClick={() => handleCancelAppointment(appointment._id)}
+                            className="text-red-600 hover:text-red-900"
+                            disabled={cancellationLoading}
                           >
-                            View
+                            {cancellationLoading ? "Anulowanie..." : "Anuluj"}
                           </button>
-
-                          {appointment.status === "booked" && (
-                            <>
-                              {appointment.mode === "online" &&
-                                appointment.joining_link && (
-                                  <a
-                                    href={appointment.joining_link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 p-1"
-                                  >
-                                    Join
-                                  </a>
-                                )}
-                              <button
-                                onClick={() =>
-                                  handleCancelAppointment(appointment._id)
-                                }
-                                className="text-red-600 hover:text-red-800 p-1"
-                                disabled={cancellationLoading}
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          )}
-                        </div>
+                        )}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </>
-        )}
+          )}
+        </div>
 
         {/* Appointment Details Modal */}
         {showModal && selectedAppointment && (
@@ -496,7 +447,7 @@ const MyAppointments = () => {
 
                       <div className="flex items-start">
                         <div className="flex h-8 w-8 rounded-full bg-gray-100 items-center justify-center mr-3">
-                          {selectedAppointment.mode === "online" ? (
+                          {selectedAppointment.type === "online" ? (
                             <FaVideo className="text-blue-600" />
                           ) : (
                             <FaMapMarkerAlt className="text-teal-600" />
@@ -506,13 +457,13 @@ const MyAppointments = () => {
                           <div className="text-xs text-gray-500">Mode</div>
                           <div
                             className={`font-medium ${
-                              selectedAppointment.mode === "online"
+                              selectedAppointment.type === "online"
                                 ? "text-blue-600"
                                 : "text-gray-800"
                             }`}
                           >
-                            {selectedAppointment.mode.charAt(0).toUpperCase() +
-                              selectedAppointment.mode.slice(1)}{" "}
+                            {selectedAppointment.type.charAt(0).toUpperCase() +
+                              selectedAppointment.type.slice(1)}{" "}
                             Appointment
                           </div>
                         </div>
@@ -568,8 +519,8 @@ const MyAppointments = () => {
                   </div>
                 </div>
 
-                {selectedAppointment.status === "booked" &&
-                  selectedAppointment.mode === "online" && (
+                {selectedAppointment.status === "zarezerwowana" &&
+                  selectedAppointment.type === "online" && (
                     <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
                       <div className="flex justify-between items-center">
                         <div>
@@ -597,7 +548,7 @@ const MyAppointments = () => {
                   )}
 
                 <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100">
-                  {selectedAppointment.status === "booked" && (
+                  {selectedAppointment.status === "zarezerwowana" && (
                     <button
                       onClick={() =>
                         handleCancelAppointment(selectedAppointment._id)
@@ -606,8 +557,8 @@ const MyAppointments = () => {
                       disabled={cancellationLoading}
                     >
                       {cancellationLoading
-                        ? "Cancelling..."
-                        : "Cancel Appointment"}
+                        ? "Anulowanie..."
+                        : "Anuluj"}
                     </button>
                   )}
 

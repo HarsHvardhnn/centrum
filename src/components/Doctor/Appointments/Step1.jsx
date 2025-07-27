@@ -32,11 +32,11 @@ const AppointmentModal = ({ isOpen, onClose }) => {
     
     // Validate form
     const newErrors = {};
-    if (!formData.patientName) newErrors.patientName = "Patient name is required";
-    if (!formData.patientSource) newErrors.patientSource = "Patient source is required";
-    if (!formData.visitType) newErrors.visitType = "Visit type is required";
-    if (!formData.doctor) newErrors.doctor = "Doctor is required";
-    if (!formData.visitSlot) newErrors.visitSlot = "Slot number is required";
+    if (!formData.patientName) newErrors.patientName = "Imię i nazwisko pacjenta jest wymagane";
+    if (!formData.patientSource) newErrors.patientSource = "Źródło pacjenta jest wymagane";
+    if (!formData.visitType) newErrors.visitType = "Typ wizyty jest wymagany";
+    if (!formData.doctor) newErrors.doctor = "Lekarz jest wymagany";
+    if (!formData.visitSlot) newErrors.visitSlot = "Numer slotu jest wymagany";
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -62,19 +62,19 @@ const AppointmentModal = ({ isOpen, onClose }) => {
           </svg>
         </button>
         
-        <h2 className="text-xl font-semibold mb-4">Add Appointment</h2>
+        <h2 className="text-xl font-semibold mb-4">Dodaj wizytę</h2>
         
         <form onSubmit={handleSubmit}>
           {/* Patient Name */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Patient name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Imię i nazwisko pacjenta</label>
             <div className="relative">
               <input
                 type="text"
                 name="patientName"
                 value={formData.patientName}
                 onChange={handleChange}
-                placeholder="Enter patient name & number"
+                placeholder="Wprowadź imię i numer pacjenta"
                 className={`w-full p-2 border rounded-md ${errors.patientName ? 'border-red-500' : 'border-gray-300'}`}
               />
               <button className="absolute right-2 top-2 text-teal-500">
@@ -88,7 +88,7 @@ const AppointmentModal = ({ isOpen, onClose }) => {
           
           {/* About the patient */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 ">About the patient</label>
+            <label className="block text-sm font-medium text-gray-700">O pacjencie</label>
             <div className="bg-teal-50 p-3 rounded-md flex items-center gap-8">
               <div className="flex items-center mb-2">
                 <select
@@ -97,9 +97,9 @@ const AppointmentModal = ({ isOpen, onClose }) => {
                   onChange={handleChange}
                   className={`w-full p-2 border rounded-md ${errors.patientSource ? 'border-red-500' : 'border-gray-300'}`}
                 >
-                  <option value="">Select patient source</option>
-                  <option value="referral">Referral</option>
-                  <option value="walkin">Walk-in</option>
+                  <option value="">Wybierz źródło pacjenta</option>
+                  <option value="referral">Skierowanie</option>
+                  <option value="walkin">Bez rejestracji</option>
                   <option value="online">Online</option>
                 </select>
               </div>
@@ -116,7 +116,7 @@ const AppointmentModal = ({ isOpen, onClose }) => {
                     onChange={handleChange}
                     className="mr-2"
                   />
-                  <label htmlFor="first-visit">First-Time Visit</label>
+                  <label htmlFor="first-visit">Pierwsza wizyta</label>
                 </div>
                 <div className="flex items-center">
                   <input
@@ -128,7 +128,7 @@ const AppointmentModal = ({ isOpen, onClose }) => {
                     onChange={handleChange}
                     className="mr-2"
                   />
-                  <label htmlFor="re-visit">Re-Visit</label>
+                  <label htmlFor="re-visit">Kolejna wizyta</label>
                 </div>
               </div>
               {errors.visitType && <p className="text-red-500 text-xs mt-1">{errors.visitType}</p>}
@@ -143,14 +143,14 @@ const AppointmentModal = ({ isOpen, onClose }) => {
                   onChange={handleChange}
                   className="mr-2"
                 />
-                International Patient
+                Pacjent międzynarodowy
               </label>
             </div>
           </div>
           
           {/* Doctor */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Doctor</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Lekarz</label>
             <div className="grid grid-cols-3 gap-2">
               <select
                 name="doctor"
@@ -158,7 +158,7 @@ const AppointmentModal = ({ isOpen, onClose }) => {
                 onChange={handleChange}
                 className={`p-2 border rounded-md ${errors.doctor ? 'border-red-500' : 'border-gray-300'}`}
               >
-                <option value="">Select doctor</option>
+                <option value="">Wybierz lekarza</option>
                 <option value="dr-smith">Dr. Smith</option>
                 <option value="dr-jones">Dr. Jones</option>
               </select>
@@ -169,9 +169,9 @@ const AppointmentModal = ({ isOpen, onClose }) => {
                 onChange={handleChange}
                 className="p-2 border border-gray-300 rounded-md"
               >
-                <option value="">Select visit type</option>
-                <option value="consultation">Consultation</option>
-                <option value="followup">Follow-up</option>
+                <option value="">Wybierz typ wizyty</option>
+                <option value="consultation">Konsultacja</option>
+                <option value="followup">Kontrolna</option>
               </select>
               
               <input
@@ -179,7 +179,7 @@ const AppointmentModal = ({ isOpen, onClose }) => {
                 name="visitSlot"
                 value={formData.visitSlot}
                 onChange={handleChange}
-                placeholder="Enter slots number"
+                placeholder="Wprowadź numer slotu"
                 className={`p-2 border rounded-md ${errors.visitSlot ? 'border-red-500' : 'border-gray-300'}`}
               />
             </div>
@@ -189,8 +189,8 @@ const AppointmentModal = ({ isOpen, onClose }) => {
           
           {/* Time */}
           <div className="mb-4 w-[60%]">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-            <div className="flex space-x-2 ">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Czas</label>
+            <div className="flex space-x-2">
               <input
                 type="text"
                 name="date"
@@ -209,8 +209,8 @@ const AppointmentModal = ({ isOpen, onClose }) => {
             </div>
           </div>
           
-          {/* Status Options */}
-          <div className="mb-4 flex space-x-4">
+          {/* Additional Options */}
+          <div className="space-y-2">
             <label className="flex items-center">
               <input
                 type="checkbox"
@@ -219,9 +219,9 @@ const AppointmentModal = ({ isOpen, onClose }) => {
                 onChange={handleChange}
                 className="mr-2"
               />
-              Mark Apt as Arrived
+              <span className="text-sm text-gray-700">Oznacz jako przybyły</span>
             </label>
-            
+
             <label className="flex items-center">
               <input
                 type="checkbox"
@@ -230,9 +230,9 @@ const AppointmentModal = ({ isOpen, onClose }) => {
                 onChange={handleChange}
                 className="mr-2"
               />
-              Is Walkin
+              <span className="text-sm text-gray-700">Bez rejestracji</span>
             </label>
-            
+
             <label className="flex items-center">
               <input
                 type="checkbox"
@@ -241,24 +241,9 @@ const AppointmentModal = ({ isOpen, onClose }) => {
                 onChange={handleChange}
                 className="mr-2"
               />
-              Needs Attention
+              <span className="text-sm text-gray-700">Wymaga uwagi</span>
             </label>
-          </div>
-          
-          {/* Review Notes */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Review Notes</label>
-            <textarea
-              name="reviewNotes"
-              value={formData.reviewNotes}
-              onChange={handleChange}
-              placeholder="Enter patient details..."
-              className="w-full p-2 border border-gray-300 rounded-md h-24"
-            ></textarea>
-          </div>
-          
-          {/* Enable repeats */}
-          <div className="mb-6">
+
             <label className="flex items-center">
               <input
                 type="checkbox"
@@ -267,19 +252,41 @@ const AppointmentModal = ({ isOpen, onClose }) => {
                 onChange={handleChange}
                 className="mr-2"
               />
-              Enable repeats patient
+              <span className="text-sm text-gray-700">Włącz powtarzanie dla pacjenta</span>
             </label>
           </div>
           
-          {/* Submit Button */}
-          <div className="flex justify-end">
+          {/* Review Notes */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Notatki
+            </label>
+            <textarea
+              name="reviewNotes"
+              value={formData.reviewNotes}
+              onChange={handleChange}
+              placeholder="Wprowadź szczegóły pacjenta..."
+              className="w-full p-2 border rounded-md focus:ring-1 focus:ring-teal-500 h-20"
+            ></textarea>
+          </div>
+          
+          <div className="mt-6 text-right">
             <button
               type="submit"
-              className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-md flex items-center"
+              className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 inline-flex items-center"
             >
-              Add Appointment
-              <svg className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              Dodaj wizytę
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 ml-1"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
               </svg>
             </button>
           </div>
@@ -311,3 +318,4 @@ const App = () => {
 };
 
 export default App;
+

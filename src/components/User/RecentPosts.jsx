@@ -13,7 +13,7 @@ const RecentPosts = ({ isNews }) => {
         const res = await apiCaller("GET", `/news?latest=5&isNews=${isNews}`);
         setNewsData(res.data);
       } catch (err) {
-        setError("Failed to load recent posts");
+        setError("Nie udało się załadować ostatnich postów");
       } finally {
         setLoading(false);
       }
@@ -31,7 +31,7 @@ const RecentPosts = ({ isNews }) => {
       <div className="mb-4 relative">
         <input
           type="text"
-          placeholder="Search"
+          placeholder="Szukaj"
           className="w-full p-2 border rounded-lg pl-8"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -40,11 +40,11 @@ const RecentPosts = ({ isNews }) => {
       </div>
 
       <h2 className="text-3xl font-semibold font-serif text-main mb-4">
-        Recent Posts
+        Ostatnie posty
       </h2>
 
       {loading ? (
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-gray-500">Ładowanie...</p>
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : filteredNews.length > 0 ? (
@@ -69,7 +69,7 @@ const RecentPosts = ({ isNews }) => {
         </ul>
       ) : (
         <div className="py-8 text-center">
-          <p className="text-gray-500">No recent posts found</p>
+          <p className="text-gray-500">Nie znaleziono postów</p>
         </div>
       )}
     </div>

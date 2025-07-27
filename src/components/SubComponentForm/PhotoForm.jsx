@@ -112,10 +112,10 @@ const ConsentDocumentUpload = () => {
 
   // Common consent options
   const commonConsents = [
-    "Patient agrees to receive SMS notifications",
-    "Patient agrees to share medical information with referring doctor",
-    "Patient consents to telehealth services",
-    "Patient agrees to be contacted for follow-up appointments",
+    "Pacjent wyraża zgodę na otrzymywanie powiadomień SMS",
+    "Pacjent wyraża zgodę na udostępnienie informacji medycznych lekarzowi kierującemu",
+    "Pacjent wyraża zgodę na usługi telemedyczne",
+    "Pacjent wyraża zgodę na kontakt w sprawie wizyt kontrolnych",
   ];
 
   // Add a common consent
@@ -144,7 +144,7 @@ const ConsentDocumentUpload = () => {
           }`}
           onClick={() => setActiveTab("consent")}
         >
-          Patient Consents
+          Zgody Pacjenta
         </button>
         <button
           className={`px-4 py-2 ${
@@ -154,7 +154,7 @@ const ConsentDocumentUpload = () => {
           }`}
           onClick={() => setActiveTab("documents")}
         >
-          Documents
+          Dokumenty
         </button>
       </div>
 
@@ -162,20 +162,20 @@ const ConsentDocumentUpload = () => {
         <div className="space-y-6">
           <div>
             <h2 className="text-lg font-medium text-gray-800">
-              Patient Consents
+              Zgody Pacjenta
             </h2>
-            <p className="text-gray-600">Manage patient consent agreements</p>
+            <p className="text-gray-600">Zarządzaj zgodami pacjenta</p>
           </div>
 
           {/* Add new consent */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="font-medium mb-3">Add New Consent</h3>
+            <h3 className="font-medium mb-3">Dodaj Nową Zgodę</h3>
             <div className="flex space-x-2">
               <input
                 type="text"
                 value={newConsent}
                 onChange={(e) => setNewConsent(e.target.value)}
-                placeholder="Enter consent statement"
+                placeholder="Wprowadź treść zgody"
                 className="flex-grow p-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
               <button
@@ -183,14 +183,14 @@ const ConsentDocumentUpload = () => {
                 className="bg-primary-light text-white px-4 py-2 rounded hover:bg-primary flex items-center"
               >
                 <Plus size={18} className="mr-1" />
-                Add
+                Dodaj
               </button>
             </div>
           </div>
 
           {/* Common consents */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="font-medium mb-3">Common Consent Templates</h3>
+            <h3 className="font-medium mb-3">Szablony Typowych Zgód</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {commonConsents.map((text, index) => (
                 <button
@@ -207,7 +207,7 @@ const ConsentDocumentUpload = () => {
 
           {/* List of consents */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="font-medium mb-3">Active Consents</h3>
+            <h3 className="font-medium mb-3">Aktywne Zgody</h3>
             {formData.consents && formData.consents.length > 0 ? (
               <ul className="space-y-3">
                 {formData.consents.map((consent) => (
@@ -247,7 +247,7 @@ const ConsentDocumentUpload = () => {
               </ul>
             ) : (
               <p className="text-gray-500 text-center py-4">
-                No consents added yet
+                Brak dodanych zgód
               </p>
             )}
           </div>
@@ -256,9 +256,9 @@ const ConsentDocumentUpload = () => {
 
       {activeTab === "documents" && (
         <div className="space-y-4">
-          <h2 className="text-lg font-medium text-gray-800">Document Upload</h2>
+          <h2 className="text-lg font-medium text-gray-800">Dokumenty</h2>
           <p className="text-gray-600">
-            Upload patient documents (PDF or Images)
+            Zarządzaj dokumentami i zdjęciami pacjenta
           </p>
 
           <div

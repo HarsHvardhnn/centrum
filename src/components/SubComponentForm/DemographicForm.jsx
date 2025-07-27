@@ -21,7 +21,7 @@ const DemographicsForm = () => {
       // Format to YYYY-MM-DD
       return date.toISOString().split("T")[0];
     } catch (error) {
-      console.error("Error formatting date:", error);
+      console.error("Błąd formatowania daty:", error);
       return "";
     }
   };
@@ -30,14 +30,14 @@ const DemographicsForm = () => {
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Full Name
+          Pełna Nazwa
         </label>
         <input
           type="text"
           name="fullName"
           value={formData.fullName || ""}
           onChange={handleChange}
-          placeholder="Enter your full name"
+          placeholder="Wprowadź swoje pełne imię i nazwisko"
           className="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
       </div>
@@ -45,42 +45,42 @@ const DemographicsForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email ID
+            Adres E-mail
           </label>
           <input
             type="email"
             name="email"
             value={formData.email || ""}
             onChange={handleChange}
-            placeholder="Enter your e-mail"
+            placeholder="Wprowadź swój e-mail"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mobile Number
+            Numer Telefonu
           </label>
           <input
             type="tel"
             name="mobileNumber"
             value={formData.mobileNumber || ""}
             onChange={handleChange}
-            placeholder="Enter your mobile number"
+            placeholder="Wprowadź swój numer telefonu"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Date of Birth
+            Data Urodzenia
           </label>
           <input
             type="date"
             name="dateOfBirth"
             value={formatDateForInput(formData.dateOfBirth)}
             onChange={handleChange}
-            placeholder="Enter date"
+            placeholder="Wprowadź datę"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -89,35 +89,35 @@ const DemographicsForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Mother Tongue
+            Język Ojczysty
           </label>
           <input
             type="text"
             name="motherTongue"
             value={formData.motherTongue || ""}
             onChange={handleChange}
-            placeholder="Enter your mother tongue"
+            placeholder="Wprowadź swój język ojczysty"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Govt ID
+            ID Rządowe
           </label>
           <input
             type="text"
             name="govtId"
             value={formData.govtId || ""}
             onChange={handleChange}
-            placeholder="Enter govt id"
+            placeholder="Wprowadź ID rządowe"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Hosp. ID
+            ID Szpitala
           </label>
           <div className="relative">
             <input
@@ -134,7 +134,7 @@ const DemographicsForm = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Sex
+            Płeć
           </label>
           <div className="flex gap-4 p-3 bg-primary-lighter rounded-xl">
             <label className="inline-flex items-center">
@@ -146,7 +146,7 @@ const DemographicsForm = () => {
                 onChange={handleChange}
                 className="form-radio h-4 w-4 text-teal-500"
               />
-              <span className="ml-2">Male</span>
+              <span className="ml-2">Mężczyzna</span>
             </label>
             <label className="inline-flex items-center">
               <input
@@ -157,14 +157,14 @@ const DemographicsForm = () => {
                 onChange={handleChange}
                 className="form-radio h-4 w-4 text-teal-500"
               />
-              <span className="ml-2">Female</span>
+              <span className="ml-2">Kobieta</span>
             </label>
           </div>
         </div>
 
-        <div>
+        <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Marital Status
+            Stan Cywilny
           </label>
           <div className="flex gap-4 p-3 bg-primary-lighter rounded-xl">
             <label className="inline-flex items-center">
@@ -176,7 +176,7 @@ const DemographicsForm = () => {
                 onChange={handleChange}
                 className="form-radio h-4 w-4 text-teal-500"
               />
-              <span className="ml-2">Single</span>
+              <span className="ml-2">Wolny</span>
             </label>
             <label className="inline-flex items-center">
               <input
@@ -187,7 +187,7 @@ const DemographicsForm = () => {
                 onChange={handleChange}
                 className="form-radio h-4 w-4 text-teal-500"
               />
-              <span className="ml-2">Married</span>
+              <span className="ml-2">Żonaty/Zamężna</span>
             </label>
             <label className="inline-flex items-center">
               <input
@@ -198,16 +198,17 @@ const DemographicsForm = () => {
                 onChange={handleChange}
                 className="form-radio h-4 w-4 text-teal-500"
               />
-              <span className="ml-2">Widow</span>
+              <span className="ml-2">Wdowiec/Wdowa</span>
             </label>
           </div>
         </div>
+      </div>
 
-        <div>
+      <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Ethnicity
+            Pochodzenie Etniczne
           </label>
-          <div className="flex gap-4 p-3 bg-primary-lighter rounded-xl">
+          <div className="flex w-[30%] gap-4 p-3 bg-primary-lighter rounded-xl">
             <label className="inline-flex items-center">
               <input
                 type="radio"
@@ -217,7 +218,7 @@ const DemographicsForm = () => {
                 onChange={handleChange}
                 className="form-radio h-4 w-4 text-teal-500"
               />
-              <span className="ml-2">European</span>
+              <span className="ml-2">Europejskie</span>
             </label>
             <label className="inline-flex items-center">
               <input
@@ -228,22 +229,20 @@ const DemographicsForm = () => {
                 onChange={handleChange}
                 className="form-radio h-4 w-4 text-teal-500"
               />
-              <span className="ml-2">Bangali</span>
+              <span className="ml-2">Bengalskie</span>
             </label>
           </div>
         </div>
-      </div>
-
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Other Hospital IDs
+          Inne ID Szpitalne
         </label>
         <input
           type="text"
           name="otherHospitalIds"
           value={formData.otherHospitalIds || ""}
           onChange={handleChange}
-          placeholder="Enter id's"
+          placeholder="Wprowadź ID"
           className="w-full px-3 py-2 border border-gray-300 rounded-md"
         />
       </div>

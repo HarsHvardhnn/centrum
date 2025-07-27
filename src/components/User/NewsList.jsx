@@ -18,11 +18,11 @@ const NewsCard = ({ article }) => {
           <span>{article.date}</span>
           <span>{article.author}</span>
           <span className="flex items-center">
-            <Eye className="size-3 sm:size-4 lg:size-5 mr-1" /> {article.views}
+            <Eye className="size-3 sm:size-4 lg:size-5 mr-1" /> {article.views} wyświetleń
           </span>
           <span className="flex items-center">
             <Heart className="size-3 sm:size-4 lg:size-5 mr-1 text-red-500" />{" "}
-            {article.likes}
+            {article.likes} polubień
           </span>
         </div>
         <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif font-semibold text-main mt-2">
@@ -34,7 +34,7 @@ const NewsCard = ({ article }) => {
             to={`/user/news/single/${article._id}`}
             className="text-main max-sm:text-sm px-6 py-2 rounded-full bg-main-light transition"
           >
-            Read More »
+            Czytaj więcej »
           </Link>
         </div>
       </div>
@@ -55,8 +55,8 @@ const NewsList = ({ isNews }) => {
         const response = await apiCaller("GET", `/news?isNews=${isNews}`);
         setNewsData(response.data);
       } catch (err) {
-        console.error("Failed to fetch news:", err);
-        setError("Failed to load posts");
+        console.error("Nie udało się pobrać aktualności:", err);
+        setError("Nie udało się załadować postów");
       } finally {
         setLoading(false);
       }
@@ -79,7 +79,7 @@ const NewsList = ({ isNews }) => {
     <div className="max-w-3xl mx-auto p-5">
       {loading ? (
         <div className="text-center py-12">
-          <p className="text-gray-500">Loading...</p>
+          <p className="text-gray-500">Wczytywanie...</p>
         </div>
       ) : error ? (
         <div className="text-center py-12">
@@ -92,8 +92,8 @@ const NewsList = ({ isNews }) => {
           ))}
 
           <ReactPaginate
-            previousLabel={"Previous"}
-            nextLabel={"Next"}
+            previousLabel={"Poprzednia"}
+            nextLabel={"Następna"}
             pageCount={pageCount}
             onPageChange={handlePageClick}
             containerClassName={"pagination flex justify-center space-x-2 mt-6"}
@@ -112,7 +112,7 @@ const NewsList = ({ isNews }) => {
         </>
       ) : (
         <div className="text-center py-16 bg-white rounded-lg shadow">
-          <p className="text-gray-500 text-xl">No posts available</p>
+          <p className="text-gray-500 text-xl">Brak dostępnych postów</p>
         </div>
       )}
     </div>

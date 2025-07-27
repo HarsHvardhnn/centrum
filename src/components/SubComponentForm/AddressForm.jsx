@@ -14,35 +14,35 @@ const AddressForm = () => {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Adres</label>
           <input 
             type="text" 
             name="address"
             value={formData.address}
             onChange={handleChange}
-            placeholder="Enter your home address" 
+            placeholder="Wprowadź swój adres domowy" 
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Miasto</label>
           <input 
             type="text" 
             name="city"
             value={formData.city}
             onChange={handleChange}
-            placeholder="Enter your city name" 
+            placeholder="Wprowadź nazwę miasta" 
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Pin Code</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Kod Pocztowy</label>
           <input 
             type="text" 
             name="pinCode"
             value={formData.pinCode}
             onChange={handleChange}
-            placeholder="Enter pin" 
+            placeholder="Wprowadź kod" 
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
@@ -50,45 +50,45 @@ const AddressForm = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Województwo</label>
           <select 
             name="state"
             value={formData.state}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           >
-            <option value="" disabled>Select your state</option>
-            <option value="state1">State 1</option>
-            <option value="state2">State 2</option>
-            <option value="state3">State 3</option>
+            <option value="" disabled>Wybierz województwo</option>
+            <option value="state1">Województwo 1</option>
+            <option value="state2">Województwo 2</option>
+            <option value="state3">Województwo 3</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Kraj</label>
           <select 
             name="country"
             value={formData.country}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           >
-            <option value="" disabled>Select your country</option>
-            <option value="country1">Country 1</option>
-            <option value="country2">Country 2</option>
-            <option value="country3">Country 3</option>
+            <option value="" disabled>Wybierz kraj</option>
+            <option value="country1">Kraj 1</option>
+            <option value="country2">Kraj 2</option>
+            <option value="country3">Kraj 3</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Powiat</label>
           <select 
             name="district"
             value={formData.district}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           >
-            <option value="" disabled>Select your district</option>
-            <option value="district1">District 1</option>
-            <option value="district2">District 2</option>
-            <option value="district3">District 3</option>
+            <option value="" disabled>Wybierz powiat</option>
+            <option value="district1">Powiat 1</option>
+            <option value="district2">Powiat 2</option>
+            <option value="district3">Powiat 3</option>
           </select>
         </div>
       </div>
@@ -102,7 +102,7 @@ const AddressForm = () => {
           onChange={handleChange}
           className="mr-2" 
         />
-        <label htmlFor="international" className="text-sm text-gray-700">International Patient</label>
+        <label htmlFor="international" className="text-sm text-gray-700">Pacjent Międzynarodowy</label>
       </div>
     </div>
   );

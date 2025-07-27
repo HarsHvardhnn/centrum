@@ -12,7 +12,7 @@ export const MedicationForm = ({
     frequency: "",
     startDate: "",
     endDate: "",
-    status: "Active",
+    status: "Aktywny",
   });
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export const MedicationForm = ({
         frequency: medication.frequency || "",
         startDate: startDate,
         endDate: endDate,
-        status: medication.status || "Active",
+        status: medication.status || "Aktywny",
       });
     }
   }, [isEditing, medication]);
@@ -52,14 +52,14 @@ export const MedicationForm = ({
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
       <h3 className="text-lg font-medium mb-4">
-        {isEditing ? "Edit Medication" : "Add New Medication"}
+        {isEditing ? "Edytuj lek" : "Dodaj nowy lek"}
       </h3>
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Medication Name*
+              Nazwa leku*
             </label>
             <input
               type="text"
@@ -73,14 +73,14 @@ export const MedicationForm = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Dosage*
+              Dawkowanie*
             </label>
             <input
               type="text"
               name="dosage"
               value={formData.dosage}
               onChange={handleChange}
-              placeholder="e.g., 10mg"
+              placeholder="np. 10mg"
               className="w-full p-2 border border-gray-300 rounded-md"
               required
             />
@@ -88,14 +88,14 @@ export const MedicationForm = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Frequency*
+              Częstotliwość*
             </label>
             <input
               type="text"
               name="frequency"
               value={formData.frequency}
               onChange={handleChange}
-              placeholder="e.g., Twice daily"
+              placeholder="np. Dwa razy dziennie"
               className="w-full p-2 border border-gray-300 rounded-md"
               required
             />
@@ -111,16 +111,16 @@ export const MedicationForm = ({
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md"
             >
-              <option value="Active">Active</option>
-              <option value="Completed">Completed</option>
-              <option value="Discontinued">Discontinued</option>
-              <option value="On Hold">On Hold</option>
+              <option value="Aktywny">Aktywny</option>
+              <option value="Zakończony">Zakończony</option>
+              <option value="Przerwany">Przerwany</option>
+              <option value="Wstrzymany">Wstrzymany</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Start Date*
+              Data rozpoczęcia*
             </label>
             <input
               type="date"
@@ -134,7 +134,7 @@ export const MedicationForm = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              End Date
+              Data zakończenia
             </label>
             <input
               type="date"
@@ -152,13 +152,13 @@ export const MedicationForm = ({
             onClick={onCancel}
             className="px-4 py-2 border border-gray-300 rounded-md text-sm"
           >
-            Cancel
+            Anuluj
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-[#80c5c5] hover:bg-teal-500 text-white rounded-md text-sm"
           >
-            {isEditing ? "Update Medication" : "Add Medication"}
+            {isEditing ? "Aktualizuj lek" : "Dodaj lek"}
           </button>
         </div>
       </form>

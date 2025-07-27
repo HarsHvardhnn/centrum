@@ -12,13 +12,13 @@ const ServicesDetailPage = () => {
     <>
       <PageHeader
         title={service}
-        path="Home / Services"
+        path="Strona główna / Usługi"
         bgurl="/images/services-header.jfif"
         />
       <ServiceDetail serviceName={service} />
       <Doctors />
       <ContactSection />
-        </>
+    </>
   );
 };
 

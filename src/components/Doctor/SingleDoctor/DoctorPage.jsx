@@ -20,6 +20,7 @@ function DoctorsPage() {
   const [appointmentData, setAppointmentData] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientDetails, setPatientDetails] = useState(null);
+  const [appointmentId, setAppointmentId] = useState(null);
 
   useEffect(() => {
     const fetchDoctorData = async () => {
@@ -60,18 +61,21 @@ function DoctorsPage() {
   // New effect to fetch patient details when a patient is selected
   useEffect(() => {
     if (selectedPatient) {
-      fetchPatientDetails(selectedPatient);
+      fetchPatientDetails(selectedPatient, appointmentId);
     } else {
       setPatientDetails(null);
     }
-  }, [selectedPatient]);
+  }, [selectedPatient, appointmentId]);
 
   const fetchPatientsByDoctor = async (doctorId) => {
     try {
       const response = await appointmentHelper.getDoctorAppointments(
         doctorId,
         formatDateToYYYYMMDD(selectedDate),
-        formatDateToYYYYMMDD(selectedDate)
+        formatDateToYYYYMMDD(selectedDate),
+        "all",
+        1,
+        10,
       );
 
       if (response && response.success && response.data) {
@@ -88,12 +92,13 @@ function DoctorsPage() {
   };
 
   // New function to fetch patient details
-  const fetchPatientDetails = async (patientId) => {
+  const fetchPatientDetails = async (patientId,appointmentId) => {
     try {
       showLoader();
       // Make API call to get patient details using the patient service
       const response = await doctorService.getPatientDetailsAndReports(
-        patientId
+        patientId,
+        appointmentId
       );
 
       console.log("patient response", response);
@@ -196,6 +201,7 @@ function DoctorsPage() {
         selectedPatient={selectedPatient}
         patientDetails={patientDetails} // Pass the patient details to DoctorDashboard
         onPatientSelect={handlePatientSelect}
+        setAppointmentId={setAppointmentId}
         onDateSelect={setSelectedDate}
         breadcrumbs={[
             { label: "Dashboard", onClick: () => navigate("/admin") },

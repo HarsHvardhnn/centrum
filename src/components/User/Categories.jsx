@@ -11,7 +11,7 @@ const Categories = () => {
         const response = await apiCaller("GET","/news/category/news-count");
         setCategories(response.data || []);
       } catch (error) {
-        console.error("Failed to fetch categories:", error);
+        console.error("Nie udało się pobrać kategorii:", error);
       } finally {
         setLoading(false);
       }
@@ -23,13 +23,13 @@ const Categories = () => {
   return (
     <div className="p-4 border rounded-lg border-neutral-200 bg-white w-72">
       <h2 className="text-3xl font-serif font-semibold text-main mb-4">
-        Categories
+        Kategorie
       </h2>
 
       {loading ? (
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-gray-500">Ładowanie...</p>
       ) : categories.length === 0 ? (
-        <p className="text-gray-500">No categories found</p>
+        <p className="text-gray-500">Nie znaleziono kategorii</p>
       ) : (
         <ul>
           {categories.map((cat, index) => (

@@ -74,7 +74,7 @@ export default function PatientMedicalDetails() {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-pulse text-teal-600">
-          Loading medical details...
+          Ładowanie danych medycznych...
         </div>
       </div>
     );
@@ -105,7 +105,7 @@ export default function PatientMedicalDetails() {
           >
             <div className="flex items-center space-x-2">
               <Package size={20} />
-              <h2 className="font-bold text-lg">Medications</h2>
+              <h2 className="font-bold text-lg">Leki</h2>
             </div>
             {expandedSections.medications ? (
               <ChevronUp size={20} />
@@ -122,19 +122,19 @@ export default function PatientMedicalDetails() {
                     <thead className="bg-teal-50">
                       <tr>
                         <th className="p-3 text-left text-sm font-medium text-teal-800">
-                          Medication
+                          Lek
                         </th>
                         <th className="p-3 text-left text-sm font-medium text-teal-800">
-                          Dosage
+                          Dawkowanie
                         </th>
                         <th className="p-3 text-left text-sm font-medium text-teal-800">
-                          Frequency
+                          Częstotliwość
                         </th>
                         <th className="p-3 text-left text-sm font-medium text-teal-800">
-                          Start Date
+                          Data rozpoczęcia
                         </th>
                         <th className="p-3 text-left text-sm font-medium text-teal-800">
-                          End Date
+                          Data zakończenia
                         </th>
                         <th className="p-3 text-left text-sm font-medium text-teal-800">
                           Status
@@ -173,7 +173,7 @@ export default function PatientMedicalDetails() {
                 </div>
               ) : (
                 <div className="text-center p-4 text-gray-500">
-                  No medications found
+                  Nie znaleziono leków
                 </div>
               )}
             </div>
@@ -188,7 +188,7 @@ export default function PatientMedicalDetails() {
           >
             <div className="flex items-center space-x-2">
               <Activity size={20} />
-              <h2 className="font-bold text-lg">Test Results</h2>
+              <h2 className="font-bold text-lg">Wyniki badań</h2>
             </div>
             {expandedSections.tests ? (
               <ChevronUp size={20} />
@@ -261,7 +261,7 @@ export default function PatientMedicalDetails() {
           >
             <div className="flex items-center space-x-2">
               <Calendar size={20} />
-              <h2 className="font-bold text-lg">Latest Consultation</h2>
+              <h2 className="font-bold text-lg">Ostatnia konsultacja</h2>
             </div>
             {expandedSections.consultation ? (
               <ChevronUp size={20} />
@@ -397,7 +397,7 @@ export default function PatientMedicalDetails() {
           >
             <div className="flex items-center space-x-2">
               <FileText size={20} />
-              <h2 className="font-bold text-lg">Medical Documents</h2>
+              <h2 className="font-bold text-lg">Dokumenty medyczne</h2>
             </div>
             {expandedSections.documents ? (
               <ChevronUp size={20} />

@@ -92,7 +92,7 @@ const PatientSelectionStep = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            About the patient
+            O pacjencie
           </label>
 
           <div className="bg-primary-lighter p-3 inline-block rounded-lg mb-2 w-full">
@@ -102,7 +102,7 @@ const PatientSelectionStep = () => {
                 <input
                   type="text"
                   name="patientSource"
-                  placeholder="Select patient source"
+                  placeholder="Wybierz źródło pacjenta"
                   value={appointmentData.patientSource}
                   onChange={handleInputChange}
                   className="w-full p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
@@ -120,7 +120,7 @@ const PatientSelectionStep = () => {
                     onChange={handleInputChange}
                     className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
-                  <span className="ml-2">First-Time Visit</span>
+                  <span className="ml-2">Pierwsza wizyta</span>
                 </label>
                 <label className="inline-flex items-center whitespace-nowrap">
                   <input
@@ -131,7 +131,7 @@ const PatientSelectionStep = () => {
                     onChange={handleInputChange}
                     className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
-                  <span className="ml-2">Re-Visit</span>
+                  <span className="ml-2">Kolejna wizyta</span>
                 </label>
               </div>
             </div>
@@ -147,7 +147,7 @@ const PatientSelectionStep = () => {
                 onChange={handleInputChange}
                 className="h-5 w-5 text-purple-600 border-gray-300 rounded-md focus:ring-purple-500"
               />
-              <span className="ml-2 text-gray-700">International Patient</span>
+              <span className="ml-2 text-gray-700">Pacjent międzynarodowy</span>
             </label>
           </div>
         </div>
@@ -162,7 +162,7 @@ const PatientSelectionStep = () => {
         {/* Time section */}
         <div className="w-full md:w-1/2">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Date
+            Data
           </label>
 
           {/* Light teal background container */}
@@ -193,7 +193,7 @@ const PatientSelectionStep = () => {
                 className="h-4 w-4 text-gray-600 border-gray-300 rounded focus:ring-teal-500"
               />
               <span className="ml-2 text-sm text-gray-700">
-                Mark Apt as Arrived
+                Oznacz jako przybyły
               </span>
             </label>
 
@@ -206,7 +206,7 @@ const PatientSelectionStep = () => {
                 onChange={handleInputChange}
                 className="h-4 w-4 text-gray-600 border-gray-300 rounded focus:ring-teal-500"
               />
-              <span className="ml-2 text-sm text-gray-700">Is Walkin</span>
+              <span className="ml-2 text-sm text-gray-700">Bez rejestracji</span>
             </label>
 
             {/* Needs Attention */}
@@ -219,7 +219,7 @@ const PatientSelectionStep = () => {
                 className="h-4 w-4 text-gray-600 border-gray-300 rounded focus:ring-teal-500"
               />
               <span className="ml-2 text-sm text-gray-700">
-                Needs Attention
+                Wymaga uwagi
               </span>
             </label>
           </div>
@@ -228,13 +228,13 @@ const PatientSelectionStep = () => {
         {/* Review Notes */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Review Notes
+            Notatki
           </label>
           <textarea
             name="notes"
             value={appointmentData.notes}
             onChange={handleInputChange}
-            placeholder="Enter patient details..."
+            placeholder="Wprowadź szczegóły pacjenta..."
             className="w-full p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500 h-12 text-sm"
           ></textarea>
         </div>
@@ -248,7 +248,7 @@ const PatientSelectionStep = () => {
             className="h-4 w-4 text-teal-600 rounded mr-2"
           />
           <label htmlFor="enableRepeats" className="text-sm text-gray-700">
-            Enable repeats for patient
+            Włącz powtarzanie dla pacjenta
           </label>
         </div>
 
@@ -262,7 +262,7 @@ const PatientSelectionStep = () => {
               !appointmentData.selectedSlot
             }
           >
-            Add Appointment
+            Dodaj wizytę
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4 ml-1"

@@ -3,7 +3,7 @@ const ConfirmationStep = () => {
     // Implementation for confirmation step
     return (
       <div>
-        <h3 className="text-lg font-medium mb-4">Confirm Appointment</h3>
+        <h3 className="text-lg font-medium mb-4">Potwierdź wizytę</h3>
         {/* Confirmation details */}
       </div>
     );

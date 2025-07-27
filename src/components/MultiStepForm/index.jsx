@@ -6,7 +6,7 @@ export const useMultiStepForm = () => {
   const context = useContext(MultiStepFormContext);
   if (!context) {
     throw new Error(
-      "useMultiStepForm must be used within a MultiStepFormProvider"
+      "useMultiStepForm musi być używany wewnątrz MultiStepFormProvider"
     );
   }
   return context;
@@ -49,14 +49,14 @@ const MultiStepForm = ({
 
   // Function to determine button text based on step and sub-step
   const getNextButtonText = () => {
-    if (currentStep === steps.length - 1) return "Add Appointment";
+    if (currentStep === steps.length - 1) return "Dodaj wizytę";
     
     // If we're handling sub-steps and on the last sub-step
     if (handleSubStepNavigation && currentStep === 1 && currentSubStep === totalSubSteps - 1) {
-      return "Complete Step";
+      return "Zakończ etap";
     }
     
-    return "Next";
+    return "Dalej";
   };
 
   // Function to determine previous button text
@@ -64,10 +64,10 @@ const MultiStepForm = ({
     // If we're on a sub-step (not the first one), show custom back text
     if (handleSubStepNavigation && currentSubStep > 0 && subStepTitles.length > 0) {
       const prevSubStepName = subStepTitles[currentSubStep - 1];
-      return `← Back to ${prevSubStepName}`;
+      return `← Wróć do ${prevSubStepName}`;
     }
     
-    return "Previous";
+    return "Wstecz";
   };
 
   return (
@@ -80,7 +80,7 @@ const MultiStepForm = ({
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
-              aria-label="Close"
+              aria-label="Zamknij"
             >
               <svg
                 className="w-5 h-5"

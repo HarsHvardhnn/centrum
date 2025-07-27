@@ -12,32 +12,36 @@ export default function Footer() {
             <h2 className="text-2xl font-bold text-left">Centrum Medyczne</h2>
           </div>
           <p className="text-left text-base leading-relaxed">
-            Leading the Way in Medical Excellence, Trusted Care.
+          CM7– profesjonalna klinika,
+ przychodnia w województwie
+ świętokrzyskim, oferująca
+ kompleksową opiekę medyczną i
+ specjalistyczne usługi zdrowotne
           </p>
         </div>
 
         {/* Important Links */}
         <div className="flex flex-col items-start gap-3">
-          <h3 className="font-semibold text-xl text-left">Important Links</h3>
+          <h3 className="font-semibold text-xl text-left">Ważne linki</h3>
           <ul className="mt-2 flex flex-col gap-2 text-left">
             <li>
               <a href="#" className="hover:underline">
-                Appointment
+                Umów wizytę
               </a>
             </li>
             <li>
               <a href="#" className="hover:underline">
-                Doctors
+                Lekarze
               </a>
             </li>
             <li>
               <a href="#" className="hover:underline">
-                Services
+                Usługi
               </a>
             </li>
             <li>
               <a href="#" className="hover:underline">
-                About Us
+                O nas
               </a>
             </li>
           </ul>
@@ -45,11 +49,11 @@ export default function Footer() {
 
         {/* Contact Us */}
         <div className="flex flex-col items-start gap-3">
-          <h3 className="font-semibold text-xl text-left">Contact Us</h3>
-          <p>(237) 681-812-255</p>
-          <p>support@centrum.com</p>
-          <p>0123 Some place</p>
-          <p>Some country</p>
+          <h3 className="font-semibold text-xl text-left">Kontakt</h3>
+          <p>(+48) 797 097 487</p>
+          <p>kontakt@centrummedyczne7.pl</p>
+          <p>Powstańców Warszawy 7/15</p>
+          <p>26-110 Skarżysko-Kamienna</p>
         </div>
 
         {/* Newsletter */}
@@ -58,7 +62,7 @@ export default function Footer() {
           <div className="flex w-full max-w-sm">
             <input
               type="email"
-              placeholder="Enter your email"
+              placeholder="Wpisz swój email"
               className="w-full p-3 text-black placeholder:text-teal-600 rounded-l-md outline-none"
             />
             <button className="bg-white text-teal-600 px-4 py-2 rounded-r-md">
@@ -70,24 +74,24 @@ export default function Footer() {
 
       {/* Footer Bottom */}
       <div className="border-t border-white py-6 flex flex-col md:flex-row justify-center md:justify-between items-center text-center space-y-4 md:space-y-0">
-        <p>© 2025 Centrum Medyczne. All Rights Reserved</p>
+        <p>© 2025 Centrum Medyczne. Wszelkie prawa zastrzeżone</p>
 
         {/* Social Media Icons */}
         <div className="flex space-x-4">
-          <a
+          {/* <a
             href="#"
             className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"
           >
             <FaLinkedinIn />
-          </a>
+          </a> */}
           <a
-            href="#"
+            href="https://www.facebook.com/klinikacm7/"
             className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"
           >
             <FaFacebookF />
           </a>
           <a
-            href="#"
+            href="https://www.instagram.com/centrummedyczne7/"
             className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"
           >
             <FaInstagram />

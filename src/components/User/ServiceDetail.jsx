@@ -17,7 +17,7 @@ const ServiceDetail = ({ serviceName }) => {
   }, [service, navigate, loading]);
 
   if (loading) {
-    return <div className="text-center py-20">Loading service details...</div>;
+    return <div className="text-center py-20">Wczytywanie szczegółów usługi...</div>;
   }
 
   if (!service) {
@@ -50,8 +50,6 @@ const ServiceDetail = ({ serviceName }) => {
                 <RandomIcon className="text-xl" />
                 <div className="flex flex-col">
                   <span>{item.title}</span>
-                  {/* Display the price */}
-              
                 </div>
               </Link>
             );
@@ -74,7 +72,7 @@ const ServiceDetail = ({ serviceName }) => {
           </h2>
           {/* Display the price prominently */}
           <div className="text-2xl font-bold text-main bg-neutral-100 px-4 py-2 rounded-lg">
-            ${service.price || "N/A"}
+            {service.price ? `${service.price} zł` : "Cena na zapytanie"}
           </div>
         </div>
 

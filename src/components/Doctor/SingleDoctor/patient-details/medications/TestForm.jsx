@@ -5,7 +5,7 @@ export const TestForm = ({ test = {}, isEditing = false, onSave, onCancel }) => 
     name: "",
     date: "",
     results: "",
-    status: "Pending",
+    status: "Oczekujący",
   });
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export const TestForm = ({ test = {}, isEditing = false, onSave, onCancel }) => 
           typeof test.results === "object"
             ? JSON.stringify(test.results)
             : test.results || "",
-        status: test.status || "Pending",
+        status: test.status || "Oczekujący",
       });
     }
   }, [isEditing, test]);
@@ -50,7 +50,7 @@ export const TestForm = ({ test = {}, isEditing = false, onSave, onCancel }) => 
         formattedData.results = JSON.parse(formData.results);
       } catch (e) {
         // If parsing fails, keep it as string
-        console.log("Results parsing failed, keeping as string");
+        console.log("Parsowanie wyników nie powiodło się, zachowuję jako tekst");
       }
     }
 
@@ -60,14 +60,14 @@ export const TestForm = ({ test = {}, isEditing = false, onSave, onCancel }) => 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
       <h3 className="text-lg font-medium mb-4">
-        {isEditing ? "Edit Test" : "Add New Test"}
+        {isEditing ? "Edytuj badanie" : "Dodaj nowe badanie"}
       </h3>
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Test Name*
+              Nazwa badania*
             </label>
             <input
               type="text"
@@ -81,7 +81,7 @@ export const TestForm = ({ test = {}, isEditing = false, onSave, onCancel }) => 
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Test Date*
+              Data badania*
             </label>
             <input
               type="date"
@@ -95,7 +95,7 @@ export const TestForm = ({ test = {}, isEditing = false, onSave, onCancel }) => 
 
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Test Results
+              Wyniki badania
             </label>
             <textarea
               name="results"
@@ -103,7 +103,7 @@ export const TestForm = ({ test = {}, isEditing = false, onSave, onCancel }) => 
               onChange={handleChange}
               rows="3"
               className="w-full p-2 border border-gray-300 rounded-md"
-              placeholder="Enter test results or paste JSON data"
+              placeholder="Wprowadź wyniki badania lub wklej dane JSON"
             />
           </div>
 
@@ -117,11 +117,11 @@ export const TestForm = ({ test = {}, isEditing = false, onSave, onCancel }) => 
               onChange={handleChange}
               className="w-full p-2 border border-gray-300 rounded-md"
             >
-              <option value="Pending">Pending</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
-              <option value="Abnormal">Abnormal</option>
-              <option value="Normal">Normal</option>
+              <option value="Oczekujący">Oczekujący</option>
+              <option value="Zakończony">Zakończony</option>
+              <option value="Anulowany">Anulowany</option>
+              <option value="Nieprawidłowy">Nieprawidłowy</option>
+              <option value="Normalny">Normalny</option>
             </select>
           </div>
         </div>
@@ -132,13 +132,13 @@ export const TestForm = ({ test = {}, isEditing = false, onSave, onCancel }) => 
             onClick={onCancel}
             className="px-4 py-2 border border-gray-300 rounded-md text-sm"
           >
-            Cancel
+            Anuluj
           </button>
           <button
             type="submit"
             className="px-4 py-2 bg-[#80c5c5] hover:bg-teal-500 text-white rounded-md text-sm"
           >
-            {isEditing ? "Update Test" : "Add Test"}
+            {isEditing ? "Aktualizuj badanie" : "Dodaj badanie"}
           </button>
         </div>
       </form>

@@ -12,8 +12,8 @@ const OurDoctorsPage = () => {
   return (
     <>
       <PageHeader
-        title="Our Doctors"
-        path="Home / Doctors"
+        title="Nasi lekarze"
+        path="Strona główna / Lekarze"
         bgurl="/images/about-header.jpg"
       />
       <Doctors

@@ -3,27 +3,27 @@ import StatCard from "./StatCard";
 import { Calendar, Bed, Stethoscope, Activity } from "lucide-react";
 
 const StatsDashboard = () => {
-  // Data for the stats cards
+  // Dane dla kart statystyk
   const statsData = [
     {
       icon: <Calendar size={24} />,
       count: 165,
-      label: "Appointment"
+      label: "Wizyty"
     },
     {
       icon: <Bed size={24} />,
       count: 102,
-      label: "New Admitted"
+      label: "Nowo przyjęci"
     },
     {
       icon: <Stethoscope size={24} />,
       count: 4,
-      label: "Surgery"
+      label: "Zabiegi"
     },
     {
       icon: <Activity size={24} />,
       count: 54,
-      label: "Critical Patient"
+      label: "Pacjenci krytyczni"
     }
   ];
 

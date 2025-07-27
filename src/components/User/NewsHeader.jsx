@@ -13,12 +13,12 @@ const NewsHeader = ({ news }) => {
       <div className="relative z-10 text-center md:text-left">
         <nav className="text-sm md:text-lg text-main">
           <Link to="/" className="hover:underline">
-            Home
+            Strona główna
           </Link>{" "}
           /
           <Link to="/news" className="hover:underline">
             {" "}
-            News
+            Aktualności
           </Link>{" "}
           /<span> {news.category}</span>
         </nav>
@@ -35,9 +35,9 @@ const NewsHeader = ({ news }) => {
           <GoDotFill className="mx-1 md:mx-2 text-gray-400" />
           <span>{news.author}</span>
           <GoDotFill className="mx-1 md:mx-2 text-gray-400" />
-          <span>{news.views} Views</span>
+          <span>{news.views} wyświetleń</span>
           <GoDotFill className="mx-1 md:mx-2 text-gray-400" />
-          <span>{news.likes} Likes</span>
+          <span>{news.likes} polubień</span>
         </div>
       </div>
     </div>

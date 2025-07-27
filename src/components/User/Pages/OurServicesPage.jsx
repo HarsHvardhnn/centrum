@@ -7,8 +7,8 @@ const OurServicesPage = () => {
   return (
     <>
       <PageHeader
-        title="Our Services"
-        path="Home / Services"
+        title="Nasze usługi"
+        path="Strona główna / Usługi"
         bgurl="/images/services-header.jfif"
       />
       <AllServices />

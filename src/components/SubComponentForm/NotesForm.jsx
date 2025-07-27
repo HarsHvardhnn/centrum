@@ -13,12 +13,12 @@ const NotesForm = () => {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Review Notes</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Notatki</label>
         <textarea 
           name="reviewNotes"
           value={formData.reviewNotes}
           onChange={handleChange}
-          placeholder="Enter your note..." 
+          placeholder="Wprowadź notatkę..." 
           className="w-full px-3 py-2 border border-gray-300 rounded-lg h-36"
         ></textarea>
       </div>
@@ -33,7 +33,7 @@ const NotesForm = () => {
           className="h-4 w-4 text-teal-500 border-gray-300 rounded"
         />
         <label htmlFor="international-patient" className="ml-2 text-sm text-gray-700">
-          International Patient
+          Pacjent Zagraniczny
         </label>
       </div>
     </div>

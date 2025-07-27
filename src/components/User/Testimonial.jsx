@@ -23,10 +23,10 @@ export default function Testimonial() {
         
         <div className="w-full lg:w-1/2 text-center md:text-left">
           <h3 className="text-4xl md:text-[54px] font-bold text-gray-900 leading-tight">
-            What <span className="text-teal-600">Our Patients<br /></span> Say About Us
+            Co <span className="text-teal-600">nasi pacjenci<br /></span> mówią o nas
           </h3>
           <p className="text-neutral-700 mt-4 text-lg">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sem velit viverra amet faucibus.
+            Poznaj opinie naszych pacjentów na temat jakości świadczonych przez nas usług.
           </p>
 
           <div className="flex justify-center md:justify-start items-center gap-4 mt-6">
@@ -35,7 +35,7 @@ export default function Testimonial() {
                 <FaRegUserCircle key={i} className="text-4xl md:text-5xl rounded-full bg-teal-100" />
               ))}
             </div>
-            <p className="text-neutral-900 text-lg font-bold">100+ Reviews</p>
+            <p className="text-neutral-900 text-lg font-bold">Ponad 100 opinii</p>
           </div>
         </div>
 

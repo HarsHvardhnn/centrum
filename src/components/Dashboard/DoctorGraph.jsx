@@ -14,7 +14,7 @@ const chartData = [
 ];
 
 export default function DoctorAppointmentChart() {
-  const [selectedMonth] = useState("Month");
+  const [selectedMonth] = useState("Miesiąc");
 
   // Calculate max chart height for proper scaling
   const getMaxTotal = () => {
@@ -29,7 +29,7 @@ export default function DoctorAppointmentChart() {
     <div className="bg-white rounded-lg shadow-sm w-full max-w-xl p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-800">
-          Doctor Appointment
+          Wizyty lekarskie
         </h2>
         <div className="relative">
           <button className="flex items-center bg-white border border-gray-200 rounded-md px-4 py-2 text-gray-700">
@@ -42,7 +42,7 @@ export default function DoctorAppointmentChart() {
       {/* Highlighted month info */}
       <div className="mb-6">
         <div className="inline-block bg-teal-50 rounded-md px-3 py-2">
-          <span className="text-sm text-gray-700 mr-2">September</span>
+          <span className="text-sm text-gray-700 mr-2">Wrzesień</span>
           <span className="text-sm font-semibold text-gray-800">20k</span>
         </div>
       </div>
@@ -51,15 +51,15 @@ export default function DoctorAppointmentChart() {
       <div className="flex items-center space-x-4 mb-8">
         <div className="flex items-center">
           <div className="w-2 h-2 rounded-full bg-teal-500 mr-2"></div>
-          <span className="text-xs text-gray-500">Series 1</span>
+          <span className="text-xs text-gray-500">Seria 1</span>
         </div>
         <div className="flex items-center">
           <div className="w-2 h-2 rounded-full bg-teal-300 mr-2"></div>
-          <span className="text-xs text-gray-500">Series 2</span>
+          <span className="text-xs text-gray-500">Seria 2</span>
         </div>
         <div className="flex items-center">
           <div className="w-2 h-2 rounded-full bg-teal-200 mr-2"></div>
-          <span className="text-xs text-gray-500">Series 3</span>
+          <span className="text-xs text-gray-500">Seria 3</span>
         </div>
       </div>
 
@@ -76,7 +76,7 @@ export default function DoctorAppointmentChart() {
 
         {/* Y-axis label */}
         <div className="absolute -left-16 top-1/2 transform -rotate-90 text-xs text-gray-500 whitespace-nowrap">
-          Active doctor
+          Aktywni lekarze
         </div>
 
         {/* Chart grid lines */}
@@ -117,7 +117,7 @@ export default function DoctorAppointmentChart() {
         </div>
 
         {/* X-axis label */}
-        <div className="text-xs text-gray-500 text-center">Month</div>
+        <div className="text-xs text-gray-500 text-center">Miesiąc</div>
       </div>
     </div>
   );

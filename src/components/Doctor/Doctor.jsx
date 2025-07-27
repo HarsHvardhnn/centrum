@@ -26,21 +26,21 @@ const BillingPage = () => {
           const transformed = response.doctors.map((doc, index) => ({
             id:doc.id || doc._id,
             name: `Dr. ${doc.name}`,
-            specialty: doc.specialty || doc.specializations?.[0] || "General",
-            timing: "9:30am - 01:00pm BST", 
+            specialty: doc.specialty || doc.specializations?.[0] || "Ogólny",
+            timing: "9:30 - 13:00", 
             date: format(new Date(doc.date), "MMM dd, yyyy"),
             description:
               doc.bio ||
-              "Infectious Diseases Hub aims to provide up-to-date, essential research and on aspects of microbiology, virology, and parasitology.",
+              "Centrum Chorób Zakaźnych ma na celu dostarczanie aktualnych, istotnych badań dotyczących aspektów mikrobiologii, wirusologii i parazytologii.",
             image: doc.image || "https://placehold.jp/250x50.png?",
-            status: doc.status || (doc.available ? "Available" : "Unavailable"),
-            visitType: doc.visitType || "Consultation",
+            status: doc.status || (doc.available ? "Dostępny" : "Niedostępny"),
+            visitType: doc.visitType || "Konsultacja",
             available: doc.available ?? true,
           }));
 
           setAllDoctors(transformed);
         } catch (error) {
-          console.error("Failed to fetch doctors:", error);
+          console.error("Nie udało się pobrać lekarzy:", error);
         }
         finally {
           hideLoader()
@@ -54,13 +54,13 @@ const BillingPage = () => {
   // Sample filter options
   const filterOptions = {
     specialties: [
-      "Cardiologist",
-      "Dermatologist",
-      "Neurologist",
-      "Pediatrician",
+      "Kardiolog",
+      "Dermatolog",
+      "Neurolog",
+      "Pediatra",
     ],
-    statuses: ["Scheduled", "Canceled", "Completed"],
-    visitTypes: ["Consultation", "Procedure", "Follow-up"],
+    statuses: ["Zaplanowane", "Anulowane", "Zakończone"],
+    visitTypes: ["Konsultacja", "Zabieg", "Kontrola"],
   };
 
   const handleAddDoctor = async (doctorData, resetForm, closeModal) => {
@@ -80,12 +80,12 @@ const BillingPage = () => {
           doctorData.specialization?.[0] ||
           "",
         available: createdDoctor.available || true,
-        status: createdDoctor.status || "Available",
+        status: createdDoctor.status || "Dostępny",
         department:createdDoctor?.department || "",
         experience:
-          createdDoctor.experience || `${doctorData.experience} years`,
+          createdDoctor.experience || `${doctorData.experience} lat`,
         image: createdDoctor.image || doctorData.profilePicture,
-        visitType: "Consultation",
+        visitType: "Konsultacja",
         date: new Date().toISOString().split("T")[0],
         email: createdDoctor.email || doctorData.email,
         phone: createdDoctor.phone || doctorData.phone,
@@ -100,7 +100,7 @@ const BillingPage = () => {
 
       setAllDoctors((prevDoctors) => [...prevDoctors, newDoctor]);
 
-      toast.success("New doctor added successfully");
+      toast.success("Nowy lekarz został dodany pomyślnie");
 
       // Only reset form and close modal on success
       resetForm();
@@ -108,10 +108,10 @@ const BillingPage = () => {
 
       return newDoctor;
     } catch (error) {
-      console.error("Error adding doctor:", error);
+      console.error("Błąd podczas dodawania lekarza:", error);
 
       toast.error(
-        error.response?.data?.message || error.message || "Failed to add doctor"
+        error.response?.data?.message || error.message || "Nie udało się dodać lekarza"
       );
 
       // Don't close modal or reset form on error
@@ -170,8 +170,8 @@ const BillingPage = () => {
     <div className="container mx-auto px-4 h-screen flex flex-col">
       {/* Reusable Header */}
       <Header
-        title="Billing Overview"
-        subtitle="All Consultations of All Healthcare Providers"
+        title="Przegląd rozliczeń"
+        subtitle="Wszystkie konsultacje wszystkich świadczeniodawców"
         onSearch={(term) => setSearchTerm(term)}
         onFilter={(filters) => setActiveFilters(filters)}
         onAddDoctor={() => setShowAddDoctorModal(true)}
@@ -183,7 +183,7 @@ const BillingPage = () => {
         {filteredDoctors.length ? (
           <DoctorListing doctors={filteredDoctors} />
         ) : (
-          <p>No doctors found.</p>
+          <p>Nie znaleziono lekarzy.</p>
         )}
       </div>
 

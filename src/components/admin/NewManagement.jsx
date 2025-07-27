@@ -29,6 +29,7 @@ const NewsManagement = () => {
     author: "",
     date: "",
     description: "",
+    shortDescription: "",
     image: "",
     isNews: true,
     category: "",
@@ -62,7 +63,7 @@ const NewsManagement = () => {
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString("pl-PL", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -82,7 +83,7 @@ const NewsManagement = () => {
       setNewsArticles(response.data);
       setError(null);
     } catch (err) {
-      setError("Failed to fetch news articles. Please try again.");
+      setError("Nie udało się pobrać artykułów. Spróbuj ponownie.");
       console.error("Error fetching news articles:", err);
     } finally {
       setLoading(false);
@@ -147,12 +148,12 @@ const NewsManagement = () => {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.title.trim()) errors.title = "Title is required";
-    if (!formData.author.trim()) errors.author = "Author is required";
-    if (!formData.date.trim()) errors.date = "Date is required";
-    if (!formData.description.trim()) errors.description = "Description is required";
-    if (!formData.category) errors.category = "Category is required";
-    if (!imageFile && !currentArticle) errors.image = "Image is required";
+    if (!formData.title.trim()) errors.title = "Tytuł jest wymagany";
+    if (!formData.date.trim()) errors.date = "Data jest wymagana";
+    if (!formData.shortDescription.trim()) errors.shortDescription = "Krótki opis jest wymagany";
+    if (!formData.description.trim()) errors.description = "Opis jest wymagany";
+    if (!formData.category) errors.category = "Kategoria jest wymagana";
+    if (!imageFile && !currentArticle) errors.image = "Zdjęcie jest wymagane";
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -160,7 +161,7 @@ const NewsManagement = () => {
 
   const validateCategoryForm = () => {
     const errors = {};
-    if (!categoryFormData.name.trim()) errors.name = "Category name is required";
+    if (!categoryFormData.name.trim()) errors.name = "Nazwa kategorii jest wymagana";
     setCategoryErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -177,6 +178,7 @@ const NewsManagement = () => {
     formDataToSend.append("title", formData.title);
     formDataToSend.append("author", formData.author);
     formDataToSend.append("date", formData.date);
+    formDataToSend.append("shortDescription", formData.shortDescription);
     formDataToSend.append("description", formData.description);
     formDataToSend.append("isNews", formData.isNews);
     formDataToSend.append("category", formData.category);
@@ -200,7 +202,7 @@ const NewsManagement = () => {
       setIsModalOpen(false);
       fetchNewsArticles();
     } catch (err) {
-      setError("Failed to save news article. Please try again.");
+      setError("Nie udało się zapisać artykułu. Spróbuj ponownie.");
       console.error("Error saving news article:", err);
     } finally {
       setLoading(false);
@@ -224,7 +226,7 @@ const NewsManagement = () => {
       setIsCategoryModalOpen(false);
     } catch (err) {
       setCategoryErrors({
-        name: "Failed to create category. It might already exist."
+        name: "Nie udało się utworzyć kategorii. Może już istnieć."
       });
       console.error("Error creating category:", err);
     } finally {
@@ -242,7 +244,7 @@ const NewsManagement = () => {
       setIsCategoryDeleteModalOpen(false);
       setCategoryToDelete(null);
     } catch (err) {
-      setError("Failed to delete category. It might be in use by news articles.");
+      setError("Nie udało się usunąć kategorii. Może być używana przez artykuły.");
       console.error("Error deleting category:", err);
     } finally {
       setLoading(false);
@@ -252,22 +254,18 @@ const NewsManagement = () => {
   const openEditModal = (article) => {
     setCurrentArticle(article);
     setFormData({
-      title: article.title,
-      author: article.author,
-      date: formatDateForInput(article.date),
+      title: article.title || "",
+      author: article.author || "",
+      date: formatDateForInput(article.date) || "",
+      shortDescription: article.shortDescription || "",
       description: article.description || "",
-      isNews: article.isNews !== undefined ? article.isNews : true,
-      category: article.category?._id || article.category || "",
+      image: article.image || "",
+      isNews: article.isNews,
+      category: article.category || "",
     });
-
-    // If there's an existing image, set it as preview
-    if (article.image) {
-      setImagePreview(article.image);
-    } else {
-      setImagePreview(null);
-    }
-
-    setImageFile(null); // Reset file input
+    setImagePreview(article.image ? article.image : null);
+    setImageFile(null);
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -293,7 +291,7 @@ const NewsManagement = () => {
       setIsConfirmModalOpen(false);
       setArticleToDelete(null);
     } catch (err) {
-      setError("Failed to delete news article. Please try again.");
+      setError("Nie udało się usunąć artykułu. Spróbuj ponownie.");
       console.error("Error deleting news article:", err);
     } finally {
       setLoading(false);
@@ -305,17 +303,19 @@ const NewsManagement = () => {
       title: "",
       author: "",
       date: "",
+      shortDescription: "",
       description: "",
+      image: "",
       isNews: true,
       category: "",
     });
+    setImageFile(null);
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
     }
-    setImageFile(null);
     setImagePreview(null);
-    setFormErrors({});
     setCurrentArticle(null);
+    setFormErrors({});
   };
 
   const openAddModal = () => {
@@ -331,7 +331,7 @@ const NewsManagement = () => {
 
   const getCategoryName = (categoryId) => {
     const category = categories.find(cat => cat._id === categoryId);
-    return category ? category.name : "Unknown";
+    return category ? category.name : "Nieznana";
   };
 
   const filteredArticles = searchTerm
@@ -344,17 +344,17 @@ const NewsManagement = () => {
     : newsArticles;
 
   return (
-   <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-white rounded-lg shadow-sm p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">
-          News Management
+          Zarządzanie Aktualnościami
         </h1>
         <div className="flex items-center gap-4">
           <div className="relative">
             <input
               type="text"
-              placeholder="Search news..."
+              placeholder="Szukaj aktualności..."
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -369,14 +369,14 @@ const NewsManagement = () => {
             className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-300"
           >
             <Tag size={18} />
-            <span>Add Category</span>
+            <span>Dodaj Kategorię</span>
           </button>
           <button
             onClick={openAddModal}
             className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg transition-colors duration-300"
           >
             <PlusCircle size={18} />
-            <span>Add News</span>
+            <span>Dodaj Aktualność</span>
           </button>
         </div>
       </div>
@@ -394,7 +394,7 @@ const NewsManagement = () => {
 
       {/* Categories Section */}
       <div className="mb-6">
-        <h2 className="text-lg font-medium text-gray-800 mb-3">Categories</h2>
+        <h2 className="text-lg font-medium text-gray-800 mb-3">Kategorie</h2>
         <div className="flex flex-wrap gap-2">
           {categories.length > 0 ? (
             categories.map((category) => (
@@ -412,7 +412,7 @@ const NewsManagement = () => {
               </div>
             ))
           ) : (
-            <p className="text-gray-500 text-sm">No categories found. Add one to get started.</p>
+            <p className="text-gray-500 text-sm">Brak kategorii. Dodaj pierwszą, aby rozpocząć.</p>
           )}
         </div>
       </div>
@@ -423,25 +423,25 @@ const NewsManagement = () => {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Title
+                Tytuł
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Author
+                Autor
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
+                Data
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Category
+                Kategoria
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Views/Likes
+                Wyświetlenia/Polubienia
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Type
+                Typ
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
+                Akcje
               </th>
             </tr>
           </thead>
@@ -449,7 +449,7 @@ const NewsManagement = () => {
             {loading && !newsArticles.length ? (
               <tr>
                 <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                  Loading news articles...
+                  Ładowanie aktualności...
                 </td>
               </tr>
             ) : filteredArticles.length ? (
@@ -482,7 +482,7 @@ const NewsManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium">
                       <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                        {article.category?.name || getCategoryName(article.category) || "Uncategorized"}
+                        {article.category?.name || getCategoryName(article.category) || "Bez kategorii"}
                       </span>
                     </div>
                   </td>
@@ -501,20 +501,20 @@ const NewsManagement = () => {
                           : "bg-blue-100 text-blue-800"
                       }`}
                     >
-                      {article.isNews ? "News" : "Blog"}
+                      {article.isNews ? "Aktualność" : "Artykuł"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-3">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div className="flex items-center space-x-3">
                       <button
                         onClick={() => openEditModal(article)}
-                        className="p-1.5 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100"
+                        className="text-indigo-600 hover:text-indigo-900"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => openDeleteConfirmation(article)}
-                        className="p-1.5 rounded-full bg-red-50 text-red-600 hover:bg-red-100"
+                        className="text-red-600 hover:text-red-900"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -525,7 +525,7 @@ const NewsManagement = () => {
             ) : (
               <tr>
                 <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                  No news articles found.
+                  Nie znaleziono aktualności.
                 </td>
               </tr>
             )}
@@ -533,35 +533,113 @@ const NewsManagement = () => {
         </table>
       </div>
 
+      {/* Delete Confirmation Modal */}
+      {isConfirmModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Potwierdź usunięcie
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Czy na pewno chcesz usunąć "{articleToDelete?.title}"? Tej operacji nie można cofnąć.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setIsConfirmModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Anuluj
+              </button>
+              <button
+                onClick={deleteArticle}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+              >
+                Usuń
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Delete Confirmation Modal */}
+      {isCategoryDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Potwierdź usunięcie kategorii
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Czy na pewno chcesz usunąć kategorię "{categoryToDelete?.name}"? Tej operacji nie można cofnąć.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setIsCategoryDeleteModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                Anuluj
+              </button>
+              <button
+                onClick={deleteCategory}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+              >
+                Usuń
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit News Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-full overflow-auto">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">
-                {currentArticle ? "Edit News Article" : "Add New News Article"}
-              </h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-medium text-gray-900">
+                {currentArticle ? "Edytuj Aktualność" : "Dodaj Nową Aktualność"}
+              </h3>
+              <button
+                onClick={() => {
+                  resetForm();
+                  setIsModalOpen(false);
+                }}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="space-y-6">
-                {/* Title */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label
                     htmlFor="title"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-gray-700"
                   >
-                    Title*
+                    Tytuł
                   </label>
                   <input
                     type="text"
-                    id="title"
                     name="title"
+                    id="title"
                     value={formData.title}
                     onChange={handleInputChange}
-                    className={`w-full p-2 border ${
-                      formErrors.title ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                    className={`mt-1 block w-full rounded-md shadow-sm ${
+                      formErrors.title
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+                    }`}
                   />
                   {formErrors.title && (
                     <p className="mt-1 text-sm text-red-600">
@@ -570,23 +648,24 @@ const NewsManagement = () => {
                   )}
                 </div>
 
-                {/* Author */}
                 <div>
                   <label
                     htmlFor="author"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-gray-700"
                   >
-                    Author*
+                    Autor
                   </label>
                   <input
                     type="text"
-                    id="author"
                     name="author"
+                    id="author"
                     value={formData.author}
                     onChange={handleInputChange}
-                    className={`w-full p-2 border ${
-                      formErrors.author ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                    className={`mt-1 block w-full rounded-md shadow-sm ${
+                      formErrors.author
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+                    }`}
                   />
                   {formErrors.author && (
                     <p className="mt-1 text-sm text-red-600">
@@ -595,74 +674,49 @@ const NewsManagement = () => {
                   )}
                 </div>
 
-                {/* Date */}
                 <div>
                   <label
                     htmlFor="date"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-gray-700"
                   >
-                    Date*
+                    Data
                   </label>
                   <input
                     type="date"
-                    id="date"
                     name="date"
+                    id="date"
                     value={formData.date}
                     onChange={handleInputChange}
-                    className={`w-full p-2 border ${
-                      formErrors.date ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                    className={`mt-1 block w-full rounded-md shadow-sm ${
+                      formErrors.date
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+                    }`}
                   />
                   {formErrors.date && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {formErrors.date}
-                    </p>
+                    <p className="mt-1 text-sm text-red-600">{formErrors.date}</p>
                   )}
                 </div>
 
-                {/* Description */}
-                <div>
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Description*
-                  </label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    rows="4"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    className={`w-full p-2 border ${
-                      formErrors.description ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500`}
-                  />
-                  {formErrors.description && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {formErrors.description}
-                    </p>
-                  )}
-                </div>
-
-                {/* Category */}
                 <div>
                   <label
                     htmlFor="category"
-                    className="block text-sm font-medium text-gray-700 mb-1"
+                    className="block text-sm font-medium text-gray-700"
                   >
-                    Category*
+                    Kategoria
                   </label>
                   <select
-                    id="category"
                     name="category"
+                    id="category"
                     value={formData.category}
                     onChange={handleInputChange}
-                    className={`w-full p-2 border ${
-                      formErrors.category ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500`}
+                    className={`mt-1 block w-full rounded-md shadow-sm ${
+                      formErrors.category
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                        : "border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+                    }`}
                   >
-                    <option value="">Select a category</option>
+                    <option value="">Wybierz kategorię</option>
                     {categories.map((category) => (
                       <option key={category._id} value={category._id}>
                         {category.name}
@@ -675,131 +729,152 @@ const NewsManagement = () => {
                     </p>
                   )}
                 </div>
+              </div>
 
-                {/* Type (News or Article) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Type
-                  </label>
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center">
-                      <input
-                        id="news-type"
-                        name="isNews"
-                        type="radio"
-                        checked={formData.isNews === true}
-                        onChange={() =>
-                          setFormData({ ...formData, isNews: true })
-                        }
-                        className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
-                      />
-                      <label
-                        htmlFor="news-type"
-                        className="ml-2 text-sm text-gray-700"
-                      >
-                        News
-                      </label>
-                    </div>
-                    <div className="flex items-center">
-                      <input
-                        id="article-type"
-                        name="isNews"
-                        type="radio"
-                        checked={formData.isNews === false}
-                        onChange={() =>
-                          setFormData({ ...formData, isNews: false })
-                        }
-                        className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300"
-                      />
-                      <label
-                        htmlFor="article-type"
-                        className="ml-2 text-sm text-gray-700"
-                      >
-                        Blog
-                      </label>
-                    </div>
-                  </div>
-                </div>
+              <div>
+                <label
+                  htmlFor="shortDescription"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Krótki opis
+                </label>
+                <textarea
+                  name="shortDescription"
+                  id="shortDescription"
+                  rows={2}
+                  value={formData.shortDescription}
+                  onChange={handleInputChange}
+                  placeholder="Wprowadź krótki opis, który będzie widoczny na liście aktualności"
+                  className={`mt-1 block w-full rounded-md shadow-sm ${
+                    formErrors.shortDescription
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+                  }`}
+                />
+                {formErrors.shortDescription && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {formErrors.shortDescription}
+                  </p>
+                )}
+              </div>
 
-                {/* Image Upload */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Featured Image {currentArticle ? "" : "*"}
-                  </label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                    <div className="space-y-1 text-center">
-                      <Image className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="flex text-sm text-gray-600">
-                        <label
-                          htmlFor="image-upload"
-                          className="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500"
-                        >
-                          <span>Upload an image</span>
-                          <input
-                            id="image-upload"
-                            name="image"
-                            type="file"
-                            accept="image/*"
-                            className="sr-only"
-                            onChange={handleImageChange}
-                          />
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, GIF up to 5MB
-                      </p>
-                    </div>
-                  </div>
+              <div>
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Pełny opis
+                </label>
+                <textarea
+                  name="description"
+                  id="description"
+                  rows={4}
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className={`mt-1 block w-full rounded-md shadow-sm ${
+                    formErrors.description
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+                  }`}
+                />
+                {formErrors.description && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {formErrors.description}
+                  </p>
+                )}
+              </div>
 
-                  {formErrors.image && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {formErrors.image}
-                    </p>
-                  )}
-
-                  {/* Image preview */}
-                  {imagePreview && (
-                    <div className="mt-4 relative">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Zdjęcie
+                </label>
+                <div className="mt-1 flex items-center space-x-4">
+                  {imagePreview ? (
+                    <div className="relative">
                       <img
                         src={imagePreview}
                         alt="Preview"
-                        className="h-40 w-full object-cover rounded-md"
+                        className="h-32 w-32 object-cover rounded-lg"
                       />
                       <button
                         type="button"
                         onClick={removeImage}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                        className="absolute -top-2 -right-2 bg-red-100 rounded-full p-1 text-red-600 hover:text-red-700"
                       >
-                        <Trash2 size={16} />
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
                       </button>
                     </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-32 w-32 border-2 border-gray-300 border-dashed rounded-lg">
+                      <label
+                        htmlFor="image-upload"
+                        className="cursor-pointer hover:text-teal-500"
+                      >
+                        <Image size={24} />
+                        <input
+                          id="image-upload"
+                          name="image"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="sr-only"
+                        />
+                      </label>
+                    </div>
+                  )}
+                  {formErrors.image && (
+                    <p className="text-sm text-red-600">{formErrors.image}</p>
                   )}
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="mt-8 flex justify-end space-x-3">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="isNews"
+                  name="isNews"
+                  checked={formData.isNews}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isNews: e.target.checked })
+                  }
+                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                />
+                <label
+                  htmlFor="isNews"
+                  className="ml-2 block text-sm text-gray-900"
+                >
+                  To jest aktualność (nie artykuł)
+                </label>
+              </div>
+
+              <div className="flex justify-end space-x-3">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  onClick={() => {
+                    resetForm();
+                    setIsModalOpen(false);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
                 >
-                  Cancel
+                  Anuluj
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 flex items-center gap-2"
-                  disabled={loading}
+                  className="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-md hover:bg-teal-700"
                 >
-                  {loading ? (
-                    <>
-                      <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>{currentArticle ? "Update" : "Create"} Article</>
-                  )}
+                  {currentArticle ? "Zapisz zmiany" : "Dodaj"}
                 </button>
               </div>
             </form>
@@ -810,153 +885,79 @@ const NewsManagement = () => {
       {/* Add Category Modal */}
       {isCategoryModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Add New Category
-              </h2>
+          <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Dodaj Nową Kategorię
+              </h3>
+              <button
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
 
-            <form onSubmit={handleCategorySubmit} className="p-4">
-              <div className="space-y-4">
-                {/* Category Name */}
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Category Name*
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={categoryFormData.name}
-                    onChange={handleCategoryInputChange}
-                    className={`w-full p-2 border ${
-                      categoryErrors.name ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500`}
-                  />
-                  {categoryErrors.name && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {categoryErrors.name}
-                    </p>
-                  )}
-                </div>
+            <form onSubmit={handleCategorySubmit}>
+              <div>
+                <label
+                  htmlFor="categoryName"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Nazwa Kategorii
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  id="categoryName"
+                  value={categoryFormData.name}
+                  onChange={handleCategoryInputChange}
+                  className={`mt-1 block w-full rounded-md shadow-sm ${
+                    categoryErrors.name
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                      : "border-gray-300 focus:border-teal-500 focus:ring-teal-500"
+                  }`}
+                />
+                {categoryErrors.name && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {categoryErrors.name}
+                  </p>
+                )}
               </div>
 
-              {/* Action Buttons */}
-              <div className="mt-6 flex justify-end space-x-3">
+              <div className="mt-4 flex justify-end space-x-3">
                 <button
                   type="button"
                   onClick={() => setIsCategoryModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
                 >
-                  Cancel
+                  Anuluj
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center gap-2"
-                  disabled={loading}
+                  className="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-md hover:bg-teal-700"
                 >
-                  {loading ? (
-                    <>
-                      <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                      <span>Creating...</span>
-                    </>
-                  ) : (
-                    <>Create Category</>
-                  )}
+                  Dodaj
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+    </div>
+  );
+};
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteConfirmationOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-            <div className="p-4">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                Confirm Deletion
-              </h2>
-              <p className="text-gray-600">
-                Are you sure you want to delete the article "{currentArticle?.title}"? This action cannot be undone.
-              </p>
-            </div>
-
-            <div className="p-4 flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={() => setIsDeleteConfirmationOpen(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteArticle}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-2"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                    <span>Deleting...</span>
-                  </>
-                ) : (
-                  <>Delete</>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Category Delete Confirmation Modal */}
-      {isCategoryDeleteConfirmationOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-            <div className="p-4">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                Confirm Category Deletion
-              </h2>
-              <p className="text-gray-600">
-                Are you sure you want to delete the category "{currentCategory?.name}"? 
-                Articles associated with this category will be set to uncategorized.
-              </p>
-            </div>
-
-            <div className="p-4 flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={() => setIsCategoryDeleteConfirmationOpen(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteCategory}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-2"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                    <span>Deleting...</span>
-                  </>
-                ) : (
-                  <>Delete</>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>)}
-
-
-export default  NewsManagement;
+export default NewsManagement;

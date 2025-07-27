@@ -16,7 +16,7 @@ export default function News() {
         const response = await apiCaller("GET", "/news");
         setNews(response.data);
       } catch (error) {
-        console.error("Failed to fetch news:", error);
+        console.error("Nie udało się pobrać aktualności:", error);
       } finally {
         setLoading(false);
       }
@@ -51,7 +51,7 @@ export default function News() {
   if (loading) {
     return (
       <section className="py-12 md:px-6">
-        <div className="max-w-6xl mx-auto text-center">Loading news...</div>
+        <div className="max-w-6xl mx-auto text-center">Wczytywanie aktualności...</div>
       </section>
     );
   }
@@ -59,14 +59,14 @@ export default function News() {
   return (
     <section className="py-12 md:px-6">
       <h3 className="md:text-xl font-bold text-neutral-800 text-center">
-        BETTER INFORMATION, BETTER HEALTH
+        LEPSZA INFORMACJA, LEPSZE ZDROWIE
       </h3>
       <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 sm:mb-12 text-center">
-        News
+        Aktualności
       </h2>
 
       {news.length === 0 ? (
-        <div className="max-w-6xl mx-auto text-center">No news available.</div>
+        <div className="max-w-6xl mx-auto text-center">Brak dostępnych aktualności.</div>
       ) : (
         <div className="max-w-6xl mx-auto overflow-clip">
           <Slider {...settings}>
@@ -86,22 +86,22 @@ export default function News() {
                         />
                       </div>
                       <div className="px-4 py-2 xl:p-4 w-2/3">
-                        <p className="text-neutral-700 max-md:text-xs max-xl:text-sm">
+                        {/* <p className="text-neutral-700 max-md:text-xs max-xl:text-sm">
                           {newsItem.date} | {newsItem.author}
-                        </p>
+                        </p> */}
                         <h4 className="mt-2 sm:text-lg xl:text-xl text-neutral-700">
                           {newsItem.title}
                         </h4>
-                        <div className="flex items-center gap-4 mt-4 max-md:text-sm">
+                        {/* <div className="flex items-center gap-4 mt-4 max-md:text-sm">
                           <span className="flex items-center gap-1">
                             <IoEyeOutline className="text-blue-600 sm:text-xl" />{" "}
-                            {newsItem.views}
+                            {newsItem.views} wyświetleń
                           </span>
                           <span className="flex items-center gap-1">
                             <FaRegHeart className="text-red-500 text-sm sm:text-lg" />{" "}
-                            {newsItem.likes}
+                            {newsItem.likes} polubień
                           </span>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   ))}

@@ -12,20 +12,20 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
 
   // Form states for adding weekly shifts
   const [newShift, setNewShift] = useState({
-    dayOfWeek: "Monday",
+    dayOfWeek: "Poniedziałek",
     startTime: "09:00",
     endTime: "17:00",
   });
 
   // Days of week array for dropdown
   const daysOfWeek = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
+    "Poniedziałek",
+    "Wtorek",
+    "Środa",
+    "Czwartek",
+    "Piątek",
+    "Sobota",
+    "Niedziela",
   ];
 
   // Load doctor's schedule data
@@ -50,7 +50,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
       }
     } catch (err) {
       console.error("Error fetching doctor schedule:", err);
-      setError("Failed to load schedule data. Please try again.");
+      setError("Nie udało się załadować harmonogramu. Spróbuj ponownie.");
     } finally {
       setLoading(false);
       hideLoader();
@@ -85,23 +85,22 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
         updatedShifts = [...weeklyShifts, newShift];
       }
 
-      let response=null;
+      let response = null;
       if (doctorId) {
         // Admin updating a doctor's schedule
         response = await doctorService.updateDoctorWeeklyShifts(
           updatedShifts,
           doctorId
         );
-
       }
 
       if (response) {
-        fetchDoctorSchedule()
+        fetchDoctorSchedule();
         setWeeklyShifts(updatedShifts);
-        setSuccess(`Schedule for ${newShift.dayOfWeek} updated successfully`);
+        setSuccess(`Harmonogram dla ${newShift.dayOfWeek} został zaktualizowany pomyślnie`);
         // Reset form to default values
         setNewShift({
-          dayOfWeek: "Monday",
+          dayOfWeek: "Poniedziałek",
           startTime: "09:00",
           endTime: "17:00",
         });
@@ -113,7 +112,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
       }
     } catch (err) {
       console.error("Error adding weekly shift:", err);
-      setError("Failed to add weekly shift. Please try again.");
+      setError("Nie udało się dodać zmiany tygodniowej. Spróbuj ponownie.");
     } finally {
       hideLoader();
     }
@@ -127,14 +126,14 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
         (shift) => shift.dayOfWeek !== dayOfWeek
       );
 
-      let response=null;
+      let response = null;
       if (doctorId) {
         // Admin updating a doctor's schedule
-        response = await doctorService.updateDoctorWeeklyShifts(updatedShifts,doctorId);
+        response = await doctorService.updateDoctorWeeklyShifts(updatedShifts, doctorId);
       }
       if (response) {
         setWeeklyShifts(updatedShifts);
-        setSuccess(`Schedule for ${dayOfWeek} removed successfully`);
+        setSuccess(`Harmonogram dla ${dayOfWeek} został usunięty pomyślnie`);
 
         // Clear success message after 3 seconds
         setTimeout(() => {
@@ -143,7 +142,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
       }
     } catch (err) {
       console.error("Error deleting weekly shift:", err);
-      setError("Failed to delete weekly shift. Please try again.");
+      setError("Nie udało się usunąć zmiany tygodniowej. Spróbuj ponownie.");
     } finally {
       hideLoader();
     }
@@ -153,7 +152,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
     <div className={isModal ? "p-6" : "bg-white rounded-lg shadow-md p-6 mb-6"}>
       {!isModal && (
         <h1 className="text-2xl font-bold text-gray-800 mb-6">
-          {doctorId ? "Manage Doctor Schedule" : "Schedule Settings"}
+          {doctorId ? "Zarządzaj Harmonogramem Lekarza" : "Ustawienia Harmonogramu"}
         </h1>
       )}
 
@@ -169,7 +168,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
 
       <div>
         <h2 className="text-lg font-semibold mb-4">
-          {doctorId ? "Doctor's Weekly Schedule" : "Your Weekly Schedule"}
+          {doctorId ? "Harmonogram Tygodniowy Lekarza" : "Twój Harmonogram Tygodniowy"}
         </h2>
 
         {loading ? (
@@ -178,7 +177,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
           </div>
         ) : weeklyShifts.length === 0 ? (
           <p className="text-gray-500 italic py-2">
-            No weekly shifts have been set.
+            Nie ustawiono jeszcze żadnych zmian tygodniowych.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -186,16 +185,16 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="py-2 px-4 text-left text-sm font-medium text-gray-500">
-                    Day of Week
+                    Dzień Tygodnia
                   </th>
                   <th className="py-2 px-4 text-left text-sm font-medium text-gray-500">
-                    Start Time
+                    Godzina Rozpoczęcia
                   </th>
                   <th className="py-2 px-4 text-left text-sm font-medium text-gray-500">
-                    End Time
+                    Godzina Zakończenia
                   </th>
                   <th className="py-2 px-4 text-left text-sm font-medium text-gray-500">
-                    Actions
+                    Akcje
                   </th>
                 </tr>
               </thead>
@@ -216,7 +215,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
                         onClick={() => handleDeleteShift(shift.dayOfWeek)}
                         className="text-red-600 hover:text-red-800"
                       >
-                        Delete
+                        Usuń
                       </button>
                     </td>
                   </tr>
@@ -227,12 +226,12 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
         )}
 
         <div className="mt-8">
-          <h3 className="text-lg font-semibold mb-4">Add or Update Shift</h3>
+          <h3 className="text-lg font-semibold mb-4">Dodaj lub Zaktualizuj Zmianę</h3>
           <form onSubmit={handleAddShift} className="bg-gray-50 p-4 rounded">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Day of Week
+                  Dzień Tygodnia
                 </label>
                 <select
                   name="dayOfWeek"
@@ -249,7 +248,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Start Time
+                  Godzina Rozpoczęcia
                 </label>
                 <input
                   type="time"
@@ -261,7 +260,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  End Time
+                  Godzina Zakończenia
                 </label>
                 <input
                   type="time"
@@ -277,7 +276,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
                 type="submit"
                 className="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
-                Save Shift
+                Zapisz Zmianę
               </button>
             </div>
           </form>
@@ -292,7 +291,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
         <div className="bg-white rounded-lg p-6 w-full max-w-3xl shadow-xl transform transition-all duration-300 border border-teal-100">
           <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
             <h2 className="text-2xl font-bold text-teal-700">
-              {doctorId ? "Manage Doctor Schedule" : "Schedule Settings"}
+              {doctorId ? "Zarządzaj Harmonogramem Lekarza" : "Ustawienia Harmonogramu"}
             </h2>
             <button
               onClick={onClose}
@@ -319,7 +318,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
               onClick={onClose}
               className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded mr-2"
             >
-              Close
+              Zamknij
             </button>
           </div>
         </div>

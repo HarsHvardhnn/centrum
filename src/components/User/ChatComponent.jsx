@@ -535,7 +535,7 @@ export default function ChatComponent() {
             {!sidebarCollapsed && (
               <div className="flex items-center">
                 <MdAdminPanelSettings className="text-[#008c8c] text-xl mr-2" />
-                <h2 className="font-semibold text-lg">Support Chats</h2>
+                <h2 className="font-semibold text-lg">Czaty wsparcia</h2>
               </div>
             )}
             <button
@@ -556,7 +556,7 @@ export default function ChatComponent() {
                 <MdOutlineSearch className="text-gray-500 mr-2" />
                 <input
                   type="text"
-                  placeholder="Search chats"
+                  placeholder="Szukaj czatów"
                   className="bg-transparent w-full outline-none text-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -576,14 +576,14 @@ export default function ChatComponent() {
                   sidebarCollapsed ? "hidden" : ""
                 }`}
               >
-                No chats found
+                Nie znaleziono czatów
               </div>
             ) : (
               filteredChats.map((chat) => {
                 const userName =
                   typeof chat.user === "object"
-                    ? chat.user.name?.first || "User"
-                    : "User";
+                    ? chat.user.name?.first || "Użytkownik"
+                    : "Użytkownik";
 
                 const profilePicture =
                   typeof chat.user === "object"
@@ -595,9 +595,9 @@ export default function ChatComponent() {
                   chat.messages.length > 0
                     ? chat.messages[chat.messages.length - 1].message ||
                       (chat.messages[chat.messages.length - 1].fileUrl
-                        ? "Shared a file"
-                        : "No messages yet")
-                    : "No messages yet";
+                        ? "Udostępniono plik"
+                        : "Brak wiadomości")
+                    : "Brak wiadomości";
 
                 // Get timestamp of last message
                 const lastMessageTime =
@@ -661,7 +661,7 @@ export default function ChatComponent() {
           {!sidebarCollapsed && (
             <div className="p-3 border-t border-gray-200 bg-gray-50">
               <div className="text-xs text-gray-500 text-center">
-                {filteredChats.length} active conversations
+                {filteredChats.length} aktywnych rozmów
               </div>
             </div>
           )}
@@ -703,14 +703,12 @@ export default function ChatComponent() {
                   }`}
                 ></div>
                 <span className="text-gray-600">
-                  {chatPartner.online ? "Active now" : "Offline"}
+                  {chatPartner.online ? "Aktywny/a" : "Offline"}
                 </span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-5">
-            {/* <BiPhone className="text-gray-700 text-xl cursor-pointer hover:text-[#008c8c] transition-colors" />
-            <LuVideo className="text-gray-700 text-xl cursor-pointer hover:text-[#008c8c] transition-colors" /> */}
             <HiDotsVertical className="text-gray-700 cursor-pointer hover:text-[#008c8c] transition-colors" />
           </div>
         </div>
@@ -733,9 +731,9 @@ export default function ChatComponent() {
                   <MdAdminPanelSettings className="text-5xl text-gray-400" />
                 )}
               </div>
-              <h3 className="font-medium mb-2">No messages yet</h3>
+              <h3 className="font-medium mb-2">Brak wiadomości</h3>
               <p className="text-sm">
-                Start the conversation with {chatPartner.name}!
+                Rozpocznij rozmowę z {chatPartner.name}!
               </p>
             </div>
           ) : (
@@ -806,7 +804,7 @@ export default function ChatComponent() {
         <div className="flex items-center gap-4 p-4 border-t border-gray-300 rounded-b-xl bg-white">
           <div className="flex-1 border border-gray-300 rounded-full flex items-center px-4 py-2 hover:border-[#008c8c] focus-within:border-[#008c8c] transition-colors">
             <input
-              placeholder="Type your message..."
+              placeholder="Napisz wiadomość..."
               className="flex-1 placeholder:text-gray-500 outline-none text-sm"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
