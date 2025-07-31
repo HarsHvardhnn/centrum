@@ -42,7 +42,7 @@ const MedicalDashboard = () => {
 
       <PatientList />
 
-      <UpcomingAppointments />
+      {user?.role !== "doctor" && <UpcomingAppointments />}
     </div>
   );
 };

@@ -47,7 +47,13 @@ const ReportsDashboard = () => {
       setLoadingDoctors(true);
       try {
         const response = await doctorService.getAllDoctors();
+        console.log(response,"rewsoibnse");
         setDoctors(response?.doctors);
+        
+        // If user is a doctor, automatically set their ID as selected
+        if (user?.role === "doctor" && user?._id) {
+          setFilters(prev => ({ ...prev, doctorId: user._id }));
+        }
       } catch (error) {
         showMessage('Błąd podczas pobierania listy lekarzy: ' + error.message, 'error');
       } finally {
@@ -56,7 +62,7 @@ const ReportsDashboard = () => {
     };
 
     fetchDoctors();
-  }, []);
+  }, [user]);
 
   // Auto-set default date range (last 30 days)
   useEffect(() => {
@@ -232,19 +238,27 @@ const ReportsDashboard = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Lekarz
             </label>
-            <select
-              value={filters.doctorId}
-              onChange={(e) => setFilters(prev => ({ ...prev, doctorId: e.target.value }))}
-              disabled={loadingDoctors}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-            >
-              <option value="">Wszyscy lekarze</option>
-              {doctors.map(doctor => (
-                <option key={doctor._id} value={doctor._id}>
-                  {doctor.name} 
-                </option>
-              ))}
-            </select>
+            {user?.role === "doctor" ? (
+              // For doctors, show their name as fixed selection
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+                {user?.name || "Twój profil"}
+              </div>
+            ) : (
+              // For other roles, show the dropdown
+              <select
+                value={filters.doctorId}
+                onChange={(e) => setFilters(prev => ({ ...prev, doctorId: e.target.value }))}
+                disabled={loadingDoctors}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+              >
+                <option value="">Wszyscy lekarze</option>
+                {doctors.map(doctor => (
+                  <option key={doctor._id} value={doctor._id}>
+                    {doctor.name} 
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Status Filter */}

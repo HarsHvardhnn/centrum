@@ -209,8 +209,9 @@ const UserMessaging = () => {
     const value = e.target.value;
     // Convert Polish characters to non-accented equivalents
     const convertedValue = convertPolishCharacters(value);
-    // Only allow alphanumeric characters, spaces, and basic punctuation
-    const sanitizedValue = convertedValue.replace(/[^\w\s.,!?()-]/g, '');
+    // Allow alphanumeric characters, spaces, basic punctuation, and URL characters (/, :, .)
+    // But block special characters like &$$$###@@
+    const sanitizedValue = convertedValue.replace(/[^\w\s.,!?()-\/:]/g, '');
     setMessageContent(sanitizedValue);
   };
 
@@ -704,7 +705,9 @@ const UserMessaging = () => {
                         const value = e.target.value;
                         // Convert Polish characters to non-accented equivalents
                         const convertedValue = convertPolishCharacters(value);
-                        const sanitizedValue = convertedValue.replace(/[^\w\s.,!?()-]/g, '');
+                        // Allow alphanumeric characters, spaces, basic punctuation, and URL characters (/, :, .)
+                        // But block special characters like &$$$###@@
+                        const sanitizedValue = convertedValue.replace(/[^\w\s.,!?()-\/:]/g, '');
                         setNewTemplate({...newTemplate, description: sanitizedValue});
                       }}
                       placeholder="Treść szablonu..."
@@ -779,7 +782,7 @@ const UserMessaging = () => {
               <textarea
                 value={messageContent}
                 onChange={handleMessageChange}
-                placeholder="Wprowadź treść wiadomości (bez znaków specjalnych)..."
+                placeholder="Wprowadź treść wiadomości (linki są dozwolone)..."
                 rows="4"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               ></textarea>
