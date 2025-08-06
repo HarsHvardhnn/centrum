@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import PatientSearchField from "../../AppointmentForm/PatientSearchField"
-import DoctorSelectionWithSlots from "../../admin/DoctorsAppointments";
-import userServiceHelper from "../../../helpers/userServiceHelper";
-import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react";
-import { useServices } from "../../../context/serviceContext.jsx";
+import PatientSearchField from "../AppointmentForm/PatientSearchField";
+import DoctorSelectionWithSlots from "./DoctorsAppointments";
+import userServiceHelper from "../../helpers/userServiceHelper";
+import appointmentHelper from "../../helpers/appointmentHelper";
+import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft, Clock, Calendar, AlertTriangle } from "lucide-react";
+import { useServices } from "../../context/serviceContext.jsx";
 import { toast } from "sonner";
-import { apiCaller } from "../../../utils/axiosInstance";
+import { apiCaller } from "../../utils/axiosInstance";
 
-function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices = [], isLoadingServices = false }) {
+function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServices = [], isLoadingServices = false }) {
   const { services: contextServices, loading: contextLoading } = useServices();
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [doctorServices, setDoctorServices] = useState([]);
@@ -38,10 +39,14 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
     newPatientPhone: "",
     newPatientDateOfBirth: "",
     newPatientSex: "",
-    // New fields for enhanced appointment creation
+    // Enhanced fields for reception appointments
     customDuration: null,
     isBackdated: false,
-    duration: 30, // Default duration in minutes
+    duration: 30,
+    overrideValidation: false, // Allow override of normal validation
+    urgentAppointment: false,
+    customStartTime: "",
+    customEndTime: "",
   });
   const [availableSlots, setAvailableSlots] = useState([]);
 
@@ -53,7 +58,6 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
       setAllServices(contextServices);
     }
     
-    // Update loading state based on both props and context
     setLoadingServices(isLoadingServices || contextLoading);
   }, [availableServices, contextServices, isLoadingServices, contextLoading]);
 
@@ -63,7 +67,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
 
   // Email validation function
   const validateEmail = (email) => {
-    if (!email) return ""; // Empty is allowed
+    if (!email) return "";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email) ? "" : "Nieprawidłowy format adresu email";
   };
@@ -79,7 +83,6 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
     const { name, value, type, checked } = e.target;
     
     if (name === "newPatientPhone") {
-      // Only allow numbers and limit to 9 characters
       const numbersOnly = value.replace(/\D/g, "").slice(0, 9);
       setAppointmentData(prev => ({
         ...prev,
@@ -131,7 +134,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
     }
   };
 
-  // Add this function to fetch next available date
+  // Fetch next available date
   const fetchNextAvailableDate = async (doctorId) => {
     if (!doctorId) return;
     
@@ -143,14 +146,12 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
 
       if (response.data.success) {
         if (response.data.data) {
-          // If we have available dates, set them
           setAppointmentData(prev => ({
             ...prev,
             selectedDate: response.data.data.nextAvailableDate,
           }));
           setAvailableSlots(response.data.data.availableSlots || []);
         } else {
-          // If no dates available in next 30 days
           toast.error("Ten lekarz nie ma dostępnych terminów w ciągu najbliższych 30 dni.");
           setAppointmentData(prev => ({
             ...prev,
@@ -166,18 +167,17 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
     }
   };
 
-  // Modify the handleDoctorSelect function
   const handleDoctorSelect = (doctor) => {
     setAppointmentData({
       ...appointmentData,
       selectedDoctor: doctor,
-      selectedServices: [], // Reset selected services when doctor changes
-      selectedSlot: null, // Reset selected slot
+      selectedServices: [],
+      selectedSlot: null,
     });
     
     if (doctor && doctor._id) {
       fetchDoctorServices(doctor._id);
-      fetchNextAvailableDate(doctor._id); // Add this line to fetch next available date
+      fetchNextAvailableDate(doctor._id);
     } else {
       setDoctorServices([]);
       setAvailableSlots([]);
@@ -186,7 +186,6 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
 
   // Handle selecting/deselecting services
   const handleServiceToggle = (service) => {
-    // Normalize the service structure to ensure consistency
     const normalizedService = {
       id: service.id || service._id,
       title: service.title || service.name,
@@ -200,10 +199,8 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
       const index = currentServices.findIndex(s => s.id === normalizedService.id);
       
       if (index === -1) {
-        // Add service if not already selected
         currentServices.push(normalizedService);
       } else {
-        // Remove service if already selected
         currentServices.splice(index, 1);
       }
       
@@ -243,7 +240,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
     setAppointmentData({
       ...appointmentData,
       selectedDate: e.target.value,
-      selectedSlot: null, // Reset slot when date changes
+      selectedSlot: null,
     });
   };
 
@@ -253,7 +250,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
         service.title.toLowerCase().includes(searchTerm.toLowerCase()))
     : allServices;
 
-  // Modify the useEffect for initial doctor selection
+  // Initialize doctor selection
   useEffect(() => {
     if (doctorId) {
       const doctor = { _id: doctorId };
@@ -267,20 +264,21 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
     appointmentData.newPatientLastName.trim() !== "" &&
     appointmentData.newPatientPhone.trim().length === 9 &&
     !validationErrors.phone &&
-    (!appointmentData.newPatientEmail || !validationErrors.email) && // Email is optional but must be valid if provided
+    (!appointmentData.newPatientEmail || !validationErrors.email) &&
     appointmentData.newPatientDateOfBirth.trim() !== "" &&
     appointmentData.newPatientSex.trim() !== "";
 
   const canProceedToNextStep = () => {
     switch (currentStep) {
-      case 1: // Patient Information
+      case 1:
         return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
-      case 2: // Doctor Selection & Date
-        return appointmentData.selectedDoctor && appointmentData.selectedDate && appointmentData.selectedSlot;
-      case 3: // Services
-        return true; // Services are optional
-      case 4: // Additional Details
-        return true; // Additional details are optional
+      case 2:
+        return appointmentData.selectedDoctor && appointmentData.selectedDate && 
+               (appointmentData.selectedSlot || appointmentData.overrideValidation);
+      case 3:
+        return true;
+      case 4:
+        return true;
       default:
         return false;
     }
@@ -320,7 +318,6 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
           <div className="space-y-4">
             <h3 className="text-lg font-medium mb-4">Informacje o Pacjencie</h3>
             
-            {/* Visit Type Selection */}
             <div className="bg-teal-50 p-4 rounded-lg">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Typ wizyty
@@ -463,7 +460,6 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
           <div className="space-y-4">
             <h3 className="text-lg font-medium mb-4">Wybór Lekarza i Terminu</h3>
             
-            {/* Doctor Selection */}
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Wybierz lekarza
@@ -479,7 +475,66 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
               />
             </div>
 
-            {/* Date Selection */}
+            {/* Override options for reception */}
+            <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+              <h4 className="font-medium text-orange-800 mb-3 flex items-center">
+                <AlertTriangle size={16} className="mr-2" />
+                Opcje nadpisania (Recepcja)
+              </h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <label className="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    name="overrideValidation"
+                    checked={appointmentData.overrideValidation}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 text-orange-600"
+                  />
+                  <span className="ml-2 text-sm">Nadpisz walidację terminów</span>
+                </label>
+                <label className="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    name="urgentAppointment"
+                    checked={appointmentData.urgentAppointment}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 text-orange-600"
+                  />
+                  <span className="ml-2 text-sm">Wizyta pilna</span>
+                </label>
+              </div>
+
+              {appointmentData.overrideValidation && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Niestandardowy czas rozpoczęcia
+                    </label>
+                    <input
+                      type="time"
+                      name="customStartTime"
+                      value={appointmentData.customStartTime}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Niestandardowy czas zakończenia
+                    </label>
+                    <input
+                      type="time"
+                      name="customEndTime"
+                      value={appointmentData.customEndTime}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             {appointmentData.selectedDoctor && (
               <div className="bg-teal-50 p-4 rounded-lg">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -492,45 +547,11 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
                     value={appointmentData.selectedDate}
                     onChange={handleDateChange}
                     className="w-full md:w-1/2 p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
-                    min={new Date().toISOString().split('T')[0]}
+                    min={appointmentData.isBackdated ? undefined : new Date().toISOString().split('T')[0]}
                   />
                 </div>
               </div>
             )}
-
-            {/* Time Slots */}
-            {/* {appointmentData.selectedDoctor && appointmentData.selectedDate && (
-              <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Dostępne terminy
-                </label>
-                {availableSlots.length > 0 ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    {availableSlots.map((slot, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => handleSlotSelect(slot)}
-                        disabled={!slot.available}
-                        className={`p-2 rounded-lg border text-sm ${
-                          appointmentData.selectedSlot?.startTime === slot.startTime
-                            ? 'bg-teal-500 text-white border-teal-500'
-                            : slot.available
-                            ? 'bg-white hover:bg-gray-50 border-gray-200'
-                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        {slot.startTime} - {slot.endTime}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-gray-500">
-                    Brak dostępnych terminów w wybranym dniu
-                  </div>
-                )}
-              </div>
-            )} */}
           </div>
         );
 
@@ -539,7 +560,6 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
           <div className="space-y-4">
             <h3 className="text-lg font-medium mb-4">Wybór Usług</h3>
             
-            {/* Services Search */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search size={18} className="text-gray-400" />
@@ -553,7 +573,6 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
               />
             </div>
 
-            {/* Available Services */}
             <div className="bg-gray-50 rounded-lg p-3 max-h-60 overflow-y-auto">
               <div className="space-y-2">
                 {loadingServices ? (
@@ -589,7 +608,7 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
                               <input
                                 type="checkbox"
                                 checked={isSelected}
-                                onChange={() => {}} // Handled by the div onClick
+                                onChange={() => {}}
                                 className="h-4 w-4 text-teal-600 border-gray-300 rounded"
                               />
                               <span className="ml-2 font-medium">{service.title || service.name}</span>
@@ -622,7 +641,6 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
               </div>
             </div>
 
-            {/* Selected Services Summary */}
             {appointmentData.selectedServices.length > 0 && (
               <div className="bg-teal-50 rounded-lg p-4 border border-teal-100">
                 <h4 className="font-medium text-teal-800 mb-2 flex items-center">
@@ -650,12 +668,6 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
                 </div>
               </div>
             )}
-
-            {/* Note about services */}
-            <div className="text-xs text-gray-500 italic px-1">
-              Wybrane usługi zostaną dodane bezpośrednio do wizyty. Możesz wybrać dowolną liczbę usług dostępnych w klinice, 
-              a następnie określić ilość dla każdej z nich. Całkowita cena zostanie automatycznie obliczona.
-            </div>
           </div>
         );
 
@@ -698,7 +710,6 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
                 </label>
               </div>
 
-              {/* New fields for enhanced appointment creation */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -786,63 +797,79 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (
       (selectedPatient || isNewPatientValid) &&
       appointmentData.selectedDoctor &&
-      appointmentData.selectedSlot
+      (appointmentData.selectedSlot || appointmentData.overrideValidation)
     ) {
-      // Collect all data for backend submission using the new reception appointment API
-      const appointmentSubmissionData = {
-        date: appointmentData.selectedDate,
-        doctorId: appointmentData.selectedDoctor._id,
-        startTime: appointmentData.selectedSlot.startTime,
-        endTime: appointmentData.selectedSlot.endTime,
-        duration: appointmentData.selectedSlot.duration || 30, // Default 30 minutes
-        consultationType: "offline",
-        message: appointmentData.notes || "",
-        smsConsentAgreed: true,
-        isBackdated: appointmentData.isBackdated || false,
-        customDuration: appointmentData.customDuration || null,
-        createdBy: "receptionist" // Indicates this was created by reception/admin
-      };
-      
-      // Add patient information based on selection type
-      if (isFirstTimeVisit && isNewPatientValid) {
-        // For new patients, add their details directly
-        appointmentSubmissionData.firstName = appointmentData.newPatientFirstName;
-        appointmentSubmissionData.lastName = appointmentData.newPatientLastName;
-        appointmentSubmissionData.email = appointmentData.newPatientEmail || "";
-        appointmentSubmissionData.phone = appointmentData.newPatientPhone;
-        appointmentSubmissionData.dob = appointmentData.newPatientDateOfBirth;
-        appointmentSubmissionData.sex = appointmentData.newPatientSex;
-      } else {
-        // For existing patients, use their ID
-        appointmentSubmissionData.patientId = selectedPatient._id;
+      try {
+        // Prepare appointment data for reception API
+        const appointmentSubmissionData = {
+          date: appointmentData.selectedDate,
+          doctorId: appointmentData.selectedDoctor._id,
+          startTime: appointmentData.overrideValidation && appointmentData.customStartTime 
+            ? appointmentData.customStartTime 
+            : appointmentData.selectedSlot?.startTime,
+          endTime: appointmentData.overrideValidation && appointmentData.customEndTime 
+            ? appointmentData.customEndTime 
+            : appointmentData.selectedSlot?.endTime,
+          duration: appointmentData.customDuration || appointmentData.duration,
+          consultationType: "offline",
+          message: appointmentData.notes || "",
+          smsConsentAgreed: true,
+          isBackdated: appointmentData.isBackdated || false,
+          customDuration: appointmentData.customDuration || null,
+          createdBy: "receptionist",
+          overrideValidation: appointmentData.overrideValidation || false,
+          urgentAppointment: appointmentData.urgentAppointment || false
+        };
+        
+        // Add patient information
+        if (isFirstTimeVisit && isNewPatientValid) {
+          appointmentSubmissionData.firstName = appointmentData.newPatientFirstName;
+          appointmentSubmissionData.lastName = appointmentData.newPatientLastName;
+          appointmentSubmissionData.email = appointmentData.newPatientEmail || "";
+          appointmentSubmissionData.phone = appointmentData.newPatientPhone;
+          appointmentSubmissionData.dob = appointmentData.newPatientDateOfBirth;
+          appointmentSubmissionData.sex = appointmentData.newPatientSex;
+        } else {
+          appointmentSubmissionData.patientId = selectedPatient._id;
+        }
+
+        // Add selected services
+        if (appointmentData.selectedServices.length > 0) {
+          appointmentSubmissionData.services = appointmentData.selectedServices.map(service => ({
+            serviceId: service.id,
+            quantity: service.quantity || 1,
+            price: service.price
+          }));
+        }
+
+        // Add additional flags
+        appointmentSubmissionData.isWalkin = appointmentData.isWalkin || false;
+        appointmentSubmissionData.needsAttention = appointmentData.needsAttention || false;
+        appointmentSubmissionData.markAsArrived = appointmentData.markAsArrived || false;
+        appointmentSubmissionData.isInternational = appointmentData.isInternational || false;
+        appointmentSubmissionData.patientSource = appointmentData.patientSource || "";
+
+        console.log("Reception appointment data to submit:", appointmentSubmissionData);
+        
+        // Use the reception appointment API
+        const response = await appointmentHelper.createReceptionAppointment(appointmentSubmissionData);
+        
+        if (response.success) {
+          toast.success("Wizyta została utworzona pomyślnie!");
+          onComplete && onComplete(response.data);
+          onClose();
+        } else {
+          toast.error(response.message || "Nie udało się utworzyć wizyty");
+        }
+      } catch (error) {
+        console.error("Error creating reception appointment:", error);
+        toast.error("Wystąpił błąd podczas tworzenia wizyty");
       }
-
-      // Add selected services if any
-      if (appointmentData.selectedServices.length > 0) {
-        appointmentSubmissionData.services = appointmentData.selectedServices.map(service => ({
-          serviceId: service.id,
-          quantity: service.quantity || 1,
-          price: service.price
-        }));
-      }
-
-      // Add additional flags
-      appointmentSubmissionData.isWalkin = appointmentData.isWalkin || false;
-      appointmentSubmissionData.needsAttention = appointmentData.needsAttention || false;
-      appointmentSubmissionData.markAsArrived = appointmentData.markAsArrived || false;
-      appointmentSubmissionData.isInternational = appointmentData.isInternational || false;
-      appointmentSubmissionData.patientSource = appointmentData.patientSource || "";
-
-      console.log("Appointment data to submit:", appointmentSubmissionData);
-      
-      // Use the new reception appointment API
-      onComplete(appointmentSubmissionData);
     } else {
-      // Show validation message
       toast.error("Proszę uzupełnić wszystkie wymagane pola");
     }
   };
@@ -855,9 +882,12 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Dodaj wizytę</h2>
+          <h2 className="text-xl font-bold text-gray-800 flex items-center">
+            <Clock size={20} className="mr-2" />
+            Utwórz Wizytę (Recepcja)
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
@@ -921,9 +951,10 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
               <button
                 onClick={handleSubmit}
                 disabled={!canProceedToNextStep()}
-                className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 flex items-center"
               >
-                Zarezerwuj Wizytę
+                <Calendar size={16} className="mr-2" />
+                Utwórz Wizytę
               </button>
             )}
           </div>
@@ -933,4 +964,4 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
   );
 }
 
-export default AppointmentFormModal;
+export default ReceptionAppointmentForm; 

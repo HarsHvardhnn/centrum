@@ -360,6 +360,166 @@ const doctorService = {
       throw error;
     }
   },
+
+  // ===== NEW SCHEDULE MANAGEMENT APIs =====
+
+  /**
+   * Create or update doctor schedule for a specific date
+   * @param {Object} scheduleData - Schedule data with doctorId, date, timeBlocks, notes
+   * @returns {Promise} - API response
+   */
+  createOrUpdateSchedule: async (scheduleData) => {
+    try {
+      console.log("=== createOrUpdateSchedule called ===");
+      console.log("scheduleData:", scheduleData);
+      console.log("Making API call to /api/schedule/schedule");
+      
+      const response = await apiCaller(
+        "POST",
+        "/api/schedule/schedule",
+        scheduleData
+      );
+      console.log("createOrUpdateSchedule response:", response);
+      return response.data;
+    } catch (error) {
+      console.error("=== Error in createOrUpdateSchedule ===");
+      console.error("Error:", error);
+      console.error("Error message:", error.message);
+      console.error("Error response:", error.response);
+      throw error;
+    }
+  },
+
+  /**
+   * Get doctor schedule for a date range
+   * @param {string} doctorId - Doctor ID
+   * @param {string} startDate - Start date (YYYY-MM-DD)
+   * @param {string} endDate - End date (YYYY-MM-DD)
+   * @returns {Promise} - API response
+   */
+  getSchedule: async (doctorId, startDate, endDate) => {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+
+      const response = await apiCaller(
+        "GET",
+        `/api/schedule/schedule/${doctorId}?${params.toString()}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching schedule:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete doctor schedule for a specific date
+   * @param {string} doctorId - Doctor ID
+   * @param {string} date - Date to delete (YYYY-MM-DD)
+   * @returns {Promise} - API response
+   */
+  deleteSchedule: async (doctorId, date) => {
+    try {
+      const response = await apiCaller(
+        "DELETE",
+        `/api/schedule/schedule/${doctorId}/${date}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting schedule:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create schedule exception
+   * @param {Object} exceptionData - Exception data
+   * @returns {Promise} - API response
+   */
+  createException: async (exceptionData) => {
+    try {
+      console.log("=== createException called ===");
+      console.log("exceptionData:", exceptionData);
+      console.log("Making API call to /api/schedule/exception");
+      
+      const response = await apiCaller(
+        "POST",
+        "/api/schedule/exception",
+        exceptionData
+      );
+      console.log("createException response:", response);
+      return response.data;
+    } catch (error) {
+      console.error("=== Error in createException ===");
+      console.error("Error:", error);
+      console.error("Error message:", error.message);
+      console.error("Error response:", error.response);
+      throw error;
+    }
+  },
+
+  /**
+   * Get schedule exceptions for a doctor
+   * @param {string} doctorId - Doctor ID
+   * @param {string} startDate - Start date (YYYY-MM-DD)
+   * @param {string} endDate - End date (YYYY-MM-DD)
+   * @returns {Promise} - API response
+   */
+  getExceptions: async (doctorId, startDate, endDate) => {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+
+      const response = await apiCaller(
+        "GET",
+        `/api/schedule/exception/${doctorId}?${params.toString()}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching exceptions:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete schedule exception
+   * @param {string} exceptionId - Exception ID
+   * @returns {Promise} - API response
+   */
+  deleteException: async (exceptionId) => {
+    try {
+      const response = await apiCaller(
+        "DELETE",
+        `/api/schedule/exception/${exceptionId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting exception:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create appointment with reception override
+   * @param {Object} appointmentData - Appointment data
+   * @returns {Promise} - API response
+   */
+  createReceptionAppointment: async (appointmentData) => {
+    try {
+      const response = await apiCaller(
+        "POST",
+        "/api/appointments/reception",
+        appointmentData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error creating reception appointment:", error);
+      throw error;
+    }
+  },
 };
 
 export default doctorService;

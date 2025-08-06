@@ -62,6 +62,21 @@ class AppointmentService {
     }
   }
 
+  // Create appointment with reception override (new enhanced API)
+  async createReceptionAppointment(appointmentData) {
+    try {
+      const response = await apiCaller(
+        "POST",
+        "/appointments/reception",
+        appointmentData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error creating reception appointment:", error);
+      throw error;
+    }
+  }
+
   // Update appointment details
   async updateAppointment(appointmentId, updatedData) {
     try {
