@@ -86,14 +86,14 @@ const isBot = (userAgent) => {
 };
 
 // SEO HTML generator
-const generateSEOHTML = async (routePath, dynamicData = null) => {
+const generateSEOHTML = async (path, dynamicData = null) => {
   const BASE_URL = 'https://centrummedyczne7.pl';
   console.log("BASE_URL", BASE_URL);
-  console.log("path", routePath);
+  console.log("path", path);
   
   let title, description, keywords, ogImage;
   
-  switch (routePath) {
+  switch (path) {
     case '/':
       title = 'CM7 – Przychodnia specjalistyczna Skarżysko-Kamienna';
       description = 'Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści. Umów wizytę w Centrum Medyczne 7.';
@@ -150,7 +150,7 @@ const generateSEOHTML = async (routePath, dynamicData = null) => {
       break;
     default:
       // Handle dynamic routes with real data
-      if (routePath.startsWith('/aktualnosci/')) {
+      if (path.startsWith('/aktualnosci/')) {
         console.log("dynamicData", dynamicData);
         if (dynamicData && dynamicData.title && dynamicData.shortDescription) {
           console.log("dynamicData", dynamicData);
@@ -164,7 +164,7 @@ const generateSEOHTML = async (routePath, dynamicData = null) => {
           keywords = 'aktualności, centrum medyczne 7, news, ogłoszenia';
           ogImage = '/images/news.jpg';
         }
-      } else if (routePath.startsWith('/uslugi/')) {
+      } else if (path.startsWith('/uslugi/')) {
         if (dynamicData && dynamicData.title && dynamicData.shortDescription) {
           title = `${dynamicData.title} – Centrum Medyczne 7 Skarżysko-Kamienna`;
           description = dynamicData?.shortDescription || dynamicData?.description;
@@ -193,7 +193,7 @@ const generateSEOHTML = async (routePath, dynamicData = null) => {
           keywords = 'usługi medyczne, centrum medyczne 7';
           ogImage = '/images/uslugi.jpg';
         }
-      } else if (routePath.startsWith('/poradnik/')) {
+      } else if (path.startsWith('/poradnik/')) {
         if (dynamicData && dynamicData.title && dynamicData.shortDescription) {
           title = `${dynamicData.title} | Poradnik – Centrum Medyczne 7`;
           description = dynamicData?.shortDescription;
@@ -205,7 +205,7 @@ const generateSEOHTML = async (routePath, dynamicData = null) => {
           keywords = 'poradnik zdrowia, porady medyczne, artykuły medyczne';
           ogImage = '/images/blogs.jpg';
         }
-      } else if (routePath.startsWith('/lekarze/')) {
+      } else if (path.startsWith('/lekarze/')) {
         // console.log("dynamicData",dynamicData.name& dynamicData.specializations);
 
         if (dynamicData.data && dynamicData.data.name && dynamicData.data.specializations) {
@@ -238,7 +238,7 @@ const generateSEOHTML = async (routePath, dynamicData = null) => {
       }
   }
 
-  const canonicalUrl = `${BASE_URL}${routePath}`;
+  const canonicalUrl = `${BASE_URL}${path}`;
   // Handle both absolute and relative image URLs
   const fullOgImage = ogImage && (ogImage.startsWith('http://') || ogImage.startsWith('https://')) 
     ? ogImage 
@@ -335,12 +335,12 @@ const generateSEOHTML = async (routePath, dynamicData = null) => {
 };
 
 // Function to fetch dynamic data
-const fetchDynamicData = async (requestPath) => {
+const fetchDynamicData = async (path) => {
   try {
     let slug, endpoint;
     
-    if (requestPath.startsWith('/aktualnosci/')) {
-      slug = requestPath.replace('/aktualnosci/', '');
+    if (path.startsWith('/aktualnosci/')) {
+      slug = path.replace('/aktualnosci/', '');
       
       // Validate slug before making API call
       if (!slug || slug === 'undefined' || slug.trim() === '') {
@@ -349,8 +349,8 @@ const fetchDynamicData = async (requestPath) => {
       }
       
       endpoint = `${API_BASE_URL}/news/slug/${slug}`;
-    } else if (requestPath.startsWith('/poradnik/')) {
-      slug = requestPath.replace('/poradnik/', '');
+    } else if (path.startsWith('/poradnik/')) {
+      slug = path.replace('/poradnik/', '');
       
       // Validate slug before making API call  
       if (!slug || slug === 'undefined' || slug.trim() === '') {
@@ -358,10 +358,9 @@ const fetchDynamicData = async (requestPath) => {
         return null;
       }
       
-      // Use the same endpoint as news but filter for blog articles
-      endpoint = `${API_BASE_URL}/news/slug/${slug}`;
-    } else if (requestPath.startsWith('/uslugi/')) {
-      slug = requestPath.replace('/uslugi/', '');
+      endpoint = `${API_BASE_URL}/blogs/slug/${slug}`;
+    } else if (path.startsWith('/uslugi/')) {
+      slug = path.replace('/uslugi/', '');
       
       // Validate slug before making API call
       if (!slug || slug === 'undefined' || slug.trim() === '') {
@@ -370,8 +369,8 @@ const fetchDynamicData = async (requestPath) => {
       }
       
       endpoint = `${API_BASE_URL}/services/slug/${slug}`;
-    } else if (requestPath.startsWith('/lekarze/')) {
-      slug = requestPath.replace('/lekarze/', '');
+    } else if (path.startsWith('/lekarze/')) {
+      slug = path.replace('/lekarze/', '');
       
       // Validate slug before making API call
       if (!slug || slug === 'undefined' || slug.trim() === '') {
@@ -389,7 +388,7 @@ const fetchDynamicData = async (requestPath) => {
     console.log(`✅ Data fetched successfully for slug: ${slug}`);
     return response.data;
   } catch (error) {
-    console.log(`❌ Failed to fetch data for ${requestPath}:`, error.message);
+    console.log(`❌ Failed to fetch data for ${path}:`, error.message);
     return null;
   }
 };
@@ -450,42 +449,22 @@ const handleInvalidSlugs = (req, res, next) => {
   next();
 };
 
-// SEO Middleware - Return SEO HTML for BOTS ONLY, React app for regular users
+// SEO Middleware - Return SEO HTML for EVERYONE (bots and users)
 const seoMiddleware = async (req, res, next) => {
   const userAgent = req.get('User-Agent') || '';
-  const requestPath = req.path;
-  const isBotRequest = isBot(userAgent);
+  const path = req.path;
   
-  console.log(`📄 Request from: ${userAgent.substring(0, 50)}...`);
-  console.log(`🔗 Route: ${requestPath}`);
-  console.log(`🤖 Is bot: ${isBotRequest}`);
+  console.log(`📄 Serving SEO HTML for: ${userAgent.substring(0, 50)}...`);
+  console.log(`🔗 Route: ${path}`);
   
-  // Only serve SEO HTML to bots
-  if (isBotRequest) {
-    console.log(`🤖 Serving SEO HTML to bot for: ${requestPath}`);
-    
-    // Fetch dynamic data for dynamic routes
-    let dynamicData = null;
-    if (requestPath.startsWith('/aktualnosci/') || requestPath.startsWith('/poradnik/') || requestPath.startsWith('/uslugi/') || requestPath.startsWith('/lekarze/')) {
-      dynamicData = await fetchDynamicData(requestPath);
-    }
-    
-    const seoHTML = await generateSEOHTML(requestPath, dynamicData);
-    return res.send(seoHTML);
-  } else {
-    // Serve React app to regular users
-    console.log(`👤 Serving React app to user for: ${requestPath}`);
-    
-    // Read the index.html file and serve it
-    try {
-      const indexPath = path.join(__dirname, 'dist', 'index.html');
-      const html = fs.readFileSync(indexPath, 'utf8');
-      res.send(html);
-    } catch (error) {
-      console.error('❌ Error serving React app:', error);
-      res.status(500).send('Error loading application');
-    }
+  // Fetch dynamic data for dynamic routes
+  let dynamicData = null;
+  if (path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/') || path.startsWith('/uslugi/') || path.startsWith('/lekarze/')) {
+    dynamicData = await fetchDynamicData(path);
   }
+  
+  const seoHTML = await generateSEOHTML(path, dynamicData);
+  return res.send(seoHTML);
 };
 
 // Dynamic sitemap generator
@@ -541,18 +520,11 @@ const generateDynamicSitemap = async () => {
       console.log('⚠️ Could not fetch news for sitemap:', newsError.message);
     }
     
-    // Fetch blog articles (using same endpoint as news but with isNews=false)
+    // Fetch blog articles
     try {
       console.log('📝 Fetching blog articles for sitemap...');
-      
-      // Get all news/blog items and filter for blogs (isNews=false)
-      const allNewsResponse = await axios.get(`${API_BASE_URL}/news`, { timeout: 5000 });
-      const allItems = allNewsResponse.data || [];
-      
-      // Filter for blog articles (isNews = false)
-      const blogItems = allItems.filter(item => item.isNews === false);
-      
-      console.log(`✅ Found ${blogItems.length} blog articles out of ${allItems.length} total news/blog items`);
+      const blogResponse = await axios.get(`${API_BASE_URL}/blogs`, { timeout: 5000 });
+      const blogItems = blogResponse.data || [];
       
       const validBlogUrls = blogItems
         .filter(item => isValidSlug(item.slug))
@@ -565,10 +537,6 @@ const generateDynamicSitemap = async () => {
       
       dynamicRoutes = [...dynamicRoutes, ...validBlogUrls];
       console.log(`✅ Added ${validBlogUrls.length} blog articles to sitemap`);
-      
-      if (validBlogUrls.length === 0) {
-        console.log('⚠️ No blog articles found or all had invalid slugs');
-      }
     } catch (blogError) {
       console.log('⚠️ Could not fetch blogs for sitemap:', blogError.message);
     }
@@ -754,20 +722,29 @@ app.get('/sitemap.xml', async (req, res) => {
   }
 });
 
-// Serve static assets (CSS, JS, images) but not HTML files
-app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
-app.use('/images', express.static(path.join(__dirname, 'dist', 'images')));
-
 // Apply middleware in correct order
 app.use(handleExternalProtocols); // First: block external protocols
 app.use(handleInvalidSlugs);      // Second: handle undefined slugs
 
-// Apply SEO middleware for ALL routes (HTML requests)
-app.get('*', seoMiddleware);
+// Serve static assets (CSS, JS, images, PDFs) BEFORE SEO middleware
+app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
+app.use('/images', express.static(path.join(__dirname, 'dist', 'images')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/', express.static(path.join(__dirname, 'public')));
+
+// Apply SEO middleware for HTML routes only (not for static files)
+app.get('*', (req, res, next) => {
+  // Skip SEO middleware for static files
+  if (req.path.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|pdf|xml|txt)$/)) {
+    return next();
+  }
+  
+  // Apply SEO middleware for HTML routes
+  return seoMiddleware(req, res, next);
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🔍 SEO middleware active for BOTS ONLY`);
+  console.log(`🔍 SEO middleware active for bots`);
   console.log(`📱 React SPA served for regular users`);
-  console.log(`🤖 Bot detection enabled for proper indexing`);
 }); 
