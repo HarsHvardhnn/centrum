@@ -121,9 +121,9 @@ const AuthForm = ({ isLogin = false }) => {
         toast.success("Logowanie zakończone sukcesem!");
 
         if (response.data.user.role === "patient") {
-          navigate("/user");
+          navigate("/");
         } else {
-          navigate("/admin");
+          navigate("/");
         }
 
         return { success: true, user: response.data.user };
@@ -204,7 +204,7 @@ const AuthForm = ({ isLogin = false }) => {
       setUser(response.data.user || {});
 
       if (response.data.user.role === "patient") {
-        navigate("/user");
+        navigate("/");
         return;
       }
       navigate("/admin");
@@ -252,9 +252,9 @@ const AuthForm = ({ isLogin = false }) => {
         toast.success("Logowanie zakończone sukcesem!");
 
         if (response.data.user.role === "patient") {
-          navigate("/user");
+          navigate("/");
         } else {
-          navigate("/admin");
+          navigate("/");
         }
       }
     } catch (error) {

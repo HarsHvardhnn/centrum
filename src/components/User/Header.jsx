@@ -76,11 +76,11 @@ const Header = () => {
   // Helper function to check if a link is active
   const isActive = (path) => {
     // For home page
-    if (path === "/user" && location.pathname === "/user") {
+    if (path === "/" && location.pathname === "/") {
       return true;
     }
     // For other pages, check if the location pathname starts with the path
-    return path !== "/user" && location.pathname.startsWith(path);
+    return path !== "/" && location.pathname.startsWith(path);
   };
 
   // Active link style
@@ -144,9 +144,9 @@ const Header = () => {
 
         <nav className="hidden lg:flex gap-4 lg:gap-6 font-medium text-sm">
           <Link
-            to="/user"
+            to="/"
             className={`py-2 ${
-              isActive("/user") && location.pathname === "/user"
+              isActive("/") && location.pathname === "/"
                 ? activeLinkClass
                 : defaultLinkClass
             }`}
@@ -224,9 +224,9 @@ const Header = () => {
 
           <nav className="flex flex-col items-center mt-16 gap-6 font-medium text-lg">
             <Link
-              to="/user"
+              to="/"
               className={
-                isActive("/user") && location.pathname === "/user"
+                isActive("/") && location.pathname === "/"
                   ? "text-teal-500 font-bold"
                   : "text-teal-900"
               }
