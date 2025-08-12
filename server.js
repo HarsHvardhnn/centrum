@@ -325,7 +325,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-DKmWLOdT.js"></script>
+    <script type="module" crossorigin src="/assets/index-DXtfWjBg.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -730,7 +730,6 @@ app.use(handleInvalidSlugs);      // Second: handle undefined slugs
 app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'dist', 'images')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
-app.use('/', express.static(path.join(__dirname, 'public')));
 
 // Apply SEO middleware for HTML routes only (not for static files)
 app.get('*', (req, res, next) => {
@@ -742,6 +741,9 @@ app.get('*', (req, res, next) => {
   // Apply SEO middleware for HTML routes
   return seoMiddleware(req, res, next);
 });
+
+// Serve static files from public directory AFTER SEO middleware (fallback)
+app.use('/', express.static(path.join(__dirname, 'public')));
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

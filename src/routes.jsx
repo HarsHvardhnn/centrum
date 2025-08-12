@@ -35,22 +35,10 @@ const ProtectedImage = () => {
       alt="Protected content"
       style={{ pointerEvents: 'none' }}
       onContextMenu={(e) => e.preventDefault()}
-      onDragStart={(e) => e.preventDefault()}
+      onDragStart={(e) => e.preventDefault() }
     />
   );
 };
-
-// Root route component that clears localStorage and redirects to /user
-const RootRoute = () => {
-  useEffect(() => {
-    // Clear all items from localStorage
-    localStorage.clear();
-  }, []);
-
-  // Redirect to /user
-  return <Navigate to="/user" replace />;
-};
-
 
 const routes = createBrowserRouter([
   // Root route - will show the same content as /user
@@ -90,52 +78,8 @@ const routes = createBrowserRouter([
     ],
   },
 
-  // Public user site routes
-  {
-    path: "/user/*",
-    element: <Navigate to={location => location.pathname.replace('/user', '')} replace />,
-  },
-  {
-    path: "/user",
-    element: <Navigate to="/" replace />,
-  },
-
-  {
-    path: "/doctors/*",
-    element: <Navigate to="/" replace />,
-  },
-  {
-    path: "/doctor-details/*",
-    element: <Navigate to="/" replace />,
-  },
-  {
-    path: "/patients/*",
-    element: <Navigate to="/" replace />,
-  },
-  {
-    path: "/clinic/*",
-    element: <Navigate to="/" replace />,
-  },
-  {
-    path: "/appointment/*",
-    element: <Navigate to="/" replace />,
-  },
-  {
-    path: "/patients-details/*",
-    element: <Navigate to="/" replace />,
-  },
-  {
-    path: "/admin/*",
-    element: <Navigate to="/" replace />,
-  },
-  {
-    path: "/doctor/*",
-    element: <Navigate to="/" replace />,
-  },
-  {
-    path: "/help-center",
-    element: <Navigate to="/" replace />,
-  },
+  // Remove the /user redirects that were causing the redirect loop
+  // The root route now serves the same content directly
 
   // Protected image route
   {
