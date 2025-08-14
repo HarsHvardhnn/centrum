@@ -39,7 +39,7 @@ function removeTrailingSlash(url) {
 
 // API base URL - adjust this to your backend URL  
 const API_BASE_URL = removeTrailingSlash('https://backend.centrummedyczne7.pl/');
-// const API_BASE_URL = removeTrailingSlash('http://localhost:5000/');
+// const API_BASE_URL = removeTrailingSlash('https://backend.centrummedyczne7.pl/');
 
 console.log("API_BASE_URL", API_BASE_URL);
 // Bot detection function
