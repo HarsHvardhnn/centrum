@@ -56,6 +56,7 @@ export default function Doctors({
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [weekLoading, setWeekLoading] = useState(false);
   const [bookingForm, setBookingForm] = useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -124,7 +125,24 @@ export default function Doctors({
         handleBookAppointment(doctor);
         
         if (dateFromUrl) {
+          setWeekLoading(true);
+          // Calculate which week this date falls into and set the week offset
+          const targetDate = new Date(dateFromUrl);
+          const today = new Date();
+          const daysDiff = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
+          const weekOffsetForDate = Math.max(0, Math.floor(daysDiff / 7)); // Ensure weekOffset is not negative
+          
+          setWeekOffset(weekOffsetForDate);
           setSelectedDate(dateFromUrl);
+          
+          // Force update the nextDays array to show the correct week immediately
+          const days = Array.from({ length: 7 }, (_, i) => {
+            const date = new Date();
+            date.setDate(date.getDate() + i + weekOffsetForDate * 7);
+            return date.toISOString().split("T")[0];
+          });
+          setNextDays(days);
+          setWeekLoading(false);
         }
         
         if (timeFromUrl && dateFromUrl) {
@@ -290,6 +308,7 @@ export default function Doctors({
   const handleBookAppointment = async (doctor) => {
     setSelectedDoctor(doctor);
     setShowModal(true);
+    setWeekLoading(true);
 
     try {
       // Fetch doctor profile
@@ -301,13 +320,36 @@ export default function Doctors({
       );
 
       if (nextAvailableResponse.success && nextAvailableResponse.data) {
+        const nextAvailableDate = nextAvailableResponse.data.nextAvailableDate;
+        
+        // Calculate which week this date falls into
+        const targetDate = new Date(nextAvailableDate);
+        const today = new Date();
+        const daysDiff = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
+        const weekOffset = Math.max(0, Math.floor(daysDiff / 7)); // Ensure weekOffset is not negative
+        
+        // Set the week offset to show the correct week
+        setWeekOffset(weekOffset);
+        
         // Set the next available date
-        setSelectedDate(nextAvailableResponse.data.nextAvailableDate);
+        setSelectedDate(nextAvailableDate);
         // Set available slots
         setAvailableSlots(nextAvailableResponse.data.availableSlots);
+        
+        // Update URL to reflect the selected date
+        updateUrlWithSelections(doctor.id, nextAvailableDate, "");
+        
+        // Force update the nextDays array to show the correct week immediately
+        const days = Array.from({ length: 7 }, (_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() + i + weekOffset * 7);
+          return date.toISOString().split("T")[0];
+        });
+        setNextDays(days);
       } else {
         // If no available date found, use current date
         setSelectedDate(new Date().toISOString().split("T")[0]);
+        setWeekOffset(0); // Reset to current week
         // Fetch slots for current date
         await fetchAvailableSlots(
           doctor.id,
@@ -319,10 +361,20 @@ export default function Doctors({
       toast.error(
         "Nie udało się pobrać dostępnych terminów. Spróbuj ponownie później."
       );
+    } finally {
+      setWeekLoading(false);
     }
   };
 
   const handleDateChange = (date) => {
+    // Don't allow selecting past dates
+    const selectedDateObj = new Date(date);
+    const today = new Date().setHours(0, 0, 0, 0);
+    
+    if (selectedDateObj < today) {
+      return;
+    }
+    
     setSelectedDate(date);
     setSelectedSlot(null); // Reset selected slot when date changes
     if (selectedDoctor) {
@@ -537,17 +589,53 @@ export default function Doctors({
   };
 
   // Calculate dates for the next 7 days based on weekOffset
-  const nextDays = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() + i + weekOffset * 7);
-    return date.toISOString().split("T")[0];
-  });
+  const [nextDays, setNextDays] = useState([]);
+
+  useEffect(() => {
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() + i + weekOffset * 7);
+      return date.toISOString().split("T")[0];
+    });
+    setNextDays(days);
+  }, [weekOffset]);
+
+  // Initialize nextDays on component mount
+  useEffect(() => {
+    const initialDays = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      return date.toISOString().split("T")[0];
+    });
+    setNextDays(initialDays);
+  }, []);
 
   const handleWeekChange = (direction) => {
-    setWeekOffset((prev) => prev + direction);
-    setSelectedDate(nextDays[0]); // Reset to first day of new week
-    if (selectedDoctor) {
-      fetchAvailableSlots(selectedDoctor.id, nextDays[0]);
+    const newWeekOffset = Math.max(0, weekOffset + direction); // Ensure we don't go below 0
+    setWeekOffset(newWeekOffset);
+    
+    // Calculate the first day of the new week
+    const firstDayOfNewWeek = new Date();
+    firstDayOfNewWeek.setDate(firstDayOfNewWeek.getDate() + newWeekOffset * 7);
+    const firstDayDate = firstDayOfNewWeek.toISOString().split("T")[0];
+    
+    // Check if the currently selected date is still in the new week
+    const currentSelectedDate = new Date(selectedDate);
+    const firstDayOfNewWeekDate = new Date(firstDayOfNewWeek);
+    const lastDayOfNewWeek = new Date(firstDayOfNewWeek);
+    lastDayOfNewWeek.setDate(lastDayOfNewWeek.getDate() + 6);
+    
+    // If current selected date is not in the new week, reset to first day
+    if (currentSelectedDate < firstDayOfNewWeekDate || currentSelectedDate > lastDayOfNewWeek) {
+      setSelectedDate(firstDayDate);
+      if (selectedDoctor) {
+        fetchAvailableSlots(selectedDoctor.id, firstDayDate);
+      }
+    } else {
+      // Keep the current selected date and fetch slots for it
+      if (selectedDoctor) {
+        fetchAvailableSlots(selectedDoctor.id, selectedDate);
+      }
     }
   };
 
@@ -763,15 +851,48 @@ export default function Doctors({
                     <div className="flex items-center justify-between mb-2">
                       <button
                         onClick={() => handleWeekChange(-1)}
-                        className="px-3 py-1 text-sm text-main hover:bg-gray-100 rounded-md flex items-center"
-                        disabled={weekOffset === 0}
+                        className={`px-3 py-1 text-sm rounded-md flex items-center ${
+                          weekOffset <= 0 || weekLoading
+                            ? "text-gray-400 cursor-not-allowed"
+                            : "text-main hover:bg-gray-100"
+                        }`}
+                        disabled={weekOffset <= 0 || weekLoading}
                       >
                         <FaChevronLeft className="mr-1" />
                         Poprzedni tydzień
                       </button>
+                      
+                      <span className="text-sm text-gray-600 font-medium">
+                        {weekLoading ? (
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-main mr-2"></div>
+                            <span>Ładowanie...</span>
+                          </div>
+                        ) : (
+                          <>
+                            {weekOffset === 0 ? "Ten tydzień" : `Za ${weekOffset} tydzień${weekOffset > 1 ? 'ni' : ''}`}
+                            {selectedDate && weekOffset > 0 && (
+                              <span className="block text-xs text-main">
+                                Następny termin: {new Date(selectedDate).toLocaleDateString('pl-PL')}
+                              </span>
+                            )}
+                            {nextDays.length > 0 && (
+                              <span className="block text-xs text-gray-500">
+                                {new Date(nextDays[0]).toLocaleDateString('pl-PL')} - {new Date(nextDays[6]).toLocaleDateString('pl-PL')}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </span>
+                      
                       <button
                         onClick={() => handleWeekChange(1)}
-                        className="px-3 py-1 text-sm text-main hover:bg-gray-100 rounded-md flex items-center"
+                        className={`px-3 py-1 text-sm rounded-md flex items-center ${
+                          weekLoading
+                            ? "text-gray-400 cursor-not-allowed"
+                            : "text-main hover:bg-gray-100"
+                        }`}
+                        disabled={weekLoading}
                       >
                         Następny tydzień
                         <FaChevronRight className="ml-1" />
@@ -784,13 +905,18 @@ export default function Doctors({
                         const isToday = date === today;
                         const isActive = date === selectedDate;
 
+                        const isPast = dayDate < new Date().setHours(0, 0, 0, 0);
+                        
                         return (
                           <button
                             key={date}
-                            onClick={() => handleDateChange(date)}
+                            onClick={() => !isPast && handleDateChange(date)}
+                            disabled={isPast}
                             className={`px-2 py-3 rounded-lg border text-sm ${
                               isActive
                                 ? "bg-main text-white border-main"
+                                : isPast
+                                ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                             }`}
                           >
@@ -803,6 +929,7 @@ export default function Doctors({
                               {dayDate.getDate()}/{dayDate.getMonth() + 1}
                             </div>
                             {isToday && <div className="text-xs">Dziś</div>}
+                            {isPast && <div className="text-xs text-gray-400">Przeszły</div>}
                           </button>
                         );
                       })}
