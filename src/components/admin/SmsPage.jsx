@@ -209,9 +209,9 @@ const UserMessaging = () => {
     const value = e.target.value;
     // Convert Polish characters to non-accented equivalents
     const convertedValue = convertPolishCharacters(value);
-    // Allow alphanumeric characters, spaces, basic punctuation, and URL characters (/, :, .)
-    // But block special characters like &$$$###@@
-    const sanitizedValue = convertedValue.replace(/[^\w\s.,!?()-\/:]/g, '');
+    // Allow alphanumeric characters, spaces, basic punctuation, and all URL-safe characters
+    // This includes: letters, numbers, spaces, common punctuation, and URL characters like / : . ? = & #
+    const sanitizedValue = convertedValue.replace(/[^\w\s.,!?()\-/:?=&#]/g, '');
     setMessageContent(sanitizedValue);
   };
 
@@ -226,7 +226,7 @@ const UserMessaging = () => {
     if (newTemplate.title.trim() && newTemplate.description.trim()) {
       // Convert Polish characters and sanitize content
       const convertedDescription = convertPolishCharacters(newTemplate.description);
-      const sanitizedDescription = convertedDescription.replace(/[^\w\s.,!?()-]/g, '');
+      const sanitizedDescription = convertedDescription.replace(/[^\w\s.,!?()\-/:?=&#]/g, '');
       
       setTemplateSubmitting(true);
       try {
@@ -705,9 +705,9 @@ const UserMessaging = () => {
                         const value = e.target.value;
                         // Convert Polish characters to non-accented equivalents
                         const convertedValue = convertPolishCharacters(value);
-                        // Allow alphanumeric characters, spaces, basic punctuation, and URL characters (/, :, .)
-                        // But block special characters like &$$$###@@
-                        const sanitizedValue = convertedValue.replace(/[^\w\s.,!?()-\/:]/g, '');
+                        // Allow alphanumeric characters, spaces, basic punctuation, and all URL-safe characters
+                        // This includes: letters, numbers, spaces, common punctuation, and URL characters like / : . ? = & #
+                        const sanitizedValue = convertedValue.replace(/[^\w\s.,!?()\-/:?=&#]/g, '');
                         setNewTemplate({...newTemplate, description: sanitizedValue});
                       }}
                       placeholder="Treść szablonu..."
