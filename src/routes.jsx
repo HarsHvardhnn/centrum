@@ -20,6 +20,13 @@ import DoctorProfilePage from "./components/User/Pages/DoctorProfilePage";
 import TermsPage from "./components/User/Pages/TermsPage";
 import PrivacyPolicyPage from "./components/User/Pages/PrivacyPolicyPage";
 import ContactPage from "./components/User/Pages/ContactPage";
+import { useScrollToTop } from "./hooks/useScrollToTop";
+
+// Scroll to top wrapper component
+const ScrollToTopWrapper = ({ children }) => {
+  useScrollToTop();
+  return children;
+};
 
 // Protected image route component
 const ProtectedImage = () => {
@@ -44,7 +51,11 @@ const routes = createBrowserRouter([
   // Root route - will show the same content as /user
   {
     path: "/",
-    element: <UserLayout />,
+    element: (
+      <ScrollToTopWrapper>
+        <UserLayout />
+      </ScrollToTopWrapper>
+    ),
     children: [
       { path: "", element: <HomePage /> },
       { path: "o-nas", element: <AboutUsPage /> },
@@ -68,7 +79,11 @@ const routes = createBrowserRouter([
 
   // Public routes group
   {
-    element: <PublicRoute />,
+    element: (
+      <ScrollToTopWrapper>
+        <PublicRoute />
+      </ScrollToTopWrapper>
+    ),
     children: [
       // Login route disabled - redirecting to root
       {
@@ -84,13 +99,21 @@ const routes = createBrowserRouter([
   // Protected image route
   {
     path: "/protected-image/*",
-    element: <ProtectedImage />
+    element: (
+      <ScrollToTopWrapper>
+        <ProtectedImage />
+      </ScrollToTopWrapper>
+    )
   },
 
   // Catch all route
   {
     path: "*",
-    element: <NotFound404 />,
+    element: (
+      <ScrollToTopWrapper>
+        <NotFound404 />
+      </ScrollToTopWrapper>
+    ),
   },
 ]);
 
