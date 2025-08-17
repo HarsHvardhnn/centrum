@@ -39,6 +39,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
     newPatientPhone: "",
     newPatientDateOfBirth: "",
     newPatientSex: "",
+    newPatientPesel: "",
     // Enhanced fields for reception appointments
     customDuration: null,
     isBackdated: false,
@@ -74,7 +75,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
 
   // Phone validation function
   const validatePhone = (phone) => {
-    if (!phone) return "Numer telefonu jest wymagany";
+    if (!phone) return ""; // Empty is allowed
     const phoneRegex = /^\d{9}$/;
     return phoneRegex.test(phone) ? "" : "Numer telefonu musi mieć dokładnie 9 cyfr";
   };
@@ -262,10 +263,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   const isNewPatientValid = isFirstTimeVisit && 
     appointmentData.newPatientFirstName.trim() !== "" && 
     appointmentData.newPatientLastName.trim() !== "" &&
-    appointmentData.newPatientPhone.trim().length === 9 &&
-    !validationErrors.phone &&
-    (!appointmentData.newPatientEmail || !validationErrors.email) &&
-    appointmentData.newPatientDateOfBirth.trim() !== "" &&
+    appointmentData.newPatientPesel.trim() !== "" &&
     appointmentData.newPatientSex.trim() !== "";
 
   const canProceedToNextStep = () => {
@@ -390,28 +388,40 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Telefon*</label>
+                    <label className="block text-sm text-gray-600 mb-1">Telefon</label>
                     <input
                       type="tel"
                       name="newPatientPhone"
                       value={appointmentData.newPatientPhone}
                       onChange={handleInputChange}
                       className={`w-full p-2 border rounded-lg ${validationErrors.phone ? 'border-red-500' : ''}`}
-                      required
-                      placeholder="Wprowadź 9 cyfr"
+                      placeholder="Opcjonalny - 9 cyfr"
                     />
                     {validationErrors.phone && (
                       <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Data urodzenia*</label>
+                    <label className="block text-sm text-gray-600 mb-1">Data urodzenia</label>
                     <input
                       type="date"
                       name="newPatientDateOfBirth"
                       value={appointmentData.newPatientDateOfBirth}
                       onChange={handleInputChange}
                       className="w-full p-2 border rounded-lg"
+                      placeholder="Opcjonalna"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">PESEL*</label>
+                    <input
+                      type="text"
+                      name="newPatientPesel"
+                      value={appointmentData.newPatientPesel}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border rounded-lg"
+                      required
+                      placeholder="Wprowadź PESEL"
                     />
                   </div>
                   <div>
@@ -833,6 +843,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
           appointmentSubmissionData.phone = appointmentData.newPatientPhone;
           appointmentSubmissionData.dob = appointmentData.newPatientDateOfBirth;
           appointmentSubmissionData.sex = appointmentData.newPatientSex;
+          appointmentSubmissionData.pesel = appointmentData.newPatientPesel;
         } else {
           appointmentSubmissionData.patientId = selectedPatient._id;
         }

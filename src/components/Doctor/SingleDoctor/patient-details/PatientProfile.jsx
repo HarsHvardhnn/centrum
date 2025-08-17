@@ -205,6 +205,10 @@ const PatientProfile = ({ patient, setPatientData }) => {
           <p className="text-sm">{patient.phone}</p>
         </div>
         <div className="flex flex-col">
+          <p className="text-xs text-gray-500">PESEL</p>
+          <p className="text-sm">{patient.govtId || patient.pesel || patient.PESEL || "Nie określono"}</p>
+        </div>
+        <div className="flex flex-col">
           <p className="text-xs text-gray-500">Data urodzenia</p>
           <p className="text-sm">
   {isNaN(new Date(patient.birthDate)) 

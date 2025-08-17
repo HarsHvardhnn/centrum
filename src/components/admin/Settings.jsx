@@ -335,15 +335,17 @@ export default function UserManagement() {
         photo: patientDetails.photo || null,
 
         // Details
-        fatherName: patientDetails.fatherName,
-        motherName: patientDetails.motherName,
-        isAdult: patientDetails.isAdult === true ? 'TAK' : 'NIE',
-        contactPerson: patientDetails.contactPerson,
-        fatherPhone: patientDetails.fatherPhone,
-        motherPhone: patientDetails.motherPhone,
-        relationToPatient: patientDetails.relationToPatient,
+        contactPerson1Name: patientDetails.contactPerson1Name,
+        contactPerson1PhonePrefix: patientDetails.contactPerson1PhonePrefix || "+48",
+        contactPerson1Phone: patientDetails.contactPerson1Phone,
+        contactPerson1Address: patientDetails.contactPerson1Address,
+        contactPerson1Pesel: patientDetails.contactPerson1Pesel,
+        contactPerson2Name: patientDetails.contactPerson2Name,
+        contactPerson2PhonePrefix: patientDetails.contactPerson2PhonePrefix || "+48",
+        contactPerson2Phone: patientDetails.contactPerson2Phone,
+        contactPerson2Address: patientDetails.contactPerson2Address,
+        contactPerson2Pesel: patientDetails.contactPerson2Pesel,
         allergies: patientDetails.allergies,
-        nationality: patientDetails.nationality,
         preferredLanguage: patientDetails.preferredLanguage,
 
         // Notes

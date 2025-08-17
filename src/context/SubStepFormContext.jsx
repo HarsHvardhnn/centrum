@@ -44,15 +44,17 @@ export const FormProvider = ({ children, initialData }) => {
     photo: null,
 
     // Details
-    fatherName: "",
-    motherName: "",
-    isAdult: "",
-    contactPerson: "",
-    fatherPhone: "",
-    motherPhone: "",
-    relationToPatient: "",
+    contactPerson1Name: "",
+    contactPerson1PhonePrefix: "+48",
+    contactPerson1Phone: "",
+    contactPerson1Address: "",
+    contactPerson1Pesel: "",
+    contactPerson2Name: "",
+    contactPerson2PhonePrefix: "+48",
+    contactPerson2Phone: "",
+    contactPerson2Address: "",
+    contactPerson2Pesel: "",
     allergies: "",
-    nationality: "",
     preferredLanguage: "",
 
     // Notes

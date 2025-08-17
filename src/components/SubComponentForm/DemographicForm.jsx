@@ -5,38 +5,27 @@ import { useState, useEffect } from "react";
 const DemographicsForm = () => {
   const { formData, updateFormData } = useFormContext();
   const [touched, setTouched] = useState({
-    email: false,
-    mobileNumber: false,
-    dateOfBirth: false,
+    fullName: false,
+    govtId: false,
     sex: false
   });
   const [errors, setErrors] = useState({
-    email: "",
-    mobileNumber: "",
-    dateOfBirth: "",
+    fullName: "",
+    govtId: "",
     sex: ""
   });
 
-  // Email validation function
-  const validateEmail = (email) => {
-    if (!email) return ""; // Empty is allowed
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email) ? "" : "Nieprawidłowy format adresu email";
+  // Full name validation function
+  const validateFullName = (name) => {
+    if (!name || name.trim() === "") return "Imię i nazwisko jest wymagane";
+    return "";
   };
 
-  // Phone number validation function
-  const validatePhone = (phone) => {
-    if (!phone) return "Numer telefonu jest wymagany";
-    const phoneRegex = /^\d{9}$/;
-    return phoneRegex.test(phone) ? "" : "Numer telefonu musi mieć dokładnie 9 cyfr";
-  };
-
-  // Date of birth validation function
-  const validateDateOfBirth = (date) => {
-    if (!date) return "Data urodzenia jest wymagana";
-    const selectedDate = new Date(date);
-    const today = new Date();
-    if (selectedDate > today) return "Data urodzenia nie może być w przyszłości";
+  // PESEL validation function
+  const validatePesel = (pesel) => {
+    if (!pesel || pesel.trim() === "") return "Numer PESEL jest wymagany";
+    if (pesel.length !== 11) return "Numer PESEL musi mieć dokładnie 11 cyfr";
+    if (!/^\d+$/.test(pesel)) return "Numer PESEL może zawierać tylko cyfry";
     return "";
   };
 
@@ -56,29 +45,20 @@ const DemographicsForm = () => {
   const handleChange = (e) => {
     const { name, value, type } = e.target;
     
-    if (name === "mobileNumber") {
-      const numbersOnly = value.replace(/\D/g, "").slice(0, 9);
-      updateFormData(name, numbersOnly);
-      if (touched[name]) {
-        setErrors(prev => ({
-          ...prev,
-          mobileNumber: validatePhone(numbersOnly)
-        }));
-      }
-    } else if (name === "email") {
+    if (name === "fullName") {
       updateFormData(name, value);
       if (touched[name]) {
         setErrors(prev => ({
           ...prev,
-          email: validateEmail(value)
+          fullName: validateFullName(value)
         }));
       }
-    } else if (name === "dateOfBirth") {
+    } else if (name === "govtId") {
       updateFormData(name, value);
       if (touched[name]) {
         setErrors(prev => ({
           ...prev,
-          dateOfBirth: validateDateOfBirth(value)
+          govtId: validatePesel(value)
         }));
       }
     } else if (name === "sex") {
@@ -88,6 +68,13 @@ const DemographicsForm = () => {
         ...prev,
         sex: validateSex(value)
       }));
+    } else if (name === "mobileNumber") {
+      const numbersOnly = value.replace(/\D/g, "").slice(0, 9);
+      updateFormData(name, numbersOnly);
+    } else if (name === "email") {
+      updateFormData(name, value);
+    } else if (name === "dateOfBirth") {
+      updateFormData(name, value);
     } else {
       updateFormData(name, type === "checkbox" ? e.target.checked : value);
     }
@@ -114,16 +101,21 @@ const DemographicsForm = () => {
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Imię i Nazwisko
+          Imię i Nazwisko <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           name="fullName"
           value={formData.fullName || ""}
           onChange={handleChange}
+          onBlur={() => handleBlur("fullName")}
           placeholder="Wprowadź imię i nazwisko"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          className={`w-full px-3 py-2 border ${touched.fullName && errors.fullName ? 'border-red-500' : 'border-gray-300'} rounded-md`}
+          required
         />
+        {touched.fullName && errors.fullName && (
+          <p className="mt-1 text-sm text-red-500">{errors.fullName}</p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -136,50 +128,36 @@ const DemographicsForm = () => {
             name="email"
             value={formData.email || ""}
             onChange={handleChange}
-            onBlur={() => handleBlur("email")}
             placeholder="Wprowadź adres e-mail"
-            className={`w-full px-3 py-2 border ${touched.email && errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md`}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
-          {touched.email && errors.email && (
-            <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-          )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Numer Telefonu <span className="text-red-500">*</span>
+            Numer Telefonu
           </label>
           <input
             type="tel"
             name="mobileNumber"
             value={formData.mobileNumber || ""}
             onChange={handleChange}
-            onBlur={() => handleBlur("mobileNumber")}
             placeholder="Wprowadź 9 cyfr"
-            className={`w-full px-3 py-2 border ${touched.mobileNumber && errors.mobileNumber ? 'border-red-500' : 'border-gray-300'} rounded-md`}
-            required
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
-          {touched.mobileNumber && errors.mobileNumber && (
-            <p className="mt-1 text-sm text-red-500">{errors.mobileNumber}</p>
-          )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Data Urodzenia <span className="text-red-500">*</span>
+            Data Urodzenia
           </label>
           <input
             type="date"
             name="dateOfBirth"
             value={formatDateForInput(formData.dateOfBirth) || ""}
             onChange={handleChange}
-            onBlur={() => handleBlur("dateOfBirth")}
-            required
-            className={`w-full px-3 py-2 border ${touched.dateOfBirth && errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md`}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
-          {touched.dateOfBirth && errors.dateOfBirth && (
-            <p className="mt-1 text-sm text-red-500">{errors.dateOfBirth}</p>
-          )}
         </div>
       </div>
 
@@ -200,16 +178,21 @@ const DemographicsForm = () => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Numer PESEL
+            Numer PESEL <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             name="govtId"
             value={formData.govtId || ""}
             onChange={handleChange}
+            onBlur={() => handleBlur("govtId")}
             placeholder="Wprowadź numer PESEL"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            className={`w-full px-3 py-2 border ${touched.govtId && errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md`}
+            required
           />
+          {touched.govtId && errors.govtId && (
+            <p className="mt-1 text-sm text-red-500">{errors.govtId}</p>
+          )}
         </div>
 
         <div>
@@ -261,90 +244,43 @@ const DemographicsForm = () => {
             <p className="mt-1 text-sm text-red-500">{errors.sex}</p>
           )}
         </div>
-{/* 
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Stan Cywilny
-          </label>
-          <div className="flex gap-4 p-3 bg-primary-lighter rounded-xl">
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="maritalStatus"
-                value="Single"
-                checked={formData.maritalStatus === "Single"}
-                onChange={handleChange}
-                className="form-radio h-4 w-4 text-teal-500"
-              />
-              <span className="ml-2">Wolny</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="maritalStatus"
-                value="Married"
-                checked={formData.maritalStatus === "Married"}
-                onChange={handleChange}
-                className="form-radio h-4 w-4 text-teal-500"
-              />
-              <span className="ml-2">Żonaty/Zamężna</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="maritalStatus"
-                value="Widow"
-                checked={formData.maritalStatus === "Widow"}
-                onChange={handleChange}
-                className="form-radio h-4 w-4 text-teal-500"
-              />
-              <span className="ml-2">Wdowiec/Wdowa</span>
-            </label>
-          </div>
-        </div> */}
       </div>
-{/* 
-      <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Pochodzenie Etniczne
-          </label>
-          <div className="flex w-[30%] gap-4 p-3 bg-primary-lighter rounded-xl">
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="ethnicity"
-                value="European"
-                checked={formData.ethnicity === "European"}
-                onChange={handleChange}
-                className="form-radio h-4 w-4 text-teal-500"
-              />
-              <span className="ml-2">Europejskie</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="ethnicity"
-                value="Bangali"
-                checked={formData.ethnicity === "Bangali"}
-                onChange={handleChange}
-                className="form-radio h-4 w-4 text-teal-500"
-              />
-              <span className="ml-2">Bengalskie</span>
-            </label>
-          </div>
-        </div> */}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           ID Pacjenta
         </label>
-        <input
-          type="text"
-          name="otherHospitalIds"
-          value={formData.otherHospitalIds || ""}
-          onChange={handleChange}
-          placeholder="Wprowadź ID- auogenerate?"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-        />
+        <div className="relative group">
+          <input
+            type="text"
+            name="otherHospitalIds"
+            value={formData.otherHospitalIds || ""}
+            onChange={handleChange}
+            placeholder="Wprowadź ID pacjenta"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          />
+          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+            <svg 
+              className="w-5 h-5 text-gray-400 cursor-help" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+              title="ID jest generowane automatycznie przez system"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth="2" 
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          {/* Tooltip */}
+          <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-10">
+            ID jest generowane automatycznie przez system
+            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+          </div>
+        </div>
       </div>
     </div>
   );

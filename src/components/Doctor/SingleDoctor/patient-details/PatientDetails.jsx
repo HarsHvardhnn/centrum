@@ -137,6 +137,7 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
       "Imię i nazwisko": `${patientData.name?.first || ""} ${patientData.name?.last || ""}`.trim(),
       "Email": patientData.email,
       "Telefon": patientData.phone,
+      "PESEL": patientData.govtId || patientData.pesel || patientData.PESEL || "Nie określono",
       "Płeć": patientData.sex === "Male" ? "Mężczyzna" : patientData.sex === "Female" ? "Kobieta" : patientData.sex,
       "Data urodzenia": patientData.dateOfBirth ? formatDate(patientData.dateOfBirth) : null,
       "Wiek": patientData.age,
@@ -326,7 +327,8 @@ const PatientDetailsPage = () => {
     bloodPressure: null,
     temperature: null,
     weight: null,
-    height: null
+    height: null,
+    govtId: ""
   });
 
   // Consultation state (now tied to appointment)
@@ -394,6 +396,8 @@ const PatientDetailsPage = () => {
         
         // Fetch patient basic data
         const patientResponse = await patientService.getPatientDetails(id);
+        console.log("Patient Response:", patientResponse);
+        console.log("Patient Data Fields:", Object.keys(patientResponse.patientData || {}));
         //("patientResponse", patientResponse);
 
         setPatientData(prevData => ({

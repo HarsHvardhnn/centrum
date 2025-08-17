@@ -32,18 +32,17 @@ const SubStepForm = ({
   // Validate current step
   useEffect(() => {
     if (currentSubStep === 0) { // Demographics form
-      const emailError = formData.email ? !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) : false;
-      const phoneError = formData.mobileNumber ? !/^\d{9}$/.test(formData.mobileNumber) : false;
-      const dateError = !formData.dateOfBirth;
+      const fullNameError = !formData.fullName || formData.fullName.trim() === "";
+      const govtIdError = !formData.govtId || formData.govtId.trim() === "";
       const sexError = !formData.sex;
-      setHasValidationErrors(emailError || phoneError || dateError || sexError);
+      setHasValidationErrors(fullNameError || govtIdError || sexError);
     } else if (currentSubStep === 1) { // Referrer form
       const doctorError = !formData.consultingDoctor;
       setHasValidationErrors(doctorError);
     } else {
       setHasValidationErrors(false);
     }
-  }, [currentSubStep, formData.email, formData.mobileNumber, formData.dateOfBirth, formData.sex, formData.consultingDoctor]);
+  }, [currentSubStep, formData.fullName, formData.govtId, formData.sex, formData.consultingDoctor]);
 
   const getPreviousButtonText = () => {
     if (currentSubStep > 0) {

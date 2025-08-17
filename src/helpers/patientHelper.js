@@ -65,12 +65,17 @@ const patientService = {
       appendIfExists("spouseName", patientData.spouseName);
       appendIfExists("state", patientData.state);
       appendIfExists("isAdult", patientData.isAdult);
-      appendIfExists("contactPerson", patientData.contactPerson);
-      appendIfExists("fatherPhone", patientData.fatherPhone);
-      appendIfExists("motherPhone", patientData.motherPhone);
-      appendIfExists("relationToPatient", patientData.relationToPatient);
+      appendIfExists("contactPerson1Name", patientData.contactPerson1Name);
+      appendIfExists("contactPerson1PhonePrefix", patientData.contactPerson1PhonePrefix);
+      appendIfExists("contactPerson1Phone", patientData.contactPerson1Phone);
+      appendIfExists("contactPerson1Address", patientData.contactPerson1Address);
+      appendIfExists("contactPerson1Pesel", patientData.contactPerson1Pesel);
+      appendIfExists("contactPerson2Name", patientData.contactPerson2Name);
+      appendIfExists("contactPerson2PhonePrefix", patientData.contactPerson2PhonePrefix);
+      appendIfExists("contactPerson2Phone", patientData.contactPerson2Phone);
+      appendIfExists("contactPerson2Address", patientData.contactPerson2Address);
+      appendIfExists("contactPerson2Pesel", patientData.contactPerson2Pesel);
       appendIfExists("allergies", patientData.allergies);
-      appendIfExists("nationality", patientData.nationality);
       appendIfExists("preferredLanguage", patientData.preferredLanguage);
 
       // Append documents (multiple files)
@@ -149,12 +154,17 @@ const patientService = {
     if (patientData.treatmentCategory !== undefined) formData.append("treatmentCategory", patientData.treatmentCategory);
     if (patientData.appointmentSpecificDocument !== undefined) formData.append("appointmentSpecificDocument", patientData.appointmentSpecificDocument);
     if (patientData.isAdult !== undefined) formData.append("isAdult", patientData.isAdult==="TAK");
-    if (patientData.contactPerson !== undefined) formData.append("contactPerson", patientData.contactPerson);
-    if (patientData.fatherPhone !== undefined) formData.append("fatherPhone", patientData.fatherPhone);
-    if (patientData.motherPhone !== undefined) formData.append("motherPhone", patientData.motherPhone);
-    if (patientData.relationToPatient !== undefined) formData.append("relationToPatient", patientData.relationToPatient);
+    if (patientData.contactPerson1Name !== undefined) formData.append("contactPerson1Name", patientData.contactPerson1Name);
+    if (patientData.contactPerson1PhonePrefix !== undefined) formData.append("contactPerson1PhonePrefix", patientData.contactPerson1PhonePrefix);
+    if (patientData.contactPerson1Phone !== undefined) formData.append("contactPerson1Phone", patientData.contactPerson1Phone);
+    if (patientData.contactPerson1Address !== undefined) formData.append("contactPerson1Address", patientData.contactPerson1Address);
+    if (patientData.contactPerson1Pesel !== undefined) formData.append("contactPerson1Pesel", patientData.contactPerson1Pesel);
+    if (patientData.contactPerson2Name !== undefined) formData.append("contactPerson2Name", patientData.contactPerson2Name);
+    if (patientData.contactPerson2PhonePrefix !== undefined) formData.append("contactPerson2PhonePrefix", patientData.contactPerson2PhonePrefix);
+    if (patientData.contactPerson2Phone !== undefined) formData.append("contactPerson2Phone", patientData.contactPerson2Phone);
+    if (patientData.contactPerson2Address !== undefined) formData.append("contactPerson2Address", patientData.contactPerson2Address);
+    if (patientData.contactPerson2Pesel !== undefined) formData.append("contactPerson2Pesel", patientData.contactPerson2Pesel);
     if (patientData.allergies !== undefined) formData.append("allergies", patientData.allergies);
-    if (patientData.nationality !== undefined) formData.append("nationality", patientData.nationality);
     if (patientData.preferredLanguage !== undefined) formData.append("preferredLanguage", patientData.preferredLanguage);
 
     // Add health metrics
