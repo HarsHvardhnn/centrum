@@ -50,6 +50,8 @@ const patientService = {
       appendIfExists("mainComplaint", patientData.mainComplaint);
       appendIfExists("maritalStatus", patientData.maritalStatus);
       appendIfExists("mobileNumber", patientData.mobileNumber);
+      appendIfExists("phoneCode", patientData.phoneCode);
+      appendIfExists("phone", patientData.phone);
       appendIfExists("motherName", patientData.motherName);
       appendIfExists("motherTongue", patientData.motherTongue);
       appendIfExists("occupation", patientData.occupation);
@@ -66,13 +68,15 @@ const patientService = {
       appendIfExists("state", patientData.state);
       appendIfExists("isAdult", patientData.isAdult);
       appendIfExists("contactPerson1Name", patientData.contactPerson1Name);
-      appendIfExists("contactPerson1PhonePrefix", patientData.contactPerson1PhonePrefix);
+      appendIfExists("contactPerson1PhoneCode", patientData.contactPerson1PhoneCode);
       appendIfExists("contactPerson1Phone", patientData.contactPerson1Phone);
+      appendIfExists("contactPerson1PhoneFull", patientData.contactPerson1PhoneCode + patientData.contactPerson1Phone);
       appendIfExists("contactPerson1Address", patientData.contactPerson1Address);
       appendIfExists("contactPerson1Pesel", patientData.contactPerson1Pesel);
       appendIfExists("contactPerson2Name", patientData.contactPerson2Name);
-      appendIfExists("contactPerson2PhonePrefix", patientData.contactPerson2PhonePrefix);
+      appendIfExists("contactPerson2PhoneCode", patientData.contactPerson2PhoneCode);
       appendIfExists("contactPerson2Phone", patientData.contactPerson2Phone);
+      appendIfExists("contactPerson2PhoneFull", patientData.contactPerson2PhoneCode + patientData.contactPerson2Phone);
       appendIfExists("contactPerson2Address", patientData.contactPerson2Address);
       appendIfExists("contactPerson2Pesel", patientData.contactPerson2Pesel);
       appendIfExists("allergies", patientData.allergies);
@@ -137,6 +141,8 @@ const patientService = {
     if (patientData.mainComplaint !== undefined) formData.append("mainComplaint", patientData.mainComplaint);
     if (patientData.maritalStatus !== undefined) formData.append("maritalStatus", patientData.maritalStatus);
     if (patientData.mobileNumber !== undefined) formData.append("mobileNumber", patientData.mobileNumber);
+    if (patientData.phoneCode !== undefined) formData.append("phoneCode", patientData.phoneCode);
+    if (patientData.phone !== undefined) formData.append("phone", patientData.phone);
     if (patientData.motherName !== undefined) formData.append("motherName", patientData.motherName);
     if (patientData.motherTongue !== undefined) formData.append("motherTongue", patientData.motherTongue);
     if (patientData.occupation !== undefined) formData.append("occupation", patientData.occupation);
@@ -155,13 +161,19 @@ const patientService = {
     if (patientData.appointmentSpecificDocument !== undefined) formData.append("appointmentSpecificDocument", patientData.appointmentSpecificDocument);
     if (patientData.isAdult !== undefined) formData.append("isAdult", patientData.isAdult==="TAK");
     if (patientData.contactPerson1Name !== undefined) formData.append("contactPerson1Name", patientData.contactPerson1Name);
-    if (patientData.contactPerson1PhonePrefix !== undefined) formData.append("contactPerson1PhonePrefix", patientData.contactPerson1PhonePrefix);
+    if (patientData.contactPerson1PhoneCode !== undefined) formData.append("contactPerson1PhoneCode", patientData.contactPerson1PhoneCode);
     if (patientData.contactPerson1Phone !== undefined) formData.append("contactPerson1Phone", patientData.contactPerson1Phone);
+    if (patientData.contactPerson1PhoneCode !== undefined && patientData.contactPerson1Phone !== undefined) {
+      formData.append("contactPerson1PhoneFull", patientData.contactPerson1PhoneCode + patientData.contactPerson1Phone);
+    }
     if (patientData.contactPerson1Address !== undefined) formData.append("contactPerson1Address", patientData.contactPerson1Address);
     if (patientData.contactPerson1Pesel !== undefined) formData.append("contactPerson1Pesel", patientData.contactPerson1Pesel);
     if (patientData.contactPerson2Name !== undefined) formData.append("contactPerson2Name", patientData.contactPerson2Name);
-    if (patientData.contactPerson2PhonePrefix !== undefined) formData.append("contactPerson2PhonePrefix", patientData.contactPerson2PhonePrefix);
+    if (patientData.contactPerson2PhoneCode !== undefined) formData.append("contactPerson2PhoneCode", patientData.contactPerson2PhoneCode);
     if (patientData.contactPerson2Phone !== undefined) formData.append("contactPerson2Phone", patientData.contactPerson2Phone);
+    if (patientData.contactPerson2PhoneCode !== undefined && patientData.contactPerson2Phone !== undefined) {
+      formData.append("contactPerson2PhoneFull", patientData.contactPerson2PhoneCode + patientData.contactPerson2Phone);
+    }
     if (patientData.contactPerson2Address !== undefined) formData.append("contactPerson2Address", patientData.contactPerson2Address);
     if (patientData.contactPerson2Pesel !== undefined) formData.append("contactPerson2Pesel", patientData.contactPerson2Pesel);
     if (patientData.allergies !== undefined) formData.append("allergies", patientData.allergies);

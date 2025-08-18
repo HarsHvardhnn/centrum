@@ -53,8 +53,8 @@ function AppointmentPage() {
         
         toast.success(successMessage);
 
-        // Navigate to the doctors page
-        navigate("/doctors");
+        // Navigate to the patients page where doctor can generate invoice
+        navigate("/clinic");
       } else {
         // Handle error from API that returns success: false
         toast.error(response?.message || "Nie udało się zarezerwować wizyty");
@@ -89,7 +89,7 @@ function AppointmentPage() {
   };
 
   const handleClose = () => {
-    navigate("/doctors");
+    navigate("/clinic");
   };
 
   return (

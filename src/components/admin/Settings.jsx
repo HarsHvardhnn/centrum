@@ -26,6 +26,19 @@ export default function UserManagement() {
     deleted: "Usunięty"
   };
 
+  // Phone country codes with validation
+  const phoneCountryCodes = [
+    { code: "+48", country: "Polska", flag: "🇵🇱", maxLength: 9, default: true },
+    { code: "+49", country: "Germany", flag: "🇩🇪", maxLength: 11 },
+    { code: "+44", country: "United Kingdom", flag: "🇬🇧", maxLength: 10 },
+    { code: "+34", country: "Spain", flag: "🇪🇸", maxLength: 9 },
+    { code: "+33", country: "France", flag: "🇫🇷", maxLength: 9 },
+    { code: "+43", country: "Austria", flag: "🇦🇹", maxLength: 10 },
+    { code: "+39", country: "Italy", flag: "🇮🇹", maxLength: 10 },
+    { code: "+420", country: "Czech Republic", flag: "🇨🇿", maxLength: 9 },
+    { code: "+1", country: "USA", flag: "🇺🇸", maxLength: 10 }
+  ];
+
   const [users, setUsers] = useState([]);
   const { user } = useUser();
   const { showLoader, hideLoader } = useLoader();
@@ -38,6 +51,8 @@ export default function UserManagement() {
   const [sortOrder, setSortOrder] = useState("desc");
   const [showSpecsModal,setShowSpecsModal]=useState(false)
   const [patientFormData, setPatientFormData] = useState({});
+  const [selectedPhoneCode, setSelectedPhoneCode] = useState("+48");
+  const [phoneValidationError, setPhoneValidationError] = useState("");
 
   // Add User dropdowns and modals
   const [showAddDropdown, setShowAddDropdown] = useState(false);
@@ -80,6 +95,49 @@ export default function UserManagement() {
 
   // Add this function to check if user is admin
   const isAdmin = user?.role === 'admin';
+
+  // Phone validation function
+  const validatePhoneNumber = (phoneNumber, countryCode) => {
+    if (!phoneNumber) return "";
+    
+    const country = phoneCountryCodes.find(c => c.code === countryCode);
+    if (!country) return "Nieprawidłowy kod kraju";
+    
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    if (cleanPhone.length !== country.maxLength) {
+      return `Numer telefonu dla ${country.country} musi mieć ${country.maxLength} cyfr`;
+    }
+    
+    return "";
+  };
+
+  // Handle phone code change
+  const handlePhoneCodeChange = (newCode) => {
+    setSelectedPhoneCode(newCode);
+    setPhoneValidationError("");
+    
+    // Update the form data with new phone code
+    setPatientFormData(prev => ({
+      ...prev,
+      phoneCode: newCode
+    }));
+  };
+
+  // Handle phone number input change with validation
+  const handlePhoneNumberChange = (phoneNumber) => {
+    // Remove any non-digit characters
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    
+    // Update form data
+    setPatientFormData(prev => ({
+      ...prev,
+      mobileNumber: cleanPhone
+    }));
+    
+    // Validate phone number
+    const validationError = validatePhoneNumber(cleanPhone, selectedPhoneCode);
+    setPhoneValidationError(validationError);
+  };
 
   const fetchUsers = async () => {
     try {
@@ -336,12 +394,12 @@ export default function UserManagement() {
 
         // Details
         contactPerson1Name: patientDetails.contactPerson1Name,
-        contactPerson1PhonePrefix: patientDetails.contactPerson1PhonePrefix || "+48",
+        contactPerson1PhoneCode: patientDetails.contactPerson1PhoneCode || "+48",
         contactPerson1Phone: patientDetails.contactPerson1Phone,
         contactPerson1Address: patientDetails.contactPerson1Address,
         contactPerson1Pesel: patientDetails.contactPerson1Pesel,
         contactPerson2Name: patientDetails.contactPerson2Name,
-        contactPerson2PhonePrefix: patientDetails.contactPerson2PhonePrefix || "+48",
+        contactPerson2PhoneCode: patientDetails.contactPerson2PhoneCode || "+48",
         contactPerson2Phone: patientDetails.contactPerson2Phone,
         contactPerson2Address: patientDetails.contactPerson2Address,
         contactPerson2Pesel: patientDetails.contactPerson2Pesel,
@@ -351,6 +409,29 @@ export default function UserManagement() {
         // Notes
         reviewNotes: patientDetails.reviewNotes,
       };
+
+      // Extract phone code from existing phone number if it exists
+      if (patientDetails.phone) {
+        const phoneWithCode = patientDetails.phone;
+        const foundCountry = phoneCountryCodes.find(country => 
+          phoneWithCode.startsWith(country.code)
+        );
+        
+        if (foundCountry) {
+          mappedFormData.phoneCode = foundCountry.code;
+          mappedFormData.mobileNumber = phoneWithCode.replace(foundCountry.code, '');
+          setSelectedPhoneCode(foundCountry.code);
+        } else {
+          // Default to Poland if no code found
+          mappedFormData.phoneCode = "+48";
+          mappedFormData.mobileNumber = phoneWithCode;
+          setSelectedPhoneCode("+48");
+        }
+      } else {
+        mappedFormData.phoneCode = "+48";
+        mappedFormData.mobileNumber = "";
+        setSelectedPhoneCode("+48");
+      }
       //(mappedFormData, "mapped form data")
       setPatientFormData(mappedFormData);
       setCurrentPatientId(userId);
@@ -368,13 +449,23 @@ export default function UserManagement() {
   const handleAddPatient = async (formData) => {
     try {
       showLoader();
+      
+      // Prepare the data with combined phone number and separate phone code
+      const patientData = {
+        ...formData,
+        phoneCode: selectedPhoneCode, // Send separate phone code
+        mobileNumber: formData.mobileNumber, // Send clean mobile number
+        // Also combine them for backward compatibility
+        phone: selectedPhoneCode + (formData.mobileNumber || "")
+      };
+      
       let response;
       
       if (isEditMode && currentPatientId) {
-        response = await patientService.updatePatient(currentPatientId, formData);
+        response = await patientService.updatePatient(currentPatientId, patientData);
         setSuccess("Pacjent zaktualizowany pomyślnie");
       } else {
-        response = await patientService.createPatient(formData);
+        response = await patientService.createPatient(patientData);
         setSuccess("Pacjent dodany pomyślnie");
       }
       
@@ -384,6 +475,8 @@ export default function UserManagement() {
       setIsEditMode(false);
       setCurrentPatientId(null);
       setPatientFormData({});
+      setSelectedPhoneCode("+48");
+      setPhoneValidationError("");
 
       setTimeout(() => {
         setSuccess("");
@@ -999,6 +1092,11 @@ export default function UserManagement() {
                   currentPatientId={currentPatientId}
                   handleAddPatient={handleAddPatient}
                   patientFormData={patientFormData}
+                  selectedPhoneCode={selectedPhoneCode}
+                  onPhoneCodeChange={handlePhoneCodeChange}
+                  onPhoneNumberChange={handlePhoneNumberChange}
+                  phoneValidationError={phoneValidationError}
+                  phoneCountryCodes={phoneCountryCodes}
                 />
               </FormProvider>
             </div>
@@ -1062,7 +1160,12 @@ function PatientStepFormWrapper({
   subStepTitles,
   isEditMode,
   handleAddPatient,
-  patientFormData
+  patientFormData,
+  selectedPhoneCode,
+  onPhoneCodeChange,
+  onPhoneNumberChange,
+  phoneValidationError,
+  phoneCountryCodes
 }) {
   const [completedSteps, setCompletedSteps] = useState([]);
   const { formData, updateFormData } = useFormContext();
@@ -1106,6 +1209,11 @@ function PatientStepFormWrapper({
       isEditMode={isEditMode}
       currentPatientId={currentPatientId}
       completedSteps={completedSteps}
+      selectedPhoneCode={selectedPhoneCode}
+      onPhoneCodeChange={onPhoneCodeChange}
+      onPhoneNumberChange={onPhoneNumberChange}
+      phoneValidationError={phoneValidationError}
+      phoneCountryCodes={phoneCountryCodes}
     />
   );
 }

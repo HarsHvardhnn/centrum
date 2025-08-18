@@ -9,6 +9,7 @@ export const FormProvider = ({ children, initialData }) => {
     fullName: "",
     email: "",
     mobileNumber: "",
+    phoneCode: "+48",
     dateOfBirth: "",
     motherTongue: "",
     govtId: "",
@@ -45,12 +46,12 @@ export const FormProvider = ({ children, initialData }) => {
 
     // Details
     contactPerson1Name: "",
-    contactPerson1PhonePrefix: "+48",
+    contactPerson1PhoneCode: "+48",
     contactPerson1Phone: "",
     contactPerson1Address: "",
     contactPerson1Pesel: "",
     contactPerson2Name: "",
-    contactPerson2PhonePrefix: "+48",
+    contactPerson2PhoneCode: "+48",
     contactPerson2Phone: "",
     contactPerson2Address: "",
     contactPerson2Pesel: "",

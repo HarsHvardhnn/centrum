@@ -180,6 +180,9 @@ function DoctorsPage() {
 
         // Close modal
         setShowAppointmentModal(false);
+        
+        // Navigate to the patients page where doctor can generate invoice
+        navigate("/clinic");
       } else {
         // Handle error from API that returns success: false
         toast.error("Wystąpił błąd");

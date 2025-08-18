@@ -7,13 +7,62 @@ const DemographicsForm = () => {
   const [touched, setTouched] = useState({
     fullName: false,
     govtId: false,
-    sex: false
+    sex: false,
+    mobileNumber: false
   });
   const [errors, setErrors] = useState({
     fullName: "",
     govtId: "",
-    sex: ""
+    sex: "",
+    mobileNumber: ""
   });
+
+  // Phone country codes with validation
+  const phoneCountryCodes = [
+    { code: "+48", country: "Polska", flag: "🇵🇱", maxLength: 9, default: true },
+    { code: "+49", country: "Germany", flag: "🇩🇪", maxLength: 11 },
+    { code: "+44", country: "United Kingdom", flag: "🇬🇧", maxLength: 10 },
+    { code: "+34", country: "Spain", flag: "🇪🇸", maxLength: 9 },
+    { code: "+33", country: "France", flag: "🇫🇷", maxLength: 9 },
+    { code: "+43", country: "Austria", flag: "🇦🇹", maxLength: 10 },
+    { code: "+39", country: "Italy", flag: "🇮🇹", maxLength: 10 },
+    { code: "+420", country: "Czech Republic", flag: "🇨🇿", maxLength: 9 },
+    { code: "+1", country: "USA", flag: "🇺🇸", maxLength: 10 }
+  ];
+
+  // Get current phone code from form data or default to +48
+  const currentPhoneCode = formData.phoneCode || "+48";
+  const currentCountry = phoneCountryCodes.find(c => c.code === currentPhoneCode) || phoneCountryCodes[0];
+
+  // Handle phone code change
+  const handlePhoneCodeChange = (newCode) => {
+    updateFormData("phoneCode", newCode);
+    
+    // Update the placeholder based on new country
+    const newCountry = phoneCountryCodes.find(c => c.code === newCode);
+    if (newCountry) {
+      // Clear any existing phone number if it doesn't match the new country's length
+      const currentPhone = formData.mobileNumber || "";
+      if (currentPhone && currentPhone.length !== newCountry.maxLength) {
+        updateFormData("mobileNumber", "");
+      }
+    }
+  };
+
+  // Phone validation function
+  const validatePhoneNumber = (phoneNumber, countryCode) => {
+    if (!phoneNumber) return "";
+    
+    const country = phoneCountryCodes.find(c => c.code === countryCode);
+    if (!country) return "Nieprawidłowy kod kraju";
+    
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    if (cleanPhone.length !== country.maxLength) {
+      return `Numer telefonu dla ${country.country} musi mieć ${country.maxLength} cyfr`;
+    }
+    
+    return "";
+  };
 
   // Full name validation function
   const validateFullName = (name) => {
@@ -69,8 +118,17 @@ const DemographicsForm = () => {
         sex: validateSex(value)
       }));
     } else if (name === "mobileNumber") {
-      const numbersOnly = value.replace(/\D/g, "").slice(0, 9);
+      const numbersOnly = value.replace(/\D/g, "").slice(0, currentCountry.maxLength);
       updateFormData(name, numbersOnly);
+      
+      // Validate phone number
+      if (touched.mobileNumber) {
+        const phoneError = validatePhoneNumber(numbersOnly, currentPhoneCode);
+        setErrors(prev => ({
+          ...prev,
+          mobileNumber: phoneError
+        }));
+      }
     } else if (name === "email") {
       updateFormData(name, value);
     } else if (name === "dateOfBirth") {
@@ -137,14 +195,37 @@ const DemographicsForm = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Numer Telefonu
           </label>
-          <input
-            type="tel"
-            name="mobileNumber"
-            value={formData.mobileNumber || ""}
-            onChange={handleChange}
-            placeholder="Wprowadź 9 cyfr"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
+          <div className="flex">
+            {/* Country Code Dropdown */}
+            <select
+              value={currentPhoneCode}
+              onChange={(e) => handlePhoneCodeChange(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-l-md border-r-0 bg-gray-50 text-sm"
+            >
+              {phoneCountryCodes.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.flag} {country.code}
+                </option>
+              ))}
+            </select>
+            
+            {/* Phone Number Input */}
+            <input
+              type="tel"
+              name="mobileNumber"
+              value={formData.mobileNumber || ""}
+              onChange={handleChange}
+              onBlur={() => setTouched(prev => ({ ...prev, mobileNumber: true }))}
+              placeholder={`Wprowadź ${currentCountry.maxLength} cyfr`}
+              className={`flex-1 px-3 py-2 border ${touched.mobileNumber && errors.mobileNumber ? 'border-red-500' : 'border-gray-300'} rounded-r-md`}
+            />
+          </div>
+          {touched.mobileNumber && errors.mobileNumber && (
+            <p className="mt-1 text-sm text-red-500">{errors.mobileNumber}</p>
+          )}
+          <p className="mt-1 text-xs text-gray-500">
+            {currentCountry.country} - {currentCountry.maxLength} cyfr
+          </p>
         </div>
 
         <div>
