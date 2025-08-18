@@ -27,32 +27,61 @@ function AppointmentPage() {
 
   // Function to handle appointment form submission
   const handleAppointmentComplete = async (data) => {
-    //("Appointment data submitted:", data);
+    console.log("Appointment data submitted:", data);
     setAppointmentData(data);
 
     try {
       // Show loading indicator
       showLoader();
-      // Call the appointment service to create the appointment
-      const response = await appointmentHelper.createAppointment(data);
+      
+      // Use the new reception appointment API for enhanced capabilities
+      const response = await appointmentHelper.createReceptionAppointment(data);
 
-      if (response) {
-        // Show success notification
-        toast.success("Wizyta została zarezerwowana pomyślnie!");
+      if (response && response.success) {
+        // Show success notification with override information if applicable
+        let successMessage = "Wizyta została zarezerwowana pomyślnie!";
+        
+        if (data.metadata?.overrideInfo) {
+          const override = data.metadata.overrideInfo;
+          if (override.customDuration || override.isBackdated || override.overrideConflicts) {
+            successMessage += "\n\nUżyto opcji nadpisania:";
+            if (override.customDuration) successMessage += `\n• Czas trwania: ${override.customDuration}`;
+            if (override.isBackdated) successMessage += "\n• Data wsteczna";
+            if (override.overrideConflicts) successMessage += "\n• Nadpisano konflikty czasowe";
+          }
+        }
+        
+        toast.success(successMessage);
 
         // Navigate to the doctors page
         navigate("/doctors");
       } else {
         // Handle error from API that returns success: false
-        toast.error(response.message || "Nie udało się zarezerwować wizyty");
+        toast.error(response?.message || "Nie udało się zarezerwować wizyty");
       }
     } catch (error) {
       // Handle exception from the API call
       console.error("Error creating appointment:", error);
-      toast.error(
-        error.response?.data?.message ||
-          "Wystąpił błąd podczas rezerwacji wizyty"
-      );
+      
+      // Enhanced error handling for override-specific errors
+      let errorMessage = "Wystąpił błąd podczas rezerwacji wizyty";
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
+      // Check for specific override validation errors
+      if (error.response?.data?.conflict) {
+        errorMessage += "\n\nAby nadpisać konflikt czasowy, zaznacz opcję 'Nadpisz konflikty czasowe'";
+      }
+      
+      if (error.response?.data?.pastDate) {
+        errorMessage += "\n\nAby umówić wizytę w przeszłości, zaznacz opcję 'Pozwól na daty z przeszłości'";
+      }
+      
+      toast.error(errorMessage);
     } finally {
       // Hide loading indicator
       hideLoader();
