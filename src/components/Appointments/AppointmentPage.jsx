@@ -94,12 +94,21 @@ function AppointmentPage() {
 
   return (
     <div className="container mx-auto p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-teal-700 mb-2">Dodaj Nową Wizytę</h1>
+        <p className="text-gray-600">
+          Nowy proces: Najpierw wybierz specjalizację, lekarza i termin, a następnie wprowadź dane pacjenta.
+        </p>
+      </div>
+      
       <AppointmentFormModal
         onClose={handleClose}
         onComplete={handleAppointmentComplete}
         doctorId={null} // No doctorId means user can select any doctor
         availableServices={availableServices}
         isLoadingServices={isLoadingServices}
+        isReceptionistMode={true} // Enable receptionist workflow
+        workflowOrder="appointmentFirst" // New workflow order
       />
     </div>
   );

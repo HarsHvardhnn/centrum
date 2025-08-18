@@ -7,7 +7,15 @@ import { useServices } from "../../../context/serviceContext.jsx";
 import { toast } from "sonner";
 import { apiCaller } from "../../../utils/axiosInstance";
 
-function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices = [], isLoadingServices = false }) {
+function AppointmentFormModal({ 
+  onClose, 
+  onComplete, 
+  doctorId, 
+  availableServices = [], 
+  isLoadingServices = false,
+  isReceptionistMode = false,
+  workflowOrder = "patientFirst" // "patientFirst" or "appointmentFirst"
+}) {
   const { services: contextServices, loading: contextLoading } = useServices();
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [doctorServices, setDoctorServices] = useState([]);
@@ -315,9 +323,11 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
   };
 
   // Filter services based on search term
-  const filteredServices = searchTerm 
-    ? allServices.filter(service => 
-        service.title.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredServices = searchTerm
+    ? allServices.filter(service =>
+        service.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        service.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
     : allServices;
 
   // Modify the useEffect for initial doctor selection
@@ -336,669 +346,751 @@ function AppointmentFormModal({ onClose, onComplete, doctorId, availableServices
     appointmentData.newPatientSex.trim() !== "";
 
   const canProceedToNextStep = () => {
-    switch (currentStep) {
-      case 1: // Patient Information
-        return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
-      case 2: // Doctor Selection & Date
-        return appointmentData.selectedDoctor && 
-               appointmentData.selectedDate && 
-               appointmentData.customStartTime && 
-               appointmentData.customStartTime.trim() !== "";
-      case 3: // Services
-        return true; // Services are optional
-      case 4: // Additional Details
-        return true; // Additional details are optional
-      case 5: // Receptionist Overrides
-        return true; // Override options are optional
-      default:
-        return false;
+    if (workflowOrder === "appointmentFirst") {
+      // New workflow: Appointment first, then patient
+      switch (currentStep) {
+        case 1: // Doctor Selection & Date
+          return appointmentData.selectedDoctor && 
+                 appointmentData.selectedDate && 
+                 appointmentData.customStartTime && 
+                 appointmentData.customStartTime.trim() !== "";
+        case 2: // Patient Information
+          return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
+        case 3: // Services
+          return true; // Services are optional
+        case 4: // Additional Details
+          return true; // Additional details are optional
+        case 5: // Receptionist Overrides
+          return true; // Override options are optional
+        default:
+          return false;
+      }
+    } else {
+      // Original workflow: Patient first, then appointment
+      switch (currentStep) {
+        case 1: // Patient Information
+          return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
+        case 2: // Doctor Selection & Date
+          return appointmentData.selectedDoctor && 
+                 appointmentData.selectedDate && 
+                 appointmentData.customStartTime && 
+                 appointmentData.customStartTime.trim() !== "";
+        case 3: // Services
+          return true; // Services are optional
+        case 4: // Additional Details
+          return true; // Additional details are optional
+        case 5: // Receptionist Overrides
+          return true; // Override options are optional
+        default:
+          return false;
+      }
     }
   };
 
-  const StepIndicator = () => (
-    <div className="flex items-center justify-center mb-6">
-      {[1, 2, 3, 4, 5].map((step) => (
-        <div key={step} className="flex items-center">
-          <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              currentStep === step
-                ? "bg-teal-500 text-white"
-                : currentStep > step
-                ? "bg-teal-200 text-teal-700"
-                : "bg-gray-200 text-gray-500"
-            }`}
-          >
-            {step}
-          </div>
-          {step < 5 && (
+  const StepIndicator = () => {
+    const getStepTitle = (step) => {
+      if (workflowOrder === "appointmentFirst") {
+        // New workflow: Appointment first, then patient
+        switch (step) {
+          case 1: return "Lekarz i Termin";
+          case 2: return "Dane Pacjenta";
+          case 3: return "Usługi";
+          case 4: return "Szczegóły";
+          case 5: return "Opcje Recepcjonisty";
+          default: return step;
+        }
+      } else {
+        // Original workflow: Patient first, then appointment
+        switch (step) {
+          case 1: return "Dane Pacjenta";
+          case 2: return "Lekarz i Termin";
+          case 3: return "Usługi";
+          case 4: return "Szczegóły";
+          case 5: return "Opcje Recepcjonisty";
+          default: return step;
+        }
+      }
+    };
+
+    return (
+      <div className="flex items-center justify-center mb-6">
+        {[1, 2, 3, 4, 5].map((step) => (
+          <div key={step} className="flex items-center">
             <div
-              className={`w-12 h-1 mx-2 ${
-                currentStep > step ? "bg-teal-200" : "bg-gray-200"
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                currentStep === step
+                  ? "bg-teal-500 text-white"
+                  : currentStep > step
+                  ? "bg-teal-200 text-teal-700"
+                  : "bg-gray-200 text-gray-500"
               }`}
-            />
-          )}
-        </div>
-      ))}
-    </div>
-  );
+            >
+              {step}
+            </div>
+            {step < 5 && (
+              <div
+                className={`w-12 h-1 mx-2 ${
+                  currentStep > step ? "bg-teal-200" : "bg-gray-200"
+                }`}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium mb-4">Informacje o Pacjencie</h3>
-            
-            {/* Visit Type Selection */}
-            <div className="bg-teal-50 p-4 rounded-lg">
+    if (workflowOrder === "appointmentFirst") {
+      // New workflow: Appointment first, then patient
+      switch (currentStep) {
+        case 1:
+          return renderDoctorSelectionStep();
+        case 2:
+          return renderPatientInfoStep();
+        case 3:
+          return renderServicesStep();
+        case 4:
+          return renderAdditionalDetailsStep();
+        case 5:
+          return renderReceptionistOverridesStep();
+        default:
+          return null;
+      }
+    } else {
+      // Original workflow: Patient first, then appointment
+      switch (currentStep) {
+        case 1:
+          return renderPatientInfoStep();
+        case 2:
+          return renderDoctorSelectionStep();
+        case 3:
+          return renderServicesStep();
+        case 4:
+          return renderAdditionalDetailsStep();
+        case 5:
+          return renderReceptionistOverridesStep();
+        default:
+          return null;
+      }
+    }
+  };
+
+  const renderDoctorSelectionStep = () => {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium mb-4">Wybór Lekarza i Terminu</h3>
+        
+        {/* Doctor Selection */}
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Wybierz lekarza
+          </label>
+          <DoctorSelectionWithSlots
+            selectedDoctor={appointmentData.selectedDoctor}
+            selectedDate={appointmentData.selectedDate}
+            onDoctorSelect={handleDoctorSelect}
+            onDateChange={handleDateChange}
+            initialDoctorId={doctorId}
+          />
+        </div>
+
+        {/* Date Selection */}
+        {appointmentData.selectedDoctor && (
+          <div className="bg-teal-50 p-4 rounded-lg">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Wybierz datę wizyty
+            </label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="date"
+                name="selectedDate"
+                value={appointmentData.selectedDate}
+                onChange={handleDateChange}
+                className="w-full md:w-1/2 p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
+                min={appointmentData.isBackdated ? undefined : new Date().toISOString().split('T')[0]}
+              />
+              {appointmentData.isBackdated && (
+                <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                  Data w przeszłości dozwolona
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Custom Time Slot Input - Receptionist Override */}
+        {appointmentData.selectedDoctor && appointmentData.selectedDate && (
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h4 className="text-md font-medium text-blue-800 mb-3">Ustaw Termin Wizyty</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Czas rozpoczęcia*
+                </label>
+                <input
+                  type="time"
+                  name="customStartTime"
+                  value={appointmentData.customStartTime || ""}
+                  onChange={handleCustomTimeChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Czas zakończenia (opcjonalny)
+                </label>
+                <input
+                  type="time"
+                  name="customEndTime"
+                  value={appointmentData.customEndTime || ""}
+                  onChange={handleCustomTimeChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-blue-600 mt-2">
+              Ustaw dowolny termin - możesz nadpisać istniejące wizyty lub umówić w niestandardowym czasie
+            </p>
+            {appointmentData.customStartTime && appointmentData.customEndTime && validateForm().customTime && (
+              <p className="text-red-500 text-xs mt-2">
+                {validateForm().customTime}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderPatientInfoStep = () => {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium mb-4">Informacje o Pacjencie</h3>
+        
+        {/* Visit Type Selection */}
+        <div className="bg-teal-50 p-4 rounded-lg">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Typ wizyty
+          </label>
+          <div className="flex gap-4">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="visitType"
+                value="first-time"
+                checked={appointmentData.visitType === "first-time"}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-teal-600"
+              />
+              <span className="ml-2">Pierwsza wizyta</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="visitType"
+                value="re-visit"
+                checked={appointmentData.visitType === "re-visit"}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-teal-600"
+              />
+              <span className="ml-2">Kolejna wizyta</span>
+            </label>
+          </div>
+        </div>
+
+        {appointmentData.visitType === "re-visit" && (
+          <PatientSearchField onPatientSelect={handlePatientSelect} />
+        )}
+
+        {appointmentData.visitType === "first-time" && (
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Imię*</label>
+                <input
+                  type="text"
+                  name="newPatientFirstName"
+                  value={appointmentData.newPatientFirstName}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Nazwisko*</label>
+                <input
+                  type="text"
+                  name="newPatientLastName"
+                  value={appointmentData.newPatientLastName}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Email</label>
+                <input
+                  type="email"
+                  name="newPatientEmail"
+                  value={appointmentData.newPatientEmail}
+                  onChange={handleInputChange}
+                  className={`w-full p-2 border rounded-lg ${validationErrors.email ? 'border-red-500' : ''}`}
+                  placeholder="Opcjonalny"
+                />
+                {validationErrors.email && (
+                  <p className="text-red-500 text-xs mt-1">{validationErrors.email}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Telefon</label>
+                <input
+                  type="tel"
+                  name="newPatientPhone"
+                  value={appointmentData.newPatientPhone}
+                  onChange={handleInputChange}
+                  className={`w-full p-2 border rounded-lg ${validationErrors.phone ? 'border-red-500' : ''}`}
+                  placeholder="Opcjonalny - 9 cyfr"
+                />
+                {validationErrors.phone && (
+                  <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Data urodzenia</label>
+                <input
+                  type="date"
+                  name="newPatientDateOfBirth"
+                  value={appointmentData.newPatientDateOfBirth}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="Opcjonalna"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">PESEL*</label>
+                <input
+                  type="text"
+                  name="newPatientPesel"
+                  value={appointmentData.newPatientPesel}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded-lg"
+                  required
+                  placeholder="Wprowadź PESEL"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Płeć*</label>
+                <select
+                  name="newPatientSex"
+                  value={appointmentData.newPatientSex}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded-lg"
+                >
+                  <option value="">Wybierz płeć</option>
+                  <option value="Male">Mężczyzna</option>
+                  <option value="Female">Kobieta</option>
+                  <option value="Others">Inna</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-teal-50 p-4 rounded-lg">
+          <div className="flex items-center mb-3">
+            <input
+              type="checkbox"
+              name="isInternational"
+              checked={appointmentData.isInternational}
+              onChange={handleInputChange}
+              className="h-4 w-4 text-teal-600"
+            />
+            <label className="ml-2 text-sm">Pacjent międzynarodowy</label>
+          </div>
+          <input
+            type="text"
+            name="patientSource"
+            placeholder="Źródło pacjenta"
+            value={appointmentData.patientSource}
+            onChange={handleInputChange}
+            className="w-full p-2 border rounded-lg"
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const renderServicesStep = () => {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium mb-4">Wybór Usług</h3>
+        
+        {/* Services Search */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search size={18} className="text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Szukaj usług..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+          />
+        </div>
+
+        {/* Available Services */}
+        <div className="bg-gray-50 rounded-lg p-3 max-h-60 overflow-y-auto">
+          <div className="space-y-2">
+            {loadingServices ? (
+              <div className="p-4 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
+                <p>Ładowanie usług...</p>
+              </div>
+            ) : filteredServices.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                Nie znaleziono usług
+              </div>
+            ) : (
+              filteredServices.map((service) => {
+                const isSelected = appointmentData.selectedServices.some(s => 
+                  s.id === (service.id || service._id));
+                const selectedService = appointmentData.selectedServices.find(s => 
+                  s.id === (service.id || service._id));
+                const quantity = selectedService ? (selectedService.quantity || 1) : 1;
+                
+                return (
+                  <div 
+                    key={service.id || service._id} 
+                    className={`p-3 rounded-lg border ${
+                      isSelected ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-teal-200'
+                    } transition-all`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div 
+                        className="flex-1 cursor-pointer"
+                        onClick={() => handleServiceToggle(service)}
+                      >
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}} // Handled by the div onClick
+                            className="h-4 w-4 text-teal-600 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 font-medium">{service.title || service.name}</span>
+                        </div>
+                        <div className="ml-6 mt-1 text-sm text-gray-600">{service.price} zł</div>
+                      </div>
+                      
+                      {isSelected && (
+                        <div className="flex items-center space-x-2">
+                          <button 
+                            onClick={() => updateServiceQuantity(service.id || service._id, quantity - 1)}
+                            className="h-6 w-6 flex items-center justify-center rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="text-sm font-medium w-6 text-center">{quantity}</span>
+                          <button 
+                            onClick={() => updateServiceQuantity(service.id || service._id, quantity + 1)}
+                            className="h-6 w-6 flex items-center justify-center rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Selected Services Summary */}
+        {appointmentData.selectedServices.length > 0 && (
+          <div className="bg-teal-50 rounded-lg p-4 border border-teal-100">
+            <h4 className="font-medium text-teal-800 mb-2 flex items-center">
+              <CheckCircle size={16} className="mr-2" />
+              Wybrane usługi
+            </h4>
+            <div className="space-y-2">
+              {appointmentData.selectedServices.map((service) => (
+                <div key={service.id} className="flex justify-between text-sm">
+                  <div>
+                    {service.title} 
+                    {(service.quantity && service.quantity > 1) && (
+                      <span className="text-gray-600 ml-1">x{service.quantity}</span>
+                    )}
+                  </div>
+                  <div className="font-medium">
+                    {((parseFloat(service.price) || 0) * (service.quantity || 1)).toFixed(2)} zł
+                  </div>
+                </div>
+              ))}
+              <div className="border-t border-teal-200 mt-2 pt-2 flex justify-between font-medium">
+                <div>Łącznie:</div>
+                <div>{calculateTotalPrice().toFixed(2)} zł</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Note about services */}
+        <div className="text-xs text-gray-500 italic px-1">
+          Wybrane usługi zostaną dodane bezpośrednio do wizyty. Możesz wybrać dowolną liczbę usług dostępnych w klinice, 
+          a następnie określić ilość dla każdej z nich. Całkowita cena zostanie automatycznie obliczona.
+        </div>
+      </div>
+    );
+  };
+
+  const renderAdditionalDetailsStep = () => {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium mb-4">Dodatkowe Informacje</h3>
+        
+        {/* Walk-in and Attention Flags */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="isWalkin"
+              checked={appointmentData.isWalkin}
+              onChange={handleInputChange}
+              className="h-4 w-4 text-teal-600"
+            />
+            <span>Pacjent bez wcześniejszej rezerwacji</span>
+          </label>
+          
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              name="needsAttention"
+              checked={appointmentData.needsAttention}
+              onChange={handleInputChange}
+              className="h-4 w-4 text-teal-600"
+            />
+            <span>Wymaga szczególnej uwagi</span>
+          </label>
+        </div>
+
+        {/* Notes */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Notatki
+          </label>
+          <textarea
+            name="notes"
+            value={appointmentData.notes}
+            onChange={handleInputChange}
+            rows={3}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            placeholder="Dodatkowe informacje o wizycie..."
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const renderReceptionistOverridesStep = () => {
+    return (
+      <div className="space-y-6">
+        <h3 className="text-lg font-medium mb-4">Opcje Recepcjonisty</h3>
+        
+        {/* Custom Duration */}
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h4 className="text-md font-medium text-blue-800 mb-3">Czas Trwania Wizyty</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Czas trwania (minuty)
+              </label>
+              <input
+                type="number"
+                name="customDuration"
+                value={appointmentData.customDuration || ""}
+                onChange={handleInputChange}
+                min="1"
+                max="480"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="30"
+              />
+              <p className="text-xs text-gray-500 mt-1">1-480 minut (1-8 godzin)</p>
+              {appointmentData.customDuration && validateCustomDuration(appointmentData.customDuration) && (
+                <p className="text-red-500 text-xs mt-1">
+                  {validateCustomDuration(appointmentData.customDuration)}
+                </p>
+              )}
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Typ wizyty
               </label>
-              <div className="flex gap-4">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="visitType"
-                    value="first-time"
-                    checked={appointmentData.visitType === "first-time"}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-teal-600"
-                  />
-                  <span className="ml-2">Pierwsza wizyta</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="visitType"
-                    value="re-visit"
-                    checked={appointmentData.visitType === "re-visit"}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-teal-600"
-                  />
-                  <span className="ml-2">Kolejna wizyta</span>
-                </label>
-              </div>
-            </div>
-
-            {appointmentData.visitType === "re-visit" && (
-              <PatientSearchField onPatientSelect={handlePatientSelect} />
-            )}
-
-            {appointmentData.visitType === "first-time" && (
-              <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Imię*</label>
-                    <input
-                      type="text"
-                      name="newPatientFirstName"
-                      value={appointmentData.newPatientFirstName}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Nazwisko*</label>
-                    <input
-                      type="text"
-                      name="newPatientLastName"
-                      value={appointmentData.newPatientLastName}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Email</label>
-                    <input
-                      type="email"
-                      name="newPatientEmail"
-                      value={appointmentData.newPatientEmail}
-                      onChange={handleInputChange}
-                      className={`w-full p-2 border rounded-lg ${validationErrors.email ? 'border-red-500' : ''}`}
-                      placeholder="Opcjonalny"
-                    />
-                    {validationErrors.email && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.email}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Telefon</label>
-                    <input
-                      type="tel"
-                      name="newPatientPhone"
-                      value={appointmentData.newPatientPhone}
-                      onChange={handleInputChange}
-                      className={`w-full p-2 border rounded-lg ${validationErrors.phone ? 'border-red-500' : ''}`}
-                      placeholder="Opcjonalny - 9 cyfr"
-                    />
-                    {validationErrors.phone && (
-                      <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Data urodzenia</label>
-                    <input
-                      type="date"
-                      name="newPatientDateOfBirth"
-                      value={appointmentData.newPatientDateOfBirth}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg"
-                      placeholder="Opcjonalna"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">PESEL*</label>
-                    <input
-                      type="text"
-                      name="newPatientPesel"
-                      value={appointmentData.newPatientPesel}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg"
-                      required
-                      placeholder="Wprowadź PESEL"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Płeć*</label>
-                    <select
-                      name="newPatientSex"
-                      value={appointmentData.newPatientSex}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg"
-                    >
-                      <option value="">Wybierz płeć</option>
-                      <option value="Male">Mężczyzna</option>
-                      <option value="Female">Kobieta</option>
-                      <option value="Others">Inna</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="bg-teal-50 p-4 rounded-lg">
-              <div className="flex items-center mb-3">
-                <input
-                  type="checkbox"
-                  name="isInternational"
-                  checked={appointmentData.isInternational}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-teal-600"
-                />
-                <label className="ml-2 text-sm">Pacjent międzynarodowy</label>
-              </div>
-              <input
-                type="text"
-                name="patientSource"
-                placeholder="Źródło pacjenta"
-                value={appointmentData.patientSource}
+              <select
+                name="visitType"
+                value={appointmentData.visitType || ""}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded-lg"
-              />
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Wybierz typ wizyty</option>
+                <option value="consultation">Konsultacja</option>
+                <option value="emergency">Nagły przypadek</option>
+                <option value="followup">Wizyta kontrolna</option>
+                <option value="quick_check">Szybka kontrola</option>
+                <option value="extended_consultation">Rozszerzona konsultacja</option>
+              </select>
             </div>
           </div>
-        );
+        </div>
 
-      case 2:
-        return (
+        {/* Override Options */}
+        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+          <h4 className="text-md font-medium text-yellow-800 mb-3">Opcje Nadpisania</h4>
           <div className="space-y-4">
-            <h3 className="text-lg font-medium mb-4">Wybór Lekarza i Terminu</h3>
-            
-            {/* Doctor Selection */}
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Wybierz lekarza
-              </label>
-              <DoctorSelectionWithSlots
-                selectedDoctor={appointmentData.selectedDoctor}
-                selectedDate={appointmentData.selectedDate}
-                onDoctorSelect={handleDoctorSelect}
-                onDateChange={handleDateChange}
-                initialDoctorId={doctorId}
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="isBackdated"
+                checked={appointmentData.isBackdated}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-yellow-600"
               />
-            </div>
-
-            {/* Date Selection */}
-            {appointmentData.selectedDoctor && (
-              <div className="bg-teal-50 p-4 rounded-lg">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Wybierz datę wizyty
-                </label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="date"
-                    name="selectedDate"
-                    value={appointmentData.selectedDate}
-                    onChange={handleDateChange}
-                    className="w-full md:w-1/2 p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
-                    min={appointmentData.isBackdated ? undefined : new Date().toISOString().split('T')[0]}
-                  />
-                  {appointmentData.isBackdated && (
-                    <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
-                      Data w przeszłości dozwolona
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Custom Time Slot Input - Receptionist Override */}
-            {appointmentData.selectedDoctor && appointmentData.selectedDate && (
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 className="text-md font-medium text-blue-800 mb-3">Ustaw Termin Wizyty</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Czas rozpoczęcia*
-                    </label>
-                    <input
-                      type="time"
-                      name="customStartTime"
-                      value={appointmentData.customStartTime || ""}
-                      onChange={handleCustomTimeChange}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Czas zakończenia (opcjonalny)
-                    </label>
-                    <input
-                      type="time"
-                      name="customEndTime"
-                      value={appointmentData.customEndTime || ""}
-                      onChange={handleCustomTimeChange}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-blue-600 mt-2">
-                  Ustaw dowolny termin - możesz nadpisać istniejące wizyty lub umówić w niestandardowym czasie
+              <span className="text-sm font-medium">Pozwól na daty z przeszłości (dla celów ewidencyjnych)</span>
+            </label>
+            
+            {appointmentData.isBackdated && appointmentData.selectedDate && (
+              <div className="ml-6 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  <strong>Uwaga:</strong> Wybrana data ({appointmentData.selectedDate}) jest w przeszłości. 
+                  Ta opcja jest przydatna do rejestrowania wizyt, które już się odbyły.
                 </p>
-                {appointmentData.customStartTime && appointmentData.customEndTime && validateForm().customTime && (
-                  <p className="text-red-500 text-xs mt-2">
-                    {validateForm().customTime}
-                  </p>
-                )}
               </div>
             )}
-          </div>
-        );
-
-      case 3:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium mb-4">Wybór Usług</h3>
             
-            {/* Services Search */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search size={18} className="text-gray-400" />
-              </div>
+            <label className="flex items-center space-x-2">
               <input
-                type="text"
-                placeholder="Szukaj usług..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                type="checkbox"
+                name="overrideConflicts"
+                checked={appointmentData.overrideConflicts}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-yellow-600"
               />
-            </div>
-
-            {/* Available Services */}
-            <div className="bg-gray-50 rounded-lg p-3 max-h-60 overflow-y-auto">
-              <div className="space-y-2">
-                {loadingServices ? (
-                  <div className="p-4 text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
-                    <p>Ładowanie usług...</p>
-                  </div>
-                ) : filteredServices.length === 0 ? (
-                  <div className="p-4 text-center text-gray-500">
-                    Nie znaleziono usług
-                  </div>
-                ) : (
-                  filteredServices.map((service) => {
-                    const isSelected = appointmentData.selectedServices.some(s => 
-                      s.id === (service.id || service._id));
-                    const selectedService = appointmentData.selectedServices.find(s => 
-                      s.id === (service.id || service._id));
-                    const quantity = selectedService ? (selectedService.quantity || 1) : 1;
-                    
-                    return (
-                      <div 
-                        key={service.id || service._id} 
-                        className={`p-3 rounded-lg border ${
-                          isSelected ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-teal-200'
-                        } transition-all`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div 
-                            className="flex-1 cursor-pointer"
-                            onClick={() => handleServiceToggle(service)}
-                          >
-                            <div className="flex items-center">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => {}} // Handled by the div onClick
-                                className="h-4 w-4 text-teal-600 border-gray-300 rounded"
-                              />
-                              <span className="ml-2 font-medium">{service.title || service.name}</span>
-                            </div>
-                            <div className="ml-6 mt-1 text-sm text-gray-600">{service.price} zł</div>
-                          </div>
-                          
-                          {isSelected && (
-                            <div className="flex items-center space-x-2">
-                              <button 
-                                onClick={() => updateServiceQuantity(service.id || service._id, quantity - 1)}
-                                className="h-6 w-6 flex items-center justify-center rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
-                              >
-                                <Minus size={14} />
-                              </button>
-                              <span className="text-sm font-medium w-6 text-center">{quantity}</span>
-                              <button 
-                                onClick={() => updateServiceQuantity(service.id || service._id, quantity + 1)}
-                                className="h-6 w-6 flex items-center justify-center rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
-                              >
-                                <Plus size={14} />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
-            {/* Selected Services Summary */}
-            {appointmentData.selectedServices.length > 0 && (
-              <div className="bg-teal-50 rounded-lg p-4 border border-teal-100">
-                <h4 className="font-medium text-teal-800 mb-2 flex items-center">
-                  <CheckCircle size={16} className="mr-2" />
-                  Wybrane usługi
-                </h4>
-                <div className="space-y-2">
-                  {appointmentData.selectedServices.map((service) => (
-                    <div key={service.id} className="flex justify-between text-sm">
-                      <div>
-                        {service.title} 
-                        {(service.quantity && service.quantity > 1) && (
-                          <span className="text-gray-600 ml-1">x{service.quantity}</span>
-                        )}
-                      </div>
-                      <div className="font-medium">
-                        {((parseFloat(service.price) || 0) * (service.quantity || 1)).toFixed(2)} zł
-                      </div>
-                    </div>
-                  ))}
-                  <div className="border-t border-teal-200 mt-2 pt-2 flex justify-between font-medium">
-                    <div>Łącznie:</div>
-                    <div>{calculateTotalPrice().toFixed(2)} zł</div>
-                  </div>
-                </div>
+              <span className="text-sm font-medium">Nadpisz konflikty czasowe (wielu pacjentów jednocześnie)</span>
+            </label>
+            
+            {appointmentData.overrideConflicts && (
+              <div className="ml-6 p-3 bg-orange-100 border border-orange-300 rounded-lg">
+                <p className="text-sm text-orange-800">
+                  <strong>Uwaga:</strong> Ta opcja pozwoli na umówienie wizyty w czasie, gdy lekarz ma już inne wizyty. 
+                  Upewnij się, że lekarz może obsłużyć wielu pacjentów jednocześnie.
+                </p>
               </div>
             )}
+            
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                name="isEmergency"
+                checked={appointmentData.isEmergency}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-yellow-600"
+              />
+              <span className="text-sm font-medium">Wizyta nagła (priorytetowa)</span>
+            </label>
+          </div>
+        </div>
 
-            {/* Note about services */}
-            <div className="text-xs text-gray-500 italic px-1">
-              Wybrane usługi zostaną dodane bezpośrednio do wizyty. Możesz wybrać dowolną liczbę usług dostępnych w klinice, 
-              a następnie określić ilość dla każdej z nich. Całkowita cena zostanie automatycznie obliczona.
+        {/* Receptionist Notes */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h4 className="text-md font-medium text-gray-800 mb-3">Notatki Recepcjonisty</h4>
+          <textarea
+            name="receptionistNotes"
+            value={appointmentData.receptionistNotes}
+            onChange={handleInputChange}
+            rows={3}
+            className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+            placeholder="Dodatkowe informacje o nadpisaniu, powody, uwagi..."
+          />
+        </div>
+
+        {/* Active Overrides Summary */}
+        {(appointmentData.customDuration || appointmentData.isBackdated || appointmentData.overrideConflicts || appointmentData.isEmergency) && (
+          <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+            <h4 className="text-md font-medium text-purple-800 mb-3">Aktywne Opcje Nadpisania</h4>
+            <div className="space-y-2 text-sm">
+              {appointmentData.customDuration && (
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4 text-purple-600" />
+                  <span>Niestandardowy czas trwania: {appointmentData.customDuration} minut</span>
+                </div>
+              )}
+              {appointmentData.isBackdated && (
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4 text-purple-600" />
+                  <span>Pozwolono na daty z przeszłości</span>
+                </div>
+              )}
+              {appointmentData.overrideConflicts && (
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4 text-purple-600" />
+                  <span>Nadpisano konflikty czasowe</span>
+                </div>
+              )}
+              {appointmentData.isEmergency && (
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4 text-purple-600" />
+                  <span>Wizyta nagła (priorytetowa)</span>
+                </div>
+              )}
             </div>
           </div>
-        );
+        )}
 
-      case 4:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium mb-4">Dodatkowe Informacje</h3>
-            
-            {/* Walk-in and Attention Flags */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="isWalkin"
-                  checked={appointmentData.isWalkin}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-teal-600"
-                />
-                <span>Pacjent bez wcześniejszej rezerwacji</span>
-              </label>
-              
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="needsAttention"
-                  checked={appointmentData.needsAttention}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-teal-600"
-                />
-                <span>Wymaga szczególnej uwagi</span>
-              </label>
-            </div>
-
-            {/* Notes */}
+        {/* Current Appointment Summary */}
+        <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+          <h4 className="text-md font-medium text-teal-800 mb-3">Podsumowanie Wizyty</h4>
+          <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Notatki
-              </label>
-              <textarea
-                name="notes"
-                value={appointmentData.notes}
-                onChange={handleInputChange}
-                rows={3}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                placeholder="Dodatkowe informacje o wizycie..."
-              />
+              <span className="font-medium">Data:</span> {appointmentData.selectedDate}
             </div>
-          </div>
-        );
-      
-      case 5:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium mb-4">Opcje Recepcjonisty</h3>
-            
-            {/* Custom Duration */}
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h4 className="text-md font-medium text-blue-800 mb-3">Czas Trwania Wizyty</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Czas trwania (minuty)
-                  </label>
-                  <input
-                    type="number"
-                    name="customDuration"
-                    value={appointmentData.customDuration || ""}
-                    onChange={handleInputChange}
-                    min="1"
-                    max="480"
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="30"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">1-480 minut (1-8 godzin)</p>
-                  {appointmentData.customDuration && validateCustomDuration(appointmentData.customDuration) && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {validateCustomDuration(appointmentData.customDuration)}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Typ wizyty
-                  </label>
-                  <select
-                    name="visitType"
-                    value={appointmentData.visitType || ""}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Wybierz typ wizyty</option>
-                    <option value="consultation">Konsultacja</option>
-                    <option value="emergency">Nagły przypadek</option>
-                    <option value="followup">Wizyta kontrolna</option>
-                    <option value="quick_check">Szybka kontrola</option>
-                    <option value="extended_consultation">Rozszerzona konsultacja</option>
-                  </select>
-                </div>
-              </div>
+            <div>
+              <span className="font-medium">Czas:</span> {
+                appointmentData.customStartTime 
+                  ? `${appointmentData.customStartTime}${appointmentData.customEndTime ? ` - ${appointmentData.customEndTime}` : ''}`
+                  : "Nie wybrano"
+              }
             </div>
-
-            {/* Override Options */}
-            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-              <h4 className="text-md font-medium text-yellow-800 mb-3">Opcje Nadpisania</h4>
-              <div className="space-y-4">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name="isBackdated"
-                    checked={appointmentData.isBackdated}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-yellow-600"
-                  />
-                  <span className="text-sm font-medium">Pozwól na daty z przeszłości (dla celów ewidencyjnych)</span>
-                </label>
-                
-                {appointmentData.isBackdated && appointmentData.selectedDate && (
-                  <div className="ml-6 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
-                    <p className="text-sm text-yellow-800">
-                      <strong>Uwaga:</strong> Wybrana data ({appointmentData.selectedDate}) jest w przeszłości. 
-                      Ta opcja jest przydatna do rejestrowania wizyt, które już się odbyły.
-                    </p>
-                  </div>
-                )}
-                
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name="overrideConflicts"
-                    checked={appointmentData.overrideConflicts}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-yellow-600"
-                  />
-                  <span className="text-sm font-medium">Nadpisz konflikty czasowe (wielu pacjentów jednocześnie)</span>
-                </label>
-                
-                {appointmentData.overrideConflicts && (
-                  <div className="ml-6 p-3 bg-orange-100 border border-orange-300 rounded-lg">
-                    <p className="text-sm text-orange-800">
-                      <strong>Uwaga:</strong> Ta opcja pozwoli na umówienie wizyty w czasie, gdy lekarz ma już inne wizyty. 
-                      Upewnij się, że lekarz może obsłużyć wielu pacjentów jednocześnie.
-                    </p>
-                  </div>
-                )}
-                
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    name="isEmergency"
-                    checked={appointmentData.isEmergency}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-yellow-600"
-                  />
-                  <span className="text-sm font-medium">Wizyta nagła (priorytetowa)</span>
-                </label>
-              </div>
+            <div>
+              <span className="font-medium">Lekarz:</span> {appointmentData.selectedDoctor?.name || "Nie wybrano"}
             </div>
-
-            {/* Receptionist Notes */}
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h4 className="text-md font-medium text-gray-800 mb-3">Notatki Recepcjonisty</h4>
-              <textarea
-                name="receptionistNotes"
-                value={appointmentData.receptionistNotes}
-                onChange={handleInputChange}
-                rows={3}
-                className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-                placeholder="Dodatkowe informacje o nadpisaniu, powody, uwagi..."
-              />
+            <div>
+              <span className="font-medium">Czas trwania:</span> {appointmentData.customDuration || appointmentData.duration || 30} min
             </div>
-
-            {/* Active Overrides Summary */}
-            {(appointmentData.customDuration || appointmentData.isBackdated || appointmentData.overrideConflicts || appointmentData.isEmergency) && (
-              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                <h4 className="text-md font-medium text-purple-800 mb-3">Aktywne Opcje Nadpisania</h4>
-                <div className="space-y-2 text-sm">
-                  {appointmentData.customDuration && (
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                      <span>Niestandardowy czas trwania: {appointmentData.customDuration} minut</span>
-                    </div>
-                  )}
-                  {appointmentData.isBackdated && (
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                      <span>Pozwolono na daty z przeszłości</span>
-                    </div>
-                  )}
-                  {appointmentData.overrideConflicts && (
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                      <span>Nadpisano konflikty czasowe</span>
-                    </div>
-                  )}
-                  {appointmentData.isEmergency && (
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                      <span>Wizyta nagła (priorytetowa)</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Current Appointment Summary */}
-            <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
-              <h4 className="text-md font-medium text-teal-800 mb-3">Podsumowanie Wizyty</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            {(appointmentData.customDuration || appointmentData.customStartTime) && (
+              <>
                 <div>
-                  <span className="font-medium">Data:</span> {appointmentData.selectedDate}
-                </div>
-                <div>
-                  <span className="font-medium">Czas:</span> {
+                  <span className="font-medium">Czas zakończenia:</span> {
                     appointmentData.customStartTime 
-                      ? `${appointmentData.customStartTime}${appointmentData.customEndTime ? ` - ${appointmentData.customEndTime}` : ''}`
-                      : "Nie wybrano"
+                      ? calculateEndTime(appointmentData.customStartTime, appointmentData.customDuration || 30)
+                      : "Nie obliczono"
                   }
                 </div>
                 <div>
-                  <span className="font-medium">Lekarz:</span> {appointmentData.selectedDoctor?.name || "Nie wybrano"}
+                  <span className="font-medium">Typ:</span> {appointmentData.visitType || "Standardowa"}
                 </div>
-                <div>
-                  <span className="font-medium">Czas trwania:</span> {appointmentData.customDuration || appointmentData.duration || 30} min
-                </div>
-                {(appointmentData.customDuration || appointmentData.customStartTime) && (
-                  <>
-                    <div>
-                      <span className="font-medium">Czas zakończenia:</span> {
-                        appointmentData.customStartTime 
-                          ? calculateEndTime(appointmentData.customStartTime, appointmentData.customDuration || 30)
-                          : "Nie obliczono"
-                      }
-                    </div>
-                    <div>
-                      <span className="font-medium">Typ:</span> {appointmentData.visitType || "Standardowa"}
-                    </div>
-                  </>
-                )}
-                {appointmentData.customStartTime && (
-                  <div className="col-span-2">
-                    <span className="font-medium text-blue-600">✓ Użyto własnego terminu</span>
-                  </div>
-                )}
+              </>
+            )}
+            {appointmentData.customStartTime && (
+              <div className="col-span-2">
+                <span className="font-medium text-blue-600">✓ Użyto własnego terminu</span>
               </div>
-            </div>
+            )}
           </div>
-        );
-
-      default:
-        return null;
-    }
+        </div>
+      </div>
+    );
   };
 
   const handleSubmit = () => {
