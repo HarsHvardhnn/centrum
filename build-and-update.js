@@ -11,8 +11,9 @@ const branchName = process.argv[2];
 
 if (!branchName) {
   console.error('❌ Error: Branch name is required');
-  console.log('Usage: npm run build:update <branch-name>');
-  console.log('Example: npm run build:update main');
+  console.log('Usage: node build-and-update.js <branch-name>');
+  console.log('Example: node build-and-update.js main');
+  console.log('Or use: npm run build:update -- main');
   process.exit(1);
 }
 
