@@ -560,7 +560,7 @@ export default function Doctors({
       // Navigate to homepage or appointment confirmation page
       setSelectedDepartment(selectedDoctor.department);
       setSelectedDoctorId(selectedDoctor.id);
-      navigate("/user");
+      navigate("/");
     } catch (error) {
       console.error("Błąd podczas rezerwacji wizyty:", error);
 
