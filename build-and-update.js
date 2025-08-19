@@ -6,7 +6,17 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-console.log('🚀 Starting build process...');
+// Get branch name from command line arguments
+const branchName = process.argv[2];
+
+if (!branchName) {
+  console.error('❌ Error: Branch name is required');
+  console.log('Usage: npm run build:update <branch-name>');
+  console.log('Example: npm run build:update main');
+  process.exit(1);
+}
+
+console.log(`🚀 Starting build process for branch: ${branchName}`);
 
 try {
   // Step 1: Build the project
@@ -53,7 +63,25 @@ try {
   console.log('✅ Build and update completed successfully!');
   console.log(`📁 Updated server.js with assets: ${jsFile}, ${cssFile}`);
   
+  // Step 4: Git operations
+  console.log('🔧 Performing git operations...');
+  
+  // Add all changes
+  console.log('📝 Adding all changes...');
+  execSync('git add .', { stdio: 'inherit' });
+  
+  // Commit changes
+  console.log('💾 Committing changes...');
+  execSync('git commit -m "pushing build"', { stdio: 'inherit' });
+  
+  // Push to origin with branch name
+  console.log(`🚀 Pushing to origin/${branchName}...`);
+  execSync(`git push origin ${branchName}`, { stdio: 'inherit' });
+  
+  console.log('🎉 All operations completed successfully!');
+  console.log(`✅ Build, update, and push to ${branchName} completed!`);
+  
 } catch (error) {
-  console.error('❌ Error during build process:', error.message);
+  console.error('❌ Error during process:', error.message);
   process.exit(1);
 } 
