@@ -58,6 +58,8 @@ function AppointmentFormModal({
     // Custom time override fields
     customStartTime: "",
     customEndTime: "",
+    // Slot selection field
+    selectedSlot: null,
   });
   const [availableSlots, setAvailableSlots] = useState([]);
 
@@ -104,6 +106,16 @@ function AppointmentFormModal({
   // Form validation function
   const validateForm = () => {
     const errors = {};
+    
+    // Validate that either slot is selected OR custom time is provided, but not both
+    if (appointmentData.selectedSlot && (appointmentData.customStartTime || appointmentData.customEndTime)) {
+      errors.timeSelection = "Możesz wybrać termin z listy LUB ustawić własny czas, ale nie oba jednocześnie";
+    }
+    
+    // Validate that at least one time option is selected
+    if (!appointmentData.selectedSlot && !appointmentData.customStartTime) {
+      errors.timeSelection = "Proszę wybrać termin z listy dostępnych terminów LUB ustawić własny czas";
+    }
     
     // Validate custom duration if provided
     if (appointmentData.customDuration) {
@@ -289,6 +301,25 @@ function AppointmentFormModal({
     });
   };
 
+  // Handle slot selection
+  const handleSlotSelect = (slot) => {
+    setAppointmentData(prev => ({
+      ...prev,
+      selectedSlot: slot,
+      // Clear custom time when slot is selected
+      customStartTime: "",
+      customEndTime: ""
+    }));
+  };
+
+  // Clear slot selection
+  const clearSlotSelection = () => {
+    setAppointmentData(prev => ({
+      ...prev,
+      selectedSlot: null
+    }));
+  };
+
   // Update service quantity
   const updateServiceQuantity = (serviceId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -307,12 +338,15 @@ function AppointmentFormModal({
     });
   };
 
+  // Handle custom time change
   const handleCustomTimeChange = (e) => {
     const { name, value } = e.target;
-    setAppointmentData({
-      ...appointmentData,
+    setAppointmentData(prev => ({
+      ...prev,
       [name]: value,
-    });
+      // Clear selected slot when custom time is used
+      selectedSlot: null
+    }));
   };
 
   const handleDateChange = (e) => {
@@ -352,8 +386,7 @@ function AppointmentFormModal({
         case 1: // Doctor Selection & Date
           return appointmentData.selectedDoctor && 
                  appointmentData.selectedDate && 
-                 appointmentData.customStartTime && 
-                 appointmentData.customStartTime.trim() !== "";
+                 (appointmentData.customStartTime || appointmentData.selectedSlot);
         case 2: // Patient Information
           return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
         case 3: // Services
@@ -373,8 +406,7 @@ function AppointmentFormModal({
         case 2: // Doctor Selection & Date
           return appointmentData.selectedDoctor && 
                  appointmentData.selectedDate && 
-                 appointmentData.customStartTime && 
-                 appointmentData.customStartTime.trim() !== "";
+                 (appointmentData.customStartTime || appointmentData.selectedSlot);
         case 3: // Services
           return true; // Services are optional
         case 4: // Additional Details
@@ -492,6 +524,7 @@ function AppointmentFormModal({
             onDoctorSelect={handleDoctorSelect}
             onDateChange={handleDateChange}
             initialDoctorId={doctorId}
+            onSlotSelect={handleSlotSelect}
           />
         </div>
 
@@ -523,10 +556,38 @@ function AppointmentFormModal({
         {appointmentData.selectedDoctor && appointmentData.selectedDate && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <h4 className="text-md font-medium text-blue-800 mb-3">Ustaw Termin Wizyty</h4>
+            
+            {/* Show current selection status */}
+            {appointmentData.selectedSlot && (
+              <div className="mb-3 p-3 bg-green-100 border border-green-300 rounded-lg">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-green-800">
+                      <strong>✓ Wybrano termin:</strong> {appointmentData.selectedSlot.startTime} - {appointmentData.selectedSlot.endTime}
+                    </p>
+                    <p className="text-xs text-green-700 mt-1">
+                      Możesz zmienić na własny termin poniżej, ale wtedy wybrany termin zostanie odznaczony.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearSlotSelection}
+                    className="text-xs text-red-600 hover:text-red-800 underline"
+                  >
+                    Wyczyść wybór
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <p className="text-xs text-blue-600 mb-3">
+              <strong>Uwaga:</strong> Możesz wybrać dostępny termin z listy powyżej LUB ustawić własny termin poniżej. 
+              Nie możesz używać obu opcji jednocześnie.
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Czas rozpoczęcia*
+                  Czas rozpoczęcia
                 </label>
                 <input
                   type="time"
@@ -534,7 +595,8 @@ function AppointmentFormModal({
                   value={appointmentData.customStartTime || ""}
                   onChange={handleCustomTimeChange}
                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
+                  disabled={appointmentData.selectedSlot !== null}
+                  placeholder="HH:MM"
                 />
               </div>
               <div>
@@ -547,6 +609,8 @@ function AppointmentFormModal({
                   value={appointmentData.customEndTime || ""}
                   onChange={handleCustomTimeChange}
                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={appointmentData.selectedSlot !== null}
+                  placeholder="HH:MM"
                 />
               </div>
             </div>
@@ -556,6 +620,11 @@ function AppointmentFormModal({
             {appointmentData.customStartTime && appointmentData.customEndTime && validateForm().customTime && (
               <p className="text-red-500 text-xs mt-2">
                 {validateForm().customTime}
+              </p>
+            )}
+            {validateForm().timeSelection && (
+              <p className="text-red-500 text-xs mt-2">
+                {validateForm().timeSelection}
               </p>
             )}
           </div>
@@ -1057,30 +1126,43 @@ function AppointmentFormModal({
             </div>
             <div>
               <span className="font-medium">Czas:</span> {
-                appointmentData.customStartTime 
-                  ? `${appointmentData.customStartTime}${appointmentData.customEndTime ? ` - ${appointmentData.customEndTime}` : ''}`
-                  : "Nie wybrano"
+                appointmentData.selectedSlot 
+                  ? `${appointmentData.selectedSlot.startTime} - ${appointmentData.selectedSlot.endTime} (wybrany termin)`
+                  : appointmentData.customStartTime 
+                    ? `${appointmentData.customStartTime}${appointmentData.customEndTime ? ` - ${appointmentData.customEndTime}` : ''} (własny termin)`
+                    : "Nie wybrano"
               }
             </div>
             <div>
               <span className="font-medium">Lekarz:</span> {appointmentData.selectedDoctor?.name || "Nie wybrano"}
             </div>
             <div>
-              <span className="font-medium">Czas trwania:</span> {appointmentData.customDuration || appointmentData.duration || 30} min
+              <span className="font-medium">Czas trwania:</span> {
+                appointmentData.selectedSlot 
+                  ? `${appointmentData.selectedSlot.duration || 30} min`
+                  : `${appointmentData.customDuration || appointmentData.duration || 30} min`
+              }
             </div>
-            {(appointmentData.customDuration || appointmentData.customStartTime) && (
+            {(appointmentData.customDuration || appointmentData.customStartTime || appointmentData.selectedSlot) && (
               <>
                 <div>
                   <span className="font-medium">Czas zakończenia:</span> {
-                    appointmentData.customStartTime 
-                      ? calculateEndTime(appointmentData.customStartTime, appointmentData.customDuration || 30)
-                      : "Nie obliczono"
+                    appointmentData.selectedSlot
+                      ? appointmentData.selectedSlot.endTime
+                      : appointmentData.customStartTime 
+                        ? calculateEndTime(appointmentData.customStartTime, appointmentData.customDuration || 30)
+                        : "Nie obliczono"
                   }
                 </div>
                 <div>
                   <span className="font-medium">Typ:</span> {appointmentData.visitType || "Standardowa"}
                 </div>
               </>
+            )}
+            {appointmentData.selectedSlot && (
+              <div className="col-span-2">
+                <span className="font-medium text-green-600">✓ Użyto wybranego terminu</span>
+              </div>
             )}
             {appointmentData.customStartTime && (
               <div className="col-span-2">
@@ -1108,26 +1190,36 @@ function AppointmentFormModal({
       (selectedPatient || isNewPatientValid) &&
       appointmentData.selectedDoctor &&
       appointmentData.selectedDate &&
-      appointmentData.customStartTime &&
-      appointmentData.customStartTime.trim() !== ""
+      (appointmentData.customStartTime || appointmentData.selectedSlot)
     ) {
-      // Determine start and end times from custom input
-      const startTime = appointmentData.customStartTime;
-      let endTime, duration;
+      // Determine start and end times from custom input or slot
+      let startTime, endTime, duration;
       
-      if (appointmentData.customEndTime && appointmentData.customEndTime.trim() !== "") {
-        endTime = appointmentData.customEndTime;
-        // Calculate duration from custom times
-        const start = new Date(`2000-01-01T${startTime}`);
-        const end = new Date(`2000-01-01T${endTime}`);
-        duration = Math.round((end - start) / 60000); // Convert to minutes
+      if (appointmentData.customStartTime && appointmentData.customStartTime.trim() !== "") {
+        startTime = appointmentData.customStartTime;
+        if (appointmentData.customEndTime && appointmentData.customEndTime.trim() !== "") {
+          endTime = appointmentData.customEndTime;
+          // Calculate duration from custom times
+          const start = new Date(`2000-01-01T${startTime}`);
+          const end = new Date(`2000-01-01T${endTime}`);
+          duration = Math.round((end - start) / 60000); // Convert to minutes
+        } else {
+          // If only start time is provided, use custom duration or default
+          duration = appointmentData.customDuration || 30;
+          // Calculate end time
+          const start = new Date(`2000-01-01T${startTime}`);
+          const end = new Date(start.getTime() + duration * 60000);
+          endTime = end.toTimeString().slice(0, 5);
+        }
+      } else if (appointmentData.selectedSlot) {
+        // If a slot is selected, use its start time and duration
+        startTime = appointmentData.selectedSlot.startTime;
+        duration = appointmentData.selectedSlot.duration;
+        endTime = appointmentData.selectedSlot.endTime;
       } else {
-        // Use custom duration or default
-        duration = appointmentData.customDuration || 30;
-        // Calculate end time
-        const start = new Date(`2000-01-01T${startTime}`);
-        const end = new Date(start.getTime() + duration * 60000);
-        endTime = end.toTimeString().slice(0, 5);
+        // Fallback if no time is selected
+        toast.error("Proszę wybrać termin wizyty.");
+        return;
       }
 
       // Collect all data for backend submission using the new reception appointment API
@@ -1148,6 +1240,33 @@ function AppointmentFormModal({
         // Custom time override
         customStartTime: appointmentData.customStartTime,
         customEndTime: appointmentData.customEndTime || null,
+        // Slot selection
+        selectedSlot: appointmentData.selectedSlot ? {
+          _id: appointmentData.selectedSlot._id,
+          startTime: appointmentData.selectedSlot.startTime,
+          endTime: appointmentData.selectedSlot.endTime,
+          duration: appointmentData.selectedSlot.duration,
+          doctorId: appointmentData.selectedSlot.doctorId,
+          date: appointmentData.selectedSlot.date,
+          isWalkin: appointmentData.selectedSlot.isWalkin,
+          needsAttention: appointmentData.selectedSlot.needsAttention,
+          markAsArrived: appointmentData.selectedSlot.markAsArrived,
+          isInternational: appointmentData.selectedSlot.isInternational,
+          patientSource: appointmentData.selectedSlot.patientSource,
+          notes: appointmentData.selectedSlot.notes,
+          enableRepeats: appointmentData.selectedSlot.enableRepeats,
+          selectedServices: appointmentData.selectedSlot.services,
+          newPatientFirstName: appointmentData.selectedSlot.newPatientFirstName,
+          newPatientLastName: appointmentData.selectedSlot.newPatientLastName,
+          newPatientEmail: appointmentData.selectedSlot.newPatientEmail,
+          newPatientPhone: appointmentData.selectedSlot.newPatientPhone,
+          newPatientDateOfBirth: appointmentData.selectedSlot.newPatientDateOfBirth,
+          newPatientSex: appointmentData.selectedSlot.newPatientSex,
+          newPatientPesel: appointmentData.selectedSlot.newPatientPesel,
+          receptionistNotes: appointmentData.selectedSlot.receptionistNotes,
+          overrideInfo: appointmentData.selectedSlot.overrideInfo,
+          metadata: appointmentData.selectedSlot.metadata,
+        } : null,
         // Metadata fields
         metadata: {
           visitType: appointmentData.visitType || "",

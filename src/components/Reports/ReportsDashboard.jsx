@@ -88,8 +88,15 @@ const ReportsDashboard = () => {
   };
 
   const handleGenerateReport = async () => {
+    // Always set start date to current date
+    const currentDate = new Date().toISOString().split('T')[0];
+    const updatedFilters = {
+      ...filters,
+      startDate: currentDate
+    };
+
     // Validate filters
-    const validationErrors = validateFilters(filters);
+    const validationErrors = validateFilters(updatedFilters);
     if (validationErrors.length > 0) {
       showMessage(validationErrors.join(', '), 'error');
       return;
@@ -104,7 +111,7 @@ const ReportsDashboard = () => {
     setError('');
     
     try {
-      const data = await generateReport(filters);
+      const data = await generateReport(updatedFilters);
       if (data.success) {
         setReportData(data.data);
         showMessage('Raport wygenerowany pomyślnie', 'success');
@@ -151,7 +158,14 @@ const ReportsDashboard = () => {
     setExportLoading(prev => ({ ...prev, pdf: true }));
     
     try {
-      await exportReportToPDF(filters);
+      // Always use current date as start date for export
+      const currentDate = new Date().toISOString().split('T')[0];
+      const exportFilters = {
+        ...filters,
+        startDate: currentDate
+      };
+      
+      await exportReportToPDF(exportFilters);
       showMessage('Raport wyeksportowany do PDF', 'success');
     } catch (error) {
       showMessage(handleApiError(error), 'error');
@@ -174,7 +188,14 @@ const ReportsDashboard = () => {
     setExportLoading(prev => ({ ...prev, csv: true }));
     
     try {
-      await exportReportToCSV(filters);
+      // Always use current date as start date for export
+      const currentDate = new Date().toISOString().split('T')[0];
+      const exportFilters = {
+        ...filters,
+        startDate: currentDate
+      };
+      
+      await exportReportToCSV(exportFilters);
       showMessage('Raport wyeksportowany do CSV', 'success');
     } catch (error) {
       showMessage(handleApiError(error), 'error');
@@ -219,6 +240,9 @@ const ReportsDashboard = () => {
               onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Automatycznie ustawiana na dzisiejszą datę przy generowaniu raportu
+            </p>
           </div>
           
           <div>

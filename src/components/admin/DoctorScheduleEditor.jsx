@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import doctorService from "../../helpers/doctorHelper";
 import { useLoader } from "../../context/LoaderContext";
-import { Calendar, Clock, Plus, Trash2, Edit, X, Save, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar, Clock, Plus, Trash2, Edit, X, Save, Calendar as CalendarIcon, Copy, CopyCheck } from "lucide-react";
 import { toast } from "sonner";
+import { apiCaller } from "../../utils/axiosInstance";
 
 const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
   const { showLoader, hideLoader } = useLoader();
@@ -16,6 +17,15 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' or 'list'
+
+  // Date range copy states
+  const [showCopyModal, setShowCopyModal] = useState(false);
+  const [copyForm, setCopyForm] = useState({
+    sourceStartDate: "",
+    sourceEndDate: "",
+    targetStartDate: ""
+  });
+  const [copyLoading, setCopyLoading] = useState(false);
 
   // Form states for daily schedule
   const [scheduleForm, setScheduleForm] = useState({
@@ -360,6 +370,248 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
     setEditingException(null);
   };
 
+  // Copy schedule functionality
+  const handleCopyFormChange = (e) => {
+    const { name, value } = e.target;
+    setCopyForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const resetCopyForm = () => {
+    setCopyForm({
+      sourceStartDate: "",
+      sourceEndDate: "",
+      targetStartDate: ""
+    });
+  };
+
+  const calculateTargetDate = (sourceStart, sourceEnd, targetStart) => {
+    if (!sourceStart || !sourceEnd || !targetStart) return "";
+    
+    const start = new Date(sourceStart);
+    const end = new Date(sourceEnd);
+    const target = new Date(targetStart);
+    
+    // Calculate the difference in days between source start and end
+    const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    
+    // Calculate target end date
+    const targetEnd = new Date(target);
+    targetEnd.setDate(target.getDate() + daysDiff - 1);
+    
+    return targetEnd.toISOString().split('T')[0];
+  };
+
+  const handleCopySchedule = async (e) => {
+    e.preventDefault();
+    
+    if (!copyForm.sourceStartDate || !copyForm.sourceEndDate || !copyForm.targetStartDate) {
+      toast.error("Proszę wypełnić wszystkie pola dat");
+      return;
+    }
+
+    const sourceStart = new Date(copyForm.sourceStartDate);
+    const sourceEnd = new Date(copyForm.sourceEndDate);
+    const targetStart = new Date(copyForm.targetStartDate);
+
+    if (sourceStart > sourceEnd) {
+      toast.error("Data rozpoczęcia źródła musi być wcześniejsza niż data zakończenia");
+      return;
+    }
+
+    if (targetStart <= sourceEnd) {
+      toast.error("Data docelowa musi być późniejsza niż data zakończenia źródła");
+      return;
+    }
+
+    try {
+      setCopyLoading(true);
+      showLoader();
+
+      const copyData = {
+        sourceStartDate: copyForm.sourceStartDate,
+        sourceEndDate: copyForm.sourceEndDate,
+        targetStartDate: copyForm.targetStartDate
+      };
+
+      console.log("Copying schedule with data:", copyData);
+
+      // Use the copy-date-range API
+      const response = await apiCaller(
+        "POST",
+        `docs/schedule/copy-date-range${doctorId ? `?doctorId=${doctorId}` : ''}`,
+        copyData
+      );
+
+      if (response.data.success) {
+        toast.success(response.data.message || "Harmonogram został pomyślnie skopiowany");
+        
+        // Show summary if available
+        if (response.data.data?.summary) {
+          const summary = response.data.data.summary;
+          toast.success(`Skopiowano ${summary.successfullyCopied} z ${summary.totalDays} dni`);
+          
+          if (summary.failedDays > 0) {
+            toast.warning(`${summary.failedDays} dni nie udało się skopiować`);
+          }
+        }
+
+        setShowCopyModal(false);
+        resetCopyForm();
+        
+        // Refresh schedules to show the copied ones
+        fetchDoctorSchedule();
+      } else {
+        toast.error(response.data.message || "Nie udało się skopiować harmonogramu");
+      }
+    } catch (err) {
+      console.error("Error copying schedule:", err);
+      
+      if (err.response?.status === 207) {
+        // Partial success
+        const data = err.response.data;
+        if (data.data?.summary) {
+          const summary = data.data.summary;
+          toast.warning(`Harmonogram skopiowany częściowo: ${summary.successfullyCopied} z ${summary.totalDays} dni`);
+          
+          if (data.data.errors) {
+            data.data.errors.forEach(error => {
+              toast.error(`Błąd dla ${error.date}: ${error.error}`);
+            });
+          }
+        }
+        
+        // Refresh schedules even on partial success
+        fetchDoctorSchedule();
+      } else {
+        toast.error("Nie udało się skopiować harmonogramu");
+      }
+    } finally {
+      setCopyLoading(false);
+      hideLoader();
+    }
+  };
+
+  const openCopyModal = () => {
+    // Set default dates: last week as source, next week as target
+    const today = new Date();
+    const lastWeekStart = new Date(today);
+    lastWeekStart.setDate(today.getDate() - 7);
+    
+    const lastWeekEnd = new Date(today);
+    lastWeekEnd.setDate(today.getDate() - 1);
+    
+    const nextWeekStart = new Date(today);
+    nextWeekStart.setDate(today.getDate() + 7);
+    
+    setCopyForm({
+      sourceStartDate: lastWeekStart.toISOString().split('T')[0],
+      sourceEndDate: lastWeekEnd.toISOString().split('T')[0],
+      targetStartDate: nextWeekStart.toISOString().split('T')[0]
+    });
+    setShowCopyModal(true);
+  };
+
+  // Quick copy functions for common scenarios
+  const quickCopyLastWeekToNextWeek = async () => {
+    const today = new Date();
+    const lastWeekStart = new Date(today);
+    lastWeekStart.setDate(today.getDate() - 7);
+    
+    const lastWeekEnd = new Date(today);
+    lastWeekEnd.setDate(today.getDate() - 1);
+    
+    const nextWeekStart = new Date(today);
+    nextWeekStart.setDate(today.getDate() + 7);
+    
+    try {
+      setCopyLoading(true);
+      showLoader();
+
+      const copyData = {
+        sourceStartDate: lastWeekStart.toISOString().split('T')[0],
+        sourceEndDate: lastWeekEnd.toISOString().split('T')[0],
+        targetStartDate: nextWeekStart.toISOString().split('T')[0]
+      };
+
+      console.log("Quick copying last week to next week:", copyData);
+
+      const response = await apiCaller(
+        "POST",
+        `doctors/schedule/copy-date-range${doctorId ? `?doctorId=${doctorId}` : ''}`,
+        copyData
+      );
+
+      if (response.data.success) {
+        toast.success("Harmonogram z zeszłego tygodnia został skopiowany na przyszły tydzień");
+        
+        if (response.data.data?.summary) {
+          const summary = response.data.data.summary;
+          toast.success(`Skopiowano ${summary.successfullyCopied} z ${summary.totalDays} dni`);
+        }
+        
+        fetchDoctorSchedule();
+      } else {
+        toast.error("Nie udało się skopiować harmonogramu");
+      }
+    } catch (err) {
+      console.error("Error in quick copy:", err);
+      toast.error("Nie udało się skopiować harmonogramu");
+    } finally {
+      setCopyLoading(false);
+      hideLoader();
+    }
+  };
+
+  const quickCopyThisWeekToNextWeek = async () => {
+    const today = new Date();
+    const thisWeekStart = new Date(today);
+    thisWeekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
+    
+    const thisWeekEnd = new Date(today);
+    thisWeekEnd.setDate(today.getDate() - today.getDay() + 7); // Sunday
+    
+    const nextWeekStart = new Date(today);
+    nextWeekStart.setDate(today.getDate() + 7);
+    
+    try {
+      setCopyLoading(true);
+      showLoader();
+
+      const copyData = {
+        sourceStartDate: thisWeekStart.toISOString().split('T')[0],
+        sourceEndDate: thisWeekEnd.toISOString().split('T')[0],
+        targetStartDate: nextWeekStart.toISOString().split('T')[0]
+      };
+
+      console.log("Quick copying this week to next week:", copyData);
+
+      const response = await apiCaller(
+        "POST",
+        `doctors/schedule/copy-date-range${doctorId ? `?doctorId=${doctorId}` : ''}`,
+        copyData
+      );
+
+      if (response.data.success) {
+        toast.success("Harmonogram z tego tygodnia został skopiowany na przyszły tydzień");
+        
+        if (response.data.data?.summary) {
+          const summary = response.data.data.summary;
+          toast.success(`Skopiowano ${summary.successfullyCopied} z ${summary.totalDays} dni`);
+        }
+        
+        fetchDoctorSchedule();
+      } else {
+        toast.error("Nie udało się skopiować harmonogramu");
+      }
+    } catch (err) {
+      console.error("Error in quick copy:", err);
+      toast.error("Nie udało się skopiować harmonogramu");
+    } finally {
+      setCopyLoading(false);
+      hideLoader();
+    }
+  };
+
   // Calendar navigation
   const goToPreviousMonth = () => {
     setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -445,8 +697,9 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
           </div>
         )}
 
-        {/* View Mode Toggle */}
-        <div className="flex justify-between items-center mb-6">
+        {/* View Mode Toggle and Action Buttons */}
+        <div className="flex flex-col space-y-4 mb-6">
+          {/* View Mode Toggle */}
           <div className="flex space-x-2">
             <button
               onClick={() => setViewMode('calendar')}
@@ -472,29 +725,62 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
             </button>
           </div>
 
-          <div className="flex space-x-2">
+          {/* Main Action Buttons */}
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={() => {
                 console.log("Add Schedule button clicked");
                 resetScheduleForm();
                 setShowScheduleModal(true);
               }}
-              className="bg-teal-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-teal-600"
+              className="bg-teal-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-teal-600 transition-colors shadow-sm"
             >
               <Plus size={16} />
               <span>Dodaj Harmonogram</span>
             </button>
+            
             <button
               onClick={() => {
                 console.log("Add Exception button clicked");
                 resetExceptionForm();
                 setShowExceptionModal(true);
               }}
-              className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-orange-600"
+              className="bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-orange-600 transition-colors shadow-sm"
             >
               <Plus size={16} />
               <span>Dodaj Wyjątek</span>
             </button>
+            
+            <button
+              onClick={openCopyModal}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-600 transition-colors shadow-sm"
+            >
+              <Copy size={16} />
+              <span>Skopiuj Harmonogram</span>
+            </button>
+          </div>
+
+          {/* Quick Copy Options - Compact Design */}
+          <div className="pt-2 border-t border-gray-200">
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={quickCopyLastWeekToNextWeek}
+                disabled={copyLoading}
+                className="bg-green-50 text-green-700 px-3 py-2 rounded-lg text-sm flex items-center space-x-2 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-green-200 hover:border-green-300"
+              >
+                <CopyCheck size={14} />
+                <span>Zeszły → Przyszły tydzień</span>
+              </button>
+              
+              <button
+                onClick={quickCopyThisWeekToNextWeek}
+                disabled={copyLoading}
+                className="bg-green-50 text-green-700 px-3 py-2 rounded-lg text-sm flex items-center space-x-2 hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-green-200 hover:border-green-300"
+              >
+                <CopyCheck size={14} />
+                <span>Ten → Przyszły tydzień</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1019,6 +1305,188 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
   );
   };
 
+  // Copy Schedule Modal
+  const renderCopyScheduleModal = () => {
+    console.log("Rendering copy schedule modal with:", { copyForm, copyLoading });
+    
+    const targetEndDate = calculateTargetDate(copyForm.sourceStartDate, copyForm.sourceEndDate, copyForm.targetStartDate);
+    const hasValidDates = copyForm.sourceStartDate && copyForm.sourceEndDate && copyForm.targetStartDate;
+    
+    return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">
+            Skopiuj Harmonogram
+          </h2>
+          <button
+            onClick={() => {
+              console.log("Closing copy schedule modal");
+              setShowCopyModal(false);
+              resetCopyForm();
+            }}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <form onSubmit={handleCopySchedule} className="space-y-4">
+          <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800">
+              <strong>Jak to działa:</strong> Wybierz zakres dat źródłowych (skąd kopiować) 
+              i datę docelową (dokąd kopiować). System automatycznie skopiuje harmonogramy 
+              dla każdego dnia w zakresie źródłowym.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data rozpoczęcia harmonogramu źródłowego
+              </label>
+              <input
+                type="date"
+                name="sourceStartDate"
+                value={copyForm.sourceStartDate}
+                onChange={handleCopyFormChange}
+                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data zakończenia harmonogramu źródłowego
+              </label>
+              <input
+                type="date"
+                name="sourceEndDate"
+                value={copyForm.sourceEndDate}
+                onChange={handleCopyFormChange}
+                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data rozpoczęcia harmonogramu docelowego
+              </label>
+              <input
+                type="date"
+                name="targetStartDate"
+                value={copyForm.targetStartDate}
+                onChange={handleCopyFormChange}
+                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Preview Section */}
+          {hasValidDates && (
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Podgląd kopiowania:</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Źródło:</span>
+                  <span className="font-medium">
+                    {copyForm.sourceStartDate} → {copyForm.sourceEndDate}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Cel:</span>
+                  <span className="font-medium">
+                    {copyForm.targetStartDate} → {targetEndDate}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Liczba dni:</span>
+                  <span className="font-medium">
+                    {(() => {
+                      const start = new Date(copyForm.sourceStartDate);
+                      const end = new Date(copyForm.sourceEndDate);
+                      const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                      return days;
+                    })()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Validation Messages */}
+          {hasValidDates && (
+            <div className="space-y-2">
+              {(() => {
+                const sourceStart = new Date(copyForm.sourceStartDate);
+                const sourceEnd = new Date(copyForm.sourceEndDate);
+                const targetStart = new Date(copyForm.targetStartDate);
+                
+                if (sourceStart > sourceEnd) {
+                  return (
+                    <div className="text-red-600 text-sm bg-red-50 p-2 rounded border border-red-200">
+                      ⚠️ Data rozpoczęcia źródła musi być wcześniejsza niż data zakończenia
+                    </div>
+                  );
+                }
+                
+                if (targetStart <= sourceEnd) {
+                  return (
+                    <div className="text-red-600 text-sm bg-red-50 p-2 rounded border border-red-200">
+                      ⚠️ Data docelowa musi być późniejsza niż data zakończenia źródła
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="text-green-600 text-sm bg-green-50 p-2 rounded border border-green-200">
+                    ✅ Daty są poprawne - możesz skopiować harmonogram
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <button
+              type="button"
+              onClick={() => {
+                setShowCopyModal(false);
+                resetCopyForm();
+              }}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+            >
+              Anuluj
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={copyLoading || !hasValidDates || 
+                (() => {
+                  if (!hasValidDates) return true;
+                  const sourceStart = new Date(copyForm.sourceStartDate);
+                  const sourceEnd = new Date(copyForm.sourceEndDate);
+                  const targetStart = new Date(copyForm.targetStartDate);
+                  return sourceStart > sourceEnd || targetStart <= sourceEnd;
+                })()}
+            >
+              {copyLoading ? (
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <Copy size={16} className="mr-1" />
+              )}
+              {copyLoading ? "Kopiuję..." : "Skopiuj Harmonogram"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+  };
+
   if (isModal) {
     console.log("Rendering modal with:", { doctorId, showScheduleModal, showExceptionModal });
     return (
@@ -1071,6 +1539,12 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
             {renderExceptionModal()}
           </div>
         )}
+        {showCopyModal && (
+          <div>
+            {console.log("=== Rendering copy schedule modal in modal mode ===")}
+            {renderCopyScheduleModal()}
+          </div>
+        )}
       </div>
     );
   }
@@ -1092,6 +1566,12 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
               <div>
                 {console.log("=== Rendering exception modal ===")}
                 {renderExceptionModal()}
+              </div>
+            )}
+            {showCopyModal && (
+              <div>
+                {console.log("=== Rendering copy schedule modal ===")}
+                {renderCopyScheduleModal()}
               </div>
             )}
           </div>
