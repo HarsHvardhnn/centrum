@@ -50,11 +50,13 @@ export const FormProvider = ({ children, initialData }) => {
     contactPerson1Phone: "",
     contactPerson1Address: "",
     contactPerson1Pesel: "",
+    contactPerson1Relationship: "",
     contactPerson2Name: "",
     contactPerson2PhoneCode: "+48",
     contactPerson2Phone: "",
     contactPerson2Address: "",
     contactPerson2Pesel: "",
+    contactPerson2Relationship: "",
     allergies: "",
     preferredLanguage: "",
 

@@ -73,12 +73,14 @@ const patientService = {
       appendIfExists("contactPerson1PhoneFull", patientData.contactPerson1PhoneCode + patientData.contactPerson1Phone);
       appendIfExists("contactPerson1Address", patientData.contactPerson1Address);
       appendIfExists("contactPerson1Pesel", patientData.contactPerson1Pesel);
+      appendIfExists("contactPerson1Relationship", patientData.contactPerson1Relationship);
       appendIfExists("contactPerson2Name", patientData.contactPerson2Name);
       appendIfExists("contactPerson2PhoneCode", patientData.contactPerson2PhoneCode);
       appendIfExists("contactPerson2Phone", patientData.contactPerson2Phone);
       appendIfExists("contactPerson2PhoneFull", patientData.contactPerson2PhoneCode + patientData.contactPerson2Phone);
       appendIfExists("contactPerson2Address", patientData.contactPerson2Address);
       appendIfExists("contactPerson2Pesel", patientData.contactPerson2Pesel);
+      appendIfExists("contactPerson2Relationship", patientData.contactPerson2Relationship);
       appendIfExists("allergies", patientData.allergies);
       appendIfExists("preferredLanguage", patientData.preferredLanguage);
 
@@ -168,6 +170,7 @@ const patientService = {
     }
     if (patientData.contactPerson1Address !== undefined) formData.append("contactPerson1Address", patientData.contactPerson1Address);
     if (patientData.contactPerson1Pesel !== undefined) formData.append("contactPerson1Pesel", patientData.contactPerson1Pesel);
+    if (patientData.contactPerson1Relationship !== undefined) formData.append("contactPerson1Relationship", patientData.contactPerson1Relationship);
     if (patientData.contactPerson2Name !== undefined) formData.append("contactPerson2Name", patientData.contactPerson2Name);
     if (patientData.contactPerson2PhoneCode !== undefined) formData.append("contactPerson2PhoneCode", patientData.contactPerson2PhoneCode);
     if (patientData.contactPerson2Phone !== undefined) formData.append("contactPerson2Phone", patientData.contactPerson2Phone);
@@ -176,6 +179,7 @@ const patientService = {
     }
     if (patientData.contactPerson2Address !== undefined) formData.append("contactPerson2Address", patientData.contactPerson2Address);
     if (patientData.contactPerson2Pesel !== undefined) formData.append("contactPerson2Pesel", patientData.contactPerson2Pesel);
+    if (patientData.contactPerson2Relationship !== undefined) formData.append("contactPerson2Relationship", patientData.contactPerson2Relationship);
     if (patientData.allergies !== undefined) formData.append("allergies", patientData.allergies);
     if (patientData.preferredLanguage !== undefined) formData.append("preferredLanguage", patientData.preferredLanguage);
 

@@ -398,11 +398,13 @@ export default function UserManagement() {
         contactPerson1Phone: patientDetails.contactPerson1Phone,
         contactPerson1Address: patientDetails.contactPerson1Address,
         contactPerson1Pesel: patientDetails.contactPerson1Pesel,
+        contactPerson1Relationship: patientDetails.contactPerson1Relationship,
         contactPerson2Name: patientDetails.contactPerson2Name,
         contactPerson2PhoneCode: patientDetails.contactPerson2PhoneCode || "+48",
         contactPerson2Phone: patientDetails.contactPerson2Phone,
         contactPerson2Address: patientDetails.contactPerson2Address,
         contactPerson2Pesel: patientDetails.contactPerson2Pesel,
+        contactPerson2Relationship: patientDetails.contactPerson2Relationship,
         allergies: patientDetails.allergies,
         preferredLanguage: patientDetails.preferredLanguage,
 
