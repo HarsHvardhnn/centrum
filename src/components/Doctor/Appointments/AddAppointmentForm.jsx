@@ -75,6 +75,32 @@ function AppointmentFormModal({
     setLoadingServices(isLoadingServices || contextLoading);
   }, [availableServices, contextServices, isLoadingServices, contextLoading]);
 
+  // Update duration when time changes or slot is selected
+  useEffect(() => {
+    let calculatedDuration = 0;
+    
+    if (appointmentData.selectedSlot) {
+      // Calculate duration from selected slot
+      if (appointmentData.selectedSlot.startTime && appointmentData.selectedSlot.endTime) {
+        const start = new Date(`2000-01-01T${appointmentData.selectedSlot.startTime}`);
+        const end = new Date(`2000-01-01T${appointmentData.selectedSlot.endTime}`);
+        calculatedDuration = Math.round((end - start) / 60000);
+      } else if (appointmentData.selectedSlot.duration) {
+        calculatedDuration = appointmentData.selectedSlot.duration;
+      }
+    } else if (appointmentData.customStartTime && appointmentData.customEndTime) {
+      // Calculate duration from custom time
+      calculatedDuration = calculateDurationFromTime();
+    }
+    
+    if (calculatedDuration && calculatedDuration > 0 && !appointmentData.customDuration) {
+      setAppointmentData(prev => ({
+        ...prev,
+        customDuration: calculatedDuration
+      }));
+    }
+  }, [appointmentData.customStartTime, appointmentData.customEndTime, appointmentData.selectedSlot]);
+
   const handlePatientSelect = (patient) => {
     setSelectedPatient(patient);
   };
@@ -376,7 +402,6 @@ function AppointmentFormModal({
   const isNewPatientValid = isFirstTimeVisit && 
     appointmentData.newPatientFirstName.trim() !== "" && 
     appointmentData.newPatientLastName.trim() !== "" &&
-    appointmentData.newPatientPesel.trim() !== "" &&
     appointmentData.newPatientSex.trim() !== "";
 
   const canProceedToNextStep = () => {
@@ -449,13 +474,15 @@ function AppointmentFormModal({
         {[1, 2, 3, 4, 5].map((step) => (
           <div key={step} className="flex items-center">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              onClick={() => setCurrentStep(step)}
+              className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-110 ${
                 currentStep === step
-                  ? "bg-teal-500 text-white"
+                  ? "bg-teal-500 text-white shadow-lg"
                   : currentStep > step
-                  ? "bg-teal-200 text-teal-700"
-                  : "bg-gray-200 text-gray-500"
+                  ? "bg-teal-200 text-teal-700 hover:bg-teal-300"
+                  : "bg-gray-200 text-gray-500 hover:bg-gray-300"
               }`}
+              title={`Krok ${step}: ${getStepTitle(step)}`}
             >
               {step}
             </div>
@@ -736,15 +763,14 @@ function AppointmentFormModal({
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">PESEL*</label>
+                <label className="block text-sm text-gray-600 mb-1">PESEL</label>
                 <input
                   type="text"
                   name="newPatientPesel"
                   value={appointmentData.newPatientPesel}
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded-lg"
-                  required
-                  placeholder="Wprowadź PESEL"
+                  placeholder="Wprowadź PESEL (opcjonalny)"
                 />
               </div>
               <div>
@@ -971,6 +997,22 @@ function AppointmentFormModal({
         {/* Custom Duration */}
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <h4 className="text-md font-medium text-blue-800 mb-3">Czas Trwania Wizyty</h4>
+          
+          {/* Show calculated duration if available */}
+          {(appointmentData.customStartTime && appointmentData.customEndTime) || appointmentData.selectedSlot ? (
+            <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg">
+              <p className="text-sm text-green-800">
+                <strong>✓ Automatycznie obliczony czas trwania:</strong> {appointmentData.customDuration || 0} minut
+              </p>
+              <p className="text-xs text-green-700 mt-1">
+                {appointmentData.selectedSlot 
+                  ? `Na podstawie wybranego terminu: ${appointmentData.selectedSlot.startTime} - ${appointmentData.selectedSlot.endTime}`
+                  : `Na podstawie wybranego czasu: ${appointmentData.customStartTime} - ${appointmentData.customEndTime}`
+                }
+              </p>
+            </div>
+          ) : null}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -986,7 +1028,12 @@ function AppointmentFormModal({
                 className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="30"
               />
-              <p className="text-xs text-gray-500 mt-1">1-480 minut (1-8 godzin)</p>
+              <p className="text-xs text-gray-500 mt-1">
+                {(appointmentData.customStartTime && appointmentData.customEndTime) || appointmentData.selectedSlot
+                  ? "Możesz zmienić automatycznie obliczony czas trwania"
+                  : "1-480 minut (1-8 godzin) - lub wybierz termin/wybierz czas w kroku 1 aby automatycznie obliczyć"
+                }
+              </p>
               {appointmentData.customDuration && validateCustomDuration(appointmentData.customDuration) && (
                 <p className="text-red-500 text-xs mt-1">
                   {validateCustomDuration(appointmentData.customDuration)}
@@ -1329,6 +1376,16 @@ function AppointmentFormModal({
   const calculateTotalPrice = () => {
     return appointmentData.selectedServices.reduce((total, service) => 
       total + ((parseFloat(service.price) || 0) * (service.quantity || 1)), 0);
+  };
+
+  // Helper function to calculate duration from custom start and end times
+  const calculateDurationFromTime = () => {
+    if (!appointmentData.customStartTime || !appointmentData.customEndTime) {
+      return 0; // No custom time selected
+    }
+    const start = new Date(`2000-01-01T${appointmentData.customStartTime}`);
+    const end = new Date(`2000-01-01T${appointmentData.customEndTime}`);
+    return Math.round((end - start) / 60000); // Convert to minutes
   };
 
   return (

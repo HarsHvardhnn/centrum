@@ -204,13 +204,7 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
     "Oświadczenie pacjenta o upoważnieniu osoby bliskiej do uzyskiwania informacji o stanie zdrowia i udzielonych świadczeniach zdrowotnych",
     "Oświadczenie pacjenta o upoważnieniu osoby bliskiej do uzyskiwania dokumentacji medycznej",
     "Oświadczenie pacjenta o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego",
-    "Oświadczenie pacjenta – przedstawiciel ustawowy/opiekun faktyczny",
-    "Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).",
-    "Zapoznałem(-am) się z Regulaminem i Polityką Prywatności i akceptuję ich postanowienia.",
-    "Potwierdzam, że konsultacja medyczna odbędzie się w formie zdalnej (online) i jestem świadomy(-a) tej formy świadczenia zdrowotnego",
-    "Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).",
-    "Wyrażam zgodę na kontakt telefoniczny lub e-mailowy w celu realizacji konsultacji online, w tym przesłania linku do spotkania.",
-    "Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym danych medycznych, w celu realizacji konsultacji medycznej online, zgodnie z art. 9 ust. 2 lit. h RODO. "
+    "Oświadczenie pacjenta – przedstawiciel ustawowy/opiekun faktyczny"
   ];
 
   // Add a common consent
