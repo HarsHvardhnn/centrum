@@ -10,6 +10,7 @@ export const FormProvider = ({ children, initialData }) => {
     email: "",
     mobileNumber: "",
     phoneCode: "+48",
+    phone: "+48",
     dateOfBirth: "",
     motherTongue: "",
     govtId: "",

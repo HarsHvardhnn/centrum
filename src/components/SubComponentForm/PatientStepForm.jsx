@@ -14,7 +14,12 @@ const PatientStepForm = ({
   markStepAsCompleted,
   hideButtons = false,
   subStepTitles = [],
-  currentPatientId = null
+  currentPatientId = null,
+  selectedPhoneCode,
+  onPhoneCodeChange,
+  onPhoneNumberChange,
+  phoneValidationError,
+  phoneCountryCodes
 }) => {
   return (
     <div>
@@ -26,7 +31,13 @@ const PatientStepForm = ({
         subStepTitles={subStepTitles}
       >
         <SubStep title="Dane Podstawowe">
-          <DemographicsForm />
+          <DemographicsForm 
+            selectedPhoneCode={selectedPhoneCode}
+            onPhoneCodeChange={onPhoneCodeChange}
+            onPhoneNumberChange={onPhoneNumberChange}
+            phoneValidationError={phoneValidationError}
+            phoneCountryCodes={phoneCountryCodes}
+          />
         </SubStep>
         <SubStep title="Skierowanie">
           <ReferrerForm />

@@ -330,6 +330,7 @@ function LabAppointmentsContent({ clinic }) {
 
   const handleAddPatient = async (formData) => {
     try {
+      console.log("PatientList - handleAddPatient received:", formData);
       showLoader();
       let response;
       
@@ -345,7 +346,8 @@ function LabAppointmentsContent({ clinic }) {
       setShowAddPatientModal(false);
       setIsEditMode(false);
       setCurrentPatientId(null);
-      setPatientFormData({});
+      // Preserve the phone code preference when resetting form
+      setPatientFormData({ phoneCode: formData.phoneCode || "+48" });
       fetchAppointments(); // Refresh the appointments list
 
     } catch (err) {
@@ -932,7 +934,8 @@ function LabAppointmentsContent({ clinic }) {
                     setShowAddPatientModal(false);
                     setIsEditMode(false);
                     setCurrentPatientId(null);
-                    setPatientFormData({});
+                    // Preserve the phone code preference when closing form
+                    setPatientFormData({ phoneCode: patientFormData.phoneCode || "+48" });
                   }}
                 >
                   <svg
@@ -1006,6 +1009,7 @@ function PatientStepFormWrapper({
     }
 
     if (currentSubStep === subStepTitles.length - 1) {
+      console.log("Submitting form data:", formData);
       handleAddPatient(formData);
     } else {
       goToSubStep(currentSubStep + 1);

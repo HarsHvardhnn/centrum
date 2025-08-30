@@ -450,6 +450,7 @@ export default function UserManagement() {
   // Modify handleAddPatient to handle both create and update
   const handleAddPatient = async (formData) => {
     try {
+      console.log("Settings - handleAddPatient received:", formData);
       showLoader();
       
       // Prepare the data with combined phone number and separate phone code
@@ -460,6 +461,8 @@ export default function UserManagement() {
         // Also combine them for backward compatibility
         phone: selectedPhoneCode + (formData.mobileNumber || "")
       };
+      
+      console.log("Settings - handleAddPatient prepared data:", patientData);
       
       let response;
       
@@ -476,8 +479,9 @@ export default function UserManagement() {
       setShowAddPatientModal(false);
       setIsEditMode(false);
       setCurrentPatientId(null);
-      setPatientFormData({});
-      setSelectedPhoneCode("+48");
+      // Preserve the phone code preference when resetting form
+      setPatientFormData({ phoneCode: patientData.phoneCode || "+48" });
+      setSelectedPhoneCode(patientData.phoneCode || "+48");
       setPhoneValidationError("");
 
       setTimeout(() => {
@@ -1060,12 +1064,13 @@ export default function UserManagement() {
               </h2>
               <button
                 className="text-gray-500 hover:text-gray-700"
-                onClick={() => {
-                  setShowAddPatientModal(false);
-                  setIsEditMode(false);
-                  setCurrentPatientId(null);
-                  setPatientFormData({});
-                }}
+                                  onClick={() => {
+                    setShowAddPatientModal(false);
+                    setIsEditMode(false);
+                    setCurrentPatientId(null);
+                    // Preserve the phone code preference when closing form
+                    setPatientFormData({ phoneCode: patientFormData.phoneCode || "+48" });
+                  }}
               >
                 <svg
                   className="w-6 h-6"
@@ -1196,6 +1201,7 @@ function PatientStepFormWrapper({
     }
 
     if (currentSubStep === subStepTitles.length - 1) {
+      console.log("Settings - Submitting form data:", formData);
       handleAddPatient(formData);
     } else {
       goToSubStep(currentSubStep + 1);
