@@ -7,6 +7,19 @@ import { useServices } from "../../../context/serviceContext.jsx";
 import { toast } from "sonner";
 import { apiCaller } from "../../../utils/axiosInstance";
 
+/**
+ * AppointmentFormModal - Component for adding new appointments
+ * 
+ * Phone Number Fields for New Patients:
+ * - newPatientPhoneCode: Country code (e.g., "+48", "+380")
+ * - newPatientPhone: Phone number without country code (e.g., "123456789")
+ * - Combined: Full phone number (e.g., "+48123456789")
+ * 
+ * Backend Submission Fields:
+ * - phone: Full phone number (code + number)
+ * - phoneCode: Just the country code
+ * - mobileNumber: Just the number without code
+ */
 function AppointmentFormModal({ 
   onClose, 
   onComplete, 
@@ -43,6 +56,7 @@ function AppointmentFormModal({
     newPatientLastName: "",
     newPatientEmail: "",
     newPatientPhone: "",
+    newPatientPhoneCode: "+48", // Add phone code field
     newPatientDateOfBirth: "",
     newPatientSex: "",
     newPatientPesel: "",
@@ -62,6 +76,134 @@ function AppointmentFormModal({
     selectedSlot: null,
   });
   const [availableSlots, setAvailableSlots] = useState([]);
+  const [phoneDropdownOpen, setPhoneDropdownOpen] = useState(false);
+
+  // FlagIcon component for SVG flags
+  const FlagIcon = ({ countryCode }) => {
+    const flags = {
+      PL: (
+        <svg viewBox="0 0 640 480" className="w-4 h-4">
+          <g fillRule="evenodd">
+            <path fill="#fff" d="M640 480H0V0h640z"/>
+            <path fill="#dc143c" d="M640 480H0V240h640z"/>
+          </g>
+        </svg>
+      ),
+      UA: (
+        <svg viewBox="0 0 640 480" className="w-4 h-4">
+          <g fillRule="evenodd">
+            <path fill="#005bbb" d="M0 0h640v240H0z"/>
+            <path fill="#ffd700" d="M0 240h640v240H0z"/>
+          </g>
+        </svg>
+      ),
+      DE: (
+        <svg viewBox="0 0 640 480" className="w-4 h-4">
+          <g fillRule="evenodd">
+            <path d="M0 0h640v480H0z"/>
+            <path fill="#d00" d="M0 160h640v160H0z"/>
+            <path fill="#ffce00" d="M0 320h640v160H0z"/>
+          </g>
+        </svg>
+      ),
+      GB: (
+        <svg viewBox="0 0 640 480" className="w-4 h-4">
+          <g fillRule="evenodd">
+            <path fill="#012169" d="M0 0h640v480H0z"/>
+            <path fill="#FFF" d="m75 0 244 181L562 0h78v62L400 241l240 178v61h-80L320 301 81 480H0v-60l239-178L0 64V0h75z"/>
+            <path fill="#C8102E" d="m424 281 216 159v40L369 281h55zm-184 20 6 35L54 480H0l240-179zM640 0v3L391 191l2-44L590 0h50zM0 0l239 176h-60L0 42V0z"/>
+            <path fill="#FFF" d="M241 0v480h160V0H241zM0 160v160h640V160H0z"/>
+            <path fill="#C8102E" d="M0 193v96h640v-96H0zM273 0v480h96V0h-96z"/>
+          </g>
+        </svg>
+      ),
+      ES: (
+        <svg viewBox="0 0 640 480" className="w-4 h-4">
+          <g fillRule="evenodd">
+            <path fill="#c60b1e" d="M0 0h640v480H0z"/>
+            <path fill="#ffc400" d="M0 120h640v240H0z"/>
+          </g>
+        </svg>
+      ),
+      FR: (
+        <svg viewBox="0 0 640 480" className="w-4 h-4">
+          <g fillRule="evenodd">
+            <path fill="#fff" d="M0 0h640v480H0z"/>
+            <path fill="#00267f" d="M0 0h213.3v480H0z"/>
+            <path fill="#f31830" d="M426.7 0H640v480H426.7z"/>
+          </g>
+        </svg>
+      ),
+      AT: (
+        <svg viewBox="0 0 640 480" className="w-4 h-4">
+          <g fillRule="evenodd">
+            <path fill="#fff" d="M0 0h640v480H0z"/>
+            <path fill="#c8102e" d="M0 160h640v160H0z"/>
+          </g>
+        </svg>
+      ),
+      IT: (
+        <svg viewBox="0 0 640 480" className="w-4 h-4">
+          <g fillRule="evenodd">
+            <path fill="#fff" d="M0 0h640v480H0z"/>
+            <path fill="#009246" d="M0 0h213.3v480H0z"/>
+            <path fill="#ce2b37" d="M426.7 0H640v480H426.7z"/>
+          </g>
+        </svg>
+      ),
+      CZ: (
+        <svg viewBox="0 0 640 480" className="w-4 h-4">
+          <g fillRule="evenodd">
+            <path fill="#fff" d="M0 0h640v240H0z"/>
+            <path fill="#d7141a" d="M0 240h640v240H0z"/>
+            <path fill="#11457e" d="M240 0h160v480H240z"/>
+          </g>
+        </svg>
+      ),
+      US: (
+        <svg viewBox="0 0 640 480" className="w-4 h-4">
+          <g fillRule="evenodd">
+            <path fill="#bd3d44" d="M0 0h640v480H0z"/>
+            <path stroke="#fff" strokeWidth="37" d="M0 55.3h640M0 129h640M0 203h640M0 277h640M0 351h640M0 425h640"/>
+            <path fill="#192f5d" d="M0 0h364.8v258.5H0z"/>
+            <g fill="#fff">
+              <g id="d">
+                <g id="c">
+                  <g id="e">
+                    <g id="b">
+                      <path id="a" d="M24.8 25l3.2 9.8h10.3l-8.4 6.1 3.2 9.8-8.3-6.1-8.3 6.1 3.2-9.8-8.4-6.1h10.3z"/>
+                      <use href="#a" y="19.5"/>
+                      <use href="#a" y="39"/>
+                    </g>
+                    <use href="#b" y="78"/>
+                  </g>
+                  <use href="#e" y="78"/>
+                </g>
+                <use href="#c" y="156"/>
+              </g>
+              <use href="#d" y="312"/>
+            </g>
+          </g>
+        </svg>
+      )
+    };
+    
+    return flags[countryCode] || <span>🏳️</span>;
+  };
+
+  // Phone country codes with validation
+  const phoneCountryCodes = [
+    { code: "+48", country: "Polska", flag: "PL", maxLength: 9, default: true },
+    { code: "+380", country: "Ukraina", flag: "UA", maxLength: 9 },
+    { code: "+49", country: "Niemcy", flag: "DE", maxLength: 11 },
+    { code: "+44", country: "Wielka Brytania", flag: "GB", maxLength: 10 },
+    { code: "+34", country: "Hiszpania", flag: "ES", maxLength: 9 },
+    { code: "+33", country: "Francja", flag: "FR", maxLength: 9 },
+    { code: "+43", country: "Austria", flag: "AT", maxLength: 10 },
+    { code: "+39", country: "Włochy", flag: "IT", maxLength: 10 },
+    { code: "+420", country: "Czechy", flag: "CZ", maxLength: 9 },
+    { code: "+1", country: "USA", flag: "US", maxLength: 10 }
+  ];
 
   // Update allServices when availableServices changes or use context services as fallback
   useEffect(() => {
@@ -115,9 +257,10 @@ function AppointmentFormModal({
 
   // Phone validation function
   const validatePhone = (phone) => {
-    if (!phone) return ""; // Empty is allowed
-    const phoneRegex = /^\\d{9}$/;
-    return phoneRegex.test(phone) ? "" : "Numer telefonu musi mieć dokładnie 9 cyfr";
+    if (!phone) return "Numer telefonu jest wymagany"; // Make phone mandatory
+    const currentCountry = phoneCountryCodes.find(c => c.code === appointmentData.newPatientPhoneCode) || phoneCountryCodes[0];
+    const phoneRegex = new RegExp(`^\\d{${currentCountry.maxLength}}$`);
+    return phoneRegex.test(phone) ? "" : `Numer telefonu dla ${currentCountry.country} musi mieć dokładnie ${currentCountry.maxLength} cyfr`;
   };
 
   // Custom duration validation function
@@ -182,6 +325,18 @@ function AppointmentFormModal({
         errors.date = "Nie można umówić wizyty sprzed więcej niż 1 roku";
       }
     }
+
+    // Validate phone number for new patients
+    if (appointmentData.visitType === "first-time") {
+      if (!appointmentData.newPatientPhone || appointmentData.newPatientPhone.trim() === "") {
+        errors.phone = "Numer telefonu jest wymagany dla nowych pacjentów";
+      } else {
+        const phoneError = validatePhone(appointmentData.newPatientPhone);
+        if (phoneError) {
+          errors.phone = phoneError;
+        }
+      }
+    }
     
     return errors;
   };
@@ -202,8 +357,9 @@ function AppointmentFormModal({
     const { name, value, type, checked } = e.target;
     
     if (name === "newPatientPhone") {
-      // Only allow numbers and limit to 9 characters
-      const numbersOnly = value.replace(/\D/g, "").slice(0, 9);
+      // Get current country for max length validation
+      const currentCountry = phoneCountryCodes.find(c => c.code === appointmentData.newPatientPhoneCode) || phoneCountryCodes[0];
+      const numbersOnly = value.replace(/\D/g, "").slice(0, currentCountry.maxLength);
       setAppointmentData(prev => ({
         ...prev,
         [name]: numbersOnly
@@ -227,6 +383,28 @@ function AppointmentFormModal({
         [name]: type === "checkbox" ? checked : value
       }));
     }
+  };
+
+  // Handle phone code change
+  const handlePhoneCodeChange = (newCode) => {
+    setAppointmentData(prev => ({
+      ...prev,
+      newPatientPhoneCode: newCode
+    }));
+    
+    // Clear phone number if it doesn't match new country's length
+    const newCountry = phoneCountryCodes.find(c => c.code === newCode);
+    if (newCountry && appointmentData.newPatientPhone) {
+      const currentPhone = appointmentData.newPatientPhone;
+      if (currentPhone.length !== newCountry.maxLength) {
+        setAppointmentData(prev => ({
+          ...prev,
+          newPatientPhone: ""
+        }));
+      }
+    }
+    
+    setPhoneDropdownOpen(false);
   };
 
   // Fetch doctor services when a doctor is selected
@@ -411,7 +589,9 @@ function AppointmentFormModal({
   const isNewPatientValid = isFirstTimeVisit && 
     appointmentData.newPatientFirstName.trim() !== "" && 
     appointmentData.newPatientLastName.trim() !== "" &&
-    appointmentData.newPatientSex.trim() !== "";
+    appointmentData.newPatientSex.trim() !== "" &&
+    appointmentData.newPatientPhone.trim() !== "" &&
+    validatePhone(appointmentData.newPatientPhone) === "";
 
   const canProceedToNextStep = () => {
     if (workflowOrder === "appointmentFirst") {
@@ -748,15 +928,60 @@ function AppointmentFormModal({
                 )}
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Telefon</label>
-                <input
-                  type="tel"
-                  name="newPatientPhone"
-                  value={appointmentData.newPatientPhone}
-                  onChange={handleInputChange}
-                  className={`w-full p-2 border rounded-lg ${validationErrors.phone ? 'border-red-500' : ''}`}
-                  placeholder="Opcjonalny - 9 cyfr"
-                />
+                <label className="block text-sm text-gray-600 mb-1">Telefon*</label>
+                <div className="flex">
+                  {/* Custom Country Code Dropdown */}
+                  <div className="relative w-24 phone-dropdown">
+                    <button
+                      type="button"
+                      onClick={() => setPhoneDropdownOpen(!phoneDropdownOpen)}
+                      className="w-full h-[42px] px-3 border border-gray-300 rounded-l-md border-r-0 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
+                    >
+                                             <span className="flex items-center">
+                         <span className="mr-1">
+                           <FlagIcon countryCode={phoneCountryCodes.find(c => c.code === appointmentData.newPatientPhoneCode)?.flag || "PL"} />
+                         </span>
+                         <span className="text-xs">{appointmentData.newPatientPhoneCode}</span>
+                       </span>
+                      <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    {/* Dropdown Options */}
+                    {phoneDropdownOpen && (
+                      <div className="absolute top-full left-0 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
+                        {phoneCountryCodes.map((country) => (
+                                                     <button
+                             key={country.code}
+                             type="button"
+                             onClick={() => handlePhoneCodeChange(country.code)}
+                             className={`w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center ${
+                               appointmentData.newPatientPhoneCode === country.code ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                             }`}
+                           >
+                             <span className="mr-2">
+                               <FlagIcon countryCode={country.flag} />
+                             </span>
+                             <span className="mr-2">{country.code}</span>
+                             <span className="text-xs text-gray-500">{country.country}</span>
+                           </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Phone Number Input */}
+                  <input
+                    type="tel"
+                    name="newPatientPhone"
+                    value={appointmentData.newPatientPhone}
+                    onChange={handleInputChange}
+                    className={`flex-1 h-[42px] px-3 border border-gray-300 rounded-r-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${validationErrors.phone ? 'border-red-500' : ''}`}
+                    placeholder={`Wprowadź ${phoneCountryCodes.find(c => c.code === appointmentData.newPatientPhoneCode)?.maxLength || 9} cyfr`}
+                    maxLength={phoneCountryCodes.find(c => c.code === appointmentData.newPatientPhoneCode)?.maxLength || 9}
+                  />
+                </div>
                 {validationErrors.phone && (
                   <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
                 )}
@@ -1348,7 +1573,15 @@ function AppointmentFormModal({
         appointmentSubmissionData.firstName = appointmentData.newPatientFirstName;
         appointmentSubmissionData.lastName = appointmentData.newPatientLastName;
         appointmentSubmissionData.email = appointmentData.newPatientEmail || "";
-        appointmentSubmissionData.phone = appointmentData.newPatientPhone;
+        
+        // Phone fields for backend - sending all three required fields:
+        // 1. phone: full phone number (code + number) - e.g., "+48123456789"
+        // 2. phoneCode: just the country code - e.g., "+48"
+        // 3. mobileNumber: just the number without code - e.g., "123456789"
+        appointmentSubmissionData.phone = appointmentData.newPatientPhoneCode + appointmentData.newPatientPhone;
+        appointmentSubmissionData.phoneCode = appointmentData.newPatientPhoneCode;
+        appointmentSubmissionData.mobileNumber = appointmentData.newPatientPhone;
+        
         appointmentSubmissionData.dob = appointmentData.newPatientDateOfBirth;
         appointmentSubmissionData.sex = appointmentData.newPatientSex;
         appointmentSubmissionData.pesel = appointmentData.newPatientPesel;
@@ -1374,6 +1607,11 @@ function AppointmentFormModal({
       appointmentSubmissionData.patientSource = appointmentData.patientSource || "";
 
       console.log("Appointment data to submit:", appointmentSubmissionData);
+      console.log("Phone fields being sent to backend:", {
+        phone: appointmentSubmissionData.phone,
+        phoneCode: appointmentSubmissionData.phoneCode,
+        mobileNumber: appointmentSubmissionData.mobileNumber
+      });
       
       // Use the new reception appointment API
       onComplete(appointmentSubmissionData);
@@ -1410,6 +1648,20 @@ function AppointmentFormModal({
     
     return duration;
   };
+
+  // Close phone dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (phoneDropdownOpen && !event.target.closest(".phone-dropdown")) {
+        setPhoneDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [phoneDropdownOpen]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

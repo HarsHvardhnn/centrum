@@ -140,8 +140,8 @@ const DemographicsForm = ({
   
 
 
-  // Phone country codes with validation
-  const phoneCountryCodes = externalPhoneCountryCodes || [
+  // Phone country codes with validation - Using SVG flags for better compatibility
+  const phoneCountryCodes = [
     { code: "+48", country: "Polska", flag: <FlagIcon countryCode="PL" />, maxLength: 9, default: true },
     { code: "+380", country: "Ukraina", flag: <FlagIcon countryCode="UA" />, maxLength: 9 },
     { code: "+49", country: "Niemcy", flag: <FlagIcon countryCode="DE" />, maxLength: 11 },
@@ -153,6 +153,8 @@ const DemographicsForm = ({
     { code: "+420", country: "Czechy", flag: <FlagIcon countryCode="CZ" />, maxLength: 9 },
     { code: "+1", country: "USA", flag: <FlagIcon countryCode="US" />, maxLength: 10 }
   ];
+
+
 
   // Get current phone code from form data, external props, or default to +48
   const currentPhoneCode = formData.phoneCode || selectedPhoneCode || "+48";
@@ -171,6 +173,8 @@ const DemographicsForm = ({
       currentPhoneCode 
     });
   }, [currentPhoneCode, formData.mobileNumber, formData.phone]);
+
+
 
   // Monitor form data changes for debugging
   useEffect(() => {

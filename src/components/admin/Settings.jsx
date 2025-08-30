@@ -29,13 +29,14 @@ export default function UserManagement() {
   // Phone country codes with validation
   const phoneCountryCodes = [
     { code: "+48", country: "Polska", flag: "🇵🇱", maxLength: 9, default: true },
-    { code: "+49", country: "Germany", flag: "🇩🇪", maxLength: 11 },
-    { code: "+44", country: "United Kingdom", flag: "🇬🇧", maxLength: 10 },
-    { code: "+34", country: "Spain", flag: "🇪🇸", maxLength: 9 },
-    { code: "+33", country: "France", flag: "🇫🇷", maxLength: 9 },
+    { code: "+380", country: "Ukraina", flag: "🇺🇦", maxLength: 9 },
+    { code: "+49", country: "Niemcy", flag: "🇩🇪", maxLength: 11 },
+    { code: "+44", country: "Wielka Brytania", flag: "🇬🇧", maxLength: 10 },
+    { code: "+34", country: "Hiszpania", flag: "🇪🇸", maxLength: 9 },
+    { code: "+33", country: "Francja", flag: "🇫🇷", maxLength: 9 },
     { code: "+43", country: "Austria", flag: "🇦🇹", maxLength: 10 },
-    { code: "+39", country: "Italy", flag: "🇮🇹", maxLength: 10 },
-    { code: "+420", country: "Czech Republic", flag: "🇨🇿", maxLength: 9 },
+    { code: "+39", country: "Włochy", flag: "🇮🇹", maxLength: 10 },
+    { code: "+420", country: "Czechy", flag: "🇨🇿", maxLength: 9 },
     { code: "+1", country: "USA", flag: "🇺🇸", maxLength: 10 }
   ];
 
@@ -1202,6 +1203,12 @@ function PatientStepFormWrapper({
 
     if (currentSubStep === subStepTitles.length - 1) {
       console.log("Settings - Submitting form data:", formData);
+      console.log("Settings - Contact person phone data:", {
+        contactPerson1PhoneCode: formData.contactPerson1PhoneCode,
+        contactPerson1Phone: formData.contactPerson1Phone,
+        contactPerson2PhoneCode: formData.contactPerson2PhoneCode,
+        contactPerson2Phone: formData.contactPerson2Phone
+      });
       handleAddPatient(formData);
     } else {
       goToSubStep(currentSubStep + 1);

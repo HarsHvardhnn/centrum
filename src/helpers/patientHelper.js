@@ -13,6 +13,13 @@ const patientService = {
    */
   createPatient: async (patientData) => {
     try {
+      console.log("Patient Helper - Received data:", {
+        contactPerson1PhoneCode: patientData.contactPerson1PhoneCode,
+        contactPerson1Phone: patientData.contactPerson1Phone,
+        contactPerson2PhoneCode: patientData.contactPerson2PhoneCode,
+        contactPerson2Phone: patientData.contactPerson2Phone
+      });
+      
       const formData = new FormData();
 
       // Helper function to append only if value exists and is not null/undefined
@@ -70,14 +77,22 @@ const patientService = {
       appendIfExists("contactPerson1Name", patientData.contactPerson1Name);
       appendIfExists("contactPerson1PhoneCode", patientData.contactPerson1PhoneCode);
       appendIfExists("contactPerson1Phone", patientData.contactPerson1Phone);
-      appendIfExists("contactPerson1PhoneFull", patientData.contactPerson1PhoneCode + patientData.contactPerson1Phone);
+      // Only append phone full if both code and phone number exist
+      if (patientData.contactPerson1PhoneCode && patientData.contactPerson1Phone) {
+        formData.append("contactPerson1PhoneFull", patientData.contactPerson1PhoneCode + patientData.contactPerson1Phone);
+        console.log("Contact Person 1 Phone Full:", patientData.contactPerson1PhoneCode + patientData.contactPerson1Phone);
+      }
       appendIfExists("contactPerson1Address", patientData.contactPerson1Address);
       appendIfExists("contactPerson1Pesel", patientData.contactPerson1Pesel);
       appendIfExists("contactPerson1Relationship", patientData.contactPerson1Relationship);
       appendIfExists("contactPerson2Name", patientData.contactPerson2Name);
       appendIfExists("contactPerson2PhoneCode", patientData.contactPerson2PhoneCode);
       appendIfExists("contactPerson2Phone", patientData.contactPerson2Phone);
-      appendIfExists("contactPerson2PhoneFull", patientData.contactPerson2PhoneCode + patientData.contactPerson2Phone);
+      // Only append phone full if both code and phone number exist
+      if (patientData.contactPerson2PhoneCode && patientData.contactPerson2Phone) {
+        formData.append("contactPerson2PhoneFull", patientData.contactPerson2PhoneCode + patientData.contactPerson2Phone);
+        console.log("Contact Person 2 Phone Full:", patientData.contactPerson2PhoneCode + patientData.contactPerson2Phone);
+      }
       appendIfExists("contactPerson2Address", patientData.contactPerson2Address);
       appendIfExists("contactPerson2Pesel", patientData.contactPerson2Pesel);
       appendIfExists("contactPerson2Relationship", patientData.contactPerson2Relationship);
