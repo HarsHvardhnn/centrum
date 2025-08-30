@@ -55,9 +55,9 @@ function AppointmentFormModal({
     visitType: "",
     isEmergency: false,
     receptionistNotes: "",
-    // Custom time override fields
-    customStartTime: "",
-    customEndTime: "",
+         // Custom time override fields
+     customStartTime: "",
+     customEndTime: "",
     // Slot selection field
     selectedSlot: null,
   });
@@ -93,7 +93,8 @@ function AppointmentFormModal({
       calculatedDuration = calculateDurationFromTime();
     }
     
-    if (calculatedDuration && calculatedDuration > 0 && !appointmentData.customDuration) {
+    // Always update duration when we have a valid calculation, regardless of previous customDuration
+    if (calculatedDuration && calculatedDuration > 0) {
       setAppointmentData(prev => ({
         ...prev,
         customDuration: calculatedDuration
@@ -154,11 +155,19 @@ function AppointmentFormModal({
     // Validate custom time if provided
     if (appointmentData.customStartTime && appointmentData.customStartTime.trim() !== "") {
       if (appointmentData.customEndTime && appointmentData.customEndTime.trim() !== "") {
-        // If both start and end time are provided, validate that end is after start
-        const start = new Date(`2000-01-01T${appointmentData.customStartTime}`);
-        const end = new Date(`2000-01-01T${appointmentData.customEndTime}`);
+                 // If both start and end time are provided, validate that end is after start
+         // HTML time input already provides 24-hour format
+         const start = new Date(`2000-01-01T${appointmentData.customStartTime}`);
+         const end = new Date(`2000-01-01T${appointmentData.customEndTime}`);
+        
         if (end <= start) {
           errors.customTime = "Czas zakończenia musi być po czasie rozpoczęcia";
+        }
+        
+        // Duration should be reasonable (not too long)
+        const duration = Math.round((end - start) / 60000);
+        if (duration > 480) { // 8 hours max
+          errors.customTime = "Czas trwania wizyty nie może przekraczać 8 godzin";
         }
       }
     }
@@ -611,39 +620,40 @@ function AppointmentFormModal({
               <strong>Uwaga:</strong> Możesz wybrać dostępny termin z listy powyżej LUB ustawić własny termin poniżej. 
               Nie możesz używać obu opcji jednocześnie.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Czas rozpoczęcia
-                </label>
-                <input
-                  type="time"
-                  name="customStartTime"
-                  value={appointmentData.customStartTime || ""}
-                  onChange={handleCustomTimeChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={appointmentData.selectedSlot !== null}
-                  placeholder="HH:MM"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Czas zakończenia (opcjonalny)
-                </label>
-                <input
-                  type="time"
-                  name="customEndTime"
-                  value={appointmentData.customEndTime || ""}
-                  onChange={handleCustomTimeChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={appointmentData.selectedSlot !== null}
-                  placeholder="HH:MM"
-                />
-              </div>
-            </div>
-            <p className="text-xs text-blue-600 mt-2">
-              Ustaw dowolny termin - możesz nadpisać istniejące wizyty lub umówić w niestandardowym czasie
-            </p>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                   Czas rozpoczęcia
+                 </label>
+                 <input
+                   type="time"
+                   name="customStartTime"
+                   value={appointmentData.customStartTime || ""}
+                   onChange={handleCustomTimeChange}
+                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                   disabled={appointmentData.selectedSlot !== null}
+                   placeholder="HH:MM"
+                 />
+               </div>
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                   Czas zakończenia (opcjonalny)
+                 </label>
+                 <input
+                   type="time"
+                   name="customEndTime"
+                   value={appointmentData.customEndTime || ""}
+                   onChange={handleCustomTimeChange}
+                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                   disabled={appointmentData.selectedSlot !== null}
+                   placeholder="HH:MM"
+                 />
+               </div>
+             </div>
+                         <p className="text-xs text-blue-600 mt-2">
+               Ustaw dowolny termin - możesz nadpisać istniejące wizyty lub umówić w niestandardowym czasie. 
+               <strong>Uwaga:</strong> Użyj wbudowanego selektora czasu (AM/PM jest automatycznie obsługiwane).
+             </p>
             {appointmentData.customStartTime && appointmentData.customEndTime && validateForm().customTime && (
               <p className="text-red-500 text-xs mt-2">
                 {validateForm().customTime}
@@ -1004,12 +1014,12 @@ function AppointmentFormModal({
               <p className="text-sm text-green-800">
                 <strong>✓ Automatycznie obliczony czas trwania:</strong> {appointmentData.customDuration || 0} minut
               </p>
-              <p className="text-xs text-green-700 mt-1">
-                {appointmentData.selectedSlot 
-                  ? `Na podstawie wybranego terminu: ${appointmentData.selectedSlot.startTime} - ${appointmentData.selectedSlot.endTime}`
-                  : `Na podstawie wybranego czasu: ${appointmentData.customStartTime} - ${appointmentData.customEndTime}`
-                }
-              </p>
+                                               <p className="text-xs text-green-700 mt-1">
+                   {appointmentData.selectedSlot 
+                     ? `Na podstawie wybranego terminu: ${appointmentData.selectedSlot.startTime} - ${appointmentData.selectedSlot.endTime}`
+                     : `Na podstawie wybranego czasu: ${appointmentData.customStartTime} - ${appointmentData.customEndTime}`
+                   }
+                 </p>
             </div>
           ) : null}
           
@@ -1171,15 +1181,15 @@ function AppointmentFormModal({
             <div>
               <span className="font-medium">Data:</span> {appointmentData.selectedDate}
             </div>
-            <div>
-              <span className="font-medium">Czas:</span> {
-                appointmentData.selectedSlot 
-                  ? `${appointmentData.selectedSlot.startTime} - ${appointmentData.selectedSlot.endTime} (wybrany termin)`
-                  : appointmentData.customStartTime 
-                    ? `${appointmentData.customStartTime}${appointmentData.customEndTime ? ` - ${appointmentData.customEndTime}` : ''} (własny termin)`
-                    : "Nie wybrano"
-              }
-            </div>
+                         <div>
+               <span className="font-medium">Czas:</span> {
+                 appointmentData.selectedSlot 
+                   ? `${appointmentData.selectedSlot.startTime} - ${appointmentData.selectedSlot.endTime} (wybrany termin)`
+                   : appointmentData.customStartTime 
+                     ? `${appointmentData.customStartTime}${appointmentData.customEndTime ? ` - ${appointmentData.customEndTime}` : ''} (własny termin)`
+                     : "Nie wybrano"
+               }
+             </div>
             <div>
               <span className="font-medium">Lekarz:</span> {appointmentData.selectedDoctor?.name || "Nie wybrano"}
             </div>
@@ -1246,10 +1256,11 @@ function AppointmentFormModal({
         startTime = appointmentData.customStartTime;
         if (appointmentData.customEndTime && appointmentData.customEndTime.trim() !== "") {
           endTime = appointmentData.customEndTime;
-          // Calculate duration from custom times
-          const start = new Date(`2000-01-01T${startTime}`);
-          const end = new Date(`2000-01-01T${endTime}`);
-          duration = Math.round((end - start) / 60000); // Convert to minutes
+                     // Calculate duration from custom times
+           // HTML time input already provides 24-hour format
+           const start = new Date(`2000-01-01T${appointmentData.customStartTime}`);
+           const end = new Date(`2000-01-01T${appointmentData.customEndTime}`);
+           duration = Math.round((end - start) / 60000); // Convert to minutes
         } else {
           // If only start time is provided, use custom duration or default
           duration = appointmentData.customDuration || 30;
@@ -1378,14 +1389,26 @@ function AppointmentFormModal({
       total + ((parseFloat(service.price) || 0) * (service.quantity || 1)), 0);
   };
 
+  // Helper function to convert 12-hour time to 24-hour time (for display purposes)
+  const convertTo24Hour = (time) => {
+    if (!time) return "";
+    // HTML time input already provides 24-hour format, so just return as is
+    return time;
+  };
+
   // Helper function to calculate duration from custom start and end times
   const calculateDurationFromTime = () => {
     if (!appointmentData.customStartTime || !appointmentData.customEndTime) {
       return 0; // No custom time selected
     }
+    
+    // HTML time input already provides 24-hour format, so use directly
     const start = new Date(`2000-01-01T${appointmentData.customStartTime}`);
     const end = new Date(`2000-01-01T${appointmentData.customEndTime}`);
-    return Math.round((end - start) / 60000); // Convert to minutes
+    
+    const duration = Math.round((end - start) / 60000); // Convert to minutes
+    
+    return duration;
   };
 
   return (
