@@ -412,6 +412,10 @@ const ConsultationForm = ({
                   }));
                   setIsEditingTime(false);
                   toast.success("Termin wizyty został zaktualizowany");
+                  // Reload the page after successful update
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 1500);
                 }
               } catch (error) {
                 console.error("Błąd podczas aktualizacji terminu:", error);

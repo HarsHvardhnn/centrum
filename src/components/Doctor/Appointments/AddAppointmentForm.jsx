@@ -27,7 +27,8 @@ function AppointmentFormModal({
   availableServices = [], 
   isLoadingServices = false,
   isReceptionistMode = false,
-  workflowOrder = "patientFirst" // "patientFirst" or "appointmentFirst"
+  workflowOrder = "patientFirst", // "patientFirst" or "appointmentFirst"
+  allowPastDates = false // Whether to allow selecting dates in the past
 }) {
   const { services: contextServices, loading: contextLoading } = useServices();
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -62,7 +63,7 @@ function AppointmentFormModal({
     newPatientPesel: "",
     // Enhanced appointment creation fields for receptionist override
     customDuration: null,
-    isBackdated: false,
+    isBackdated: allowPastDates, // Set to true if allowPastDates is true
     overrideConflicts: false,
     duration: 30, // Default duration in minutes
     // Metadata fields
@@ -757,7 +758,7 @@ function AppointmentFormModal({
                 value={appointmentData.selectedDate}
                 onChange={handleDateChange}
                 className="w-full md:w-1/2 p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
-                min={appointmentData.isBackdated ? undefined : new Date().toISOString().split('T')[0]}
+                min={undefined} /* Removed min date restriction to allow selecting previous dates */
               />
               {appointmentData.isBackdated && (
                 <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
