@@ -1,8 +1,10 @@
 // ConsultationForm.jsx
 import React, { useEffect, useState, useRef } from "react";
-import { ChevronDown, Upload, Trash2, Search } from "lucide-react";
+import { ChevronDown, Upload, Trash2, Search, Clock } from "lucide-react";
 import FileUploadArea from "./FileUploadArea";
 import FileListItem from "./FileListItem";
+import { toast } from "sonner";
+import { apiCaller } from "../../../../utils/axiosInstance";
 
 const ConsultationForm = ({
   patientData,
@@ -15,6 +17,10 @@ const ConsultationForm = ({
   appointmentId,
   className = "",
 }) => {
+  const [isEditingTime, setIsEditingTime] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [tempDate, setTempDate] = useState("");
+  const [tempTime, setTempTime] = useState("");
   //("consulting doctor", uploadedFiles);
 
   // Stan dla rozwijanej listy z wyszukiwaniem
@@ -59,6 +65,7 @@ const ConsultationForm = ({
               ...prev,
               date: formattedDate,
             }));
+            setTempDate(formattedDate);
           }
         }
       } catch (error) {
@@ -95,8 +102,11 @@ const ConsultationForm = ({
                 ...prev,
                 time: formattedTime,
               }));
+              setTempTime(formattedTime);
             }
           }
+        } else {
+          setTempTime(consultationData.time);
         }
       } catch (error) {
         console.error("Błąd formatowania czasu:", error);
@@ -255,22 +265,54 @@ const ConsultationForm = ({
 
         <div>
           <label className="block text-sm text-gray-600 mb-1">Data</label>
-          <input
-            type="date"
-            value={consultationData.date || ""}
-            onChange={(e) => handleConsultationChange("date", e.target.value)}
-            className="w-full p-2.5 border border-gray-200 rounded-lg"
-          />
+          {isEditingTime ? (
+            <input
+              type="date"
+              value={tempDate || ""}
+              onChange={(e) => setTempDate(e.target.value)}
+              className="w-full p-2.5 border border-teal-300 rounded-lg"
+            />
+          ) : (
+            <div className="flex items-center">
+              <input
+                type="date"
+                value={consultationData.date || ""}
+                disabled
+                className="w-full p-2.5 border border-gray-200 rounded-lg bg-gray-50"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditingTime(true);
+                  setTempDate(consultationData.date || "");
+                  setTempTime(consultationData.time || "");
+                }}
+                className="ml-2 p-2 text-teal-600 hover:text-teal-800"
+                title="Edytuj termin"
+              >
+                <Clock size={18} />
+              </button>
+            </div>
+          )}
         </div>
 
         <div>
           <label className="block text-sm text-gray-600 mb-1">Godzina</label>
-          <input
-            type="time"
-            value={consultationData.time || ""}
-            onChange={(e) => handleConsultationChange("time", e.target.value)}
-            className="w-full p-2.5 border border-gray-200 rounded-lg"
-          />
+          {isEditingTime ? (
+            <input
+              type="time"
+              value={tempTime || ""}
+              onChange={(e) => setTempTime(e.target.value)}
+              className="w-full p-2.5 border border-teal-300 rounded-lg"
+            />
+          ) : (
+            <input
+              type="time"
+              value={consultationData.time || ""}
+              disabled
+              className="w-full p-2.5 border border-gray-200 rounded-lg bg-gray-50"
+            />
+          )}
         </div>
       </div>
 
@@ -330,6 +372,62 @@ const ConsultationForm = ({
         ></textarea>
       </div>
 
+      {/* Przycisk zapisywania zmian terminu */}
+      {isEditingTime && (
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setIsEditingTime(false)}
+            className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg mr-2 hover:bg-gray-200"
+            disabled={isSaving}
+          >
+            Anuluj
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              if (!tempDate || !tempTime) {
+                toast.error("Data i godzina są wymagane");
+                return;
+              }
+              
+              try {
+                setIsSaving(true);
+                
+                const response = await apiCaller(
+                  "PATCH",
+                  `/appointments/${appointmentId}/time`,
+                  {
+                    date: tempDate,
+                    startTime: tempTime,
+                    doctorId: consultationData.doctorId || consultationData.doctor_id
+                  }
+                );
+                
+                if (response && response.data) {
+                  setConsultationData(prev => ({
+                    ...prev,
+                    date: tempDate,
+                    time: tempTime
+                  }));
+                  setIsEditingTime(false);
+                  toast.success("Termin wizyty został zaktualizowany");
+                }
+              } catch (error) {
+                console.error("Błąd podczas aktualizacji terminu:", error);
+                toast.error(error.response?.data?.message || "Nie udało się zaktualizować terminu wizyty");
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+            className="px-4 py-2 text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isSaving}
+          >
+            {isSaving ? "Zapisywanie..." : "Zapisz zmiany"}
+          </button>
+        </div>
+      )}
+      
       {/* Międzynarodowy pacjent */}
       <div className="mt-6 flex items-center">
         <input
