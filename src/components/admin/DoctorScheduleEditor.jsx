@@ -14,6 +14,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
   // Schedule management states
   const [schedules, setSchedules] = useState([]);
   const [exceptions, setExceptions] = useState([]);
+  const [bookedAppointments, setBookedAppointments] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' or 'list'
@@ -47,8 +48,10 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
   // Modal states
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showExceptionModal, setShowExceptionModal] = useState(false);
+  const [showAppointmentDetailsModal, setShowAppointmentDetailsModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [editingException, setEditingException] = useState(null);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   // Exception types
   const exceptionTypes = [
@@ -77,9 +80,10 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
     console.log("doctorId truthy:", !!doctorId);
     
     if (doctorId) {
-      console.log("Calling fetchDoctorSchedule and fetchDoctorExceptions...");
+      console.log("Calling fetchDoctorSchedule, fetchDoctorExceptions, and fetchBookedAppointments...");
       fetchDoctorSchedule();
       fetchDoctorExceptions();
+      fetchBookedAppointments();
     } else {
       console.log("No doctorId provided, skipping data fetch");
     }
@@ -99,8 +103,30 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
 
       const response = await doctorService.getSchedule(doctorId, startDate, endDate);
       console.log("Schedule response:", response);
+      
       if (response.success) {
-        setSchedules(response.data || []);
+        // Process the data to ensure dates are correctly formatted
+        const processedSchedules = (response.data || []).map(schedule => {
+          // Log each schedule to help with debugging
+          console.log("Processing schedule:", {
+            id: schedule._id,
+            date: schedule.date,
+            timeBlocks: schedule.timeBlocks
+          });
+          
+          // Ensure date is properly formatted
+          if (typeof schedule.date === 'string' && schedule.date.includes('T')) {
+            // Extract just the date part from ISO string
+            const datePart = schedule.date.split('T')[0];
+            console.log(`Converted date from ${schedule.date} to ${datePart}`);
+            return { ...schedule, date: datePart };
+          }
+          
+          return schedule;
+        });
+        
+        console.log("Processed schedules:", processedSchedules);
+        setSchedules(processedSchedules);
       }
     } catch (err) {
       console.error("Error fetching doctor schedule:", err);
@@ -124,6 +150,27 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
       }
     } catch (err) {
       console.error("Error fetching doctor exceptions:", err);
+    }
+  };
+
+  const fetchBookedAppointments = async () => {
+    try {
+      console.log("Fetching booked appointments for doctor:", doctorId);
+      const startDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).toISOString().split('T')[0];
+      const endDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).toISOString().split('T')[0];
+
+      // Use the appointments API to get booked appointments
+      const response = await apiCaller(
+        "GET",
+        `/appointments/doctor/${doctorId}?startDate=${startDate}&endDate=${endDate}&status=all&page=1&limit=100`
+      );
+
+      console.log("Booked appointments response:", response);
+      if (response && response.data && response.data.data) {
+        setBookedAppointments(response.data.data.appointments || []);
+      }
+    } catch (err) {
+      console.error("Error fetching booked appointments:", err);
     }
   };
 
@@ -200,6 +247,18 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
     console.log("scheduleForm:", scheduleForm);
     console.log("doctorId:", doctorId);
     
+    // Check if date is in the past
+    const selectedDate = new Date(scheduleForm.date);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+      toast.error("Nie można dodać harmonogramu dla dat w przeszłości");
+      return;
+    }
+    
     try {
       showLoader();
       const scheduleData = {
@@ -240,6 +299,18 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
     console.log("=== handleSaveException called ===");
     console.log("exceptionForm:", exceptionForm);
     console.log("doctorId:", doctorId);
+    
+    // Check if date is in the past
+    const selectedDate = new Date(exceptionForm.date);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+      toast.error("Nie można dodać wyjątku dla dat w przeszłości");
+      return;
+    }
     
     try {
       showLoader();
@@ -350,8 +421,11 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
 
   // Reset forms
   const resetScheduleForm = () => {
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+    
     setScheduleForm({
-      date: new Date().toISOString().split('T')[0],
+      date: today,
       timeBlocks: [{ startTime: "09:00", endTime: "17:00", isActive: true }],
       notes: ""
     });
@@ -359,8 +433,11 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
   };
 
   const resetExceptionForm = () => {
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+    
     setExceptionForm({
-      date: new Date().toISOString().split('T')[0],
+      date: today,
       type: "vacation",
       title: "",
       description: "",
@@ -643,18 +720,114 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
 
   // Get schedule for a specific date
   const getScheduleForDate = (date) => {
+    // Format the date as YYYY-MM-DD
     const dateStr = date.getFullYear() + '-' + 
       String(date.getMonth() + 1).padStart(2, '0') + '-' + 
       String(date.getDate()).padStart(2, '0');
-    return schedules.find(schedule => schedule.date === dateStr);
+    
+    // Check for exact match or ISO date format match
+    return schedules.find(schedule => {
+      // Handle different date formats
+      if (schedule.date === dateStr) return true;
+      
+      // Handle ISO date string (e.g. "2025-08-14T00:00:00.000Z")
+      if (typeof schedule.date === 'string' && schedule.date.includes('T')) {
+        const scheduleDateStr = schedule.date.split('T')[0];
+        return scheduleDateStr === dateStr;
+      }
+      
+      // Handle Date object
+      if (schedule.date instanceof Date) {
+        const scheduleYear = schedule.date.getFullYear();
+        const scheduleMonth = schedule.date.getMonth() + 1;
+        const scheduleDay = schedule.date.getDate();
+        const formattedScheduleDate = `${scheduleYear}-${String(scheduleMonth).padStart(2, '0')}-${String(scheduleDay).padStart(2, '0')}`;
+        return formattedScheduleDate === dateStr;
+      }
+      
+      return false;
+    });
   };
 
   // Get exception for a specific date
   const getExceptionForDate = (date) => {
+    // Format the date as YYYY-MM-DD
     const dateStr = date.getFullYear() + '-' + 
       String(date.getMonth() + 1).padStart(2, '0') + '-' + 
       String(date.getDate()).padStart(2, '0');
-    return exceptions.find(exception => exception.date === dateStr);
+    
+    // Check for exact match or ISO date format match
+    return exceptions.find(exception => {
+      // Handle different date formats
+      if (exception.date === dateStr) return true;
+      
+      // Handle ISO date string (e.g. "2025-08-14T00:00:00.000Z")
+      if (typeof exception.date === 'string' && exception.date.includes('T')) {
+        const exceptionDateStr = exception.date.split('T')[0];
+        return exceptionDateStr === dateStr;
+      }
+      
+      // Handle Date object
+      if (exception.date instanceof Date) {
+        const exceptionYear = exception.date.getFullYear();
+        const exceptionMonth = exception.date.getMonth() + 1;
+        const exceptionDay = exception.date.getDate();
+        const formattedExceptionDate = `${exceptionYear}-${String(exceptionMonth).padStart(2, '0')}-${String(exceptionDay).padStart(2, '0')}`;
+        return formattedExceptionDate === dateStr;
+      }
+      
+      return false;
+    });
+  };
+  
+  // Get booked appointments for a specific date
+  const getAppointmentsForDate = (date) => {
+    // Format the date as YYYY-MM-DD
+    const dateStr = date.getFullYear() + '-' + 
+      String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(date.getDate()).padStart(2, '0');
+    
+    return bookedAppointments.filter(appointment => {
+      // Handle different date formats
+      if (appointment.date === dateStr) return true;
+      
+      // Handle ISO date string (e.g. "2025-08-14T00:00:00.000Z")
+      if (typeof appointment.date === 'string' && appointment.date.includes('T')) {
+        const appointmentDateStr = appointment.date.split('T')[0];
+        return appointmentDateStr === dateStr;
+      }
+      
+      // Check appointmentDate field if present
+      if (appointment.appointmentDate) {
+        if (typeof appointment.appointmentDate === 'string') {
+          const appointmentDateStr = appointment.appointmentDate.includes('T') 
+            ? appointment.appointmentDate.split('T')[0] 
+            : appointment.appointmentDate;
+          return appointmentDateStr === dateStr;
+        }
+      }
+      
+      // Handle Date object
+      if (appointment.date instanceof Date) {
+        const appointmentYear = appointment.date.getFullYear();
+        const appointmentMonth = appointment.date.getMonth() + 1;
+        const appointmentDay = appointment.date.getDate();
+        const formattedAppointmentDate = `${appointmentYear}-${String(appointmentMonth).padStart(2, '0')}-${String(appointmentDay).padStart(2, '0')}`;
+        return formattedAppointmentDate === dateStr;
+      }
+      
+      return false;
+    });
+  };
+  
+  // Format time for display
+  const formatTime = (timeString) => {
+    if (!timeString) return '';
+    // If timeString includes T (ISO format), extract the time part
+    if (timeString.includes('T')) {
+      timeString = timeString.split('T')[1].substring(0, 5);
+    }
+    return timeString;
   };
 
   // Check if date is today
@@ -667,6 +840,20 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
   const isCurrentMonth = (date) => {
     return date.getMonth() === currentMonth.getMonth() && 
            date.getFullYear() === currentMonth.getFullYear();
+  };
+  
+  // Check if date is in the past
+  const isPastDate = (date) => {
+    // Create today's date with time set to 00:00:00 for fair comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Clone the input date to avoid modifying it
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    
+    // Compare dates
+    return compareDate < today;
   };
 
   const renderContent = () => {
@@ -809,6 +996,26 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
                 →
               </button>
             </div>
+            
+            {/* Calendar Legend */}
+            <div className="flex flex-wrap gap-2 p-2 bg-gray-50 border-b text-xs">
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-green-100 rounded mr-1"></div>
+                <span>Bloki harmonogramu</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-blue-100 rounded mr-1"></div>
+                <span>Zarezerwowane wizyty</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-red-100 rounded mr-1"></div>
+                <span>Wyjątki (nieobecności)</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-green-50 rounded mr-1"></div>
+                <span>Dostępne terminy</span>
+              </div>
+            </div>
 
             {/* Calendar Grid */}
             <div className="grid grid-cols-7 gap-px bg-gray-200">
@@ -820,36 +1027,101 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
               ))}
 
               {/* Calendar days */}
-              {generateCalendarDays().map((date, index) => {
+                              {generateCalendarDays().map((date, index) => {
+                // Format date for debugging
+                const debugDateStr = date.getFullYear() + '-' + 
+                  String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                  String(date.getDate()).padStart(2, '0');
+                
+                // Get schedule and log for debugging
                 const schedule = getScheduleForDate(date);
+                if (schedule) {
+                  console.log(`Found schedule for date ${debugDateStr}:`, schedule);
+                }
+                
                 const exception = getExceptionForDate(date);
                 const isCurrentMonthDay = isCurrentMonth(date);
                 const isTodayDate = isToday(date);
 
+                // Check if date is in the past
+                const isPast = isPastDate(date);
+                
                 return (
                   <div
                     key={index}
-                    className={`min-h-[100px] p-2 bg-white ${
-                      !isCurrentMonthDay ? 'text-gray-400' : 'text-gray-900'
+                    className={`min-h-[120px] p-2 ${
+                      isPast ? 'bg-gray-100' : 'bg-white'
+                    } ${
+                      !isCurrentMonthDay ? 'text-gray-400' : isPast ? 'text-gray-500' : 'text-gray-900'
                     } ${isTodayDate ? 'bg-blue-50 border-2 border-blue-200' : ''}`}
                   >
                     <div className="text-sm font-medium mb-1">
                       {date.getDate()}
                     </div>
                     
+                    {/* Schedule info */}
                     {schedule && (
-                      <div className="text-xs bg-green-100 text-green-800 p-1 rounded mb-1">
-                        {schedule.timeBlocks.length} blok(ów)
+                      <div className="text-xs bg-green-100 text-green-800 p-1 rounded mb-1 flex justify-between">
+                        <span>{schedule.timeBlocks.length} blok(ów)</span>
+                        {isCurrentMonthDay && getAppointmentsForDate(date).length > 0 && (
+                          <span title="Ilość zarezerwowanych wizyt">🗓️ {getAppointmentsForDate(date).length}</span>
+                        )}
                       </div>
                     )}
                     
+                    {/* Exception info */}
                     {exception && (
-                      <div className="text-xs bg-red-100 text-red-800 p-1 rounded">
+                      <div className="text-xs bg-red-100 text-red-800 p-1 rounded mb-1">
                         {exception.title}
                       </div>
                     )}
                     
-                    {isCurrentMonthDay && (
+                    {/* Booked appointments */}
+                    {isCurrentMonthDay && getAppointmentsForDate(date).length > 0 && (
+                      <div className="mt-1 mb-1 max-h-[60px] overflow-y-auto">
+                        {getAppointmentsForDate(date).slice(0, 3).map((appointment, idx) => (
+                          <div 
+                            key={idx} 
+                            className="text-xs bg-blue-100 text-blue-800 p-1 rounded mb-1 flex justify-between cursor-pointer hover:bg-blue-200"
+                            title={`${appointment.patientName || 'Pacjent'} - Kliknij aby zobaczyć szczegóły`}
+                            onClick={() => {
+                              setSelectedAppointment(appointment);
+                              setShowAppointmentDetailsModal(true);
+                            }}
+                          >
+                            <span>{formatTime(appointment.startTime || appointment.time)}</span>
+                            <span>👤 {appointment.patientName ? appointment.patientName.split(' ')[0] : ''}</span>
+                          </div>
+                        ))}
+                        {getAppointmentsForDate(date).length > 3 && (
+                          <div className="text-xs text-gray-500 text-center">
+                            +{getAppointmentsForDate(date).length - 3} więcej
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Available slots */}
+                    {isCurrentMonthDay && schedule && (
+                      <div className="mt-1 mb-1 max-h-[60px] overflow-y-auto">
+                        {schedule.timeBlocks.slice(0, 2).map((block, idx) => (
+                          <div 
+                            key={idx} 
+                            className={`text-xs ${block.isActive ? 'bg-green-50 text-green-800' : 'bg-gray-100 text-gray-600'} p-1 rounded mb-1`}
+                          >
+                            {block.startTime} - {block.endTime}
+                          </div>
+                        ))}
+                        {schedule.timeBlocks.length > 2 && (
+                          <div className="text-xs text-gray-500 text-center">
+                            +{schedule.timeBlocks.length - 2} więcej
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Action buttons - only show for current and future dates */}
+                    {isCurrentMonthDay && !isPast && (
                       <div className="mt-1 space-y-1">
                         {schedule && (
                           <button
@@ -862,21 +1134,30 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
                             Edytuj
                           </button>
                         )}
-                                                 {!schedule && (
-                           <button
-                             onClick={() => {
-                               const dateStr = date.getFullYear() + '-' + 
-                                 String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-                                 String(date.getDate()).padStart(2, '0');
-                               console.log("Add schedule button clicked for date:", dateStr);
-                               setScheduleForm(prev => ({ ...prev, date: dateStr }));
-                               setShowScheduleModal(true);
-                             }}
-                             className="w-full text-xs bg-gray-500 text-white p-1 rounded hover:bg-gray-600"
-                           >
-                             Dodaj
-                           </button>
-                         )}
+                        {!schedule && (
+                          <button
+                            onClick={() => {
+                              const dateStr = date.getFullYear() + '-' + 
+                                String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                                String(date.getDate()).padStart(2, '0');
+                              console.log("Add schedule button clicked for date:", dateStr);
+                              setScheduleForm(prev => ({ ...prev, date: dateStr }));
+                              setShowScheduleModal(true);
+                            }}
+                            className="w-full text-xs bg-gray-500 text-white p-1 rounded hover:bg-gray-600"
+                          >
+                            Dodaj
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* For past dates, show a disabled indicator */}
+                    {isCurrentMonthDay && isPast && (
+                      <div className="mt-1">
+                        <div className="w-full text-xs bg-gray-300 text-gray-500 p-1 rounded text-center cursor-not-allowed">
+                          Data miniona
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1032,6 +1313,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
                 name="date"
                 value={scheduleForm.date}
                 onChange={handleScheduleFormChange}
+                min={new Date().toISOString().split('T')[0]} // Prevent selecting past dates
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500"
                 required
               />
@@ -1168,6 +1450,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
                 name="date"
                 value={exceptionForm.date}
                 onChange={handleExceptionFormChange}
+                min={new Date().toISOString().split('T')[0]} // Prevent selecting past dates
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-500"
                 required
               />
@@ -1303,6 +1586,90 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
       </div>
     </div>
   );
+  };
+
+  // Appointment Details Modal
+  const renderAppointmentDetailsModal = () => {
+    if (!selectedAppointment) return null;
+
+    // Format date for display
+    const formatDate = (dateString) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('pl-PL', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        weekday: 'long'
+      });
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">
+              Szczegóły Wizyty
+            </h2>
+            <button
+              onClick={() => {
+                setShowAppointmentDetailsModal(false);
+                setSelectedAppointment(null);
+              }}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X size={24} />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h3 className="font-medium text-lg text-blue-800 mb-2">
+                {selectedAppointment.patientName || 'Pacjent'}
+              </h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="font-medium">Data:</span> {formatDate(selectedAppointment.date || selectedAppointment.appointmentDate)}
+                </div>
+                <div>
+                  <span className="font-medium">Godzina:</span> {formatTime(selectedAppointment.startTime || selectedAppointment.time)}
+                  {selectedAppointment.endTime && ` - ${formatTime(selectedAppointment.endTime)}`}
+                </div>
+                <div>
+                  <span className="font-medium">Status:</span> {selectedAppointment.status || 'Zaplanowana'}
+                </div>
+                <div>
+                  <span className="font-medium">Typ:</span> {selectedAppointment.type || selectedAppointment.appointmentType || 'Standardowa'}
+                </div>
+                {selectedAppointment.service && (
+                  <div className="col-span-2">
+                    <span className="font-medium">Usługa:</span> {selectedAppointment.service}
+                  </div>
+                )}
+                {selectedAppointment.notes && (
+                  <div className="col-span-2">
+                    <span className="font-medium">Notatki:</span> {selectedAppointment.notes}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAppointmentDetailsModal(false);
+                  setSelectedAppointment(null);
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+              >
+                Zamknij
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Copy Schedule Modal
@@ -1545,6 +1912,12 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
             {renderCopyScheduleModal()}
           </div>
         )}
+        {showAppointmentDetailsModal && (
+          <div>
+            {console.log("=== Rendering appointment details modal in modal mode ===")}
+            {renderAppointmentDetailsModal()}
+          </div>
+        )}
       </div>
     );
   }
@@ -1572,6 +1945,12 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
               <div>
                 {console.log("=== Rendering copy schedule modal ===")}
                 {renderCopyScheduleModal()}
+              </div>
+            )}
+            {showAppointmentDetailsModal && (
+              <div>
+                {console.log("=== Rendering appointment details modal ===")}
+                {renderAppointmentDetailsModal()}
               </div>
             )}
           </div>
