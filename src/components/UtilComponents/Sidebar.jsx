@@ -14,7 +14,7 @@ import {
 } from "react-icons/fi";
 import { BsCalendarPlusFill } from "react-icons/bs";
 import { useUser } from "../../context/userContext";
-import { Calendar1, Shield, BarChart3 } from "lucide-react";
+import { Calendar1, Shield, BarChart3, Settings } from "lucide-react";
 
 const Sidebar = () => {
   const { user } = useUser();
@@ -176,17 +176,26 @@ const Sidebar = () => {
           <div className="border-t border-teal-100 my-1"></div>
 
           {user?.role === "admin" && (
-            <NavItem
-              icon={<Shield className="text-xl text-teal-400" />}
-              label="Kontrola dostępu IP"
-              to="/admin/ip-config"
-              isActive={currentPath === "/admin/ip-config"}
-              isEnabled={true}
-            />
+            <>
+              <NavItem
+                icon={<Shield className="text-xl text-teal-400" />}
+                label="Kontrola dostępu IP"
+                to="/admin/ip-config"
+                isActive={currentPath === "/admin/ip-config"}
+                isEnabled={true}
+              />
+              <NavItem
+                icon={<Settings className="text-xl text-teal-400" />}
+                label="Konfiguracja wizyt"
+                to="/admin/appointment-config"
+                isActive={currentPath === "/admin/appointment-config"}
+                isEnabled={true}
+              />
+            </>
           )}
 
             <NavItem
-              icon={<FiSettings className="text-xl text-teal-400" />}
+              icon={<Settings className="text-xl text-teal-400" />}
               label="Ustawienia"
               to={`/admin/accounts`}
               isActive={currentPath === "/admin/accounts"}
