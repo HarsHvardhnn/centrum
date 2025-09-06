@@ -1,4 +1,6 @@
 import React, {useEffect } from "react";
+import LoginScreen from "./components/Auth/AuthScreen";
+import LoginImage from "/images/new_login_wp.png";
 
 import { createBrowserRouter, Navigate, useLocation } from "react-router-dom";
 import UserLayout from "./UserLayout";
@@ -88,7 +90,7 @@ const routes = createBrowserRouter([
       // Login route disabled - redirecting to root
       {
         path: "/login",
-        element: <Navigate to="/" replace />,
+        element: <LoginScreen screenImg={LoginImage} isLogin={true} />,
       },
     ],
   },
