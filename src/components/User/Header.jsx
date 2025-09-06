@@ -419,7 +419,7 @@ const Header = () => {
                 <div className="absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 z-50">
                   
                   <Link
-                    to="/user/appointments"
+                    to="/appointments"
                     className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 ${
                       isActive("/user/appointments")
                         ? "text-teal-500 font-medium"
@@ -431,7 +431,7 @@ const Header = () => {
                     Moje wizyty
                   </Link>
                   <Link
-                    to="/user/details"
+                    to="/details"
                     className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 ${
                       isActive("/user/details")
                         ? "text-teal-500 font-medium"
@@ -443,7 +443,7 @@ const Header = () => {
                         Dokumentacja medyczna
                   </Link>
                   <Link
-                    to="/user/profile"
+                    to="/profile"
                     className={`flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100 ${
                       isActive("/user/profile")
                         ? "text-teal-500 font-medium"
