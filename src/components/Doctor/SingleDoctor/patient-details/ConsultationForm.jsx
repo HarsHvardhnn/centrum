@@ -316,6 +316,68 @@ const ConsultationForm = ({
         </div>
       </div>
 
+      {/* Przycisk zapisywania zmian terminu bezpośrednio pod polami daty */}
+      {isEditingTime && (
+        <div className="mt-3 mb-3 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setIsEditingTime(false)}
+            className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg mr-2 hover:bg-gray-200"
+            disabled={isSaving}
+          >
+            Anuluj
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              if (!tempDate || !tempTime) {
+                toast.error("Data i godzina są wymagane");
+                return;
+              }
+              
+              try {
+                setIsSaving(true);
+                
+                const response = await apiCaller(
+                  "PATCH",
+                  `/appointments/${appointmentId}/time`,
+                  {
+                    date: tempDate,
+                    startTime: tempTime,
+                    doctorId: consultationData.doctorId || consultationData.doctor_id
+                  }
+                );
+                
+                if (response && response.data) {
+                  setConsultationData(prev => ({
+                    ...prev,
+                    date: tempDate,
+                    time: tempTime
+                  }));
+                  setIsEditingTime(false);
+                  toast.success("Termin wizyty został zaktualizowany");
+                  // Reload the page after successful update
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 1500);
+                }
+              } catch (error) {
+                console.error("Błąd podczas aktualizacji terminu:", error);
+                toast.error(error.response?.data?.message || "Nie udało się zaktualizować terminu wizyty");
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+            className="px-4 py-2 text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isSaving}
+          >
+            <span className="inline-block -mt-0.5">
+              {isSaving ? "Zapisywanie..." : "Zapisz zmiany"}
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* Wywiad z pacjentem */}
       <div className="mt-6">
         <label className="block text-sm text-gray-600 mb-1">Wywiad z pacjentem</label>
@@ -372,65 +434,7 @@ const ConsultationForm = ({
         ></textarea>
       </div>
 
-      {/* Przycisk zapisywania zmian terminu */}
-      {isEditingTime && (
-        <div className="mt-4 flex justify-end">
-          <button
-            type="button"
-            onClick={() => setIsEditingTime(false)}
-            className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg mr-2 hover:bg-gray-200"
-            disabled={isSaving}
-          >
-            Anuluj
-          </button>
-          <button
-            type="button"
-            onClick={async () => {
-              if (!tempDate || !tempTime) {
-                toast.error("Data i godzina są wymagane");
-                return;
-              }
-              
-              try {
-                setIsSaving(true);
-                
-                const response = await apiCaller(
-                  "PATCH",
-                  `/appointments/${appointmentId}/time`,
-                  {
-                    date: tempDate,
-                    startTime: tempTime,
-                    doctorId: consultationData.doctorId || consultationData.doctor_id
-                  }
-                );
-                
-                if (response && response.data) {
-                  setConsultationData(prev => ({
-                    ...prev,
-                    date: tempDate,
-                    time: tempTime
-                  }));
-                  setIsEditingTime(false);
-                  toast.success("Termin wizyty został zaktualizowany");
-                  // Reload the page after successful update
-                  setTimeout(() => {
-                    window.location.reload();
-                  }, 1500);
-                }
-              } catch (error) {
-                console.error("Błąd podczas aktualizacji terminu:", error);
-                toast.error(error.response?.data?.message || "Nie udało się zaktualizować terminu wizyty");
-              } finally {
-                setIsSaving(false);
-              }
-            }}
-            className="px-4 py-2 text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={isSaving}
-          >
-            {isSaving ? "Zapisywanie..." : "Zapisz zmiany"}
-          </button>
-        </div>
-      )}
+
       
       {/* Międzynarodowy pacjent */}
       <div className="mt-6 flex items-center">

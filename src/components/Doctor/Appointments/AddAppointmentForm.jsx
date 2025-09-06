@@ -1231,10 +1231,9 @@ function AppointmentFormModal({
         <h3 className="text-lg font-medium mb-4">Opcje Recepcjonisty</h3>
         
         {/* Custom Duration */}
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+        {/* <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <h4 className="text-md font-medium text-blue-800 mb-3">Czas Trwania Wizyty</h4>
           
-          {/* Show calculated duration if available */}
           {(appointmentData.customStartTime && appointmentData.customEndTime) || appointmentData.selectedSlot ? (
             <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg">
               <p className="text-sm text-green-800">
@@ -1295,7 +1294,7 @@ function AppointmentFormModal({
               </select>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Override Options */}
         <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
@@ -1402,7 +1401,7 @@ function AppointmentFormModal({
 
         {/* Current Appointment Summary */}
         <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
-          <h4 className="text-md font-medium text-teal-800 mb-3">Podsumowanie Wizyty</h4>
+          <h4 className="text-md font-medium text-teal-800 mb-3" onClick={()=>{console.log("Podsumowanie Wizyty",appointmentData.selectedSlot ,appointmentData.customStartTime,appointmentData.customEndTime ,appointmentData.customDuration)}}>Podsumowanie Wizyty</h4>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="font-medium">Data:</span> {appointmentData.selectedDate}
@@ -1422,7 +1421,7 @@ function AppointmentFormModal({
             <div>
               <span className="font-medium">Czas trwania:</span> {
                 appointmentData.selectedSlot 
-                  ? `${appointmentData.selectedSlot.duration || 30} min`
+                  ? `${appointmentData.customDuration || 30} min`
                   : `${appointmentData.customDuration || appointmentData.duration || 30} min`
               }
             </div>
