@@ -376,7 +376,7 @@ const Header = () => {
               </>
             ) : (
               <>
-                {/* <button
+                <button
                   onClick={() => {
                     setMenuOpen(false);
                     navigate("/login");
@@ -385,7 +385,7 @@ const Header = () => {
                 >
                   Zaloguj się
                 </button>
-                <button
+                {/* <button
                   onClick={() => {
                     setMenuOpen(false);
                     navigate("/register");
@@ -482,13 +482,13 @@ const Header = () => {
             </div>
           ) : (
             <>
-              {/* <Link
+              <Link
                 to="/login"
                 className="bg-teal-800 text-white px-6 py-2 text-sm rounded-full"
               >
                 Zaloguj się
               </Link>
-              <Link
+              {/* <Link
                 to="/register"
                 className="border border-teal-700 text-teal-700 px-6 py-2 text-sm rounded-full"
               >

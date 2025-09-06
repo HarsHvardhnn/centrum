@@ -11,7 +11,7 @@ import ServicesMini from "../ServicesMini";
 import { useAppointmentContext } from "../../../UserLayout";
 import MetaTags from '../../UtilComponents/MetaTags';
 
-const HomePage = () => {
+const  HomePage = () => {
   const {
     selectedDepartment,
     setSelectedDepartment,
