@@ -109,7 +109,7 @@ function AppointmentPage() {
         isLoadingServices={isLoadingServices}
         isReceptionistMode={true} // Enable receptionist workflow
         workflowOrder="appointmentFirst" // New workflow order
-        allowPastDates={true} // Allow selecting dates in the past
+        allowPastDates={false} // Don't auto-enable past dates checkbox
       />
     </div>
   );

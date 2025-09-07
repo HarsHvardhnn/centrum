@@ -6,6 +6,9 @@ const DoctorSelectionWithSlots = ({
   onDoctorSelect,
   onSlotSelect,
   selectedDate,
+  selectedPatient = null,
+  smsConsentAgreed = true,
+  onSmsConsentChange = null,
 }) => {
   const { specializations } = useSpecializations();
   const [selectedSpecialization, setSelectedSpecialization] = useState("");
@@ -386,10 +389,19 @@ const DoctorSelectionWithSlots = ({
         {/* Appointment summary */}
         {selectedSlot && (
           <div className="mt-6 p-4 bg-teal-50 border border-teal-100 rounded-lg">
-            <h4 className="text-sm font-medium text-teal-800 mb-2">
+            <h4 className="text-sm font-medium text-teal-800 mb-3">
               Podsumowanie Wizyty
             </h4>
-            <div className="flex flex-wrap gap-y-2">
+            <div className="flex flex-wrap gap-y-2 mb-4">
+              <div className="w-full md:w-1/2">
+                <span className="text-xs text-gray-500">Pacjent</span>
+                <p className="text-sm font-medium">
+                  {selectedPatient ? 
+                    `${selectedPatient.firstName || ''} ${selectedPatient.lastName || ''}`.trim() || selectedPatient.name || 'Nie wybrano pacjenta' :
+                    'Nie wybrano pacjenta'
+                  }
+                </p>
+              </div>
               <div className="w-full md:w-1/2">
                 <span className="text-xs text-gray-500">Specjalizacja</span>
                 <p className="text-sm font-medium">
@@ -419,6 +431,26 @@ const DoctorSelectionWithSlots = ({
                 </p>
               </div>
             </div>
+            
+            {/* SMS Consent Option */}
+            {onSmsConsentChange && (
+              <div className="border-t border-teal-200 pt-3">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={smsConsentAgreed}
+                    onChange={(e) => onSmsConsentChange(e.target.checked)}
+                    className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-teal-800 font-medium">
+                    Zgoda na powiadomienia SMS
+                  </span>
+                </label>
+                <p className="text-xs text-teal-600 mt-1">
+                  Pacjent będzie otrzymywał powiadomienia SMS o wizytach
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -302,11 +302,11 @@ const AppointmentConfigPage = () => {
                           {config.validation && (
                             <div className="text-xs text-gray-500 mt-1">
                               {config.validation.min !== undefined && config.validation.max !== undefined
-                                ? `Min: ${config.validation.min}, Max: ${config.validation.max}`
+                                ? `Min: ${config.validation.min}, Maks: ${config.validation.max}`
                                 : config.validation.min !== undefined
                                 ? `Min: ${config.validation.min}`
                                 : config.validation.max !== undefined
-                                ? `Max: ${config.validation.max}`
+                                ? `Maks: ${config.validation.max}`
                                 : ''}
                             </div>
                           )}

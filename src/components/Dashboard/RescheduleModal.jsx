@@ -18,6 +18,12 @@ const RescheduleModal = ({
   const [consultationType, setConsultationType] = useState("offline");
   const [error, setError] = useState("");
   const [currentWeek, setCurrentWeek] = useState(0); // 0 = current week, 1 = next week, etc.
+  const [selectionMode, setSelectionMode] = useState("slots"); // "slots" or "timeRange"
+  const [customStartTime, setCustomStartTime] = useState("");
+  const [customEndTime, setCustomEndTime] = useState("");
+  const [smsConsentAgreed, setSmsConsentAgreed] = useState(false);
+  const [sendSmsReminder, setSendSmsReminder] = useState(false);
+  const [smsConsentLoading, setSmsConsentLoading] = useState(false);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -28,12 +34,40 @@ const RescheduleModal = ({
       setError("");
       setConsultationType(appointment.mode || "offline");
       setCurrentWeek(0); // Reset to current week
+      setSelectionMode("slots"); // Reset to slots mode
+      setCustomStartTime("");
+      setCustomEndTime("");
+      setSendSmsReminder(false);
+      
+      // Fetch SMS consent status
+      fetchSmsConsentStatus();
       
       // Debug logging
       console.log("RescheduleModal opened with appointment:", appointment);
       console.log("Doctor ID:", getDoctorId());
     }
   }, [isOpen, appointment]);
+
+  // Fetch SMS consent status for the patient
+  const fetchSmsConsentStatus = async () => {
+    if (!appointment?.patient?._id) return;
+    
+    try {
+      setSmsConsentLoading(true);
+      const response = await apiCaller("GET", `/api/sms-consent/${appointment.patient._id}`);
+      
+      if (response.data && response.data.success) {
+        setSmsConsentAgreed(response.data.smsConsentAgreed);
+      } else {
+        setSmsConsentAgreed(false);
+      }
+    } catch (error) {
+      console.error("Error fetching SMS consent status:", error);
+      setSmsConsentAgreed(false);
+    } finally {
+      setSmsConsentLoading(false);
+    }
+  };
 
   // Fetch available slots when date changes
   const fetchAvailableSlots = async (doctorId, date) => {
@@ -113,11 +147,56 @@ const RescheduleModal = ({
     }
   };
 
+  // Handle custom time range changes
+  const handleCustomTimeChange = (type, value) => {
+    if (type === "start") {
+      setCustomStartTime(value);
+    } else {
+      setCustomEndTime(value);
+    }
+  };
+
+  // Validate time range
+  const validateTimeRange = () => {
+    if (!customStartTime || !customEndTime) {
+      return "Proszę wybrać godzinę rozpoczęcia i zakończenia";
+    }
+    
+    const startTime = new Date(`2000-01-01T${customStartTime}`);
+    const endTime = new Date(`2000-01-01T${customEndTime}`);
+    
+    if (startTime >= endTime) {
+      return "Godzina rozpoczęcia musi być wcześniejsza niż godzina zakończenia";
+    }
+    
+    // Check if duration is reasonable (maximum 4 hours)
+    const duration = (endTime - startTime) / (1000 * 60); // duration in minutes
+    if (duration > 240) {
+      return "Maksymalny czas wizyty to 4 godziny";
+    }
+    
+    return null;
+  };
+
   // Handle reschedule submission
   const handleReschedule = async () => {
-    if (!selectedDate || !selectedSlot) {
-      setError("Proszę wybrać datę i godzinę");
+    if (!selectedDate) {
+      setError("Proszę wybrać datę");
       return;
+    }
+
+    // Validate based on selection mode
+    if (selectionMode === "slots") {
+      if (!selectedSlot) {
+        setError("Proszę wybrać godzinę z dostępnych terminów");
+        return;
+      }
+    } else if (selectionMode === "timeRange") {
+      const timeRangeError = validateTimeRange();
+      if (timeRangeError) {
+        setError(timeRangeError);
+        return;
+      }
     }
 
     const doctorId = getDoctorId();
@@ -130,11 +209,27 @@ const RescheduleModal = ({
       setLoading(true);
       setError("");
 
-      const rescheduleData = {
-        newDate: selectedDate,
-        newStartTime: selectedSlot.startTime,
-        consultationType: consultationType
-      };
+      let rescheduleData;
+      
+      if (selectionMode === "slots") {
+        rescheduleData = {
+          newDate: selectedDate,
+          newStartTime: selectedSlot.startTime,
+          newEndTime: selectedSlot.endTime,
+          consultationType: consultationType,
+          selectionType: "slot",
+          smsToBeSent: sendSmsReminder
+        };
+      } else {
+        rescheduleData = {
+          newDate: selectedDate,
+          newStartTime: customStartTime,
+          newEndTime: customEndTime,
+          consultationType: consultationType,
+          selectionType: "timeRange",
+          smsToBeSent: sendSmsReminder
+        };
+      }
 
       const response = await appointmentHelper.rescheduleAppointment(
         appointment._id,
@@ -303,6 +398,110 @@ const RescheduleModal = ({
             </div>
           </div>
 
+          {/* SMS Reminder Options */}
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="text-sm font-medium text-blue-800 mb-3">
+              Powiadomienia SMS
+            </h4>
+            
+            {/* SMS Consent Status */}
+            <div className="mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-700">Status zgody na SMS:</span>
+                {smsConsentLoading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                ) : (
+                  <span className={`text-sm font-medium px-2 py-1 rounded ${
+                    smsConsentAgreed 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {smsConsentAgreed ? 'Zgoda udzielona' : 'Brak zgody'}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-600 mt-1">
+                {smsConsentAgreed 
+                  ? 'Pacjent wyraził zgodę na otrzymywanie powiadomień SMS'
+                  : 'Pacjent nie wyraził zgody na powiadomienia SMS'
+                }
+              </p>
+            </div>
+
+            {/* Send SMS Reminder Option */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="sendSmsReminder"
+                checked={sendSmsReminder}
+                onChange={(e) => setSendSmsReminder(e.target.checked)}
+                disabled={!smsConsentAgreed}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <label 
+                htmlFor="sendSmsReminder" 
+                className={`text-sm font-medium ${
+                  !smsConsentAgreed ? 'text-gray-400' : 'text-blue-800'
+                }`}
+              >
+                Wyślij powiadomienie SMS o przełożeniu wizyty
+              </label>
+            </div>
+            
+            {!smsConsentAgreed && (
+              <p className="text-xs text-red-600 mt-2">
+                ⚠️ Nie można wysłać SMS - pacjent nie wyraził zgody na powiadomienia
+              </p>
+            )}
+            
+            {sendSmsReminder && smsConsentAgreed && (
+              <p className="text-xs text-green-600 mt-2">
+                ✓ Pacjent otrzyma SMS z informacją o nowym terminie wizyty
+              </p>
+            )}
+          </div>
+
+          {/* Selection Mode */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Sposób wyboru czasu
+            </label>
+            <div className="flex gap-3">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="selectionMode"
+                  value="slots"
+                  checked={selectionMode === "slots"}
+                  onChange={(e) => {
+                    setSelectionMode(e.target.value);
+                    setSelectedSlot(null);
+                    setCustomStartTime("");
+                    setCustomEndTime("");
+                  }}
+                  className="mr-2"
+                />
+                <span className="text-sm">Z dostępnych terminów</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="selectionMode"
+                  value="timeRange"
+                  checked={selectionMode === "timeRange"}
+                  onChange={(e) => {
+                    setSelectionMode(e.target.value);
+                    setSelectedSlot(null);
+                    setCustomStartTime("");
+                    setCustomEndTime("");
+                  }}
+                  className="mr-2"
+                />
+                <span className="text-sm">Własny zakres czasu</span>
+              </label>
+            </div>
+          </div>
+
           {/* Date Selection */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
@@ -354,43 +553,91 @@ const RescheduleModal = ({
             </div>
           </div>
 
-          {/* Time Slots */}
+          {/* Time Selection */}
           {selectedDate && (
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Wybierz godzinę
-              </label>
-              
-              {slotsLoading ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
-                </div>
-              ) : availableSlots.length > 0 ? (
-                <div className="grid grid-cols-3 gap-2">
-                  {availableSlots.map((slot, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSlotSelect(slot)}
-                      disabled={!slot.available}
-                      className={`p-3 text-sm rounded-lg border transition-colors ${
-                        selectedSlot && selectedSlot.startTime === slot.startTime
-                          ? "bg-teal-500 text-white border-teal-500"
-                          : slot.available
-                          ? "bg-white text-gray-700 border-gray-300 hover:border-teal-400"
-                          : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                      }`}
-                    >
-                      {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-                    </button>
-                  ))}
-                </div>
+              {selectionMode === "slots" ? (
+                <>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Wybierz godzinę z dostępnych terminów
+                  </label>
+                  
+                  {slotsLoading ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+                    </div>
+                  ) : availableSlots.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {availableSlots.map((slot, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSlotSelect(slot)}
+                          disabled={!slot.available}
+                          className={`p-3 text-sm rounded-lg border transition-colors ${
+                            selectedSlot && selectedSlot.startTime === slot.startTime
+                              ? "bg-teal-500 text-white border-teal-500"
+                              : slot.available
+                              ? "bg-white text-gray-700 border-gray-300 hover:border-teal-400"
+                              : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                          }`}
+                        >
+                          {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <AlertCircle className="mx-auto text-gray-400 mb-2" size={24} />
+                      <p className="text-gray-700">
+                        Brak dostępnych terminów w wybranym dniu
+                      </p>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="text-center py-6 bg-gray-50 rounded-lg">
-                  <AlertCircle className="mx-auto text-gray-400 mb-2" size={24} />
-                  <p className="text-gray-700">
-                    Brak dostępnych terminów w wybranym dniu
-                  </p>
-                </div>
+                <>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Wybierz własny zakres czasu
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Godzina rozpoczęcia
+                      </label>
+                      <input
+                        type="time"
+                        value={customStartTime}
+                        onChange={(e) => handleCustomTimeChange("start", e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">
+                        Godzina zakończenia
+                      </label>
+                      <input
+                        type="time"
+                        value={customEndTime}
+                        onChange={(e) => handleCustomTimeChange("end", e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      />
+                    </div>
+                  </div>
+                  {customStartTime && customEndTime && (
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-700">
+                        <strong>Czas trwania:</strong> {(() => {
+                          const start = new Date(`2000-01-01T${customStartTime}`);
+                          const end = new Date(`2000-01-01T${customEndTime}`);
+                          const duration = (end - start) / (1000 * 60);
+                          const hours = Math.floor(duration / 60);
+                          const minutes = duration % 60;
+                          return hours > 0 ? `${hours}h ${minutes}min` : `${minutes}min`;
+                        })()}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -416,7 +663,12 @@ const RescheduleModal = ({
             </button>
             <button
               onClick={handleReschedule}
-              disabled={!selectedDate || !selectedSlot || loading}
+              disabled={
+                !selectedDate || 
+                (selectionMode === "slots" && !selectedSlot) || 
+                (selectionMode === "timeRange" && (!customStartTime || !customEndTime)) || 
+                loading
+              }
               className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading ? (

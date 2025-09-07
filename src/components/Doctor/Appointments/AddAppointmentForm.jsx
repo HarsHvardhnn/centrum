@@ -586,9 +586,15 @@ function AppointmentFormModal({
   };
 
   const handleDateChange = (e) => {
+    const selectedDate = e.target.value;
+    const today = new Date().toISOString().split("T")[0];
+    const isSelectedDateInPast = selectedDate < today;
+    
     setAppointmentData({
       ...appointmentData,
-      selectedDate: e.target.value,
+      selectedDate: selectedDate,
+      // Automatically check isBackdated if selected date is in the past
+      isBackdated: isSelectedDateInPast || appointmentData.isBackdated,
     });
   };
 
@@ -764,6 +770,9 @@ function AppointmentFormModal({
             onDateChange={handleDateChange}
             initialDoctorId={doctorId}
             onSlotSelect={handleSlotSelect}
+            selectedPatient={selectedPatient}
+            smsConsentAgreed={appointmentData.smsConsentAgreed}
+            onSmsConsentChange={(checked) => setAppointmentData(prev => ({ ...prev, smsConsentAgreed: checked }))}
           />
         </div>
 
@@ -1061,17 +1070,6 @@ function AppointmentFormModal({
             <label className="ml-2 text-sm">Pacjent międzynarodowy</label>
           </div>
           
-          {/* SMS Consent Checkbox */}
-          <div className="flex items-center mb-3">
-            <input
-              type="checkbox"
-              name="smsConsentAgreed"
-              checked={appointmentData.smsConsentAgreed}
-              onChange={handleInputChange}
-              className="h-4 w-4 text-teal-600"
-            />
-            <label className="ml-2 text-sm">Zgoda na powiadomienia SMS</label>
-          </div>
           
           <input
             type="text"
