@@ -575,7 +575,7 @@ const PatientDetailsPage = () => {
         // Refresh appointment details
         await fetchAppointmentDetails(currentAppointmentId);
 
-        navigate(`/admin/billing?appointment=${currentAppointmentId}`)
+        navigate(`/patients?appointment=${currentAppointmentId}`)
       } else {
         throw new Error(response.message || "Nie udało się zaktualizować szczegółów spotkania");
       }

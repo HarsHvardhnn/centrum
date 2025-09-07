@@ -97,7 +97,7 @@ const BillDetails = () => {
       } else {
         toast.error("Nie udało się wygenerować faktury");
       }
-      navigate("/patients")
+      navigate(`/patients?startDate=${new Date().toISOString().split('T')[0]}`)
     } catch (error) {
       console.error("Błąd podczas generowania faktury:", error);
       toast.error("Nie udało się wygenerować faktury");

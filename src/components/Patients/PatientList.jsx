@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { useLoader } from "../../context/LoaderContext";
 import { useUser } from "../../context/userContext";
 import CheckInModal from "../admin/CheckinModal";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
 import { translateStatus, getStatusStyle } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
@@ -57,6 +57,7 @@ function LabAppointmentsContent({ clinic }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   // Appointments data
   const [appointments, setAppointments] = useState([]);
   const [pagination, setPagination] = useState({
@@ -94,6 +95,8 @@ function LabAppointmentsContent({ clinic }) {
   const fetchAppointments = async (page = 1) => {
     try {
       showLoader();
+      const appointmentIdFromUrl = searchParams.get('appointmentId');
+      
       const filters = {
         ...(statusFilter !== "All" && { status: statusFilter }),
         ...(dateRange.startDate && { startDate: dateRange.startDate }),
@@ -101,6 +104,7 @@ function LabAppointmentsContent({ clinic }) {
         ...(searchQuery && { search: searchQuery }),
         ...(user?.role === "doctor" && { doctorId: user?.id }),
         ...(clinic && { isClinicIp: clinic }),
+        ...(appointmentIdFromUrl && { appointmentId: appointmentIdFromUrl }),
       };
 
       const response = await appointmentHelper.getAllAppointments(
@@ -124,13 +128,32 @@ function LabAppointmentsContent({ clinic }) {
     }
   };
 
+  // Initialize filters from URL parameters
+  useEffect(() => {
+    const startDateFromUrl = searchParams.get('startDate');
+    const appointmentIdFromUrl = searchParams.get('appointmentId');
+    
+    if (startDateFromUrl) {
+      setDateRange(prev => ({
+        ...prev,
+        startDate: startDateFromUrl
+      }));
+    }
+    
+    // Store appointmentId for API filtering
+    if (appointmentIdFromUrl) {
+      // You can add appointmentId to state if needed for UI display
+      console.log('Appointment ID from URL:', appointmentIdFromUrl);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     const debounceTimeout = setTimeout(() => {
       fetchAppointments(1); // Reset to first page when filters change
     }, 300);
 
     return () => clearTimeout(debounceTimeout);
-  }, [searchQuery, statusFilter, dateRange, user?.id, clinic]);
+  }, [searchQuery, statusFilter, dateRange, user?.id, clinic, searchParams]);
 
   // Remove the frontend filtering logic and use the appointments directly from backend
   const groupAppointmentsByDate = (appointments) => {
