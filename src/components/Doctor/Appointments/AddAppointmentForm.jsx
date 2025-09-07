@@ -70,11 +70,13 @@ function AppointmentFormModal({
     visitType: "",
     isEmergency: false,
     receptionistNotes: "",
-         // Custom time override fields
-     customStartTime: "",
-     customEndTime: "",
+    // Custom time override fields
+    customStartTime: "",
+    customEndTime: "",
     // Slot selection field
     selectedSlot: null,
+    // SMS consent field
+    smsConsentAgreed: true,
   });
   const [availableSlots, setAvailableSlots] = useState([]);
   const [phoneDropdownOpen, setPhoneDropdownOpen] = useState(false);
@@ -245,8 +247,28 @@ function AppointmentFormModal({
     }
   }, [appointmentData.customStartTime, appointmentData.customEndTime, appointmentData.selectedSlot]);
 
-  const handlePatientSelect = (patient) => {
+  const handlePatientSelect = async (patient) => {
     setSelectedPatient(patient);
+    
+    // Fetch SMS consent status for existing patient
+    if (patient && patient._id) {
+      try {
+        const response = await apiCaller("GET", `/api/sms-consent/${patient._id}`);
+        if (response && response.data && response.data.success) {
+          setAppointmentData(prev => ({
+            ...prev,
+            smsConsentAgreed: response.data.smsConsentAgreed
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching SMS consent status:", error);
+        // Default to true if there's an error
+        setAppointmentData(prev => ({
+          ...prev,
+          smsConsentAgreed: true
+        }));
+      }
+    }
   };
 
   // Email validation function
@@ -1038,6 +1060,19 @@ function AppointmentFormModal({
             />
             <label className="ml-2 text-sm">Pacjent międzynarodowy</label>
           </div>
+          
+          {/* SMS Consent Checkbox */}
+          <div className="flex items-center mb-3">
+            <input
+              type="checkbox"
+              name="smsConsentAgreed"
+              checked={appointmentData.smsConsentAgreed}
+              onChange={handleInputChange}
+              className="h-4 w-4 text-teal-600"
+            />
+            <label className="ml-2 text-sm">Zgoda na powiadomienia SMS</label>
+          </div>
+          
           <input
             type="text"
             name="patientSource"
@@ -1514,7 +1549,7 @@ function AppointmentFormModal({
         duration: duration,
         consultationType: "offline",
         message: appointmentData.notes || "",
-        smsConsentAgreed: true,
+        smsConsentAgreed: appointmentData.smsConsentAgreed,
         // Receptionist override capabilities
         isBackdated: appointmentData.isBackdated || false,
         customDuration: appointmentData.customDuration || null,

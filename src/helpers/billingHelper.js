@@ -40,6 +40,7 @@ const billingHelper = {
         startDate,
         endDate,
         paymentStatus,
+        appointmentId
 
       } = options;
 
@@ -54,6 +55,7 @@ const billingHelper = {
       if (startDate) queryParams.append("startDate", startDate);
       if (endDate) queryParams.append("endDate", endDate);
       if (paymentStatus) queryParams.append("paymentStatus", paymentStatus);
+      if(appointmentId) queryParams.append("appointmentId",appointmentId)
 
 
       const response = await apiCaller(

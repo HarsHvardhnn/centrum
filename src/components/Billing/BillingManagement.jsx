@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Search,
   Filter,
@@ -38,9 +38,16 @@ const LoaderOverlay = () => (
 
 const BillingManagement = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useUser();
   const { services } = useServices();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Extract appointmentId from query parameters if present
+  const queryParams = new URLSearchParams(location.search);
+  const appointmentId = queryParams.get('appointment');
+
+  console.log("appointemtn id ", appointmentId)
   
   // Add state for confirmation modal
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -454,6 +461,7 @@ const BillingManagement = () => {
   const fetchBills = useCallback(async () => {
     try {
       setIsLoading(true);
+      console.log("here s",appointmentId)
       const response = await billingHelper.getAllBills({
         page: pagination.currentPage,
         limit: pagination.limit,
@@ -463,6 +471,7 @@ const BillingManagement = () => {
         ...(dateRange.startDate && { startDate: dateRange.startDate }),
         ...(dateRange.endDate && { endDate: dateRange.endDate }),
         ...(paymentStatusFilter && { paymentStatus: paymentStatusFilter }),
+        ...(appointmentId && { appointmentId: appointmentId }),
       });
       
       if (response.success) {
@@ -477,7 +486,7 @@ const BillingManagement = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.currentPage, pagination.limit, sortConfig, searchQuery, dateRange, paymentStatusFilter]);
+  }, [pagination.currentPage, pagination.limit, sortConfig, searchQuery, dateRange, paymentStatusFilter, appointmentId]);
 
   useEffect(() => {
     fetchBills();
@@ -491,7 +500,8 @@ const BillingManagement = () => {
         const response = await billingHelper.getAllBills({
           limit: 1000, // Get a large number of bills to ensure we get all
           ...(dateRange.startDate && { startDate: dateRange.startDate }),
-          ...(dateRange.endDate && { endDate: dateRange.endDate })
+          ...(dateRange.endDate && { endDate: dateRange.endDate }),
+          ...(appointmentId && { appointmentId: appointmentId })
         });
         
         if (response.success && response.data) {
@@ -547,7 +557,7 @@ const BillingManagement = () => {
     };
 
     fetchStats();
-  }, [dateRange.startDate, dateRange.endDate]); // Only depend on date range for stats
+  }, [dateRange.startDate, dateRange.endDate, appointmentId]); // Depend on date range and appointmentId for stats
   
   const handleSort = (key) => {
     setSortConfig(prev => ({

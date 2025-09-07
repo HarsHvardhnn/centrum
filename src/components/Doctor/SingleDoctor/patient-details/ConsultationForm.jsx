@@ -17,10 +17,14 @@ const ConsultationForm = ({
   appointmentId,
   className = "",
 }) => {
+
+  console.log("consliutatojdata",consultationData)
   const [isEditingTime, setIsEditingTime] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [tempDate, setTempDate] = useState("");
   const [tempTime, setTempTime] = useState("");
+  const [tempEndTime, setTempEndTime] = useState("");
+  const [timeError, setTimeError] = useState("");
   //("consulting doctor", uploadedFiles);
 
   // Stan dla rozwijanej listy z wyszukiwaniem
@@ -286,6 +290,7 @@ const ConsultationForm = ({
                   setIsEditingTime(true);
                   setTempDate(consultationData.date || "");
                   setTempTime(consultationData.time || "");
+                  setTempEndTime(consultationData.endTime || "");
                 }}
                 className="ml-2 p-2 text-teal-600 hover:text-teal-800"
                 title="Edytuj termin"
@@ -297,13 +302,17 @@ const ConsultationForm = ({
         </div>
 
         <div>
-          <label className="block text-sm text-gray-600 mb-1">Godzina</label>
+          <label className="block text-sm text-gray-600 mb-1">Godzina rozpoczęcia</label>
           {isEditingTime ? (
             <input
               type="time"
               value={tempTime || ""}
-              onChange={(e) => setTempTime(e.target.value)}
-              className="w-full p-2.5 border border-teal-300 rounded-lg"
+              onChange={(e) => {
+                setTempTime(e.target.value);
+                // Clear error when user changes start time
+                if (timeError) setTimeError("");
+              }}
+              className={`w-full p-2.5 border ${timeError ? "border-red-300" : "border-teal-300"} rounded-lg`}
             />
           ) : (
             <input
@@ -314,8 +323,38 @@ const ConsultationForm = ({
             />
           )}
         </div>
+        
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Godzina zakończenia</label>
+          {isEditingTime ? (
+            <input
+              type="time"
+              value={tempEndTime || ""}
+              onChange={(e) => {
+                setTempEndTime(e.target.value);
+                // Clear error when user changes end time
+                if (timeError) setTimeError("");
+              }}
+              className={`w-full p-2.5 border ${timeError ? "border-red-300" : "border-teal-300"} rounded-lg`}
+            />
+          ) : (
+            <input
+              type="time"
+              value={consultationData.endTime || ""}
+              disabled
+              className="w-full p-2.5 border border-gray-200 rounded-lg bg-gray-50"
+            />
+          )}
+        </div>
       </div>
 
+      {/* Error message for time validation */}
+      {isEditingTime && timeError && (
+        <div className="mt-1 text-red-500 text-sm px-2">
+          {timeError}
+        </div>
+      )}
+      
       {/* Przycisk zapisywania zmian terminu bezpośrednio pod polami daty */}
       {isEditingTime && (
         <div className="mt-3 mb-3 flex justify-end">
@@ -330,8 +369,24 @@ const ConsultationForm = ({
           <button
             type="button"
             onClick={async () => {
+              // Reset error state
+              setTimeError("");
+              
+              // Basic validation
               if (!tempDate || !tempTime) {
-                toast.error("Data i godzina są wymagane");
+                toast.error("Data i godzina rozpoczęcia są wymagane");
+                return;
+              }
+              
+              if (!tempEndTime) {
+                toast.error("Godzina zakończenia jest wymagana");
+                return;
+              }
+              
+              // Validate that end time is after start time
+              if (tempTime >= tempEndTime) {
+                setTimeError("Godzina zakończenia musi być późniejsza niż godzina rozpoczęcia");
+                toast.error("Godzina zakończenia musi być późniejsza niż godzina rozpoczęcia");
                 return;
               }
               
@@ -344,6 +399,7 @@ const ConsultationForm = ({
                   {
                     date: tempDate,
                     startTime: tempTime,
+                    endTime: tempEndTime,
                     doctorId: consultationData.doctorId || consultationData.doctor_id
                   }
                 );
@@ -352,7 +408,8 @@ const ConsultationForm = ({
                   setConsultationData(prev => ({
                     ...prev,
                     date: tempDate,
-                    time: tempTime
+                    time: tempTime,
+                    endTime: tempEndTime
                   }));
                   setIsEditingTime(false);
                   toast.success("Termin wizyty został zaktualizowany");

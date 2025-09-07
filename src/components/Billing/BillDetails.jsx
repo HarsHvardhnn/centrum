@@ -97,6 +97,7 @@ const BillDetails = () => {
       } else {
         toast.error("Nie udało się wygenerować faktury");
       }
+      navigate("/patients")
     } catch (error) {
       console.error("Błąd podczas generowania faktury:", error);
       toast.error("Nie udało się wygenerować faktury");
