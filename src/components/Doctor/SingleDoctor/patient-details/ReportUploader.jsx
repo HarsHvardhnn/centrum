@@ -83,6 +83,7 @@ const ReportUploader = ({ appointmentId, onSuccess }) => {
       // Notify parent component
       if (onSuccess) {
         onSuccess(response.data);
+        window.location.reload()
       }
       
     } catch (err) {
