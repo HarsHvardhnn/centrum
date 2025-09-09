@@ -14,7 +14,8 @@ import {
   UserCheck,
   DollarSign,
   Trash2,
-  Pen
+  Pen,
+  Clock
 } from "lucide-react";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
@@ -29,6 +30,7 @@ import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import PatientStepForm from "../SubComponentForm/PatientStepForm";
 import patientService from "../../helpers/patientHelper";
+import RescheduleModal from "../Dashboard/RescheduleModal";
 
 // Add billingHelper with the generateBill function
 const billingHelper = {
@@ -55,6 +57,7 @@ function LabAppointmentsContent({ clinic }) {
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [billingServices, setBillingServices] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -396,6 +399,28 @@ function LabAppointmentsContent({ clinic }) {
     }
   };
 
+  const handleRescheduleClick = (appointment) => {
+    setSelectedAppointment(appointment);
+    setShowRescheduleModal(true);
+  };
+
+  const handleRescheduleSuccess = (rescheduledData) => {
+    // Update the appointment in the list with new data
+    setAppointments(appointments.map(apt => 
+      apt.id === selectedAppointment.id 
+        ? {
+            ...apt,
+            date: rescheduledData.appointment.date,
+            startTime: rescheduledData.appointment.startTime,
+            mode: rescheduledData.appointment.mode
+          }
+        : apt
+    ));
+    
+    // Refresh the appointments list
+    fetchAppointments(pagination.page);
+  };
+
   return (
     <div className="bg-white min-h-screen">
       <div className="w-full mx-auto px-4 py-8">
@@ -630,6 +655,17 @@ function LabAppointmentsContent({ clinic }) {
                                     >
                                       <UserCheck size={16} className="mr-2 flex-shrink-0" />
                                       Zamelduj
+                                    </DropdownMenu.Item>
+                                  )}
+
+                                  {/* Reschedule option for admin and receptionist in clinic cases */}
+                                  {(user?.role === "admin" || user?.role === "receptionist") && appointment.status === "booked" && (
+                                    <DropdownMenu.Item
+                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                      onClick={() => handleRescheduleClick(appointment)}
+                                    >
+                                      <Clock size={16} className="mr-2 flex-shrink-0" />
+                                      Przełóż wizytę
                                     </DropdownMenu.Item>
                                   )}
 
@@ -941,6 +977,14 @@ function LabAppointmentsContent({ clinic }) {
           patientName={selectedAppointment?.patient?.name}
           appointmentId={selectedAppointment?.id}
           patientId={selectedAppointment?.patient?.id}
+        />
+
+        {/* Reschedule Modal */}
+        <RescheduleModal
+          isOpen={showRescheduleModal}
+          onClose={() => setShowRescheduleModal(false)}
+          appointment={selectedAppointment}
+          onRescheduleSuccess={handleRescheduleSuccess}
         />
 
         {/* Add Patient Modal */}

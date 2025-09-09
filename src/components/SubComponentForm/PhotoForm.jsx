@@ -40,7 +40,7 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
       if (consent.id === id) {
         const newAgreedValue = !consent.agreed;
         // Check if this is the SMS consent
-        if (consent.text === "Pacjent wyraża zgodę na otrzymywanie powiadomień SMS") {
+        if (consent.text === "Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).") {
           updateFormData("smsConsentAgreed", newAgreedValue);
         }
         return { ...consent, agreed: newAgreedValue };
@@ -193,18 +193,16 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
   };
 
   // Common consent options
-  // const commonConsents = [
-  //   "Pacjent wyraża zgodę na otrzymywanie powiadomień SMS",
-  //   "Pacjent wyraża zgodę na udostępnienie informacji medycznych lekarzowi kierującemu",
-  //   "Pacjent wyraża zgodę na usługi telemedyczne",
-  //   "Pacjent wyraża zgodę na kontakt w sprawie wizyt kontrolnych",
-  // ];
   const commonConsents = [
-    "Zgoda pacjenta na przetwarzanie danych osobowych",
-    "Oświadczenie pacjenta o upoważnieniu osoby bliskiej do uzyskiwania informacji o stanie zdrowia i udzielonych świadczeniach zdrowotnych",
+    "Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).",
+    "Zgoda na przesyłaniem informacji o kampaniach i akcjach prozdrowotnych",
+    "Zgoda na otrzymywanie newslettera z informacjami marketingowymi",
+    "Oświadczenie pacjenta – przedstawiciel ustawowy/opiekun faktyczny",
     "Oświadczenie pacjenta o upoważnieniu osoby bliskiej do uzyskiwania dokumentacji medycznej",
+    "Oświadczenie pacjenta o upoważnieniu osoby bliskiej do uzyskiwania informacji o stanie zdrowia i udzielonych świadczeniach zdrowotnych",
     "Oświadczenie pacjenta o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego",
-    "Oświadczenie pacjenta – przedstawiciel ustawowy/opiekun faktyczny"
+    "Świadoma zgoda pacjenta na zabieg implantacji Disulfiramu",
+    "Zgoda pacjenta na zabieg chirurgiczny"
   ];
 
   // Add a common consent

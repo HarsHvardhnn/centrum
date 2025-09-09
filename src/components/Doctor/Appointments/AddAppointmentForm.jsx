@@ -593,8 +593,8 @@ function AppointmentFormModal({
     setAppointmentData({
       ...appointmentData,
       selectedDate: selectedDate,
-      // Automatically check isBackdated if selected date is in the past
-      isBackdated: isSelectedDateInPast || appointmentData.isBackdated,
+      // Update isBackdated based on the selected date
+      isBackdated: isSelectedDateInPast,
     });
   };
 
@@ -771,8 +771,6 @@ function AppointmentFormModal({
             initialDoctorId={doctorId}
             onSlotSelect={handleSlotSelect}
             selectedPatient={selectedPatient}
-            smsConsentAgreed={appointmentData.smsConsentAgreed}
-            onSmsConsentChange={(checked) => setAppointmentData(prev => ({ ...prev, smsConsentAgreed: checked }))}
           />
         </div>
 
@@ -1432,22 +1430,51 @@ function AppointmentFormModal({
           </div>
         )}
 
+        {/* SMS Consent Checkbox */}
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h4 className="text-md font-medium text-blue-800 mb-3">Zgoda na SMS</h4>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="smsConsentAgreed"
+              checked={appointmentData.smsConsentAgreed}
+              onChange={(e) => setAppointmentData(prev => ({ ...prev, smsConsentAgreed: e.target.checked }))}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="smsConsentAgreed" className="text-sm font-medium text-blue-800">
+              Pacjent wyraża zgodę na otrzymywanie powiadomień SMS o wizytach
+            </label>
+          </div>
+          <p className="text-xs text-blue-600 mt-2">
+            Zgoda na SMS pozwala na automatyczne wysyłanie przypomnień o wizytach i ważnych informacji.
+          </p>
+        </div>
+
         {/* Current Appointment Summary */}
         <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
           <h4 className="text-md font-medium text-teal-800 mb-3" onClick={()=>{console.log("Podsumowanie Wizyty",appointmentData.selectedSlot ,appointmentData.customStartTime,appointmentData.customEndTime ,appointmentData.customDuration)}}>Podsumowanie Wizyty</h4>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
+              <span className="font-medium">Pacjent:</span> {
+                isFirstTimeVisit && isNewPatientValid
+                  ? `${appointmentData.newPatientFirstName} ${appointmentData.newPatientLastName}`
+                  : selectedPatient
+                    ? `${selectedPatient.firstName || selectedPatient.name || "N/A"} ${selectedPatient.lastName || ""}`
+                    : "Nie wybrano"
+              }
+            </div>
+            <div>
               <span className="font-medium">Data:</span> {appointmentData.selectedDate}
             </div>
-                         <div>
-               <span className="font-medium">Czas:</span> {
-                 appointmentData.selectedSlot 
-                   ? `${appointmentData.selectedSlot.startTime} - ${appointmentData.selectedSlot.endTime} (wybrany termin)`
-                   : appointmentData.customStartTime 
-                     ? `${appointmentData.customStartTime}${appointmentData.customEndTime ? ` - ${appointmentData.customEndTime}` : ''} (własny termin)`
-                     : "Nie wybrano"
-               }
-             </div>
+            <div>
+              <span className="font-medium">Czas:</span> {
+                appointmentData.selectedSlot 
+                  ? `${appointmentData.selectedSlot.startTime} - ${appointmentData.selectedSlot.endTime} (wybrany termin)`
+                  : appointmentData.customStartTime 
+                    ? `${appointmentData.customStartTime}${appointmentData.customEndTime ? ` - ${appointmentData.customEndTime}` : ''} (własny termin)`
+                    : "Nie wybrano"
+              }
+            </div>
             <div>
               <span className="font-medium">Lekarz:</span> {appointmentData.selectedDoctor?.name || "Nie wybrano"}
             </div>
@@ -1456,6 +1483,11 @@ function AppointmentFormModal({
                 appointmentData.selectedSlot 
                   ? `${appointmentData.customDuration || 30} min`
                   : `${appointmentData.customDuration || appointmentData.duration || 30} min`
+              }
+            </div>
+            <div>
+              <span className="font-medium">Zgoda na SMS:</span> {
+                appointmentData.smsConsentAgreed ? "✓ Tak" : "✗ Nie"
               }
             </div>
             {(appointmentData.customDuration || appointmentData.customStartTime || appointmentData.selectedSlot) && (

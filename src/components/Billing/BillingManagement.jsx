@@ -43,11 +43,12 @@ const BillingManagement = () => {
   const { services } = useServices();
   const [isLoading, setIsLoading] = useState(false);
   
-  // Extract appointmentId from query parameters if present
+  // Extract appointmentId and step from query parameters if present
   const queryParams = new URLSearchParams(location.search);
   const appointmentId = queryParams.get('appointment');
+  const step = queryParams.get('step');
 
-  console.log("appointemtn id ", appointmentId)
+  console.log("appointment id ", appointmentId, "step", step)
   
   // Add state for confirmation modal
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -84,7 +85,7 @@ const BillingManagement = () => {
   });
   
   // Add EditBillModal component
-  const EditBillModal = ({ isOpen, onClose, billId, onUpdate }) => {
+  const EditBillModal = ({ isOpen, onClose, billId, onUpdate, isRedirectedFromAppointment }) => {
     const { services } = useServices();
     const [modalLoading, setModalLoading] = useState(false);
     const [billData, setBillData] = useState(null);
@@ -199,6 +200,12 @@ const BillingManagement = () => {
           toast.success("Faktura została zaktualizowana");
           onUpdate();
           onClose();
+          
+          // If user was redirected from appointment, redirect back to patients page
+          if (isRedirectedFromAppointment) {
+            const today = new Date().toISOString().split('T')[0];
+            navigate(`/patients?date=${today}`);
+          }
         } else {
           toast.error("Nie udało się zaktualizować faktury");
         }
@@ -450,11 +457,24 @@ const BillingManagement = () => {
   // Add state for edit modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedBillId, setSelectedBillId] = useState(null);
+  const [isRedirectedFromAppointment, setIsRedirectedFromAppointment] = useState(false);
 
   // Add handleEditBill function
   const handleEditBill = (billId) => {
     setSelectedBillId(billId);
     setIsEditModalOpen(true);
+  };
+
+  // Handle edit modal close with redirect logic
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedBillId(null);
+    
+    // If user was redirected from appointment, redirect back to patients page
+    if (isRedirectedFromAppointment) {
+      const today = new Date().toISOString().split('T')[0];
+      navigate(`/patients?date=${today}`);
+    }
   };
   
   // Load bills on initial render and when filters/pagination change
@@ -491,6 +511,28 @@ const BillingManagement = () => {
   useEffect(() => {
     fetchBills();
   }, [fetchBills]);
+
+  // Handle automatic edit modal opening when redirected from appointment
+  useEffect(() => {
+    if (step === 'edit' && appointmentId && bills.length > 0) {
+      // Find the bill for this specific appointment
+      const billForAppointment = bills.find(bill => 
+        bill.appointmentId === appointmentId || 
+        bill.appointment?._id === appointmentId ||
+        bill.appointment?.id === appointmentId
+      );
+      
+      if (billForAppointment) {
+        setSelectedBillId(billForAppointment._id);
+        setIsEditModalOpen(true);
+        setIsRedirectedFromAppointment(true);
+      } else {
+        // If no bill found for this appointment, show error and redirect back
+        toast.error("Nie znaleziono faktury dla tej wizyty");
+        navigate('/patients?date=' + new Date().toISOString().split('T')[0]);
+      }
+    }
+  }, [step, appointmentId, bills, navigate]);
   
   // Separate useEffect for billing stats
   useEffect(() => {
@@ -1100,9 +1142,10 @@ const BillingManagement = () => {
       {isEditModalOpen && (
         <EditBillModal
           isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
+          onClose={handleEditModalClose}
           billId={selectedBillId}
           onUpdate={fetchBills}
+          isRedirectedFromAppointment={isRedirectedFromAppointment}
         />
       )}
     </div>

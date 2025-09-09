@@ -44,22 +44,32 @@ const RescheduleModal = ({
       
       // Debug logging
       console.log("RescheduleModal opened with appointment:", appointment);
+      console.log("Appointment patient:", appointment?.patient);
+      console.log("Patient ID:", appointment?.patient?._id || appointment?.patient?.id);
       console.log("Doctor ID:", getDoctorId());
     }
   }, [isOpen, appointment]);
 
   // Fetch SMS consent status for the patient
   const fetchSmsConsentStatus = async () => {
-    if (!appointment?.patient?._id) return;
+    // Check for both possible patient ID field names
+    const patientId = appointment?.patient?._id || appointment?.patient?.id;
+    if (!patientId) {
+      console.log("No patient ID found in appointment:", appointment);
+      return;
+    }
     
     try {
       setSmsConsentLoading(true);
-      const response = await apiCaller("GET", `/api/sms-consent/${appointment.patient._id}`);
+      console.log("Fetching SMS consent for patient ID:", patientId);
+      const response = await apiCaller("GET", `/api/sms-consent/${patientId}`);
       
       if (response.data && response.data.success) {
         setSmsConsentAgreed(response.data.smsConsentAgreed);
+        console.log("SMS consent status:", response.data.smsConsentAgreed);
       } else {
         setSmsConsentAgreed(false);
+        console.log("SMS consent API returned unsuccessful response:", response.data);
       }
     } catch (error) {
       console.error("Error fetching SMS consent status:", error);
@@ -231,8 +241,10 @@ const RescheduleModal = ({
         };
       }
 
+      // Use the correct appointment ID field
+      const appointmentId = appointment._id || appointment.id;
       const response = await appointmentHelper.rescheduleAppointment(
-        appointment._id,
+        appointmentId,
         rescheduleData
       );
 
