@@ -79,6 +79,9 @@ function LabAppointmentsContent({ clinic }) {
     endDate: null,
   });
 
+  // Ref for filter dropdown
+  const filterRef = useRef(null);
+
   // Add new state for patient form
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
   const [currentSubStep, setCurrentSubStep] = useState(0);
@@ -99,11 +102,13 @@ function LabAppointmentsContent({ clinic }) {
     try {
       showLoader();
       const appointmentIdFromUrl = searchParams.get('appointmentId');
+      const dateFromUrl = searchParams.get('date');
       
       const filters = {
         ...(statusFilter !== "All" && { status: statusFilter }),
         ...(dateRange.startDate && { startDate: dateRange.startDate }),
         ...(dateRange.endDate && { endDate: dateRange.endDate }),
+        ...(dateFromUrl && { date: dateFromUrl }),
         ...(searchQuery && { search: searchQuery }),
         ...(user?.role === "doctor" && { doctorId: user?.id }),
         ...(clinic && { isClinicIp: clinic }),
@@ -134,12 +139,16 @@ function LabAppointmentsContent({ clinic }) {
   // Initialize filters from URL parameters
   useEffect(() => {
     const startDateFromUrl = searchParams.get('startDate');
+    const dateFromUrl = searchParams.get('date');
     const appointmentIdFromUrl = searchParams.get('appointmentId');
     
-    if (startDateFromUrl) {
+    // Handle both 'startDate' and 'date' parameters
+    const dateToSet = startDateFromUrl || dateFromUrl;
+    
+    if (dateToSet) {
       setDateRange(prev => ({
         ...prev,
-        startDate: startDateFromUrl
+        startDate: dateToSet
       }));
     }
     
@@ -149,6 +158,23 @@ function LabAppointmentsContent({ clinic }) {
       console.log('Appointment ID from URL:', appointmentIdFromUrl);
     }
   }, [searchParams]);
+
+  // Handle clicking outside filter dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterRef.current && !filterRef.current.contains(event.target)) {
+        setIsFilterOpen(false);
+      }
+    };
+
+    if (isFilterOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isFilterOpen]);
 
   useEffect(() => {
     const debounceTimeout = setTimeout(() => {
@@ -429,7 +455,19 @@ function LabAppointmentsContent({ clinic }) {
             <h1 className="text-2xl font-bold mb-1">
               {clinic ? "Wizyty w Przychodni" : "Lista pacjentów"}
             </h1>
-            <p className="text-gray-600 mb-4">Wyświetlane: Wszystkie wizyty</p>
+            <div className="flex items-center gap-2 mb-4">
+              <p className="text-gray-600">
+                Wyświetlane: {dateRange.startDate ? `Wizyty z dnia ${new Date(dateRange.startDate).toLocaleDateString('pl-PL')}` : "Wszystkie wizyty"}
+              </p>
+              {dateRange.startDate && (
+                <button
+                  onClick={() => setDateRange({ startDate: null, endDate: null })}
+                  className="text-sm text-teal-600 hover:text-teal-800 underline"
+                >
+                  Wyczyść filtr daty
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-2 mb-6 w-[50%]">
@@ -447,7 +485,7 @@ function LabAppointmentsContent({ clinic }) {
             </div>
 
             {/* Filter Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={filterRef}>
               <button
                 className="flex items-center gap-2 px-4 py-2 border rounded-lg bg-white text-gray-700"
                 onClick={() => setIsFilterOpen(!isFilterOpen)}

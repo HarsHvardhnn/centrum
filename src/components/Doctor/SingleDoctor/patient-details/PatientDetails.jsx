@@ -162,6 +162,20 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
     }),
   };
 
+
+  console.log("patinet data",patientData)
+
+  // Add appointment flags section if any of the 5 fields are true
+  if (patientData.isWalkin || patientData.needsAttention || patientData.isBackdated || patientData.overrideConflicts || patientData.isEmergency) {
+    sections["Informacje o wizycie"] = filterEmptyFields({
+      "Pacjent bez wcześniejszej rezerwacji": patientData.isWalkin ? "Tak" : "Nie",
+      "Wymaga szczególnej uwagi": patientData.needsAttention ? "Tak" : "Nie",
+      "Wizyta nagła (priorytetowa)": patientData.isEmergency ? "Tak" : "Nie",
+      "Pozwolono na daty z przeszłości": patientData.isBackdated ? "Tak" : "Nie",
+      "Nadpisano konflikty czasowe": patientData.overrideConflicts ? "Tak" : "Nie",
+    });
+  }
+
   // Add consents section if there are any consents
   if (patientData.consents && patientData.consents.length > 0) {
     sections["Zgody pacjenta"] = {
@@ -872,6 +886,19 @@ const PatientDetailsPage = () => {
   const AppointmentDetails = ({ appointment }) => {
     if (!appointment) return null;
 
+    // Helper function to render boolean field with icon
+    const renderBooleanField = (value, label, icon, trueColor = "text-green-600", falseColor = "text-gray-400") => {
+      return (
+        <div className="flex items-center gap-2 mb-2">
+          {icon}
+          <span className="text-sm text-gray-600">{label}:</span>
+          <span className={`text-sm font-medium ${value ? trueColor : falseColor}`}>
+            {value ? "Tak" : "Nie"}
+          </span>
+        </div>
+      );
+    };
+
     return (
       <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
         <h3 className="text-lg font-semibold mb-4">Szczegóły wizyty</h3>
@@ -933,6 +960,52 @@ const PatientDetailsPage = () => {
             )}
           </div>
         </div>
+
+        {/* Additional Appointment Flags Section - using patient data */}
+        {(patientData.isWalkin || patientData.needsAttention || patientData.isBackdated || patientData.overrideConflicts || patientData.isEmergency) && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h4 className="text-md font-medium text-gray-800 mb-3">Dodatkowe Informacje o Wizycie</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                {renderBooleanField(
+                  patientData.isWalkin,
+                  "Pacjent bez wcześniejszej rezerwacji",
+                  <User size={16} className="text-blue-500" />
+                )}
+                {renderBooleanField(
+                  patientData.needsAttention,
+                  "Wymaga szczególnej uwagi",
+                  <Info size={16} className="text-yellow-500" />
+                )}
+                {renderBooleanField(
+                  patientData.isEmergency,
+                  "Wizyta nagła (priorytetowa)",
+                  <Activity size={16} className="text-red-500" />
+                )}
+              </div>
+              <div>
+                {renderBooleanField(
+                  patientData.isBackdated,
+                  "Pozwolono na daty z przeszłości",
+                  <Clock size={16} className="text-orange-500" />
+                )}
+                {renderBooleanField(
+                  patientData.overrideConflicts,
+                  "Nadpisano konflikty czasowe",
+                  <FileText size={16} className="text-purple-500" />
+                )}
+              </div>
+            </div>
+            
+            {/* Receptionist Notes */}
+            {patientData.receptionistNotes && (
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                <h5 className="text-sm font-medium text-gray-700 mb-2">Notatki Recepcjonisty:</h5>
+                <p className="text-sm text-gray-600">{patientData.receptionistNotes}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   };

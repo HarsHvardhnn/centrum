@@ -18,13 +18,17 @@ import {
   Plus,
   Minus,
   Save,
-  Loader
+  Loader,
+  Trash2
 } from "lucide-react";
 import billingHelper from "../../helpers/billingHelper";
+import patientServicesHelper from "../../helpers/patientServicesHelper";
+import appointmentHelper from "../../helpers/appointmentHelper";
 import { toast } from "sonner";
 import { formatDateToYYYYMMDD } from "../../utils/formatDate";
 import { useUser } from "../../context/userContext";
 import { useServices } from "../../context/serviceContext";
+import ServiceSelectionModal from "../Doctor/SingleDoctor/patient-details/ServiceSelectionModal";
 
 // Simple Loader Component
 const LoaderOverlay = () => (
@@ -458,6 +462,360 @@ const BillingManagement = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedBillId, setSelectedBillId] = useState(null);
   const [isRedirectedFromAppointment, setIsRedirectedFromAppointment] = useState(false);
+  
+  // Add state for generate bill modal
+  const [isGenerateBillModalOpen, setIsGenerateBillModalOpen] = useState(false);
+  const [appointmentData, setAppointmentData] = useState(null);
+
+  // Add GenerateBillModal component
+  const GenerateBillModal = ({ isOpen, onClose, appointmentId, onBillGenerated }) => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [taxPercentage, setTaxPercentage] = useState(0);
+    const [additionalCharges, setAdditionalCharges] = useState(0);
+    const [additionalChargeNote, setAdditionalChargeNote] = useState("");
+    const [discount, setDiscount] = useState(0);
+    const [paymentMethod, setPaymentMethod] = useState("cash");
+    const [showServiceModal, setShowServiceModal] = useState(false);
+    const [services, setServices] = useState([]);
+    const [appointment, setAppointment] = useState(null);
+    const [patient, setPatient] = useState(null);
+
+    // Fetch appointment and patient data
+    useEffect(() => {
+      if (isOpen && appointmentId) {
+        fetchAppointmentData();
+      }
+    }, [isOpen, appointmentId]);
+
+    const fetchAppointmentData = async () => {
+      try {
+        setIsLoading(true);
+        const appointmentResponse = await appointmentHelper.getAppointmentById(appointmentId);
+        if (appointmentResponse.success) {
+          setAppointment(appointmentResponse.data);
+          setPatient(appointmentResponse.data.patient);
+          await fetchPatientServices(appointmentResponse.data.patient._id);
+        }
+      } catch (error) {
+        console.error("Error fetching appointment data:", error);
+        toast.error("Nie udało się pobrać danych wizyty");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchPatientServices = async (patientId) => {
+      try {
+        const response = await patientServicesHelper.getPatientServices(patientId, { appointmentId });
+        
+        if (response && response.data && response.data.services) {
+          const formattedServices = response.data.services.map(serviceItem => ({
+            serviceId: serviceItem.service._id,
+            _id: serviceItem._id,
+            title: serviceItem.service.title,
+            price: serviceItem.service.price,
+            quantity: serviceItem.quantity || 1,
+            totalPrice: (parseFloat(serviceItem.service.price) * (serviceItem.quantity || 1)).toFixed(2),
+            status: serviceItem.status,
+            notes: serviceItem.notes
+          }));
+          
+          setServices(formattedServices);
+        }
+      } catch (error) {
+        console.error("Error fetching patient services:", error);
+        toast.error("Nie udało się załadować usług pacjenta");
+      }
+    };
+
+    const handleAddServices = async (servicesData) => {
+      try {
+        setIsLoading(true);
+        
+        const servicesToAdd = servicesData.services.map(service => ({
+          serviceId: service.serviceId,
+          quantity: service.quantity,
+          notes: "",
+          status: "active"
+        }));
+        
+        await patientServicesHelper.addServicesToPatient(patient._id, servicesToAdd, { appointmentId });
+        await fetchPatientServices(patient._id);
+        setShowServiceModal(false);
+        toast.success("Usługi dodane pomyślnie");
+      } catch (error) {
+        console.error("Error adding services:", error);
+        toast.error("Nie udało się dodać usług");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const handleRemoveService = async (serviceId) => {
+      try {
+        setIsLoading(true);
+        await patientServicesHelper.removeServiceFromPatient(patient._id, serviceId, { appointmentId });
+        await fetchPatientServices(patient._id);
+        toast.success("Usługa usunięta pomyślnie");
+      } catch (error) {
+        console.error("Error removing service:", error);
+        toast.error("Nie udało się usunąć usługi");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (!isOpen) return null;
+
+    // Calculate totals
+    const subtotal = services.reduce((sum, service) => {
+      return sum + parseFloat(service.totalPrice || 0);
+    }, 0);
+
+    const taxAmount = (subtotal * taxPercentage) / 100;
+
+    const totalAmount = (
+      subtotal +
+      taxAmount +
+      parseFloat(additionalCharges || 0) -
+      parseFloat(discount || 0)
+    ).toFixed(2);
+
+    const handleGenerateBill = async () => {
+      try {
+        setIsLoading(true);
+
+        // Format services data
+        const formattedServices = services.map((service) => ({
+          serviceId: service.serviceId,
+          title: service.title,
+          price: service.price,
+          status: service.status,
+        }));
+
+        // Prepare billing payload
+        const billingPayload = {
+          services: formattedServices,
+          subtotal: subtotal,
+          taxPercentage: taxPercentage,
+          taxAmount: taxAmount,
+          discount: parseFloat(discount) || 0,
+          additionalCharges: parseFloat(additionalCharges) || 0,
+          additionalChargeNote: additionalChargeNote || "",
+          totalAmount: totalAmount,
+          paymentMethod: paymentMethod,
+        };
+
+        // Call the API to generate the bill
+        const response = await billingHelper.generateBill(appointmentId, billingPayload);
+
+        toast.success(`Rachunek wygenerowany pomyślnie na kwotę zł${totalAmount}`);
+        onClose();
+        onBillGenerated();
+        
+        // Redirect to billing details
+        navigate(`/admin/billing/details/${response.data._id}`);
+      } catch (error) {
+        console.error("Failed to generate bill:", error);
+        toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Generuj rachunek dla {patient?.name?.first} {patient?.name?.last}
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Utworzy to rachunek dla pacjenta na podstawie wybranych usług.
+            </p>
+
+            {isLoading ? (
+              <div className="py-4 flex justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-500"></div>
+              </div>
+            ) : (
+              <>
+                <div className="border rounded-lg overflow-hidden mb-4">
+                  <div className="bg-gray-50 px-4 py-2 border-b flex justify-between items-center">
+                    <h4 className="font-medium text-sm">Usługi</h4>
+                    <button
+                      onClick={() => setShowServiceModal(true)}
+                      className="text-sm text-teal-600 hover:text-teal-800 flex items-center"
+                    >
+                      <Plus size={16} className="mr-1" />
+                      Dodaj usługę
+                    </button>
+                  </div>
+
+                  {services && services.length > 0 ? (
+                    <div className="divide-y">
+                      {services.map((service) => (
+                        <div
+                          key={service._id}
+                          className="px-4 py-2 flex justify-between items-center"
+                        >
+                          <div>
+                            <p className="font-medium text-sm">
+                              {service.title}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Ilość: {service.quantity} | Status: {service.status === 'active' ? 'Aktywna' : service.status === 'completed' ? 'Zakończona' : service.status}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <p className="text-sm">
+                              zł{service.totalPrice}
+                            </p>
+                            <button
+                              onClick={() => handleRemoveService(service.serviceId)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="px-4 py-2 flex justify-between items-center bg-gray-50">
+                        <p className="font-medium">Suma częściowa</p>
+                        <p className="font-medium">zł{subtotal.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-gray-500">
+                      Nie znaleziono usług dla tej wizyty.
+                    </div>
+                  )}
+                </div>
+
+                {/* Tax, Additional Charges, and Discount Fields */}
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Podatek (%)
+                    </label>
+                    <div className="flex items-center">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={taxPercentage}
+                        onChange={(e) =>
+                          setTaxPercentage(parseFloat(e.target.value) || 0)
+                        }
+                        className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                      />
+                      <span className="ml-2 text-sm text-gray-500">
+                        ({taxPercentage === 0 ? "ZW" : `zł${taxAmount.toFixed(2)}`})
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Dodatkowe opłaty (zł)
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="number"
+                        min="0"
+                        value={additionalCharges}
+                        onChange={(e) =>
+                          setAdditionalCharges(parseFloat(e.target.value) || 0)
+                        }
+                        className="block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Notatka (opcjonalna)"
+                        value={additionalChargeNote}
+                        onChange={(e) => setAdditionalChargeNote(e.target.value)}
+                        className="block flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Rabat (zł)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={discount}
+                      onChange={(e) =>
+                        setDiscount(parseFloat(e.target.value) || 0)
+                      }
+                      className="block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Metoda płatności
+                    </label>
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                    >
+                      <option value="cash">Gotówka</option>
+                      <option value="card">Karta kredytowa/debetowa</option>
+                      <option value="insurance">Ubezpieczenie</option>
+                      <option value="bank_transfer">Przelew bankowy</option>
+                      <option value="mobile_payment">Płatność mobilna</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Total */}
+                <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                  <div className="flex justify-between items-center">
+                    <p className="font-semibold text-lg">Łączna kwota</p>
+                    <p className="font-bold text-lg text-teal-600">
+                      zł{totalAmount}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+                onClick={onClose}
+              >
+                Anuluj
+              </button>
+              <button
+                className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center"
+                onClick={handleGenerateBill}
+                disabled={isLoading || services.length === 0}
+              >
+                <DollarSign size={16} className="mr-1" />
+                Generuj rachunek
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Service Selection Modal */}
+        <ServiceSelectionModal
+          isOpen={showServiceModal}
+          onClose={() => setShowServiceModal(false)}
+          onSave={handleAddServices}
+          patientId={patient?._id}
+          appointmentId={appointmentId}
+          existingServices={services}
+        />
+      </div>
+    );
+  };
 
   // Add handleEditBill function
   const handleEditBill = (billId) => {
@@ -475,6 +833,24 @@ const BillingManagement = () => {
       const today = new Date().toISOString().split('T')[0];
       navigate(`/patients?date=${today}`);
     }
+  };
+
+  // Handle generate bill modal close
+  const handleGenerateBillModalClose = () => {
+    setIsGenerateBillModalOpen(false);
+    
+    // If user was redirected from appointment, redirect back to patients page
+    if (isRedirectedFromAppointment) {
+      const today = new Date().toISOString().split('T')[0];
+      navigate(`/patients?date=${today}`);
+    }
+  };
+
+  // Handle bill generated successfully
+  const handleBillGenerated = () => {
+    // Refresh the bills list
+    fetchBills();
+    setIsGenerateBillModalOpen(false);
   };
   
   // Load bills on initial render and when filters/pagination change
@@ -527,10 +903,14 @@ const BillingManagement = () => {
         setIsEditModalOpen(true);
         setIsRedirectedFromAppointment(true);
       } else {
-        // If no bill found for this appointment, show error and redirect back
-        toast.error("Nie znaleziono faktury dla tej wizyty");
-        navigate('/patients?date=' + new Date().toISOString().split('T')[0]);
+        // If no bill found for this appointment, show generate bill modal
+        setIsGenerateBillModalOpen(true);
+        setIsRedirectedFromAppointment(true);
       }
+    } else if (step === 'edit' && appointmentId && bills.length === 0) {
+      // If no bills at all and we have appointment ID, show generate bill modal
+      setIsGenerateBillModalOpen(true);
+      setIsRedirectedFromAppointment(true);
     }
   }, [step, appointmentId, bills, navigate]);
   
@@ -1146,6 +1526,16 @@ const BillingManagement = () => {
           billId={selectedBillId}
           onUpdate={fetchBills}
           isRedirectedFromAppointment={isRedirectedFromAppointment}
+        />
+      )}
+
+      {/* GenerateBillModal */}
+      {isGenerateBillModalOpen && (
+        <GenerateBillModal
+          isOpen={isGenerateBillModalOpen}
+          onClose={handleGenerateBillModalClose}
+          appointmentId={appointmentId}
+          onBillGenerated={handleBillGenerated}
         />
       )}
     </div>

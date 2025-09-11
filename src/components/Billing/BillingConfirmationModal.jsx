@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { DollarSign, Plus, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
 import { toast } from "sonner";
 import ServiceSelectionModal from "../Doctor/SingleDoctor/patient-details/ServiceSelectionModal";
@@ -15,6 +16,7 @@ const BillingConfirmationModal = ({
 
 }) => {
   //(appointmentId,patientId, "patientServicesData");
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [taxPercentage, setTaxPercentage] = useState(0);
   const [additionalCharges, setAdditionalCharges] = useState(0);
@@ -283,19 +285,26 @@ const BillingConfirmationModal = ({
             </button>
             <button
               className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center"
-              onClick={() =>
-                onConfirm({
-                  services,
-                  subtotal,
-                  taxPercentage,
-                  taxAmount,
-                  additionalCharges,
-                  additionalChargeNote,
-                  discount,
-                  totalAmount,
-                  paymentMethod,
-                })
-              }
+              onClick={async () => {
+                try {
+                  await onConfirm({
+                    services,
+                    subtotal,
+                    taxPercentage,
+                    taxAmount,
+                    additionalCharges,
+                    additionalChargeNote,
+                    discount,
+                    totalAmount,
+                    paymentMethod,
+                  });
+                  
+                  // Redirect to admin billing page with appointment ID and step
+                  navigate(`/admin/billing?appointment=${appointmentId}&step=edit`);
+                } catch (error) {
+                  console.error("Error generating bill:", error);
+                }
+              }}
               disabled={isLoading || services.length === 0}
             >
               <DollarSign size={16} className="mr-1" />
