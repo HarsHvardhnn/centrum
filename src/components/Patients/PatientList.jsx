@@ -142,6 +142,9 @@ function LabAppointmentsContent({ clinic }) {
     const dateFromUrl = searchParams.get('date');
     const appointmentIdFromUrl = searchParams.get('appointmentId');
     
+    // Check if there are any query parameters at all
+    const hasAnyQueryParams = searchParams.toString().length > 0;
+    
     // Handle both 'startDate' and 'date' parameters
     const dateToSet = startDateFromUrl || dateFromUrl;
     
@@ -149,6 +152,13 @@ function LabAppointmentsContent({ clinic }) {
       setDateRange(prev => ({
         ...prev,
         startDate: dateToSet
+      }));
+    } else if (!hasAnyQueryParams) {
+      // Set today's date as default only if no query parameters are present
+      const today = new Date().toISOString().split('T')[0];
+      setDateRange(prev => ({
+        ...prev,
+        startDate: today
       }));
     }
     

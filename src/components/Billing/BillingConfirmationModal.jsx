@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { DollarSign, Plus, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
 import { toast } from "sonner";
 import ServiceSelectionModal from "../Doctor/SingleDoctor/patient-details/ServiceSelectionModal";
@@ -17,6 +17,7 @@ const BillingConfirmationModal = ({
 }) => {
   //(appointmentId,patientId, "patientServicesData");
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [taxPercentage, setTaxPercentage] = useState(0);
   const [additionalCharges, setAdditionalCharges] = useState(0);
@@ -299,8 +300,15 @@ const BillingConfirmationModal = ({
                     paymentMethod,
                   });
                   
-                  // Redirect to admin billing page with appointment ID and step
-                  navigate(`/admin/billing?appointment=${appointmentId}&step=edit`);
+                  // Check if we're currently on admin billing page
+                  if (location.pathname === '/admin/billing') {
+                    // If on admin billing page, redirect to patients with today's date
+                    const today = new Date().toISOString().split('T')[0];
+                    navigate(`/patients?date=${today}`);
+                  } else {
+                    // Otherwise, redirect to admin billing page with appointment ID and step
+                    navigate(`/admin/billing?appointment=${appointmentId}&step=edit`);
+                  }
                 } catch (error) {
                   console.error("Error generating bill:", error);
                 }
