@@ -115,43 +115,42 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
   };
 
   const handleSubmit = async () => {
-    if (files.length === 0) {
-      setUploadError("Proszę przesłać co najmniej jeden dokument");
-      return;
-    }
-
     setUploading(true);
     setUploadError(null);
 
     try {
-      const formData = new FormData();
-      files.forEach((fileObj) => {
-        formData.append("files", fileObj.file);
-      });
+      // If files are provided, upload them
+      if (files.length > 0) {
+        const formData = new FormData();
+        files.forEach((fileObj) => {
+          formData.append("files", fileObj.file);
+        });
 
-      // Use normalized patient ID for the URL
-      const url = `/patients/documents/${patient.patient_id}/upload/${appointmentId}`;
+        // Use normalized patient ID for the URL
+        const url = `/patients/documents/${patient.patient_id}/upload/${appointmentId}`;
 
-      const headers = {
-        "Content-Type": "multipart/form-data",
-      };
+        const headers = {
+          "Content-Type": "multipart/form-data",
+        };
 
-      const response = await apiCaller("POST", url, formData, headers);
+        const response = await apiCaller("POST", url, formData, headers);
 
-      if (response) {
-        setUploadSuccess(true);
-        setIsOpen(false);
-        setFiles([]);
-        setUploadSuccess(false);
-
-        if (typeof onCheckinSuccess === 'function') {
-          onCheckinSuccess(appointmentId);
+        if (!response) {
+          throw new Error(response.message || "Przesyłanie nie powiodło się");
         }
-        if (typeof onAppointmentUpdate === 'function') {
-          onAppointmentUpdate(appointmentId, 'checkedIn');
-        }
-      } else {
-        throw new Error(response.message || "Przesyłanie nie powiodło się");
+      }
+
+      // Always proceed with check-in regardless of file upload
+      setUploadSuccess(true);
+      setIsOpen(false);
+      setFiles([]);
+      setUploadSuccess(false);
+
+      if (typeof onCheckinSuccess === 'function') {
+        onCheckinSuccess(appointmentId);
+      }
+      if (typeof onAppointmentUpdate === 'function') {
+        onAppointmentUpdate(appointmentId, 'checkedIn');
       }
     } catch (error) {
       console.error("Error uploading files:", error);
@@ -260,7 +259,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
               <h3 className="text-md font-medium">Prześlij Dokumenty</h3>
             </div>
             <p className="text-gray-500 text-sm mb-3">
-              Prześlij dokument podpisany przez pacjenta
+              Prześlij dokument podpisany przez pacjenta (opcjonalne)
             </p>
 
             {/* Upload Area - Simplified */}
@@ -379,7 +378,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
               onClick={handleSubmit}
               disabled={uploading}
             >
-              {uploading ? "Przesyłanie..." : "Prześlij"}
+              {uploading ? "Przesyłanie..." : "Zamelduj"}
             </button>
           </div>
         </div>
