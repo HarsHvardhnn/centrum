@@ -72,7 +72,7 @@ function LabAppointmentsContent({ clinic }) {
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("booked");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [dateRange, setDateRange] = useState({
     startDate: null,
@@ -511,7 +511,7 @@ function LabAppointmentsContent({ clinic }) {
                       Filtruj według statusu
                     </h3>
                     <div className="space-y-2 px-3 py-1">
-                      {["All", "Booked", "checkedIn", "Cancelled", "Completed"].map(
+                      {["All", "booked", "checkedIn", "Cancelled", "Completed"].map(
                         (status) => (
                           <label
                             key={status}
@@ -530,7 +530,7 @@ function LabAppointmentsContent({ clinic }) {
                             <span>
                               {status === "All"
                                 ? "Wszystkie"
-                                : status === "Booked"
+                                : status === "booked"
                                 ? "Zarezerwowane"
                                 : status === "checkedIn"
                                 ? "Zameldowany"
