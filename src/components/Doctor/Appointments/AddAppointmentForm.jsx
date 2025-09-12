@@ -24,11 +24,13 @@ function AppointmentFormModal({
   onClose, 
   onComplete, 
   doctorId, 
+  doctorInfo = null, // Full doctor information object
   availableServices = [], 
   isLoadingServices = false,
   isReceptionistMode = false,
   workflowOrder = "patientFirst", // "patientFirst" or "appointmentFirst"
-  allowPastDates = false // Whether to allow selecting dates in the past
+  allowPastDates = false, // Whether to allow selecting dates in the past
+  skipDoctorSelection = false // Whether to skip doctor selection step
 }) {
   const { services: contextServices, loading: contextLoading } = useServices();
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -45,11 +47,24 @@ function AppointmentFormModal({
     const today = new Date().toISOString().split("T")[0];
     const isDefaultDateInPast = today < today; // This will always be false, but keeping for consistency
     
+    // If skipDoctorSelection is true and we have doctorInfo, use it
+    let selectedDoctor = null;
+    if (skipDoctorSelection && doctorInfo) {
+      selectedDoctor = {
+        _id: doctorInfo.id || doctorInfo._id,
+        name: doctorInfo.name,
+        specialty: doctorInfo.specialty,
+        profilePicture: doctorInfo.avatarUrl || doctorInfo.profilePicture
+      };
+    } else if (doctorId) {
+      selectedDoctor = { _id: doctorId };
+    }
+    
     return {
       patientSource: "",
       visitType: "",
       isInternational: false,
-      selectedDoctor: doctorId ? { _id: doctorId } : null,
+      selectedDoctor: selectedDoctor,
       selectedDate: today,
       isWalkin: false,
       needsAttention: false,
@@ -615,11 +630,20 @@ function AppointmentFormModal({
 
   // Modify the useEffect for initial doctor selection
   useEffect(() => {
-    if (doctorId) {
+    if (skipDoctorSelection && doctorInfo) {
+      // When skipping doctor selection, automatically set up the doctor
+      const doctor = {
+        _id: doctorInfo.id || doctorInfo._id,
+        name: doctorInfo.name,
+        specialty: doctorInfo.specialty,
+        profilePicture: doctorInfo.avatarUrl || doctorInfo.profilePicture
+      };
+      handleDoctorSelect(doctor);
+    } else if (doctorId) {
       const doctor = { _id: doctorId };
       handleDoctorSelect(doctor);
     }
-  }, [doctorId]);
+  }, [doctorId, skipDoctorSelection, doctorInfo]);
 
   // Effect to handle SMS consent when date changes
   useEffect(() => {
@@ -646,39 +670,71 @@ function AppointmentFormModal({
   const canProceedToNextStep = () => {
     if (workflowOrder === "appointmentFirst") {
       // New workflow: Appointment first, then patient
-      switch (currentStep) {
-        case 1: // Doctor Selection & Date
-          return appointmentData.selectedDoctor && 
-                 appointmentData.selectedDate && 
-                 (appointmentData.customStartTime || appointmentData.selectedSlot);
-        case 2: // Patient Information
-          return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
-        case 3: // Services
-          return true; // Services are optional
-        case 4: // Additional Details
-          return true; // Additional details are optional
-        case 5: // Receptionist Overrides
-          return true; // Override options are optional
-        default:
-          return false;
+      if (skipDoctorSelection) {
+        // Skip doctor selection step when opened from doctor page
+        switch (currentStep) {
+          case 1: // Patient Information (doctor already selected)
+            return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
+          case 2: // Services
+            return true; // Services are optional
+          case 3: // Additional Details
+            return true; // Additional details are optional
+          case 4: // Receptionist Overrides
+            return true; // Override options are optional
+          default:
+            return false;
+        }
+      } else {
+        switch (currentStep) {
+          case 1: // Doctor Selection & Date
+            return appointmentData.selectedDoctor && 
+                   appointmentData.selectedDate && 
+                   (appointmentData.customStartTime || appointmentData.selectedSlot);
+          case 2: // Patient Information
+            return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
+          case 3: // Services
+            return true; // Services are optional
+          case 4: // Additional Details
+            return true; // Additional details are optional
+          case 5: // Receptionist Overrides
+            return true; // Override options are optional
+          default:
+            return false;
+        }
       }
     } else {
       // Original workflow: Patient first, then appointment
-      switch (currentStep) {
-        case 1: // Patient Information
-          return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
-        case 2: // Doctor Selection & Date
-          return appointmentData.selectedDoctor && 
-                 appointmentData.selectedDate && 
-                 (appointmentData.customStartTime || appointmentData.selectedSlot);
-        case 3: // Services
-          return true; // Services are optional
-        case 4: // Additional Details
-          return true; // Additional details are optional
-        case 5: // Receptionist Overrides
-          return true; // Override options are optional
-        default:
-          return false;
+      if (skipDoctorSelection) {
+        // Skip doctor selection step when opened from doctor page
+        switch (currentStep) {
+          case 1: // Patient Information (doctor already selected)
+            return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
+          case 2: // Services
+            return true; // Services are optional
+          case 3: // Additional Details
+            return true; // Additional details are optional
+          case 4: // Receptionist Overrides
+            return true; // Override options are optional
+          default:
+            return false;
+        }
+      } else {
+        switch (currentStep) {
+          case 1: // Patient Information
+            return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
+          case 2: // Doctor Selection & Date
+            return appointmentData.selectedDoctor && 
+                   appointmentData.selectedDate && 
+                   (appointmentData.customStartTime || appointmentData.selectedSlot);
+          case 3: // Services
+            return true; // Services are optional
+          case 4: // Additional Details
+            return true; // Additional details are optional
+          case 5: // Receptionist Overrides
+            return true; // Override options are optional
+          default:
+            return false;
+        }
       }
     }
   };
@@ -687,30 +743,55 @@ function AppointmentFormModal({
     const getStepTitle = (step) => {
       if (workflowOrder === "appointmentFirst") {
         // New workflow: Appointment first, then patient
-        switch (step) {
-          case 1: return "Lekarz i Termin";
-          case 2: return "Dane Pacjenta";
-          case 3: return "Usługi";
-          case 4: return "Szczegóły";
-          case 5: return "Opcje Recepcjonisty";
-          default: return step;
+        if (skipDoctorSelection) {
+          // Skip doctor selection step when opened from doctor page
+          switch (step) {
+            case 1: return "Dane Pacjenta";
+            case 2: return "Usługi";
+            case 3: return "Szczegóły";
+            case 4: return "Opcje Recepcjonisty";
+            default: return step;
+          }
+        } else {
+          switch (step) {
+            case 1: return "Lekarz i Termin";
+            case 2: return "Dane Pacjenta";
+            case 3: return "Usługi";
+            case 4: return "Szczegóły";
+            case 5: return "Opcje Recepcjonisty";
+            default: return step;
+          }
         }
       } else {
         // Original workflow: Patient first, then appointment
-        switch (step) {
-          case 1: return "Dane Pacjenta";
-          case 2: return "Lekarz i Termin";
-          case 3: return "Usługi";
-          case 4: return "Szczegóły";
-          case 5: return "Opcje Recepcjonisty";
-          default: return step;
+        if (skipDoctorSelection) {
+          // Skip doctor selection step when opened from doctor page
+          switch (step) {
+            case 1: return "Dane Pacjenta";
+            case 2: return "Usługi";
+            case 3: return "Szczegóły";
+            case 4: return "Opcje Recepcjonisty";
+            default: return step;
+          }
+        } else {
+          switch (step) {
+            case 1: return "Dane Pacjenta";
+            case 2: return "Lekarz i Termin";
+            case 3: return "Usługi";
+            case 4: return "Szczegóły";
+            case 5: return "Opcje Recepcjonisty";
+            default: return step;
+          }
         }
       }
     };
 
+    const totalSteps = skipDoctorSelection ? 4 : 5;
+    const stepsArray = Array.from({ length: totalSteps }, (_, i) => i + 1);
+
     return (
       <div className="flex items-center justify-center mb-6">
-        {[1, 2, 3, 4, 5].map((step) => (
+        {stepsArray.map((step) => (
           <div key={step} className="flex items-center">
             <div
               onClick={() => setCurrentStep(step)}
@@ -725,7 +806,7 @@ function AppointmentFormModal({
             >
               {step}
             </div>
-            {step < 5 && (
+            {step < totalSteps && (
               <div
                 className={`w-12 h-1 mx-2 ${
                   currentStep > step ? "bg-teal-200" : "bg-gray-200"
@@ -741,35 +822,67 @@ function AppointmentFormModal({
   const renderStepContent = () => {
     if (workflowOrder === "appointmentFirst") {
       // New workflow: Appointment first, then patient
-      switch (currentStep) {
-        case 1:
-          return renderDoctorSelectionStep();
-        case 2:
-          return renderPatientInfoStep();
-        case 3:
-          return renderServicesStep();
-        case 4:
-          return renderAdditionalDetailsStep();
-        case 5:
-          return renderReceptionistOverridesStep();
-        default:
-          return null;
+      if (skipDoctorSelection) {
+        // Skip doctor selection step when opened from doctor page
+        switch (currentStep) {
+          case 1:
+            return renderPatientInfoStep();
+          case 2:
+            return renderServicesStep();
+          case 3:
+            return renderAdditionalDetailsStep();
+          case 4:
+            return renderReceptionistOverridesStep();
+          default:
+            return null;
+        }
+      } else {
+        switch (currentStep) {
+          case 1:
+            return renderDoctorSelectionStep();
+          case 2:
+            return renderPatientInfoStep();
+          case 3:
+            return renderServicesStep();
+          case 4:
+            return renderAdditionalDetailsStep();
+          case 5:
+            return renderReceptionistOverridesStep();
+          default:
+            return null;
+        }
       }
     } else {
       // Original workflow: Patient first, then appointment
-      switch (currentStep) {
-        case 1:
-          return renderPatientInfoStep();
-        case 2:
-          return renderDoctorSelectionStep();
-        case 3:
-          return renderServicesStep();
-        case 4:
-          return renderAdditionalDetailsStep();
-        case 5:
-          return renderReceptionistOverridesStep();
-        default:
-          return null;
+      if (skipDoctorSelection) {
+        // Skip doctor selection step when opened from doctor page
+        switch (currentStep) {
+          case 1:
+            return renderPatientInfoStep();
+          case 2:
+            return renderServicesStep();
+          case 3:
+            return renderAdditionalDetailsStep();
+          case 4:
+            return renderReceptionistOverridesStep();
+          default:
+            return null;
+        }
+      } else {
+        switch (currentStep) {
+          case 1:
+            return renderPatientInfoStep();
+          case 2:
+            return renderDoctorSelectionStep();
+          case 3:
+            return renderServicesStep();
+          case 4:
+            return renderAdditionalDetailsStep();
+          case 5:
+            return renderReceptionistOverridesStep();
+          default:
+            return null;
+        }
       }
     }
   };
@@ -905,6 +1018,26 @@ function AppointmentFormModal({
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-medium mb-4">Informacje o Pacjencie</h3>
+        
+        {/* Show selected doctor info when skipDoctorSelection is true */}
+        {skipDoctorSelection && appointmentData.selectedDoctor && (
+          <div className="bg-teal-50 p-4 rounded-lg border border-teal-200 mb-4">
+            <h4 className="text-md font-medium text-teal-800 mb-2">Wybrany Lekarz</h4>
+            <div className="flex items-center space-x-3">
+              {appointmentData.selectedDoctor.profilePicture && (
+                <img
+                  src={appointmentData.selectedDoctor.profilePicture}
+                  alt={appointmentData.selectedDoctor.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              )}
+              <div>
+                <p className="font-medium text-teal-900">{appointmentData.selectedDoctor.name}</p>
+                <p className="text-sm text-teal-700">{appointmentData.selectedDoctor.specialty}</p>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Visit Type Selection */}
         <div className="bg-teal-50 p-4 rounded-lg">

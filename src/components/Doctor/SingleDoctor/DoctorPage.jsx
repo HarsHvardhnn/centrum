@@ -247,6 +247,11 @@ function DoctorsPage() {
           onClose={() => setShowAppointmentModal(false)}
           onComplete={handleAppointmentComplete}
           doctorId={doctorInfo.id}
+          doctorInfo={doctorInfo} // Pass the full doctor info
+          isReceptionistMode={true} // Enable receptionist workflow
+          workflowOrder="appointmentFirst" // Use appointment-first workflow
+          allowPastDates={false} // Don't auto-enable past dates checkbox
+          skipDoctorSelection={true} // Skip doctor selection step
         />
       )}
     </>
