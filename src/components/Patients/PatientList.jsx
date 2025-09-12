@@ -194,6 +194,41 @@ function LabAppointmentsContent({ clinic }) {
     return () => clearTimeout(debounceTimeout);
   }, [searchQuery, statusFilter, dateRange, user?.id, clinic, searchParams]);
 
+  // Force refetch when clinic prop changes to clear cache
+  useEffect(() => {
+    // Clear appointments and pagination when clinic prop changes to prevent cache issues
+    setAppointments([]);
+    setPagination({
+      total: 0,
+      page: 1,
+      pages: 1,
+      limit: 10,
+    });
+    setSearchQuery("");
+    setStatusFilter("booked");
+    
+    // Preserve date from query parameters when switching routes
+    const startDateFromUrl = searchParams.get('startDate');
+    const dateFromUrl = searchParams.get('date');
+    const dateToSet = startDateFromUrl || dateFromUrl;
+    
+    if (dateToSet) {
+      setDateRange({
+        startDate: dateToSet,
+        endDate: null,
+      });
+    } else {
+      // Only reset date range if no query parameters
+      setDateRange({
+        startDate: null,
+        endDate: null,
+      });
+    }
+    
+    // Refetch with fresh data
+    fetchAppointments(1);
+  }, [clinic, searchParams]);
+
   // Remove the frontend filtering logic and use the appointments directly from backend
   const groupAppointmentsByDate = (appointments) => {
     const grouped = {};
@@ -468,6 +503,7 @@ function LabAppointmentsContent({ clinic }) {
             <div className="flex items-center gap-2 mb-4">
               <p className="text-gray-600">
                 Wyświetlane: {dateRange.startDate ? `Wizyty z dnia ${new Date(dateRange.startDate).toLocaleDateString('pl-PL')}` : "Wszystkie wizyty"}
+                {clinic && " (Przychodnia)"}
               </p>
               {dateRange.startDate && (
                 <button

@@ -868,7 +868,7 @@ const BillingManagement = () => {
     // If user was redirected from appointment, redirect back to patients page
     if (isRedirectedFromAppointment) {
       const today = new Date().toISOString().split('T')[0];
-      navigate(`/patients?date=${today}`);
+      navigate(`/clinic?date=${today}`);
     }
   };
   
