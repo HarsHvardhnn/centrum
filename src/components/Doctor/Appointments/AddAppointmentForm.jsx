@@ -667,6 +667,20 @@ function AppointmentFormModal({
     appointmentData.newPatientPhone.trim() !== "" &&
     validatePhone(appointmentData.newPatientPhone) === "";
 
+  // Function to map visit types to Polish
+  const getVisitTypeInPolish = (visitType) => {
+    const visitTypeMap = {
+      "first-time": "Pierwsza wizyta",
+      "re-visit": "Kolejna wizyta",
+      "consultation": "Konsultacja",
+      "emergency": "Nagły przypadek",
+      "followup": "Wizyta kontrolna",
+      "quick_check": "Szybka kontrola",
+      "extended_consultation": "Rozszerzona konsultacja"
+    };
+    return visitTypeMap[visitType] || "Standardowa";
+  };
+
   const canProceedToNextStep = () => {
     if (workflowOrder === "appointmentFirst") {
       // New workflow: Appointment first, then patient
@@ -1656,7 +1670,7 @@ function AppointmentFormModal({
                   }
                 </div>
                 <div>
-                  <span className="font-medium">Typ:</span> {appointmentData.visitType || "Standardowa"}
+                  <span className="font-medium">Typ:</span> {getVisitTypeInPolish(appointmentData.visitType)}
                 </div>
               </>
             )}

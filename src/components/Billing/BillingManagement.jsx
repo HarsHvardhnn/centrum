@@ -467,8 +467,16 @@ const BillingManagement = () => {
   const [isGenerateBillModalOpen, setIsGenerateBillModalOpen] = useState(false);
   const [appointmentData, setAppointmentData] = useState(null);
 
+  // Ensure modals are closed on component mount
+  useEffect(() => {
+    setIsEditModalOpen(false);
+    setIsGenerateBillModalOpen(false);
+    setSelectedBillId(null);
+    setIsRedirectedFromAppointment(false);
+  }, []);
+
   // Add GenerateBillModal component
-  const GenerateBillModal = ({ isOpen, onClose, appointmentId, onBillGenerated }) => {
+  const GenerateBillModal = ({ isOpen, onClose, appointmentId, onBillGenerated, isRedirectedFromAppointment }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [taxPercentage, setTaxPercentage] = useState(0);
     const [additionalCharges, setAdditionalCharges] = useState(0);
@@ -613,8 +621,11 @@ const BillingManagement = () => {
         onClose();
         onBillGenerated();
         
-        // Redirect to billing details
-        navigate(`/admin/billing/details/${response.data._id}`);
+        // Only redirect to billing details if not redirected from appointment
+        // The onBillGenerated callback will handle the redirect for appointment cases
+        if (!isRedirectedFromAppointment) {
+          navigate(`/admin/billing/details/${response.data._id}`);
+        }
       } catch (error) {
         console.error("Failed to generate bill:", error);
         toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
@@ -827,6 +838,7 @@ const BillingManagement = () => {
   const handleEditModalClose = () => {
     setIsEditModalOpen(false);
     setSelectedBillId(null);
+    setIsRedirectedFromAppointment(false);
     
     // If user was redirected from appointment, redirect back to patients page
     if (isRedirectedFromAppointment) {
@@ -838,6 +850,7 @@ const BillingManagement = () => {
   // Handle generate bill modal close
   const handleGenerateBillModalClose = () => {
     setIsGenerateBillModalOpen(false);
+    setIsRedirectedFromAppointment(false);
     
     // If user was redirected from appointment, redirect back to patients page
     if (isRedirectedFromAppointment) {
@@ -851,6 +864,12 @@ const BillingManagement = () => {
     // Refresh the bills list
     fetchBills();
     setIsGenerateBillModalOpen(false);
+    
+    // If user was redirected from appointment, redirect back to patients page
+    if (isRedirectedFromAppointment) {
+      const today = new Date().toISOString().split('T')[0];
+      navigate(`/patients?date=${today}`);
+    }
   };
   
   // Load bills on initial render and when filters/pagination change
@@ -890,7 +909,10 @@ const BillingManagement = () => {
 
   // Handle automatic edit modal opening when redirected from appointment
   useEffect(() => {
-    if (step === 'edit' && appointmentId && bills.length > 0) {
+    if (step === 'edit' && appointmentId) {
+      console.log("Checking for bill with appointmentId:", appointmentId);
+      console.log("Available bills:", bills);
+      
       // Find the bill for this specific appointment
       const billForAppointment = bills.find(bill => 
         bill.appointmentId === appointmentId || 
@@ -898,21 +920,27 @@ const BillingManagement = () => {
         bill.appointment?.id === appointmentId
       );
       
+      console.log("Found bill for appointment:", billForAppointment);
+      
       if (billForAppointment) {
+        // Bill exists for this appointment - show edit modal
+        console.log("Showing edit modal for bill:", billForAppointment._id);
         setSelectedBillId(billForAppointment._id);
         setIsEditModalOpen(true);
         setIsRedirectedFromAppointment(true);
+        // Ensure generate modal is closed
+        setIsGenerateBillModalOpen(false);
       } else {
-        // If no bill found for this appointment, show generate bill modal
+        // No bill found for this appointment - show generate bill modal
+        console.log("No bill found, showing generate modal");
         setIsGenerateBillModalOpen(true);
         setIsRedirectedFromAppointment(true);
+        // Ensure edit modal is closed
+        setIsEditModalOpen(false);
+        setSelectedBillId(null);
       }
-    } else if (step === 'edit' && appointmentId && bills.length === 0) {
-      // If no bills at all and we have appointment ID, show generate bill modal
-      setIsGenerateBillModalOpen(true);
-      setIsRedirectedFromAppointment(true);
     }
-  }, [step, appointmentId, bills, navigate]);
+  }, [step, appointmentId, bills]);
   
   // Separate useEffect for billing stats
   useEffect(() => {
@@ -1536,6 +1564,7 @@ const BillingManagement = () => {
           onClose={handleGenerateBillModalClose}
           appointmentId={appointmentId}
           onBillGenerated={handleBillGenerated}
+          isRedirectedFromAppointment={isRedirectedFromAppointment}
         />
       )}
     </div>
