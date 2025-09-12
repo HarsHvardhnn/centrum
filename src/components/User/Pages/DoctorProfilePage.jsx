@@ -39,6 +39,7 @@ const DoctorProfilePage = () => {
     name: "",
     email: "",
     phone: "",
+    phoneCode: "+48", // Default country code
     gender: "male",
     message: "",
     consultationType: "offline",
@@ -55,6 +56,20 @@ const DoctorProfilePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAllServices, setShowAllServices] = useState(false);
 
+  // Phone country codes configuration
+  const phoneCountryCodes = [
+    { code: "+48", country: "Polska", flag: "🇵🇱", maxLength: 9, default: true },
+    { code: "+380", country: "Ukraina", flag: "🇺🇦", maxLength: 9 },
+    { code: "+49", country: "Niemcy", flag: "🇩🇪", maxLength: 11 },
+    { code: "+44", country: "Wielka Brytania", flag: "🇬🇧", maxLength: 10 },
+    { code: "+34", country: "Hiszpania", flag: "🇪🇸", maxLength: 9 },
+    { code: "+33", country: "Francja", flag: "🇫🇷", maxLength: 9 },
+    { code: "+43", country: "Austria", flag: "🇦🇹", maxLength: 10 },
+    { code: "+39", country: "Włochy", flag: "🇮🇹", maxLength: 10 },
+    { code: "+420", country: "Czechy", flag: "🇨🇿", maxLength: 9 },
+    { code: "+1", country: "USA", flag: "🇺🇸", maxLength: 10 }
+  ];
+
   useEffect(() => {
     fetchDoctorBySlug();
   }, [doctorSlug]);
@@ -69,6 +84,9 @@ const DoctorProfilePage = () => {
         phone: user?.phone?.startsWith("+48")
           ? user.phone.slice(3)
           : user?.phone || "",
+        phoneCode: user?.phone?.startsWith("+") 
+          ? user.phone.substring(0, user.phone.length - (user.phone.length - user.phone.indexOf(user.phone.match(/\d/)[0])))
+          : "+48",
       }));
     }
   }, [user]);
@@ -337,8 +355,8 @@ const DoctorProfilePage = () => {
         return;
       }
 
-      // Format phone number by adding the Polish country code
-      const phone = `+48${bookingForm.phone}`;
+      // Format phone number by adding the selected country code
+      const phone = `${bookingForm.phoneCode}${bookingForm.phone}`;
 
       // Get the correct doctor ID (could be _id or id)
       const doctorId = doctor._id || doctor.id;
@@ -393,6 +411,7 @@ const DoctorProfilePage = () => {
         phone: user?.phone?.startsWith("+48")
           ? user.phone.slice(3)
           : user?.phone || "",
+        phoneCode: "+48",
         gender: "male",
         message: "",
         consultationType: "offline",
@@ -1194,19 +1213,38 @@ const DoctorProfilePage = () => {
                               <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Telefon* (9 cyfr)
                               </label>
-                              <input
-                                type="tel"
-                                name="phone"
-                                value={bookingForm.phone}
-                                onChange={handlePhoneChange}
-                                className={`w-full px-3 py-2 border ${
-                                  formErrors.phone
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                placeholder="123456789"
-                                maxLength="9"
-                              />
+                              <div className="flex">
+                                <div className="relative">
+                                  <select
+                                    name="phoneCode"
+                                    value={bookingForm.phoneCode}
+                                    onChange={handleInputChange}
+                                    className="px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white min-w-[140px] pl-8"
+                                  >
+                                    {phoneCountryCodes.map((country) => (
+                                      <option key={country.code} value={country.code}>
+                                        {country.flag} {country.code} {country.country}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                    {phoneCountryCodes.find(country => country.code === bookingForm.phoneCode)?.flag || "🇵🇱"}
+                                  </div>
+                                </div>
+                                <input
+                                  type="tel"
+                                  name="phone"
+                                  value={bookingForm.phone}
+                                  onChange={handlePhoneChange}
+                                  className={`flex-1 px-3 py-2 border ${
+                                    formErrors.phone
+                                      ? "border-red-500"
+                                      : "border-gray-300"
+                                  } rounded-r-md focus:outline-none focus:ring-1 focus:ring-teal-500 border-l-0`}
+                                  placeholder="123456789"
+                                  maxLength="9"
+                                />
+                              </div>
                               {formErrors.phone ? (
                                 <p className="text-red-500 text-xs mt-1">
                                   {formErrors.phone}

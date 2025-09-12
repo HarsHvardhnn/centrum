@@ -106,11 +106,26 @@ export default function BookAppointment({
   const timeFromUrl = searchParams.get('godzina');
   const specializationFromUrl = searchParams.get('specjalizacja') || selectedSpecialization;
 
+  // Phone country codes configuration
+  const phoneCountryCodes = [
+    { code: "+48", country: "Polska", flag: "🇵🇱", maxLength: 9, default: true },
+    { code: "+380", country: "Ukraina", flag: "🇺🇦", maxLength: 9 },
+    { code: "+49", country: "Niemcy", flag: "🇩🇪", maxLength: 11 },
+    { code: "+44", country: "Wielka Brytania", flag: "🇬🇧", maxLength: 10 },
+    { code: "+34", country: "Hiszpania", flag: "🇪🇸", maxLength: 9 },
+    { code: "+33", country: "Francja", flag: "🇫🇷", maxLength: 9 },
+    { code: "+43", country: "Austria", flag: "🇦🇹", maxLength: 10 },
+    { code: "+39", country: "Włochy", flag: "🇮🇹", maxLength: 10 },
+    { code: "+420", country: "Czechy", flag: "🇨🇿", maxLength: 9 },
+    { code: "+1", country: "USA", flag: "🇺🇸", maxLength: 10 }
+  ];
+
   const initialValues = {
     name: user?.name || "",
     gender: "",
     email: user?.email || "",
     phone: user?.phone?.startsWith("+48") ? user.phone.slice(3) : user?.phone || "",
+    phoneCode: "+48", // Default country code
     date: dateFromUrl || "",
     time: timeFromUrl || "",
     doctor: doctorIdFromUrl || "",
@@ -134,6 +149,7 @@ export default function BookAppointment({
     phone: Yup.string()
       .matches(/^\d{9}$/, "Wprowadź dokładnie 9 cyfr")
       .required("Wymagane"),
+    phoneCode: Yup.string().required("Wymagane"),
     date: Yup.date().required("Wymagane"),
     time: Yup.string().required("Wymagane"),
     doctor: Yup.string().required("Wymagane"),
@@ -396,7 +412,7 @@ export default function BookAppointment({
       // Format date and time if needed
       const formData = {
         ...values,
-        phone: `+48${values.phone}`,
+        phone: `${values.phoneCode}${values.phone}`,
         recaptchaToken,
         isV2Fallback,
         consent: true // Add consent field for CAPTCHA verification
@@ -669,33 +685,45 @@ export default function BookAppointment({
 
                 <div className="col-span-1">
                   <div className="custom-phone-input relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <div className="flex items-center">
-                        <div className="flag-icon w-5 h-3.5 mr-2">
-                          <div className="w-full h-full flex flex-col">
-                            <div className="bg-white h-1/2 w-full"></div>
-                            <div className="bg-red-600 h-1/2 w-full"></div>
-                          </div>
+                    <div className="flex">
+                      <div className="relative">
+                        <Field
+                          as="select"
+                          name="phoneCode"
+                          className="p-2.5 sm:p-3 text-sm sm:text-base outline-none bg-white border border-[#062b47] text-[#062b47] rounded-l appearance-none pr-8 min-w-[140px] pl-8"
+                        >
+                          {phoneCountryCodes.map((country) => (
+                            <option key={country.code} value={country.code}>
+                              {country.flag} {country.code} {country.country}
+                            </option>
+                          ))}
+                        </Field>
+                        <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                          {phoneCountryCodes.find(country => country.code === values.phoneCode)?.flag || "🇵🇱"}
                         </div>
-                        <span className="text-gray-500 text-sm sm:text-base">+48</span>
                       </div>
+                      <input
+                        type="text"
+                        value={values.phone}
+                        onChange={(e) => handlePhoneChange(e, setFieldValue)}
+                        placeholder="123 456 789"
+                        className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-gray-400 rounded-r border-l-0"
+                      />
                     </div>
-                    <input
-                      type="text"
-                      value={values.phone}
-                      onChange={(e) => handlePhoneChange(e, setFieldValue)}
-                      placeholder="123 456 789"
-                      className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-gray-400 rounded pl-16 sm:pl-20"
-                    />
                   </div>
                   {errors.phone && touched.phone && (
                     <div className="text-red-600 text-xs sm:text-sm mt-1">
                       {errors.phone}
                     </div>
                   )}
+                  {errors.phoneCode && touched.phoneCode && (
+                    <div className="text-red-600 text-xs sm:text-sm mt-1">
+                      {errors.phoneCode}
+                    </div>
+                  )}
                   {values.phone && !errors.phone && (
                     <div className="text-xs text-gray-500 mt-1">
-                      +48 {formatPhoneDisplay(values.phone)}
+                      {values.phoneCode} {formatPhoneDisplay(values.phone)}
                     </div>
                   )}
                 </div>
