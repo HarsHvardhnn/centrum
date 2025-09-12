@@ -35,7 +35,7 @@ const Sidebar = () => {
         <div className="flex items-center">
           <img
             src="https://res.cloudinary.com/dca740eqo/image/upload/v1757666023/hospital_app/images/a8qfdccxpi0aipcavki2.png"
-            className="size-10"
+            className="size-24"
             alt="company_logo"
           />
           <div className="ml-2 flex flex-col font-semibold text-gray-800 text-lg">
