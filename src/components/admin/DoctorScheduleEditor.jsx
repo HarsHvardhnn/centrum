@@ -591,14 +591,18 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
   // Quick copy functions for common scenarios
   const quickCopyLastWeekToNextWeek = async () => {
     const today = new Date();
+    
+    // Calculate last week (Monday to Sunday)
     const lastWeekStart = new Date(today);
-    lastWeekStart.setDate(today.getDate() - 7);
+    lastWeekStart.setDate(today.getDate() - today.getDay() - 6); // Last Monday
     
     const lastWeekEnd = new Date(today);
-    lastWeekEnd.setDate(today.getDate() - 1);
+    lastWeekEnd.setDate(today.getDate() - today.getDay()); // Last Sunday
     
+    // Calculate next Monday (next week start)
     const nextWeekStart = new Date(today);
-    nextWeekStart.setDate(today.getDate() + 7);
+    const daysUntilNextMonday = (8 - today.getDay()) % 7; // 0 = Sunday, 1 = Monday, etc.
+    nextWeekStart.setDate(today.getDate() + (daysUntilNextMonday === 0 ? 7 : daysUntilNextMonday));
     
     try {
       setCopyLoading(true);
@@ -647,8 +651,10 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
     const thisWeekEnd = new Date(today);
     thisWeekEnd.setDate(today.getDate() - today.getDay() + 7); // Sunday
     
+    // Calculate next Monday (next week start)
     const nextWeekStart = new Date(today);
-    nextWeekStart.setDate(today.getDate() + 7);
+    const daysUntilNextMonday = (8 - today.getDay()) % 7; // 0 = Sunday, 1 = Monday, etc.
+    nextWeekStart.setDate(today.getDate() + (daysUntilNextMonday === 0 ? 7 : daysUntilNextMonday));
     
     try {
       setCopyLoading(true);
