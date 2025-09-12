@@ -41,42 +41,47 @@ function AppointmentFormModal({
     email: "",
     phone: ""
   });
-  const [appointmentData, setAppointmentData] = useState({
-    patientSource: "",
-    visitType: "",
-    isInternational: false,
-    selectedDoctor: doctorId ? { _id: doctorId } : null,
-    selectedDate: new Date().toISOString().split("T")[0],
-    isWalkin: false,
-    needsAttention: false,
-    markAsArrived: false,
-    notes: "",
-    enableRepeats: false,
-    selectedServices: [],
-    newPatientFirstName: "",
-    newPatientLastName: "",
-    newPatientEmail: "",
-    newPatientPhone: "",
-    newPatientPhoneCode: "+48", // Add phone code field
-    newPatientDateOfBirth: "",
-    newPatientSex: "",
-    newPatientPesel: "",
-    // Enhanced appointment creation fields for receptionist override
-    customDuration: null,
-    isBackdated: allowPastDates, // Set to true if allowPastDates is true
-    overrideConflicts: false,
-    duration: 30, // Default duration in minutes
-    // Metadata fields
-    visitType: "",
-    isEmergency: false,
-    receptionistNotes: "",
-    // Custom time override fields
-    customStartTime: "",
-    customEndTime: "",
-    // Slot selection field
-    selectedSlot: null,
-    // SMS consent field
-    smsConsentAgreed: true,
+  const [appointmentData, setAppointmentData] = useState(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const isDefaultDateInPast = today < today; // This will always be false, but keeping for consistency
+    
+    return {
+      patientSource: "",
+      visitType: "",
+      isInternational: false,
+      selectedDoctor: doctorId ? { _id: doctorId } : null,
+      selectedDate: today,
+      isWalkin: false,
+      needsAttention: false,
+      markAsArrived: false,
+      notes: "",
+      enableRepeats: false,
+      selectedServices: [],
+      newPatientFirstName: "",
+      newPatientLastName: "",
+      newPatientEmail: "",
+      newPatientPhone: "",
+      newPatientPhoneCode: "+48", // Add phone code field
+      newPatientDateOfBirth: "",
+      newPatientSex: "",
+      newPatientPesel: "",
+      // Enhanced appointment creation fields for receptionist override
+      customDuration: null,
+      isBackdated: allowPastDates, // Set to true if allowPastDates is true
+      overrideConflicts: false,
+      duration: 30, // Default duration in minutes
+      // Metadata fields
+      visitType: "",
+      isEmergency: false,
+      receptionistNotes: "",
+      // Custom time override fields
+      customStartTime: "",
+      customEndTime: "",
+      // Slot selection field
+      selectedSlot: null,
+      // SMS consent field - default to true for future dates, false for past dates
+      smsConsentAgreed: !isDefaultDateInPast,
+    };
   });
   const [availableSlots, setAvailableSlots] = useState([]);
   const [phoneDropdownOpen, setPhoneDropdownOpen] = useState(false);
@@ -595,6 +600,8 @@ function AppointmentFormModal({
       selectedDate: selectedDate,
       // Update isBackdated based on the selected date
       isBackdated: isSelectedDateInPast,
+      // Uncheck SMS consent for past dates (user can still check it manually if needed)
+      smsConsentAgreed: isSelectedDateInPast ? false : appointmentData.smsConsentAgreed,
     });
   };
 
@@ -613,6 +620,20 @@ function AppointmentFormModal({
       handleDoctorSelect(doctor);
     }
   }, [doctorId]);
+
+  // Effect to handle SMS consent when date changes
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const isSelectedDateInPast = appointmentData.selectedDate < today;
+    
+    // Only update SMS consent if the date is in the past and SMS consent is currently true
+    if (isSelectedDateInPast && appointmentData.smsConsentAgreed) {
+      setAppointmentData(prev => ({
+        ...prev,
+        smsConsentAgreed: false
+      }));
+    }
+  }, [appointmentData.selectedDate]);
 
   const isFirstTimeVisit = appointmentData.visitType === "first-time";
   const isNewPatientValid = isFirstTimeVisit && 

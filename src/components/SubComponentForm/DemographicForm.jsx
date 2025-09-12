@@ -423,12 +423,11 @@ const DemographicsForm = ({
               className={`flex-1 h-[42px] px-3 border ${touched.mobileNumber && errors.mobileNumber ? 'border-red-500' : 'border-gray-300'} rounded-r-md focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
             />
           </div>
-          {touched.mobileNumber && errors.mobileNumber && (
-            <p className="mt-1 text-sm text-red-500">{errors.mobileNumber}</p>
-          )}
-          {phoneValidationError && (
-            <p className="mt-1 text-sm text-red-500">{phoneValidationError}</p>
-          )}
+          {(touched.mobileNumber && errors.mobileNumber) || phoneValidationError ? (
+            <p className="mt-1 text-sm text-red-500">
+              {phoneValidationError || errors.mobileNumber}
+            </p>
+          ) : null}
           <p className="mt-1 text-xs text-gray-500">
             <span className="inline-block mr-1 align-middle">{currentCountry.flag}</span>
             <span className="font-medium text-gray-700">{currentCountry.country}</span> - {currentCountry.maxLength} cyfr

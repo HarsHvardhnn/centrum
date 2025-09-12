@@ -614,7 +614,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
 
       const response = await apiCaller(
         "POST",
-        `doctors/schedule/copy-date-range${doctorId ? `?doctorId=${doctorId}` : ''}`,
+        `docs/schedule/copy-date-range${doctorId ? `?doctorId=${doctorId}` : ''}`,
         copyData
       );
 
@@ -664,7 +664,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
 
       const response = await apiCaller(
         "POST",
-        `doctors/schedule/copy-date-range${doctorId ? `?doctorId=${doctorId}` : ''}`,
+        `docs/schedule/copy-date-range${doctorId ? `?doctorId=${doctorId}` : ''}`,
         copyData
       );
 
