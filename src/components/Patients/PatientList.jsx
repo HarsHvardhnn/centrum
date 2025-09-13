@@ -655,7 +655,7 @@ function LabAppointmentsContent({ clinic }) {
                           onClick={() => {
                             if (appointment.isAppointment !== false) {
                               navigate(
-                                `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                                `/szczegoly-pacjenta/${appointment.patient.id}?appointmentId=${appointment.id}`
                               );
                             }
                           }}
@@ -720,7 +720,7 @@ function LabAppointmentsContent({ clinic }) {
                                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                     onClick={() => {
                                       navigate(
-                                        `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                                        `/szczegoly-pacjenta/${appointment.patient.id}?appointmentId=${appointment.id}`
                                       );
                                     }}
                                   >
@@ -834,7 +834,7 @@ function LabAppointmentsContent({ clinic }) {
                       onClick={() => {
                         if (appointment.isAppointment !== false) {
                           navigate(
-                            `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                            `/szczegoly-pacjenta/${appointment.patient.id}?appointmentId=${appointment.id}`
                           );
                         }
                       }}
@@ -938,7 +938,7 @@ function LabAppointmentsContent({ clinic }) {
                                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                   onClick={() => {
                                     navigate(
-                                      `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                                      `/szczegoly-pacjenta/${appointment.patient.id}?appointmentId=${appointment.id}`
                                     );
                                   }}
                                 >

@@ -948,7 +948,7 @@ const PatientList = () => {
                       onChange={() => toggleSelectPatient(patient.id)}
                     />
                   </td> */}
-                  <td className="py-4 px-4 cursor-pointer" onClick={() => navigate(`/patients-details/${patient.patient_id}?appointmentId=${patient._id}`)} >
+                  <td className="py-4 px-4 cursor-pointer" onClick={() => navigate(`/szczegoly-pacjenta/${patient.patient_id}?appointmentId=${patient._id}`)} >
                     <div className="font-medium">{patient.name || "N/A"}</div>
                     <div className="text-sm text-gray-500">
                       {patient.username || "N/A"}
@@ -1000,7 +1000,7 @@ const PatientList = () => {
                               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                               onClick={() => {
                                 navigate(
-                                  `/patients-details/${patient.patient_id}?appointmentId=${patient._id}`
+                                  `/szczegoly-pacjenta/${patient.patient_id}?appointmentId=${patient._id}`
                                 );
                               }}
                             >
@@ -1362,7 +1362,7 @@ const UpcomingAppointments = () => {
                         className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                         onClick={() => {
                           navigate(
-                            `/patients-details/${appointment.patient.id}?appointmentId=${appointment.id}`
+                            `/szczegoly-pacjenta/${appointment.patient.id}?appointmentId=${appointment.id}`
                           );
                         }}
                       >

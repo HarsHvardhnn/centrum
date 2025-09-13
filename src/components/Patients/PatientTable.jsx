@@ -158,7 +158,7 @@ function PatientsTable({
           <tbody>
             {currentPatients.length > 0 ? (
               currentPatients.map((patient, index) => (
-                <tr key={index} className="border-b hover:bg-gray-50" onClick={()=>navigate(`/patients-details/${patient.id}`)}>
+                <tr key={index} className="border-b hover:bg-gray-50" onClick={()=>navigate(`/szczegoly-pacjenta/${patient.id}`)}>
                   <td className="px-4 py-3">
                     <input type="checkbox" className="rounded" />
                   </td>
