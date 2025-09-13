@@ -33,6 +33,25 @@ const generateSlug = (text) => {
     // Remove leading/trailing hyphens
     .replace(/^-|-$/g, '');
 };
+
+// Utility function to normalize URLs for canonical consistency
+const normalizeUrl = (url) => {
+  if (!url) return '';
+  
+  // Remove trailing slash except for root
+  let normalized = url.endsWith('/') && url.length > 1 ? url.slice(0, -1) : url;
+  
+  // Ensure lowercase for consistency
+  normalized = normalized.toLowerCase();
+  
+  // Remove any query parameters for canonical URLs
+  normalized = normalized.split('?')[0];
+  
+  // Remove any fragments
+  normalized = normalized.split('#')[0];
+  
+  return normalized;
+};
 function removeTrailingSlash(url) {
   return url?.endsWith('/') && url.length > 1 ? url.slice(0, -1) : url;
 }
@@ -238,7 +257,13 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       }
   }
 
-  const canonicalUrl = `${BASE_URL}${path}`;
+  // Normalize the path for consistent canonical URLs
+  const normalizedPath = normalizeUrl(path);
+  const canonicalUrl = `${BASE_URL}${normalizedPath}`;
+  
+  // Ensure canonical URL is always self-referencing and properly formatted
+  const finalCanonicalUrl = canonicalUrl.replace(/\/$/, '') || BASE_URL;
+  
   // Handle both absolute and relative image URLs
   const fullOgImage = ogImage && (ogImage.startsWith('http://') || ogImage.startsWith('https://')) 
     ? ogImage 
@@ -256,11 +281,11 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <title>${title}</title>
     <meta name="description" content="${description}">
     <meta name="keywords" content="${keywords}">
-    <link rel="canonical" href="${canonicalUrl}">
+    <link rel="canonical" href="${finalCanonicalUrl}">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="${canonicalUrl}">
+    <meta property="og:url" content="${finalCanonicalUrl}">
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${description}">
     <meta property="og:image" content="${fullOgImage}">
@@ -268,7 +293,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="${canonicalUrl}">
+    <meta property="twitter:url" content="${finalCanonicalUrl}">
     <meta property="twitter:title" content="${title}">
     <meta property="twitter:description" content="${description}">
     <meta property="twitter:image" content="${fullOgImage}">
@@ -421,7 +446,7 @@ const handleExternalProtocols = (req, res, next) => {
   next();
 };
 
-// Middleware to handle invalid/undefined slugs
+// Middleware to handle invalid/undefined slugs and trailing slashes
 const handleInvalidSlugs = (req, res, next) => {
   const path = req.path;
   
@@ -444,6 +469,42 @@ const handleInvalidSlugs = (req, res, next) => {
     const redirectTo = path.slice(0, -1); // Remove trailing slash
     console.log(`🚫 Redirecting trailing slash URL: ${path} -> ${redirectTo}`);
     return res.redirect(301, redirectTo);
+  }
+  
+  next();
+};
+
+// Middleware to handle trailing slashes for dynamic service pages
+const handleServiceTrailingSlash = (req, res, next) => {
+  const path = req.path;
+  
+  // Handle trailing slashes for service pages specifically
+  if (path.startsWith('/uslugi/') && path.endsWith('/') && path.length > '/uslugi/'.length) {
+    const redirectTo = path.slice(0, -1); // Remove trailing slash
+    console.log(`🔄 Redirecting service trailing slash: ${path} -> ${redirectTo}`);
+    return res.redirect(301, redirectTo);
+  }
+  
+  // Handle trailing slashes for other dynamic pages
+  if ((path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/') || path.startsWith('/lekarze/')) && 
+      path.endsWith('/') && path.length > 8) {
+    const redirectTo = path.slice(0, -1); // Remove trailing slash
+    console.log(`🔄 Redirecting dynamic page trailing slash: ${path} -> ${redirectTo}`);
+    return res.redirect(301, redirectTo);
+  }
+  
+  next();
+};
+
+// Middleware to handle case sensitivity and URL normalization
+const handleUrlNormalization = (req, res, next) => {
+  const path = req.path;
+  const normalizedPath = normalizeUrl(path);
+  
+  // If the path was normalized (changed), redirect to the normalized version
+  if (path !== normalizedPath) {
+    console.log(`🔄 Redirecting to normalized URL: ${path} -> ${normalizedPath}`);
+    return res.redirect(301, normalizedPath);
   }
   
   next();
@@ -723,8 +784,10 @@ app.get('/sitemap.xml', async (req, res) => {
 });
 
 // Apply middleware in correct order
-app.use(handleExternalProtocols); // First: block external protocols
-app.use(handleInvalidSlugs);      // Second: handle undefined slugs
+app.use(handleExternalProtocols);     // First: block external protocols
+app.use(handleInvalidSlugs);          // Second: handle undefined slugs
+app.use(handleServiceTrailingSlash);  // Third: handle trailing slashes for dynamic pages
+app.use(handleUrlNormalization);      // Fourth: handle URL normalization and case sensitivity
 
 // Serve static assets (CSS, JS, images, PDFs) BEFORE SEO middleware
 app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
