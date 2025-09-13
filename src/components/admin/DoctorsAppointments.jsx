@@ -9,6 +9,7 @@ const DoctorSelectionWithSlots = ({
   selectedPatient = null,
   smsConsentAgreed = true,
   onSmsConsentChange = null,
+  loadingNextAvailableDate = false,
 }) => {
   const { specializations } = useSpecializations();
   const [selectedSpecialization, setSelectedSpecialization] = useState("");
@@ -137,10 +138,10 @@ const DoctorSelectionWithSlots = ({
     );
   };
 
-  const renderLoadingState = () => (
+  const renderLoadingState = (customMessage = "Ładowanie...") => (
     <div className="flex items-center justify-center py-8">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
-      <span className="ml-2 text-gray-600">Ładowanie...</span>
+      <span className="ml-2 text-gray-600">{customMessage}</span>
     </div>
   );
 
@@ -266,7 +267,7 @@ const DoctorSelectionWithSlots = ({
             </div>
 
             {isLoading && doctors.length === 0 ? (
-              renderLoadingState()
+              renderLoadingState("Ładowanie lekarzy...")
             ) : doctors.length === 0 ? (
               renderEmptyState("Brak dostępnych lekarzy w tej specjalizacji")
             ) : (
@@ -360,8 +361,12 @@ const DoctorSelectionWithSlots = ({
             </div>
 
             <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-              {isLoading ? (
-                renderLoadingState()
+              {isLoading || loadingNextAvailableDate ? (
+                renderLoadingState(
+                  loadingNextAvailableDate 
+                    ? "Sprawdzanie dostępności lekarza..." 
+                    : "Ładowanie terminów..."
+                )
               ) : availableSlots.length === 0 ? (
                 renderEmptyState(
                   "Brak dostępnych terminów dla tego lekarza w wybranym dniu"

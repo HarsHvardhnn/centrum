@@ -37,6 +37,7 @@ function AppointmentFormModal({
   const [doctorServices, setDoctorServices] = useState([]);
   const [allServices, setAllServices] = useState(availableServices || []);
   const [loadingServices, setLoadingServices] = useState(false);
+  const [loadingNextAvailableDate, setLoadingNextAvailableDate] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
   const [validationErrors, setValidationErrors] = useState({
@@ -479,6 +480,7 @@ function AppointmentFormModal({
   const fetchNextAvailableDate = async (doctorId) => {
     if (!doctorId) return;
     
+    setLoadingNextAvailableDate(true);
     try {
       const response = await apiCaller(
         "GET",
@@ -507,6 +509,8 @@ function AppointmentFormModal({
       console.error("Error fetching next available date:", error);
       toast.error("Wystąpił błąd podczas sprawdzania dostępności lekarza.");
       setAvailableSlots([]);
+    } finally {
+      setLoadingNextAvailableDate(false);
     }
   };
 
@@ -919,6 +923,7 @@ function AppointmentFormModal({
             initialDoctorId={doctorId}
             onSlotSelect={handleSlotSelect}
             selectedPatient={selectedPatient}
+            loadingNextAvailableDate={loadingNextAvailableDate}
           />
         </div>
 
