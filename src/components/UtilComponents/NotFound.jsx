@@ -149,7 +149,7 @@ export default function NotFound404() {
         </p>
 
         <button
-          onClick={() => navigate('/login')}
+          onClick={() => navigate('/logowanie')}
           className="px-8 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors text-lg mb-12"
         >
           {t.backToLogin}

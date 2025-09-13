@@ -82,7 +82,7 @@ axiosInstance.interceptors.response.use(
         removeCookie('user');
         localStorage.clear();
         if (window.location.pathname !== "/login") {
-          window.location.href = "/login";
+          window.location.href = "/logowanie";
         }
       } else {
         // Other status codes handling (e.g., 500 server error)

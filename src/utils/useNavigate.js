@@ -36,13 +36,33 @@ export const useNavigation = () => {
 // You can also define common route paths here to avoid hardcoding
 export const ROUTES = {
   HOME: "/",
-  DASHBOARD: "/dashboard",
-  PROFILE: "/profile",
-  SETTINGS: "/settings",
-  PATIENTS: "/patients",
-  APPOINTMENTS: "/appointments",
-  MEDICAL_RECORDS: "/medical-records",
-  HELP_CENTER: "/help",
+  LOGIN: "/logowanie",
+  FORGOT_PASSWORD: "/zapomniane-haslo",
+  DASHBOARD: "/administracja",
+  PROFILE: "/administracja/profil",
+  SETTINGS: "/administracja/konta",
+  DOCTORS: "/lekarze",
+  DOCTOR_APPOINTMENTS: "/lekarze/wizyty",
+  DOCTOR_DETAILS: "/szczegoly-lekarza",
+  PATIENTS: "/pacjenci",
+  PATIENT_DETAILS: "/szczegoly-pacjenta",
+  CLINIC: "/klinika",
+  APPOINTMENT_CREATE: "/wizyta/utworz",
+  ADMIN_SMS: "/administracja/sms",
+  DOCTOR_CREATE: "/lekarz/utworz",
+  ADMIN_ACCOUNTS: "/administracja/konta",
+  ADMIN_SERVICES: "/administracja/uslugi",
+  ADMIN_NEWS: "/administracja/aktualnosci",
+  DOCTOR_SETTINGS: "/lekarz/ustawienia",
+  ADMIN_CALENDAR: "/administracja/kalendarz",
+  HELP_CENTER: "/centrum-pomocy",
+  ADMIN_DATA: "/administracja/dane",
+  ADMIN_BILLING: "/administracja/rozliczenia",
+  ADMIN_BILLING_DETAILS: "/administracja/rozliczenia/szczegoly",
+  ADMIN_CONTACT_MESSAGES: "/administracja/wiadomosci-kontaktowe",
+  ADMIN_IP_CONFIG: "/administracja/konfiguracja-ip",
+  ADMIN_SECURITY_2FA: "/administracja/bezpieczenstwo/2fa",
+  ADMIN_APPOINTMENT_CONFIG: "/administracja/konfiguracja-wizyt",
   NOT_FOUND: "/404",
 };
 
@@ -50,7 +70,7 @@ export const ROUTES = {
 // This is useful for non-functional components or utility functions
 export const createNavigationUtils = (navigate) => ({
   goBack: () => navigate(-1),
-  goHome: () => navigate("/admin"),
-  goToDashboard: () => navigate("/dashboard"),
+  goHome: () => navigate("/administracja"),
+  goToDashboard: () => navigate("/administracja"),
   // ... add other navigation functions similar to above
 });

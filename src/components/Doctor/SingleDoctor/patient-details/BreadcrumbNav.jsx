@@ -14,14 +14,14 @@ const BreadcrumbNav = ({ patientName, navigate }) => {
       </button>
       <span
         className="cursor-pointer"
-        onClick={() => navigate("/doctor-appointment")}
+        onClick={() => navigate("/lekarze/wizyty")}
       >
         Wizyty lekarskie
       </span>
       <span className="mx-2">/</span>
       <span
         className="cursor-pointer"
-        onClick={() => navigate("/patients-details")}
+        onClick={() => navigate("/szczegoly-pacjenta")}
       >
         Szczegóły pacjenta
       </span>

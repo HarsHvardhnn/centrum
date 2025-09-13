@@ -250,7 +250,7 @@ export default function DoctorDetailPage() {
           <FaArrowLeftLong
             className="font-normal cursor-pointer"
             onClick={() => {
-              navigate("/doctors");
+              navigate("/lekarze");
             }}
           />
           Wizyta Lekarska / {doctorData.name}

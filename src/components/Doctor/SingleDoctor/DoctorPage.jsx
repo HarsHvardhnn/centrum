@@ -182,7 +182,7 @@ function DoctorsPage() {
         setShowAppointmentModal(false);
         
         // Navigate to the patients page where doctor can generate invoice
-        navigate("/clinic");
+        navigate("/klinika");
       } else {
         // Handle error from API that returns success: false
         toast.error("Wystąpił błąd");
@@ -229,7 +229,7 @@ function DoctorsPage() {
         setAppointmentId={setAppointmentId}
         onDateSelect={setSelectedDate}
         breadcrumbs={[
-          { label: "Panel główny", onClick: () => navigate("/admin") },
+          { label: "Panel główny", onClick: () => navigate("/administracja") },
           { label: "Wizyty lekarskie", onClick: null },
         ]}
         onSearch={handleSearch}

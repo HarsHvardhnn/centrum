@@ -41,7 +41,7 @@ const Header = () => {
     setUser(null);
 
     // Redirect to login page
-    window.location.href = "/login";
+    window.location.href = "/logowanie";
   };
 
   const handleViewProfile = () => {

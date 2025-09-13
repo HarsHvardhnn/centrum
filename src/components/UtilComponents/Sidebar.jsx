@@ -24,7 +24,7 @@ const Sidebar = () => {
   const currentPath = location.pathname;
   const handleLogout = () => {
     localStorage.clear();
-    window.location.href = "/login";
+    window.location.href = "/logowanie";
   };
   //("user", user);
 
@@ -51,8 +51,8 @@ const Sidebar = () => {
           <NavItem
             icon={<FiBarChart2 className="text-xl text-teal-400" />}
             label="Panel główny"
-            to="/admin"
-            isActive={currentPath === "/admin"}
+            to="/administracja"
+            isActive={currentPath === "/administracja"}
             isEnabled={true}
           />
 
@@ -61,18 +61,18 @@ const Sidebar = () => {
             label="Wizyty lekarskie"
             to={
               user?.role == "admin" || user?.role == "receptionist"
-                ? "/doctors"
-                : `/doctors/appointments/${user?.d_id}`
+                ? "/lekarze"
+                : `/lekarze/wizyty/${user?.d_id}`
             }
-            isActive={currentPath === "/doctors"}
+            isActive={currentPath === "/lekarze"}
             isEnabled={true}
           />
 
           <NavItem
             icon={<BsCalendarPlusFill className="text-xl text-teal-400" />}
             label="Dodaj wizytę"
-            to="/appointment/create"
-            isActive={currentPath === "/appointment/create"}
+            to="/wizyta/utworz"
+            isActive={currentPath === "/wizyta/utworz"}
             isEnabled={true}
           />
 
@@ -82,8 +82,8 @@ const Sidebar = () => {
                 <MdOutlineMedicalServices className="text-xl text-teal-400" />
               }
               label="Usługi"
-              to="/admin/services"
-              isActive={currentPath === "/admin/services"}
+              to="/administracja/uslugi"
+              isActive={currentPath === "/administracja/uslugi"}
               isEnabled={true}
             />
           )}
@@ -91,16 +91,16 @@ const Sidebar = () => {
             <NavItem
               icon={<MdSms className="text-xl text-teal-400" />}
               label="Zarządzanie SMS"
-              to="/admin/sms"
-              isActive={currentPath === "/admin/sms"}
+              to="/administracja/sms"
+              isActive={currentPath === "/administracja/sms"}
               isEnabled={true}
             />
           )}
                <NavItem
               icon={<Calendar1 className=" text-teal-400" />}
               label="Kalendarz"
-              to="/admin/calendar"
-              isActive={currentPath === "/admin/calendar"}
+              to="/administracja/kalendarz"
+              isActive={currentPath === "/administracja/kalendarz"}
               isEnabled={true}
             />
           {user?.role === "admin" && (
@@ -109,8 +109,8 @@ const Sidebar = () => {
                 <MdOutlineMedicalServices className="text-xl text-teal-400" />
               }
               label="Aktualności"
-              to="/admin/news"
-              isActive={currentPath === "/admin/news"}
+              to="/administracja/aktualnosci"
+              isActive={currentPath === "/administracja/aktualnosci"}
               isEnabled={true}
             />
           )}
@@ -118,8 +118,8 @@ const Sidebar = () => {
           <NavItem
             icon={<FiUsers className="text-xl text-teal-400" />}
             label="Lista pacjentów"
-            to="/patients"
-            isActive={currentPath === "/patients"}
+            to="/pacjenci"
+            isActive={currentPath === "/pacjenci"}
             isEnabled={true}
           />
           <div className="border-b border-teal-100 my-1"></div>
@@ -127,8 +127,8 @@ const Sidebar = () => {
           <NavItem
             icon={<RiHomeLine className="text-xl text-teal-400" />}
             label="Historia wizyt"
-            to="/clinic"
-            isActive={currentPath === "/clinic"}
+            to="/klinika"
+            isActive={currentPath === "/klinika"}
             isEnabled={true}
           />
 
@@ -136,40 +136,40 @@ const Sidebar = () => {
             <NavItem
               icon={<LuFileChartColumn className="text-xl text-teal-400" />}
               label="Rozliczenia"
-              to="/admin/billing"
-              isActive={currentPath === "/admin/billing"}
+              to="/administracja/rozliczenia"
+              isActive={currentPath === "/administracja/rozliczenia"}
               isEnabled={true}
             />
 
             <NavItem
               icon={<BarChart3 className="text-xl text-teal-400" />}
               label="Raporty"
-              to="/admin/data"
-              isActive={currentPath === "/admin/data"}
+              to="/administracja/dane"
+              isActive={currentPath === "/administracja/dane"}
               isEnabled={true}
             />
           
          {user?.role !== "doctor" && <NavItem
             icon={<FiMessageCircle className="text-xl text-teal-400" />}
             label="Kontakty"
-            to="/admin/contact-messages"
-            isActive={currentPath === "/admin/contact-messages"}
+            to="/administracja/wiadomosci-kontaktowe"
+            isActive={currentPath === "/administracja/wiadomosci-kontaktowe"}
             isEnabled={true}
           />}
 
           <NavItem
             icon={<FiUser className="text-xl text-teal-400" />}
             label="Konto"
-            to="/admin/profile"
-            isActive={currentPath === "/admin/profile"}
+            to="/administracja/profil"
+            isActive={currentPath === "/administracja/profil"}
             isEnabled={true}
           />
 
           <NavItem
             icon={<Shield className="text-xl text-teal-400" />}
             label="Uwierzytelnianie 2FA"
-            to="/admin/security/2fa"
-            isActive={currentPath === "/admin/security/2fa"}
+            to="/administracja/bezpieczenstwo/2fa"
+            isActive={currentPath === "/administracja/bezpieczenstwo/2fa"}
             isEnabled={true}
           />
 
@@ -180,15 +180,15 @@ const Sidebar = () => {
               <NavItem
                 icon={<Shield className="text-xl text-teal-400" />}
                 label="Kontrola dostępu IP"
-                to="/admin/ip-config"
-                isActive={currentPath === "/admin/ip-config"}
+                to="/administracja/konfiguracja-ip"
+                isActive={currentPath === "/administracja/konfiguracja-ip"}
                 isEnabled={true}
               />
               <NavItem
                 icon={<Settings className="text-xl text-teal-400" />}
                 label="Konfiguracja wizyt"
-                to="/admin/appointment-config"
-                isActive={currentPath === "/admin/appointment-config"}
+                to="/administracja/konfiguracja-wizyt"
+                isActive={currentPath === "/administracja/konfiguracja-wizyt"}
                 isEnabled={true}
               />
             </>
@@ -197,16 +197,16 @@ const Sidebar = () => {
             <NavItem
               icon={<Settings className="text-xl text-teal-400" />}
               label="Ustawienia"
-              to={`/admin/accounts`}
-              isActive={currentPath === "/admin/accounts"}
+              to={`/administracja/konta`}
+              isActive={currentPath === "/administracja/konta"}
               isEnabled={true}
             />
             {
               user?.role == "doctor" &&    <NavItem
               icon={<FiSettings className="text-xl text-teal-400" />}
               label="Harmonogram"
-              to={`/doctor/settings`}
-              isActive={currentPath === "/doctor/settings"}
+              to={`/lekarz/ustawienia`}
+              isActive={currentPath === "/lekarz/ustawienia"}
               isEnabled={true}
             />
     
@@ -256,7 +256,7 @@ const Sidebar = () => {
             </p>
             <button
               onClick={() => {
-                navigate("/help-center");
+                navigate("/centrum-pomocy");
               }}
               className="w-full bg-teal-400 hover:bg-teal-600 text-white py-3 px-4 rounded-md font-medium"
             >

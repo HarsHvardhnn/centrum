@@ -132,7 +132,113 @@ const routes = createBrowserRouter([
   // Root route - redirects to login
   {
     path: "/",
-    element: <Navigate to="/login" replace />,
+    element: <Navigate to="/logowanie" replace />,
+  },
+
+  // English to Polish redirections for backward compatibility
+  {
+    path: "/login",
+    element: <Navigate to="/logowanie" replace />,
+  },
+  {
+    path: "/forgot-password",
+    element: <Navigate to="/zapomniane-haslo" replace />,
+  },
+  {
+    path: "/doctors",
+    element: <Navigate to="/lekarze" replace />,
+  },
+  {
+    path: "/doctors/appointments/:id",
+    element: <Navigate to="/lekarze/wizyty/:id" replace />,
+  },
+  {
+    path: "/doctor-details/:id",
+    element: <Navigate to="/szczegoly-lekarza/:id" replace />,
+  },
+  {
+    path: "/patients",
+    element: <Navigate to="/pacjenci" replace />,
+  },
+  {
+    path: "/clinic",
+    element: <Navigate to="/klinika" replace />,
+  },
+  {
+    path: "/appointment/create",
+    element: <Navigate to="/wizyta/utworz" replace />,
+  },
+  {
+    path: "/patients-details/:id",
+    element: <Navigate to="/szczegoly-pacjenta/:id" replace />,
+  },
+  {
+    path: "/admin",
+    element: <Navigate to="/administracja" replace />,
+  },
+  {
+    path: "/admin/sms",
+    element: <Navigate to="/administracja/sms" replace />,
+  },
+  {
+    path: "/doctor/create",
+    element: <Navigate to="/lekarz/utworz" replace />,
+  },
+  {
+    path: "/admin/accounts",
+    element: <Navigate to="/administracja/konta" replace />,
+  },
+  {
+    path: "/admin/services",
+    element: <Navigate to="/administracja/uslugi" replace />,
+  },
+  {
+    path: "/admin/news",
+    element: <Navigate to="/administracja/aktualnosci" replace />,
+  },
+  {
+    path: "/doctor/settings",
+    element: <Navigate to="/lekarz/ustawienia" replace />,
+  },
+  {
+    path: "/admin/profile",
+    element: <Navigate to="/administracja/profil" replace />,
+  },
+  {
+    path: "/admin/calendar",
+    element: <Navigate to="/administracja/kalendarz" replace />,
+  },
+  {
+    path: "/help-center",
+    element: <Navigate to="/centrum-pomocy" replace />,
+  },
+  {
+    path: "/admin/data",
+    element: <Navigate to="/administracja/dane" replace />,
+  },
+  {
+    path: "/admin/billing",
+    element: <Navigate to="/administracja/rozliczenia" replace />,
+  },
+  {
+    path: "/admin/billing/details/:billId",
+    element: <Navigate to="/administracja/rozliczenia/szczegoly/:billId" replace />,
+  },
+  {
+    path: "/admin/contact-messages",
+    element: <Navigate to="/administracja/wiadomosci-kontaktowe" replace />,
+  },
+  {
+    path: "/admin/ip-config",
+    element: <Navigate to="/administracja/konfiguracja-ip" replace />,
+  },
+  {
+    path: "/admin/security/2fa",
+    element: <Navigate to="/administracja/bezpieczenstwo/2fa" replace />,
+  },
+  {
+    path: "/admin/appointment-config",
+    element: <Navigate to="/administracja/konfiguracja-wizyt" replace />,
   },
 
   // Public routes group
@@ -140,15 +246,11 @@ const routes = createBrowserRouter([
     element: <PublicRoute />,
     children: [
       {
-        path: "/login",
+        path: "/logowanie",
         element: <LoginScreen screenImg={LoginImage} isLogin={true} />,
       },
-      // {
-      //   path: "/signup",
-      //   element: <LoginScreen screenImg={SignupImage} isLogin={false} />,
-      // },
       {
-        path: "/forgot-password",
+        path: "/zapomniane-haslo",
         element: <ForgotPasswordScreen />,
       },
     ],
@@ -157,11 +259,11 @@ const routes = createBrowserRouter([
   // Public user site routes
   {
     path: "/user/*",
-    element: <Navigate to={location => location.pathname.replace('/login', '')} replace />,
+    element: <Navigate to={location => location.pathname.replace('/logowanie', '')} replace />,
   },
   {
     path: "/user",
-    element: <Navigate to="/login" replace />,
+    element: <Navigate to="/logowanie" replace />,
   },
 
   // Doctor & Admin protected routes
@@ -172,35 +274,34 @@ const routes = createBrowserRouter([
       {
         element: <MainLayout />,
         children: [
-          { path: "/doctors", element: <BillingPage /> },
-          { path: "/doctors/appointments/:id", element: <DoctorsPage /> },
-          { path: "/doctor-details/:id", element: <DoctorDetailPage /> },
-          { path: "/patients", element: <LabAppointments key="patients" clinic={false} /> },
-          { path: "/clinic", element: <LabAppointments key="clinic" clinic={true} /> },
-          { path: "/appointment/create", element: <AppointmentPage /> },
-          { path: "/patients-details/:id", element: <PatientDetailsPage /> },
-          { path: "/admin", element: <MedicalDashboard /> },
-          { path: "/admin/sms", element: <UserMessaging /> },
-          { path: "/doctor/create", element: <AddDoctorForm /> },
-          { path: "/admin/accounts", element: <UserManagement /> },
-          { path: "/admin/services", element: <ServicesManagement /> },
-          { path: "/admin/news", element: <NewsManagement /> },
-          { path: "/doctor/settings", element: <DoctorScheduleSettings /> },
-          { path: "/admin/profile", element: <ProfilePage /> },
-          { path: "/admin/calendar", element: <DoctorCalendar /> },
+          { path: "/lekarze", element: <BillingPage /> },
+          { path: "/lekarze/wizyty/:id", element: <DoctorsPage /> },
+          { path: "/szczegoly-lekarza/:id", element: <DoctorDetailPage /> },
+          { path: "/pacjenci", element: <LabAppointments key="patients" clinic={false} /> },
+          { path: "/klinika", element: <LabAppointments key="clinic" clinic={true} /> },
+          { path: "/wizyta/utworz", element: <AppointmentPage /> },
+          { path: "/szczegoly-pacjenta/:id", element: <PatientDetailsPage /> },
+          { path: "/administracja", element: <MedicalDashboard /> },
+          { path: "/administracja/sms", element: <UserMessaging /> },
+          { path: "/lekarz/utworz", element: <AddDoctorForm /> },
+          { path: "/administracja/konta", element: <UserManagement /> },
+          { path: "/administracja/uslugi", element: <ServicesManagement /> },
+          { path: "/administracja/aktualnosci", element: <NewsManagement /> },
+          { path: "/lekarz/ustawienia", element: <DoctorScheduleSettings /> },
+          { path: "/administracja/profil", element: <ProfilePage /> },
+          { path: "/administracja/kalendarz", element: <DoctorCalendar /> },
           {
-            path: "/help-center",
+            path: "/centrum-pomocy",
             element: <ChatComponent />,
           },
-          { path: "/admin/data", element: <ReportsDashboard /> },
+          { path: "/administracja/dane", element: <ReportsDashboard /> },
           
-          { path: "/admin/billing", element: <BillingManagement /> },
-          { path: "/admin/billing/details/:billId", element: <BillDetails /> },
-          { path: "/admin/contact-messages", element: <Adminmsgs /> },
-          { path: "/admin/ip-config", element: <IPConfigPage /> },
-          { path: "/admin/security/2fa", element: <TwoFactorSettings /> },
-          { path: "/admin/appointment-config", element: <AppointmentConfigPage /> },
-          // { path: "/admin/data", element: <ReportsDashboard /> },
+          { path: "/administracja/rozliczenia", element: <BillingManagement /> },
+          { path: "/administracja/rozliczenia/szczegoly/:billId", element: <BillDetails /> },
+          { path: "/administracja/wiadomosci-kontaktowe", element: <Adminmsgs /> },
+          { path: "/administracja/konfiguracja-ip", element: <IPConfigPage /> },
+          { path: "/administracja/bezpieczenstwo/2fa", element: <TwoFactorSettings /> },
+          { path: "/administracja/konfiguracja-wizyt", element: <AppointmentConfigPage /> },
         ],
       },
     ],

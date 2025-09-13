@@ -195,7 +195,7 @@ const BillDetails = () => {
             <h2 className="text-2xl font-semibold text-gray-800 mb-2">Nie znaleziono faktury</h2>
             <p className="text-gray-600 mb-6">{error || "Nie można znaleźć żądanej faktury."}</p>
             <button
-              onClick={() => navigate('/billing')}
+              onClick={() => navigate('/administracja/rozliczenia')}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700"
             >
               <ChevronLeft size={16} className="mr-2" />

@@ -166,7 +166,7 @@ const ForgotPassword = () => {
             </form>
 
             <button
-              onClick={() => (window.location.href = "/login")}
+              onClick={() => (window.location.href = "/logowanie")}
               className="flex items-center text-gray-500 hover:text-gray-700"
             >
               <ArrowLeft size={16} className="mr-1" /> Zaloguj się
@@ -229,7 +229,7 @@ const ForgotPassword = () => {
             </div>
 
             <button
-              onClick={() => (window.location.href = "/login")}
+              onClick={() => (window.location.href = "/logowanie")}
               className="flex items-center text-gray-500 hover:text-gray-700"
             >
               <ArrowLeft size={16} className="mr-1" /> Zaloguj się
@@ -372,7 +372,7 @@ const ForgotPassword = () => {
             </form>
 
             <button
-              onClick={() => (window.location.href = "/login")}
+              onClick={() => (window.location.href = "/logowanie")}
               className="flex items-center text-gray-500 hover:text-gray-700"
             >
               <ArrowLeft size={16} className="mr-1" /> Zaloguj się
@@ -427,7 +427,7 @@ const ForgotPassword = () => {
             </p>
 
             <button
-              onClick={() => (window.location.href = "/login")}
+              onClick={() => (window.location.href = "/logowanie")}
               className="w-full bg-[#80C5C5] text-white py-2 rounded-md hover:bg-[#6eb6b6] transition-colors mb-4"
             >
               Powrót do logowania

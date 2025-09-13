@@ -33,7 +33,7 @@ const Header = () => {
     if (user && user.role !== "patient") {
       // Clear localStorage and redirect to login if user role is not patient
       localStorage.clear();
-      navigate("/login");
+      navigate("/logowanie");
     }
   }, [user, navigate]);
 
@@ -55,7 +55,7 @@ const Header = () => {
     // Clear user data from context and localStorage
     logout();
     localStorage.clear();
-    navigate("/login");
+    navigate("/logowanie");
   };
 
   // Helper function to check if a link is active
@@ -360,7 +360,7 @@ const Header = () => {
                 {/* <button
                   onClick={() => {
                     setMenuOpen(false);
-                    navigate("/login");
+                    navigate("/logowanie");
                   }}
                   className="bg-teal-800 text-white w-32 py-2 text-sm rounded-full"
                 >
@@ -369,7 +369,7 @@ const Header = () => {
                 <button
                   onClick={() => {
                     setMenuOpen(false);
-                    navigate("/register");
+                    navigate("/rejestracja");
                   }}
                   className="border border-teal-700 text-teal-700 w-32 py-2 text-sm rounded-full"
                 >
@@ -464,13 +464,13 @@ const Header = () => {
           ) : (
             <>
               {/* <Link
-                to="/login"
+                to="/logowanie"
                 className="bg-teal-800 text-white px-6 py-2 text-sm rounded-full"
               >
                 Zaloguj się
               </Link>
               <Link
-                to="/register"
+                to="/rejestracja"
                 className="border border-teal-700 text-teal-700 px-6 py-2 text-sm rounded-full"
               >
                 Zarejestruj się

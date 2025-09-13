@@ -571,7 +571,7 @@ const ProfilePage = () => {
                             onClick={() =>
                             {
                               localStorage.clear();
-                            (window.location.href = "/forgot-password")}
+                            (window.location.href = "/zapomniane-haslo")}
                           }
                           className="text-teal-500 hover:text-teal-700 text-sm font-medium focus:outline-none mt-1"
                         >
