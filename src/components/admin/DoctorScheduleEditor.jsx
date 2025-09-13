@@ -594,15 +594,17 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
     
     // Calculate last week (Monday to Sunday)
     const lastWeekStart = new Date(today);
-    lastWeekStart.setDate(today.getDate() - today.getDay() - 6); // Last Monday
+    const todayDayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const daysToLastMonday = todayDayOfWeek === 0 ? 6 : todayDayOfWeek - 1; // Days to last Monday
+    lastWeekStart.setDate(today.getDate() - daysToLastMonday - 7); // Go back one full week
     
-    const lastWeekEnd = new Date(today);
-    lastWeekEnd.setDate(today.getDate() - today.getDay()); // Last Sunday
+    const lastWeekEnd = new Date(lastWeekStart);
+    lastWeekEnd.setDate(lastWeekStart.getDate() + 6); // Sunday of last week
     
     // Calculate next Monday (next week start)
     const nextWeekStart = new Date(today);
-    const daysUntilNextMonday = (8 - today.getDay()) % 7; // 0 = Sunday, 1 = Monday, etc.
-    nextWeekStart.setDate(today.getDate() + (daysUntilNextMonday === 0 ? 7 : daysUntilNextMonday));
+    const daysToNextMonday = todayDayOfWeek === 0 ? 1 : 8 - todayDayOfWeek; // Days to next Monday
+    nextWeekStart.setDate(today.getDate() + daysToNextMonday);
     
     try {
       setCopyLoading(true);
@@ -645,16 +647,20 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
 
   const quickCopyThisWeekToNextWeek = async () => {
     const today = new Date();
-    const thisWeekStart = new Date(today);
-    thisWeekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
+    const todayDayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
     
-    const thisWeekEnd = new Date(today);
-    thisWeekEnd.setDate(today.getDate() - today.getDay() + 7); // Sunday
+    // Calculate this week (Monday to Sunday)
+    const thisWeekStart = new Date(today);
+    const daysToThisMonday = todayDayOfWeek === 0 ? 6 : todayDayOfWeek - 1; // Days to this Monday
+    thisWeekStart.setDate(today.getDate() - daysToThisMonday);
+    
+    const thisWeekEnd = new Date(thisWeekStart);
+    thisWeekEnd.setDate(thisWeekStart.getDate() + 6); // Sunday of this week
     
     // Calculate next Monday (next week start)
     const nextWeekStart = new Date(today);
-    const daysUntilNextMonday = (8 - today.getDay()) % 7; // 0 = Sunday, 1 = Monday, etc.
-    nextWeekStart.setDate(today.getDate() + (daysUntilNextMonday === 0 ? 7 : daysUntilNextMonday));
+    const daysToNextMonday = todayDayOfWeek === 0 ? 1 : 8 - todayDayOfWeek; // Days to next Monday
+    nextWeekStart.setDate(today.getDate() + daysToNextMonday);
     
     try {
       setCopyLoading(true);
@@ -710,8 +716,18 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
     const month = currentMonth.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
+    
+    // Calculate the start date for Monday-based calendar
+    // getDay() returns 0 for Sunday, 1 for Monday, etc.
+    // For Monday-based calendar, we need to adjust:
+    // If firstDay is Sunday (0), we go back 6 days to get Monday
+    // If firstDay is Monday (1), we go back 0 days
+    // If firstDay is Tuesday (2), we go back 1 day, etc.
+    const firstDayOfWeek = firstDay.getDay();
+    const daysToSubtract = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+    
     const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    startDate.setDate(startDate.getDate() - daysToSubtract);
     
     const days = [];
     const currentDate = new Date(startDate);

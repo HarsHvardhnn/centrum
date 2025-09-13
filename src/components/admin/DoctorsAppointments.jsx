@@ -10,19 +10,28 @@ const DoctorSelectionWithSlots = ({
   smsConsentAgreed = true,
   onSmsConsentChange = null,
   loadingNextAvailableDate = false,
+  hideDoctorSelection = false,
+  selectedDoctor: propSelectedDoctor = null,
 }) => {
   const { specializations } = useSpecializations();
   const [selectedSpecialization, setSelectedSpecialization] = useState("");
   const [doctors, setDoctors] = useState([]);
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [selectedDoctor, setSelectedDoctor] = useState(propSelectedDoctor);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Handle pre-selected doctor
+  useEffect(() => {
+    if (propSelectedDoctor && !hideDoctorSelection) {
+      setSelectedDoctor(propSelectedDoctor);
+    }
+  }, [propSelectedDoctor, hideDoctorSelection]);
+
   // Fetch doctors when specialization changes
   useEffect(() => {
     const fetchDoctors = async () => {
-      if (!selectedSpecialization) return;
+      if (!selectedSpecialization || hideDoctorSelection) return;
 
       setIsLoading(true);
       try {
@@ -37,7 +46,7 @@ const DoctorSelectionWithSlots = ({
     };
 
     fetchDoctors();
-  }, [selectedSpecialization]);
+  }, [selectedSpecialization, hideDoctorSelection]);
 
   // Fetch available slots when doctor or date changes
   useEffect(() => {
@@ -214,44 +223,46 @@ const DoctorSelectionWithSlots = ({
       </div>
 
       <div className="p-6">
-        {/* Specialization Selection */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Wybierz Specjalizację
-          </label>
-          <div className="relative">
-            <select
-              className="w-full appearance-none p-3 pl-4 pr-10 bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-              value={selectedSpecialization}
-              onChange={handleSpecializationChange}
-            >
-              <option value="">Wybierz specjalizację</option>
-              {specializations &&
-                specializations.map((spec) => (
-                  <option key={spec._id} value={spec._id}>
-                    {spec.name}
-                  </option>
-                ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3">
-              <svg
-                className="h-5 w-5 text-gray-400"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+        {/* Specialization Selection - only show if not hiding doctor selection */}
+        {!hideDoctorSelection && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Wybierz Specjalizację
+            </label>
+            <div className="relative">
+              <select
+                className="w-full appearance-none p-3 pl-4 pr-10 bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+                value={selectedSpecialization}
+                onChange={handleSpecializationChange}
               >
-                <path
-                  fillRule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
+                <option value="">Wybierz specjalizację</option>
+                {specializations &&
+                  specializations.map((spec) => (
+                    <option key={spec._id} value={spec._id}>
+                      {spec.name}
+                    </option>
+                  ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3">
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Doctor Selection */}
-        {selectedSpecialization && (
+        {/* Doctor Selection - only show if not hiding doctor selection */}
+        {!hideDoctorSelection && selectedSpecialization && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
@@ -338,7 +349,7 @@ const DoctorSelectionWithSlots = ({
           </div>
         )}
 
-        {/* Time Slots */}
+        {/* Time Slots - show if doctor is selected (either from selection or pre-selected) */}
         {selectedDoctor && (
           <div className="mb-3">
             <div className="flex items-center justify-between mb-2">

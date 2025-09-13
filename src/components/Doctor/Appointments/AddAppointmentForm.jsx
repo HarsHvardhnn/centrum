@@ -87,7 +87,6 @@ function AppointmentFormModal({
       overrideConflicts: false,
       duration: 30, // Default duration in minutes
       // Metadata fields
-      visitType: "",
       isEmergency: false,
       receptionistNotes: "",
       // Custom time override fields
@@ -689,15 +688,18 @@ function AppointmentFormModal({
     if (workflowOrder === "appointmentFirst") {
       // New workflow: Appointment first, then patient
       if (skipDoctorSelection) {
-        // Skip doctor selection step when opened from doctor page
+        // When doctor is pre-selected, still show date/slot selection
         switch (currentStep) {
-          case 1: // Patient Information (doctor already selected)
+          case 1: // Date & Time Selection (doctor already selected)
+            return appointmentData.selectedDate && 
+                   (appointmentData.customStartTime || appointmentData.selectedSlot);
+          case 2: // Patient Information
             return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
-          case 2: // Services
+          case 3: // Services
             return true; // Services are optional
-          case 3: // Additional Details
+          case 4: // Additional Details
             return true; // Additional details are optional
-          case 4: // Receptionist Overrides
+          case 5: // Receptionist Overrides
             return true; // Override options are optional
           default:
             return false;
@@ -723,15 +725,18 @@ function AppointmentFormModal({
     } else {
       // Original workflow: Patient first, then appointment
       if (skipDoctorSelection) {
-        // Skip doctor selection step when opened from doctor page
+        // When doctor is pre-selected, still show date/slot selection
         switch (currentStep) {
           case 1: // Patient Information (doctor already selected)
             return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
-          case 2: // Services
+          case 2: // Date & Time Selection
+            return appointmentData.selectedDate && 
+                   (appointmentData.customStartTime || appointmentData.selectedSlot);
+          case 3: // Services
             return true; // Services are optional
-          case 3: // Additional Details
+          case 4: // Additional Details
             return true; // Additional details are optional
-          case 4: // Receptionist Overrides
+          case 5: // Receptionist Overrides
             return true; // Override options are optional
           default:
             return false;
@@ -762,12 +767,13 @@ function AppointmentFormModal({
       if (workflowOrder === "appointmentFirst") {
         // New workflow: Appointment first, then patient
         if (skipDoctorSelection) {
-          // Skip doctor selection step when opened from doctor page
+          // When doctor is pre-selected, still show date/slot selection
           switch (step) {
-            case 1: return "Dane Pacjenta";
-            case 2: return "Usługi";
-            case 3: return "Szczegóły";
-            case 4: return "Opcje Recepcjonisty";
+            case 1: return "Termin Wizyty";
+            case 2: return "Dane Pacjenta";
+            case 3: return "Usługi";
+            case 4: return "Szczegóły";
+            case 5: return "Opcje Recepcjonisty";
             default: return step;
           }
         } else {
@@ -783,12 +789,13 @@ function AppointmentFormModal({
       } else {
         // Original workflow: Patient first, then appointment
         if (skipDoctorSelection) {
-          // Skip doctor selection step when opened from doctor page
+          // When doctor is pre-selected, still show date/slot selection
           switch (step) {
             case 1: return "Dane Pacjenta";
-            case 2: return "Usługi";
-            case 3: return "Szczegóły";
-            case 4: return "Opcje Recepcjonisty";
+            case 2: return "Termin Wizyty";
+            case 3: return "Usługi";
+            case 4: return "Szczegóły";
+            case 5: return "Opcje Recepcjonisty";
             default: return step;
           }
         } else {
@@ -804,7 +811,7 @@ function AppointmentFormModal({
       }
     };
 
-    const totalSteps = skipDoctorSelection ? 4 : 5;
+    const totalSteps = 5; // Always 5 steps now
     const stepsArray = Array.from({ length: totalSteps }, (_, i) => i + 1);
 
     return (
@@ -841,15 +848,17 @@ function AppointmentFormModal({
     if (workflowOrder === "appointmentFirst") {
       // New workflow: Appointment first, then patient
       if (skipDoctorSelection) {
-        // Skip doctor selection step when opened from doctor page
+        // When doctor is pre-selected, still show date/slot selection
         switch (currentStep) {
           case 1:
-            return renderPatientInfoStep();
+            return renderDateSlotSelectionStep();
           case 2:
-            return renderServicesStep();
+            return renderPatientInfoStep();
           case 3:
-            return renderAdditionalDetailsStep();
+            return renderServicesStep();
           case 4:
+            return renderAdditionalDetailsStep();
+          case 5:
             return renderReceptionistOverridesStep();
           default:
             return null;
@@ -873,15 +882,17 @@ function AppointmentFormModal({
     } else {
       // Original workflow: Patient first, then appointment
       if (skipDoctorSelection) {
-        // Skip doctor selection step when opened from doctor page
+        // When doctor is pre-selected, still show date/slot selection
         switch (currentStep) {
           case 1:
             return renderPatientInfoStep();
           case 2:
-            return renderServicesStep();
+            return renderDateSlotSelectionStep();
           case 3:
-            return renderAdditionalDetailsStep();
+            return renderServicesStep();
           case 4:
+            return renderAdditionalDetailsStep();
+          case 5:
             return renderReceptionistOverridesStep();
           default:
             return null;
@@ -903,6 +914,155 @@ function AppointmentFormModal({
         }
       }
     }
+  };
+
+  const renderDateSlotSelectionStep = () => {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium mb-4">Wybór Terminu Wizyty</h3>
+        
+        {/* Show selected doctor info */}
+        {appointmentData.selectedDoctor && (
+          <div className="bg-teal-50 p-4 rounded-lg border border-teal-200 mb-4">
+            <h4 className="text-md font-medium text-teal-800 mb-2">Wybrany Lekarz</h4>
+            <div className="flex items-center space-x-3">
+              {appointmentData.selectedDoctor.profilePicture && (
+                <img
+                  src={appointmentData.selectedDoctor.profilePicture}
+                  alt={appointmentData.selectedDoctor.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              )}
+              <div>
+                <p className="font-medium text-teal-900">{appointmentData.selectedDoctor.name}</p>
+                <p className="text-sm text-teal-700">{appointmentData.selectedDoctor.specialty}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Date and Slot Selection - Doctor is pre-selected */}
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Wybierz datę i termin
+          </label>
+          <DoctorSelectionWithSlots
+            selectedDoctor={appointmentData.selectedDoctor}
+            selectedDate={appointmentData.selectedDate}
+            onDoctorSelect={handleDoctorSelect}
+            onDateChange={handleDateChange}
+            initialDoctorId={doctorId}
+            onSlotSelect={handleSlotSelect}
+            selectedPatient={selectedPatient}
+            loadingNextAvailableDate={loadingNextAvailableDate}
+            hideDoctorSelection={true} // Hide doctor selection when pre-selected
+          />
+        </div>
+
+        {/* Date Selection */}
+        {appointmentData.selectedDoctor && (
+          <div className="bg-teal-50 p-4 rounded-lg">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Wybierz datę wizyty
+            </label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="date"
+                name="selectedDate"
+                value={appointmentData.selectedDate}
+                onChange={handleDateChange}
+                className="w-full md:w-1/2 p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
+                min={undefined} /* Removed min date restriction to allow selecting previous dates */
+              />
+              {appointmentData.isBackdated && (
+                <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                  Data w przeszłości dozwolona
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Custom Time Slot Input - Receptionist Override */}
+        {appointmentData.selectedDoctor && appointmentData.selectedDate && (
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h4 className="text-md font-medium text-blue-800 mb-3">Ustaw Termin Wizyty</h4>
+            
+            {/* Show current selection status */}
+            {appointmentData.selectedSlot && (
+              <div className="mb-3 p-3 bg-green-100 border border-green-300 rounded-lg">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-green-800">
+                      <strong>✓ Wybrano termin:</strong> {appointmentData.selectedSlot.startTime} - {appointmentData.selectedSlot.endTime}
+                    </p>
+                    <p className="text-xs text-green-700 mt-1">
+                      Możesz zmienić na własny termin poniżej, ale wtedy wybrany termin zostanie odznaczony.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearSlotSelection}
+                    className="text-xs text-red-600 hover:text-red-800 underline"
+                  >
+                    Wyczyść wybór
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <p className="text-xs text-blue-600 mb-3">
+              <strong>Uwaga:</strong> Możesz wybrać dostępny termin z listy powyżej LUB ustawić własny termin poniżej. 
+              Nie możesz używać obu opcji jednocześnie.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Czas rozpoczęcia
+                </label>
+                <input
+                  type="time"
+                  name="customStartTime"
+                  value={appointmentData.customStartTime || ""}
+                  onChange={handleCustomTimeChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={appointmentData.selectedSlot !== null}
+                  placeholder="HH:MM"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Czas zakończenia (opcjonalny)
+                </label>
+                <input
+                  type="time"
+                  name="customEndTime"
+                  value={appointmentData.customEndTime || ""}
+                  onChange={handleCustomTimeChange}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={appointmentData.selectedSlot !== null}
+                  placeholder="HH:MM"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-blue-600 mt-2">
+              Ustaw dowolny termin - możesz nadpisać istniejące wizyty lub umówić w niestandardowym czasie. 
+              <strong>Uwaga:</strong> Użyj wbudowanego selektora czasu (AM/PM jest automatycznie obsługiwane).
+            </p>
+            {appointmentData.customStartTime && appointmentData.customEndTime && validateForm().customTime && (
+              <p className="text-red-500 text-xs mt-2">
+                {validateForm().customTime}
+              </p>
+            )}
+            {validateForm().timeSelection && (
+              <p className="text-red-500 text-xs mt-2">
+                {validateForm().timeSelection}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderDoctorSelectionStep = () => {
