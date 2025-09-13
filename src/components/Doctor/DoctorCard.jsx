@@ -22,7 +22,7 @@ const DoctorCard = ({ doctor }) => {
             <FaStethoscope className="text-gray-700" />
             <span className="text-gray-medium">{doctor?.specialty?.name || "Ogólny"}</span>
 
-            <svg
+            {/* <svg
               className="w-5 h-5 text-gray-medium ml-4"
               fill="none"
               stroke="currentColor"
@@ -36,7 +36,7 @@ const DoctorCard = ({ doctor }) => {
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
               ></path>
             </svg>
-            <span className="text-gray-medium">{doctor?.timing}</span>
+            <span className="text-gray-medium">{doctor?.timing}</span> */}
 
             <svg
               className="w-5 h-5 text-gray-medium ml-4"

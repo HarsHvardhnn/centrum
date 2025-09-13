@@ -94,8 +94,8 @@ function AppointmentFormModal({
       customEndTime: "",
       // Slot selection field
       selectedSlot: null,
-      // SMS consent field - default to true for future dates, false for past dates
-      smsConsentAgreed: !isDefaultDateInPast,
+      // SMS consent field - will be updated by useEffect based on date
+      smsConsentAgreed: true, // Default to true, will be updated by useEffect
     };
   });
   const [availableSlots, setAvailableSlots] = useState([]);
@@ -275,17 +275,27 @@ function AppointmentFormModal({
       try {
         const response = await apiCaller("GET", `/api/sms-consent/${patient._id}`);
         if (response && response.data && response.data.success) {
+          // Check if selected date is in the past
+          const today = new Date().toISOString().split("T")[0];
+          const isSelectedDateInPast = appointmentData.selectedDate < today;
+          
+          // If date is in past, always set SMS consent to false regardless of fetched value
+          // If date is in future, use the fetched value
           setAppointmentData(prev => ({
             ...prev,
-            smsConsentAgreed: response.data.smsConsentAgreed
+            smsConsentAgreed: isSelectedDateInPast ? false : response.data.smsConsentAgreed
           }));
         }
       } catch (error) {
         console.error("Error fetching SMS consent status:", error);
-        // Default to true if there's an error
+        // Check if selected date is in the past
+        const today = new Date().toISOString().split("T")[0];
+        const isSelectedDateInPast = appointmentData.selectedDate < today;
+        
+        // Default based on date: false for past dates, true for future dates
         setAppointmentData(prev => ({
           ...prev,
-          smsConsentAgreed: true
+          smsConsentAgreed: isSelectedDateInPast ? false : true
         }));
       }
     }
@@ -613,14 +623,15 @@ function AppointmentFormModal({
     const today = new Date().toISOString().split("T")[0];
     const isSelectedDateInPast = selectedDate < today;
     
-    setAppointmentData({
-      ...appointmentData,
+    setAppointmentData(prev => ({
+      ...prev,
       selectedDate: selectedDate,
       // Update isBackdated based on the selected date
       isBackdated: isSelectedDateInPast,
-      // Uncheck SMS consent for past dates (user can still check it manually if needed)
-      smsConsentAgreed: isSelectedDateInPast ? false : appointmentData.smsConsentAgreed,
-    });
+      // Always set SMS consent to false for past dates, but allow user to manually check it
+      // This overrides any previously fetched SMS consent from the API
+      smsConsentAgreed: isSelectedDateInPast ? false : prev.smsConsentAgreed,
+    }));
   };
 
   // Filter services based on search term
@@ -648,19 +659,33 @@ function AppointmentFormModal({
     }
   }, [doctorId, skipDoctorSelection, doctorInfo]);
 
-  // Effect to handle SMS consent when date changes
+  // Effect to handle SMS consent on component mount and when date changes
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
     const isSelectedDateInPast = appointmentData.selectedDate < today;
     
-    // Only update SMS consent if the date is in the past and SMS consent is currently true
-    if (isSelectedDateInPast && appointmentData.smsConsentAgreed) {
+    // Always set SMS consent to false for past dates, but allow user to manually check it
+    // This overrides any previously fetched SMS consent from the API
+    if (isSelectedDateInPast) {
       setAppointmentData(prev => ({
         ...prev,
         smsConsentAgreed: false
       }));
     }
   }, [appointmentData.selectedDate]);
+
+  // Effect to check initial date on component mount
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const isSelectedDateInPast = appointmentData.selectedDate < today;
+    
+    if (isSelectedDateInPast) {
+      setAppointmentData(prev => ({
+        ...prev,
+        smsConsentAgreed: false
+      }));
+    }
+  }, []); // Empty dependency array means this runs only on mount
 
   const isFirstTimeVisit = appointmentData.visitType === "first-time";
   const isNewPatientValid = isFirstTimeVisit && 
@@ -1781,6 +1806,22 @@ function AppointmentFormModal({
           <p className="text-xs text-blue-600 mt-2">
             Zgoda na SMS pozwala na automatyczne wysyłanie przypomnień o wizytach i ważnych informacji.
           </p>
+          {(() => {
+            const today = new Date().toISOString().split("T")[0];
+            const isSelectedDateInPast = appointmentData.selectedDate < today;
+            
+            if (isSelectedDateInPast) {
+              return (
+                <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded">
+                  <p className="text-xs text-yellow-800">
+                    <strong>Uwaga:</strong> Wybrana data jest w przeszłości. Zgoda na SMS została automatycznie odznaczona, 
+                    ale możesz ją zaznaczyć jeśli chcesz wysłać SMS dla tej wizyty.
+                  </p>
+                </div>
+              );
+            }
+            return null;
+          })()}
         </div>
 
         {/* Current Appointment Summary */}
