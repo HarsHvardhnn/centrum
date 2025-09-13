@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { format, parseISO, addDays } from 'date-fns';
 import doctorService from '../../helpers/doctorHelper';
+import DoctorScheduleEditor from './DoctorScheduleEditor';
+import { useUser } from '../../context/userContext';
 
 const DoctorScheduleSettings = () => {
+  const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [weeklyShifts, setWeeklyShifts] = useState([]);
   const [offSchedule, setOffSchedule] = useState([]);
-  const [activeTab, setActiveTab] = useState("weeklyShifts");
+  const [activeTab, setActiveTab] = useState("scheduleEditor");
   const [error, setError] = useState(null);
 
   // Form states for adding weekly shifts
@@ -287,6 +290,18 @@ const DoctorScheduleSettings = () => {
                 <ul className="flex flex-wrap -mb-px">
                   <li className="mr-2">
                     <button
+                      onClick={() => setActiveTab("scheduleEditor")}
+                      className={`inline-block py-2 px-4 border-b-2 rounded-t-lg ${
+                        activeTab === "scheduleEditor"
+                          ? "text-blue-600 border-blue-600"
+                          : "border-transparent hover:text-gray-600 hover:border-gray-300"
+                      }`}
+                    >
+                      Edytor Harmonogramu
+                    </button>
+                  </li>
+                  <li className="mr-2">
+                    <button
                       onClick={() => setActiveTab("weeklyShifts")}
                       className={`inline-block py-2 px-4 border-b-2 rounded-t-lg ${
                         activeTab === "weeklyShifts"
@@ -294,7 +309,7 @@ const DoctorScheduleSettings = () => {
                           : "border-transparent hover:text-gray-600 hover:border-gray-300"
                       }`}
                     >
-                      Zmiany Tygodniowe
+                      Zmiany Tygodniowe (Stary UI)
                     </button>
                   </li>
                   <li className="mr-2">
@@ -306,17 +321,45 @@ const DoctorScheduleSettings = () => {
                           : "border-transparent hover:text-gray-600 hover:border-gray-300"
                       }`}
                     >
-                      Czas Wolny
+                      Czas Wolny (Stary UI)
                     </button>
                   </li>
                 </ul>
               </div>
 
+              {/* Schedule Editor Tab Content */}
+              {activeTab === "scheduleEditor" && (
+                <div>
+                  <h2 className="text-lg font-semibold mb-4">
+                    Zaawansowany Edytor Harmonogramu
+                  </h2>
+                  <p className="text-gray-600 mb-4">
+                    Użyj tego edytora do zarządzania harmonogramami, wyjątkami i kopiowaniem harmonogramów.
+                  </p>
+                  
+                  {user?.id ? (
+                    <DoctorScheduleEditor 
+                      isModal={false} 
+                      doctorId={user.id} 
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">Ładowanie danych użytkownika...</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Weekly Shifts Tab Content */}
               {activeTab === "weeklyShifts" && (
                 <div>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <p className="text-yellow-800 text-sm">
+                      <strong>Uwaga:</strong> To jest starsza wersja interfejsu. Zalecamy używanie nowego "Edytora Harmonogramu" powyżej.
+                    </p>
+                  </div>
                   <h2 className="text-lg font-semibold mb-4">
-                    Twój Harmonogram Tygodniowy
+                    Twój Harmonogram Tygodniowy (Stary Interfejs)
                   </h2>
 
                   {loading ? (
@@ -440,8 +483,13 @@ const DoctorScheduleSettings = () => {
               {/* Off Time Tab Content */}
               {activeTab === "offTime" && (
                 <div>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <p className="text-yellow-800 text-sm">
+                      <strong>Uwaga:</strong> To jest starsza wersja interfejsu. Zalecamy używanie nowego "Edytora Harmonogramu" powyżej.
+                    </p>
+                  </div>
                   <h2 className="text-lg font-semibold mb-4">
-                    Twój Harmonogram Czasu Wolnego
+                    Twój Harmonogram Czasu Wolnego (Stary Interfejs)
                   </h2>
 
                   {loading ? (
@@ -590,6 +638,7 @@ const DoctorScheduleSettings = () => {
                   </div>
                 </div>
               )}
+
             </div>
           </div>
         </div>

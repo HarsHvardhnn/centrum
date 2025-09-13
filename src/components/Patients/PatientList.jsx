@@ -142,9 +142,6 @@ function LabAppointmentsContent({ clinic }) {
     const dateFromUrl = searchParams.get('date');
     const appointmentIdFromUrl = searchParams.get('appointmentId');
     
-    // Check if there are any query parameters at all
-    const hasAnyQueryParams = searchParams.toString().length > 0;
-    
     // Handle both 'startDate' and 'date' parameters
     const dateToSet = startDateFromUrl || dateFromUrl;
     
@@ -153,8 +150,8 @@ function LabAppointmentsContent({ clinic }) {
         ...prev,
         startDate: dateToSet
       }));
-    } else if (!hasAnyQueryParams) {
-      // Set today's date as default only if no query parameters are present
+    } else {
+      // Always set today's date as default for both /patients and /clinic pages
       const today = new Date().toISOString().split('T')[0];
       setDateRange(prev => ({
         ...prev,
@@ -207,7 +204,7 @@ function LabAppointmentsContent({ clinic }) {
     setSearchQuery("");
     setStatusFilter("booked");
     
-    // Preserve date from query parameters when switching routes
+    // Preserve date from query parameters when switching routes, otherwise set today's date
     const startDateFromUrl = searchParams.get('startDate');
     const dateFromUrl = searchParams.get('date');
     const dateToSet = startDateFromUrl || dateFromUrl;
@@ -218,9 +215,10 @@ function LabAppointmentsContent({ clinic }) {
         endDate: null,
       });
     } else {
-      // Only reset date range if no query parameters
+      // Set today's date as default for both pages
+      const today = new Date().toISOString().split('T')[0];
       setDateRange({
-        startDate: null,
+        startDate: today,
         endDate: null,
       });
     }
@@ -504,6 +502,7 @@ function LabAppointmentsContent({ clinic }) {
               <p className="text-gray-600">
                 Wyświetlane: {dateRange.startDate ? `Wizyty z dnia ${new Date(dateRange.startDate).toLocaleDateString('pl-PL')}` : "Wszystkie wizyty"}
                 {clinic && " (Przychodnia)"}
+                {statusFilter === "booked" && " - Status: Zarezerwowane"}
               </p>
               {dateRange.startDate && (
                 <button
