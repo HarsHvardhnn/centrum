@@ -123,7 +123,7 @@ const AuthForm = ({ isLogin = false }) => {
         if (response.data.user.role === "patient") {
           navigate("/user");
         } else {
-          navigate("/admin");
+          navigate("/administracja");
         }
 
         return { success: true, user: response.data.user };
@@ -207,7 +207,7 @@ const AuthForm = ({ isLogin = false }) => {
         navigate("/user");
         return;
       }
-      navigate("/admin");
+      navigate("/administracja");
     } catch (error) {
       toast.error(
         "Logowanie przez Google nie powiodło się: " + 
@@ -249,12 +249,14 @@ const AuthForm = ({ isLogin = false }) => {
         localStorage.setItem("user", userStr);
         setUser(response.data.user || {});
 
+        console.log("response",response.data.user.role)
+
         toast.success("Logowanie zakończone sukcesem!");
 
         if (response.data.user.role === "patient") {
           navigate("/user");
         } else {
-          navigate("/admin");
+          navigate("/administracja");
         }
       }
     } catch (error) {
@@ -389,7 +391,7 @@ const AuthForm = ({ isLogin = false }) => {
       });
 
       localStorage.setItem("authToken", response.data.token);
-      navigate("/admin");
+      navigate("/administracja");
     } catch (error) {
       console.error(
         "OTP verification failed:",

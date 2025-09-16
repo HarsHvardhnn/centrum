@@ -630,7 +630,7 @@ const PatientList = () => {
       setLoading(false);
       
       // Redirect to billing details
-      navigate(`/admin/billing/details/${response.data._id}`);
+      navigate(`/administracja/rozliczenia/szczegoly/${response.data._id}`);
     } catch (error) {
       console.error("Failed to generate bill:", error);
       toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");

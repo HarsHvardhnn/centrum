@@ -224,107 +224,107 @@ const routes = createBrowserRouter([
   // English to Polish redirections for backward compatibility (placed after Polish routes)
   {
     path: "/login",
-    element: <Navigate to={({ location }) => `/logowanie${location.search}`} replace />,
+    element: <Navigate to="/logowanie" replace />,
   },
   {
     path: "/forgot-password",
-    element: <Navigate to={({ location }) => `/zapomniane-haslo${location.search}`} replace />,
+    element: <Navigate to="/zapomniane-haslo" replace />,
   },
   {
     path: "/doctors",
-    element: <Navigate to={({ location }) => `/lekarze${location.search}`} replace />,
+    element: <Navigate to="/lekarze" replace />,
   },
   {
     path: "/doctors/appointments/:id",
-    element: <Navigate to={({ location, params }) => `/lekarze/wizyty/${params.id}${location.search}`} replace />,
+    element: <Navigate to={({ params }) => `/lekarze/wizyty/${params.id}`} replace />,
   },
   {
     path: "/doctor-details/:id",
-    element: <Navigate to={({ location, params }) => `/szczegoly-lekarza/${params.id}${location.search}`} replace />,
+    element: <Navigate to={({ params }) => `/szczegoly-lekarza/${params.id}`} replace />,
   },
   {
     path: "/patients",
-    element: <Navigate to={({ location }) => `/pacjenci${location.search}`} replace />,
+    element: <Navigate to="/pacjenci" replace />,
   },
   {
     path: "/clinic",
-    element: <Navigate to={({ location }) => `/klinika${location.search}`} replace />,
+    element: <Navigate to="/klinika" replace />,
   },
   {
     path: "/appointment/create",
-    element: <Navigate to={({ location }) => `/wizyta/utworz${location.search}`} replace />,
+    element: <Navigate to="/wizyta/utworz" replace />,
   },
   {
     path: "/patients-details/:id",
-    element: <Navigate to={({ location, params }) => `/szczegoly-pacjenta/${params.id}${location.search}`} replace />,
+    element: <Navigate to={({ params }) => `/szczegoly-pacjenta/${params.id}`} replace />,
   },
   {
     path: "/admin",
-    element: <Navigate to={({ location }) => `/administracja${location.search}`} replace />,
+    element: <Navigate to="/administracja" replace />,
   },
   {
     path: "/admin/sms",
-    element: <Navigate to={({ location }) => `/administracja/sms${location.search}`} replace />,
+    element: <Navigate to="/administracja/sms" replace />,
   },
   {
     path: "/doctor/create",
-    element: <Navigate to={({ location }) => `/lekarz/utworz${location.search}`} replace />,
+    element: <Navigate to="/lekarz/utworz" replace />,
   },
   {
     path: "/admin/accounts",
-    element: <Navigate to={({ location }) => `/administracja/konta${location.search}`} replace />,
+    element: <Navigate to="/administracja/konta" replace />,
   },
   {
     path: "/admin/services",
-    element: <Navigate to={({ location }) => `/administracja/uslugi${location.search}`} replace />,
+    element: <Navigate to="/administracja/uslugi" replace />,
   },
   {
     path: "/admin/news",
-    element: <Navigate to={({ location }) => `/administracja/aktualnosci${location.search}`} replace />,
+    element: <Navigate to="/administracja/aktualnosci" replace />,
   },
   {
     path: "/doctor/settings",
-    element: <Navigate to={({ location }) => `/lekarz/ustawienia${location.search}`} replace />,
+    element: <Navigate to="/lekarz/ustawienia" replace />,
   },
   {
     path: "/admin/profile",
-    element: <Navigate to={({ location }) => `/administracja/profil${location.search}`} replace />,
+    element: <Navigate to="/administracja/profil" replace />,
   },
   {
     path: "/admin/calendar",
-    element: <Navigate to={({ location }) => `/administracja/kalendarz${location.search}`} replace />,
+    element: <Navigate to="/administracja/kalendarz" replace />,
   },
   {
     path: "/help-center",
-    element: <Navigate to={({ location }) => `/centrum-pomocy${location.search}`} replace />,
+    element: <Navigate to="/centrum-pomocy" replace />,
   },
   {
     path: "/admin/data",
-    element: <Navigate to={({ location }) => `/administracja/dane${location.search}`} replace />,
+    element: <Navigate to="/administracja/dane" replace />,
   },
   {
     path: "/admin/billing",
-    element: <Navigate to={({ location }) => `/administracja/rozliczenia${location.search}`} replace />,
+    element: <Navigate to="/administracja/rozliczenia" replace />,
   },
   {
     path: "/admin/billing/details/:billId",
-    element: <Navigate to={({ location, params }) => `/administracja/rozliczenia/szczegoly/${params.billId}${location.search}`} replace />,
+    element: <Navigate to={({ params }) => `/administracja/rozliczenia/szczegolyparams.billId}`} replace />,
   },
   {
     path: "/admin/contact-messages",
-    element: <Navigate to={({ location }) => `/administracja/wiadomosci-kontaktowe${location.search}`} replace />,
+    element: <Navigate to="/administracja/wiadomosci-kontaktowe" replace />,
   },
   {
     path: "/admin/ip-config",
-    element: <Navigate to={({ location }) => `/administracja/konfiguracja-ip${location.search}`} replace />,
+    element: <Navigate to="/administracja/konfiguracja-ip" replace />,
   },
   {
     path: "/admin/security/2fa",
-    element: <Navigate to={({ location }) => `/administracja/bezpieczenstwo/2fa${location.search}`} replace />,
+    element: <Navigate to="/administracja/bezpieczenstwo/2fa" replace />,
   },
   {
     path: "/admin/appointment-config",
-    element: <Navigate to={({ location }) => `/administracja/konfiguracja-wizyt${location.search}`} replace />,
+    element: <Navigate to="/administracja/konfiguracja-wizyt" replace />,
   },
 
   // Catch all route

@@ -624,7 +624,7 @@ const BillingManagement = () => {
         // Only redirect to billing details if not redirected from appointment
         // The onBillGenerated callback will handle the redirect for appointment cases
         if (!isRedirectedFromAppointment) {
-          navigate(`/admin/billing/details/${response.data._id}`);
+          navigate(`/administracja/rozliczenia/szczegoly/${response.data._id}`);
         }
       } catch (error) {
         console.error("Failed to generate bill:", error);
@@ -1095,7 +1095,7 @@ const BillingManagement = () => {
   };
   
   const handleViewBillDetails = (billId) => {
-    navigate(`/admin/billing/details/${billId}`);
+    navigate(`/administracja/rozliczenia/szczegoly/${billId}`);
   };
   
   const handlePrintBill = (billId) => {
