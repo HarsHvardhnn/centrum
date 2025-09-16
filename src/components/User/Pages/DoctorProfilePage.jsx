@@ -1219,11 +1219,11 @@ const DoctorProfilePage = () => {
                                     name="phoneCode"
                                     value={bookingForm.phoneCode}
                                     onChange={handleInputChange}
-                                    className="px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white min-w-[140px] pl-8"
+                                    className="px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white min-w-[100px] pl-8"
                                   >
                                     {phoneCountryCodes.map((country) => (
                                       <option key={country.code} value={country.code}>
-                                        {country.flag} {country.code} {country.country}
+                                        {country.flag} {country.code}
                                       </option>
                                     ))}
                                   </select>
