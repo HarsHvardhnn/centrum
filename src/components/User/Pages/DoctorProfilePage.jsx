@@ -1219,7 +1219,7 @@ const DoctorProfilePage = () => {
                                     name="phoneCode"
                                     value={bookingForm.phoneCode}
                                     onChange={handleInputChange}
-                                    className="px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white min-w-[100px] pl-8"
+                                    className="px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white min-w-[90px] text-sm"
                                   >
                                     {phoneCountryCodes.map((country) => (
                                       <option key={country.code} value={country.code}>
@@ -1227,9 +1227,6 @@ const DoctorProfilePage = () => {
                                       </option>
                                     ))}
                                   </select>
-                                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                    {phoneCountryCodes.find(country => country.code === bookingForm.phoneCode)?.flag || "🇵🇱"}
-                                  </div>
                                 </div>
                                 <input
                                   type="tel"
