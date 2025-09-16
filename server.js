@@ -337,7 +337,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     </script>
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-CseC9Ew.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-CseC9Ew-.css">
 </head>
 <body>
     <!-- SEO Content for crawlers -->
