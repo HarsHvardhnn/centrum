@@ -786,8 +786,7 @@ app.get('/sitemap.xml', async (req, res) => {
 // Apply middleware in correct order
 app.use(handleExternalProtocols);     // First: block external protocols
 app.use(handleInvalidSlugs);          // Second: handle undefined slugs
-app.use(handleServiceTrailingSlash);  // Third: handle trailing slashes for dynamic pages
-app.use(handleUrlNormalization);      // Fourth: handle URL normalization and case sensitivity
+    // Fourth: handle URL normalization and case sensitivity
 
 // Serve static assets (CSS, JS, images, PDFs) BEFORE SEO middleware
 app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
