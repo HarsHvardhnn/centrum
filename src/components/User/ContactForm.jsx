@@ -357,7 +357,7 @@ function ContactForm() {
             required
           />
           <label htmlFor="consent" className="text-sm text-gray-700 leading-5">
-            <span className="font-medium text-red-600">*</span> Wyrażam zgodę na przetwarzanie moich danych osobowych przez Centrum Medyczne 7 Sp. z o.o. w celu obsługi zapytania przesłanego za pośrednictwem formularza kontaktowego oraz weryfikacji bezpieczeństwa. Zapoznałem(-am) się z{" "}
+            <span className="font-medium text-red-600">*</span> Wyrażam zgodę na przetwarzanie moich danych osobowych przez CM7 Sp. z o.o. w celu obsługi zapytania przesłanego za pośrednictwem formularza kontaktowego oraz weryfikacji bezpieczeństwa. Zapoznałem(-am) się z{" "}
             <a 
               href="/regulamin.pdf" 
               target="_blank" 

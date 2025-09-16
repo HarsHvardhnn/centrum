@@ -16,8 +16,8 @@ const AboutUsPage = () => {
   return (
     <>
       <MetaTags 
-        title="O nas – Centrum Medyczne 7 Skarżysko-Kamienna | Kim jesteśmy"
-        description="Poznaj Centrum Medyczne 7 w Skarżysku-Kamiennej. Nasza misja, wartości i zespół lekarzy, którym możesz zaufać."
+        title="O nas – CM7 Skarżysko-Kamienna | Kim jesteśmy"
+        description="Poznaj CM7 w Skarżysku-Kamiennej. Nasza misja, wartości i zespół lekarzy, którym możesz zaufać."
         path="/o-nas"
       />
       <PageHeader

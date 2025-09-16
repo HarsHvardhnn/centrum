@@ -45,7 +45,7 @@ const HomePage = () => {
     <>
       <MetaTags 
         title="CM7 – Przychodnia specjalistyczna Skarżysko-Kamienna"
-        description="Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści. Umów wizytę w Centrum Medyczne 7."
+        description="Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści. Umów wizytę w CM7."
         path="/"
       />
       <Hero selectedDoctorId={selectedDoctorId} setSelectedDoctorId={setSelectedDoctorId}  />

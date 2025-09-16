@@ -105,7 +105,7 @@ const HospitalCareSection = () => {
         </div>
 
         <p className="text-gray-600 leading-relaxed mb-3">
-          Centrum Medyczne 7 to nowoczesna klinika i przychodnia, mieszcząca się
+          CM7 to nowoczesna klinika i przychodnia, mieszcząca się
           w województwie świętokrzyskim, w Skarżysku-Kamiennej.
         </p>
         <p className="text-gray-600 leading-relaxed mb-3">
@@ -118,7 +118,7 @@ const HospitalCareSection = () => {
           mieście za profesjonalizm oraz skuteczność leczenia.
         </p>
         <p className="text-gray-600 leading-relaxed mb-3">
-          Zadbaj o siebie – wybierz nowoczesną opiekę w Centrum Medyczne 7 w
+          Zadbaj o siebie – wybierz nowoczesną opiekę w CM7 w
           Skarżysku-Kamiennej.
         </p>
       </div>
