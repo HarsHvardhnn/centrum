@@ -2,8 +2,8 @@ import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 
 const Map = () => {
   const center = {
-    lat: 51.11,
-    lng: 20.85
+    lat: 51.11933277319532,
+    lng: 20.86488251545072
   };
 
   const mapStyles = {

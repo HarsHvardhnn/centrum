@@ -74,8 +74,8 @@ const NewsDetail = () => {
   };
 
   const metaTitle = isBlog 
-    ? `${article.title} | Poradnik – Centrum Medyczne 7`
-    : `${article.title} | Aktualności – Centrum Medyczne 7`;
+    ? `${article.title} | Poradnik – CM7`
+    : `${article.title} | Aktualności – CM7`;
 
   const metaPath = isBlog 
     ? `/poradnik/${slug}`

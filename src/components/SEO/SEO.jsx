@@ -30,9 +30,9 @@ const SEO = () => {
     // Handle dynamic routes with data
     if (path.startsWith('/aktualnosci/') && currentData?.news) {
       return {
-        title: `${currentData.news.title} | Aktualności – Centrum Medyczne 7`,
+        title: `${currentData.news.title} | Aktualności – CM7`,
         description: shortDescription || 'Bądź na bieżąco z informacjami w CM7.',
-        keywords: 'aktualności, centrum medyczne 7, news, ogłoszenia',
+        keywords: 'aktualności, CM7, news, ogłoszenia',
         canonicalUrl: `${BASE_URL}${path}`,
         ogImage: currentData.news.image || '/images/news.jpg'
       };
@@ -40,9 +40,9 @@ const SEO = () => {
 
     if (path.startsWith('/uslugi/') && currentData?.service) {
       return {
-        title: `${currentData.service.title} – Centrum Medyczne 7 Skarżysko-Kamienna`,
+        title: `${currentData.service.title} – CM7 Skarżysko-Kamienna`,
         description: shortDescription || 'Szczegółowy opis usługi medycznej w Centrum Medycznym 7.',
-        keywords: 'usługi medyczne, centrum medyczne 7, ' + currentData.service.title,
+        keywords: 'usługi medyczne, CM7, ' + currentData.service.title,
         canonicalUrl: `${BASE_URL}${path}`,
         ogImage: currentData.service.images?.[0] || '/images/uslugi.jpg'
       };
@@ -53,22 +53,22 @@ const SEO = () => {
       case '/':
         return {
           title: 'CM7 – Przychodnia specjalistyczna Skarżysko-Kamienna',
-          description: 'Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści. Umów wizytę w Centrum Medyczne 7.',
-          keywords: 'centrum medyczne 7, przychodnia Skarżysko-Kamienna, lekarze specjaliści, wizyta lekarska, opieka medyczna, cm7',
+          description: 'Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści. Umów wizytę w CM7.',
+          keywords: 'CM7, przychodnia Skarżysko-Kamienna, lekarze specjaliści, wizyta lekarska, opieka medyczna, cm7',
           canonicalUrl: BASE_URL,
           ogImage: '/images/mainlogo.png'
         };
       case '/o-nas':
         return {
-          title: 'O nas – Centrum Medyczne 7 Skarżysko-Kamienna | Kim jesteśmy',
-          description: 'Poznaj Centrum Medyczne 7 w Skarżysku-Kamiennej. Nasza misja, wartości i zespół lekarzy, którym możesz zaufać.',
-          keywords: 'o nas centrum medyczne 7, misja cm7, zespół lekarzy, wartości, Skarżysko-Kamienna',
+          title: 'O nas – CM7 Skarżysko-Kamienna | Kim jesteśmy',
+          description: 'Poznaj CM7 w Skarżysku-Kamiennej. Nasza misja, wartości i zespół lekarzy, którym możesz zaufać.',
+          keywords: 'o nas CM7, misja cm7, zespół lekarzy, wartości, Skarżysko-Kamienna',
           canonicalUrl: `${BASE_URL}/o-nas`,
           ogImage: '/images/abt_us.jpg'
         };
       case '/uslugi':
         return {
-          title: 'Usługi medyczne – Centrum Medyczne 7 Skarżysko-Kamienna',
+          title: 'Usługi medyczne – CM7 Skarżysko-Kamienna',
           description: 'Konsultacja chirurgiczna | Konsultacja online | Konsultacja proktologiczna | Leczenie ran przewlekłych | Neurologia dziecięca',
           keywords: 'usługi medyczne, konsultacja chirurgiczna, konsultacja online, proktologia, neurologia dziecięca, leczenie ran',
           canonicalUrl: `${BASE_URL}/uslugi`,
@@ -76,25 +76,25 @@ const SEO = () => {
         };
       case '/kontakt':
         return {
-          title: 'Kontakt – Centrum Medyczne 7 Skarżysko-Kamienna | Rejestracja i telefon',
+          title: 'Kontakt – CM7 Skarżysko-Kamienna | Rejestracja i telefon',
           description: 'Zadzwoń: 797-097-487. Skontaktuj się z CM7 – telefon, e-mail, godziny otwarcia i rejestracja.',
-          keywords: 'kontakt centrum medyczne 7, umów wizytę, telefon cm7, adres Skarżysko-Kamienna, godziny pracy',
+          keywords: 'kontakt CM7, umów wizytę, telefon cm7, adres Skarżysko-Kamienna, godziny pracy',
           canonicalUrl: `${BASE_URL}/kontakt`,
           ogImage: '/images/contact.jpg'
         };
       case '/lekarze':
         return {
-          title: 'Nasi lekarze – Centrum Medyczne 7 Skarżysko-Kamienna | Zespół specjalistów',
+          title: 'Nasi lekarze – CM7 Skarżysko-Kamienna | Zespół specjalistów',
           description: 'Poznaj lekarzy CM7 w Skarżysku-Kamiennej. Doświadczeni specjaliści w różnych dziedzinach medycyny – sprawdź nasz zespół.',
-          keywords: 'lekarze centrum medyczne 7, specjaliści medycyny, zespół lekarzy, doktorzy Skarżysko-Kamienna',
+          keywords: 'lekarze CM7, specjaliści medycyny, zespół lekarzy, doktorzy Skarżysko-Kamienna',
           canonicalUrl: `${BASE_URL}/lekarze`,
           ogImage: '/images/doctors1.png'
         };
       case '/aktualnosci':
         return {
-          title: 'Aktualności – Centrum Medyczne 7 Skarżysko-Kamienna | Nowości i ogłoszenia',
+          title: 'Aktualności – CM7 Skarżysko-Kamienna | Nowości i ogłoszenia',
           description: 'Bądź na bieżąco z informacjami w CM7. Ogłoszenia, zmiany godzin pracy, wydarzenia i komunikaty.',
-          keywords: 'aktualności centrum medyczne 7, ogłoszenia medyczne, nowości cm7, komunikaty, wydarzenia medyczne',
+          keywords: 'aktualności CM7, ogłoszenia medyczne, nowości cm7, komunikaty, wydarzenia medyczne',
           canonicalUrl: `${BASE_URL}/aktualnosci`,
           ogImage: '/images/news.jpg'
         };
@@ -102,13 +102,13 @@ const SEO = () => {
         return {
           title: 'CM7 – Artykuły i porady zdrowotne | Poradnik medyczny',
           description: 'Sprawdzone porady zdrowotne i artykuły medyczne od specjalistów CM7 w Skarżysku-Kamiennej. Praktyczna wiedza i wskazówki dla pacjentów.',
-          keywords: 'poradnik zdrowia, porady medyczne, artykuły medyczne, profilaktyka, zdrowie, centrum medyczne 7',
+          keywords: 'poradnik zdrowia, porady medyczne, artykuły medyczne, profilaktyka, zdrowie, CM7',
           canonicalUrl: `${BASE_URL}/poradnik`,
           ogImage: '/images/blogs.jpg'
         };
       default:
         return {
-          title: 'Centrum Medyczne 7 Skarżysko-Kamienna',
+          title: 'CM7 Skarżysko-Kamienna',
           description: 'Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści.',
           keywords: 'centrum medyczne, przychodnia, lekarze, Skarżysko-Kamienna',
           canonicalUrl: `${BASE_URL}${path}`,

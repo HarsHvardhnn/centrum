@@ -13,7 +13,7 @@ const OurDoctorsPage = () => {
   return (
     <>
       <MetaTags 
-        title="Nasi lekarze – Centrum Medyczne 7 Skarżysko-Kamienna | Zespół specjalistów"
+        title="Nasi lekarze – CM7 Skarżysko-Kamienna | Zespół specjalistów"
         description="Poznaj lekarzy CM7 w Skarżysku-Kamiennej. Doświadczeni specjaliści w różnych dziedzinach medycyny – sprawdź nasz zespół."
         path="/lekarze"
       />

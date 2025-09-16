@@ -5,7 +5,7 @@ const PrivacyPolicyPage = () => {
   return (
     <>
       <MetaTags 
-        title="Polityka Prywatności - Centrum Medyczne 7"
+        title="Polityka Prywatności - CM7"
         description="Polityka ochrony danych osobowych w Centrum Medycznym 7 w Skarżysku-Kamiennej"
         path="/polityka-prywatnosci"
       />
@@ -20,7 +20,7 @@ const PrivacyPolicyPage = () => {
               <iframe
                 src="/polityka-prywatnosci.pdf"
                 className="w-full h-full border-0 rounded-lg"
-                title="Polityka Prywatności Centrum Medyczne 7"
+                title="Polityka Prywatności CM7"
               />
             </div>
             

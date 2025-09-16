@@ -8,7 +8,7 @@ const OurServicesPage = () => {
   return (
     <>
       <MetaTags 
-        title="Usługi medyczne – Centrum Medyczne 7 Skarżysko-Kamienna"
+        title="Usługi medyczne – CM7 Skarżysko-Kamienna"
         description="Konsultacja chirurgiczna | Konsultacja online | Konsultacja proktologiczna | Leczenie ran przewlekłych | Neurologia dziecięca"
         path="/uslugi"
       />

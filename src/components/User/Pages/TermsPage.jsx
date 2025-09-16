@@ -5,7 +5,7 @@ const TermsPage = () => {
   return (
     <>
       <MetaTags 
-        title="Regulamin - Centrum Medyczne 7"
+        title="Regulamin - CM7"
         description="Regulamin świadczenia usług medycznych w Centrum Medycznym 7 w Skarżysku-Kamiennej"
         path="/regulamin"
       />
@@ -20,7 +20,7 @@ const TermsPage = () => {
               <iframe
                 src="/regulamin.pdf"
                 className="w-full h-full border-0 rounded-lg"
-                title="Regulamin Centrum Medyczne 7"
+                title="Regulamin CM7"
               />
             </div>
             

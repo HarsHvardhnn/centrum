@@ -14,7 +14,7 @@ const NewsPage = ({isNews=true}) => {
   };
 
   const title = isNews 
-    ? "Aktualności – Centrum Medyczne 7 Skarżysko-Kamienna | Nowości i ogłoszenia"
+    ? "Aktualności – CM7 Skarżysko-Kamienna | Nowości i ogłoszenia"
     : "CM7 – Artykuły i porady zdrowotne | Poradnik medyczny";
   
   const description = isNews
@@ -47,6 +47,7 @@ const NewsPage = ({isNews=true}) => {
           <Categories 
             selectedCategory={selectedCategory}
             onCategorySelect={handleCategorySelect}
+            isNews={isNews}
           />
         </div>
       </div>

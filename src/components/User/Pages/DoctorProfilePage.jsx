@@ -534,7 +534,7 @@ const DoctorProfilePage = () => {
       "jobTitle": doctor.specializations?.map(spec => spec.name).join(", "),
       "worksFor": {
         "@type": "MedicalOrganization",
-        "name": "Centrum Medyczne 7",
+        "name": "CM7",
         "address": {
           "@type": "PostalAddress",
           "addressLocality": "Skarżysko-Kamienna",
@@ -588,7 +588,7 @@ const DoctorProfilePage = () => {
   const experience = doctor.experience ? `${doctor.experience} lat doświadczenia` : "";
   
   // Generate meta title and description
-  const metaTitle = `${doctorName} – ${specializations}${experience ? ` | ${experience}` : ""} | Centrum Medyczne 7`;
+  const metaTitle = `${doctorName} – ${specializations}${experience ? ` | ${experience}` : ""} | CM7`;
   const metaDescription = `Umów wizytę z ${doctorName}, ${specializations.toLowerCase()}${experience ? ` z ${experience}` : ""}. ${
     doctor.onlineConsultationPrice !== undefined 
       ? `Konsultacje online od ${doctor.onlineConsultationPrice} zł` 

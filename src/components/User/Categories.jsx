@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { apiCaller } from '../../utils/axiosInstance';
 
-const Categories = ({ selectedCategory, onCategorySelect }) => {
+const Categories = ({ selectedCategory, onCategorySelect, isNews = true }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await apiCaller("GET", "/news/category/news-count");
+        const response = await apiCaller("GET", `/news/category/news-count?isNews=${isNews}`);
         setCategories(response.data);
       } catch (error) {
         console.error("Nie udało się pobrać kategorii:", error);
@@ -18,7 +18,7 @@ const Categories = ({ selectedCategory, onCategorySelect }) => {
     };
 
     fetchCategories();
-  }, []);
+  }, [isNews]);
 
   if (loading) {
     return <div className="bg-white p-6 rounded-lg">Ładowanie kategorii...</div>;

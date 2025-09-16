@@ -68,7 +68,7 @@ const ServicesDetailPage = () => {
   return (
     <>
       <MetaTags 
-        title={`${serviceData.title} – Centrum Medyczne 7 Skarżysko-Kamienna`}
+        title={`${serviceData.title} – CM7 Skarżysko-Kamienna`}
         description={serviceData.shortDescription || serviceData.description || "Szczegółowy opis usługi medycznej w Centrum Medycznym 7."}
         path={`/uslugi/${service}`}
       />
