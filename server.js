@@ -796,8 +796,11 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // Apply SEO middleware for HTML routes only (not for static files)
 app.get('*', (req, res, next) => {
-  // Skip SEO middleware for static files
-  if (req.path.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|pdf|xml|txt)$/)) {
+  // Skip SEO middleware for static files and assets
+  if (req.path.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|pdf|xml|txt)$/) || 
+      req.path.startsWith('/assets/') || 
+      req.path.startsWith('/images/') || 
+      req.path.startsWith('/public/')) {
     return next();
   }
   
