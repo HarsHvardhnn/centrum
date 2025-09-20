@@ -613,7 +613,8 @@ export default function BookAppointment({
                     >
                       Wizyta stacjonarna
                     </button>
-                    <button
+                    {/* Temporarily hidden - will be needed later */}
+                    {/* <button
                       type="button"
                       onClick={() => setFieldValue("consultationType", "online")}
                       className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
@@ -623,7 +624,7 @@ export default function BookAppointment({
                       }`}
                     >
                       Wizyta online
-                    </button>
+                    </button> */}
                   </div>
                   {errors.consultationType && touched.consultationType && (
                     <div className="text-red-600 text-xs sm:text-sm mt-1">

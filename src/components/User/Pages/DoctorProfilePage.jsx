@@ -1162,7 +1162,8 @@ const DoctorProfilePage = () => {
                             >
                               Wizyta stacjonarna
                             </button>
-                            <button
+                            {/* Temporarily hidden - will be needed later */}
+                            {/* <button
                               type="button"
                               onClick={() =>
                                 setBookingForm({
@@ -1177,7 +1178,7 @@ const DoctorProfilePage = () => {
                               }`}
                             >
                               Wizyta online
-                            </button>
+                            </button> */}
                           </div>
                         </div>
 

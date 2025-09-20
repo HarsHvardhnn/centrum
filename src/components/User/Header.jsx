@@ -376,7 +376,8 @@ const Header = () => {
               </>
             ) : (
               <>
-                <button
+                {/* Temporarily hidden - will be needed later */}
+                {/* <button
                   onClick={() => {
                     setMenuOpen(false);
                     navigate("/login");
@@ -384,7 +385,7 @@ const Header = () => {
                   className="bg-teal-800 text-white w-32 py-2 text-sm rounded-full"
                 >
                   Zaloguj się
-                </button>
+                </button> */}
                 {/* <button
                   onClick={() => {
                     setMenuOpen(false);
@@ -482,12 +483,13 @@ const Header = () => {
             </div>
           ) : (
             <>
-              <Link
+              {/* Temporarily hidden - will be needed later */}
+              {/* <Link
                 to="/login"
                 className="bg-teal-800 text-white px-6 py-2 text-sm rounded-full"
               >
                 Zaloguj się
-              </Link>
+              </Link> */}
               {/* <Link
                 to="/register"
                 className="border border-teal-700 text-teal-700 px-6 py-2 text-sm rounded-full"

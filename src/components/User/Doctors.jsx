@@ -1025,7 +1025,8 @@ export default function Doctors({
                           >
                             Wizyta stacjonarna
                           </button>
-                          <button
+                          {/* Temporarily hidden - will be needed later */}
+                          {/* <button
                             type="button"
                             onClick={() =>
                               setBookingForm({
@@ -1040,7 +1041,7 @@ export default function Doctors({
                             }`}
                           >
                             Wizyta online
-                          </button>
+                          </button> */}
                         </div>
                       </div>
 
