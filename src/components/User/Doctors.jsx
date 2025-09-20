@@ -1083,7 +1083,7 @@ export default function Doctors({
                                   name="phoneCode"
                                   value={bookingForm.phoneCode}
                                   onChange={handleInputChange}
-                                  className="px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white min-w-[140px] pl-8"
+                                  className="px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white min-w-[140px]"
                                 >
                                   {phoneCountryCodes.map((country) => (
                                     <option key={country.code} value={country.code}>
@@ -1091,9 +1091,6 @@ export default function Doctors({
                                     </option>
                                   ))}
                                 </select>
-                                <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                  {phoneCountryCodes.find(country => country.code === bookingForm.phoneCode)?.flag || "🇵🇱"}
-                                </div>
                               </div>
                               <input
                                 type="tel"

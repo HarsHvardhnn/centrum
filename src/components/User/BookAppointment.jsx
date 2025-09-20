@@ -691,7 +691,7 @@ export default function BookAppointment({
                         <Field
                           as="select"
                           name="phoneCode"
-                          className="p-2.5 sm:p-3 text-sm sm:text-base outline-none bg-white border border-[#062b47] text-[#062b47] rounded-l appearance-none pr-8 min-w-[100px] pl-8"
+                          className="p-2.5 sm:p-3 text-sm sm:text-base outline-none bg-white border border-[#062b47] text-[#062b47] rounded-l appearance-none pr-8 min-w-[100px]"
                         >
                           {phoneCountryCodes.map((country) => (
                             <option key={country.code} value={country.code}>
@@ -699,9 +699,6 @@ export default function BookAppointment({
                             </option>
                           ))}
                         </Field>
-                        <div className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                          {phoneCountryCodes.find(country => country.code === values.phoneCode)?.flag || "🇵🇱"}
-                        </div>
                       </div>
                       <input
                         type="text"
