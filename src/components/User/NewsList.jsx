@@ -52,11 +52,11 @@ const NewsCard = ({ article }) => {
             <span>{new Date(article.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
             <span>{article.author}</span>
           </div>
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif font-semibold text-main mt-2">
+          <h3 className="text-xl sm:text-2xl lg:text-3xl font-serif font-semibold text-main mt-2">
             {article.title}
-          </h2>
+          </h3>
           <p className="text-gray-600 mt-2">
-            {sanitizedDescription}
+            { sanitizedDescription || `Dowiedz się więcej o ${article.title} w Centrum Medycznym 7 w Skarżysku-Kamiennej. Nasza przychodnia specjalistyczna oferuje kompleksową opiekę medyczną.`}
           </p>
           <div className="flex justify-between items-center mt-4">
             <span className="text-gray-500 max-sm:text-sm px-6 py-2 rounded-full bg-gray-200">
@@ -70,11 +70,13 @@ const NewsCard = ({ article }) => {
 
   return (
     <div className="bg-white overflow-hidden mb-6">
-      <img
-        src={article.image}
-        alt={article.title}
-        className="w-full h-64 sm:h-96 object-cover"
-      />
+      <Link to={`/aktualnosci/${validSlug}`}>
+        <img
+          src={article.image}
+          alt={article.title}
+          className="w-full h-64 sm:h-96 object-cover hover:opacity-90 transition-opacity"
+        />
+      </Link>
       <div className="py-5">
         <div className="text-xs sm:text-sm text-gray-500 flex gap-4 items-center">
           <span>{new Date(article.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
@@ -87,11 +89,11 @@ const NewsCard = ({ article }) => {
             {article.likes} polubień
           </span> */}
         </div>
-        <h2 className="text-xl sm:text-2xl lg:text-3xl font-serif font-semibold text-main mt-2">
+        <h3 className="text-xl sm:text-2xl lg:text-3xl font-serif font-semibold text-main mt-2">
           {article.title}
-        </h2>
+        </h3>
         <p className="text-gray-600 mt-2">
-          {sanitizedDescription}
+          {article.shortDescription || sanitizedDescription || `Dowiedz się więcej o ${article.title} w Centrum Medycznym 7 w Skarżysku-Kamiennej. Nasza przychodnia specjalistyczna oferuje kompleksową opiekę medyczną.`}
         </p>
         <div className="flex justify-between items-center mt-4">
           <Link

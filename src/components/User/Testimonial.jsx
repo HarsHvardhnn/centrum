@@ -21,10 +21,10 @@ export default function Testimonial() {
     <section className="bg-[#e3f3f3] py-20 px-6 flex justify-center">
       <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center gap-12">
         <div className="w-full lg:w-1/2 text-center md:text-left">
-          <h3 className="text-4xl md:text-[54px] font-bold text-gray-900 leading-tight">
+          <h2 className="text-4xl md:text-[54px] font-bold text-gray-900 leading-tight">
             Co Mówią o Nas
-          </h3>
-          <span className="text-teal-600 text-4xl font-semibold block mb-2">Nasi Pacjenci</span>
+          </h2>
+          <h3 className="text-teal-600 text-4xl font-semibold block mb-2">Nasi Pacjenci</h3>
           <p className="text-neutral-700 mt-4 text-lg">
             Zdrowie i zadowolenie pacjentów są dla nas najważniejsze.
           </p>
@@ -42,13 +42,12 @@ export default function Testimonial() {
             </div>
             <span className="text-neutral-900 text-2xl font-bold">150+ Opinii</span>
             <a 
-              href="https://www.google.com/maps/place/lek.+Michał+Szczubkowski+%7C+Chirurg+%7C+Proktolog+%7C+Leczenie+ran+przewlekłych/@51.1263237,20.876852,17z/data=!4m8!3m7!1s0x4718391f2a385e57:0x40e9db5b8218c35b!8m2!3d51.1263237!4d20.876852!9m1!1b1!16s%2Fg%2F11rcwlzvlw?entry=ttu&g_ep=EgoyMDI1MDUxMy4xIKXMDSoASAFQAw%3D%3D"
+              href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skarżysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dziecięcy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors duration-300 mt-2"
             >
               Sprawdź opinie
-
             </a>
           </div>
         </div>

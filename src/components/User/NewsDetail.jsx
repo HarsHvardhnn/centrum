@@ -81,6 +81,41 @@ const NewsDetail = () => {
     ? `/poradnik/${slug}`
     : `/aktualnosci/${slug}`;
 
+  // Generate Article Schema (JSON-LD)
+  const generateArticleSchema = () => {
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": isBlog ? "BlogPosting" : "NewsArticle",
+      "headline": news.title,
+      "description": news.description,
+      "image": news.image,
+      "author": {
+        "@type": "Person",
+        "name": news.author || "Centrum Medyczne 7"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Centrum Medyczne 7",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://centrummedyczne7.pl/images/mainlogo.png"
+        }
+      },
+      "datePublished": news.date,
+      "dateModified": news.updatedAt || news.date,
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": `https://centrummedyczne7.pl${metaPath}`
+      },
+      "url": `https://centrummedyczne7.pl${metaPath}`,
+      "articleSection": isBlog ? "Poradnik medyczny" : "Aktualności medyczne",
+      "keywords": isBlog ? "porady medyczne, zdrowie, centrum medyczne 7" : "aktualności medyczne, centrum medyczne 7, Skarżysko-Kamienna",
+      "inLanguage": "pl-PL"
+    };
+
+    return schema;
+  };
+
   return (
     <>
       <MetaTags 
@@ -88,6 +123,13 @@ const NewsDetail = () => {
         description={article.description}
         path={metaPath}
       />
+      
+      {/* Article Schema (JSON-LD) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(generateArticleSchema()) }}
+      />
+      
       <div className="max-w-3xl mx-auto bg-white px-4 rounded-lg mt-32">
         <button
           onClick={() => navigate(-1)}

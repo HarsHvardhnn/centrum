@@ -31,7 +31,7 @@ const NewsPage = ({isNews=true}) => {
         path={path}
       />
       <PageHeader
-        title={isNews ? "Aktualności" : "Blog"}
+        title={isNews ? "Aktualności CM7" : "Blog"}
         path={isNews ? "STRONA GŁÓWNA / AKTUALNOŚCI" : "STRONA GŁÓWNA / BLOG"}
         bgurl={isNews ? "/images/news.jpg" : "/images/blogs.jpg"}
       />
