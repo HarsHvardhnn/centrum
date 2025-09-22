@@ -790,7 +790,7 @@ function LabAppointmentsContent({ clinic }) {
                                 <DropdownMenu.Item
                                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                   onClick={() => {
-                                    navigate(`/admin/accounts?edytujPacjenta=${appointment.patient.id}`);
+                                    navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id}`);
                                   }}
                                 >
                                   <Eye size={16} className="mr-2" />
@@ -987,7 +987,7 @@ function LabAppointmentsContent({ clinic }) {
                                   <DropdownMenu.Item
                                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                     onClick={() => {
-                                      navigate(`/admin/accounts?edytujPacjenta=${appointment.patient.id}`);
+                                      navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id}`);
                                     }}
                                   >
                                     <Pen size={16} className="mr-2" />
@@ -1003,7 +1003,7 @@ function LabAppointmentsContent({ clinic }) {
                                   <div
                                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                     onClick={() => {
-                                      navigate(`/admin/accounts?edytujPacjenta=${appointment.patient.id}`);
+                                      navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id}`);
                                     }}
                                   >
                                     <Pen size={16} className="mr-2" />
