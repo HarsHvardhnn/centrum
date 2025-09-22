@@ -44,8 +44,8 @@ const  HomePage = () => {
   return (
     <>
       <MetaTags 
-        title="CM7 – Przychodnia specjalistyczna Skarżysko-Kamienna"
-        description="Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści. Umów wizytę w CM7."
+        title="Centrum Medyczne 7 Skarżysko-Kamienna – Przychodnia specjalistyczna"
+        description="Prywatna przychodnia specjalistyczna w Skarżysku-Kamiennej. Chirurgia, proktologia, neurologia dziecięca. Doświadczeni lekarze i szybkie terminy wizyt."
         path="/"
       />
       <Hero selectedDoctorId={selectedDoctorId} setSelectedDoctorId={setSelectedDoctorId}  />

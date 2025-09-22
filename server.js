@@ -114,8 +114,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
   
   switch (path) {
     case '/':
-      title = 'CM7 – Przychodnia specjalistyczna Skarżysko-Kamienna';
-      description = 'Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści. Umów wizytę w Centrum Medyczne 7.';
+      title = 'Centrum Medyczne 7 Skarżysko-Kamienna – Przychodnia specjalistyczna';
+      description = 'Prywatna przychodnia specjalistyczna w Skarżysku-Kamiennej. Chirurgia, proktologia, neurologia dziecięca. Doświadczeni lekarze i szybkie terminy wizyt.';
       keywords = 'centrum medyczne 7, przychodnia Skarżysko-Kamienna, lekarze specjaliści, wizyta lekarska, opieka medyczna, cm7';
       ogImage = '/images/mainlogo.png';
       break;

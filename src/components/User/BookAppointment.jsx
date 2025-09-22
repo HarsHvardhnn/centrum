@@ -557,8 +557,7 @@ export default function BookAppointment({
             Zarezerwuj Wizytę
           </h2>
           <p className="text-neutral-800 text-sm sm:text-base md:text-lg max-w-2xl mx-auto lg:mx-0">
-            Wybierz dogodny termin i umów się na konsultację z naszym specjalistą.
-            To szybkie, proste i wygodne — bez dzwonienia i kolejek.
+            Wybierz dogodny termin i umów się na konsultację z lekarzem w Centrum Medycznym 7 w Skarżysku-Kamiennej. Szybka rejestracja online, doświadczeni specjaliści i wizyty bez kolejek.
           </p>
         </div>
 
@@ -639,10 +638,13 @@ export default function BookAppointment({
                 </div>
 
                 <div className="col-span-1">
+                  <label htmlFor="name" className="sr-only">Imię i nazwisko</label>
                   <Field
+                    id="name"
                     name="name"
                     type="text"
                     placeholder="Imię i nazwisko"
+                    autoComplete="name"
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
                   />
                   <ErrorMessage
@@ -653,9 +655,12 @@ export default function BookAppointment({
                 </div>
 
                 <div className="col-span-1">
+                  <label htmlFor="gender" className="sr-only">Płeć</label>
                   <Field
                     as="select"
+                    id="gender"
                     name="gender"
+                    autoComplete="off"
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
                   >
                     <option value="">Wybierz płeć</option>
@@ -671,10 +676,13 @@ export default function BookAppointment({
                 </div>
 
                 <div className="col-span-1">
+                  <label htmlFor="email" className="sr-only">Email</label>
                   <Field
+                    id="email"
                     name="email"
                     type="email"
                     placeholder="Email"
+                    autoComplete="email"
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
                   />
                   <ErrorMessage
@@ -685,12 +693,14 @@ export default function BookAppointment({
                 </div>
 
                 <div className="col-span-1">
+                  <label htmlFor="phone" className="sr-only">Telefon</label>
                   <div className="custom-phone-input relative">
                     <div className="flex">
                       <div className="relative">
                         <Field
                           as="select"
                           name="phoneCode"
+                          autoComplete="off"
                           className="p-2.5 sm:p-3 text-sm sm:text-base outline-none bg-white border border-[#062b47] text-[#062b47] rounded-l appearance-none pr-8 min-w-[100px]"
                         >
                           {phoneCountryCodes.map((country) => (
@@ -701,10 +711,13 @@ export default function BookAppointment({
                         </Field>
                       </div>
                       <input
-                        type="text"
+                        id="phone"
+                        name="phone"
+                        type="tel"
                         value={values.phone}
                         onChange={(e) => handlePhoneChange(e, setFieldValue)}
                         placeholder="123 456 789"
+                        autoComplete="tel"
                         className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-gray-400 rounded-r border-l-0"
                       />
                     </div>
@@ -732,10 +745,13 @@ export default function BookAppointment({
                 </div>
 
                 <div className="col-span-1">
+                  <label htmlFor="specialization" className="sr-only">Specjalizacja</label>
                   <Field
                     as="select"
+                    id="specialization"
                     name="specialization"
                     onChange={(e) => handleSpecializationChangeWithUpdate(e, setFieldValue, values)}
+                    autoComplete="off"
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
                   >
                     <option value="">Wybierz specjalizację</option>
@@ -753,10 +769,13 @@ export default function BookAppointment({
                 </div>
 
                 <div className="col-span-1">
+                  <label htmlFor="doctor" className="sr-only">Lekarz</label>
                   <Field
                     as="select"
+                    id="doctor"
                     name="doctor"
                     onChange={(e) => handleDoctorChangeWithUpdate(e, values.date, setFieldValue, values)}
+                    autoComplete="off"
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
                     disabled={!values.specialization}
                   >
@@ -775,10 +794,13 @@ export default function BookAppointment({
                 </div>
 
                 <div className="col-span-1">
+                  <label htmlFor="date" className="sr-only">Data</label>
                   <Field
+                    id="date"
                     name="date"
                     type="date"
                     onChange={(e) => handleDateChangeWithUpdate(e, values.doctor, setFieldValue, values)}
+                    autoComplete="off"
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
                     min={new Date().toISOString().split('T')[0]}
                     disabled={!values.doctor}
@@ -799,15 +821,18 @@ export default function BookAppointment({
 
                     {/* PESEL field */}
                     <div className="col-span-1">
+                      <label htmlFor="govtId" className="sr-only">Numer PESEL</label>
                       <Field name="govtId">
                         {({ field, form }) => (
                           <input
+                            id="govtId"
                             type="text"
                             {...field}
                             onChange={(e) => {
                               const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
                               form.setFieldValue('govtId', value);
                             }}
+                            autoComplete="off"
                             className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
                             placeholder="Wprowadź numer PESEL"
                             maxLength="15"
@@ -823,11 +848,14 @@ export default function BookAppointment({
 
                     {/* Data urodzenia field */}
                     <div className="col-span-1">
+                      <label htmlFor="dateOfBirth" className="sr-only">Data urodzenia</label>
                       <Field name="dateOfBirth">
                         {({ field, form }) => (
                           <input
+                            id="dateOfBirth"
                             type="date"
                             {...field}
+                            autoComplete="off"
                             className={`w-full px-3 py-2 border ${form.touched.dateOfBirth && form.errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
                             max={new Date().toISOString().split("T")[0]}
                           />
@@ -842,15 +870,18 @@ export default function BookAppointment({
 
                     {/* Adres zamieszkania field */}
                     <div className="col-span-1 sm:col-span-2">
+                      <label htmlFor="address" className="sr-only">Adres zamieszkania</label>
                       <Field name="address">
                         {({ field, form }) => (
                           <textarea
+                            id="address"
                             {...field}
                             rows="2"
                             onChange={(e) => {
                               const value = e.target.value;
                               form.setFieldValue('address', value.trim());
                             }}
+                            autoComplete="off"
                             className={`w-full px-3 py-2 border ${form.touched.address && form.errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
                             placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
                           />
@@ -923,10 +954,13 @@ export default function BookAppointment({
 
                 {/* Message Textarea */}
                 <div className="col-span-1 sm:col-span-2">
+                  <label htmlFor="message" className="sr-only">Wiadomość</label>
                   <Field
                     as="textarea"
+                    id="message"
                     name="message"
                     placeholder="Prosimy opisać krótko swój problem zdrowotny oraz wskazać usługę, którą są Państwo zainteresowani (np. konsultacja chirurgiczna, usunięcie zmiany skórnej)."
+                    autoComplete="off"
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded resize-none h-24 sm:h-32"
                   />
                   <ErrorMessage
@@ -944,6 +978,7 @@ export default function BookAppointment({
                       <Field
                         type="checkbox"
                         name="privacyPolicyAgreed"
+                        autoComplete="off"
                         className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
                       />
                       <span className="text-sm text-gray-700">
@@ -982,6 +1017,7 @@ export default function BookAppointment({
                           <Field
                             type="checkbox"
                             name="medicalDataProcessingAgreed"
+                            autoComplete="off"
                             className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
                           />
                           <span className="text-sm text-gray-700">
@@ -1001,6 +1037,7 @@ export default function BookAppointment({
                           <Field
                             type="checkbox"
                             name="teleportationConfirmed"
+                            autoComplete="off"
                             className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
                           />
                           <span className="text-sm text-gray-700">
@@ -1020,6 +1057,7 @@ export default function BookAppointment({
                           <Field
                             type="checkbox"
                             name="contactConsentAgreed"
+                            autoComplete="off"
                             className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
                           />
                           <span className="text-sm text-gray-700">
@@ -1041,6 +1079,7 @@ export default function BookAppointment({
                       <Field
                         type="checkbox"
                         name="smsConsentAgreed"
+                        autoComplete="off"
                         className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
                       />
                       <span className="text-sm text-gray-700">
