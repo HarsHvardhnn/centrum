@@ -73,7 +73,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
               {" "}
               z <span className="text-teal-600">Najlepszymi Specjalistami</span>
             </h2>
-          <h1 className="text-2xl sm:text-2xl md:text-2xl lg:text-4xl xl:text-5xl leading-tight font-bold text-gray-900 mt-4">
+          <h1 className="text-2xl sm:text-2xl md:text-2xl lg:text-4xl xl:text-5xl leading-tight font-bold text-gray-900">
             Centrum Medyczne 7 – prywatna przychodnia specjalistyczna w Skarżysku-Kamiennej
           </h1>
           <p className="text-gray-600 mt-4 max-w-md mx-auto md:mx-0 px-2 sm:px-0 text-md">
