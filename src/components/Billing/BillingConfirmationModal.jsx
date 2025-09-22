@@ -301,13 +301,13 @@ const BillingConfirmationModal = ({
                   });
                   
                   // Check if we're currently on admin billing page
-                  if (location.pathname === '/admin/billing') {
+                  if (location.pathname === '/administracja/rozliczenia') {
                     // If on admin billing page, redirect to patients with today's date
                     const today = new Date().toISOString().split('T')[0];
-                    navigate(`/patients?date=${today}`);
+                    navigate(`/pacjenci?date=${today}`);
                   } else {
                     // Otherwise, redirect to admin billing page with appointment ID and step
-                    navigate(`/admin/billing?appointment=${appointmentId}&step=edit`);
+                    navigate(`/administracja/rozliczenia/?appointment=${appointmentId}&step=edit`);
                   }
                 } catch (error) {
                   console.error("Error generating bill:", error);
