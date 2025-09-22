@@ -63,8 +63,8 @@ export default function Footer() {
         {/* Contact Us */}
         <div className="flex flex-col items-start gap-3">
           <h3 className="font-semibold text-xl text-left">Kontakt</h3>
-          <p>(+48) 797 097 487</p>
-          <p>kontakt@centrummedyczne7.pl</p>
+          <a href="tel:+48797097487" className="hover:underline">(+48) 797 097 487</a>
+          <a href="mailto:kontakt@centrummedyczne7.pl" className="hover:underline">kontakt@centrummedyczne7.pl</a>
           <p>Powstańców Warszawy 7/1.5</p>
           <p>26-110 Skarżysko-Kamienna</p>
         </div>
