@@ -41,8 +41,21 @@ const normalizeUrl = (url) => {
   // Remove trailing slash except for root
   let normalized = url.endsWith('/') && url.length > 1 ? url.slice(0, -1) : url;
   
-  // Ensure lowercase for consistency
-  normalized = normalized.toLowerCase();
+  // DO NOT convert to lowercase - preserve original case for dynamic routes
+  // Only convert static routes to lowercase for consistency
+  if (normalized === '/' || 
+      normalized === '/o-nas' || 
+      normalized === '/lekarze' || 
+      normalized === '/uslugi' || 
+      normalized === '/aktualnosci' || 
+      normalized === '/poradnik' || 
+      normalized === '/kontakt' || 
+      normalized === '/regulamin' || 
+      normalized === '/polityka-prywatnosci') {
+    normalized = normalized.toLowerCase();
+  }
+  // For dynamic routes (with slashes), preserve the original case
+  // This ensures service pages, doctor pages, and blog articles maintain their proper URLs
   
   // Remove any query parameters for canonical URLs
   normalized = normalized.split('?')[0];
@@ -264,6 +277,21 @@ const generateSEOHTML = async (path, dynamicData = null) => {
   // Ensure canonical URL is always self-referencing and properly formatted
   const finalCanonicalUrl = canonicalUrl.replace(/\/$/, '') || BASE_URL;
   
+  // Validate that canonical URL is self-referencing
+  const expectedCanonical = `${BASE_URL}${path}`.replace(/\/$/, '') || BASE_URL;
+  let finalCanonicalUrlToUse = finalCanonicalUrl;
+  
+  if (finalCanonicalUrl !== expectedCanonical) {
+    console.warn(`⚠️ Canonical URL mismatch for ${path}:`);
+    console.warn(`   Expected: ${expectedCanonical}`);
+    console.warn(`   Generated: ${finalCanonicalUrl}`);
+    // Use the expected canonical URL instead
+    finalCanonicalUrlToUse = expectedCanonical;
+    console.log(`🔗 Using corrected Canonical URL for ${path}: ${finalCanonicalUrlToUse}`);
+  } else {
+    console.log(`🔗 Canonical URL for ${path}: ${finalCanonicalUrlToUse}`);
+  }
+  
   // Handle both absolute and relative image URLs
   const fullOgImage = ogImage && (ogImage.startsWith('http://') || ogImage.startsWith('https://')) 
     ? ogImage 
@@ -281,11 +309,11 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <title>${title}</title>
     <meta name="description" content="${description}">
     <meta name="keywords" content="${keywords}">
-    <link rel="canonical" href="${finalCanonicalUrl}">
+    <link rel="canonical" href="${finalCanonicalUrlToUse}">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="${finalCanonicalUrl}">
+    <meta property="og:url" content="${finalCanonicalUrlToUse}">
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${description}">
     <meta property="og:image" content="${fullOgImage}">
@@ -293,7 +321,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="${finalCanonicalUrl}">
+    <meta property="twitter:url" content="${finalCanonicalUrlToUse}">
     <meta property="twitter:title" content="${title}">
     <meta property="twitter:description" content="${description}">
     <meta property="twitter:image" content="${fullOgImage}">
@@ -337,7 +365,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     </script>
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-CgTfrMaZ.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BFgWsJ3O.css">
 </head>
 <body>
     <!-- SEO Content for crawlers -->
@@ -350,7 +378,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-CFAN9tYV.js"></script>
+    <script type="module" crossorigin src="/assets/index-LnSDWLla.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -521,7 +549,9 @@ const seoMiddleware = async (req, res, next) => {
   // Fetch dynamic data for dynamic routes
   let dynamicData = null;
   if (path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/') || path.startsWith('/uslugi/') || path.startsWith('/lekarze/')) {
+    console.log(`📄 Processing dynamic route: ${path}`);
     dynamicData = await fetchDynamicData(path);
+    console.log(`📄 Dynamic data fetched:`, dynamicData ? 'Success' : 'Failed');
   }
   
   const seoHTML = await generateSEOHTML(path, dynamicData);
