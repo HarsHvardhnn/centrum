@@ -7,6 +7,7 @@ import { FaRegHeart } from "react-icons/fa";
 import { apiCaller } from "../../utils/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import { generateNewsSlug } from "../../utils/slugUtils";
+import DOMPurify from "dompurify";
 
 export default function News() {
   const [news, setNews] = useState([]);
@@ -89,6 +90,14 @@ export default function News() {
     return newsItem._id || 'undefined-article';
   };
 
+  // Helper function to strip HTML tags and create clean text
+  const stripHTML = (html) => {
+    if (!html) return '';
+    const div = document.createElement('div');
+    div.innerHTML = DOMPurify.sanitize(html);
+    return div.textContent || div.innerText || '';
+  };
+
   const handleNewsClick = (newsItem) => {
     const slug = getValidSlug(newsItem);
     // Only navigate if we have a valid slug
@@ -110,11 +119,8 @@ export default function News() {
 
   return (
     <section className="py-12 md:px-6">
-      <h3 className="md:text-xl font-bold text-neutral-800 text-center">
-        WIEDZA, KTÓRA MA ZNACZENIE
-      </h3>
       <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 text-center">
-        Aktualności
+        Aktualności CM7
       </h2>
 
       {/* Categories Section */}
@@ -158,12 +164,18 @@ export default function News() {
             {groupedNews.map((group, index) => (
               <div key={index} className="p-4">
                 <div className="grid grid-rows-2 gap-4">
-                  {group.map((newsItem) => (
-                    <div
-                      key={newsItem._id}
-                      className="bg-white shadow-md rounded-lg overflow-hidden flex cursor-pointer"
-                      onClick={() => handleNewsClick(newsItem)}
-                    >
+                  {group.map((newsItem) => {
+                    const slug = getValidSlug(newsItem);
+                    return (
+                      <a
+                        key={newsItem._id}
+                        href={`/aktualnosci/${slug}`}
+                        className="bg-white shadow-md rounded-lg overflow-hidden flex cursor-pointer hover:shadow-lg transition-shadow"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleNewsClick(newsItem);
+                        }}
+                      >
                       <div className="w-1/3">
                         <img
                          loading="lazy"
@@ -173,25 +185,24 @@ export default function News() {
                         />
                       </div>
                       <div className="px-4 py-2 xl:p-4 w-2/3">
-                        {/* <p className="text-neutral-700 max-md:text-xs max-xl:text-sm">
-                          {newsItem.date} | {newsItem.author}
-                        </p> */}
-                        <h4 className="mt-2 sm:text-lg xl:text-xl text-neutral-700">
+                        <h3 className="mt-2 sm:text-lg xl:text-xl text-neutral-700 font-semibold">
                           {newsItem.title}
-                        </h4>
-                        {/* <div className="flex items-center gap-4 mt-4 max-md:text-sm">
-                          <span className="flex items-center gap-1">
-                            <IoEyeOutline className="text-blue-600 sm:text-xl" />{" "}
-                            {newsItem.views} wyświetleń
+                        </h3>
+                        <p className="text-neutral-600 text-sm mt-2 line-clamp-3">
+                          {newsItem.description 
+                            ? stripHTML(newsItem.description).substring(0, 150) + '...'
+                            : `Dowiedz się więcej o najnowszych informacjach medycznych w Centrum Medycznym CM7 w Skarżysko-Kamienna. Nasz zespół specjalistów zapewnia kompleksową opiekę zdrowotną dla mieszkańców regionu.`
+                          }
+                        </p>
+                        <div className="mt-3">
+                          <span className="text-main text-sm font-medium hover:underline">
+                            Czytaj więcej →
                           </span>
-                          <span className="flex items-center gap-1">
-                            <FaRegHeart className="text-red-500 text-sm sm:text-lg" />{" "}
-                            {newsItem.likes} polubień
-                          </span>
-                        </div> */}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             ))}

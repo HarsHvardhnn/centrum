@@ -73,11 +73,11 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
               {" "}
               z <span className="text-teal-600">Najlepszymi Specjalistami</span>
             </h2>
-          <h1 className="text-2xl sm:text-2xl md:text-2xl lg:text-4xl xl:text-5xl leading-tight font-bold text-gray-900">
+          <h1 className="text-md sm:text-md md:text-md lg:text-md xl:text-md leading-tight font-bold text-gray mt-4">
             Centrum Medyczne 7 – prywatna przychodnia specjalistyczna w Skarżysku-Kamiennej
+            Doświadczeni lekarze, szybka rejestracja online i wizyty bez skierowania.
           </h1>
           <p className="text-gray-600 mt-4 max-w-md mx-auto md:mx-0 px-2 sm:px-0 text-md">
-            Doświadczeni lekarze, szybka rejestracja online i wizyty bez skierowania.
           </p>
           <h2 className="text-xl sm:text-2xl mt-8 md:mt-6 font-bold">
             Znajdź termin

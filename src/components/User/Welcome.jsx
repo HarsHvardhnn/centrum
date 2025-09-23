@@ -4,12 +4,15 @@ import { FaArrowRight } from "react-icons/fa6";
 export default function Welcome() {
   return (
     <section className="py-12 text-center bg-white px-4 md:px-8 lg:px-16">
-      <h2 className="text-3xl md:text-4xl font-bold font-serif text-main mt-2">
-        Jesteśmy tu dla Ciebie
-      </h2>
       <h3 className="font-bold text-xl text-neutral-800 uppercase mt-2">
-        Specjalistyczne konsultacje i zabiegi
+        CENTRUM MEDYCZNE 7
       </h3>
+      <h2 className="text-3xl md:text-4xl font-bold font-serif text-main mt-2">
+        Twoje Zdrowie w Dobrych Rękach
+      </h2>
+      <p className="text-neutral-700 text-lg mt-4 max-w-4xl mx-auto leading-relaxed">
+        Naszą misją jest leczenie z pełnym szacunkiem, empatią i zaangażowaniem. – szybkie specjalistyczne konsultacje i zabiegi bez skierowania.
+      </p>
 
       <div className="mt-6">
         <a

@@ -88,7 +88,12 @@ const NewsDetail = () => {
       "@type": isBlog ? "BlogPosting" : "NewsArticle",
       "headline": news.title,
       "description": news.description,
-      "image": news.image,
+      "image": {
+        "@type": "ImageObject",
+        "url": news.image,
+        "width": 800,
+        "height": 600
+      },
       "author": {
         "@type": "Person",
         "name": news.author || "Centrum Medyczne 7"
@@ -96,9 +101,17 @@ const NewsDetail = () => {
       "publisher": {
         "@type": "Organization",
         "name": "Centrum Medyczne 7",
+        "url": "https://centrummedyczne7.pl",
         "logo": {
           "@type": "ImageObject",
-          "url": "https://centrummedyczne7.pl/images/mainlogo.png"
+          "url": "https://centrummedyczne7.pl/images/mainlogo.png",
+          "width": 200,
+          "height": 60
+        },
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Skarżysko-Kamienna",
+          "addressCountry": "PL"
         }
       },
       "datePublished": news.date,
@@ -109,8 +122,10 @@ const NewsDetail = () => {
       },
       "url": `https://centrummedyczne7.pl${metaPath}`,
       "articleSection": isBlog ? "Poradnik medyczny" : "Aktualności medyczne",
-      "keywords": isBlog ? "porady medyczne, zdrowie, centrum medyczne 7" : "aktualności medyczne, centrum medyczne 7, Skarżysko-Kamienna",
-      "inLanguage": "pl-PL"
+      "keywords": isBlog ? "porady medyczne, zdrowie, centrum medyczne 7, Skarżysko-Kamienna" : "aktualności medyczne, centrum medyczne 7, Skarżysko-Kamienna, CM7",
+      "inLanguage": "pl-PL",
+      "wordCount": news.description ? news.description.length : 0,
+      "isAccessibleForFree": true
     };
 
     return schema;
