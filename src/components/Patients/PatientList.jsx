@@ -151,12 +151,14 @@ function LabAppointmentsContent({ clinic }) {
         startDate: dateToSet
       }));
     } else {
-      // Always set today's date as default for both /patients and /clinic pages
-      const today = new Date().toISOString().split('T')[0];
-      setDateRange(prev => ({
-        ...prev,
-        startDate: today
-      }));
+      // Only set today's date as default for clinic cases
+      if (clinic) {
+        const today = new Date().toISOString().split('T')[0];
+        setDateRange(prev => ({
+          ...prev,
+          startDate: today
+        }));
+      }
     }
     
     // Store appointmentId for API filtering
@@ -164,7 +166,7 @@ function LabAppointmentsContent({ clinic }) {
       // You can add appointmentId to state if needed for UI display
       console.log('Appointment ID from URL:', appointmentIdFromUrl);
     }
-  }, [searchParams]);
+  }, [searchParams, clinic]);
 
   // Handle clicking outside filter dropdown
   useEffect(() => {
@@ -204,7 +206,7 @@ function LabAppointmentsContent({ clinic }) {
     setSearchQuery("");
     setStatusFilter("booked");
     
-    // Preserve date from query parameters when switching routes, otherwise set today's date
+    // Preserve date from query parameters when switching routes, otherwise set today's date only for clinic
     const startDateFromUrl = searchParams.get('startDate');
     const dateFromUrl = searchParams.get('date');
     const dateToSet = startDateFromUrl || dateFromUrl;
@@ -215,12 +217,20 @@ function LabAppointmentsContent({ clinic }) {
         endDate: null,
       });
     } else {
-      // Set today's date as default for both pages
-      const today = new Date().toISOString().split('T')[0];
-      setDateRange({
-        startDate: today,
-        endDate: null,
-      });
+      // Only set today's date as default for clinic cases
+      if (clinic) {
+        const today = new Date().toISOString().split('T')[0];
+        setDateRange({
+          startDate: today,
+          endDate: null,
+        });
+      } else {
+        // For non-clinic cases, clear the date filter
+        setDateRange({
+          startDate: null,
+          endDate: null,
+        });
+      }
     }
     
     // Refetch with fresh data
