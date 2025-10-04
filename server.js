@@ -112,7 +112,10 @@ const isBot = (userAgent) => {
     /bitrix link preview/i,
     /xing-contenttabreceiver/i,
     /chrome-lighthouse/i,
-    /telegrambot/i
+    /telegrambot/i,
+    /semrushbot/i,
+    /ahrefsbot/i,
+    /screaming frog/i
   ];
   return botPatterns.some(pattern => pattern.test(userAgent));
 };
@@ -437,11 +440,35 @@ const fetchDynamicData = async (path) => {
     }
     
     console.log(`📡 Fetching data from: ${endpoint}`);
-    const response = await axios.get(endpoint, { timeout: 3000 });
+    
+    // Add retry logic
+    let retries = 2;
+    let response;
+    
+    while (retries >= 0) {
+      try {
+        response = await axios.get(endpoint, { timeout: 5000 }); // Increased timeout
+        break; // Success, exit the retry loop
+      } catch (error) {
+        if (retries > 0) {
+          console.log(`⚠️ Retry attempt for ${endpoint}, ${retries} attempts left`);
+          await new Promise(r => setTimeout(r, 1000)); // Wait 1 second before retry
+          retries--;
+        } else {
+          throw error; // No more retries, rethrow
+        }
+      }
+    }
+    
     console.log(`✅ Data fetched successfully for slug: ${slug}`);
     return response.data;
   } catch (error) {
     console.log(`❌ Failed to fetch data for ${path}:`, error.message);
+    // Log more error details
+    if (error.response) {
+      console.log(`Status: ${error.response.status}`);
+      console.log(`Data:`, error.response.data);
+    }
     return null;
   }
 };
@@ -555,6 +582,13 @@ const seoMiddleware = async (req, res, next) => {
   }
   
   const seoHTML = await generateSEOHTML(path, dynamicData);
+  
+  // Add caching headers
+  res.set({
+    'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+    'Vary': 'User-Agent' // Vary response based on user agent
+  });
+  
   return res.send(seoHTML);
 };
 
@@ -813,10 +847,34 @@ app.get('/sitemap.xml', async (req, res) => {
   }
 });
 
+// Add redirect tracking middleware
+app.use((req, res, next) => {
+  const originalUrl = req.originalUrl;
+  const referer = req.get('Referer') || 'none';
+  const userAgent = req.get('User-Agent') || 'unknown';
+  
+  // Override the redirect method
+  const originalRedirect = res.redirect;
+  res.redirect = function(status, url) {
+    if (typeof status === 'string') {
+      url = status;
+      status = 302;
+    }
+    
+    // Log to console
+    console.log(`🔄 Redirect: ${originalUrl} -> ${url} (${status}) | UA: ${userAgent.substring(0, 50)}`);
+    
+    return originalRedirect.call(this, status, url);
+  };
+  
+  next();
+});
+
 // Apply middleware in correct order
 app.use(handleExternalProtocols);     // First: block external protocols
 app.use(handleInvalidSlugs);          // Second: handle undefined slugs
-    // Fourth: handle URL normalization and case sensitivity
+app.use(handleUrlNormalization);      // Fourth: handle URL normalization and case sensitivity
+app.use(handleServiceTrailingSlash);  // Fifth: handle trailing slashes for dynamic pages
 
 // Serve static assets (CSS, JS, images, PDFs) BEFORE SEO middleware
 app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
@@ -839,6 +897,53 @@ app.get('*', (req, res, next) => {
 
 // Serve static files from public directory AFTER SEO middleware (fallback)
 app.use('/', express.static(path.join(__dirname, 'public')));
+
+// Add diagnostic endpoint for debugging
+app.get('/seo-diagnostic', (req, res) => {
+  const path = req.query.path || '/';
+  const userAgent = req.query.ua || req.get('User-Agent');
+  
+  // Check how the URL would be processed
+  const normalizedPath = normalizeUrl(path);
+  const isRobotCheck = isBot(userAgent);
+  
+  res.json({
+    original_path: path,
+    normalized_path: normalizedPath,
+    would_redirect: path !== normalizedPath,
+    is_bot: isRobotCheck,
+    user_agent: userAgent,
+    middleware_checks: {
+      external_protocol: path.includes('tel:') || path.includes('mailto:'),
+      invalid_slug: path.includes('/undefined'),
+      has_trailing_slash: path.endsWith('/') && path.length > 1
+    }
+  });
+});
+
+// Add API health check endpoint
+app.get('/api-health', async (req, res) => {
+  const results = {};
+  
+  try {
+    // Check news API
+    const newsStart = Date.now();
+    const newsResponse = await axios.get(`${API_BASE_URL}/news`, { timeout: 3000 });
+    results.news = {
+      status: newsResponse.status,
+      time: Date.now() - newsStart,
+      count: newsResponse.data?.length || 0
+    };
+  } catch (error) {
+    results.news = { error: error.message };
+  }
+  
+  res.json({
+    timestamp: new Date().toISOString(),
+    api_base_url: API_BASE_URL,
+    results
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
