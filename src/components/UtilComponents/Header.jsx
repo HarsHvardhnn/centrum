@@ -64,17 +64,14 @@ const Header = () => {
     <div className="bg-primary text-white py-2 px-6 flex items-center justify-between w-full z-20 shadow-md">
       <div className="flex items-center border border-white rounded-xl py-2 px-4">
         <div className="flex items-center cursor-pointer">
-          <div className="h-10 w-10 flex items-center justify-center cursor-pointer" onClick={()=>window.location.reload()}>
+          <div className=" w-40 py-4 h-16  flex items-center justify-center cursor-pointer" onClick={()=>window.location.reload()}>
             <img
-              src="/images/logo.png"
+              src="/images/białe.svg"
               alt="Centrum Medyczne"
-              className="h-8"
+              className="w-40"
             />
           </div>
-          <div className="ml-3">
-            <h1 className="font-semibold text-lg">Centrum Medyczne</h1>
-            <p className="text-xs text-white/80">Polska</p>
-          </div>
+      
         </div>
         {/* <button className="ml-2 hover:bg-primary rounded-full p-1">
           <ChevronDown size={18} />

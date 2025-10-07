@@ -72,7 +72,7 @@ function LabAppointmentsContent({ clinic }) {
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("booked");
+  const [statusFilter, setStatusFilter] = useState(clinic ? "booked" : "All");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [dateRange, setDateRange] = useState({
     startDate: null,
@@ -114,6 +114,14 @@ function LabAppointmentsContent({ clinic }) {
         ...(clinic && { isClinicIp: clinic }),
         ...(appointmentIdFromUrl && { appointmentId: appointmentIdFromUrl }),
       };
+      
+      // Log the current filters for debugging
+      console.log('Filters applied:', { 
+        statusFilter, 
+        dateRange, 
+        clinic, 
+        filters 
+      });
 
       const response = await appointmentHelper.getAllAppointments(
         page,
@@ -157,6 +165,12 @@ function LabAppointmentsContent({ clinic }) {
         setDateRange(prev => ({
           ...prev,
           startDate: today
+        }));
+      } else {
+        // Clear date filter for non-clinic cases
+        setDateRange(prev => ({
+          ...prev,
+          startDate: null
         }));
       }
     }
@@ -204,7 +218,7 @@ function LabAppointmentsContent({ clinic }) {
       limit: 10,
     });
     setSearchQuery("");
-    setStatusFilter("booked");
+    setStatusFilter(clinic ? "booked" : "All");
     
     // Preserve date from query parameters when switching routes, otherwise set today's date only for clinic
     const startDateFromUrl = searchParams.get('startDate');
@@ -225,7 +239,7 @@ function LabAppointmentsContent({ clinic }) {
           endDate: null,
         });
       } else {
-        // For non-clinic cases, clear the date filter
+        // For non-clinic cases, always clear the date filter
         setDateRange({
           startDate: null,
           endDate: null,
