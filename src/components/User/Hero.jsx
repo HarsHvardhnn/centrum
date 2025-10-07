@@ -63,20 +63,19 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
     <section className="bg-[#F0F7F7] relative flex flex-col items-center pt-12 sm:pt-16">
       <div className=" flex-1 flex flex-col md:flex-row items-center justify-between px-4 sm:px-10 xl:px-20 pt-8 sm:pt-16">
         {/* Left Side Content */}
-        <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
-          <h2 className="text-2xl sm:text-2xl md:text-2xl lg:text-4xl xl:text-5xl leading-tight font-bold text-gray-900">
-            Zadbaj o Zdrowie          
-            
-          
+        <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0 md:pr-40 lg:pr-48 xl:pr-56">
+          <h2 className="text-2xl sm:text-2xl md:text-2xl lg:text-4xl xl:text-5xl leading-normal font-bold text-gray-900 whitespace-nowrap">
+            Zadbaj o Zdrowie<br />
+            z <span className="text-teal-600">Najlepszymi Specjalistami</span>
           </h2>
-          <h2 className="text-2xl sm:text-2xl md:text-2xl lg:text-4xl xl:text-5xl leading-tight font-bold text-gray-900">
-              {" "}
-              z <span className="text-teal-600">Najlepszymi Specjalistami</span>
-            </h2>
-          <h1 className="text-md sm:text-md md:text-md lg:text-md xl:text-md leading-tight font-bold text-gray mt-4">
-            Centrum Medyczne 7 – prywatna przychodnia specjalistyczna w Skarżysku-Kamiennej
-            Doświadczeni lekarze, szybka rejestracja online i wizyty bez skierowania.
-          </h1>
+          <div className="mt-4">
+            <p className="text-lg sm:text-lg md:text-lg lg:text-xl xl:text-xl font-bold text-gray md:whitespace-nowrap">
+              Centrum Medyczne 7 – prywatna przychodnia specjalistyczna w Skarżysku-Kamiennej.
+            </p>
+            <p className="text-lg sm:text-lg md:text-lg lg:text-xl xl:text-xl font-bold text-gray md:whitespace-nowrap">
+              Doświadczeni lekarze, szybka rejestracja online i wizyty bez skierowania.
+            </p>
+          </div>
           <p className="text-gray-600 mt-4 max-w-md mx-auto md:mx-0 px-2 sm:px-0 text-md">
           </p>
           <h2 className="text-xl sm:text-2xl mt-8 md:mt-6 font-bold">
