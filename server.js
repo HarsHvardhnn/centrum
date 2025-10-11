@@ -404,7 +404,8 @@ const fetchDynamicData = async (path) => {
         return null;
       }
       
-      endpoint = `${API_BASE_URL}/news/slug/${slug}`;
+      // News articles use isNews=true parameter
+      endpoint = `${API_BASE_URL}/news/slug/${slug}?isNews=true`;
     } else if (path.startsWith('/poradnik/')) {
       slug = path.replace('/poradnik/', '');
       
@@ -414,7 +415,8 @@ const fetchDynamicData = async (path) => {
         return null;
       }
       
-      endpoint = `${API_BASE_URL}/blogs/slug/${slug}`;
+      // Blogs use the same /news endpoint with isNews=false parameter
+      endpoint = `${API_BASE_URL}/news/slug/${slug}?isNews=false`;
     } else if (path.startsWith('/uslugi/')) {
       slug = path.replace('/uslugi/', '');
       
@@ -434,6 +436,7 @@ const fetchDynamicData = async (path) => {
         return null;
       }
       
+      // Try multiple possible endpoints for doctor data
       endpoint = `${API_BASE_URL}/docs/profile/slug/${slug}`;
     } else {
       return null;
@@ -450,6 +453,32 @@ const fetchDynamicData = async (path) => {
         response = await axios.get(endpoint, { timeout: 5000 }); // Increased timeout
         break; // Success, exit the retry loop
       } catch (error) {
+        // If this is a doctor endpoint and it fails, try alternative endpoints
+        if (path.startsWith('/lekarze/') && error.response?.status === 404) {
+          console.log(`⚠️ Doctor endpoint failed, trying alternative endpoints...`);
+          
+          // Try alternative doctor endpoints
+          const alternativeEndpoints = [
+            `${API_BASE_URL}/docs/slug/${slug}`,
+            `${API_BASE_URL}/doctors/slug/${slug}`,
+            `${API_BASE_URL}/doctor/slug/${slug}`
+          ];
+          
+          for (const altEndpoint of alternativeEndpoints) {
+            try {
+              console.log(`📡 Trying alternative endpoint: ${altEndpoint}`);
+              response = await axios.get(altEndpoint, { timeout: 3000 });
+              console.log(`✅ Found doctor data at: ${altEndpoint}`);
+              break;
+            } catch (altError) {
+              console.log(`❌ Alternative endpoint failed: ${altEndpoint}`);
+              continue;
+            }
+          }
+          
+          if (response) break; // Success with alternative endpoint
+        }
+        
         if (retries > 0) {
           console.log(`⚠️ Retry attempt for ${endpoint}, ${retries} attempts left`);
           await new Promise(r => setTimeout(r, 1000)); // Wait 1 second before retry
@@ -458,6 +487,10 @@ const fetchDynamicData = async (path) => {
           throw error; // No more retries, rethrow
         }
       }
+    }
+    
+    if (!response) {
+      throw new Error('All retry attempts and alternative endpoints failed');
     }
     
     console.log(`✅ Data fetched successfully for slug: ${slug}`);
@@ -575,10 +608,40 @@ const seoMiddleware = async (req, res, next) => {
   
   // Fetch dynamic data for dynamic routes
   let dynamicData = null;
+  let dataFetchFailed = false;
+  
   if (path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/') || path.startsWith('/uslugi/') || path.startsWith('/lekarze/')) {
     console.log(`📄 Processing dynamic route: ${path}`);
     dynamicData = await fetchDynamicData(path);
-    console.log(`📄 Dynamic data fetched:`, dynamicData ? 'Success' : 'Failed');
+    
+    if (!dynamicData) {
+      console.log(`⚠️ No dynamic data available for ${path} - serving fallback content`);
+      dataFetchFailed = true;
+      
+      // For dynamic routes with no data, return 404 instead of serving empty content
+      // This prevents "false 404" errors in Google Search Console
+      return res.status(404).send(`
+        <!DOCTYPE html>
+        <html lang="pl">
+        <head>
+          <meta charset="UTF-8">
+          <title>Strona nie została znaleziona - Centrum Medyczne 7</title>
+          <meta name="robots" content="noindex, nofollow">
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+            h1 { color: #008C8C; }
+          </style>
+        </head>
+        <body>
+          <h1>404 - Strona nie została znaleziona</h1>
+          <p>Przepraszamy, ale strona której szukasz nie istnieje.</p>
+          <p><a href="/">Powrót do strony głównej</a></p>
+        </body>
+        </html>
+      `);
+    }
+    
+    console.log(`📄 Dynamic data fetched: Success`);
   }
   
   const seoHTML = await generateSEOHTML(path, dynamicData);
@@ -627,7 +690,8 @@ const generateDynamicSitemap = async () => {
     // Fetch news articles
     try {
       console.log('📰 Fetching news for sitemap...');
-      const newsResponse = await axios.get(`${API_BASE_URL}/news`, { timeout: 5000 });
+      // News articles use isNews=true parameter
+      const newsResponse = await axios.get(`${API_BASE_URL}/news?isNews=true`, { timeout: 5000 });
       const newsItems = newsResponse.data || [];
       
       const validNewsUrls = newsItems
@@ -648,7 +712,8 @@ const generateDynamicSitemap = async () => {
     // Fetch blog articles
     try {
       console.log('📝 Fetching blog articles for sitemap...');
-      const blogResponse = await axios.get(`${API_BASE_URL}/blogs`, { timeout: 5000 });
+      // Blogs use the same /news endpoint with isNews=false parameter
+      const blogResponse = await axios.get(`${API_BASE_URL}/news?isNews=false`, { timeout: 5000 });
       const blogItems = blogResponse.data || [];
       
       const validBlogUrls = blogItems
@@ -689,8 +754,32 @@ const generateDynamicSitemap = async () => {
     
     // Fetch doctor profiles - Enhanced with better debugging and structure handling
     try {
-      console.log('👨‍⚕️ Fetching doctor profiles for sitemap from:', `${API_BASE_URL}/docs`);
-      const doctorsResponse = await axios.get(`${API_BASE_URL}/docs`, { timeout: 5000 });
+      // Try multiple possible endpoints for doctors
+      const doctorEndpoints = [
+        `${API_BASE_URL}/docs`,
+        `${API_BASE_URL}/doctors`,
+        `${API_BASE_URL}/doctor`
+      ];
+      
+      let doctorsResponse = null;
+      let workingEndpoint = null;
+      
+      for (const endpoint of doctorEndpoints) {
+        try {
+          console.log(`👨‍⚕️ Trying doctor endpoint: ${endpoint}`);
+          doctorsResponse = await axios.get(endpoint, { timeout: 5000 });
+          workingEndpoint = endpoint;
+          console.log(`✅ Found working doctor endpoint: ${endpoint}`);
+          break;
+        } catch (error) {
+          console.log(`❌ Doctor endpoint failed: ${endpoint} - ${error.message}`);
+          continue;
+        }
+      }
+      
+      if (!doctorsResponse) {
+        throw new Error('All doctor endpoints failed');
+      }
       
       console.log('👨‍⚕️ Doctors API Response status:', doctorsResponse.status);
       console.log('👨‍⚕️ Doctors API Response structure:', {
@@ -919,6 +1008,31 @@ app.get('/seo-diagnostic', (req, res) => {
       has_trailing_slash: path.endsWith('/') && path.length > 1
     }
   });
+});
+
+// Add endpoint to test dynamic data fetching
+app.get('/test-dynamic-data/:type/:slug', async (req, res) => {
+  const { type, slug } = req.params;
+  const path = `/${type}/${slug}`;
+  
+  try {
+    console.log(`🧪 Testing dynamic data fetch for: ${path}`);
+    const dynamicData = await fetchDynamicData(path);
+    
+    res.json({
+      path: path,
+      success: !!dynamicData,
+      data: dynamicData,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      path: path,
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Add API health check endpoint

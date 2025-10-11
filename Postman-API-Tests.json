@@ -1,0 +1,328 @@
+{
+  "info": {
+    "name": "Centrum Medyczne 7 - API Testing",
+    "description": "Test all backend API endpoints to identify 404 errors",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. List Endpoints (Working)",
+      "item": [
+        {
+          "name": "Get All Doctors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/docs",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["docs"]
+            }
+          }
+        },
+        {
+          "name": "Get All Services",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/services",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["services"]
+            }
+          }
+        },
+        {
+          "name": "Get All News",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/news",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["news"]
+            }
+          }
+        },
+        {
+          "name": "Get All Blogs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/blogs",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["blogs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Individual Service Pages (CRITICAL)",
+      "item": [
+        {
+          "name": "Service: Konsultacja chirurgiczna",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/services/slug/konsultacja-chirurgiczna",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["services", "slug", "konsultacja-chirurgiczna"]
+            }
+          }
+        },
+        {
+          "name": "Service: Konsultacja proktologiczna",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/services/slug/konsultacja-proktologiczna",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["services", "slug", "konsultacja-proktologiczna"]
+            }
+          }
+        },
+        {
+          "name": "Service: Konsultacja online",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/services/slug/konsultacja-online",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["services", "slug", "konsultacja-online"]
+            }
+          }
+        },
+        {
+          "name": "Service: Konsultacja neurologiczna",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/services/slug/konsultacja-neurologiczna",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["services", "slug", "konsultacja-neurologiczna"]
+            }
+          }
+        },
+        {
+          "name": "Service: Leczenie stopy cukrzycowej",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/services/slug/leczenie-stopy-cukrzycowej",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["services", "slug", "leczenie-stopy-cukrzycowej"]
+            }
+          }
+        },
+        {
+          "name": "Service: Wycinanie zmian skórnych",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/services/slug/wycinanie-zmian-skornych-z-ocena-histopatologiczna",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["services", "slug", "wycinanie-zmian-skornych-z-ocena-histopatologiczna"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Individual Doctor Pages (CRITICAL)",
+      "item": [
+        {
+          "name": "Doctor Profile Endpoint 1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/docs/profile/slug/{{doctor_slug}}",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["docs", "profile", "slug", "{{doctor_slug}}"]
+            },
+            "description": "Replace {{doctor_slug}} with actual doctor slug from /docs response"
+          }
+        },
+        {
+          "name": "Doctor Alternative Endpoint 2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/docs/slug/{{doctor_slug}}",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["docs", "slug", "{{doctor_slug}}"]
+            },
+            "description": "Alternative endpoint for doctor data"
+          }
+        },
+        {
+          "name": "Doctor Alternative Endpoint 3",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/doctors/slug/{{doctor_slug}}",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["doctors", "slug", "{{doctor_slug}}"]
+            }
+          }
+        },
+        {
+          "name": "Doctor Alternative Endpoint 4",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/doctor/slug/{{doctor_slug}}",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["doctor", "slug", "{{doctor_slug}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Individual News Pages",
+      "item": [
+        {
+          "name": "News by Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/news/slug/{{news_slug}}",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["news", "slug", "{{news_slug}}"]
+            },
+            "description": "Replace {{news_slug}} with actual news slug from /news response"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Individual Blog Pages",
+      "item": [
+        {
+          "name": "Blog by Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://backend.centrummedyczne7.pl/blogs/slug/{{blog_slug}}",
+              "protocol": "https",
+              "host": ["backend", "centrummedyczne7", "pl"],
+              "path": ["blogs", "slug", "{{blog_slug}}"]
+            },
+            "description": "Replace {{blog_slug}} with actual blog slug from /blogs response (if any exist)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Frontend SEO Test",
+      "item": [
+        {
+          "name": "Frontend: Service Page",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://centrummedyczne7.pl/uslugi/konsultacja-chirurgiczna",
+              "protocol": "https",
+              "host": ["centrummedyczne7", "pl"],
+              "path": ["uslugi", "konsultacja-chirurgiczna"]
+            },
+            "description": "Test how Google sees your service page"
+          }
+        },
+        {
+          "name": "Frontend: Doctor Page",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://centrummedyczne7.pl/lekarze/{{doctor_slug}}",
+              "protocol": "https",
+              "host": ["centrummedyczne7", "pl"],
+              "path": ["lekarze", "{{doctor_slug}}"]
+            },
+            "description": "Test how Google sees your doctor page"
+          }
+        },
+        {
+          "name": "Frontend: News Page",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "User-Agent",
+                "value": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://centrummedyczne7.pl/aktualnosci/{{news_slug}}",
+              "protocol": "https",
+              "host": ["centrummedyczne7", "pl"],
+              "path": ["aktualnosci", "{{news_slug}}"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "doctor_slug",
+      "value": "replace-with-actual-slug",
+      "type": "string"
+    },
+    {
+      "key": "news_slug",
+      "value": "replace-with-actual-slug",
+      "type": "string"
+    },
+    {
+      "key": "blog_slug",
+      "value": "replace-with-actual-slug",
+      "type": "string"
+    }
+  ]
+}
+

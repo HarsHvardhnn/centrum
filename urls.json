@@ -1,0 +1,158 @@
+{
+    "info": {
+      "name": "CM7 Backend API Tests",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Doctor Endpoints",
+        "item": [
+          {
+            "name": "GET /docs",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://backend.centrummedyczne7.pl/docs",
+                "protocol": "https",
+                "host": ["backend", "centrummedyczne7", "pl"],
+                "path": ["docs"]
+              }
+            }
+          },
+          {
+            "name": "GET /doctors",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://backend.centrummedyczne7.pl/doctors",
+                "protocol": "https",
+                "host": ["backend", "centrummedyczne7", "pl"],
+                "path": ["doctors"]
+              }
+            }
+          },
+          {
+            "name": "GET /doctor",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://backend.centrummedyczne7.pl/doctor",
+                "protocol": "https",
+                "host": ["backend", "centrummedyczne7", "pl"],
+                "path": ["doctor"]
+              }
+            }
+          },
+          {
+            "name": "GET /docs/profile/slug/{slug}",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://backend.centrummedyczne7.pl/docs/profile/slug/doctor-slug",
+                "protocol": "https",
+                "host": ["backend", "centrummedyczne7", "pl"],
+                "path": ["docs", "profile", "slug", "doctor-slug"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Services",
+        "item": [
+          {
+            "name": "GET /services",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://backend.centrummedyczne7.pl/services",
+                "protocol": "https",
+                "host": ["backend", "centrummedyczne7", "pl"],
+                "path": ["services"]
+              }
+            }
+          },
+          {
+            "name": "GET /services/slug/{slug}",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://backend.centrummedyczne7.pl/services/slug/service-slug",
+                "protocol": "https",
+                "host": ["backend", "centrummedyczne7", "pl"],
+                "path": ["services", "slug", "service-slug"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "News",
+        "item": [
+          {
+            "name": "GET /news",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://backend.centrummedyczne7.pl/news",
+                "protocol": "https",
+                "host": ["backend", "centrummedyczne7", "pl"],
+                "path": ["news"]
+              }
+            }
+          },
+          {
+            "name": "GET /news/slug/{slug}",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://backend.centrummedyczne7.pl/news/slug/news-slug",
+                "protocol": "https",
+                "host": ["backend", "centrummedyczne7", "pl"],
+                "path": ["news", "slug", "news-slug"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Blogs",
+        "item": [
+          {
+            "name": "GET /blogs",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://backend.centrummedyczne7.pl/blogs",
+                "protocol": "https",
+                "host": ["backend", "centrummedyczne7", "pl"],
+                "path": ["blogs"]
+              }
+            }
+          },
+          {
+            "name": "GET /blogs/slug/{slug}",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://backend.centrummedyczne7.pl/blogs/slug/blog-slug",
+                "protocol": "https",
+                "host": ["backend", "centrummedyczne7", "pl"],
+                "path": ["blogs", "slug", "blog-slug"]
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
