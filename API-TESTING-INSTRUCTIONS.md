@@ -168,3 +168,4 @@ Invoke-WebRequest -Uri "https://backend.centrummedyczne7.pl/blogs" | Select-Obje
 3. What's the correct endpoint for individual doctors? `/docs/profile/slug/{slug}` or something else?
 4. Do you actually have blogs? Should `/poradnik` exist on your site?
 
+

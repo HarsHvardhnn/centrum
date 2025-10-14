@@ -77,3 +77,4 @@ Based on the code, I suspect:
 
 This would explain why Google can't index individual pages!
 
+
