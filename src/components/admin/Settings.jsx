@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import adminHelper from "../../helpers/adminHelper";
 import { useLoader } from "../../context/LoaderContext";
 import { useUser } from "../../context/userContext";
@@ -44,6 +44,7 @@ export default function UserManagement() {
   const { user } = useUser();
   const { showLoader, hideLoader } = useLoader();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -85,6 +86,7 @@ export default function UserManagement() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentPatientId, setCurrentPatientId] = useState(null);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [returnUrl, setReturnUrl] = useState(null);
   const subStepTitles = [
     "Dane Podstawowe",
     "Skierowanie",
@@ -93,6 +95,48 @@ export default function UserManagement() {
     "Szczegóły",
     "Notatki",
   ];
+
+  // Add this function to handle email removal
+  const handleRemoveEmail = async () => {
+    if (!currentPatientId) {
+      toast.error("Brak ID pacjenta");
+      return;
+    }
+
+    if (!window.confirm('Czy na pewno chcesz usunąć email pacjenta? Tej operacji nie można cofnąć.')) {
+      return;
+    }
+
+    try {
+      showLoader();
+      const response = await patientService.removePatientEmail(currentPatientId);
+      
+      if (response.success) {
+        toast.success("Email pacjenta został pomyślnie usunięty");
+        
+        // Close the modal and reset form state
+        setShowAddPatientModal(false);
+        setIsEditMode(false);
+        setCurrentPatientId(null);
+        setPatientFormData({ phoneCode: "+48" });
+        setSelectedPhoneCode("+48");
+        setPhoneValidationError("");
+        
+        // Redirect back to the original page if returnUrl is set
+        if (returnUrl) {
+          navigate(returnUrl);
+          setReturnUrl(null); // Clear the return URL
+        }
+      } else {
+        toast.error(response.message || "Nie udało się usunąć email pacjenta");
+      }
+    } catch (error) {
+      console.error("Error removing patient email:", error);
+      toast.error("Wystąpił błąd podczas usuwania email");
+    } finally {
+      hideLoader();
+    }
+  };
 
   // Add this function to check if user is admin
   const isAdmin = user?.role === 'admin';
@@ -170,10 +214,17 @@ export default function UserManagement() {
   // Handle URL parameter for editing patient
   useEffect(() => {
     const editPatientId = searchParams.get('edytujPacjenta');
+    const returnUrlParam = searchParams.get('returnUrl');
     console.log("editPatientId", editPatientId);
+    console.log("returnUrl", returnUrlParam);
+    
     if (editPatientId) {
       handleEditPatient(editPatientId);
-      // Clear the URL parameter after handling
+      // Store the return URL if provided
+      if (returnUrlParam) {
+        setReturnUrl(decodeURIComponent(returnUrlParam));
+      }
+      // Clear the URL parameters after handling
       setSearchParams({});
     }
   }, [searchParams]);
@@ -484,6 +535,12 @@ export default function UserManagement() {
       setPatientFormData({ phoneCode: patientData.phoneCode || "+48" });
       setSelectedPhoneCode(patientData.phoneCode || "+48");
       setPhoneValidationError("");
+
+      // Redirect back to the original page if returnUrl is set
+      if (returnUrl) {
+        navigate(returnUrl);
+        setReturnUrl(null); // Clear the return URL
+      }
 
       setTimeout(() => {
         setSuccess("");
@@ -1063,30 +1120,50 @@ export default function UserManagement() {
               <h2 className="text-xl font-bold">
                 {isEditMode ? "Edytuj Pacjenta" : "Dodaj Pacjenta"}
               </h2>
-              <button
-                className="text-gray-500 hover:text-gray-700"
-                                  onClick={() => {
+              <div className="flex items-center gap-2">
+                {isEditMode && patientFormData.email && (
+                  <button
+                    onClick={handleRemoveEmail}
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm flex items-center gap-1"
+                    title="Usuń email pacjenta"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Usuń Email
+                  </button>
+                )}
+                <button
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => {
                     setShowAddPatientModal(false);
                     setIsEditMode(false);
                     setCurrentPatientId(null);
                     // Preserve the phone code preference when closing form
                     setPatientFormData({ phoneCode: patientFormData.phoneCode || "+48" });
+                    
+                    // Redirect back to the original page if returnUrl is set
+                    if (returnUrl) {
+                      navigate(returnUrl);
+                      setReturnUrl(null); // Clear the return URL
+                    }
                   }}
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  ></path>
-                </svg>
-              </button>
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div className="p-6">
@@ -1179,6 +1256,14 @@ function PatientStepFormWrapper({
   const { formData, updateFormData } = useFormContext();
   const [isInitialized, setIsInitialized] = useState(false);
   //('Form Data:', patientFormData);
+
+  // Expose updateFormData globally so it can be accessed from parent component
+  useEffect(() => {
+    window.updateFormData = updateFormData;
+    return () => {
+      window.updateFormData = null;
+    };
+  }, [updateFormData]);
 
   // Effect to pre-populate form data when in edit mode - only run once when entering edit mode
   useEffect(() => {

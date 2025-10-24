@@ -551,6 +551,8 @@ const PatientList = () => {
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [billingServices, setBillingServices] = useState([]);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [sendSMSNotification, setSendSMSNotification] = useState(false);
+  const [sendEmailNotification, setSendEmailNotification] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     total: 0,
@@ -646,9 +648,11 @@ const PatientList = () => {
 
   const handleCancelAppointment = async () => {
     try {
-      await appointmentHelper.cancelAppointment(selectedAppointment, "Canceled by user");
+      await appointmentHelper.cancelAppointment(selectedAppointment, "Canceled by user", sendSMSNotification, sendEmailNotification);
       setShowCancelModal(false);
       setSelectedAppointment(null);
+      setSendSMSNotification(false);
+      setSendEmailNotification(false);
       // Refresh the patient list after cancellation
       const response = await patientService.getSimpliefiedAppointmentsList({
         page: pagination.currentPage,
@@ -868,12 +872,43 @@ const PatientList = () => {
           <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
             <h3 className="text-lg font-medium mb-4">Potwierdź anulowanie</h3>
             <p className="text-gray-600 mb-6">Czy na pewno chcesz anulować tę wizytę? Tej operacji nie można cofnąć.</p>
+            
+            <div className="mb-6">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="smsNotification"
+                  checked={sendSMSNotification}
+                  onChange={(e) => setSendSMSNotification(e.target.checked)}
+                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                />
+                <label htmlFor="smsNotification" className="ml-2 text-sm text-gray-700">
+                  Wyślij powiadomienie SMS o anulowaniu wizyty
+                </label>
+              </div>
+
+              <div className="flex items-center mt-3">
+                <input
+                  type="checkbox"
+                  id="emailNotification"
+                  checked={sendEmailNotification}
+                  onChange={(e) => setSendEmailNotification(e.target.checked)}
+                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                />
+                <label htmlFor="emailNotification" className="ml-2 text-sm text-gray-700">
+                  Wyślij powiadomienie email o anulowaniu wizyty
+                </label>
+              </div>
+            </div>
+
             <div className="flex justify-end gap-3">
               <button
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
                 onClick={() => {
                   setShowCancelModal(false);
                   setSelectedAppointment(null);
+                  setSendSMSNotification(false);
+                  setSendEmailNotification(false);
                 }}
               >
                 Anuluj

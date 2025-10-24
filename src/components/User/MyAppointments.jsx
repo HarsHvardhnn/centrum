@@ -29,6 +29,9 @@ const MyAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [cancellationLoading, setCancellationLoading] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [sendSMSNotification, setSendSMSNotification] = useState(false);
+  const [sendEmailNotification, setSendEmailNotification] = useState(false);
   const { user } = useUser();
 
   useEffect(() => {
@@ -71,9 +74,7 @@ const MyAppointments = () => {
   const handleCancelAppointment = async (appointmentId) => {
     try {
       setCancellationLoading(true);
-      await apiCaller("PATCH", `/appointments/${appointmentId}/cancel`, {
-        status: "cancelled",
-      });
+      await appointmentHelper.cancelAppointment(appointmentId, "Canceled by user", sendSMSNotification, sendEmailNotification);
 
       // Update local state to reflect cancellation
       setAppointments(
@@ -87,6 +88,11 @@ const MyAppointments = () => {
         handleCloseModal();
       }
 
+      // Close cancel modal
+      setShowCancelModal(false);
+      setSendSMSNotification(false);
+      setSendEmailNotification(false);
+
       alert("Appointment cancelled successfully");
     } catch (err) {
       console.error("Error cancelling appointment:", err);
@@ -94,6 +100,11 @@ const MyAppointments = () => {
     } finally {
       setCancellationLoading(false);
     }
+  };
+
+  const handleCancelClick = (appointmentId) => {
+    setSelectedAppointment(appointments.find(app => app._id === appointmentId));
+    setShowCancelModal(true);
   };
 
   const handleGenerateVisitCard = async (appointmentId) => {
@@ -376,7 +387,7 @@ const MyAppointments = () => {
                         </button>
                         {appointment.status === "zarezerwowana" && (
                           <button
-                            onClick={() => handleCancelAppointment(appointment._id)}
+                            onClick={() => handleCancelClick(appointment._id)}
                             className="text-red-600 hover:text-red-700 transition-colors"
                             disabled={cancellationLoading}
                           >
@@ -581,6 +592,98 @@ const MyAppointments = () => {
                     className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                   >
                     Zamknij
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cancellation Confirmation Modal */}
+        {showCancelModal && selectedAppointment && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg max-w-md w-full mx-4">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Anuluj wizytę</h3>
+                  <button
+                    onClick={() => {
+                      setShowCancelModal(false);
+                      setSendSMSNotification(false);
+                      setSendEmailNotification(false);
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+
+                <div className="mb-6">
+                  <p className="text-gray-600 mb-4">
+                    Czy na pewno chcesz anulować wizytę z{" "}
+                    <span className="font-medium">
+                      Dr. {selectedAppointment.doctor.name.first} {selectedAppointment.doctor.name.last}
+                    </span>{" "}
+                    zaplanowaną na{" "}
+                    <span className="font-medium">
+                      {new Date(selectedAppointment.date).toLocaleDateString('pl-PL')} o {selectedAppointment.startTime}
+                    </span>?
+                  </p>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-start">
+                      <FaExclamation className="text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
+                      <div className="text-sm text-yellow-800">
+                        <p className="font-medium mb-1">Uwaga:</p>
+                        <p>Po anulowaniu wizyty nie będzie można jej przywrócić.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="smsNotification"
+                      checked={sendSMSNotification}
+                      onChange={(e) => setSendSMSNotification(e.target.checked)}
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="smsNotification" className="ml-2 text-sm text-gray-700">
+                      Wyślij powiadomienie SMS o anulowaniu wizyty
+                    </label>
+                  </div>
+
+                  <div className="flex items-center mt-3">
+                    <input
+                      type="checkbox"
+                      id="emailNotification"
+                      checked={sendEmailNotification}
+                      onChange={(e) => setSendEmailNotification(e.target.checked)}
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="emailNotification" className="ml-2 text-sm text-gray-700">
+                      Wyślij powiadomienie email o anulowaniu wizyty
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setShowCancelModal(false);
+                      setSendSMSNotification(false);
+                      setSendEmailNotification(false);
+                    }}
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Anuluj
+                  </button>
+                  <button
+                    onClick={() => handleCancelAppointment(selectedAppointment._id)}
+                    disabled={cancellationLoading}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                  >
+                    {cancellationLoading ? "Anulowanie..." : "Tak, anuluj wizytę"}
                   </button>
                 </div>
               </div>

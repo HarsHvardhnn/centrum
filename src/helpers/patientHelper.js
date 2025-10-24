@@ -485,6 +485,23 @@ const patientService = {
       throw error;
     }
   },
+  /**
+   * Remove patient email by setting it to empty string
+   * @param {string} patientId - Patient ID
+   * @returns {Promise} - API response
+   */
+  removePatientEmail: async (patientId) => {
+    try {
+      const response = await apiCaller(
+        "DELETE",
+        `/patients/${patientId}/email`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error removing patient email:", error);
+      throw error;
+    }
+  }
 };
 
 export default patientService;

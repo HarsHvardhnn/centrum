@@ -248,7 +248,7 @@ class AppointmentService {
       throw error;
     }
   }
-  async cancelAppointment(appointmentId, reason = "Canceled by user") {
+  async cancelAppointment(appointmentId, reason = "Canceled by user", sendSMSNotification = false, sendEmailNotification = false) {
     try {
       // Validate inputs
       if (!appointmentId) {
@@ -258,7 +258,11 @@ class AppointmentService {
       const response = await apiCaller(
         "PATCH",
         `/appointments/cancel/${appointmentId}`,
-        { cancellationReason: reason }
+        { 
+          cancellationReason: reason,
+          sendSMSNotification: sendSMSNotification,
+          sendEmailNotification: sendEmailNotification
+        }
       );
 
       // You can add additional success handling here if needed
