@@ -826,7 +826,7 @@ function LabAppointmentsContent({ clinic }) {
                                 <DropdownMenu.Item
                                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                   onClick={() => {
-                                    const currentPath = clinic ? '/administracja/wizyty-przychodnia' : '/administracja/pacjenci';
+                                    const currentPath = clinic ? '/klinika' : '/pacjenci';
                                     const returnUrl = encodeURIComponent(currentPath);
                                     navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id}&returnUrl=${returnUrl}`);
                                   }}
