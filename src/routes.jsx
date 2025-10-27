@@ -147,6 +147,10 @@ const routes = createBrowserRouter([
         path: "/zapomniane-haslo",
         element: <ForgotPasswordScreen />,
       },
+      {
+        path: "/kontakt",
+        element: <ContactPage />,
+      },
     ],
   },
 
@@ -229,6 +233,10 @@ const routes = createBrowserRouter([
   {
     path: "/forgot-password",
     element: <Navigate to="/zapomniane-haslo" replace />,
+  },
+  {
+    path: "/contact",
+    element: <Navigate to="/kontakt" replace />,
   },
   {
     path: "/doctors",

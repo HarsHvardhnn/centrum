@@ -1121,18 +1121,6 @@ export default function UserManagement() {
                 {isEditMode ? "Edytuj Pacjenta" : "Dodaj Pacjenta"}
               </h2>
               <div className="flex items-center gap-2">
-                {isEditMode && patientFormData.email && (
-                  <button
-                    onClick={handleRemoveEmail}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm flex items-center gap-1"
-                    title="Usuń email pacjenta"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                    Usuń Email
-                  </button>
-                )}
                 <button
                   className="text-gray-500 hover:text-gray-700"
                   onClick={() => {
@@ -1182,6 +1170,7 @@ export default function UserManagement() {
                   onPhoneNumberChange={handlePhoneNumberChange}
                   phoneValidationError={phoneValidationError}
                   phoneCountryCodes={phoneCountryCodes}
+                  onRemoveEmail={handleRemoveEmail}
                 />
               </FormProvider>
             </div>
@@ -1250,7 +1239,8 @@ function PatientStepFormWrapper({
   onPhoneCodeChange,
   onPhoneNumberChange,
   phoneValidationError,
-  phoneCountryCodes
+  phoneCountryCodes,
+  onRemoveEmail
 }) {
   const [completedSteps, setCompletedSteps] = useState([]);
   const { formData, updateFormData } = useFormContext();
