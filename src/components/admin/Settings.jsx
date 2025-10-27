@@ -1304,6 +1304,7 @@ function PatientStepFormWrapper({
       onPhoneNumberChange={onPhoneNumberChange}
       phoneValidationError={phoneValidationError}
       phoneCountryCodes={phoneCountryCodes}
+      onRemoveEmail={onRemoveEmail}
     />
   );
 }

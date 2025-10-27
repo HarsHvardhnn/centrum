@@ -19,7 +19,8 @@ const PatientStepForm = ({
   onPhoneCodeChange,
   onPhoneNumberChange,
   phoneValidationError,
-  phoneCountryCodes
+  phoneCountryCodes,
+  onRemoveEmail
 }) => {
   return (
     <div>
@@ -37,6 +38,7 @@ const PatientStepForm = ({
             onPhoneNumberChange={onPhoneNumberChange}
             phoneValidationError={phoneValidationError}
             phoneCountryCodes={phoneCountryCodes}
+            onRemoveEmail={onRemoveEmail}
           />
         </SubStep>
         <SubStep title="Skierowanie">
