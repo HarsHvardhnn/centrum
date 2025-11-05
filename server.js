@@ -186,13 +186,11 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     default:
       // Handle dynamic routes with real data
       if (path.startsWith('/aktualnosci/')) {
-        console.log("dynamicData", dynamicData);
-        if (dynamicData && dynamicData.title && dynamicData.shortDescription) {
-          console.log("dynamicData", dynamicData);
+        if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
           title = `${dynamicData.title} | Aktualności – Centrum Medyczne 7`;
-          description = dynamicData?.shortDescription;
+          description = dynamicData?.shortDescription || '';
           keywords = `aktualności, centrum medyczne 7, news, ${dynamicData.title}`;
-          ogImage = dynamicData.image || '/images/news.jpg';
+          ogImage = (dynamicData && dynamicData.image) ? dynamicData.image : '/images/news.jpg';
         } else {
           title = 'Aktualność – Centrum Medyczne 7 Skarżysko-Kamienna';
           description = 'Bądź na bieżąco z informacjami w CM7.';
@@ -200,18 +198,17 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           ogImage = '/images/news.jpg';
         }
       } else if (path.startsWith('/uslugi/')) {
-        if (dynamicData && dynamicData.title && dynamicData.shortDescription) {
+        if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
           title = `${dynamicData.title} – Centrum Medyczne 7 Skarżysko-Kamienna`;
-          description = dynamicData?.shortDescription || dynamicData?.description;
+          description = dynamicData?.shortDescription || dynamicData?.description || '';
           keywords = `usługi medyczne, centrum medyczne 7, ${dynamicData.title}`;
-         // ogImage = (dynamicData.images && dynamicData.images[0]) || dynamicData.image || '/images/uslugi.jpg';
           
           // Handle images with proper null checks and empty array checks
           let serviceImage = '/images/uslugi.jpg'; // Default fallback
-          if (dynamicData.images && Array.isArray(dynamicData.images) && dynamicData.images.length > 0) {
+          if (dynamicData && dynamicData.images && Array.isArray(dynamicData.images) && dynamicData.images.length > 0) {
             // Use the first image from the array
             serviceImage = dynamicData.images[0];
-          } else if (dynamicData.image) {
+          } else if (dynamicData && dynamicData.image) {
             // Fallback to single image field
             serviceImage = dynamicData.image;
           }
@@ -229,11 +226,11 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           ogImage = '/images/uslugi.jpg';
         }
       } else if (path.startsWith('/poradnik/')) {
-        if (dynamicData && dynamicData.title && dynamicData.shortDescription) {
+        if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
           title = `${dynamicData.title} | Poradnik – Centrum Medyczne 7`;
-          description = dynamicData?.shortDescription;
+          description = dynamicData?.shortDescription || '';
           keywords = `poradnik zdrowia, porady medyczne, ${dynamicData.title}`;
-          ogImage = dynamicData.image || '/images/blogs.jpg';
+          ogImage = (dynamicData && dynamicData.image) ? dynamicData.image : '/images/blogs.jpg';
         } else {
           title = 'Artykuł – CM7 Poradnik medyczny';
           description = 'Sprawdzone porady zdrowotne od specjalistów CM7.';
@@ -241,24 +238,36 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           ogImage = '/images/blogs.jpg';
         }
       } else if (path.startsWith('/lekarze/')) {
-        // console.log("dynamicData",dynamicData.name& dynamicData.specializations);
-
-        if (dynamicData.data && dynamicData.data.name && dynamicData.data.specializations) {
-          const doctorName = `${dynamicData.data.name.first} ${dynamicData.data.name.last}`;
-          const specializations = dynamicData.data.specializations.map(spec => spec.name).join(", ");
-          const experience = dynamicData.data.experience ? `${dynamicData.data.experience} lat doświadczenia` : "";
-          console.log("dynamicData", dynamicData);
+        // Note: dynamicData for doctors is already extracted in fetchDynamicData
+        // So it's the doctor object directly, not wrapped in {data: {...}}
+        // Structure: {name: {first, last}, specializations: [...], ...}
+        
+        if (dynamicData && 
+            typeof dynamicData === 'object' && 
+            dynamicData.name && 
+            typeof dynamicData.name === 'object' &&
+            dynamicData.name.first && 
+            dynamicData.name.last &&
+            dynamicData.specializations && 
+            Array.isArray(dynamicData.specializations)) {
           
-          title = `${specializations} – ${doctorName} | CM7 Skarżysko-Kamienna`;
+          const doctorName = `${dynamicData.name.first} ${dynamicData.name.last}`;
+          const specializations = dynamicData.specializations
+            .map(spec => spec && spec.name ? spec.name : '')
+            .filter(name => name)
+            .join(", ");
+          const experience = dynamicData.experience ? `${dynamicData.experience} lat doświadczenia` : "";
+          
+          title = `${specializations || 'Lekarz'} – ${doctorName} | CM7 Skarżysko-Kamienna`;
 
-          const shortDescription = dynamicData.data.shortDescription || `Umów wizytę z ${doctorName}, ${specializations.toLowerCase()}${experience ? ` z ${experience}` : ""}. ${
-            dynamicData.data.onlineConsultationPrice !== undefined 
-              ? `Konsultacje online od ${dynamicData.data.onlineConsultationPrice} zł` 
+          const shortDescription = dynamicData.shortDescription || `Umów wizytę z ${doctorName}${specializations ? `, ${specializations.toLowerCase()}` : ''}${experience ? ` z ${experience}` : ""}. ${
+            dynamicData.onlineConsultationPrice !== undefined 
+              ? `Konsultacje online od ${dynamicData.onlineConsultationPrice} zł` 
               : "Konsultacje dostępne"
           } w Centrum Medycznym 7.`;
           description = shortDescription;
-          keywords = `${doctorName}, ${specializations}, lekarz, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna`;
-          ogImage = dynamicData.data.image || '/images/doctors1.png';
+          keywords = `${doctorName}, ${specializations || 'lekarz'}, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna`;
+          ogImage = (dynamicData && dynamicData.image) ? dynamicData.image : '/images/doctors1.png';
         } else {
           title = 'Lekarz – Centrum Medyczne 7 Skarżysko-Kamienna';
           description = 'Profil lekarza w Centrum Medycznym 7. Umów wizytę z doświadczonym specjalistą.';
@@ -444,7 +453,34 @@ const fetchDynamicData = async (path) => {
         // Check if response is successful
         if (response.status === 200 && response.data) {
           console.log(`✅ Data fetched successfully for slug: ${slug}`);
-          return response.data;
+          
+          // Log response structure for debugging
+          console.log(`📦 Response structure:`, {
+            hasData: !!response.data,
+            hasNestedData: !!response.data.data,
+            keys: Object.keys(response.data).slice(0, 5),
+            type: typeof response.data
+          });
+          
+          // Handle different response structures
+          // Test results show:
+          // - Most endpoints: response.data = actual data (direct)
+          // - Doctor profile: response.data = {success: true, data: {...}} (nested with success wrapper)
+          
+          // Check for success wrapper first (doctors endpoint)
+          if (response.data.success !== undefined && response.data.data && typeof response.data.data === 'object') {
+            // Success wrapper with nested data: {success: true, data: {...}}
+            console.log(`📦 Using success wrapper structure (doctors)`);
+            return response.data.data;
+          } else if (response.data.data && typeof response.data.data === 'object' && !Array.isArray(response.data.data)) {
+            // Nested data structure: {data: {...}}
+            console.log(`📦 Using nested data structure`);
+            return response.data.data;
+          } else {
+            // Direct data structure: {...} or [...]
+            console.log(`📦 Using direct data structure`);
+            return response.data;
+          }
         }
         
         // If 404, don't retry - it's a real 404
@@ -475,7 +511,15 @@ const fetchDynamicData = async (path) => {
               const altResponse = await axios.get(altEndpoint, { timeout: 5000 });
               if (altResponse.status === 200 && altResponse.data) {
                 console.log(`✅ Found doctor data at: ${altEndpoint}`);
-                return altResponse.data;
+                
+                // Handle different response structures for doctors
+                if (altResponse.data.data && typeof altResponse.data.data === 'object') {
+                  return altResponse.data.data;
+                } else if (altResponse.data.success && altResponse.data.data) {
+                  return altResponse.data.data;
+                } else {
+                  return altResponse.data;
+                }
               }
             } catch (altError) {
               console.log(`❌ Alternative endpoint failed: ${altEndpoint}`);
