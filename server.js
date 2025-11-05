@@ -120,6 +120,17 @@ const isBot = (userAgent) => {
   return botPatterns.some(pattern => pattern.test(userAgent));
 };
 
+// Helper function to escape HTML attributes
+const escapeHtml = (str) => {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+};
+
 // SEO HTML generator
 const generateSEOHTML = async (path, dynamicData = null) => {
   const BASE_URL = 'https://centrummedyczne7.pl';
@@ -319,6 +330,50 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     ? ogImage 
     : `${BASE_URL}${ogImage}`;
 
+  // Generate service-specific structured data for service pages
+  let structuredData = '';
+  if (path.startsWith('/uslugi/') && dynamicData && typeof dynamicData === 'object' && dynamicData.title) {
+    // Service-specific structured data to reinforce meta description
+    const serviceStructuredData = {
+      "@context": "https://schema.org",
+      "@type": "MedicalService",
+      "name": dynamicData.title,
+      "description": description,
+      "provider": {
+        "@type": "MedicalOrganization",
+        "name": "Centrum Medyczne 7",
+        "url": BASE_URL,
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Skarżysko-Kamienna",
+          "addressCountry": "PL"
+        }
+      },
+      "areaServed": {
+        "@type": "City",
+        "name": "Skarżysko-Kamienna"
+      }
+    };
+    structuredData = `<script type="application/ld+json">${JSON.stringify(serviceStructuredData)}</script>`;
+  } else {
+    // Generic MedicalOrganization for other pages
+    const orgStructuredData = {
+      "@context": "https://schema.org",
+      "@type": "MedicalOrganization",
+      "name": "Centrum Medyczne 7",
+      "url": BASE_URL,
+      "logo": `${BASE_URL}/images/mainlogo.png`,
+      "description": description,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Skarżysko-Kamienna",
+        "addressCountry": "PL"
+      },
+      "telephone": "797-097-487"
+    };
+    structuredData = `<script type="application/ld+json">${JSON.stringify(orgStructuredData)}</script>`;
+  }
+
   return `<!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -328,24 +383,24 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <meta name="referrer" content="strict-origin-when-cross-origin">
     
     <!-- SEO Meta Tags -->
-    <title>${title}</title>
-    <meta name="description" content="${description}">
-    <meta name="keywords" content="${keywords}">
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(description)}">
+    <meta name="keywords" content="${escapeHtml(keywords)}">
     <link rel="canonical" href="${canonicalUrl}">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="${canonicalUrl}">
-    <meta property="og:title" content="${title}">
-    <meta property="og:description" content="${description}">
+    <meta property="og:title" content="${escapeHtml(title)}">
+    <meta property="og:description" content="${escapeHtml(description)}">
     <meta property="og:image" content="${fullOgImage}">
     <meta property="og:site_name" content="Centrum Medyczne 7">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="${canonicalUrl}">
-    <meta property="twitter:title" content="${title}">
-    <meta property="twitter:description" content="${description}">
+    <meta property="twitter:title" content="${escapeHtml(title)}">
+    <meta property="twitter:description" content="${escapeHtml(description)}">
     <meta property="twitter:image" content="${fullOgImage}">
     
     <!-- Additional SEO -->
@@ -369,22 +424,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     </script>
     
     <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "MedicalOrganization",
-      "name": "Centrum Medyczne 7",
-      "url": "${BASE_URL}",
-      "logo": "${BASE_URL}/images/mainlogo.png",
-      "description": "${description}",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Skarżysko-Kamienna",
-        "addressCountry": "PL"
-      },
-      "telephone": "797-097-487"
-    }
-    </script>
+    ${structuredData}
     
     <!-- React App CSS and JS will be injected here -->
     <link rel="stylesheet" crossorigin href="/assets/index-CDv2gVqO.css">
@@ -392,8 +432,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
 <body>
     <!-- SEO Content for crawlers -->
     <div style="display: none;">
-        <h1>${title}</h1>
-        <p>${description}</p>
+        <h1>${escapeHtml(title)}</h1>
+        <p>${escapeHtml(description)}</p>
     </div>
     
     <!-- React App Root -->
