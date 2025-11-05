@@ -520,29 +520,79 @@ const fetchDynamicData = async (path) => {
   }
 };
 
-// Middleware to handle tel: and mailto: URLs that shouldn't be treated as internal routes
-const handleExternalProtocols = (req, res, next) => {
-  const path = req.path;
+// Middleware to normalize and sanitize paths
+const normalizePath = (path) => {
+  if (!path) return '/';
   
-  // Check if the path starts with tel: or mailto: protocols
-  if (path.startsWith('/tel:') || path.startsWith('/mailto:')) {
-    console.log(`🚫 Blocking external protocol URL: ${path}`);
-    // Return 404 for these URLs as they shouldn't be accessible via HTTP
-    return res.status(404).json({ 
-      error: 'Not Found',
-      message: 'External protocol URLs are not valid HTTP endpoints',
-      path: path
-    });
+  // Fix double slashes (except at start for protocol)
+  path = path.replace(/\/+/g, '/');
+  
+  // Remove leading/trailing slashes (except root)
+  if (path !== '/') {
+    path = path.replace(/^\/+|\/+$/g, '');
+    path = '/' + path;
   }
   
-  // Also handle malformed URLs that might include these protocols
-  if (path.includes('tel:') || path.includes('mailto:')) {
-    console.log(`🚫 Blocking malformed URL containing external protocol: ${path}`);
-    return res.status(404).json({ 
-      error: 'Not Found',
-      message: 'Malformed URL containing external protocol',
-      path: path
-    });
+  return path;
+};
+
+// Security middleware - Block common attack paths immediately
+const handleSecurityPaths = (req, res, next) => {
+  let path = req.path;
+  
+  // Normalize path first (fix double slashes)
+  path = normalizePath(path);
+  
+  // Update req.path with normalized path
+  req.path = path;
+  
+  // Block common attack paths (WordPress, git, etc.)
+  const blockedPaths = [
+    '/wp-admin', '/wp-includes', '/wp-content', '/wp-login', '/wp-config',
+    '/xmlrpc.php', '/wp-trackback', '/wp-cron', '/wp-mail.php',
+    '/.git', '/.svn', '/.env', '/.htaccess', '/.htpasswd',
+    '/admin', '/administrator', '/phpmyadmin', '/mysql', '/database',
+    '/backup', '/backups', '/old', '/temp', '/tmp',
+    '/cgi-bin', '/.well-known', '/api', '/api/'
+  ];
+  
+  // Check if path starts with any blocked path
+  const isBlocked = blockedPaths.some(blocked => path.startsWith(blocked));
+  
+  if (isBlocked) {
+    console.log(`🚫 Blocking security threat: ${path}`);
+    return res.status(404).send(`
+      <!DOCTYPE html>
+      <html lang="pl">
+      <head>
+        <meta charset="UTF-8">
+        <title>404 - Not Found</title>
+        <meta name="robots" content="noindex, nofollow">
+      </head>
+      <body>
+        <h1>404 - Not Found</h1>
+      </body>
+      </html>
+    `);
+  }
+  
+  // Block external protocols
+  if (path.startsWith('/tel:') || path.startsWith('/mailto:') || 
+      path.includes('tel:') || path.includes('mailto:')) {
+    console.log(`🚫 Blocking external protocol URL: ${path}`);
+    return res.status(404).send(`
+      <!DOCTYPE html>
+      <html lang="pl">
+      <head>
+        <meta charset="UTF-8">
+        <title>404 - Not Found</title>
+        <meta name="robots" content="noindex, nofollow">
+      </head>
+      <body>
+        <h1>404 - Not Found</h1>
+      </body>
+      </html>
+    `);
   }
   
   next();
@@ -616,10 +666,20 @@ const handleUrlNormalization = (req, res, next) => {
 // SEO Middleware - Return SEO HTML for EVERYONE (bots and users)
 const seoMiddleware = async (req, res, next) => {
   const userAgent = req.get('User-Agent') || '';
-  const path = req.path;
+  let path = req.path;
   
-  console.log(`📄 Serving SEO HTML for: ${userAgent.substring(0, 50)}...`);
-  console.log(`🔗 Route: ${path}`);
+  // Normalize path (fix double slashes, etc.)
+  path = normalizePath(path);
+  req.path = path;
+  
+  // Only log legitimate requests (not attack paths)
+  const isAttackPath = path.includes('wp-') || path.includes('.git') || 
+                       path.includes('xmlrpc') || path.includes('admin');
+  
+  if (!isAttackPath) {
+    console.log(`📄 Serving SEO HTML for: ${userAgent.substring(0, 50)}...`);
+    console.log(`🔗 Route: ${path}`);
+  }
   
   // Fetch dynamic data for dynamic routes
   let dynamicData = null;
@@ -983,7 +1043,7 @@ app.use((req, res, next) => {
 });
 
 // Apply middleware in correct order - IMPORTANT: order matters to prevent redirect chains
-app.use(handleExternalProtocols);     // First: block external protocols
+app.use(handleSecurityPaths);        // First: security and path normalization (fixes double slashes)
 app.use(handleInvalidSlugs);          // Second: handle undefined slugs (redirects to parent pages)
 app.use(handleTrailingSlash);         // Third: handle trailing slashes (before normalization)
 app.use(handleUrlNormalization);      // Fourth: handle URL normalization and case sensitivity
