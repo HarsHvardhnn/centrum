@@ -108,55 +108,64 @@ const HospitalCareSection = () => {
       </div>
 
       <div className="md:w-3/5 md:pl-4 text-gray-800">
-        <h2 className="text-main font-serif font-bold text-3xl md:text-4xl lg:text-5xl mb-4">
-          Profesjonalna Opieka Zdrowotna dla Ciebie i Twojej Rodziny
-        </h2>
+        <h1 className="text-main font-serif font-bold text-3xl md:text-4xl lg:text-5xl mb-4">
+          Zespół lekarzy z doświadczeniem klinicznym w Skarżysku-Kamiennej
+        </h1>
 
         <div className="grid grid-cols-2 gap-y-4 gap-x-14 mt-8 mb-8">
           <div className="flex items-start gap-2 min-h-[48px]">
-            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5" />
-            <p className="text-gray-700">Indywidualne podejście do pacjenta</p>
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5"></div>
+            <p className="text-gray-700">Lekarze z doświadczeniem klinicznym</p>
           </div>
           <div className="flex items-start gap-2 min-h-[48px]">
-            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5" />
-            <p className="text-gray-700">Nowoczesna opieka medyczna</p>
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5"></div>
+            <p className="text-gray-700">Indywidualne podejście i troska o pacjenta</p>
           </div>
           <div className="flex items-start gap-2 min-h-[48px]">
-            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5" />
-            <p className="text-gray-700">Specjaliści z doświadczeniem</p>
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5"></div>
+            <p className="text-gray-700">Opieka zgodna z aktualnymi wytycznymi medycznymi</p>
           </div>
           <div className="flex items-start gap-2 min-h-[48px]">
-            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5" />
-            <p className="text-gray-700">Nowoczesne metody leczenia</p>
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5"></div>
+            <p className="text-gray-700">Komfortowe warunki wizyt i jasna komunikacja</p>
           </div>
           <div className="flex items-start gap-2 min-h-[48px]">
-            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5" />
-            <p className="text-gray-700">
-              Wiedza oparta na nauce i doświadczeniu
-            </p>
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5"></div>
+            <p className="text-gray-700">Nowoczesne metody diagnostyki i leczenia</p>
           </div>
           <div className="flex items-start gap-2 min-h-[48px]">
-            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5" />
-            <p className="text-gray-700">Polecana klinika w Świętokrzyskim</p>
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-1.5"></div>
+            <p className="text-gray-700">Wysokie zaufanie pacjentów i najwyższe oceny w opiniach online</p>
           </div>
         </div>
 
         <p className="text-gray-600 leading-relaxed mb-3">
-          CM7 to nowoczesna klinika i przychodnia, mieszcząca się
-          w województwie świętokrzyskim, w Skarżysku-Kamiennej.
+          Centrum Medyczne 7 to placówka prowadzona przez lekarzy z doświadczeniem klinicznym,
+          powstała z myślą o pacjentach z województwa świętokrzyskiego, mazowieckiego i okolic.
+          Zapewniamy rzetelną diagnostykę, wysokie standardy leczenia i indywidualną opiekę w
+          oparciu o aktualną wiedzę medyczną.
         </p>
+
         <p className="text-gray-600 leading-relaxed mb-3">
-          Oferujemy kompleksową opiekę zdrowotną opartą na doświadczeniu, wiedzy
-          i indywidualnym podejściu do każdego pacjenta.
+          Nasza przychodnia powstała z pasji do leczenia i potrzeby stworzenia miejsca, w którym
+          pacjent jest wysłuchany, traktowany z szacunkiem i ma czas na spokojną konsultację ze
+          specjalistą. Jako lekarze wiemy, jak ważne jest poczucie bezpieczeństwa i możliwość
+          szybkiego uzyskania pomocy — dlatego jeśli ktoś pilnie potrzebuje wizyty, zawsze staramy się
+          znaleźć dla niego termin.
         </p>
+
         <p className="text-gray-600 leading-relaxed mb-3">
-          W naszej klinice pracuje m.in. doświadczony specjalista z zakresu
-          chirurgii i proktologii – lek. Michał Szczubkowski, znany i ceniony w
-          mieście za profesjonalizm oraz skuteczność leczenia.
+          Do CM7 trafiają pacjenci zarówno ze Skarżyska-Kamiennej, jak i z pobliskich miejscowości,
+          w tym z Kielc, Radomia, Szydłowca, Starachowic i Końskich. Wybierają nas, bo szukają opieki
+          prowadzonej przez lekarzy, którym zależy nie tylko na skutecznym leczeniu, ale także na
+          spokojnej rozmowie, jasnym wyjaśnieniu zaleceń i partnerskim podejściu.
         </p>
+
         <p className="text-gray-600 leading-relaxed mb-3">
-          Zadbaj o siebie – wybierz nowoczesną opiekę w CM7 w
-          Skarżysku-Kamiennej.
+          Każdego dnia pracujemy tak, jak sami chcielibyśmy być leczeni — mądrze, uczciwie i z
+          empatią. To podejście widać również w opiniach naszych pacjentów: wspierają nas, polecają
+          dalej i z wdzięcznością dzielą się doświadczeniami w Google. Zaufanie, jakim nas obdarzają,
+          traktujemy jako największe wyróżnienie i motywację do dalszej pracy.
         </p>
       </div>
     </div>

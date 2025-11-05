@@ -166,8 +166,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       ogImage = '/images/blogs.jpg';
       break;
     case '/kontakt':
-      title = 'Kontakt – Centrum Medyczne 7 Skarżysko-Kamienna | Rejestracja i telefon';
-      description = 'Zadzwoń: 797-097-487. Skontaktuj się z CM7 – telefon, e-mail, godziny otwarcia i rejestracja.';
+      title = 'Kontakt – Centrum Medyczne 7 Skarżysko-Kamienna | Rejestracja pacjentów';
+      description = 'Skontaktuj się z Centrum Medycznym 7 w Skarżysku-Kamiennej. Rejestracja pacjentów i szybkie terminy wizyt u specjalistów. Telefon: 797-097-487. Dbamy o dostępność i zawsze staramy się znaleźć termin dla pacjentów z regionu świętokrzyskiego i mazowieckiego.';
       keywords = 'kontakt centrum medyczne 7, umów wizytę, telefon cm7, adres Skarżysko-Kamienna, godziny pracy';
       ogImage = '/images/contact.jpg';
       break;
@@ -281,14 +281,16 @@ const generateSEOHTML = async (path, dynamicData = null) => {
             .join(", ");
           const experience = dynamicData.experience ? `${dynamicData.experience} lat doświadczenia` : "";
           
-          title = `${specializations || 'Lekarz'} – ${doctorName} | CM7 Skarżysko-Kamienna`;
+          // Meta title format: {specialization} – Skarżysko-Kamienna | CM7
+          // If multiple: {specialization_1}, {specialization_2} – Skarżysko-Kamienna | CM7
+          title = `${specializations || 'Lekarz'} – Skarżysko-Kamienna | CM7`;
 
-          const shortDescription = dynamicData.shortDescription || `Umów wizytę z ${doctorName}${specializations ? `, ${specializations.toLowerCase()}` : ''}${experience ? ` z ${experience}` : ""}. ${
+          // Use shortDescription as meta description
+          description = dynamicData.shortDescription || `Umów wizytę z ${doctorName}${specializations ? `, ${specializations.toLowerCase()}` : ''}${experience ? ` z ${experience}` : ""}. ${
             dynamicData.onlineConsultationPrice !== undefined 
               ? `Konsultacje online od ${dynamicData.onlineConsultationPrice} zł` 
               : "Konsultacje dostępne"
           } w Centrum Medycznym 7.`;
-          description = shortDescription;
           keywords = `${doctorName}, ${specializations || 'lekarz'}, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna`;
           ogImage = (dynamicData && dynamicData.image) ? dynamicData.image : '/images/doctors1.png';
         } else {
@@ -398,7 +400,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-mxSwXtvA.js"></script>
+    <script type="module" crossorigin src="/assets/index-DSFMAZO1.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
