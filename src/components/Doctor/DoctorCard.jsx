@@ -81,7 +81,7 @@ const DoctorCard = ({ doctor }) => {
       <div className="flex flex-col gap-3">
         <button
           onClick={() => {
-            navigateReplace(`/doctors/appointments/${doctor.id}`);
+            navigateReplace(`/lekarze/wizyty/${doctor.id}`);
           }}
           className="bg-primary-light font-semibold text-white py-3 px-5 rounded-lg hover:bg-primary transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
         >
