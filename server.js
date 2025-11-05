@@ -587,8 +587,8 @@ const handleSecurityPaths = (req, res, next) => {
   // Normalize path first (fix double slashes)
   path = normalizePath(path);
   
-  // Update req.path with normalized path
-  req.path = path;
+  // Store normalized path in custom property (req.path is read-only)
+  req.normalizedPath = path;
   
   // Block common attack paths (WordPress, git, etc.)
   const blockedPaths = [
@@ -644,7 +644,7 @@ const handleSecurityPaths = (req, res, next) => {
 
 // Middleware to handle invalid/undefined slugs and trailing slashes
 const handleInvalidSlugs = (req, res, next) => {
-  const path = req.path;
+  const path = req.normalizedPath || req.path;
   
   // Check for undefined slugs in URLs
   if (path === '/aktualnosci/undefined' || 
@@ -672,7 +672,7 @@ const handleInvalidSlugs = (req, res, next) => {
 
 // Combined middleware to handle trailing slashes - prevents redirect chains
 const handleTrailingSlash = (req, res, next) => {
-  const path = req.path;
+  const path = req.normalizedPath || req.path;
   
   // Skip if root path
   if (path === '/') {
@@ -692,7 +692,7 @@ const handleTrailingSlash = (req, res, next) => {
 // Middleware to handle case sensitivity and URL normalization
 // Only normalize static routes, preserve dynamic route case
 const handleUrlNormalization = (req, res, next) => {
-  const path = req.path;
+  const path = req.normalizedPath || req.path;
   
   // Only normalize static routes - preserve dynamic routes as-is
   const staticRoutes = ['/', '/o-nas', '/lekarze', '/uslugi', '/aktualnosci', '/poradnik', '/kontakt', '/regulamin', '/polityka-prywatnosci'];
@@ -710,11 +710,8 @@ const handleUrlNormalization = (req, res, next) => {
 // SEO Middleware - Return SEO HTML for EVERYONE (bots and users)
 const seoMiddleware = async (req, res, next) => {
   const userAgent = req.get('User-Agent') || '';
-  let path = req.path;
-  
-  // Normalize path (fix double slashes, etc.)
-  path = normalizePath(path);
-  req.path = path;
+  // Use normalized path if available, otherwise normalize current path
+  let path = req.normalizedPath || normalizePath(req.path);
   
   // Only log legitimate requests (not attack paths)
   const isAttackPath = path.includes('wp-') || path.includes('.git') || 
