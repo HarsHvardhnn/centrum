@@ -41,6 +41,12 @@ const normalizeUrl = (url) => {
   // Remove trailing slash except for root
   let normalized = url.endsWith('/') && url.length > 1 ? url.slice(0, -1) : url;
   
+  // Remove any query parameters for canonical URLs
+  normalized = normalized.split('?')[0];
+  
+  // Remove any fragments
+  normalized = normalized.split('#')[0];
+  
   // DO NOT convert to lowercase - preserve original case for dynamic routes
   // Only convert static routes to lowercase for consistency
   if (normalized === '/' || 
@@ -56,12 +62,6 @@ const normalizeUrl = (url) => {
   }
   // For dynamic routes (with slashes), preserve the original case
   // This ensures service pages, doctor pages, and blog articles maintain their proper URLs
-  
-  // Remove any query parameters for canonical URLs
-  normalized = normalized.split('?')[0];
-  
-  // Remove any fragments
-  normalized = normalized.split('#')[0];
   
   return normalized;
 };
@@ -273,27 +273,12 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       }
   }
 
-  // Normalize the path for consistent canonical URLs
-  const normalizedPath = normalizeUrl(path);
-  const canonicalUrl = `${BASE_URL}${normalizedPath}`;
+  // Generate canonical URL - use the actual path, removing trailing slash
+  // This ensures consistency and prevents redirect loops
+  const cleanPath = path.replace(/\/$/, '') || '/';
+  const canonicalUrl = `${BASE_URL}${cleanPath}`;
   
-  // Ensure canonical URL is always self-referencing and properly formatted
-  const finalCanonicalUrl = canonicalUrl.replace(/\/$/, '') || BASE_URL;
-  
-  // Validate that canonical URL is self-referencing
-  const expectedCanonical = `${BASE_URL}${path}`.replace(/\/$/, '') || BASE_URL;
-  let finalCanonicalUrlToUse = finalCanonicalUrl;
-  
-  if (finalCanonicalUrl !== expectedCanonical) {
-    console.warn(`⚠️ Canonical URL mismatch for ${path}:`);
-    console.warn(`   Expected: ${expectedCanonical}`);
-    console.warn(`   Generated: ${finalCanonicalUrl}`);
-    // Use the expected canonical URL instead
-    finalCanonicalUrlToUse = expectedCanonical;
-    console.log(`🔗 Using corrected Canonical URL for ${path}: ${finalCanonicalUrlToUse}`);
-  } else {
-    console.log(`🔗 Canonical URL for ${path}: ${finalCanonicalUrlToUse}`);
-  }
+  console.log(`🔗 Canonical URL for ${path}: ${canonicalUrl}`);
   
   // Handle both absolute and relative image URLs
   const fullOgImage = ogImage && (ogImage.startsWith('http://') || ogImage.startsWith('https://')) 
@@ -312,11 +297,11 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <title>${title}</title>
     <meta name="description" content="${description}">
     <meta name="keywords" content="${keywords}">
-    <link rel="canonical" href="${finalCanonicalUrlToUse}">
+    <link rel="canonical" href="${canonicalUrl}">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="${finalCanonicalUrlToUse}">
+    <meta property="og:url" content="${canonicalUrl}">
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${description}">
     <meta property="og:image" content="${fullOgImage}">
@@ -324,7 +309,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="${finalCanonicalUrlToUse}">
+    <meta property="twitter:url" content="${canonicalUrl}">
     <meta property="twitter:title" content="${title}">
     <meta property="twitter:description" content="${description}">
     <meta property="twitter:image" content="${fullOgImage}">
@@ -444,17 +429,37 @@ const fetchDynamicData = async (path) => {
     
     console.log(`📡 Fetching data from: ${endpoint}`);
     
-    // Add retry logic
-    let retries = 2;
-    let response;
+    // Add retry logic with better error handling
+    let retries = 3;
+    let response = null;
+    let lastError = null;
     
     while (retries >= 0) {
       try {
-        response = await axios.get(endpoint, { timeout: 5000 }); // Increased timeout
-        break; // Success, exit the retry loop
+        response = await axios.get(endpoint, { 
+          timeout: 10000, // Increased timeout to 10 seconds
+          validateStatus: (status) => status < 500 // Don't throw on 4xx, only 5xx
+        });
+        
+        // Check if response is successful
+        if (response.status === 200 && response.data) {
+          console.log(`✅ Data fetched successfully for slug: ${slug}`);
+          return response.data;
+        }
+        
+        // If 404, don't retry - it's a real 404
+        if (response.status === 404) {
+          console.log(`❌ 404 - Resource not found: ${endpoint}`);
+          return null;
+        }
+        
+        // Other status codes, throw to retry
+        throw new Error(`Unexpected status: ${response.status}`);
       } catch (error) {
+        lastError = error;
+        
         // If this is a doctor endpoint and it fails, try alternative endpoints
-        if (path.startsWith('/lekarze/') && error.response?.status === 404) {
+        if (path.startsWith('/lekarze/') && (error.response?.status === 404 || !response)) {
           console.log(`⚠️ Doctor endpoint failed, trying alternative endpoints...`);
           
           // Try alternative doctor endpoints
@@ -467,40 +472,49 @@ const fetchDynamicData = async (path) => {
           for (const altEndpoint of alternativeEndpoints) {
             try {
               console.log(`📡 Trying alternative endpoint: ${altEndpoint}`);
-              response = await axios.get(altEndpoint, { timeout: 3000 });
-              console.log(`✅ Found doctor data at: ${altEndpoint}`);
-              break;
+              const altResponse = await axios.get(altEndpoint, { timeout: 5000 });
+              if (altResponse.status === 200 && altResponse.data) {
+                console.log(`✅ Found doctor data at: ${altEndpoint}`);
+                return altResponse.data;
+              }
             } catch (altError) {
               console.log(`❌ Alternative endpoint failed: ${altEndpoint}`);
               continue;
             }
           }
-          
-          if (response) break; // Success with alternative endpoint
         }
         
-        if (retries > 0) {
+        // Retry logic - only retry on network errors or 5xx errors
+        if (retries > 0 && (!error.response || error.response.status >= 500)) {
           console.log(`⚠️ Retry attempt for ${endpoint}, ${retries} attempts left`);
-          await new Promise(r => setTimeout(r, 1000)); // Wait 1 second before retry
+          await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds before retry
           retries--;
         } else {
-          throw error; // No more retries, rethrow
+          // Don't retry on 4xx errors (client errors)
+          if (error.response && error.response.status < 500) {
+            console.log(`❌ Client error (${error.response.status}) - not retrying: ${endpoint}`);
+            return null;
+          }
+          throw error; // Network error or server error - rethrow
         }
       }
     }
     
-    if (!response) {
-      throw new Error('All retry attempts and alternative endpoints failed');
-    }
-    
-    console.log(`✅ Data fetched successfully for slug: ${slug}`);
-    return response.data;
+    // If we get here, all retries failed
+    console.log(`❌ All retry attempts failed for ${endpoint}`);
+    throw lastError || new Error('All retry attempts and alternative endpoints failed');
   } catch (error) {
     console.log(`❌ Failed to fetch data for ${path}:`, error.message);
-    // Log more error details
+    // Log more error details for debugging
     if (error.response) {
       console.log(`Status: ${error.response.status}`);
-      console.log(`Data:`, error.response.data);
+      console.log(`URL: ${error.config?.url}`);
+      if (error.response.data) {
+        console.log(`Response data:`, JSON.stringify(error.response.data).substring(0, 200));
+      }
+    } else if (error.request) {
+      console.log(`No response received - network error or timeout`);
+      console.log(`Request URL: ${error.config?.url}`);
     }
     return null;
   }
@@ -562,22 +576,19 @@ const handleInvalidSlugs = (req, res, next) => {
   next();
 };
 
-// Middleware to handle trailing slashes for dynamic service pages
-const handleServiceTrailingSlash = (req, res, next) => {
+// Combined middleware to handle trailing slashes - prevents redirect chains
+const handleTrailingSlash = (req, res, next) => {
   const path = req.path;
   
-  // Handle trailing slashes for service pages specifically
-  if (path.startsWith('/uslugi/') && path.endsWith('/') && path.length > '/uslugi/'.length) {
-    const redirectTo = path.slice(0, -1); // Remove trailing slash
-    console.log(`🔄 Redirecting service trailing slash: ${path} -> ${redirectTo}`);
-    return res.redirect(301, redirectTo);
+  // Skip if root path
+  if (path === '/') {
+    return next();
   }
   
-  // Handle trailing slashes for other dynamic pages
-  if ((path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/') || path.startsWith('/lekarze/')) && 
-      path.endsWith('/') && path.length > 8) {
-    const redirectTo = path.slice(0, -1); // Remove trailing slash
-    console.log(`🔄 Redirecting dynamic page trailing slash: ${path} -> ${redirectTo}`);
+  // Remove trailing slash for all paths (except root)
+  if (path.endsWith('/')) {
+    const redirectTo = path.slice(0, -1);
+    console.log(`🔄 Redirecting trailing slash: ${path} -> ${redirectTo}`);
     return res.redirect(301, redirectTo);
   }
   
@@ -585,12 +596,16 @@ const handleServiceTrailingSlash = (req, res, next) => {
 };
 
 // Middleware to handle case sensitivity and URL normalization
+// Only normalize static routes, preserve dynamic route case
 const handleUrlNormalization = (req, res, next) => {
   const path = req.path;
-  const normalizedPath = normalizeUrl(path);
   
-  // If the path was normalized (changed), redirect to the normalized version
-  if (path !== normalizedPath) {
+  // Only normalize static routes - preserve dynamic routes as-is
+  const staticRoutes = ['/', '/o-nas', '/lekarze', '/uslugi', '/aktualnosci', '/poradnik', '/kontakt', '/regulamin', '/polityka-prywatnosci'];
+  const isStaticRoute = staticRoutes.includes(path.toLowerCase());
+  
+  if (isStaticRoute && path !== path.toLowerCase()) {
+    const normalizedPath = path.toLowerCase();
     console.log(`🔄 Redirecting to normalized URL: ${path} -> ${normalizedPath}`);
     return res.redirect(301, normalizedPath);
   }
@@ -615,21 +630,29 @@ const seoMiddleware = async (req, res, next) => {
     dynamicData = await fetchDynamicData(path);
     
     if (!dynamicData) {
-      console.log(`⚠️ No dynamic data available for ${path} - serving fallback content`);
+      console.log(`⚠️ No dynamic data available for ${path} - returning proper 404`);
       dataFetchFailed = true;
       
-      // For dynamic routes with no data, return 404 instead of serving empty content
-      // This prevents "false 404" errors in Google Search Console
+      // Return proper 404 with SEO meta tags to prevent false 404 errors
+      const BASE_URL = 'https://centrummedyczne7.pl';
+      const cleanPath = path.replace(/\/$/, '') || '/';
+      const canonicalUrl = `${BASE_URL}${cleanPath}`;
+      
       return res.status(404).send(`
         <!DOCTYPE html>
         <html lang="pl">
         <head>
           <meta charset="UTF-8">
-          <title>Strona nie została znaleziona - Centrum Medyczne 7</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>404 - Strona nie została znaleziona | Centrum Medyczne 7</title>
+          <meta name="description" content="Strona której szukasz nie została znaleziona. Wróć do strony głównej Centrum Medycznego 7 w Skarżysku-Kamiennej.">
           <meta name="robots" content="noindex, nofollow">
+          <link rel="canonical" href="${canonicalUrl}">
           <style>
             body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
             h1 { color: #008C8C; }
+            a { color: #008C8C; text-decoration: none; }
+            a:hover { text-decoration: underline; }
           </style>
         </head>
         <body>
@@ -959,11 +982,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Apply middleware in correct order
+// Apply middleware in correct order - IMPORTANT: order matters to prevent redirect chains
 app.use(handleExternalProtocols);     // First: block external protocols
-app.use(handleInvalidSlugs);          // Second: handle undefined slugs
+app.use(handleInvalidSlugs);          // Second: handle undefined slugs (redirects to parent pages)
+app.use(handleTrailingSlash);         // Third: handle trailing slashes (before normalization)
 app.use(handleUrlNormalization);      // Fourth: handle URL normalization and case sensitivity
-app.use(handleServiceTrailingSlash);  // Fifth: handle trailing slashes for dynamic pages
 
 // Serve static assets (CSS, JS, images, PDFs) BEFORE SEO middleware
 app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
