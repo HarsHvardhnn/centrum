@@ -136,14 +136,14 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       ogImage = '/images/mainlogo.png';
       break;
     case '/o-nas':
-      title = 'O nas – Centrum Medyczne 7 Skarżysko-Kamienna | Kim jesteśmy';
-      description = 'Poznaj Centrum Medyczne 7 w Skarżysku-Kamiennej. Nasza misja, wartości i zespół lekarzy, którym możesz zaufać.';
+      title = 'O nas – Centrum Medyczne 7 | Opieka medyczna oparta na doświadczeniu klinicznym';
+      description = 'Centrum Medyczne 7 to placówka prowadzona przez lekarzy z doświadczeniem klinicznym, powstała z myślą o pacjentach z województwa świętokrzyskiego, mazowieckiego i okolic. Zapewniamy rzetelną diagnostykę, wysokie standardy leczenia i indywidualną opiekę w oparciu o aktualną wiedzę medyczną.';
       keywords = 'o nas centrum medyczne 7, misja cm7, zespół lekarzy, wartości, Skarżysko-Kamienna';
       ogImage = '/images/abt_us.jpg';
       break;
     case '/lekarze':
-      title = 'Nasi lekarze – Centrum Medyczne 7 Skarżysko-Kamienna | Zespół specjalistów';
-      description = 'Poznaj lekarzy CM7 w Skarżysku-Kamiennej. Doświadczeni specjaliści w różnych dziedzinach medycyny – sprawdź nasz zespół.';
+      title = 'Lekarze prywatnie – Skarżysko-Kamienna | Centrum Medyczne 7';
+      description = 'Szukasz lekarza prywatnie w Skarżysku-Kamiennej? W Centrum Medycznym 7 przyjmują doświadczeni specjaliści wielu dziedzin. Oferujemy krótkie terminy, wygodną rejestrację i konsultacje bez skierowania.';
       keywords = 'lekarze centrum medyczne 7, specjaliści medycyny, zespół lekarzy, doktorzy Skarżysko-Kamienna';
       ogImage = '/images/doctors1.png';
       break;
@@ -187,7 +187,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       // Handle dynamic routes with real data
       if (path.startsWith('/aktualnosci/')) {
         if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
-          title = `${dynamicData.title} | Aktualności – Centrum Medyczne 7`;
+          // Meta title should be the same as article title (client requirement)
+          title = dynamicData.title;
           description = dynamicData?.shortDescription || '';
           keywords = `aktualności, centrum medyczne 7, news, ${dynamicData.title}`;
           ogImage = (dynamicData && dynamicData.image) ? dynamicData.image : '/images/news.jpg';
@@ -199,7 +200,28 @@ const generateSEOHTML = async (path, dynamicData = null) => {
         }
       } else if (path.startsWith('/uslugi/')) {
         if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
-          title = `${dynamicData.title} – Centrum Medyczne 7 Skarżysko-Kamienna`;
+          // Automatic meta title generation for services
+          // Default: {service title} – Skarżysko-Kamienna | Centrum Medyczne 7
+          // If total title > ~55 chars: {service title shortened}… – Skarżysko-Kamienna | CM7
+          const serviceTitle = dynamicData.title;
+          const maxTotalLength = 70; // Maximum total title length (allows some flexibility)
+          const suffixFull = ' – Skarżysko-Kamienna | Centrum Medyczne 7';
+          const suffixShort = ' – Skarżysko-Kamienna | CM7';
+          
+          // Calculate total length with full suffix
+          const totalLengthWithFull = serviceTitle.length + suffixFull.length;
+          
+          if (totalLengthWithFull <= maxTotalLength) {
+            // Use full brand name - title fits within limit
+            title = `${serviceTitle}${suffixFull}`;
+          } else {
+            // Truncate service title to fit with short suffix (target ~55-60 chars total)
+            const targetLength = 60; // Target total length when truncating
+            const availableSpace = targetLength - suffixShort.length - 1; // -1 for ellipsis
+            const truncatedTitle = serviceTitle.substring(0, Math.max(1, availableSpace)) + '…';
+            title = `${truncatedTitle}${suffixShort}`;
+          }
+          
           description = dynamicData?.shortDescription || dynamicData?.description || '';
           keywords = `usługi medyczne, centrum medyczne 7, ${dynamicData.title}`;
           
@@ -227,7 +249,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
         }
       } else if (path.startsWith('/poradnik/')) {
         if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
-          title = `${dynamicData.title} | Poradnik – Centrum Medyczne 7`;
+          // Meta title should be the same as article title (client requirement)
+          title = dynamicData.title;
           description = dynamicData?.shortDescription || '';
           keywords = `poradnik zdrowia, porady medyczne, ${dynamicData.title}`;
           ogImage = (dynamicData && dynamicData.image) ? dynamicData.image : '/images/blogs.jpg';
