@@ -189,8 +189,8 @@ export default function News() {
                           {newsItem.title}
                         </h3>
                         <p className="text-neutral-600 text-sm mt-2 line-clamp-3">
-                          {newsItem.description 
-                            ? stripHTML(newsItem.description).substring(0, 150) + '...'
+                          {newsItem.shortDescription 
+                            ? stripHTML(newsItem.shortDescription).substring(0, 150) + '...'
                             : `Dowiedz się więcej o najnowszych informacjach medycznych w Centrum Medycznym CM7 w Skarżysko-Kamienna. Nasz zespół specjalistów zapewnia kompleksową opiekę zdrowotną dla mieszkańców regionu.`
                           }
                         </p>

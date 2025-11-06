@@ -502,6 +502,21 @@ const DoctorProfilePage = () => {
     handleBookAppointmentModal();
   };
 
+  // Truncate text to first N words
+  const truncateText = (text, wordLimit = 20) => {
+    if (!text) return '';
+    const words = text.split(' ');
+    if (words.length <= wordLimit) return text;
+    return words.slice(0, wordLimit).join(' ') + '...';
+  };
+
+  // Navigate to service page
+  const handleReadMore = (serviceSlug) => {
+    if (serviceSlug) {
+      navigate(`/uslugi/${serviceSlug}`);
+    }
+  };
+
   const handleShare = async () => {
     const shareUrl = window.location.href;
     try {
@@ -687,13 +702,18 @@ const DoctorProfilePage = () => {
                   .filter(service => service.status === "active")
                   .slice(0, showAllServices ? undefined : 1)
                   .map((service, index) => {
+                    const serviceId = service._id || index;
                     const serviceName = service.service.title || 
                       (service.service.shortDescription && service.service.shortDescription.split('.')[0]) || 
                       `Konsultacja ${index + 1}`;
-
+                    const description = service.service.description || '';
+                    const shouldTruncate = description.split(' ').length > 20;
+                    const displayText = shouldTruncate ? truncateText(description, 20) : description;
+                    const serviceSlug = service.service.slug;
+                    console.log("slug",service)
                     return (
                       <div 
-                        key={service._id || index}
+                        key={serviceId}
                         className="bg-gray-50 rounded-lg p-6 transition-all hover:shadow-md"
                       >
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-3">
@@ -701,10 +721,18 @@ const DoctorProfilePage = () => {
                             <h3 className="text-lg font-semibold text-teal-800 mb-1">
                               {serviceName}
                             </h3>
-                            {service.service.shortDescription && (
-                              <p className="text-gray-600 text-sm leading-relaxed">
-                                {service.service.shortDescription}
-                              </p>
+                            {description && (
+                              <div className="text-gray-600 text-sm leading-relaxed">
+                                <p>{displayText}</p>
+                                {shouldTruncate && serviceSlug && (
+                                  <button
+                                    onClick={() => handleReadMore(serviceSlug)}
+                                    className="text-teal-600 hover:text-teal-800 font-medium mt-2 text-sm flex items-center gap-1"
+                                  >
+                                    Czytaj więcej <FaChevronDown className="text-xs" />
+                                  </button>
+                                )}
+                              </div>
                             )}
                           </div>
                           <div className="text-xl font-bold text-teal-600 whitespace-nowrap flex-shrink-0">

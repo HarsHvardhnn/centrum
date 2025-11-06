@@ -12,9 +12,8 @@ export default function Footer() {
             <img src="/images/białe.png" height={140} width={140}  alt="Logo" />
           </div>
           <p className="text-left text-base leading-relaxed">
-            CM7– profesjonalna klinika, przychodnia w województwie
-            świętokrzyskim, oferująca kompleksową opiekę medyczną i
-            specjalistyczne usługi zdrowotne
+          Centrum Medyczne 7- specjalistyczna opieka medyczna dla dorosłych i dzieci.
+          Doświadczeni lekarze, nowoczesna diagnostyka, komfortowe warunki wizyt.
           </p>
         </div>
 
