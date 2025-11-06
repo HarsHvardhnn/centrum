@@ -102,7 +102,7 @@ const DoctorCard = ({ doctor }) => {
           </svg>
         </button>
 
-        <button onClick={()=>{navigateReplace(`/doctor-details/${doctor.id}`)}} className="text-gray-dark font-semibold border border-gray-300 py-3 px-5 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
+        <button onClick={()=>{navigateReplace(`/szczegoly-lekarza/${doctor.id}`)}} className="text-gray-dark font-semibold border border-gray-300 py-3 px-5 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
           Zobacz szczegóły lekarza
         </button>
       </div>

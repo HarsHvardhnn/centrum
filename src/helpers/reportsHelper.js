@@ -320,22 +320,8 @@ export const validateFilters = (filters) => {
     errors.push('Data końcowa jest wymagana');
   }
   
-  if (filters.startDate && filters.endDate) {
-    const startDate = new Date(filters.startDate);
-    const endDate = new Date(filters.endDate);
-    
-    if (startDate > endDate) {
-      errors.push('Data początkowa nie może być późniejsza niż data końcowa');
-    }
-    
-    // Check if date range is not too large (more than 1 year)
-    const diffTime = Math.abs(endDate - startDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays > 365) {
-      errors.push('Zakres dat nie może być większy niż 1 rok');
-    }
-  }
+  // Removed date comparison validation - users can select any date range
+  // Removed date range size limitation - users can select any range size
   
   return errors;
 };

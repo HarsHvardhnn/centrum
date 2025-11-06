@@ -88,11 +88,9 @@ const ReportsDashboard = () => {
   };
 
   const handleGenerateReport = async () => {
-    // Always set start date to current date
-    const currentDate = new Date().toISOString().split('T')[0];
+    // Use user-selected filters without overriding dates
     const updatedFilters = {
-      ...filters,
-      startDate: currentDate
+      ...filters
     };
 
     // Validate filters
@@ -158,11 +156,9 @@ const ReportsDashboard = () => {
     setExportLoading(prev => ({ ...prev, pdf: true }));
     
     try {
-      // Always use current date as start date for export
-      const currentDate = new Date().toISOString().split('T')[0];
+      // Use user-selected filters without overriding dates
       const exportFilters = {
-        ...filters,
-        startDate: currentDate
+        ...filters
       };
       
       await exportReportToPDF(exportFilters);
@@ -188,11 +184,9 @@ const ReportsDashboard = () => {
     setExportLoading(prev => ({ ...prev, csv: true }));
     
     try {
-      // Always use current date as start date for export
-      const currentDate = new Date().toISOString().split('T')[0];
+      // Use user-selected filters without overriding dates
       const exportFilters = {
-        ...filters,
-        startDate: currentDate
+        ...filters
       };
       
       await exportReportToCSV(exportFilters);
@@ -240,9 +234,6 @@ const ReportsDashboard = () => {
               onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Automatycznie ustawiana na dzisiejszą datę przy generowaniu raportu
-            </p>
           </div>
           
           <div>

@@ -116,73 +116,90 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
 
   const handleSubmit = async () => {
     setUploading(true);
+    setLoading(true);
     setUploadError(null);
 
+    let fileUploadSuccess = true;
+    let fileUploadError = null;
+
     try {
-      // If files are provided, upload them
+      // If files are provided, upload them (optional - don't block check-in if this fails)
       if (files.length > 0) {
-        const formData = new FormData();
-        files.forEach((fileObj) => {
-          formData.append("files", fileObj.file);
-        });
+        try {
+          const formData = new FormData();
+          files.forEach((fileObj) => {
+            formData.append("files", fileObj.file);
+          });
 
-        // Use normalized patient ID for the URL
-        const url = `/patients/documents/${patient.patient_id}/upload/${appointmentId}`;
+          // Use normalized patient ID for the URL
+          const url = `/patients/documents/${patient.patient_id}/upload/${appointmentId}`;
 
-        const headers = {
-          "Content-Type": "multipart/form-data",
-        };
+          const headers = {
+            "Content-Type": "multipart/form-data",
+          };
 
-        const response = await apiCaller("POST", url, formData, headers);
+          const response = await apiCaller("POST", url, formData, headers);
 
-        if (!response) {
-          throw new Error(response.message || "Przesyłanie nie powiodło się");
+          if (!response) {
+            fileUploadSuccess = false;
+            fileUploadError = "Przesyłanie plików nie powiodło się";
+          } else {
+            setUploadSuccess(true);
+          }
+        } catch (fileError) {
+          console.error("Error uploading files:", fileError);
+          fileUploadSuccess = false;
+          fileUploadError = fileError.message || "Nie udało się przesłać plików";
+          // Continue with check-in even if file upload fails
         }
       }
 
-      // Always proceed with check-in regardless of file upload
-      setUploadSuccess(true);
-      setIsOpen(false);
-      setFiles([]);
-      setUploadSuccess(false);
+      // Always proceed with check-in API call regardless of file upload status
+      try {
+        // If completeCheckIn doesn't throw, it means check-in was successful
+        await appointmentHelper.completeCheckIn(
+          appointmentId,
+          patient.patient_id
+        );
 
-      if (typeof onCheckinSuccess === 'function') {
-        onCheckinSuccess(appointmentId);
-      }
-      if (typeof onAppointmentUpdate === 'function') {
-        onAppointmentUpdate(appointmentId, 'checkedIn');
-      }
-    } catch (error) {
-      console.error("Error uploading files:", error);
-      setUploadError(
-        error.message || "Nie udało się przesłać plików. Spróbuj ponownie."
-      );
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleCheckin = async () => {
-    try {
-      setLoading(true);
-      const response = await appointmentHelper.checkInPatient(appointmentId);
-      
-      if (response.success) {
+        // If we reach here, check-in was successful (no exception thrown)
         toast.success("Pacjent został pomyślnie zameldowany");
+        
+        // Show warning if file upload failed but check-in succeeded
+        if (!fileUploadSuccess && fileUploadError) {
+          toast.warning(`Zameldowanie zakończone, ale: ${fileUploadError}`);
+        }
+
+        // Close modal and reset state
+        setIsOpen(false);
+        setFiles([]);
+        setUploadSuccess(false);
+        setUploadError(null);
+
+        // Call callbacks
         if (typeof onCheckinSuccess === 'function') {
           onCheckinSuccess(appointmentId);
         }
         if (typeof onAppointmentUpdate === 'function') {
           onAppointmentUpdate(appointmentId, 'checkedIn');
         }
-        setIsOpen(false);
-      } else {
-        toast.error("Nie udało się zameldować pacjenta");
+      } catch (checkInError) {
+        console.error("Error during check-in:", checkInError);
+        toast.error(
+          checkInError.message || "Wystąpił błąd podczas meldowania pacjenta"
+        );
+        // Show file upload error if it occurred
+        if (fileUploadError) {
+          setUploadError(fileUploadError);
+        }
+        // Don't close modal on check-in error so user can retry
       }
     } catch (error) {
-      console.error("Error during check-in:", error);
-      toast.error("Wystąpił błąd podczas meldowania pacjenta");
+      console.error("Error in handleSubmit:", error);
+      // This catch block handles any unexpected errors
+      toast.error("Wystąpił nieoczekiwany błąd");
     } finally {
+      setUploading(false);
       setLoading(false);
     }
   };
@@ -373,12 +390,12 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
             </button>
             <button
               className={`px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 ${
-                uploading ? "opacity-50 cursor-not-allowed" : ""
+                (uploading || loading) ? "opacity-50 cursor-not-allowed" : ""
               }`}
               onClick={handleSubmit}
-              disabled={uploading}
+              disabled={uploading || loading}
             >
-              {uploading ? "Przesyłanie..." : "Zamelduj"}
+              {(uploading || loading) ? "Zameldowywanie..." : "Zamelduj"}
             </button>
           </div>
         </div>
