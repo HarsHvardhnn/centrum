@@ -117,7 +117,7 @@ function MainLayout() {
         <div
           className={`transition-all duration-300 ${
             isSidebarOpen ? "ml-72" : "ml-20"
-          } flex-1 min-h-screen pt-16 ${
+          } flex-1 min-h-screen pt-24 md:pt-28 ${
             isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-800"
           }`}
         >

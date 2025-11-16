@@ -35,7 +35,7 @@ const UserLayout = () => {
         <GoogleAnalytics />
         <TawkToWidget />
         <Header />
-        <main className="flex-1 pt-[15px]">
+        <main className="flex-1 pt-[80px] md:pt-[140px]">
           <Outlet
             context={{
               selectedDepartment,
