@@ -21,8 +21,8 @@ const AboutUsPage = () => {
         path="/o-nas"
       />
       <PageHeader
-        title="O nas"
-        path="Strona główna / O nas"
+        title={"O\u00A0nas"}
+        path={"Strona główna / O\u00A0nas"}
         bgurl="/images/abt_us.jpg"
       />
       <HospitalCareSection />

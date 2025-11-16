@@ -440,7 +440,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-Cs9EyrjZ.js"></script>
+    <script type="module" crossorigin src="/assets/index-C2mt0vuQ.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
