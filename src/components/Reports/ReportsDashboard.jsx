@@ -228,12 +228,24 @@ const ReportsDashboard = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Data początkowa
             </label>
-            <input
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={filters.startDate}
+                onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+              <button
+                onClick={() => {
+                  const today = new Date().toISOString().split('T')[0];
+                  setFilters(prev => ({ ...prev, startDate: today }));
+                }}
+                className="px-3 py-2 bg-teal-100 hover:bg-teal-200 text-teal-700 rounded-md text-sm font-medium transition-colors whitespace-nowrap"
+                title="Ustaw dzisiejszą datę"
+              >
+                Dzisiaj
+              </button>
+            </div>
           </div>
           
           <div>

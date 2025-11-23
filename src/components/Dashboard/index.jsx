@@ -167,12 +167,18 @@ const DoctorAppointmentChart = () => {
       const periodParts = item.datePeriod.split('-');
       let periodLabel;
       
-      if (timeframe === 'month' && periodParts.length >= 2) {
-        // For monthly data, use month name (use month index which is zero-based)
+      // Check if datePeriod contains day component (YYYY-MM-DD format)
+      if (periodParts.length === 3) {
+        // Daily data - show day number
+        const day = parseInt(periodParts[2]);
+        const monthIndex = parseInt(periodParts[1]) - 1;
+        periodLabel = `${day}`; // Just show the day number
+      } else if (periodParts.length === 2) {
+        // Monthly data - show month name
         const monthIndex = parseInt(periodParts[1]) - 1;
         periodLabel = monthNames[monthIndex];
       } else {
-        // For other timeframes, use the period as is
+        // For other formats, use the period as is
         periodLabel = item.datePeriod;
       }
       
@@ -186,7 +192,8 @@ const DoctorAppointmentChart = () => {
         label: periodLabel,
         series1: appointments.booked || 0,
         series2: appointments.completed || 0,
-        series3: appointments.cancelled || 0
+        series3: appointments.cancelled || 0,
+        total: itemTotal // Store total for scaling
       };
     });
     
@@ -369,49 +376,89 @@ const DoctorAppointmentChart = () => {
         </div>
       ) : (
         <div className="relative h-64">
-          {/* Y-axis labels */}
-          <div className="absolute -left-0 top-0 text-xs text-gray-500">1000</div>
-          <div className="absolute left-2 top-8 text-xs text-gray-500">800</div>
-          <div className="absolute left-2 top-16 text-xs text-gray-500">600</div>
-          <div className="absolute left-2 top-24 text-xs text-gray-500">400</div>
-          <div className="absolute left-2 top-32 text-xs text-gray-500">200</div>
-          <div className="absolute left-4 top-40 text-xs text-gray-500">0</div>
-
-          {/* Y-axis title */}
-          <div className="absolute -left-12 top-24 transform -rotate-90 text-xs text-gray-500 whitespace-nowrap">
-            Liczba wizyt
-          </div>
-
-          {/* Chart content */}
-          <div className="flex items-end justify-between h-48 pl-16 gap-2">
-            {chartData.map((data, index) => {
-              const maxValue = Math.max(data.series1, data.series2, data.series3);
-              const scale = maxValue > 0 ? 1000 / maxValue : 1;
-              
-              return (
-                <div key={index} className="flex flex-col items-center">
-                  <div className="w-8 flex flex-col-reverse">
-                    <div
-                      className="bg-teal-500 w-full"
-                      style={{ height: `${(data.series1 * scale) / 10}px` }}
-                      title={`${seriesLabels.series1}: ${data.series1}`}
-                    ></div>
-                    <div
-                      className="bg-teal-300 w-full"
-                      style={{ height: `${(data.series2 * scale) / 10}px` }}
-                      title={`${seriesLabels.series2}: ${data.series2}`}
-                    ></div>
-                    <div
-                      className="bg-teal-100 w-full"
-                      style={{ height: `${(data.series3 * scale) / 10}px` }}
-                      title={`${seriesLabels.series3}: ${data.series3}`}
-                    ></div>
+          {(() => {
+            // Calculate global max value across all bars for consistent scaling
+            const maxTotal = Math.max(...chartData.map(d => d.total || 0), 1);
+            // Round up to nearest nice number for Y-axis
+            const getNiceMax = (max) => {
+              const magnitude = Math.pow(10, Math.floor(Math.log10(max)));
+              const normalized = max / magnitude;
+              let nice;
+              if (normalized <= 1) nice = 1;
+              else if (normalized <= 2) nice = 2;
+              else if (normalized <= 5) nice = 5;
+              else nice = 10;
+              return nice * magnitude;
+            };
+            const yAxisMax = getNiceMax(maxTotal);
+            const chartHeight = 192; // h-48 = 12rem = 192px
+            const scale = yAxisMax > 0 ? chartHeight / yAxisMax : 1;
+            
+            // Generate Y-axis labels
+            const yAxisSteps = 5;
+            const yAxisLabels = [];
+            for (let i = yAxisSteps; i >= 0; i--) {
+              const value = Math.round((yAxisMax / yAxisSteps) * i);
+              const position = (i / yAxisSteps) * chartHeight;
+              yAxisLabels.push({ value, position });
+            }
+            
+            return (
+              <>
+                {/* Y-axis labels */}
+                {yAxisLabels.map((label, idx) => (
+                  <div
+                    key={idx}
+                    className="absolute left-0 text-xs text-gray-500"
+                    style={{ 
+                      bottom: `${label.position}px`, 
+                      transform: 'translateY(50%)' 
+                    }}
+                  >
+                    {label.value}
                   </div>
-                  <div className="text-xs text-gray-500 mt-2">{data.label}</div>
+                ))}
+
+                {/* Y-axis title */}
+                <div className="absolute -left-12 top-24 transform -rotate-90 text-xs text-gray-500 whitespace-nowrap">
+                  Liczba wizyt
                 </div>
-              );
-            })}
-          </div>
+
+                {/* Chart content */}
+                <div className="flex items-end justify-between h-48 pl-16 gap-2">
+                  {chartData.map((data, index) => {
+                    // Calculate heights for each segment (stacked bar)
+                    const series1Height = (data.series1 || 0) * scale;
+                    const series2Height = (data.series2 || 0) * scale;
+                    const series3Height = (data.series3 || 0) * scale;
+                    
+                    return (
+                      <div key={index} className="flex flex-col items-center">
+                        <div className="w-8 flex flex-col-reverse" style={{ height: `${chartHeight}px` }}>
+                          <div
+                            className="bg-teal-500 w-full"
+                            style={{ height: `${series1Height}px`, minHeight: series1Height > 0 ? '1px' : '0' }}
+                            title={`${seriesLabels.series1}: ${data.series1}`}
+                          ></div>
+                          <div
+                            className="bg-teal-300 w-full"
+                            style={{ height: `${series2Height}px`, minHeight: series2Height > 0 ? '1px' : '0' }}
+                            title={`${seriesLabels.series2}: ${data.series2}`}
+                          ></div>
+                          <div
+                            className="bg-teal-100 w-full"
+                            style={{ height: `${series3Height}px`, minHeight: series3Height > 0 ? '1px' : '0' }}
+                            title={`${seriesLabels.series3}: ${data.series3}`}
+                          ></div>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2 whitespace-nowrap">{data.label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            );
+          })()}
 
           {/* X-axis label */}
           <div className="text-xs text-gray-500 text-center mt-8">
