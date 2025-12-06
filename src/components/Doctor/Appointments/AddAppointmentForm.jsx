@@ -96,6 +96,7 @@ function AppointmentFormModal({
       selectedSlot: null,
       // SMS consent field - will be updated by useEffect based on date
       smsConsentAgreed: true, // Default to true, will be updated by useEffect
+      persistSmsConsent: false, // Default to false - whether to save SMS consent for future appointments
     };
   });
   const [availableSlots, setAvailableSlots] = useState([]);
@@ -1822,6 +1823,34 @@ function AppointmentFormModal({
             }
             return null;
           })()}
+          
+          {/* Persist SMS Consent Checkbox - only show if smsConsentAgreed is true */}
+          {appointmentData.smsConsentAgreed && (
+            <div className="mt-4 pt-4 border-t border-blue-300">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="persistSmsConsent"
+                  checked={appointmentData.persistSmsConsent}
+                  onChange={(e) => setAppointmentData(prev => ({ ...prev, persistSmsConsent: e.target.checked }))}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="persistSmsConsent" className="text-sm font-medium text-blue-800">
+                  Czy chcesz zapisać tę zgodę na SMS?
+                </label>
+              </div>
+              {!appointmentData.persistSmsConsent && (
+                <p className="text-xs text-blue-600 mt-2 italic">
+                  Jeśli nie zaznaczysz, zgoda będzie ważna tylko dla tej wizyty - wyślemy email i SMS tylko tym razem.
+                </p>
+              )}
+              {appointmentData.persistSmsConsent && (
+                <p className="text-xs text-green-600 mt-2 italic">
+                  Zgoda zostanie zapisana i będzie używana dla przyszłych wizyt tego pacjenta.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Current Appointment Summary */}
@@ -1954,6 +1983,7 @@ function AppointmentFormModal({
         consultationType: "offline",
         message: appointmentData.notes || "",
         smsConsentAgreed: appointmentData.smsConsentAgreed,
+        persistSmsConsent: appointmentData.persistSmsConsent || false,
         // Receptionist override capabilities
         isBackdated: appointmentData.isBackdated || false,
         customDuration: appointmentData.customDuration || null,

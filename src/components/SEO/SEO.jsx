@@ -82,6 +82,15 @@ const SEO = () => {
           canonicalUrl: `${BASE_URL}/kontakt`,
           ogImage: '/images/contact.jpg'
         };
+      case '/logowanie':
+        return {
+          title: 'Logowanie do systemu CM7Med – Dostęp tylko dla personelu',
+          description: 'Bezpieczne logowanie do panelu CM7MED. Dostęp wyłącznie dla uprawnionych pracowników placówki medycznej.',
+          keywords: 'logowanie CM7MED, panel personelu, dostęp pracowników',
+          canonicalUrl: `${BASE_URL}/logowanie`,
+          ogImage: '/images/cm7med_link_photo-min.jpg',
+          robots: 'noindex, nofollow'
+        };
       case '/lekarze':
         return {
           title: 'Nasi lekarze – CM7 Skarżysko-Kamienna | Zespół specjalistów',
@@ -112,12 +121,13 @@ const SEO = () => {
           description: 'Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści.',
           keywords: 'centrum medyczne, przychodnia, lekarze, Skarżysko-Kamienna',
           canonicalUrl: `${BASE_URL}${path}`,
-          ogImage: '/images/mainlogo.png'
+          ogImage: '/images/mainlogo.png',
+          robots: null
         };
     }
   };
 
-  const { title, description, keywords, canonicalUrl, ogImage } = getMetaInfo(location.pathname);
+  const { title, description, keywords, canonicalUrl, ogImage, robots } = getMetaInfo(location.pathname);
 
   return (
     <Helmet>
@@ -125,6 +135,9 @@ const SEO = () => {
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
       <link rel="canonical" href={canonicalUrl} />
+      
+      {/* Robots meta tag - noindex, nofollow for login page */}
+      {robots && <meta name="robots" content={robots} />}
       
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />

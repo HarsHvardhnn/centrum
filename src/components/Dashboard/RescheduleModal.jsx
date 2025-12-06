@@ -24,6 +24,7 @@ const RescheduleModal = ({
   const [smsConsentAgreed, setSmsConsentAgreed] = useState(false);
   const [sendSmsReminder, setSendSmsReminder] = useState(false);
   const [smsConsentLoading, setSmsConsentLoading] = useState(false);
+  const [persistSmsConsent, setPersistSmsConsent] = useState(false);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -38,6 +39,7 @@ const RescheduleModal = ({
       setCustomStartTime("");
       setCustomEndTime("");
       setSendSmsReminder(false);
+      setPersistSmsConsent(false);
       
       // Fetch SMS consent status
       fetchSmsConsentStatus();
@@ -228,7 +230,8 @@ const RescheduleModal = ({
           newEndTime: selectedSlot.endTime,
           consultationType: consultationType,
           selectionType: "slot",
-          smsToBeSent: sendSmsReminder
+          smsToBeSent: sendSmsReminder,
+          persistSmsConsent: persistSmsConsent || false
         };
       } else {
         rescheduleData = {
@@ -237,7 +240,8 @@ const RescheduleModal = ({
           newEndTime: customEndTime,
           consultationType: consultationType,
           selectionType: "timeRange",
-          smsToBeSent: sendSmsReminder
+          smsToBeSent: sendSmsReminder,
+          persistSmsConsent: persistSmsConsent || false
         };
       }
 
@@ -470,6 +474,34 @@ const RescheduleModal = ({
               <p className="text-xs text-green-600 mt-2">
                 ✓ Pacjent otrzyma SMS z informacją o nowym terminie wizyty
               </p>
+            )}
+            
+            {/* Persist SMS Consent Checkbox - only show if smsConsentAgreed is true */}
+            {smsConsentAgreed && (
+              <div className="mt-4 pt-4 border-t border-blue-300">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="persistSmsConsent"
+                    checked={persistSmsConsent}
+                    onChange={(e) => setPersistSmsConsent(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="persistSmsConsent" className="text-sm font-medium text-blue-800">
+                    Czy chcesz zapisać tę zgodę na SMS?
+                  </label>
+                </div>
+                {!persistSmsConsent && (
+                  <p className="text-xs text-blue-600 mt-2 italic">
+                    Jeśli nie zaznaczysz, zgoda będzie ważna tylko dla tej wizyty - wyślemy email i SMS tylko tym razem.
+                  </p>
+                )}
+                {persistSmsConsent && (
+                  <p className="text-xs text-green-600 mt-2 italic">
+                    Zgoda zostanie zapisana i będzie używana dla przyszłych wizyt tego pacjenta.
+                  </p>
+                )}
+              </div>
             )}
           </div>
 

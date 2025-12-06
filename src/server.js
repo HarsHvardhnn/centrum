@@ -13,6 +13,19 @@ app.get('/sitemap.xml', (req, res) => {
   res.send(generateSitemap());
 });
 
+// Block search engine robots for login pages
+app.get('/logowanie', (req, res) => {
+  // Set headers to block search engine indexing
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+app.get('/login', (req, res) => {
+  // Set headers to block search engine indexing
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
 // Handle all routes for SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
