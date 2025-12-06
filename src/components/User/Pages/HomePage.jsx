@@ -115,7 +115,7 @@ const  HomePage = () => {
         ]
       },
       "sameAs": [
-        "https://www.facebook.com/klinikacm7/",
+        "https://www.facebook.com/przychodniacm7/",
         "https://www.instagram.com/centrummedyczne7/"
       ]
     };

@@ -2,8 +2,12 @@ const express = require('express');
 const path = require('path');
 const generateSitemap = require('./utils/sitemapGenerator');
 const fs = require('fs');
+const axios = require('axios');
 
 const app = express();
+
+// API base URL
+const API_BASE_URL = process.env.API_BASE_URL || 'https://backend.centrummedyczne7.pl';
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'build')));
@@ -18,26 +22,98 @@ function humanizeSlug(slug) {
     .replace(/\b\w/g, c => c.toUpperCase());
 }
 
-// Utility: render index.html with a VISIBLE pre-content SEO block
-function renderWithSEO(res, titleText, descriptionText) {
+// Utility: escape HTML
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Utility: render index.html with proper SEO metadata
+function renderWithSEO(res, titleText, descriptionText, ogImage = null, additionalMeta = '') {
   try {
     const indexPath = path.join(__dirname, 'build', 'index.html');
     let html = fs.readFileSync(indexPath, 'utf8');
 
-    const escape = (str) => String(str || '')
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    const BASE_URL = 'https://centrummedyczne7.pl';
+    const fullOgImage = ogImage && (ogImage.startsWith('http://') || ogImage.startsWith('https://'))
+      ? ogImage
+      : ogImage ? `${BASE_URL}${ogImage}` : `${BASE_URL}/images/mainlogo.png`;
 
-    const injection = `\n<section id="seo-content" style="padding:16px 0;">\n  <h1 style="margin:0 0 8px 0; font-size:24px; line-height:1.3;">${escape(titleText)}</h1>\n  <p style="margin:0; color:#475467;">${escape(descriptionText)}</p>\n</section>\n<div id="root"></div>`;
+    // Replace existing title tag if present
+    if (html.includes('<title>')) {
+      html = html.replace(/<title>.*?<\/title>/i, `<title>${escapeHtml(titleText)}</title>`);
+    } else {
+      // Inject title before </head> if not present
+      html = html.replace('</head>', `  <title>${escapeHtml(titleText)}</title>\n</head>`);
+    }
 
+    // Generate other meta tags (excluding title)
+    const metaTags = `
+    <meta name="description" content="${escapeHtml(descriptionText)}">
+    <meta property="og:title" content="${escapeHtml(titleText)}">
+    <meta property="og:description" content="${escapeHtml(descriptionText)}">
+    <meta property="og:image" content="${escapeHtml(fullOgImage)}">
+    <meta property="og:type" content="article">
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="${escapeHtml(titleText)}">
+    <meta property="twitter:description" content="${escapeHtml(descriptionText)}">
+    <meta property="twitter:image" content="${escapeHtml(fullOgImage)}">
+    ${additionalMeta}`;
+
+    // Inject meta tags before </head>
+    html = html.replace('</head>', `${metaTags}\n</head>`);
+
+    // Also inject visible pre-content SEO block
+    const injection = `\n<section id="seo-content" style="padding:16px 0;">\n  <h1 style="margin:0 0 8px 0; font-size:24px; line-height:1.3;">${escapeHtml(titleText)}</h1>\n  <p style="margin:0; color:#475467;">${escapeHtml(descriptionText)}</p>\n</section>\n<div id="root"></div>`;
     html = html.replace('<div id="root"></div>', injection);
+    
     res.send(html);
-  } catch (_) {
+  } catch (error) {
+    console.error('Error rendering SEO HTML:', error);
     // Fallback to plain index.html if anything goes wrong
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  }
+}
+
+// Function to fetch article data from API
+async function fetchArticleData(slug, isNews) {
+  try {
+    const endpoint = isNews 
+      ? `${API_BASE_URL}/news/slug/${slug}?isNews=true`
+      : `${API_BASE_URL}/news/slug/${slug}?isNews=false`;
+    
+    console.log(`📡 Fetching article data from: ${endpoint}`);
+    
+    const response = await axios.get(endpoint, {
+      timeout: 10000,
+      validateStatus: (status) => status < 500
+    });
+
+    if (response.status === 200 && response.data) {
+      // Handle different response structures
+      if (response.data.success !== undefined && response.data.data) {
+        return response.data.data;
+      } else if (response.data.data && typeof response.data.data === 'object') {
+        return response.data.data;
+      } else {
+        return response.data;
+      }
+    }
+
+    if (response.status === 404) {
+      console.log(`❌ Article not found: ${slug}`);
+      return null;
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`❌ Error fetching article data for ${slug}:`, error.message);
+    return null;
   }
 }
 
@@ -58,15 +134,83 @@ app.get('/lekarze/:slug', (req, res) => {
   renderWithSEO(res, titleText, descriptionText);
 });
 
-// Optional: news/blog pages – visible preface to reduce soft 404 risk
-app.get(['/aktualnosci/:slug', '/poradnik/:slug'], (req, res) => {
-  const readable = humanizeSlug(req.params.slug);
+// News/blog pages – fetch article data and inject proper metadata
+app.get(['/aktualnosci/:slug', '/poradnik/:slug'], async (req, res) => {
+  const slug = req.params.slug;
   const isNews = req.path.startsWith('/aktualnosci/');
-  const titleText = isNews ? `${readable} | Aktualności – CM7` : `${readable} | Poradnik – CM7`;
-  const descriptionText = isNews
-    ? `Artykuł aktualności: ${readable}. Informacje z Centrum Medycznego 7.`
-    : `Artykuł poradnikowy: ${readable}. Porady od specjalistów Centrum Medycznego 7.`;
-  renderWithSEO(res, titleText, descriptionText);
+  
+  // Validate slug
+  if (!slug || slug === 'undefined' || slug.trim() === '') {
+    console.log(`❌ Invalid slug: "${slug}"`);
+    const readable = humanizeSlug(slug);
+    const titleText = isNews ? `${readable} | Aktualności – CM7` : `${readable} | Poradnik – CM7`;
+    const descriptionText = isNews
+      ? `Artykuł aktualności: ${readable}. Informacje z Centrum Medycznego 7.`
+      : `Artykuł poradnikowy: ${readable}. Porady od specjalistów Centrum Medycznego 7.`;
+    return renderWithSEO(res, titleText, descriptionText);
+  }
+
+  // Fetch article data from API
+  const articleData = await fetchArticleData(slug, isNews);
+
+  if (articleData && articleData.title) {
+    // Use actual article data
+    const titleText = articleData.title; // Use article title directly as per requirements
+    const descriptionText = articleData.shortDescription || articleData.description || 
+      (isNews 
+        ? `Artykuł aktualności: ${articleData.title}. Informacje z Centrum Medycznego 7.`
+        : `Artykuł poradnikowy: ${articleData.title}. Porady od specjalistów Centrum Medycznego 7.`);
+    
+    const ogImage = articleData.image || (isNews ? '/images/news.jpg' : '/images/blogs.jpg');
+    
+    // Generate Article Schema (JSON-LD)
+    const articleSchema = {
+      "@context": "https://schema.org",
+      "@type": isNews ? "NewsArticle" : "BlogPosting",
+      "headline": articleData.title,
+      "description": descriptionText,
+      "image": {
+        "@type": "ImageObject",
+        "url": ogImage.startsWith('http') ? ogImage : `https://centrummedyczne7.pl${ogImage}`,
+        "width": 800,
+        "height": 600
+      },
+      "author": {
+        "@type": "Person",
+        "name": articleData.author || "Centrum Medyczne 7"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Centrum Medyczne 7",
+        "url": "https://centrummedyczne7.pl",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://centrummedyczne7.pl/images/mainlogo.png",
+          "width": 200,
+          "height": 60
+        }
+      },
+      "datePublished": articleData.date,
+      "dateModified": articleData.updatedAt || articleData.date,
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": `https://centrummedyczne7.pl${req.path}`
+      }
+    };
+
+    const structuredData = `<script type="application/ld+json">${JSON.stringify(articleSchema)}</script>`;
+    
+    renderWithSEO(res, titleText, descriptionText, ogImage, structuredData);
+  } else {
+    // Fallback to slug-based metadata if API fails
+    console.log(`⚠️ No article data found for slug: ${slug}, using fallback metadata`);
+    const readable = humanizeSlug(slug);
+    const titleText = isNews ? `${readable} | Aktualności – CM7` : `${readable} | Poradnik – CM7`;
+    const descriptionText = isNews
+      ? `Artykuł aktualności: ${readable}. Informacje z Centrum Medycznego 7.`
+      : `Artykuł poradnikowy: ${readable}. Porady od specjalistów Centrum Medycznego 7.`;
+    renderWithSEO(res, titleText, descriptionText, isNews ? '/images/news.jpg' : '/images/blogs.jpg');
+  }
 });
 
 // Serve sitemap.xml

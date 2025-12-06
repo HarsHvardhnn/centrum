@@ -105,7 +105,7 @@ export default function Footer() {
                   Polityka prywatności
                 </a>
           <a
-            href="https://www.facebook.com/klinikacm7/"
+            href="https://www.facebook.com/przychodniacm7/"
             className="text-[#008c8c] p-2 bg-white rounded-full hover:bg-teal-100 transition"
           >
             <FaFacebookF />
