@@ -121,7 +121,7 @@ const Header = () => {
         </div>
         <div className=" flex items-center gap-2">
           <a
-            href="https://www.facebook.com/share/16Sb5NkqZt/?mibextid=wwXIfr"
+            href="https://www.facebook.com/przychodniacm7/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-teal-600 hover:text-teal-800 transition-colors"
