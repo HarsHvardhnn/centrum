@@ -27,7 +27,7 @@ const CookieConsent = () => {
             </p>
             <p className="text-xs text-gray-500 mt-2">
               Więcej informacji znajdziesz w naszej{' '}
-              <a href="/privacy-policy" className="text-[#008c8c] hover:underline">
+              <a href="/polityka-prywatnosci" className="text-[#008c8c] hover:underline">
                 polityce prywatności
               </a>
               .
