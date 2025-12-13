@@ -889,7 +889,19 @@ export default function Doctors({
                           </div>
                         ) : (
                           <>
-                            {weekOffset === 0 ? "Ten tydzień" : `Za ${weekOffset} tydzień${weekOffset > 1 ? 'ni' : ''}`}
+                            {weekOffset === 0 
+                              ? "Ten tydzień" 
+                              : (() => {
+                                  let weekText;
+                                  if (weekOffset === 1) {
+                                    weekText = "tydzień";
+                                  } else if (weekOffset >= 2 && weekOffset <= 4) {
+                                    weekText = "tygodnie";
+                                  } else {
+                                    weekText = "tygodni";
+                                  }
+                                  return `Za ${weekOffset} ${weekText}`;
+                                })()}
                             {selectedDate && weekOffset > 0 && (
                               <span className="block text-xs text-main">
                                 Następny termin: {new Date(selectedDate).toLocaleDateString('pl-PL')}
