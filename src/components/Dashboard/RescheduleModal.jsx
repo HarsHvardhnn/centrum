@@ -488,19 +488,9 @@ const RescheduleModal = ({
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <label htmlFor="persistSmsConsent" className="text-sm font-medium text-blue-800">
-                    Czy chcesz zapisać tę zgodę na SMS?
+                    Jeśli nie chcesz wysyłać SMS i e-maili dla tej wizyty, zaznacz to pole
                   </label>
                 </div>
-                {!persistSmsConsent && (
-                  <p className="text-xs text-blue-600 mt-2 italic">
-                    Jeśli nie zaznaczysz, zgoda będzie ważna tylko dla tej wizyty - wyślemy email i SMS tylko tym razem.
-                  </p>
-                )}
-                {persistSmsConsent && (
-                  <p className="text-xs text-green-600 mt-2 italic">
-                    Zgoda zostanie zapisana i będzie używana dla przyszłych wizyt tego pacjenta.
-                  </p>
-                )}
               </div>
             )}
           </div>
