@@ -43,7 +43,18 @@ try {
   
   console.log(`✅ Found assets: ${jsFile}, ${cssFile}`);
   
-  // Step 3: Update server.js
+  // Step 3: Generate static doctor pages
+  console.log('👨‍⚕️ Generating static doctor pages...');
+  try {
+    execSync('npm run build:static-doctors', { stdio: 'inherit' });
+    console.log('✅ Static doctor pages generated successfully!');
+  } catch (error) {
+    console.warn('⚠️ Warning: Static doctor pages generation failed, continuing with build...');
+    console.warn(`   Error: ${error.message}`);
+    // Don't fail the build if static generation fails - it's optional
+  }
+  
+  // Step 4: Update server.js
   console.log('📝 Updating server.js...');
   const serverJsPath = path.join(__dirname, 'server.js');
   let serverContent = fs.readFileSync(serverJsPath, 'utf8');
@@ -64,7 +75,7 @@ try {
   console.log('✅ Build and update completed successfully!');
   console.log(`📁 Updated server.js with assets: ${jsFile}, ${cssFile}`);
   
-  // Step 4: Git operations
+  // Step 5: Git operations
   console.log('🔧 Performing git operations...');
   
   // Add all changes

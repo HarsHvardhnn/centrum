@@ -6,11 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:static-doctors": "node scripts/generate-static-doctor-pages.js",
+    "build:test-doctor": "node scripts/generate-test-doctor-page.js",
+    "build:full": "npm run build && npm run build:static-doctors",
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "node server.js",
     "start:simple": "node server-simple.js",
-    "build:prod": "npm run build && npm run start",
+    "build:prod": "npm run build:full && npm run start",
     "build:update": "node build-and-update.js"
   },
   "dependencies": {

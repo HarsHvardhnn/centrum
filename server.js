@@ -1159,6 +1159,46 @@ app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'dist', 'images')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
+// Middleware to serve static doctor pages (if they exist)
+// This provides better SEO and reliability than dynamic server-side rendering
+const serveStaticDoctorPages = (req, res, next) => {
+  const requestPath = req.normalizedPath || normalizePath(req.path);
+  
+  // Check if this is a doctor page route
+  if (requestPath.startsWith('/lekarze/') && requestPath !== '/lekarze') {
+    // Extract slug from path
+    const slug = requestPath.replace('/lekarze/', '');
+    
+    // Validate slug
+    if (slug && slug !== 'undefined' && slug.trim() !== '') {
+      // Check if static HTML file exists
+      const staticFilePath = path.join(__dirname, 'dist', 'lekarze', `${slug}.html`);
+      
+      if (fs.existsSync(staticFilePath)) {
+        console.log(`📄 Serving static doctor page: /lekarze/${slug}`);
+        
+        // Read and serve the static HTML file
+        const staticHTML = fs.readFileSync(staticFilePath, 'utf8');
+        
+        // Set appropriate headers
+        res.set({
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+          'Vary': 'User-Agent'
+        });
+        
+        return res.send(staticHTML);
+      }
+    }
+  }
+  
+  // If no static file found, continue to next middleware
+  next();
+};
+
+// Apply static doctor pages middleware BEFORE SEO middleware
+app.get('*', serveStaticDoctorPages);
+
 // Apply SEO middleware for HTML routes only (not for static files)
 app.get('*', (req, res, next) => {
   // Skip SEO middleware for static files and assets
@@ -1169,7 +1209,7 @@ app.get('*', (req, res, next) => {
     return next();
   }
   
-  // Apply SEO middleware for HTML routes
+  // Apply SEO middleware for HTML routes (fallback if static page not found)
   return seoMiddleware(req, res, next);
 });
 
