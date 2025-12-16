@@ -9,6 +9,7 @@
     "build:static-doctors": "node scripts/generate-static-doctor-pages.js",
     "build:test-doctor": "node scripts/generate-test-doctor-page.js",
     "build:full": "npm run build && npm run build:static-doctors",
+    "check:indexing": "node scripts/check-indexing.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "node server.js",

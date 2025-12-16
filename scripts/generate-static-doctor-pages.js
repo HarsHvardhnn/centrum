@@ -90,8 +90,23 @@ const fetchAllDoctors = async () => {
   throw new Error('Could not fetch doctors from any endpoint');
 };
 
+// Find actual asset filenames from dist/assets
+const findAssetFilenames = () => {
+  const assetsPath = path.join(DIST_DIR, 'assets');
+  
+  if (!fs.existsSync(assetsPath)) {
+    return { cssFile: null, jsFile: null };
+  }
+  
+  const files = fs.readdirSync(assetsPath);
+  const cssFile = files.find(file => file.endsWith('.css') && file.startsWith('index-'));
+  const jsFile = files.find(file => file.endsWith('.js') && file.startsWith('index-') && !file.includes('.map'));
+  
+  return { cssFile, jsFile };
+};
+
 // Generate static HTML for a doctor
-const generateDoctorHTML = (doctor) => {
+const generateDoctorHTML = (doctor, cssFile, jsFile) => {
   const slug = generateDoctorSlug(doctor);
   if (!slug || slug === 'undefined' || slug.trim() === '') {
     console.log(`⚠️ Skipping doctor with invalid slug:`, doctor.name);
@@ -217,8 +232,7 @@ const generateDoctorHTML = (doctor) => {
     <!-- Structured Data -->
     <script type="application/ld+json">${JSON.stringify(structuredData)}</script>
     
-    <!-- React App CSS - will be loaded dynamically -->
-    <link rel="preload" href="/assets/index.css" as="style">
+    ${cssFile ? `<!-- React App CSS -->\n    <link rel="stylesheet" crossorigin href="/assets/${cssFile}">` : ''}
 </head>
 <body>
     <!-- SEO Content for crawlers (visible content) -->
@@ -234,15 +248,7 @@ const generateDoctorHTML = (doctor) => {
     <!-- React App Root -->
     <div id="root"></div>
     
-    <!-- React App JavaScript - will be loaded dynamically -->
-    <script type="module">
-        // Hydrate React app
-        if (window.location.pathname === '/lekarze/${slug}') {
-            import('/assets/index.js').catch(() => {
-                console.log('React app will load dynamically');
-            });
-        }
-    </script>
+    ${jsFile ? `<!-- React App JavaScript -->\n    <script type="module" crossorigin src="/assets/${jsFile}"></script>` : '<!-- React App will load dynamically -->'}
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -271,6 +277,14 @@ const generateStaticDoctorPages = async () => {
       fs.mkdirSync(lekarzeDir, { recursive: true });
     }
     
+    // Find actual asset filenames
+    const { cssFile, jsFile } = findAssetFilenames();
+    if (cssFile && jsFile) {
+      console.log(`✅ Found assets: ${cssFile}, ${jsFile}`);
+    } else {
+      console.warn('⚠️  Warning: Could not find CSS/JS assets. Static pages will work but assets may not load correctly.');
+    }
+    
     // Fetch all doctors
     const doctors = await fetchAllDoctors();
     console.log(`📋 Processing ${doctors.length} doctors...`);
@@ -281,7 +295,7 @@ const generateStaticDoctorPages = async () => {
     // Generate HTML for each doctor
     for (const doctor of doctors) {
       try {
-        const result = generateDoctorHTML(doctor);
+        const result = generateDoctorHTML(doctor, cssFile, jsFile);
         
         if (!result) {
           skipCount++;

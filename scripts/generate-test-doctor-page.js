@@ -21,8 +21,23 @@ const escapeHtml = (str) => {
     .replace(/>/g, '&gt;');
 };
 
+// Find actual asset filenames from dist/assets
+const findAssetFilenames = () => {
+  const assetsPath = path.join(DIST_DIR, 'assets');
+  
+  if (!fs.existsSync(assetsPath)) {
+    return { cssFile: null, jsFile: null };
+  }
+  
+  const files = fs.readdirSync(assetsPath);
+  const cssFile = files.find(file => file.endsWith('.css') && file.startsWith('index-'));
+  const jsFile = files.find(file => file.endsWith('.js') && file.startsWith('index-') && !file.includes('.map'));
+  
+  return { cssFile, jsFile };
+};
+
 // Generate static HTML for a doctor
-const generateDoctorHTML = (doctor, slug) => {
+const generateDoctorHTML = (doctor, slug, cssFile, jsFile) => {
   const doctorName = `${doctor.name?.first || ''} ${doctor.name?.last || ''}`.trim();
   const specializations = doctor.specializations
     ?.map(spec => spec && spec.name ? spec.name : '')
@@ -142,8 +157,7 @@ const generateDoctorHTML = (doctor, slug) => {
     <!-- Structured Data -->
     <script type="application/ld+json">${JSON.stringify(structuredData)}</script>
     
-    <!-- React App CSS - will be loaded dynamically -->
-    <link rel="preload" href="/assets/index.css" as="style">
+    ${cssFile ? `<!-- React App CSS -->\n    <link rel="stylesheet" crossorigin href="/assets/${cssFile}">` : ''}
 </head>
 <body>
     <!-- SEO Content for crawlers (visible content) -->
@@ -159,15 +173,7 @@ const generateDoctorHTML = (doctor, slug) => {
     <!-- React App Root -->
     <div id="root"></div>
     
-    <!-- React App JavaScript - will be loaded dynamically -->
-    <script type="module">
-        // Hydrate React app
-        if (window.location.pathname === '/lekarze/${slug}') {
-            import('/assets/index.js').catch(() => {
-                console.log('React app will load dynamically');
-            });
-        }
-    </script>
+    ${jsFile ? `<!-- React App JavaScript -->\n    <script type="module" crossorigin src="/assets/${jsFile}"></script>` : '<!-- React App will load dynamically -->'}
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -262,8 +268,14 @@ const generateTestDoctorPage = async () => {
       slug = 'jan-kowalski';
     }
     
+    // Find actual asset filenames
+    const { cssFile, jsFile } = findAssetFilenames();
+    if (cssFile && jsFile) {
+      console.log(`✅ Found assets: ${cssFile}, ${jsFile}`);
+    }
+    
     // Generate HTML
-    const html = generateDoctorHTML(doctor, slug);
+    const html = generateDoctorHTML(doctor, slug, cssFile, jsFile);
     
     // Write to file
     const filePath = path.join(lekarzeDir, `${slug}.html`);

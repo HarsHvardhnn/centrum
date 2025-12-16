@@ -49,8 +49,8 @@
     <!-- Structured Data -->
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Physician","name":"","jobTitle":"Neurolog dziecięcy","worksFor":{"@type":"MedicalOrganization","name":"Centrum Medyczne 7","address":{"@type":"PostalAddress","addressLocality":"Skarżysko-Kamienna","addressCountry":"PL"},"telephone":"797-097-487"},"medicalSpecialty":["Neurolog dziecięcy"],"image":"https://res.cloudinary.com/dca740eqo/image/upload/v1756246783/hospital_app/images/fe0qqfuyacegrbhelktu.jpg","description":"Umów wizytę z , neurolog dziecięcy z 23 lat doświadczenia. Konsultacje dostępne w Centrum Medycznym 7.","url":"https://centrummedyczne7.pl/lekarze/anna-grabowska","offers":[]}</script>
     
-    <!-- React App CSS - will be loaded dynamically -->
-    <link rel="preload" href="/assets/index.css" as="style">
+    <!-- React App CSS -->
+    <link rel="stylesheet" crossorigin href="/assets/index-CDv2gVqO.css">
 </head>
 <body>
     <!-- SEO Content for crawlers (visible content) -->
@@ -70,15 +70,8 @@ Przyjmuje pacjentów w ramach konsultacji neurologicznych w Centrum Medycznym 7 
     <!-- React App Root -->
     <div id="root"></div>
     
-    <!-- React App JavaScript - will be loaded dynamically -->
-    <script type="module">
-        // Hydrate React app
-        if (window.location.pathname === '/lekarze/anna-grabowska') {
-            import('/assets/index.js').catch(() => {
-                console.log('React app will load dynamically');
-            });
-        }
-    </script>
+    <!-- React App JavaScript -->
+    <script type="module" crossorigin src="/assets/index-CLDKlslo.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
