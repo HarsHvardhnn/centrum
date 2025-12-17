@@ -187,6 +187,13 @@ const Sidebar = () => {
                 isActive={currentPath === "/administracja/konfiguracja-wizyt"}
                 isEnabled={true}
               />
+              <NavItem
+                icon={<Shield className="text-xl text-teal-400" />}
+                label="Ustawienia JWT"
+                to="/administracja/ustawienia-jwt"
+                isActive={currentPath === "/administracja/ustawienia-jwt"}
+                isEnabled={true}
+              />
             </>
           )}
 

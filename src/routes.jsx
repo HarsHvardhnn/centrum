@@ -50,6 +50,8 @@ import TwoFactorSettings from "./components/Auth/TwoFactorSettings";
 import DoctorProfilePage from "./components/User/Pages/DoctorProfilePage";
 import ReportsDashboard from "./components/Reports/ReportsDashboard";
 import AppointmentConfigPage from "./components/admin/AppointmentConfigPage";
+import JWTSettingsPage from "./components/admin/JWTSettingsPage";
+import TokenExpiryPopup from "./components/UtilComponents/TokenExpiryPopup";
 
 // Protected image route component
 const ProtectedImage = () => {
@@ -124,6 +126,9 @@ function MainLayout() {
           <Outlet />
         </div>
       </div>
+      
+      {/* Token Expiry Popup - shown globally when token is about to expire */}
+      <TokenExpiryPopup />
     </div>
   );
 }
@@ -200,6 +205,7 @@ const routes = createBrowserRouter([
           { path: "/administracja/konfiguracja-ip", element: <IPConfigPage /> },
           { path: "/administracja/bezpieczenstwo/2fa", element: <TwoFactorSettings /> },
           { path: "/administracja/konfiguracja-wizyt", element: <AppointmentConfigPage /> },
+          { path: "/administracja/ustawienia-jwt", element: <JWTSettingsPage /> },
         ],
       },
     ],
@@ -333,6 +339,10 @@ const routes = createBrowserRouter([
   {
     path: "/admin/appointment-config",
     element: <Navigate to="/administracja/konfiguracja-wizyt" replace />,
+  },
+  {
+    path: "/admin/jwt-settings",
+    element: <Navigate to="/administracja/ustawienia-jwt" replace />,
   },
 
   // Catch all route

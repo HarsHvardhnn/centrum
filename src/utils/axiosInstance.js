@@ -64,25 +64,116 @@ axiosInstance.interceptors.request.use(
   }
 );
 
+// Token refresh state management
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+};
+
 // Response interceptor for handling responses
 axiosInstance.interceptors.response.use(
   (response) => {
     // You can check the response status or manipulate the data here
     return response;
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
     // Handle various errors like unauthorized access or server issues
     if (error.response) {
       // Server responded with a status other than 2xx
       if (error.response.status === 401) {
-        // Handle unauthorized errors (for example, redirect to login)
-        console.error("Unauthorized access. Please login.");
-        // Clear both cookie and localStorage
-        removeCookie('authToken');
-        removeCookie('user');
-        localStorage.clear();
-        if (window.location.pathname !== "/login") {
-          window.location.href = "/logowanie";
+        // If this is a refresh token request that failed, redirect to login
+        if (originalRequest.url === '/auth/refresh-token' || originalRequest.url?.includes('/auth/refresh-token')) {
+          console.error("Refresh token failed. Redirecting to login.");
+          removeCookie('authToken');
+          removeCookie('user');
+          localStorage.clear();
+          if (window.location.pathname !== "/logowanie") {
+            window.location.href = "/logowanie";
+          }
+          return Promise.reject(error);
+        }
+
+        // If we're already refreshing, queue this request
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          })
+            .then(token => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              return axiosInstance(originalRequest);
+            })
+            .catch(err => {
+              return Promise.reject(err);
+            });
+        }
+
+        // Try to refresh the token
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          // Create a new axios instance for refresh to avoid interceptors
+          const refreshAxios = axios.create({
+            baseURL: axiosInstance.defaults.baseURL,
+            withCredentials: true,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          const refreshResponse = await refreshAxios.post('/auth/refresh-token', {});
+
+          if (refreshResponse.data && refreshResponse.data.token) {
+            const newToken = refreshResponse.data.token;
+            
+            // Update token in storage
+            localStorage.setItem("authToken", newToken);
+            setCookie('authToken', newToken, 7);
+            
+            // Update user data if provided
+            if (refreshResponse.data.user) {
+              localStorage.setItem("user", JSON.stringify(refreshResponse.data.user));
+            }
+
+            // Update the original request with new token
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            
+            // Process queued requests
+            processQueue(null, newToken);
+            
+            // Retry the original request
+            return axiosInstance(originalRequest);
+          } else {
+            throw new Error("No token in refresh response");
+          }
+        } catch (refreshError) {
+          console.error("Token refresh failed:", refreshError);
+          processQueue(refreshError, null);
+          
+          // Clear tokens and redirect to login
+          removeCookie('authToken');
+          removeCookie('user');
+          localStorage.clear();
+          
+          if (window.location.pathname !== "/logowanie") {
+            window.location.href = "/logowanie";
+          }
+          
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
         }
       } else {
         // Other status codes handling (e.g., 500 server error)
@@ -122,14 +213,18 @@ const apiCaller = async (method, url, data = {}, isFormData = false) => {
     console.log("full URL will be:", `${axiosInstance.defaults.baseURL}${url}`);
     
     // Handle POST/PUT data validation
-    if (method === "POST" || method === "PUT") {
+    // Allow empty data for endpoints that don't require a body (like refresh-token)
+    const isRefreshTokenEndpoint = url === '/auth/refresh-token' || url?.includes('/auth/refresh-token');
+    
+    if ((method === "POST" || method === "PUT") && !isRefreshTokenEndpoint) {
       const dataIsFormData = data instanceof FormData;
 
       const isEmpty =
-        !data ||
+        data === null ||
+        data === undefined ||
         (dataIsFormData
           ? [...data.entries()].length === 0
-          : Object.keys(data).length === 0);
+          : (typeof data === 'object' && Object.keys(data).length === 0));
 
       if (isEmpty) {
         throw new Error("Data must be provided for POST/PUT requests");
@@ -150,19 +245,27 @@ const apiCaller = async (method, url, data = {}, isFormData = false) => {
     if (isFormData || data instanceof FormData) {
       // For FormData, don't set Content-Type as the browser will set it with the boundary
       // The browser will automatically set the correct multipart/form-data content type with boundary
-    } else {
-      // For regular JSON requests
+    } else if (data !== null && data !== undefined) {
+      // For regular JSON requests, only set Content-Type if there's data
       headers["Content-Type"] = "application/json";
     }
+    // If data is null/undefined, don't set Content-Type header
 
     console.log("Making axios request with headers:", headers);
 
-    const response = await axiosInstance({
+    // Build request config - only include data if it's not null/undefined
+    const requestConfig = {
       method,
       url,
-      data,
       headers,
-    });
+    };
+
+    // Only add data if it's provided (not null or undefined)
+    if (data !== null && data !== undefined) {
+      requestConfig.data = data;
+    }
+
+    const response = await axiosInstance(requestConfig);
 
     console.log("=== apiCaller response received ===");
     console.log("response status:", response.status);
