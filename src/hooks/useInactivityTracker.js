@@ -17,6 +17,7 @@ export const useInactivityTracker = () => {
   const popupTimerRef = useRef(null);
   const retryCountRef = useRef(0);
   const maxRetries = 3;
+  const showPopupRef = useRef(false); // Track popup state in ref for event handlers
 
   // Fetch inactivity timeout from config - only when authenticated
   useEffect(() => {
@@ -126,6 +127,7 @@ export const useInactivityTracker = () => {
     lastActivityTime.current = Date.now();
     setIsInactive(false);
     setShowPopup(false);
+    showPopupRef.current = false; // Update ref when hiding popup
 
     // Clear existing timers
     if (inactivityTimerRef.current) {
@@ -151,6 +153,7 @@ export const useInactivityTracker = () => {
       console.log("[InactivityTracker] Inactivity period reached, showing popup");
       setIsInactive(true);
       setShowPopup(true);
+      showPopupRef.current = true; // Update ref when showing popup
       
       // Give user additional time (same as inactivity timeout) to respond
       console.log("[InactivityTracker] Setting popup auto-logout timer for:", inactivityTimeout, "ms");
@@ -158,6 +161,7 @@ export const useInactivityTracker = () => {
         // Auto logout if no response
         console.log("[InactivityTracker] Popup timeout reached, auto-logging out");
         setShowPopup(false);
+        showPopupRef.current = false;
       }, inactivityTimeout);
     }, inactivityTimeout);
   }, [inactivityTimeout]);
@@ -186,6 +190,11 @@ export const useInactivityTracker = () => {
 
     // Add event listeners
     const handleActivity = () => {
+      // Don't reset timer if popup is showing - user must click button to stay active
+      if (showPopupRef.current) {
+        console.log("[InactivityTracker] Activity detected but popup is showing, ignoring activity");
+        return;
+      }
       console.log("[InactivityTracker] Activity detected, resetting timer");
       resetInactivityTimer();
     };
