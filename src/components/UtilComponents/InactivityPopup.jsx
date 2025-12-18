@@ -8,19 +8,22 @@ const InactivityPopup = ({ inactivityTimeout, onStayActive, onLogout }) => {
 
   // Countdown timer - give user time to respond
   useEffect(() => {
-    if (!inactivityTimeout || inactivityTimeout <= 0) return;
+    if (!inactivityTimeout || inactivityTimeout <= 0) {
+      return;
+    }
 
     setCountdown(inactivityTimeout);
 
     const interval = setInterval(() => {
       setCountdown((prev) => {
-        if (prev <= 1000) {
+        const newCountdown = prev - 1000;
+        if (newCountdown <= 0) {
           // Time's up, auto logout
           clearInterval(interval);
           onLogout();
           return 0;
         }
-        return prev - 1000;
+        return newCountdown;
       });
     }, 1000);
 

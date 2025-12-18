@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Save, RotateCcw, AlertCircle, Info, Clock, Shield, Timer } from "lucide-react";
+import { Save, RotateCcw, AlertCircle, Info, Clock, Shield } from "lucide-react";
 import { useLoader } from "../../context/LoaderContext";
 import appointmentConfigService from "../../helpers/appointmentConfigHelper";
 
@@ -10,10 +10,8 @@ const JWTSettingsPage = () => {
   const [error, setError] = useState(null);
   const [jwtExpiry, setJwtExpiry] = useState("");
   const [refreshTokenExpiry, setRefreshTokenExpiry] = useState("");
-  const [inactivityTimeout, setInactivityTimeout] = useState("");
   const [originalJwtExpiry, setOriginalJwtExpiry] = useState("");
   const [originalRefreshTokenExpiry, setOriginalRefreshTokenExpiry] = useState("");
-  const [originalInactivityTimeout, setOriginalInactivityTimeout] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
@@ -23,9 +21,8 @@ const JWTSettingsPage = () => {
   useEffect(() => {
     const hasJwtChange = jwtExpiry !== originalJwtExpiry;
     const hasRefreshChange = refreshTokenExpiry !== originalRefreshTokenExpiry;
-    const hasInactivityChange = inactivityTimeout !== originalInactivityTimeout;
-    setHasChanges(hasJwtChange || hasRefreshChange || hasInactivityChange);
-  }, [jwtExpiry, refreshTokenExpiry, inactivityTimeout, originalJwtExpiry, originalRefreshTokenExpiry, originalInactivityTimeout]);
+    setHasChanges(hasJwtChange || hasRefreshChange);
+  }, [jwtExpiry, refreshTokenExpiry, originalJwtExpiry, originalRefreshTokenExpiry]);
 
   const fetchSettings = async () => {
     try {
@@ -44,18 +41,6 @@ const JWTSettingsPage = () => {
       const refreshValue = refreshResponse.data?.value?.toString() || "30";
       setRefreshTokenExpiry(refreshValue);
       setOriginalRefreshTokenExpiry(refreshValue);
-
-      // Fetch INACTIVITY_TIMEOUT
-      try {
-        const inactivityResponse = await appointmentConfigService.getConfig("INACTIVITY_TIMEOUT");
-        const inactivityValue = inactivityResponse.data?.value || "30m";
-        setInactivityTimeout(inactivityValue);
-        setOriginalInactivityTimeout(inactivityValue);
-      } catch (inactivityErr) {
-        // If INACTIVITY_TIMEOUT doesn't exist yet, set default
-        setInactivityTimeout("30m");
-        setOriginalInactivityTimeout("30m");
-      }
     } catch (err) {
       console.error("Error fetching JWT settings:", err);
       setError("Wystąpił błąd podczas pobierania ustawień JWT.");
@@ -89,17 +74,6 @@ const JWTSettingsPage = () => {
         }
         promises.push(
           appointmentConfigService.updateConfig("REFRESH_TOKEN_EXPIRY_DAYS", { value: refreshDays })
-        );
-      }
-
-      // Update INACTIVITY_TIMEOUT if changed
-      if (inactivityTimeout !== originalInactivityTimeout) {
-        if (!validateJwtExpiry(inactivityTimeout)) {
-          toast.error("Nieprawidłowy format czasu nieaktywności. Użyj formatu: liczba + jednostka (m=minuty, h=godziny, d=dni)");
-          return;
-        }
-        promises.push(
-          appointmentConfigService.updateConfig("INACTIVITY_TIMEOUT", { value: inactivityTimeout })
         );
       }
 
@@ -178,7 +152,6 @@ const JWTSettingsPage = () => {
             <ul className="text-sm text-blue-700 mt-2 list-disc list-inside">
               <li><strong>Token dostępu (JWT):</strong> Krótkotrwały token używany do żądań API</li>
               <li><strong>Token odświeżający:</strong> Długotrwały token przechowywany w bezpiecznym ciasteczku HTTP-only</li>
-              <li><strong>Czas nieaktywności:</strong> Czas po którym użytkownik zostanie wylogowany z powodu braku aktywności (klawiatura, mysz, itp.)</li>
             </ul>
           </div>
         </div>
@@ -259,46 +232,6 @@ const JWTSettingsPage = () => {
               </div>
               <p className="mt-1 text-xs text-gray-500">
                 Liczba dni (1-365). Token odświeżający jest przechowywany w bezpiecznym ciasteczku HTTP-only.
-              </p>
-            </div>
-
-            {/* Inactivity Timeout */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <div className="flex items-center">
-                  <Timer className="mr-2 text-teal-600" size={18} />
-                  Czas nieaktywności przed wylogowaniem
-                </div>
-              </label>
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={inactivityTimeout}
-                  onChange={(e) => setInactivityTimeout(e.target.value)}
-                  placeholder="np. 30m, 1h, 2h"
-                  className={`flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                    inactivityTimeout && !validateJwtExpiry(inactivityTimeout)
-                      ? 'border-red-300 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-teal-500'
-                  }`}
-                />
-                <button
-                  onClick={() => handleReset("INACTIVITY_TIMEOUT")}
-                  className="px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg flex items-center"
-                  title="Resetuj do wartości domyślnej"
-                >
-                  <RotateCcw size={16} className="mr-1" />
-                  Resetuj
-                </button>
-              </div>
-              {inactivityTimeout && !validateJwtExpiry(inactivityTimeout) && (
-                <p className="mt-1 text-sm text-red-600">
-                  Nieprawidłowy format. Użyj formatu: liczba + jednostka (m=minuty, h=godziny, d=dni)
-                </p>
-              )}
-              <p className="mt-1 text-xs text-gray-500">
-                Czas bez aktywności (klawiatura, mysz, scroll, touch) po którym użytkownik zostanie wylogowany. 
-                Przykłady: "30m" (30 minut), "1h" (1 godzina), "2h" (2 godziny), "1d" (1 dzień)
               </p>
             </div>
 

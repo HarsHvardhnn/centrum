@@ -204,14 +204,6 @@ const validateAPIResponse = (response) => {
 // API call function
 const apiCaller = async (method, url, data = {}, isFormData = false) => {
   try {
-    console.log("=== apiCaller called ===");
-    console.log("method:", method);
-    console.log("url:", url);
-    console.log("data:", data);
-    console.log("isFormData:", isFormData);
-    console.log("baseURL:", axiosInstance.defaults.baseURL);
-    console.log("full URL will be:", `${axiosInstance.defaults.baseURL}${url}`);
-    
     // Handle POST/PUT data validation
     // Allow empty data for endpoints that don't require a body (like refresh-token)
     const isRefreshTokenEndpoint = url === '/auth/refresh-token' || url?.includes('/auth/refresh-token');
@@ -251,8 +243,6 @@ const apiCaller = async (method, url, data = {}, isFormData = false) => {
     }
     // If data is null/undefined, don't set Content-Type header
 
-    console.log("Making axios request with headers:", headers);
-
     // Build request config - only include data if it's not null/undefined
     const requestConfig = {
       method,
@@ -267,17 +257,9 @@ const apiCaller = async (method, url, data = {}, isFormData = false) => {
 
     const response = await axiosInstance(requestConfig);
 
-    console.log("=== apiCaller response received ===");
-    console.log("response status:", response.status);
-    console.log("response data:", response.data);
-
     return validateAPIResponse(response);
   } catch (error) {
-    console.error("=== apiCaller error ===");
-    console.error("Error:", error);
-    console.error("Error message:", error.message);
-    console.error("Error response:", error.response);
-    console.error("Error request:", error.request);
+    console.error("API call error:", error.message);
     throw error;
   }
 };

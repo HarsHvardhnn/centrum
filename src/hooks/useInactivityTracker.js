@@ -20,19 +20,25 @@ export const useInactivityTracker = () => {
         const response = await appointmentConfigService.getConfig("INACTIVITY_TIMEOUT");
         const timeoutValue = response.data?.value;
         
-        if (timeoutValue) {
+        if (timeoutValue !== null && timeoutValue !== undefined && timeoutValue !== '') {
           // Convert to milliseconds
-          // Expected format: "30m", "1h", "2h", etc.
-          const timeoutMs = parseTimeToMilliseconds(timeoutValue);
+          // Handle both string format ("30m", "1h") and number format (assumed to be minutes)
+          let timeoutMs = 0;
+          
+          if (typeof timeoutValue === 'number') {
+            // If it's a number, assume it's minutes
+            timeoutMs = timeoutValue * 60 * 1000;
+          } else if (typeof timeoutValue === 'string') {
+            // If it's a string, parse it
+            timeoutMs = parseTimeToMilliseconds(timeoutValue);
+          }
+          
           if (timeoutMs > 0) {
             setInactivityTimeout(timeoutMs);
           }
         }
       } catch (error) {
         console.error("Error fetching inactivity timeout:", error);
-        // Default to 30 minutes if config not found
-        // Don't set default if config doesn't exist - let it be null so feature is disabled
-        // setInactivityTimeout(30 * 60 * 1000);
       }
     };
 
@@ -41,10 +47,14 @@ export const useInactivityTracker = () => {
 
   // Parse time string to milliseconds
   const parseTimeToMilliseconds = (timeString) => {
-    if (!timeString || typeof timeString !== 'string') return 0;
+    if (!timeString || typeof timeString !== 'string') {
+      return 0;
+    }
     
     const match = timeString.match(/^(\d+)([mhd])$/);
-    if (!match) return 0;
+    if (!match) {
+      return 0;
+    }
     
     const value = parseInt(match[1], 10);
     const unit = match[2];
@@ -70,12 +80,16 @@ export const useInactivityTracker = () => {
     // Clear existing timers
     if (inactivityTimerRef.current) {
       clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
     }
     if (popupTimerRef.current) {
       clearTimeout(popupTimerRef.current);
+      popupTimerRef.current = null;
     }
 
-    if (!inactivityTimeout) return;
+    if (!inactivityTimeout) {
+      return;
+    }
 
     // Set timer to show popup after inactivity period
     inactivityTimerRef.current = setTimeout(() => {
@@ -84,7 +98,7 @@ export const useInactivityTracker = () => {
       
       // Give user additional time (same as inactivity timeout) to respond
       popupTimerRef.current = setTimeout(() => {
-        // Auto logout if no response - this will be handled by the popup component
+        // Auto logout if no response
         setShowPopup(false);
       }, inactivityTimeout);
     }, inactivityTimeout);
@@ -92,7 +106,9 @@ export const useInactivityTracker = () => {
 
   // Activity detection
   useEffect(() => {
-    if (!inactivityTimeout) return;
+    if (!inactivityTimeout) {
+      return;
+    }
 
     // List of events to track
     const events = [
@@ -124,9 +140,11 @@ export const useInactivityTracker = () => {
       });
       if (inactivityTimerRef.current) {
         clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
       }
       if (popupTimerRef.current) {
         clearTimeout(popupTimerRef.current);
+        popupTimerRef.current = null;
       }
     };
   }, [inactivityTimeout, resetInactivityTimer]);
