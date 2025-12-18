@@ -155,14 +155,9 @@ export const useInactivityTracker = () => {
       setShowPopup(true);
       showPopupRef.current = true; // Update ref when showing popup
       
-      // Give user additional time (same as inactivity timeout) to respond
-      console.log("[InactivityTracker] Setting popup auto-logout timer for:", inactivityTimeout, "ms");
-      popupTimerRef.current = setTimeout(() => {
-        // Auto logout if no response
-        console.log("[InactivityTracker] Popup timeout reached, auto-logging out");
-        setShowPopup(false);
-        showPopupRef.current = false;
-      }, inactivityTimeout);
+      // Note: Auto-logout is handled by the useEffect that watches showPopup
+      // This timer is kept for backwards compatibility but the actual logout
+      // is triggered by the useEffect hook
     }, inactivityTimeout);
   }, [inactivityTimeout]);
 
@@ -230,9 +225,38 @@ export const useInactivityTracker = () => {
     resetInactivityTimer();
   }, [resetInactivityTimer]);
 
+  // Store logout callback in ref so it can be accessed in timer
+  const onLogoutRef = useRef(null);
+  
+  const setOnLogout = useCallback((callback) => {
+    onLogoutRef.current = callback;
+  }, []);
+
+  // Update the popup timer to call logout when it expires
+  useEffect(() => {
+    if (showPopup && inactivityTimeout && onLogoutRef.current) {
+      console.log("[InactivityTracker] Setting up auto-logout timer for popup, timeout:", inactivityTimeout, "ms");
+      // Set up auto-logout timer when popup is shown
+      const autoLogoutTimer = setTimeout(() => {
+        console.log("[InactivityTracker] Popup timeout reached, calling logout");
+        setShowPopup(false);
+        showPopupRef.current = false;
+        if (onLogoutRef.current) {
+          onLogoutRef.current();
+        }
+      }, inactivityTimeout);
+
+      return () => {
+        console.log("[InactivityTracker] Cleaning up auto-logout timer");
+        clearTimeout(autoLogoutTimer);
+      };
+    }
+  }, [showPopup, inactivityTimeout]);
+
   return {
     showPopup,
     inactivityTimeout,
     handleStayActive,
+    setOnLogout,
   };
 };

@@ -90,7 +90,7 @@ function MainLayout() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user, logout } = useUser();
-  const { showPopup, inactivityTimeout, handleStayActive } = useInactivityTracker();
+  const { showPopup, inactivityTimeout, handleStayActive, setOnLogout } = useInactivityTracker();
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -104,6 +104,11 @@ function MainLayout() {
     logout();
     window.location.href = "/logowanie";
   };
+
+  // Set the logout callback in the hook
+  useEffect(() => {
+    setOnLogout(handleInactivityLogout);
+  }, [setOnLogout]);
 
   return (
     <div className={isDarkMode ? "dark" : ""}>

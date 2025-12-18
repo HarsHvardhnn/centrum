@@ -78,6 +78,21 @@ const TokenExpiryPopup = () => {
     return () => clearInterval(interval);
   }, [showPopup, timeRemaining]);
 
+  // Auto-logout when token expires (countdown reaches 0)
+  useEffect(() => {
+    if (showPopup && (countdown === 0 || timeRemaining === 0)) {
+      console.log("[TokenExpiryPopup] Token expired, auto-logging out");
+      // Small delay to ensure user sees the expired state
+      const logoutTimer = setTimeout(() => {
+        setShowPopup(false);
+        logout();
+        window.location.href = "/logowanie";
+      }, 1000);
+
+      return () => clearTimeout(logoutTimer);
+    }
+  }, [showPopup, countdown, timeRemaining, logout]);
+
   const handleRefreshToken = async () => {
     try {
       setIsRefreshing(true);
