@@ -125,15 +125,15 @@ axiosInstance.interceptors.response.use(
 
         try {
           // Create a new axios instance for refresh to avoid interceptors
+          // Refresh token endpoint uses HTTP-only cookies, no Authorization header, no body
           const refreshAxios = axios.create({
             baseURL: axiosInstance.defaults.baseURL,
-            withCredentials: true,
-            headers: {
-              'Content-Type': 'application/json'
-            }
+            withCredentials: true
+            // No headers - refresh token uses cookies only, no body needed
           });
           
-          const refreshResponse = await refreshAxios.post('/auth/refresh-token', {});
+          // Don't send any body - refresh token uses HTTP-only cookies only
+          const refreshResponse = await refreshAxios.post('/auth/refresh-token');
 
           if (refreshResponse.data && refreshResponse.data.token) {
             const newToken = refreshResponse.data.token;
