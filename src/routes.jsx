@@ -52,6 +52,8 @@ import ReportsDashboard from "./components/Reports/ReportsDashboard";
 import AppointmentConfigPage from "./components/admin/AppointmentConfigPage";
 import JWTSettingsPage from "./components/admin/JWTSettingsPage";
 import TokenExpiryPopup from "./components/UtilComponents/TokenExpiryPopup";
+import InactivityPopup from "./components/UtilComponents/InactivityPopup";
+import { useInactivityTracker } from "./hooks/useInactivityTracker";
 
 // Protected image route component
 const ProtectedImage = () => {
@@ -87,7 +89,8 @@ const RootRoute = () => {
 function MainLayout() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { user }=useUser()
+  const { user, logout } = useUser();
+  const { showPopup, inactivityTimeout, handleStayActive } = useInactivityTracker();
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -95,6 +98,11 @@ function MainLayout() {
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleInactivityLogout = () => {
+    logout();
+    window.location.href = "/logowanie";
   };
 
   return (
@@ -129,6 +137,15 @@ function MainLayout() {
       
       {/* Token Expiry Popup - shown globally when token is about to expire */}
       <TokenExpiryPopup />
+      
+      {/* Inactivity Popup - shown when user is inactive */}
+      {showPopup && inactivityTimeout && (
+        <InactivityPopup
+          inactivityTimeout={inactivityTimeout}
+          onStayActive={handleStayActive}
+          onLogout={handleInactivityLogout}
+        />
+      )}
     </div>
   );
 }
