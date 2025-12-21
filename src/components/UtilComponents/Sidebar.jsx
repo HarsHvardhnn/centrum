@@ -14,7 +14,7 @@ import {
 } from "react-icons/fi";
 import { BsCalendarPlusFill } from "react-icons/bs";
 import { useUser } from "../../context/userContext";
-import { Calendar1, Shield, BarChart3, Settings } from "lucide-react";
+import { Calendar1, Shield, BarChart3, Settings, Trash2 } from "lucide-react";
 
 const Sidebar = () => {
   const { user } = useUser();
@@ -192,6 +192,13 @@ const Sidebar = () => {
                 label="Ustawienia JWT"
                 to="/administracja/ustawienia-jwt"
                 isActive={currentPath === "/administracja/ustawienia-jwt"}
+                isEnabled={true}
+              />
+              <NavItem
+                icon={<Trash2 className="text-xl text-red-400" />}
+                label="Trwałe usuwanie"
+                to="/administracja/trwale-usuwanie"
+                isActive={currentPath === "/administracja/trwale-usuwanie"}
                 isEnabled={true}
               />
             </>

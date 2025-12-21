@@ -12,6 +12,9 @@ import doctorService from "../../helpers/doctorHelper";
 import patientService from "../../helpers/patientHelper";
 import SpecializationModal from "./SpecializationModal";
 import { toast } from "sonner";
+import PermanentDeleteDialog from "./PermanentDeleteDialog";
+import BulkDeleteByIdsDialog from "./BulkDeleteByIdsDialog";
+import { Trash2 } from "lucide-react";
 
 export default function UserManagement() {
   // Add these translation mappings at the top of the component
@@ -63,6 +66,16 @@ export default function UserManagement() {
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [permanentDeleteDialog, setPermanentDeleteDialog] = useState({
+    open: false,
+    id: null,
+    userName: ""
+  });
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [bulkDeleteDialog, setBulkDeleteDialog] = useState({
+    open: false,
+    ids: []
+  });
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -260,6 +273,46 @@ export default function UserManagement() {
   const handleDeleteClick = (user) => {
     setSelectedUser(user);
     setShowDeleteModal(true);
+  };
+
+  const handlePermanentDeleteClick = (user) => {
+    setPermanentDeleteDialog({
+      open: true,
+      id: user._id,
+      userName: `${user.name.first} ${user.name.last}`
+    });
+  };
+
+  const handlePermanentDeleteSuccess = () => {
+    fetchUsers();
+    setSelectedUserIds([]);
+  };
+
+  const handleSelectUser = (userId) => {
+    setSelectedUserIds(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedUserIds.length === users.length) {
+      setSelectedUserIds([]);
+    } else {
+      setSelectedUserIds(users.map(user => user._id));
+    }
+  };
+
+  const handleBulkDeleteClick = () => {
+    if (selectedUserIds.length === 0) {
+      toast.error('Proszę wybrać użytkowników do usunięcia');
+      return;
+    }
+    setBulkDeleteDialog({
+      open: true,
+      ids: selectedUserIds
+    });
   };
 
   // Function to open the schedule modal
@@ -751,11 +804,37 @@ export default function UserManagement() {
         </div>
       )}
 
+      {/* Bulk Delete Button */}
+      {isAdmin && selectedUserIds.length > 0 && (
+        <div className="mb-4 flex items-center justify-between bg-red-50 border border-red-200 rounded-lg p-4">
+          <span className="text-red-800 font-medium">
+            Wybrano {selectedUserIds.length} użytkownik(ów)
+          </span>
+          <button
+            onClick={handleBulkDeleteClick}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            <Trash2 size={18} />
+            Trwale usuń wybranych ({selectedUserIds.length})
+          </button>
+        </div>
+      )}
+
       {/* User Table */}
       <div className="overflow-x-auto bg-white rounded-lg shadow">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              {isAdmin && (
+                <th scope="col" className="px-6 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={users.length > 0 && selectedUserIds.length === users.length}
+                    onChange={handleSelectAll}
+                    className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                </th>
+              )}
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
@@ -808,7 +887,7 @@ export default function UserManagement() {
           <tbody className="bg-white divide-y divide-gray-200">
             {isLoading ? (
               <tr>
-                <td colSpan="7" className="px-6 py-4 text-center">
+                <td colSpan={isAdmin ? "8" : "7"} className="px-6 py-4 text-center">
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-teal-500"></div>
                   </div>
@@ -816,13 +895,23 @@ export default function UserManagement() {
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={isAdmin ? "8" : "7"} className="px-6 py-4 text-center text-gray-500">
                   Nie znaleziono użytkowników
                 </td>
               </tr>
             ) : (
               users.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50">
+                <tr key={user._id} className={`hover:bg-gray-50 ${selectedUserIds.includes(user._id) ? 'bg-red-50' : ''}`}>
+                  {isAdmin && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={selectedUserIds.includes(user._id)}
+                        onChange={() => handleSelectUser(user._id)}
+                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      />
+                    </td>
+                  )}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
@@ -920,6 +1009,15 @@ export default function UserManagement() {
                           >
                             Usuń
                           </button>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handlePermanentDeleteClick(user)}
+                              className="text-red-800 hover:text-red-950 font-semibold ml-2"
+                              title="Trwale usuń (nieodwracalne)"
+                            >
+                              Trwale usuń
+                            </button>
+                          )}
                         </>
                       )}
                       {user.deleted && isAdmin && (
@@ -1221,6 +1319,27 @@ export default function UserManagement() {
           }}
         />
       )}
+
+      {/* Permanent Delete Dialog */}
+      <PermanentDeleteDialog
+        open={permanentDeleteDialog.open}
+        onClose={() => setPermanentDeleteDialog({ open: false, id: null, userName: "" })}
+        type="user"
+        id={permanentDeleteDialog.id}
+        title="Trwale usuń konto użytkownika?"
+        message={`Konto użytkownika "${permanentDeleteDialog.userName}" oraz wszystkie powiązane rekordy (wizyty, faktury, usługi) zostaną trwale usunięte. Ta operacja jest nieodwracalna.`}
+        onSuccess={handlePermanentDeleteSuccess}
+      />
+
+      {/* Bulk Delete Dialog */}
+      <BulkDeleteByIdsDialog
+        open={bulkDeleteDialog.open}
+        onClose={() => setBulkDeleteDialog({ open: false, ids: [] })}
+        type="user"
+        selectedIds={bulkDeleteDialog.ids}
+        itemName="użytkowników"
+        onSuccess={handlePermanentDeleteSuccess}
+      />
     </div>
   );
 }

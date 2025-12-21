@@ -51,6 +51,7 @@ import DoctorProfilePage from "./components/User/Pages/DoctorProfilePage";
 import ReportsDashboard from "./components/Reports/ReportsDashboard";
 import AppointmentConfigPage from "./components/admin/AppointmentConfigPage";
 import JWTSettingsPage from "./components/admin/JWTSettingsPage";
+import PermanentDeletePage from "./components/admin/PermanentDeletePage";
 import TokenExpiryPopup from "./components/UtilComponents/TokenExpiryPopup";
 import InactivityPopup from "./components/UtilComponents/InactivityPopup";
 import { useInactivityTracker } from "./hooks/useInactivityTracker";
@@ -228,6 +229,7 @@ const routes = createBrowserRouter([
           { path: "/administracja/bezpieczenstwo/2fa", element: <TwoFactorSettings /> },
           { path: "/administracja/konfiguracja-wizyt", element: <AppointmentConfigPage /> },
           { path: "/administracja/ustawienia-jwt", element: <JWTSettingsPage /> },
+          { path: "/administracja/trwale-usuwanie", element: <PermanentDeletePage /> },
         ],
       },
     ],

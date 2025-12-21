@@ -31,6 +31,8 @@ import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import PatientStepForm from "../SubComponentForm/PatientStepForm";
 import patientService from "../../helpers/patientHelper";
 import RescheduleModal from "../Dashboard/RescheduleModal";
+import BulkDeleteByIdsDialog from "../admin/BulkDeleteByIdsDialog";
+import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 
 // Add billingHelper with the generateBill function
 const billingHelper = {
@@ -61,6 +63,15 @@ function LabAppointmentsContent({ clinic }) {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [sendSMSNotification, setSendSMSNotification] = useState(false);
   const [sendEmailNotification, setSendEmailNotification] = useState(false);
+  const [selectedAppointmentIds, setSelectedAppointmentIds] = useState([]);
+  const [bulkDeleteDialog, setBulkDeleteDialog] = useState({
+    open: false,
+    ids: []
+  });
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    id: null
+  });
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -526,6 +537,52 @@ function LabAppointmentsContent({ clinic }) {
     fetchAppointments(pagination.page);
   };
 
+  // Multi-select handlers for appointments
+  const handleSelectAppointment = (appointmentId) => {
+    if (user?.role !== "admin") return; // Only admin can select
+    setSelectedAppointmentIds(prev => 
+      prev.includes(appointmentId) 
+        ? prev.filter(id => id !== appointmentId)
+        : [...prev, appointmentId]
+    );
+  };
+
+  const handleSelectAllAppointments = () => {
+    if (user?.role !== "admin") return;
+    if (selectedAppointmentIds.length === appointments.length) {
+      setSelectedAppointmentIds([]);
+    } else {
+      setSelectedAppointmentIds(appointments.map(apt => apt.id));
+    }
+  };
+
+  const handleBulkDeleteAppointments = () => {
+    if (selectedAppointmentIds.length === 0) {
+      toast.error('Proszę wybrać wizyty do usunięcia');
+      return;
+    }
+    setBulkDeleteDialog({
+      open: true,
+      ids: selectedAppointmentIds
+    });
+  };
+
+  const handleBulkDeleteSuccess = () => {
+    fetchAppointments(pagination.page);
+    setSelectedAppointmentIds([]);
+  };
+
+  const handlePermanentDeleteClick = (appointmentId) => {
+    setDeleteDialog({
+      open: true,
+      id: appointmentId
+    });
+  };
+
+  const handlePermanentDeleteSuccess = () => {
+    fetchAppointments(pagination.page);
+  };
+
   return (
     <div className="bg-white min-h-screen">
       <div className="w-full mx-auto px-4 py-8">
@@ -671,23 +728,71 @@ function LabAppointmentsContent({ clinic }) {
           </div>
         </div>
 
+        {/* Bulk Delete Button for Appointments */}
+        {user?.role === "admin" && selectedAppointmentIds.length > 0 && (
+          <div className="mb-4 flex items-center justify-between bg-red-50 border border-red-200 rounded-lg p-4">
+            <span className="text-red-800 font-medium">
+              Wybrano {selectedAppointmentIds.length} wizyt(y)
+            </span>
+            <button
+              onClick={handleBulkDeleteAppointments}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              <Trash2 size={18} />
+              Trwale usuń wybrane ({selectedAppointmentIds.length})
+            </button>
+          </div>
+        )}
+
         {clinic ? (
           // Clinic appointments - Date focused layout
           <div className="space-y-6">
             {Object.entries(groupAppointmentsByDate(appointments)).map(([date, appointments]) => (
               <div key={date} className="bg-white rounded-lg shadow-sm border">
-                <div className="bg-gray-50 px-6 py-4 border-b">
+                <div className="bg-gray-50 px-6 py-4 border-b flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-gray-800">
                     {formatDateHeader(date)}
                   </h2>
+                  {user?.role === "admin" && (
+                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={appointments.every(apt => selectedAppointmentIds.includes(apt.id)) && appointments.length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedAppointmentIds(prev => [
+                              ...prev,
+                              ...appointments.map(apt => apt.id).filter(id => !prev.includes(id))
+                            ]);
+                          } else {
+                            setSelectedAppointmentIds(prev => prev.filter(id => !appointments.map(apt => apt.id).includes(id)));
+                          }
+                        }}
+                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      />
+                      <span>Zaznacz wszystkie</span>
+                    </label>
+                  )}
                 </div>
                 <div className="divide-y">
                   {appointments.map((appointment) => (
-                    <div key={appointment.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+                    <div key={appointment.id} className={`px-6 py-4 hover:bg-gray-50 transition-colors ${selectedAppointmentIds.includes(appointment.id) ? 'bg-red-50' : ''}`}>
                       <div className="grid grid-cols-12 gap-4 items-center h-[60px]">
-                        {/* Patient Info - 5 columns */}
+                        {/* Checkbox - only for admin */}
+                        {user?.role === "admin" && (
+                          <div className="col-span-1 flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedAppointmentIds.includes(appointment.id)}
+                              onChange={() => handleSelectAppointment(appointment.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                            />
+                          </div>
+                        )}
+                        {/* Patient Info - adjusted columns */}
                         <div 
-                          className={`col-span-5 flex items-center gap-3 min-w-0 ${appointment.isAppointment !== false ? 'cursor-pointer' : ''}`}
+                          className={`${user?.role === "admin" ? "col-span-4" : "col-span-5"} flex items-center gap-3 min-w-0 ${appointment.isAppointment !== false ? 'cursor-pointer' : ''}`}
                           onClick={() => {
                             if (appointment.isAppointment !== false) {
                               navigate(
@@ -719,8 +824,8 @@ function LabAppointmentsContent({ clinic }) {
                           </div>
                         </div>
 
-                        {/* Time and Doctor - 4 columns */}
-                        <div className="col-span-4 flex flex-col min-w-0">
+                        {/* Time and Doctor - adjusted columns */}
+                        <div className={`${user?.role === "admin" ? "col-span-3" : "col-span-4"} flex flex-col min-w-0`}>
                           <div className="font-medium text-gray-900 truncate">
                             {appointment.startTime} - {appointment.endTime}
                           </div>
@@ -737,7 +842,19 @@ function LabAppointmentsContent({ clinic }) {
                         </div>
 
                         {/* Actions - 1 column */}
-                        <div className="col-span-1 flex justify-end">
+                        <div className="col-span-1 flex justify-end items-center gap-2">
+                          {user?.role === "admin" && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePermanentDeleteClick(appointment.id);
+                              }}
+                              className="text-red-600 hover:text-red-800"
+                              title="Trwale usuń"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                           {appointment.isAppointment !== false && (
                             <DropdownMenu.Root>
                               <DropdownMenu.Trigger asChild>
@@ -852,6 +969,16 @@ function LabAppointmentsContent({ clinic }) {
             <table className="w-full table-fixed border-collapse">
               <thead>
                 <tr className="text-left text-gray-500 border-b bg-gray-50">
+                  {user?.role === "admin" && (
+                    <th className="px-4 py-3 w-[3%] font-medium">
+                      <input
+                        type="checkbox"
+                        checked={appointments.length > 0 && selectedAppointmentIds.length === appointments.length}
+                        onChange={handleSelectAllAppointments}
+                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      />
+                    </th>
+                  )}
                   <th className="px-4 py-3 w-[16%] font-medium">Pacjent</th>
                   <th className="px-4 py-3 w-[12%] font-medium">
                     Data i godzina
@@ -866,7 +993,17 @@ function LabAppointmentsContent({ clinic }) {
               </thead>
               <tbody>
                 {appointments.map((appointment) => (
-                  <tr key={appointment.id} className="border-b hover:bg-gray-50">
+                  <tr key={appointment.id} className={`border-b hover:bg-gray-50 ${selectedAppointmentIds.includes(appointment.id) ? 'bg-red-50' : ''}`}>
+                    {user?.role === "admin" && (
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedAppointmentIds.includes(appointment.id)}
+                          onChange={() => handleSelectAppointment(appointment.id)}
+                          className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                        />
+                      </td>
+                    )}
                     <td
                       className={`px-4 py-3 truncate ${appointment.isAppointment !== false ? 'cursor-pointer' : ''}`}
                       onClick={() => {
@@ -1032,6 +1169,17 @@ function LabAppointmentsContent({ clinic }) {
                                   >
                                     <Pen size={16} className="mr-2" />
                                     Edytuj pacjenta
+                                  </DropdownMenu.Item>
+                                )}
+
+                                {/* Permanent Delete - only for admin */}
+                                {user?.role === "admin" && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
+                                    onClick={() => handlePermanentDeleteClick(appointment.id)}
+                                  >
+                                    <Trash2 size={16} className="mr-2" />
+                                    Trwale usuń
                                   </DropdownMenu.Item>
                                 )}
                               </DropdownMenu.Content>
@@ -1239,6 +1387,27 @@ function LabAppointmentsContent({ clinic }) {
             </div>
           </div>
         )}
+
+        {/* Bulk Delete Dialog */}
+        <BulkDeleteByIdsDialog
+          open={bulkDeleteDialog.open}
+          onClose={() => setBulkDeleteDialog({ open: false, ids: [] })}
+          type="appointment"
+          selectedIds={bulkDeleteDialog.ids}
+          itemName="wizyt"
+          onSuccess={handleBulkDeleteSuccess}
+        />
+
+        {/* Single Delete Dialog */}
+        <PermanentDeleteDialog
+          open={deleteDialog.open}
+          onClose={() => setDeleteDialog({ open: false, id: null })}
+          type="appointment"
+          id={deleteDialog.id}
+          title="Trwale usuń wizytę?"
+          message="Ta operacja jest nieodwracalna. Wizyta oraz wszystkie powiązane rekordy (rachunki, raporty) zostaną trwale usunięte."
+          onSuccess={handlePermanentDeleteSuccess}
+        />
       </div>
     </div>
   );

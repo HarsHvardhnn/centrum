@@ -29,6 +29,8 @@ import { formatDateToYYYYMMDD } from "../../utils/formatDate";
 import { useUser } from "../../context/userContext";
 import { useServices } from "../../context/serviceContext";
 import ServiceSelectionModal from "../Doctor/SingleDoctor/patient-details/ServiceSelectionModal";
+import BulkDeleteByIdsDialog from "../admin/BulkDeleteByIdsDialog";
+import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 
 // Simple Loader Component
 const LoaderOverlay = () => (
@@ -57,6 +59,15 @@ const BillingManagement = () => {
   // Add state for confirmation modal
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [billToUpdate, setBillToUpdate] = useState(null);
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState([]);
+  const [bulkDeleteDialog, setBulkDeleteDialog] = useState({
+    open: false,
+    ids: []
+  });
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    id: null
+  });
   
   // State for bills data and pagination
   const [bills, setBills] = useState([]);
@@ -1097,6 +1108,52 @@ const BillingManagement = () => {
   const handleViewBillDetails = (billId) => {
     navigate(`/administracja/rozliczenia/szczegoly/${billId}`);
   };
+
+  // Multi-select handlers for invoices
+  const handleSelectInvoice = (invoiceId) => {
+    if (user?.role !== "admin") return; // Only admin can select
+    setSelectedInvoiceIds(prev => 
+      prev.includes(invoiceId) 
+        ? prev.filter(id => id !== invoiceId)
+        : [...prev, invoiceId]
+    );
+  };
+
+  const handleSelectAllInvoices = () => {
+    if (user?.role !== "admin") return;
+    if (selectedInvoiceIds.length === bills.length) {
+      setSelectedInvoiceIds([]);
+    } else {
+      setSelectedInvoiceIds(bills.map(bill => bill._id));
+    }
+  };
+
+  const handleBulkDeleteInvoices = () => {
+    if (selectedInvoiceIds.length === 0) {
+      toast.error('Proszę wybrać faktury do usunięcia');
+      return;
+    }
+    setBulkDeleteDialog({
+      open: true,
+      ids: selectedInvoiceIds
+    });
+  };
+
+  const handleBulkDeleteSuccess = () => {
+    fetchBills();
+    setSelectedInvoiceIds([]);
+  };
+
+  const handlePermanentDeleteClick = (invoiceId) => {
+    setDeleteDialog({
+      open: true,
+      id: invoiceId
+    });
+  };
+
+  const handlePermanentDeleteSuccess = () => {
+    fetchBills();
+  };
   
   const handlePrintBill = (billId) => {
     // Open in new tab for printing
@@ -1335,12 +1392,38 @@ const BillingManagement = () => {
           )}
         </div>
         
+        {/* Bulk Delete Button for Invoices */}
+        {user?.role === "admin" && selectedInvoiceIds.length > 0 && (
+          <div className="mb-4 flex items-center justify-between bg-red-50 border border-red-200 rounded-lg p-4">
+            <span className="text-red-800 font-medium">
+              Wybrano {selectedInvoiceIds.length} faktur(y)
+            </span>
+            <button
+              onClick={handleBulkDeleteInvoices}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              <Trash2 size={18} />
+              Trwale usuń wybrane ({selectedInvoiceIds.length})
+            </button>
+          </div>
+        )}
+
         {/* Bills Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  {user?.role === "admin" && (
+                    <th scope="col" className="px-6 py-3 text-left">
+                      <input
+                        type="checkbox"
+                        checked={bills.length > 0 && selectedInvoiceIds.length === bills.length}
+                        onChange={handleSelectAllInvoices}
+                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      />
+                    </th>
+                  )}
                   {/* <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
@@ -1424,7 +1507,17 @@ const BillingManagement = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {bills.length > 0 ? (
                   bills.map((bill) => (
-                    <tr key={bill._id} className="hover:bg-gray-50">
+                    <tr key={bill._id} className={`hover:bg-gray-50 ${selectedInvoiceIds.includes(bill._id) ? 'bg-red-50' : ''}`}>
+                      {user?.role === "admin" && (
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={selectedInvoiceIds.includes(bill._id)}
+                            onChange={() => handleSelectInvoice(bill._id)}
+                            className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                          />
+                        </td>
+                      )}
                       {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {bill?._id}
                       </td> */}
@@ -1494,13 +1587,22 @@ const BillingManagement = () => {
                               </button>
                             </>
                           )}
+                          {user?.role === "admin" && (
+                            <button
+                              onClick={() => handlePermanentDeleteClick(bill._id)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Trwale usuń fakturę"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center">
+                    <td colSpan={user?.role === "admin" ? "7" : "6"} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center">
                         <FileText size={48} className="text-gray-300 mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-1">Nie znaleziono faktur</h3>
@@ -1567,6 +1669,27 @@ const BillingManagement = () => {
           isRedirectedFromAppointment={isRedirectedFromAppointment}
         />
       )}
+
+      {/* Bulk Delete Dialog */}
+      <BulkDeleteByIdsDialog
+        open={bulkDeleteDialog.open}
+        onClose={() => setBulkDeleteDialog({ open: false, ids: [] })}
+        type="invoice"
+        selectedIds={bulkDeleteDialog.ids}
+        itemName="faktur"
+        onSuccess={handleBulkDeleteSuccess}
+      />
+
+      {/* Single Delete Dialog */}
+      <PermanentDeleteDialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ open: false, id: null })}
+        type="invoice"
+        id={deleteDialog.id}
+        title="Trwale usuń fakturę?"
+        message="Ta operacja jest nieodwracalna. Faktura oraz wszystkie powiązane rekordy zostaną trwale usunięte."
+        onSuccess={handlePermanentDeleteSuccess}
+      />
     </div>
   );
 };

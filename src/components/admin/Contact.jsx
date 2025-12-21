@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+import PermanentDeleteDialog from "./PermanentDeleteDialog";
+import BulkDeleteComponent from "./BulkDeleteComponent";
 
 const PAGE_SIZE = 10;
 
@@ -12,6 +14,10 @@ const Adminmsgs = () => {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [deletingId, setDeletingId] = useState(null);
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    id: null
+  });
 
   // Function to convert privacy policy acceptance to Polish
   const getPrivacyPolicyStatus = (accepted) => {
@@ -46,31 +52,15 @@ const Adminmsgs = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  const handleDelete = async (contactId) => {
-    // Confirm deletion
-    if (!window.confirm("Czy na pewno chcesz usunąć tę wiadomość kontaktową? Ta operacja jest nieodwracalna.")) {
-      return;
-    }
+  const handleDeleteClick = (contactId) => {
+    setDeleteDialog({
+      open: true,
+      id: contactId
+    });
+  };
 
-    try {
-      setDeletingId(contactId);
-      
-      const res = await apiCaller("DELETE", `/api/contact/${contactId}`);
-      
-      if (res.data.success) {
-        toast.success("Wiadomość kontaktowa usunięta pomyślnie");
-        // Refresh the messages list
-        await fetchMessages();
-      } else {
-        throw new Error(res.data.message || "Nie udało się usunąć wiadomości");
-      }
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "Błąd podczas usuwania wiadomości";
-      toast.error(errorMessage);
-      console.error("Error deleting contact:", err);
-    } finally {
-      setDeletingId(null);
-    }
+  const handleDeleteSuccess = async () => {
+    await fetchMessages();
   };
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -78,6 +68,14 @@ const Adminmsgs = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Wiadomości kontaktowe</h1>
+      
+      {/* Bulk Delete Component */}
+      <div className="mb-6">
+        <BulkDeleteComponent 
+          type="contact" 
+          onSuccess={handleDeleteSuccess}
+        />
+      </div>
       {loading ? (
         <div className="text-center py-12">Ładowanie...</div>
       ) : error ? (
@@ -113,13 +111,12 @@ const Adminmsgs = () => {
                       </td>
                       <td className="px-4 py-3 border-b">
                         <button
-                          onClick={() => handleDelete(msg._id)}
-                          disabled={deletingId === msg._id}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          title="Usuń wiadomość"
+                          onClick={() => handleDeleteClick(msg._id)}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                          title="Trwale usuń wiadomość"
                         >
                           <Trash2 size={16} />
-                          {deletingId === msg._id ? "Usuwanie..." : "Usuń"}
+                          Trwale usuń
                         </button>
                       </td>
                     </tr>
@@ -150,6 +147,17 @@ const Adminmsgs = () => {
           )}
         </>
       )}
+
+      {/* Permanent Delete Dialog */}
+      <PermanentDeleteDialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ open: false, id: null })}
+        type="contact"
+        id={deleteDialog.id}
+        title="Trwale usuń wiadomość kontaktową?"
+        message="Ta operacja jest nieodwracalna. Wiadomość kontaktowa zostanie trwale usunięta z systemu."
+        onSuccess={handleDeleteSuccess}
+      />
     </div>
   );
 };
