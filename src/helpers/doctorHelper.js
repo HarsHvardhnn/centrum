@@ -359,6 +359,35 @@ const doctorService = {
       throw error;
     }
   },
+
+  /**
+   * Get week slot availability for a doctor
+   * @param {string} doctorId - Doctor ID
+   * @param {string} startDate - Start date in YYYY-MM-DD format
+   * @param {string} endDate - Optional end date in YYYY-MM-DD format (defaults to 7 days from startDate)
+   * @returns {Promise} - API response with week availability data
+   */
+  getWeekAvailability: async (doctorId, startDate, endDate = null) => {
+    try {
+      if (!doctorId) {
+        throw new Error("Doctor ID is required");
+      }
+      if (!startDate) {
+        throw new Error("Start date is required");
+      }
+
+      let url = `/docs/schedule/week-availability/${doctorId}?startDate=${startDate}`;
+      if (endDate) {
+        url += `&endDate=${endDate}`;
+      }
+
+      const response = await apiCaller("GET", url);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching week availability:", error);
+      throw error;
+    }
+  },
 };
 
 export default doctorService;

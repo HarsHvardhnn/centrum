@@ -55,6 +55,11 @@ const DoctorProfilePage = () => {
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAllServices, setShowAllServices] = useState(false);
+  // Track which days have available slots
+  const [daysWithSlots, setDaysWithSlots] = useState(new Set());
+  const [checkingSlots, setCheckingSlots] = useState(false);
+  // Cache week availability data to avoid redundant API calls
+  const [weekAvailabilityCache, setWeekAvailabilityCache] = useState(null);
 
   // Phone country codes configuration
   const phoneCountryCodes = [
@@ -113,19 +118,141 @@ const DoctorProfilePage = () => {
   const fetchAvailableSlots = async (doctorId, date) => {
     try {
       setSlotsLoading(true);
+      
+      // Check if we have cached week availability data for this date
+      if (weekAvailabilityCache && weekAvailabilityCache.availability) {
+        const cachedDay = weekAvailabilityCache.availability.find(
+          day => day.date === date
+        );
+        
+        if (cachedDay && cachedDay.hasSlots && cachedDay.availableSlots) {
+          // Use cached data if available
+          setAvailableSlots(cachedDay.availableSlots);
+          return;
+        } else if (cachedDay && !cachedDay.hasSlots) {
+          // No slots available according to cache
+          setAvailableSlots([]);
+          return;
+        }
+      }
+      
+      // Fallback to API call if cache doesn't have this date
       const response = await apiCaller(
         "GET",
         `docs/schedule/available-slots/${doctorId}?date=${date}`
       );
       if (response.data.success) {
         setAvailableSlots(response.data.data);
+        // Update daysWithSlots based on whether slots are available
+        if (response.data.data && response.data.data.length > 0) {
+          const hasAvailableSlots = response.data.data.some(slot => slot.available);
+          setDaysWithSlots(prev => {
+            const newSet = new Set(prev);
+            if (hasAvailableSlots) {
+              newSet.add(date);
+            } else {
+              newSet.delete(date);
+            }
+            return newSet;
+          });
+        } else {
+          setDaysWithSlots(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(date);
+            return newSet;
+          });
+        }
       } else {
         console.error("Failed to fetch available slots");
+        setDaysWithSlots(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(date);
+          return newSet;
+        });
       }
     } catch (error) {
       console.error("Error fetching available slots:", error);
+      setDaysWithSlots(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(date);
+        return newSet;
+      });
     } finally {
       setSlotsLoading(false);
+    }
+  };
+
+  // Fetch slot availability for all days in the current week using new optimized endpoint
+  const fetchWeekSlotAvailability = async (doctorId, days) => {
+    if (!doctorId || !days || days.length === 0) return;
+    
+    try {
+      setCheckingSlots(true);
+      
+      // Get start and end dates from the days array
+      const startDate = days[0];
+      const endDate = days[days.length - 1];
+      
+      // Use the new week availability endpoint
+      const response = await doctorService.getWeekAvailability(doctorId, startDate, endDate);
+      
+      if (response.success && response.data && response.data.availability) {
+        // Process the availability data from the new endpoint
+        const newDaysWithSlots = new Set();
+        response.data.availability.forEach((dayAvailability) => {
+          if (dayAvailability.hasSlots) {
+            newDaysWithSlots.add(dayAvailability.date);
+          }
+        });
+        setDaysWithSlots(newDaysWithSlots);
+        
+        // Cache the week availability data for potential reuse
+        setWeekAvailabilityCache(response.data);
+      } else {
+        // Fallback: if response structure is unexpected, mark all days as having no slots
+        console.warn("Unexpected response structure from week availability endpoint");
+        setDaysWithSlots(new Set());
+        setWeekAvailabilityCache(null);
+      }
+    } catch (error) {
+      console.error("Error fetching week slot availability:", error);
+      // On error, fall back to checking individual dates (old method)
+      console.log("Falling back to individual date checks...");
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        const slotChecks = days
+          .filter(date => date >= today)
+          .map(async (date) => {
+            try {
+              const response = await apiCaller(
+                "GET",
+                `docs/schedule/available-slots/${doctorId}?date=${date}`
+              );
+              if (response.data.success && response.data.data) {
+                const hasAvailableSlots = response.data.data.some(slot => slot.available);
+                return { date, hasSlots: hasAvailableSlots };
+              }
+              return { date, hasSlots: false };
+            } catch (error) {
+              console.error(`Error checking slots for ${date}:`, error);
+              return { date, hasSlots: false };
+            }
+          });
+
+        const results = await Promise.all(slotChecks);
+        const newDaysWithSlots = new Set();
+        results.forEach(({ date, hasSlots }) => {
+          if (hasSlots) {
+            newDaysWithSlots.add(date);
+          }
+        });
+        setDaysWithSlots(newDaysWithSlots);
+      } catch (fallbackError) {
+        console.error("Fallback method also failed:", fallbackError);
+        setDaysWithSlots(new Set());
+      }
+    } finally {
+      setCheckingSlots(false);
     }
   };
 
@@ -171,6 +298,18 @@ const DoctorProfilePage = () => {
         // Set available slots
         setAvailableSlots(nextAvailableResponse.data.availableSlots);
         
+        // Update daysWithSlots for the next available date
+        if (nextAvailableResponse.data.availableSlots && nextAvailableResponse.data.availableSlots.length > 0) {
+          const hasAvailableSlots = nextAvailableResponse.data.availableSlots.some(slot => slot.available);
+          setDaysWithSlots(prev => {
+            const newSet = new Set(prev);
+            if (hasAvailableSlots) {
+              newSet.add(nextAvailableDate);
+            }
+            return newSet;
+          });
+        }
+        
         // Force update the nextDays array to show the correct week immediately
         const days = Array.from({ length: 7 }, (_, i) => {
           const date = new Date();
@@ -178,6 +317,9 @@ const DoctorProfilePage = () => {
           return date.toISOString().split("T")[0];
         });
         setNextDays(days);
+        
+        // Fetch slot availability for all days in the week
+        fetchWeekSlotAvailability(doctorId, days);
       } else {
         // If no available date found, use current date
         setSelectedDate(new Date().toISOString().split("T")[0]);
@@ -455,7 +597,19 @@ const DoctorProfilePage = () => {
       return date.toISOString().split("T")[0];
     });
     setNextDays(days);
-  }, [weekOffset]);
+    
+    // Clear cache when week changes
+    setWeekAvailabilityCache(null);
+    
+    // Fetch slot availability for all days in the week when week changes
+    if (doctor && days.length > 0) {
+      const doctorId = doctor._id || doctor.id;
+      if (doctorId) {
+        fetchWeekSlotAvailability(doctorId, days);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekOffset, doctor?._id, doctor?.id]);
 
   // Initialize nextDays on component mount
   useEffect(() => {
@@ -1102,19 +1256,26 @@ const DoctorProfilePage = () => {
                           const isToday = date === today;
                           const isActive = date === selectedDate;
                           const isPast = dayDate < new Date().setHours(0, 0, 0, 0);
+                          const hasSlots = daysWithSlots.has(date);
+                          const isChecking = checkingSlots && !isPast;
 
                           return (
                             <button
                               key={date}
-                              onClick={() => !isPast && handleDateChange(date)}
-                              disabled={isPast}
-                              className={`px-2 py-3 rounded-lg border text-sm ${
+                              onClick={() => !isPast && hasSlots && handleDateChange(date)}
+                              disabled={isPast || !hasSlots}
+                              className={`px-2 py-3 rounded-lg border text-sm transition-all ${
                                 isActive
                                   ? "bg-teal-600 text-white border-teal-600"
                                   : isPast
-                                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-50"
+                                  : !hasSlots && !isChecking
+                                  ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-40"
+                                  : isChecking
+                                  ? "bg-gray-100 text-gray-500 border-gray-300 cursor-wait"
+                                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-teal-300"
                               }`}
+                              title={!hasSlots && !isPast ? "Brak dostępnych terminów" : ""}
                             >
                               <div className="font-medium">
                                 {dayDate.toLocaleDateString("pl-PL", {
@@ -1126,6 +1287,10 @@ const DoctorProfilePage = () => {
                               </div>
                               {isToday && <div className="text-xs">Dziś</div>}
                               {isPast && <div className="text-xs text-gray-400">Przeszły</div>}
+                              {!hasSlots && !isPast && !isChecking && (
+                                <div className="text-xs text-gray-400">Brak terminów</div>
+                              )}
+                              {isChecking && <div className="text-xs text-gray-400">Sprawdzanie...</div>}
                             </button>
                           );
                         })}
