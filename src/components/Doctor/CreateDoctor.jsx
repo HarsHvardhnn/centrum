@@ -15,6 +15,7 @@ import {
 import { useSpecializations } from "../../context/SpecializationContext";
 import SpecializationDropdown from "./SpecializationDropdown";
 import ImageCropper from "../UtilComponents/ImageCropper";
+import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
 
 // List of departments
 
@@ -62,7 +63,7 @@ const DoctorSchema = Yup.object().shape({
 });
 
 
-export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode }) {
+export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode, onFormDataChange, saveStatus }) {
   //("doctors",initialData)
 
   console.log("intitial data", initialData?.profilePicture)
@@ -169,9 +170,14 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-800">
-            {isEditMode ? "Edytuj Lekarza" : "Dodaj Nowego Lekarza"}
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold text-gray-800">
+              {isEditMode ? "Edytuj Lekarza" : "Dodaj Nowego Lekarza"}
+            </h2>
+            {!isEditMode && saveStatus && (
+              <AutoSaveIndicator status={saveStatus} />
+            )}
+          </div>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
@@ -182,19 +188,19 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
 
         <Formik
           initialValues={{
-            firstName: initialData?.name?.first || "",
-            lastName: initialData?.name?.last || "",
+            firstName: initialData?.name?.first || initialData?.firstName || "",
+            lastName: initialData?.name?.last || initialData?.lastName || "",
             email: initialData?.email || "",
             phone: initialData?.phone || "",
-            password: "",
+            password: initialData?.password || "",
             confirmPassword: "",
             department: initialData?.department || "",
-            specialization: normalizeSpecs(initialData?.specializations),
+            specialization: normalizeSpecs(initialData?.specializations) || initialData?.specialization || [],
             qualifications: initialData?.qualifications || [],
             experience: initialData?.experience || "",
             shortDescription: initialData?.shortDescription || "",
             bio: initialData?.bio || "",
-            consultationFee: initialData?.onlineConsultationFee || "",
+            consultationFee: initialData?.onlineConsultationFee || initialData?.consultationFee || "",
             offlineConsultationFee: initialData?.offlineConsultationFee || "",
             profilePicture:  null, // Always null initially, we handle preview separately
           }}
@@ -215,8 +221,16 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             }
           }}
         >
-          {({ values, errors, touched, isSubmitting, setFieldValue }) => (
-            <Form className="space-y-6">
+          {({ values, errors, touched, isSubmitting, setFieldValue }) => {
+            // Track form data changes for auto-save
+            useEffect(() => {
+              if (onFormDataChange && !isEditMode) {
+                onFormDataChange(values);
+              }
+            }, [values, onFormDataChange, isEditMode]);
+
+            return (
+              <Form className="space-y-6">
               <div className="flex flex-col md:flex-row gap-8">
                 {/* Left column */}
                 <div className="flex-1 space-y-6">
@@ -676,7 +690,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                 </button>
               </div>
             </Form>
-          )}
+            );
+          }}
         </Formik>
 
         {/* Image Cropper Modal */}

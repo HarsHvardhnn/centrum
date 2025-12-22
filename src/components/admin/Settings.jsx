@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import adminHelper from "../../helpers/adminHelper";
 import { useLoader } from "../../context/LoaderContext";
@@ -15,6 +15,9 @@ import { toast } from "sonner";
 import PermanentDeleteDialog from "./PermanentDeleteDialog";
 import BulkDeleteByIdsDialog from "./BulkDeleteByIdsDialog";
 import { Trash2 } from "lucide-react";
+import { useFormDraft } from "../../hooks/useFormDraft";
+import { loadFormDraft, clearFormDraft, hasFormDraft, formatDraftAge } from "../../utils/formDraftStorage";
+import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
 
 export default function UserManagement() {
   // Add these translation mappings at the top of the component
@@ -99,6 +102,7 @@ export default function UserManagement() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentPatientId, setCurrentPatientId] = useState(null);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [doctorDraftData, setDoctorDraftData] = useState(null); // For draft recovery
   const [returnUrl, setReturnUrl] = useState(null);
   const subStepTitles = [
     "Dane Podstawowe",
@@ -244,6 +248,21 @@ export default function UserManagement() {
 
   // Track form data from FormContext
   const [currentFormContextData, setCurrentFormContextData] = useState(null);
+  const [currentDoctorFormData, setCurrentDoctorFormData] = useState(null); // Track doctor form data for auto-save
+  const isRecoveringDraftRef = useRef(false); // Track if we're currently recovering a draft
+  const recoveredDraftDataRef = useRef(null); // Store recovered draft data to prevent re-processing
+
+  // Draft recovery states
+  const [showDraftRecoveryModal, setShowDraftRecoveryModal] = useState({
+    show: false,
+    formType: null,
+    draft: null,
+  });
+  
+  // Refs to track if modals were just opened (to show draft recovery)
+  const receptionistModalJustOpened = useRef(false);
+  const doctorModalJustOpened = useRef(false);
+  const patientModalJustOpened = useRef(false);
 
 
   const handleSearch = (e) => {
@@ -372,6 +391,41 @@ export default function UserManagement() {
     });
   };
 
+  // Auto-save for Receptionist form
+  const receptionistDraftStatus = useFormDraft({
+    formType: 'receptionist',
+    formData: formData,
+    metadata: { isEditMode: false },
+    enabled: showAddModal && !isEditMode,
+    debounceMs: 1000,
+    intervalMs: 30000,
+  });
+
+  // Auto-save for Doctor form
+  const doctorDraftStatus = useFormDraft({
+    formType: 'doctor',
+    formData: currentDoctorFormData,
+    metadata: { isEditMode: !!selectedDoctor },
+    enabled: showAddDoctorModal && !selectedDoctor, // Only auto-save in create mode
+    debounceMs: 1000,
+    intervalMs: 30000,
+  });
+
+  // Auto-save for Patient form (using context data when available)
+  const patientFormDataForSave = currentFormContextData || patientFormData;
+  const patientDraftStatus = useFormDraft({
+    formType: 'patient',
+    formData: patientFormDataForSave,
+    metadata: { 
+      isEditMode: isEditMode,
+      currentSubStep: currentSubStep,
+      currentPatientId: currentPatientId,
+    },
+    enabled: showAddPatientModal && !isEditMode, // Only auto-save in create mode
+    debounceMs: 1500,
+    intervalMs: 30000,
+  });
+
   const handleAddReceptionist = async (e) => {
     e.preventDefault();
     try {
@@ -380,6 +434,10 @@ export default function UserManagement() {
       setError("");
       setSuccess("Recepcjonista został dodany pomyślnie");
       setShowAddModal(false);
+      
+      // Clear draft on successful submission
+      clearFormDraft('receptionist');
+      
       setFormData({
         firstName: "",
         lastName: "",
@@ -410,6 +468,29 @@ export default function UserManagement() {
     }
   };
 
+  // Handle draft recovery for Receptionist form
+  const handleRecoverReceptionistDraft = (draft) => {
+    if (draft && draft.formData) {
+      setFormData({
+        firstName: draft.formData.firstName || "",
+        lastName: draft.formData.lastName || "",
+        email: draft.formData.email || "",
+        phone: draft.formData.phone || "",
+        password: draft.formData.password || "",
+        signupMethod: draft.formData.signupMethod || "email",
+      });
+      toast.success("Szkic został przywrócony");
+    }
+    setShowDraftRecoveryModal({ show: false, formType: null, draft: null });
+  };
+
+  // Handle starting fresh (discard draft)
+  const handleStartFresh = (formType) => {
+    clearFormDraft(formType);
+    setShowDraftRecoveryModal({ show: false, formType: null, draft: null });
+    toast.info("Rozpoczynasz od nowa");
+  };
+
   // Function to handle adding/updating a doctor
   const handleAddDoctor = async (doctorData, resetForm, closeModal) => {
     try {
@@ -429,6 +510,11 @@ export default function UserManagement() {
 
       hideLoader();
       fetchUsers(); // Refresh the users list
+
+      // Clear draft on successful submission (only for create, not edit)
+      if (!selectedDoctor) {
+        clearFormDraft('doctor');
+      }
 
       // Clear success message after 3 seconds
       setTimeout(() => {
@@ -451,6 +537,16 @@ export default function UserManagement() {
         "Nieznany błąd"))
       hideLoader();
     }
+  };
+
+  // Handle draft recovery for Doctor form
+  const handleRecoverDoctorDraft = (draft) => {
+    if (draft && draft.formData) {
+      // Store draft data to pass to AddDoctorForm
+      setDoctorDraftData(draft.formData);
+      toast.success("Szkic został przywrócony");
+    }
+    setShowDraftRecoveryModal({ show: false, formType: null, draft: null });
   };
 
   // Add this function to handle edit click
@@ -588,6 +684,12 @@ export default function UserManagement() {
       setShowAddPatientModal(false);
       setIsEditMode(false);
       setCurrentPatientId(null);
+      
+      // Clear draft on successful submission (only for create, not edit)
+      if (!isEditMode) {
+        clearFormDraft('patient');
+      }
+      
       // Preserve the phone code preference when resetting form
       setPatientFormData({ phoneCode: patientData.phoneCode || "+48" });
       setSelectedPhoneCode(patientData.phoneCode || "+48");
@@ -611,6 +713,34 @@ export default function UserManagement() {
       (err.response?.data?.error || err.response?.data?.message || "Nieznany błąd"))
       hideLoader();
     }
+  };
+
+  // Handle draft recovery for Patient form
+  const handleRecoverPatientDraft = (draft) => {
+    if (draft && draft.formData) {
+      isRecoveringDraftRef.current = true;
+      // Store draft data in ref for processing
+      recoveredDraftDataRef.current = JSON.stringify(draft.formData);
+      setPatientFormData(draft.formData);
+      
+      // Restore phone code if available
+      if (draft.formData.phoneCode) {
+        setSelectedPhoneCode(draft.formData.phoneCode);
+      }
+      
+      // Restore current step if available
+      if (draft.metadata && draft.metadata.currentSubStep !== undefined) {
+        setCurrentSubStep(draft.metadata.currentSubStep);
+      }
+      
+      toast.success("Szkic został przywrócony");
+      
+      // Reset flag after state updates
+      setTimeout(() => {
+        isRecoveringDraftRef.current = false;
+      }, 500);
+    }
+    setShowDraftRecoveryModal({ show: false, formType: null, draft: null });
   };
 
   // Functions for patient form
@@ -656,6 +786,60 @@ export default function UserManagement() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showAddDropdown]);
+
+  // Check for drafts when Receptionist modal opens
+  useEffect(() => {
+    if (showAddModal && !isEditMode && receptionistModalJustOpened.current) {
+      receptionistModalJustOpened.current = false;
+      
+      if (hasFormDraft('receptionist')) {
+        const draft = loadFormDraft('receptionist');
+        if (draft && draft.formData) {
+          setShowDraftRecoveryModal({
+            show: true,
+            formType: 'receptionist',
+            draft: draft,
+          });
+        }
+      }
+    }
+  }, [showAddModal, isEditMode]);
+
+  // Check for drafts when Doctor modal opens
+  useEffect(() => {
+    if (showAddDoctorModal && !selectedDoctor && doctorModalJustOpened.current) {
+      doctorModalJustOpened.current = false;
+      
+      if (hasFormDraft('doctor')) {
+        const draft = loadFormDraft('doctor');
+        if (draft && draft.formData) {
+          setShowDraftRecoveryModal({
+            show: true,
+            formType: 'doctor',
+            draft: draft,
+          });
+        }
+      }
+    }
+  }, [showAddDoctorModal, selectedDoctor]);
+
+  // Check for drafts when Patient modal opens
+  useEffect(() => {
+    if (showAddPatientModal && !isEditMode && patientModalJustOpened.current) {
+      patientModalJustOpened.current = false;
+      
+      if (hasFormDraft('patient')) {
+        const draft = loadFormDraft('patient');
+        if (draft && draft.formData) {
+          setShowDraftRecoveryModal({
+            show: true,
+            formType: 'patient',
+            draft: draft,
+          });
+        }
+      }
+    }
+  }, [showAddPatientModal, isEditMode]);
 
   // Add handleEditUser function
   const handleEditUser = (user) => {
@@ -714,6 +898,7 @@ export default function UserManagement() {
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => {
                           setShowAddDropdown(false);
+                          doctorModalJustOpened.current = true;
                           setShowAddDoctorModal(true);
                         }}
                       >
@@ -723,6 +908,7 @@ export default function UserManagement() {
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => {
                           setShowAddDropdown(false);
+                          receptionistModalJustOpened.current = true;
                           setShowAddModal(true);
                         }}
                       >
@@ -734,6 +920,7 @@ export default function UserManagement() {
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={() => {
                       setShowAddDropdown(false);
+                      patientModalJustOpened.current = true;
                       setShowAddPatientModal(true);
                     }}
                   >
@@ -1100,9 +1287,17 @@ export default function UserManagement() {
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm transition-opacity duration-300">
           <div className="bg-white rounded-lg p-8 w-full max-w-md shadow-xl transform transition-all duration-300 border border-teal-100">
-            <h2 className="text-2xl font-bold mb-6 text-teal-700 border-b pb-2 border-teal-200">
-              Dodaj Nowego Recepcjonistę
-            </h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-teal-700 border-b pb-2 border-teal-200 flex-1">
+                Dodaj Nowego Recepcjonistę
+              </h2>
+              {!isEditMode && (
+                <AutoSaveIndicator 
+                  status={receptionistDraftStatus.saveStatus} 
+                  className="ml-2"
+                />
+              )}
+            </div>
             <form onSubmit={handleAddReceptionist}>
               <div className="space-y-5">
                 <div>
@@ -1178,7 +1373,10 @@ export default function UserManagement() {
               <div className="flex justify-end space-x-3 mt-8">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false);
+                    // Don't clear draft on cancel - user might come back
+                  }}
                   className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-5 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
                   Anuluj
@@ -1202,15 +1400,20 @@ export default function UserManagement() {
           onClose={() => {
             setShowAddDoctorModal(false);
             setSelectedDoctor(null);
+            setDoctorDraftData(null); // Clear draft data when closing
+            // Don't clear draft from localStorage on cancel - user might come back
           }}
           onAddDoctor={(doctorData, resetForm) =>
             handleAddDoctor(doctorData, resetForm, () => {
               setShowAddDoctorModal(false);
               setSelectedDoctor(null);
+              setDoctorDraftData(null);
             })
           }
-          initialData={selectedDoctor}
+          initialData={doctorDraftData || selectedDoctor}
           isEditMode={!!selectedDoctor}
+          onFormDataChange={setCurrentDoctorFormData}
+          saveStatus={doctorDraftStatus.saveStatus}
         />
       )}
 
@@ -1223,6 +1426,11 @@ export default function UserManagement() {
                 <h2 className="text-xl font-bold">
                   {isEditMode ? "Edytuj Pacjenta" : "Dodaj Pacjenta"}
                 </h2>
+                {!isEditMode && (
+                  <AutoSaveIndicator 
+                    status={patientDraftStatus.saveStatus} 
+                  />
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -1231,9 +1439,9 @@ export default function UserManagement() {
                     setShowAddPatientModal(false);
                     setIsEditMode(false);
                     setCurrentPatientId(null);
-                    setCurrentDraftId(null); // Clear draft ID when closing
                     // Preserve the phone code preference when closing form
                     setPatientFormData({ phoneCode: patientFormData.phoneCode || "+48" });
+                    // Don't clear draft on cancel - user might come back
                     
                     // Redirect back to the original page if returnUrl is set
                     if (returnUrl) {
@@ -1280,6 +1488,8 @@ export default function UserManagement() {
                   phoneCountryCodes={phoneCountryCodes}
                   onRemoveEmail={handleRemoveEmail}
                   onFormDataChange={setCurrentFormContextData}
+                  recoveredDraftDataRef={recoveredDraftDataRef}
+                  isRecoveringDraftRef={isRecoveringDraftRef}
                 />
               </FormProvider>
             </div>
@@ -1352,6 +1562,52 @@ export default function UserManagement() {
         onSuccess={handlePermanentDeleteSuccess}
       />
 
+      {/* Draft Recovery Modal */}
+      {showDraftRecoveryModal.show && showDraftRecoveryModal.draft && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+            <h2 className="text-xl font-bold mb-4 text-teal-700">
+              Znaleziono zapisany szkic
+            </h2>
+            <p className="mb-4 text-gray-600">
+              Znaleziono zapisany szkic formularza. Czy chcesz go przywrócić?
+            </p>
+            <div className="mb-4 p-3 bg-gray-50 rounded-md">
+              <p className="text-sm text-gray-700">
+                <strong>Zapisano:</strong> {formatDraftAge(Date.now() - (showDraftRecoveryModal.draft.metadata?.timestamp || 0))}
+              </p>
+              {showDraftRecoveryModal.formType === 'patient' && showDraftRecoveryModal.draft.metadata?.currentSubStep !== undefined && (
+                <p className="text-sm text-gray-700 mt-1">
+                  <strong>Krok:</strong> {subStepTitles[showDraftRecoveryModal.draft.metadata.currentSubStep] || `Krok ${showDraftRecoveryModal.draft.metadata.currentSubStep + 1}`}
+                </p>
+              )}
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => handleStartFresh(showDraftRecoveryModal.formType)}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition-colors"
+              >
+                Rozpocznij od nowa
+              </button>
+              <button
+                onClick={() => {
+                  if (showDraftRecoveryModal.formType === 'receptionist') {
+                    handleRecoverReceptionistDraft(showDraftRecoveryModal.draft);
+                  } else if (showDraftRecoveryModal.formType === 'doctor') {
+                    handleRecoverDoctorDraft(showDraftRecoveryModal.draft);
+                  } else if (showDraftRecoveryModal.formType === 'patient') {
+                    handleRecoverPatientDraft(showDraftRecoveryModal.draft);
+                  }
+                }}
+                className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+              >
+                Przywróć szkic
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
@@ -1372,17 +1628,35 @@ function PatientStepFormWrapper({
   phoneValidationError,
   phoneCountryCodes,
   onRemoveEmail,
-  onFormDataChange // Callback to notify parent of form data changes
+  onFormDataChange, // Callback to notify parent of form data changes
+  recoveredDraftDataRef, // Ref from parent to track recovered draft
+  isRecoveringDraftRef // Ref from parent to track if recovering draft
 }) {
   const [completedSteps, setCompletedSteps] = useState([]);
   const { formData, updateFormData, updateMultipleFields } = useFormContext();
   const [isInitialized, setIsInitialized] = useState(false);
+  const draftLoadedRef = useRef(false); // Track if draft has been loaded
+  const lastPatientFormDataRef = useRef(null); // Track last loaded data to prevent re-loading
+  const isUpdatingFormRef = useRef(false); // Track if we're currently updating form to prevent loops
   //('Form Data:', patientFormData);
 
-  // Notify parent component of form data changes for auto-save
+  // Notify parent component of form data changes for auto-save (with guard to prevent loops)
+  const lastNotifiedFormDataRef = useRef(null);
   useEffect(() => {
+    // Don't notify if we're currently updating the form from draft/edit
+    if (isUpdatingFormRef.current) {
+      return;
+    }
+    
     if (onFormDataChange && formData) {
-      onFormDataChange(formData);
+      // Only notify if form data actually changed (not just reference)
+      const formDataString = JSON.stringify(formData);
+      const lastNotifiedString = lastNotifiedFormDataRef.current;
+      
+      if (formDataString !== lastNotifiedString) {
+        onFormDataChange(formData);
+        lastNotifiedFormDataRef.current = formDataString;
+      }
     }
   }, [formData, onFormDataChange]);
 
@@ -1394,31 +1668,70 @@ function PatientStepFormWrapper({
     };
   }, [updateFormData]);
 
-  // Effect to pre-populate form data when in edit mode OR when draft is recovered
+  // Separate effect for draft recovery - only runs when recoveredDraftDataRef is set
   useEffect(() => {
-    // Update form when:
-    // 1. Edit mode with patientFormData
-    // 2. Draft recovery (patientFormData changes but not in edit mode)
-    if (patientFormData && Object.keys(patientFormData).length > 0) {
-      // Check if this is draft recovery (has fullName but not in edit mode)
-      const isDraftRecovery = !isEditMode && (patientFormData.fullName || patientFormData.email || patientFormData.mobileNumber);
+    if (!recoveredDraftDataRef.current || isUpdatingFormRef.current || draftLoadedRef.current) {
+      return;
+    }
+
+    if (patientFormData && Object.keys(patientFormData).length > 0 && !isEditMode) {
+      const currentDataKey = JSON.stringify(patientFormData);
+      const recoveredKey = recoveredDraftDataRef.current;
       
-      if (isEditMode && !isInitialized) {
+      // Only load if the current data matches the recovered draft
+      if (currentDataKey === recoveredKey) {
+        isUpdatingFormRef.current = true;
+        updateMultipleFields(patientFormData);
+        lastPatientFormDataRef.current = currentDataKey;
+        draftLoadedRef.current = true;
+        console.log('✅ Form data loaded from draft recovery:', patientFormData);
+        // Clear recovered draft ref after loading
+        recoveredDraftDataRef.current = null;
+        // Reset flag after form context updates
+        setTimeout(() => {
+          isUpdatingFormRef.current = false;
+        }, 300);
+      }
+    }
+  }, [patientFormData, isEditMode, updateMultipleFields]);
+
+  // Effect to pre-populate form data when in edit mode
+  useEffect(() => {
+    // Skip if we're already updating to prevent loops
+    if (isUpdatingFormRef.current || isRecoveringDraftRef.current) {
+      return;
+    }
+
+    // Only handle edit mode here
+    if (isEditMode && patientFormData && Object.keys(patientFormData).length > 0 && !isInitialized) {
+      const currentDataKey = JSON.stringify(patientFormData);
+      const lastDataKey = lastPatientFormDataRef.current;
+      const dataChanged = currentDataKey !== lastDataKey;
+      
+      if (dataChanged) {
         // Edit mode - update form data
+        isUpdatingFormRef.current = true;
         updateMultipleFields(patientFormData);
         setCompletedSteps(Array.from({ length: subStepTitles.length }, (_, i) => i));
         setIsInitialized(true);
+        lastPatientFormDataRef.current = currentDataKey;
+        draftLoadedRef.current = true;
         console.log('✅ Form data loaded for edit mode');
-      } else if (isDraftRecovery) {
-        // Draft recovery - update form data immediately
-        updateMultipleFields(patientFormData);
-        console.log('✅ Form data loaded from draft recovery:', patientFormData);
+        // Reset flag after form context updates
+        setTimeout(() => {
+          isUpdatingFormRef.current = false;
+        }, 300);
       }
     }
     
     // Reset initialization when exiting edit mode and no draft data
     if (!isEditMode && (!patientFormData || !patientFormData.fullName)) {
       setIsInitialized(false);
+      draftLoadedRef.current = false;
+      lastPatientFormDataRef.current = null;
+      isUpdatingFormRef.current = false;
+      lastNotifiedFormDataRef.current = null;
+      recoveredDraftDataRef.current = null;
     }
   }, [isEditMode, patientFormData, isInitialized, subStepTitles.length, updateMultipleFields]);
 
