@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
-import LogoMark from "../../../public/images/new_logo_cm7.png";
 import { apiCaller } from "../../utils/axiosInstance";
 
 const ForgotPassword = () => {
@@ -443,7 +442,7 @@ const ForgotPassword = () => {
   return (
     <div className="flex flex-col items-center gap-20 h-full p-4">
       <div className="flex items-center">
-        <img src={LogoMark} alt="Centrum Medyczne" className="h-40 w-auto" />
+        <img src="/images/new_logo_cm7.png" alt="Centrum Medyczne" className="h-40 w-auto" />
       </div>
 
       {renderStep()}

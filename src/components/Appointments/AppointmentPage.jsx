@@ -25,6 +25,7 @@ function AppointmentPage() {
     }
   }, [services, loading]);
 
+
   // Function to handle appointment form submission
   const handleAppointmentComplete = async (data) => {
     console.log("Appointment data submitted:", data);
@@ -111,6 +112,7 @@ function AppointmentPage() {
         workflowOrder="appointmentFirst" // New workflow order
         allowPastDates={false} // Don't auto-enable past dates checkbox
       />
+
     </div>
   );
 }

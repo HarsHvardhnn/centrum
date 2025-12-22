@@ -4,7 +4,7 @@ import adminHelper from "../../helpers/adminHelper";
 import { useLoader } from "../../context/LoaderContext";
 import { useUser } from "../../context/userContext";
 import DoctorScheduleManager from "./DoctorScheduleEditor";
-import { ChevronDown } from "lucide-react"; // For dropdown icon
+import { ChevronDown, Save } from "lucide-react"; // For dropdown icon
 import PatientStepForm from "../SubComponentForm/PatientStepForm";
 import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import AddDoctorForm from "../Doctor/CreateDoctor";
@@ -241,6 +241,10 @@ export default function UserManagement() {
       setSearchParams({});
     }
   }, [searchParams]);
+
+  // Track form data from FormContext
+  const [currentFormContextData, setCurrentFormContextData] = useState(null);
+
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -656,9 +660,9 @@ export default function UserManagement() {
   // Add handleEditUser function
   const handleEditUser = (user) => {
     setSelectedUser(user);
-    setShowAddPatientModal(true);
-    setIsEditMode(true);
-    setCurrentPatientId(user._id);
+      setShowAddPatientModal(true);
+      setIsEditMode(true);
+      setCurrentPatientId(user._id);
   };
 
   // Add handleEditDoctor function
@@ -1215,9 +1219,11 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg w-3/4 max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b p-4">
-              <h2 className="text-xl font-bold">
-                {isEditMode ? "Edytuj Pacjenta" : "Dodaj Pacjenta"}
-              </h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold">
+                  {isEditMode ? "Edytuj Pacjenta" : "Dodaj Pacjenta"}
+                </h2>
+              </div>
               <div className="flex items-center gap-2">
                 <button
                   className="text-gray-500 hover:text-gray-700"
@@ -1225,6 +1231,7 @@ export default function UserManagement() {
                     setShowAddPatientModal(false);
                     setIsEditMode(false);
                     setCurrentPatientId(null);
+                    setCurrentDraftId(null); // Clear draft ID when closing
                     // Preserve the phone code preference when closing form
                     setPatientFormData({ phoneCode: patientFormData.phoneCode || "+48" });
                     
@@ -1253,7 +1260,10 @@ export default function UserManagement() {
             </div>
 
             <div className="p-6">
-              <FormProvider initialData={patientFormData}>
+              <FormProvider 
+                key={`patient-form-${isEditMode ? 'edit' : 'new'}`} 
+                initialData={patientFormData}
+              >
                 <PatientStepFormWrapper
                   currentSubStep={currentSubStep}
                   goToSubStep={goToSubStep}
@@ -1269,6 +1279,7 @@ export default function UserManagement() {
                   phoneValidationError={phoneValidationError}
                   phoneCountryCodes={phoneCountryCodes}
                   onRemoveEmail={handleRemoveEmail}
+                  onFormDataChange={setCurrentFormContextData}
                 />
               </FormProvider>
             </div>
@@ -1340,6 +1351,7 @@ export default function UserManagement() {
         itemName="użytkowników"
         onSuccess={handlePermanentDeleteSuccess}
       />
+
     </div>
   );
 }
@@ -1359,12 +1371,20 @@ function PatientStepFormWrapper({
   onPhoneNumberChange,
   phoneValidationError,
   phoneCountryCodes,
-  onRemoveEmail
+  onRemoveEmail,
+  onFormDataChange // Callback to notify parent of form data changes
 }) {
   const [completedSteps, setCompletedSteps] = useState([]);
-  const { formData, updateFormData } = useFormContext();
+  const { formData, updateFormData, updateMultipleFields } = useFormContext();
   const [isInitialized, setIsInitialized] = useState(false);
   //('Form Data:', patientFormData);
+
+  // Notify parent component of form data changes for auto-save
+  useEffect(() => {
+    if (onFormDataChange && formData) {
+      onFormDataChange(formData);
+    }
+  }, [formData, onFormDataChange]);
 
   // Expose updateFormData globally so it can be accessed from parent component
   useEffect(() => {
@@ -1374,20 +1394,43 @@ function PatientStepFormWrapper({
     };
   }, [updateFormData]);
 
-  // Effect to pre-populate form data when in edit mode - only run once when entering edit mode
+  // Effect to pre-populate form data when in edit mode OR when draft is recovered
   useEffect(() => {
-    if (isEditMode && patientFormData && !isInitialized) {
-      //('Updating form data with:', JSON.stringify(patientFormData, null, 2));
-      updateFormData(patientFormData);
-      setCompletedSteps(Array.from({ length: subStepTitles.length }, (_, i) => i));
-      setIsInitialized(true);
+    // Update form when:
+    // 1. Edit mode with patientFormData
+    // 2. Draft recovery (patientFormData changes but not in edit mode)
+    if (patientFormData && Object.keys(patientFormData).length > 0) {
+      // Check if this is draft recovery (has fullName but not in edit mode)
+      const isDraftRecovery = !isEditMode && (patientFormData.fullName || patientFormData.email || patientFormData.mobileNumber);
+      
+      if (isEditMode && !isInitialized) {
+        // Edit mode - update form data
+        updateMultipleFields(patientFormData);
+        setCompletedSteps(Array.from({ length: subStepTitles.length }, (_, i) => i));
+        setIsInitialized(true);
+        console.log('✅ Form data loaded for edit mode');
+      } else if (isDraftRecovery) {
+        // Draft recovery - update form data immediately
+        updateMultipleFields(patientFormData);
+        console.log('✅ Form data loaded from draft recovery:', patientFormData);
+      }
     }
     
-    // Reset initialization when exiting edit mode
-    if (!isEditMode) {
+    // Reset initialization when exiting edit mode and no draft data
+    if (!isEditMode && (!patientFormData || !patientFormData.fullName)) {
       setIsInitialized(false);
     }
-  }, [isEditMode, patientFormData, isInitialized, subStepTitles.length]);
+  }, [isEditMode, patientFormData, isInitialized, subStepTitles.length, updateMultipleFields]);
+
+  // Expose updateFormData globally so it can be accessed from parent component
+  useEffect(() => {
+    window.updateFormData = updateFormData;
+    window.updateMultipleFields = updateMultipleFields;
+    return () => {
+      window.updateFormData = null;
+      window.updateMultipleFields = null;
+    };
+  }, [updateFormData, updateMultipleFields]);
 
   // This function connects the context's form data to the parent component
   const handleStepCompleted = () => {

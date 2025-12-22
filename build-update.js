@@ -60,7 +60,18 @@ try {
   fs.writeFileSync(serverJsPath, serverJsContent, 'utf8');
   console.log('✅ Successfully updated server.js with new asset references');
 
-  console.log('🎉 Build and asset update process completed successfully!');
+  // Step 6: Generate static pages for articles, blogs, and services
+  console.log('\n👨‍⚕️ Generating static pages (articles, blogs, services)...');
+  try {
+    execSync('npm run build:static-pages', { stdio: 'inherit' });
+    console.log('✅ Static pages generated successfully!');
+  } catch (error) {
+    console.warn('⚠️  Warning: Static pages generation failed, continuing with build...');
+    console.warn(`   Error: ${error.message}`);
+    // Don't fail the build if static generation fails - it's optional
+  }
+
+  console.log('\n🎉 Build and asset update process completed successfully!');
   console.log(`📋 Updated assets: CSS=${cssFile}, JS=${jsFile}`);
 
 } catch (error) {

@@ -187,3 +187,4 @@ const BulkDeleteComponent = ({ type, status, onSuccess }) => {
 
 export default BulkDeleteComponent;
 
+

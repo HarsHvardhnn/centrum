@@ -1,10 +1,11 @@
 // FormContext.jsx
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const FormContext = createContext(null);
 
 export const FormProvider = ({ children, initialData }) => {
-  const [formData, setFormData] = useState(initialData || {
+  // Default values
+  const defaults = {
     // Demographics
     fullName: "",
     email: "",
@@ -63,7 +64,23 @@ export const FormProvider = ({ children, initialData }) => {
 
     // Notes
     reviewNotes: "",
+  };
+
+  // Initialize state with defaults merged with initialData
+  const [formData, setFormData] = useState(() => {
+    return initialData ? { ...defaults, ...initialData } : defaults;
   });
+
+  // Update formData when initialData changes (for draft recovery)
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      console.log('🔄 FormProvider: Updating formData from initialData:', initialData);
+      setFormData(prevData => ({
+        ...prevData,
+        ...initialData
+      }));
+    }
+  }, [initialData]);
 
   const updateFormData = (fieldName, value) => {
     setFormData(prevData => ({

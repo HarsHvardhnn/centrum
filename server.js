@@ -690,11 +690,61 @@ app.get('/sitemap.xml', async (req, res) => {
 app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'dist', 'images')));
 
+// Middleware to serve static pages (articles, blogs, services) when available
+const serveStaticPages = (req, res, next) => {
+  const requestPath = req.path;
+  
+  // Check for static pages in different directories
+  let staticFilePath = null;
+  let baseDir = null;
+  
+  if (requestPath.startsWith('/aktualnosci/') && requestPath !== '/aktualnosci') {
+    const slug = requestPath.replace('/aktualnosci/', '');
+    if (slug && slug !== 'undefined' && slug.trim() !== '') {
+      baseDir = path.join(__dirname, 'dist', 'aktualnosci');
+      staticFilePath = path.join(baseDir, `${slug}.html`);
+    }
+  } else if (requestPath.startsWith('/poradnik/') && requestPath !== '/poradnik') {
+    const slug = requestPath.replace('/poradnik/', '');
+    if (slug && slug !== 'undefined' && slug.trim() !== '') {
+      baseDir = path.join(__dirname, 'dist', 'poradnik');
+      staticFilePath = path.join(baseDir, `${slug}.html`);
+    }
+  } else if (requestPath.startsWith('/uslugi/') && requestPath !== '/uslugi') {
+    const slug = requestPath.replace('/uslugi/', '');
+    if (slug && slug !== 'undefined' && slug.trim() !== '') {
+      baseDir = path.join(__dirname, 'dist', 'uslugi');
+      staticFilePath = path.join(baseDir, `${slug}.html`);
+    }
+  }
+  
+  // If static file exists, serve it
+  if (staticFilePath && fs.existsSync(staticFilePath)) {
+    console.log(`📄 Serving static page: ${requestPath}`);
+    
+    const staticHTML = fs.readFileSync(staticFilePath, 'utf8');
+    
+    res.set({
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+      'Vary': 'User-Agent'
+    });
+    
+    return res.send(staticHTML);
+  }
+  
+  // If no static file found, continue to next middleware
+  next();
+};
+
 // Apply middleware in correct order
 app.use(handleExternalProtocols); // First: block external protocols
 app.use(handleInvalidSlugs);      // Second: handle undefined slugs
 
-// Apply SEO middleware for ALL routes (HTML requests)
+// Check for static pages BEFORE SEO middleware
+app.get('*', serveStaticPages);
+
+// Apply SEO middleware for ALL routes (HTML requests) - fallback if static page not found
 app.get('*', seoMiddleware);
 
 app.listen(PORT, () => {

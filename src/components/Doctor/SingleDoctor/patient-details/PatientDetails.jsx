@@ -14,9 +14,10 @@ import appointmentHelper from "../../../../helpers/appointmentHelper";
 import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
-import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity } from "lucide-react";
+import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity, Save } from "lucide-react";
 import { toast } from "sonner";
 import { translateStatus } from "../../../../utils/statusHelper";
+import { useAutoSave } from "../../../../hooks/useAutoSave";
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
@@ -395,6 +396,60 @@ const PatientDetailsPage = () => {
   // Add states for Visit Card Confirmation Modal
   const [showVisitCardModal, setShowVisitCardModal] = useState(false);
   const [pendingVisitCardData, setPendingVisitCardData] = useState(null);
+
+  // Auto-save functionality for patient details (direct save)
+  const directSaveFunction = async (dataToSave, meta) => {
+    if (!currentAppointmentId) return;
+    
+    const hasUploadingFiles = uploadedFiles.some(
+      (file) => file.progress < 100
+    );
+
+    if (hasUploadingFiles) {
+      // Skip auto-save if files are still uploading
+      return;
+    }
+
+    await appointmentHelper.updateAppointmentDetails(
+      currentAppointmentId,
+      {
+        patientData: dataToSave.patientData || patientData,
+        consultationData: dataToSave.consultationData || consultationData,
+        medications: dataToSave.medications || medications,
+        tests: dataToSave.tests || tests,
+        uploadedFiles: dataToSave.uploadedFiles || uploadedFiles,
+        notes: (dataToSave.consultationData || consultationData).notes
+      }
+    );
+  };
+
+  // Setup auto-save hook
+  const { manualSave: manualSaveDraft } = useAutoSave({
+    formType: 'patient_details',
+    formData: {
+      patientData,
+      consultationData,
+      medications,
+      tests,
+      uploadedFiles
+    },
+    metadata: {
+      appointmentId: currentAppointmentId,
+      patientId: id
+    },
+    debounceMs: 3000, // 3 seconds debounce
+    autoSaveInterval: 30000, // Auto-save every 30 seconds
+    enabled: !!currentAppointmentId, // Only enable if appointment is selected
+    directSave: true,
+    directSaveFunction: directSaveFunction,
+    onSaveSuccess: () => {
+      // Silent success - don't show toast for auto-saves
+    },
+    onSaveError: (error) => {
+      // Silent error - data is saved to localStorage as fallback
+      console.log('Auto-save failed, saved to localStorage:', error);
+    }
+  });
 
   // Add a specific useEffect to fetch patient services when appointment ID changes
   useEffect(() => {
@@ -1068,6 +1123,16 @@ const PatientDetailsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BreadcrumbNav patientName={patientData.name} />
+      
+      {/* Auto-save indicator */}
+      {currentAppointmentId && (
+        <div className="container mx-auto px-4 pt-4">
+          <div className="bg-teal-50 border border-teal-200 rounded-lg p-2 flex items-center gap-2 text-sm text-teal-700">
+            <Save size={16} />
+            <span>Automatyczne zapisywanie włączone - zmiany są zapisywane automatycznie</span>
+          </div>
+        </div>
+      )}
       
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

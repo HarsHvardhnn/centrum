@@ -86,3 +86,4 @@ export const usePermanentDelete = () => {
   return { deleteRecord, bulkDeleteByIds, getStats, loading, error };
 };
 
+
