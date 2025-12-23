@@ -23,6 +23,7 @@ import TermsPage from "./components/User/Pages/TermsPage";
 import PrivacyPolicyPage from "./components/User/Pages/PrivacyPolicyPage";
 import ContactPage from "./components/User/Pages/ContactPage";
 import ProctologyTestPage from "./components/User/Pages/ProctologyTestPage";
+import ProctologyPage from "./components/User/Pages/ProctologyPage";
 import { useScrollToTop } from "./hooks/useScrollToTop";
 
 // Scroll to top wrapper component
@@ -76,7 +77,8 @@ const routes = createBrowserRouter([
       { path: "security/2fa", element: <TwoFactorSettings /> },
       { path: "regulamin", element: <TermsPage /> },
       { path: "polityka-prywatnosci", element: <PrivacyPolicyPage /> },
-      { path: "uslugi-new-first/test", element: <ProctologyTestPage /> },
+      { path: "konsultacja-proktologiczna", element: <ProctologyTestPage /> },
+      { path: "proktolog", element: <ProctologyPage /> },
       { path: "*", element: <NotFound404 /> },
     ],
   },

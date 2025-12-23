@@ -95,7 +95,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
   };
 
   return (
-    <section className="relative flex flex-col items-center pt-12 xs:pt-14 sm:pt-16 md:pt-20 lg:pt-24 xl:pt-28 pb-16 xs:pb-20 sm:pb-20 md:pb-24 lg:pb-28 xl:pb-32 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-br from-[#F0F7F7] via-[#E6F5F5] to-[#DCF2F2]">
+    <section className="relative flex flex-col items-center pt-24 xs:pt-26 sm:pt-28 md:pt-32 lg:pt-36 xl:pt-40 pb-16 xs:pb-20 sm:pb-20 md:pb-24 lg:pb-28 xl:pb-32 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-br from-[#F0F7F7] via-[#E6F5F5] to-[#DCF2F2]">
       <div className="flex-1 flex flex-col md:flex-row items-start justify-between w-full max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 pt-6 xs:pt-8 sm:pt-10 md:pt-12 lg:pt-14 xl:pt-16 gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-16">
         {/* Left Side Content */}
         <div className="md:w-1/2 lg:w-[48%] xl:w-1/2 text-center md:text-left mb-6 xs:mb-8 sm:mb-10 md:mb-0 w-full">
