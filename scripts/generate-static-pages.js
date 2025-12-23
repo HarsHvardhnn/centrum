@@ -496,3 +496,4 @@ if (filePath === runPath || runPath.includes('generate-static-pages')) {
 
 export default generateStaticPages;
 
+
