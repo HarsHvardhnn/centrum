@@ -24,6 +24,7 @@ import PrivacyPolicyPage from "./components/User/Pages/PrivacyPolicyPage";
 import ContactPage from "./components/User/Pages/ContactPage";
 import ProctologyTestPage from "./components/User/Pages/ProctologyTestPage";
 import ProctologyPage from "./components/User/Pages/ProctologyPage";
+import SkinLesionRemovalPage from "./components/User/Pages/SkinLesionRemovalPage";
 import { useScrollToTop } from "./hooks/useScrollToTop";
 
 // Scroll to top wrapper component
@@ -79,6 +80,7 @@ const routes = createBrowserRouter([
       { path: "polityka-prywatnosci", element: <PrivacyPolicyPage /> },
       { path: "konsultacja-proktologiczna", element: <ProctologyTestPage /> },
       { path: "proktolog", element: <ProctologyPage /> },
+      { path: "usuwanie-zmian-skornych", element: <SkinLesionRemovalPage /> },
       { path: "*", element: <NotFound404 /> },
     ],
   },

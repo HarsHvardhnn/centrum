@@ -144,12 +144,12 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
                 <div className="w-1.5 xs:w-2 h-1.5 xs:h-2 bg-teal-600 rounded-full"></div>
                 Rejestracja 24/7 online
               </div>
-            </div>
+          </div>
 
             {/* Heading */}
             <h2 className="text-xl xs:text-2xl sm:text-2xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-4 xs:mb-5 sm:mb-6">
               Umów wizytę online
-            </h2>
+          </h2>
 
             {/* Specialization Custom Dropdown */}
             <div className="mb-3 xs:mb-3.5 sm:mb-4">
@@ -259,7 +259,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
                         <div className="px-4 py-3 text-center text-gray-500 text-sm">
                           Brak dostępnych lekarzy
                         </div>
-                      ) : (
+      ) : (
                         doctors.map((doctor, index) => (
                           <button
                             key={doctor.id}
@@ -274,15 +274,15 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
                                 : "text-gray-800 hover:bg-teal-50 hover:text-teal-700"
                             } ${index !== doctors.length - 1 ? "border-b border-gray-100" : ""}`}
                           >
-                            {doctor.name}
+            {doctor.name}
                           </button>
-                        ))
-                      )}
+        ))
+      )}
                     </div>
                   </div>
                 )}
               </div>
-            </div>
+  </div>
 
             {/* Action Buttons */}
             <div className="space-y-2.5 xs:space-y-3 mb-4 xs:mb-5 sm:mb-6">
@@ -296,14 +296,14 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
               </button>
 
               {/* Call Button */}
-              <button
+  <button
                 onClick={handleCall}
                 className="w-full bg-white border-2 border-teal-600 text-teal-600 font-semibold text-sm xs:text-base py-2.5 xs:py-3 sm:py-3.5 px-4 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2"
-              >
+  >
                 <FaPhone className="text-teal-600 text-sm xs:text-base" />
                 Zadzwoń
-              </button>
-            </div>
+  </button>
+</div>
 
             {/* Footer Info */}
             <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3 xs:gap-2.5 pt-4 xs:pt-5 mt-2 border-t border-gray-200">
@@ -316,7 +316,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
                 <span className="text-xs xs:text-sm font-medium text-gray-700">Powiadomienia SMS</span>
               </div>
             </div>
-          </div>
+        </div>
 
         </div>
 
@@ -327,7 +327,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
             <div className="relative z-10 w-full max-w-[500px] md:max-w-[550px] lg:max-w-[600px] xl:max-w-[650px] 2xl:max-w-[700px]">
               <div className="relative rounded-xl xs:rounded-2xl bg-white border-2 md:border-4 border-white p-2 xs:p-2.5 md:p-3 pt-2 xs:pt-2.5 md:pt-3 pb-6 xs:pb-7 md:pb-8" style={{ boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 rgba(0, 0, 0, 0)' }}>
                 <img
-                  loading="lazy"
+          loading="lazy"
                   src={heroImage}
                   alt="Konsultacja medyczna - Centrum Medyczne 7"
                   className="w-full h-auto object-contain"
@@ -362,7 +362,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
           <div className="relative z-10 w-full max-w-[400px] xs:max-w-[500px] sm:max-w-[550px] mt-6 xs:mt-8">
             <div className="relative rounded-xl xs:rounded-2xl bg-white border-2 sm:border-4 border-white p-2 xs:p-2.5 pt-2 xs:pt-2.5 pb-4 xs:pb-5" style={{ boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 rgba(0, 0, 0, 0)' }}>
               <img
-                loading="lazy"
+   loading="lazy"
                 src={heroImage}
                 alt="Konsultacja medyczna - Centrum Medyczne 7"
                 className="w-full h-auto object-contain"
