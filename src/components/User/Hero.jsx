@@ -313,7 +313,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
 </div>
 
             {/* Footer Info */}
-            <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3 xs:gap-2.5 pt-4 xs:pt-5 mt-2 border-t border-gray-200">
+            <div className="flex flex-row items-center justify-between gap-2.5 xs:gap-3 pt-4 xs:pt-5 mt-2 border-t border-gray-200">
               <div className="flex items-center gap-2 xs:gap-2.5">
                 <FaShieldAlt className="text-teal-600 text-base xs:text-lg flex-shrink-0" />
                 <span className="text-xs xs:text-sm font-medium text-gray-700">Bezpieczna rejestracja</span>

@@ -167,13 +167,13 @@ const PediatricNeurologyPage = () => {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 px-4 md:px-0">
                   <button 
-                    onClick={() => window.location.href = '/?openAppointment=true#appointment-section'}
+                    onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-base md:text-lg"
                   >
                     Umów wizytę
                   </button>
                   <button 
-                    onClick={() => window.location.href = "tel:797097487"}
+                    onClick={() => window.location.href = "tel:+48797097487"}
                     className="bg-white border-2 border-teal-600 text-teal-600 font-semibold py-3 px-6 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2 text-base md:text-lg"
                   >
                     <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
@@ -193,7 +193,7 @@ const PediatricNeurologyPage = () => {
                   <span className="text-gray-900 font-semibold text-base">5.0</span>
                   {/* Link Text */}
                   <a 
-                    href="https://share.google/BzJ9Tr3GTdOFZuw6C" 
+                    href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skar%C5%BCysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dzieci%C4%99cy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-gray-900 font-normal text-base ml-1 cursor-pointer hover:text-teal-600"
@@ -578,7 +578,7 @@ const PediatricNeurologyPage = () => {
               {/* CTA Button */}
               <div className="text-center">
                 <button
-                  onClick={() => window.location.href = '/#kontakt'}
+                  onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                   className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-4 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg"
                 >
                   Umów wizytę u neurologa dziecięcego
@@ -607,7 +607,7 @@ const PediatricNeurologyPage = () => {
                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center mb-8 sm:mb-10">
                   {/* Button 1: Zadzwoń teraz */}
                   <button
-                    onClick={() => window.location.href = 'tel:797097487'}
+                    onClick={() => window.location.href = 'tel:+48797097487'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 w-full sm:w-auto"
                   >
                     <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
@@ -616,7 +616,7 @@ const PediatricNeurologyPage = () => {
 
                   {/* Button 2: Umów wizytę online */}
                   <button
-                    onClick={() => window.location.href = '/#kontakt'}
+                    onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                     className="bg-white hover:bg-gray-50 text-teal-600 border-2 border-teal-600 font-semibold px-6 py-3 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 w-full sm:w-auto"
                   >
                     <Calendar className="w-5 h-5" />
@@ -624,13 +624,15 @@ const PediatricNeurologyPage = () => {
                   </button>
 
                   {/* Button 3: Zobacz opinie Google */}
-                  <button
-                    onClick={() => window.open('https://share.google/BzJ9Tr3GTdOFZuw6C', '_blank')}
+                  <a
+                    href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skar%C5%BCysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dzieci%C4%99cy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="bg-white hover:bg-gray-50 text-teal-600 border-2 border-teal-600 font-semibold px-6 py-3 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 w-full sm:w-auto"
                   >
                     <Star className="w-5 h-5" />
                     Zobacz opinie Google
-                  </button>
+                  </a>
                 </div>
 
                 {/* Google Rating Display */}

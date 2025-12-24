@@ -194,7 +194,7 @@ const ProctologyPage = () => {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6 px-4 md:px-0">
                   <button 
-                    onClick={() => window.location.href = '/?openAppointment=true#appointment-section'}
+                    onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg transition-colors text-sm sm:text-base md:text-lg"
                   >
                     Umów wizytę u Proktologa
@@ -456,7 +456,7 @@ const ProctologyPage = () => {
                 <div className="space-y-3 sm:space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-gray-200">
                     <a 
-                      href="/uslugi/konsultacja-proktologiczna"
+                      href="/konsultacja-proktologiczna"
                       className="text-gray-800 text-sm sm:text-base md:text-lg hover:text-teal-600 transition-colors cursor-pointer"
                     >
                       Konsultacja proktologiczna
@@ -536,12 +536,12 @@ const ProctologyPage = () => {
                       >
                         Zobacz Proktologa
                       </a>
-                      <a
-                        href="#appointment-section"
+                      <button
+                        onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                         className="bg-white border-2 border-teal-600 text-teal-600 font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-teal-50 transition-colors text-center text-sm sm:text-base"
                       >
                         Umów wizytę u Proktologa
-                      </a>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -607,18 +607,18 @@ const ProctologyPage = () => {
                   {/* Buttons */}
                   <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <button
-                      onClick={() => window.location.href = "tel:797097487"}
+                      onClick={() => window.location.href = "tel:+48797097487"}
                       className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
                     >
                       <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
                       Zadzwoń teraz
                     </button>
-                    <a
-                      href="#appointment-section"
+                    <button
+                      onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                       className="bg-white border-2 border-teal-600 text-teal-600 font-semibold px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base text-center"
                     >
                       Umów wizytę
-                    </a>
+                    </button>
                   </div>
                 </div>
 

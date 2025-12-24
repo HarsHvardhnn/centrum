@@ -81,13 +81,13 @@ const MichalSzczubkowskiPage = () => {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-6 px-4 md:px-0">
                   <button
-                    onClick={() => window.location.href = '/#kontakt'}
+                    onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg"
                   >
                     Umów wizytę
                   </button>
                   <button
-                    onClick={() => window.location.href = 'tel:797097487'}
+                    onClick={() => window.location.href = 'tel:+48797097487'}
                     className="bg-white hover:bg-gray-50 text-teal-600 border-2 border-teal-600 font-semibold px-6 py-3 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2"
                   >
                     <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
@@ -263,7 +263,7 @@ const MichalSzczubkowskiPage = () => {
                     </p>
                   </div>
                   <a 
-                    href="/proktolog"
+                    href="/konsultacja-proktologiczna"
                     className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700"
                   >
                     Konsultacja proktologiczna- szczegóły
@@ -369,8 +369,8 @@ const MichalSzczubkowskiPage = () => {
                   
                   <div className="space-y-3 sm:space-y-4">
                     <div className="flex justify-between items-start border-b border-teal-300 pb-3">
-                      <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Konsultacja proktologiczna</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">300 zł</span>
+                      <span  href="/konsultacja-proktologiczna" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1" >Konsultacja proktologiczna</span>
+                      <a href="/konsultacja-proktologiczna" className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4 cursor-pointer">300 zł</a>
                     </div>
                     <div className="flex justify-between items-start border-b border-teal-300 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Konsultacja proktologiczna z badaniem per rectum</span>
@@ -742,13 +742,13 @@ const MichalSzczubkowskiPage = () => {
               
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center">
                 <button
-                  onClick={() => window.location.href = '/#kontakt'}
+                  onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                   className="bg-white text-teal-600 font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg w-full sm:w-auto"
                 >
                   Zarezerwuj termin
                 </button>
                 <button
-                  onClick={() => window.location.href = 'tel:797097487'}
+                  onClick={() => window.location.href = 'tel:+48797097487'}
                   className="bg-teal-600 border-2 border-white text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
                   <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />

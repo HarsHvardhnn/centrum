@@ -173,13 +173,13 @@ const SkinLesionRemovalPage = () => {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6 px-4 md:px-0">
                   <button 
-                    onClick={() => window.location.href = '/?openAppointment=true#appointment-section'}
+                    onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg transition-colors text-sm sm:text-base md:text-lg"
                   >
                     Umów wizytę
                   </button>
                   <button
-                    onClick={() => window.location.href = "tel:797097487"}
+                    onClick={() => window.location.href = "tel:+48797097487"}
                     className="bg-white border-2 border-teal-600 text-teal-600 font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base md:text-lg text-center"
                   >
                     <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
@@ -577,12 +577,12 @@ const SkinLesionRemovalPage = () => {
 
                 {/* Call to Action */}
                 <div className="mt-6 sm:mt-8 text-center">
-                  <a
-                    href="#appointment-section"
+                  <button
+                    onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                     className="inline-block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors text-sm sm:text-base md:text-lg"
                   >
                     Umów wizytę u Chirurga
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
@@ -606,7 +606,7 @@ const SkinLesionRemovalPage = () => {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 sm:mb-8">
                 {/* Call Button - Teal */}
                 <button
-                  onClick={() => window.location.href = "tel:797097487"}
+                  onClick={() => window.location.href = "tel:+48797097487"}
                   className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors flex items-center justify-center gap-2 w-full sm:w-auto text-sm sm:text-base"
                 >
                   <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
@@ -614,17 +614,17 @@ const SkinLesionRemovalPage = () => {
                 </button>
 
                 {/* Book Appointment Button - White with Teal Border */}
-                <a
-                  href="#appointment-section"
+                <button
+                  onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                   className="bg-white border-2 border-teal-600 text-teal-600 font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto text-sm sm:text-base text-center"
                 >
                   <FaCalendar className="text-teal-600" />
                   Umów wizytę online
-                </a>
+                </button>
 
                 {/* Google Reviews Button - White with Teal Border */}
                 <a
-                  href="https://share.google/BzJ9Tr3GTdOFZuw6C"
+                  href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skar%C5%BCysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dzieci%C4%99cy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-white border-2 border-teal-600 text-teal-600 font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto text-sm sm:text-base text-center"
