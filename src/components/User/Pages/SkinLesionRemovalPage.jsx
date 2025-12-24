@@ -139,7 +139,7 @@ const SkinLesionRemovalPage = () => {
                 </div>
 
                 {/* Main Heading */}
-                <h1 id="hero-heading" className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6">
+                <h2 id="hero-heading" className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6">
                   <span className="block text-teal-600">Usuwanie zmian</span>
                   <span className="block">
                     <span className="text-teal-600">skórnych – </span>
@@ -148,7 +148,7 @@ const SkinLesionRemovalPage = () => {
                   <span className="block text-gray-900">z oceną</span>
                   <span className="block text-gray-900">histopatologiczną,</span>
                   <span className="block text-gray-900">Skarżysko-Kamienna</span>
-                </h1>
+                </h2>
 
                 {/* Description Paragraphs */}
                 <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed">

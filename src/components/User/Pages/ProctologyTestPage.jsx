@@ -84,13 +84,13 @@ const ProctologyTestPage = () => {
                 </div>
 
                 {/* Main Heading */}
-                <h1 id="hero-heading" className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold leading-tight mb-6">
+                <h2 id="hero-heading" className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold leading-tight mb-6">
                   <span className="block text-teal-600">Konsultacja</span>
                   <span className="block text-teal-600">proktologiczna –</span>
                   <span className="block text-black font-bold">prywatnie,</span>
                   <span className="block text-black font-bold">bez skierowania,</span>
                   <span className="block text-black font-normal text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl">świętokrzyskie</span>
-                </h1>
+                </h2>
 
                 {/* Description Paragraphs */}
                 <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed">

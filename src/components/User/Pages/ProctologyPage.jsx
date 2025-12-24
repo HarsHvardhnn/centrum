@@ -147,13 +147,13 @@ const ProctologyPage = () => {
                 </div>
 
                 {/* Main Heading */}
-                <h1 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6">
+                <h2 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6">
                   <span className="block text-teal-600">Proktolog</span>
                   <span className="block text-teal-600">Skarżysko-Kamienna,</span>
                   <span className="block text-gray-900">świętokrzyskie</span>
                   <span className="block text-gray-900">– leczenie hemoroidów</span>
                   <span className="block text-gray-900">i chorób odbytu</span>
-                </h1>
+                </h2>
 
                 {/* Description Paragraph */}
                 <div className="mb-4 sm:mb-6 text-gray-700 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed">
