@@ -100,20 +100,27 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
         {/* Left Side Content */}
         <div className="md:w-1/2 lg:w-[48%] xl:w-1/2 text-center md:text-left mb-6 xs:mb-8 sm:mb-10 md:mb-0 w-full">
           {/* Main Heading */}
-          <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold leading-tight mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8">
+          <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold leading-tight mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8">
             <span className="text-teal-600 block">Prywatna przychodnia</span>
             <span className="text-teal-600 block">specjalistyczna</span>
-            <span className="text-gray-700 text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl 2xl:text-6xl block">w Skarżysku-Kamiennej</span>
+            <span className="text-gray-700 text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl block">
+              <span className="border-b-2 border-teal-600">w</span> Skarżysku-Kamiennej
+            </span>
           </h1>
 
           {/* Description */}
-          <p className="text-base xs:text-lg sm:text-xl md:text-xl lg:text-2xl xl:text-2xl text-gray-600 leading-relaxed mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8 max-w-2xl mx-auto md:mx-0">
-            Chirurg, proktolog, neurolog dziecięcy, kardiolog, radiolog.<br />
-            Prywatne wizyty bez skierowania - szybka rejestracja online.
+          <p className="text-sm xs:text-base sm:text-base md:text-lg lg:text-lg xl:text-xl text-gray-600 leading-relaxed mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8 max-w-2xl mx-auto md:mx-0">
+            <span className="block">Chirurg, proktolog, neurolog dziecięcy, kardiolog, radiolog.</span>
+            <span className="block">Prywatne wizyty bez skierowania - szybka rejestracja online.</span>
           </p>
 
           {/* Google Rating */}
-          <div className="flex items-center gap-2 mb-6 xs:mb-7 sm:mb-8 md:mb-8 lg:mb-10 justify-center md:justify-start max-w-2xl mx-auto md:mx-0">
+          <a 
+            href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skarżysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dziecięcy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 mb-6 xs:mb-7 sm:mb-8 md:mb-8 lg:mb-10 justify-center md:justify-start max-w-2xl mx-auto md:mx-0 cursor-pointer hover:opacity-80 transition-opacity"
+          >
             <div className="flex items-center gap-1.5 xs:gap-2 flex-wrap justify-center md:justify-start">
               {/* Google Logo - Teal */}
               <div className="flex items-center justify-center">
@@ -135,9 +142,9 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
               {/* Link Text */}
               <span className="text-teal-500 text-xs xs:text-sm font-medium ml-0.5 xs:ml-1">Zobacz opinie w Google</span>
             </div>
-          </div>
+          </a>
           {/* Appointment Booking Form Card */}
-          <div className="mt-4 xs:mt-5 sm:mt-6 md:mt-8 lg:mt-10 relative z-10 bg-white rounded-xl xs:rounded-2xl shadow-xl p-5 xs:p-6 sm:p-7 md:p-8 lg:p-9 xl:p-10 max-w-2xl mx-auto md:mx-0">
+          <div className="mt-4 xs:mt-5 sm:mt-6 md:mt-8 lg:mt-10 relative z-10 bg-white rounded-xl xs:rounded-2xl shadow-[0_20px_25px_-5px_rgba(20,184,166,0.1),0_10px_10px_-5px_rgba(20,184,166,0.04)] p-5 xs:p-6 sm:p-7 md:p-8 lg:p-9 xl:p-10 max-w-2xl mx-auto md:mx-0">
             {/* Teal Pill Tag */}
             <div className="flex items-center gap-2 mb-3 xs:mb-3.5 sm:mb-4">
               <div className="flex items-center gap-1 xs:gap-1.5 bg-teal-50 text-teal-600 px-2.5 xs:px-3 py-0.5 xs:py-1 rounded-full text-[10px] xs:text-xs font-medium">

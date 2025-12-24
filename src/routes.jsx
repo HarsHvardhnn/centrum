@@ -71,7 +71,7 @@ const routes = createBrowserRouter([
       { path: "lekarze/michal-szczubkowski", element: <MichalSzczubkowskiPage /> },
       { path: "lekarze/:doctorSlug", element: <DoctorProfilePage /> },
       { path: "uslugi", element: <OurServicesPage /> },
-      { path: "uslugi/:service", element: <ServicesDetailPage /> },
+      // { path: "uslugi/:service", element: <ServicesDetailPage /> },
       { path: "aktualnosci", element: <NewsPage /> },
       { path: "poradnik", element: <NewsPage isNews={false} /> },
       { path: "kontakt", element: <ContactPage /> },

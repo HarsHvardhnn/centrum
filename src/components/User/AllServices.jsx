@@ -2,7 +2,6 @@ import React from "react";
 import { FaArrowRight } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useServices } from "../../context/serviceContext";
-import { generateServiceSlug } from "../../utils/slugUtils";
 
 const ServiceCard = ({ service }) => {
   // Function to truncate text to specific length
@@ -11,6 +10,9 @@ const ServiceCard = ({ service }) => {
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength) + "...";
   };
+
+  // Check if redirectionUrl exists and is not empty
+  const hasRedirectionUrl = service.redirectionUrl && service.redirectionUrl.trim() !== "";
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden border flex flex-col h-full">
@@ -35,12 +37,14 @@ const ServiceCard = ({ service }) => {
             {truncateText(service.description, 120)}
           </p>
         </div>
-        <Link
-          to={"/uslugi/" + generateServiceSlug(service.title)}
-          className="text-main flex items-center gap-1 mt-3 font-medium"
-        >
-          Dowiedz się więcej <FaArrowRight />
-        </Link>
+        {hasRedirectionUrl && (
+          <Link
+            to={service.redirectionUrl}
+            className="text-main flex items-center gap-1 mt-3 font-medium hover:underline"
+          >
+            Dowiedz się więcej <FaArrowRight />
+          </Link>
+        )}
       </div>
     </div>
   );

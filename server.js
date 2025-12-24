@@ -141,9 +141,9 @@ const generateSEOHTML = async (path, dynamicData = null) => {
   
   switch (path) {
     case '/':
-      title = 'Centrum Medyczne 7 Skarżysko-Kamienna – Przychodnia specjalistyczna';
-      description = 'Prywatna przychodnia specjalistyczna w Skarżysku-Kamiennej. Chirurgia, proktologia, neurologia dziecięca. Doświadczeni lekarze i szybkie terminy wizyt.';
-      keywords = 'centrum medyczne 7, przychodnia Skarżysko-Kamienna, lekarze specjaliści, wizyta lekarska, opieka medyczna, cm7';
+      title = 'Centrum Medyczne 7 – poradnie specjalistyczne świętokrzyskie';
+      description = 'Poradnie CM7: chirurg, proktolog, neurolog dziecięcy, kardiolog, radiolog.  Wizyty prywatne, bez skierowania. Skarżysko-Kamienna, woj. świętokrzyskie.';
+      keywords = 'centrum medyczne 7, przychodnia Skarżysko-Kamienna, lekarze specjaliści, wizyta lekarska, opieka medyczna, cm7, poradnie specjalistyczne świętokrzyskie';
       ogImage = '/images/mainlogo.png';
       break;
     case '/o-nas':
