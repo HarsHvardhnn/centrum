@@ -28,6 +28,7 @@ const ServicesManagement = () => {
     description: "",
     bulletPoints: [],
     images: [],
+    redirectionUrl: "",
   });
   const [formErrors, setFormErrors] = useState({});
   const [imageFiles, setImageFiles] = useState([]);
@@ -164,6 +165,7 @@ const ServicesManagement = () => {
       "bulletPoints",
       JSON.stringify(formData.bulletPoints)
     );
+    formDataToSend.append("redirectionUrl", formData.redirectionUrl || "");
 
     // Append all new image files
     imageFiles.forEach((file) => {
@@ -218,6 +220,7 @@ const ServicesManagement = () => {
       description: service.description,
       bulletPoints: service.bulletPoints || [],
       images: service.images || [],
+      redirectionUrl: service.redirectionUrl || "",
     });
     
     // Set existing images as previews
@@ -262,6 +265,7 @@ const ServicesManagement = () => {
       description: "",
       bulletPoints: [],
       images: [],
+      redirectionUrl: "",
     });
     setImageFiles([]);
     setImagePreview([]);
@@ -506,6 +510,24 @@ const ServicesManagement = () => {
                       rows={4}
                       value={formData.description}
                       onChange={handleInputChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="redirectionUrl"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Redirection URL
+                    </label>
+                    <input
+                      type="text"
+                      id="redirectionUrl"
+                      name="redirectionUrl"
+                      value={formData.redirectionUrl}
+                      onChange={handleInputChange}
+                      placeholder="https://example.com or /route"
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
                     />
                   </div>
