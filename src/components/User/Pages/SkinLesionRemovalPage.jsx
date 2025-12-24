@@ -346,7 +346,7 @@ const SkinLesionRemovalPage = () => {
               <div className="bg-gray-50 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 shadow-md">
                 <div className="flex flex-col md:flex-row gap-6 sm:gap-8 md:gap-10 items-start">
                   {/* Left Side - Image and Button */}
-                  <div className="flex-shrink-0 flex flex-col items-center md:items-start w-full md:w-auto">
+                  <div className="flex-shrink-0 flex flex-col items-center w-full md:w-auto">
                     <img
                       src="/assets/static-assets/mikel_doctor.png"
                       alt="lek. Michał Szczubkowski - Chirurg"
@@ -354,7 +354,7 @@ const SkinLesionRemovalPage = () => {
                       loading="lazy"
                     />
                     <a
-                      href="/lekarze/michał-szczubkowski"
+                      href="/lekarze/michal-szczubkowski"
                       className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-center text-sm sm:text-base w-full md:w-auto"
                     >
                       Zobacz Chirurga
