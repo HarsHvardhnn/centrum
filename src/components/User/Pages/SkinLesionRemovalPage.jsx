@@ -171,7 +171,10 @@ const SkinLesionRemovalPage = () => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
-                  <button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg transition-colors text-sm sm:text-base md:text-lg">
+                  <button 
+                    onClick={() => window.location.href = '/?openAppointment=true#appointment-section'}
+                    className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg transition-colors text-sm sm:text-base md:text-lg"
+                  >
                     Umów wizytę
                   </button>
                   <button

@@ -192,7 +192,10 @@ const ProctologyPage = () => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
-                  <button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg transition-colors text-sm sm:text-base md:text-lg">
+                  <button 
+                    onClick={() => window.location.href = '/?openAppointment=true#appointment-section'}
+                    className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg transition-colors text-sm sm:text-base md:text-lg"
+                  >
                     Umów wizytę u Proktologa
                   </button>
                   <a
@@ -496,7 +499,7 @@ const ProctologyPage = () => {
               <div className="bg-white rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 shadow-lg">
                 <div className="flex flex-col md:flex-row gap-6 sm:gap-8 md:gap-10 items-start">
                   {/* Left Side - Image */}
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-start">
                     <img
                       src="/assets/static-assets/mikel_doctor.png"
                       alt="lek. Michał Szczubkowski - Proktolog"

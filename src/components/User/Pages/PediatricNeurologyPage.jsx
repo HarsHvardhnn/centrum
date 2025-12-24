@@ -161,7 +161,10 @@ const PediatricNeurologyPage = () => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
-                  <button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-base md:text-lg">
+                  <button 
+                    onClick={() => window.location.href = '/?openAppointment=true#appointment-section'}
+                    className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-base md:text-lg"
+                  >
                     Umów wizytę
                   </button>
                   <button 

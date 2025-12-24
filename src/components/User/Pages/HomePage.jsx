@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import ContactSection from "../ContactSection";
 import News from "../News";
 import Testimonial from "../Testimonial";
@@ -18,6 +19,7 @@ const  HomePage = () => {
     selectedDoctorId,
     setSelectedDoctorId,
   } = useAppointmentContext();
+  const [searchParams] = useSearchParams();
 
 //("selected doctor id",selectedDoctorId)
   useEffect(() => {
@@ -40,6 +42,22 @@ const  HomePage = () => {
       }, 100);
     }
   }, [selectedDoctorId,selectedDepartment]);
+
+  // Handle openAppointment query parameter
+  useEffect(() => {
+    const openAppointment = searchParams.get('openAppointment');
+    if (openAppointment === 'true') {
+      // Wait for page to load, then scroll to appointment section
+      setTimeout(() => {
+        const appointmentSection = document.getElementById('appointment-section');
+        if (appointmentSection) {
+          const yOffset = -120;
+          const y = appointmentSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 300);
+    }
+  }, [searchParams]);
 
   // Generate LocalBusiness Schema (JSON-LD)
   const generateLocalBusinessSchema = () => {

@@ -113,7 +113,10 @@ const ProctologyTestPage = () => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                  <button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-base md:text-lg">
+                  <button 
+                    onClick={() => window.location.href = '/?openAppointment=true#appointment-section'}
+                    className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-base md:text-lg"
+                  >
                     Umów wizytę
                   </button>
                   <button 
@@ -286,9 +289,9 @@ const ProctologyTestPage = () => {
 
               {/* Doctor Card */}
               <div className="bg-gray-100 rounded-lg p-6 md:p-8 lg:p-10">
-                <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center">
+                <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start">
                   {/* Left Side - Image and Button */}
-                  <div className="flex-shrink-0 flex flex-col items-center md:items-start">
+                  <div className="flex-shrink-0 flex flex-col items-center w-full md:w-auto">
                     {/* Doctor Image */}
                     <img
                       src="/assets/static-assets/mikel_doctor.png"
