@@ -36,6 +36,7 @@ export default function Doctors({
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState(selectedDoctorId);
+  const modalClosedRef = useRef(false);
 
   useEffect(() => {
     if (selectedDoctorId) {
@@ -128,8 +129,18 @@ export default function Doctors({
 
   // Add state for share functionality - removed modal states since we're copying directly
 
+  // Reset modal closed ref on location change (page navigation/refresh)
+  useEffect(() => {
+    modalClosedRef.current = false;
+  }, [location.pathname]);
+
   // Parse URL parameters on component mount
   useEffect(() => {
+    // Don't auto-open if modal was just manually closed in this session
+    if (modalClosedRef.current) {
+      return;
+    }
+
     const doctorIdFromUrl = searchParams.get('lekarz');
     const dateFromUrl = searchParams.get('data');
     const timeFromUrl = searchParams.get('godzina');
@@ -326,6 +337,8 @@ export default function Doctors({
   const handleBookAppointment = async (doctor) => {
     setSelectedDoctor(doctor);
     setShowModal(true);
+    // Reset the closed flag when opening modal
+    modalClosedRef.current = false;
     setWeekLoading(true);
 
     try {
@@ -555,6 +568,9 @@ export default function Doctors({
 
       // Close modal and reset form
       setShowModal(false);
+      modalClosedRef.current = true;
+      // Clear URL parameters when modal is closed
+      setSearchParams({});
       setBookingForm({
         name: user?.name || "",
         email: user?.email || "",
@@ -771,7 +787,12 @@ export default function Doctors({
                   </button>
                 )}
                 <button
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    modalClosedRef.current = true;
+                    // Clear URL parameters when modal is closed
+                    setSearchParams({});
+                  }}
                   className="text-white hover:text-gray-200 p-2 rounded-full hover:bg-white/10 transition-colors"
                 >
                   <FaTimes size={24} />
@@ -1438,7 +1459,12 @@ export default function Doctors({
             {/* Modal Footer */}
             <div className="bg-gray-50 px-6 py-4 flex justify-end sticky bottom-0">
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  modalClosedRef.current = true;
+                  // Clear URL parameters when modal is closed
+                  setSearchParams({});
+                }}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 mr-2 hover:bg-gray-100"
               >
                 Anuluj

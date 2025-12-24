@@ -30,18 +30,29 @@ export default function Specialties() {
       </h2>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
-        {Array.isArray(specialtiesData) ? specialtiesData.map((specialty) => (
-          <div
-            key={specialty.id}
-            onClick={() => navigate(`/lekarze`)}
-            className="border-2 rounded-lg p-6 md:p-8 flex flex-col items-center cursor-pointer transition-all duration-300 hover:bg-main text-neutral-900 hover:text-white"
-          >
-            <img   loading="lazy" src="/images/speciality.png" className="size-8 md:size-10" alt={specialty.name} />
-            <p className="mt-2 text-base md:text-lg font-medium">
-              {specialty.name}
-            </p>
-          </div>
-        )) : (
+        {Array.isArray(specialtiesData) ? specialtiesData.map((specialty) => {
+          const handleSpecialtyClick = () => {
+            // Check if specialization name is "Proktolog" (case-insensitive)
+            if (specialty.name && specialty.name.toLowerCase().includes('proktolog')) {
+              navigate('/proktolog');
+            } else {
+              navigate(`/lekarze`);
+            }
+          };
+
+          return (
+            <div
+              key={specialty.id}
+              onClick={handleSpecialtyClick}
+              className="border-2 rounded-lg p-6 md:p-8 flex flex-col items-center cursor-pointer transition-all duration-300 hover:bg-main text-neutral-900 hover:text-white"
+            >
+              <img   loading="lazy" src="/images/speciality.png" className="size-8 md:size-10" alt={specialty.name} />
+              <p className="mt-2 text-base md:text-lg font-medium">
+                {specialty.name}
+              </p>
+            </div>
+          );
+        }) : (
           <div className="col-span-full text-center py-20 text-gray-500">
             Brak dostępnych specjalizacji
           </div>
