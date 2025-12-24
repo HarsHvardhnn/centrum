@@ -315,7 +315,7 @@ const SkinLesionRemovalPage = () => {
 
                 {/* Highlighted Info Box */}
                 <div className="bg-teal-50 rounded-lg p-6 md:p-8 mt-6">
-                  <p className="text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed text-left">
+                  <p className="text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed text-center">
                     Zabieg usuwania zmian skórnych jest krótki, wykonywany w znieczuleniu miejscowym i zazwyczaj nie powoduje bólu. Całość odbywa się w warunkach ambulatoryjnych, z zachowaniem pełnego bezpieczeństwa i komfortu pacjenta.
                   </p>
                 </div>
@@ -329,7 +329,7 @@ const SkinLesionRemovalPage = () => {
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="doctor-heading"
-                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3"
+                  className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
                 >
                   Zabiegi chirurgicznego usuwania zmian skórnych wykonuje doświadczony chirurg
                 </h2>
@@ -340,16 +340,16 @@ const SkinLesionRemovalPage = () => {
               <div className="bg-gray-50 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 shadow-md">
                 <div className="flex flex-col md:flex-row gap-6 sm:gap-8 md:gap-10 items-start">
                   {/* Left Side - Image and Button */}
-                  <div className="flex-shrink-0 flex flex-col items-center md:items-start">
+                  <div className="flex-shrink-0 flex flex-col items-center md:items-start w-full md:w-auto">
                     <img
                       src="/assets/static-assets/mikel_doctor.png"
                       alt="lek. Michał Szczubkowski - Chirurg"
-                      className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-full object-cover mb-4"
+                      className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-full object-cover mb-4 border-4 border-white shadow-md"
                       loading="lazy"
                     />
                     <a
                       href="/lekarze/michał-szczubkowski"
-                      className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-center text-sm sm:text-base"
+                      className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-center text-sm sm:text-base w-full md:w-auto"
                     >
                       Zobacz Chirurga
                     </a>
@@ -386,12 +386,12 @@ const SkinLesionRemovalPage = () => {
           </section>
 
           {/* Section 5: Types of Skin Lesions */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-gray-50 py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="lesions-heading">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-teal-50 py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="lesions-heading">
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="lesions-heading"
-                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3"
+                  className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
                 >
                   Z jakimi zmianami skórnymi zgłosić się do chirurga?
                 </h2>
@@ -448,76 +448,96 @@ const SkinLesionRemovalPage = () => {
           </section>
 
           {/* Section 6: FAQ */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="faq-heading">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="faq-heading">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="faq-heading"
                   className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
                 >
-                  Najczęściej zadawane pytania o usuwaniu zmian skórnych
+                  Najczęściej zadawane pytania o wycinaniu zmian skórnych
                 </h2>
                 <div className="w-20 sm:w-24 h-1 bg-teal-600 mx-auto"></div>
               </div>
 
               <div className="space-y-3 sm:space-y-4 md:space-y-6">
                 {/* FAQ Item 1 */}
-                <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8">
+                <div className="bg-gray-100 rounded-lg p-4 sm:p-6 md:p-8 shadow-sm">
                   <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
-                    Czy usuwanie zmian skórnych boli?
+                    Czy usuwanie zmian skórnych jest bezpieczne?
                   </h3>
                   <p className="text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed">
-                    Zabieg wykonywany jest w znieczuleniu miejscowym, więc jest bezbolesny. Możliwe jest jedynie lekkie uczucie ukłucia podczas podawania znieczulenia.
+                    Tak. Chirurgiczne usuwanie zmian skórnych wykonywane przez doświadczonego chirurga jest procedurą bezpieczną. Każdy zabieg poprzedza kwalifikacja lekarska.
                   </p>
                 </div>
 
                 {/* FAQ Item 2 */}
-                <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8">
+                <div className="bg-gray-100 rounded-lg p-4 sm:p-6 md:p-8 shadow-sm">
                   <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
-                    Jak długo trwa zabieg?
+                    Czy każdy usunięty pieprzyk trafia do histopatologii?
                   </h3>
                   <p className="text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed">
-                    Większość zabiegów usuwania zmian skórnych trwa od 15 do 30 minut, w zależności od rozmiaru i lokalizacji zmiany.
+                    Tak. W Centrum Medyczne 7 wszystkie usunięte zmiany skórne standardowo przekazywane są do badania histopatologicznego, co pozwala na jednoznaczną ocenę charakteru zmiany.
                   </p>
                 </div>
 
                 {/* FAQ Item 3 */}
-                <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8">
+                <div className="bg-gray-100 rounded-lg p-4 sm:p-6 md:p-8 shadow-sm">
                   <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
-                    Czy po zabiegu zostanie blizna?
+                    Czy usuwanie pieprzyka boli?
                   </h3>
                   <p className="text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed">
-                    Chirurg wykonuje zabieg z dbałością o estetykę, a blizna jest zwykle minimalna i z czasem staje się mniej widoczna. Wszystkie usunięte zmiany są kierowane do badania histopatologicznego.
+                    Zabieg wykonywany jest w znieczuleniu miejscowym. Pacjent może odczuwać jedynie niewielki dyskomfort podczas podania znieczulenia, natomiast samo usunięcie zmiany jest bezbolesne.
                   </p>
                 </div>
 
                 {/* FAQ Item 4 */}
-                <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8">
+                <div className="bg-gray-100 rounded-lg p-4 sm:p-6 md:p-8 shadow-sm">
                   <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
-                    Kiedy można wrócić do normalnej aktywności?
+                    Czy po usunięciu zmiany zostaje blizna?
                   </h3>
                   <p className="text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed">
-                    Większość pacjentów może wrócić do codziennych aktywności tego samego dnia. Należy unikać intensywnego wysiłku fizycznego przez kilka dni po zabiegu.
+                    W przypadku chirurgicznego usuwania zmiany może pozostać niewielka blizna. Chirurg dobiera technikę tak, aby była ona jak najmniej widoczna, a pacjent otrzymuje zalecenia.
                   </p>
                 </div>
 
                 {/* FAQ Item 5 */}
-                <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8">
+                <div className="bg-gray-100 rounded-lg p-4 sm:p-6 md:p-8 shadow-sm">
                   <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
-                    Czy potrzebne jest skierowanie?
+                    Czy trzeba się specjalnie przygotować do zabiegu?
                   </h3>
                   <p className="text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed">
-                    Nie, skierowanie nie jest wymagane. Przyjmujemy pacjentów prywatnie, bez skierowania od lekarza rodzinnego.
+                    Nie. W większości przypadków nie jest wymagane specjalne przygotowanie. Podczas konsultacji chirurg poinformuje pacjenta o ewentualnych zaleceniach indywidualnych.
                   </p>
                 </div>
 
                 {/* FAQ Item 6 */}
-                <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8">
+                <div className="bg-gray-100 rounded-lg p-4 sm:p-6 md:p-8 shadow-sm">
                   <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
-                    Czy usunięta zmiana jest badana?
+                    Kiedy otrzymam wynik badania histopatologicznego?
                   </h3>
                   <p className="text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed">
-                    Tak, wszystkie usunięte zmiany są kierowane do badania histopatologicznego, co pozwala na potwierdzenie rozpoznania i wykluczenie zmian nowotworowych.
+                    Wynik badania histopatologicznego dostępny jest zazwyczaj po kilkunastu dniach. Lekarz omawia wynik z pacjentem i – jeśli to konieczne – zaleca dalsze postępowanie.
+                  </p>
+                </div>
+
+                {/* FAQ Item 7 */}
+                <div className="bg-gray-100 rounded-lg p-4 sm:p-6 md:p-8 shadow-sm">
+                  <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
+                    Czy mogę usunąć kilka zmian skórnych podczas jednej wizyty?
+                  </h3>
+                  <p className="text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed">
+                    Tak, w wielu przypadkach możliwe jest usunięcie kilku zmian podczas jednej wizyty. Decyzję podejmuje lekarz po ocenie zmian w trakcie konsultacji.
+                  </p>
+                </div>
+
+                {/* FAQ Item 8 */}
+                <div className="bg-gray-100 rounded-lg p-4 sm:p-6 md:p-8 shadow-sm">
+                  <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
+                    Czy w CM7 usuwamy tylko pieprzyki, czy także inne zmiany skórne?
+                  </h3>
+                  <p className="text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed">
+                    W Centrum Medyczne 7 usuwamy różne rodzaje zmian skórnych, m.in. znamiona (pieprzyki), kaszaki, brodawki, inne podejrzane zmiany wymagające oceny histopatologicznej.
                   </p>
                 </div>
               </div>
@@ -530,7 +550,7 @@ const SkinLesionRemovalPage = () => {
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="location-heading"
-                  className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
+                  className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-3"
                 >
                   Usuwanie zmian skórnych blisko Ciebie – Skarżysko-Kamienna, Kielce, Radom
                 </h2>
@@ -538,14 +558,14 @@ const SkinLesionRemovalPage = () => {
               </div>
 
               {/* Content Block - White Card */}
-              <div className="bg-primary-lightest rounded-lg p-6 md:p-8 lg:p-10 shadow-sm max-w-4xl mx-auto">
-                <div className="space-y-4 sm:space-y-6 text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">
+              <div className="bg-white rounded-lg p-6 md:p-8 lg:p-10 shadow-sm max-w-4xl mx-auto">
+                <div className="space-y-4 sm:space-y-6 text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed text-left">
                   <p>
-                    Choć Centrum Medyczne 7 mieści się w Skarżysku-Kamiennej, z usług chirurgicznego usuwania zmian skórnych regularnie korzystają pacjenci z całego regionu – m.in. z <strong>Kielc, Radomia, Starachowic, Szydłowca, Ostrowca</strong> i okolicznych miejscowości.
+                    Choć Centrum Medyczne 7 znajduje się w Skarżysku-Kamiennej, z zabiegów chirurgicznego usuwania zmian skórnych z oceną histopatologiczną korzystają pacjenci z całego regionu – m.in. z Kielc, Radomia, Starachowic, Szydłowca czy Ostrowca Świętokrzyskiego.
                   </p>
                   
                   <p>
-                    Pacjenci doceniają dogodny dojazd, wygodną rejestrację online oraz brak kolejek. Zabiegi wykonywane są przez doświadczonych chirurgów z dbałością o estetykę i bezpieczeństwo.
+                    Pacjenci wybierają naszą placówkę ze względu na doświadczonego chirurga, standard przekazywania każdej usuniętej zmiany do badania histopatologicznego, dogodny dojazd oraz możliwość szybkiej rejestracji online bez skierowania.
                   </p>
                 </div>
 
@@ -555,7 +575,7 @@ const SkinLesionRemovalPage = () => {
                     href="#appointment-section"
                     className="inline-block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors text-sm sm:text-base md:text-lg"
                   >
-                    Umów się na wizytę
+                    Umów wizytę u Chirurga
                   </a>
                 </div>
               </div>
