@@ -196,7 +196,7 @@ const ProctologyPage = () => {
                     Umów wizytę u Proktologa
                   </button>
                   <a
-                    href="/lekarze/michal-szczubkowski"
+                    href="/lekarze/michał-szczubkowski"
                     className="bg-white border-2 border-teal-600 text-teal-600 font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base md:text-lg text-center"
                   >
                     Zobacz Proktologa
@@ -451,7 +451,12 @@ const ProctologyPage = () => {
 
                 <div className="space-y-3 sm:space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-gray-200">
-                    <span className="text-gray-800 text-sm sm:text-base md:text-lg">Konsultacja proktologiczna</span>
+                    <a 
+                      href="/uslugi/konsultacja-proktologiczna"
+                      className="text-gray-800 text-sm sm:text-base md:text-lg hover:text-teal-600 transition-colors cursor-pointer"
+                    >
+                      Konsultacja proktologiczna
+                    </a>
                     <span className="text-teal-700 font-bold text-lg sm:text-xl md:text-2xl">300 zł</span>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-gray-200">
@@ -522,7 +527,7 @@ const ProctologyPage = () => {
                     {/* Action Buttons - Side by side */}
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                       <a
-                        href="/lekarze/michal-szczubkowski"
+                        href="/lekarze/michał-szczubkowski"
                         className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-center text-sm sm:text-base"
                       >
                         Zobacz Proktologa

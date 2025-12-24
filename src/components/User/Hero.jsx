@@ -95,7 +95,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
   };
 
   return (
-    <section className="relative flex flex-col items-center pt-24 xs:pt-26 sm:pt-28 md:pt-32 lg:pt-36 xl:pt-40 pb-16 xs:pb-20 sm:pb-20 md:pb-24 lg:pb-28 xl:pb-32 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-br from-[#F0F7F7] via-[#E6F5F5] to-[#DCF2F2]">
+    <section className="relative flex flex-col items-center pt-24 xs:pt-26 sm:pt-28 md:pt-32 lg:pt-36 xl:pt-40 pb-0 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-br from-[#F0F7F7] via-[#E6F5F5] to-[#DCF2F2]">
       <div className="flex-1 flex flex-col md:flex-row items-start justify-between w-full max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 pt-6 xs:pt-8 sm:pt-10 md:pt-12 lg:pt-14 xl:pt-16 gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-16">
         {/* Left Side Content */}
         <div className="md:w-1/2 lg:w-[48%] xl:w-1/2 text-center md:text-left mb-6 xs:mb-8 sm:mb-10 md:mb-0 w-full">
@@ -417,8 +417,8 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
 
       
       {/* Stats Section - New Design */}
-      <div className="bg-teal-600 w-full text-white py-4 xs:py-5 sm:py-5 md:py-6 lg:py-7 mt-8 xs:mt-10 sm:mt-12 md:mt-14 lg:mt-16 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12">
-        <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 xs:gap-5 sm:gap-6 md:gap-7 lg:gap-8">
+      <div className="bg-teal-600 w-screen text-white py-4 xs:py-5 sm:py-5 md:py-6 lg:py-7 mt-8 xs:mt-10 sm:mt-12 md:mt-14 lg:mt-16 -mx-3 xs:-mx-4 sm:-mx-6 md:-mx-8 lg:-mx-6 xl:-mx-8 2xl:-mx-12">
+        <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 xs:gap-5 sm:gap-6 md:gap-7 lg:gap-8">
           {/* Section 1: Specjaliści */}
           <div className="flex flex-col items-center text-center">
             <div className="bg-teal-700 rounded-lg xs:rounded-xl p-3 xs:p-3.5 md:p-4 mb-3 xs:mb-3.5 md:mb-4 w-12 h-12 xs:w-14 xs:h-14 md:w-16 md:h-16 flex items-center justify-center">

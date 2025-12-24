@@ -196,7 +196,12 @@ const SkinLesionRemovalPage = () => {
                 </div>
 
                 {/* Google Rating */}
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <a
+                  href="https://share.google/BzJ9Tr3GTdOFZuw6C"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-wrap items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                >
                   {/* Five Stars */}
                   <div className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
@@ -205,7 +210,7 @@ const SkinLesionRemovalPage = () => {
                   </div>
                   {/* Rating Text */}
                   <span className="text-gray-900 font-semibold text-sm sm:text-base">5.0 ocena w Google</span>
-                </div>
+                </a>
               </div>
 
               {/* Right Side - Image */}
@@ -373,7 +378,7 @@ const SkinLesionRemovalPage = () => {
                     {/* Action Buttons - Side by side */}
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                       <a
-                        href="/lekarze/michal-szczubkowski"
+                        href="/lekarze/michał-szczubkowski"
                         className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-center text-sm sm:text-base"
                       >
                         Zobacz Chirurga

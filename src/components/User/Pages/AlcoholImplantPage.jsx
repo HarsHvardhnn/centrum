@@ -103,8 +103,8 @@ const AlcoholImplantPage = () => {
 
                 {/* Price Box */}
                 <div className="bg-primary-lighter rounded-lg px-6 py-4 mb-6 flex items-center justify-between">
-                  <span className="text-gray-800 font-medium text-base md:text-lg">Wszywka alkoholowa (Disulfiram-Esperal)</span>
-                  <span className="text-teal-700 font-bold text-2xl md:text-3xl">od 1500 zł</span>
+                  <span className="text-gray-800 font-medium text-sm md:text-base">Wszywka alkoholowa (Disulfiram-Esperal)</span>
+                  <span className="text-primary font-bold text-sm md:text-xl">od 1500 zł</span>
                 </div>
 
                 {/* Action Buttons */}
@@ -122,7 +122,12 @@ const AlcoholImplantPage = () => {
                 </div>
 
                 {/* Google Rating */}
-                <div className="flex items-center gap-2">
+                <a
+                  href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skarżysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dziecięcy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                >
                   {/* Five Stars */}
                   <div className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
@@ -132,15 +137,10 @@ const AlcoholImplantPage = () => {
                   {/* Rating Text */}
                   <span className="text-gray-900 font-semibold text-base">5.0</span>
                   {/* Link Text */}
-                  <a 
-                    href="https://share.google/BzJ9Tr3GTdOFZuw6C" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-gray-900 font-normal text-base ml-1 cursor-pointer hover:text-teal-600"
-                  >
+                  <span className="text-gray-900 font-normal text-base ml-1 hover:text-teal-600">
                     Zobacz opinie Google
-                  </a>
-                </div>
+                  </span>
+                </a>
               </div>
 
               {/* Right Side - Image */}
