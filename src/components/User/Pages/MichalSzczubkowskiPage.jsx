@@ -1,8 +1,9 @@
 import React from "react";
 import MetaTags from '../../UtilComponents/MetaTags';
-import { FaStar, FaPhone, FaCalendar, FaShieldAlt, FaCheck } from "react-icons/fa";
+import { FaStar, FaCalendar, FaShieldAlt, FaCheck } from "react-icons/fa";
 import { IoLocationOutline } from "react-icons/io5";
 import { Activity, Stethoscope, HeartPulse, GraduationCap, Briefcase, Star, ClipboardList, MessageCircle, FileText } from "lucide-react";
+import phoneDialIcon from '../../../assets/phone_dial.png';
 
 const MichalSzczubkowskiPage = () => {
   // Structured Data (JSON-LD)
@@ -44,18 +45,18 @@ const MichalSzczubkowskiPage = () => {
       <main className="min-h-screen bg-white">
         {/* Hero Section - First Section */}
         <section className="bg-[#F7F9FA] pt-24 md:pt-28 lg:pt-32 pb-12 md:pb-16 lg:pb-20" aria-labelledby="hero-heading">
-          <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
+          <div className="max-w-7xl mx-auto px-0 md:px-6 lg:px-8 xl:px-12">
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8 lg:gap-12 xl:gap-16">
               {/* Left Side - Text Content */}
               <div className="flex-1 w-full lg:w-1/2 pt-4 lg:pt-0">
                 {/* Main Heading */}
-                <h1 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-4 sm:mb-6">
+                <h1 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-4 sm:mb-6 px-4 md:px-0">
                   <span className="block text-gray-900">Lek. Michał</span>
                   <span className="block text-gray-900">Szczubkowski</span>
                 </h1>
 
                 {/* Specialization Tags */}
-                <div className="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6 px-4 md:px-0">
                   <span className="inline-flex items-center bg-teal-100 text-teal-700 px-4 py-1.5 rounded-full text-sm sm:text-base font-medium">
                     Chirurg ogólny
                   </span>
@@ -65,12 +66,12 @@ const MichalSzczubkowskiPage = () => {
                 </div>
 
                 {/* Description Text */}
-                <p className="text-gray-800 text-base sm:text-lg md:text-xl leading-relaxed mb-4 sm:mb-6">
+                <p className="text-gray-800 text-base sm:text-lg md:text-xl leading-relaxed mb-4 sm:mb-6 px-4 md:px-0">
                   Doświadczony Chirurg i Proktolog – konsultacje prywatne
                 </p>
 
                 {/* Location Text */}
-                <div className="flex items-center gap-2 mb-6 sm:mb-8">
+                <div className="flex items-center gap-2 mb-6 sm:mb-8 px-4 md:px-0">
                   <IoLocationOutline className="text-teal-600 w-5 h-5 flex-shrink-0" />
                   <span className="text-gray-800 text-base sm:text-lg">
                     Przyjmuję pacjentów w Skarżysku-Kamiennej
@@ -78,7 +79,7 @@ const MichalSzczubkowskiPage = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row gap-4 mb-6 px-4 md:px-0">
                   <button
                     onClick={() => window.location.href = '/#kontakt'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg"
@@ -89,13 +90,13 @@ const MichalSzczubkowskiPage = () => {
                     onClick={() => window.location.href = 'tel:797097487'}
                     className="bg-white hover:bg-gray-50 text-teal-600 border-2 border-teal-600 font-semibold px-6 py-3 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2"
                   >
-                    <FaPhone className="w-5 h-5" />
+                    <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
                     Zadzwoń
                   </button>
                 </div>
 
                 {/* Google Rating */}
-                <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 px-4 md:px-0">
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
                       <FaStar key={i} className="text-yellow-400 text-base fill-yellow-400" />
@@ -126,8 +127,8 @@ const MichalSzczubkowskiPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16" role="main">
           
           {/* Section 2: About the Doctor */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="about-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="about-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-left mb-6 sm:mb-8">
                 <h2 
                   id="about-heading"
@@ -198,8 +199,8 @@ const MichalSzczubkowskiPage = () => {
           </section>
 
           {/* Section 4: Specializations */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="specializations-heading">
-            <div className="max-w-6xl mx-auto">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="specializations-heading">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-8 sm:mb-12">
                 <h2 
                   id="specializations-heading"
@@ -417,8 +418,8 @@ const MichalSzczubkowskiPage = () => {
           </section>
 
           {/* Section 6: Experience and Qualifications */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="experience-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="experience-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-8 sm:mb-12">
                 <h2 
                   id="experience-heading"
@@ -651,8 +652,8 @@ const MichalSzczubkowskiPage = () => {
           </section>
 
           {/* Section 8: Other Specialists */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="other-specialists-heading">
-            <div className="max-w-6xl mx-auto">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="other-specialists-heading">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-8 sm:mb-12">
                 <h2 
                   id="other-specialists-heading"
@@ -750,7 +751,7 @@ const MichalSzczubkowskiPage = () => {
                   onClick={() => window.location.href = 'tel:797097487'}
                   className="bg-teal-600 border-2 border-white text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
-                  <FaPhone className="w-5 h-5" />
+                  <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
                   Zadzwoń
                 </button>
               </div>

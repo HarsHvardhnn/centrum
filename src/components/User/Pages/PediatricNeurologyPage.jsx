@@ -1,8 +1,9 @@
 import React from "react";
 import MetaTags from '../../UtilComponents/MetaTags';
-import { FaStar, FaPhone, FaCalendar, FaShieldAlt, FaCheck } from "react-icons/fa";
+import { FaStar, FaCalendar, FaShieldAlt, FaCheck } from "react-icons/fa";
 import { IoLocationOutline } from "react-icons/io5";
-import { Brain, Activity, HeartPulse, Dumbbell, Baby, Bed, Phone, Calendar, Star } from "lucide-react";
+import { Brain, Activity, HeartPulse, Dumbbell, Baby, Bed, Calendar, Star } from "lucide-react";
+import phoneDialIcon from '../../../assets/phone_dial.png';
 
 const PediatricNeurologyPage = () => {
   // Structured Data (JSON-LD)
@@ -119,29 +120,33 @@ const PediatricNeurologyPage = () => {
       <main className="min-h-screen bg-white">
         {/* Hero Section - First Section */}
         <section className="bg-[#F7F9FA] pt-24 md:pt-28 lg:pt-32 pb-12 md:pb-16 lg:pb-20" aria-labelledby="hero-heading">
-          <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
+          <div className="max-w-7xl mx-auto px-0 md:px-6 lg:px-8 xl:px-12">
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8 lg:gap-12 xl:gap-16">
               {/* Left Side - Text Content */}
               <div className="flex-1 w-full lg:w-1/2 pt-4 lg:pt-0">
                 {/* Teal Pill Tag */}
-                <div className="mb-4">
+                <div className="mb-4 px-4 md:px-0">
                   <span className="inline-flex items-center gap-1.5 bg-teal-100 text-teal-700 px-4 py-1.5 rounded-full text-sm font-medium">
                     <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
                     Prywatnie, bez skierowania
                   </span>
                 </div>
 
-                {/* Main Heading */}
-                <h2 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6">
-                  <span className="block text-teal-600">Konsultacja</span>
-                  <span className="block text-teal-600">neurologiczna dla</span>
-                  <span className="block text-teal-600">dzieci i młodzieży</span>
-                  <span className="block text-gray-900">- prywatnie,</span>
-                  <span className="block text-gray-900">bez skierowania</span>
-                </h2>
+                {/* Main Heading - Full width on mobile */}
+                <div className="w-[100vw] relative left-1/2 -translate-x-1/2 md:w-auto md:left-0 md:translate-x-0 mb-6">
+                  <div className="px-4 md:px-0">
+                    <h2 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight">
+                      <span className="block text-teal-600">Konsultacja</span>
+                      <span className="block text-teal-600">neurologiczna dla</span>
+                      <span className="block text-teal-600">dzieci i młodzieży</span>
+                      <span className="block text-gray-900">- prywatnie,</span>
+                      <span className="block text-gray-900">bez skierowania</span>
+                    </h2>
+                  </div>
+                </div>
 
                 {/* Description Paragraphs */}
-                <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed">
+                <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed px-4 md:px-0">
                   <p>
                     Zauważasz u dziecka niepokojące objawy, takie jak tiki nerwowe, bóle głowy, drżenia, napady, problemy ze snem lub opóźnienie rozwoju? Nie zwlekaj – konsultacja neurologiczna dzieci pozwala na rzetelną ocenę stanu zdrowia i dalsze pokierowanie postępowaniem.
                   </p>
@@ -154,13 +159,13 @@ const PediatricNeurologyPage = () => {
                 </div>
 
                 {/* Price Box */}
-                <div className="bg-primary-lighter rounded-lg px-6 py-4 mb-6 flex items-center justify-between">
+                <div className="bg-primary-lighter rounded-lg px-6 py-4 mb-6 flex items-center justify-between mx-4 md:mx-0">
                   <span className="text-gray-800 font-medium text-sm md:text-base">Cena konsultacji neurologicznej dla dzieci</span>
                   <span className="text-teal-700 font-bold text-xl md:text-2xl">250 zł</span>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 px-4 md:px-0">
                   <button 
                     onClick={() => window.location.href = '/?openAppointment=true#appointment-section'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-base md:text-lg"
@@ -171,13 +176,13 @@ const PediatricNeurologyPage = () => {
                     onClick={() => window.location.href = "tel:797097487"}
                     className="bg-white border-2 border-teal-600 text-teal-600 font-semibold py-3 px-6 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2 text-base md:text-lg"
                   >
-                    <FaPhone className="text-teal-600" />
+                    <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
                     Zadzwoń teraz
                   </button>
                 </div>
 
                 {/* Google Rating */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-4 md:px-0">
                   {/* Five Stars */}
                   <div className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
@@ -287,8 +292,8 @@ const PediatricNeurologyPage = () => {
           </section>
 
           {/* Section 3: How Does Consultation Look Like */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="consultation-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="consultation-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="consultation-heading"
@@ -377,8 +382,8 @@ const PediatricNeurologyPage = () => {
           </section>
 
           {/* Section 5: Problems to Report */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="problems-heading">
-            <div className="max-w-6xl mx-auto">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="problems-heading">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="problems-heading"
@@ -538,8 +543,8 @@ const PediatricNeurologyPage = () => {
           </section>
 
           {/* Section 7: Contact/CTA */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="contact-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="contact-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="contact-heading"
@@ -583,8 +588,8 @@ const PediatricNeurologyPage = () => {
           </section>
 
           {/* Section 8: Trusted by Parents */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="trust-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="trust-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="trust-heading"
@@ -605,7 +610,7 @@ const PediatricNeurologyPage = () => {
                     onClick={() => window.location.href = 'tel:797097487'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 w-full sm:w-auto"
                   >
-                    <Phone className="w-5 h-5" />
+                    <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
                     Zadzwoń teraz
                   </button>
 

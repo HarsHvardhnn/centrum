@@ -1,7 +1,8 @@
 import React from "react";
 import MetaTags from '../../UtilComponents/MetaTags';
-import { FaStar, FaPhone, FaCalendar, FaShieldAlt, FaCheck, FaArrowRight } from "react-icons/fa";
+import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaArrowRight } from "react-icons/fa";
 import { IoLocationOutline } from "react-icons/io5";
+import phoneDialIcon from '../../../assets/phone_dial.png';
 
 const SkinLesionRemovalPage = () => {
   // Structured Data (JSON-LD)
@@ -126,12 +127,12 @@ const SkinLesionRemovalPage = () => {
       <main className="min-h-screen bg-white">
         {/* Hero Section - First Section */}
         <section className="bg-[#F7F9FA] pt-24 md:pt-28 lg:pt-32 pb-12 md:pb-16 lg:pb-20" aria-labelledby="hero-heading">
-          <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 xl:px-12">
+          <div className="max-w-7xl mx-auto px-0 md:px-6 lg:px-8 xl:px-12">
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8 lg:gap-12 xl:gap-16">
               {/* Left Side - Text Content */}
               <div className="flex-1 w-full lg:w-1/2 pt-4 lg:pt-0">
                 {/* Teal Pill Tag */}
-                <div className="mb-4">
+                <div className="mb-4 px-4 md:px-0">
                   <span className="inline-flex items-center gap-1.5 bg-teal-100 text-teal-700 px-4 py-1.5 rounded-full text-sm font-medium">
                     <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
                     Prywatnie, bez skierowania
@@ -139,7 +140,7 @@ const SkinLesionRemovalPage = () => {
                 </div>
 
                 {/* Main Heading */}
-                <h2 id="hero-heading" className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6">
+                <h2 id="hero-heading" className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6 px-4 md:px-0">
                   <span className="block text-teal-600">Usuwanie zmian</span>
                   <span className="block">
                     <span className="text-teal-600">skórnych – </span>
@@ -151,7 +152,7 @@ const SkinLesionRemovalPage = () => {
                 </h2>
 
                 {/* Description Paragraphs */}
-                <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed">
+                <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed px-4 md:px-0">
                   <p>
                     Masz niepokojące znamię, kaszak, włókniak lub inną zmianę skórną? Zdiagnozuj ją w Centrum Medycznym 7 w woj. świętokrzyskim, gdzie wykonujemy chirurgiczne usuwanie zmian skórnych w bezpiecznych warunkach ambulatoryjnych.
                   </p>
@@ -164,13 +165,13 @@ const SkinLesionRemovalPage = () => {
                 </div>
 
                 {/* Price Box */}
-                <div className="bg-primary-lighter rounded-lg px-6 py-4 mb-6 flex items-center justify-between">
+                <div className="bg-primary-lighter rounded-lg px-6 py-4 mb-6 flex items-center justify-between mx-4 md:mx-0">
                   <span className="text-gray-800 font-medium text-sm md:text-base">Chirurgiczne usuwanie zmian skórnych</span>
                   <span className="text-teal-700 font-bold text-xl md:text-2xl">od 500 zł</span>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6 px-4 md:px-0">
                   <button 
                     onClick={() => window.location.href = '/?openAppointment=true#appointment-section'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg transition-colors text-sm sm:text-base md:text-lg"
@@ -181,12 +182,13 @@ const SkinLesionRemovalPage = () => {
                     onClick={() => window.location.href = "tel:797097487"}
                     className="bg-white border-2 border-teal-600 text-teal-600 font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base md:text-lg text-center"
                   >
-                    <FaPhone className="text-teal-600" />
+                    <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
                     Zadzwoń teraz
                   </button>
                 </div>
 
                 {/* Google Rating */}
+                <div className="px-4 md:px-0">
                 <a
                   href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skarżysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dziecięcy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
                   target="_blank"
@@ -206,6 +208,7 @@ const SkinLesionRemovalPage = () => {
                     Zobacz opinie Google
                   </span>
                 </a>
+                </div>
               </div>
 
               {/* Right Side - Image */}
@@ -244,9 +247,9 @@ const SkinLesionRemovalPage = () => {
               </p>
 
               {/* Symptoms Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-6 mb-8">
                 {/* Left Column */}
-                <div className="bg-gray-100 rounded-lg p-6">
+                <div className="bg-gray-100 rounded-t-lg md:rounded-lg p-6">
                   <ul className="space-y-4" role="list">
                     <li className="flex items-start gap-3">
                       <span className="flex-shrink-0 w-2 h-2 bg-teal-600 rounded-full mt-2"></span>
@@ -264,7 +267,7 @@ const SkinLesionRemovalPage = () => {
                 </div>
 
                 {/* Right Column */}
-                <div className="bg-gray-100 rounded-lg p-6">
+                <div className="bg-gray-100 rounded-b-lg md:rounded-lg p-6">
                   <ul className="space-y-4" role="list">
                     <li className="flex items-start gap-3">
                       <span className="flex-shrink-0 w-2 h-2 bg-teal-600 rounded-full mt-2"></span>
@@ -292,8 +295,8 @@ const SkinLesionRemovalPage = () => {
           </section>
 
           {/* Section 3: How Does Procedure Look Like */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-teal-50 py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="procedure-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-teal-50 py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="procedure-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="procedure-heading"
@@ -389,8 +392,8 @@ const SkinLesionRemovalPage = () => {
           </section>
 
           {/* Section 5: Types of Skin Lesions */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-teal-50 py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="lesions-heading">
-            <div className="max-w-6xl mx-auto">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-teal-50 py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="lesions-heading">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="lesions-heading"
@@ -586,8 +589,8 @@ const SkinLesionRemovalPage = () => {
           </section>
 
           {/* Final Section: Trusted by Patients */}
-          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="trusted-heading">
-            <div className="max-w-6xl mx-auto text-center">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="trusted-heading">
+            <div className="max-w-6xl mx-auto text-center px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <h2 
                 id="trusted-heading"
                 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6"
@@ -606,7 +609,7 @@ const SkinLesionRemovalPage = () => {
                   onClick={() => window.location.href = "tel:797097487"}
                   className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors flex items-center justify-center gap-2 w-full sm:w-auto text-sm sm:text-base"
                 >
-                  <FaPhone className="text-white" />
+                  <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
                   Zadzwoń teraz
                 </button>
 
