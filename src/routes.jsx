@@ -27,6 +27,7 @@ import ProctologyPage from "./components/User/Pages/ProctologyPage";
 import SkinLesionRemovalPage from "./components/User/Pages/SkinLesionRemovalPage";
 import AlcoholImplantPage from "./components/User/Pages/AlcoholImplantPage";
 import PediatricNeurologyPage from "./components/User/Pages/PediatricNeurologyPage";
+import MichalSzczubkowskiPage from "./components/User/Pages/MichalSzczubkowskiPage";
 import { useScrollToTop } from "./hooks/useScrollToTop";
 
 // Scroll to top wrapper component
@@ -67,6 +68,7 @@ const routes = createBrowserRouter([
       { path: "", element: <HomePage /> },
       { path: "o-nas", element: <AboutUsPage /> },
       { path: "lekarze", element: <OurDoctorsPage /> },
+      { path: "lekarze/michal-szczubkowski", element: <MichalSzczubkowskiPage /> },
       { path: "lekarze/:doctorSlug", element: <DoctorProfilePage /> },
       { path: "uslugi", element: <OurServicesPage /> },
       { path: "uslugi/:service", element: <ServicesDetailPage /> },
