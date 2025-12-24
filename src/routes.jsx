@@ -25,6 +25,7 @@ import ContactPage from "./components/User/Pages/ContactPage";
 import ProctologyTestPage from "./components/User/Pages/ProctologyTestPage";
 import ProctologyPage from "./components/User/Pages/ProctologyPage";
 import SkinLesionRemovalPage from "./components/User/Pages/SkinLesionRemovalPage";
+import AlcoholImplantPage from "./components/User/Pages/AlcoholImplantPage";
 import { useScrollToTop } from "./hooks/useScrollToTop";
 
 // Scroll to top wrapper component
@@ -81,6 +82,7 @@ const routes = createBrowserRouter([
       { path: "konsultacja-proktologiczna", element: <ProctologyTestPage /> },
       { path: "proktolog", element: <ProctologyPage /> },
       { path: "usuwanie-zmian-skornych", element: <SkinLesionRemovalPage /> },
+      { path: "implantacja-wszywki-alkoholowej", element: <AlcoholImplantPage /> },
       { path: "*", element: <NotFound404 /> },
     ],
   },
