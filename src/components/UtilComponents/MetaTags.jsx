@@ -8,6 +8,7 @@ const MetaTags = ({ title, description, path }) => {
     <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
+      <link rel="canonical" href={fullUrl} />
       
       {/* Open Graph / Facebook */}
       <meta property="og:type" content="website" />

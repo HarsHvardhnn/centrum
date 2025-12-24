@@ -3,6 +3,55 @@ import MetaTags from '../../UtilComponents/MetaTags';
 import { FaStar, FaPhone, FaCalendar } from "react-icons/fa";
 
 const ProctologyTestPage = () => {
+  // Structured Data (JSON-LD)
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "MedicalProcedure",
+    "name": "Konsultacja proktologiczna",
+    "description": "Konsultacja proktologiczna prywatnie, bez skierowania w Centrum Medycznym 7. Umów wizytę u proktologa w Skarżysku-Kamiennej.",
+    "provider": {
+      "@type": "MedicalBusiness",
+      "name": "Centrum Medyczne 7",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Skarżysko-Kamienna",
+        "addressRegion": "świętokrzyskie",
+        "addressCountry": "PL"
+      },
+      "telephone": "797-097-487",
+      "url": "https://centrummedyczne7.pl"
+    },
+    "medicalSpecialty": "Proctology",
+    "availableChannel": {
+      "@type": "ServiceChannel",
+      "serviceType": "Private consultation",
+      "availableLanguage": "pl"
+    }
+  };
+
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Czy konsultacja proktologiczna wymaga skierowania?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nie. Przyjmujemy pacjentów prywatnie, bez skierowania."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Jak wygląda wizyta u proktologa?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Wizyta rozpoczyna się od szczegółowego wywiadu medycznego, następnie lekarz przeprowadza badanie per rectam. Badanie jest bezpieczne, delikatne i nie powinno powodować bólu."
+        }
+      }
+    ]
+  };
+
   return (
     <>
       <MetaTags 
@@ -10,6 +59,14 @@ const ProctologyTestPage = () => {
         description="Konsultacja proktologiczna prywatnie, bez skierowania w Centrum Medycznym 7. Umów wizytę u proktologa w Skarżysku-Kamiennej."
         path="/uslugi-new-first/test"
       />
+      
+      {/* Structured Data */}
+      <script type="application/ld+json">
+        {JSON.stringify(structuredData)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(faqStructuredData)}
+      </script>
       
       <main className="min-h-screen bg-white">
         {/* Hero Section - First Section */}

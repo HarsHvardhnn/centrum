@@ -4,6 +4,51 @@ import { FaStar, FaPhone, FaCalendar, FaShieldAlt, FaCheck } from "react-icons/f
 import { IoLocationOutline } from "react-icons/io5";
 
 const AlcoholImplantPage = () => {
+  // Structured Data (JSON-LD)
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "MedicalProcedure",
+    "name": "Wszywka alkoholowa - chirurgiczna implantacja disulfiramu (Esperal)",
+    "description": "Chirurgiczna implantacja disulfiramu (Esperal) w Centrum Medycznym 7. Profesjonalne wszywki alkoholowe. Pomoc w leczeniu uzależnienia od alkoholu.",
+    "provider": {
+      "@type": "MedicalBusiness",
+      "name": "Centrum Medyczne 7",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Skarżysko-Kamienna",
+        "addressRegion": "świętokrzyskie",
+        "addressCountry": "PL"
+      },
+      "telephone": "797-097-487",
+      "url": "https://centrummedyczne7.pl"
+    },
+    "medicalSpecialty": "Addiction Medicine",
+    "availableChannel": {
+      "@type": "ServiceChannel",
+      "serviceType": "Private consultation",
+      "availableLanguage": "pl"
+    }
+  };
+
+  const physicianData = {
+    "@context": "https://schema.org",
+    "@type": "Physician",
+    "name": "lek. Michał Szczubkowski",
+    "jobTitle": "Chirurg",
+    "worksFor": {
+      "@type": "MedicalBusiness",
+      "name": "Centrum Medyczne 7",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Skarżysko-Kamienna",
+        "addressRegion": "świętokrzyskie",
+        "addressCountry": "PL"
+      }
+    },
+    "medicalSpecialty": "Addiction Medicine",
+    "url": "https://centrummedyczne7.pl/implantacja-wszywki-alkoholowej"
+  };
+
   return (
     <>
       <MetaTags 
@@ -11,6 +56,14 @@ const AlcoholImplantPage = () => {
         description="Chirurgiczna implantacja disulfiramu (Esperal) w Centrum Medycznym 7. Profesjonalne wszywki alkoholowe. Pomoc w leczeniu uzależnienia od alkoholu. Umów konsultację."
         path="/implantacja-wszywki-alkoholowej"
       />
+      
+      {/* Structured Data */}
+      <script type="application/ld+json">
+        {JSON.stringify(structuredData)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(physicianData)}
+      </script>
       
       <main className="min-h-screen bg-white">
         {/* Hero Section - First Section */}

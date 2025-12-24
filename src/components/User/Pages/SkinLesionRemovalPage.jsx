@@ -4,6 +4,106 @@ import { FaStar, FaPhone, FaCalendar, FaShieldAlt, FaCheck } from "react-icons/f
 import { IoLocationOutline } from "react-icons/io5";
 
 const SkinLesionRemovalPage = () => {
+  // Structured Data (JSON-LD)
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "MedicalProcedure",
+    "name": "Chirurgiczne usuwanie zmian skórnych",
+    "description": "Chirurgiczne usuwanie zmian skórnych w Centrum Medycznym 7. Profesjonalne usuwanie znamion, brodawek, kaszaków i innych zmian skórnych.",
+    "provider": {
+      "@type": "MedicalBusiness",
+      "name": "Centrum Medyczne 7",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Skarżysko-Kamienna",
+        "addressRegion": "świętokrzyskie",
+        "addressCountry": "PL"
+      },
+      "telephone": "797-097-487",
+      "url": "https://centrummedyczne7.pl"
+    },
+    "medicalSpecialty": "Dermatologic Surgery",
+    "availableChannel": {
+      "@type": "ServiceChannel",
+      "serviceType": "Private consultation",
+      "availableLanguage": "pl"
+    }
+  };
+
+  const physicianData = {
+    "@context": "https://schema.org",
+    "@type": "Physician",
+    "name": "lek. Michał Szczubkowski",
+    "jobTitle": "Chirurg",
+    "worksFor": {
+      "@type": "MedicalBusiness",
+      "name": "Centrum Medyczne 7",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Skarżysko-Kamienna",
+        "addressRegion": "świętokrzyskie",
+        "addressCountry": "PL"
+      }
+    },
+    "medicalSpecialty": "Dermatologic Surgery",
+    "url": "https://centrummedyczne7.pl/usuwanie-zmian-skornych"
+  };
+
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Czy usuwanie zmian skórnych boli?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Zabieg wykonywany jest w znieczuleniu miejscowym, więc jest bezbolesny. Możliwe jest jedynie lekkie uczucie ukłucia podczas podawania znieczulenia."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Jak długo trwa zabieg?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Większość zabiegów usuwania zmian skórnych trwa od 15 do 30 minut, w zależności od rozmiaru i lokalizacji zmiany."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy po zabiegu zostanie blizna?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Chirurg wykonuje zabieg z dbałością o estetykę, a blizna jest zwykle minimalna i z czasem staje się mniej widoczna. Wszystkie usunięte zmiany są kierowane do badania histopatologicznego."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kiedy można wrócić do normalnej aktywności?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Większość pacjentów może wrócić do codziennych aktywności tego samego dnia. Należy unikać intensywnego wysiłku fizycznego przez kilka dni po zabiegu."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy potrzebne jest skierowanie?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nie, skierowanie nie jest wymagane. Przyjmujemy pacjentów prywatnie, bez skierowania od lekarza rodzinnego."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy usunięta zmiana jest badana?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tak, wszystkie usunięte zmiany są kierowane do badania histopatologicznego, co pozwala na potwierdzenie rozpoznania i wykluczenie zmian nowotworowych."
+        }
+      }
+    ]
+  };
+
   return (
     <>
       <MetaTags 
@@ -11,6 +111,17 @@ const SkinLesionRemovalPage = () => {
         description="Chirurgiczne usuwanie zmian skórnych w Centrum Medycznym 7. Profesjonalne usuwanie znamion, brodawek, kaszaków i innych zmian skórnych. Umów wizytę."
         path="/usuwanie-zmian-skornych"
       />
+      
+      {/* Structured Data */}
+      <script type="application/ld+json">
+        {JSON.stringify(structuredData)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(physicianData)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(faqStructuredData)}
+      </script>
       
       <main className="min-h-screen bg-white">
         {/* Hero Section - First Section */}

@@ -4,6 +4,114 @@ import { FaStar, FaPhone, FaCalendar, FaShieldAlt, FaCheck, FaMapMarkerAlt } fro
 import { IoLocationOutline } from "react-icons/io5";
 
 const ProctologyPage = () => {
+  // Structured Data (JSON-LD)
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "MedicalProcedure",
+    "name": "Konsultacja proktologiczna - leczenie hemoroidów i chorób odbytu",
+    "description": "Proktolog w Skarżysku-Kamiennej. Leczenie hemoroidów i chorób odbytu. Prywatne konsultacje proktologiczne bez skierowania.",
+    "provider": {
+      "@type": "MedicalBusiness",
+      "name": "Centrum Medyczne 7",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Skarżysko-Kamienna",
+        "addressRegion": "świętokrzyskie",
+        "addressCountry": "PL"
+      },
+      "telephone": "797-097-487",
+      "url": "https://centrummedyczne7.pl"
+    },
+    "medicalSpecialty": "Proctology",
+    "availableChannel": {
+      "@type": "ServiceChannel",
+      "serviceType": "Private consultation",
+      "availableLanguage": "pl"
+    }
+  };
+
+  const physicianData = {
+    "@context": "https://schema.org",
+    "@type": "Physician",
+    "name": "lek. Michał Szczubkowski",
+    "jobTitle": "Chirurg, Proktolog",
+    "worksFor": {
+      "@type": "MedicalBusiness",
+      "name": "Centrum Medyczne 7",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Skarżysko-Kamienna",
+        "addressRegion": "świętokrzyskie",
+        "addressCountry": "PL"
+      }
+    },
+    "medicalSpecialty": "Proctology",
+    "url": "https://centrummedyczne7.pl/proktolog"
+  };
+
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Kiedy warto udać się do proktologa?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Warto skonsultować się z proktologiem przy objawach takich jak krwawienie z odbytu, ból, świąd, pieczenie, guzki, problemy z wypróżnianiem lub uczucie niepełnego wypróżnienia."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy proktolog leczy hemoroidy?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tak, leczenie hemoroidów to jedna z najczęstszych przyczyn wizyty u proktologa. Lekarz dobierze odpowiednią metodę leczenia - od farmakoterapii po małoinwazyjne zabiegi."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Ile kosztuje wizyta u proktologa w Skarżysku-Kamiennej?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cena standardowej konsultacji proktologicznej w naszej placówce to 300 zł. Koszt może się różnić w zależności od zakresu wizyty i ewentualnych dodatkowych zaleceń."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy proktolog w Skarżysku-Kamiennej przyjmuje prywatnie?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tak, konsultacje proktologiczne w Centrum Medycznym 7 odbywają się wyłącznie prywatnie - bez potrzeby skierowania i bez kolejek."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy na wizytę u proktologa trzeba mieć skierowanie?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nie, w naszej placówce przyjmujemy pacjentów wyłącznie prywatnie - bez potrzeby posiadania skierowania od lekarza rodzinnego."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy do proktologa w Skarżysku-Kamiennej mogą zgłaszać się pacjenci z innych miast?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tak, przyjmujemy pacjentów nie tylko ze Skarżyska-Kamiennej, ale również z Kielc, Radomia, Starachowic, Szydłowca, Końskich i całego województwa świętokrzyskiego czy mazowieckiego."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy proktolog przyjmuje prywatnie w województwie świętokrzyskim i mazowieckim?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tak - w woj. świętokrzyskim prywatne konsultacje proktologiczne oferuje m.in. Centrum Medyczne 7 w Skarżysku-Kamiennej. Przyjmujemy pacjentów z całego regionu: m.in. z Kielc, Ostrowca Świętokrzyskiego, Starachowic, Sandomierza, Końskich i Suchedniowa."
+        }
+      }
+    ]
+  };
+
   return (
     <>
       <MetaTags 
@@ -11,6 +119,17 @@ const ProctologyPage = () => {
         description="Proktolog w Skarżysku-Kamiennej. Leczenie hemoroidów i chorób odbytu. Prywatne konsultacje proktologiczne bez skierowania. Umów wizytę u proktologa."
         path="/proktolog"
       />
+      
+      {/* Structured Data */}
+      <script type="application/ld+json">
+        {JSON.stringify(structuredData)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(physicianData)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(faqStructuredData)}
+      </script>
       
       <main className="min-h-screen bg-white">
         {/* Hero Section - First Section */}

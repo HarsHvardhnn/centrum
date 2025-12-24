@@ -5,6 +5,98 @@ import { IoLocationOutline } from "react-icons/io5";
 import { Brain, Activity, HeartPulse, Dumbbell, Baby, Bed, Phone, Calendar, Star } from "lucide-react";
 
 const PediatricNeurologyPage = () => {
+  // Structured Data (JSON-LD)
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "MedicalProcedure",
+    "name": "Konsultacja neurologiczna dla dzieci i młodzieży",
+    "description": "Konsultacja neurologiczna dla dzieci i młodzieży w Centrum Medycznym 7. Prywatne wizyty bez skierowania. Neurolog dziecięcy lek. Anna Grabowska.",
+    "provider": {
+      "@type": "MedicalBusiness",
+      "name": "Centrum Medyczne 7",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Skarżysko-Kamienna",
+        "addressRegion": "świętokrzyskie",
+        "addressCountry": "PL"
+      },
+      "telephone": "797-097-487",
+      "url": "https://centrummedyczne7.pl"
+    },
+    "medicalSpecialty": "Pediatric Neurology",
+    "availableChannel": {
+      "@type": "ServiceChannel",
+      "serviceType": "Private consultation",
+      "availableLanguage": "pl"
+    }
+  };
+
+  const physicianData = {
+    "@context": "https://schema.org",
+    "@type": "Physician",
+    "name": "lek. Anna Grabowska",
+    "jobTitle": "Neurolog dziecięcy",
+    "worksFor": {
+      "@type": "MedicalBusiness",
+      "name": "Centrum Medyczne 7",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Skarżysko-Kamienna",
+        "addressRegion": "świętokrzyskie",
+        "addressCountry": "PL"
+      }
+    },
+    "medicalSpecialty": "Pediatric Neurology",
+    "url": "https://centrummedyczne7.pl/konsultacja-neurologiczna-dla-dzieci"
+  };
+
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Czy konsultacja neurologiczna dzieci odbywa się bez skierowania?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tak. Przyjmujemy pacjentów prywatnie, bez skierowania."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy neurolog dziecięcy przyjmuje niemowlęta?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tak. Konsultacje obejmują niemowlęta, dzieci oraz młodzież."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy badanie neurologiczne dziecka boli?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nie. Badanie jest bezpieczne i bezbolesne."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Ile trwa konsultacja neurologiczna dzieci?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Standardowa wizyta trwa około 30-40 minut."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy przed wizytą potrzebne są badania?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nie. W razie potrzeby neurolog dziecięcy zleci badania po konsultacji."
+        }
+      }
+    ]
+  };
+
   return (
     <>
       <MetaTags 
@@ -12,6 +104,17 @@ const PediatricNeurologyPage = () => {
         description="Konsultacja neurologiczna dla dzieci i młodzieży w Centrum Medycznym 7. Prywatne wizyty bez skierowania. Neurolog dziecięcy lek. Anna Grabowska. Umów wizytę."
         path="/konsultacja-neurologiczna-dla-dzieci"
       />
+      
+      {/* Structured Data */}
+      <script type="application/ld+json">
+        {JSON.stringify(structuredData)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(physicianData)}
+      </script>
+      <script type="application/ld+json">
+        {JSON.stringify(faqStructuredData)}
+      </script>
       
       <main className="min-h-screen bg-white">
         {/* Hero Section - First Section */}
@@ -33,8 +136,8 @@ const PediatricNeurologyPage = () => {
                   <span className="block text-teal-600">Konsultacja</span>
                   <span className="block text-teal-600">neurologiczna dla</span>
                   <span className="block text-teal-600">dzieci i młodzieży</span>
-                  <span className="block text-teal-600">- prywatnie,</span>
-                  <span className="block text-teal-600">bez skierowania</span>
+                  <span className="block text-gray-900">- prywatnie,</span>
+                  <span className="block text-gray-900">bez skierowania</span>
                 </h1>
 
                 {/* Description Paragraphs */}
@@ -172,7 +275,7 @@ const PediatricNeurologyPage = () => {
               </div>
 
               {/* Light Teal Box - Concluding Statement */}
-              <div className="bg-teal-50 rounded-lg p-6 md:p-8">
+              <div className="bg-primary-lightest rounded-lg p-6 md:p-8 mt-6">
                 <p className="text-left text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">
                   Wczesna konsultacja z neurologiem dziecięcym pozwala na szybką diagnostykę i właściwe ukierunkowanie dalszego postępowania.
                 </p>
