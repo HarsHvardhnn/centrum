@@ -26,6 +26,7 @@ import ProctologyTestPage from "./components/User/Pages/ProctologyTestPage";
 import ProctologyPage from "./components/User/Pages/ProctologyPage";
 import SkinLesionRemovalPage from "./components/User/Pages/SkinLesionRemovalPage";
 import AlcoholImplantPage from "./components/User/Pages/AlcoholImplantPage";
+import PediatricNeurologyPage from "./components/User/Pages/PediatricNeurologyPage";
 import { useScrollToTop } from "./hooks/useScrollToTop";
 
 // Scroll to top wrapper component
@@ -83,6 +84,7 @@ const routes = createBrowserRouter([
       { path: "proktolog", element: <ProctologyPage /> },
       { path: "usuwanie-zmian-skornych", element: <SkinLesionRemovalPage /> },
       { path: "implantacja-wszywki-alkoholowej", element: <AlcoholImplantPage /> },
+      { path: "konsultacja-neurologiczna-dla-dzieci", element: <PediatricNeurologyPage /> },
       { path: "*", element: <NotFound404 /> },
     ],
   },

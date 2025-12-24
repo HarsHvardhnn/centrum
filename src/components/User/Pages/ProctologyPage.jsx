@@ -147,7 +147,8 @@ const ProctologyPage = () => {
                       <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center mt-0.5">
                         <img 
                           src="/stethoscope.png" 
-                          alt="icon" 
+                          alt="" 
+                          role="presentation"
                           className="w-4 h-4 sm:w-5 sm:h-5 object-contain"
                         />
                       </div>
@@ -157,7 +158,8 @@ const ProctologyPage = () => {
                       <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center mt-0.5">
                         <img 
                           src="/stethoscope.png" 
-                          alt="icon" 
+                          alt="" 
+                          role="presentation"
                           className="w-4 h-4 sm:w-5 sm:h-5 object-contain"
                         />
                       </div>
@@ -167,7 +169,8 @@ const ProctologyPage = () => {
                       <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center mt-0.5">
                         <img 
                           src="/stethoscope.png" 
-                          alt="icon" 
+                          alt="" 
+                          role="presentation"
                           className="w-4 h-4 sm:w-5 sm:h-5 object-contain"
                         />
                       </div>
@@ -181,7 +184,8 @@ const ProctologyPage = () => {
                       <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center mt-0.5">
                         <img 
                           src="/stethoscope.png" 
-                          alt="icon" 
+                          alt="" 
+                          role="presentation"
                           className="w-4 h-4 sm:w-5 sm:h-5 object-contain"
                         />
                       </div>
@@ -191,7 +195,8 @@ const ProctologyPage = () => {
                       <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center mt-0.5">
                         <img 
                           src="/stethoscope.png" 
-                          alt="icon" 
+                          alt="" 
+                          role="presentation"
                           className="w-4 h-4 sm:w-5 sm:h-5 object-contain"
                         />
                       </div>
@@ -201,7 +206,8 @@ const ProctologyPage = () => {
                       <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center mt-0.5">
                         <img 
                           src="/stethoscope.png" 
-                          alt="icon" 
+                          alt="" 
+                          role="presentation"
                           className="w-4 h-4 sm:w-5 sm:h-5 object-contain"
                         />
                       </div>
