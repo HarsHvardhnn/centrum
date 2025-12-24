@@ -744,12 +744,14 @@ export default function Doctors({
                   </div>
 
                   <div className="flex flex-col">
-                    <button
-                      onClick={() => navigate(generateDoctorProfileUrl({ name: { first: doctor.name.split(' ')[0], last: doctor.name.split(' ').slice(1).join(' ') } }))}
-                      className="bg-gray-100 text-main font-semibold text-lg py-3 w-full hover:bg-gray-200 transition-all border-b border-gray-200"
-                    >
-                      Zobacz profil
-                    </button>
+                    {doctor.id === '6877dbf8635211ff3ec6322d' && (
+                      <button
+                        onClick={() => navigate(generateDoctorProfileUrl({ name: { first: doctor.name.split(' ')[0], last: doctor.name.split(' ').slice(1).join(' ') } }))}
+                        className="bg-gray-100 text-main font-semibold text-lg py-3 w-full hover:bg-gray-200 transition-all border-b border-gray-200"
+                      >
+                        Zobacz profil
+                      </button>
+                    )}
                     <button
                       onClick={() => handleBookAppointment(doctor)}
                       className="bg-main text-white font-semibold text-lg py-3 w-full hover:bg-teal-700 transition-all"
