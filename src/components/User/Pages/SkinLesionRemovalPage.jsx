@@ -1,6 +1,6 @@
 import React from "react";
 import MetaTags from '../../UtilComponents/MetaTags';
-import { FaStar, FaPhone, FaCalendar, FaShieldAlt, FaCheck } from "react-icons/fa";
+import { FaStar, FaPhone, FaCalendar, FaShieldAlt, FaCheck, FaArrowRight } from "react-icons/fa";
 import { IoLocationOutline } from "react-icons/io5";
 
 const SkinLesionRemovalPage = () => {
@@ -139,65 +139,53 @@ const SkinLesionRemovalPage = () => {
                 </div>
 
                 {/* Main Heading */}
-                <h1 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6">
-                  <span className="block text-teal-600">Usuwanie zmian skórnych</span>
-                  <span className="block text-teal-600">Skarżysko-Kamienna,</span>
-                  <span className="block text-gray-900">Kielce, Radom</span>
-                  <span className="block text-gray-900">– chirurgiczne usuwanie</span>
-                  <span className="block text-gray-900">znamion i zmian skórnych</span>
+                <h1 id="hero-heading" className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6">
+                  <span className="block text-teal-600">Usuwanie zmian</span>
+                  <span className="block">
+                    <span className="text-teal-600">skórnych – </span>
+                    <span className="text-gray-900">chirurgiczne,</span>
+                  </span>
+                  <span className="block text-gray-900">z oceną</span>
+                  <span className="block text-gray-900">histopatologiczną,</span>
+                  <span className="block text-gray-900">Skarżysko-Kamienna</span>
                 </h1>
 
-                {/* Description Paragraph */}
-                <div className="mb-4 sm:mb-6 text-gray-700 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed">
+                {/* Description Paragraphs */}
+                <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed">
                   <p>
-                    Profesjonalne chirurgiczne usuwanie zmian skórnych: znamion, brodawek, kaszaków i innych zmian. Zabiegi wykonywane przez doświadczonych chirurgów w Centrum Medycznym 7.
+                    Masz niepokojące znamię, kaszak, włókniak lub inną zmianę skórną? Zdiagnozuj ją w Centrum Medycznym 7 w woj. świętokrzyskim, gdzie wykonujemy chirurgiczne usuwanie zmian skórnych w bezpiecznych warunkach ambulatoryjnych.
+                  </p>
+                  <p>
+                    Zabieg wykonywany jest przez doświadczonego chirurga, po konsultacji i kwalifikacji medycznej. Każda usunięta zmiana skórna jest rutynowo kierowana do badania histopatologicznego, co zapewnia rzetelną ocenę i bezpieczeństwo pacjenta.
+                  </p>
+                  <p>
+                    Przyjmujemy pacjentów prywatnie, bez skierowania. Z naszych usług korzystają pacjenci ze Skarżyska-Kamiennej oraz okolicznych miejscowości, m.in. z Kielc, Starachowic i Radomia.
                   </p>
                 </div>
 
-                {/* Feature Items */}
-                <div className="mb-4 sm:mb-6">
-                  {/* First Row - Two items side by side */}
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-6 mb-3 sm:mb-4">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
-                        <FaCheck className="text-teal-600 text-base sm:text-lg" />
-                      </div>
-                      <span className="text-gray-800 text-sm sm:text-base md:text-lg">Prywatnie, bez skierowania</span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
-                        <FaShieldAlt className="text-teal-600 text-base sm:text-lg" />
-                      </div>
-                      <span className="text-gray-800 text-sm sm:text-base md:text-lg">Dyskrecja i komfort</span>
-                    </div>
-                  </div>
-                  {/* Second Row - Third item centered */}
-                  <div className="flex justify-center sm:justify-start">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
-                        <IoLocationOutline className="text-teal-600 text-base sm:text-lg" />
-                      </div>
-                      <span className="text-gray-800 text-sm sm:text-base md:text-lg">Pacjenci z całego woj. świętokrzyskiego</span>
-                    </div>
-                  </div>
+                {/* Price Box */}
+                <div className="bg-primary-lighter rounded-lg px-6 py-4 mb-6 flex items-center justify-between">
+                  <span className="text-gray-800 font-medium text-sm md:text-base">Chirurgiczne usuwanie zmian skórnych</span>
+                  <span className="text-teal-700 font-bold text-xl md:text-2xl">od 500 zł</span>
                 </div>
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
                   <button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg transition-colors text-sm sm:text-base md:text-lg">
-                    Umów się na wizytę
+                    Umów wizytę
                   </button>
-                  <a
-                    href="/lekarze/michal-szczubkowski"
+                  <button
+                    onClick={() => window.location.href = "tel:797097487"}
                     className="bg-white border-2 border-teal-600 text-teal-600 font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base md:text-lg text-center"
                   >
-                    Zobacz Chirurga
-                  </a>
+                    <FaPhone className="text-teal-600" />
+                    Zadzwoń teraz
+                  </button>
                 </div>
 
                 {/* Google Rating */}
                 <a
-                  href="https://share.google/BzJ9Tr3GTdOFZuw6C"
+                  href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skarżysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dziecięcy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex flex-wrap items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
@@ -209,7 +197,11 @@ const SkinLesionRemovalPage = () => {
                     ))}
                   </div>
                   {/* Rating Text */}
-                  <span className="text-gray-900 font-semibold text-sm sm:text-base">5.0 ocena w Google</span>
+                  <span className="text-gray-900 font-semibold text-sm sm:text-base">5.0</span>
+                  {/* Link Text */}
+                  <span className="text-gray-900 font-normal text-sm sm:text-base ml-1 hover:text-teal-600">
+                    Zobacz opinie Google
+                  </span>
                 </a>
               </div>
 
@@ -232,7 +224,7 @@ const SkinLesionRemovalPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16" role="main">
           
           {/* Section 2: When to Visit */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="when-to-visit-heading">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="when-to-visit-heading">
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -245,59 +237,59 @@ const SkinLesionRemovalPage = () => {
               </div>
 
               <p className="text-left text-gray-700 text-sm sm:text-base md:text-lg mb-6 sm:mb-8">
-                Jeśli zauważasz poniższe objawy lub masz niepokojące dolegliwości - nie zwlekaj z wizytą:
+                Jeśli zauważysz niepokojącą zmianę na skórze lub zmianę wyglądu pieprzyka, nie odkładaj konsultacji chirurgicznej.
               </p>
 
               {/* Symptoms Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 {/* Left Column */}
-                <div className="bg-white rounded-lg p-6">
+                <div className="bg-gray-100 rounded-lg p-6">
                   <ul className="space-y-4" role="list">
                     <li className="flex items-start gap-3">
                       <span className="flex-shrink-0 w-2 h-2 bg-teal-600 rounded-full mt-2"></span>
-                      <span className="text-gray-800 text-base sm:text-lg md:text-xl">zmiana kształtu, koloru lub rozmiaru znamienia</span>
+                      <span className="text-gray-800 text-base sm:text-lg md:text-xl">zmiana kształtu, koloru lub wielkości pieprzyka</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="flex-shrink-0 w-2 h-2 bg-teal-600 rounded-full mt-2"></span>
-                      <span className="text-gray-800 text-base sm:text-lg md:text-xl">swędzenie, pieczenie lub ból w okolicy zmiany</span>
+                      <span className="text-gray-800 text-base sm:text-lg md:text-xl">krwawienie, sączenie lub bolesność zmiany skórnej</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="flex-shrink-0 w-2 h-2 bg-teal-600 rounded-full mt-2"></span>
-                      <span className="text-gray-800 text-base sm:text-lg md:text-xl">krwawienie lub sączenie ze zmiany</span>
+                      <span className="text-gray-800 text-base sm:text-lg md:text-xl">szybki wzrost znamienia lub guzka pod skórą</span>
                     </li>
                   </ul>
                 </div>
 
                 {/* Right Column */}
-                <div className="bg-white rounded-lg p-6">
+                <div className="bg-gray-100 rounded-lg p-6">
                   <ul className="space-y-4" role="list">
                     <li className="flex items-start gap-3">
                       <span className="flex-shrink-0 w-2 h-2 bg-teal-600 rounded-full mt-2"></span>
-                      <span className="text-gray-800 text-base sm:text-lg md:text-xl">znamię w miejscu narażonym na urazy</span>
+                      <span className="text-gray-800 text-base sm:text-lg md:text-xl">kaszaki, tłuszczaki, brodawki do usunięcia</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="flex-shrink-0 w-2 h-2 bg-teal-600 rounded-full mt-2"></span>
-                      <span className="text-gray-800 text-base sm:text-lg md:text-xl">zmiany estetyczne powodujące dyskomfort</span>
+                      <span className="text-gray-800 text-base sm:text-lg md:text-xl">zmiany skórne drażnione przez odzież lub golenie</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="flex-shrink-0 w-2 h-2 bg-teal-600 rounded-full mt-2"></span>
-                      <span className="text-gray-800 text-base sm:text-lg md:text-xl">podejrzenie zmiany nowotworowej</span>
+                      <span className="text-gray-800 text-base sm:text-lg md:text-xl">podejrzenie zmiany wymagającej oceny histopatologiczne</span>
                     </li>
                   </ul>
                 </div>
               </div>
 
               {/* Bottom Info Box */}
-              <div className="bg-white rounded-lg p-6 md:p-8">
-                <p className="text-gray-800 text-base md:text-lg leading-relaxed text-left font-semibold">
-                  Wczesna diagnostyka i usunięcie podejrzanych zmian skórnych pozwala na skuteczne leczenie i zapobieganie powikłaniom.
+              <div className="bg-teal-50 rounded-lg p-6 md:p-8">
+                <p className="text-gray-800 text-base md:text-lg leading-relaxed text-left">
+                  Wczesne chirurgiczne usunięcie zmiany skórnej i jej badanie histopatologiczne pozwala na dokładną diagnostykę i zwiększa bezpieczeństwo pacjenta.
                 </p>
               </div>
             </div>
           </section>
 
           {/* Section 3: How Does Procedure Look Like */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="procedure-heading">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-teal-50 py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="procedure-heading">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -310,21 +302,21 @@ const SkinLesionRemovalPage = () => {
               </div>
 
               {/* Main Content Box */}
-              <div className="bg-primary-lightest rounded-lg p-6 md:p-8 lg:p-10 shadow-sm">
+              <div className="bg-white rounded-lg p-6 md:p-8 lg:p-10 shadow-md">
                 {/* First Paragraph */}
-                <p className="text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed mb-4 sm:mb-6">
-                  Zabieg usuwania zmian skórnych wykonywany jest w znieczuleniu miejscowym, co zapewnia pełny komfort podczas procedury. Chirurg precyzyjnie usuwa zmianę wraz z odpowiednim marginesem zdrowych tkanek, co jest istotne dla prawidłowego gojenia i ewentualnej diagnostyki histopatologicznej.
+                <p className="text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed mb-4 sm:mb-6 text-left">
+                  Podczas wizyty chirurg przeprowadza szczegółowy wywiad medyczny oraz ocenę zmiany skórnej. Następnie, po kwalifikacji, wykonywany jest zabieg chirurgicznego usunięcia zmiany skórnej w znieczuleniu miejscowym.
                 </p>
 
                 {/* Second Paragraph */}
-                <p className="text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed mb-4 sm:mb-6">
-                  Po zabiegu zakładane są szwy, które są usuwane po około 7-14 dniach, w zależności od lokalizacji zmiany. Większość zabiegów trwa od 15 do 30 minut i można wrócić do codziennych aktywności tego samego dnia.
+                <p className="text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed mb-4 sm:mb-6 text-left">
+                  Każda usunięta zmiana — niezależnie od tego, czy jest to pieprzyk, znamię, kaszak lub inna zmiana skórna — przekazywana jest do badania histopatologicznego.
                 </p>
 
                 {/* Highlighted Info Box */}
-                <div className="bg-white rounded-lg p-6 md:p-8 mt-6">
-                  <p className="text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed font-semibold">
-                    Wszystkie usunięte zmiany są kierowane do badania histopatologicznego, co pozwala na potwierdzenie rozpoznania i wykluczenie zmian nowotworowych.
+                <div className="bg-teal-50 rounded-lg p-6 md:p-8 mt-6">
+                  <p className="text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed text-left">
+                    Zabieg usuwania zmian skórnych jest krótki, wykonywany w znieczuleniu miejscowym i zazwyczaj nie powoduje bólu. Całość odbywa się w warunkach ambulatoryjnych, z zachowaniem pełnego bezpieczeństwa i komfortu pacjenta.
                   </p>
                 </div>
               </div>
@@ -332,28 +324,35 @@ const SkinLesionRemovalPage = () => {
           </section>
 
           {/* Section 4: Doctor Info */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="doctor-heading">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="doctor-heading">
             <div className="max-w-6xl mx-auto">
-              <div className="mb-6 sm:mb-8">
+              <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="doctor-heading"
-                  className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
+                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3"
                 >
-                  Lekarz specjalista CM7 – Chirurg
+                  Zabiegi chirurgicznego usuwania zmian skórnych wykonuje doświadczony chirurg
                 </h2>
+                <div className="w-20 sm:w-24 h-1 bg-teal-600 mx-auto"></div>
               </div>
 
-              {/* Doctor Card - White with shadow */}
-              <div className="bg-white rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 shadow-lg">
+              {/* Doctor Card - Light gray with shadow */}
+              <div className="bg-gray-50 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 shadow-md">
                 <div className="flex flex-col md:flex-row gap-6 sm:gap-8 md:gap-10 items-start">
-                  {/* Left Side - Image */}
-                  <div className="flex-shrink-0">
+                  {/* Left Side - Image and Button */}
+                  <div className="flex-shrink-0 flex flex-col items-center md:items-start">
                     <img
                       src="/assets/static-assets/mikel_doctor.png"
                       alt="lek. Michał Szczubkowski - Chirurg"
-                      className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-lg object-cover"
+                      className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-full object-cover mb-4"
                       loading="lazy"
                     />
+                    <a
+                      href="/lekarze/michał-szczubkowski"
+                      className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-center text-sm sm:text-base"
+                    >
+                      Zobacz Chirurga
+                    </a>
                   </div>
 
                   {/* Right Side - Doctor Info */}
@@ -362,33 +361,23 @@ const SkinLesionRemovalPage = () => {
                       lek. Michał Szczubkowski
                     </h3>
                     <p className="text-teal-600 text-lg sm:text-xl md:text-2xl font-medium mb-4 sm:mb-6">
-                      Chirurg
+                      Specjalista Chirurg Ogólnej
                     </p>
 
                     {/* Biography */}
-                    <div className="space-y-4 text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed mb-6 sm:mb-8">
+                    <div className="space-y-4 text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">
                       <p>
-                        Doświadczony chirurg z wieloletnią praktyką w zakresie chirurgii ogólnej i usuwania zmian skórnych. Specjalizuje się w precyzyjnym usuwaniu znamion, brodawek, kaszaków i innych zmian skórnych z zachowaniem estetyki i bezpieczeństwa.
+                        Lek. Michał Szczubkowski jest chirurgiem z wieloletnim doświadczeniem w diagnostyce i chirurgicznym usuwaniu zmian skórnych.
                       </p>
                       <p>
-                        Indywidualne podejście do każdego pacjenta oraz nowoczesne techniki chirurgiczne pozwalają na skuteczne i bezpieczne usuwanie zmian skórnych z minimalnym ryzykiem powikłań.
+                        Wykonuje zabiegi usuwania znamion, pieprzyków, kaszaków oraz innych zmian skórnych wymagających oceny specjalisty.
                       </p>
-                    </div>
-
-                    {/* Action Buttons - Side by side */}
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                      <a
-                        href="/lekarze/michał-szczubkowski"
-                        className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-center text-sm sm:text-base"
-                      >
-                        Zobacz Chirurga
-                      </a>
-                      <a
-                        href="#appointment-section"
-                        className="bg-white border-2 border-teal-600 text-teal-600 font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-teal-50 transition-colors text-center text-sm sm:text-base"
-                      >
-                        Umów się na wizytę
-                      </a>
+                      <p>
+                        Każdy zabieg poprzedzony jest kwalifikacją lekarską, a usunięte zmiany rutynowo przekazywane są do badania histopatologicznego.
+                      </p>
+                      <p>
+                        W swojej praktyce stawia na precyzję, bezpieczeństwo pacjenta oraz leczenie zgodne z aktualnymi standardami chirurgii ambulatoryjnej.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -397,62 +386,62 @@ const SkinLesionRemovalPage = () => {
           </section>
 
           {/* Section 5: Types of Skin Lesions */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="lesions-heading">
+          <section className="mb-12 sm:mb-16 md:mb-20 bg-gray-50 py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="lesions-heading">
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="lesions-heading"
-                  className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
+                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3"
                 >
                   Z jakimi zmianami skórnymi zgłosić się do chirurga?
                 </h2>
                 <div className="w-20 sm:w-24 h-1 bg-teal-600 mx-auto mb-4 sm:mb-6"></div>
                 <p className="text-gray-700 text-sm sm:text-base md:text-lg">
-                  Kliknij, by dowiedzieć się więcej:
+                  Kliknij, aby dowiedzieć się więcej o danym rodzaju zmiany i możliwościach leczenia chirurgicznego.
                 </p>
               </div>
 
               {/* Lesions Grid - 2 rows x 4 columns */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {/* Lesion Cards */}
-                <button className="bg-gray-100 rounded-lg p-4 md:p-6 hover:shadow-lg transition-shadow text-center flex flex-col items-center justify-center gap-3 group">
-                  <span className="text-teal-600 text-2xl font-bold group-hover:text-teal-700">+</span>
-                  <span className="text-gray-800 text-base md:text-lg font-medium">Znamiona barwnikowe</span>
+                <button className="bg-white rounded-lg p-4 md:p-6 hover:shadow-md transition-shadow flex items-center gap-3 group">
+                  <FaArrowRight className="text-gray-800 text-lg flex-shrink-0" />
+                  <span className="text-gray-800 text-base md:text-lg text-left">Znamiona (pieprzyki)</span>
                 </button>
 
-                <button className="bg-gray-100 rounded-lg p-4 md:p-6 hover:shadow-lg transition-shadow text-center flex flex-col items-center justify-center gap-3 group">
-                  <span className="text-teal-600 text-2xl font-bold group-hover:text-teal-700">+</span>
-                  <span className="text-gray-800 text-base md:text-lg font-medium">Brodawek</span>
+                <button className="bg-white rounded-lg p-4 md:p-6 hover:shadow-md transition-shadow flex items-center gap-3 group">
+                  <FaArrowRight className="text-gray-800 text-lg flex-shrink-0" />
+                  <span className="text-gray-800 text-base md:text-lg text-left">Kaszaki (torbiele)</span>
                 </button>
 
-                <button className="bg-gray-100 rounded-lg p-4 md:p-6 hover:shadow-lg transition-shadow text-center flex flex-col items-center justify-center gap-3 group">
-                  <span className="text-teal-600 text-2xl font-bold group-hover:text-teal-700">+</span>
-                  <span className="text-gray-800 text-base md:text-lg font-medium">Kaszaków</span>
+                <button className="bg-white rounded-lg p-4 md:p-6 hover:shadow-md transition-shadow flex items-center gap-3 group">
+                  <FaArrowRight className="text-gray-800 text-lg flex-shrink-0" />
+                  <span className="text-gray-800 text-base md:text-lg text-left">Brodawki skórne</span>
                 </button>
 
-                <button className="bg-gray-100 rounded-lg p-4 md:p-6 hover:shadow-lg transition-shadow text-center flex flex-col items-center justify-center gap-3 group">
-                  <span className="text-teal-600 text-2xl font-bold group-hover:text-teal-700">+</span>
-                  <span className="text-gray-800 text-base md:text-lg font-medium">Tłuszczaków</span>
+                <button className="bg-white rounded-lg p-4 md:p-6 hover:shadow-md transition-shadow flex items-center gap-3 group">
+                  <FaArrowRight className="text-gray-800 text-lg flex-shrink-0" />
+                  <span className="text-gray-800 text-base md:text-lg text-left">Guzki podskórne</span>
                 </button>
 
-                <button className="bg-gray-100 rounded-lg p-4 md:p-6 hover:shadow-lg transition-shadow text-center flex flex-col items-center justify-center gap-3 group">
-                  <span className="text-teal-600 text-2xl font-bold group-hover:text-teal-700">+</span>
-                  <span className="text-gray-800 text-base md:text-lg font-medium">Naczyniaków</span>
+                <button className="bg-white rounded-lg p-4 md:p-6 hover:shadow-md transition-shadow flex items-center gap-3 group">
+                  <FaArrowRight className="text-gray-800 text-lg flex-shrink-0" />
+                  <span className="text-gray-800 text-base md:text-lg text-left">Zmiany barwnikowe</span>
                 </button>
 
-                <button className="bg-gray-100 rounded-lg p-4 md:p-6 hover:shadow-lg transition-shadow text-center flex flex-col items-center justify-center gap-3 group">
-                  <span className="text-teal-600 text-2xl font-bold group-hover:text-teal-700">+</span>
-                  <span className="text-gray-800 text-base md:text-lg font-medium">Torbieli</span>
+                <button className="bg-white rounded-lg p-4 md:p-6 hover:shadow-md transition-shadow flex items-center gap-3 group">
+                  <FaArrowRight className="text-gray-800 text-lg flex-shrink-0" />
+                  <span className="text-gray-800 text-base md:text-lg text-left">Zmiany rosnące</span>
                 </button>
 
-                <button className="bg-gray-100 rounded-lg p-4 md:p-6 hover:shadow-lg transition-shadow text-center flex flex-col items-center justify-center gap-3 group">
-                  <span className="text-teal-600 text-2xl font-bold group-hover:text-teal-700">+</span>
-                  <span className="text-gray-800 text-base md:text-lg font-medium">Błoniaków</span>
+                <button className="bg-white rounded-lg p-4 md:p-6 hover:shadow-md transition-shadow flex items-center gap-3 group">
+                  <FaArrowRight className="text-gray-800 text-lg flex-shrink-0" />
+                  <span className="text-gray-800 text-base md:text-lg text-left">Zmiany bolesne</span>
                 </button>
 
-                <button className="bg-gray-100 rounded-lg p-4 md:p-6 hover:shadow-lg transition-shadow text-center flex flex-col items-center justify-center gap-3 group">
-                  <span className="text-teal-600 text-2xl font-bold group-hover:text-teal-700">+</span>
-                  <span className="text-gray-800 text-base md:text-lg font-medium">Innych zmian skórnych</span>
+                <button className="bg-white rounded-lg p-4 md:p-6 hover:shadow-md transition-shadow flex items-center gap-3 group">
+                  <FaArrowRight className="text-gray-800 text-lg flex-shrink-0" />
+                  <span className="text-gray-800 text-base md:text-lg text-left">Zmiany krwawiące</span>
                 </button>
               </div>
             </div>
