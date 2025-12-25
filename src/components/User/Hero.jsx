@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaSearch, FaStar, FaPhone, FaShieldAlt, FaUserMd, FaUsers, FaClock } from "react-icons/fa";
+import { FaSearch, FaStar, FaShieldAlt, FaUserMd, FaUsers, FaClock } from "react-icons/fa";
 import { FaFacebookF, FaInstagram, FaMobileAlt } from "react-icons/fa";
 import { FaRegCircleUser } from "react-icons/fa6";
 import { IoLocationOutline } from "react-icons/io5";
@@ -9,6 +9,7 @@ import { useIsMobile } from "./useIsMobile";
 import { useSpecializations } from "../../context/SpecializationContext";
 import { useAppointmentContext } from "../../UserLayout";
 import heroImage from "../../assets/a6cac98caf0f70d2a113ae6f901a2da389eae67e.png";
+import phoneDialIcon from "../../assets/phone_dial.png";
 
 // Import your actual doctor service here
 // import doctorService from '../services/doctorService';
@@ -95,8 +96,8 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
   };
 
   return (
-    <section className="relative flex flex-col items-center pt-24 xs:pt-26 sm:pt-28 md:pt-32 lg:pt-36 xl:pt-40 pb-0 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-br from-[#F0F7F7] via-[#E6F5F5] to-[#DCF2F2]">
-      <div className="flex-1 flex flex-col md:flex-row items-start justify-between w-full max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 pt-6 xs:pt-8 sm:pt-10 md:pt-12 lg:pt-14 xl:pt-16 gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-16">
+    <section className="relative flex flex-col items-center pt-24 xs:pt-26 sm:pt-28 md:pt-20 lg:pt-20 xl:pt-20 pb-0 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-br from-[#F0F7F7] via-[#E6F5F5] to-[#DCF2F2]">
+      <div className="flex-1 flex flex-col md:flex-row items-start justify-between w-full max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 pt-6 xs:pt-8 sm:pt-10 md:pt-4 lg:pt-4 xl:pt-4 gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-16">
         {/* Left Side Content */}
         <div className="md:w-1/2 lg:w-[48%] xl:w-1/2 text-center md:text-left mb-6 xs:mb-8 sm:mb-10 md:mb-0 w-full">
           {/* Main Heading */}
@@ -104,7 +105,9 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
             <span className="text-teal-600 block">Prywatna przychodnia</span>
             <span className="text-teal-600 block">specjalistyczna</span>
             <span className="text-gray-700 text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl block">
-              <span className="border-b-2 border-teal-600">w</span> Skarżysku-Kamiennej
+              <span className="border-b-4 border-teal-600 inline-block">
+                <span className="font-normal">w</span> <span className="font-normal">S</span>
+              </span><span className="font-normal">karżysku-Kamiennej</span>
             </span>
           </h1>
 
@@ -307,20 +310,20 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
                 onClick={handleCall}
                 className="w-full bg-white border-2 border-teal-600 text-teal-600 font-semibold text-sm xs:text-base py-2.5 xs:py-3 sm:py-3.5 px-4 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2"
   >
-                <FaPhone className="text-teal-600 text-sm xs:text-base" />
+                <img src={phoneDialIcon} alt="Phone" className="w-4 h-4 xs:w-5 xs:h-5" />
                 Zadzwoń
   </button>
 </div>
 
             {/* Footer Info */}
-            <div className="flex flex-row items-center justify-between gap-2.5 xs:gap-3 pt-4 xs:pt-5 mt-2 border-t border-gray-200">
-              <div className="flex items-center gap-2 xs:gap-2.5">
-                <FaShieldAlt className="text-teal-600 text-base xs:text-lg flex-shrink-0" />
-                <span className="text-xs xs:text-sm font-medium text-gray-700">Bezpieczna rejestracja</span>
+            <div className="flex flex-row items-center justify-center gap-3 xs:gap-4 pt-3 xs:pt-3.5 mt-2">
+              <div className="flex items-center gap-1.5 xs:gap-2">
+                <FaShieldAlt className="text-teal-600 text-sm xs:text-base flex-shrink-0" />
+                <span className="text-xs xs:text-sm font-medium text-gray-700 whitespace-nowrap">Bezpieczna rejestracja</span>
               </div>
-              <div className="flex items-center gap-2 xs:gap-2.5">
-                <FaMobileAlt className="text-teal-600 text-base xs:text-lg flex-shrink-0" />
-                <span className="text-xs xs:text-sm font-medium text-gray-700">Powiadomienia SMS</span>
+              <div className="flex items-center gap-1.5 xs:gap-2">
+                <FaMobileAlt className="text-teal-600 text-sm xs:text-base flex-shrink-0" />
+                <span className="text-xs xs:text-sm font-medium text-gray-700 whitespace-nowrap">Powiadomienia SMS</span>
               </div>
             </div>
         </div>
