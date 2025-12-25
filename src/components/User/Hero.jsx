@@ -96,15 +96,15 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
   };
 
   return (
-    <section className="relative flex flex-col items-center pt-24 xs:pt-26 sm:pt-28 md:pt-20 lg:pt-20 xl:pt-20 pb-0 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-br from-[#F0F7F7] via-[#E6F5F5] to-[#DCF2F2]">
-      <div className="flex-1 flex flex-col md:flex-row items-start justify-between w-full max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 pt-6 xs:pt-8 sm:pt-10 md:pt-4 lg:pt-4 xl:pt-4 gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-16">
+    <section className="relative flex flex-col items-center pt-16 xs:pt-18 sm:pt-20 md:pt-20 lg:pt-20 xl:pt-20 pb-0 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-br from-[#F0F7F7] via-[#E6F5F5] to-[#DCF2F2]">
+      <div className="flex-1 flex flex-col md:flex-row items-start justify-between w-full max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 pt-3 xs:pt-4 sm:pt-6 md:pt-4 lg:pt-4 xl:pt-4 gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-16">
         {/* Left Side Content */}
         <div className="md:w-1/2 lg:w-[48%] xl:w-1/2 text-center md:text-left mb-6 xs:mb-8 sm:mb-10 md:mb-0 w-full">
           {/* Main Heading */}
-          <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold leading-tight mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8">
+          <h1 className="text-2xl xs:text-3xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold leading-tight mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8">
             <span className="text-teal-600 block">Prywatna przychodnia</span>
             <span className="text-teal-600 block">specjalistyczna</span>
-            <span className="text-gray-700 text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl block">
+            <span className="text-gray-700 text-xl xs:text-2xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl block">
               <span className="border-b-4 border-teal-600 inline-block">
                 <span className="font-normal">w</span> <span className="font-normal">S</span>
               </span><span className="font-normal">karżysku-Kamiennej</span>
@@ -112,7 +112,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
           </h1>
 
           {/* Description */}
-          <p className="text-sm xs:text-base sm:text-base md:text-lg lg:text-lg xl:text-xl text-gray-600 leading-relaxed mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8 max-w-2xl mx-auto md:mx-0">
+          <p className="text-base xs:text-lg sm:text-lg md:text-lg lg:text-lg xl:text-xl text-gray-600 leading-relaxed mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8 max-w-2xl mx-auto md:mx-0">
             <span className="block">Chirurg, proktolog, neurolog dziecięcy, kardiolog, radiolog.</span>
             <span className="block">Prywatne wizyty bez skierowania - szybka rejestracja online.</span>
           </p>
@@ -141,9 +141,9 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
                 ))}
               </div>
               {/* Rating Text */}
-              <span className="text-gray-900 font-semibold text-xs xs:text-sm">5.0</span>
+              <span className="text-gray-900 font-semibold text-sm xs:text-base">5.0</span>
               {/* Link Text */}
-              <span className="text-teal-500 text-xs xs:text-sm font-medium ml-0.5 xs:ml-1">Zobacz opinie w Google</span>
+              <span className="text-teal-500 text-sm xs:text-base font-medium ml-0.5 xs:ml-1">Zobacz opinie w Google</span>
             </div>
           </a>
           {/* Appointment Booking Form Card */}
@@ -157,7 +157,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
           </div>
 
             {/* Heading */}
-            <h2 className="text-xl xs:text-2xl sm:text-2xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-4 xs:mb-5 sm:mb-6">
+            <h2 className="text-2xl xs:text-2xl sm:text-2xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-4 xs:mb-5 sm:mb-6">
               Umów wizytę online
           </h2>
 
@@ -369,7 +369,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
 
         {/* Hero Image for mobile screens */}
         {isMobile && (
-          <div className="relative z-10 w-full max-w-[400px] xs:max-w-[500px] sm:max-w-[550px] mt-6 xs:mt-8">
+          <div className="relative z-10 w-full max-w-[400px] xs:max-w-[500px] sm:max-w-[550px] -mt-22 xs:-mt-16">
             <div className="relative rounded-xl xs:rounded-2xl bg-white border-2 sm:border-4 border-white p-2 xs:p-2.5 pt-2 xs:pt-2.5 pb-4 xs:pb-5" style={{ boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 rgba(0, 0, 0, 0)' }}>
               <img
    loading="lazy"
