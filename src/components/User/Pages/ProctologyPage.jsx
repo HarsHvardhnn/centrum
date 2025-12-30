@@ -154,7 +154,7 @@ const ProctologyPage = () => {
                   <span className="block text-teal-600">Proktolog</span>
                   <span className="block text-teal-600">Skarżysko-Kamienna,</span>
                   <span className="block text-gray-900">świętokrzyskie</span>
-                  <span className="block text-gray-900">– leczenie hemoroidów</span>
+                  <span className="block text-gray-900 font-semibold">– leczenie hemoroidów</span>
                   <span className="block text-gray-900 font-normal">i chorób odbytu</span>
                 </h1>
 
@@ -167,7 +167,7 @@ const ProctologyPage = () => {
                 </div>
 
                 {/* Feature Items */}
-                <div className="mb-4 sm:mb-6 px-4 md:px-0">
+                <div className="mb-4 sm:mb-6">
                   {/* First Row - Two items side by side */}
                   <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-6 mb-3 sm:mb-4">
                     <div className="flex items-center justify-start gap-2 sm:gap-3">
@@ -195,7 +195,7 @@ const ProctologyPage = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6 px-4 md:px-0">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 sm:mb-6">
                   <button 
                     onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 sm:py-3 px-5 sm:px-6 rounded-lg transition-colors text-sm sm:text-base md:text-lg"
@@ -215,7 +215,7 @@ const ProctologyPage = () => {
                   href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skarżysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dziecięcy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex flex-wrap items-center gap-1.5 sm:gap-2 px-4 md:px-0 cursor-pointer hover:opacity-80 transition-opacity"
+                  className="flex flex-wrap items-center gap-1.5 sm:gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                 >
                   {/* Five Stars */}
                   <div className="flex items-center gap-0.5">
@@ -247,7 +247,7 @@ const ProctologyPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12" role="main">
           
           {/* Section 2: What is Proctology */}
-          <section className="bg-[#F0F9F9] pt-4 sm:pt-6 md:pt-8 pb-8 sm:pb-12 md:pb-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="what-is-proctology-heading">
+          <section className="bg-[#F0F9F9] pt-8 sm:pt-12 md:pt-16 pb-8 sm:pb-12 md:pb-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="what-is-proctology-heading">
             <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <h2 
                 id="what-is-proctology-heading"
@@ -261,7 +261,7 @@ const ProctologyPage = () => {
                 Proktolog to lekarz specjalista zajmujący się diagnostyką i leczeniem chorób odbytu, odbytnicy oraz okolicy okołoodbytowej. W naszej poradni proktologicznej w Skarżysku-Kamiennej oferujemy kompleksową opiekę medyczną w zakresie proktologii.
               </p>
               <p className="text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed mb-6 sm:mb-8">
-                Nasze doświadczenie w leczeniu chorób proktologicznych pozwala na skuteczną diagnostykę i terapię różnorodnych schorzeń. Zapewniamy profesjonalną opiekę medyczną w komfortowych warunkach, z poszanowaniem dyskrecji pacjenta.
+                Nasze doświadczenie w leczeniu chorób proktologicznych pozwala na skuteczną diagnostykę&nbsp;i terapię różnorodnych schorzeń. Zapewniamy profesjonalną opiekę medyczną w komfortowych warunkach, z poszanowaniem dyskrecji pacjenta.
               </p>
 
               {/* White Box with Two-column List */}
