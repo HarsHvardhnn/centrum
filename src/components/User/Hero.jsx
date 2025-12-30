@@ -96,7 +96,9 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
 
   return (
     <section className="relative flex flex-col items-center pt-16 xs:pt-18 sm:pt-20 md:pt-20 lg:pt-20 xl:pt-20 pb-0 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-b from-primary-lighter to-white">
-      <div className="flex-1 flex flex-col md:flex-row items-start justify-between w-full max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 pt-3 xs:pt-4 sm:pt-6 md:pt-4 lg:pt-4 xl:pt-4 gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-16">
+      {/* Radial gradient overlay */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_70%_80%,rgba(0,140,140,0.02),transparent_50%)]"></div>
+      <div className="relative flex-1 flex flex-col md:flex-row items-start justify-between w-full max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 pt-3 xs:pt-4 sm:pt-6 md:pt-4 lg:pt-4 xl:pt-4 gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-16">
         {/* Left Side Content */}
         <div className="md:w-1/2 lg:w-[48%] xl:w-1/2 text-center md:text-left mb-6 xs:mb-8 sm:mb-10 md:mb-0 w-full">
           {/* Main Heading */}
@@ -146,7 +148,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
             </div>
           </a>
           {/* Appointment Booking Form Card */}
-          <div className="mt-4 xs:mt-5 sm:mt-6 md:mt-8 lg:mt-10 relative z-10 bg-white rounded-xl xs:rounded-2xl shadow-[0_20px_25px_-5px_rgba(20,184,166,0.1),0_10px_10px_-5px_rgba(20,184,166,0.04)] p-5 xs:p-6 sm:p-7 md:p-8 lg:p-9 xl:p-10 max-w-2xl mx-auto md:mx-0">
+          <div className="mt-20 sm:mt-24 md:mt-24 lg:mt-28 relative z-10 bg-white rounded-xl xs:rounded-2xl shadow-[0_20px_25px_-5px_rgba(20,184,166,0.1),0_10px_10px_-5px_rgba(20,184,166,0.04)] p-5 xs:p-6 sm:p-7 md:p-8 lg:p-9 xl:p-10 max-w-2xl mx-auto md:mx-0">
             {/* Teal Pill Tag */}
             <div className="flex items-center gap-2 mb-3 xs:mb-3.5 sm:mb-4">
               <div className="flex items-center gap-1 xs:gap-1.5 bg-teal-50 text-teal-600 px-2.5 xs:px-3 py-0.5 xs:py-1 rounded-full text-[10px] xs:text-xs font-medium">
@@ -342,7 +344,12 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
                   className="w-full h-auto object-contain"
                 />
                 {/* Google Review Widget - positioned at bottom border, half inside half outside */}
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-[30%] bg-white rounded-xl xs:rounded-2xl px-3 xs:px-4 md:px-5 py-2.5 xs:py-3 md:py-3.5 shadow-[0_8px_20px_rgba(0,0,0,0.15)] flex items-center gap-2 xs:gap-2.5 md:gap-3 border border-gray-200 z-20">
+                <a 
+                  href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skarżysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dziecięcy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-[30%] bg-white rounded-xl xs:rounded-2xl px-3 xs:px-4 md:px-5 py-2.5 xs:py-3 md:py-3.5 shadow-[0_8px_20px_rgba(0,0,0,0.15)] flex items-center gap-2 xs:gap-2.5 md:gap-3 border border-gray-200 z-20"
+                >
                   {/* Google Logo - Teal color */}
                   <div className="flex items-center justify-center w-5 h-5 xs:w-6 xs:h-6 md:w-7 md:h-7">
                     <svg className="w-4 h-4 xs:w-5 xs:h-5 md:w-5 md:h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -360,7 +367,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
                   </div>
                   {/* Rating Text */}
                   <span className="text-gray-900 font-semibold text-sm xs:text-base">5.0</span>
-                </div>
+                </a>
               </div>
             </div>
           )}
@@ -377,7 +384,12 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
                 className="w-full h-auto object-contain"
               />
               {/* Google Review Widget - positioned at bottom border, half inside half outside */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-[30%] bg-white rounded-xl xs:rounded-2xl px-3 xs:px-4 py-4 xs:py-5 sm:py-6 shadow-[0_8px_20px_rgba(0,0,0,0.15)] flex items-center gap-1.5 xs:gap-2 border border-gray-200 z-20">
+              <a 
+                href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skarżysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dziecięcy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-[30%] bg-white rounded-xl xs:rounded-2xl px-3 xs:px-4 py-4 xs:py-5 sm:py-6 shadow-[0_8px_20px_rgba(0,0,0,0.15)] flex items-center gap-1.5 xs:gap-2 border border-gray-200 z-20"
+              >
                 {/* Google Logo - Teal color */}
                 <div className="flex items-center justify-center w-5 h-5 xs:w-6 xs:h-6">
                   <svg className="w-4 h-4 xs:w-[18px] xs:h-[18px]" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -395,7 +407,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
                 </div>
                 {/* Rating Text */}
                 <span className="text-gray-900 font-semibold text-xs xs:text-sm">5.0</span>
-              </div>
+              </a>
             </div>
           </div>
         )}
@@ -419,7 +431,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
 
       
       {/* Stats Section - New Design */}
-      <div className="bg-teal-600 w-screen text-white py-4 xs:py-5 sm:py-5 md:py-6 lg:py-7 mt-8 xs:mt-10 sm:mt-12 md:mt-14 lg:mt-16 -mx-3 xs:-mx-4 sm:-mx-6 md:-mx-8 lg:-mx-6 xl:-mx-8 2xl:-mx-12">
+      <div className="bg-teal-600 w-screen text-white py-4 xs:py-5 sm:py-5 md:py-6 lg:py-7 mt-16 xs:mt-20 sm:mt-24 md:mt-28 lg:mt-32 -mx-3 xs:-mx-4 sm:-mx-6 md:-mx-8 lg:-mx-6 xl:-mx-8 2xl:-mx-12">
         <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 xs:gap-5 sm:gap-6 md:gap-7 lg:gap-8">
           {/* Section 1: Specjaliści */}
           <div className="flex flex-col items-center text-center transition-all duration-300 hover:brightness-110 cursor-pointer">

@@ -1,9 +1,12 @@
 import React from "react";
+import { useNavigate } from 'react-router-dom';
 import MetaTags from '../../UtilComponents/MetaTags';
-import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaMapMarkerAlt, FaPhone } from "react-icons/fa";
-import { IoLocationOutline } from "react-icons/io5";
+import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaMapMarkerAlt, FaPhone, FaExclamationTriangle, FaTint, FaHandPaper, FaCircle, FaClock, FaEyeDropper } from "react-icons/fa";
+import { IoLocation } from "react-icons/io5";
 
 const ProctologyPage = () => {
+  const navigate = useNavigate();
+  
   // Structured Data (JSON-LD)
   const structuredData = {
     "@context": "https://schema.org",
@@ -133,7 +136,7 @@ const ProctologyPage = () => {
       
       <main className="min-h-screen bg-white">
         {/* Hero Section - First Section */}
-        <section className="bg-[#F7F9FA] pt-24 md:pt-28 lg:pt-32 pb-12 md:pb-16 lg:pb-20" aria-labelledby="hero-heading">
+        <section className="bg-[#F7F9FA] pt-24 md:pt-28 lg:pt-32 pb-0 md:pb-16 lg:pb-20" aria-labelledby="hero-heading">
           <div className="max-w-7xl mx-auto px-0 md:px-6 lg:px-8 xl:px-12">
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8 lg:gap-12 xl:gap-16">
               {/* Left Side - Text Content */}
@@ -152,13 +155,13 @@ const ProctologyPage = () => {
                   <span className="block text-teal-600">Skarżysko-Kamienna,</span>
                   <span className="block text-gray-900">świętokrzyskie</span>
                   <span className="block text-gray-900">– leczenie hemoroidów</span>
-                  <span className="block text-gray-900">i chorób odbytu</span>
+                  <span className="block text-gray-900 font-normal">i chorób odbytu</span>
                 </h2>
 
                 {/* Description Paragraph */}
-                <div className="mb-4 sm:mb-6 text-gray-700 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed">
+                <div className="mb-4 sm:mb-6 text-gray-700 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-normal">
                   <p>
-                    Profesjonalna diagnostyka i leczenie chorób odbytu i odbytnicy. Konsultacje prywatne bez skierowania w Poradni Proktologicznej Centrum Medyczne 7.
+                    Profesjonalna diagnostyka&nbsp;i leczenie chorób odbytu&nbsp;i odbytnicy. Konsultacje prywatne bez skierowania&nbsp;w Poradni Proktologicznej Centrum Medyczne 7.
                   </p>
                 </div>
 
@@ -166,24 +169,24 @@ const ProctologyPage = () => {
                 <div className="mb-4 sm:mb-6 px-4 md:px-0">
                   {/* First Row - Two items side by side */}
                   <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-6 mb-3 sm:mb-4">
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center justify-start gap-2 sm:gap-3">
                       <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
                         <FaCheck className="text-teal-600 text-base sm:text-lg" />
                       </div>
                       <span className="text-gray-800 text-sm sm:text-base md:text-lg">Prywatnie, bez skierowania</span>
                     </div>
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center justify-start gap-2 sm:gap-3">
                       <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
                         <FaShieldAlt className="text-teal-600 text-base sm:text-lg" />
                       </div>
                       <span className="text-gray-800 text-sm sm:text-base md:text-lg">Dyskrecja i komfort</span>
                     </div>
                   </div>
-                  {/* Second Row - Third item centered */}
-                  <div className="flex justify-center sm:justify-start">
+                  {/* Second Row - Third item */}
+                  <div className="flex justify-start">
                     <div className="flex items-center gap-2 sm:gap-3">
                       <div className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center">
-                        <IoLocationOutline className="text-teal-600 text-base sm:text-lg" />
+                        <IoLocation className="text-teal-600 text-base sm:text-lg" />
                       </div>
                       <span className="text-gray-800 text-sm sm:text-base md:text-lg">Pacjenci z całego woj. świętokrzyskiego</span>
                     </div>
@@ -207,7 +210,12 @@ const ProctologyPage = () => {
                 </div>
 
                 {/* Google Rating */}
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 px-4 md:px-0">
+                <a 
+                  href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skarżysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dziecięcy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-wrap items-center gap-1.5 sm:gap-2 px-4 md:px-0 cursor-pointer hover:opacity-80 transition-opacity"
+                >
                   {/* Five Stars */}
                   <div className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
@@ -216,7 +224,7 @@ const ProctologyPage = () => {
                   </div>
                   {/* Rating Text */}
                   <span className="text-gray-900 font-semibold text-sm sm:text-base">5.0 ocena w Google</span>
-                </div>
+                </a>
               </div>
 
               {/* Right Side - Image */}
@@ -235,11 +243,11 @@ const ProctologyPage = () => {
         </section>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16" role="main">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12" role="main">
           
           {/* Section 2: What is Proctology */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="what-is-proctology-heading">
-            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
+          <section className="bg-[#F0F9F9] pt-0 pb-8 sm:pb-12 md:pb-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="what-is-proctology-heading">
+            <div className="max-w-5xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <h2 
                 id="what-is-proctology-heading"
                 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6"
@@ -255,13 +263,12 @@ const ProctologyPage = () => {
                 Nasze doświadczenie w leczeniu chorób proktologicznych pozwala na skuteczną diagnostykę i terapię różnorodnych schorzeń. Zapewniamy profesjonalną opiekę medyczną w komfortowych warunkach, z poszanowaniem dyskrecji pacjenta.
               </p>
 
-              {/* Sub-heading */}
-              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">
-                Najczęściej leczone schorzenia proktologiczne:
-              </h3>
-
               {/* White Box with Two-column List */}
               <div className="bg-white rounded-lg p-4 sm:p-6 md:p-8 shadow-sm">
+                {/* Sub-heading */}
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">
+                  Najczęściej leczone schorzenia proktologiczne:
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
                   {/* Left Column */}
                   <div className="space-y-3 sm:space-y-4">
@@ -342,7 +349,7 @@ const ProctologyPage = () => {
           </section>
 
           {/* Section 3: Symptoms */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="symptoms-heading">
+          <section className="bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="symptoms-heading">
             <div className="max-w-6xl mx-auto">
               <h2 
                 id="symptoms-heading"
@@ -358,10 +365,13 @@ const ProctologyPage = () => {
               {/* Symptoms Cards Grid - 2 columns, 3 rows */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-12">
                 {/* Card 1 */}
-                <div className="bg-gray-100 rounded-lg p-4 sm:p-6">
+                <div 
+                  onClick={() => navigate('/')}
+                  className="bg-gray-100 rounded-lg p-4 sm:p-6 cursor-pointer hover:bg-gray-200 transition-colors"
+                >
                   <div className="flex items-start gap-3 sm:gap-4 mb-3">
                     <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-teal-600 rounded-sm transform rotate-45"></div>
+                      <FaExclamationTriangle className="text-teal-600 text-lg sm:text-xl md:text-2xl" />
                     </div>
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">ból i pieczenie odbytu</h3>
                   </div>
@@ -371,10 +381,13 @@ const ProctologyPage = () => {
                 </div>
 
                 {/* Card 2 */}
-                <div className="bg-gray-100 rounded-lg p-4 sm:p-6">
+                <div 
+                  onClick={() => navigate('/')}
+                  className="bg-gray-100 rounded-lg p-4 sm:p-6 cursor-pointer hover:bg-gray-200 transition-colors"
+                >
                   <div className="flex items-start gap-3 sm:gap-4 mb-3">
                     <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-teal-600 rounded-full"></div>
+                      <FaTint className="text-teal-600 text-lg sm:text-xl md:text-2xl" />
                     </div>
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">krwawienie przy wypróżnianiu</h3>
                   </div>
@@ -384,10 +397,13 @@ const ProctologyPage = () => {
                 </div>
 
                 {/* Card 3 */}
-                <div className="bg-gray-100 rounded-lg p-4 sm:p-6">
+                <div 
+                  onClick={() => navigate('/')}
+                  className="bg-gray-100 rounded-lg p-4 sm:p-6 cursor-pointer hover:bg-gray-200 transition-colors"
+                >
                   <div className="flex items-start gap-3 sm:gap-4 mb-3">
                     <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-teal-600 rounded-full"></div>
+                      <FaHandPaper className="text-teal-600 text-lg sm:text-xl md:text-2xl" />
                     </div>
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">świąd okolicy odbytu</h3>
                   </div>
@@ -397,10 +413,13 @@ const ProctologyPage = () => {
                 </div>
 
                 {/* Card 4 */}
-                <div className="bg-gray-100 rounded-lg p-4 sm:p-6">
+                <div 
+                  onClick={() => navigate('/')}
+                  className="bg-gray-100 rounded-lg p-4 sm:p-6 cursor-pointer hover:bg-gray-200 transition-colors"
+                >
                   <div className="flex items-start gap-3 sm:gap-4 mb-3">
                     <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-teal-600 rounded-full"></div>
+                      <FaCircle className="text-teal-600 text-lg sm:text-xl md:text-2xl" />
                     </div>
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">guzki lub obrzęk</h3>
                   </div>
@@ -410,10 +429,13 @@ const ProctologyPage = () => {
                 </div>
 
                 {/* Card 5 */}
-                <div className="bg-gray-100 rounded-lg p-4 sm:p-6">
+                <div 
+                  onClick={() => navigate('/')}
+                  className="bg-gray-100 rounded-lg p-4 sm:p-6 cursor-pointer hover:bg-gray-200 transition-colors"
+                >
                   <div className="flex items-start gap-3 sm:gap-4 mb-3">
                     <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-teal-600 rounded-full"></div>
+                      <FaClock className="text-teal-600 text-lg sm:text-xl md:text-2xl" />
                     </div>
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">uczucie niepełnego wypróżnienia</h3>
                   </div>
@@ -423,10 +445,13 @@ const ProctologyPage = () => {
                 </div>
 
                 {/* Card 6 */}
-                <div className="bg-gray-100 rounded-lg p-4 sm:p-6">
+                <div 
+                  onClick={() => navigate('/')}
+                  className="bg-gray-100 rounded-lg p-4 sm:p-6 cursor-pointer hover:bg-gray-200 transition-colors"
+                >
                   <div className="flex items-start gap-3 sm:gap-4 mb-3">
                     <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
-                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-teal-600 rounded-full"></div>
+                      <FaEyeDropper className="text-teal-600 text-lg sm:text-xl md:text-2xl" />
                     </div>
                     <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900">śluz lub ropa w kale</h3>
                   </div>
@@ -437,7 +462,7 @@ const ProctologyPage = () => {
               </div>
 
               {/* Pricing Section */}
-              <div className="mt-8 sm:mt-12">
+              <div className="mt-8 sm:mt-12 bg-white rounded-lg p-6 sm:p-8 md:p-10 shadow-sm">
                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
                   Cennik usług-Poradnia Proktologiczna
                 </h2>
@@ -447,7 +472,7 @@ const ProctologyPage = () => {
                 </p>
 
                 <div className="mb-4 sm:mb-6">
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 pb-2 border-b border-gray-300">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 pb-2 border-b border-teal-600">
                     Proktologia
                   </h3>
                 </div>
@@ -484,7 +509,7 @@ const ProctologyPage = () => {
           </section>
 
           {/* Section 4: Doctor Info */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="doctor-heading">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="doctor-heading">
             <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="mb-6 sm:mb-8">
                 <h2 
@@ -497,9 +522,9 @@ const ProctologyPage = () => {
 
               {/* Doctor Card - White with shadow */}
               <div className="bg-white rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 shadow-lg">
-                <div className="flex flex-col md:flex-row gap-6 sm:gap-8 md:gap-10 items-start">
+                <div className="flex flex-col md:flex-row gap-6 sm:gap-8 md:gap-10 items-start md:items-center">
                   {/* Left Side - Image */}
-                  <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-start">
+                  <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-center">
                     <img
                       src="/assets/static-assets/mikel_doctor.png"
                       alt="lek. Michał Szczubkowski - Proktolog"
@@ -549,7 +574,7 @@ const ProctologyPage = () => {
           </section>
 
           {/* Section 5: Patient Trust */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="trust-heading">
+          <section className="bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="trust-heading">
             <div className="max-w-4xl mx-auto">
               <h2 
                 id="trust-heading"
@@ -573,7 +598,7 @@ const ProctologyPage = () => {
           </section>
 
           {/* Section 6: Contact */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="contact-heading">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="contact-heading">
             <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -609,7 +634,7 @@ const ProctologyPage = () => {
                       onClick={() => window.location.href = "tel:+48797097487"}
                       className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
                     >
-                      <FaPhone className="text-teal-600 w-5 h-5 scale-x-[-1]" />
+                      <FaPhone className="text-white w-5 h-5 scale-x-[-1]" />
                       Zadzwoń teraz
                     </button>
                     <button
@@ -662,7 +687,7 @@ const ProctologyPage = () => {
                   id="faq-heading"
                   className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
                 >
-                  Najczęściej zadawane pytania o Proktologii i leczeniu hemoroidów
+                  Najczęściej zadawane pytania o Proktologii<br />i leczeniu hemoroidów
                 </h2>
                 <div className="w-20 sm:w-24 h-1 bg-teal-600 mx-auto"></div>
               </div>
