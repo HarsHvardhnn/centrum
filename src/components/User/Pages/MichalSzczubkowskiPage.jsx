@@ -108,7 +108,12 @@ const MichalSzczubkowskiPage = () => {
                 </div>
 
                 {/* Google Rating */}
-                <div className="flex items-center gap-2 sm:gap-3 px-4 md:px-0 justify-center lg:justify-start">
+                <a 
+                  href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skarżysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dziecięcy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 sm:gap-3 px-4 md:px-0 justify-center lg:justify-start"
+                >
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
                       <FaStar key={i} className="text-yellow-400 text-base fill-yellow-400" />
@@ -117,17 +122,34 @@ const MichalSzczubkowskiPage = () => {
                   <span className="text-gray-900 font-medium text-base">
                     5.0 ocena w Google
                   </span>
-                </div>
+                </a>
+
+                {/* ZnanyLekarz Rating */}
+                <a 
+                  href="https://www.znanylekarz.pl/michal-szczubkowski-2/chirurg-proktolog/skarzysko-kamienna#profile-reviews"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 sm:gap-3 px-4 md:px-0 justify-center lg:justify-start mt-3"
+                >
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <FaStar key={i} className="text-yellow-400 text-base fill-yellow-400" />
+                    ))}
+                  </div>
+                  <span className="text-teal-600 font-medium text-base">
+                    Zobacz opinie w ZnanyLekarz
+                  </span>
+                </a>
               </div>
             </div>
           </div>
         </section>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16" role="main">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12" role="main">
           
           {/* Section 2: About the Doctor */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="about-heading">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="about-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-left mb-6 sm:mb-8">
                 <h2 
@@ -164,7 +186,7 @@ const MichalSzczubkowskiPage = () => {
           </section>
 
           {/* Section 3: Location/Service Area */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="location-heading">
+          <section className="bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="location-heading">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -201,7 +223,7 @@ const MichalSzczubkowskiPage = () => {
           </section>
 
           {/* Section 4: Specializations */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="specializations-heading">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="specializations-heading">
             <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-8 sm:mb-12">
                 <h2 
@@ -293,7 +315,7 @@ const MichalSzczubkowskiPage = () => {
           </section>
 
           {/* Section 5: Price List */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="pricing-heading">
+          <section className="bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="pricing-heading">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -408,7 +430,7 @@ const MichalSzczubkowskiPage = () => {
           </section>
 
           {/* Section 6: Experience and Qualifications */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="experience-heading">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="experience-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-8 sm:mb-12">
                 <h2 
@@ -593,7 +615,7 @@ const MichalSzczubkowskiPage = () => {
           </section>
 
           {/* Section 7: How Visit Proceeds */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="visit-process-heading">
+          <section className="bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="visit-process-heading">
             <div className="max-w-6xl mx-auto">
               <div className="text-center mb-8 sm:mb-12">
                 <h2 
