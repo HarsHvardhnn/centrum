@@ -646,7 +646,6 @@ const AppointmentConfigPage = () => {
       'open': 'otwarty',
       'closed': 'zamknięty',
       'public': 'publiczny',
-      'private': 'prywatny',
       'secret': 'tajny',
       'confidential': 'poufny',
       'classified': 'tajny',
