@@ -706,7 +706,7 @@ const ProctologyPage = () => {
                   id="faq-heading"
                   className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
                 >
-                  Najczęściej zadawane pytania o Proktologii<br />&nbsp;i leczeniu hemoroidów
+                  Najczęściej zadawane pytania<br />&nbsp;o Proktologii<br />&nbsp;i leczeniu hemoroidów
                 </h2>
                 <div className="w-20 sm:w-24 h-1 bg-teal-600 mx-auto"></div>
               </div>
@@ -738,7 +738,7 @@ const ProctologyPage = () => {
                     Ile kosztuje wizyta u proktologa<br />&nbsp;w Skarżysku-Kamiennej?
                   </h3>
                   <p className="text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed">
-                    Cena standardowej konsultacji proktologicznej w naszej placówce to 300 zł. Koszt może się różnić w zależności od zakresu wizyty i ewentualnych dodatkowych zaleceń.
+                    Cena standardowej konsultacji proktologicznej<br />&nbsp;w naszej placówce to 300 zł. Koszt może się różnić<br />&nbsp;w zależności od zakresu wizyty i ewentualnych dodatkowych zaleceń.
                   </p>
                 </div>
 
