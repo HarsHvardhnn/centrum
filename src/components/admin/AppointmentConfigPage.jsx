@@ -202,6 +202,13 @@ const AppointmentConfigPage = () => {
       'authorization': 'autoryzacja',
       'permission': 'uprawnienie',
       'access': 'dostęp',
+      'jwt': 'JWT',
+      'token': 'token',
+      'refresh': 'odświeżanie',
+      'expiry': 'wygaśnięcie',
+      'expiration': 'wygaśnięcie',
+      'days': 'dni',
+      'security': 'bezpieczeństwo',
       'role': 'rola',
       'privilege': 'przywilej',
       'right': 'prawo',
@@ -696,7 +703,15 @@ const AppointmentConfigPage = () => {
       'for booking': 'dla rezerwacji',
       'prevents booking slots too close to current time': 'zapobiega rezerwacji slotów zbyt blisko aktualnego czasu',
       'for available slots generation': 'dla generowania dostępnych slotów',
-      'for new patients': 'dla nowych pacjentów'
+      'for new patients': 'dla nowych pacjentów',
+      'jwt_expiry_time': 'Czas wygaśnięcia tokena dostępu (JWT)',
+      'refresh_token_expiry_days': 'Czas wygaśnięcia tokena odświeżającego (w dniach)',
+      'jwt expiry time': 'czas wygaśnięcia tokena dostępu (JWT)',
+      'refresh token expiry days': 'czas wygaśnięcia tokena odświeżającego (w dniach)',
+      'access token': 'token dostępu',
+      'refresh token': 'token odświeżający',
+      'expiry time': 'czas wygaśnięcia',
+      'expiry days': 'dni wygaśnięcia'
     };
     
     // Check for phrase matches
@@ -982,7 +997,9 @@ const AppointmentConfigPage = () => {
           {Object.entries(groupedConfigs).map(([category, categoryConfigs]) => (
             <div key={category} className="mb-8">
               <h2 className="text-xl font-semibold text-gray-700 mb-4 capitalize">
-                {category === 'appointment' ? 'Wizyty' : translateToPolish(category)}
+                {category === 'appointment' ? 'Wizyty' : 
+                 category === 'jwt' || category === 'security' ? 'Bezpieczeństwo (JWT)' : 
+                 translateToPolish(category)}
               </h2>
               
               <div className="bg-white rounded-lg shadow-sm overflow-hidden">
