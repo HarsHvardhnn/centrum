@@ -136,7 +136,7 @@ const ProctologyPage = () => {
       
       <main className="min-h-screen bg-white">
         {/* Hero Section - First Section */}
-        <section className="bg-[#F7F9FA] pt-24 md:pt-28 lg:pt-32 pb-0 md:pb-16 lg:pb-20" aria-labelledby="hero-heading">
+        <section className="bg-[#F7F9FA] pt-12 md:pt-28 lg:pt-32 pb-0 md:pb-16 lg:pb-20" aria-labelledby="hero-heading">
           <div className="max-w-7xl mx-auto px-0 md:px-6 lg:px-8 xl:px-12">
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8 lg:gap-12 xl:gap-16">
               {/* Left Side - Text Content */}
@@ -150,20 +150,18 @@ const ProctologyPage = () => {
                 </div>
 
                 {/* Main Heading */}
-                <h2 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6">
+                <h1 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6">
                   <span className="block text-teal-600">Proktolog</span>
                   <span className="block text-teal-600">Skarżysko-Kamienna,</span>
                   <span className="block text-gray-900">świętokrzyskie</span>
                   <span className="block text-gray-900">– leczenie hemoroidów</span>
                   <span className="block text-gray-900 font-normal">i chorób odbytu</span>
-                </h2>
+                </h1>
 
                 {/* Description Paragraph */}
-                <div className="mb-4 sm:mb-6 text-gray-700 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-normal">
-                  <p>
-                    Profesjonalna diagnostyka&nbsp;i leczenie chorób odbytu&nbsp;i odbytnicy. Konsultacje prywatne bez skierowania&nbsp;w Poradni Proktologicznej Centrum Medyczne 7.
-                  </p>
-                </div>
+                <h2 className="mb-4 sm:mb-6 text-gray-700 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-normal">
+                  Profesjonalna diagnostyka&nbsp;i leczenie chorób odbytu&nbsp;i odbytnicy. Konsultacje prywatne bez skierowania&nbsp;w Poradni Proktologicznej Centrum Medyczne 7.
+                </h2>
 
                 {/* Feature Items */}
                 <div className="mb-4 sm:mb-6 px-4 md:px-0">
@@ -516,7 +514,7 @@ const ProctologyPage = () => {
                   id="doctor-heading"
                   className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
                 >
-                  Lekarz specjalista CM7 – Chirurg i Proktolog
+                  Lekarz specjalista CM7 –<br />Chirurg&nbsp;i Proktolog
                 </h2>
               </div>
 
@@ -687,7 +685,7 @@ const ProctologyPage = () => {
                   id="faq-heading"
                   className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
                 >
-                  Najczęściej zadawane pytania o Proktologii<br />i leczeniu hemoroidów
+                  Najczęściej zadawane pytania<br />o Proktologii<br />&nbsp;i leczeniu hemoroidów
                 </h2>
                 <div className="w-20 sm:w-24 h-1 bg-teal-600 mx-auto"></div>
               </div>
