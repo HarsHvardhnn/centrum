@@ -107,7 +107,7 @@ const ProctologyTestPage = () => {
 
                 {/* Price Box */}
                 <div className="bg-primary-lighter   rounded-lg px-6 py-4 mb-6 flex items-center justify-between mx-4 md:mx-0">
-                  <span className="text-gray-800 font-medium text-base md:text-lg">Cena konsultacji proktologicznej:</span>
+                  <span className="text-gray-800 font-medium text-base md:text-lg">CENA:</span>
                   <span className="text-teal-700 font-bold text-2xl md:text-3xl">300 zł</span>
                 </div>
 
