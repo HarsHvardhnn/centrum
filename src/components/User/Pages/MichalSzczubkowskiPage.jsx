@@ -1,6 +1,6 @@
 import React from "react";
 import MetaTags from '../../UtilComponents/MetaTags';
-import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaPhone } from "react-icons/fa";
+import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaPhone, FaGraduationCap, FaBriefcase } from "react-icons/fa";
 import { IoLocationOutline, IoLocation } from "react-icons/io5";
 import { Activity, Stethoscope, HeartPulse, GraduationCap, Briefcase, Star, ClipboardList, MessageCircle, FileText } from "lucide-react";
 import starIcon from '../../../assets/star.png';
@@ -471,7 +471,7 @@ const MichalSzczubkowskiPage = () => {
                 {/* Education Section */}
                 <div className="md:bg-white md:rounded-lg md:shadow-md p-6 sm:p-8">
                   <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                    <GraduationCap className="w-6 h-6 md:w-7 md:h-7 text-teal-600 flex-shrink-0" />
+                    <FaGraduationCap className="w-6 h-6 md:w-7 md:h-7 text-teal-600 flex-shrink-0" />
                     <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                       Wykształcenie
                     </h3>
@@ -515,7 +515,7 @@ const MichalSzczubkowskiPage = () => {
                 {/* Professional Experience Section */}
                 <div className="md:bg-white md:rounded-lg md:shadow-md p-6 sm:p-8">
                   <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                    <Briefcase className="w-6 h-6 md:w-7 md:h-7 text-teal-600 flex-shrink-0" />
+                    <FaBriefcase className="w-6 h-6 md:w-7 md:h-7 text-teal-600 flex-shrink-0" />
                     <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                       Doświadczenie zawodowe
                     </h3>
@@ -567,7 +567,7 @@ const MichalSzczubkowskiPage = () => {
                 {/* Courses and Certificates Section */}
                 <div className="md:bg-white md:rounded-lg md:shadow-md p-6 sm:p-8">
                   <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                    <Star className="w-6 h-6 md:w-7 md:h-7 text-teal-600 flex-shrink-0" />
+                    <FaStar className="w-6 h-6 md:w-7 md:h-7 text-teal-600 flex-shrink-0" />
                     <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                       Kursy i certyfikaty
                     </h3>
