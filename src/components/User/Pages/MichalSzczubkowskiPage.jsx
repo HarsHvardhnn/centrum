@@ -3,6 +3,7 @@ import MetaTags from '../../UtilComponents/MetaTags';
 import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaPhone } from "react-icons/fa";
 import { IoLocationOutline } from "react-icons/io5";
 import { Activity, Stethoscope, HeartPulse, GraduationCap, Briefcase, Star, ClipboardList, MessageCircle, FileText } from "lucide-react";
+import starIcon from '../../../assets/star.png';
 
 const MichalSzczubkowskiPage = () => {
   // Structured Data (JSON-LD)
@@ -114,13 +115,22 @@ const MichalSzczubkowskiPage = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 sm:gap-3 px-4 md:px-0 justify-center lg:justify-start"
                 >
+                  {/* Google Logo */}
+                  <div className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#14B8A6"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#14B8A6"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#14B8A6"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#14B8A6"/>
+                    </svg>
+                  </div>
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
                       <FaStar key={i} className="text-yellow-400 text-base fill-yellow-400" />
                     ))}
                   </div>
-                  <span className="text-gray-900 font-medium text-base">
-                    5.0 ocena w Google
+                  <span className="text-teal-600 font-medium text-base">
+                    Zobacz opinie w Google
                   </span>
                 </a>
 
@@ -131,6 +141,10 @@ const MichalSzczubkowskiPage = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 sm:gap-3 px-4 md:px-0 justify-center lg:justify-start mt-3"
                 >
+                  {/* ZnanyLekarz Logo - using star.png */}
+                  <div className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6">
+                    <img src={starIcon} alt="ZnanyLekarz" className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
                       <FaStar key={i} className="text-yellow-400 text-base fill-yellow-400" />
@@ -164,7 +178,13 @@ const MichalSzczubkowskiPage = () => {
               <div className="space-y-4 sm:space-y-6">
                 {/* First Paragraph */}
                 <p className="text-left text-gray-800 text-base sm:text-lg md:text-xl leading-relaxed">
-                  Lek. <span className="font-semibold text-teal-700">Michał Szczubkowski</span> jest renomowanym lekarzem specjalistą w dziedzinie chirurgii ogólnej, związanym zawodowo z Oddziałem Chirurgii Szpitala Powiatowego im. Marii Skłodowskiej-Curie w Skarżysku-Kamiennej oraz z przychodnią Centrum Medyczne 7.
+                  Lek. <span className="font-semibold text-teal-700">Michał Szczubkowski</span> jest renomowanym lekarzem specjalistą w dziedzinie chirurgii ogólnej, związanym zawodowo z Oddziałem Chirurgii Szpitala Powiatowego im. Marii Skłodowskiej-Curie{" "}
+                  <span className="inline-block">
+                    <span className="border-b-[3.5px] border-teal-700 inline-block pb-3.5">
+                      <span className="font-normal">w</span> <span className="font-normal">S</span>
+                    </span><span className="font-normal">karżysku-Kamiennej</span>
+                  </span>{" "}
+                  oraz z przychodnią Centrum Medyczne 7.
                 </p>
 
                 {/* Second Paragraph */}
@@ -224,7 +244,7 @@ const MichalSzczubkowskiPage = () => {
 
           {/* Section 4: Specializations */}
           <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="specializations-heading">
-            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
+            <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-8 sm:mb-12">
                 <h2 
                   id="specializations-heading"
@@ -243,9 +263,12 @@ const MichalSzczubkowskiPage = () => {
                       <Activity className="w-6 h-6 md:w-10 md:h-10 text-teal-600 md:text-white" />
                     </div>
                     <div className="flex-1 md:flex-none md:text-center">
-                      <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-0 md:mb-4">
+                      <a 
+                        href="/proktolog"
+                        className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-0 md:mb-4 hover:text-teal-600 transition-colors block"
+                      >
                         Chirurgia ogólna
-                      </h3>
+                      </a>
                     </div>
                   </div>
                   <div className="mb-6">
@@ -255,7 +278,7 @@ const MichalSzczubkowskiPage = () => {
                   </div>
                   <a 
                     href="/proktolog"
-                    className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700"
+                    className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700 whitespace-nowrap block"
                   >
                     Konsultacja chirurgiczna- szczegóły
                   </a>
@@ -268,9 +291,12 @@ const MichalSzczubkowskiPage = () => {
                       <Stethoscope className="w-6 h-6 md:w-10 md:h-10 text-teal-600 md:text-white" />
                     </div>
                     <div className="flex-1 md:flex-none md:text-center">
-                      <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-0 md:mb-4">
+                      <a 
+                        href="/proktolog"
+                        className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-0 md:mb-4 hover:text-teal-600 transition-colors block"
+                      >
                         Proktologia
-                      </h3>
+                      </a>
                     </div>
                   </div>
                   <div className="mb-6">
@@ -280,7 +306,7 @@ const MichalSzczubkowskiPage = () => {
                   </div>
                   <a 
                     href="/konsultacja-proktologiczna"
-                    className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700"
+                    className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700 whitespace-nowrap block"
                   >
                     Konsultacja proktologiczna- szczegóły
                   </a>
@@ -293,9 +319,12 @@ const MichalSzczubkowskiPage = () => {
                       <HeartPulse className="w-6 h-6 md:w-10 md:h-10 text-teal-600 md:text-white" />
                     </div>
                     <div className="flex-1 md:flex-none md:text-center">
-                      <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-0 md:mb-4">
+                      <a 
+                        href="/proktolog"
+                        className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-0 md:mb-4 hover:text-teal-600 transition-colors block"
+                      >
                         Chirurgia naczyniowa
-                      </h3>
+                      </a>
                     </div>
                   </div>
                   <div className="mb-6">
@@ -305,7 +334,7 @@ const MichalSzczubkowskiPage = () => {
                   </div>
                   <a 
                     href="/proktolog"
-                    className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700"
+                    className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700 whitespace-nowrap block"
                   >
                     Konsultacja chirurgiczna- szczegóły
                   </a>
@@ -521,9 +550,9 @@ const MichalSzczubkowskiPage = () => {
                   <div className="space-y-4 md:space-y-6">
                     {/* Entry 1: Specjalista Chirurgii Ogólnej - Szpital Powiatowy */}
                     <div className="flex items-start gap-2 md:gap-3">
-                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch"></div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
+                      <div className="w-0.5 md:w-1 bg-teal-600 flex-shrink-0" style={{ minHeight: '100%', alignSelf: 'stretch' }}></div>
+                      <div className="flex-1">
+                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold mb-1">
                           Specjalista Chirurgii Ogólnej
                         </p>
                         <p className="text-gray-700 text-sm sm:text-base md:text-lg">
@@ -532,31 +561,28 @@ const MichalSzczubkowskiPage = () => {
                       </div>
                     </div>
                     
-                    {/* Entry 2: Specjalista Chirurgii Ogólnej - Centrum Medyczne 7 */}
+                    {/* Entry 2: Specjalista Chirurgii Ogólnej - Szpital św. Leona */}
                     <div className="flex items-start gap-2 md:gap-3">
-                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch"></div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
-                          Specjalista Chirurgii Ogólnej
-                        </p>
-                        <p className="text-gray-700 text-sm sm:text-base md:text-lg">
-                          Centrum Medyczne 7
-                        </p>
-                        <p className="text-gray-700 text-sm sm:text-base md:text-lg">
-                          Skarżysko-Kamienna
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* Entry 3: Specjalista Chirurgii Ogólnej - Szpital św. Leona */}
-                    <div className="flex items-start gap-2 md:gap-3">
-                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch"></div>
-                      <div className="flex-1 space-y-1">
-                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
+                      <div className="w-0.5 md:w-1 bg-teal-600 flex-shrink-0" style={{ minHeight: '100%', alignSelf: 'stretch' }}></div>
+                      <div className="flex-1">
+                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold mb-1">
                           Specjalista Chirurgii Ogólnej
                         </p>
                         <p className="text-gray-700 text-sm sm:text-base md:text-lg">
                           Szpital św. Leona w Opatowie
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Entry 3: Kształcenie Specjalizacyjne */}
+                    <div className="flex items-start gap-2 md:gap-3">
+                      <div className="w-0.5 md:w-1 bg-teal-600 flex-shrink-0" style={{ minHeight: '100%', alignSelf: 'stretch' }}></div>
+                      <div className="flex-1">
+                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold mb-1">
+                          Kształcenie Specjalizacyjne
+                        </p>
+                        <p className="text-gray-700 text-sm sm:text-base md:text-lg">
+                          Uniwersytecki Szpital Kliniczny nr 4 w Lublinie
                         </p>
                       </div>
                     </div>
