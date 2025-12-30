@@ -3,7 +3,9 @@ import { Clock, LogOut } from "lucide-react";
 import { formatTimeRemaining } from "../../utils/jwtUtils";
 
 const InactivityPopup = ({ inactivityTimeout, onStayActive, onLogout }) => {
-  const [countdown, setCountdown] = useState(inactivityTimeout);
+  // Use a shorter countdown time for the popup (30 seconds) instead of the full inactivity timeout
+  const POPUP_COUNTDOWN_MS = 30 * 1000; // 30 seconds
+  const [countdown, setCountdown] = useState(POPUP_COUNTDOWN_MS);
   const [isStaying, setIsStaying] = useState(false);
 
   // Countdown timer - give user time to respond
@@ -12,7 +14,7 @@ const InactivityPopup = ({ inactivityTimeout, onStayActive, onLogout }) => {
       return;
     }
 
-    setCountdown(inactivityTimeout);
+    setCountdown(POPUP_COUNTDOWN_MS);
 
     const interval = setInterval(() => {
       setCountdown((prev) => {
@@ -28,7 +30,7 @@ const InactivityPopup = ({ inactivityTimeout, onStayActive, onLogout }) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [inactivityTimeout, onLogout]);
+  }, [onLogout]);
 
   const handleStayActive = () => {
     setIsStaying(true);
