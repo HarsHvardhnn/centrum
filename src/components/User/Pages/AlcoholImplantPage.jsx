@@ -579,28 +579,8 @@ const AlcoholImplantPage = () => {
               {/* Light Gray Doctor Card */}
               <div className="bg-gray-100 rounded-lg p-6 md:p-8 lg:p-10">
                 <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center">
-                  {/* Left Side - Image and Button */}
-                  <div className="flex-shrink-0 flex flex-col items-center">
-                    {/* Doctor Image with White Padding and Shadow */}
-                    <div className="bg-white p-2 rounded-full shadow-md mb-6">
-                      <img
-                        src="/assets/static-assets/mikel_doctor.png"
-                        alt="lek. Michał Szczubkowski - Chirurg"
-                        className="w-48 h-48 md:w-56 md:h-56 rounded-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                    {/* CTA Button - Below Image, Centered */}
-                    <a
-                      href="/lekarze/michal-szczubkowski"
-                      className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors text-center"
-                    >
-                      Zobacz Chirurga
-                    </a>
-                  </div>
-
-                  {/* Right Side - Doctor Info */}
-                  <div className="flex-1">
+                  {/* Right Side - Doctor Info (First on mobile, second on desktop) */}
+                  <div className="flex-1 order-1 md:order-2">
                     <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
                       lek. Michał Szczubkowski
                     </h3>
@@ -621,6 +601,36 @@ const AlcoholImplantPage = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* Left Side - Image and Button (Second on mobile, first on desktop) */}
+                  <div className="flex-shrink-0 flex flex-col items-center order-2 md:order-1">
+                    {/* Doctor Image with White Padding and Shadow */}
+                    <div className="bg-white p-2 rounded-full shadow-md mb-0 md:mb-6">
+                      <img
+                        src="/assets/static-assets/mikel_doctor.png"
+                        alt="lek. Michał Szczubkowski - Chirurg"
+                        className="w-48 h-48 md:w-56 md:h-56 rounded-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    {/* CTA Button - Hidden on mobile, shown on desktop */}
+                    <a
+                      href="/lekarze/michal-szczubkowski"
+                      className="hidden md:block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors text-center"
+                    >
+                      Zobacz Chirurga
+                    </a>
+                  </div>
+                </div>
+                
+                {/* CTA Button - Mobile only, at the end */}
+                <div className="mt-6 md:hidden">
+                  <a
+                    href="/lekarze/michal-szczubkowski"
+                    className="block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors text-center"
+                  >
+                    Zobacz Chirurga
+                  </a>
                 </div>
               </div>
             </div>

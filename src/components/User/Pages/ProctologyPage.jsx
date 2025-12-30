@@ -521,18 +521,8 @@ const ProctologyPage = () => {
               {/* Doctor Card - White with shadow */}
               <div className="bg-white rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 shadow-lg">
                 <div className="flex flex-col md:flex-row gap-6 sm:gap-8 md:gap-10 items-start md:items-center">
-                  {/* Left Side - Image */}
-                  <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-center">
-                    <img
-                      src="/assets/static-assets/mikel_doctor.png"
-                      alt="lek. Michał Szczubkowski - Proktolog"
-                      className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-lg object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-
-                  {/* Right Side - Doctor Info */}
-                  <div className="flex-1">
+                  {/* Right Side - Doctor Info (First on mobile, second on desktop) */}
+                  <div className="flex-1 order-1 md:order-2">
                     <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">
                       lek. Michał Szczubkowski
                     </h3>
@@ -541,7 +531,7 @@ const ProctologyPage = () => {
                     </p>
 
                     {/* Biography */}
-                    <div className="space-y-4 text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed mb-6 sm:mb-8">
+                    <div className="space-y-4 text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed mb-0 md:mb-6 sm:mb-8">
                       <p>
                         Doświadczony lekarz specjalista chirurg z wieloletnią praktyką w zakresie proktologii. Specjalizuje się w diagnostyce i leczeniu chorób odbytu i odbytnicy, zapewniając pacjentom profesjonalną opiekę medyczną w atmosferze pełnej dyskrecji.
                       </p>
@@ -550,8 +540,8 @@ const ProctologyPage = () => {
                       </p>
                     </div>
 
-                    {/* Action Buttons - Side by side */}
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    {/* Action Buttons - Hidden on mobile, shown on desktop */}
+                    <div className="hidden md:flex flex-col sm:flex-row gap-3 sm:gap-4">
                       <a
                         href="/lekarze/michal-szczubkowski"
                         className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-center text-sm sm:text-base"
@@ -565,6 +555,34 @@ const ProctologyPage = () => {
                         Umów wizytę u Proktologa
                       </button>
                     </div>
+                  </div>
+
+                  {/* Left Side - Image (Second on mobile, first on desktop) */}
+                  <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-center order-2 md:order-1">
+                    <img
+                      src="/assets/static-assets/mikel_doctor.png"
+                      alt="lek. Michał Szczubkowski - Proktolog"
+                      className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-lg object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
+                
+                {/* Action Buttons - Mobile only, at the end */}
+                <div className="mt-6 md:hidden">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <a
+                      href="/lekarze/michal-szczubkowski"
+                      className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-center text-sm sm:text-base"
+                    >
+                      Zobacz Proktologa
+                    </a>
+                    <button
+                      onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
+                      className="bg-white border-2 border-teal-600 text-teal-600 font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-teal-50 transition-colors text-center text-sm sm:text-base"
+                    >
+                      Umów wizytę u Proktologa
+                    </button>
                   </div>
                 </div>
               </div>

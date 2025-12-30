@@ -344,24 +344,8 @@ const SkinLesionRemovalPage = () => {
               {/* Doctor Card - Light gray with shadow */}
               <div className="bg-gray-50 rounded-lg p-6 sm:p-8 md:p-10 lg:p-12 shadow-md">
                 <div className="flex flex-col md:flex-row gap-6 sm:gap-8 md:gap-10 items-start">
-                  {/* Left Side - Image and Button */}
-                  <div className="flex-shrink-0 flex flex-col items-center w-full md:w-auto">
-                    <img
-                      src="/assets/static-assets/mikel_doctor.png"
-                      alt="lek. Michał Szczubkowski - Chirurg"
-                      className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-full object-cover mb-4 border-4 border-white shadow-md"
-                      loading="lazy"
-                    />
-                    <a
-                      href="/lekarze/michal-szczubkowski"
-                      className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-center text-sm sm:text-base w-full md:w-auto"
-                    >
-                      Zobacz Chirurga
-                    </a>
-                  </div>
-
-                  {/* Right Side - Doctor Info */}
-                  <div className="flex-1">
+                  {/* Right Side - Doctor Info (First on mobile, second on desktop) */}
+                  <div className="flex-1 order-1 md:order-2">
                     <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">
                       lek. Michał Szczubkowski
                     </h3>
@@ -385,6 +369,33 @@ const SkinLesionRemovalPage = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* Left Side - Image and Button (Second on mobile, first on desktop) */}
+                  <div className="flex-shrink-0 flex flex-col items-center w-full md:w-auto order-2 md:order-1">
+                    <img
+                      src="/assets/static-assets/mikel_doctor.png"
+                      alt="lek. Michał Szczubkowski - Chirurg"
+                      className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-full object-cover mb-0 md:mb-4 border-4 border-white shadow-md"
+                      loading="lazy"
+                    />
+                    {/* CTA Button - Hidden on mobile, shown on desktop */}
+                    <a
+                      href="/lekarze/michal-szczubkowski"
+                      className="hidden md:block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-center text-sm sm:text-base w-full md:w-auto"
+                    >
+                      Zobacz Chirurga
+                    </a>
+                  </div>
+                </div>
+                
+                {/* CTA Button - Mobile only, at the end */}
+                <div className="mt-6 md:hidden">
+                  <a
+                    href="/lekarze/michal-szczubkowski"
+                    className="block bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors text-center text-sm sm:text-base w-full"
+                  >
+                    Zobacz Chirurga
+                  </a>
                 </div>
               </div>
             </div>
