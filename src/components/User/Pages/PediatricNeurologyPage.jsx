@@ -166,7 +166,7 @@ const PediatricNeurologyPage = () => {
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 px-4 md:px-0">
                   <button 
-                    onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
+                    onClick={() => window.location.href = '/?lekarz=688887149cc810a1bd1d8589&openAppointment=true#appointment-section'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-base md:text-lg"
                   >
                     Umów wizytę
@@ -577,7 +577,7 @@ const PediatricNeurologyPage = () => {
               {/* CTA Button */}
               <div className="text-center">
                 <button
-                  onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
+                  onClick={() => window.location.href = '/?lekarz=688887149cc810a1bd1d8589&openAppointment=true#appointment-section'}
                   className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-4 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg"
                 >
                   Umów wizytę u neurologa dziecięcego
@@ -615,7 +615,7 @@ const PediatricNeurologyPage = () => {
 
                   {/* Button 2: Umów wizytę online */}
                   <button
-                    onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
+                    onClick={() => window.location.href = '/?lekarz=688887149cc810a1bd1d8589&openAppointment=true#appointment-section'}
                     className="bg-white hover:bg-gray-50 text-teal-600 border-2 border-teal-600 font-semibold px-6 py-3 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 w-full sm:w-auto"
                   >
                     <Calendar className="w-5 h-5" />

@@ -457,7 +457,7 @@ const MichalSzczubkowskiPage = () => {
 
           {/* Section 6: Experience and Qualifications */}
           <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="experience-heading">
-            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
+            <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-left mb-8 sm:mb-12">
                 <h2 
                   id="experience-heading"
@@ -583,33 +583,33 @@ const MichalSzczubkowskiPage = () => {
                   <div className="space-y-2 md:space-y-4">
                     <div className="flex items-start gap-2 md:gap-3">
                       <FaCheck className="text-teal-600 w-4 h-4 md:w-5 md:h-5 mt-0.5 md:mt-1 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl">
-                          Kurs zaawansowanej chirurgii laparoskopowej
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl md:whitespace-nowrap">
+                          Szkolenie z terapii podciśnieniowej (VAC/NPWT) - leczenie ran przewlekłych, stopy cukrzycowej, odleżyn
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-2 md:gap-3">
                       <FaCheck className="text-teal-600 w-4 h-4 md:w-5 md:h-5 mt-0.5 md:mt-1 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl">
-                          Certyfikat z proktologii klinicznej
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl md:whitespace-nowrap">
+                          Szkolenie z techniki T.I.M.E. - nowoczesne leczenie owrzodzeń i ran trudno gojących się
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-2 md:gap-3">
                       <FaCheck className="text-teal-600 w-4 h-4 md:w-5 md:h-5 mt-0.5 md:mt-1 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl">
-                          Kurs leczenia żylaków metodą EVLA
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl md:whitespace-nowrap">
+                          Kurs ultrasonografii jamy brzusznej - Roztoczańska Szkoła Ultrasonografii
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-2 md:gap-3">
                       <FaCheck className="text-teal-600 w-4 h-4 md:w-5 md:h-5 mt-0.5 md:mt-1 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl">
-                          Szkolenie z technik małoinwazyjnych w proktologii
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl md:whitespace-nowrap">
+                          Szkolenie z żywienia dojelitowego i pozajelitowego oraz technik zakładania PEG/PEJ
                         </p>
                       </div>
                     </div>
