@@ -681,9 +681,9 @@ export default function Doctors({
 
       <div className="max-w-7xl mx-auto">
         {doctors.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4 items-start">
             {doctors.map((doctor) => (
-              <div key={doctor.id} className="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
+              <div key={doctor.id} className="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col">
                 <img
                   src={doctor.image}
                   alt={doctor.name}
@@ -696,7 +696,7 @@ export default function Doctors({
                   </p>
                 </div>
 
-                <div className="flex flex-col mt-auto min-h-[96px]">
+                <div className="flex flex-col">
                   {doctor.id === '6877dbf8635211ff3ec6322d' ? (
                     <>
                       <button
@@ -1073,13 +1073,14 @@ export default function Doctors({
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Telefon* (9 cyfr)
                             </label>
-                            <div className="flex w-full max-w-full">
+                            <div className="flex w-full overflow-hidden">
                               <div className="relative flex-shrink-0">
                                 <select
                                   name="phoneCode"
                                   value={bookingForm.phoneCode}
                                   onChange={handleInputChange}
-                                  className="px-2 sm:px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white text-sm w-[100px] sm:w-[120px]"
+                                  className="h-[42px] px-2 sm:px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white text-sm w-[90px] sm:w-[120px] appearance-none"
+                                  style={{ lineHeight: '1.5' }}
                                 >
                                   {phoneCountryCodes.map((country) => (
                                     <option key={country.code} value={country.code}>
@@ -1093,13 +1094,14 @@ export default function Doctors({
                                 name="phone"
                                 value={bookingForm.phone}
                                 onChange={handlePhoneChange}
-                                className={`flex-1 min-w-0 px-3 py-2 border ${
+                                className={`h-[42px] flex-1 min-w-0 px-3 py-2 border ${
                                   formErrors.phone
                                     ? "border-red-500"
                                     : "border-gray-300"
                                 } rounded-r-md focus:outline-none focus:ring-1 focus:ring-teal-500 border-l-0`}
                                 placeholder="123456789"
                                 maxLength="9"
+                                style={{ lineHeight: '1.5' }}
                               />
                             </div>
                             {formErrors.phone ? (

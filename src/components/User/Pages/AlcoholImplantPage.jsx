@@ -741,7 +741,7 @@ const AlcoholImplantPage = () => {
                   ))}
                 </div>
                 {/* Rating Text */}
-                <span className="text-gray-600 font-normal text-base sm:text-lg">5.0 ocena w Google</span>
+                <span className="text-gray-500 font-light text-base sm:text-lg">5.0 ocena w Google</span>
               </div>
             </div>
           </section>

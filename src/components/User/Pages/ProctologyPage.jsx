@@ -159,9 +159,12 @@ const ProctologyPage = () => {
                 </h1>
 
                 {/* Description Paragraph */}
-                <h2 className="mb-4 sm:mb-6 text-gray-700 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-normal">
-                  Profesjonalna diagnostyka&nbsp;i leczenie chorób odbytu&nbsp;i odbytnicy. Konsultacje prywatne bez skierowania&nbsp;w Poradni Proktologicznej Centrum Medyczne 7.
-                </h2>
+                <div className="mb-4 sm:mb-6 text-gray-700 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light">
+                  <span className="block">Profesjonalna diagnostyka&nbsp;i leczenie chorób</span>
+                  <span className="block">odbytu&nbsp;i odbytnicy. Konsultacje prywatne</span>
+                  <span className="block">bez skierowania&nbsp;w&nbsp;Poradni Proktologicznej</span>
+                  <span className="block">Centrum Medyczne 7.</span>
+                </div>
 
                 {/* Feature Items */}
                 <div className="mb-4 sm:mb-6 px-4 md:px-0">
@@ -221,7 +224,7 @@ const ProctologyPage = () => {
                     ))}
                   </div>
                   {/* Rating Text */}
-                  <span className="text-gray-900 font-semibold text-sm sm:text-base">5.0 ocena w Google</span>
+                  <span className="text-gray-500 font-light text-sm sm:text-base">5.0 ocena w Google</span>
                 </a>
               </div>
 
@@ -245,7 +248,7 @@ const ProctologyPage = () => {
           
           {/* Section 2: What is Proctology */}
           <section className="bg-[#F0F9F9] pt-8 sm:pt-0 pb-8 sm:pb-12 md:pb-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="what-is-proctology-heading">
-            <div className="max-w-5xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <h2 
                 id="what-is-proctology-heading"
                 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6"
@@ -338,7 +341,7 @@ const ProctologyPage = () => {
                           className="w-4 h-4 sm:w-5 sm:h-5 object-contain"
                         />
                       </div>
-                      <span className="text-gray-800 text-sm sm:text-base md:text-lg">zmiany zapalne i nowotworowe (diagnostyka)</span>
+                      <span className="text-gray-800 text-sm sm:text-base md:text-lg md:whitespace-nowrap">zmiany zapalne&nbsp;i nowotworowe (diagnostyka)</span>
                     </div>
                   </div>
                 </div>
@@ -703,7 +706,7 @@ const ProctologyPage = () => {
                   id="faq-heading"
                   className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
                 >
-                  Najczęściej zadawane pytania<br />o Proktologii<br />&nbsp;i leczeniu hemoroidów
+                  Najczęściej zadawane pytania o Proktologii<br />&nbsp;i leczeniu hemoroidów
                 </h2>
                 <div className="w-20 sm:w-24 h-1 bg-teal-600 mx-auto"></div>
               </div>

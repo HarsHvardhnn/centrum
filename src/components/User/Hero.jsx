@@ -95,7 +95,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
   };
 
   return (
-    <section className="relative flex flex-col items-center pt-16 xs:pt-18 sm:pt-20 md:pt-20 lg:pt-20 xl:pt-20 pb-0 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-b from-primary-lighter to-white">
+    <section className="relative flex flex-col items-center pt-16 xs:pt-18 sm:pt-20 md:pt-24 lg:pt-28 xl:pt-32 pb-0 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-b from-primary-lighter to-white">
       {/* Radial gradient overlay */}
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_70%_80%,rgba(0,140,140,0.02),transparent_50%)]"></div>
       <div className="relative flex-1 flex flex-col md:flex-row items-start justify-between w-full max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 pt-3 xs:pt-4 sm:pt-6 md:pt-4 lg:pt-4 xl:pt-4 gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-16">
@@ -123,7 +123,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
             href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skarżysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dziecięcy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 mb-6 xs:mb-7 sm:mb-8 md:mb-8 lg:mb-10 justify-center md:justify-start max-w-2xl mx-auto md:mx-0 cursor-pointer hover:opacity-80 transition-opacity"
+            className="flex items-center gap-2 mb-4 xs:mb-4 sm:mb-5 md:mb-4 lg:mb-5 justify-center md:justify-start max-w-2xl mx-auto md:mx-0 cursor-pointer hover:opacity-80 transition-opacity"
           >
             <div className="flex items-center gap-1.5 xs:gap-2 flex-wrap justify-center md:justify-start">
               {/* Google Logo - Teal */}
@@ -148,7 +148,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
             </div>
           </a>
           {/* Appointment Booking Form Card */}
-          <div className="mt-20 sm:mt-24 md:mt-24 lg:mt-28 relative z-10 bg-white rounded-xl xs:rounded-2xl shadow-[0_20px_25px_-5px_rgba(20,184,166,0.1),0_10px_10px_-5px_rgba(20,184,166,0.04)] p-5 xs:p-6 sm:p-7 md:p-8 lg:p-9 xl:p-10 max-w-2xl mx-auto md:mx-0">
+          <div className="mt-8 sm:mt-10 md:mt-8 lg:mt-10 relative z-10 bg-white rounded-xl xs:rounded-2xl shadow-[0_20px_25px_-5px_rgba(20,184,166,0.1),0_10px_10px_-5px_rgba(20,184,166,0.04)] p-5 xs:p-6 sm:p-7 md:p-8 lg:p-9 xl:p-10 max-w-2xl mx-auto md:mx-0">
             {/* Teal Pill Tag */}
             <div className="flex items-center gap-2 mb-3 xs:mb-3.5 sm:mb-4">
               <div className="flex items-center gap-1 xs:gap-1.5 bg-teal-50 text-teal-600 px-2.5 xs:px-3 py-0.5 xs:py-1 rounded-full text-[10px] xs:text-xs font-medium">
@@ -375,7 +375,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
 
         {/* Hero Image for mobile screens */}
         {isMobile && (
-          <div className="relative z-10 w-full max-w-[400px] xs:max-w-[500px] sm:max-w-[550px] -mt-22 xs:-mt-16">
+          <div className="relative z-10 w-full max-w-[400px] xs:max-w-[500px] sm:max-w-[550px] -mt-12 xs:-mt-10 sm:-mt-8">
             <div className="relative rounded-xl xs:rounded-2xl bg-white border-2 sm:border-4 border-white p-2 xs:p-2.5 pt-2 xs:pt-2.5 pb-4 xs:pb-5" style={{ boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 rgba(0, 0, 0, 0)' }}>
               <img
    loading="lazy"

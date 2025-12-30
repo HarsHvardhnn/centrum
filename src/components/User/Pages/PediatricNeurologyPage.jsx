@@ -641,7 +641,7 @@ const PediatricNeurologyPage = () => {
                       <FaStar key={i} className="text-yellow-400 w-6 h-6 md:w-7 md:h-7" />
                     ))}
                   </div>
-                  <p className="text-gray-800 text-base md:text-lg font-medium">
+                  <p className="text-gray-500 text-base md:text-lg font-light">
                     5.0 ocena w Google
                   </p>
                 </div>
