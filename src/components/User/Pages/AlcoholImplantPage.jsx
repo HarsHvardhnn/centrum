@@ -1,8 +1,7 @@
 import React from "react";
 import MetaTags from '../../UtilComponents/MetaTags';
-import { FaStar, FaCalendar, FaShieldAlt, FaCheck } from "react-icons/fa";
+import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaPhone } from "react-icons/fa";
 import { IoLocationOutline } from "react-icons/io5";
-import phoneDialIcon from '../../../assets/phone_dial.png';
 
 const AlcoholImplantPage = () => {
   // Structured Data (JSON-LD)
@@ -120,7 +119,7 @@ const AlcoholImplantPage = () => {
                     onClick={() => window.location.href = "tel:+48797097487"}
                     className="bg-white border-2 border-teal-600 text-teal-600 font-semibold py-3 px-6 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2 text-base md:text-lg"
                   >
-                    <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
+                    <FaPhone className="text-teal-600 w-5 h-5 scale-x-[-1]" />
                     Zadzwoń teraz
                   </button>
                 </div>
@@ -698,7 +697,7 @@ const AlcoholImplantPage = () => {
                   onClick={() => window.location.href = "tel:+48797097487"}
                   className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg transition-colors flex items-center justify-center gap-2 w-full sm:w-auto text-sm sm:text-base"
                 >
-                  <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
+                  <FaPhone className="text-white w-5 h-5 scale-x-[-1]" />
                   Zadzwoń teraz
                 </button>
 

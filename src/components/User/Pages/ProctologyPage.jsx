@@ -1,8 +1,7 @@
 import React from "react";
 import MetaTags from '../../UtilComponents/MetaTags';
-import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaMapMarkerAlt } from "react-icons/fa";
+import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaMapMarkerAlt, FaPhone } from "react-icons/fa";
 import { IoLocationOutline } from "react-icons/io5";
-import phoneDialIcon from '../../../assets/phone_dial.png';
 
 const ProctologyPage = () => {
   // Structured Data (JSON-LD)
@@ -610,7 +609,7 @@ const ProctologyPage = () => {
                       onClick={() => window.location.href = "tel:+48797097487"}
                       className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 sm:px-5 py-2.5 sm:py-3 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
                     >
-                      <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
+                      <FaPhone className="text-teal-600 w-5 h-5 scale-x-[-1]" />
                       Zadzwoń teraz
                     </button>
                     <button

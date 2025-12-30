@@ -1,9 +1,8 @@
 import React from "react";
 import MetaTags from '../../UtilComponents/MetaTags';
-import { FaStar, FaCalendar, FaShieldAlt, FaCheck } from "react-icons/fa";
+import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaPhone } from "react-icons/fa";
 import { IoLocationOutline } from "react-icons/io5";
 import { Brain, Activity, HeartPulse, Dumbbell, Baby, Bed, Calendar, Star } from "lucide-react";
-import phoneDialIcon from '../../../assets/phone_dial.png';
 
 const PediatricNeurologyPage = () => {
   // Structured Data (JSON-LD)
@@ -176,7 +175,7 @@ const PediatricNeurologyPage = () => {
                     onClick={() => window.location.href = "tel:+48797097487"}
                     className="bg-white border-2 border-teal-600 text-teal-600 font-semibold py-3 px-6 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2 text-base md:text-lg"
                   >
-                    <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
+                    <FaPhone className="text-teal-600 w-5 h-5 scale-x-[-1]" />
                     Zadzwoń teraz
                   </button>
                 </div>
@@ -610,7 +609,7 @@ const PediatricNeurologyPage = () => {
                     onClick={() => window.location.href = 'tel:+48797097487'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 w-full sm:w-auto"
                   >
-                    <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
+                    <FaPhone className="text-teal-600 w-5 h-5 scale-x-[-1]" />
                     Zadzwoń teraz
                   </button>
 

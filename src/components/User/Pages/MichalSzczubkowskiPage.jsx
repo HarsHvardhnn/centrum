@@ -1,9 +1,8 @@
 import React from "react";
 import MetaTags from '../../UtilComponents/MetaTags';
-import { FaStar, FaCalendar, FaShieldAlt, FaCheck } from "react-icons/fa";
+import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaPhone } from "react-icons/fa";
 import { IoLocationOutline } from "react-icons/io5";
 import { Activity, Stethoscope, HeartPulse, GraduationCap, Briefcase, Star, ClipboardList, MessageCircle, FileText } from "lucide-react";
-import phoneDialIcon from '../../../assets/phone_dial.png';
 
 const MichalSzczubkowskiPage = () => {
   // Structured Data (JSON-LD)
@@ -103,7 +102,7 @@ const MichalSzczubkowskiPage = () => {
                     onClick={() => window.location.href = 'tel:+48797097487'}
                     className="bg-white hover:bg-gray-50 text-teal-600 border-2 border-teal-600 font-semibold px-6 py-3 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2"
                   >
-                    <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
+                    <FaPhone className="text-teal-600 w-5 h-5 scale-x-[-1]" />
                     Zadzwoń
                   </button>
                 </div>
@@ -723,7 +722,7 @@ const MichalSzczubkowskiPage = () => {
                     onClick={() => window.location.href = 'tel:+48797127487'}
                     className="bg-white border-2 border-teal-600 text-teal-600 font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto"
                   >
-                    <img src={phoneDialIcon} alt="Phone" className="w-5 h-5" />
+                    <FaPhone className="text-teal-600 w-5 h-5 scale-x-[-1]" />
                     Zadzwoń: +48 797 127 487
                   </button>
                 </div>

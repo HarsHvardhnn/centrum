@@ -1064,17 +1064,17 @@ export default function Doctors({
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Telefon* (9 cyfr)
                             </label>
-                            <div className="flex">
-                              <div className="relative">
+                            <div className="flex w-full max-w-full">
+                              <div className="relative flex-shrink-0">
                                 <select
                                   name="phoneCode"
                                   value={bookingForm.phoneCode}
                                   onChange={handleInputChange}
-                                  className="px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white min-w-[140px]"
+                                  className="px-2 sm:px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white text-sm w-[100px] sm:w-[120px]"
                                 >
                                   {phoneCountryCodes.map((country) => (
                                     <option key={country.code} value={country.code}>
-                                      {country.flag} {country.code} {country.country}
+                                      {country.flag} {country.code}
                                     </option>
                                   ))}
                                 </select>
@@ -1084,7 +1084,7 @@ export default function Doctors({
                                 name="phone"
                                 value={bookingForm.phone}
                                 onChange={handlePhoneChange}
-                                className={`flex-1 px-3 py-2 border ${
+                                className={`flex-1 min-w-0 px-3 py-2 border ${
                                   formErrors.phone
                                     ? "border-red-500"
                                     : "border-gray-300"

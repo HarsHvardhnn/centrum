@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaSearch, FaStar, FaShieldAlt, FaUserMd, FaUsers, FaClock } from "react-icons/fa";
+import { FaSearch, FaStar, FaShieldAlt, FaUserMd, FaUsers, FaClock, FaPhone } from "react-icons/fa";
 import { FaFacebookF, FaInstagram, FaMobileAlt } from "react-icons/fa";
 import { FaRegCircleUser } from "react-icons/fa6";
 import { IoLocationOutline } from "react-icons/io5";
@@ -9,7 +9,6 @@ import { useIsMobile } from "./useIsMobile";
 import { useSpecializations } from "../../context/SpecializationContext";
 import { useAppointmentContext } from "../../UserLayout";
 import heroImage from "../../assets/a6cac98caf0f70d2a113ae6f901a2da389eae67e.png";
-import phoneDialIcon from "../../assets/phone_dial.png";
 
 // Import your actual doctor service here
 // import doctorService from '../services/doctorService';
@@ -96,7 +95,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
   };
 
   return (
-    <section className="relative flex flex-col items-center pt-16 xs:pt-18 sm:pt-20 md:pt-20 lg:pt-20 xl:pt-20 pb-0 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-br from-[#F0F7F7] via-[#E6F5F5] to-[#DCF2F2]">
+    <section className="relative flex flex-col items-center pt-16 xs:pt-18 sm:pt-20 md:pt-20 lg:pt-20 xl:pt-20 pb-0 px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 bg-gradient-to-b from-primary-lighter to-white">
       <div className="flex-1 flex flex-col md:flex-row items-start justify-between w-full max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 pt-3 xs:pt-4 sm:pt-6 md:pt-4 lg:pt-4 xl:pt-4 gap-6 xs:gap-8 sm:gap-10 md:gap-12 lg:gap-16">
         {/* Left Side Content */}
         <div className="md:w-1/2 lg:w-[48%] xl:w-1/2 text-center md:text-left mb-6 xs:mb-8 sm:mb-10 md:mb-0 w-full">
@@ -105,7 +104,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
             <span className="text-teal-600 block">Prywatna przychodnia</span>
             <span className="text-teal-600 block">specjalistyczna</span>
             <span className="text-gray-700 text-xl xs:text-2xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl block">
-              <span className="border-b-4 border-teal-600 inline-block">
+              <span className="border-b-[3.5px] border-teal-600 inline-block pb-3.5">
                 <span className="font-normal">w</span> <span className="font-normal">S</span>
               </span><span className="font-normal">karżysku-Kamiennej</span>
             </span>
@@ -310,7 +309,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
                 onClick={handleCall}
                 className="w-full bg-white border-2 border-teal-600 text-teal-600 font-semibold text-sm xs:text-base py-2.5 xs:py-3 sm:py-3.5 px-4 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2"
   >
-                <img src={phoneDialIcon} alt="Phone" className="w-4 h-4 xs:w-5 xs:h-5" />
+                <FaPhone className="text-teal-600 w-4 h-4 xs:w-5 xs:h-5 scale-x-[-1]" />
                 Zadzwoń
   </button>
 </div>
@@ -423,8 +422,8 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
       <div className="bg-teal-600 w-screen text-white py-4 xs:py-5 sm:py-5 md:py-6 lg:py-7 mt-8 xs:mt-10 sm:mt-12 md:mt-14 lg:mt-16 -mx-3 xs:-mx-4 sm:-mx-6 md:-mx-8 lg:-mx-6 xl:-mx-8 2xl:-mx-12">
         <div className="max-w-7xl mx-auto px-3 xs:px-4 sm:px-6 md:px-8 lg:px-6 xl:px-8 2xl:px-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 xs:gap-5 sm:gap-6 md:gap-7 lg:gap-8">
           {/* Section 1: Specjaliści */}
-          <div className="flex flex-col items-center text-center">
-            <div className="bg-teal-700 rounded-lg xs:rounded-xl p-3 xs:p-3.5 md:p-4 mb-3 xs:mb-3.5 md:mb-4 w-12 h-12 xs:w-14 xs:h-14 md:w-16 md:h-16 flex items-center justify-center">
+          <div className="flex flex-col items-center text-center transition-all duration-300 hover:brightness-110 cursor-pointer">
+            <div className="bg-teal-700 rounded-lg xs:rounded-xl p-3 xs:p-3.5 md:p-4 mb-3 xs:mb-3.5 md:mb-4 w-12 h-12 xs:w-14 xs:h-14 md:w-16 md:h-16 flex items-center justify-center transition-all duration-300 hover:bg-teal-600">
               <FaUserMd className="text-white text-lg xs:text-xl md:text-2xl" />
             </div>
             <h3 className="text-xl xs:text-2xl sm:text-2xl md:text-3xl font-bold mb-1.5 xs:mb-2">Specjaliści</h3>
@@ -434,8 +433,8 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
           </div>
 
           {/* Section 2: Opieka */}
-          <div className="flex flex-col items-center text-center">
-            <div className="bg-teal-700 rounded-lg xs:rounded-xl p-3 xs:p-3.5 md:p-4 mb-3 xs:mb-3.5 md:mb-4 w-12 h-12 xs:w-14 xs:h-14 md:w-16 md:h-16 flex items-center justify-center">
+          <div className="flex flex-col items-center text-center transition-all duration-300 hover:brightness-110 cursor-pointer">
+            <div className="bg-teal-700 rounded-lg xs:rounded-xl p-3 xs:p-3.5 md:p-4 mb-3 xs:mb-3.5 md:mb-4 w-12 h-12 xs:w-14 xs:h-14 md:w-16 md:h-16 flex items-center justify-center transition-all duration-300 hover:bg-teal-600">
               <FaUsers className="text-white text-lg xs:text-xl md:text-2xl" />
             </div>
             <h3 className="text-xl xs:text-2xl sm:text-2xl md:text-3xl font-bold mb-1.5 xs:mb-2">Opieka</h3>
@@ -445,8 +444,8 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
           </div>
 
           {/* Section 3: 24h */}
-          <div className="flex flex-col items-center text-center">
-            <div className="bg-teal-700 rounded-lg xs:rounded-xl p-3 xs:p-3.5 md:p-4 mb-3 xs:mb-3.5 md:mb-4 w-12 h-12 xs:w-14 xs:h-14 md:w-16 md:h-16 flex items-center justify-center">
+          <div className="flex flex-col items-center text-center transition-all duration-300 hover:brightness-110 cursor-pointer">
+            <div className="bg-teal-700 rounded-lg xs:rounded-xl p-3 xs:p-3.5 md:p-4 mb-3 xs:mb-3.5 md:mb-4 w-12 h-12 xs:w-14 xs:h-14 md:w-16 md:h-16 flex items-center justify-center transition-all duration-300 hover:bg-teal-600">
               <FaClock className="text-white text-lg xs:text-xl md:text-2xl" />
             </div>
             <h3 className="text-xl xs:text-2xl sm:text-2xl md:text-3xl font-bold mb-1.5 xs:mb-2">24h</h3>
@@ -456,8 +455,8 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
           </div>
 
           {/* Section 4: 5.0 Rating */}
-          <div className="flex flex-col items-center text-center">
-            <div className="bg-teal-700 rounded-lg xs:rounded-xl p-3 xs:p-3.5 md:p-4 mb-3 xs:mb-3.5 md:mb-4 w-12 h-12 xs:w-14 xs:h-14 md:w-16 md:h-16 flex items-center justify-center">
+          <div className="flex flex-col items-center text-center transition-all duration-300 hover:brightness-110 cursor-pointer">
+            <div className="bg-teal-700 rounded-lg xs:rounded-xl p-3 xs:p-3.5 md:p-4 mb-3 xs:mb-3.5 md:mb-4 w-12 h-12 xs:w-14 xs:h-14 md:w-16 md:h-16 flex items-center justify-center transition-all duration-300 hover:bg-teal-600">
               <FaStar className="text-white text-lg xs:text-xl md:text-2xl" />
             </div>
             <h3 className="text-xl xs:text-2xl sm:text-2xl md:text-3xl font-bold mb-1.5 xs:mb-2">5.0</h3>
