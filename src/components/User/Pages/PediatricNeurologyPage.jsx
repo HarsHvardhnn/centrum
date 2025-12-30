@@ -218,11 +218,11 @@ const PediatricNeurologyPage = () => {
         </section>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16" role="main">
+        <div role="main">
           
           {/* Section 2: When to Schedule Consultation */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="when-to-schedule-heading">
-            <div className="max-w-6xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="when-to-schedule-heading">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="when-to-schedule-heading"
@@ -291,7 +291,7 @@ const PediatricNeurologyPage = () => {
           </section>
 
           {/* Section 3: How Does Consultation Look Like */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="consultation-heading">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="consultation-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -326,8 +326,8 @@ const PediatricNeurologyPage = () => {
           </section>
 
           {/* Section 4: Doctor Info */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="doctor-heading">
-            <div className="max-w-6xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="doctor-heading">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="doctor-heading"
@@ -340,9 +340,9 @@ const PediatricNeurologyPage = () => {
 
               {/* Light Gray Doctor Card */}
               <div className="bg-gray-100 rounded-lg p-6 md:p-8 lg:p-10">
-                <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center">
-                  {/* Left Side - Doctor Image/Icon */}
-                  <div className="flex-shrink-0 flex flex-col items-center md:items-start">
+                <div className="flex flex-col items-center gap-6 md:gap-8">
+                  {/* Doctor Image/Icon - Centered */}
+                  <div className="flex flex-col items-center">
                     <div className="bg-white p-2 rounded-full shadow-md mb-4">
                       <img
                         src="https://res.cloudinary.com/dca740eqo/image/upload/v1756246783/hospital_app/images/fe0qqfuyacegrbhelktu.jpg"
@@ -356,8 +356,8 @@ const PediatricNeurologyPage = () => {
                     </div>
                   </div>
 
-                  {/* Right Side - Doctor Info */}
-                  <div className="flex-1">
+                  {/* Doctor Info - Centered */}
+                  <div className="flex flex-col items-center text-center max-w-3xl">
                     <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
                       lek. Anna Grabowska
                     </h3>
@@ -381,7 +381,7 @@ const PediatricNeurologyPage = () => {
           </section>
 
           {/* Section 5: Problems to Report */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="problems-heading">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="problems-heading">
             <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -474,8 +474,8 @@ const PediatricNeurologyPage = () => {
           </section>
 
           {/* Section 6: FAQ */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="faq-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="faq-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-8 sm:mb-12">
                 <h2 
                   id="faq-heading"
@@ -542,7 +542,7 @@ const PediatricNeurologyPage = () => {
           </section>
 
           {/* Section 7: Contact/CTA */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="contact-heading">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="contact-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -587,7 +587,7 @@ const PediatricNeurologyPage = () => {
           </section>
 
           {/* Section 8: Trusted by Parents */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="trust-heading">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="trust-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 

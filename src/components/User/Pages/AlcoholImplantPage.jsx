@@ -164,11 +164,11 @@ const AlcoholImplantPage = () => {
         </section>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16" role="main">
+        <div role="main">
           
           {/* Section 2: Introduction */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="introduction-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="introduction-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="introduction-heading"
@@ -194,7 +194,7 @@ const AlcoholImplantPage = () => {
           </section>
 
           {/* Section 3: When to Consider */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="when-to-consider-heading">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="when-to-consider-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -249,8 +249,8 @@ const AlcoholImplantPage = () => {
           </section>
 
           {/* Section 4: What is Disulfiram */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="what-is-disulfiram-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="what-is-disulfiram-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="what-is-disulfiram-heading"
@@ -281,8 +281,8 @@ const AlcoholImplantPage = () => {
           </section>
 
           {/* Section 5: Effectiveness and Limitations */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="effectiveness-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="effectiveness-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="effectiveness-heading"
@@ -325,7 +325,7 @@ const AlcoholImplantPage = () => {
           </section>
 
           {/* Section 6: How Does Procedure Look Like */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="procedure-heading">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="procedure-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -386,8 +386,8 @@ const AlcoholImplantPage = () => {
           </section>
 
           {/* Section 7: Contraindications and Safety */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="contraindications-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="contraindications-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="contraindications-heading"
@@ -446,8 +446,8 @@ const AlcoholImplantPage = () => {
           </section>
 
           {/* Section 8: Adverse Effects and Risks */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-[#E5E7EB] py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="adverse-effects-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="bg-[#E5E7EB] py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="adverse-effects-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="adverse-effects-heading"
@@ -504,7 +504,7 @@ const AlcoholImplantPage = () => {
           </section>
 
           {/* Section 9: Removal of Alcohol Implant */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="removal-heading">
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="removal-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -526,8 +526,8 @@ const AlcoholImplantPage = () => {
           </section>
 
           {/* Section 10: Location and Availability */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="location-availability-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="location-availability-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="location-availability-heading"
@@ -564,8 +564,8 @@ const AlcoholImplantPage = () => {
           </section>
 
           {/* Section 11: Doctor Info */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="doctor-heading">
-            <div className="max-w-6xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="doctor-heading">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="doctor-heading"
@@ -626,8 +626,8 @@ const AlcoholImplantPage = () => {
             </div>
           </section>
 
-{/* Section 8: Location/Service Area */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="location-heading">
+{/* Section 12: Location/Service Area */}
+          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="location-heading">
             <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
