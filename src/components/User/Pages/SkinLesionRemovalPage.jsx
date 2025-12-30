@@ -226,11 +226,11 @@ const SkinLesionRemovalPage = () => {
         </section>
 
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-12 md:py-16" role="main">
+        <div role="main">
           
           {/* Section 2: When to Visit */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="when-to-visit-heading">
-            <div className="max-w-6xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="when-to-visit-heading">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="when-to-visit-heading"
@@ -294,7 +294,7 @@ const SkinLesionRemovalPage = () => {
           </section>
 
           {/* Section 3: How Does Procedure Look Like */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-teal-50 py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="procedure-heading">
+          <section className="bg-teal-50 py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="procedure-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -329,8 +329,8 @@ const SkinLesionRemovalPage = () => {
           </section>
 
           {/* Section 4: Doctor Info */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="doctor-heading">
-            <div className="max-w-6xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="doctor-heading">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="doctor-heading"
@@ -402,7 +402,7 @@ const SkinLesionRemovalPage = () => {
           </section>
 
           {/* Section 5: Types of Skin Lesions */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-teal-50 py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="lesions-heading">
+          <section className="bg-teal-50 py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="lesions-heading">
             <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -464,8 +464,8 @@ const SkinLesionRemovalPage = () => {
           </section>
 
           {/* Section 6: FAQ */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="faq-heading">
-            <div className="max-w-4xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="faq-heading">
+            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="faq-heading"
@@ -561,8 +561,8 @@ const SkinLesionRemovalPage = () => {
           </section>
 
           {/* Section 7: Location/Service Area */}
-          <section className="mb-12 sm:mb-16 md:mb-20 bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="location-heading">
-            <div className="max-w-6xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="location-heading">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
                   id="location-heading"
