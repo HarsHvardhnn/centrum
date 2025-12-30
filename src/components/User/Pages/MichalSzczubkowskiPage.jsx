@@ -178,27 +178,19 @@ const MichalSzczubkowskiPage = () => {
               <div className="space-y-4 sm:space-y-6">
                 {/* First Paragraph */}
                 <p className="text-left text-gray-800 text-base sm:text-lg md:text-xl leading-relaxed">
-                  Lek. <span className="font-semibold text-teal-700">Michał Szczubkowski</span> jest renomowanym lekarzem specjalistą w dziedzinie chirurgii ogólnej, związanym zawodowo z Oddziałem Chirurgii Szpitala Powiatowego im. Marii Skłodowskiej-Curie{" "}
-                  <span className="inline-block">
-                    <span className="border-b-[3.5px] border-teal-700 inline-block pb-3.5">
-                      <span className="font-normal">w</span> <span className="font-normal">S</span>
-                    </span><span className="font-normal">karżysku-Kamiennej</span>
-                  </span>.
+                  Lek. <span className="font-semibold text-teal-700">Michał Szczubkowski</span> jest renomowanym lekarzem specjalistą&nbsp;w dziedzinie chirurgii ogólnej, związanym zawodowo z Oddziałem Chirurgii Szpitala Powiatowego im. Marii Skłodowskiej-Curie&nbsp;w Skarżysku-Kamiennej.
                 </p>
 
-                {/* Second Paragraph */}
                 <p className="text-left text-gray-800 text-base sm:text-lg md:text-xl leading-relaxed">
-                  Specjalizuje się w leczeniu przepuklin brzusznych i pachwinowych, chorób jelita grubego i odbytu, trudno gojących się ran oraz zespołu stopy cukrzycowej. W swojej praktyce stosuje nowoczesne metody diagnostyczne i terapeutyczne, realizując zarówno zabiegi planowe, jak i interwencje doraźne.
+                  Specjalizuje się&nbsp;w leczeniu przepuklin brzusznych&nbsp;i pachwinowych, chorób jelita grubego&nbsp;i odbytu, trudno gojących się ran oraz zespołu stopy cukrzycowej. W swojej praktyce stosuje nowoczesne metody diagnostyczne&nbsp;i terapeutyczne, realizując zarówno zabiegi planowe, jak&nbsp;i interwencje doraźne.
                 </p>
 
-                {/* Third Paragraph */}
                 <p className="text-left text-gray-800 text-base sm:text-lg md:text-xl leading-relaxed">
-                  W swojej pracy klinicznej kładzie szczególny nacisk na indywidualne podejście do każdego pacjenta, dokładną diagnostykę oraz transparentną komunikację. Pacjenci cenią go za profesjonalizm, empatię oraz umiejętność wyjaśnienia skomplikowanych zagadnień medycznych w zrozumiały sposób
+                  W swojej pracy klinicznej kładzie szczególny nacisk na indywidualne podejście do każdego pacjenta, dokładną diagnostykę oraz transparentną komunikację. Pacjenci cenią go za profesjonalizm, empatię oraz umiejętność wyjaśnienia skomplikowanych zagadnień medycznych&nbsp;w zrozumiały sposób
                 </p>
 
-                {/* Fourth Paragraph */}
                 <p className="text-left text-gray-800 text-base sm:text-lg md:text-xl leading-relaxed">
-                  Oprócz praktyki klinicznej, lek. Michał Szczubkowski regularnie uczestniczy w konferencjach medycznych i szkoleniach, aby być na bieżąco z najnowszymi osiągnięciami w dziedzinie Chirurgii Ogólnej i Proktologii.
+                  Oprócz praktyki klinicznej, lek. Michał Szczubkowski regularnie uczestniczy&nbsp;w konferencjach medycznych&nbsp;i szkoleniach, aby być na bieżąco z najnowszymi osiągnięciami&nbsp;w dziedzinie Chirurgii Ogólnej&nbsp;i Proktologii.
                 </p>
               </div>
             </div>
@@ -254,14 +246,14 @@ const MichalSzczubkowskiPage = () => {
               </div>
 
               {/* Three Specialization Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 md:gap-12">
                 {/* Card 1: Chirurgia ogólna */}
-                <div className="bg-white rounded-lg p-6 md:p-8 shadow-md">
+                <div className="bg-white rounded-lg p-6 md:p-8 lg:p-10 shadow-md w-full">
                   <div className="flex flex-row md:flex-col items-start md:items-center gap-4 md:gap-0 mb-4 md:mb-4">
-                    <div className="bg-teal-100 rounded-full p-3 md:bg-teal-600 md:p-4 flex-shrink-0 md:mb-4">
+                    <div className="bg-teal-100 rounded-full p-3 md:bg-teal-600 md:p-4 flex-shrink-0 md:mb-4 md:mx-auto">
                       <Activity className="w-6 h-6 md:w-10 md:h-10 text-teal-600 md:text-white" />
                     </div>
-                    <div className="flex-1 md:flex-none md:text-center">
+                    <div className="flex-1 md:flex-none md:w-full md:text-center">
                       <a 
                         href="/proktolog"
                         className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-0 md:mb-4 hover:text-teal-600 transition-colors block"
@@ -271,25 +263,27 @@ const MichalSzczubkowskiPage = () => {
                     </div>
                   </div>
                   <div className="mb-6">
-                    <p className="text-left text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">
+                    <p className="text-left md:text-center text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">
                       Kompleksowa diagnostyka i leczenie chirurgiczne schorzeń jamy brzusznej, w tym przepuklin, kamicy żółciowej i chorób tarczycy. Specjalizuję się w technikach laparoskopowych, które zapewniają szybszy powrót do zdrowia.
                     </p>
                   </div>
-                  <a 
-                    href="/proktolog"
-                    className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700 whitespace-nowrap block"
-                  >
-                    Konsultacja chirurgiczna- szczegóły
-                  </a>
+                  <div className="text-center md:text-center overflow-hidden">
+                    <a 
+                      href="/proktolog"
+                      className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700 inline-block whitespace-nowrap"
+                    >
+                      Konsultacja chirurgiczna- szczegóły
+                    </a>
+                  </div>
                 </div>
 
                 {/* Card 2: Proktologia */}
-                <div className="bg-white rounded-lg p-6 md:p-8 shadow-md">
+                <div className="bg-white rounded-lg p-6 md:p-8 lg:p-10 shadow-md w-full">
                   <div className="flex flex-row md:flex-col items-start md:items-center gap-4 md:gap-0 mb-4 md:mb-4">
-                    <div className="bg-teal-100 rounded-full p-3 md:bg-teal-600 md:p-4 flex-shrink-0 md:mb-4">
+                    <div className="bg-teal-100 rounded-full p-3 md:bg-teal-600 md:p-4 flex-shrink-0 md:mb-4 md:mx-auto">
                       <Stethoscope className="w-6 h-6 md:w-10 md:h-10 text-teal-600 md:text-white" />
                     </div>
-                    <div className="flex-1 md:flex-none md:text-center">
+                    <div className="flex-1 md:flex-none md:w-full md:text-center">
                       <a 
                         href="/proktolog"
                         className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-0 md:mb-4 hover:text-teal-600 transition-colors block"
@@ -299,25 +293,27 @@ const MichalSzczubkowskiPage = () => {
                     </div>
                   </div>
                   <div className="mb-6">
-                    <p className="text-left text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">
+                    <p className="text-left md:text-center text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">
                       Leczenie schorzeń odbytu i jelita grubego, w tym hemoroidów, szczelin odbytu, przetok i polipów. Oferuję nowoczesne, małoinwazyjne metody leczenia, które minimalizują dyskomfort i skracają rekonwalescencję.
                     </p>
                   </div>
-                  <a 
-                    href="/konsultacja-proktologiczna"
-                    className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700 whitespace-nowrap block"
-                  >
-                    Konsultacja proktologiczna- szczegóły
-                  </a>
+                  <div className="text-center md:text-center overflow-hidden">
+                    <a 
+                      href="/konsultacja-proktologiczna"
+                      className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700 inline-block whitespace-nowrap"
+                    >
+                      Konsultacja proktologiczna- szczegóły
+                    </a>
+                  </div>
                 </div>
 
                 {/* Card 3: Chirurgia naczyniowa */}
-                <div className="bg-white rounded-lg p-6 md:p-8 shadow-md">
+                <div className="bg-white rounded-lg p-6 md:p-8 lg:p-10 shadow-md w-full">
                   <div className="flex flex-row md:flex-col items-start md:items-center gap-4 md:gap-0 mb-4 md:mb-4">
-                    <div className="bg-teal-100 rounded-full p-3 md:bg-teal-600 md:p-4 flex-shrink-0 md:mb-4">
+                    <div className="bg-teal-100 rounded-full p-3 md:bg-teal-600 md:p-4 flex-shrink-0 md:mb-4 md:mx-auto">
                       <HeartPulse className="w-6 h-6 md:w-10 md:h-10 text-teal-600 md:text-white" />
                     </div>
-                    <div className="flex-1 md:flex-none md:text-center">
+                    <div className="flex-1 md:flex-none md:w-full md:text-center">
                       <a 
                         href="/proktolog"
                         className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-0 md:mb-4 hover:text-teal-600 transition-colors block"
@@ -327,16 +323,18 @@ const MichalSzczubkowskiPage = () => {
                     </div>
                   </div>
                   <div className="mb-6">
-                    <p className="text-left text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">
+                    <p className="text-left md:text-center text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">
                       Diagnostyka i leczenie chorób naczyń krwionośnych, w tym żylaków kończyn dolnych, niewydolności żylnej i chorób tętnic. Stosuję zarówno metody klasyczne, jak i nowoczesne techniki endowaskularne.
                     </p>
                   </div>
-                  <a 
-                    href="/proktolog"
-                    className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700 whitespace-nowrap block"
-                  >
-                    Konsultacja chirurgiczna- szczegóły
-                  </a>
+                  <div className="text-center md:text-center overflow-hidden">
+                    <a 
+                      href="/proktolog"
+                      className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700 inline-block whitespace-nowrap"
+                    >
+                      Konsultacja chirurgiczna- szczegóły
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -369,33 +367,33 @@ const MichalSzczubkowskiPage = () => {
                   <div className="w-full h-0.5 bg-teal-600 mb-4 sm:mb-6"></div>
                   
                   <div className="space-y-3 sm:space-y-4">
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Konsultacja chirurgiczna</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">300 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">300 zł</span>
                     </div>
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Usunięcie chirurgiczne szwów</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">od 200 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 200 zł</span>
                     </div>
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
-                      <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Usunięcie znamienia/ tłuszczaka</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">od 400 zł</span>
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
+                      <a href="/Usuwanie-zmian-skórnych" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Usunięcie znamienia/ tłuszczaka</a>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 400 zł</span>
                     </div>
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Leczenie chirurgiczne wzrastających paznokci</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">od 500 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 500 zł</span>
                     </div>
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Leczenie stopy cukrzycowej</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">od 500 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 500 zł</span>
                     </div>
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
-                      <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Implantacja wszywki alkoholowej (Disulfiram-Esperal)</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">2000 zł</span>
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
+                      <a href="/implantacja-wszywki-alkoholowej" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Implantacja wszywki alkoholowej (Disulfiram-Esperal)</a>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">2000 zł</span>
                     </div>
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Kwalifikacja do operacji chirurgicznej</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">od 300 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 300 zł</span>
                     </div>
                   </div>
                 </div>
@@ -408,25 +406,25 @@ const MichalSzczubkowskiPage = () => {
                   <div className="w-full h-0.5 bg-teal-600 mb-4 sm:mb-6"></div>
                   
                   <div className="space-y-3 sm:space-y-4">
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
-                      <span  href="/konsultacja-proktologiczna" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1" >Konsultacja proktologiczna</span>
-                      <a href="/konsultacja-proktologiczna" className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4 cursor-pointer">300 zł</a>
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
+                      <a href="/konsultacja-proktologiczna" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Konsultacja proktologiczna</a>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">300 zł</span>
                     </div>
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Konsultacja proktologiczna z badaniem per rectum</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">350 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">350 zł</span>
                     </div>
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Zaopatrzenie drobnych ran i zmian okolicy odbytu</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">od 500 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 500 zł</span>
                     </div>
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Usunięcie polipa</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">od 500 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 500 zł</span>
                     </div>
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Operacja przetoki odbytu</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">od 3000 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 3000 zł</span>
                     </div>
                   </div>
                 </div>
@@ -439,17 +437,17 @@ const MichalSzczubkowskiPage = () => {
                   <div className="w-full h-0.5 bg-teal-600 mb-4 sm:mb-6"></div>
                   
                   <div className="space-y-3 sm:space-y-4">
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Poradnictwo żywieniowe w chorobach przewlekłych</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">300 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">300 zł</span>
                     </div>
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Konsultacja przed terapia infuzyjną</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">od 400 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 400 zł</span>
                     </div>
-                    <div className="flex justify-between items-start border-b border-teal-300 pb-3">
+                    <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Konsultacja lekarska online</span>
-                      <span className="text-gray-900 font-semibold text-base sm:text-lg md:text-xl ml-4">250 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">250 zł</span>
                     </div>
                   </div>
                 </div>
@@ -460,7 +458,7 @@ const MichalSzczubkowskiPage = () => {
           {/* Section 6: Experience and Qualifications */}
           <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="experience-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
-              <div className="text-center mb-8 sm:mb-12">
+              <div className="text-left mb-8 sm:mb-12">
                 <h2 
                   id="experience-heading"
                   className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3"
@@ -489,12 +487,7 @@ const MichalSzczubkowskiPage = () => {
                         <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
                           Uniwersytet Medyczny w Lublinie
                         </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2 md:gap-3">
-                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch min-h-[20px] md:min-h-[48px]"></div>
-                      <div className="flex-1">
-                        <p className="text-gray-700 text-sm sm:text-base md:text-lg">
+                        <p className="text-gray-700 text-sm sm:text-base md:text-lg mt-1">
                           Wydział Lekarski
                         </p>
                       </div>
@@ -503,15 +496,10 @@ const MichalSzczubkowskiPage = () => {
                       <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch min-h-[20px] md:min-h-[48px]"></div>
                       <div className="flex-1">
                         <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
-                          Specjalizacja z Chirurgii Ogólnej
+                          Koloproktologia praktyczna
                         </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2 md:gap-3">
-                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch min-h-[20px] md:min-h-[48px]"></div>
-                      <div className="flex-1">
-                        <p className="text-gray-700 text-sm sm:text-base md:text-lg">
-                          Warszawa
+                        <p className="text-gray-700 text-sm sm:text-base md:text-lg mt-1">
+                          Uniwersytet Jagielloński Collegium Medicum
                         </p>
                       </div>
                     </div>
@@ -519,15 +507,7 @@ const MichalSzczubkowskiPage = () => {
                       <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch min-h-[20px] md:min-h-[48px]"></div>
                       <div className="flex-1">
                         <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
-                          Specjalizacja z Proktologii
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2 md:gap-3">
-                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch min-h-[20px] md:min-h-[48px]"></div>
-                      <div className="flex-1">
-                        <p className="text-gray-700 text-sm sm:text-base md:text-lg">
-                          Uniwersytet Jagielloński Collegium Medicum
+                          Specjalizacja z Chirurgii Ogólnej
                         </p>
                       </div>
                     </div>
@@ -746,16 +726,11 @@ const MichalSzczubkowskiPage = () => {
                 >
                   <span className="block">Umów wizytę u doświadczonego</span>
                   <span className="block">
-                    Chirurga, Proktologa{" "}
-                    <span className="inline-block">
-                      <span className="border-b-[3.5px] border-white inline-block pb-3.5">
-                        <span className="font-normal">w</span> <span className="font-normal">S</span>
-                      </span><span className="font-normal">karżysku-Kamiennej</span>
-                    </span>
+                    Chirurga, Proktologa&nbsp;w Skarżysku-Kamiennej
                   </span>
                 </h2>
                 <p className="text-white text-base sm:text-lg md:text-xl mb-8 sm:mb-10">
-                  Profesjonalna opieka chirurgiczna i proktologiczna<br className="hidden sm:inline" /> na najwyższym poziomie
+                  Profesjonalna opieka chirurgiczna&nbsp;i proktologiczna<br className="hidden sm:inline" /> na najwyższym poziomie
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
