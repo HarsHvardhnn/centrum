@@ -183,8 +183,7 @@ const MichalSzczubkowskiPage = () => {
                     <span className="border-b-[3.5px] border-teal-700 inline-block pb-3.5">
                       <span className="font-normal">w</span> <span className="font-normal">S</span>
                     </span><span className="font-normal">karżysku-Kamiennej</span>
-                  </span>{" "}
-                  oraz z przychodnią Centrum Medyczne 7.
+                  </span>.
                 </p>
 
                 {/* Second Paragraph */}

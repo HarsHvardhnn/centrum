@@ -244,7 +244,7 @@ const ProctologyPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12" role="main">
           
           {/* Section 2: What is Proctology */}
-          <section className="bg-[#F0F9F9] pt-0 pb-8 sm:pb-12 md:pb-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="what-is-proctology-heading">
+          <section className="bg-[#F0F9F9] pt-8 sm:pt-0 pb-8 sm:pb-12 md:pb-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="what-is-proctology-heading">
             <div className="max-w-5xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <h2 
                 id="what-is-proctology-heading"
