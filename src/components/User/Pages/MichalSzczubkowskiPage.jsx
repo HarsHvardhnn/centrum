@@ -1,7 +1,7 @@
 import React from "react";
 import MetaTags from '../../UtilComponents/MetaTags';
 import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaPhone } from "react-icons/fa";
-import { IoLocationOutline } from "react-icons/io5";
+import { IoLocationOutline, IoLocation } from "react-icons/io5";
 import { Activity, Stethoscope, HeartPulse, GraduationCap, Briefcase, Star, ClipboardList, MessageCircle, FileText } from "lucide-react";
 import starIcon from '../../../assets/star.png';
 
@@ -85,7 +85,7 @@ const MichalSzczubkowskiPage = () => {
 
                 {/* Location Text */}
                 <div className="flex items-center gap-2 mb-6 sm:mb-8 px-4 md:px-0 justify-center lg:justify-start">
-                  <IoLocationOutline className="text-teal-600 w-5 h-5 flex-shrink-0" />
+                  <IoLocation className="text-teal-600 w-5 h-5 flex-shrink-0" />
                   <span className="text-gray-800 text-base sm:text-lg">
                     Przyjmuję pacjentów w Skarżysku-Kamiennej
                   </span>
@@ -471,9 +471,7 @@ const MichalSzczubkowskiPage = () => {
                 {/* Education Section */}
                 <div className="md:bg-white md:rounded-lg md:shadow-md p-6 sm:p-8">
                   <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                    <div className="bg-teal-600 rounded-full p-2 flex-shrink-0">
-                      <GraduationCap className="w-5 h-5 md:w-6 md:h-6 text-white" />
-                    </div>
+                    <GraduationCap className="w-6 h-6 md:w-7 md:h-7 text-teal-600 flex-shrink-0" />
                     <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                       Wykształcenie
                     </h3>
@@ -517,9 +515,7 @@ const MichalSzczubkowskiPage = () => {
                 {/* Professional Experience Section */}
                 <div className="md:bg-white md:rounded-lg md:shadow-md p-6 sm:p-8">
                   <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                    <div className="bg-teal-600 rounded-full p-2 flex-shrink-0">
-                      <Briefcase className="w-5 h-5 md:w-6 md:h-6 text-white" />
-                    </div>
+                    <Briefcase className="w-6 h-6 md:w-7 md:h-7 text-teal-600 flex-shrink-0" />
                     <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                       Doświadczenie zawodowe
                     </h3>
@@ -571,9 +567,7 @@ const MichalSzczubkowskiPage = () => {
                 {/* Courses and Certificates Section */}
                 <div className="md:bg-white md:rounded-lg md:shadow-md p-6 sm:p-8">
                   <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                    <div className="bg-teal-600 rounded-full p-2 flex-shrink-0">
-                      <Star className="w-5 h-5 md:w-6 md:h-6 text-white" />
-                    </div>
+                    <Star className="w-6 h-6 md:w-7 md:h-7 text-teal-600 flex-shrink-0" />
                     <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                       Kursy i certyfikaty
                     </h3>
