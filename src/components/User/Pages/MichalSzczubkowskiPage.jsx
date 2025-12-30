@@ -496,50 +496,43 @@ const MichalSzczubkowskiPage = () => {
                   </div>
                   <div className="w-full h-0.5 bg-teal-600 mb-4 sm:mb-6"></div>
                   
-                  <div className="space-y-2 md:space-y-4">
+                  <div className="space-y-4 md:space-y-6">
+                    {/* Entry 1: Specjalista Chirurgii Ogólnej - Szpital Powiatowy */}
                     <div className="flex items-start gap-2 md:gap-3">
-                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch min-h-[20px] md:min-h-[48px]"></div>
-                      <div className="flex-1">
+                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch"></div>
+                      <div className="flex-1 space-y-1">
                         <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
                           Specjalista Chirurgii Ogólnej
                         </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2 md:gap-3">
-                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch min-h-[20px] md:min-h-[48px]"></div>
-                      <div className="flex-1">
                         <p className="text-gray-700 text-sm sm:text-base md:text-lg">
                           Szpital Powiatowy im. Marii Skłodowskiej-Curie w Skarżysku-Kamiennej
                         </p>
                       </div>
                     </div>
+                    
+                    {/* Entry 2: Specjalista Chirurgii Ogólnej - Centrum Medyczne 7 */}
                     <div className="flex items-start gap-2 md:gap-3">
-                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch min-h-[20px] md:min-h-[48px]"></div>
-                      <div className="flex-1">
+                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch"></div>
+                      <div className="flex-1 space-y-1">
                         <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
+                          Specjalista Chirurgii Ogólnej
+                        </p>
+                        <p className="text-gray-700 text-sm sm:text-base md:text-lg">
                           Centrum Medyczne 7
                         </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2 md:gap-3">
-                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch min-h-[20px] md:min-h-[48px]"></div>
-                      <div className="flex-1">
                         <p className="text-gray-700 text-sm sm:text-base md:text-lg">
                           Skarżysko-Kamienna
                         </p>
                       </div>
                     </div>
+                    
+                    {/* Entry 3: Specjalista Chirurgii Ogólnej - Szpital św. Leona */}
                     <div className="flex items-start gap-2 md:gap-3">
-                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch min-h-[20px] md:min-h-[48px]"></div>
-                      <div className="flex-1">
+                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch"></div>
+                      <div className="flex-1 space-y-1">
                         <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
                           Specjalista Chirurgii Ogólnej
                         </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2 md:gap-3">
-                      <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch min-h-[20px] md:min-h-[48px]"></div>
-                      <div className="flex-1">
                         <p className="text-gray-700 text-sm sm:text-base md:text-lg">
                           Szpital św. Leona w Opatowie
                         </p>
@@ -698,38 +691,46 @@ const MichalSzczubkowskiPage = () => {
           {/* Container for Sections 8 and 9 - Mobile order swap */}
           <div className="flex flex-col md:contents">
             {/* Section 9: Call to Action Banner */}
-            <section className="bg-teal-50 md:bg-teal-600 py-12 sm:py-16 md:py-20 px-4 sm:px-6 order-1 md:order-2" aria-labelledby="cta-heading">
+            <section className="bg-teal-600 py-12 sm:py-16 md:py-20 w-screen relative left-1/2 -translate-x-1/2 px-4 sm:px-6 order-1 md:order-2" aria-labelledby="cta-heading">
               <div className="max-w-4xl mx-auto text-center">
                 <h2 
                   id="cta-heading"
-                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 md:text-white mb-4 leading-tight"
+                  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight"
                 >
                   <span className="block">Umów wizytę u doświadczonego</span>
-                  <span className="block">Chirurga, Proktologa w Skarżysku-Kamiennej</span>
+                  <span className="block">
+                    Chirurga, Proktologa{" "}
+                    <span className="inline-block">
+                      <span className="border-b-[3.5px] border-white inline-block pb-3.5">
+                        <span className="font-normal">w</span> <span className="font-normal">S</span>
+                      </span><span className="font-normal">karżysku-Kamiennej</span>
+                    </span>
+                  </span>
                 </h2>
-                <p className="text-gray-700 md:text-white text-base sm:text-lg md:text-xl mb-8 sm:mb-10">
+                <p className="text-white text-base sm:text-lg md:text-xl mb-8 sm:mb-10">
                   Profesjonalna opieka chirurgiczna i proktologiczna<br className="hidden sm:inline" /> na najwyższym poziomie
                 </p>
                 
-                <div className="flex flex-col gap-4 justify-center items-center">
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                   <button
                     onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
-                    className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg w-full sm:w-auto"
+                    className="bg-white hover:bg-gray-50 text-gray-900 font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg w-full sm:w-auto"
                   >
                     Zarezerwuj termin
                   </button>
                   <button
                     onClick={() => window.location.href = 'tel:+48797127487'}
-                    className="bg-white border-2 border-teal-600 text-teal-600 font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto"
+                    className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-8 py-3 sm:px-10 sm:py-4 rounded-lg text-base md:text-lg transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto border-2 border-white"
                   >
-                    <FaPhone className="text-teal-600 w-5 h-5 scale-x-[-1]" />
-                    Zadzwoń: +48 797 127 487
+                    <FaPhone className="text-white w-5 h-5 scale-x-[-1]" />
+                    Zadzwoń
                   </button>
                 </div>
               </div>
             </section>
 
-            {/* Section 8: Other Specialists */}
+            {/* Section 8: Other Specialists - Commented out */}
+            {/*
             <section className="mb-12 sm:mb-16 md:mb-20 bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2 order-2 md:order-1" aria-labelledby="other-specialists-heading">
             <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-8 sm:mb-12">
@@ -742,11 +743,9 @@ const MichalSzczubkowskiPage = () => {
               </div>
 
               <div className="flex flex-col md:grid md:grid-cols-2 gap-6 sm:gap-8">
-                {/* Anna Grabowska Card */}
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
                   <div className="p-4 sm:p-6 md:p-8">
                     <div className="flex flex-row md:flex-col items-center md:items-center md:text-center gap-4 md:gap-0 md:mb-6">
-                      {/* Mobile: Circular avatar on left, Desktop: Square avatar centered */}
                       <div className="w-20 h-20 md:w-48 md:h-48 lg:w-56 lg:h-56 rounded-full md:rounded-lg overflow-hidden bg-primary-lightest flex items-center justify-center flex-shrink-0 md:mb-4">
                         <img
                           src="https://res.cloudinary.com/dca740eqo/image/upload/v1756246783/hospital_app/images/fe0qqfuyacegrbhelktu.jpg"
@@ -758,7 +757,6 @@ const MichalSzczubkowskiPage = () => {
                           }}
                         />
                       </div>
-                      {/* Mobile: Text in center, Desktop: Text centered */}
                       <div className="flex-1 md:flex-none md:w-full">
                         <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 md:mb-2 text-left md:text-center">
                           Lek. Anna Grabowska
@@ -767,7 +765,6 @@ const MichalSzczubkowskiPage = () => {
                           Neurolog dziecięcy
                         </p>
                       </div>
-                      {/* Mobile: Button on right, Desktop: Full width button */}
                       <a
                         href="/lekarze/anna-grabowska"
                         className="bg-white text-teal-600 hover:bg-teal-50 font-semibold px-4 py-2 md:px-6 md:py-3 rounded-lg text-sm md:text-base lg:text-lg transition-colors shadow-sm hover:shadow-md md:w-full md:text-center md:block flex-shrink-0"
@@ -778,11 +775,9 @@ const MichalSzczubkowskiPage = () => {
                   </div>
                 </div>
 
-                {/* Michał Szczubkowski Card */}
                 <div className="bg-white rounded-lg shadow-md overflow-hidden">
                   <div className="p-4 sm:p-6 md:p-8">
                     <div className="flex flex-row md:flex-col items-center md:items-center md:text-center gap-4 md:gap-0 md:mb-6">
-                      {/* Mobile: Circular avatar on left, Desktop: Square avatar centered */}
                       <div className="w-20 h-20 md:w-48 md:h-48 lg:w-56 lg:h-56 rounded-full md:rounded-lg overflow-hidden bg-primary-lightest flex items-center justify-center flex-shrink-0 md:mb-4">
                         <img
                           src="/assets/static-assets/doctor-image.png"
@@ -791,7 +786,6 @@ const MichalSzczubkowskiPage = () => {
                           loading="lazy"
                         />
                       </div>
-                      {/* Mobile: Text in center, Desktop: Text centered */}
                       <div className="flex-1 md:flex-none md:w-full">
                         <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 md:mb-2 text-left md:text-center">
                           Lek. Michał Szczubkowski
@@ -800,7 +794,6 @@ const MichalSzczubkowskiPage = () => {
                           Chirurg, Proktolog
                         </p>
                       </div>
-                      {/* Mobile: Button on right, Desktop: Full width button */}
                       <a
                         href="/lekarze/michal-szczubkowski"
                         className="bg-white text-teal-600 hover:bg-teal-50 font-semibold px-4 py-2 md:px-6 md:py-3 rounded-lg text-sm md:text-base lg:text-lg transition-colors shadow-sm hover:shadow-md md:w-full md:text-center md:block flex-shrink-0"
@@ -813,6 +806,7 @@ const MichalSzczubkowskiPage = () => {
               </div>
             </div>
           </section>
+            */}
           </div>
 
         </div>

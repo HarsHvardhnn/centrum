@@ -714,7 +714,7 @@ const ProctologyPage = () => {
                 {/* FAQ Item 3 */}
                 <div className="bg-gray-100 rounded-lg p-4 sm:p-6 md:p-8">
                   <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
-                    Ile kosztuje wizyta u proktologa w Skarżysku-Kamiennej?
+                    Ile kosztuje wizyta u proktologa<br />&nbsp;w Skarżysku-Kamiennej?
                   </h3>
                   <p className="text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed">
                     Cena standardowej konsultacji proktologicznej w naszej placówce to 300 zł. Koszt może się różnić w zależności od zakresu wizyty i ewentualnych dodatkowych zaleceń.
