@@ -542,7 +542,7 @@ const PediatricNeurologyPage = () => {
           </section>
 
           {/* Section 7: Contact/CTA */}
-          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="contact-heading">
+          <section className="bg-[#F7F9FA] py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="contact-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -587,7 +587,7 @@ const PediatricNeurologyPage = () => {
           </section>
 
           {/* Section 8: Trusted by Parents */}
-          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="trust-heading">
+          <section className="bg-[#F0F7F7] py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="trust-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
