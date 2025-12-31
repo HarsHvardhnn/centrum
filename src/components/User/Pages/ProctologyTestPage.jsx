@@ -194,9 +194,9 @@ const ProctologyTestPage = () => {
             </p>
 
             {/* Symptoms Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
               {/* Left Column */}
-              <div className="bg-gray-100 rounded-t-lg md:rounded-lg p-6">
+              <div className="bg-gray-100 rounded-lg p-6">
                 <ul className="space-y-4" role="list">
                   <li className="flex items-start gap-3">
                     <span className="flex-shrink-0 w-2 h-2 bg-teal-600 rounded-full mt-2"></span>
@@ -214,7 +214,7 @@ const ProctologyTestPage = () => {
               </div>
 
               {/* Right Column */}
-              <div className="bg-gray-100 rounded-b-lg md:rounded-lg p-6">
+              <div className="bg-gray-100 rounded-lg p-6">
                 <ul className="space-y-4" role="list">
                   <li className="flex items-start gap-3">
                     <span className="flex-shrink-0 w-2 h-2 bg-teal-600 rounded-full mt-2"></span>
@@ -249,7 +249,7 @@ const ProctologyTestPage = () => {
                   id="visit-appearance-heading"
                   className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3"
                 >
-                  Jak wygląda wizyta u proktologa?
+                  Jak wygląda wizyta <span className="whitespace-nowrap">u proktologa?</span>
                 </h2>
                 <div className="w-24 h-1 bg-teal-600 mx-auto"></div>
               </div>
