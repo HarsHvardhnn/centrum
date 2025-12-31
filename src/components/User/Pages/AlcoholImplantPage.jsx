@@ -603,9 +603,9 @@ const AlcoholImplantPage = () => {
                   </div>
 
                   {/* Left Side - Image and Button (Second on mobile, first on desktop) */}
-                  <div className="flex-shrink-0 flex flex-col items-center order-2 md:order-1">
+                  <div className="flex-shrink-0 flex flex-col items-center w-full md:w-auto order-2 md:order-1">
                     {/* Doctor Image with White Padding and Shadow */}
-                    <div className="bg-white p-2 rounded-full shadow-md mb-0 md:mb-6">
+                    <div className="bg-white p-2 rounded-full shadow-md mb-0 md:mb-6 mx-auto">
                       <img
                         src="/assets/static-assets/mikel_doctor.png"
                         alt="lek. Michał Szczubkowski - Chirurg"

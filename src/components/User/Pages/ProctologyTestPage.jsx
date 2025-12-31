@@ -161,11 +161,12 @@ const ProctologyTestPage = () => {
 
               {/* Right Side - Image */}
               <div className="flex-1 w-full lg:w-1/2 flex justify-center lg:justify-end items-center">
-                <div className="relative w-full max-w-lg">
+                <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-4 md:px-0">
                   <img
                     src="/assets/static-assets/section_1_t.png"
                     alt="Konsultacja proktologiczna - Centrum Medyczne 7"
                     className="w-full h-auto object-contain rounded-t-2xl"
+                    loading="lazy"
                   />
                 </div>
               </div>

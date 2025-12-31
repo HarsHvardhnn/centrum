@@ -147,7 +147,7 @@ const SkinLesionRemovalPage = () => {
                   </span>
                   <span className="block text-gray-900">z oceną</span>
                   <span className="block text-gray-900">histopatologiczną,</span>
-                  <span className="block text-gray-900">Skarżysko-Kamienna</span>
+                  <span className="block text-gray-900 font-normal">Skarżysko-Kamienna</span>
                 </h2>
 
                 {/* Description Paragraphs */}
