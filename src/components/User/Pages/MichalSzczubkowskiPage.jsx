@@ -139,18 +139,18 @@ const MichalSzczubkowskiPage = () => {
                   href="https://www.znanylekarz.pl/michal-szczubkowski-2/chirurg-proktolog/skarzysko-kamienna#profile-reviews"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 sm:gap-3 px-4 md:px-0 justify-center lg:justify-start mt-3"
+                  className="flex items-center gap-1.5 sm:gap-2 px-4 md:px-0 justify-center lg:justify-start mt-2 opacity-80 hover:opacity-100 transition-opacity"
                 >
                   {/* ZnanyLekarz Logo - using star.png */}
-                  <div className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6">
-                    <img src={starIcon} alt="ZnanyLekarz" className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <div className="flex items-center justify-center w-3.5 h-3.5 sm:w-4 sm:h-4">
+                    <img src={starIcon} alt="ZnanyLekarz" className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5">
                     {[...Array(5)].map((_, i) => (
-                      <FaStar key={i} className="text-yellow-400 text-base fill-yellow-400" />
+                      <FaStar key={i} className="text-yellow-400 text-xs sm:text-sm fill-yellow-400" />
                     ))}
                   </div>
-                  <span className="text-teal-600 font-medium text-base">
+                  <span className="text-teal-600 font-medium text-sm sm:text-base">
                     Zobacz opinie w ZnanyLekarz
                   </span>
                 </a>
@@ -235,8 +235,8 @@ const MichalSzczubkowskiPage = () => {
 
           {/* Section 4: Specializations */}
           <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="specializations-heading">
-            <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
-              <div className="text-center mb-8 sm:mb-12">
+            <div className="max-w-7xl mx-auto pl-4 sm:pl-6 md:pl-8 lg:pl-10 xl:pl-12 2xl:pl-16 pr-4 sm:pr-6 md:pr-12 lg:pr-16 xl:pr-20 2xl:pr-24">
+              <div className="text-left mb-8 sm:mb-12">
                 <h2 
                   id="specializations-heading"
                   className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-3"
@@ -249,28 +249,34 @@ const MichalSzczubkowskiPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 md:gap-12">
                 {/* Card 1: Chirurgia ogólna */}
                 <div className="bg-white rounded-lg p-6 md:p-8 lg:p-10 shadow-md w-full">
-                  <div className="flex flex-row md:flex-col items-start md:items-center gap-4 md:gap-0 mb-4 md:mb-4">
-                    <div className="bg-teal-100 rounded-full p-3 md:bg-teal-600 md:p-4 flex-shrink-0 md:mb-4 md:mx-auto">
-                      <Activity className="w-6 h-6 md:w-10 md:h-10 text-teal-600 md:text-white" />
+                  <div className="flex flex-col items-start gap-4 mb-4">
+                    <div className="bg-teal-600 rounded-full p-4 flex-shrink-0">
+                      <Activity className="w-10 h-10 text-white" />
                     </div>
-                    <div className="flex-1 md:flex-none md:w-full md:text-center">
+                    <div className="w-full">
                       <a 
                         href="/proktolog"
-                        className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-0 md:mb-4 hover:text-teal-600 transition-colors block"
+                        className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-4 hover:text-teal-600 transition-colors block text-left"
                       >
                         Chirurgia ogólna
                       </a>
                     </div>
                   </div>
-                  <div className="mb-6">
-                    <p className="text-left md:text-center text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">
-                      Kompleksowa diagnostyka i leczenie chirurgiczne schorzeń jamy brzusznej, w tym przepuklin, kamicy żółciowej i chorób tarczycy. Specjalizuję się w technikach laparoskopowych, które zapewniają szybszy powrót do zdrowia.
+                  <div className="mb-6 space-y-3">
+                    <p className="text-left text-gray-800 text-xs sm:text-sm md:text-base leading-relaxed">
+                      Kompleksowa diagnostyka i leczenie schorzeń wymagających interwencji chirurgicznej.
+                    </p>
+                    <p className="text-left text-gray-800 text-xs sm:text-sm md:text-base leading-relaxed">
+                      Leczenie przepuklin, kamicy żółciowej, chorób tarczycy oraz innych schorzeń jamy brzusznej.
+                    </p>
+                    <p className="text-left text-gray-800 text-xs sm:text-sm md:text-base leading-relaxed">
+                      Wykonuję zabiegi metodami klasycznymi oraz małoinwazyjnymi, dostosowując technikę do indywidualnych potrzeb pacjenta.
                     </p>
                   </div>
-                  <div className="text-center md:text-center overflow-hidden">
+                  <div className="text-left">
                     <a 
                       href="/proktolog"
-                      className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700 inline-block whitespace-nowrap"
+                      className="text-teal-600 underline font-medium text-xs sm:text-sm md:text-base hover:text-teal-700 whitespace-nowrap"
                     >
                       Konsultacja chirurgiczna- szczegóły
                     </a>
@@ -279,28 +285,34 @@ const MichalSzczubkowskiPage = () => {
 
                 {/* Card 2: Proktologia */}
                 <div className="bg-white rounded-lg p-6 md:p-8 lg:p-10 shadow-md w-full">
-                  <div className="flex flex-row md:flex-col items-start md:items-center gap-4 md:gap-0 mb-4 md:mb-4">
-                    <div className="bg-teal-100 rounded-full p-3 md:bg-teal-600 md:p-4 flex-shrink-0 md:mb-4 md:mx-auto">
-                      <Stethoscope className="w-6 h-6 md:w-10 md:h-10 text-teal-600 md:text-white" />
+                  <div className="flex flex-col items-start gap-4 mb-4">
+                    <div className="bg-teal-600 rounded-full p-4 flex-shrink-0">
+                      <Stethoscope className="w-10 h-10 text-white" />
                     </div>
-                    <div className="flex-1 md:flex-none md:w-full md:text-center">
+                    <div className="w-full">
                       <a 
                         href="/proktolog"
-                        className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-0 md:mb-4 hover:text-teal-600 transition-colors block"
+                        className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-4 hover:text-teal-600 transition-colors block text-left"
                       >
                         Proktologia
                       </a>
                     </div>
                   </div>
-                  <div className="mb-6">
-                    <p className="text-left md:text-center text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">
-                      Leczenie schorzeń odbytu i jelita grubego, w tym hemoroidów, szczelin odbytu, przetok i polipów. Oferuję nowoczesne, małoinwazyjne metody leczenia, które minimalizują dyskomfort i skracają rekonwalescencję.
+                  <div className="mb-6 space-y-3">
+                    <p className="text-left text-gray-800 text-xs sm:text-sm md:text-base leading-relaxed">
+                      Specjalistyczne leczenie chorób <span className="whitespace-nowrap">odbytu i</span> <span className="whitespace-nowrap">odbytnicy w</span> warunkach zapewniających pełną <span className="whitespace-nowrap">dyskrecję i</span> komfort.
+                    </p>
+                    <p className="text-left text-gray-800 text-xs sm:text-sm md:text-base leading-relaxed">
+                      Leczenie hemoroidów, szczelin odbytu, przetok, polipów oraz innych schorzeń obszaru anorektum.
+                    </p>
+                    <p className="text-left text-gray-800 text-xs sm:text-sm md:text-base leading-relaxed">
+                      Stosuję nowoczesne metody <span className="whitespace-nowrap">diagnostyczne i</span> <span className="whitespace-nowrap">terapeutyczne, w</span> tym zabiegi małoinwazyjne.
                     </p>
                   </div>
-                  <div className="text-center md:text-center overflow-hidden">
+                  <div className="text-left">
                     <a 
                       href="/konsultacja-proktologiczna"
-                      className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700 inline-block whitespace-nowrap"
+                      className="text-teal-600 underline font-medium text-xs sm:text-sm md:text-base hover:text-teal-700 whitespace-nowrap"
                     >
                       Konsultacja proktologiczna- szczegóły
                     </a>
@@ -309,28 +321,34 @@ const MichalSzczubkowskiPage = () => {
 
                 {/* Card 3: Chirurgia naczyniowa */}
                 <div className="bg-white rounded-lg p-6 md:p-8 lg:p-10 shadow-md w-full">
-                  <div className="flex flex-row md:flex-col items-start md:items-center gap-4 md:gap-0 mb-4 md:mb-4">
-                    <div className="bg-teal-100 rounded-full p-3 md:bg-teal-600 md:p-4 flex-shrink-0 md:mb-4 md:mx-auto">
-                      <HeartPulse className="w-6 h-6 md:w-10 md:h-10 text-teal-600 md:text-white" />
+                  <div className="flex flex-col items-start gap-4 mb-4">
+                    <div className="bg-teal-600 rounded-full p-4 flex-shrink-0">
+                      <HeartPulse className="w-10 h-10 text-white" />
                     </div>
-                    <div className="flex-1 md:flex-none md:w-full md:text-center">
+                    <div className="w-full">
                       <a 
                         href="/proktolog"
-                        className="text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-0 md:mb-4 hover:text-teal-600 transition-colors block"
+                        className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-4 hover:text-teal-600 transition-colors block text-left"
                       >
                         Chirurgia naczyniowa
                       </a>
                     </div>
                   </div>
-                  <div className="mb-6">
-                    <p className="text-left md:text-center text-gray-800 text-sm sm:text-base md:text-lg leading-relaxed">
-                      Diagnostyka i leczenie chorób naczyń krwionośnych, w tym żylaków kończyn dolnych, niewydolności żylnej i chorób tętnic. Stosuję zarówno metody klasyczne, jak i nowoczesne techniki endowaskularne.
+                  <div className="mb-6 space-y-3">
+                    <p className="text-left text-gray-800 text-xs sm:text-sm md:text-base leading-relaxed">
+                      Diagnostyka i leczenie chorób naczyń krwionośnych, w tym żylaków kończyn dolnych.
+                    </p>
+                    <p className="text-left text-gray-800 text-xs sm:text-sm md:text-base leading-relaxed">
+                      Leczenie niewydolności żylnej, zakrzepicy, zmian miażdżycowych oraz innych schorzeń układu naczyniowego.
+                    </p>
+                    <p className="text-left text-gray-800 text-xs sm:text-sm md:text-base leading-relaxed">
+                      Oferuję zarówno metody klasyczne, jak i nowoczesne techniki endowaskularne.
                     </p>
                   </div>
-                  <div className="text-center md:text-center overflow-hidden">
+                  <div className="text-left">
                     <a 
                       href="/proktolog"
-                      className="text-teal-600 underline font-medium text-sm sm:text-base md:text-lg hover:text-teal-700 inline-block whitespace-nowrap"
+                      className="text-teal-600 underline font-medium text-xs sm:text-sm md:text-base hover:text-teal-700 whitespace-nowrap"
                     >
                       Konsultacja chirurgiczna- szczegóły
                     </a>
@@ -501,7 +519,7 @@ const MichalSzczubkowskiPage = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-2 md:gap-3">
+                    <div className="flex items-center gap-2 md:gap-3">
                       <div className="w-0.5 md:w-1 h-auto bg-teal-600 flex-shrink-0 self-stretch min-h-[20px] md:min-h-[48px]"></div>
                       <div className="flex-1">
                         <p className="text-gray-800 text-sm sm:text-base md:text-lg lg:text-xl font-semibold">
