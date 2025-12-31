@@ -106,7 +106,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
             <span className="text-teal-600 block">Prywatna przychodnia</span>
             <span className="text-teal-600 block">specjalistyczna</span>
             <span className="text-gray-700 text-xl xs:text-2xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl block">
-              <span className="border-b-[3.5px] border-teal-600 inline-block pb-3.5">
+              <span className="border-b-[3.5px] border-teal-600 inline-block pb-3.5 px-1.5 md:px-0">
                 <span className="font-normal">w</span> <span className="font-normal">S</span>
               </span><span className="font-normal">karżysku-Kamiennej</span>
             </span>
