@@ -637,7 +637,7 @@ const AlcoholImplantPage = () => {
           </section>
 
 {/* Section 12: Location/Service Area */}
-          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="location-heading">
+          <section className="bg-primary-lightest pt-8 sm:pt-12 md:pt-16 pb-1 sm:pb-12 md:pb-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="location-heading">
             <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
@@ -675,7 +675,7 @@ const AlcoholImplantPage = () => {
           </section>
 
           {/* Final Section: Summary for Patients */}
-          <section className="bg-primary-lightest py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="summary-heading">
+          <section className="bg-primary-lightest pt-1 sm:pt-12 md:pt-16 pb-8 sm:pb-12 md:pb-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="summary-heading">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-6 sm:mb-8">
                 <h2 
