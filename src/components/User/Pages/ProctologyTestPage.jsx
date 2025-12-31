@@ -84,25 +84,25 @@ const ProctologyTestPage = () => {
                 </div>
 
                 {/* Main Heading */}
-                <h2 id="hero-heading" className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold leading-tight mb-6 px-4 md:px-0">
+                <h1 id="hero-heading" className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold leading-tight mb-6 px-4 md:px-0">
                   <span className="block text-teal-600">Konsultacja</span>
                   <span className="block text-teal-600">proktologiczna –</span>
                   <span className="block text-black font-bold">prywatnie,</span>
                   <span className="block text-black font-bold">bez skierowania,</span>
                   <span className="block text-black font-normal text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl">świętokrzyskie</span>
-                </h2>
+                </h1>
 
-                {/* Description Paragraphs */}
+                {/* Description H2 */}
                 <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed px-4 md:px-0">
-                  <p>
+                  <h2>
                     Zmagasz się z bólem, swędzeniem lub pieczeniem w okolicy odbytu? A może zauważyłeś krew podczas wypróżniania? <br />Nie zwlekaj – umów się na prywatną konsultację proktologiczną <br />w Centrum Medycznym 7 w Skarżysku-Kamiennej.
-                  </p>
-                  <p>
+                  </h2>
+                  <h2>
                     Proktolog lek. Michał Szczubkowski przeprowadzi dokładny wywiad, badanie oraz zaproponuje indywidualny plan leczenia – <br />w atmosferze pełnej dyskrecji i zrozumienia.
-                  </p>
-                  <p>
+                  </h2>
+                  <h2>
                     Konsultacja odbywa się zgodnie z aktualnymi standardami medycznymi oraz z zachowaniem pełnej poufności. <br />Nie wymagamy skierowania – przyjmujemy prywatnie.
-                  </p>
+                  </h2>
                 </div>
 
                 {/* Price Box */}

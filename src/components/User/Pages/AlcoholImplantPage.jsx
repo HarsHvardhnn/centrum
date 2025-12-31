@@ -81,24 +81,24 @@ const AlcoholImplantPage = () => {
                 </div>
 
                 {/* Main Heading */}
-                <h2 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6 px-4 md:px-0">
+                <h1 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6 px-4 md:px-0">
                   <span className="block text-teal-600">Wszywka alkoholowa –</span>
                   <span className="block text-gray-900 font-bold">chirurgiczna</span>
                   <span className="block text-gray-900 font-bold">implantacja disulfiramu</span>
                   <span className="block text-gray-900 font-bold">(Esperal)</span>
-                </h2>
+                </h1>
 
-                {/* Description Paragraphs */}
+                {/* Description H2 */}
                 <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed px-4 md:px-0">
-                  <p>
+                  <h2>
                     Chirurgiczna implantacja disulfiramu (Esperal) wykonywana przez lekarza, po kwalifikacji medycznej.
-                  </p>
-                  <p>
+                  </h2>
+                  <h2>
                     Leczenie uzależnienia od alkoholu jest procesem złożonym, wymagającym świadomego zaangażowania pacjenta oraz wsparcia medycznego i terapeutycznego. Jedną z metod wspomagających leczenie alkoholizmu oraz utrzymanie abstynencji jest wszywka alkoholowa.
-                  </p>
-                  <p>
+                  </h2>
+                  <h2>
                     Zabieg wykonywany jest przez doświadczonego chirurga, w warunkach ambulatoryjnych, po wcześniejszej kwalifikacji medycznej. Przyjmujemy pacjentów prywatnie, bez skierowania.
-                  </p>
+                  </h2>
                 </div>
 
                 {/* Price Box */}

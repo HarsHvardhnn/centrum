@@ -134,27 +134,27 @@ const PediatricNeurologyPage = () => {
                 {/* Main Heading - Full width on mobile */}
                 <div className="w-[100vw] relative left-1/2 -translate-x-1/2 md:w-auto md:left-0 md:translate-x-0 mb-6">
                   <div className="px-4 md:px-0">
-                    <h2 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight">
+                    <h1 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight">
                       <span className="block text-teal-600">Konsultacja</span>
                       <span className="block text-teal-600">neurologiczna dla</span>
                       <span className="block text-teal-600">dzieci i młodzieży</span>
                       <span className="block text-gray-900">- prywatnie,</span>
                       <span className="block text-gray-900">bez skierowania</span>
-                    </h2>
+                    </h1>
                   </div>
                 </div>
 
-                {/* Description Paragraphs */}
+                {/* Description H2 */}
                 <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed px-4 md:px-0">
-                  <p>
+                  <h2>
                     Zauważasz u dziecka niepokojące objawy, takie jak tiki nerwowe, bóle głowy, drżenia, napady, problemy ze snem lub opóźnienie rozwoju? Nie zwlekaj – konsultacja neurologiczna dzieci pozwala na rzetelną ocenę stanu zdrowia i dalsze pokierowanie postępowaniem.
-                  </p>
-                  <p>
+                  </h2>
+                  <h2>
                     W Centrum Medycznym 7 w Skarżysku-Kamiennej przyjmujemy dzieci i młodzież w ramach prywatnych konsultacji neurologicznych – bez skierowania. Z konsultacji korzystają również pacjenci z Kielc, Radomia, Starachowic i całego regionu.
-                  </p>
-                  <p>
+                  </h2>
+                  <h2>
                     Neurolog dziecięcy lek. Anna Grabowska zapewnia dokładny wywiad, badanie neurologiczne oraz jasne omówienie dalszych kroków – w atmosferze bezpieczeństwa i zrozumienia dla dziecka i rodziców.
-                  </p>
+                  </h2>
                 </div>
 
                 {/* Price Box */}

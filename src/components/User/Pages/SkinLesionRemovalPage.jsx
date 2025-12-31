@@ -139,7 +139,7 @@ const SkinLesionRemovalPage = () => {
                 </div>
 
                 {/* Main Heading */}
-                <h2 id="hero-heading" className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6 px-4 md:px-0">
+                <h1 id="hero-heading" className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6 px-4 md:px-0">
                   <span className="block text-teal-600">Usuwanie zmian</span>
                   <span className="block">
                     <span className="text-teal-600">skórnych – </span>
@@ -148,19 +148,19 @@ const SkinLesionRemovalPage = () => {
                   <span className="block text-gray-900">z oceną</span>
                   <span className="block text-gray-900">histopatologiczną,</span>
                   <span className="block text-gray-900 font-normal">Skarżysko-Kamienna</span>
-                </h2>
+                </h1>
 
-                {/* Description Paragraphs */}
+                {/* Description H2 */}
                 <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed px-4 md:px-0">
-                  <p>
+                  <h2>
                     Masz niepokojące znamię, kaszak, włókniak lub inną zmianę skórną? Zdiagnozuj ją w Centrum Medycznym 7 w woj. świętokrzyskim, gdzie wykonujemy chirurgiczne usuwanie zmian skórnych w bezpiecznych warunkach ambulatoryjnych.
-                  </p>
-                  <p>
+                  </h2>
+                  <h2>
                     Zabieg wykonywany jest przez doświadczonego chirurga, po konsultacji i kwalifikacji medycznej. Każda usunięta zmiana skórna jest rutynowo kierowana do badania histopatologicznego, co zapewnia rzetelną ocenę i bezpieczeństwo pacjenta.
-                  </p>
-                  <p>
+                  </h2>
+                  <h2>
                     Przyjmujemy pacjentów prywatnie, bez skierowania. Z naszych usług korzystają pacjenci ze Skarżyska-Kamiennej oraz okolicznych miejscowości, m.in. z Kielc, Starachowic i Radomia.
-                  </p>
+                  </h2>
                 </div>
 
                 {/* Price Box */}
