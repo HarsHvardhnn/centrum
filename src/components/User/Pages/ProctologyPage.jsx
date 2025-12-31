@@ -350,8 +350,8 @@ const ProctologyPage = () => {
           </section>
 
           {/* Section 3: Symptoms */}
-          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="symptoms-heading">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-14">
+          <section className="bg-white pt-8 sm:pt-12 md:pt-16 pb-0 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="symptoms-heading">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <h2 
                 id="symptoms-heading"
                 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6"
@@ -461,10 +461,14 @@ const ProctologyPage = () => {
                   </p>
                 </div>
               </div>
+            </div>
+          </section>
 
-              {/* Pricing Section */}
-              <div className="mt-8 sm:mt-12 bg-white rounded-lg p-10 sm:p-12 md:p-14 lg:p-16 xl:p-18 shadow-sm">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
+          {/* Section 3.5: Pricing */}
+          <section className="bg-white pt-0 -mt-4 sm:-mt-6 md:-mt-8 pb-8 sm:pb-12 md:pb-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="pricing-heading">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-14">
+              <div className="bg-white rounded-lg p-10 sm:p-12 md:p-14 lg:p-16 xl:p-18 shadow-sm">
+                <h2 id="pricing-heading" className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
                   Cennik usług-Poradnia Proktologiczna
                 </h2>
                 
