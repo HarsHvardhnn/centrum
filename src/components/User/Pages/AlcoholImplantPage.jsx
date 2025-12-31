@@ -67,7 +67,7 @@ const AlcoholImplantPage = () => {
       
       <main className="min-h-screen bg-white">
         {/* Hero Section - First Section */}
-        <section className="bg-[#F7F9FA] pt-24 md:pt-28 lg:pt-32 pb-12 md:pb-16 lg:pb-20" aria-labelledby="hero-heading">
+        <section className="bg-[#F7F9FA] pt-16 md:pt-28 lg:pt-32 pb-12 md:pb-16 lg:pb-20" aria-labelledby="hero-heading">
           <div className="max-w-7xl mx-auto px-0 md:px-6 lg:px-8 xl:px-12">
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8 lg:gap-12 xl:gap-16">
               {/* Left Side - Text Content */}
