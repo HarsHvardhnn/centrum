@@ -158,13 +158,13 @@ const ProctologyPage = () => {
                   <span className="block text-gray-900 font-normal">i chorób odbytu</span>
                 </h1>
 
-                {/* Description Paragraph */}
-                <div className="mb-4 sm:mb-6 text-gray-700 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light">
+                {/* Description H2 */}
+                <h2 className="mb-4 sm:mb-6 text-gray-700 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light">
                   <span className="block">Profesjonalna diagnostyka&nbsp;i leczenie chorób</span>
                   <span className="block">odbytu&nbsp;i odbytnicy. Konsultacje prywatne</span>
                   <span className="block">bez skierowania&nbsp;w&nbsp;Poradni Proktologicznej</span>
                   <span className="block">Centrum Medyczne 7.</span>
-                </div>
+                </h2>
 
                 {/* Feature Items */}
                 <div className="mb-4 sm:mb-6">
@@ -251,7 +251,7 @@ const ProctologyPage = () => {
             <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <h2 
                 id="what-is-proctology-heading"
-                className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6"
+                className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6"
               >
                 Czym zajmuje się proktolog?
               </h2>
@@ -350,8 +350,8 @@ const ProctologyPage = () => {
           </section>
 
           {/* Section 3: Symptoms */}
-          <section className="bg-white py-8 sm:py-12 md:py-16 px-4 sm:px-6" aria-labelledby="symptoms-heading">
-            <div className="max-w-6xl mx-auto">
+          <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="symptoms-heading">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-14">
               <h2 
                 id="symptoms-heading"
                 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6"
@@ -463,7 +463,7 @@ const ProctologyPage = () => {
               </div>
 
               {/* Pricing Section */}
-              <div className="mt-8 sm:mt-12 bg-white rounded-lg p-6 sm:p-8 md:p-10 shadow-sm">
+              <div className="mt-8 sm:mt-12 bg-white rounded-lg p-10 sm:p-12 md:p-14 lg:p-16 xl:p-18 shadow-sm">
                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
                   Cennik usług-Poradnia Proktologiczna
                 </h2>
@@ -706,7 +706,7 @@ const ProctologyPage = () => {
                   id="faq-heading"
                   className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3"
                 >
-                  Najczęściej zadawane pytania<br />&nbsp;o Proktologii<br />&nbsp;i leczeniu hemoroidów
+                  Najczęściej zadawane pytania o Proktologii<br />&nbsp;i leczeniu hemoroidów
                 </h2>
                 <div className="w-20 sm:w-24 h-1 bg-teal-600 mx-auto"></div>
               </div>
