@@ -105,10 +105,18 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
           <h1 className="text-2xl xs:text-3xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold leading-tight mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8">
             <span className="text-teal-600 block">Prywatna przychodnia</span>
             <span className="text-teal-600 block">specjalistyczna</span>
-            <span className="text-gray-700 text-xl xs:text-2xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl block text-center md:text-left">
-              <span className="border-b-[3.5px] border-teal-600 inline-block pb-3.5 px-1.5 md:px-0">
-                <span className="font-normal">w</span> <span className="font-normal">S</span>
-              </span><span className="font-normal">karżysku-Kamiennej</span>
+            <span className="text-gray-700 text-xl xs:text-2xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl block text-center md:text-left relative">
+              {/* Mobile: Centered underline in middle of screen */}
+              <span className="md:hidden block relative pb-3.5">
+                <span className="font-normal">w</span> <span className="font-normal">S</span><span className="font-normal">karżysku-Kamiennej</span>
+                <span className="absolute left-1/2 transform -translate-x-1/2 bottom-0 w-20 xs:w-24 border-b-[3.5px] border-teal-600"></span>
+              </span>
+              {/* Desktop: Original underline under "w S" */}
+              <span className="hidden md:inline">
+                <span className="border-b-[3.5px] border-teal-600 inline-block pb-3.5 px-1.5 md:px-0">
+                  <span className="font-normal">w</span> <span className="font-normal">S</span>
+                </span><span className="font-normal">karżysku-Kamiennej</span>
+              </span>
             </span>
           </h1>
 
