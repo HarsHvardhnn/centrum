@@ -1120,7 +1120,7 @@ const DoctorProfilePage = () => {
                       <img
                         src={doctor.image || "https://via.placeholder.com/300x400"}
                         alt={doctorName}
-                        className="w-full h-48 object-cover rounded-lg mb-4"
+                        className="w-full h-48 object-cover object-top rounded-lg mb-4"
                       />
                       <h4 className="text-xl font-semibold">{doctorName}</h4>
                       <p className="text-gray-700 font-medium">
