@@ -427,7 +427,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     ${structuredData}
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-D0t_AN_3.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BgpyY5sR.css">
 </head>
 <body>
     <!-- SEO Content for crawlers -->
@@ -440,7 +440,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-8FQbPjrX.js"></script>
+    <script type="module" crossorigin src="/assets/index-aCTJ-Muq.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
