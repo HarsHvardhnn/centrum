@@ -683,7 +683,7 @@ export default function Doctors({
         {doctors.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4 items-stretch">
             {doctors.map((doctor) => (
-              <div key={doctor.id} className="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
+              <div key={doctor.id} className="bg-[#F4F4F4] shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
                 <img
                   src={doctor.image}
                   alt={doctor.name}
@@ -696,7 +696,7 @@ export default function Doctors({
                   </p>
                 </div>
 
-                <div className="flex flex-col mt-auto">
+                <div className="flex flex-col mt-auto bg-[#F4F4F4]">
                   {doctor.id === '6877dbf8635211ff3ec6322d' ? (
                     <>
                       <button
