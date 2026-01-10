@@ -772,6 +772,16 @@ const handleUrlNormalization = (req, res, next) => {
   next();
 };
 
+// List of known client-side routes (hardcoded in React Router)
+// These routes should be served even if API fetch fails
+const knownClientSideRoutes = [
+  '/uslugi/proktolog',
+  '/uslugi/konsultacja-proktologiczna',
+  '/uslugi/Usuwanie-zmian-skórnych',
+  '/uslugi/implantacja-wszywki-alkoholowej',
+  '/uslugi/konsultacja-neurologiczna-dla-dzieci'
+];
+
 // SEO Middleware - Return SEO HTML for EVERYONE (bots and users)
 const seoMiddleware = async (req, res, next) => {
   const userAgent = req.get('User-Agent') || '';
@@ -790,47 +800,64 @@ const seoMiddleware = async (req, res, next) => {
   // Fetch dynamic data for dynamic routes
   let dynamicData = null;
   let dataFetchFailed = false;
+  const isKnownClientRoute = knownClientSideRoutes.includes(path);
   
   if (path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/') || path.startsWith('/uslugi/') || path.startsWith('/lekarze/')) {
     console.log(`📄 Processing dynamic route: ${path}`);
     dynamicData = await fetchDynamicData(path);
     
     if (!dynamicData) {
-      console.log(`⚠️ No dynamic data available for ${path} - returning proper 404`);
-      dataFetchFailed = true;
-      
-      // Return proper 404 with SEO meta tags to prevent false 404 errors
-      const BASE_URL = 'https://centrummedyczne7.pl';
-      const cleanPath = path.replace(/\/$/, '') || '/';
-      const canonicalUrl = `${BASE_URL}${cleanPath}`;
-      
-      return res.status(404).send(`
-        <!DOCTYPE html>
-        <html lang="pl">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>404 - Strona nie została znaleziona | Centrum Medyczne 7</title>
-          <meta name="description" content="Strona której szukasz nie została znaleziona. Wróć do strony głównej Centrum Medycznego 7 w Skarżysku-Kamiennej.">
-          <meta name="robots" content="noindex, nofollow">
-          <link rel="canonical" href="${canonicalUrl}">
-          <style>
-            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-            h1 { color: #008C8C; }
-            a { color: #008C8C; text-decoration: none; }
-            a:hover { text-decoration: underline; }
-          </style>
-        </head>
-        <body>
-          <h1>404 - Strona nie została znaleziona</h1>
-          <p>Przepraszamy, ale strona której szukasz nie istnieje.</p>
-          <p><a href="/">Powrót do strony głównej</a></p>
-        </body>
-        </html>
-      `);
+      // If this is a known client-side route, serve React app anyway
+      if (isKnownClientRoute) {
+        console.log(`📄 Known client-side route without API data: ${path} - serving React app`);
+        // Continue to generate SEO HTML with null data - will use defaults
+      } else {
+        // For unknown routes, check if they're doctor pages or news/blog which should exist in API
+        const isDynamicContentRoute = path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/') || path.startsWith('/lekarze/');
+        
+        if (isDynamicContentRoute) {
+          // For dynamic content routes (news, blog, doctors), return 404 if no data found
+          console.log(`⚠️ No dynamic data available for ${path} - returning proper 404`);
+          dataFetchFailed = true;
+          
+          // Return proper 404 with SEO meta tags to prevent false 404 errors
+          const BASE_URL = 'https://centrummedyczne7.pl';
+          const cleanPath = path.replace(/\/$/, '') || '/';
+          const canonicalUrl = `${BASE_URL}${cleanPath}`;
+          
+          return res.status(404).send(`
+            <!DOCTYPE html>
+            <html lang="pl">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>404 - Strona nie została znaleziona | Centrum Medyczne 7</title>
+              <meta name="description" content="Strona której szukasz nie została znaleziona. Wróć do strony głównej Centrum Medycznego 7 w Skarżysku-Kamiennej.">
+              <meta name="robots" content="noindex, nofollow">
+              <link rel="canonical" href="${canonicalUrl}">
+              <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                h1 { color: #008C8C; }
+                a { color: #008C8C; text-decoration: none; }
+                a:hover { text-decoration: underline; }
+              </style>
+            </head>
+            <body>
+              <h1>404 - Strona nie została znaleziona</h1>
+              <p>Przepraszamy, ale strona której szukasz nie istnieje.</p>
+              <p><a href="/">Powrót do strony głównej</a></p>
+            </body>
+            </html>
+          `);
+        } else {
+          // For other /uslugi/ routes, serve React app even without API data
+          console.log(`📄 Unknown service route without API data: ${path} - serving React app`);
+          // Continue to generate SEO HTML with null data
+        }
+      }
+    } else {
+      console.log(`📄 Dynamic data fetched: Success`);
     }
-    
-    console.log(`📄 Dynamic data fetched: Success`);
   }
   
   const seoHTML = await generateSEOHTML(path, dynamicData);
