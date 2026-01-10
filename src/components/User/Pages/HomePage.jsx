@@ -63,78 +63,35 @@ const  HomePage = () => {
   const generateLocalBusinessSchema = () => {
     const schema = {
       "@context": "https://schema.org",
-      "@type": "MedicalClinic",
+      "@type": "MedicalOrganization",
       "name": "Centrum Medyczne 7",
-      "alternateName": "CM7",
-      "description": "Prywatna przychodnia specjalistyczna w Skarżysku-Kamiennej. Chirurgia, proktologia, neurologia dziecięca. Doświadczeni lekarze i szybkie terminy wizyt.",
       "url": "https://centrummedyczne7.pl",
       "logo": "https://centrummedyczne7.pl/images/mainlogo.png",
       "image": "https://centrummedyczne7.pl/images/mainlogo.png",
+      "description": "Prywatne wizyty u specjalistów: chirurg, proktolog, neurolog dziecięcy, kardiolog, radiolog. Bez skierowania – Skarżysko-Kamienna.",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "Powstańców Warszawy 7/1.5",
+        "streetAddress": "ul. Powstańców Warszawy 7/1.5",
         "addressLocality": "Skarżysko-Kamienna",
         "postalCode": "26-110",
-        "addressCountry": "PL",
-        "addressRegion": "Świętokrzyskie"
+        "addressCountry": "PL"
       },
-      "geo": {
-        "@type": "GeoCoordinates",
-        "latitude": "51.1191214",
-        "longitude": "20.864972"
-      },
-      "telephone": "+48797097487",
-      "email": "kontakt@centrummedyczne7.pl",
+      "telephone": "+48 797 127 487",
       "openingHoursSpecification": [
         {
           "@type": "OpeningHoursSpecification",
           "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
           "opens": "15:00",
           "closes": "20:00"
-        },
-        {
-          "@type": "OpeningHoursSpecification",
-          "dayOfWeek": "Saturday",
-          "opens": "09:00",
-          "closes": "17:00"
         }
       ],
       "medicalSpecialty": [
-        "Chirurgia",
-        "Proktologia", 
-        "Neurologia dziecięca",
-        "Leczenie ran przewlekłych"
-      ],
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Usługi medyczne",
-        "itemListElement": [
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "MedicalProcedure",
-              "name": "Konsultacja chirurgiczna"
-            }
-          },
-          {
-            "@type": "Offer", 
-            "itemOffered": {
-              "@type": "MedicalProcedure",
-              "name": "Konsultacja proktologiczna"
-            }
-          },
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "MedicalProcedure", 
-              "name": "Neurologia dziecięca"
-            }
-          }
-        ]
-      },
-      "sameAs": [
-        "https://www.facebook.com/przychodniacm7/",
-        "https://www.instagram.com/centrummedyczne7/"
+        "Surgery",
+        "Cardiology",
+        "Neurology",
+        "Proctology",
+        "Gastroenterology",
+        "Radiology"
       ]
     };
 
@@ -144,8 +101,8 @@ const  HomePage = () => {
   return (
     <>
       <MetaTags 
-        title="Centrum Medyczne 7 Skarżysko-Kamienna – Przychodnia specjalistyczna"
-        description="Prywatna przychodnia specjalistyczna w Skarżysku-Kamiennej. Chirurgia, proktologia, neurologia dziecięca. Doświadczeni lekarze i szybkie terminy wizyt."
+        title="Centrum Medyczne 7 – poradnie specjalistyczne świętokrzyskie"
+        description="Poradnie CM7: chirurg, proktolog, neurolog dziecięcy, kardiolog, radiolog.  Wizyty prywatne, bez skierowania. Skarżysko-Kamienna, woj. świętokrzyskie."
         path="/"
       />
       

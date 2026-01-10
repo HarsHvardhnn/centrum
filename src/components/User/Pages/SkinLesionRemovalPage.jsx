@@ -107,8 +107,8 @@ const SkinLesionRemovalPage = () => {
   return (
     <>
       <MetaTags 
-        title="Usuwanie zmian skórnych – Skarżysko-Kamienna, Kielce, Radom – CM7"
-        description="Chirurgiczne usuwanie zmian skórnych w Centrum Medycznym 7. Profesjonalne usuwanie znamion, brodawek, kaszaków i innych zmian skórnych. Umów wizytę."
+        title="Usuwanie zmian skórnych z badaniem histopatologicznym | CM7"
+        description="Chirurgiczne usuwanie zmian skórnych, znamion (pieprzyków), kaszaków, włókniaków z badaniem histopatologicznym. Bez skierowania – Świętokrzyskie, Skarżysko-Kamienna."
         path="/usuwanie-zmian-skornych"
       />
       

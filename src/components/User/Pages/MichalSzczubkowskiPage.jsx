@@ -32,8 +32,8 @@ const MichalSzczubkowskiPage = () => {
   return (
     <>
       <MetaTags 
-        title="lek. Michał Szczubkowski – Chirurg, Proktolog – Skarżysko-Kamienna – CM7"
-        description="lek. Michał Szczubkowski – doświadczony chirurg i proktolog w Centrum Medycznym 7. Specjalizuje się w leczeniu chorób odbytu, hemoroidów i chirurgii ogólnej. Umów wizytę."
+        title="Usuwanie zmian skórnych z badaniem histopatologicznym | CM7"
+        description="Chirurgiczne usuwanie zmian skórnych, znamion (pieprzyków), kaszaków, włókniaków z badaniem histopatologicznym. Bez skierowania – Świętokrzyskie, Skarżysko-Kamienna."
         path="/lekarze/michal-szczubkowski"
       />
       

@@ -8,7 +8,7 @@ export default function Welcome() {
         CENTRUM MEDYCZNE 7
       </h3>
       <h2 className="text-3xl md:text-4xl font-bold font-serif text-main mt-2">
-        Twoje Zdrowie w Dobrych Rękach
+        Twoje&nbsp;Zdrowie w Dobrych Rękach
       </h2>
       <p className="text-neutral-700 text-lg mt-4 max-w-4xl mx-auto leading-relaxed">
         Naszą misją jest leczenie z pełnym szacunkiem, empatią i zaangażowaniem. – szybkie specjalistyczne konsultacje i zabiegi bez skierowania.

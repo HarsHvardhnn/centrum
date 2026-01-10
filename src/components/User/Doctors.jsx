@@ -681,22 +681,22 @@ export default function Doctors({
 
       <div className="max-w-7xl mx-auto">
         {doctors.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4 items-stretch">
             {doctors.map((doctor) => (
-              <div key={doctor.id} className="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col">
+              <div key={doctor.id} className="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
                 <img
                   src={doctor.image}
                   alt={doctor.name}
                   className="w-full h-80 md:h-96 object-cover"
                 />
-                <div className="bg-[#F4F4F4] text-main py-6 px-6">
+                <div className="bg-[#F4F4F4] text-main py-6 px-6 flex-shrink-0">
                   <h4 className="text-lg font-semibold">{doctor.name}</h4>
                   <p className="text-lg font-semibold uppercase text-black">
                     {doctor.department.join(", ")}
                   </p>
                 </div>
 
-                <div className="flex flex-col">
+                <div className="flex flex-col mt-auto">
                   {doctor.id === '6877dbf8635211ff3ec6322d' ? (
                     <>
                       <button

@@ -55,8 +55,8 @@ const ProctologyTestPage = () => {
   return (
     <>
       <MetaTags 
-        title="Konsultacja proktologiczna – prywatnie, bez skierowania, świętokrzyskie – CM7"
-        description="Konsultacja proktologiczna prywatnie, bez skierowania w Centrum Medycznym 7. Umów wizytę u proktologa w Skarżysku-Kamiennej."
+        title="Proktolog Skarżysko-Kamienna – poradnia proktologiczna CM7"
+        description="Poradnia proktologiczna świętokrzyskie– leczenie hemoroidów (żylaków odbytu), szczelin odbytu, przetok, krwawień. Doświadczony proktolog. Skarżysko-Kamienna."
         path="/uslugi-new-first/test"
       />
       
