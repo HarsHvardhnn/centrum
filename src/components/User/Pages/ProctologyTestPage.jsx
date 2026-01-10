@@ -57,7 +57,7 @@ const ProctologyTestPage = () => {
       <MetaTags 
         title="Proktolog Skarżysko-Kamienna – poradnia proktologiczna CM7"
         description="Poradnia proktologiczna świętokrzyskie– leczenie hemoroidów (żylaków odbytu), szczelin odbytu, przetok, krwawień. Doświadczony proktolog. Skarżysko-Kamienna."
-        path="/uslugi-new-first/test"
+        path="/uslugi/konsultacja-proktologiczna"
       />
       
       {/* Structured Data */}

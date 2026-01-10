@@ -255,7 +255,7 @@ const MichalSzczubkowskiPage = () => {
                     </div>
                     <div className="w-full">
                       <a 
-                        href="/proktolog"
+                        href="/uslugi/proktolog"
                         className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-4 hover:text-teal-600 transition-colors block text-left"
                       >
                         Chirurgia ogólna
@@ -291,7 +291,7 @@ const MichalSzczubkowskiPage = () => {
                     </div>
                     <div className="w-full">
                       <a 
-                        href="/proktolog"
+                        href="/uslugi/proktolog"
                         className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-4 hover:text-teal-600 transition-colors block text-left"
                       >
                         Proktologia
@@ -311,7 +311,7 @@ const MichalSzczubkowskiPage = () => {
                   </div>
                   <div className="text-left">
                     <a 
-                      href="/konsultacja-proktologiczna"
+                      href="/uslugi/konsultacja-proktologiczna"
                       className="text-teal-600 underline font-medium text-xs sm:text-sm md:text-base hover:text-teal-700 whitespace-nowrap"
                     >
                       Konsultacja proktologiczna- szczegóły
@@ -327,7 +327,7 @@ const MichalSzczubkowskiPage = () => {
                     </div>
                     <div className="w-full">
                       <a 
-                        href="/proktolog"
+                        href="/uslugi/proktolog"
                         className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-4 hover:text-teal-600 transition-colors block text-left"
                       >
                         Chirurgia naczyniowa
@@ -394,7 +394,7 @@ const MichalSzczubkowskiPage = () => {
                       <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 200 zł</span>
                     </div>
                     <div className="flex justify-between items-start border-b border-gray-200 pb-3">
-                      <a href="/Usuwanie-zmian-skórnych" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Usunięcie znamienia/ tłuszczaka</a>
+                      <a href="/uslugi/Usuwanie-zmian-skórnych" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Usunięcie znamienia/ tłuszczaka</a>
                       <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 400 zł</span>
                     </div>
                     <div className="flex justify-between items-start border-b border-gray-200 pb-3">
@@ -406,7 +406,7 @@ const MichalSzczubkowskiPage = () => {
                       <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 500 zł</span>
                     </div>
                     <div className="flex justify-between items-start border-b border-gray-200 pb-3">
-                      <a href="/implantacja-wszywki-alkoholowej" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Implantacja wszywki alkoholowej (Disulfiram-Esperal)</a>
+                      <a href="/uslugi/implantacja-wszywki-alkoholowej" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Implantacja wszywki alkoholowej (Disulfiram-Esperal)</a>
                       <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">2000 zł</span>
                     </div>
                     <div className="flex justify-between items-start border-b border-gray-200 pb-3">
