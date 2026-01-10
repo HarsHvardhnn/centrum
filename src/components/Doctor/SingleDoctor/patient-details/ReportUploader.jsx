@@ -7,7 +7,7 @@ import { apiCaller } from '../../../../utils/axiosInstance';
 const ReportUploader = ({ appointmentId, onSuccess }) => {
   const [file, setFile] = useState(null);
   const [reportName, setReportName] = useState('');
-  const [reportType, setReportType] = useState('Lab');
+  const [reportType, setReportType] = useState('Wynik badania laboratoryjnego');
   const [description, setDescription] = useState('');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -97,7 +97,7 @@ const ReportUploader = ({ appointmentId, onSuccess }) => {
   
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
-      <h3 className="text-lg font-semibold mb-4">Prześlij Raport Medyczny</h3>
+      <h3 className="text-lg font-semibold mb-4">Dodaj dokument medyczny do wizyty</h3>
       
       {error && (
         <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md">
@@ -109,32 +109,35 @@ const ReportUploader = ({ appointmentId, onSuccess }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nazwa Raportu
+              Nazwa dokumentu
             </label>
             <input
               type="text"
               value={reportName}
               onChange={(e) => setReportName(e.target.value)}
-              placeholder="np. Wyniki badania krwi"
+              placeholder="Podaj nazwę dokumentu"
               className="w-full p-2 border rounded-md focus:ring-teal-500 focus:border-teal-500"
             />
           </div>
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Typ Raportu
+              Typ dokumentu
             </label>
             <select 
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
               className="w-full p-2 border rounded-md focus:ring-teal-500 focus:border-teal-500"
             >
-              <option value="Lab">Badanie Laboratoryjne</option>
-              <option value="Imaging">Obrazowanie</option>
-              <option value="Procedure">Procedura</option>
-              <option value="Consultation">Konsultacja</option>
-              <option value="Prescription">Recepta</option>
-              <option value="Other">Inne</option>
+              <option value="Wynik badania laboratoryjnego">Wynik badania laboratoryjnego</option>
+              <option value="Wynik histopatologiczny">Wynik histopatologiczny</option>
+              <option value="Opis badania obrazowego (USG / RTG / TK / MR)">Opis badania obrazowego (USG / RTG / TK / MR)</option>
+              <option value="Zlecenie badania">Zlecenie badania</option>
+              <option value="Dokument z konsultacji">Dokument z konsultacji</option>
+              <option value="Dokument zabiegu / procedury">Dokument zabiegu / procedury</option>
+              <option value="Zalecenia medyczne">Zalecenia medyczne</option>
+              <option value="Recepta / informacja o leczeniu">Recepta / informacja o leczeniu</option>
+              <option value="Inny dokument medyczny">Inny dokument medyczny</option>
             </select>
           </div>
         </div>
@@ -146,7 +149,7 @@ const ReportUploader = ({ appointmentId, onSuccess }) => {
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Krótki opis raportu"
+            placeholder="Dodatkowe informacje dotyczące dokumentu"
             className="w-full p-2 border rounded-md focus:ring-teal-500 focus:border-teal-500"
             rows="2"
           />
@@ -210,7 +213,7 @@ const ReportUploader = ({ appointmentId, onSuccess }) => {
           className="w-full py-2 px-4 bg-teal-600 text-white rounded-md hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50"
           disabled={uploading || !file}
         >
-          {uploading ? 'Przesyłanie...' : 'Prześlij Raport'}
+          {uploading ? 'Przesyłanie...' : 'Dodaj dokument medyczny do wizyty'}
         </button>
       </form>
     </div>
