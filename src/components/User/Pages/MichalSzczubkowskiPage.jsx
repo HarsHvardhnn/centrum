@@ -32,8 +32,8 @@ const MichalSzczubkowskiPage = () => {
   return (
     <>
       <MetaTags 
-        title="Usuwanie zmian skórnych z badaniem histopatologicznym | CM7"
-        description="Chirurgiczne usuwanie zmian skórnych, znamion (pieprzyków), kaszaków, włókniaków z badaniem histopatologicznym. Bez skierowania – Świętokrzyskie, Skarżysko-Kamienna."
+        title="Lek. Michał Szczubkowski – chirurg, proktolog | Centrum Medyczne 7"
+        description="Lek. Michał Szczubkowski – chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Leczenie chorób odbytu i schorzeń chirurgicznych."
         path="/lekarze/michal-szczubkowski"
       />
       

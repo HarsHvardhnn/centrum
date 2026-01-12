@@ -137,7 +137,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
   console.log("BASE_URL", BASE_URL);
   console.log("path", path);
   
-  let title, description, keywords, ogImage;
+  let title, description, keywords, ogImage, ogType = 'website', ogTitle, ogDescription;
   
   switch (path) {
     case '/':
@@ -193,6 +193,37 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       description = 'Polityka ochrony danych osobowych w Centrum Medycznym 7 w Skarżysku-Kamiennej. Dowiedz się jak chronimy Twoje dane osobowe.';
       keywords = 'polityka prywatności centrum medyczne 7, ochrona danych osobowych, rodo cm7, prywatność pacjentów';
       ogImage = '/images/mainlogo.png';
+      break;
+    // Known client-side service routes with predefined meta tags
+    case '/uslugi/konsultacja-proktologiczna':
+      title = 'Proktolog Skarżysko-Kamienna – poradnia proktologiczna CM7';
+      description = 'Poradnia proktologiczna świętokrzyskie– leczenie hemoroidów (żylaków odbytu), szczelin odbytu, przetok, krwawień. Doświadczony proktolog. Skarżysko-Kamienna.';
+      keywords = 'proktolog, konsultacja proktologiczna, hemoroidy, poradnia proktologiczna, Skarżysko-Kamienna, centrum medyczne 7';
+      ogImage = '/images/uslugi.jpg';
+      break;
+    case '/uslugi/proktolog':
+      title = 'Proktolog Skarżysko-Kamienna – poradnia proktologiczna CM7';
+      description = 'Poradnia proktologiczna świętokrzyskie– leczenie hemoroidów (żylaków odbytu), szczelin odbytu, przetok, krwawień. Doświadczony proktolog. Skarżysko-Kamienna.';
+      keywords = 'proktolog, konsultacja proktologiczna, hemoroidy, poradnia proktologiczna, Skarżysko-Kamienna, centrum medyczne 7';
+      ogImage = '/images/uslugi.jpg';
+      break;
+    case '/uslugi/Usuwanie-zmian-skórnych':
+      title = 'Usuwanie zmian skórnych z badaniem histopatologicznym | CM7';
+      description = 'Chirurgiczne usuwanie zmian skórnych, znamion (pieprzyków), kaszaków, włókniaków z badaniem histopatologicznym. Bez skierowania – Świętokrzyskie, Skarżysko-Kamienna.';
+      keywords = 'usuwanie zmian skórnych, znamiona, pieprzyki, kaszaki, włókniaki, badanie histopatologiczne, Skarżysko-Kamienna, centrum medyczne 7';
+      ogImage = '/images/uslugi.jpg';
+      break;
+    case '/uslugi/implantacja-wszywki-alkoholowej':
+      title = 'Wszywka alkoholowa (Esperal) – Skarżysko-Kamienna, Kielce, Radom – CM7';
+      description = 'Chirurgiczna implantacja disulfiramu (Esperal) w Centrum Medycznym 7. Profesjonalne wszywki alkoholowe. Pomoc w leczeniu uzależnienia od alkoholu. Umów konsultację.';
+      keywords = 'wszywka alkoholowa, esperal, disulfiram, leczenie uzależnienia, implantacja, Skarżysko-Kamienna, Kielce, Radom, centrum medyczne 7';
+      ogImage = '/images/uslugi.jpg';
+      break;
+    case '/uslugi/konsultacja-neurologiczna-dla-dzieci':
+      title = 'Konsultacja neurologiczna dla dzieci i młodzieży – prywatnie, bez skierowania – CM7';
+      description = 'Konsultacja neurologiczna dla dzieci i młodzieży w Centrum Medycznym 7. Prywatne wizyty bez skierowania. Neurolog dziecięcy lek. Anna Grabowska. Umów wizytę.';
+      keywords = 'neurolog dziecięcy, konsultacja neurologiczna dzieci, neurologia dziecięca, Skarżysko-Kamienna, centrum medyczne 7';
+      ogImage = '/images/uslugi.jpg';
       break;
     default:
       // Handle dynamic routes with real data
@@ -292,18 +323,20 @@ const generateSEOHTML = async (path, dynamicData = null) => {
             .join(", ");
           const experience = dynamicData.experience ? `${dynamicData.experience} lat doświadczenia` : "";
           
-          // Meta title format: {specialization} – Skarżysko-Kamienna | CM7
-          // If multiple: {specialization_1}, {specialization_2} – Skarżysko-Kamienna | CM7
-          title = `${specializations || 'Lekarz'} – Skarżysko-Kamienna | CM7`;
+          // Meta title format: Lek. {Name} – {specializations} | Centrum Medyczne 7
+          title = `Lek. ${doctorName} – ${specializations || 'lekarz'} | Centrum Medyczne 7`;
 
-          // Use shortDescription as meta description
-          description = dynamicData.shortDescription || `Umów wizytę z ${doctorName}${specializations ? `, ${specializations.toLowerCase()}` : ''}${experience ? ` z ${experience}` : ""}. ${
-            dynamicData.onlineConsultationPrice !== undefined 
-              ? `Konsultacje online od ${dynamicData.onlineConsultationPrice} zł` 
-              : "Konsultacje dostępne"
-          } w Centrum Medycznym 7.`;
+          // Use shortDescription as meta description, or generate default
+          description = dynamicData.shortDescription || `Lek. ${doctorName} – ${specializations || 'lekarz'}${specializations ? ' przyjmujący pacjentów' : ''} w Centrum Medycznym 7 w Skarżysku-Kamiennej.${experience ? ` ${experience}.` : ''} ${dynamicData.onlineConsultationPrice !== undefined ? `Konsultacje online od ${dynamicData.onlineConsultationPrice} zł.` : 'Konsultacje dostępne.'}`;
           keywords = `${doctorName}, ${specializations || 'lekarz'}, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna`;
           ogImage = (dynamicData && dynamicData.image) ? dynamicData.image : '/images/doctors1.png';
+          
+          // Set OG type to profile for doctor pages
+          ogType = 'profile';
+          // OG title: Lek. {Name} – {specializations} | CM7
+          ogTitle = `Lek. ${doctorName} – ${specializations || 'lekarz'} | CM7`;
+          // OG description: Custom description for doctor pages
+          ogDescription = dynamicData.shortDescription || `${specializations || 'Lekarz'} przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej.${experience ? ` ${experience}.` : ''} Doświadczenie i indywidualne podejście.`;
         } else {
           title = 'Lekarz – Centrum Medyczne 7 Skarżysko-Kamienna';
           description = 'Profil lekarza w Centrum Medycznym 7. Umów wizytę z doświadczonym specjalistą.';
@@ -389,18 +422,18 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <link rel="canonical" href="${canonicalUrl}">
     
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="${ogType}">
     <meta property="og:url" content="${canonicalUrl}">
-    <meta property="og:title" content="${escapeHtml(title)}">
-    <meta property="og:description" content="${escapeHtml(description)}">
+    <meta property="og:title" content="${escapeHtml(ogTitle || title)}">
+    <meta property="og:description" content="${escapeHtml(ogDescription || description)}">
     <meta property="og:image" content="${fullOgImage}">
     <meta property="og:site_name" content="Centrum Medyczne 7">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="${canonicalUrl}">
-    <meta property="twitter:title" content="${escapeHtml(title)}">
-    <meta property="twitter:description" content="${escapeHtml(description)}">
+    <meta property="twitter:title" content="${escapeHtml(ogTitle || title)}">
+    <meta property="twitter:description" content="${escapeHtml(ogDescription || description)}">
     <meta property="twitter:image" content="${fullOgImage}">
     
     <!-- Additional SEO -->
@@ -440,7 +473,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-3N_HL2aD.js"></script>
+    <script type="module" crossorigin src="/assets/index-C_BFRcnV.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>

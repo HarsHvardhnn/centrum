@@ -753,16 +753,15 @@ const DoctorProfilePage = () => {
   }
 
   const doctorName = `${doctor.name?.first} ${doctor.name?.last}`;
-  const specializations = doctor.specializations?.map(spec => spec.name).join(", ") || "Specjalista";
+  const specializations = doctor.specializations?.map(spec => spec.name).join(", ") || "lekarz";
   const experience = doctor.experience ? `${doctor.experience} lat doświadczenia` : "";
   
   // Generate meta title and description
-  const metaTitle = `${doctorName} – ${specializations}${experience ? ` | ${experience}` : ""} | CM7`;
-  const metaDescription = `Umów wizytę z ${doctorName}, ${specializations.toLowerCase()}${experience ? ` z ${experience}` : ""}. ${
-    doctor.onlineConsultationPrice !== undefined 
-      ? `Konsultacje online od ${doctor.onlineConsultationPrice} zł` 
-      : "Konsultacje dostępne"
-  } w Centrum Medycznym 7.`;
+  // Title format: Lek. {Name} – {specializations} | Centrum Medyczne 7
+  const metaTitle = `Lek. ${doctorName} – ${specializations} | Centrum Medyczne 7`;
+  
+  // Description: Use shortDescription if available, otherwise generate default
+  const metaDescription = doctor.shortDescription || `Lek. ${doctorName} – ${specializations}${specializations ? ' przyjmujący pacjentów' : ''} w Centrum Medycznym 7 w Skarżysku-Kamiennej.${experience ? ` ${experience}.` : ''} ${doctor.onlineConsultationPrice !== undefined ? `Konsultacje online od ${doctor.onlineConsultationPrice} zł.` : 'Konsultacje dostępne.'}`;
 
   return (
     <>
