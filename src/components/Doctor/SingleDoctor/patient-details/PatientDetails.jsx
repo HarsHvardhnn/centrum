@@ -1235,13 +1235,13 @@ const PatientDetailsPage = () => {
                 <div className="mt-6">
                   {!showReportUploader ? (
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-semibold">Raporty Medyczne</h3>
+                      <h3 className="text-lg font-semibold">Dokumenty medyczne wizyty</h3>
                       <button 
                         onClick={() => setShowReportUploader(true)}
                         className="flex items-center text-teal-600 hover:text-teal-800 text-sm font-medium"
                       >
                         <PlusCircle size={16} className="mr-1" />
-                        Dodaj Raport
+                        Dodaj Dokument
                       </button>
                     </div>
                   ) : (

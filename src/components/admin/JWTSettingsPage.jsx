@@ -13,7 +13,7 @@ const JWTSettingsPage = () => {
   const [inactivityTimeout, setInactivityTimeout] = useState("");
   const [originalJwtExpiry, setOriginalJwtExpiry] = useState("");
   const [originalRefreshTokenExpiry, setOriginalRefreshTokenExpiry] = useState("");
-  const [originalInactivityTimeout, setOriginalInactivityTimeout] = useState("");
+  const [originalInactivityTimeout, setOriginalInactivityTimeout] = useState(0);
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
@@ -23,7 +23,8 @@ const JWTSettingsPage = () => {
   useEffect(() => {
     const hasJwtChange = jwtExpiry !== originalJwtExpiry;
     const hasRefreshChange = refreshTokenExpiry !== originalRefreshTokenExpiry;
-    const hasTimeoutChange = inactivityTimeout !== originalInactivityTimeout;
+    const timeoutNum = parseInt(inactivityTimeout, 10) || 0;
+    const hasTimeoutChange = timeoutNum !== originalInactivityTimeout;
     setHasChanges(hasJwtChange || hasRefreshChange || hasTimeoutChange);
   }, [jwtExpiry, refreshTokenExpiry, inactivityTimeout, originalJwtExpiry, originalRefreshTokenExpiry, originalInactivityTimeout]);
 
@@ -47,13 +48,29 @@ const JWTSettingsPage = () => {
 
       // Fetch INACTIVITY_TIMEOUT
       const timeoutResponse = await appointmentConfigService.getConfig("INACTIVITY_TIMEOUT");
-      const timeoutValue = timeoutResponse.data?.value || "30m";
-      // Convert number (minutes) to string format if needed
-      const timeoutString = typeof timeoutValue === 'number' 
-        ? `${timeoutValue}m` 
-        : timeoutValue.toString();
-      setInactivityTimeout(timeoutString);
-      setOriginalInactivityTimeout(timeoutString);
+      const timeoutValue = timeoutResponse.data?.value || 30;
+      // Convert to number (minutes) - handle both number and string formats
+      let timeoutMinutes = 30; // default
+      if (typeof timeoutValue === 'number') {
+        timeoutMinutes = timeoutValue;
+      } else if (typeof timeoutValue === 'string') {
+        // Parse string format like "30m", "1h", etc. to minutes
+        const match = timeoutValue.match(/^(\d+)(m|h|d|w)$/);
+        if (match) {
+          const value = parseInt(match[1], 10);
+          const unit = match[2];
+          if (unit === 'm') timeoutMinutes = value;
+          else if (unit === 'h') timeoutMinutes = value * 60;
+          else if (unit === 'd') timeoutMinutes = value * 60 * 24;
+          else if (unit === 'w') timeoutMinutes = value * 60 * 24 * 7;
+        } else {
+          // Try to parse as plain number
+          const parsed = parseInt(timeoutValue, 10);
+          if (!isNaN(parsed)) timeoutMinutes = parsed;
+        }
+      }
+      setInactivityTimeout(timeoutMinutes.toString());
+      setOriginalInactivityTimeout(timeoutMinutes);
     } catch (err) {
       console.error("Error fetching JWT settings:", err);
       setError("Wystąpił błąd podczas pobierania ustawień JWT.");
@@ -91,13 +108,14 @@ const JWTSettingsPage = () => {
       }
 
       // Update INACTIVITY_TIMEOUT if changed
-      if (inactivityTimeout !== originalInactivityTimeout) {
-        if (inactivityTimeout && !validateJwtExpiry(inactivityTimeout)) {
-          toast.error("Nieprawidłowy format czasu nieaktywności. Użyj formatu: liczba + jednostka (m=minuty, h=godziny, d=dni, w=tygodnie)");
+      const timeoutMinutes = parseInt(inactivityTimeout, 10);
+      if (timeoutMinutes !== originalInactivityTimeout) {
+        if (isNaN(timeoutMinutes) || timeoutMinutes < 1) {
+          toast.error("Czas nieaktywności musi być liczbą większą od 0 (w minutach)");
           return;
         }
         promises.push(
-          appointmentConfigService.updateConfig("INACTIVITY_TIMEOUT", { value: inactivityTimeout })
+          appointmentConfigService.updateConfig("INACTIVITY_TIMEOUT", { value: timeoutMinutes })
         );
       }
 
@@ -270,16 +288,18 @@ const JWTSettingsPage = () => {
               </label>
               <div className="flex gap-3">
                 <input
-                  type="text"
+                  type="number"
                   value={inactivityTimeout}
                   onChange={(e) => setInactivityTimeout(e.target.value)}
-                  placeholder="np. 30m, 1h, 2h, 1d"
+                  min="1"
+                  placeholder="np. 30"
                   className={`flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                    inactivityTimeout && !validateJwtExpiry(inactivityTimeout)
+                    inactivityTimeout && (isNaN(parseInt(inactivityTimeout, 10)) || parseInt(inactivityTimeout, 10) < 1)
                       ? 'border-red-300 focus:ring-red-500'
                       : 'border-gray-300 focus:ring-teal-500'
                   }`}
                 />
+                <span className="flex items-center px-3 text-gray-600">minut</span>
                 <button
                   onClick={() => handleReset("INACTIVITY_TIMEOUT")}
                   className="px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg flex items-center"
@@ -289,13 +309,13 @@ const JWTSettingsPage = () => {
                   Resetuj
                 </button>
               </div>
-              {inactivityTimeout && !validateJwtExpiry(inactivityTimeout) && (
+              {inactivityTimeout && (isNaN(parseInt(inactivityTimeout, 10)) || parseInt(inactivityTimeout, 10) < 1) && (
                 <p className="mt-1 text-sm text-red-600">
-                  Nieprawidłowy format. Użyj formatu: liczba + jednostka (m=minuty, h=godziny, d=dni, w=tygodnie)
+                  Czas nieaktywności musi być liczbą większą od 0 (w minutach)
                 </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Przykłady: "30m" (30 minut), "1h" (1 godzina), "2h" (2 godziny), "1d" (1 dzień). Po tym czasie użytkownik zostanie automatycznie wylogowany z powodu braku aktywności.
+                Czas w minutach (np. 30 = 30 minut, 60 = 1 godzina, 120 = 2 godziny). Po tym czasie użytkownik zostanie automatycznie wylogowany z powodu braku aktywności.
               </p>
             </div>
 
