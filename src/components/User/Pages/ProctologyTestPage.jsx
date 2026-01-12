@@ -55,7 +55,7 @@ const ProctologyTestPage = () => {
   return (
     <>
       <MetaTags 
-        title="Proktolog Skarżysko-Kamienna – poradnia proktologiczna CM7"
+        title="CENTRUM MEDYCZNE 7"
         description="Poradnia proktologiczna świętokrzyskie– leczenie hemoroidów (żylaków odbytu), szczelin odbytu, przetok, krwawień. Doświadczony proktolog. Skarżysko-Kamienna."
         path="/uslugi/konsultacja-proktologiczna"
       />
@@ -108,7 +108,7 @@ const ProctologyTestPage = () => {
                 {/* Price Box */}
                 <div className="bg-primary-lighter   rounded-lg px-6 py-4 mb-6 flex items-center justify-between mx-4 md:mx-0">
                   <span className="text-gray-800 font-medium text-base md:text-lg">Cena:</span>
-                  <span className="text-teal-700 font-bold text-2xl md:text-3xl">300 zł</span>
+                  <span className="text-teal-700 font-bold text-2xl md:text-3xl">350 zł</span>
                 </div>
 
                 {/* Action Buttons */}

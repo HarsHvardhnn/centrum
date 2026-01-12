@@ -100,7 +100,7 @@ const PediatricNeurologyPage = () => {
   return (
     <>
       <MetaTags 
-        title="Konsultacja neurologiczna dla dzieci i młodzieży – prywatnie, bez skierowania – CM7"
+        title="CENTRUM MEDYCZNE 7"
         description="Konsultacja neurologiczna dla dzieci i młodzieży w Centrum Medycznym 7. Prywatne wizyty bez skierowania. Neurolog dziecięcy lek. Anna Grabowska. Umów wizytę."
         path="/uslugi/konsultacja-neurologiczna-dla-dzieci"
       />

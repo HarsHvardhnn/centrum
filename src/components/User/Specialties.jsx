@@ -34,7 +34,7 @@ export default function Specialties() {
           const handleSpecialtyClick = () => {
             // Check if specialization name is "Proktolog" (case-insensitive)
             if (specialty.name && specialty.name.toLowerCase().includes('proktolog')) {
-              navigate('/uslugi/proktolog');
+              navigate('/proktolog');
             } else {
               navigate(`/lekarze`);
             }

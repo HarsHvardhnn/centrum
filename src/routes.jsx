@@ -83,7 +83,7 @@ const routes = createBrowserRouter([
       { path: "regulamin", element: <TermsPage /> },
       { path: "polityka-prywatnosci", element: <PrivacyPolicyPage /> },
       { path: "uslugi/konsultacja-proktologiczna", element: <ProctologyTestPage /> },
-      { path: "uslugi/proktolog", element: <ProctologyPage /> },
+      { path: "proktolog", element: <ProctologyPage /> },
       { path: "uslugi/Usuwanie-zmian-skórnych", element: <SkinLesionRemovalPage /> },
       { path: "uslugi/implantacja-wszywki-alkoholowej", element: <AlcoholImplantPage /> },
       { path: "uslugi/konsultacja-neurologiczna-dla-dzieci", element: <PediatricNeurologyPage /> },

@@ -49,7 +49,7 @@ const ProctologyPage = () => {
       }
     },
     "medicalSpecialty": "Proctology",
-    "url": "https://centrummedyczne7.pl/uslugi/proktolog"
+    "url": "https://centrummedyczne7.pl/proktolog"
   };
 
   const faqStructuredData = {
@@ -118,9 +118,9 @@ const ProctologyPage = () => {
   return (
     <>
       <MetaTags 
-        title="Proktolog Skarżysko-Kamienna – poradnia proktologiczna CM7"
+        title="CENTRUM MEDYCZNE 7"
         description="Poradnia proktologiczna świętokrzyskie– leczenie hemoroidów (żylaków odbytu), szczelin odbytu, przetok, krwawień. Doświadczony proktolog. Skarżysko-Kamienna."
-        path="/uslugi/proktolog"
+        path="/proktolog"
       />
       
       {/* Structured Data */}

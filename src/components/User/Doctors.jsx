@@ -681,9 +681,9 @@ export default function Doctors({
 
       <div className="max-w-7xl mx-auto">
         {doctors.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4 items-stretch">
+          <div className="flex flex-wrap justify-center gap-6 px-4">
             {doctors.map((doctor) => (
-              <div key={doctor.id} className="bg-[#F4F4F4] shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
+              <div key={doctor.id} className="bg-[#F4F4F4] shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] xl:w-[calc(25%-18px)] max-w-sm">
                 <img
                   src={doctor.image}
                   alt={doctor.name}
@@ -696,7 +696,7 @@ export default function Doctors({
                   </p>
                 </div>
 
-                <div className="flex flex-col mt-auto bg-[#F4F4F4]">
+                <div className="flex flex-col mt-auto bg-[#F4F4F4] min-h-[96px]">
                   {doctor.id === '6877dbf8635211ff3ec6322d' ? (
                     <>
                       <button
@@ -713,12 +713,15 @@ export default function Doctors({
                       </button>
                     </>
                   ) : (
-                    <button
-                      onClick={() => handleBookAppointment(doctor)}
-                      className="bg-main text-white font-semibold text-lg py-3 w-full hover:bg-teal-700 transition-all"
-                    >
-                      Umów wizytę
-                    </button>
+                    <>
+                      <div className="bg-[#F4F4F4] h-[48px]"></div>
+                      <button
+                        onClick={() => handleBookAppointment(doctor)}
+                        className="bg-main text-white font-semibold text-lg py-3 w-full hover:bg-teal-700 transition-all"
+                      >
+                        Umów wizytę
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

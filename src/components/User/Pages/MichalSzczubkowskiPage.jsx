@@ -255,7 +255,7 @@ const MichalSzczubkowskiPage = () => {
                     </div>
                     <div className="w-full">
                       <a 
-                        href="/uslugi/proktolog"
+                        href="/proktolog"
                         className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-4 hover:text-teal-600 transition-colors block text-left"
                       >
                         Chirurgia ogólna
@@ -291,7 +291,7 @@ const MichalSzczubkowskiPage = () => {
                     </div>
                     <div className="w-full">
                       <a 
-                        href="/uslugi/proktolog"
+                        href="/proktolog"
                         className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-4 hover:text-teal-600 transition-colors block text-left"
                       >
                         Proktologia
@@ -327,7 +327,7 @@ const MichalSzczubkowskiPage = () => {
                     </div>
                     <div className="w-full">
                       <a 
-                        href="/uslugi/proktolog"
+                        href="/proktolog"
                         className="text-base md:text-lg lg:text-xl font-bold text-gray-900 mb-4 hover:text-teal-600 transition-colors block text-left"
                       >
                         Chirurgia naczyniowa
@@ -387,7 +387,7 @@ const MichalSzczubkowskiPage = () => {
                   <div className="space-y-3 sm:space-y-4">
                     <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Konsultacja chirurgiczna</span>
-                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">300 zł</span>
+                      <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">350 zł</span>
                     </div>
                     <div className="flex justify-between items-start border-b border-gray-200 pb-3">
                       <span className="text-gray-800 text-base sm:text-lg md:text-xl flex-1">Usunięcie chirurgiczne szwów</span>

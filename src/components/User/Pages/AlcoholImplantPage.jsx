@@ -52,7 +52,7 @@ const AlcoholImplantPage = () => {
   return (
     <>
       <MetaTags 
-        title="Wszywka alkoholowa (Esperal) – Skarżysko-Kamienna, Kielce, Radom – CM7"
+        title="CENTRUM MEDYCZNE 7"
         description="Chirurgiczna implantacja disulfiramu (Esperal) w Centrum Medycznym 7. Profesjonalne wszywki alkoholowe. Pomoc w leczeniu uzależnienia od alkoholu. Umów konsultację."
         path="/uslugi/implantacja-wszywki-alkoholowej"
       />

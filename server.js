@@ -196,31 +196,31 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       break;
     // Known client-side service routes with predefined meta tags
     case '/uslugi/konsultacja-proktologiczna':
-      title = 'Proktolog Skarżysko-Kamienna – poradnia proktologiczna CM7';
+      title = 'CENTRUM MEDYCZNE 7';
       description = 'Poradnia proktologiczna świętokrzyskie– leczenie hemoroidów (żylaków odbytu), szczelin odbytu, przetok, krwawień. Doświadczony proktolog. Skarżysko-Kamienna.';
       keywords = 'proktolog, konsultacja proktologiczna, hemoroidy, poradnia proktologiczna, Skarżysko-Kamienna, centrum medyczne 7';
       ogImage = '/images/uslugi.jpg';
       break;
-    case '/uslugi/proktolog':
-      title = 'Proktolog Skarżysko-Kamienna – poradnia proktologiczna CM7';
+    case '/proktolog':
+      title = 'CENTRUM MEDYCZNE 7';
       description = 'Poradnia proktologiczna świętokrzyskie– leczenie hemoroidów (żylaków odbytu), szczelin odbytu, przetok, krwawień. Doświadczony proktolog. Skarżysko-Kamienna.';
       keywords = 'proktolog, konsultacja proktologiczna, hemoroidy, poradnia proktologiczna, Skarżysko-Kamienna, centrum medyczne 7';
       ogImage = '/images/uslugi.jpg';
       break;
     case '/uslugi/Usuwanie-zmian-skórnych':
-      title = 'Usuwanie zmian skórnych z badaniem histopatologicznym | CM7';
+      title = 'CENTRUM MEDYCZNE 7';
       description = 'Chirurgiczne usuwanie zmian skórnych, znamion (pieprzyków), kaszaków, włókniaków z badaniem histopatologicznym. Bez skierowania – Świętokrzyskie, Skarżysko-Kamienna.';
       keywords = 'usuwanie zmian skórnych, znamiona, pieprzyki, kaszaki, włókniaki, badanie histopatologiczne, Skarżysko-Kamienna, centrum medyczne 7';
       ogImage = '/images/uslugi.jpg';
       break;
     case '/uslugi/implantacja-wszywki-alkoholowej':
-      title = 'Wszywka alkoholowa (Esperal) – Skarżysko-Kamienna, Kielce, Radom – CM7';
+      title = 'CENTRUM MEDYCZNE 7';
       description = 'Chirurgiczna implantacja disulfiramu (Esperal) w Centrum Medycznym 7. Profesjonalne wszywki alkoholowe. Pomoc w leczeniu uzależnienia od alkoholu. Umów konsultację.';
       keywords = 'wszywka alkoholowa, esperal, disulfiram, leczenie uzależnienia, implantacja, Skarżysko-Kamienna, Kielce, Radom, centrum medyczne 7';
       ogImage = '/images/uslugi.jpg';
       break;
     case '/uslugi/konsultacja-neurologiczna-dla-dzieci':
-      title = 'Konsultacja neurologiczna dla dzieci i młodzieży – prywatnie, bez skierowania – CM7';
+      title = 'CENTRUM MEDYCZNE 7';
       description = 'Konsultacja neurologiczna dla dzieci i młodzieży w Centrum Medycznym 7. Prywatne wizyty bez skierowania. Neurolog dziecięcy lek. Anna Grabowska. Umów wizytę.';
       keywords = 'neurolog dziecięcy, konsultacja neurologiczna dzieci, neurologia dziecięca, Skarżysko-Kamienna, centrum medyczne 7';
       ogImage = '/images/uslugi.jpg';
@@ -460,7 +460,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     ${structuredData}
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-BOo35N5y.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-uHT4qPoU.css">
 </head>
 <body>
     <!-- SEO Content for crawlers -->
@@ -473,7 +473,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-C_BFRcnV.js"></script>
+    <script type="module" crossorigin src="/assets/index-BuACIsrj.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -808,7 +808,7 @@ const handleUrlNormalization = (req, res, next) => {
 // List of known client-side routes (hardcoded in React Router)
 // These routes should be served even if API fetch fails
 const knownClientSideRoutes = [
-  '/uslugi/proktolog',
+  '/proktolog',
   '/uslugi/konsultacja-proktologiczna',
   '/uslugi/Usuwanie-zmian-skórnych',
   '/uslugi/implantacja-wszywki-alkoholowej',
