@@ -35,6 +35,12 @@ const MichalSzczubkowskiPage = () => {
         title="Lek. Michał Szczubkowski – chirurg, proktolog | Centrum Medyczne 7"
         description="Lek. Michał Szczubkowski – chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Leczenie chorób odbytu i schorzeń chirurgicznych."
         path="/lekarze/michal-szczubkowski"
+        robots="index, follow"
+        ogType="profile"
+        ogTitle="Lek. Michał Szczubkowski – chirurg i proktolog | CM7"
+        ogDescription="Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Doświadczenie i indywidualne podejście."
+        twitterTitle="Lek. Michał Szczubkowski – chirurg, proktolog | CM7"
+        twitterDescription="Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej."
       />
       
       {/* Structured Data */}
@@ -425,7 +431,7 @@ const MichalSzczubkowskiPage = () => {
                   
                   <div className="space-y-3 sm:space-y-4">
                     <div className="flex justify-between items-start border-b border-gray-200 pb-3">
-                      <a href="/konsultacja-proktologiczna" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Konsultacja proktologiczna</a>
+                      <a href="/uslugi/konsultacja-proktologiczna" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Konsultacja proktologiczna</a>
                       <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">300 zł</span>
                     </div>
                     <div className="flex justify-between items-start border-b border-gray-200 pb-3">

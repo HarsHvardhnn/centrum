@@ -8,24 +8,25 @@ const ProctologyTestPage = () => {
     "@context": "https://schema.org",
     "@type": "MedicalProcedure",
     "name": "Konsultacja proktologiczna",
-    "description": "Konsultacja proktologiczna prywatnie, bez skierowania w Centrum Medycznym 7. Umów wizytę u proktologa w Skarżysku-Kamiennej.",
+    "description": "Prywatna konsultacja proktologiczna obejmująca wywiad, badanie oraz plan leczenia chorób odbytu i odbytnicy.",
     "provider": {
-      "@type": "MedicalBusiness",
+      "@type": "MedicalClinic",
       "name": "Centrum Medyczne 7",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Skarżysko-Kamienna",
-        "addressRegion": "świętokrzyskie",
-        "addressCountry": "PL"
-      },
-      "telephone": "797-097-487",
-      "url": "https://centrummedyczne7.pl"
+      "url": "https://centrummedyczne7.pl/"
     },
     "medicalSpecialty": "Proctology",
-    "availableChannel": {
-      "@type": "ServiceChannel",
-      "serviceType": "Private consultation",
-      "availableLanguage": "pl"
+    "availableService": {
+      "@type": "MedicalProcedure",
+      "name": "Konsultacja proktologiczna prywatna",
+      "offers": {
+        "@type": "Offer",
+        "price": "300",
+        "priceCurrency": "PLN"
+      }
+    },
+    "areaServed": {
+      "@type": "AdministrativeArea",
+      "name": "Polska"
     }
   };
 
@@ -55,9 +56,15 @@ const ProctologyTestPage = () => {
   return (
     <>
       <MetaTags 
-        title="CENTRUM MEDYCZNE 7"
-        description="Poradnia proktologiczna świętokrzyskie– leczenie hemoroidów (żylaków odbytu), szczelin odbytu, przetok, krwawień. Doświadczony proktolog. Skarżysko-Kamienna."
+        title="Konsultacja proktologiczna prywatnie- Proktolog Świętokrzyskie"
+        description="Prywatna konsultacja proktologiczna bez skierowania. Doświadczony proktolog, dyskretna wizyta, szybkie terminy. Skarżysko-Kamienna, woj. świętokrzyskie. Cena 300 zł."
         path="/uslugi/konsultacja-proktologiczna"
+        robots="index, follow"
+        ogType="website"
+        ogTitle="Konsultacja proktologiczna – bez skierowania | CM7"
+        ogDescription="Dyskretny i profesjonalny przebieg wizyty. Konsultacja proktologiczna bez skierowania – Skarżysko-Kamienna, Centrum Medyczne 7."
+        twitterTitle="Konsultacja proktologiczna prywatnie | CM7"
+        twitterDescription="Prywatna konsultacja proktologiczna bez skierowania. Dyskrecja, doświadczenie i szybkie terminy."
       />
       
       {/* Structured Data */}

@@ -196,10 +196,14 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       break;
     // Known client-side service routes with predefined meta tags
     case '/uslugi/konsultacja-proktologiczna':
-      title = 'CENTRUM MEDYCZNE 7';
-      description = 'Poradnia proktologiczna świętokrzyskie– leczenie hemoroidów (żylaków odbytu), szczelin odbytu, przetok, krwawień. Doświadczony proktolog. Skarżysko-Kamienna.';
-      keywords = 'proktolog, konsultacja proktologiczna, hemoroidy, poradnia proktologiczna, Skarżysko-Kamienna, centrum medyczne 7';
+    case '/uslugi/konsultacja-proktologiczna/':
+      title = 'Konsultacja proktologiczna prywatnie- Proktolog Świętokrzyskie';
+      description = 'Prywatna konsultacja proktologiczna bez skierowania. Doświadczony proktolog, dyskretna wizyta, szybkie terminy. Skarżysko-Kamienna, woj. świętokrzyskie. Cena 300 zł.';
+      keywords = 'konsultacja proktologiczna, proktolog, prywatnie, bez skierowania, Skarżysko-Kamienna, świętokrzyskie, centrum medyczne 7';
       ogImage = '/images/uslugi.jpg';
+      ogType = 'website';
+      ogTitle = 'Konsultacja proktologiczna – bez skierowania | CM7';
+      ogDescription = 'Dyskretny i profesjonalny przebieg wizyty. Konsultacja proktologiczna bez skierowania – Skarżysko-Kamienna, Centrum Medyczne 7.';
       break;
     case '/proktolog':
       title = 'CENTRUM MEDYCZNE 7';
@@ -302,6 +306,17 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           keywords = 'poradnik zdrowia, porady medyczne, artykuły medyczne';
           ogImage = '/images/blogs.jpg';
         }
+      } else if (path === '/lekarze/michal-szczubkowski' || path === '/lekarze/michal-szczubkowski/') {
+        // Specific meta tags for Michał Szczubkowski page
+        title = 'Lek. Michał Szczubkowski – chirurg, proktolog | Centrum Medyczne 7';
+        description = 'Lek. Michał Szczubkowski – chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Leczenie chorób odbytu i schorzeń chirurgicznych.';
+        keywords = 'Michał Szczubkowski, chirurg, proktolog, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna';
+        ogImage = '/images/doctors1.png';
+        
+        // Set OG type to profile for doctor pages
+        ogType = 'profile';
+        ogTitle = 'Lek. Michał Szczubkowski – chirurg i proktolog | CM7';
+        ogDescription = 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Doświadczenie i indywidualne podejście.';
       } else if (path.startsWith('/lekarze/')) {
         // Note: dynamicData for doctors is already extracted in fetchDynamicData
         // So it's the doctor object directly, not wrapped in {data: {...}}
@@ -365,7 +380,35 @@ const generateSEOHTML = async (path, dynamicData = null) => {
 
   // Generate service-specific structured data for service pages
   let structuredData = '';
-  if (path.startsWith('/uslugi/') && dynamicData && typeof dynamicData === 'object' && dynamicData.title) {
+  if (path === '/uslugi/konsultacja-proktologiczna' || path === '/uslugi/konsultacja-proktologiczna/') {
+    // Specific structured data for proctology consultation page
+    const proctologyStructuredData = {
+      "@context": "https://schema.org",
+      "@type": "MedicalProcedure",
+      "name": "Konsultacja proktologiczna",
+      "description": "Prywatna konsultacja proktologiczna obejmująca wywiad, badanie oraz plan leczenia chorób odbytu i odbytnicy.",
+      "provider": {
+        "@type": "MedicalClinic",
+        "name": "Centrum Medyczne 7",
+        "url": `${BASE_URL}/`
+      },
+      "medicalSpecialty": "Proctology",
+      "availableService": {
+        "@type": "MedicalProcedure",
+        "name": "Konsultacja proktologiczna prywatna",
+        "offers": {
+          "@type": "Offer",
+          "price": "300",
+          "priceCurrency": "PLN"
+        }
+      },
+      "areaServed": {
+        "@type": "AdministrativeArea",
+        "name": "Polska"
+      }
+    };
+    structuredData = `<script type="application/ld+json">${JSON.stringify(proctologyStructuredData)}</script>`;
+  } else if (path.startsWith('/uslugi/') && dynamicData && typeof dynamicData === 'object' && dynamicData.title) {
     // Service-specific structured data to reinforce meta description
     const serviceStructuredData = {
       "@context": "https://schema.org",
@@ -473,7 +516,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-BuACIsrj.js"></script>
+    <script type="module" crossorigin src="/assets/index-B2VThRvP.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
