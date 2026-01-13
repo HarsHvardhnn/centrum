@@ -292,6 +292,18 @@ const generateStaticDoctorPages = async () => {
     let successCount = 0;
     let skipCount = 0;
     
+    // List of slugs to skip (use dynamic generation instead)
+    const skipSlugs = ['michal-szczubkowski'];
+    
+    // Clean up: Delete static files for skipped slugs if they exist
+    for (const skipSlug of skipSlugs) {
+      const existingFilePath = path.join(lekarzeDir, `${skipSlug}.html`);
+      if (fs.existsSync(existingFilePath)) {
+        fs.unlinkSync(existingFilePath);
+        console.log(`🗑️  Deleted existing static file: /lekarze/${skipSlug}.html (using dynamic generation)`);
+      }
+    }
+    
     // Generate HTML for each doctor
     for (const doctor of doctors) {
       try {
@@ -303,6 +315,14 @@ const generateStaticDoctorPages = async () => {
         }
         
         const { slug, html } = result;
+        
+        // Skip generating static file for specific slugs (use dynamic generation)
+        if (skipSlugs.includes(slug)) {
+          console.log(`⏭️  Skipping static generation for /lekarze/${slug} - using dynamic generation`);
+          skipCount++;
+          continue;
+        }
+        
         const filePath = path.join(lekarzeDir, `${slug}.html`);
         
         fs.writeFileSync(filePath, html, 'utf8');
@@ -319,10 +339,11 @@ const generateStaticDoctorPages = async () => {
     console.log(`   ⏭️  Skipped: ${skipCount} doctors`);
     console.log(`\n🎉 Static doctor pages generation completed!`);
     
-    // Generate index file with all doctor slugs
+    // Generate index file with all doctor slugs (excluding skipped ones)
+    const skipSlugs = ['michal-szczubkowski'];
     const slugs = doctors
       .map(doc => generateDoctorSlug(doc))
-      .filter(slug => slug && slug !== 'undefined' && slug.trim() !== '');
+      .filter(slug => slug && slug !== 'undefined' && slug.trim() !== '' && !skipSlugs.includes(slug));
     
     const indexData = {
       generatedAt: new Date().toISOString(),
