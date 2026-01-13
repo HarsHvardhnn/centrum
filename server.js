@@ -1352,6 +1352,17 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 const serveStaticDoctorPages = (req, res, next) => {
   const requestPath = req.normalizedPath || normalizePath(req.path);
   
+  // SKIP static file serving for specific routes that need dynamic generation
+  const normalizedPathForCheck = requestPath.replace(/\/$/, '') || '/';
+  const isSpecificRoute = normalizedPathForCheck === '/lekarze/michal-szczubkowski' ||
+                          requestPath === '/lekarze/michal-szczubkowski' ||
+                          requestPath === '/lekarze/michal-szczubkowski/';
+  
+  if (isSpecificRoute) {
+    console.log('🚫 SKIPPING static file serving for /lekarze/michal-szczubkowski - using dynamic generation');
+    return next(); // Skip static file, use dynamic SEO generation
+  }
+  
   // Check if this is a doctor page route
   if (requestPath.startsWith('/lekarze/') && requestPath !== '/lekarze') {
     // Extract slug from path
