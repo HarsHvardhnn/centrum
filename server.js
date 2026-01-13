@@ -136,10 +136,51 @@ const generateSEOHTML = async (path, dynamicData = null) => {
   const BASE_URL = 'https://centrummedyczne7.pl';
   console.log("BASE_URL", BASE_URL);
   console.log("path", path);
+  console.log("dynamicData received:", dynamicData ? "YES (will be ignored for specific route)" : "NO");
   
-  let title, description, keywords, ogImage, ogType = 'website', ogTitle, ogDescription;
+  // Normalize path for comparison (remove trailing slash)
+  const normalizedPath = path.replace(/\/$/, '') || '/';
+  console.log("normalizedPath", normalizedPath);
   
-  switch (path) {
+  let title, description, keywords, ogImage, ogType = 'website', ogTitle, ogDescription, twitterTitle, twitterDescription;
+  
+  // EARLY RETURN for specific routes - check BEFORE switch to ensure it's handled
+  // This MUST be checked first and MUST skip all dynamic data processing
+  // Check multiple variations to be safe
+  const isMichalRoute = normalizedPath === '/lekarze/michal-szczubkowski' || 
+                        normalizedPath === '/lekarze/michal-szczubkowski/' ||
+                        path === '/lekarze/michal-szczubkowski' ||
+                        path === '/lekarze/michal-szczubkowski/';
+  
+  if (isMichalRoute) {
+    console.log('✅✅✅ EARLY RETURN: Matched specific case for /lekarze/michal-szczubkowski');
+    console.log('✅ IGNORING dynamicData completely - using hardcoded values ONLY');
+    console.log('✅ NO API data will be used - all values are hardcoded');
+    if (dynamicData) {
+      console.log('⚠️ WARNING: dynamicData was passed but will be IGNORED');
+    }
+    // Force dynamicData to null to prevent any usage
+    dynamicData = null;
+    
+    // Set hardcoded meta tags - NO API data used
+    title = 'Lek. Michał Szczubkowski – chirurg, proktolog | Centrum Medyczne 7';
+    description = 'Lek. Michał Szczubkowski – chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Leczenie chorób odbytu i schorzeń chirurgicznych.';
+    keywords = 'Michał Szczubkowski, chirurg, proktolog, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna';
+    ogImage = '/images/doctors1.png';
+    ogType = 'profile';
+    ogTitle = 'Lek. Michał Szczubkowski – chirurg i proktolog | CM7';
+    ogDescription = 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Doświadczenie i indywidualne podejście.';
+    twitterTitle = 'Lek. Michał Szczubkowski – chirurg, proktolog | CM7';
+    twitterDescription = 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej.';
+    console.log('✅ Hardcoded Title:', title);
+    console.log('✅ Hardcoded Description:', description);
+    console.log('✅ Hardcoded OG Title:', ogTitle);
+    console.log('✅ Hardcoded Twitter Title:', twitterTitle);
+    // Continue to generate HTML with these values (skip switch and default)
+  } else {
+    console.log('❌ Path does not match /lekarze/michal-szczubkowski, normalizedPath:', normalizedPath);
+  
+  switch (normalizedPath) {
     case '/':
       title = 'Centrum Medyczne 7 – poradnie specjalistyczne świętokrzyskie';
       description = 'Poradnie CM7: chirurg, proktolog, neurolog dziecięcy, kardiolog, radiolog.  Wizyty prywatne, bez skierowania. Skarżysko-Kamienna, woj. świętokrzyskie.';
@@ -231,7 +272,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       break;
     default:
       // Handle dynamic routes with real data
-      if (path.startsWith('/aktualnosci/')) {
+      // Check specific routes FIRST before general patterns
+      if (normalizedPath.startsWith('/aktualnosci/')) {
         if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
           // Meta title should be the same as article title (client requirement)
           title = dynamicData.title;
@@ -244,7 +286,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           keywords = 'aktualności, centrum medyczne 7, news, ogłoszenia';
           ogImage = '/images/news.jpg';
         }
-      } else if (path.startsWith('/uslugi/')) {
+      } else if (normalizedPath.startsWith('/uslugi/')) {
         if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
           // Automatic meta title generation for services
           // Default: {service title} – Skarżysko-Kamienna | Centrum Medyczne 7
@@ -293,7 +335,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           keywords = 'usługi medyczne, centrum medyczne 7';
           ogImage = '/images/uslugi.jpg';
         }
-      } else if (path.startsWith('/poradnik/')) {
+      } else if (normalizedPath.startsWith('/poradnik/')) {
         if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
           // Meta title should be the same as article title (client requirement)
           title = dynamicData.title;
@@ -306,21 +348,14 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           keywords = 'poradnik zdrowia, porady medyczne, artykuły medyczne';
           ogImage = '/images/blogs.jpg';
         }
-      } else if (path === '/lekarze/michal-szczubkowski' || path === '/lekarze/michal-szczubkowski/') {
-        // Specific meta tags for Michał Szczubkowski page
-        title = 'Lek. Michał Szczubkowski – chirurg, proktolog | Centrum Medyczne 7';
-        description = 'Lek. Michał Szczubkowski – chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Leczenie chorób odbytu i schorzeń chirurgicznych.';
-        keywords = 'Michał Szczubkowski, chirurg, proktolog, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna';
-        ogImage = '/images/doctors1.png';
-        
-        // Set OG type to profile for doctor pages
-        ogType = 'profile';
-        ogTitle = 'Lek. Michał Szczubkowski – chirurg i proktolog | CM7';
-        ogDescription = 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Doświadczenie i indywidualne podejście.';
-      } else if (path.startsWith('/lekarze/')) {
+      } else if (normalizedPath.startsWith('/lekarze/') && 
+                 normalizedPath !== '/lekarze/michal-szczubkowski' &&
+                 path !== '/lekarze/michal-szczubkowski' &&
+                 path !== '/lekarze/michal-szczubkowski/') {
         // Note: dynamicData for doctors is already extracted in fetchDynamicData
         // So it's the doctor object directly, not wrapped in {data: {...}}
         // Structure: {name: {first, last}, specializations: [...], ...}
+        // SKIP this route - it's handled by early return above
         
         if (dynamicData && 
             typeof dynamicData === 'object' && 
@@ -365,6 +400,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
         ogImage = '/images/mainlogo.png';
       }
   }
+  } // End of else block for early return check
 
   // Generate canonical URL - use the actual path, removing trailing slash
   // This ensures consistency and prevents redirect loops
@@ -372,6 +408,35 @@ const generateSEOHTML = async (path, dynamicData = null) => {
   const canonicalUrl = `${BASE_URL}${cleanPath}`;
   
   console.log(`🔗 Canonical URL for ${path}: ${canonicalUrl}`);
+  
+  // Final verification for specific route - FORCE correct values if somehow they got overwritten
+  const isMichalRouteFinal = normalizedPath === '/lekarze/michal-szczubkowski' || 
+                              normalizedPath === '/lekarze/michal-szczubkowski/' ||
+                              path === '/lekarze/michal-szczubkowski' ||
+                              path === '/lekarze/michal-szczubkowski/';
+  
+  if (isMichalRouteFinal) {
+    console.log('🔍 FINAL VERIFICATION BEFORE HTML GENERATION');
+    console.log('🔍 Current Title:', title);
+    console.log('🔍 Current Description:', description);
+    
+    // FORCE the correct values one more time to ensure they're not overwritten
+    if (title !== 'Lek. Michał Szczubkowski – chirurg, proktolog | Centrum Medyczne 7') {
+      console.log('⚠️ WARNING: Title was overwritten! Forcing correct value...');
+      title = 'Lek. Michał Szczubkowski – chirurg, proktolog | Centrum Medyczne 7';
+      description = 'Lek. Michał Szczubkowski – chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Leczenie chorób odbytu i schorzeń chirurgicznych.';
+      ogType = 'profile';
+      ogTitle = 'Lek. Michał Szczubkowski – chirurg i proktolog | CM7';
+      ogDescription = 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Doświadczenie i indywidualne podejście.';
+      twitterTitle = 'Lek. Michał Szczubkowski – chirurg, proktolog | CM7';
+      twitterDescription = 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej.';
+      ogImage = '/images/doctors1.png';
+    }
+    console.log('✅ FINAL Title:', title);
+    console.log('✅ FINAL Description:', description);
+    console.log('✅ FINAL OG Title:', ogTitle);
+    console.log('✅ FINAL Twitter Title:', twitterTitle);
+  }
   
   // Handle both absolute and relative image URLs
   const fullOgImage = ogImage && (ogImage.startsWith('http://') || ogImage.startsWith('https://')) 
@@ -475,8 +540,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="${canonicalUrl}">
-    <meta property="twitter:title" content="${escapeHtml(ogTitle || title)}">
-    <meta property="twitter:description" content="${escapeHtml(ogDescription || description)}">
+    <meta property="twitter:title" content="${escapeHtml(twitterTitle || ogTitle || title)}">
+    <meta property="twitter:description" content="${escapeHtml(twitterDescription || ogDescription || description)}">
     <meta property="twitter:image" content="${fullOgImage}">
     
     <!-- Additional SEO -->
@@ -516,7 +581,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-B2VThRvP.js"></script>
+    <script type="module" crossorigin src="/assets/index-De-EdnTV.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -873,12 +938,24 @@ const seoMiddleware = async (req, res, next) => {
     console.log(`🔗 Route: ${path}`);
   }
   
+  // CHECK FOR SPECIFIC ROUTE FIRST - Skip ALL API calls for this route
+  const normalizedPathForCheck = path.replace(/\/$/, '') || '/';
+  const isSpecificRoute = normalizedPathForCheck === '/lekarze/michal-szczubkowski' ||
+                          path === '/lekarze/michal-szczubkowski' ||
+                          path === '/lekarze/michal-szczubkowski/';
+  
   // Fetch dynamic data for dynamic routes
   let dynamicData = null;
   let dataFetchFailed = false;
   const isKnownClientRoute = knownClientSideRoutes.includes(path);
   
-  if (path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/') || path.startsWith('/uslugi/') || path.startsWith('/lekarze/')) {
+  // FOR SPECIFIC ROUTE: Skip ALL API calls, use hardcoded values only
+  if (isSpecificRoute) {
+    console.log('🚫🚫🚫 SPECIFIC ROUTE DETECTED: /lekarze/michal-szczubkowski');
+    console.log('🚫 SKIPPING ALL API CALLS - Using hardcoded meta tags only');
+    console.log('🚫 NO fetchDynamicData will be called for this route');
+    dynamicData = null; // Explicitly set to null
+  } else if ((path.startsWith('/aktualnosci/') || path.startsWith('/poradnik/') || path.startsWith('/uslugi/') || path.startsWith('/lekarze/'))) {
     console.log(`📄 Processing dynamic route: ${path}`);
     dynamicData = await fetchDynamicData(path);
     
@@ -936,7 +1013,15 @@ const seoMiddleware = async (req, res, next) => {
     }
   }
   
-  const seoHTML = await generateSEOHTML(path, dynamicData);
+  // For specific routes, ALWAYS use null - no dynamic data
+  const finalDynamicData = isSpecificRoute ? null : dynamicData;
+  
+  if (isSpecificRoute) {
+    console.log('🔒 CONFIRMED: finalDynamicData is NULL for specific route');
+    console.log('🔒 NO backend data will be used - only hardcoded values');
+  }
+  
+  const seoHTML = await generateSEOHTML(path, finalDynamicData);
   
   // Add caching headers
   res.set({

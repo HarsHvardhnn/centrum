@@ -8,6 +8,17 @@ const SEO = () => {
   const [pageData, setPageData] = useState(null);
   const BASE_URL = 'https://centrummedyczne7.pl';
 
+  // List of routes that have their own MetaTags component - skip SEO component for these
+  const routesWithOwnMetaTags = [
+    '/lekarze/michal-szczubkowski',
+    '/uslugi/konsultacja-proktologiczna'
+  ];
+
+  // Skip rendering if this route has its own MetaTags component
+  if (routesWithOwnMetaTags.includes(location.pathname)) {
+    return null;
+  }
+
   // Get page data from DOM or API
   const getPageData = () => {
     const dataElement = document.querySelector('script[type="application/json"][data-page-data]');
@@ -90,6 +101,19 @@ const SEO = () => {
           canonicalUrl: `${BASE_URL}/lekarze`,
           ogImage: '/images/doctors1.png'
         };
+      case '/lekarze/michal-szczubkowski':
+        return {
+          title: 'Lek. Michał Szczubkowski – chirurg, proktolog | Centrum Medyczne 7',
+          description: 'Lek. Michał Szczubkowski – chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Leczenie chorób odbytu i schorzeń chirurgicznych.',
+          keywords: 'Michał Szczubkowski, chirurg, proktolog, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna',
+          canonicalUrl: `${BASE_URL}/lekarze/michal-szczubkowski`,
+          ogImage: '/images/doctors1.png',
+          ogType: 'profile',
+          ogTitle: 'Lek. Michał Szczubkowski – chirurg i proktolog | CM7',
+          ogDescription: 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Doświadczenie i indywidualne podejście.',
+          twitterTitle: 'Lek. Michał Szczubkowski – chirurg, proktolog | CM7',
+          twitterDescription: 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej.'
+        };
       case '/aktualnosci':
         return {
           title: 'Aktualności – CM7 Skarżysko-Kamienna | Nowości i ogłoszenia',
@@ -107,6 +131,27 @@ const SEO = () => {
           ogImage: '/images/blogs.jpg'
         };
       default:
+        // Check if it's a doctor route that might need API data
+        if (path.startsWith('/lekarze/')) {
+          // For doctor routes, try to get data from DOM or use defaults
+          const doctorData = pageData?.doctor || {};
+          if (doctorData.name && doctorData.specializations) {
+            const doctorName = `${doctorData.name.first} ${doctorData.name.last}`;
+            const specializations = doctorData.specializations.map(s => s.name).join(", ");
+            return {
+              title: `Lek. ${doctorName} – ${specializations} | Centrum Medyczne 7`,
+              description: doctorData.shortDescription || `Lek. ${doctorName} – ${specializations} przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej.`,
+              keywords: `${doctorName}, ${specializations}, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna`,
+              canonicalUrl: `${BASE_URL}${path}`,
+              ogImage: doctorData.image || '/images/doctors1.png',
+              ogType: 'profile',
+              ogTitle: `Lek. ${doctorName} – ${specializations} | CM7`,
+              ogDescription: doctorData.shortDescription || `${specializations} przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Doświadczenie i indywidualne podejście.`,
+              twitterTitle: `Lek. ${doctorName} – ${specializations} | CM7`,
+              twitterDescription: doctorData.shortDescription || `${specializations} przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej.`
+            };
+          }
+        }
         return {
           title: 'CM7 Skarżysko-Kamienna',
           description: 'Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści.',
@@ -117,7 +162,14 @@ const SEO = () => {
     }
   };
 
-  const { title, description, keywords, canonicalUrl, ogImage } = getMetaInfo(location.pathname);
+  const { title, description, keywords, canonicalUrl, ogImage, ogType, ogTitle, ogDescription, twitterTitle, twitterDescription } = getMetaInfo(location.pathname);
+
+  // Use provided OG values or fallback to defaults
+  const finalOgType = ogType || 'website';
+  const finalOgTitle = ogTitle || title;
+  const finalOgDescription = ogDescription || description;
+  const finalTwitterTitle = twitterTitle || title;
+  const finalTwitterDescription = twitterDescription || description;
 
   return (
     <Helmet>
@@ -126,15 +178,15 @@ const SEO = () => {
       <meta name="keywords" content={keywords} />
       <link rel="canonical" href={canonicalUrl} />
       
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
+      <meta property="og:type" content={finalOgType} />
+      <meta property="og:title" content={finalOgTitle} />
+      <meta property="og:description" content={finalOgDescription} />
       <meta property="og:image" content={`${BASE_URL}${ogImage}`} />
       <meta property="og:url" content={canonicalUrl} />
-      <meta property="og:type" content="website" />
       
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title} />
-      <meta name="twitter:description" content={description} />
+      <meta name="twitter:title" content={finalTwitterTitle} />
+      <meta name="twitter:description" content={finalTwitterDescription} />
       <meta name="twitter:image" content={`${BASE_URL}${ogImage}`} />
     </Helmet>
   );
