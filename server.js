@@ -247,7 +247,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       ogDescription = 'Dyskretny i profesjonalny przebieg wizyty. Konsultacja proktologiczna bez skierowania – Skarżysko-Kamienna, Centrum Medyczne 7.';
       break;
     case '/proktolog':
-      title = 'CENTRUM MEDYCZNE 7';
+      title = 'Proktolog Skarżysko-Kamienna – poradnia proktologiczna CM7';
       description = 'Poradnia proktologiczna świętokrzyskie– leczenie hemoroidów (żylaków odbytu), szczelin odbytu, przetok, krwawień. Doświadczony proktolog. Skarżysko-Kamienna.';
       keywords = 'proktolog, konsultacja proktologiczna, hemoroidy, poradnia proktologiczna, Skarżysko-Kamienna, centrum medyczne 7';
       ogImage = '/images/uslugi.jpg';
