@@ -252,8 +252,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       keywords = 'proktolog, konsultacja proktologiczna, hemoroidy, poradnia proktologiczna, Skarżysko-Kamienna, centrum medyczne 7';
       ogImage = '/images/uslugi.jpg';
       break;
-    case '/uslugi/Usuwanie-zmian-skórnych':
-      title = 'CENTRUM MEDYCZNE 7';
+    case '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym':
+      title = 'Usuwanie zmian skórnych z badaniem histopatologicznym | CM7';
       description = 'Chirurgiczne usuwanie zmian skórnych, znamion (pieprzyków), kaszaków, włókniaków z badaniem histopatologicznym. Bez skierowania – Świętokrzyskie, Skarżysko-Kamienna.';
       keywords = 'usuwanie zmian skórnych, znamiona, pieprzyki, kaszaki, włókniaki, badanie histopatologiczne, Skarżysko-Kamienna, centrum medyczne 7';
       ogImage = '/images/uslugi.jpg';
@@ -265,8 +265,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       ogImage = '/images/uslugi.jpg';
       break;
     case '/uslugi/konsultacja-neurologiczna-dla-dzieci':
-      title = 'CENTRUM MEDYCZNE 7';
-      description = 'Konsultacja neurologiczna dla dzieci i młodzieży w Centrum Medycznym 7. Prywatne wizyty bez skierowania. Neurolog dziecięcy lek. Anna Grabowska. Umów wizytę.';
+      title = 'Konsultacja neurologiczna dla dzieci – Neurolog dziecięcy';
+      description = 'Poradnia neurologiczna dla dzieci – woj. świętokrzyskie. Tiki nerwowe, padaczka, opóźniony rozwój mowy. Diagnoza, leczenie. Skarżysko, Kielce, Radom i okolice.';
       keywords = 'neurolog dziecięcy, konsultacja neurologiczna dzieci, neurologia dziecięca, Skarżysko-Kamienna, centrum medyczne 7';
       ogImage = '/images/uslugi.jpg';
       break;
@@ -581,7 +581,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-De-EdnTV.js"></script>
+    <script type="module" crossorigin src="/assets/index-qXbeXWMs.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -918,7 +918,7 @@ const handleUrlNormalization = (req, res, next) => {
 const knownClientSideRoutes = [
   '/proktolog',
   '/uslugi/konsultacja-proktologiczna',
-  '/uslugi/Usuwanie-zmian-skórnych',
+  '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym',
   '/uslugi/implantacja-wszywki-alkoholowej',
   '/uslugi/konsultacja-neurologiczna-dla-dzieci'
 ];

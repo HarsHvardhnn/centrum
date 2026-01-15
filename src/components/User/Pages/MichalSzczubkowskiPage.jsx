@@ -400,7 +400,7 @@ const MichalSzczubkowskiPage = () => {
                       <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 200 zł</span>
                     </div>
                     <div className="flex justify-between items-start border-b border-gray-200 pb-3">
-                      <a href="/uslugi/Usuwanie-zmian-skórnych" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Usunięcie znamienia/ tłuszczaka</a>
+                      <a href="/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Usunięcie znamienia/ tłuszczaka</a>
                       <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 400 zł</span>
                     </div>
                     <div className="flex justify-between items-start border-b border-gray-200 pb-3">

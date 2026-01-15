@@ -107,9 +107,9 @@ const SkinLesionRemovalPage = () => {
   return (
     <>
       <MetaTags 
-        title="CENTRUM MEDYCZNE 7"
+        title="Usuwanie zmian skórnych z badaniem histopatologicznym | CM7"
         description="Chirurgiczne usuwanie zmian skórnych, znamion (pieprzyków), kaszaków, włókniaków z badaniem histopatologicznym. Bez skierowania – Świętokrzyskie, Skarżysko-Kamienna."
-        path="/uslugi/Usuwanie-zmian-skórnych"
+        path="/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym"
       />
       
       {/* Structured Data */}
@@ -214,7 +214,7 @@ const SkinLesionRemovalPage = () => {
               <div className="flex-1 w-full lg:w-1/2 flex justify-center lg:justify-end items-center">
                 <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
                   <img
-                    src="/assets/static-assets/Usuwanie-zmian-skórnych.png"
+                    src="/assets/static-assets/usuwanie-zmian-skornych-z-badaniem-histopatologicznym.png"
                     alt="Usuwanie zmian skórnych - Centrum Medyczne 7"
                     className="w-full h-auto object-contain rounded-t-2xl"
                     loading="lazy"
