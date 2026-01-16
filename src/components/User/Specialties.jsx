@@ -23,7 +23,7 @@ export default function Specialties() {
   return (
     <section className="py-12 text-center px-4 md:px-8 lg:px-16">
       <h3 className="text-lg md:text-xl font-bold text-neutral-800">
-        PASJA DO LECZENIA, EMPATIA W DZIAŁANIU
+        PORADNIE SPECJALISTYCZNE CM7 W SKARŻYSKU-KAMIENNEJ
       </h3>
       <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8">
         Nasi Specjaliści

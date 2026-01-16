@@ -676,7 +676,7 @@ export default function Doctors({
     <section className="py-16 px-6 bg-white text-center relative doctors-section">
       <h3 className="md:text-xl font-bold text-neutral-800">ZAUFANA OPIEKA</h3>
       <h2 className="text-3xl md:text-4xl font-bold text-main font-serif mt-2 mb-8 sm:mb-12">
-        Nasi Specjaliści
+        Nasze Specjalizacje
       </h2>
 
       <div className="max-w-7xl mx-auto">
