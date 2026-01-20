@@ -7,7 +7,6 @@ import {
   Mail,
   Award,
   BookOpen,
-  Clock,
   FileText,
   Briefcase,
   Camera,
@@ -29,36 +28,118 @@ const DoctorSchema = Yup.object().shape({
   phone: Yup.string()
     .required("Numer telefonu jest wymagany")
     .matches(/^\d{9}$/, "Numer telefonu musi składać się z dokładnie 9 cyfr"),
-  password: Yup.string()
-    .min(8, "Hasło musi zawierać co najmniej 8 znaków")
-    .required("Hasło jest wymagane"),
-  confirmPassword: Yup.string()
-    .oneOf([Yup.ref("password"), null], "Hasła muszą być zgodne")
-    .required("Potwierdzenie hasła jest wymagane"),
+  password: Yup.string().test('password-validation', function(value) {
+    try {
+      const context = this.options?.context || {};
+      const isEditMode = context.isEditMode === true || context.isEditMode === 'true' || !!context.isEditMode;
+      
+      // In edit mode, field is completely optional
+      if (isEditMode) {
+        // If value is provided, validate it; if empty, allow it
+        if (!value || value.trim() === '') {
+          return true; // Empty is allowed in edit mode
+        }
+        // If value is provided, it must be at least 8 characters
+        if (value.length < 8) {
+          return this.createError({ 
+            path: this.path, 
+            message: 'Hasło musi zawierać co najmniej 8 znaków' 
+          });
+        }
+        return true;
+      }
+      
+      // In create mode, require password with min 8 characters
+      if (!value || value.trim() === '' || value.length < 8) {
+        return this.createError({ 
+          path: this.path, 
+          message: value && value.length < 8 ? 'Hasło musi zawierać co najmniej 8 znaków' : 'Hasło jest wymagane' 
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      // If there's any error, default to allowing (safer for edit mode)
+      return true;
+    }
+  }),
+  confirmPassword: Yup.string().test('confirm-password-validation', function(value) {
+    try {
+      const context = this.options?.context || {};
+      const isEditMode = context.isEditMode === true || context.isEditMode === 'true' || !!context.isEditMode;
+      const password = this.parent.password;
+      
+      // In edit mode, field is completely optional
+      if (isEditMode) {
+        // If password is empty, confirmPassword can be empty
+        if (!password || password.trim() === '') {
+          return true; // Both can be empty in edit mode
+        }
+        // If password is provided, confirmPassword must match
+        if (value !== password) {
+          return this.createError({ 
+            path: this.path, 
+            message: 'Hasła muszą być zgodne' 
+          });
+        }
+        return true;
+      }
+      
+      // In create mode, require confirmPassword and it must match password
+      if (!value || value.trim() === '') {
+        return this.createError({ 
+          path: this.path, 
+          message: 'Potwierdzenie hasła jest wymagane' 
+        });
+      }
+      
+      if (value !== password) {
+        return this.createError({ 
+          path: this.path, 
+          message: 'Hasła muszą być zgodne' 
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      // If there's any error, default to allowing (safer for edit mode)
+      return true;
+    }
+  }),
   specialization: Yup.array()
     .min(1, "Wymagana jest co najmniej jedna specjalizacja")
     .required("Specjalizacja jest wymagana"),
   qualifications: Yup.array()
     .min(1, "Wymagana jest co najmniej jedna kwalifikacja")
     .required("Kwalifikacja jest wymagana"),
-  experience: Yup.number()
-    .positive("Doświadczenie musi być liczbą dodatnią")
-    .required("Doświadczenie jest wymagane"),
   shortDescription: Yup.string()
     .required("Krótki opis jest wymagany")
     .min(10, "Krótki opis musi zawierać co najmniej 10 znaków")
     .max(200, "Krótki opis nie może przekraczać 200 znaków"),
   bio: Yup.string().required("Bio jest wymagane"),
-  consultationFee: Yup.number()
-    .positive("Opłata musi być liczbą dodatnią")
-    .required("Opłata za konsultację online jest wymagana"),
-  offlineConsultationFee: Yup.number()
-    .positive("Opłata musi być liczbą dodatnią")
-    .required("Opłata za konsultację stacjonarną jest wymagana"),
-  profilePicture: Yup.mixed().when('$isEditMode', {
-    is: true,
-    then: () => Yup.mixed(), // no validation in edit mode
-    otherwise: () => Yup.mixed().required("Zdjęcie profilowe jest wymagane"),
+  profilePicture: Yup.mixed().test('profile-picture-required', function(value) {
+    try {
+      const context = this.options?.context || {};
+      const isEditMode = context.isEditMode === true || context.isEditMode === 'true' || !!context.isEditMode;
+      
+      // In edit mode, field is completely optional - always pass
+      if (isEditMode) {
+        return true;
+      }
+      
+      // In create mode, require a File object
+      if (!value || !(value instanceof File)) {
+        return this.createError({ 
+          path: this.path, 
+          message: 'Zdjęcie profilowe jest wymagane' 
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      // If there's any error checking context, default to allowing (safer for edit mode)
+      return true;
+    }
   }),
 });
 
@@ -197,12 +278,11 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             department: initialData?.department || "",
             specialization: normalizeSpecs(initialData?.specializations) || initialData?.specialization || [],
             qualifications: initialData?.qualifications || [],
-            experience: initialData?.experience || "",
             shortDescription: initialData?.shortDescription || "",
             bio: initialData?.bio || "",
-            consultationFee: initialData?.onlineConsultationFee || initialData?.consultationFee || "",
-            offlineConsultationFee: initialData?.offlineConsultationFee || "",
-            profilePicture:  null, // Always null initially, we handle preview separately
+            // In edit mode, set to existing URL if available, otherwise null
+            // This ensures validation passes when editing with existing picture
+            profilePicture: isEditMode && initialData?.profilePicture ? initialData.profilePicture : null,
           }}
           validationSchema={DoctorSchema}
           context={{ isEditMode, initialData }}
@@ -213,6 +293,23 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                 ...values,
                 specialization: (values.specialization || []).map(spec => spec.id),
               };
+              
+              // In edit mode, handle optional fields
+              if (isEditMode) {
+                // Remove password fields if they're empty (don't update password)
+                if (!submitValues.password || submitValues.password.trim() === '') {
+                  delete submitValues.password;
+                  delete submitValues.confirmPassword;
+                }
+                
+                // If no new profile picture is uploaded, use the existing URL
+                // This ensures the backend knows to preserve the existing image
+                if (!submitValues.profilePicture && initialData?.profilePicture) {
+                  // Set profilePicture to the existing URL string so backend preserves it
+                  submitValues.profilePicture = initialData.profilePicture;
+                }
+              }
+              
               await onAddDoctor(submitValues, resetForm, onClose);
               setSubmitting(false);
             } catch (error) {
@@ -268,7 +365,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       </label>
                     </div>
                   </div>
-                  {errors.profilePicture && touched.profilePicture && (
+                  {errors.profilePicture && touched.profilePicture && !isEditMode && (
                     <div className="text-red-500 text-xs text-center">
                       {errors.profilePicture}
                     </div>
@@ -373,13 +470,14 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         htmlFor="password"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Hasło*
+                        Hasło{isEditMode ? " (opcjonalne)" : "*"}
                       </label>
                       <Field
                         type="password"
                         name="password"
                         id="password"
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                        placeholder={isEditMode ? "Zostaw puste, aby zachować obecne hasło" : ""}
                       />
                       <ErrorMessage
                         name="password"
@@ -393,13 +491,14 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         htmlFor="confirmPassword"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Potwierdź Hasło*
+                        Potwierdź Hasło{isEditMode ? " (opcjonalne)" : "*"}
                       </label>
                       <Field
                         type="password"
                         name="confirmPassword"
                         id="confirmPassword"
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                        placeholder={isEditMode ? "Zostaw puste, aby zachować obecne hasło" : ""}
                       />
                       <ErrorMessage
                         name="confirmPassword"
@@ -522,87 +621,6 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         {errors.qualifications}
                       </div>
                     )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        htmlFor="experience"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Doświadczenie (lata)*
-                      </label>
-                      <div className="relative">
-                        <Field
-                          type="number"
-                          name="experience"
-                          id="experience"
-                          min="0"
-                          className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                        />
-                        <Clock
-                          size={16}
-                          className="absolute left-3 top-3 text-gray-400"
-                        />
-                      </div>
-                      <ErrorMessage
-                        name="experience"
-                        component="div"
-                        className="text-red-500 text-xs mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="consultationFee"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Opłata za konsultację online*
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                          <span className="text-gray-500">PLN</span>
-                        </div>
-                        <Field
-                          type="number"
-                          name="consultationFee"
-                          id="consultationFee"
-                          className="w-full pl-14 p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                          min="0"
-                        />
-                      </div>
-                      <ErrorMessage
-                        name="consultationFee"
-                        component="div"
-                        className="text-red-500 text-xs mt-1"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="offlineConsultationFee"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Opłata za konsultację stacjonarną*
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <span className="text-gray-500">PLN</span>
-                      </div>
-                      <Field
-                        type="number"
-                        name="offlineConsultationFee"
-                        id="offlineConsultationFee"
-                        className="w-full pl-14 p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                        min="0"
-                      />
-                    </div>
-                    <ErrorMessage
-                      name="offlineConsultationFee"
-                      component="div"
-                      className="text-red-500 text-xs mt-1"
-                    />
                   </div>
 
                   <div>

@@ -225,8 +225,16 @@ const doctorService = {
       }
 
       // Handle profile picture
+      // Check if profilePicture is a File object (new upload) or a string (existing URL to preserve)
       if (updateData.profilePicture) {
-        formData.append("file", updateData.profilePicture);
+        // If it's a File object, append it as a file for upload
+        if (updateData.profilePicture instanceof File) {
+          formData.append("file", updateData.profilePicture);
+        }
+        // If it's a string (URL), send it as a field to preserve the existing image
+        else if (typeof updateData.profilePicture === 'string') {
+          formData.append("profilePicture", updateData.profilePicture);
+        }
       }
 
       const response = await apiCaller("PATCH", `/docs/details/${id}`, formData, {
