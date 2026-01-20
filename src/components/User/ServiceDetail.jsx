@@ -41,37 +41,44 @@ const ServiceDetail = ({ serviceName }) => {
     <div className="flex flex-col md:flex-row gap-6 p-6 mx-auto pt-16 max-w-6xl">
       <div className="w-full md:w-1/4 rounded-lg">
         <div className="border max-md:flex max-md:overflow-scroll border-neutral-200 rounded-lg overflow-hidden">
-          {services.map((item) => (
+          {Array.isArray(services) && services.length > 0 ? services.map((item, index) => (
             <Link
-              to={"/uslugi/" + generateServiceSlug(item.title)}
-              key={item._id}
+              to={"/uslugi/" + generateServiceSlug(item.title || "")}
+              key={item._id || `service-${index}`}
               className={`flex max-md:flex-col text-start items-center gap-2 cursor-pointer px-8 py-7 ${
-                generateServiceSlug(item.title) === serviceName ? "bg-main text-white" : ""
+                generateServiceSlug(item.title || "") === serviceName ? "bg-main text-white" : ""
               }`}
             >
               <div className="flex items-center gap-2 w-full">
                 <FaHospital className="text-xl" />
                 <div className="flex flex-col capitalize">
-                  <span>{item.title.length > 20 ? item.title.slice(0, 20) + "..." : item.title}</span>
+                  <span>{(item.title || "").length > 20 ? (item.title || "").slice(0, 20) + "..." : (item.title || "Usługa")}</span>
                 </div>
               </div>
             </Link>
-          ))}
+          )) : (
+            <div className="p-8 text-center text-gray-500">Brak dostępnych usług</div>
+          )}
         </div>
       </div>
 
       <div className="w-full md:w-3/4">
         <div className="w-full flex justify-center">
           <img
-            src={service.images[0]}
-            alt={service.title}
+            src={service.images && Array.isArray(service.images) && service.images.length > 0 
+              ? service.images[0] 
+              : "/images/uslugi.jpg"}
+            alt={service.title || "Usługa medyczna"}
             className="rounded-lg shadow-lg w-full h-80 md:h-96 object-cover"
+            onError={(e) => {
+              e.target.src = "/images/uslugi.jpg";
+            }}
           />
         </div>
 
         <div className="flex justify-between items-center mt-6">
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-main capitalize">
-            {service.title}
+            {service.title || "Usługa medyczna"}
           </h2>
           {/* Display the price prominently */}
           <div className="text-2xl font-bold text-main bg-neutral-100 px-4 py-2 rounded-lg">
@@ -79,17 +86,19 @@ const ServiceDetail = ({ serviceName }) => {
           </div>
         </div>
 
-        <ul className="grid md:grid-cols-2 gap-2 mt-4 text-xl text-neutral-900">
-          {service.bulletPoints.map((point, index) => (
-            <li key={index} className="flex items-center gap-2">
-              <GoDotFill className="text-main text-2xl" />
-              {point}
-            </li>
-          ))}
-        </ul>
+        {service.bulletPoints && Array.isArray(service.bulletPoints) && service.bulletPoints.length > 0 && (
+          <ul className="grid md:grid-cols-2 gap-2 mt-4 text-xl text-neutral-900">
+            {service.bulletPoints.map((point, index) => (
+              <li key={index} className="flex items-center gap-2">
+                <GoDotFill className="text-main text-2xl" />
+                {point}
+              </li>
+            ))}
+          </ul>
+        )}
 
         <p className="mt-4 text-neutral-900 text-lg max-md:text-justify">
-          {service.description}
+          {service.description || ""}
         </p>
       </div>
     </div>
