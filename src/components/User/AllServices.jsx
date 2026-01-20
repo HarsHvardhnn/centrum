@@ -12,20 +12,37 @@ const ServiceCard = ({ service }) => {
   };
 
   // Check if redirectionUrl exists and is not empty
-  const hasRedirectionUrl = service.redirectionUrl && service.redirectionUrl.trim() !== "";
+  const hasRedirectionUrl = service.redirectionUrl && 
+    typeof service.redirectionUrl === 'string' && 
+    service.redirectionUrl.trim() !== "";
+  
+  // Safely get image source
+  const imageSrc = service.images && Array.isArray(service.images) && service.images.length > 0 
+    ? service.images[0] 
+    : "/images/uslugi.jpg"; // fallback image
+  
+  // Safely format redirection URL
+  const getRedirectionUrl = () => {
+    if (!hasRedirectionUrl) return "#";
+    const url = service.redirectionUrl.trim();
+    return url.startsWith('/') ? url : `/${url}`;
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden border flex flex-col h-full">
       <img
-        src={service.images[0]}
-        alt={service.title}
-         loading="lazy"
+        src={imageSrc}
+        alt={service.title || "Usługa medyczna"}
+        loading="lazy"
         className="w-full h-52 object-cover rounded-t-md"
+        onError={(e) => {
+          e.target.src = "/images/uslugi.jpg";
+        }}
       />
       <div className="p-4 flex flex-col flex-grow">
         <div className="mb-2 flex justify-between items-center">
           <h3 className="text-xl font-semibold text-main mb-2">
-            {service.title}
+            {service.title || "Usługa medyczna"}
           </h3>
           {/* Display the price */}
           <div className="inline-block text-lg font-bold text-main bg-neutral-100 px-3 py-1 rounded-lg whitespace-nowrap">
@@ -34,12 +51,12 @@ const ServiceCard = ({ service }) => {
         </div>
         <div className="flex-grow">
           <p className="text-gray-600 text-sm mt-2 line-clamp-3">
-            {truncateText(service.description, 120)}
+            {truncateText(service.description || "", 120)}
           </p>
         </div>
         {hasRedirectionUrl && (
           <Link
-            to={service.redirectionUrl}
+            to={getRedirectionUrl()}
             className="text-main flex items-center gap-1 mt-3 font-medium hover:underline"
           >
             Dowiedz się więcej <FaArrowRight />
@@ -63,8 +80,8 @@ const AllServices = () => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-6xl mx-auto gap-6 pt-16 p-6">
-      {Array.isArray(services) ? services.map((service) => (
-        <ServiceCard key={service._id} service={service} />
+      {Array.isArray(services) && services.length > 0 ? services.map((service, index) => (
+        <ServiceCard key={service._id || `service-${index}`} service={service} />
       )) : (
         <div className="col-span-full text-center py-20 text-gray-500">
           Brak dostępnych usług
