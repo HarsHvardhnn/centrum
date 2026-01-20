@@ -28,84 +28,55 @@ const DoctorSchema = Yup.object().shape({
   phone: Yup.string()
     .required("Numer telefonu jest wymagany")
     .matches(/^\d{9}$/, "Numer telefonu musi składać się z dokładnie 9 cyfr"),
-  password: Yup.string().test('password-validation', function(value) {
-    try {
-      const context = this.options?.context || {};
-      const isEditMode = context.isEditMode === true || context.isEditMode === 'true' || !!context.isEditMode;
-      
-      // In edit mode, field is completely optional
-      if (isEditMode) {
-        // If value is provided, validate it; if empty, allow it
-        if (!value || value.trim() === '') {
-          return true; // Empty is allowed in edit mode
-        }
-        // If value is provided, it must be at least 8 characters
-        if (value.length < 8) {
-          return this.createError({ 
-            path: this.path, 
-            message: 'Hasło musi zawierać co najmniej 8 znaków' 
-          });
-        }
-        return true;
-      }
-      
-      // In create mode, require password with min 8 characters
-      if (!value || value.trim() === '' || value.length < 8) {
-        return this.createError({ 
-          path: this.path, 
-          message: value && value.length < 8 ? 'Hasło musi zawierać co najmniej 8 znaków' : 'Hasło jest wymagane' 
-        });
-      }
-      
-      return true;
-    } catch (error) {
-      // If there's any error, default to allowing (safer for edit mode)
-      return true;
-    }
-  }),
-  confirmPassword: Yup.string().test('confirm-password-validation', function(value) {
-    try {
-      const context = this.options?.context || {};
-      const isEditMode = context.isEditMode === true || context.isEditMode === 'true' || !!context.isEditMode;
-      const password = this.parent.password;
-      
-      // In edit mode, field is completely optional
-      if (isEditMode) {
-        // If password is empty, confirmPassword can be empty
-        if (!password || password.trim() === '') {
-          return true; // Both can be empty in edit mode
-        }
-        // If password is provided, confirmPassword must match
-        if (value !== password) {
-          return this.createError({ 
-            path: this.path, 
-            message: 'Hasła muszą być zgodne' 
-          });
-        }
-        return true;
-      }
-      
-      // In create mode, require confirmPassword and it must match password
-      if (!value || value.trim() === '') {
-        return this.createError({ 
-          path: this.path, 
-          message: 'Potwierdzenie hasła jest wymagane' 
-        });
-      }
-      
-      if (value !== password) {
-        return this.createError({ 
-          path: this.path, 
-          message: 'Hasła muszą być zgodne' 
-        });
-      }
-      
-      return true;
-    } catch (error) {
-      // If there's any error, default to allowing (safer for edit mode)
-      return true;
-    }
-  }),
+  password: Yup.string()
+    .when('$isEditMode', {
+      is: true,
+      then: (schema) => schema
+        .nullable()
+        .transform((value, originalValue) => originalValue === '' ? null : value)
+        .test('password-optional-edit', function(value) {
+          // In edit mode, empty/null is always allowed
+          if (!value || value === null || (typeof value === 'string' && value.trim() === '')) {
+            return true;
+          }
+          // If value is provided, validate length
+          if (value.length < 8) {
+            return this.createError({ 
+              path: this.path, 
+              message: 'Hasło musi zawierać co najmniej 8 znaków' 
+            });
+          }
+          return true;
+        }),
+      otherwise: (schema) => schema
+        .required('Hasło jest wymagane')
+        .min(8, 'Hasło musi zawierać co najmniej 8 znaków')
+    }),
+  confirmPassword: Yup.string()
+    .when('$isEditMode', {
+      is: true,
+      then: (schema) => schema
+        .nullable()
+        .transform((value, originalValue) => originalValue === '' ? null : value)
+        .test('confirm-password-optional-edit', function(value) {
+          const password = this.parent.password;
+          // In edit mode, if password is empty, confirmPassword can be empty
+          if (!password || password === null || (typeof password === 'string' && password.trim() === '')) {
+            return true;
+          }
+          // If password is provided, confirmPassword must match (or be empty)
+          if (value && value !== null && value !== password) {
+            return this.createError({ 
+              path: this.path, 
+              message: 'Hasła muszą być zgodne' 
+            });
+          }
+          return true;
+        }),
+      otherwise: (schema) => schema
+        .required('Potwierdzenie hasła jest wymagane')
+        .oneOf([Yup.ref("password"), null], "Hasła muszą być zgodne")
+    }),
   specialization: Yup.array()
     .min(1, "Wymagana jest co najmniej jedna specjalizacja")
     .required("Specjalizacja jest wymagana"),
@@ -273,7 +244,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             lastName: initialData?.name?.last || initialData?.lastName || "",
             email: initialData?.email || "",
             phone: initialData?.phone || "",
-            password: initialData?.password || "",
+            // In edit mode, always start with empty password fields (optional)
+            password: isEditMode ? "" : (initialData?.password || ""),
             confirmPassword: "",
             department: initialData?.department || "",
             specialization: normalizeSpecs(initialData?.specializations) || initialData?.specialization || [],
@@ -479,11 +451,13 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
                         placeholder={isEditMode ? "Zostaw puste, aby zachować obecne hasło" : ""}
                       />
-                      <ErrorMessage
-                        name="password"
-                        component="div"
-                        className="text-red-500 text-xs mt-1"
-                      />
+                      {errors.password && touched.password && 
+                        (!isEditMode || (isEditMode && values.password && values.password.trim() !== '')) && (
+                          <div className="text-red-500 text-xs mt-1">
+                            {errors.password}
+                          </div>
+                        )
+                      }
                     </div>
 
                     <div>
@@ -500,11 +474,13 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
                         placeholder={isEditMode ? "Zostaw puste, aby zachować obecne hasło" : ""}
                       />
-                      <ErrorMessage
-                        name="confirmPassword"
-                        component="div"
-                        className="text-red-500 text-xs mt-1"
-                      />
+                      {errors.confirmPassword && touched.confirmPassword && 
+                        (!isEditMode || (isEditMode && values.confirmPassword && values.confirmPassword.trim() !== '')) && (
+                          <div className="text-red-500 text-xs mt-1">
+                            {errors.confirmPassword}
+                          </div>
+                        )
+                      }
                     </div>
                   </div>
                 </div>
