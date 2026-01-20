@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   FaTimes,
   FaCalendarAlt,
@@ -32,14 +32,17 @@ export default function Doctors({
   const [selectedDoctor, setSelectedDoctor] = useState(selectedDoctorId);
   const modalClosedRef = useRef(false);
 
+  // Use a ref to track if we need to open appointment modal
+  const pendingDoctorRef = useRef(null);
+  
   useEffect(() => {
-    if (selectedDoctorId) {
+    if (selectedDoctorId && doctors.length > 0) {
       const selectedDoctor = doctors.find(
         (doctor) => doctor.id === selectedDoctorId
       );
       if (selectedDoctor) {
+        pendingDoctorRef.current = selectedDoctor;
         setSelectedDoctor(selectedDoctor);
-        handleBookAppointment(selectedDoctor);
       }
     }
   }, [selectedDoctorId, doctors]);
@@ -326,6 +329,16 @@ export default function Doctors({
       setSlotsLoading(false);
     }
   };
+
+  // Handle pending doctor appointment after handleBookAppointment is defined
+  useEffect(() => {
+    if (pendingDoctorRef.current && !showModal) {
+      const doctor = pendingDoctorRef.current;
+      pendingDoctorRef.current = null;
+      handleBookAppointment(doctor);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doctors.length, showModal]);
 
   const handleBookAppointment = async (doctor) => {
     setSelectedDoctor(doctor);
