@@ -274,10 +274,11 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       // Handle dynamic routes with real data
       // Check specific routes FIRST before general patterns
       if (normalizedPath.startsWith('/aktualnosci/')) {
-        if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
+        if (dynamicData && typeof dynamicData === 'object' && dynamicData.title) {
           // Meta title should be the same as article title (client requirement)
           title = dynamicData.title;
-          description = dynamicData?.shortDescription || '';
+          // Use shortDescription if available, otherwise fall back to description field
+          description = dynamicData.shortDescription || dynamicData.description || 'Bądź na bieżąco z informacjami w CM7.';
           keywords = `aktualności, centrum medyczne 7, news, ${dynamicData.title}`;
           ogImage = (dynamicData && dynamicData.image) ? dynamicData.image : '/images/news.jpg';
         } else {
@@ -336,10 +337,11 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           ogImage = '/images/uslugi.jpg';
         }
       } else if (normalizedPath.startsWith('/poradnik/')) {
-        if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
+        if (dynamicData && typeof dynamicData === 'object' && dynamicData.title) {
           // Meta title should be the same as article title (client requirement)
           title = dynamicData.title;
-          description = dynamicData?.shortDescription || '';
+          // Use shortDescription if available, otherwise fall back to description field
+          description = dynamicData.shortDescription || dynamicData.description || 'Sprawdzone porady zdrowotne od specjalistów CM7.';
           keywords = `poradnik zdrowia, porady medyczne, ${dynamicData.title}`;
           ogImage = (dynamicData && dynamicData.image) ? dynamicData.image : '/images/blogs.jpg';
         } else {
@@ -581,7 +583,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-CODdHMOK.js"></script>
+    <script type="module" crossorigin src="/assets/index-BLQiMCg1.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
