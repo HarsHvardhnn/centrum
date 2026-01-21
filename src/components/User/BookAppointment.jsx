@@ -535,6 +535,7 @@ export default function BookAppointment({
 
   return (
     <section
+      id="appointment-section"
       className={`px-4 sm:px-6 flex justify-center items-center ${
         page === "home"
           ? "bg-[url('/images/bookappointment.jpg')] py-8 sm:py-12 bg-cover bg-center bg-no-repeat"

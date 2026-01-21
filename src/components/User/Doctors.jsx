@@ -35,6 +35,9 @@ export default function Doctors({
   // Use a ref to track if we need to open appointment modal
   const pendingDoctorRef = useRef(null);
   
+  // Track the last processed URL parameter to avoid duplicate opens
+  const lastProcessedUrlRef = useRef(null);
+  
   useEffect(() => {
     if (selectedDoctorId && doctors.length > 0) {
       const selectedDoctor = doctors.find(
@@ -132,19 +135,41 @@ export default function Doctors({
 
   // Parse URL parameters on component mount
   useEffect(() => {
-    // Don't auto-open if modal was just manually closed in this session
-    if (modalClosedRef.current) {
-      return;
-    }
-
     const doctorIdFromUrl = searchParams.get('lekarz');
     const dateFromUrl = searchParams.get('data');
     const timeFromUrl = searchParams.get('godzina');
     
+    // Create a unique key for this URL state
+    const urlKey = `${doctorIdFromUrl || ''}-${dateFromUrl || ''}-${timeFromUrl || ''}`;
+    
+    // If URL has lekarz parameter, reset the modal closed flag to allow opening
+    if (doctorIdFromUrl) {
+      modalClosedRef.current = false;
+    } else {
+      // If no lekarz parameter, don't auto-open if modal was just manually closed
+      if (modalClosedRef.current) {
+        return;
+      }
+      // Clear the last processed URL when lekarz is removed
+      lastProcessedUrlRef.current = null;
+      return;
+    }
+    
+    // Skip if we've already processed this exact URL state
+    if (lastProcessedUrlRef.current === urlKey) {
+      return;
+    }
+    
     if (doctorIdFromUrl && doctors.length > 0) {
       const doctor = doctors.find(d => d.id === doctorIdFromUrl);
       if (doctor) {
-        handleBookAppointment(doctor);
+        // Mark this URL as processed
+        lastProcessedUrlRef.current = urlKey;
+        
+        // Only open if modal is not already open for this doctor
+        if (!showModal || selectedDoctor?.id !== doctor.id) {
+          handleBookAppointment(doctor);
+        }
         
         if (dateFromUrl) {
           setWeekLoading(true);
@@ -178,7 +203,7 @@ export default function Doctors({
         }
       }
     }
-  }, [doctors, searchParams]);
+  }, [doctors, searchParams, showModal, selectedDoctor]);
 
   // Function to update URL with current selections
   const updateUrlWithSelections = (doctorId, date, time) => {
@@ -332,13 +357,13 @@ export default function Doctors({
 
   // Handle pending doctor appointment after handleBookAppointment is defined
   useEffect(() => {
-    if (pendingDoctorRef.current && !showModal) {
+    if (pendingDoctorRef.current && !showModal && doctors.length > 0) {
       const doctor = pendingDoctorRef.current;
       pendingDoctorRef.current = null;
       handleBookAppointment(doctor);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doctors.length, showModal]);
+  }, [doctors.length, showModal, selectedDoctorId]);
 
   const handleBookAppointment = async (doctor) => {
     setSelectedDoctor(doctor);
@@ -575,6 +600,7 @@ export default function Doctors({
       // Close modal and reset form
       setShowModal(false);
       modalClosedRef.current = true;
+      lastProcessedUrlRef.current = null; // Reset so modal can be opened again
       // Clear URL parameters when modal is closed
       setSearchParams({});
       setBookingForm({
@@ -769,6 +795,7 @@ export default function Doctors({
                   onClick={() => {
                     setShowModal(false);
                     modalClosedRef.current = true;
+                    lastProcessedUrlRef.current = null; // Reset so modal can be opened again
                     // Clear URL parameters when modal is closed
                     setSearchParams({});
                   }}
@@ -1443,6 +1470,7 @@ export default function Doctors({
                 onClick={() => {
                   setShowModal(false);
                   modalClosedRef.current = true;
+                  lastProcessedUrlRef.current = null; // Reset so modal can be opened again
                   // Clear URL parameters when modal is closed
                   setSearchParams({});
                 }}

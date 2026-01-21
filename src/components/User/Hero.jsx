@@ -8,6 +8,7 @@ import doctorService from "../../helpers/doctorHelper";
 import { useIsMobile } from "./useIsMobile";
 import { useSpecializations } from "../../context/SpecializationContext";
 import { useAppointmentContext } from "../../UserLayout";
+import { useSearchParams } from "react-router-dom";
 import heroImage from "../../assets/a6cac98caf0f70d2a113ae6f901a2da389eae67e.png";
 
 // Import your actual doctor service here
@@ -24,6 +25,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
   const { specializations } = useSpecializations();
   const { setSelectedDepartment } = useAppointmentContext();
   const isMobile = useIsMobile();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -79,14 +81,30 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
 
   const handleBookAppointment = () => {
     if (selectedDoctorId) {
+      // Set URL parameter to trigger modal opening in Doctors component
+      const params = new URLSearchParams(searchParams);
+      params.set('lekarz', selectedDoctorId);
+      setSearchParams(params);
+      
+      // Scroll to appointment section
       setTimeout(() => {
         const appointmentSection = document.getElementById("appointment-section");
         if (appointmentSection) {
           const yOffset = -120;
           const y = appointmentSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
           window.scrollTo({ top: y, behavior: "smooth" });
+        } else {
+          // Retry if element not found (fallback)
+          setTimeout(() => {
+            const retrySection = document.getElementById("appointment-section");
+            if (retrySection) {
+              const yOffset = -120;
+              const y = retrySection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+              window.scrollTo({ top: y, behavior: "smooth" });
+            }
+          }, 200);
         }
-      }, 100);
+      }, 150);
     }
   };
 
