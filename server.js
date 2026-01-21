@@ -259,8 +259,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       ogImage = '/images/uslugi.jpg';
       break;
     case '/uslugi/implantacja-wszywki-alkoholowej':
-      title = 'CENTRUM MEDYCZNE 7';
-      description = 'Chirurgiczna implantacja disulfiramu (Esperal) w Centrum Medycznym 7. Profesjonalne wszywki alkoholowe. Pomoc w leczeniu uzależnienia od alkoholu. Umów konsultację.';
+      title = 'Wszywka Alkoholowa Skarżysko – Esperal Disulfiram | CM7';
+      description = 'Wszywka alkoholowa Skarżysko-Kamienna, Świętokrzyskie. Szybkie terminy – nawet z dnia na dzień. Dyskretna implantacja disulfiramu (Esperal) przez chirurga.';
       keywords = 'wszywka alkoholowa, esperal, disulfiram, leczenie uzależnienia, implantacja, Skarżysko-Kamienna, Kielce, Radom, centrum medyczne 7';
       ogImage = '/images/uslugi.jpg';
       break;
@@ -288,7 +288,19 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           ogImage = '/images/news.jpg';
         }
       } else if (normalizedPath.startsWith('/uslugi/')) {
-        if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
+        // List of routes with explicit static meta tags - don't override with dynamic data
+        const staticMetaRoutes = [
+          '/uslugi/konsultacja-proktologiczna',
+          '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym',
+          '/uslugi/implantacja-wszywki-alkoholowej',
+          '/uslugi/konsultacja-neurologiczna-dla-dzieci'
+        ];
+        
+        // If this route has static meta tags defined, skip dynamic data override
+        if (staticMetaRoutes.includes(normalizedPath)) {
+          // Keep the static meta tags that were set in the switch case above
+          // Don't override with dynamic data
+        } else if (dynamicData && typeof dynamicData === 'object' && dynamicData.title && dynamicData.shortDescription) {
           // Automatic meta title generation for services
           // Default: {service title} – Skarżysko-Kamienna | Centrum Medyczne 7
           // If total title > ~55 chars: {service title shortened}… – Skarżysko-Kamienna | CM7
