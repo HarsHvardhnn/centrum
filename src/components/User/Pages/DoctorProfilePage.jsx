@@ -10,6 +10,7 @@ import doctorService from '../../../helpers/doctorHelper';
 import { useUser } from '../../../context/userContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from '../../../utils/polandTimezone';
 
 const DoctorProfilePage = () => {
   const { doctorSlug } = useParams();
@@ -28,7 +29,7 @@ const DoctorProfilePage = () => {
   // Booking modal states
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
+    getCurrentDateInPoland()
   );
   const [weekOffset, setWeekOffset] = useState(0);
   const [availableSlots, setAvailableSlots] = useState([]);
@@ -219,7 +220,7 @@ const DoctorProfilePage = () => {
       // On error, fall back to checking individual dates (old method)
       console.log("Falling back to individual date checks...");
       try {
-        const today = new Date().toISOString().split("T")[0];
+        const today = getCurrentDateInPoland();
         const slotChecks = days
           .filter(date => date >= today)
           .map(async (date) => {
@@ -284,9 +285,9 @@ const DoctorProfilePage = () => {
       if (nextAvailableResponse.success && nextAvailableResponse.data) {
         const nextAvailableDate = nextAvailableResponse.data.nextAvailableDate;
         
-        // Calculate which week this date falls into
-        const targetDate = new Date(nextAvailableDate);
-        const today = new Date();
+        // Calculate which week this date falls into (using Poland timezone)
+        const targetDate = new Date(nextAvailableDate + 'T00:00:00');
+        const today = getDateAtMidnightPoland(getCurrentDateInPoland());
         const daysDiff = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
         const weekOffset = Math.max(0, Math.floor(daysDiff / 7)); // Ensure weekOffset is not negative
         
@@ -310,25 +311,24 @@ const DoctorProfilePage = () => {
           });
         }
         
-        // Force update the nextDays array to show the correct week immediately
+        // Force update the nextDays array to show the correct week immediately (using Poland timezone)
         const days = Array.from({ length: 7 }, (_, i) => {
-          const date = new Date();
+          const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
+          const date = new Date(todayPoland);
           date.setDate(date.getDate() + i + weekOffset * 7);
-          return date.toISOString().split("T")[0];
+          return formatDateToPolandTimezone(date);
         });
         setNextDays(days);
         
         // Fetch slot availability for all days in the week
         fetchWeekSlotAvailability(doctorId, days);
       } else {
-        // If no available date found, use current date
-        setSelectedDate(new Date().toISOString().split("T")[0]);
+        // If no available date found, use current date (Poland timezone)
+        const currentDatePoland = getCurrentDateInPoland();
+        setSelectedDate(currentDatePoland);
         setWeekOffset(0); // Reset to current week
         // Fetch slots for current date
-        await fetchAvailableSlots(
-          doctorId,
-          new Date().toISOString().split("T")[0]
-        );
+        await fetchAvailableSlots(doctorId, currentDatePoland);
       }
     } catch (error) {
       console.error("Error fetching doctor availability:", error);
@@ -341,11 +341,8 @@ const DoctorProfilePage = () => {
   };
 
   const handleDateChange = (date) => {
-    // Don't allow selecting past dates
-    const selectedDateObj = new Date(date);
-    const today = new Date().setHours(0, 0, 0, 0);
-    
-    if (selectedDateObj < today) {
+    // Don't allow selecting past dates (using Poland timezone)
+    if (isDateInPast(date)) {
       return;
     }
     
@@ -592,9 +589,10 @@ const DoctorProfilePage = () => {
 
   useEffect(() => {
     const days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
+      const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
+      const date = new Date(todayPoland);
       date.setDate(date.getDate() + i + weekOffset * 7);
-      return date.toISOString().split("T")[0];
+      return formatDateToPolandTimezone(date);
     });
     setNextDays(days);
     
@@ -611,12 +609,13 @@ const DoctorProfilePage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekOffset, doctor?._id, doctor?.id]);
 
-  // Initialize nextDays on component mount
+  // Initialize nextDays on component mount (using Poland timezone)
   useEffect(() => {
     const initialDays = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
+      const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
+      const date = new Date(todayPoland);
       date.setDate(date.getDate() + i);
-      return date.toISOString().split("T")[0];
+      return formatDateToPolandTimezone(date);
     });
     setNextDays(initialDays);
   }, []);
@@ -625,10 +624,11 @@ const DoctorProfilePage = () => {
     const newWeekOffset = Math.max(0, weekOffset + direction); // Ensure we don't go below 0
     setWeekOffset(newWeekOffset);
     
-    // Calculate the first day of the new week
-    const firstDayOfNewWeek = new Date();
+    // Calculate the first day of the new week (using Poland timezone)
+    const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
+    const firstDayOfNewWeek = new Date(todayPoland);
     firstDayOfNewWeek.setDate(firstDayOfNewWeek.getDate() + newWeekOffset * 7);
-    const firstDayDate = firstDayOfNewWeek.toISOString().split("T")[0];
+    const firstDayDate = formatDateToPolandTimezone(firstDayOfNewWeek);
     
     // Check if the currently selected date is still in the new week
     const currentSelectedDate = new Date(selectedDate);
@@ -1250,11 +1250,10 @@ const DoctorProfilePage = () => {
                       </div>
                       <div className="grid grid-cols-3 md:grid-cols-7 gap-2">
                         {nextDays.map((date) => {
-                          const dayDate = new Date(date);
-                          const today = new Date().toISOString().split("T")[0];
+                          const today = getCurrentDateInPoland();
                           const isToday = date === today;
                           const isActive = date === selectedDate;
-                          const isPast = dayDate < new Date().setHours(0, 0, 0, 0);
+                          const isPast = isDateInPast(date);
                           const hasSlots = daysWithSlots.has(date);
                           const isChecking = checkingSlots && !isPast;
 
@@ -1547,7 +1546,7 @@ const DoctorProfilePage = () => {
                                       ? "border-red-500"
                                       : "border-gray-300"
                                   } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                  max={new Date().toISOString().split("T")[0]}
+                                  max={getCurrentDateInPoland()}
                                 />
                                 {formErrors.dateOfBirth && (
                                   <p className="text-red-500 text-xs mt-1">

@@ -109,7 +109,9 @@ const SkinLesionRemovalPage = () => {
       <MetaTags 
         title="Usuwanie zmian skórnych z badaniem histopatologicznym | CM7"
         description="Chirurgiczne usuwanie zmian skórnych, znamion (pieprzyków), kaszaków, włókniaków z badaniem histopatologicznym. Bez skierowania – Świętokrzyskie, Skarżysko-Kamienna."
-        path="/uslugi/Usuwanie-zmian-skórnych"
+        path="/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym"
+        ogImage="/assets/static-assets/Usuwanie-zmian-skórnych.png"
+        twitterImage="/assets/static-assets/Usuwanie-zmian-skórnych.png"
       />
       
       {/* Structured Data */}

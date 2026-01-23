@@ -256,7 +256,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       title = 'Usuwanie zmian skórnych z badaniem histopatologicznym | CM7';
       description = 'Chirurgiczne usuwanie zmian skórnych, znamion (pieprzyków), kaszaków, włókniaków z badaniem histopatologicznym. Bez skierowania – Świętokrzyskie, Skarżysko-Kamienna.';
       keywords = 'usuwanie zmian skórnych, znamiona, pieprzyki, kaszaki, włókniaki, badanie histopatologiczne, Skarżysko-Kamienna, centrum medyczne 7';
-      ogImage = '/images/uslugi.jpg';
+      ogImage = '/assets/static-assets/Usuwanie-zmian-skórnych.png';
       break;
     case '/uslugi/wszywka-alkoholowa-skarzysko-kamienna':
       title = 'Wszywka Alkoholowa Skarżysko – Esperal Disulfiram | CM7';

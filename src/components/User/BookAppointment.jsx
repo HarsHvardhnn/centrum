@@ -8,6 +8,7 @@ import { useSpecializations } from "../../context/SpecializationContext";
 import { FaCalendarAlt, FaShare } from "react-icons/fa";
 import { useUser } from "../../context/userContext";
 import { useSearchParams, useLocation } from "react-router-dom";
+import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from "../../utils/polandTimezone";
 
 export default function BookAppointment({
   page,
@@ -176,7 +177,7 @@ export default function BookAppointment({
       is: 'online',
       then: (schema) => schema
         .required("Data urodzenia jest wymagana")
-        .max(new Date(), "Data urodzenia nie może być w przyszłości")
+        .max(getDateAtMidnightPoland(getCurrentDateInPoland()), "Data urodzenia nie może być w przyszłości")
         .nullable()
         .transform((curr, orig) => orig === '' ? null : curr),
       otherwise: (schema) => schema
@@ -309,8 +310,8 @@ export default function BookAppointment({
           setAvailableSlots(nextAvailableResponse.data.availableSlots);
           updateUrlWithSelections(newDoctorId, values.specialization, nextAvailableResponse.data.nextAvailableDate, "");
         } else {
-          // If no available date found, use current date
-          const currentDate = new Date().toISOString().split("T")[0];
+          // If no available date found, use current date (Poland timezone)
+          const currentDate = getCurrentDateInPoland();
           setFieldValue("date", currentDate);
           // Fetch slots for current date
           await fetchAvailableSlots(newDoctorId, currentDate);
@@ -803,7 +804,7 @@ export default function BookAppointment({
                     onChange={(e) => handleDateChangeWithUpdate(e, values.doctor, setFieldValue, values)}
                     autoComplete="off"
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
-                    min={new Date().toISOString().split('T')[0]}
+                    min={getCurrentDateInPoland()}
                     disabled={!values.doctor}
                   />
                   <ErrorMessage
@@ -858,7 +859,7 @@ export default function BookAppointment({
                             {...field}
                             autoComplete="off"
                             className={`w-full px-3 py-2 border ${form.touched.dateOfBirth && form.errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                            max={new Date().toISOString().split("T")[0]}
+                            max={getCurrentDateInPoland()}
                           />
                         )}
                       </Field>

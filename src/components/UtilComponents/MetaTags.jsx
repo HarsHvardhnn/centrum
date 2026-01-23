@@ -8,8 +8,10 @@ const MetaTags = ({
   ogType = "website",
   ogTitle,
   ogDescription,
+  ogImage,
   twitterTitle,
-  twitterDescription
+  twitterDescription,
+  twitterImage
 }) => {
   const baseUrl = 'https://centrummedyczne7.pl';
   const fullUrl = `${baseUrl}${path}`;
@@ -20,6 +22,17 @@ const MetaTags = ({
   const finalOgDescription = ogDescription || description;
   const finalTwitterTitle = twitterTitle || title;
   const finalTwitterDescription = twitterDescription || description;
+  // Handle ogImage - if provided, use it; if it's a relative path, make it absolute; otherwise use default
+  const finalOgImage = ogImage 
+    ? (ogImage.startsWith('http://') || ogImage.startsWith('https://') 
+        ? ogImage 
+        : `${baseUrl}${ogImage.startsWith('/') ? ogImage : '/' + ogImage}`)
+    : `${baseUrl}/images/fav_new.png`;
+  const finalTwitterImage = twitterImage 
+    ? (twitterImage.startsWith('http://') || twitterImage.startsWith('https://') 
+        ? twitterImage 
+        : `${baseUrl}${twitterImage.startsWith('/') ? twitterImage : '/' + twitterImage}`)
+    : finalOgImage;
 
   return (
     <Helmet>
@@ -33,14 +46,14 @@ const MetaTags = ({
       <meta property="og:url" content={fullUrl} />
       <meta property="og:title" content={finalOgTitle} />
       <meta property="og:description" content={finalOgDescription} />
-      <meta property="og:image" content={`${baseUrl}/images/fav_new.png`} />
+      <meta property="og:image" content={finalOgImage} />
 
       {/* Twitter */}
       <meta property="twitter:card" content="summary_large_image" />
       <meta property="twitter:url" content={fullUrl} />
       <meta property="twitter:title" content={finalTwitterTitle} />
       <meta property="twitter:description" content={finalTwitterDescription} />
-      <meta property="twitter:image" content={`${baseUrl}/images/fav_new.png`} />
+      <meta property="twitter:image" content={finalTwitterImage} />
     </Helmet>
   );
 };
