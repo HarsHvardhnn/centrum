@@ -23,14 +23,56 @@ const AppWrapper = ({ children }) => {
 
 // Global error handler for unhandled errors
 window.addEventListener('error', (event) => {
-  console.error('Global error:', event.error);
-  // Prevent default error handling to avoid showing error page
-  // The ErrorBoundary will handle it
+  const error = event.error || event;
+  const errorMessage = error?.message || error?.toString() || '';
+  
+  // Check if it's React error #300
+  if (errorMessage.includes('Minified React error #300') || errorMessage.includes('error #300')) {
+    const retryCount = parseInt(sessionStorage.getItem('error300_retry') || '0', 10);
+    
+    // Auto-refresh for React error #300 (max 2 retries)
+    if (retryCount < 2) {
+      sessionStorage.setItem('error300_retry', String(retryCount + 1));
+      setTimeout(() => {
+        sessionStorage.removeItem('error300_retry');
+      }, 30000);
+      
+      // Prevent default error handling and refresh
+      event.preventDefault();
+      window.location.reload();
+      return;
+    }
+  }
+  
+  // Log other errors but let ErrorBoundary handle them
+  if (import.meta.env.DEV) {
+    console.error('Global error:', event.error);
+  }
 });
 
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('Unhandled promise rejection:', event.reason);
-  // Prevent default error handling
+  const reason = event.reason?.message || event.reason?.toString() || '';
+  
+  // Check if it's React error #300
+  if (reason.includes('Minified React error #300') || reason.includes('error #300')) {
+    const retryCount = parseInt(sessionStorage.getItem('error300_retry') || '0', 10);
+    
+    if (retryCount < 2) {
+      sessionStorage.setItem('error300_retry', String(retryCount + 1));
+      setTimeout(() => {
+        sessionStorage.removeItem('error300_retry');
+      }, 30000);
+      
+      event.preventDefault();
+      window.location.reload();
+      return;
+    }
+  }
+  
+  // Log other errors
+  if (import.meta.env.DEV) {
+    console.error('Unhandled promise rejection:', event.reason);
+  }
   event.preventDefault();
 });
 
@@ -78,17 +120,34 @@ if (import.meta.env.PROD) {
   // In production, add a fallback error handler
   const originalConsoleError = console.error;
   console.error = (...args) => {
-    // Filter out React error #300 in production to reduce noise
-    if (args[0]?.includes?.('Minified React error #300')) {
-      // Log to error tracking service instead
-      if (window.gtag) {
-        window.gtag('event', 'exception', {
-          description: 'React error #300 - Hydration mismatch',
-          fatal: false
-        });
+    const errorMessage = args[0]?.toString() || '';
+    
+    // Check for React error #300 and auto-refresh
+    if (errorMessage.includes('Minified React error #300') || errorMessage.includes('error #300')) {
+      const retryCount = parseInt(sessionStorage.getItem('error300_retry') || '0', 10);
+      
+      if (retryCount < 2) {
+        sessionStorage.setItem('error300_retry', String(retryCount + 1));
+        setTimeout(() => {
+          sessionStorage.removeItem('error300_retry');
+        }, 30000);
+        
+        // Log to error tracking service
+        if (window.gtag) {
+          window.gtag('event', 'exception', {
+            description: 'React error #300 - Auto-refreshing',
+            fatal: false
+          });
+        }
+        
+        // Auto-refresh
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+        return;
       }
-      return;
     }
+    
     originalConsoleError.apply(console, args);
   };
 }
