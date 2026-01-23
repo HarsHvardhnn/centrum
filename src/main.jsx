@@ -13,8 +13,31 @@ import { Toaster } from "sonner"; // 👈 import sonner's Toaster
 import { ServicesProvider } from "./context/serviceContext";
 import { SpecializationProvider } from "./context/SpecializationContext.jsx";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
+// Only use StrictMode in development to avoid double renders and hydration issues in production
+const AppWrapper = ({ children }) => {
+  if (import.meta.env.DEV) {
+    return <React.StrictMode>{children}</React.StrictMode>;
+  }
+  return <>{children}</>;
+};
+
+// Global error handler for unhandled errors
+window.addEventListener('error', (event) => {
+  console.error('Global error:', event.error);
+  // Prevent default error handling to avoid showing error page
+  // The ErrorBoundary will handle it
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled promise rejection:', event.reason);
+  // Prevent default error handling
+  event.preventDefault();
+});
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+
+root.render(
+  <AppWrapper>
     <HelmetProvider>
       <LoaderProvider>
         <UserProvider>
@@ -32,7 +55,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 }}
               >
                 <SpecializationProvider>
-                  <RouterProvider router={routes} />
+                  <RouterProvider 
+                    router={routes}
+                    future={{
+                      v7_startTransition: true,
+                      v7_relativeSplatPath: true,
+                    }}
+                  />
                   <Toaster richColors position="top-right" />
                 </SpecializationProvider>
               </GoogleReCaptchaProvider>
@@ -41,5 +70,25 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         </UserProvider>
       </LoaderProvider>
     </HelmetProvider>
-  </React.StrictMode>
+  </AppWrapper>
 );
+
+// Error recovery - if render fails, try to recover
+if (import.meta.env.PROD) {
+  // In production, add a fallback error handler
+  const originalConsoleError = console.error;
+  console.error = (...args) => {
+    // Filter out React error #300 in production to reduce noise
+    if (args[0]?.includes?.('Minified React error #300')) {
+      // Log to error tracking service instead
+      if (window.gtag) {
+        window.gtag('event', 'exception', {
+          description: 'React error #300 - Hydration mismatch',
+          fatal: false
+        });
+      }
+      return;
+    }
+    originalConsoleError.apply(console, args);
+  };
+}

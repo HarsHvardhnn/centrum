@@ -9,6 +9,7 @@ import { CookieConsentProvider } from "./context/CookieConsentContext";
 import SEO from "./components/SEO/SEO";
 import SEOTester from "./components/SEO/SEOTester";
 import GoogleAnalytics from "./components/Analytics/GoogleAnalytics";
+import ErrorBoundary from "./components/UtilComponents/ErrorBoundary";
 
 const UserLayout = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -29,28 +30,30 @@ const UserLayout = () => {
   }, []);
 
   return (
-    <CookieConsentProvider>
-      <div className="flex flex-col min-h-screen">
-        <SEO />
-        <GoogleAnalytics />
-        <TawkToWidget />
-        <Header />
-        <main className="flex-1 pt-[15px]">
-          <Outlet
-            context={{
-              selectedDepartment,
-              setSelectedDepartment,
-              selectedDoctorId,
-              setSelectedDoctorId,
-            }}
-          />
-        </main>
-        <Footer />
-        <CookieConsent />
-        <CookiePreferences />
-        <SEOTester />
-      </div>
-    </CookieConsentProvider>
+    <ErrorBoundary>
+      <CookieConsentProvider>
+        <div className="flex flex-col min-h-screen">
+          <SEO />
+          <GoogleAnalytics />
+          <TawkToWidget />
+          <Header />
+          <main className="flex-1 pt-[15px]">
+            <Outlet
+              context={{
+                selectedDepartment,
+                setSelectedDepartment,
+                selectedDoctorId,
+                setSelectedDoctorId,
+              }}
+            />
+          </main>
+          <Footer />
+          <CookieConsent />
+          <CookiePreferences />
+          <SEOTester />
+        </div>
+      </CookieConsentProvider>
+    </ErrorBoundary>
   );
 };
 
