@@ -115,9 +115,21 @@ const NewsManagement = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // Special handling for category to ensure it's always a string
+    let processedValue = value;
+    if (name === 'category') {
+      // If value is an object, extract the ID
+      if (typeof value === 'object' && value?._id) {
+        processedValue = value._id;
+      } else {
+        processedValue = String(value || '');
+      }
+    }
+    
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: processedValue,
     });
     // Clear error when user starts typing
     if (formErrors[name]) {
@@ -196,7 +208,12 @@ const NewsManagement = () => {
     formDataToSend.append("shortDescription", formData.shortDescription);
     formDataToSend.append("description", formData.description);
     formDataToSend.append("isNews", formData.isNews);
-    formDataToSend.append("category", formData.category);
+    
+    // Ensure category is always a string ID, not an object
+    const categoryId = typeof formData.category === 'object' && formData.category?._id 
+      ? formData.category._id 
+      : String(formData.category || '');
+    formDataToSend.append("category", categoryId);
     
     // Append the file if it exists
     if (formData.file) {
@@ -268,6 +285,16 @@ const NewsManagement = () => {
 
   const openEditModal = (article) => {
     setCurrentArticle(article);
+    // Extract category ID - handle both object and string formats
+    let categoryId = "";
+    if (article.category) {
+      if (typeof article.category === 'object' && article.category._id) {
+        categoryId = article.category._id;
+      } else if (typeof article.category === 'string') {
+        categoryId = article.category;
+      }
+    }
+    
     setFormData({
       title: article.title || "",
       author: article.author || "",
@@ -276,7 +303,7 @@ const NewsManagement = () => {
       description: article.description || "",
       image: article.image || "",
       isNews: article.isNews,
-      category: article.category || "",
+      category: categoryId,
       file: null,
     });
     setIsModalOpen(true);
@@ -727,7 +754,9 @@ const NewsManagement = () => {
                     <select
                       name="category"
                       id="category"
-                      value={formData.category}
+                      value={typeof formData.category === 'object' && formData.category?._id 
+                        ? formData.category._id 
+                        : String(formData.category || '')}
                       onChange={handleInputChange}
                       className={`mt-1 block w-full rounded-md shadow-sm ${
                         formErrors.category
