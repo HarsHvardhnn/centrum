@@ -412,7 +412,7 @@ const MichalSzczubkowskiPage = () => {
                       <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">od 500 zł</span>
                     </div>
                     <div className="flex justify-between items-start border-b border-gray-200 pb-3">
-                      <a href="/uslugi/implantacja-wszywki-alkoholowej" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Implantacja wszywki alkoholowej (Disulfiram-Esperal)</a>
+                      <a href="/uslugi/wszywka-alkoholowa-skarzysko-kamienna" className="text-gray-800 text-base sm:text-lg md:text-xl flex-1 hover:text-teal-600 transition-colors cursor-pointer">Implantacja wszywki alkoholowej (Disulfiram-Esperal)</a>
                       <span className="text-teal-600 font-semibold text-base sm:text-lg md:text-xl ml-4">2000 zł</span>
                     </div>
                     <div className="flex justify-between items-start border-b border-gray-200 pb-3">

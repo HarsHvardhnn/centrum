@@ -30,7 +30,7 @@ konsultacja-neurologiczna
 usuniecie-chirurgiczne-szwow-1
 leczenie-ran-przewleklych
 leczenie-chirurgiczne-wrastajacych-paznokci
-implantacja-wszywki-alkoholowej-disulfiram-esperal-1
+wszywka-alkoholowa-skarzysko-kamienna-disulfiram-esperal-1
 wycinanie-zmian-skornych-z-ocena-histopatologiczna
 leczenie-stopy-cukrzycowej
 specjalistyczne-poradnictwo-zywieniowe

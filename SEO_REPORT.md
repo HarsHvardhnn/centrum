@@ -4,7 +4,7 @@
 1. **ProctologyTestPage.jsx** (`/uslugi-new-first/test`)
 2. **ProctologyPage.jsx** (`/proktolog`)
 3. **SkinLesionRemovalPage.jsx** (`/usuwanie-zmian-skornych`)
-4. **AlcoholImplantPage.jsx** (`/implantacja-wszywki-alkoholowej`)
+4. **AlcoholImplantPage.jsx** (`/wszywka-alkoholowa-skarzysko-kamienna`)
 5. **PediatricNeurologyPage.jsx** (`/konsultacja-neurologiczna-dla-dzieci`)
 
 ---

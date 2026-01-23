@@ -85,7 +85,7 @@ const routes = createBrowserRouter([
       { path: "uslugi/konsultacja-proktologiczna", element: <ProctologyTestPage /> },
       { path: "proktolog", element: <ProctologyPage /> },
       { path: "uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym", element: <SkinLesionRemovalPage /> },
-      { path: "uslugi/implantacja-wszywki-alkoholowej", element: <AlcoholImplantPage /> },
+      { path: "uslugi/wszywka-alkoholowa-skarzysko-kamienna", element: <AlcoholImplantPage /> },
       { path: "uslugi/konsultacja-neurologiczna-dla-dzieci", element: <PediatricNeurologyPage /> },
       { path: "*", element: <NotFound404 /> },
     ],

@@ -46,7 +46,7 @@ const AlcoholImplantPage = () => {
       }
     },
     "medicalSpecialty": "Addiction Medicine",
-    "url": "https://centrummedyczne7.pl/uslugi/implantacja-wszywki-alkoholowej"
+    "url": "https://centrummedyczne7.pl/uslugi/wszywka-alkoholowa-skarzysko-kamienna"
   };
 
   return (
@@ -54,7 +54,7 @@ const AlcoholImplantPage = () => {
       <MetaTags 
         title="CENTRUM MEDYCZNE 7"
         description="Chirurgiczna implantacja disulfiramu (Esperal) w Centrum Medycznym 7. Profesjonalne wszywki alkoholowe. Pomoc w leczeniu uzależnienia od alkoholu. Umów konsultację."
-        path="/uslugi/implantacja-wszywki-alkoholowej"
+        path="/uslugi/wszywka-alkoholowa-skarzysko-kamienna"
       />
       
       {/* Structured Data */}

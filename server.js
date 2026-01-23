@@ -200,8 +200,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       ogImage = '/images/doctors1.png';
       break;
     case '/uslugi':
-      title = 'Usługi medyczne – Centrum Medyczne 7 Skarżysko-Kamienna';
-      description = 'Konsultacja chirurgiczna | Konsultacja online | Konsultacja proktologiczna | Leczenie ran przewlekłych | Neurologia dziecięca';
+      title = 'Usługi Medyczne – Centrum Medyczne 7 Skarżysko-Kamienna';
+      description = 'USG, EKG, Holter, proktologia, chirurgia, neurologia dziecięca i inne usługi medyczne – prywatnie, bez skierowania. Skarżysko-Kamienna, Świętokrzyskie. Zobacz.';
       keywords = 'usługi medyczne, konsultacja chirurgiczna, konsultacja online, proktologia, neurologia dziecięca, leczenie ran';
       ogImage = '/images/uslugi.jpg';
       break;
@@ -258,7 +258,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       keywords = 'usuwanie zmian skórnych, znamiona, pieprzyki, kaszaki, włókniaki, badanie histopatologiczne, Skarżysko-Kamienna, centrum medyczne 7';
       ogImage = '/images/uslugi.jpg';
       break;
-    case '/uslugi/implantacja-wszywki-alkoholowej':
+    case '/uslugi/wszywka-alkoholowa-skarzysko-kamienna':
       title = 'Wszywka Alkoholowa Skarżysko – Esperal Disulfiram | CM7';
       description = 'Wszywka alkoholowa Skarżysko-Kamienna, Świętokrzyskie. Szybkie terminy – nawet z dnia na dzień. Dyskretna implantacja disulfiramu (Esperal) przez chirurga.';
       keywords = 'wszywka alkoholowa, esperal, disulfiram, leczenie uzależnienia, implantacja, Skarżysko-Kamienna, Kielce, Radom, centrum medyczne 7';
@@ -292,7 +292,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
         const staticMetaRoutes = [
           '/uslugi/konsultacja-proktologiczna',
           '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym',
-          '/uslugi/implantacja-wszywki-alkoholowej',
+          '/uslugi/wszywka-alkoholowa-skarzysko-kamienna',
           '/uslugi/konsultacja-neurologiczna-dla-dzieci'
         ];
         
@@ -595,7 +595,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-w4drjFV4.js"></script>
+    <script type="module" crossorigin src="/assets/index-e6EjtxRa.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -933,7 +933,7 @@ const knownClientSideRoutes = [
   '/proktolog',
   '/uslugi/konsultacja-proktologiczna',
   '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym',
-  '/uslugi/implantacja-wszywki-alkoholowej',
+  '/uslugi/wszywka-alkoholowa-skarzysko-kamienna',
   '/uslugi/konsultacja-neurologiczna-dla-dzieci'
 ];
 

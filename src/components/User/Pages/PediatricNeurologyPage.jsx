@@ -100,8 +100,8 @@ const PediatricNeurologyPage = () => {
   return (
     <>
       <MetaTags 
-        title="CENTRUM MEDYCZNE 7"
-        description="Konsultacja neurologiczna dla dzieci i młodzieży w Centrum Medycznym 7. Prywatne wizyty bez skierowania. Neurolog dziecięcy lek. Anna Grabowska. Umów wizytę."
+        title="Konsultacja neurologiczna dla dzieci – Neurolog dziecięcy"
+        description="Poradnia neurologiczna dla dzieci – woj. świętokrzyskie. Tiki nerwowe, padaczka, opóźniony rozwój mowy. Diagnoza, leczenie. Skarżysko, Kielce, Radom i okolice."
         path="/uslugi/konsultacja-neurologiczna-dla-dzieci"
       />
       

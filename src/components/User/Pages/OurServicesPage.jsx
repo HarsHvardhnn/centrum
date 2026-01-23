@@ -8,8 +8,8 @@ const OurServicesPage = () => {
   return (
     <>
       <MetaTags 
-        title="Usługi medyczne – CM7 Skarżysko-Kamienna"
-        description="Konsultacja chirurgiczna | Konsultacja online | Konsultacja proktologiczna | Leczenie ran przewlekłych | Neurologia dziecięca"
+        title="Usługi Medyczne – Centrum Medyczne 7 Skarżysko-Kamienna"
+        description="USG, EKG, Holter, proktologia, chirurgia, neurologia dziecięca i inne usługi medyczne – prywatnie, bez skierowania. Skarżysko-Kamienna, Świętokrzyskie. Zobacz."
         path="/uslugi"
       />
       <PageHeader
