@@ -8,6 +8,21 @@ const SEO = () => {
   const [pageData, setPageData] = useState(null);
   const BASE_URL = 'https://centrummedyczne7.pl';
 
+  // Get page data from DOM or API
+  const getPageData = () => {
+    const dataElement = document.querySelector('script[type="application/json"][data-page-data]');
+    return dataElement ? JSON.parse(dataElement.textContent) : null;
+  };
+
+  // IMPORTANT: All hooks must be called before any conditional returns
+  // This ensures hooks are always called in the same order (Rules of Hooks)
+  useEffect(() => {
+    const data = getPageData();
+    if (data) {
+      setPageData(data);
+    }
+  }, [location.pathname]);
+
   // List of routes that have their own MetaTags component - skip SEO component for these
   const routesWithOwnMetaTags = [
     '/lekarze/michal-szczubkowski',
@@ -15,22 +30,10 @@ const SEO = () => {
   ];
 
   // Skip rendering if this route has its own MetaTags component
+  // This check is now AFTER all hooks are called
   if (routesWithOwnMetaTags.includes(location.pathname)) {
     return null;
   }
-
-  // Get page data from DOM or API
-  const getPageData = () => {
-    const dataElement = document.querySelector('script[type="application/json"][data-page-data]');
-    return dataElement ? JSON.parse(dataElement.textContent) : null;
-  };
-
-  useEffect(() => {
-    const data = getPageData();
-    if (data) {
-      setPageData(data);
-    }
-  }, [location.pathname]);
 
   const getMetaInfo = (path) => {
     const currentData = pageData || {};
