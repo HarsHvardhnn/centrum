@@ -4,7 +4,6 @@ import ContactSection from "../ContactSection";
 import { useParams } from "react-router-dom";
 import ServiceDetail from "../ServiceDetail";
 import PageHeader from "../PageHeader";
-import { ServicesProvider } from "../../../context/serviceContext";
 import { useServices } from "../../../context/serviceContext";
 import { generateServiceSlug } from "../../../utils/slugUtils";
 import MetaTags from '../../UtilComponents/MetaTags';

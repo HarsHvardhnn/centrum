@@ -27,8 +27,11 @@ const ServiceDetail = ({ serviceName }) => {
     if (service) {
       trackServiceView(service.title, service.price, 'medical_service');
     }
-  }, [service, trackServiceView]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [service]); // Only depend on service, trackServiceView is stable
 
+  // Handle loading and error states with conditional rendering instead of early returns
+  // This ensures all hooks are always called in the same order
   if (loading) {
     return <div className="text-center py-20">Wczytywanie szczegółów usługi...</div>;
   }
