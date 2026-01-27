@@ -65,6 +65,8 @@ const ProctologyTestPage = () => {
         ogDescription="Dyskretny i profesjonalny przebieg wizyty. Konsultacja proktologiczna bez skierowania – Skarżysko-Kamienna, Centrum Medyczne 7."
         twitterTitle="Konsultacja proktologiczna prywatnie | CM7"
         twitterDescription="Prywatna konsultacja proktologiczna bez skierowania. Dyskrecja, doświadczenie i szybkie terminy."
+        ogImage="/assets/static-assets/section_1_t.png"
+        twitterImage="/assets/static-assets/section_1_t.png"
       />
       
       {/* Structured Data */}

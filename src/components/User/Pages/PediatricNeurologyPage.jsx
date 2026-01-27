@@ -103,6 +103,8 @@ const PediatricNeurologyPage = () => {
         title="Konsultacja neurologiczna dla dzieci – Neurolog dziecięcy"
         description="Poradnia neurologiczna dla dzieci – woj. świętokrzyskie. Tiki nerwowe, padaczka, opóźniony rozwój mowy. Diagnoza, leczenie. Skarżysko, Kielce, Radom i okolice."
         path="/uslugi/konsultacja-neurologiczna-dla-dzieci"
+        ogImage="/assets/static-assets/Konsultacja-neurologiczna-dla-dzieci.png"
+        twitterImage="/assets/static-assets/Konsultacja-neurologiczna-dla-dzieci.png"
       />
       
       {/* Structured Data */}

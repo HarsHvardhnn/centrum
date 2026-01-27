@@ -26,7 +26,9 @@ const SEO = () => {
   // List of routes that have their own MetaTags component - skip SEO component for these
   const routesWithOwnMetaTags = [
     '/lekarze/michal-szczubkowski',
-    '/uslugi/konsultacja-proktologiczna'
+    '/uslugi/konsultacja-proktologiczna',
+    '/uslugi',
+    '/uslugi/wszywka-alkoholowa-skarzysko-kamienna'
   ];
 
   // Skip rendering if this route has its own MetaTags component

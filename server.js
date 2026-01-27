@@ -241,7 +241,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       title = 'Konsultacja proktologiczna prywatnie- Proktolog Świętokrzyskie';
       description = 'Prywatna konsultacja proktologiczna bez skierowania. Doświadczony proktolog, dyskretna wizyta, szybkie terminy. Skarżysko-Kamienna, woj. świętokrzyskie. Cena 300 zł.';
       keywords = 'konsultacja proktologiczna, proktolog, prywatnie, bez skierowania, Skarżysko-Kamienna, świętokrzyskie, centrum medyczne 7';
-      ogImage = '/images/uslugi.jpg';
+      ogImage = '/assets/static-assets/section_1_t.png';
       ogType = 'website';
       ogTitle = 'Konsultacja proktologiczna – bez skierowania | CM7';
       ogDescription = 'Dyskretny i profesjonalny przebieg wizyty. Konsultacja proktologiczna bez skierowania – Skarżysko-Kamienna, Centrum Medyczne 7.';
@@ -262,13 +262,13 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       title = 'Wszywka Alkoholowa Skarżysko – Esperal Disulfiram | CM7';
       description = 'Wszywka alkoholowa Skarżysko-Kamienna, Świętokrzyskie. Szybkie terminy – nawet z dnia na dzień. Dyskretna implantacja disulfiramu (Esperal) przez chirurga.';
       keywords = 'wszywka alkoholowa, esperal, disulfiram, leczenie uzależnienia, implantacja, Skarżysko-Kamienna, Kielce, Radom, centrum medyczne 7';
-      ogImage = '/images/uslugi.jpg';
+      ogImage = '/assets/static-assets/Implantacja _section1.png';
       break;
     case '/uslugi/konsultacja-neurologiczna-dla-dzieci':
       title = 'Konsultacja neurologiczna dla dzieci – Neurolog dziecięcy';
       description = 'Poradnia neurologiczna dla dzieci – woj. świętokrzyskie. Tiki nerwowe, padaczka, opóźniony rozwój mowy. Diagnoza, leczenie. Skarżysko, Kielce, Radom i okolice.';
       keywords = 'neurolog dziecięcy, konsultacja neurologiczna dzieci, neurologia dziecięca, Skarżysko-Kamienna, centrum medyczne 7';
-      ogImage = '/images/uslugi.jpg';
+      ogImage = '/assets/static-assets/Konsultacja-neurologiczna-dla-dzieci.png';
       break;
     default:
       // Handle dynamic routes with real data
@@ -595,7 +595,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-Cc_74WCf.js"></script>
+    <script type="module" crossorigin src="/assets/index-BLdRmKYz.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
