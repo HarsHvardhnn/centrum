@@ -964,7 +964,8 @@ export default function Doctors({
                         const isActive = date === selectedDate;
 
                         const isPast = isDateInPast(date);
-                        
+                        const dayDate = new Date(date + "T12:00:00");
+
                         return (
                           <button
                             key={date}

@@ -1256,6 +1256,7 @@ const DoctorProfilePage = () => {
                           const isPast = isDateInPast(date);
                           const hasSlots = daysWithSlots.has(date);
                           const isChecking = checkingSlots && !isPast;
+                          const dayDate = new Date(date + "T12:00:00");
 
                           return (
                             <button
