@@ -838,41 +838,10 @@ export default function Doctors({
                           </div>
                         )}
 
-                        {doctorProfile.experience && (
-                          <p className="text-sm mt-2">
-                            <span className="font-semibold">
-                              Doświadczenie:
-                            </span>{" "}
-                            {doctorProfile.experience} lat
-                          </p>
-                        )}
                         {doctorProfile.education && (
                           <p className="text-sm mt-2">
                             <span className="font-semibold">Edukacja:</span>{" "}
                             {doctorProfile.education}
-                          </p>
-                        )}
-                        {doctorProfile.onlineConsultationPrice !==
-                          undefined && (
-                          <p className="text-sm font-medium mt-2">
-                            <span className="font-semibold">
-                              Cena wizyty online:
-                            </span>{" "}
-                            {doctorProfile.onlineConsultationPrice === 0
-                              ? "Darmowa"
-                              : `${doctorProfile.onlineConsultationPrice} zł`}
-                          </p>
-                        )}
-
-                        {doctorProfile.offlineConsultationPrice !==
-                          undefined && (
-                          <p className="text-sm font-medium mt-2">
-                            <span className="font-semibold">
-                              Cena wizyty stacjonarnej:
-                            </span>{" "}
-                            {doctorProfile.offlineConsultationPrice === 0
-                              ? "Darmowa"
-                              : `${doctorProfile.offlineConsultationPrice} zł`}
                           </p>
                         )}
                       </div>

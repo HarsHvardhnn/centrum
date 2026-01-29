@@ -1138,37 +1138,10 @@ const DoctorProfilePage = () => {
                           </div>
                         )}
 
-                        {doctor.experience && (
-                          <p className="text-sm mt-2">
-                            <span className="font-semibold">Doświadczenie:</span>{" "}
-                            {doctor.experience} lat
-                          </p>
-                        )}
                         {doctor.education && (
                           <p className="text-sm mt-2">
                             <span className="font-semibold">Edukacja:</span>{" "}
                             {doctor.education}
-                          </p>
-                        )}
-                        {doctor.onlineConsultationPrice !== undefined && (
-                          <p className="text-sm font-medium mt-2">
-                            <span className="font-semibold">
-                              Cena wizyty online:
-                            </span>{" "}
-                            {doctor.onlineConsultationPrice === 0
-                              ? "Darmowa"
-                              : `${doctor.onlineConsultationPrice} zł`}
-                          </p>
-                        )}
-
-                        {doctor.offlineConsultationPrice !== undefined && (
-                          <p className="text-sm font-medium mt-2">
-                            <span className="font-semibold">
-                              Cena wizyty stacjonarnej:
-                            </span>{" "}
-                            {doctor.offlineConsultationPrice === 0
-                              ? "Darmowa"
-                              : `${doctor.offlineConsultationPrice} zł`}
                           </p>
                         )}
                       </div>
