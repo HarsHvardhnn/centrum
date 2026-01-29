@@ -28,7 +28,8 @@ const SEO = () => {
     '/lekarze/michal-szczubkowski',
     '/uslugi/konsultacja-proktologiczna',
     '/uslugi',
-    '/uslugi/wszywka-alkoholowa-skarzysko-kamienna'
+    '/uslugi/wszywka-alkoholowa-skarzysko-kamienna',
+    '/proktolog'
   ];
 
   // Normalize path (strip trailing slash) so skip/list and getMetaInfo match server

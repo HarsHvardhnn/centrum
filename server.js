@@ -250,7 +250,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       title = 'Proktolog Skarżysko-Kamienna – poradnia proktologiczna CM7';
       description = 'Poradnia proktologiczna świętokrzyskie– leczenie hemoroidów (żylaków odbytu), szczelin odbytu, przetok, krwawień. Doświadczony proktolog. Skarżysko-Kamienna.';
       keywords = 'proktolog, konsultacja proktologiczna, hemoroidy, poradnia proktologiczna, Skarżysko-Kamienna, centrum medyczne 7';
-      ogImage = '/images/uslugi.jpg';
+      ogImage = '/assets/static-assets/proktolog_section_1.png';
       break;
     case '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym':
       title = 'Usuwanie zmian skórnych z badaniem histopatologicznym | CM7';
@@ -595,7 +595,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-DOINPZj-.js"></script>
+    <script type="module" crossorigin src="/assets/index-BGNbihl5.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
