@@ -166,7 +166,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     title = 'Lek. Michał Szczubkowski – chirurg, proktolog | Centrum Medyczne 7';
     description = 'Lek. Michał Szczubkowski – chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Leczenie chorób odbytu i schorzeń chirurgicznych.';
     keywords = 'Michał Szczubkowski, chirurg, proktolog, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna';
-    ogImage = '/images/doctors1.png';
+    ogImage = '/assets/static-assets/mikel_doctor.png';
     ogType = 'profile';
     ogTitle = 'Lek. Michał Szczubkowski – chirurg i proktolog | CM7';
     ogDescription = 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Doświadczenie i indywidualne podejście.';
@@ -444,7 +444,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       ogDescription = 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Doświadczenie i indywidualne podejście.';
       twitterTitle = 'Lek. Michał Szczubkowski – chirurg, proktolog | CM7';
       twitterDescription = 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej.';
-      ogImage = '/images/doctors1.png';
+      ogImage = '/assets/static-assets/mikel_doctor.png';
     }
     console.log('✅ FINAL Title:', title);
     console.log('✅ FINAL Description:', description);
@@ -595,7 +595,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-A7UOtGBk.js"></script>
+    <script type="module" crossorigin src="/assets/index-DOINPZj-.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>

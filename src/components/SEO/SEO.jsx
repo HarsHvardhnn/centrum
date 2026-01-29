@@ -31,41 +31,46 @@ const SEO = () => {
     '/uslugi/wszywka-alkoholowa-skarzysko-kamienna'
   ];
 
+  // Normalize path (strip trailing slash) so skip/list and getMetaInfo match server
+  const normalizedPath = location.pathname.replace(/\/$/, '') || '/';
+
   // Skip rendering if this route has its own MetaTags component
   // This check is now AFTER all hooks are called
-  if (routesWithOwnMetaTags.includes(location.pathname)) {
+  if (routesWithOwnMetaTags.includes(normalizedPath)) {
     return null;
   }
 
   const getMetaInfo = (path) => {
+    // Normalize path so switch cases match regardless of trailing slash
+    const pathNorm = (path && path.replace(/\/$/, '')) || path || '/';
     const currentData = pageData || {};
-    const shortDescription = currentData?.news?.shortDescription || 
+    const shortDescription = currentData?.news?.shortDescription ||
                             currentData?.service?.shortDescription ||
                             currentData?.shortDescription;
 
     // Handle dynamic routes with data
-    if (path.startsWith('/aktualnosci/') && currentData?.news) {
+    if (pathNorm.startsWith('/aktualnosci/') && currentData?.news) {
       return {
         title: `${currentData.news.title} | Aktualności – CM7`,
         description: shortDescription || 'Bądź na bieżąco z informacjami w CM7.',
         keywords: 'aktualności, CM7, news, ogłoszenia',
-        canonicalUrl: `${BASE_URL}${path}`,
+        canonicalUrl: `${BASE_URL}${pathNorm}`,
         ogImage: currentData.news.image || '/images/news.jpg'
       };
     }
 
-    if (path.startsWith('/uslugi/') && currentData?.service) {
+    if (pathNorm.startsWith('/uslugi/') && currentData?.service) {
       return {
         title: `${currentData.service.title} – CM7 Skarżysko-Kamienna`,
         description: shortDescription || 'Szczegółowy opis usługi medycznej w Centrum Medycznym 7.',
         keywords: 'usługi medyczne, CM7, ' + currentData.service.title,
-        canonicalUrl: `${BASE_URL}${path}`,
+        canonicalUrl: `${BASE_URL}${pathNorm}`,
         ogImage: currentData.service.images?.[0] || '/images/uslugi.jpg'
       };
     }
 
-    // Static routes
-    switch (path) {
+    // Static routes (use pathNorm so trailing slash doesn't break match)
+    switch (pathNorm) {
       case '/':
         return {
           title: 'Centrum Medyczne 7 – poradnie specjalistyczne świętokrzyskie',
@@ -84,8 +89,8 @@ const SEO = () => {
         };
       case '/uslugi':
         return {
-          title: 'Usługi medyczne – CM7 Skarżysko-Kamienna',
-          description: 'Konsultacja chirurgiczna | Konsultacja online | Konsultacja proktologiczna | Leczenie ran przewlekłych | Neurologia dziecięca',
+          title: 'Usługi Medyczne – Centrum Medyczne 7 Skarżysko-Kamienna',
+          description: 'USG, EKG, Holter, proktologia, chirurgia, neurologia dziecięca i inne usługi medyczne – prywatnie, bez skierowania. Skarżysko-Kamienna, Świętokrzyskie. Zobacz.',
           keywords: 'usługi medyczne, konsultacja chirurgiczna, konsultacja online, proktologia, neurologia dziecięca, leczenie ran',
           canonicalUrl: `${BASE_URL}/uslugi`,
           ogImage: '/images/uslugi.jpg'
@@ -112,12 +117,20 @@ const SEO = () => {
           description: 'Lek. Michał Szczubkowski – chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Leczenie chorób odbytu i schorzeń chirurgicznych.',
           keywords: 'Michał Szczubkowski, chirurg, proktolog, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna',
           canonicalUrl: `${BASE_URL}/lekarze/michal-szczubkowski`,
-          ogImage: '/images/doctors1.png',
+          ogImage: '/assets/static-assets/mikel_doctor.png',
           ogType: 'profile',
           ogTitle: 'Lek. Michał Szczubkowski – chirurg i proktolog | CM7',
           ogDescription: 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Doświadczenie i indywidualne podejście.',
           twitterTitle: 'Lek. Michał Szczubkowski – chirurg, proktolog | CM7',
           twitterDescription: 'Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej.'
+        };
+      case '/uslugi/wszywka-alkoholowa-skarzysko-kamienna':
+        return {
+          title: 'Wszywka Alkoholowa Skarżysko – Esperal Disulfiram | CM7',
+          description: 'Wszywka alkoholowa Skarżysko-Kamienna, Świętokrzyskie. Szybkie terminy – nawet z dnia na dzień. Dyskretna implantacja disulfiramu (Esperal) przez chirurga.',
+          keywords: 'wszywka alkoholowa, esperal, disulfiram, leczenie uzależnienia, implantacja, Skarżysko-Kamienna, Kielce, Radom, centrum medyczne 7',
+          canonicalUrl: `${BASE_URL}/uslugi/wszywka-alkoholowa-skarzysko-kamienna`,
+          ogImage: '/assets/static-assets/Implantacja _section1.png'
         };
       case '/aktualnosci':
         return {
@@ -137,7 +150,7 @@ const SEO = () => {
         };
       default:
         // Check if it's a doctor route that might need API data
-        if (path.startsWith('/lekarze/')) {
+        if (pathNorm.startsWith('/lekarze/')) {
           // For doctor routes, try to get data from DOM or use defaults
           const doctorData = pageData?.doctor || {};
           if (doctorData.name && doctorData.specializations) {
@@ -147,7 +160,7 @@ const SEO = () => {
               title: `Lek. ${doctorName} – ${specializations} | Centrum Medyczne 7`,
               description: doctorData.shortDescription || `Lek. ${doctorName} – ${specializations} przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej.`,
               keywords: `${doctorName}, ${specializations}, centrum medyczne 7, wizyta lekarska, Skarżysko-Kamienna`,
-              canonicalUrl: `${BASE_URL}${path}`,
+              canonicalUrl: `${BASE_URL}${pathNorm}`,
               ogImage: doctorData.image || '/images/doctors1.png',
               ogType: 'profile',
               ogTitle: `Lek. ${doctorName} – ${specializations} | CM7`,
@@ -161,13 +174,13 @@ const SEO = () => {
           title: 'CM7 Skarżysko-Kamienna',
           description: 'Nowoczesna przychodnia w Skarżysku-Kamiennej. Doświadczeni lekarze specjaliści.',
           keywords: 'centrum medyczne, przychodnia, lekarze, Skarżysko-Kamienna',
-          canonicalUrl: `${BASE_URL}${path}`,
+          canonicalUrl: `${BASE_URL}${pathNorm}`,
           ogImage: '/images/mainlogo.png'
         };
     }
   };
 
-  const { title, description, keywords, canonicalUrl, ogImage, ogType, ogTitle, ogDescription, twitterTitle, twitterDescription } = getMetaInfo(location.pathname);
+  const { title, description, keywords, canonicalUrl, ogImage, ogType, ogTitle, ogDescription, twitterTitle, twitterDescription } = getMetaInfo(normalizedPath);
 
   // Use provided OG values or fallback to defaults
   const finalOgType = ogType || 'website';

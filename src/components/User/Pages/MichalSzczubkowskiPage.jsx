@@ -26,7 +26,7 @@ const MichalSzczubkowskiPage = () => {
     },
     "medicalSpecialty": ["Proctology", "General Surgery"],
     "url": "https://centrummedyczne7.pl/lekarze/michal-szczubkowski",
-    "image": "https://centrummedyczne7.pl/assets/static-assets/doctor-image.png"
+    "image": "https://centrummedyczne7.pl/assets/static-assets/mikel_doctor.png"
   };
 
   return (
@@ -37,6 +37,7 @@ const MichalSzczubkowskiPage = () => {
         path="/lekarze/michal-szczubkowski"
         robots="index, follow"
         ogType="profile"
+        ogImage="/assets/static-assets/mikel_doctor.png"
         ogTitle="Lek. Michał Szczubkowski – chirurg i proktolog | CM7"
         ogDescription="Chirurg i proktolog przyjmujący pacjentów w Centrum Medycznym 7 w Skarżysku-Kamiennej. Doświadczenie i indywidualne podejście."
         twitterTitle="Lek. Michał Szczubkowski – chirurg, proktolog | CM7"
@@ -58,7 +59,7 @@ const MichalSzczubkowskiPage = () => {
               <div className="flex-1 w-full lg:w-1/2 flex justify-center lg:justify-end items-center order-1 lg:order-2 mb-6 lg:mb-0">
                 <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
                   <img
-                    src="/assets/static-assets/doctor-image.png"
+                    src="/assets/static-assets/mikel_doctor.png"
                     alt="lek. Michał Szczubkowski - Chirurg, Proktolog"
                     className="w-[200px] h-[200px] sm:w-[240px] sm:h-[240px] md:w-auto md:h-auto lg:w-full lg:h-auto object-cover rounded-full lg:rounded-t-lg lg:rounded-b-none shadow-lg mx-auto lg:mx-0 border-4 border-teal-100 lg:border-0"
                     loading="lazy"
@@ -820,7 +821,7 @@ const MichalSzczubkowskiPage = () => {
                     <div className="flex flex-row md:flex-col items-center md:items-center md:text-center gap-4 md:gap-0 md:mb-6">
                       <div className="w-20 h-20 md:w-48 md:h-48 lg:w-56 lg:h-56 rounded-full md:rounded-lg overflow-hidden bg-primary-lightest flex items-center justify-center flex-shrink-0 md:mb-4">
                         <img
-                          src="/assets/static-assets/doctor-image.png"
+                          src="/assets/static-assets/mikel_doctor.png"
                           alt="lek. Michał Szczubkowski - Chirurg, Proktolog"
                           className="w-full h-full object-cover"
                           loading="lazy"

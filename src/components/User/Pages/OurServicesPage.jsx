@@ -11,6 +11,7 @@ const OurServicesPage = () => {
         title="Usługi Medyczne – Centrum Medyczne 7 Skarżysko-Kamienna"
         description="USG, EKG, Holter, proktologia, chirurgia, neurologia dziecięca i inne usługi medyczne – prywatnie, bez skierowania. Skarżysko-Kamienna, Świętokrzyskie. Zobacz."
         path="/uslugi"
+        ogImage="/images/uslugi.jpg"
       />
       <PageHeader
         title="Nasze Usługi"
