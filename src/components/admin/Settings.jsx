@@ -499,8 +499,9 @@ export default function UserManagement() {
       let response;
       
       if (selectedDoctor) {
-        // Update existing doctor
-        response = await doctorService.updateDoctor(selectedDoctor.id, doctorData);
+        // Update existing doctor (API may return id or _id)
+        const doctorId = selectedDoctor.id || selectedDoctor._id;
+        response = await doctorService.updateDoctor(doctorId, doctorData);
         setSuccess("Lekarz został zaktualizowany pomyślnie");
       } else {
         // Create new doctor

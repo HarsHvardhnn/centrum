@@ -23,9 +23,13 @@ const BillingPage = () => {
           showLoader()
           const response = await doctorService.getAllDoctors();
 
+          const formatDoctorName = (name) =>
+            typeof name === "object" && name !== null
+              ? [name.first, name.last].filter(Boolean).join(" ") || ""
+              : String(name || "");
           const transformed = response.doctors.map((doc, index) => ({
-            id:doc.id || doc._id,
-            name: `Dr. ${doc.name}`,
+            id: doc.id || doc._id,
+            name: `lek. ${formatDoctorName(doc.name)}`.trim() || "lek.",
             specialty: doc.specialty || doc.specializations?.[0] || "Ogólny",
             timing: "9:30 - 13:00", 
             date: format( new Date(doc.date), "dd.MM.yyyy"),
@@ -71,10 +75,11 @@ const BillingPage = () => {
       const createdDoctor = response.doctor;
 
       const newDoctor = {
-        id: createdDoctor.id || createdDoctor.d_id || `dr-${Date.now()}`,
+        id: createdDoctor.id || createdDoctor.d_id || `lek-${Date.now()}`,
         name:
-          createdDoctor.name ||
-          `${doctorData.firstName} ${doctorData.lastName}`,
+          `lek. ${createdDoctor.name && typeof createdDoctor.name === "object"
+            ? [createdDoctor.name.first, createdDoctor.name.last].filter(Boolean).join(" ")
+            : createdDoctor.name || `${doctorData.firstName} ${doctorData.lastName}`}`.trim() || "lek.",
         specialty:
           createdDoctor.specializations?.[0] ||
           doctorData.specialization?.[0] ||

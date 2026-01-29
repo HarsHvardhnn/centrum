@@ -27,7 +27,9 @@ const doctorService = {
 
       formData.append("email", doctorData.email);
       formData.append("phone", doctorData.phone);
-      formData.append("password", doctorData.password);
+      if (doctorData.password) {
+        formData.append("password", doctorData.password);
+      }
       formData.append("signupMethod", doctorData.signupMethod || "email");
       formData.append("bio", doctorData.bio || "");
       formData.append("experience", doctorData.experience || 0);

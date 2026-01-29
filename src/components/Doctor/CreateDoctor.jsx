@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import {
@@ -16,103 +16,63 @@ import SpecializationDropdown from "./SpecializationDropdown";
 import ImageCropper from "../UtilComponents/ImageCropper";
 import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
 
-// List of departments
-
-// Updated validation schema with department field
-const DoctorSchema = Yup.object().shape({
-  firstName: Yup.string().required("Imię jest wymagane"),
-  lastName: Yup.string().required("Nazwisko jest wymagane"),
-  email: Yup.string()
-    .email("Nieprawidłowy adres email")
-    .required("Email jest wymagany"),
-  phone: Yup.string()
-    .required("Numer telefonu jest wymagany")
-    .matches(/^\d{9}$/, "Numer telefonu musi składać się z dokładnie 9 cyfr"),
-  password: Yup.string()
-    .when('$isEditMode', {
-      is: true,
-      then: (schema) => schema
-        .nullable()
-        .transform((value, originalValue) => originalValue === '' ? null : value)
-        .test('password-optional-edit', function(value) {
-          // In edit mode, empty/null is always allowed
-          if (!value || value === null || (typeof value === 'string' && value.trim() === '')) {
+// Base schema fields (same for create and edit)
+const getDoctorSchema = (isEditMode) =>
+  Yup.object().shape({
+    firstName: Yup.string().required("Imię jest wymagane"),
+    lastName: Yup.string().required("Nazwisko jest wymagane"),
+    email: Yup.string()
+      .email("Nieprawidłowy adres email")
+      .required("Email jest wymagany"),
+    phone: Yup.string()
+      .required("Numer telefonu jest wymagany")
+      .matches(/^\d{9}$/, "Numer telefonu musi składać się z dokładnie 9 cyfr"),
+    // Create: required + min 8. Edit: optional; if provided, min 8
+    password: isEditMode
+      ? Yup.string()
+          .optional()
+          .nullable()
+          .transform((v) => (v === "" || v === undefined ? undefined : v))
+          .test("password-edit", function (value) {
+            if (value == null || (typeof value === "string" && value.trim() === "")) return true;
+            if (value.length < 8) return this.createError({ path: this.path, message: "Hasło musi zawierać co najmniej 8 znaków" });
             return true;
-          }
-          // If value is provided, validate length
-          if (value.length < 8) {
-            return this.createError({ 
-              path: this.path, 
-              message: 'Hasło musi zawierać co najmniej 8 znaków' 
-            });
-          }
-          return true;
-        }),
-      otherwise: (schema) => schema
-        .required('Hasło jest wymagane')
-        .min(8, 'Hasło musi zawierać co najmniej 8 znaków')
-    }),
-  confirmPassword: Yup.string()
-    .when('$isEditMode', {
-      is: true,
-      then: (schema) => schema
-        .nullable()
-        .transform((value, originalValue) => originalValue === '' ? null : value)
-        .test('confirm-password-optional-edit', function(value) {
-          const password = this.parent.password;
-          // In edit mode, if password is empty, confirmPassword can be empty
-          if (!password || password === null || (typeof password === 'string' && password.trim() === '')) {
+          })
+      : Yup.string()
+          .required("Hasło jest wymagane")
+          .min(8, "Hasło musi zawierać co najmniej 8 znaków"),
+    confirmPassword: isEditMode
+      ? Yup.string()
+          .optional()
+          .nullable()
+          .transform((v) => (v === "" || v === undefined ? undefined : v))
+          .test("confirm-edit", function (value) {
+            const password = this.parent.password;
+            if (password == null || (typeof password === "string" && password.trim() === "")) return true;
+            if (value != null && value !== password) return this.createError({ path: this.path, message: "Hasła muszą być zgodne" });
             return true;
-          }
-          // If password is provided, confirmPassword must match (or be empty)
-          if (value && value !== null && value !== password) {
-            return this.createError({ 
-              path: this.path, 
-              message: 'Hasła muszą być zgodne' 
-            });
-          }
-          return true;
-        }),
-      otherwise: (schema) => schema
-        .required('Potwierdzenie hasła jest wymagane')
-        .oneOf([Yup.ref("password"), null], "Hasła muszą być zgodne")
-    }),
-  specialization: Yup.array()
-    .min(1, "Wymagana jest co najmniej jedna specjalizacja")
-    .required("Specjalizacja jest wymagana"),
-  qualifications: Yup.array()
-    .min(1, "Wymagana jest co najmniej jedna kwalifikacja")
-    .required("Kwalifikacja jest wymagana"),
-  shortDescription: Yup.string()
-    .required("Krótki opis jest wymagany")
-    .min(10, "Krótki opis musi zawierać co najmniej 10 znaków")
-    .max(200, "Krótki opis nie może przekraczać 200 znaków"),
-  bio: Yup.string().required("Bio jest wymagane"),
-  profilePicture: Yup.mixed().test('profile-picture-required', function(value) {
-    try {
-      const context = this.options?.context || {};
-      const isEditMode = context.isEditMode === true || context.isEditMode === 'true' || !!context.isEditMode;
-      
-      // In edit mode, field is completely optional - always pass
-      if (isEditMode) {
-        return true;
-      }
-      
-      // In create mode, require a File object
-      if (!value || !(value instanceof File)) {
-        return this.createError({ 
-          path: this.path, 
-          message: 'Zdjęcie profilowe jest wymagane' 
-        });
-      }
-      
-      return true;
-    } catch (error) {
-      // If there's any error checking context, default to allowing (safer for edit mode)
-      return true;
-    }
-  }),
-});
+          })
+      : Yup.string()
+          .required("Potwierdzenie hasła jest wymagane")
+          .oneOf([Yup.ref("password"), null], "Hasła muszą być zgodne"),
+    specialization: Yup.array()
+      .min(1, "Wymagana jest co najmniej jedna specjalizacja")
+      .required("Specjalizacja jest wymagana"),
+    qualifications: Yup.array()
+      .min(1, "Wymagana jest co najmniej jedna kwalifikacja")
+      .required("Kwalifikacja jest wymagana"),
+    shortDescription: Yup.string()
+      .required("Krótki opis jest wymagany")
+      .min(10, "Krótki opis musi zawierać co najmniej 10 znaków")
+      .max(200, "Krótki opis nie może przekraczać 200 znaków"),
+    bio: Yup.string().required("Bio jest wymagane"),
+    // Create: required (File). Edit: optional
+    profilePicture: isEditMode
+      ? Yup.mixed().notRequired()
+      : Yup.mixed()
+          .required("Zdjęcie profilowe jest wymagane")
+          .test("is-file", "Zdjęcie profilowe jest wymagane", (value) => value instanceof File),
+  });
 
 
 export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode, onFormDataChange, saveStatus }) {
@@ -139,6 +99,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
       setProfileImage(null);
     }
   }, [isOpen, isEditMode, initialData?.profilePicture]);
+
+  const doctorSchema = useMemo(() => getDoctorSchema(isEditMode), [isEditMode]);
 
   if (!isOpen) return null;
 
@@ -256,8 +218,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             // This ensures validation passes when editing with existing picture
             profilePicture: isEditMode && initialData?.profilePicture ? initialData.profilePicture : null,
           }}
-          validationSchema={DoctorSchema}
-          context={{ isEditMode, initialData }}
+          validationSchema={doctorSchema}
           onSubmit={async (values, { setSubmitting, resetForm }) => {
             try {
               // Always map specialization to array of ids for backend
@@ -266,18 +227,15 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                 specialization: (values.specialization || []).map(spec => spec.id),
               };
               
-              // In edit mode, handle optional fields
+              // Remove password fields when empty (optional in both create and edit)
+              if (!submitValues.password || submitValues.password.trim() === '') {
+                delete submitValues.password;
+                delete submitValues.confirmPassword;
+              }
+
               if (isEditMode) {
-                // Remove password fields if they're empty (don't update password)
-                if (!submitValues.password || submitValues.password.trim() === '') {
-                  delete submitValues.password;
-                  delete submitValues.confirmPassword;
-                }
-                
                 // If no new profile picture is uploaded, use the existing URL
-                // This ensures the backend knows to preserve the existing image
                 if (!submitValues.profilePicture && initialData?.profilePicture) {
-                  // Set profilePicture to the existing URL string so backend preserves it
                   submitValues.profilePicture = initialData.profilePicture;
                 }
               }
@@ -290,7 +248,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             }
           }}
         >
-          {({ values, errors, touched, isSubmitting, setFieldValue }) => {
+          {({ values, errors, touched, isSubmitting, setFieldValue, setTouched, handleSubmit }) => {
             // Track form data changes for auto-save
             useEffect(() => {
               if (onFormDataChange && !isEditMode) {
@@ -298,8 +256,23 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
               }
             }, [values, onFormDataChange, isEditMode]);
 
+            // When validation fails on submit, touch fields with errors so messages show
+            useEffect(() => {
+              const errorKeys = Object.keys(errors);
+              if (errorKeys.length === 0) return;
+              const toTouch = errorKeys.filter((k) => !touched[k]);
+              if (toTouch.length > 0) {
+                setTouched((prev) => ({ ...prev, ...Object.fromEntries(toTouch.map((k) => [k, true])) }));
+              }
+            }, [errors]);
+
             return (
-              <Form className="space-y-6">
+              <Form className="space-y-6" onSubmit={handleSubmit}>
+              {Object.keys(errors).length > 0 && (
+                <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                  Formularz zawiera błędy. Proszę poprawić zaznaczone pola poniżej.
+                </div>
+              )}
               <div className="flex flex-col md:flex-row gap-8">
                 {/* Left column */}
                 <div className="flex-1 space-y-6">
@@ -451,13 +424,9 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
                         placeholder={isEditMode ? "Zostaw puste, aby zachować obecne hasło" : ""}
                       />
-                      {errors.password && touched.password && 
-                        (!isEditMode || (isEditMode && values.password && values.password.trim() !== '')) && (
-                          <div className="text-red-500 text-xs mt-1">
-                            {errors.password}
-                          </div>
-                        )
-                      }
+                      {errors.password && touched.password && (
+                        <div className="text-red-500 text-xs mt-1">{errors.password}</div>
+                      )}
                     </div>
 
                     <div>
@@ -474,13 +443,9 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
                         placeholder={isEditMode ? "Zostaw puste, aby zachować obecne hasło" : ""}
                       />
-                      {errors.confirmPassword && touched.confirmPassword && 
-                        (!isEditMode || (isEditMode && values.confirmPassword && values.confirmPassword.trim() !== '')) && (
-                          <div className="text-red-500 text-xs mt-1">
-                            {errors.confirmPassword}
-                          </div>
-                        )
-                      }
+                      {errors.confirmPassword && touched.confirmPassword && (
+                        <div className="text-red-500 text-xs mt-1">{errors.confirmPassword}</div>
+                      )}
                     </div>
                   </div>
                 </div>
