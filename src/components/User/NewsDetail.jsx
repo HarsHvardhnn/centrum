@@ -70,7 +70,7 @@ const NewsDetail = () => {
 
   const article = {
     title: news.title,
-    description: news.description,
+    description: news.shortDescription || news.description,
   };
 
   const metaTitle = isBlog 
@@ -87,7 +87,7 @@ const NewsDetail = () => {
       "@context": "https://schema.org",
       "@type": isBlog ? "BlogPosting" : "NewsArticle",
       "headline": news.title,
-      "description": news.description,
+      "description": news.shortDescription || news.description,
       "image": {
         "@type": "ImageObject",
         "url": news.image,

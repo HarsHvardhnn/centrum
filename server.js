@@ -595,7 +595,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-BjlfvOFw.js"></script>
+    <script type="module" crossorigin src="/assets/index-BtSnZdkQ.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -1361,9 +1361,9 @@ app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'dist', 'images')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Middleware to serve static doctor pages (if they exist)
-// This provides better SEO and reliability than dynamic server-side rendering
-const serveStaticDoctorPages = (req, res, next) => {
+// Middleware to serve static pages (doctors + articles) when they exist
+// Generated at build time for SEO and reliability
+const serveStaticPages = (req, res, next) => {
   const requestPath = req.normalizedPath || normalizePath(req.path);
   
   // SKIP static file serving for specific routes that need dynamic generation
@@ -1374,43 +1374,56 @@ const serveStaticDoctorPages = (req, res, next) => {
   
   if (isSpecificRoute) {
     console.log('🚫 SKIPPING static file serving for /lekarze/michal-szczubkowski - using dynamic generation');
-    return next(); // Skip static file, use dynamic SEO generation
+    return next();
   }
   
-  // Check if this is a doctor page route
-  if (requestPath.startsWith('/lekarze/') && requestPath !== '/lekarze') {
-    // Extract slug from path
-    const slug = requestPath.replace('/lekarze/', '');
+  // Check for static article pages (news + blogs)
+  if ((requestPath.startsWith('/aktualnosci/') || requestPath.startsWith('/poradnik/')) 
+      && requestPath !== '/aktualnosci' && requestPath !== '/poradnik') {
+    const dir = requestPath.startsWith('/aktualnosci/') ? 'aktualnosci' : 'poradnik';
+    const slug = requestPath.replace(`/${dir}/`, '').replace(/\/$/, '');
     
-    // Validate slug
     if (slug && slug !== 'undefined' && slug.trim() !== '') {
-      // Check if static HTML file exists
-      const staticFilePath = path.join(__dirname, 'dist', 'lekarze', `${slug}.html`);
+      const staticFilePath = path.join(__dirname, 'dist', dir, `${slug}.html`);
       
       if (fs.existsSync(staticFilePath)) {
-        console.log(`📄 Serving static doctor page: /lekarze/${slug}`);
-        
-        // Read and serve the static HTML file
+        console.log(`📄 Serving static article page: /${dir}/${slug}`);
         const staticHTML = fs.readFileSync(staticFilePath, 'utf8');
-        
-        // Set appropriate headers
         res.set({
           'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+          'Cache-Control': 'public, max-age=3600',
           'Vary': 'User-Agent'
         });
-        
         return res.send(staticHTML);
       }
     }
   }
   
-  // If no static file found, continue to next middleware
+  // Check if this is a doctor page route
+  if (requestPath.startsWith('/lekarze/') && requestPath !== '/lekarze') {
+    const slug = requestPath.replace('/lekarze/', '');
+    
+    if (slug && slug !== 'undefined' && slug.trim() !== '') {
+      const staticFilePath = path.join(__dirname, 'dist', 'lekarze', `${slug}.html`);
+      
+      if (fs.existsSync(staticFilePath)) {
+        console.log(`📄 Serving static doctor page: /lekarze/${slug}`);
+        const staticHTML = fs.readFileSync(staticFilePath, 'utf8');
+        res.set({
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600',
+          'Vary': 'User-Agent'
+        });
+        return res.send(staticHTML);
+      }
+    }
+  }
+  
   next();
 };
 
-// Apply static doctor pages middleware BEFORE SEO middleware
-app.get('*', serveStaticDoctorPages);
+// Apply static pages middleware BEFORE SEO middleware
+app.get('*', serveStaticPages);
 
 // Apply SEO middleware for HTML routes only (not for static files)
 app.get('*', (req, res, next) => {

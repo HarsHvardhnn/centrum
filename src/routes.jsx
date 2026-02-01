@@ -100,6 +100,7 @@ const routes = createBrowserRouter([
       { path: "poradnik", element: <LazyRouteWrapper><NewsPage isNews={false} /></LazyRouteWrapper> },
       { path: "kontakt", element: <LazyRouteWrapper><ContactPage /></LazyRouteWrapper> },
       { path: "aktualnosci/:slug", element: <LazyRouteWrapper><NewsDetail /></LazyRouteWrapper> },
+      { path: "poradnik/:slug", element: <LazyRouteWrapper><NewsDetail /></LazyRouteWrapper> },
       { path: "appointments", element: <LazyRouteWrapper><MyAppointments /></LazyRouteWrapper> },
       { path: "details", element: <LazyRouteWrapper><PatientMedicalDetails /></LazyRouteWrapper> },
       { path: "profile", element: <LazyRouteWrapper><ProfilePage /></LazyRouteWrapper> },

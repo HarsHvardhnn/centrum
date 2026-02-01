@@ -51,7 +51,16 @@ try {
   } catch (error) {
     console.warn('⚠️ Warning: Static doctor pages generation failed, continuing with build...');
     console.warn(`   Error: ${error.message}`);
-    // Don't fail the build if static generation fails - it's optional
+  }
+
+  // Step 3b: Generate static article pages (news + blogs)
+  console.log('📰 Generating static article pages...');
+  try {
+    execSync('npm run build:static-articles', { stdio: 'inherit' });
+    console.log('✅ Static article pages generated successfully!');
+  } catch (error) {
+    console.warn('⚠️ Warning: Static article pages generation failed, continuing with build...');
+    console.warn(`   Error: ${error.message}`);
   }
   
   // Step 4: Update server.js
