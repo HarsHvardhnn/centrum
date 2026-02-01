@@ -1366,18 +1366,7 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 const serveStaticPages = (req, res, next) => {
   const requestPath = req.normalizedPath || normalizePath(req.path);
   
-  // SKIP static file serving for specific routes that need dynamic generation
-  const normalizedPathForCheck = requestPath.replace(/\/$/, '') || '/';
-  const isSpecificRoute = normalizedPathForCheck === '/lekarze/michal-szczubkowski' ||
-                          requestPath === '/lekarze/michal-szczubkowski' ||
-                          requestPath === '/lekarze/michal-szczubkowski/';
-  
-  if (isSpecificRoute) {
-    console.log('🚫 SKIPPING static file serving for /lekarze/michal-szczubkowski - using dynamic generation');
-    return next();
-  }
-  
-  // Check for static article pages (news + blogs)
+  // Check for static article pages (news + blogs only)
   if ((requestPath.startsWith('/aktualnosci/') || requestPath.startsWith('/poradnik/')) 
       && requestPath !== '/aktualnosci' && requestPath !== '/poradnik') {
     const dir = requestPath.startsWith('/aktualnosci/') ? 'aktualnosci' : 'poradnik';
@@ -1388,26 +1377,6 @@ const serveStaticPages = (req, res, next) => {
       
       if (fs.existsSync(staticFilePath)) {
         console.log(`📄 Serving static article page: /${dir}/${slug}`);
-        const staticHTML = fs.readFileSync(staticFilePath, 'utf8');
-        res.set({
-          'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'public, max-age=3600',
-          'Vary': 'User-Agent'
-        });
-        return res.send(staticHTML);
-      }
-    }
-  }
-  
-  // Check if this is a doctor page route
-  if (requestPath.startsWith('/lekarze/') && requestPath !== '/lekarze') {
-    const slug = requestPath.replace('/lekarze/', '');
-    
-    if (slug && slug !== 'undefined' && slug.trim() !== '') {
-      const staticFilePath = path.join(__dirname, 'dist', 'lekarze', `${slug}.html`);
-      
-      if (fs.existsSync(staticFilePath)) {
-        console.log(`📄 Serving static doctor page: /lekarze/${slug}`);
         const staticHTML = fs.readFileSync(staticFilePath, 'utf8');
         res.set({
           'Content-Type': 'text/html; charset=utf-8',

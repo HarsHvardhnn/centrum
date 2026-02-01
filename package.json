@@ -6,10 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:static-doctors": "node scripts/generate-static-doctor-pages.js",
     "build:static-articles": "node scripts/generate-static-article-pages.js",
     "build:test-doctor": "node scripts/generate-test-doctor-page.js",
-    "build:full": "npm run build && npm run build:static-doctors && npm run build:static-articles",
+    "build:full": "npm run build && npm run build:static-articles",
     "check:indexing": "node scripts/check-indexing.js",
     "lint": "eslint .",
     "preview": "vite preview",

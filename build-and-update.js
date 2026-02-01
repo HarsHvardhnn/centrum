@@ -43,17 +43,7 @@ try {
   
   console.log(`✅ Found assets: ${jsFile}, ${cssFile}`);
   
-  // Step 3: Generate static doctor pages
-  console.log('👨‍⚕️ Generating static doctor pages...');
-  try {
-    execSync('npm run build:static-doctors', { stdio: 'inherit' });
-    console.log('✅ Static doctor pages generated successfully!');
-  } catch (error) {
-    console.warn('⚠️ Warning: Static doctor pages generation failed, continuing with build...');
-    console.warn(`   Error: ${error.message}`);
-  }
-
-  // Step 3b: Generate static article pages (news + blogs)
+  // Step 3: Generate static article pages (news + blogs)
   console.log('📰 Generating static article pages...');
   try {
     execSync('npm run build:static-articles', { stdio: 'inherit' });
