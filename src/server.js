@@ -68,8 +68,10 @@ function renderWithSEO(res, titleText, descriptionText, ogImage = null, addition
     // Inject meta tags before </head>
     html = html.replace('</head>', `${metaTags}\n</head>`);
 
-    // Also inject visible pre-content SEO block
-    const injection = `\n<section id="seo-content" style="padding:16px 0;">\n  <h1 style="margin:0 0 8px 0; font-size:24px; line-height:1.3;">${escapeHtml(titleText)}</h1>\n  <p style="margin:0; color:#475467;">${escapeHtml(descriptionText)}</p>\n</section>\n<div id="root"></div>`;
+    // First meaningful content: off-screen SEO block so crawlers see title/description
+    // (avoids indexing footer; visible duplicate removed)
+    const srOnly = 'position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;';
+    const injection = `\n<section id="seo-content" style="${srOnly}" aria-hidden="true">\n  <h1>${escapeHtml(titleText)}</h1>\n  <p>${escapeHtml(descriptionText)}</p>\n</section>\n<div id="root"></div>`;
     html = html.replace('<div id="root"></div>', injection);
     
     res.send(html);
@@ -120,10 +122,17 @@ async function fetchArticleData(slug, isNews) {
 // SEO: inject visible pre-content for dynamic service pages
 app.get('/uslugi/:slug', (req, res) => {
   const serviceTitle = humanizeSlug(req.params.slug);
-  // Title rule: {service title} – Skarżysko-Kamienna | Centrum Medyczne 7 (kept simple for visible block)
   const titleText = `${serviceTitle} – Skarżysko-Kamienna | Centrum Medyczne 7`;
   const descriptionText = `Szczegóły usługi: ${serviceTitle}. Rejestracja i szybkie terminy w Centrum Medycznym 7 w Skarżysku-Kamiennej.`;
-  renderWithSEO(res, titleText, descriptionText);
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: titleText,
+    description: descriptionText,
+    url: `https://centrummedyczne7.pl${req.path}`
+  };
+  const structuredData = `<script type="application/ld+json">${JSON.stringify(webPageSchema)}</script>`;
+  renderWithSEO(res, titleText, descriptionText, null, structuredData);
 });
 
 // SEO: inject visible pre-content for dynamic doctor pages
@@ -131,7 +140,15 @@ app.get('/lekarze/:slug', (req, res) => {
   const name = humanizeSlug(req.params.slug);
   const titleText = `Lekarz ${name} – Skarżysko-Kamienna | CM7`;
   const descriptionText = `Profil lekarza ${name}. Umów wizytę w Centrum Medycznym 7 w Skarżysku-Kamiennej.`;
-  renderWithSEO(res, titleText, descriptionText);
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: titleText,
+    description: descriptionText,
+    url: `https://centrummedyczne7.pl${req.path}`
+  };
+  const structuredData = `<script type="application/ld+json">${JSON.stringify(webPageSchema)}</script>`;
+  renderWithSEO(res, titleText, descriptionText, null, structuredData);
 });
 
 // News/blog pages – fetch article data and inject proper metadata
