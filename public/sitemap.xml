@@ -42,4 +42,34 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://centrummedyczne7.pl/uslugi/konsultacja-proktologiczna</loc>
+    <lastmod>2024-01-01T00:00:00.000Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://centrummedyczne7.pl/proktolog</loc>
+    <lastmod>2024-01-01T00:00:00.000Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://centrummedyczne7.pl/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym</loc>
+    <lastmod>2024-01-01T00:00:00.000Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://centrummedyczne7.pl/uslugi/wszywka-alkoholowa-skarzysko-kamienna</loc>
+    <lastmod>2024-01-01T00:00:00.000Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://centrummedyczne7.pl/uslugi/konsultacja-neurologiczna-dla-dzieci</loc>
+    <lastmod>2024-01-01T00:00:00.000Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
 </urlset> 

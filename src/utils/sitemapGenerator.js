@@ -12,6 +12,11 @@ const publicRoutes = [
   '/aktualnosci',
   '/poradnik',
   '/kontakt',
+  '/uslugi/konsultacja-proktologiczna',
+  '/proktolog',
+  '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym',
+  '/uslugi/wszywka-alkoholowa-skarzysko-kamienna',
+  '/uslugi/konsultacja-neurologiczna-dla-dzieci',
 ];
 
 // Helper function to validate slug
