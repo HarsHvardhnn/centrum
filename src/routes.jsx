@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import App from "./App";
 import LoginScreen from "./components/Auth/AuthScreen";
 import LoginImage from "/images/new_login_wp.png";
@@ -113,6 +114,9 @@ function MainLayout() {
 
   return (
     <div className={isDarkMode ? "dark" : ""}>
+      <Helmet>
+        <title>CM7Med</title>
+      </Helmet>
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 z-10">
         <Header />

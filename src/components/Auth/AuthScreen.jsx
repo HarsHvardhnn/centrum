@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import LoginForm from "./Login";
 import { checkIpAccess } from "../../utils/ipService";
 import { useNavigate } from "react-router-dom";
@@ -44,6 +45,10 @@ const LoginScreen = ({ screenImg, isLogin }) => {
   }
 
   return (
+    <>
+      <Helmet>
+        <title>CM7Med - Login to the system.</title>
+      </Helmet>
     <div className="h-screen w-screen flex items-center justify-center overflow-hidden">
       <div className="flex flex-col md:flex-row bg-white rounded-lg overflow-hidden w-[98%] max-w-full h-[97vh] md:h-[95vh]">
         {/* Left Section - Login Form */}
@@ -64,6 +69,7 @@ const LoginScreen = ({ screenImg, isLogin }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

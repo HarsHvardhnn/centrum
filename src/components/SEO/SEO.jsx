@@ -41,7 +41,7 @@ const SEO = () => {
     if (path.startsWith('/uslugi/') && currentData?.service) {
       return {
         title: `${currentData.service.title} – CM7 Skarżysko-Kamienna`,
-        description: shortDescription || 'Szczegółowy opis usługi medycznej w Centrum Medycznym 7.',
+        description: shortDescription || 'Szczegółowy opis usługi medycznej w CM7.',
         keywords: 'usługi medyczne, CM7, ' + currentData.service.title,
         canonicalUrl: `${BASE_URL}${path}`,
         ogImage: currentData.service.images?.[0] || '/images/uslugi.jpg'
@@ -84,8 +84,8 @@ const SEO = () => {
         };
       case '/logowanie':
         return {
-          title: 'Logowanie do systemu CM7Med – Dostęp tylko dla personelu',
-          description: 'Bezpieczne logowanie do panelu CM7MED. Dostęp wyłącznie dla uprawnionych pracowników placówki medycznej.',
+          title: 'CM7Med - Login to the system.',
+          description: 'Login to the system.',
           keywords: 'logowanie CM7MED, panel personelu, dostęp pracowników',
           canonicalUrl: `${BASE_URL}/logowanie`,
           ogImage: '/images/cm7med_link_photo-min.jpg',
