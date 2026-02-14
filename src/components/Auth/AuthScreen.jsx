@@ -47,7 +47,7 @@ const LoginScreen = ({ screenImg, isLogin }) => {
   return (
     <>
       <Helmet>
-        <title>CM7Med - Login to the system.</title>
+        <title>CM7Med - Logowanie do systemu</title>
       </Helmet>
     <div className="h-screen w-screen flex items-center justify-center overflow-hidden">
       <div className="flex flex-col md:flex-row bg-white rounded-lg overflow-hidden w-[98%] max-w-full h-[97vh] md:h-[95vh]">

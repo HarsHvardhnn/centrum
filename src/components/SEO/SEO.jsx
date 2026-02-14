@@ -83,14 +83,8 @@ const SEO = () => {
           ogImage: '/images/contact.jpg'
         };
       case '/logowanie':
-        return {
-          title: 'CM7Med - Login to the system.',
-          description: 'Login to the system.',
-          keywords: 'logowanie CM7MED, panel personelu, dostęp pracowników',
-          canonicalUrl: `${BASE_URL}/logowanie`,
-          ogImage: '/images/cm7med_link_photo-min.jpg',
-          robots: 'noindex, nofollow'
-        };
+      case '/zapomniane-haslo':
+        return { title: 'CM7Med - Logowanie do systemu', titleOnly: true, robots: 'noindex, nofollow' };
       case '/lekarze':
         return {
           title: 'Nasi lekarze – CM7 Skarżysko-Kamienna | Zespół specjalistów',
@@ -127,7 +121,17 @@ const SEO = () => {
     }
   };
 
-  const { title, description, keywords, canonicalUrl, ogImage, robots } = getMetaInfo(location.pathname);
+  const meta = getMetaInfo(location.pathname);
+  const { title, description, keywords, canonicalUrl, ogImage, robots, titleOnly } = meta;
+
+  if (titleOnly) {
+    return (
+      <Helmet>
+        <title>{title}</title>
+        <meta name="robots" content={robots || 'noindex, nofollow'} />
+      </Helmet>
+    );
+  }
 
   return (
     <Helmet>
@@ -135,16 +139,12 @@ const SEO = () => {
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
       <link rel="canonical" href={canonicalUrl} />
-      
-      {/* Robots meta tag - noindex, nofollow for login page */}
       {robots && <meta name="robots" content={robots} />}
-      
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={`${BASE_URL}${ogImage}`} />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:type" content="website" />
-      
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />

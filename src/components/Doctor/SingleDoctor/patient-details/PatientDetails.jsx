@@ -977,7 +977,7 @@ const PatientDetailsPage = () => {
               <User size={16} className="text-teal-500" />
               <span className="text-sm text-gray-600">Lekarz:</span>
               <span className="text-sm font-medium">
-                Dr. {appointment.doctor?.name?.first} {appointment.doctor?.name?.last}
+                Lek. {appointment.doctor?.name?.first} {appointment.doctor?.name?.last}
               </span>
             </div>
           </div>

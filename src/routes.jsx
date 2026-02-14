@@ -116,6 +116,7 @@ function MainLayout() {
     <div className={isDarkMode ? "dark" : ""}>
       <Helmet>
         <title>CM7Med</title>
+        <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 z-10">
