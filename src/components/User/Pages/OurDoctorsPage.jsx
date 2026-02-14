@@ -16,6 +16,7 @@ const OurDoctorsPage = () => {
         title="Nasi lekarze – CM7 Skarżysko-Kamienna | Zespół specjalistów"
         description="Poznaj lekarzy CM7 w Skarżysku-Kamiennej. Doświadczeni specjaliści w różnych dziedzinach medycyny – sprawdź nasz zespół."
         path="/lekarze"
+        ogImage="/images/Specialities.jpg"
       />
       <PageHeader
         title="Nasi Specjaliści "

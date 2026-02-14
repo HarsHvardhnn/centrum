@@ -197,7 +197,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       title = 'Lekarze prywatnie – Skarżysko-Kamienna | Centrum Medyczne 7';
       description = 'Szukasz lekarza prywatnie w Skarżysku-Kamiennej? W Centrum Medycznym 7 przyjmują doświadczeni specjaliści wielu dziedzin. Oferujemy krótkie terminy, wygodną rejestrację i konsultacje bez skierowania.';
       keywords = 'lekarze centrum medyczne 7, specjaliści medycyny, zespół lekarzy, doktorzy Skarżysko-Kamienna';
-      ogImage = '/images/doctors1.png';
+      ogImage = '/images/Specialities.jpg';
       break;
     case '/uslugi':
       title = 'Usługi Medyczne – Centrum Medyczne 7 Skarżysko-Kamienna';
@@ -581,12 +581,27 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <!-- Structured Data -->
     ${structuredData}
     
+    <!-- Server-injected SEO meta for React (prevents Helmet from overwriting with defaults) -->
+    <script type="application/json" id="__INITIAL_SEO__">${JSON.stringify({
+      path: cleanPath,
+      title,
+      description,
+      keywords,
+      canonicalUrl,
+      ogType: ogType || 'website',
+      ogTitle: ogTitle || title,
+      ogDescription: ogDescription || description,
+      ogImage: fullOgImage,
+      twitterTitle: twitterTitle || ogTitle || title,
+      twitterDescription: twitterDescription || ogDescription || description
+    }).replace(/<\/script>/gi, '<\\/script>')}</script>
+    
     <!-- React App CSS and JS will be injected here -->
     <link rel="stylesheet" crossorigin href="/assets/index-DLdSEYil.css">
 </head>
 <body>
-    <!-- SEO Content for crawlers -->
-    <div style="display: none;">
+    <!-- SEO content for crawlers: visible in DOM for snippet selection, not displayed on screen -->
+    <div id="seo-content" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;">
         <h1>${escapeHtml(title)}</h1>
         <p>${escapeHtml(description)}</p>
     </div>

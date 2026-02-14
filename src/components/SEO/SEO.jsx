@@ -8,10 +8,19 @@ const SEO = () => {
   const [pageData, setPageData] = useState(null);
   const BASE_URL = 'https://centrummedyczne7.pl';
 
-  // Get page data from DOM or API
+  // Get page data from DOM or API (injected by NewsDetail/ServicesDetail after fetch)
   const getPageData = () => {
     const dataElement = document.querySelector('script[type="application/json"][data-page-data]');
     return dataElement ? JSON.parse(dataElement.textContent) : null;
+  };
+
+  // Get server-injected SEO meta (from server.js) - prevents overwriting correct meta with defaults
+  const getInitialSEO = () => {
+    try {
+      const el = document.getElementById('__INITIAL_SEO__');
+      if (el && el.textContent) return JSON.parse(el.textContent);
+    } catch (_) {}
+    return null;
   };
 
   // IMPORTANT: All hooks must be called before any conditional returns
@@ -44,6 +53,22 @@ const SEO = () => {
   const getMetaInfo = (path) => {
     // Normalize path so switch cases match regardless of trailing slash
     const pathNorm = (path && path.replace(/\/$/, '')) || path || '/';
+    // Prefer server-injected meta when present and for this path (avoids overwriting correct meta for crawlers; ignore on client-side nav to other path)
+    const initialSEO = getInitialSEO();
+    if (initialSEO && initialSEO.title && initialSEO.description && initialSEO.path === pathNorm) {
+      return {
+        title: initialSEO.title,
+        description: initialSEO.description,
+        keywords: initialSEO.keywords || 'centrum medyczne 7, Skarżysko-Kamienna',
+        canonicalUrl: initialSEO.canonicalUrl || `${BASE_URL}${pathNorm}`,
+        ogImage: initialSEO.ogImage || '/images/mainlogo.png',
+        ogType: initialSEO.ogType || 'website',
+        ogTitle: initialSEO.ogTitle,
+        ogDescription: initialSEO.ogDescription,
+        twitterTitle: initialSEO.twitterTitle,
+        twitterDescription: initialSEO.twitterDescription
+      };
+    }
     const currentData = pageData || {};
     const shortDescription = currentData?.news?.shortDescription ||
                             currentData?.service?.shortDescription ||
@@ -189,6 +214,7 @@ const SEO = () => {
   const finalOgDescription = ogDescription || description;
   const finalTwitterTitle = twitterTitle || title;
   const finalTwitterDescription = twitterDescription || description;
+  const fullOgImage = (ogImage && (ogImage.startsWith('http://') || ogImage.startsWith('https://'))) ? ogImage : `${BASE_URL}${ogImage || '/images/mainlogo.png'}`;
 
   return (
     <Helmet>
@@ -200,13 +226,13 @@ const SEO = () => {
       <meta property="og:type" content={finalOgType} />
       <meta property="og:title" content={finalOgTitle} />
       <meta property="og:description" content={finalOgDescription} />
-      <meta property="og:image" content={`${BASE_URL}${ogImage}`} />
+      <meta property="og:image" content={fullOgImage} />
       <meta property="og:url" content={canonicalUrl} />
       
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={finalTwitterTitle} />
       <meta name="twitter:description" content={finalTwitterDescription} />
-      <meta name="twitter:image" content={`${BASE_URL}${ogImage}`} />
+      <meta name="twitter:image" content={fullOgImage} />
     </Helmet>
   );
 };
