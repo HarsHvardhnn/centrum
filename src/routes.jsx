@@ -30,6 +30,7 @@ const ProctologyPage = React.lazy(() => import("./components/User/Pages/Proctolo
 const SkinLesionRemovalPage = React.lazy(() => import("./components/User/Pages/SkinLesionRemovalPage"));
 const AlcoholImplantPage = React.lazy(() => import("./components/User/Pages/AlcoholImplantPage"));
 const PediatricNeurologyPage = React.lazy(() => import("./components/User/Pages/PediatricNeurologyPage"));
+const DiabeticFootPage = React.lazy(() => import("./components/User/Pages/DiabeticFootPage"));
 const MichalSzczubkowskiPage = React.lazy(() => import("./components/User/Pages/MichalSzczubkowskiPage"));
 
 // Loading component for Suspense
@@ -112,6 +113,7 @@ const routes = createBrowserRouter([
       { path: "uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym", element: <LazyRouteWrapper><SkinLesionRemovalPage /></LazyRouteWrapper> },
       { path: "uslugi/wszywka-alkoholowa-skarzysko-kamienna", element: <LazyRouteWrapper><AlcoholImplantPage /></LazyRouteWrapper> },
       { path: "uslugi/konsultacja-neurologiczna-dla-dzieci", element: <LazyRouteWrapper><PediatricNeurologyPage /></LazyRouteWrapper> },
+      { path: "uslugi/leczenie-stopy-cukrzycowej", element: <LazyRouteWrapper><DiabeticFootPage /></LazyRouteWrapper> },
       { path: "*", element: <NotFound404 /> },
     ],
   },

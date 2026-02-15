@@ -230,6 +230,22 @@ app.get(['/aktualnosci/:slug', '/poradnik/:slug'], async (req, res) => {
   }
 });
 
+// SEO: Leczenie stopy cukrzycowej - custom meta for page source
+app.get('/leczenie-stopy-cukrzycowej', (req, res) => {
+  const titleText = 'Leczenie stopy cukrzycowej – poradnia chirurgiczna Skarżysko';
+  const descriptionText = 'Objawy stopy cukrzycowej? Umów wizytę u doświadczonego chirurga w Skarżysku-Kamiennej. Leczenie ran i powikłań cukrzycowych bez skierowania.';
+  const ogImage = '/assets/static-assets/section1-newpage.png';
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: titleText,
+    description: descriptionText,
+    url: `https://centrummedyczne7.pl${req.path}`
+  };
+  const structuredData = `<script type="application/ld+json">${JSON.stringify(webPageSchema)}</script>`;
+  renderWithSEO(res, titleText, descriptionText, ogImage, structuredData);
+});
+
 // Serve sitemap.xml
 app.get('/sitemap.xml', (req, res) => {
   res.header('Content-Type', 'application/xml');

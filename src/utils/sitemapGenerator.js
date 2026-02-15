@@ -17,6 +17,7 @@ const publicRoutes = [
   '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym',
   '/uslugi/wszywka-alkoholowa-skarzysko-kamienna',
   '/uslugi/konsultacja-neurologiczna-dla-dzieci',
+  '/leczenie-stopy-cukrzycowej',
 ];
 
 // Helper function to validate slug
