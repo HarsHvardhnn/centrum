@@ -35,7 +35,7 @@ const DiabeticFootPage = () => {
                 {/* Main Heading */}
                 <h1 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-4">
                   <span className="block text-teal-600">Leczenie stopy cukrzycowej</span>
-                  <span className="block text-gray-900">Poradnia stopy cukrzycowej Skarżysko-Kamienna</span>
+                  <span className="block text-gray-900 font-semibold">Poradnia stopy cukrzycowej Skarżysko-Kamienna</span>
                 </h1>
 
                 {/* Description */}
