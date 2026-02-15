@@ -20,12 +20,12 @@ const DiabeticFootPage = () => {
       <main className="min-h-screen bg-white">
         {/* Hero Section - Section 1 */}
         <section className="bg-[#F7F9FA] pt-16 md:pt-28 lg:pt-32 pb-12 md:pb-16 lg:pb-20" aria-labelledby="hero-heading">
-          <div className="max-w-7xl mx-auto px-0 md:px-6 lg:px-8 xl:px-12">
+          <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8 lg:gap-12 xl:gap-16">
               {/* Left Side - Text Content */}
               <div className="flex-1 w-full lg:w-1/2 pt-4 lg:pt-0">
                 {/* Teal Pill Tag */}
-                <div className="mb-4 px-4 md:px-0">
+                <div className="mb-4">
                   <span className="inline-flex items-center gap-1.5 bg-teal-100 text-teal-700 px-4 py-1.5 rounded-full text-sm font-medium">
                     <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
                     Specjalistyczna chirurgia naczyniowa i leczenie ran
@@ -33,13 +33,13 @@ const DiabeticFootPage = () => {
                 </div>
 
                 {/* Main Heading */}
-                <h1 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-4 px-4 md:px-0">
+                <h1 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-4">
                   <span className="block text-teal-600">Leczenie stopy cukrzycowej</span>
                   <span className="block text-gray-900">Poradnia stopy cukrzycowej Skarżysko-Kamienna</span>
                 </h1>
 
                 {/* Description */}
-                <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed px-4 md:px-0">
+                <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed">
                   <p>
                     Specjalistyczne leczenie stopy cukrzycowej w Skarżysku-Kamiennej, w województwie świętokrzyskim.
                   </p>
@@ -52,13 +52,13 @@ const DiabeticFootPage = () => {
                 </div>
 
                 {/* Price Box */}
-                <div className="bg-primary-lighter rounded-lg px-6 py-4 mb-6 flex items-center justify-between mx-4 md:mx-0">
+                <div className="bg-primary-lighter rounded-lg px-6 py-4 mb-6 flex items-center justify-between">
                   <span className="text-gray-800 font-medium text-sm md:text-base">Cena leczenia stopy cukrzycowej:</span>
                   <span className="text-teal-700 font-bold text-xl md:text-2xl">od 500 zł</span>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 px-4 md:px-0">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
                   <button 
                     onClick={() => window.location.href = '/?lekarz=6877dbf8635211ff3ec6322d&openAppointment=true#appointment-section'}
                     className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-base md:text-lg"
@@ -75,7 +75,7 @@ const DiabeticFootPage = () => {
                 </div>
 
                 {/* Google Rating */}
-                <div className="px-4 md:px-0">
+                <div>
                   <a
                     href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skar%C5%BCysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dzieci%C4%99cy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu"
                     target="_blank"
@@ -97,7 +97,7 @@ const DiabeticFootPage = () => {
 
               {/* Right Side - Image */}
               <div className="flex-1 w-full lg:w-1/2 flex justify-center lg:justify-end items-center">
-                <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg px-4 md:px-0">
+                <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
                   <img
                     src="/assets/static-assets/section1-newpage.png"
                     alt="Leczenie stopy cukrzycowej - Centrum Medyczne 7"
@@ -114,7 +114,7 @@ const DiabeticFootPage = () => {
         <div role="main">
           {/* Section 2: What is Diabetic Foot */}
           <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="what-is-heading">
-            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="mb-6">
                 <h2 
                   id="what-is-heading"
@@ -454,7 +454,7 @@ const DiabeticFootPage = () => {
 
           {/* Section 5: Surgeon / Doctor */}
           <section className="bg-gray-100 py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="surgeon-heading">
-            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               {/* Centered header - title, subtitle, underline */}
               <div className="text-center mb-8">
                 <h2 id="surgeon-heading" className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1">
@@ -554,7 +554,7 @@ const DiabeticFootPage = () => {
 
           {/* Section 6: Visit Flow / Przebieg wizyty */}
           <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="visit-flow-heading">
-            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               {/* Header - left-aligned, underline at start */}
               <div className="mb-8">
                 <h2 id="visit-flow-heading" className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3">
@@ -825,7 +825,7 @@ const DiabeticFootPage = () => {
 
           {/* Section 8: Scope of Services */}
           <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="scope-heading">
-            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               {/* Main heading - centered */}
               <div className="text-center mb-6">
                 <h2 id="scope-heading" className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3">
@@ -868,7 +868,7 @@ const DiabeticFootPage = () => {
 
           {/* Section 9: Trusted by Patients */}
           <section className="bg-teal-50 py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="trusted-heading">
-            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24 text-center">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24 text-center">
               <h2 id="trusted-heading" className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-6">
                 Zaufali nam pacjenci z całego regionu
               </h2>
@@ -921,7 +921,7 @@ const DiabeticFootPage = () => {
 
           {/* Section 10: FAQ */}
           <section className="bg-white py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="faq-heading">
-            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-8">
                 <h2 id="faq-heading" className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3">
                   Najczęściej zadawane pytania przed wizytą u chirurga w poradni leczenia stopy cukrzycowej
@@ -964,7 +964,7 @@ const DiabeticFootPage = () => {
 
           {/* Section 11: Treatment close to you / Regional reach */}
           <section className="bg-gray-100 py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="regional-heading">
-            <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <div className="text-center mb-8">
                 <h2 id="regional-heading" className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3">
                   Leczenie stopy cukrzycowej blisko Ciebie – Skarżysko-Kamienna, Kielce, Radom i okolice
@@ -996,7 +996,7 @@ const DiabeticFootPage = () => {
 
           {/* Section 12: Contact and location - last section */}
           <section className="bg-teal-5image.png0 py-8 sm:py-12 md:py-16 w-screen relative left-1/2 -translate-x-1/2" aria-labelledby="contact-heading">
-            <div className="max-w-5xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
+            <div className="max-w-6xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 xl:px-20 2xl:px-24">
               <h2 id="contact-heading" className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 text-center mb-8">
                 Poradnia leczenia stopy cukrzycowej – kontakt i lokalizacja
               </h2>

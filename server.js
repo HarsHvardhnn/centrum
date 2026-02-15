@@ -270,6 +270,17 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       keywords = 'neurolog dziecięcy, konsultacja neurologiczna dzieci, neurologia dziecięca, Skarżysko-Kamienna, centrum medyczne 7';
       ogImage = '/assets/static-assets/Konsultacja-neurologiczna-dla-dzieci.png';
       break;
+    case '/uslugi/leczenie-stopy-cukrzycowej':
+    case '/uslugi/leczenie-stopy-cukrzycowej/':
+      title = 'Leczenie stopy cukrzycowej – poradnia chirurgiczna Skarżysko';
+      description = 'Objawy stopy cukrzycowej? Umów wizytę u doświadczonego chirurga w Skarżysku-Kamiennej. Leczenie ran i powikłań cukrzycowych bez skierowania.';
+      keywords = 'stopa cukrzycowa, leczenie stopy cukrzycowej, chirurg Skarżysko-Kamienna, poradnia stopy cukrzycowej, centrum medyczne 7';
+      ogImage = '/assets/static-assets/section1-newpage.png';
+      ogTitle = 'Leczenie stopy cukrzycowej – poradnia chirurgiczna Skarżysko';
+      ogDescription = 'Objawy stopy cukrzycowej? Umów wizytę u doświadczonego chirurga w Skarżysku-Kamiennej. Leczenie ran i powikłań cukrzycowych bez skierowania.';
+      twitterTitle = 'Leczenie stopy cukrzycowej – poradnia chirurgiczna Skarżysko';
+      twitterDescription = 'Objawy stopy cukrzycowej? Umów wizytę u doświadczonego chirurga w Skarżysku-Kamiennej. Leczenie ran i powikłań cukrzycowych bez skierowania.';
+      break;
     default:
       // Handle dynamic routes with real data
       // Check specific routes FIRST before general patterns
@@ -293,7 +304,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           '/uslugi/konsultacja-proktologiczna',
           '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym',
           '/uslugi/wszywka-alkoholowa-skarzysko-kamienna',
-          '/uslugi/konsultacja-neurologiczna-dla-dzieci'
+          '/uslugi/konsultacja-neurologiczna-dla-dzieci',
+          '/uslugi/leczenie-stopy-cukrzycowej'
         ];
         
         // If this route has static meta tags defined, skip dynamic data override
@@ -610,7 +622,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-BHIpgWBb.js"></script>
+    <script type="module" crossorigin src="/assets/index-DBSa2E3o.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -949,7 +961,8 @@ const knownClientSideRoutes = [
   '/uslugi/konsultacja-proktologiczna',
   '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym',
   '/uslugi/wszywka-alkoholowa-skarzysko-kamienna',
-  '/uslugi/konsultacja-neurologiczna-dla-dzieci'
+  '/uslugi/konsultacja-neurologiczna-dla-dzieci',
+  '/uslugi/leczenie-stopy-cukrzycowej'
 ];
 
 // SEO Middleware - Return SEO HTML for EVERYONE (bots and users)
