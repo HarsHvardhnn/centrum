@@ -823,9 +823,9 @@ function LabAppointmentsContent({ clinic }) {
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="font-medium text-gray-900 truncate max-w-[250px]">
-                              {appointment.patient?.name ?? appointment.registrationData?.firstName && appointment.registrationData?.lastName
+                              {appointment.patient?.name ?? (appointment.registrationData?.firstName && appointment.registrationData?.lastName
                                 ? `${appointment.registrationData.firstName} ${appointment.registrationData.lastName}`.trim()
-                                : "Pacjent niezweryfikowany"}
+                                : "Pacjent niezweryfikowany")}
                             </div>
                             <div className="text-sm text-gray-500 truncate max-w-[250px]">
                               {appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "Brak ID (zakończ rejestrację)"}
