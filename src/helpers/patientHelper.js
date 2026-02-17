@@ -461,6 +461,28 @@ const patientService = {
     }
   },
 
+  /**
+   * Check if a patient exists by PESEL (11 digits). Used for duplicate-PESEL handling.
+   * @param {string} pesel - 11-digit PESEL (digits only)
+   * @returns {Promise<{ exists: boolean, patientId?: string, patient?: object }>}
+   */
+  getPatientByPesel: async (pesel) => {
+    try {
+      const normalized = String(pesel).replace(/\D/g, "").slice(0, 11);
+      if (normalized.length !== 11) {
+        return { exists: false };
+      }
+      const response = await apiCaller(
+        "GET",
+        `/api/patients/by-pesel?pesel=${encodeURIComponent(normalized)}`
+      );
+      return response.data ?? response;
+    } catch (error) {
+      console.error("Error checking patient by PESEL:", error);
+      throw error;
+    }
+  },
+
 
   /**
    * Check if a patient is available for appointment

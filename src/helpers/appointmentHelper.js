@@ -77,6 +77,25 @@ class AppointmentService {
     }
   }
 
+  /**
+   * Complete registration: create or link patient to visit (PATIENT_ID created here).
+   * Body: pesel (required), firstName, lastName, dateOfBirth, phone, email, sex, smsConsentAgreed, consents.
+   * Response may include peselWarning (non-blocking).
+   */
+  async completeRegistration(visitId, data) {
+    try {
+      const response = await apiCaller(
+        "POST",
+        `/api/appointments/${visitId}/complete-registration`,
+        data
+      );
+      return response.data ?? response;
+    } catch (error) {
+      console.error("Error completing registration:", error);
+      throw error;
+    }
+  }
+
   // Update appointment details
   async updateAppointment(appointmentId, updatedData) {
     try {

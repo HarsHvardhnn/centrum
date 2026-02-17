@@ -3,10 +3,12 @@ import PatientSearchField from "../AppointmentForm/PatientSearchField";
 import DoctorSelectionWithSlots from "./DoctorsAppointments";
 import userServiceHelper from "../../helpers/userServiceHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
+import patientService from "../../helpers/patientHelper";
 import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft, Clock, Calendar, AlertTriangle } from "lucide-react";
 import { useServices } from "../../context/serviceContext.jsx";
 import { toast } from "sonner";
 import { apiCaller } from "../../utils/axiosInstance";
+import { normalizePesel, getPeselChecksumWarning } from "../../utils/peselUtils";
 
 function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServices = [], isLoadingServices = false }) {
   const { services: contextServices, loading: contextLoading } = useServices();
@@ -50,6 +52,13 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
     customEndTime: "",
   });
   const [availableSlots, setAvailableSlots] = useState([]);
+  // Visit-only flow: after first-time visit is created, show Complete registration
+  const [createdVisitId, setCreatedVisitId] = useState(null);
+  const [completeRegPesel, setCompleteRegPesel] = useState("");
+  const [peselExists, setPeselExists] = useState(false);
+  const [existingPatientData, setExistingPatientData] = useState(null);
+  const [completeRegLoading, setCompleteRegLoading] = useState(false);
+  const [peselCheckLoading, setPeselCheckLoading] = useState(false);
 
   // Update allServices when availableServices changes or use context services as fallback
   useEffect(() => {
@@ -61,6 +70,28 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
     
     setLoadingServices(isLoadingServices || contextLoading);
   }, [availableServices, contextServices, isLoadingServices, contextLoading]);
+
+  // When 11 digits in Complete registration PESEL, check if patient exists
+  useEffect(() => {
+    if (!createdVisitId || completeRegPesel.replace(/\D/g, "").length !== 11) {
+      setPeselExists(false);
+      setExistingPatientData(null);
+      return;
+    }
+    const normalized = normalizePesel(completeRegPesel);
+    let cancelled = false;
+    setPeselCheckLoading(true);
+    patientService.getPatientByPesel(normalized).then((res) => {
+      if (cancelled) return;
+      setPeselExists(!!res?.exists);
+      setExistingPatientData(res?.exists && res?.patient ? res.patient : null);
+    }).catch(() => {
+      if (!cancelled) setPeselExists(false);
+    }).finally(() => {
+      if (!cancelled) setPeselCheckLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [createdVisitId, completeRegPesel]);
 
   const handlePatientSelect = (patient) => {
     setSelectedPatient(patient);
@@ -101,6 +132,12 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
       setValidationErrors(prev => ({
         ...prev,
         email: validateEmail(value)
+      }));
+    } else if (name === "newPatientPesel") {
+      const digitsOnly = normalizePesel(value);
+      setAppointmentData(prev => ({
+        ...prev,
+        [name]: digitsOnly
       }));
     } else {
       setAppointmentData(prev => ({
@@ -260,8 +297,13 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   }, [doctorId]);
 
   const isFirstTimeVisit = appointmentData.visitType === "first-time";
-  const isNewPatientValid = isFirstTimeVisit && 
-    appointmentData.newPatientFirstName.trim() !== "" && 
+  // First submit (visit only): only first name + last name required; PESEL is collected in Complete registration
+  const isNewPatientValidForVisitOnly = isFirstTimeVisit &&
+    appointmentData.newPatientFirstName.trim() !== "" &&
+    appointmentData.newPatientLastName.trim() !== "";
+  // Legacy: full validation when not using visit-only flow (re-visit uses selectedPatient)
+  const isNewPatientValid = isFirstTimeVisit &&
+    appointmentData.newPatientFirstName.trim() !== "" &&
     appointmentData.newPatientLastName.trim() !== "" &&
     appointmentData.newPatientPesel.trim() !== "" &&
     appointmentData.newPatientSex.trim() !== "";
@@ -269,7 +311,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   const canProceedToNextStep = () => {
     switch (currentStep) {
       case 1:
-        return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
+        return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValidForVisitOnly : selectedPatient);
       case 2:
         return appointmentData.selectedDoctor && appointmentData.selectedDate && 
                (appointmentData.selectedSlot || appointmentData.overrideValidation);
@@ -413,19 +455,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">PESEL*</label>
-                    <input
-                      type="text"
-                      name="newPatientPesel"
-                      value={appointmentData.newPatientPesel}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border rounded-lg"
-                      required
-                      placeholder="Wprowadź PESEL"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-1">Płeć*</label>
+                    <label className="block text-sm text-gray-600 mb-1">Płeć</label>
                     <select
                       name="newPatientSex"
                       value={appointmentData.newPatientSex}
@@ -807,9 +837,61 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
     }
   };
 
+  const handleLoadExistingPatient = () => {
+    if (!existingPatientData) return;
+    const name = existingPatientData.name || {};
+    const first = name.first ?? "";
+    const last = name.last ?? "";
+    setAppointmentData(prev => ({
+      ...prev,
+      newPatientFirstName: first,
+      newPatientLastName: last,
+      newPatientEmail: existingPatientData.email ?? prev.newPatientEmail,
+      newPatientPhone: (existingPatientData.phone || "").replace(/\D/g, "").slice(0, 9),
+      newPatientDateOfBirth: existingPatientData.dateOfBirth ?? prev.newPatientDateOfBirth,
+      newPatientSex: existingPatientData.sex ?? prev.newPatientSex
+    }));
+    toast.info("Dane istniejącego pacjenta załadowane. Kliknij „Zakończ rejestrację”, aby przypisać wizytę.");
+  };
+
+  const handleCompleteRegistration = async () => {
+    const normalizedPesel = normalizePesel(completeRegPesel);
+    if (normalizedPesel.length !== 11) {
+      toast.error("Wprowadź prawidłowy numer PESEL (11 cyfr).");
+      return;
+    }
+    setCompleteRegLoading(true);
+    try {
+      const payload = {
+        pesel: normalizedPesel,
+        firstName: appointmentData.newPatientFirstName?.trim() || "",
+        lastName: appointmentData.newPatientLastName?.trim() || "",
+        dateOfBirth: appointmentData.newPatientDateOfBirth || undefined,
+        phone: appointmentData.newPatientPhone ? (appointmentData.newPatientPhone.length === 9 ? "+48" + appointmentData.newPatientPhone : appointmentData.newPatientPhone) : undefined,
+        email: appointmentData.newPatientEmail?.trim() || undefined,
+        sex: appointmentData.newPatientSex || undefined,
+        smsConsentAgreed: true,
+        consents: []
+      };
+      const response = await appointmentHelper.completeRegistration(createdVisitId, payload);
+      if (response?.peselWarning) {
+        toast.warning(response.peselWarning);
+      }
+      toast.success("Rejestracja zakończona. Identyfikator pacjenta został utworzony.");
+      onComplete && onComplete(response);
+      onClose();
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || "Nie udało się zakończyć rejestracji.";
+      toast.error(msg);
+    } finally {
+      setCompleteRegLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
+    const canSubmitVisit = selectedPatient || (isFirstTimeVisit ? isNewPatientValidForVisitOnly : false);
     if (
-      (selectedPatient || isNewPatientValid) &&
+      canSubmitVisit &&
       appointmentData.selectedDoctor &&
       (appointmentData.selectedSlot || appointmentData.overrideValidation)
     ) {
@@ -835,16 +917,16 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
           urgentAppointment: appointmentData.urgentAppointment || false
         };
         
-        // Add patient information
-        if (isFirstTimeVisit && isNewPatientValid) {
+        // Add patient information: first-time = visit only (no patientId, no PESEL); re-visit = link patient
+        if (isFirstTimeVisit && isNewPatientValidForVisitOnly) {
           appointmentSubmissionData.firstName = appointmentData.newPatientFirstName;
           appointmentSubmissionData.lastName = appointmentData.newPatientLastName;
           appointmentSubmissionData.email = appointmentData.newPatientEmail || "";
-          appointmentSubmissionData.phone = appointmentData.newPatientPhone;
-          appointmentSubmissionData.dob = appointmentData.newPatientDateOfBirth;
-          appointmentSubmissionData.sex = appointmentData.newPatientSex;
-          appointmentSubmissionData.pesel = appointmentData.newPatientPesel;
-        } else {
+          appointmentSubmissionData.phone = appointmentData.newPatientPhone || "";
+          appointmentSubmissionData.dob = appointmentData.newPatientDateOfBirth || undefined;
+          appointmentSubmissionData.sex = appointmentData.newPatientSex || undefined;
+          // Do NOT send patientId or pesel; backend creates visit only; PATIENT_ID after complete-registration
+        } else if (!isFirstTimeVisit && selectedPatient) {
           appointmentSubmissionData.patientId = selectedPatient._id;
         }
 
@@ -870,9 +952,21 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
         const response = await appointmentHelper.createReceptionAppointment(appointmentSubmissionData);
         
         if (response.success) {
-          toast.success("Wizyta została utworzona pomyślnie!");
-          onComplete && onComplete(response.data);
-          onClose();
+          const appointment = response.data?.appointment ?? response.data;
+          const visitId = appointment?._id ?? appointment?.id;
+          if (isFirstTimeVisit && visitId) {
+            toast.success("Wizyta utworzona. Zakończ rejestrację pacjenta (PESEL).");
+            setCreatedVisitId(visitId);
+            setCompleteRegPesel("");
+    setPeselExists(false);
+    setExistingPatientData(null);
+            // Prefill complete-registration form from step 1
+            setAppointmentData(prev => ({ ...prev }));
+          } else {
+            toast.success("Wizyta została utworzona pomyślnie!");
+            onComplete && onComplete(response.data);
+            onClose();
+          }
         } else {
           toast.error(response.message || "Nie udało się utworzyć wizyty");
         }
@@ -890,6 +984,97 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
     return appointmentData.selectedServices.reduce((total, service) => 
       total + ((parseFloat(service.price) || 0) * (service.quantity || 1)), 0);
   };
+
+  // Complete registration view (after visit-only created for first-time)
+  if (createdVisitId) {
+    const completeRegPeselNormalized = normalizePesel(completeRegPesel);
+    const canComplete = completeRegPeselNormalized.length === 11 &&
+      appointmentData.newPatientFirstName?.trim() &&
+      appointmentData.newPatientLastName?.trim() &&
+      appointmentData.newPatientSex?.trim();
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-800">Zakończ rejestrację pacjenta</h2>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">Wprowadź PESEL i dane pacjenta. Identyfikator pacjenta zostanie utworzony po zatwierdzeniu.</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">PESEL <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={11}
+                value={completeRegPesel}
+                onChange={(e) => setCompleteRegPesel(normalizePesel(e.target.value))}
+                placeholder="11 cyfr"
+                className="w-full p-2 border border-gray-300 rounded-lg"
+              />
+              {peselCheckLoading && <p className="text-xs text-gray-500 mt-1">Sprawdzam PESEL...</p>}
+              {completeRegPesel.length === 11 && getPeselChecksumWarning(completeRegPesel) && (
+                <p className="mt-1 text-sm text-amber-600">{getPeselChecksumWarning(completeRegPesel)}</p>
+              )}
+              {peselExists && (
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">Pacjent o podanym numerze PESEL już istnieje w systemie.</p>
+                  <button
+                    type="button"
+                    onClick={handleLoadExistingPatient}
+                    className="mt-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                  >
+                    Załaduj dane istniejącego pacjenta
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Imię*</label>
+                <input type="text" value={appointmentData.newPatientFirstName} onChange={(e) => setAppointmentData(prev => ({ ...prev, newPatientFirstName: e.target.value }))} className="w-full p-2 border rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Nazwisko*</label>
+                <input type="text" value={appointmentData.newPatientLastName} onChange={(e) => setAppointmentData(prev => ({ ...prev, newPatientLastName: e.target.value }))} className="w-full p-2 border rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Data urodzenia</label>
+                <input type="date" value={appointmentData.newPatientDateOfBirth} onChange={(e) => setAppointmentData(prev => ({ ...prev, newPatientDateOfBirth: e.target.value }))} className="w-full p-2 border rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Płeć*</label>
+                <select value={appointmentData.newPatientSex} onChange={(e) => setAppointmentData(prev => ({ ...prev, newPatientSex: e.target.value }))} className="w-full p-2 border rounded-lg">
+                  <option value="">Wybierz płeć</option>
+                  <option value="Male">Mężczyzna</option>
+                  <option value="Female">Kobieta</option>
+                  <option value="Others">Inna</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Telefon</label>
+                <input type="tel" value={appointmentData.newPatientPhone} onChange={(e) => setAppointmentData(prev => ({ ...prev, newPatientPhone: e.target.value.replace(/\D/g, "").slice(0, 9) }))} placeholder="9 cyfr" className="w-full p-2 border rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Email</label>
+                <input type="email" value={appointmentData.newPatientEmail} onChange={(e) => setAppointmentData(prev => ({ ...prev, newPatientEmail: e.target.value }))} className="w-full p-2 border rounded-lg" />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Anuluj</button>
+              <button type="button" onClick={handleCompleteRegistration} disabled={!canComplete || completeRegLoading} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                {completeRegLoading ? "Zapisywanie..." : "Zakończ rejestrację"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

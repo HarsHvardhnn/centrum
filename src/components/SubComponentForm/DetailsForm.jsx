@@ -1,5 +1,6 @@
 import { useFormContext } from "../../context/SubStepFormContext";
 import { useState, useEffect } from "react";
+import { normalizePesel } from "../../utils/peselUtils";
 
 // FlagIcon component for rendering country flags
 const FlagIcon = ({ countryCode, className = "w-4 h-4" }) => {
@@ -141,6 +142,10 @@ const DetailsForm = () => {
   
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === "contactPerson1Pesel" || name === "contactPerson2Pesel") {
+      updateFormData(name, normalizePesel(value));
+      return;
+    }
     updateFormData(name, type === 'checkbox' ? checked : value);
   };
 
@@ -370,10 +375,12 @@ const DetailsForm = () => {
             </label>
             <input
               type="text"
+              inputMode="numeric"
               name="contactPerson1Pesel"
               value={formData.contactPerson1Pesel || ""}
               onChange={handleChange}
-              placeholder="Wprowadź PESEL"
+              placeholder="Wprowadź PESEL (11 cyfr)"
+              maxLength={11}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>
@@ -487,10 +494,12 @@ const DetailsForm = () => {
             </label>
             <input
               type="text"
+              inputMode="numeric"
               name="contactPerson2Pesel"
               value={formData.contactPerson2Pesel || ""}
               onChange={handleChange}
-              placeholder="Wprowadź PESEL"
+              placeholder="Wprowadź PESEL (11 cyfr)"
+              maxLength={11}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>

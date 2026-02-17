@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { useLoader } from "../../context/LoaderContext";
 import { useUser } from "../../context/userContext";
 import CheckInModal from "../admin/CheckinModal";
+import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
 import { translateStatus, getStatusStyle } from '../../utils/statusHelper';
@@ -72,6 +73,7 @@ function LabAppointmentsContent({ clinic }) {
     open: false,
     id: null
   });
+  const [showCompleteRegModal, setShowCompleteRegModal] = useState(false);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -795,9 +797,14 @@ function LabAppointmentsContent({ clinic }) {
                           className={`${user?.role === "admin" ? "col-span-4" : "col-span-5"} flex items-center gap-3 min-w-0 ${appointment.isAppointment !== false ? 'cursor-pointer' : ''}`}
                           onClick={() => {
                             if (appointment.isAppointment !== false) {
-                              navigate(
-                                `/szczegoly-pacjenta/${appointment.patient.id}?appointmentId=${appointment.id}`
-                              );
+                              if (appointment.patient?.id || appointment.patient?._id) {
+                                navigate(
+                                  `/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`
+                                );
+                              } else {
+                                setSelectedAppointment(appointment);
+                                setShowCompleteRegModal(true);
+                              }
                             }
                           }}
                         >
@@ -816,10 +823,12 @@ function LabAppointmentsContent({ clinic }) {
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="font-medium text-gray-900 truncate max-w-[250px]">
-                              {appointment.patient?.name}
+                              {appointment.patient?.name ?? appointment.registrationData?.firstName && appointment.registrationData?.lastName
+                                ? `${appointment.registrationData.firstName} ${appointment.registrationData.lastName}`.trim()
+                                : "Pacjent niezweryfikowany"}
                             </div>
                             <div className="text-sm text-gray-500 truncate max-w-[250px]">
-                              {appointment.patient.patientId}
+                              {appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "Brak ID (zakończ rejestrację)"}
                             </div>
                           </div>
                         </div>
@@ -869,19 +878,32 @@ function LabAppointmentsContent({ clinic }) {
                                   sideOffset={5}
                                   align="end"
                                 >
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={() => {
-                                      navigate(
-                                        `/szczegoly-pacjenta/${appointment.patient.id}?appointmentId=${appointment.id}`
-                                      );
-                                    }}
-                                  >
-                                    <Eye size={16} className="mr-2 flex-shrink-0" />
-                                    Zobacz szczegóły
-                                  </DropdownMenu.Item>
+                                  {!(appointment.patient?.id || appointment.patient?._id) ? (
+                                    <DropdownMenu.Item
+                                      className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedAppointment(appointment);
+                                        setShowCompleteRegModal(true);
+                                      }}
+                                    >
+                                      <UserCheck size={16} className="mr-2 flex-shrink-0" />
+                                      Zakończ rejestrację
+                                    </DropdownMenu.Item>
+                                  ) : (
+                                    <DropdownMenu.Item
+                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                      onClick={() => {
+                                        navigate(
+                                          `/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`
+                                        );
+                                      }}
+                                    >
+                                      <Eye size={16} className="mr-2 flex-shrink-0" />
+                                      Zobacz szczegóły
+                                    </DropdownMenu.Item>
+                                  )}
 
-                                  {appointment.status === "booked" && (
+                                  {appointment.patient && appointment.status === "booked" && (
                                     <DropdownMenu.Item
                                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                       onClick={() => {
@@ -905,12 +927,12 @@ function LabAppointmentsContent({ clinic }) {
                                     </DropdownMenu.Item>
                                   )}
 
-                                  {["checkedIn", "booked"].includes(appointment.status) && (
+                                  {appointment.patient && ["checkedIn", "booked"].includes(appointment.status) && (
                                     <DropdownMenu.Item
                                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                       onClick={() => {
                                         setSelectedAppointment(appointment);
-                                        handleBillPatient(appointment.id, appointment.patient.id);
+                                        handleBillPatient(appointment.id, appointment.patient.id || appointment.patient._id);
                                       }}
                                     >
                                       <DollarSign size={16} className="mr-2" />
@@ -939,18 +961,20 @@ function LabAppointmentsContent({ clinic }) {
                                   </DropdownMenu.Item>
                                 )}
 
-                                {/* Edit Patient button for clinic cases */}
-                                <DropdownMenu.Item
-                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                  onClick={() => {
-                                    const currentPath = clinic ? '/klinika' : '/pacjenci';
-                                    const returnUrl = encodeURIComponent(currentPath);
-                                    navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id}&returnUrl=${returnUrl}`);
-                                  }}
-                                >
-                                  <Eye size={16} className="mr-2" />
-                                  Edytuj pacjenta
-                                </DropdownMenu.Item>
+                                {/* Edit Patient button - only when visit has a patient */}
+                                {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={() => {
+                                      const currentPath = clinic ? '/klinika' : '/pacjenci';
+                                      const returnUrl = encodeURIComponent(currentPath);
+                                      navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${returnUrl}`);
+                                    }}
+                                  >
+                                    <Eye size={16} className="mr-2" />
+                                    Edytuj pacjenta
+                                  </DropdownMenu.Item>
+                                )}
                               </DropdownMenu.Content>
                               </DropdownMenu.Portal>
                             </DropdownMenu.Root>
@@ -1008,9 +1032,14 @@ function LabAppointmentsContent({ clinic }) {
                       className={`px-4 py-3 truncate ${appointment.isAppointment !== false ? 'cursor-pointer' : ''}`}
                       onClick={() => {
                         if (appointment.isAppointment !== false) {
-                          navigate(
-                            `/szczegoly-pacjenta/${appointment.patient.id}?appointmentId=${appointment.id}`
-                          );
+                          if (appointment.patient?.id || appointment.patient?._id) {
+                            navigate(
+                              `/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`
+                            );
+                          } else {
+                            setSelectedAppointment(appointment);
+                            setShowCompleteRegModal(true);
+                          }
                         }
                       }}
                     >
@@ -1030,10 +1059,12 @@ function LabAppointmentsContent({ clinic }) {
                         </div>
                         <div className="min-w-0">
                           <div className="font-medium truncate">
-                            {appointment.patient?.name}
+                            {appointment.patient?.name ?? (appointment.registrationData?.firstName && appointment.registrationData?.lastName
+                              ? `${appointment.registrationData.firstName} ${appointment.registrationData.lastName}`.trim()
+                              : "Pacjent niezweryfikowany")}
                           </div>
                           <div className="text-sm text-gray-500 truncate">
-                            {appointment.patient.patientId}
+                            {appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "Brak ID (zakończ rejestrację)"}
                           </div>
                         </div>
                       </div>
@@ -1075,7 +1106,7 @@ function LabAppointmentsContent({ clinic }) {
                     </td>
 
                     <td className="px-4 py-3 truncate">
-                      {appointment.patient.phoneNumber || "-"}
+                      {appointment.patient?.phoneNumber ?? appointment.registrationData?.phone ?? "-"}
                     </td>
                     <td className="px-4 py-3 truncate">
                       <div className="font-medium truncate">
@@ -1083,7 +1114,7 @@ function LabAppointmentsContent({ clinic }) {
                       </div>
                     </td>
                     <td className="px-4 py-3 truncate text-center">
-                      {appointment.patient.age || "N/A"} lat
+                      {appointment.patient?.age ?? "N/A"} lat
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span
@@ -1109,19 +1140,32 @@ function LabAppointmentsContent({ clinic }) {
                                 className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
                                 sideOffset={5}
                               >
-                                <DropdownMenu.Item
-                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                  onClick={() => {
-                                    navigate(
-                                      `/szczegoly-pacjenta/${appointment.patient.id}?appointmentId=${appointment.id}`
-                                    );
-                                  }}
-                                >
-                                  <Eye size={16} className="mr-2" />
-                                  Zobacz szczegóły
-                                </DropdownMenu.Item>
+                                {!(appointment.patient?.id || appointment.patient?._id) ? (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer"
+                                    onClick={() => {
+                                      setSelectedAppointment(appointment);
+                                      setShowCompleteRegModal(true);
+                                    }}
+                                  >
+                                    <UserCheck size={16} className="mr-2" />
+                                    Zakończ rejestrację
+                                  </DropdownMenu.Item>
+                                ) : (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={() => {
+                                      navigate(
+                                        `/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`
+                                      );
+                                    }}
+                                  >
+                                    <Eye size={16} className="mr-2" />
+                                    Zobacz szczegóły
+                                  </DropdownMenu.Item>
+                                )}
 
-                                {appointment.status === "booked" && (
+                                {appointment.patient && appointment.status === "booked" && (
                                   <DropdownMenu.Item
                                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                     onClick={() => {
@@ -1134,12 +1178,12 @@ function LabAppointmentsContent({ clinic }) {
                                   </DropdownMenu.Item>
                                 )}
 
-                                {["checkedIn", "booked"].includes(appointment.status) && (
+                                {appointment.patient && ["checkedIn", "booked"].includes(appointment.status) && (
                                   <DropdownMenu.Item
                                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                     onClick={() => {
                                       setSelectedAppointment(appointment);
-                                      handleBillPatient(appointment.id, appointment.patient.id);
+                                      handleBillPatient(appointment.id, appointment.patient.id || appointment.patient._id);
                                     }}
                                   >
                                     <DollarSign size={16} className="mr-2" />
@@ -1157,14 +1201,14 @@ function LabAppointmentsContent({ clinic }) {
                                   </DropdownMenu.Item>
                                 )}
 
-                                {/* Edit Patient button for non-clinic cases */}
-                                {!clinic && (
+                                {/* Edit Patient button - only when visit has a patient */}
+                                {!clinic && appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                   <DropdownMenu.Item
                                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                     onClick={() => {
                                       const currentPath = '/pacjenci';
                                       const returnUrl = encodeURIComponent(currentPath);
-                                      navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id}&returnUrl=${returnUrl}`);
+                                      navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${returnUrl}`);
                                     }}
                                   >
                                     <Pen size={16} className="mr-2" />
@@ -1258,6 +1302,19 @@ function LabAppointmentsContent({ clinic }) {
           onClose={() => setShowRescheduleModal(false)}
           appointment={selectedAppointment}
           onRescheduleSuccess={handleRescheduleSuccess}
+        />
+
+        {/* Complete registration modal - for visits without patient */}
+        <CompleteRegistrationModal
+          isOpen={showCompleteRegModal}
+          onClose={() => {
+            setShowCompleteRegModal(false);
+            setSelectedAppointment(null);
+          }}
+          appointment={selectedAppointment}
+          onSuccess={() => {
+            fetchAppointments(pagination.page);
+          }}
         />
 
         {/* Add Patient Modal */}

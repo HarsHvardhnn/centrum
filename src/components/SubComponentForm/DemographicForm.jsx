@@ -1,6 +1,7 @@
 // components/AppointmentForm/DemographicForm.jsx
 import { useFormContext } from "../../context/SubStepFormContext";
 import { useState, useEffect } from "react";
+import { normalizePesel, getPeselChecksumWarning } from "../../utils/peselUtils";
 
 // SVG Flag Components
 const FlagIcon = ({ countryCode, className = "w-4 h-4" }) => {
@@ -237,11 +238,11 @@ const DemographicsForm = ({
     return "";
   };
 
-  // PESEL validation function
+  // PESEL validation function (digits only, exactly 11)
   const validatePesel = (pesel) => {
     if (!pesel || pesel.trim() === "") return "Numer PESEL jest wymagany";
-    if (pesel.length !== 11) return "Numer PESEL musi mieć dokładnie 11 cyfr";
-    if (!/^\d+$/.test(pesel)) return "Numer PESEL może zawierać tylko cyfry";
+    const normalized = normalizePesel(pesel);
+    if (normalized.length !== 11) return "Numer PESEL musi mieć dokładnie 11 cyfr";
     return "";
   };
 
@@ -270,11 +271,12 @@ const DemographicsForm = ({
         }));
       }
     } else if (name === "govtId") {
-      updateFormData(name, value);
+      const digitsOnly = normalizePesel(value);
+      updateFormData(name, digitsOnly);
       if (touched[name]) {
         setErrors(prev => ({
           ...prev,
-          govtId: validatePesel(value)
+          govtId: validatePesel(digitsOnly)
         }));
       }
     } else if (name === "sex") {
@@ -484,16 +486,24 @@ const DemographicsForm = ({
           </label>
           <input
             type="text"
+            inputMode="numeric"
+            autoComplete="off"
             name="govtId"
             value={formData.govtId || ""}
             onChange={handleChange}
             onBlur={() => handleBlur("govtId")}
-            placeholder="Wprowadź numer PESEL"
+            placeholder="Wprowadź numer PESEL (11 cyfr)"
+            maxLength={11}
             className={`w-full px-3 py-2 border ${touched.govtId && errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md`}
             required
           />
           {touched.govtId && errors.govtId && (
             <p className="mt-1 text-sm text-red-500">{errors.govtId}</p>
+          )}
+          {formData.govtId && formData.govtId.length === 11 && getPeselChecksumWarning(formData.govtId) && (
+            <p className="mt-1 text-sm text-amber-600" role="alert">
+              {getPeselChecksumWarning(formData.govtId)}
+            </p>
           )}
         </div>
 
