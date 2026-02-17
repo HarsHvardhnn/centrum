@@ -297,6 +297,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   }, [doctorId]);
 
   const isFirstTimeVisit = appointmentData.visitType === "first-time";
+  const isVisitOnly = appointmentData.visitType === "visit-only";
   // First submit (visit only): only first name + last name required; PESEL is collected in Complete registration
   const isNewPatientValidForVisitOnly = isFirstTimeVisit &&
     appointmentData.newPatientFirstName.trim() !== "" &&
@@ -311,6 +312,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   const canProceedToNextStep = () => {
     switch (currentStep) {
       case 1:
+        if (isVisitOnly) return true;
         return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValidForVisitOnly : selectedPatient);
       case 2:
         return appointmentData.selectedDoctor && appointmentData.selectedDate && 
@@ -362,7 +364,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Typ wizyty
               </label>
-              <div className="flex gap-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4">
                 <label className="inline-flex items-center">
                   <input
                     type="radio"
@@ -385,7 +387,23 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                   />
                   <span className="ml-2">Kolejna wizyta</span>
                 </label>
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="visitType"
+                    value="visit-only"
+                    checked={appointmentData.visitType === "visit-only"}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 text-teal-600"
+                  />
+                  <span className="ml-2">Wizyta bez pacjenta (recepcja)</span>
+                </label>
               </div>
+              {appointmentData.visitType === "visit-only" && (
+                <p className="text-sm text-gray-600 mt-2">
+                  Utwórz wizytę bez pacjenta. Pacjent zostanie dodany później przez „Zakończ rejestrację” z listy wizyt.
+                </p>
+              )}
             </div>
 
             {appointmentData.visitType === "re-visit" && (
@@ -889,7 +907,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   };
 
   const handleSubmit = async () => {
-    const canSubmitVisit = selectedPatient || (isFirstTimeVisit ? isNewPatientValidForVisitOnly : false);
+    const canSubmitVisit = isVisitOnly || selectedPatient || (isFirstTimeVisit ? isNewPatientValidForVisitOnly : false);
     if (
       canSubmitVisit &&
       appointmentData.selectedDoctor &&
@@ -917,8 +935,10 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
           urgentAppointment: appointmentData.urgentAppointment || false
         };
         
-        // Add patient information: first-time = visit only (no patientId, no PESEL); re-visit = link patient
-        if (isFirstTimeVisit && isNewPatientValidForVisitOnly) {
+        // Add patient information: visit-only = none; first-time = visit only (no patientId, no PESEL); re-visit = link patient
+        if (isVisitOnly) {
+          // No patient data; backend creates visit only. Complete registration later (same modal or from list).
+        } else if (isFirstTimeVisit && isNewPatientValidForVisitOnly) {
           appointmentSubmissionData.firstName = appointmentData.newPatientFirstName;
           appointmentSubmissionData.lastName = appointmentData.newPatientLastName;
           appointmentSubmissionData.email = appointmentData.newPatientEmail || "";
@@ -954,14 +974,12 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
         if (response.success) {
           const appointment = response.data?.appointment ?? response.data;
           const visitId = appointment?._id ?? appointment?.id;
-          if (isFirstTimeVisit && visitId) {
-            toast.success("Wizyta utworzona. Zakończ rejestrację pacjenta (PESEL).");
+          if ((isFirstTimeVisit || isVisitOnly) && visitId) {
+            toast.success(isVisitOnly ? "Wizyta utworzona. Wprowadź PESEL i dane pacjenta, aby zakończyć rejestrację." : "Wizyta utworzona. Zakończ rejestrację pacjenta (PESEL).");
             setCreatedVisitId(visitId);
             setCompleteRegPesel("");
-    setPeselExists(false);
-    setExistingPatientData(null);
-            // Prefill complete-registration form from step 1
-            setAppointmentData(prev => ({ ...prev }));
+            setPeselExists(false);
+            setExistingPatientData(null);
           } else {
             toast.success("Wizyta została utworzona pomyślnie!");
             onComplete && onComplete(response.data);
