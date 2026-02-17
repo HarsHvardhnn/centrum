@@ -26,6 +26,7 @@ export default function BookAppointment({
     success: false,
     error: null,
   });
+  const [lastBookedVisit, setLastBookedVisit] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
@@ -441,7 +442,9 @@ export default function BookAppointment({
         return;
       }
 
-      // Success case
+      // Success case: backend creates visit only (no patient, no PATIENT_ID)
+      const appointment = response.data?.appointment ?? response.data?.data ?? response.data;
+      setLastBookedVisit(appointment ?? null);
       setSubmitStatus({ success: true, error: null });
       resetForm();
       setShowV2Captcha(false);
@@ -588,8 +591,22 @@ export default function BookAppointment({
 
                 {/* Status Messages */}
                 {submitStatus.success && (
-                  <div className="col-span-1 sm:col-span-2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-sm sm:text-base">
-                    Wizyta została pomyślnie zarezerwowana!
+                  <div className="col-span-1 sm:col-span-2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-sm sm:text-base space-y-2">
+                    <p className="font-medium">Wizyta została pomyślnie zarezerwowana!</p>
+                    {lastBookedVisit && (
+                      <>
+                        {lastBookedVisit.booking_source === "ONLINE" && (
+                          <p className="text-green-800 font-medium">Rejestracja online</p>
+                        )}
+                        {lastBookedVisit.date && (
+                          <p className="text-green-800">
+                            Data: {typeof lastBookedVisit.date === "string" ? lastBookedVisit.date : new Date(lastBookedVisit.date).toLocaleDateString("pl-PL")}
+                            {lastBookedVisit.startTime && `, godz. ${lastBookedVisit.startTime}`}
+                            {lastBookedVisit.doctor?.name && ` — ${lastBookedVisit.doctor.name.first || ""} ${lastBookedVisit.doctor.name.last || ""}`.trim()}
+                          </p>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
 

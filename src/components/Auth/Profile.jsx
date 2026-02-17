@@ -541,6 +541,23 @@ const ProfilePage = () => {
                     {profile.signupMethod || "-"}
                   </p>
                 </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">
+                    ID pacjenta
+                  </h4>
+                  <p className="mt-1 text-gray-900 font-medium">
+                    {profile.patientId || user?.patientId ? (
+                      profile.patientId || user.patientId
+                    ) : (
+                      <span className="text-gray-600">Pacjent niezweryfikowany</span>
+                    )}
+                  </p>
+                  {!(profile.patientId || user?.patientId) && (
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      Identyfikator pacjenta zostanie utworzony po zakończeniu rejestracji pacjenta w systemie (w przychodni).
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Security section */}

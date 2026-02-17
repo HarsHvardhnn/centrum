@@ -591,9 +591,13 @@ export default function Doctors({
         appointmentData
       );
 
-      // Handle success
-      //("Appointment booked successfully:", response.data);
-      toast.success("Wizyta została pomyślnie zarezerwowana!");
+      // Handle success: backend creates visit only (no patient); use visit data only
+      const appointment = response?.data?.appointment ?? response?.data?.data ?? response?.data;
+      if (appointment?.booking_source === "ONLINE") {
+        toast.success("Wizyta została pomyślnie zarezerwowana! Rejestracja online.");
+      } else {
+        toast.success("Wizyta została pomyślnie zarezerwowana!");
+      }
 
       // Close modal and reset form
       setShowModal(false);
