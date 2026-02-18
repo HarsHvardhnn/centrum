@@ -521,7 +521,7 @@ const doctorService = {
     try {
       const response = await apiCaller(
         "POST",
-        "/api/appointments/reception",
+        "/appointments/reception",
         appointmentData
       );
       return response.data;

@@ -6,7 +6,6 @@ import DoctorSelectionWithSlots from "../admin/DoctorsAppointments";
 const PatientSelectionStep = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [appointmentData, setAppointmentData] = useState({
-    patientSource: "",
     visitType: "",
     isInternational: false,
     selectedDoctor: null,
@@ -67,7 +66,6 @@ const PatientSelectionStep = () => {
         date: appointmentData.selectedDate,
         startTime: appointmentData.selectedSlot.startTime,
         endTime: appointmentData.selectedSlot.endTime,
-        patientSource: appointmentData.patientSource,
         visitType: appointmentData.visitType,
         isInternational: appointmentData.isInternational,
         isWalkin: appointmentData.isWalkin,
@@ -97,20 +95,8 @@ const PatientSelectionStep = () => {
 
           <div className="bg-primary-lighter p-3 inline-block rounded-lg mb-2 w-full">
             <div className="flex gap-3 items-center flex-wrap md:flex-nowrap">
-              {/* Patient source input */}
-              <div className="w-full md:w-1/2">
-                <input
-                  type="text"
-                  name="patientSource"
-                  placeholder="Wybierz źródło pacjenta"
-                  value={appointmentData.patientSource}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
-                />
-              </div>
-
               {/* Visit type radio buttons */}
-              <div className="w-full md:w-1/2 flex justify-between items-center gap-3">
+              <div className="flex justify-between items-center gap-3">
                 <label className="inline-flex items-center whitespace-nowrap">
                   <input
                     type="radio"

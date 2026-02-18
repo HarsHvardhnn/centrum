@@ -157,7 +157,6 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
     }),
     "Dane identyfikacyjne": filterEmptyFields({
       "ID pacjenta": patientData.patientId,
-      "ID szpitala": patientData.hospId,
       "Data utworzenia": formatDate(patientData.createdAt),
       "Ostatnia aktualizacja": formatDate(patientData.updatedAt),
     }),

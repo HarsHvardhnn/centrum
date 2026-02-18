@@ -567,7 +567,6 @@ export default function UserManagement() {
         dateOfBirth: patientDetails.dateOfBirth,
         motherTongue: patientDetails.motherTongue,
         govtId: patientDetails.govtId,
-        hospId: patientDetails.hospId,
         sex: patientDetails.sex,
         maritalStatus: patientDetails.maritalStatus,
         ethnicity: patientDetails.ethnicity,

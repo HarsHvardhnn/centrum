@@ -62,7 +62,6 @@ function AppointmentFormModal({
     }
     
     return {
-      patientSource: "",
       visitType: "",
       isInternational: false,
       selectedDoctor: selectedDoctor,
@@ -689,6 +688,7 @@ function AppointmentFormModal({
   }, []); // Empty dependency array means this runs only on mount
 
   const isFirstTimeVisit = appointmentData.visitType === "first-time";
+  const isVisitOnly = appointmentData.visitType === "visit-only";
   const isNewPatientValid = isFirstTimeVisit && 
     appointmentData.newPatientFirstName.trim() !== "" && 
     appointmentData.newPatientLastName.trim() !== "" &&
@@ -701,6 +701,7 @@ function AppointmentFormModal({
     const visitTypeMap = {
       "first-time": "Pierwsza wizyta",
       "re-visit": "Kolejna wizyta",
+      "visit-only": "Wizyta bez pacjenta (recepcja)",
       "consultation": "Konsultacja",
       "emergency": "Nagły przypadek",
       "followup": "Wizyta kontrolna",
@@ -720,7 +721,7 @@ function AppointmentFormModal({
             return appointmentData.selectedDate && 
                    (appointmentData.customStartTime || appointmentData.selectedSlot);
           case 2: // Patient Information
-            return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
+            return appointmentData.visitType && (isVisitOnly ? true : (isFirstTimeVisit ? isNewPatientValid : selectedPatient));
           case 3: // Services
             return true; // Services are optional
           case 4: // Additional Details
@@ -737,7 +738,7 @@ function AppointmentFormModal({
                    appointmentData.selectedDate && 
                    (appointmentData.customStartTime || appointmentData.selectedSlot);
           case 2: // Patient Information
-            return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
+            return appointmentData.visitType && (isVisitOnly ? true : (isFirstTimeVisit ? isNewPatientValid : selectedPatient));
           case 3: // Services
             return true; // Services are optional
           case 4: // Additional Details
@@ -754,7 +755,7 @@ function AppointmentFormModal({
         // When doctor is pre-selected, still show date/slot selection
         switch (currentStep) {
           case 1: // Patient Information (doctor already selected)
-            return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
+            return appointmentData.visitType && (isVisitOnly ? true : (isFirstTimeVisit ? isNewPatientValid : selectedPatient));
           case 2: // Date & Time Selection
             return appointmentData.selectedDate && 
                    (appointmentData.customStartTime || appointmentData.selectedSlot);
@@ -770,7 +771,7 @@ function AppointmentFormModal({
       } else {
         switch (currentStep) {
           case 1: // Patient Information
-            return appointmentData.visitType && (isFirstTimeVisit ? isNewPatientValid : selectedPatient);
+            return appointmentData.visitType && (isVisitOnly ? true : (isFirstTimeVisit ? isNewPatientValid : selectedPatient));
           case 2: // Doctor Selection & Date
             return appointmentData.selectedDoctor && 
                    appointmentData.selectedDate && 
@@ -1249,7 +1250,7 @@ function AppointmentFormModal({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Typ wizyty
           </label>
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4">
             <label className="inline-flex items-center">
               <input
                 type="radio"
@@ -1272,7 +1273,23 @@ function AppointmentFormModal({
               />
               <span className="ml-2">Kolejna wizyta</span>
             </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="visitType"
+                value="visit-only"
+                checked={appointmentData.visitType === "visit-only"}
+                onChange={handleInputChange}
+                className="h-4 w-4 text-teal-600"
+              />
+              <span className="ml-2">Wizyta bez pacjenta (recepcja)</span>
+            </label>
           </div>
+          {appointmentData.visitType === "visit-only" && (
+            <p className="text-sm text-gray-600 mt-2">
+              Utwórz wizytę bez pacjenta. Pacjent zostanie dodany później przez „Zakończ rejestrację” z listy wizyt.
+            </p>
+          )}
         </div>
 
         {appointmentData.visitType === "re-visit" && (
@@ -1426,16 +1443,6 @@ function AppointmentFormModal({
             />
             <label className="ml-2 text-sm">Pacjent międzynarodowy</label>
           </div>
-          
-          
-          <input
-            type="text"
-            name="patientSource"
-            placeholder="Źródło pacjenta"
-            value={appointmentData.patientSource}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded-lg"
-          />
         </div>
       </div>
     );
@@ -1927,7 +1934,7 @@ function AppointmentFormModal({
     }
 
     if (
-      (selectedPatient || isNewPatientValid) &&
+      (selectedPatient || isNewPatientValid || isVisitOnly) &&
       appointmentData.selectedDoctor &&
       appointmentData.selectedDate &&
       (appointmentData.customStartTime || appointmentData.selectedSlot)
@@ -1994,7 +2001,6 @@ function AppointmentFormModal({
           needsAttention: appointmentData.selectedSlot.needsAttention,
           markAsArrived: appointmentData.selectedSlot.markAsArrived,
           isInternational: appointmentData.selectedSlot.isInternational,
-          patientSource: appointmentData.selectedSlot.patientSource,
           notes: appointmentData.selectedSlot.notes,
           enableRepeats: appointmentData.selectedSlot.enableRepeats,
           selectedServices: appointmentData.selectedSlot.services,
@@ -2026,8 +2032,10 @@ function AppointmentFormModal({
         }
       };
       
-      // Add patient information based on selection type
-      if (isFirstTimeVisit && isNewPatientValid) {
+      // Add patient information based on selection type (visit-only = no patient data)
+      if (isVisitOnly) {
+        // No patient data; backend creates visit only. Complete registration from list later.
+      } else if (isFirstTimeVisit && isNewPatientValid) {
         // For new patients, add their details directly
         appointmentSubmissionData.firstName = appointmentData.newPatientFirstName;
         appointmentSubmissionData.lastName = appointmentData.newPatientLastName;
@@ -2044,7 +2052,7 @@ function AppointmentFormModal({
         appointmentSubmissionData.dob = appointmentData.newPatientDateOfBirth;
         appointmentSubmissionData.sex = appointmentData.newPatientSex;
         appointmentSubmissionData.pesel = appointmentData.newPatientPesel;
-      } else {
+      } else if (selectedPatient) {
         // For existing patients, use their ID
         appointmentSubmissionData.patientId = selectedPatient._id;
       }
@@ -2063,7 +2071,6 @@ function AppointmentFormModal({
       appointmentSubmissionData.needsAttention = appointmentData.needsAttention || false;
       appointmentSubmissionData.markAsArrived = appointmentData.markAsArrived || false;
       appointmentSubmissionData.isInternational = appointmentData.isInternational || false;
-      appointmentSubmissionData.patientSource = appointmentData.patientSource || "";
 
       console.log("Appointment data to submit:", appointmentSubmissionData);
       console.log("Phone fields being sent to backend:", {

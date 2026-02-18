@@ -15,7 +15,6 @@ export const FormProvider = ({ children, initialData }) => {
     dateOfBirth: "",
     motherTongue: "",
     govtId: "",
-    hospId: "Auto generate",
     sex: "",
     maritalStatus: "",
     ethnicity: "",

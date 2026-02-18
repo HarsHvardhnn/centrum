@@ -50,7 +50,6 @@ const patientService = {
       appendIfExists("fatherName", patientData.fatherName);
       appendIfExists("fullName", patientData.fullName);
       appendIfExists("govtId", patientData.govtId);
-      appendIfExists("hospId", patientData.hospId);
       appendIfExists("isInternationalPatient", patientData.isInternationalPatient);
       appendIfExists("smsConsentAgreed", patientData.smsConsentAgreed);
       appendIfExists("ivrLanguage", patientData.ivrLanguage);
@@ -152,7 +151,6 @@ const patientService = {
     if (patientData.fatherName !== undefined) formData.append("fatherName", patientData.fatherName);
     if (patientData.fullName !== undefined) formData.append("fullName", patientData.fullName);
     if (patientData.govtId !== undefined) formData.append("govtId", patientData.govtId);
-    if (patientData.hospId !== undefined) formData.append("hospId", patientData.hospId);
     if (patientData.isInternationalPatient !== undefined) formData.append("isInternationalPatient", patientData.isInternationalPatient);
     if (patientData.ivrLanguage !== undefined) formData.append("ivrLanguage", patientData.ivrLanguage);
     if (patientData.mainComplaint !== undefined) formData.append("mainComplaint", patientData.mainComplaint);

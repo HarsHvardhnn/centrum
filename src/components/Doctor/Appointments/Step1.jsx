@@ -3,7 +3,6 @@ import React, { useState } from "react";
 const AppointmentModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     patientName: "",
-    patientSource: "",
     isInternational: false,
     visitType: "",
     doctor: "",
@@ -33,7 +32,6 @@ const AppointmentModal = ({ isOpen, onClose }) => {
     // Validate form
     const newErrors = {};
     if (!formData.patientName) newErrors.patientName = "Imię i nazwisko pacjenta jest wymagane";
-    if (!formData.patientSource) newErrors.patientSource = "Źródło pacjenta jest wymagane";
     if (!formData.visitType) newErrors.visitType = "Typ wizyty jest wymagany";
     if (!formData.doctor) newErrors.doctor = "Lekarz jest wymagany";
     if (!formData.visitSlot) newErrors.visitSlot = "Numer slotu jest wymagany";
@@ -90,21 +88,6 @@ const AppointmentModal = ({ isOpen, onClose }) => {
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">O pacjencie</label>
             <div className="bg-teal-50 p-3 rounded-md flex items-center gap-8">
-              <div className="flex items-center mb-2">
-                <select
-                  name="patientSource"
-                  value={formData.patientSource}
-                  onChange={handleChange}
-                  className={`w-full p-2 border rounded-md ${errors.patientSource ? 'border-red-500' : 'border-gray-300'}`}
-                >
-                  <option value="">Wybierz źródło pacjenta</option>
-                  <option value="referral">Skierowanie</option>
-                  <option value="walkin">Bez rejestracji</option>
-                  <option value="online">Online</option>
-                </select>
-              </div>
-              {errors.patientSource && <p className="text-red-500 text-xs mt-1">{errors.patientSource}</p>}
-              
               <div className="flex space-x-4">
                 <div className="flex items-center">
                   <input

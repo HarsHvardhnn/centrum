@@ -12,6 +12,7 @@ import {
   FileText,
   Eye,
   UserCheck,
+  UserPlus,
   DollarSign,
   Trash2,
   Pen,
@@ -113,6 +114,19 @@ function LabAppointmentsContent({ clinic }) {
     "Szczegóły",
     "Notatki",
   ];
+
+  /** Visit-only: no patient linked (use backend isVisitOnly flag or fallback to missing patient) */
+  const isVisitOnlyAppointment = (apt) =>
+    apt?.isVisitOnly === true || !(apt?.patient?.id || apt?.patient?._id);
+
+  /** Display name: patient name, or registrationData.name / firstName+lastName, or fallback */
+  const getAppointmentPatientDisplayName = (apt) =>
+    apt?.patient?.name ??
+    apt?.registrationData?.name ??
+    (apt?.registrationData?.firstName && apt?.registrationData?.lastName
+      ? `${apt.registrationData.firstName} ${apt.registrationData.lastName}`.trim()
+      : null) ??
+    "Pacjent niezweryfikowany";
 
   const fetchAppointments = async (page = 1) => {
     try {
@@ -778,7 +792,11 @@ function LabAppointmentsContent({ clinic }) {
                 </div>
                 <div className="divide-y">
                   {appointments.map((appointment) => (
-                    <div key={appointment.id} className={`px-6 py-4 hover:bg-gray-50 transition-colors ${selectedAppointmentIds.includes(appointment.id) ? 'bg-red-50' : ''}`}>
+                    <div
+                      key={appointment.id}
+                      title={isVisitOnlyAppointment(appointment) ? 'Tylko wizyta – brak przypisanego pacjenta. Kliknij, aby zakończyć rejestrację.' : undefined}
+                      className={`px-6 py-4 hover:bg-gray-50 transition-colors ${selectedAppointmentIds.includes(appointment.id) ? 'bg-red-50' : ''} ${isVisitOnlyAppointment(appointment) ? 'border-l-4 border-amber-500 bg-amber-50/50' : ''}`}
+                    >
                       <div className="grid grid-cols-12 gap-4 items-center h-[60px]">
                         {/* Checkbox - only for admin */}
                         {user?.role === "admin" && (
@@ -794,38 +812,45 @@ function LabAppointmentsContent({ clinic }) {
                         )}
                         {/* Patient Info - adjusted columns */}
                         <div 
+                          title={isVisitOnlyAppointment(appointment) ? 'Tylko wizyta – brak pacjenta. Kliknij: Zakończ rejestrację.' : undefined}
                           className={`${user?.role === "admin" ? "col-span-4" : "col-span-5"} flex items-center gap-3 min-w-0 ${appointment.isAppointment !== false ? 'cursor-pointer' : ''}`}
                           onClick={() => {
                             if (appointment.isAppointment !== false) {
-                              if (appointment.patient?.id || appointment.patient?._id) {
+                              if (isVisitOnlyAppointment(appointment)) {
+                                setSelectedAppointment(appointment);
+                                setShowCompleteRegModal(true);
+                              } else {
                                 navigate(
                                   `/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`
                                 );
-                              } else {
-                                setSelectedAppointment(appointment);
-                                setShowCompleteRegModal(true);
                               }
                             }
                           }}
                         >
-                          <div className="h-10 w-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                            {appointment.patient?.profilePicture ? (
+                          <div className={`h-10 w-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center ${isVisitOnlyAppointment(appointment) ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-500'}`}>
+                            {!isVisitOnlyAppointment(appointment) && appointment.patient?.profilePicture ? (
                               <img
                                 src={appointment.patient.profilePicture}
                                 alt={appointment.patient?.name}
                                 className="h-full w-full object-cover"
                               />
+                            ) : isVisitOnlyAppointment(appointment) ? (
+                              <UserPlus size={20} />
                             ) : (
-                              <div className="h-full w-full flex items-center justify-center bg-gray-200 text-gray-500">
-                                <UserCheck size={20} />
-                              </div>
+                              <UserCheck size={20} />
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="font-medium text-gray-900 truncate max-w-[250px]">
-                              {appointment.patient?.name ?? (appointment.registrationData?.firstName && appointment.registrationData?.lastName
-                                ? `${appointment.registrationData.firstName} ${appointment.registrationData.lastName}`.trim()
-                                : "Pacjent niezweryfikowany")}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-gray-900 truncate max-w-[250px]">
+                                {getAppointmentPatientDisplayName(appointment)}
+                              </span>
+                              {isVisitOnlyAppointment(appointment) && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 shrink-0" title="Wizyta bez pacjenta – zakończ rejestrację">
+                                  <UserPlus size={12} />
+                                  Do rejestracji
+                                </span>
+                              )}
                             </div>
                             <div className="text-sm text-gray-500 truncate max-w-[250px]">
                               {appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "Brak ID (zakończ rejestrację)"}
@@ -878,7 +903,7 @@ function LabAppointmentsContent({ clinic }) {
                                   sideOffset={5}
                                   align="end"
                                 >
-                                  {!(appointment.patient?.id || appointment.patient?._id) ? (
+                                  {isVisitOnlyAppointment(appointment) ? (
                                     <DropdownMenu.Item
                                       className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer"
                                       onClick={() => {
@@ -1017,9 +1042,13 @@ function LabAppointmentsContent({ clinic }) {
               </thead>
               <tbody>
                 {appointments.map((appointment) => (
-                  <tr key={appointment.id} className={`border-b hover:bg-gray-50 ${selectedAppointmentIds.includes(appointment.id) ? 'bg-red-50' : ''}`}>
+                  <tr
+                    key={appointment.id}
+                    title={isVisitOnlyAppointment(appointment) ? 'Tylko wizyta – brak przypisanego pacjenta. Kliknij, aby zakończyć rejestrację.' : undefined}
+                    className={`border-b hover:bg-gray-50 ${selectedAppointmentIds.includes(appointment.id) ? 'bg-red-50' : ''} ${isVisitOnlyAppointment(appointment) ? 'bg-amber-50/50' : ''}`}
+                  >
                     {user?.role === "admin" && (
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <td className={`px-4 py-3 ${isVisitOnlyAppointment(appointment) ? 'border-l-4 border-l-amber-500' : ''}`} onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selectedAppointmentIds.includes(appointment.id)}
@@ -1029,39 +1058,46 @@ function LabAppointmentsContent({ clinic }) {
                       </td>
                     )}
                     <td
-                      className={`px-4 py-3 truncate ${appointment.isAppointment !== false ? 'cursor-pointer' : ''}`}
+                      title={isVisitOnlyAppointment(appointment) ? 'Tylko wizyta – brak pacjenta. Kliknij: Zakończ rejestrację.' : undefined}
+                      className={`px-4 py-3 truncate ${appointment.isAppointment !== false ? 'cursor-pointer' : ''} ${user?.role !== "admin" && isVisitOnlyAppointment(appointment) ? 'border-l-4 border-l-amber-500' : ''}`}
                       onClick={() => {
                         if (appointment.isAppointment !== false) {
-                          if (appointment.patient?.id || appointment.patient?._id) {
+                          if (isVisitOnlyAppointment(appointment)) {
+                            setSelectedAppointment(appointment);
+                            setShowCompleteRegModal(true);
+                          } else {
                             navigate(
                               `/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`
                             );
-                          } else {
-                            setSelectedAppointment(appointment);
-                            setShowCompleteRegModal(true);
                           }
                         }
                       }}
                     >
                       <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden mr-2 flex-shrink-0">
-                          {appointment.patient?.profilePicture ? (
+                        <div className={`h-8 w-8 rounded-full overflow-hidden mr-2 flex-shrink-0 flex items-center justify-center ${isVisitOnlyAppointment(appointment) ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-500'}`}>
+                          {!isVisitOnlyAppointment(appointment) && appointment.patient?.profilePicture ? (
                             <img
                               src={appointment.patient.profilePicture}
                               alt={appointment.patient?.name}
                               className="h-full w-full object-cover"
                             />
+                          ) : isVisitOnlyAppointment(appointment) ? (
+                            <UserPlus size={16} />
                           ) : (
-                            <div className="h-full w-full flex items-center justify-center bg-gray-200 text-gray-500">
-                              <UserCheck size={16} />
-                            </div>
+                            <UserCheck size={16} />
                           )}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-medium truncate">
-                            {appointment.patient?.name ?? (appointment.registrationData?.firstName && appointment.registrationData?.lastName
-                              ? `${appointment.registrationData.firstName} ${appointment.registrationData.lastName}`.trim()
-                              : "Pacjent niezweryfikowany")}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium truncate">
+                              {getAppointmentPatientDisplayName(appointment)}
+                            </span>
+                            {isVisitOnlyAppointment(appointment) && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 shrink-0" title="Wizyta bez pacjenta – zakończ rejestrację">
+                                <UserPlus size={10} />
+                                Do rejestracji
+                              </span>
+                            )}
                           </div>
                           <div className="text-sm text-gray-500 truncate">
                             {appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "Brak ID (zakończ rejestrację)"}
@@ -1140,7 +1176,7 @@ function LabAppointmentsContent({ clinic }) {
                                 className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
                                 sideOffset={5}
                               >
-                                {!(appointment.patient?.id || appointment.patient?._id) ? (
+                                {isVisitOnlyAppointment(appointment) ? (
                                   <DropdownMenu.Item
                                     className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer"
                                     onClick={() => {

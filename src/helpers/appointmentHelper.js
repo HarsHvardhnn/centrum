@@ -86,7 +86,7 @@ class AppointmentService {
     try {
       const response = await apiCaller(
         "POST",
-        `/api/appointments/${visitId}/complete-registration`,
+        `/appointments/${visitId}/complete-registration`,
         data
       );
       return response.data ?? response;

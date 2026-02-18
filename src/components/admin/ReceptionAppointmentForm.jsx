@@ -23,7 +23,6 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
     phone: ""
   });
   const [appointmentData, setAppointmentData] = useState({
-    patientSource: "",
     visitType: "",
     isInternational: false,
     selectedDoctor: doctorId ? { _id: doctorId } : null,
@@ -501,14 +500,6 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                 />
                 <label className="ml-2 text-sm">Pacjent międzynarodowy</label>
               </div>
-              <input
-                type="text"
-                name="patientSource"
-                placeholder="Źródło pacjenta"
-                value={appointmentData.patientSource}
-                onChange={handleInputChange}
-                className="w-full p-2 border rounded-lg"
-              />
             </div>
           </div>
         );
@@ -964,7 +955,6 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
         appointmentSubmissionData.needsAttention = appointmentData.needsAttention || false;
         appointmentSubmissionData.markAsArrived = appointmentData.markAsArrived || false;
         appointmentSubmissionData.isInternational = appointmentData.isInternational || false;
-        appointmentSubmissionData.patientSource = appointmentData.patientSource || "";
 
         console.log("Reception appointment data to submit:", appointmentSubmissionData);
         
