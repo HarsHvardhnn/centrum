@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Eye,
   UserCheck,
+  UserPlus,
   DollarSign,
   FileText,
 } from "lucide-react";
@@ -26,6 +27,7 @@ import patientServicesHelper from "../../helpers/patientServicesHelper";
 import billingHelper from "../../helpers/billingHelper";
 import { createPortal } from "react-dom";
 import CheckInModal from "../admin/CheckinModal";
+import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
 import { translateStatus, getStatusStyle } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import RescheduleModal from "./RescheduleModal";
@@ -598,6 +600,7 @@ const PatientList = () => {
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [billingServices, setBillingServices] = useState([]);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [showCompleteRegModal, setShowCompleteRegModal] = useState(false);
   const [sendSMSNotification, setSendSMSNotification] = useState(false);
   const [sendEmailNotification, setSendEmailNotification] = useState(false);
   const [pagination, setPagination] = useState({
@@ -605,8 +608,12 @@ const PatientList = () => {
     total: 0,
     pages: 1,
   });
+  const [refreshCounter, setRefreshCounter] = useState(0);
 
   const navigate = useNavigate();
+
+  /** Visit-only: no patient linked (dashboard API uses patient_id) */
+  const isVisitOnlyAppointment = (apt) => !apt?.patient_id;
 
   // Function to handle billing confirmation
   const handleBillPatient = async (appointmentId, patientId) => {
@@ -756,7 +763,7 @@ const PatientList = () => {
     };
 
     fetchPatients();
-  }, [pagination.currentPage, user]);
+  }, [pagination.currentPage, user, refreshCounter]);
 
 
   const translateSexToPolish = (sex) => {
@@ -1021,17 +1028,30 @@ const PatientList = () => {
             </thead>
             <tbody>
               {patients.map((patient) => (
-                <tr key={patient.id} className="hover:bg-gray-50">
-                  {/* <td className="py-4 px-4">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300"
-                      checked={selectedPatients.includes(patient.id)}
-                      onChange={() => toggleSelectPatient(patient.id)}
-                    />
-                  </td> */}
-                  <td className="py-4 px-4 cursor-pointer" onClick={() => navigate(`/szczegoly-pacjenta/${patient.patient_id}?appointmentId=${patient._id}`)} >
-                    <div className="font-medium">{patient.name || "N/A"}</div>
+                <tr
+                  key={patient.id}
+                  className={`hover:bg-gray-50 ${isVisitOnlyAppointment(patient) ? "border-l-4 border-l-amber-500 bg-amber-50/50" : ""}`}
+                >
+                  <td
+                    className="py-4 px-4 cursor-pointer"
+                    onClick={() => {
+                      if (isVisitOnlyAppointment(patient)) {
+                        setSelectedAppointment(patient);
+                        setShowCompleteRegModal(true);
+                      } else {
+                        navigate(`/szczegoly-pacjenta/${patient.patient_id}?appointmentId=${patient._id}`);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium">{patient.name || "N/A"}</span>
+                      {isVisitOnlyAppointment(patient) && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 shrink-0" title="Wizyta bez pacjenta – zakończ rejestrację">
+                          <UserPlus size={12} />
+                          Do rejestracji
+                        </span>
+                      )}
+                    </div>
                     <div className="text-sm text-gray-500">
                       {patient.username || "N/A"}
                     </div>
@@ -1078,19 +1098,32 @@ const PatientList = () => {
                             className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
                             sideOffset={5}
                           >
-                            <DropdownMenu.Item
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                              onClick={() => {
-                                navigate(
-                                  `/szczegoly-pacjenta/${patient.patient_id}?appointmentId=${patient._id}`
-                                );
-                              }}
-                            >
-                              <Eye size={16} className="mr-2" />
-                              Zobacz szczegóły
-                            </DropdownMenu.Item>
+                            {isVisitOnlyAppointment(patient) ? (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer"
+                                onClick={() => {
+                                  setSelectedAppointment(patient);
+                                  setShowCompleteRegModal(true);
+                                }}
+                              >
+                                <UserPlus size={16} className="mr-2" />
+                                Zakończ rejestrację
+                              </DropdownMenu.Item>
+                            ) : (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={() => {
+                                  navigate(
+                                    `/szczegoly-pacjenta/${patient.patient_id}?appointmentId=${patient._id}`
+                                  );
+                                }}
+                              >
+                                <Eye size={16} className="mr-2" />
+                                Zobacz szczegóły
+                              </DropdownMenu.Item>
+                            )}
 
-                            {patient.status === "booked" && (
+                            {!isVisitOnlyAppointment(patient) && patient.status === "booked" && (
                               <DropdownMenu.Item
                                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                 onClick={() => {
@@ -1114,7 +1147,7 @@ const PatientList = () => {
                               </DropdownMenu.Item>
                             )}
 
-                            {["checkedIn", "booked"].includes(patient.status) && (
+                            {!isVisitOnlyAppointment(patient) && ["checkedIn", "booked"].includes(patient.status) && (
                               <DropdownMenu.Item
                                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                 onClick={() => {
@@ -1176,6 +1209,33 @@ const PatientList = () => {
         onClose={() => setShowRescheduleModal(false)}
         appointment={selectedAppointment}
         onRescheduleSuccess={handleRescheduleSuccess}
+      />
+
+      {/* Complete registration modal - for visits without patient */}
+      <CompleteRegistrationModal
+        isOpen={showCompleteRegModal}
+        onClose={() => {
+          setShowCompleteRegModal(false);
+          setSelectedAppointment(null);
+        }}
+        appointment={
+          selectedAppointment
+            ? {
+                id: selectedAppointment._id,
+                _id: selectedAppointment._id,
+                registrationData: {
+                  firstName: selectedAppointment.name?.split?.(" ")?.[0] ?? "",
+                  lastName: selectedAppointment.name?.split?.(" ")?.slice(1)?.join(" ") ?? "",
+                  email: selectedAppointment.email ?? "",
+                  phone: (selectedAppointment.phone || "").replace(/\D/g, "").slice(0, 9),
+                  sex: selectedAppointment.sex ?? "",
+                },
+              }
+            : null
+        }
+        onSuccess={() => {
+          setRefreshCounter((c) => c + 1);
+        }}
       />
 
       <div className="p-4 flex items-center justify-between border-t border-gray-200">
