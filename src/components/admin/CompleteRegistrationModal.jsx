@@ -15,6 +15,7 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
   const [completeRegPesel, setCompleteRegPesel] = useState("");
   const [peselExists, setPeselExists] = useState(false);
   const [existingPatientData, setExistingPatientData] = useState(null);
+  const [peselWarningFromApi, setPeselWarningFromApi] = useState(null);
   const [loading, setLoading] = useState(false);
   const [peselCheckLoading, setPeselCheckLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -39,12 +40,14 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
     setCompleteRegPesel("");
     setPeselExists(false);
     setExistingPatientData(null);
+    setPeselWarningFromApi(null);
   }, [isOpen, appointment]);
 
   useEffect(() => {
     if (!isOpen || !visitId || completeRegPesel.replace(/\D/g, "").length !== 11) {
       setPeselExists(false);
       setExistingPatientData(null);
+      setPeselWarningFromApi(null);
       return;
     }
     const normalized = normalizePesel(completeRegPesel);
@@ -54,8 +57,10 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
       if (cancelled) return;
       setPeselExists(!!res?.exists);
       setExistingPatientData(res?.exists && res?.patient ? res.patient : null);
+      setPeselWarningFromApi(res?.peselWarning ?? null);
     }).catch(() => {
       if (!cancelled) setPeselExists(false);
+      if (!cancelled) setPeselWarningFromApi(null);
     }).finally(() => {
       if (!cancelled) setPeselCheckLoading(false);
     });
@@ -150,8 +155,8 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
               className="w-full p-2 border border-gray-300 rounded-lg"
             />
             {peselCheckLoading && <p className="text-xs text-gray-500 mt-1">Sprawdzam PESEL...</p>}
-            {completeRegPesel.length === 11 && getPeselChecksumWarning(completeRegPesel) && (
-              <p className="mt-1 text-sm text-amber-600">{getPeselChecksumWarning(completeRegPesel)}</p>
+            {completeRegPesel.length === 11 && (peselWarningFromApi ?? getPeselChecksumWarning(completeRegPesel)) && (
+              <p className="mt-1 text-sm text-amber-600">{peselWarningFromApi ?? getPeselChecksumWarning(completeRegPesel)}</p>
             )}
             {peselExists && (
               <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">

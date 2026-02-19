@@ -56,6 +56,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   const [completeRegPesel, setCompleteRegPesel] = useState("");
   const [peselExists, setPeselExists] = useState(false);
   const [existingPatientData, setExistingPatientData] = useState(null);
+  const [peselWarningFromApi, setPeselWarningFromApi] = useState(null);
   const [completeRegLoading, setCompleteRegLoading] = useState(false);
   const [peselCheckLoading, setPeselCheckLoading] = useState(false);
 
@@ -75,6 +76,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
     if (!createdVisitId || completeRegPesel.replace(/\D/g, "").length !== 11) {
       setPeselExists(false);
       setExistingPatientData(null);
+      setPeselWarningFromApi(null);
       return;
     }
     const normalized = normalizePesel(completeRegPesel);
@@ -84,8 +86,10 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
       if (cancelled) return;
       setPeselExists(!!res?.exists);
       setExistingPatientData(res?.exists && res?.patient ? res.patient : null);
+      setPeselWarningFromApi(res?.peselWarning ?? null);
     }).catch(() => {
       if (!cancelled) setPeselExists(false);
+      if (!cancelled) setPeselWarningFromApi(null);
     }).finally(() => {
       if (!cancelled) setPeselCheckLoading(false);
     });
@@ -399,9 +403,35 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                 </label>
               </div>
               {appointmentData.visitType === "visit-only" && (
-                <p className="text-sm text-gray-600 mt-2">
-                  Utwórz wizytę bez pacjenta. Pacjent zostanie dodany później przez „Zakończ rejestrację” z listy wizyt.
-                </p>
+                <div className="bg-white p-4 rounded-lg border border-gray-200 mt-2">
+                  <p className="text-sm text-gray-600 mb-3">
+                    Utwórz wizytę bez pacjenta. Podaj imię i nazwisko. PESEL i pełna rejestracja pacjenta — później przez „Zakończ rejestrację” z listy wizyt.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Imię*</label>
+                      <input
+                        type="text"
+                        name="newPatientFirstName"
+                        value={appointmentData.newPatientFirstName}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded-lg"
+                        placeholder="Imię"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Nazwisko*</label>
+                      <input
+                        type="text"
+                        name="newPatientLastName"
+                        value={appointmentData.newPatientLastName}
+                        onChange={handleInputChange}
+                        className="w-full p-2 border rounded-lg"
+                        placeholder="Nazwisko"
+                      />
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -898,7 +928,8 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   };
 
   const handleSubmit = async () => {
-    const canSubmitVisit = isVisitOnly || selectedPatient || (isFirstTimeVisit ? isNewPatientValidForVisitOnly : false);
+    const isVisitOnlyValid = isVisitOnly && (appointmentData.newPatientFirstName?.trim() && appointmentData.newPatientLastName?.trim());
+    const canSubmitVisit = isVisitOnlyValid || selectedPatient || (isFirstTimeVisit ? isNewPatientValidForVisitOnly : false);
     if (
       canSubmitVisit &&
       appointmentData.selectedDoctor &&
@@ -926,9 +957,10 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
           urgentAppointment: appointmentData.urgentAppointment || false
         };
         
-        // Add patient information: visit-only = none; first-time = visit only (no patientId, no PESEL); re-visit = link patient
+        // Add patient information: visit-only = first/last name (+ optional PESEL); first-time = visit only; re-visit = link patient
         if (isVisitOnly) {
-          // No patient data; backend creates visit only. Complete registration later (same modal or from list).
+          appointmentSubmissionData.firstName = appointmentData.newPatientFirstName?.trim() || "";
+          appointmentSubmissionData.lastName = appointmentData.newPatientLastName?.trim() || "";
         } else if (isFirstTimeVisit && isNewPatientValidForVisitOnly) {
           appointmentSubmissionData.firstName = appointmentData.newPatientFirstName;
           appointmentSubmissionData.lastName = appointmentData.newPatientLastName;
@@ -1025,8 +1057,8 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                 className="w-full p-2 border border-gray-300 rounded-lg"
               />
               {peselCheckLoading && <p className="text-xs text-gray-500 mt-1">Sprawdzam PESEL...</p>}
-              {completeRegPesel.length === 11 && getPeselChecksumWarning(completeRegPesel) && (
-                <p className="mt-1 text-sm text-amber-600">{getPeselChecksumWarning(completeRegPesel)}</p>
+              {completeRegPesel.length === 11 && (peselWarningFromApi ?? getPeselChecksumWarning(completeRegPesel)) && (
+                <p className="mt-1 text-sm text-amber-600">{peselWarningFromApi ?? getPeselChecksumWarning(completeRegPesel)}</p>
               )}
               {peselExists && (
                 <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">

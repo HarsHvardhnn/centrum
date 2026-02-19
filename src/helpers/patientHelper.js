@@ -460,9 +460,10 @@ const patientService = {
   },
 
   /**
-   * Check if a patient exists by PESEL (11 digits). Used for duplicate-PESEL handling.
-   * @param {string} pesel - 11-digit PESEL (digits only)
-   * @returns {Promise<{ exists: boolean, patientId?: string, patient?: object }>}
+   * Check if a patient exists by PESEL (11 digits). Uses GET /patients/by-pesel.
+   * Used for duplicate-PESEL handling (e.g. before Complete registration).
+   * @param {string} pesel - 11-digit PESEL (non-digits stripped by backend)
+   * @returns {Promise<{ success: boolean, exists: boolean, message: string, patientId?: string, patient?: object, peselWarning?: string }>}
    */
   getPatientByPesel: async (pesel) => {
     try {
@@ -472,7 +473,7 @@ const patientService = {
       }
       const response = await apiCaller(
         "GET",
-        `/api/patients/by-pesel?pesel=${encodeURIComponent(normalized)}`
+        `/patients/by-pesel?pesel=${encodeURIComponent(normalized)}`
       );
       return response.data ?? response;
     } catch (error) {

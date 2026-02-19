@@ -6,6 +6,7 @@ import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft } from "luc
 import { useServices } from "../../../context/serviceContext.jsx";
 import { toast } from "sonner";
 import { apiCaller } from "../../../utils/axiosInstance";
+import { normalizePesel } from "../../../utils/peselUtils";
 
 /**
  * AppointmentFormModal - Component for adding new appointments
@@ -430,6 +431,11 @@ function AppointmentFormModal({
         ...prev,
         email: validateEmail(value)
       }));
+    } else if (name === "newPatientPesel") {
+      setAppointmentData(prev => ({
+        ...prev,
+        [name]: normalizePesel(value)
+      }));
     } else {
       setAppointmentData(prev => ({
         ...prev,
@@ -689,6 +695,7 @@ function AppointmentFormModal({
 
   const isFirstTimeVisit = appointmentData.visitType === "first-time";
   const isVisitOnly = appointmentData.visitType === "visit-only";
+  const isVisitOnlyValid = isVisitOnly && (appointmentData.newPatientFirstName?.trim() && appointmentData.newPatientLastName?.trim());
   const isNewPatientValid = isFirstTimeVisit && 
     appointmentData.newPatientFirstName.trim() !== "" && 
     appointmentData.newPatientLastName.trim() !== "" &&
@@ -721,7 +728,7 @@ function AppointmentFormModal({
             return appointmentData.selectedDate && 
                    (appointmentData.customStartTime || appointmentData.selectedSlot);
           case 2: // Patient Information
-            return appointmentData.visitType && (isVisitOnly ? true : (isFirstTimeVisit ? isNewPatientValid : selectedPatient));
+            return appointmentData.visitType && (isVisitOnly ? isVisitOnlyValid : (isFirstTimeVisit ? isNewPatientValid : selectedPatient));
           case 3: // Services
             return true; // Services are optional
           case 4: // Additional Details
@@ -738,7 +745,7 @@ function AppointmentFormModal({
                    appointmentData.selectedDate && 
                    (appointmentData.customStartTime || appointmentData.selectedSlot);
           case 2: // Patient Information
-            return appointmentData.visitType && (isVisitOnly ? true : (isFirstTimeVisit ? isNewPatientValid : selectedPatient));
+            return appointmentData.visitType && (isVisitOnly ? isVisitOnlyValid : (isFirstTimeVisit ? isNewPatientValid : selectedPatient));
           case 3: // Services
             return true; // Services are optional
           case 4: // Additional Details
@@ -755,7 +762,7 @@ function AppointmentFormModal({
         // When doctor is pre-selected, still show date/slot selection
         switch (currentStep) {
           case 1: // Patient Information (doctor already selected)
-            return appointmentData.visitType && (isVisitOnly ? true : (isFirstTimeVisit ? isNewPatientValid : selectedPatient));
+            return appointmentData.visitType && (isVisitOnly ? isVisitOnlyValid : (isFirstTimeVisit ? isNewPatientValid : selectedPatient));
           case 2: // Date & Time Selection
             return appointmentData.selectedDate && 
                    (appointmentData.customStartTime || appointmentData.selectedSlot);
@@ -771,7 +778,7 @@ function AppointmentFormModal({
       } else {
         switch (currentStep) {
           case 1: // Patient Information
-            return appointmentData.visitType && (isVisitOnly ? true : (isFirstTimeVisit ? isNewPatientValid : selectedPatient));
+            return appointmentData.visitType && (isVisitOnly ? isVisitOnlyValid : (isFirstTimeVisit ? isNewPatientValid : selectedPatient));
           case 2: // Doctor Selection & Date
             return appointmentData.selectedDoctor && 
                    appointmentData.selectedDate && 
@@ -1286,9 +1293,35 @@ function AppointmentFormModal({
             </label>
           </div>
           {appointmentData.visitType === "visit-only" && (
-            <p className="text-sm text-gray-600 mt-2">
-              Utwórz wizytę bez pacjenta. Pacjent zostanie dodany później przez „Zakończ rejestrację” z listy wizyt.
-            </p>
+            <div className="bg-white p-4 rounded-lg border border-gray-200 mt-2">
+              <p className="text-sm text-gray-600 mb-3">
+                Utwórz wizytę bez pacjenta. Podaj imię i nazwisko. PESEL i pełna rejestracja pacjenta — później przez „Zakończ rejestrację” z listy wizyt.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Imię*</label>
+                  <input
+                    type="text"
+                    name="newPatientFirstName"
+                    value={appointmentData.newPatientFirstName}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="Imię"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Nazwisko*</label>
+                  <input
+                    type="text"
+                    name="newPatientLastName"
+                    value={appointmentData.newPatientLastName}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="Nazwisko"
+                  />
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
@@ -1856,7 +1889,7 @@ function AppointmentFormModal({
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="font-medium">Pacjent:</span> {
-                isFirstTimeVisit && isNewPatientValid
+                (isFirstTimeVisit && isNewPatientValid) || (isVisitOnly && isVisitOnlyValid)
                   ? `${appointmentData.newPatientFirstName} ${appointmentData.newPatientLastName}`
                   : selectedPatient
                     ? `${selectedPatient.firstName || selectedPatient.name || "N/A"} ${selectedPatient.lastName || ""}`
@@ -2032,9 +2065,10 @@ function AppointmentFormModal({
         }
       };
       
-      // Add patient information based on selection type (visit-only = no patient data)
+      // Add patient information based on selection type (visit-only = first/last name + optional PESEL)
       if (isVisitOnly) {
-        // No patient data; backend creates visit only. Complete registration from list later.
+        appointmentSubmissionData.firstName = appointmentData.newPatientFirstName?.trim() || "";
+        appointmentSubmissionData.lastName = appointmentData.newPatientLastName?.trim() || "";
       } else if (isFirstTimeVisit && isNewPatientValid) {
         // For new patients, add their details directly
         appointmentSubmissionData.firstName = appointmentData.newPatientFirstName;
