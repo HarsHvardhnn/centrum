@@ -119,14 +119,18 @@ function LabAppointmentsContent({ clinic }) {
   const isVisitOnlyAppointment = (apt) =>
     apt?.isVisitOnly === true || !(apt?.patient?.id || apt?.patient?._id);
 
-  /** Display name: patient name, or registrationData.name / firstName+lastName, or fallback */
-  const getAppointmentPatientDisplayName = (apt) =>
-    apt?.patient?.name ??
-    apt?.registrationData?.name ??
-    (apt?.registrationData?.firstName && apt?.registrationData?.lastName
-      ? `${apt.registrationData.firstName} ${apt.registrationData.lastName}`.trim()
-      : null) ??
-    "Pacjent niezweryfikowany";
+  /** Display name: patient name, or registrationData, or fallback (never undefined) */
+  const getAppointmentPatientDisplayName = (apt) => {
+    const name =
+      apt?.patient?.name ??
+      apt?.registrationData?.name ??
+      (apt?.registrationData?.firstName && apt?.registrationData?.lastName
+        ? `${apt.registrationData.firstName} ${apt.registrationData.lastName}`.trim()
+        : null);
+    const fallback = "Nieznany pacjent";
+    if (name == null || name === "" || String(name) === "undefined") return fallback;
+    return name;
+  };
 
   const fetchAppointments = async (page = 1) => {
     try {
@@ -831,7 +835,7 @@ function LabAppointmentsContent({ clinic }) {
                             {!isVisitOnlyAppointment(appointment) && appointment.patient?.profilePicture ? (
                               <img
                                 src={appointment.patient.profilePicture}
-                                alt={appointment.patient?.name}
+                                alt={getAppointmentPatientDisplayName(appointment)}
                                 className="h-full w-full object-cover"
                               />
                             ) : isVisitOnlyAppointment(appointment) ? (
@@ -853,7 +857,7 @@ function LabAppointmentsContent({ clinic }) {
                               )}
                             </div>
                             <div className="text-sm text-gray-500 truncate max-w-[250px]">
-                              {appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "Brak ID (zakończ rejestrację)"}
+                              {isVisitOnlyAppointment(appointment) ? "—" : (appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "—")}
                             </div>
                           </div>
                         </div>
@@ -1078,7 +1082,7 @@ function LabAppointmentsContent({ clinic }) {
                           {!isVisitOnlyAppointment(appointment) && appointment.patient?.profilePicture ? (
                             <img
                               src={appointment.patient.profilePicture}
-                              alt={appointment.patient?.name}
+                              alt={getAppointmentPatientDisplayName(appointment)}
                               className="h-full w-full object-cover"
                             />
                           ) : isVisitOnlyAppointment(appointment) ? (
@@ -1100,7 +1104,7 @@ function LabAppointmentsContent({ clinic }) {
                             )}
                           </div>
                           <div className="text-sm text-gray-500 truncate">
-                            {appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "Brak ID (zakończ rejestrację)"}
+                            {isVisitOnlyAppointment(appointment) ? "—" : (appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "—")}
                           </div>
                         </div>
                       </div>
@@ -1327,7 +1331,7 @@ function LabAppointmentsContent({ clinic }) {
           onClose={() => setShowBillingModal(false)}
           onConfirm={confirmBilling}
           patientServicesData={billingServices}
-          patientName={selectedAppointment?.patient?.name}
+          patientName={selectedAppointment ? getAppointmentPatientDisplayName(selectedAppointment) : ""}
           appointmentId={selectedAppointment?.id}
           patientId={selectedAppointment?.patient?.id}
         />

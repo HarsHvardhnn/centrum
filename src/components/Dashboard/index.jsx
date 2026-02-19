@@ -1044,7 +1044,7 @@ const PatientList = () => {
                     }}
                   >
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium">{patient.name || "N/A"}</span>
+                      <span className="font-medium">{isVisitOnlyAppointment(patient) ? "Nieznany pacjent" : (patient.name || "Nieznany pacjent")}</span>
                       {isVisitOnlyAppointment(patient) && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 shrink-0" title="Wizyta bez pacjenta – zakończ rejestrację">
                           <UserPlus size={12} />
@@ -1053,7 +1053,7 @@ const PatientList = () => {
                       )}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {patient.username || "N/A"}
+                      {isVisitOnlyAppointment(patient) ? "—" : (patient.username || "—")}
                     </div>
                   </td>
                   <td className="py-4 px-4 text-gray-600">
@@ -1189,7 +1189,7 @@ const PatientList = () => {
         onClose={() => setShowBillingModal(false)}
         onConfirm={confirmBilling}
         patientServicesData={billingServices}
-        patientName={selectedAppointment?.patient?.name}
+        patientName={isVisitOnlyAppointment(selectedAppointment) ? "Nieznany pacjent" : (selectedAppointment?.patient?.name || "Nieznany pacjent")}
         appointmentId={selectedAppointment?.id}
         patientId={selectedAppointment?.patient_id}
       />

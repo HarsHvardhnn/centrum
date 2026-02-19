@@ -6,7 +6,8 @@ import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft } from "luc
 import { useServices } from "../../../context/serviceContext.jsx";
 import { toast } from "sonner";
 import { apiCaller } from "../../../utils/axiosInstance";
-import { normalizePesel } from "../../../utils/peselUtils";
+import { normalizePesel, getPeselChecksumWarning } from "../../../utils/peselUtils";
+import patientService from "../../../helpers/patientHelper";
 
 /**
  * AppointmentFormModal - Component for adding new appointments
@@ -45,6 +46,10 @@ function AppointmentFormModal({
     email: "",
     phone: ""
   });
+  const [firstTimePeselExists, setFirstTimePeselExists] = useState(false);
+  const [firstTimeExistingPatientData, setFirstTimeExistingPatientData] = useState(null);
+  const [firstTimePeselCheckLoading, setFirstTimePeselCheckLoading] = useState(false);
+  const [firstTimePeselWarningFromApi, setFirstTimePeselWarningFromApi] = useState(null);
   const [appointmentData, setAppointmentData] = useState(() => {
     const today = new Date().toISOString().split("T")[0];
     const isDefaultDateInPast = today < today; // This will always be false, but keeping for consistency
@@ -465,6 +470,31 @@ function AppointmentFormModal({
     
     setPhoneDropdownOpen(false);
   };
+
+  // When first-time visit and PESEL has 11 digits, check if patient already exists
+  useEffect(() => {
+    if (appointmentData.visitType !== "first-time" || appointmentData.newPatientPesel.replace(/\D/g, "").length !== 11) {
+      setFirstTimePeselExists(false);
+      setFirstTimeExistingPatientData(null);
+      setFirstTimePeselWarningFromApi(null);
+      return;
+    }
+    const normalized = normalizePesel(appointmentData.newPatientPesel);
+    let cancelled = false;
+    setFirstTimePeselCheckLoading(true);
+    patientService.getPatientByPesel(normalized).then((res) => {
+      if (cancelled) return;
+      setFirstTimePeselExists(!!res?.exists);
+      setFirstTimeExistingPatientData(res?.exists && res?.patient ? res.patient : null);
+      setFirstTimePeselWarningFromApi(res?.peselWarning ?? null);
+    }).catch(() => {
+      if (!cancelled) setFirstTimePeselExists(false);
+      if (!cancelled) setFirstTimePeselWarningFromApi(null);
+    }).finally(() => {
+      if (!cancelled) setFirstTimePeselCheckLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [appointmentData.visitType, appointmentData.newPatientPesel]);
 
   // Fetch doctor services when a doctor is selected
   const fetchDoctorServices = async (doctorId) => {
@@ -1437,15 +1467,45 @@ function AppointmentFormModal({
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">PESEL</label>
+                <label className="block text-sm text-gray-600 mb-1">PESEL (11 cyfr)</label>
                 <input
                   type="text"
+                  inputMode="numeric"
+                  maxLength={11}
                   name="newPatientPesel"
                   value={appointmentData.newPatientPesel}
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded-lg"
-                  placeholder="Wprowadź PESEL (opcjonalny)"
+                  placeholder="11 cyfr"
                 />
+                {firstTimePeselCheckLoading && <p className="text-xs text-gray-500 mt-1">Sprawdzam PESEL...</p>}
+                {appointmentData.newPatientPesel.length === 11 && (firstTimePeselWarningFromApi ?? getPeselChecksumWarning(appointmentData.newPatientPesel)) && (
+                  <p className="mt-1 text-sm text-amber-600">{firstTimePeselWarningFromApi ?? getPeselChecksumWarning(appointmentData.newPatientPesel)}</p>
+                )}
+                {firstTimePeselExists && firstTimeExistingPatientData && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">Pacjent o podanym numerze PESEL już istnieje w systemie.</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const p = firstTimeExistingPatientData;
+                        const name = p?.name || {};
+                        setSelectedPatient({
+                          _id: p._id,
+                          patientId: p.patientId,
+                          firstName: name.first ?? "",
+                          lastName: name.last ?? "",
+                          name: [name.first, name.last].filter(Boolean).join(" ") || "Nieznany pacjent",
+                          ...p
+                        });
+                        setAppointmentData(prev => ({ ...prev, visitType: "re-visit" }));
+                      }}
+                      className="mt-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
+                    >
+                      Załaduj dane istniejącego pacjenta
+                    </button>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm text-gray-600 mb-1">Płeć*</label>

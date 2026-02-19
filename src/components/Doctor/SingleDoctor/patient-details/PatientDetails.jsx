@@ -137,7 +137,7 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
     "Dane osobowe": filterEmptyFields({
       "Imię i nazwisko": `${patientData.name?.first || ""} ${patientData.name?.last || ""}`.trim(),
       "Email": patientData.email,
-      "Telefon": patientData.phone,
+      "Telefon": (patientData.phone != null && String(patientData.phone).trim() !== "") ? patientData.phone : "Brak numeru telefonu",
       "PESEL": patientData.govtId || patientData.pesel || patientData.PESEL || "Nie określono",
       "Płeć": patientData.sex === "Male" ? "Mężczyzna" : patientData.sex === "Female" ? "Kobieta" : patientData.sex,
       "Data urodzenia": patientData.dateOfBirth ? formatDate(patientData.dateOfBirth) : null,
