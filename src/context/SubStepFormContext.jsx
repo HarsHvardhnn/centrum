@@ -42,6 +42,16 @@ export const FormProvider = ({ children, initialData }) => {
     district: "",
     isInternationalPatient: false,
 
+    // Identity document (international patients)
+    documentCountry: "",
+    documentType: "",
+    documentNumber: "",
+    documentDateOfBirth: "",
+    documentExpiryDate: "",
+    citizenship: "",
+    documentEmail: "",
+    documentPhone: "",
+
     // Photo
     photo: null,
 

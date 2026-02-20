@@ -261,7 +261,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
               </div>
               <div>
                 <p className="text-gray-500">Telefon</p>
-                <p>{patient.phone}</p>
+                <p>{(patient.phone != null && String(patient.phone).trim() !== "" && !String(patient.phone).trim().startsWith("__no_phone_")) ? patient.phone : "Numer telefonu niedostępny"}</p>
               </div>
               {/* <div>
                 <p className="text-gray-500">Schorzenia</p>

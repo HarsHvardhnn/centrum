@@ -4,6 +4,13 @@ import { apiCaller } from "../utils/axiosInstance";
 
 /**
  * Service for patient-related API calls
+ *
+ * Backend contract – International patient identification (when isInternationalPatient = true):
+ * - Field name: internationalPatientDocumentKey (string)
+ * - Format: "country|documentType|documentNumber" (trimmed, pipe-separated). Example: "Germany|Passport|AB123456"
+ * - Backend should store this for duplicate prevention and PATIENT_ID; recommend also verifying with documentDateOfBirth.
+ * - On create: if a patient already exists with the same key, respond with HTTP 409 and body: { existingPatientId: "<_id>" }.
+ * - Frontend will then show "Pacjent z tym dokumentem już istnieje w systemie." and open the existing patient for editing.
  */
 const patientService = {
   /**
@@ -51,6 +58,16 @@ const patientService = {
       appendIfExists("fullName", patientData.fullName);
       appendIfExists("govtId", patientData.govtId);
       appendIfExists("isInternationalPatient", patientData.isInternationalPatient);
+      appendIfExists("documentCountry", patientData.documentCountry);
+      appendIfExists("documentType", patientData.documentType);
+      appendIfExists("documentNumber", patientData.documentNumber);
+      appendIfExists("documentDateOfBirth", patientData.documentDateOfBirth);
+      appendIfExists("documentExpiryDate", patientData.documentExpiryDate);
+      appendIfExists("citizenship", patientData.citizenship);
+      // Email and phone are sent only as email / mobileNumber+phoneCode (not documentEmail/documentPhone)
+      // Backend contract: internationalPatientDocumentKey = "country|documentType|documentNumber" for duplicate check and PATIENT_ID.
+      // Recommend also verifying with documentDateOfBirth. On duplicate return 409 with body: { existingPatientId: string }.
+      appendIfExists("internationalPatientDocumentKey", patientData.internationalPatientDocumentKey);
       appendIfExists("smsConsentAgreed", patientData.smsConsentAgreed);
       appendIfExists("ivrLanguage", patientData.ivrLanguage);
       appendIfExists("mainComplaint", patientData.mainComplaint);
@@ -152,6 +169,13 @@ const patientService = {
     if (patientData.fullName !== undefined) formData.append("fullName", patientData.fullName);
     if (patientData.govtId !== undefined) formData.append("govtId", patientData.govtId);
     if (patientData.isInternationalPatient !== undefined) formData.append("isInternationalPatient", patientData.isInternationalPatient);
+    if (patientData.documentCountry !== undefined) formData.append("documentCountry", patientData.documentCountry);
+    if (patientData.documentType !== undefined) formData.append("documentType", patientData.documentType);
+    if (patientData.documentNumber !== undefined) formData.append("documentNumber", patientData.documentNumber);
+    if (patientData.documentDateOfBirth !== undefined) formData.append("documentDateOfBirth", patientData.documentDateOfBirth);
+    if (patientData.documentExpiryDate !== undefined) formData.append("documentExpiryDate", patientData.documentExpiryDate);
+    if (patientData.citizenship !== undefined) formData.append("citizenship", patientData.citizenship);
+    if (patientData.internationalPatientDocumentKey !== undefined) formData.append("internationalPatientDocumentKey", patientData.internationalPatientDocumentKey);
     if (patientData.ivrLanguage !== undefined) formData.append("ivrLanguage", patientData.ivrLanguage);
     if (patientData.mainComplaint !== undefined) formData.append("mainComplaint", patientData.mainComplaint);
     if (patientData.maritalStatus !== undefined) formData.append("maritalStatus", patientData.maritalStatus);
@@ -482,6 +506,23 @@ const patientService = {
     }
   },
 
+  /**
+   * Get full patient details by PESEL. Use after "check by-pesel" for "Załaduj dane" / "Użyj tego pacjenta".
+   * GET /patients/by-pesel/details?pesel=...
+   * @param {string} pesel - 11-digit PESEL (non-digits stripped by backend)
+   * @returns {Promise<object>} Full patient document (same shape as GET /patients/:id). 404 if no patient.
+   */
+  getPatientDetailsByPesel: async (pesel) => {
+    const normalized = String(pesel).replace(/\D/g, "").slice(0, 11);
+    if (normalized.length !== 11) {
+      throw new Error("Podaj prawidłowy numer PESEL (11 cyfr).");
+    }
+    const response = await apiCaller(
+      "GET",
+      `/patients/by-pesel/details?pesel=${encodeURIComponent(normalized)}`
+    );
+    return response.data ?? response;
+  },
 
   /**
    * Check if a patient is available for appointment

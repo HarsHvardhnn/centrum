@@ -10,6 +10,7 @@ import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import AddDoctorForm from "../Doctor/CreateDoctor";
 import doctorService from "../../helpers/doctorHelper";
 import patientService from "../../helpers/patientHelper";
+import { normalizePesel } from "../../utils/peselUtils";
 import SpecializationModal from "./SpecializationModal";
 import { toast } from "sonner";
 import PermanentDeleteDialog from "./PermanentDeleteDialog";
@@ -594,6 +595,13 @@ export default function UserManagement() {
         district: patientDetails.district,
         isInternationalPatient: patientDetails.isInternationalPatient || false,
 
+        documentCountry: patientDetails.documentCountry || "",
+        documentType: patientDetails.documentType || "",
+        documentNumber: patientDetails.documentNumber || "",
+        documentDateOfBirth: patientDetails.documentDateOfBirth || "",
+        documentExpiryDate: patientDetails.documentExpiryDate || "",
+        citizenship: patientDetails.citizenship || "",
+
         // Photo
         photo: patientDetails.photo || null,
 
@@ -656,6 +664,23 @@ export default function UserManagement() {
   const handleAddPatient = async (formData) => {
     try {
       console.log("Settings - handleAddPatient received:", formData);
+
+      // When adding (not editing), validate that PESEL does not already exist
+      if (!isEditMode && formData.govtId) {
+        const normalizedPesel = normalizePesel(formData.govtId);
+        if (normalizedPesel.length === 11) {
+          try {
+            const res = await patientService.getPatientByPesel(normalizedPesel);
+            if (res?.exists) {
+              toast.error("Pacjent o podanym numerze PESEL już istnieje w systemie.");
+              return;
+            }
+          } catch (e) {
+            console.warn("PESEL check failed:", e);
+          }
+        }
+      }
+
       showLoader();
       
       // Prepare the data with combined phone number and separate phone code
@@ -666,6 +691,17 @@ export default function UserManagement() {
         // Also combine them for backward compatibility
         phone: selectedPhoneCode + (formData.mobileNumber || "")
       };
+
+      // International patient document key for backend duplicate check and storage.
+      // Field name: internationalPatientDocumentKey. Format: "country|documentType|documentNumber".
+      // Backend should validate uniqueness and return 409 with existingPatientId when duplicate.
+      if (formData.isInternationalPatient && formData.documentCountry?.trim() && formData.documentType?.trim() && formData.documentNumber?.trim()) {
+        patientData.internationalPatientDocumentKey = [
+          formData.documentCountry.trim(),
+          formData.documentType.trim(),
+          formData.documentNumber.trim()
+        ].join("|");
+      }
       
       console.log("Settings - handleAddPatient prepared data:", patientData);
       
@@ -705,13 +741,29 @@ export default function UserManagement() {
         setSuccess("");
       }, 3000);
     } catch (err) {
+      hideLoader();
+      const status = err.response?.status;
+      const data = err.response?.data || {};
+      const existingPatientId = data.existingPatientId || data.existingPatient_id;
+
+      // Duplicate international patient document: do not create, offer link to existing record
+      if (!isEditMode && (status === 409 || existingPatientId) && formData.isInternationalPatient) {
+        toast.error("Pacjent z tym dokumentem już istnieje w systemie.");
+        setShowAddPatientModal(false);
+        if (existingPatientId) {
+          handleEditPatient(existingPatientId);
+        }
+        return;
+      }
+
       setError(
         "Nie udało się " + (isEditMode ? "zaktualizować" : "dodać") + " pacjenta: " +
-        (err.response?.data?.error || err.response?.data?.message || "Nieznany błąd")
+        (data.error || data.message || "Nieznany błąd")
       );
-      toast.error(    "Nie udało się " + (isEditMode ? "zaktualizować" : "dodać") + " pacjenta: " +
-      (err.response?.data?.error || err.response?.data?.message || "Nieznany błąd"))
-      hideLoader();
+      toast.error(
+        "Nie udało się " + (isEditMode ? "zaktualizować" : "dodać") + " pacjenta: " +
+        (data.error || data.message || "Nieznany błąd")
+      );
     }
   };
 

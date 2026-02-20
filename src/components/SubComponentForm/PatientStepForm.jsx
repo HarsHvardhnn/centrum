@@ -20,7 +20,8 @@ const PatientStepForm = ({
   onPhoneNumberChange,
   phoneValidationError,
   phoneCountryCodes,
-  onRemoveEmail
+  onRemoveEmail,
+  isEditMode = false
 }) => {
   return (
     <div>
@@ -30,6 +31,7 @@ const PatientStepForm = ({
         onComplete={markStepAsCompleted}
         hideButtons={hideButtons}
         subStepTitles={subStepTitles}
+        isEditMode={isEditMode}
       >
         <SubStep title="Dane Podstawowe">
           <DemographicsForm 
@@ -39,6 +41,8 @@ const PatientStepForm = ({
             phoneValidationError={phoneValidationError}
             phoneCountryCodes={phoneCountryCodes}
             onRemoveEmail={onRemoveEmail}
+            isEditMode={isEditMode}
+            currentPatientId={currentPatientId}
           />
         </SubStep>
         <SubStep title="Skierowanie">

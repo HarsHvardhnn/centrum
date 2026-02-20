@@ -139,7 +139,7 @@ const PatientList = ({ patients }) => {
                   </div>
                 </td>
                 <td className="py-4 px-4 text-gray-600">{patient.patientId}</td>
-                <td className="py-4 px-4 text-gray-600">{patient.phone}</td>
+                <td className="py-4 px-4 text-gray-600">{(patient.phone != null && String(patient.phone).trim() !== "" && !String(patient.phone).trim().startsWith("__no_phone_")) ? patient.phone : "Numer telefonu niedostępny"}</td>
                 <td className="py-4 px-4 text-gray-600">{patient.lastVisit}</td>
                 <td className="py-4 px-4 text-gray-600">{patient.doctor}</td>
                 <td className="py-4 px-4 text-gray-600">{patient.dob}</td>

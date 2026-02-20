@@ -99,18 +99,6 @@ const AddressForm = () => {
           />
         </div>
       </div>
-      
-      <div className="flex items-center">
-        <input 
-          type="checkbox" 
-          id="international" 
-          name="isInternationalPatient"
-          checked={formData.isInternationalPatient}
-          onChange={handleChange}
-          className="mr-2" 
-        />
-        <label htmlFor="international" className="text-sm text-gray-700">Pacjent Międzynarodowy</label>
-      </div>
     </div>
   );
 };

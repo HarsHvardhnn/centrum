@@ -2,6 +2,10 @@
 import { useFormContext } from "../../context/SubStepFormContext";
 import { useState, useEffect } from "react";
 import { normalizePesel, getPeselChecksumWarning } from "../../utils/peselUtils";
+import patientService from "../../helpers/patientHelper";
+import { apiCaller } from "../../utils/axiosInstance";
+import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
 
 // SVG Flag Components
 const FlagIcon = ({ countryCode, className = "w-4 h-4" }) => {
@@ -105,13 +109,23 @@ const FlagIcon = ({ countryCode, className = "w-4 h-4" }) => {
   return flags[countryCode] || <span className={className}>🏳️</span>;
 };
 
+const DOCUMENT_TYPES = [
+  { value: "", label: "Wybierz typ" },
+  { value: "Passport", label: "Paszport" },
+  { value: "ID Card", label: "Dowód osobisty" },
+  { value: "Residence Card", label: "Karta pobytu" },
+  { value: "Other", label: "Inny" },
+];
+
 const DemographicsForm = ({
   selectedPhoneCode,
   onPhoneCodeChange,
   onPhoneNumberChange,
   phoneValidationError,
   phoneCountryCodes: externalPhoneCountryCodes,
-  onRemoveEmail
+  onRemoveEmail,
+  isEditMode = false,
+  currentPatientId = null,
 }) => {
   const { formData, updateFormData } = useFormContext();
   const [touched, setTouched] = useState({
@@ -127,6 +141,27 @@ const DemographicsForm = ({
     mobileNumber: ""
   });
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [peselExists, setPeselExists] = useState(false);
+  const [peselCheckLoading, setPeselCheckLoading] = useState(false);
+
+  // When adding (not editing) and PESEL has 11 digits and not international, check if patient already exists
+  useEffect(() => {
+    if (isEditMode || formData.isInternationalPatient || !formData.govtId || normalizePesel(formData.govtId).length !== 11) {
+      setPeselExists(false);
+      return;
+    }
+    const normalized = normalizePesel(formData.govtId);
+    let cancelled = false;
+    setPeselCheckLoading(true);
+    patientService.getPatientByPesel(normalized).then((res) => {
+      if (!cancelled) setPeselExists(!!res?.exists);
+    }).catch(() => {
+      if (!cancelled) setPeselExists(false);
+    }).finally(() => {
+      if (!cancelled) setPeselCheckLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [isEditMode, formData.govtId, formData.isInternationalPatient]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -177,6 +212,55 @@ const DemographicsForm = ({
   }, [currentPhoneCode, formData.mobileNumber, formData.phone]);
 
 
+
+  // Document upload (same as documents step – stored in formData.documents)
+  const handleDocumentFileChange = (e) => {
+    if (e.target.files?.[0]) {
+      const file = e.target.files[0];
+      const newDocuments = [...(formData.documents || [])];
+      newDocuments.push({
+        id: Date.now(),
+        file,
+        name: file.name,
+        type: file.type,
+        preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
+        isPdf: file.type === "application/pdf",
+      });
+      updateFormData("documents", newDocuments);
+    }
+    e.target.value = "";
+  };
+  const handleDocumentDrop = (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files?.[0]) {
+      const file = e.dataTransfer.files[0];
+      const newDocuments = [...(formData.documents || [])];
+      newDocuments.push({
+        id: Date.now(),
+        file,
+        name: file.name || file.fileName,
+        type: file.type,
+        preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
+        isPdf: file.type === "application/pdf",
+      });
+      updateFormData("documents", newDocuments);
+    }
+  };
+  const removeDocumentFromList = async (doc) => {
+    if (doc._id && currentPatientId) {
+      try {
+        await apiCaller("DELETE", `/patients/${currentPatientId}/documents/${doc._id}`);
+        toast.success("Dokument usunięty");
+      } catch (err) {
+        toast.error("Nie udało się usunąć dokumentu.");
+        return;
+      }
+    }
+    const next = (formData.documents || []).filter((d) =>
+      doc._id ? d._id !== doc._id : d.id !== doc.id
+    );
+    updateFormData("documents", next);
+  };
 
   // Monitor form data changes for debugging
   useEffect(() => {
@@ -238,8 +322,9 @@ const DemographicsForm = ({
     return "";
   };
 
-  // PESEL validation function (digits only, exactly 11)
-  const validatePesel = (pesel) => {
+  // PESEL validation function (digits only, exactly 11). When isInternationalPatient, PESEL is not required.
+  const validatePesel = (pesel, isInternational) => {
+    if (isInternational) return "";
     if (!pesel || pesel.trim() === "") return "Numer PESEL jest wymagany";
     const normalized = normalizePesel(pesel);
     if (normalized.length !== 11) return "Numer PESEL musi mieć dokładnie 11 cyfr";
@@ -276,9 +361,12 @@ const DemographicsForm = ({
       if (touched[name]) {
         setErrors(prev => ({
           ...prev,
-          govtId: validatePesel(digitsOnly)
+          govtId: validatePesel(digitsOnly, formData.isInternationalPatient)
         }));
       }
+    } else if (name === "isInternationalPatient") {
+      updateFormData(name, type === "checkbox" ? e.target.checked : value);
+      if (e.target.checked) setErrors(prev => ({ ...prev, govtId: "" }));
     } else if (name === "sex") {
       updateFormData(name, value);
       setTouched(prev => ({ ...prev, sex: true }));
@@ -480,33 +568,221 @@ const DemographicsForm = ({
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Numer PESEL <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            inputMode="numeric"
-            autoComplete="off"
-            name="govtId"
-            value={formData.govtId || ""}
-            onChange={handleChange}
-            onBlur={() => handleBlur("govtId")}
-            placeholder="Wprowadź numer PESEL (11 cyfr)"
-            maxLength={11}
-            className={`w-full px-3 py-2 border ${touched.govtId && errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md`}
-            required
-          />
-          {touched.govtId && errors.govtId && (
-            <p className="mt-1 text-sm text-red-500">{errors.govtId}</p>
-          )}
-          {formData.govtId && formData.govtId.length === 11 && getPeselChecksumWarning(formData.govtId) && (
-            <p className="mt-1 text-sm text-amber-600" role="alert">
-              {getPeselChecksumWarning(formData.govtId)}
-            </p>
-          )}
+        <div className="md:col-span-2 flex flex-col md:flex-row md:items-end gap-3">
+          <div className="flex-1 min-w-0">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Numer PESEL {!formData.isInternationalPatient && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              name="govtId"
+              value={formData.govtId || ""}
+              onChange={handleChange}
+              onBlur={() => handleBlur("govtId")}
+              placeholder={formData.isInternationalPatient ? "Nie dotyczy – pacjent międzynarodowy" : "Wprowadź numer PESEL (11 cyfr)"}
+              maxLength={11}
+              disabled={!!formData.isInternationalPatient}
+              className={`w-full px-3 py-2 border rounded-md ${formData.isInternationalPatient ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300" : touched.govtId && errors.govtId ? "border-red-500" : "border-gray-300"}`}
+              required={!formData.isInternationalPatient}
+            />
+            {touched.govtId && errors.govtId && (
+              <p className="mt-1 text-sm text-red-500">{errors.govtId}</p>
+            )}
+            {peselCheckLoading && <p className="mt-1 text-xs text-gray-500">Sprawdzam PESEL...</p>}
+            {!formData.isInternationalPatient && formData.govtId && formData.govtId.length === 11 && getPeselChecksumWarning(formData.govtId) && (
+              <p className="mt-1 text-sm text-amber-600" role="alert">
+                {getPeselChecksumWarning(formData.govtId)}
+              </p>
+            )}
+            {!isEditMode && !formData.isInternationalPatient && peselExists && (
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">Pacjent o podanym numerze PESEL już istnieje w systemie.</p>
+              </div>
+            )}
+            {formData.isInternationalPatient && (
+              <p className="mt-1 text-sm text-gray-500">PESEL does not apply to international patients.</p>
+            )}
+          </div>
+          <div className="flex items-center shrink-0 pb-0.5">
+            <input
+              type="checkbox"
+              id="isInternationalPatient"
+              name="isInternationalPatient"
+              checked={!!formData.isInternationalPatient}
+              onChange={handleChange}
+              disabled={!!isEditMode}
+              className={`h-4 w-4 text-teal-500 border-gray-300 rounded ${isEditMode ? "opacity-60 cursor-not-allowed" : ""}`}
+            />
+            <label htmlFor="isInternationalPatient" className={`ml-2 text-sm text-gray-700 whitespace-nowrap ${isEditMode ? "text-gray-500" : ""}`}>Pacjent międzynarodowy</label>
+          </div>
         </div>
       </div>
+
+      {formData.isInternationalPatient && !isEditMode && (
+        <>
+          <div className="border-t border-gray-200 pt-6 mt-4">
+            <h3 className="text-lg font-medium text-gray-800 mb-4">Dane dokumentu tożsamości</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Kraj wydania dokumentu <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="documentCountry"
+                  value={formData.documentCountry || ""}
+                  onChange={handleChange}
+                  placeholder="np. Polska, Niemcy"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Typ dokumentu <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="documentType"
+                  value={formData.documentType || ""}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  {DOCUMENT_TYPES.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Numer dokumentu <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="documentNumber"
+                  value={formData.documentNumber || ""}
+                  onChange={handleChange}
+                  placeholder="Numer dokumentu"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data urodzenia (z dokumentu) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  name="documentDateOfBirth"
+                  value={formatDateForInput(formData.documentDateOfBirth) || ""}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data ważności dokumentu
+                </label>
+                <input
+                  type="date"
+                  name="documentExpiryDate"
+                  value={formatDateForInput(formData.documentExpiryDate) || ""}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Obywatelstwo
+                </label>
+                <input
+                  type="text"
+                  name="citizenship"
+                  value={formData.citizenship || ""}
+                  onChange={handleChange}
+                  placeholder="Obywatelstwo"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  E-mail
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email || ""}
+                  onChange={handleChange}
+                  placeholder="E-mail (jak w sekcji powyżej)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+                <p className="mt-0.5 text-xs text-gray-500">Ta sama wartość co w polu E-mail powyżej.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Numer telefonu
+                </label>
+                <input
+                  type="tel"
+                  name="mobileNumber"
+                  value={formData.mobileNumber || ""}
+                  onChange={handleChange}
+                  placeholder="Numer (jak w sekcji powyżej)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+                <p className="mt-0.5 text-xs text-gray-500">Ta sama wartość co w polu Telefon powyżej.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6 mt-4">
+            <h3 className="text-lg font-medium text-gray-800 mb-3">Dokumenty</h3>
+            <p className="text-gray-600 text-sm mb-3">
+              Możesz dodać dokumenty tutaj lub w kroku „Zgody”. Wysyłane są w ten sam sposób.
+            </p>
+            <div
+              className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDocumentDrop}
+              onClick={() => document.getElementById("document-upload-basic-details")?.click()}
+            >
+              <p className="text-primary font-medium">Kliknij lub przeciągnij plik</p>
+              <p className="text-gray-500 text-sm mt-1">PDF lub obraz (JPG, PNG, GIF)</p>
+            </div>
+            <input
+              type="file"
+              id="document-upload-basic-details"
+              className="hidden"
+              accept="application/pdf,image/*"
+              onChange={handleDocumentFileChange}
+            />
+            {formData?.documents?.length > 0 && (
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">Przesłane dokumenty</p>
+                <ul className="space-y-2">
+                  {formData.documents.map((doc) => (
+                    <li
+                      key={doc.id ?? doc._id}
+                      className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md border border-gray-200"
+                    >
+                      <span className="text-sm truncate flex-1">
+                        {doc.fileName || doc.name || "Dokument"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeDocumentFromList(doc)}
+                        className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                        title="Usuń"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>

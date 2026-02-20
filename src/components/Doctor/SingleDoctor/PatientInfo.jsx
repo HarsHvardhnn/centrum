@@ -65,7 +65,7 @@ const PatientInfo = ({ patientData }) => {
               <span className="font-semibold">Email:</span> {patientData.email}
             </p>
             <p className="text-sm w-full flex flex-col border-l px-2">
-              <span className="font-semibold">Telefon:</span> {(patientData.phone != null && String(patientData.phone).trim() !== "") ? patientData.phone : "Brak numeru telefonu"}
+              <span className="font-semibold">Telefon:</span> {(patientData.phone != null && String(patientData.phone).trim() !== "" && !String(patientData.phone).trim().startsWith("__no_phone_")) ? patientData.phone : "Numer telefonu niedostępny"}
             </p>
           </div>
 

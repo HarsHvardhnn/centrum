@@ -17,7 +17,8 @@ const SubStepForm = ({
   goToSubStep, 
   onComplete,
   hideButtons = false, // Prop to optionally hide navigation buttons
-  subStepTitles = [] // Array of sub-step titles for back button text
+  subStepTitles = [], // Array of sub-step titles for back button text
+  isEditMode = false
 }) => {
   const { formData } = useFormContext();
   const [hasValidationErrors, setHasValidationErrors] = useState(false);
@@ -29,20 +30,27 @@ const SubStepForm = ({
     }
   }, [subSteps, subStepTitles]);
 
-  // Validate current step
+  // Validate current step (in edit mode, document fields are hidden so we don't require them)
   useEffect(() => {
     if (currentSubStep === 0) { // Demographics form
       const fullNameError = !formData.fullName || formData.fullName.trim() === "";
-      const govtIdError = !formData.govtId || formData.govtId.trim() === "";
+      const isInternational = !!formData.isInternationalPatient;
+      const govtIdError = !isInternational && (!formData.govtId || formData.govtId.trim() === "");
       const sexError = !formData.sex;
-      setHasValidationErrors(fullNameError || govtIdError || sexError);
+      const identityDocError = !isEditMode && isInternational && (
+        !formData.documentCountry?.trim() ||
+        !formData.documentType?.trim() ||
+        !formData.documentNumber?.trim() ||
+        !formData.documentDateOfBirth
+      );
+      setHasValidationErrors(fullNameError || govtIdError || sexError || identityDocError);
     } else if (currentSubStep === 1) { // Referrer form
       const doctorError = !formData.consultingDoctor;
       setHasValidationErrors(doctorError);
     } else {
       setHasValidationErrors(false);
     }
-  }, [currentSubStep, formData.fullName, formData.govtId, formData.sex, formData.consultingDoctor]);
+  }, [currentSubStep, isEditMode, formData.fullName, formData.govtId, formData.sex, formData.consultingDoctor, formData.isInternationalPatient, formData.documentCountry, formData.documentType, formData.documentNumber, formData.documentDateOfBirth]);
 
   const getPreviousButtonText = () => {
     if (currentSubStep > 0) {
