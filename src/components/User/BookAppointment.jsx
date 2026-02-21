@@ -139,9 +139,13 @@ export default function BookAppointment({
     medicalDataProcessingAgreed: false,
     teleportationConfirmed: false,
     contactConsentAgreed: false,
-    govtId: "", // PESEL number
+    govtId: "", // PESEL number (optional)
     address: "", // Residential address
     dateOfBirth: "", // Date of birth
+    isInternationalPatient: false,
+    documentCountry: "",
+    documentType: "",
+    documentNumber: "",
   };
 
   const validationSchema = Yup.object({
@@ -158,12 +162,27 @@ export default function BookAppointment({
     specialization: Yup.string().required("Wymagane"),
     message: Yup.string().min(10, "Za krótka wiadomość").required("Wymagane"),
     consultationType: Yup.string().oneOf(['online', 'offline']).required("Wymagane"),
-    govtId: Yup.string().when('consultationType', {
-      is: 'online',
-      then: (schema) => schema
-        .required("Numer PESEL jest wymagany")
-        .max(15, "Numer PESEL nie może być dłuższy niż 15 znaków")
-        .matches(/^[a-zA-Z0-9]+$/, "Numer PESEL może zawierać tylko litery i cyfry"),
+    govtId: Yup.string()
+      .max(15, "Numer PESEL nie może być dłuższy niż 15 znaków")
+      .matches(/^[a-zA-Z0-9]*$/, "Numer PESEL może zawierać tylko litery i cyfry")
+      .when(['consultationType', 'isInternationalPatient'], {
+        is: (consultationType, isInternationalPatient) => consultationType === 'online' && isInternationalPatient,
+        then: (schema) => schema.trim(),
+        otherwise: (schema) => schema
+      }),
+    documentCountry: Yup.string().when(['consultationType', 'isInternationalPatient'], {
+      is: (consultationType, isInternationalPatient) => consultationType === 'online' && isInternationalPatient,
+      then: (schema) => schema.required("Kraj wydania dokumentu jest wymagany").trim(),
+      otherwise: (schema) => schema
+    }),
+    documentType: Yup.string().when(['consultationType', 'isInternationalPatient'], {
+      is: (consultationType, isInternationalPatient) => consultationType === 'online' && isInternationalPatient,
+      then: (schema) => schema.required("Typ dokumentu jest wymagany").trim(),
+      otherwise: (schema) => schema
+    }),
+    documentNumber: Yup.string().when(['consultationType', 'isInternationalPatient'], {
+      is: (consultationType, isInternationalPatient) => consultationType === 'online' && isInternationalPatient,
+      then: (schema) => schema.required("Numer dokumentu jest wymagany").trim(),
       otherwise: (schema) => schema
     }),
     address: Yup.string().when('consultationType', {
@@ -373,10 +392,13 @@ export default function BookAppointment({
       setSubmitting(true);
       setSubmitStatus({ success: false, error: null });
 
-      // Additional validation for required fields
+      // Additional validation for online: address and dateOfBirth required; PESEL or document when international
       if (values.consultationType === "online") {
-        if (!values.govtId || !values.address || !values.dateOfBirth) {
-          throw new Error("Wszystkie wymagane pola muszą być wypełnione dla konsultacji online");
+        if (!values.address || !values.dateOfBirth) {
+          throw new Error("Adres i data urodzenia są wymagane dla konsultacji online");
+        }
+        if (values.isInternationalPatient && (!values.documentCountry?.trim() || !values.documentType?.trim() || !values.documentNumber?.trim())) {
+          throw new Error("Wypełnij wszystkie pola dokumentu tożsamości");
         }
       }
 
@@ -411,14 +433,30 @@ export default function BookAppointment({
         return;
       }
 
-      // Format date and time if needed
-      const formData = {
+      // Format date and time; PESEL or document (backend: never create PATIENT_ID)
+      const baseData = {
         ...values,
         phone: `${values.phoneCode}${values.phone}`,
         recaptchaToken,
         isV2Fallback,
-        consent: true // Add consent field for CAPTCHA verification
+        consent: true
       };
+      const formData = { ...baseData };
+      if (values.isInternationalPatient) {
+        const dc = values.documentCountry?.trim() || "";
+        const dt = values.documentType?.trim() || "";
+        const dn = values.documentNumber?.trim() || "";
+        formData.isInternationalPatient = true;
+        formData.documentCountry = dc;
+        formData.documentType = dt;
+        formData.documentNumber = dn;
+        if (dc && dt && dn) formData.internationalPatientDocumentKey = `${dc}|${dt}|${dn}`;
+        delete formData.govtId;
+      } else if (values.govtId?.trim()) {
+        formData.govtId = values.govtId.trim();
+      } else {
+        delete formData.govtId;
+      }
 
       console.log('Sending form data with captcha:', { 
         ...formData, 
@@ -631,8 +669,7 @@ export default function BookAppointment({
                     >
                       Wizyta stacjonarna
                     </button>
-                    {/* Temporarily hidden - will be needed later */}
-                    {/* <button
+                    <button
                       type="button"
                       onClick={() => setFieldValue("consultationType", "online")}
                       className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
@@ -642,7 +679,7 @@ export default function BookAppointment({
                       }`}
                     >
                       Wizyta online
-                    </button> */}
+                    </button>
                   </div>
                   {errors.consultationType && touched.consultationType && (
                     <div className="text-red-600 text-xs sm:text-sm mt-1">
@@ -838,32 +875,92 @@ export default function BookAppointment({
                       <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 4: Dodatkowe informacje (wymagane dla konsultacji online)</h5>
                     </div>
 
-                    {/* PESEL field */}
-                    <div className="col-span-1">
-                      <label htmlFor="govtId" className="sr-only">Numer PESEL</label>
-                      <Field name="govtId">
-                        {({ field, form }) => (
-                          <input
-                            id="govtId"
-                            type="text"
-                            {...field}
-                            onChange={(e) => {
-                              const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
-                              form.setFieldValue('govtId', value);
-                            }}
-                            autoComplete="off"
-                            className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                            placeholder="Wprowadź numer PESEL"
-                            maxLength="15"
-                          />
-                        )}
-                      </Field>
-                      <ErrorMessage
-                        name="govtId"
-                        component="div"
-                        className="text-red-600 text-xs sm:text-sm mt-1"
-                      />
+                    <div className="col-span-1 sm:col-span-2 mb-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Field name="isInternationalPatient">
+                          {({ field, form }) => (
+                            <input
+                              type="checkbox"
+                              {...field}
+                              checked={!!field.value}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                form.setFieldValue("isInternationalPatient", checked);
+                                if (checked) form.setFieldValue("govtId", "");
+                                else {
+                                  form.setFieldValue("documentCountry", "");
+                                  form.setFieldValue("documentType", "");
+                                  form.setFieldValue("documentNumber", "");
+                                }
+                              }}
+                              className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                            />
+                          )}
+                        </Field>
+                        <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
+                      </label>
                     </div>
+
+                    {!values.isInternationalPatient && (
+                      <div className="col-span-1">
+                        <label htmlFor="govtId" className="block text-sm font-medium text-gray-700 mb-1">PESEL (opcjonalnie)</label>
+                        <Field name="govtId">
+                          {({ field, form }) => (
+                            <input
+                              id="govtId"
+                              type="text"
+                              {...field}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
+                                form.setFieldValue('govtId', value);
+                              }}
+                              autoComplete="off"
+                              className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                              placeholder="Wprowadź numer PESEL (jeśli posiadasz)"
+                              maxLength="15"
+                            />
+                          )}
+                        </Field>
+                        <ErrorMessage name="govtId" component="div" className="text-red-600 text-xs sm:text-sm mt-1" />
+                      </div>
+                    )}
+
+                    {values.isInternationalPatient && (
+                      <div className="col-span-1 sm:col-span-2 mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                        <h6 className="text-sm font-medium text-gray-700 mb-3">Dane dokumentu tożsamości</h6>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Kraj wydania dokumentu *</label>
+                            <Field
+                              name="documentCountry"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                              placeholder="np. Niemcy, Polska"
+                            />
+                            <ErrorMessage name="documentCountry" component="div" className="text-red-600 text-xs mt-1" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Typ dokumentu *</label>
+                            <Field as="select" name="documentType" className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                              <option value="">Wybierz</option>
+                              <option value="Passport">Paszport</option>
+                              <option value="ID Card">Dowód osobisty</option>
+                              <option value="Residence Card">Karta pobytu</option>
+                              <option value="Other">Inny</option>
+                            </Field>
+                            <ErrorMessage name="documentType" component="div" className="text-red-600 text-xs mt-1" />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Numer dokumentu *</label>
+                            <Field
+                              name="documentNumber"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                              placeholder="Numer dokumentu"
+                            />
+                            <ErrorMessage name="documentNumber" component="div" className="text-red-600 text-xs mt-1" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Data urodzenia field */}
                     <div className="col-span-1">

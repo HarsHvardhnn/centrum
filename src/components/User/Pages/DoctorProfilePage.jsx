@@ -52,6 +52,10 @@ const DoctorProfilePage = () => {
     govtId: "",
     address: "",
     dateOfBirth: "",
+    isInternationalPatient: false,
+    documentCountry: "",
+    documentType: "",
+    documentNumber: "",
   });
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -388,12 +392,21 @@ const DoctorProfilePage = () => {
       errors.phone = "Numer telefonu musi składać się z 9 cyfr";
     }
 
-    // Validate PESEL (govtId) only for online consultation
+    // PESEL is optional. When international patient, require document fields instead.
     if (bookingForm.consultationType === "online") {
-      if (!bookingForm.govtId.trim()) {
-        errors.govtId = "Numer PESEL jest wymagany";
-      } else if (bookingForm.govtId.length > 15) {
+      if (bookingForm.govtId.trim() && bookingForm.govtId.length > 15) {
         errors.govtId = "Numer PESEL nie może być dłuższy niż 15 znaków";
+      }
+      if (bookingForm.isInternationalPatient) {
+        if (!bookingForm.documentCountry?.trim()) {
+          errors.documentCountry = "Kraj wydania dokumentu jest wymagany";
+        }
+        if (!bookingForm.documentType?.trim()) {
+          errors.documentType = "Typ dokumentu jest wymagany";
+        }
+        if (!bookingForm.documentNumber?.trim()) {
+          errors.documentNumber = "Numer dokumentu jest wymagany";
+        }
       }
 
       // Validate address only for online consultation
@@ -507,7 +520,7 @@ const DoctorProfilePage = () => {
         department: doctor.specializations?.[0] // Use first specialization
       };
 
-      // Prepare request data
+      // Prepare request data (backend: create VISIT_ID, booking_source=ONLINE; never create PATIENT_ID)
       const appointmentData = {
         date: selectedDate,
         department: doctor.specializations?.[0]?._id || doctor.specializations?.[0]?.id,
@@ -526,11 +539,24 @@ const DoctorProfilePage = () => {
         contactConsentAgreed: bookingForm.contactConsentAgreed,
         recaptchaToken: token || recaptchaToken,
         consent: true, // Required by backend middleware
-        // Adding the new fields
-        govtId: bookingForm.govtId,
         address: bookingForm.address,
         dateOfBirth: bookingForm.dateOfBirth
       };
+      // PESEL or document: send only one. Backend links to existing PATIENT_ID if PESEL exists, else stores as pending.
+      if (bookingForm.isInternationalPatient) {
+        const dc = bookingForm.documentCountry?.trim() || "";
+        const dt = bookingForm.documentType?.trim() || "";
+        const dn = bookingForm.documentNumber?.trim() || "";
+        appointmentData.isInternationalPatient = true;
+        appointmentData.documentCountry = dc;
+        appointmentData.documentType = dt;
+        appointmentData.documentNumber = dn;
+        if (dc && dt && dn) {
+          appointmentData.internationalPatientDocumentKey = `${dc}|${dt}|${dn}`;
+        }
+      } else if (bookingForm.govtId?.trim()) {
+        appointmentData.govtId = bookingForm.govtId.trim();
+      }
 
       // Make API call to book appointment
       const response = await apiCaller(
@@ -567,6 +593,10 @@ const DoctorProfilePage = () => {
         govtId: "",
         address: "",
         dateOfBirth: "",
+        isInternationalPatient: false,
+        documentCountry: "",
+        documentType: "",
+        documentNumber: "",
       });
       setSelectedSlot(null);
       setRecaptchaToken(null);
@@ -1344,8 +1374,7 @@ const DoctorProfilePage = () => {
                             >
                               Wizyta stacjonarna
                             </button>
-                            {/* Temporarily hidden - will be needed later */}
-                            {/* <button
+                            <button
                               type="button"
                               onClick={() =>
                                 setBookingForm({
@@ -1360,7 +1389,7 @@ const DoctorProfilePage = () => {
                               }`}
                             >
                               Wizyta online
-                            </button> */}
+                            </button>
                           </div>
                         </div>
 
@@ -1486,31 +1515,96 @@ const DoctorProfilePage = () => {
                           <div className="mb-6">
                             <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 3: Dodatkowe informacje (wymagane dla konsultacji online)</h5>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  PESEL*
-                                </label>
+                            <div className="mb-4">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={bookingForm.isInternationalPatient}
+                                  onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setBookingForm((prev) => ({
+                                      ...prev,
+                                      isInternationalPatient: checked,
+                                      govtId: checked ? "" : prev.govtId,
+                                      documentCountry: checked ? prev.documentCountry : "",
+                                      documentType: checked ? prev.documentType : "",
+                                      documentNumber: checked ? prev.documentNumber : "",
+                                    }));
+                                    if (formErrors.govtId || formErrors.documentCountry || formErrors.documentType || formErrors.documentNumber) {
+                                      setFormErrors((prev) => ({ ...prev, govtId: null, documentCountry: null, documentType: null, documentNumber: null }));
+                                    }
+                                  }}
+                                  className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                />
+                                <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
+                              </label>
+                            </div>
+
+                            {!bookingForm.isInternationalPatient && (
+                              <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">PESEL (opcjonalnie)</label>
                                 <input
                                   type="text"
                                   name="govtId"
                                   value={bookingForm.govtId}
                                   onChange={handleInputChange}
-                                  className={`w-full px-3 py-2 border ${
-                                    formErrors.govtId
-                                      ? "border-red-500"
-                                      : "border-gray-300"
-                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                  placeholder="Wprowadź numer PESEL"
+                                  className={`w-full px-3 py-2 border ${formErrors.govtId ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                                  placeholder="Wprowadź numer PESEL (jeśli posiadasz)"
                                   maxLength="15"
                                 />
-                                {formErrors.govtId && (
-                                  <p className="text-red-500 text-xs mt-1">
-                                    {formErrors.govtId}
-                                  </p>
-                                )}
+                                {formErrors.govtId && <p className="text-red-500 text-xs mt-1">{formErrors.govtId}</p>}
                               </div>
+                            )}
 
+                            {bookingForm.isInternationalPatient && (
+                              <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                                <h6 className="text-sm font-medium text-gray-700 mb-3">Dane dokumentu tożsamości</h6>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Kraj wydania dokumentu *</label>
+                                    <input
+                                      type="text"
+                                      name="documentCountry"
+                                      value={bookingForm.documentCountry}
+                                      onChange={handleInputChange}
+                                      placeholder="np. Niemcy, Polska"
+                                      className={`w-full px-3 py-2 border ${formErrors.documentCountry ? "border-red-500" : "border-gray-300"} rounded-md`}
+                                    />
+                                    {formErrors.documentCountry && <p className="text-red-500 text-xs mt-1">{formErrors.documentCountry}</p>}
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Typ dokumentu *</label>
+                                    <select
+                                      name="documentType"
+                                      value={bookingForm.documentType}
+                                      onChange={handleInputChange}
+                                      className={`w-full px-3 py-2 border ${formErrors.documentType ? "border-red-500" : "border-gray-300"} rounded-md`}
+                                    >
+                                      <option value="">Wybierz</option>
+                                      <option value="Passport">Paszport</option>
+                                      <option value="ID Card">Dowód osobisty</option>
+                                      <option value="Residence Card">Karta pobytu</option>
+                                      <option value="Other">Inny</option>
+                                    </select>
+                                    {formErrors.documentType && <p className="text-red-500 text-xs mt-1">{formErrors.documentType}</p>}
+                                  </div>
+                                  <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Numer dokumentu *</label>
+                                    <input
+                                      type="text"
+                                      name="documentNumber"
+                                      value={bookingForm.documentNumber}
+                                      onChange={handleInputChange}
+                                      placeholder="Numer dokumentu"
+                                      className={`w-full px-3 py-2 border ${formErrors.documentNumber ? "border-red-500" : "border-gray-300"} rounded-md`}
+                                    />
+                                    {formErrors.documentNumber && <p className="text-red-500 text-xs mt-1">{formErrors.documentNumber}</p>}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                   Data urodzenia*
