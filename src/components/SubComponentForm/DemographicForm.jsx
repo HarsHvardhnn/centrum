@@ -365,8 +365,13 @@ const DemographicsForm = ({
         }));
       }
     } else if (name === "isInternationalPatient") {
-      updateFormData(name, type === "checkbox" ? e.target.checked : value);
-      if (e.target.checked) setErrors(prev => ({ ...prev, govtId: "" }));
+      const checked = type === "checkbox" ? e.target.checked : value;
+      updateFormData(name, checked);
+      if (checked) {
+        updateFormData("govtId", "");
+        setErrors(prev => ({ ...prev, govtId: "" }));
+        setPeselExists(false);
+      }
     } else if (name === "sex") {
       updateFormData(name, value);
       setTouched(prev => ({ ...prev, sex: true }));
@@ -568,56 +573,58 @@ const DemographicsForm = ({
           />
         </div>
 
-        <div className="md:col-span-2 flex flex-col md:flex-row md:items-end gap-3">
-          <div className="flex-1 min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Numer PESEL {!formData.isInternationalPatient && <span className="text-red-500">*</span>}
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              name="govtId"
-              value={formData.govtId || ""}
-              onChange={handleChange}
-              onBlur={() => handleBlur("govtId")}
-              placeholder={formData.isInternationalPatient ? "Nie dotyczy – pacjent międzynarodowy" : "Wprowadź numer PESEL (11 cyfr)"}
-              maxLength={11}
-              disabled={!!formData.isInternationalPatient}
-              className={`w-full px-3 py-2 border rounded-md ${formData.isInternationalPatient ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300" : touched.govtId && errors.govtId ? "border-red-500" : "border-gray-300"}`}
-              required={!formData.isInternationalPatient}
-            />
-            {touched.govtId && errors.govtId && (
-              <p className="mt-1 text-sm text-red-500">{errors.govtId}</p>
-            )}
-            {peselCheckLoading && <p className="mt-1 text-xs text-gray-500">Sprawdzam PESEL...</p>}
-            {!formData.isInternationalPatient && formData.govtId && formData.govtId.length === 11 && getPeselChecksumWarning(formData.govtId) && (
-              <p className="mt-1 text-sm text-amber-600" role="alert">
-                {getPeselChecksumWarning(formData.govtId)}
-              </p>
-            )}
-            {!isEditMode && !formData.isInternationalPatient && peselExists && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">Pacjent o podanym numerze PESEL już istnieje w systemie.</p>
-              </div>
-            )}
-            {formData.isInternationalPatient && (
-              <p className="mt-1 text-sm text-gray-500">PESEL does not apply to international patients.</p>
-            )}
-          </div>
-          <div className="flex items-center shrink-0 pb-0.5">
-            <input
-              type="checkbox"
-              id="isInternationalPatient"
-              name="isInternationalPatient"
-              checked={!!formData.isInternationalPatient}
-              onChange={handleChange}
-              disabled={!!isEditMode}
-              className={`h-4 w-4 text-teal-500 border-gray-300 rounded ${isEditMode ? "opacity-60 cursor-not-allowed" : ""}`}
-            />
-            <label htmlFor="isInternationalPatient" className={`ml-2 text-sm text-gray-700 whitespace-nowrap ${isEditMode ? "text-gray-500" : ""}`}>Pacjent międzynarodowy</label>
-          </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Numer PESEL {!formData.isInternationalPatient && <span className="text-red-500">*</span>}
+          </label>
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            name="govtId"
+            value={formData.govtId || ""}
+            onChange={handleChange}
+            onBlur={() => handleBlur("govtId")}
+            placeholder={formData.isInternationalPatient ? "Nie dotyczy – pacjent międzynarodowy" : "Wprowadź numer PESEL (11 cyfr)"}
+            maxLength={11}
+            disabled={!!formData.isInternationalPatient}
+            className={`w-full px-3 py-2 border rounded-md ${formData.isInternationalPatient ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300" : touched.govtId && errors.govtId ? "border-red-500" : "border-gray-300"}`}
+            required={!formData.isInternationalPatient}
+          />
+          {touched.govtId && errors.govtId && (
+            <p className="mt-1 text-sm text-red-500">{errors.govtId}</p>
+          )}
+          {peselCheckLoading && <p className="mt-1 text-xs text-gray-500">Sprawdzam PESEL...</p>}
+          {!formData.isInternationalPatient && formData.govtId && formData.govtId.length === 11 && getPeselChecksumWarning(formData.govtId) && (
+            <p className="mt-1 text-sm text-amber-600" role="alert">
+              {getPeselChecksumWarning(formData.govtId)}
+            </p>
+          )}
+          {!isEditMode && !formData.isInternationalPatient && peselExists && (
+            <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">Pacjent o podanym numerze PESEL już istnieje w systemie.</p>
+            </div>
+          )}
+          {formData.isInternationalPatient && (
+            <p className="mt-1 text-sm text-gray-500">PESEL does not apply to international patients.</p>
+          )}
         </div>
+      </div>
+
+      <div className="flex items-center gap-3 py-2 border-t border-gray-200 mt-4">
+        <input
+          type="checkbox"
+          id="isInternationalPatient"
+          name="isInternationalPatient"
+          checked={!!formData.isInternationalPatient}
+          onChange={handleChange}
+          disabled={!!isEditMode}
+          className={`h-4 w-4 text-teal-500 border-gray-300 rounded ${isEditMode ? "opacity-60 cursor-not-allowed" : ""}`}
+        />
+        <label htmlFor="isInternationalPatient" className={`text-sm font-medium text-gray-700 ${isEditMode ? "text-gray-500" : ""}`}>
+          Pacjent międzynarodowy
+        </label>
+        <span className="text-xs text-gray-500">— Zaznacz, aby wyświetlić pola dokumentu tożsamości</span>
       </div>
 
       {formData.isInternationalPatient && !isEditMode && (
@@ -823,37 +830,14 @@ const DemographicsForm = ({
         <label className="block text-sm font-medium text-gray-700 mb-1">
           ID Pacjenta
         </label>
-        <div className="relative group">
-          <input
-            type="text"
-            name="otherHospitalIds"
-            value={formData.otherHospitalIds || ""}
-            onChange={handleChange}
-            placeholder="Wprowadź ID pacjenta"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-            <svg 
-              className="w-5 h-5 text-gray-400 cursor-help" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-              title="ID jest generowane automatycznie przez system"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth="2" 
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          {/* Tooltip */}
-          <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-10">
-            ID jest generowane automatycznie przez system
-            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
-          </div>
+        <div className="px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
+          {formData.patientId || currentPatientId
+            ? (formData.patientId || currentPatientId)
+            : "Nie zweryfikowano"}
         </div>
+        <p className="mt-1 text-xs text-gray-500">
+          ID jest przypisywane przez system po weryfikacji pacjenta.
+        </p>
       </div>
     </div>
   );

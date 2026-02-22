@@ -441,6 +441,15 @@ function AppointmentFormModal({
         ...prev,
         [name]: normalizePesel(value)
       }));
+    } else if (name === "isInternational" && type === "checkbox" && checked) {
+      setAppointmentData(prev => ({
+        ...prev,
+        isInternational: true,
+        newPatientPesel: ""
+      }));
+      setFirstTimePeselExists(false);
+      setFirstTimeExistingPatientData(null);
+      setFirstTimePeselWarningFromApi(null);
     } else {
       setAppointmentData(prev => ({
         ...prev,
@@ -725,10 +734,9 @@ function AppointmentFormModal({
 
   const isFirstTimeVisit = appointmentData.visitType === "first-time";
   const isVisitOnly = appointmentData.visitType === "visit-only";
-  const isVisitOnlyValid = isVisitOnly && (appointmentData.newPatientFirstName?.trim() && appointmentData.newPatientLastName?.trim());
+  const isVisitOnlyValid = isVisitOnly && appointmentData.newPatientFirstName?.trim();
   const isNewPatientValid = isFirstTimeVisit && 
     appointmentData.newPatientFirstName.trim() !== "" && 
-    appointmentData.newPatientLastName.trim() !== "" &&
     appointmentData.newPatientSex.trim() !== "" &&
     appointmentData.newPatientPhone.trim() !== "" &&
     validatePhone(appointmentData.newPatientPhone) === "";
@@ -1325,7 +1333,7 @@ function AppointmentFormModal({
           {appointmentData.visitType === "visit-only" && (
             <div className="bg-white p-4 rounded-lg border border-gray-200 mt-2">
               <p className="text-sm text-gray-600 mb-3">
-                Utwórz wizytę bez pacjenta. Podaj imię i nazwisko. PESEL i pełna rejestracja pacjenta — później przez „Zakończ rejestrację” z listy wizyt.
+                Utwórz wizytę bez pacjenta. Podaj imię (wymagane); nazwisko opcjonalnie. PESEL i pełna rejestracja pacjenta — później przez „Zakończ rejestrację” z listy wizyt.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -1340,7 +1348,7 @@ function AppointmentFormModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Nazwisko*</label>
+                  <label className="block text-sm text-gray-600 mb-1">Nazwisko (opcjonalnie)</label>
                   <input
                     type="text"
                     name="newPatientLastName"
@@ -1356,7 +1364,23 @@ function AppointmentFormModal({
         </div>
 
         {appointmentData.visitType === "re-visit" && (
-          <PatientSearchField onPatientSelect={handlePatientSelect} />
+          <div className="space-y-3">
+            {selectedPatient && (
+              <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg">
+                <p className="text-xs font-medium text-teal-700 uppercase tracking-wide mb-1">Wybrany pacjent</p>
+                <p className="text-sm font-medium text-teal-900">
+                  {typeof selectedPatient.name === "string"
+                    ? selectedPatient.name
+                    : `${selectedPatient.firstName || selectedPatient.name?.first || "—"} ${selectedPatient.lastName || selectedPatient.name?.last || ""}`.trim() || "—"}
+                  {selectedPatient.govtId && (
+                    <span className="text-teal-600 font-normal ml-1">(PESEL: {selectedPatient.govtId})</span>
+                  )}
+                </p>
+                <p className="text-xs text-teal-600 mt-0.5">Możesz wyszukać i wybrać innego pacjenta poniżej.</p>
+              </div>
+            )}
+            <PatientSearchField onPatientSelect={handlePatientSelect} />
+          </div>
         )}
 
         {appointmentData.visitType === "first-time" && (
@@ -1373,7 +1397,7 @@ function AppointmentFormModal({
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Nazwisko*</label>
+                <label className="block text-sm text-gray-600 mb-1">Nazwisko (opcjonalnie)</label>
                 <input
                   type="text"
                   name="newPatientLastName"

@@ -52,6 +52,7 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
   const [fullExistingPatient, setFullExistingPatient] = useState(null);
   const [loadingFullPatient, setLoadingFullPatient] = useState(false);
   const [linkingToExisting, setLinkingToExisting] = useState(false);
+  const [editingExistingPatientId, setEditingExistingPatientId] = useState(null);
   const [formData, setFormData] = useState({
     firstName: registrationData?.firstName ?? "",
     lastName: registrationData?.lastName ?? "",
@@ -104,6 +105,7 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
     setPhoneDropdownOpen(false);
     setShowExistingPatientModal(false);
     setFullExistingPatient(null);
+    setEditingExistingPatientId(null);
   }, [isOpen, appointment]);
 
   useEffect(() => {
@@ -137,14 +139,47 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
     return () => { cancelled = true; };
   }, [isOpen, visitId, completeRegPesel, formData.isInternationalPatient]);
 
+  const parsePhoneForForm = (rawPhone) => {
+    const raw = (rawPhone || "").trim();
+    let phoneCode = "+48";
+    let phoneDigits = raw.replace(/\D/g, "");
+    const match = PHONE_COUNTRY_CODES.slice().sort((a, b) => b.code.length - a.code.length).find((c) => phoneDigits.startsWith(c.code.replace(/\D/g, "")));
+    if (match) {
+      phoneCode = match.code;
+      phoneDigits = phoneDigits.slice(match.code.replace(/\D/g, "").length).slice(0, match.maxLength);
+    } else {
+      phoneDigits = phoneDigits.slice(0, 9);
+    }
+    return { phoneCode, phone: phoneDigits };
+  };
+
   const handleLoadExisting = () => {
     const normalized = normalizePesel(completeRegPesel);
     if (normalized.length !== 11) return;
     setLoadingFullPatient(true);
-    setFullExistingPatient(null);
     patientService.getPatientDetailsByPesel(normalized).then((data) => {
-      setFullExistingPatient(data);
-      setShowExistingPatientModal(true);
+      const patient = data?.patient ?? data;
+      const { phoneCode, phone } = parsePhoneForForm(patient.phone ?? patient.mobileNumber);
+      const dob = patient.dateOfBirth ?? patient.dob;
+      const dateStr = dob ? (typeof dob === "string" && dob.match(/^\d{4}-\d{2}-\d{2}/) ? dob.slice(0, 10) : new Date(dob).toISOString().slice(0, 10)) : "";
+      setFormData({
+        firstName: patient.name?.first ?? patient.firstName ?? "",
+        lastName: patient.name?.last ?? patient.lastName ?? "",
+        dateOfBirth: dateStr,
+        phoneCode,
+        phone,
+        email: patient.email ?? "",
+        sex: patient.sex ?? "",
+        street: patient.street ?? patient.address ?? "",
+        zipCode: patient.zipCode ?? patient.pinCode ?? "",
+        city: patient.city ?? "",
+        isInternationalPatient: !!patient.isInternationalPatient,
+        documentCountry: patient.documentCountry ?? "",
+        documentType: patient.documentType ?? "",
+        documentNumber: patient.documentNumber ?? ""
+      });
+      setEditingExistingPatientId(patient._id ?? patient.id ?? null);
+      toast.success("Dane pacjenta załadowane. Możesz je edytować i kliknąć «Zakończ rejestrację».");
     }).catch((err) => {
       const msg = err.response?.data?.message || err.message || "Nie udało się pobrać danych pacjenta.";
       toast.error(msg);
@@ -225,7 +260,34 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
     try {
       const fullPhone = formData.phone ? formData.phoneCode + formData.phone : undefined;
       let payload;
-      if (isInternational) {
+      if (editingExistingPatientId) {
+        payload = {
+          isExisting: true,
+          patientId: editingExistingPatientId,
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          dateOfBirth: formData.dateOfBirth?.trim() || undefined,
+          phone: fullPhone,
+          phoneCode: formData.phone ? formData.phoneCode : undefined,
+          mobileNumber: formData.phone ? formData.phone : undefined,
+          email: formData.email?.trim() || undefined,
+          sex: formData.sex || undefined,
+          street: formData.street?.trim() || undefined,
+          zipCode: formData.zipCode?.trim() || undefined,
+          city: formData.city?.trim() || undefined,
+          smsConsentAgreed: true,
+          consents: []
+        };
+        if (isInternational) {
+          payload.isInternationalPatient = true;
+          payload.documentCountry = formData.documentCountry?.trim() ?? "";
+          payload.documentType = formData.documentType?.trim() ?? "";
+          payload.documentNumber = formData.documentNumber?.trim() ?? "";
+          payload.internationalPatientDocumentKey = [payload.documentCountry, payload.documentType, payload.documentNumber].join("|");
+        } else {
+          payload.pesel = normalizePesel(completeRegPesel);
+        }
+      } else if (isInternational) {
         const documentCountry = formData.documentCountry?.trim() ?? "";
         const documentType = formData.documentType?.trim() ?? "";
         const documentNumber = formData.documentNumber?.trim() ?? "";
@@ -272,7 +334,7 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
       if (response?.peselWarning) {
         toast.warning(response.peselWarning);
       }
-      toast.success("Rejestracja zakończona.");
+      toast.success(editingExistingPatientId ? "Wizyta przypisana do pacjenta; dane zaktualizowane." : "Rejestracja zakończona.");
       onSuccess?.(response);
       onClose();
     } catch (err) {
@@ -304,6 +366,12 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
           </button>
         </div>
         <p className="text-sm text-gray-600 mb-4">Wprowadź PESEL i dane pacjenta. Identyfikator pacjenta zostanie utworzony po zatwierdzeniu.</p>
+        {editingExistingPatientId && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm font-medium text-blue-800">Edytujesz dane istniejącego pacjenta</p>
+            <p className="text-xs text-blue-700 mt-0.5">Po zatwierdzeniu wizyta zostanie przypisana do tego pacjenta z zaktualizowanymi danymi (np. nowy adres).</p>
+          </div>
+        )}
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">PESEL {!isInternational && <span className="text-red-500">*</span>}</label>
@@ -328,8 +396,8 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
                   <button type="button" onClick={handleUseExistingPatient} disabled={loadingFullPatient} className="px-3 py-1.5 bg-teal-600 text-white text-sm rounded-md hover:bg-teal-700 disabled:opacity-50">
                     {loadingFullPatient ? "Pobieram dane..." : "Użyj tego pacjenta"}
                   </button>
-                  <button type="button" onClick={handleLoadExisting} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">
-                    Załaduj dane istniejącego pacjenta
+                  <button type="button" onClick={handleLoadExisting} disabled={loadingFullPatient} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50">
+                    {loadingFullPatient ? "Ładowanie..." : "Załaduj dane do formularza (edycja)"}
                   </button>
                 </div>
               </div>
@@ -339,7 +407,17 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
                 type="checkbox"
                 id="complete-reg-international"
                 checked={isInternational}
-                onChange={(e) => setFormData((prev) => ({ ...prev, isInternationalPatient: !!e.target.checked }))}
+                onChange={(e) => {
+                  const checked = !!e.target.checked;
+                  setFormData((prev) => ({ ...prev, isInternationalPatient: checked }));
+                  if (checked) {
+                    setCompleteRegPesel("");
+                    setPeselExists(false);
+                    setExistingPatientData(null);
+                    setPeselWarningFromApi(null);
+                    setEditingExistingPatientId(null);
+                  }
+                }}
                 className="h-4 w-4 text-teal-600 border-gray-300 rounded"
               />
               <label htmlFor="complete-reg-international" className="text-sm text-gray-700">International patient (no PESEL)</label>

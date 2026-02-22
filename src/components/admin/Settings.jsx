@@ -572,6 +572,7 @@ export default function UserManagement() {
         maritalStatus: patientDetails.maritalStatus,
         ethnicity: patientDetails.ethnicity,
         otherHospitalIds: patientDetails.otherHospitalIds,
+        patientId: patientDetails.patientId || "",
 
         consents: patientDetails.consents || [],
         documents: patientDetails.documents || [],
