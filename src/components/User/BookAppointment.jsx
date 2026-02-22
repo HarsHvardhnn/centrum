@@ -163,25 +163,25 @@ export default function BookAppointment({
     message: Yup.string().min(10, "Za krótka wiadomość").required("Wymagane"),
     consultationType: Yup.string().oneOf(['online', 'offline']).required("Wymagane"),
     govtId: Yup.string()
-      .max(15, "Numer PESEL nie może być dłuższy niż 15 znaków")
-      .matches(/^[a-zA-Z0-9]*$/, "Numer PESEL może zawierać tylko litery i cyfry")
+      .test('pesel-length', 'Numer PESEL musi mieć dokładnie 11 cyfr', val => !val || val.trim() === '' || val.trim().length === 11)
+      .matches(/^[0-9]*$/, "Numer PESEL może zawierać tylko cyfry")
       .when(['consultationType', 'isInternationalPatient'], {
         is: (consultationType, isInternationalPatient) => consultationType === 'online' && isInternationalPatient,
         then: (schema) => schema.trim(),
         otherwise: (schema) => schema
       }),
-    documentCountry: Yup.string().when(['consultationType', 'isInternationalPatient'], {
-      is: (consultationType, isInternationalPatient) => consultationType === 'online' && isInternationalPatient,
+    documentCountry: Yup.string().when('isInternationalPatient', {
+      is: true,
       then: (schema) => schema.required("Kraj wydania dokumentu jest wymagany").trim(),
       otherwise: (schema) => schema
     }),
-    documentType: Yup.string().when(['consultationType', 'isInternationalPatient'], {
-      is: (consultationType, isInternationalPatient) => consultationType === 'online' && isInternationalPatient,
+    documentType: Yup.string().when('isInternationalPatient', {
+      is: true,
       then: (schema) => schema.required("Typ dokumentu jest wymagany").trim(),
       otherwise: (schema) => schema
     }),
-    documentNumber: Yup.string().when(['consultationType', 'isInternationalPatient'], {
-      is: (consultationType, isInternationalPatient) => consultationType === 'online' && isInternationalPatient,
+    documentNumber: Yup.string().when('isInternationalPatient', {
+      is: true,
       then: (schema) => schema.required("Numer dokumentu jest wymagany").trim(),
       otherwise: (schema) => schema
     }),
@@ -392,13 +392,14 @@ export default function BookAppointment({
       setSubmitting(true);
       setSubmitStatus({ success: false, error: null });
 
-      // Additional validation for online: address and dateOfBirth required; PESEL or document when international
+      // Document fields required when international (offline & online)
+      if (values.isInternationalPatient && (!values.documentCountry?.trim() || !values.documentType?.trim() || !values.documentNumber?.trim())) {
+        throw new Error("Wypełnij wszystkie pola dokumentu tożsamości");
+      }
+      // Online: address and dateOfBirth required
       if (values.consultationType === "online") {
         if (!values.address || !values.dateOfBirth) {
           throw new Error("Adres i data urodzenia są wymagane dla konsultacji online");
-        }
-        if (values.isInternationalPatient && (!values.documentCountry?.trim() || !values.documentType?.trim() || !values.documentNumber?.trim())) {
-          throw new Error("Wypełnij wszystkie pola dokumentu tożsamości");
         }
       }
 
@@ -711,44 +712,6 @@ export default function BookAppointment({
                 </div>
 
                 <div className="col-span-1">
-                  <label htmlFor="gender" className="sr-only">Płeć</label>
-                  <Field
-                    as="select"
-                    id="gender"
-                    name="gender"
-                    autoComplete="off"
-                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
-                  >
-                    <option value="">Wybierz płeć</option>
-                    <option value="male">Mężczyzna</option>
-                    <option value="female">Kobieta</option>
-                    <option value="other">Inna</option>
-                  </Field>
-                  <ErrorMessage
-                    name="gender"
-                    component="div"
-                    className="text-red-600 text-xs sm:text-sm mt-1"
-                  />
-                </div>
-
-                <div className="col-span-1">
-                  <label htmlFor="email" className="sr-only">Email</label>
-                  <Field
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="Email"
-                    autoComplete="email"
-                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
-                  />
-                  <ErrorMessage
-                    name="email"
-                    component="div"
-                    className="text-red-600 text-xs sm:text-sm mt-1"
-                  />
-                </div>
-
-                <div className="col-span-1">
                   <label htmlFor="phone" className="sr-only">Telefon</label>
                   <div className="custom-phone-input relative">
                     <div className="flex">
@@ -794,6 +757,184 @@ export default function BookAppointment({
                     </div>
                   )}
                 </div>
+
+                <div className="col-span-1">
+                  <label htmlFor="email" className="sr-only">Email</label>
+                  <Field
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="Email"
+                    autoComplete="email"
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded"
+                  />
+                  <ErrorMessage
+                    name="email"
+                    component="div"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
+                  />
+                </div>
+
+                <div className="col-span-1">
+                  <label htmlFor="gender" className="sr-only">Płeć</label>
+                  <Field
+                    as="select"
+                    id="gender"
+                    name="gender"
+                    autoComplete="off"
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
+                  >
+                    <option value="">Wybierz płeć</option>
+                    <option value="male">Mężczyzna</option>
+                    <option value="female">Kobieta</option>
+                    <option value="other">Inna</option>
+                  </Field>
+                  <ErrorMessage
+                    name="gender"
+                    component="div"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
+                  />
+                </div>
+
+                {/* PESEL / International patient / Address (basic data) */}
+                <div className="col-span-1 sm:col-span-2 mb-4 mt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Field name="isInternationalPatient">
+                      {({ field, form }) => (
+                        <input
+                          type="checkbox"
+                          {...field}
+                          checked={!!field.value}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            form.setFieldValue("isInternationalPatient", checked);
+                            if (checked) form.setFieldValue("govtId", "");
+                            else {
+                              form.setFieldValue("documentCountry", "");
+                              form.setFieldValue("documentType", "");
+                              form.setFieldValue("documentNumber", "");
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                        />
+                      )}
+                    </Field>
+                    <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 col-span-1 sm:col-span-2">
+                  {!values.isInternationalPatient && (
+                    <div className="col-span-1">
+                      <label htmlFor="govtId" className="block text-sm font-medium text-gray-700 mb-1">PESEL (opcjonalnie)</label>
+                      <Field name="govtId">
+                        {({ field, form }) => (
+                          <input
+                            id="govtId"
+                            type="text"
+                            {...field}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
+                              form.setFieldValue('govtId', value);
+                            }}
+                            autoComplete="off"
+                            className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                            placeholder="Wprowadź numer PESEL (11 cyfr)"
+                            maxLength={11}
+                          />
+                        )}
+                      </Field>
+                      <ErrorMessage name="govtId" component="div" className="text-red-600 text-xs sm:text-sm mt-1" />
+                    </div>
+                  )}
+
+                  {values.consultationType === "online" && (
+                    <div className="col-span-1">
+                      <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">Data urodzenia *</label>
+                      <Field name="dateOfBirth">
+                        {({ field, form }) => (
+                          <input
+                            id="dateOfBirth"
+                            type="date"
+                            {...field}
+                            autoComplete="off"
+                            className={`w-full px-3 py-2 border ${form.touched.dateOfBirth && form.errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                            max={getCurrentDateInPoland()}
+                          />
+                        )}
+                      </Field>
+                      <ErrorMessage
+                        name="dateOfBirth"
+                        component="div"
+                        className="text-red-600 text-xs sm:text-sm mt-1"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {values.isInternationalPatient && (
+                  <div className="col-span-1 sm:col-span-2 mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <h6 className="text-sm font-medium text-gray-700 mb-3">Dane dokumentu tożsamości</h6>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Kraj wydania dokumentu *</label>
+                        <Field
+                          name="documentCountry"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          placeholder="e.g. Germany, Poland"
+                        />
+                        <ErrorMessage name="documentCountry" component="div" className="text-red-600 text-xs mt-1" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Typ dokumentu *</label>
+                        <Field as="select" name="documentType" className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                          <option value="">Wybierz</option>
+                          <option value="Passport">Paszport</option>
+                          <option value="ID Card">Dowód osobisty</option>
+                          <option value="Residence Card">Karta pobytu</option>
+                          <option value="Other">Inny</option>
+                        </Field>
+                        <ErrorMessage name="documentType" component="div" className="text-red-600 text-xs mt-1" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Numer dokumentu *</label>
+                        <Field
+                          name="documentNumber"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          placeholder="Document number"
+                        />
+                        <ErrorMessage name="documentNumber" component="div" className="text-red-600 text-xs mt-1" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {values.consultationType === "online" && (
+                  <div className="col-span-1 sm:col-span-2">
+                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Adres zamieszkania *</label>
+                    <Field name="address">
+                      {({ field, form }) => (
+                        <textarea
+                          id="address"
+                          {...field}
+                          rows="2"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            form.setFieldValue('address', value.trim());
+                          }}
+                          autoComplete="off"
+                          className={`w-full px-3 py-2 border ${form.touched.address && form.errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                          placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
+                        />
+                      )}
+                    </Field>
+                    <ErrorMessage
+                      name="address"
+                      component="div"
+                      className="text-red-600 text-xs sm:text-sm mt-1"
+                    />
+                  </div>
+                )}
 
                 {/* Step 3: Specialization and Doctor Selection */}
                 <div className="col-span-1 sm:col-span-2 mb-4 mt-6">
@@ -867,150 +1008,6 @@ export default function BookAppointment({
                     className="text-red-600 text-xs sm:text-sm mt-1"
                   />
                 </div>
-
-                {/* Step 4: Additional Information (only for online) */}
-                {values.consultationType === "online" && (
-                  <>
-                    <div className="col-span-1 sm:col-span-2 mb-4 mt-6">
-                      <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 4: Dodatkowe informacje (wymagane dla konsultacji online)</h5>
-                    </div>
-
-                    <div className="col-span-1 sm:col-span-2 mb-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <Field name="isInternationalPatient">
-                          {({ field, form }) => (
-                            <input
-                              type="checkbox"
-                              {...field}
-                              checked={!!field.value}
-                              onChange={(e) => {
-                                const checked = e.target.checked;
-                                form.setFieldValue("isInternationalPatient", checked);
-                                if (checked) form.setFieldValue("govtId", "");
-                                else {
-                                  form.setFieldValue("documentCountry", "");
-                                  form.setFieldValue("documentType", "");
-                                  form.setFieldValue("documentNumber", "");
-                                }
-                              }}
-                              className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                            />
-                          )}
-                        </Field>
-                        <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
-                      </label>
-                    </div>
-
-                    {!values.isInternationalPatient && (
-                      <div className="col-span-1">
-                        <label htmlFor="govtId" className="block text-sm font-medium text-gray-700 mb-1">PESEL (opcjonalnie)</label>
-                        <Field name="govtId">
-                          {({ field, form }) => (
-                            <input
-                              id="govtId"
-                              type="text"
-                              {...field}
-                              onChange={(e) => {
-                                const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
-                                form.setFieldValue('govtId', value);
-                              }}
-                              autoComplete="off"
-                              className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                              placeholder="Wprowadź numer PESEL (jeśli posiadasz)"
-                              maxLength="15"
-                            />
-                          )}
-                        </Field>
-                        <ErrorMessage name="govtId" component="div" className="text-red-600 text-xs sm:text-sm mt-1" />
-                      </div>
-                    )}
-
-                    {values.isInternationalPatient && (
-                      <div className="col-span-1 sm:col-span-2 mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                        <h6 className="text-sm font-medium text-gray-700 mb-3">Dane dokumentu tożsamości</h6>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Kraj wydania dokumentu *</label>
-                            <Field
-                              name="documentCountry"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                              placeholder="np. Niemcy, Polska"
-                            />
-                            <ErrorMessage name="documentCountry" component="div" className="text-red-600 text-xs mt-1" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Typ dokumentu *</label>
-                            <Field as="select" name="documentType" className="w-full px-3 py-2 border border-gray-300 rounded-md">
-                              <option value="">Wybierz</option>
-                              <option value="Passport">Paszport</option>
-                              <option value="ID Card">Dowód osobisty</option>
-                              <option value="Residence Card">Karta pobytu</option>
-                              <option value="Other">Inny</option>
-                            </Field>
-                            <ErrorMessage name="documentType" component="div" className="text-red-600 text-xs mt-1" />
-                          </div>
-                          <div className="sm:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Numer dokumentu *</label>
-                            <Field
-                              name="documentNumber"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                              placeholder="Numer dokumentu"
-                            />
-                            <ErrorMessage name="documentNumber" component="div" className="text-red-600 text-xs mt-1" />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Data urodzenia field */}
-                    <div className="col-span-1">
-                      <label htmlFor="dateOfBirth" className="sr-only">Data urodzenia</label>
-                      <Field name="dateOfBirth">
-                        {({ field, form }) => (
-                          <input
-                            id="dateOfBirth"
-                            type="date"
-                            {...field}
-                            autoComplete="off"
-                            className={`w-full px-3 py-2 border ${form.touched.dateOfBirth && form.errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                            max={getCurrentDateInPoland()}
-                          />
-                        )}
-                      </Field>
-                      <ErrorMessage
-                        name="dateOfBirth"
-                        component="div"
-                        className="text-red-600 text-xs sm:text-sm mt-1"
-                      />
-                    </div>
-
-                    {/* Adres zamieszkania field */}
-                    <div className="col-span-1 sm:col-span-2">
-                      <label htmlFor="address" className="sr-only">Adres zamieszkania</label>
-                      <Field name="address">
-                        {({ field, form }) => (
-                          <textarea
-                            id="address"
-                            {...field}
-                            rows="2"
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              form.setFieldValue('address', value.trim());
-                            }}
-                            autoComplete="off"
-                            className={`w-full px-3 py-2 border ${form.touched.address && form.errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                            placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
-                          />
-                        )}
-                      </Field>
-                      <ErrorMessage
-                        name="address"
-                        component="div"
-                        className="text-red-600 text-xs sm:text-sm mt-1"
-                      />
-                    </div>
-                  </>
-                )}
 
                 {/* Available Time Slots */}
                 <div className="col-span-1 sm:col-span-2">

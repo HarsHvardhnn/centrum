@@ -392,23 +392,23 @@ const DoctorProfilePage = () => {
       errors.phone = "Numer telefonu musi składać się z 9 cyfr";
     }
 
-    // PESEL is optional. When international patient, require document fields instead.
-    if (bookingForm.consultationType === "online") {
-      if (bookingForm.govtId.trim() && bookingForm.govtId.length > 15) {
-        errors.govtId = "Numer PESEL nie może być dłuższy niż 15 znaków";
+    // PESEL is optional (offline & online). When provided, must be exactly 11 digits.
+    if (bookingForm.govtId.trim() && bookingForm.govtId.trim().length !== 11) {
+      errors.govtId = "Numer PESEL musi mieć dokładnie 11 cyfr";
+    }
+    if (bookingForm.isInternationalPatient) {
+      if (!bookingForm.documentCountry?.trim()) {
+        errors.documentCountry = "Kraj wydania dokumentu jest wymagany";
       }
-      if (bookingForm.isInternationalPatient) {
-        if (!bookingForm.documentCountry?.trim()) {
-          errors.documentCountry = "Kraj wydania dokumentu jest wymagany";
-        }
-        if (!bookingForm.documentType?.trim()) {
-          errors.documentType = "Typ dokumentu jest wymagany";
-        }
-        if (!bookingForm.documentNumber?.trim()) {
-          errors.documentNumber = "Numer dokumentu jest wymagany";
-        }
+      if (!bookingForm.documentType?.trim()) {
+        errors.documentType = "Typ dokumentu jest wymagany";
       }
+      if (!bookingForm.documentNumber?.trim()) {
+        errors.documentNumber = "Numer dokumentu jest wymagany";
+      }
+    }
 
+    if (bookingForm.consultationType === "online") {
       // Validate address only for online consultation
       if (!bookingForm.address.trim()) {
         errors.address = "Adres zamieszkania jest wymagany";
@@ -1423,6 +1423,47 @@ const DoctorProfilePage = () => {
 
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Płeć
+                              </label>
+                              <select
+                                name="gender"
+                                value={bookingForm.gender}
+                                onChange={handleInputChange}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
+                              >
+                                <option value="male">Mężczyzna</option>
+                                <option value="female">Kobieta</option>
+                                <option value="other">Inna</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Adres email
+                              </label>
+                              <input
+                                type="email"
+                                name="email"
+                                value={bookingForm.email}
+                                onChange={handleInputChange}
+                                className={`w-full px-3 py-2 border ${
+                                  formErrors.email
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                                placeholder="jan.kowalski@example.com"
+                              />
+                              {formErrors.email && (
+                                <p className="text-red-500 text-xs mt-1">
+                                  {formErrors.email}
+                                </p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Telefon* (9 cyfr)
                               </label>
                               <div className="flex w-full overflow-hidden">
@@ -1467,53 +1508,11 @@ const DoctorProfilePage = () => {
                               )}
                             </div>
                           </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Adres email
-                              </label>
-                              <input
-                                type="email"
-                                name="email"
-                                value={bookingForm.email}
-                                onChange={handleInputChange}
-                                className={`w-full px-3 py-2 border ${
-                                  formErrors.email
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                placeholder="jan.kowalski@example.com"
-                              />
-                              {formErrors.email && (
-                                <p className="text-red-500 text-xs mt-1">
-                                  {formErrors.email}
-                                </p>
-                              )}
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Płeć
-                              </label>
-                              <select
-                                name="gender"
-                                value={bookingForm.gender}
-                                onChange={handleInputChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
-                              >
-                                <option value="male">Mężczyzna</option>
-                                <option value="female">Kobieta</option>
-                                <option value="other">Inna</option>
-                              </select>
-                            </div>
-                          </div>
                         </div>
 
-                        {/* Step 3: Additional Information (only for online) */}
-                        {bookingForm.consultationType === "online" && (
-                          <div className="mb-6">
-                            <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 3: Dodatkowe informacje (wymagane dla konsultacji online)</h5>
+                        {/* Step 3: PESEL / International patient (offline & online) */}
+                        <div className="mb-6">
+                          <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 3: Identyfikacja (PESEL opcjonalnie)</h5>
                             
                             <div className="mb-4">
                               <label className="flex items-center gap-2 cursor-pointer">
@@ -1540,21 +1539,51 @@ const DoctorProfilePage = () => {
                               </label>
                             </div>
 
-                            {!bookingForm.isInternationalPatient && (
-                              <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">PESEL (opcjonalnie)</label>
-                                <input
-                                  type="text"
-                                  name="govtId"
-                                  value={bookingForm.govtId}
-                                  onChange={handleInputChange}
-                                  className={`w-full px-3 py-2 border ${formErrors.govtId ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                  placeholder="Wprowadź numer PESEL (jeśli posiadasz)"
-                                  maxLength="15"
-                                />
-                                {formErrors.govtId && <p className="text-red-500 text-xs mt-1">{formErrors.govtId}</p>}
-                              </div>
-                            )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              {!bookingForm.isInternationalPatient && (
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">PESEL (opcjonalnie)</label>
+                                  <input
+                                    type="text"
+                                    name="govtId"
+                                    value={bookingForm.govtId}
+                                    onChange={(e) => {
+                                      const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
+                                      handleInputChange({ target: { name: 'govtId', value } });
+                                    }}
+                                    className={`w-full px-3 py-2 border ${formErrors.govtId ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                                    placeholder="Wprowadź numer PESEL (11 cyfr)"
+                                    maxLength={11}
+                                  />
+                                  {formErrors.govtId && <p className="text-red-500 text-xs mt-1">{formErrors.govtId}</p>}
+                                </div>
+                              )}
+
+                              {bookingForm.consultationType === "online" && (
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Data urodzenia*
+                                  </label>
+                                  <input
+                                    type="date"
+                                    name="dateOfBirth"
+                                    value={bookingForm.dateOfBirth}
+                                    onChange={handleInputChange}
+                                    className={`w-full px-3 py-2 border ${
+                                      formErrors.dateOfBirth
+                                        ? "border-red-500"
+                                        : "border-gray-300"
+                                    } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                                    max={getCurrentDateInPoland()}
+                                  />
+                                  {formErrors.dateOfBirth && (
+                                    <p className="text-red-500 text-xs mt-1">
+                                      {formErrors.dateOfBirth}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
 
                             {bookingForm.isInternationalPatient && (
                               <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
@@ -1567,7 +1596,7 @@ const DoctorProfilePage = () => {
                                       name="documentCountry"
                                       value={bookingForm.documentCountry}
                                       onChange={handleInputChange}
-                                      placeholder="np. Niemcy, Polska"
+                                      placeholder="e.g. Germany, Poland"
                                       className={`w-full px-3 py-2 border ${formErrors.documentCountry ? "border-red-500" : "border-gray-300"} rounded-md`}
                                     />
                                     {formErrors.documentCountry && <p className="text-red-500 text-xs mt-1">{formErrors.documentCountry}</p>}
@@ -1595,7 +1624,7 @@ const DoctorProfilePage = () => {
                                       name="documentNumber"
                                       value={bookingForm.documentNumber}
                                       onChange={handleInputChange}
-                                      placeholder="Numer dokumentu"
+                                      placeholder="Document number"
                                       className={`w-full px-3 py-2 border ${formErrors.documentNumber ? "border-red-500" : "border-gray-300"} rounded-md`}
                                     />
                                     {formErrors.documentNumber && <p className="text-red-500 text-xs mt-1">{formErrors.documentNumber}</p>}
@@ -1604,30 +1633,9 @@ const DoctorProfilePage = () => {
                               </div>
                             )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  Data urodzenia*
-                                </label>
-                                <input
-                                  type="date"
-                                  name="dateOfBirth"
-                                  value={bookingForm.dateOfBirth}
-                                  onChange={handleInputChange}
-                                  className={`w-full px-3 py-2 border ${
-                                    formErrors.dateOfBirth
-                                      ? "border-red-500"
-                                      : "border-gray-300"
-                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                  max={getCurrentDateInPoland()}
-                                />
-                                {formErrors.dateOfBirth && (
-                                  <p className="text-red-500 text-xs mt-1">
-                                    {formErrors.dateOfBirth}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
+                          {bookingForm.consultationType === "online" && (
+                            <>
+                              <h5 className="text-md font-semibold text-gray-800 mb-3 mt-6">Dodatkowe informacje (wymagane dla konsultacji online)</h5>
 
                             <div className="mb-4">
                               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1651,8 +1659,8 @@ const DoctorProfilePage = () => {
                                 </p>
                               )}
                             </div>
-                          </div>
-                        )}
+                            </>
+                          )}
 
                         {/* Additional Information */}
                         <div className="mb-4">
