@@ -25,26 +25,28 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
   const [loadingFullPatient, setLoadingFullPatient] = useState(false);
   const [linkingToExisting, setLinkingToExisting] = useState(false);
   const [editingExistingPatientId, setEditingExistingPatientId] = useState(null);
+  const regInitial = appointment?.registrationData || {};
   const [formData, setFormData] = useState({
-    firstName: registrationData?.firstName ?? "",
-    lastName: registrationData?.lastName ?? "",
-    dateOfBirth: registrationData?.dateOfBirth ?? "",
+    firstName: regInitial?.firstName ?? (regInitial?.name ? regInitial.name.split(/\s+/)[0] : "") ?? "",
+    lastName: regInitial?.lastName ?? (regInitial?.name ? regInitial.name.split(/\s+/).slice(1).join(" ") : "") ?? "",
+    dateOfBirth: regInitial?.dateOfBirth ? (String(regInitial.dateOfBirth).slice(0, 10)) : "",
     phoneCode: "+48",
-    phone: (registrationData?.phone || "").replace(/\D/g, "").slice(0, 9),
-    email: registrationData?.email ?? "",
-    sex: registrationData?.sex ?? "",
-    street: registrationData?.street ?? registrationData?.address ?? "",
-    zipCode: registrationData?.zipCode ?? registrationData?.pinCode ?? "",
-    city: registrationData?.city ?? "",
-    isInternationalPatient: false,
-    documentCountry: "",
-    documentType: "",
-    documentNumber: ""
+    phone: (regInitial?.phone || "").replace(/\D/g, "").slice(0, 9),
+    email: regInitial?.email ?? "",
+    sex: regInitial?.sex ?? regInitial?.gender ?? "",
+    street: regInitial?.street ?? regInitial?.address ?? "",
+    zipCode: regInitial?.zipCode ?? regInitial?.pinCode ?? "",
+    city: regInitial?.city ?? "",
+    isInternationalPatient: !!regInitial?.isInternationalPatient,
+    documentCountry: regInitial?.documentCountry ?? "",
+    documentType: regInitial?.documentType ?? "",
+    documentNumber: regInitial?.documentNumber ?? ""
   });
 
   useEffect(() => {
     if (!isOpen) return;
-    const rawPhone = (registrationData?.phone || "").trim();
+    const reg = appointment?.registrationData || {};
+    const rawPhone = (reg.phone || "").trim();
     let phoneCode = "+48";
     let phoneDigits = rawPhone.replace(/\D/g, "");
     const match = PHONE_COUNTRY_CODES.slice().sort((a, b) => b.code.length - a.code.length).find((c) => phoneDigits.startsWith(c.code.replace(/\D/g, "")));
@@ -54,21 +56,23 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
     } else {
       phoneDigits = phoneDigits.slice(0, 9);
     }
+    const dob = reg.dateOfBirth;
+    const dateOfBirthStr = dob ? (typeof dob === "string" && dob.length >= 10 ? dob.slice(0, 10) : (new Date(dob).toISOString?.()?.slice(0, 10) ?? "")) : "";
     setFormData({
-      firstName: registrationData?.firstName ?? "",
-      lastName: registrationData?.lastName ?? "",
-      dateOfBirth: registrationData?.dateOfBirth ?? "",
+      firstName: reg.firstName ?? (reg.name ? reg.name.split(/\s+/)[0] : "") ?? "",
+      lastName: reg.lastName ?? (reg.name ? reg.name.split(/\s+/).slice(1).join(" ") : "") ?? "",
+      dateOfBirth: dateOfBirthStr,
       phoneCode,
       phone: phoneDigits,
-      email: registrationData?.email ?? "",
-      sex: registrationData?.sex ?? "",
-      street: registrationData?.street ?? registrationData?.address ?? "",
-      zipCode: registrationData?.zipCode ?? registrationData?.pinCode ?? "",
-      city: registrationData?.city ?? "",
-      isInternationalPatient: false,
-      documentCountry: "",
-      documentType: "",
-      documentNumber: ""
+      email: reg.email ?? "",
+      sex: reg.sex ?? reg.gender ?? "",
+      street: reg.street ?? reg.address ?? "",
+      zipCode: reg.zipCode ?? reg.pinCode ?? "",
+      city: reg.city ?? "",
+      isInternationalPatient: !!reg.isInternationalPatient,
+      documentCountry: reg.documentCountry ?? "",
+      documentType: reg.documentType ?? "",
+      documentNumber: reg.documentNumber ?? ""
     });
     setCompleteRegPesel("");
     setPeselExists(false);
