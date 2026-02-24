@@ -23,4 +23,22 @@ export const getStatusStyle = (status) => {
   };
   
   return styleMap[status] || "bg-gray-100 text-gray-800";
+};
+
+/** Visit mode from API: visitMode or mode; fallback "offline" per API contract. */
+export const getVisitMode = (appointment) => {
+  const mode = appointment?.visitMode ?? appointment?.mode ?? "offline";
+  return mode === "online" ? "online" : "offline";
+};
+
+/** Display label for visit mode (Polish). */
+export const getVisitModeLabel = (appointment) => {
+  return getVisitMode(appointment) === "online" ? "Online" : "W przychodni";
+};
+
+/** Tailwind classes for visit mode badge. */
+export const getVisitModeStyle = (appointment) => {
+  return getVisitMode(appointment) === "online"
+    ? "bg-blue-100 text-blue-800"
+    : "bg-purple-100 text-purple-800";
 }; 

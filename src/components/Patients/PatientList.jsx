@@ -27,7 +27,7 @@ import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
-import { translateStatus, getStatusStyle } from '../../utils/statusHelper';
+import { translateStatus, getStatusStyle, getVisitMode, getVisitModeLabel, getVisitModeStyle } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import PatientStepForm from "../SubComponentForm/PatientStepForm";
@@ -863,13 +863,22 @@ function LabAppointmentsContent({ clinic }) {
                         </div>
 
                         {/* Time and Doctor - adjusted columns */}
-                        <div className={`${user?.role === "admin" ? "col-span-3" : "col-span-4"} flex flex-col min-w-0`}>
+                        <div className={`${user?.role === "admin" ? "col-span-2" : "col-span-3"} flex flex-col min-w-0`}>
                           <div className="font-medium text-gray-900 truncate">
                             {appointment.startTime} - {appointment.endTime}
                           </div>
                           <div className="text-sm text-gray-500 truncate">
                             {appointment.doctor?.name || "-"}
                           </div>
+                        </div>
+
+                        {/* Tryb wizyty (visit mode) - clinic card layout */}
+                        <div className="col-span-1 flex items-center">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getVisitModeStyle(appointment)}`}
+                          >
+                            {getVisitModeLabel(appointment)}
+                          </span>
                         </div>
 
                         {/* Status - 2 columns */}
@@ -1120,28 +1129,22 @@ function LabAppointmentsContent({ clinic }) {
                     <td className="px-4 py-3 truncate">
                       <span
                         title={
-                          appointment.mode === "online"
-                            ? "Click to join meeting"
+                          getVisitMode(appointment) === "online"
+                            ? "Kliknij, aby dołączyć do spotkania"
                             : ""
                         }
                         onClick={() => {
-                          if (appointment.mode === "online") {
+                          if (getVisitMode(appointment) === "online" && appointment.meetLink) {
                             window.open(appointment.meetLink, "_blank");
                           }
                         }}
                         className={`px-2 py-1 rounded-full text-xs font-medium inline-block transition-colors ${
-                          appointment.mode === "online"
+                          getVisitMode(appointment) === "online"
                             ? "bg-blue-100 text-blue-800 cursor-pointer hover:bg-blue-200"
-                            : appointment.mode === "offline"
-                            ? "bg-purple-100 text-purple-800"
-                            : "bg-gray-100 text-gray-800"
+                            : "bg-purple-100 text-purple-800"
                         }`}
                       >
-                        {appointment.mode === "online"
-                          ? "Online"
-                          : appointment.mode === "offline"
-                          ? "Stacjonarnie"
-                          : "Brak"}
+                        {getVisitModeLabel(appointment)}
                       </span>
                     </td>
 

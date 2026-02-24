@@ -28,7 +28,7 @@ import billingHelper from "../../helpers/billingHelper";
 import { createPortal } from "react-dom";
 import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
-import { translateStatus, getStatusStyle } from '../../utils/statusHelper';
+import { translateStatus, getStatusStyle, getVisitModeLabel, getVisitModeStyle } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import RescheduleModal from "./RescheduleModal";
 
@@ -1022,6 +1022,9 @@ const PatientList = () => {
                   Data wizyty
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                  Tryb wizyty
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   Akcje
                 </th>
               </tr>
@@ -1081,6 +1084,13 @@ const PatientList = () => {
                   </td>
                   <td className="py-4 px-4 text-gray-600">
                     {new Date(patient.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }) || "N/A"}
+                  </td>
+                  <td className="py-4 px-4">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${getVisitModeStyle(patient)}`}
+                    >
+                      {getVisitModeLabel(patient)}
+                    </span>
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex justify-center">

@@ -16,7 +16,7 @@ import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
 import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity, Save } from "lucide-react";
 import { toast } from "sonner";
-import { translateStatus } from "../../../../utils/statusHelper";
+import { translateStatus, getVisitModeLabel, getVisitModeStyle } from "../../../../utils/statusHelper";
 import { useAutoSave } from "../../../../hooks/useAutoSave";
 
 // Confirmation Modal Component
@@ -1177,6 +1177,11 @@ const PatientDetailsPage = () => {
                         <p className="text-sm text-gray-500">
                           {apt.consultationType || 'Konsultacja standardowa'}
                         </p>
+                        <span
+                          className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${getVisitModeStyle(apt)}`}
+                        >
+                          {getVisitModeLabel(apt)}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span
