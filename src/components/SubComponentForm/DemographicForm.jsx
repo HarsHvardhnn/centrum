@@ -510,7 +510,7 @@ const DemographicsForm = ({
         <span className="text-xs text-gray-500">— Zaznacz, aby wyświetlić pola dokumentu tożsamości</span>
       </div>
 
-      {formData.isInternationalPatient && !isEditMode && (
+      {formData.isInternationalPatient && (
         <>
           <div className="border-t border-gray-200 pt-6 mt-4">
             <h3 className="text-lg font-medium text-gray-800 mb-4">Dane dokumentu tożsamości</h3>
@@ -593,34 +593,38 @@ const DemographicsForm = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  E-mail
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email || ""}
-                  onChange={handleChange}
-                  placeholder="E-mail (jak w sekcji powyżej)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-                <p className="mt-0.5 text-xs text-gray-500">Ta sama wartość co w polu E-mail powyżej.</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Numer telefonu
-                </label>
-                <input
-                  type="tel"
-                  name="mobileNumber"
-                  value={formData.mobileNumber || ""}
-                  onChange={handleChange}
-                  placeholder="Numer (jak w sekcji powyżej)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-                <p className="mt-0.5 text-xs text-gray-500">Ta sama wartość co w polu Telefon powyżej.</p>
-              </div>
+              {!isEditMode && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      E-mail
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email || ""}
+                      onChange={handleChange}
+                      placeholder="E-mail (jak w sekcji powyżej)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                    <p className="mt-0.5 text-xs text-gray-500">Ta sama wartość co w polu E-mail powyżej.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Numer telefonu
+                    </label>
+                    <input
+                      type="tel"
+                      name="mobileNumber"
+                      value={formData.mobileNumber || ""}
+                      onChange={handleChange}
+                      placeholder="Numer (jak w sekcji powyżej)"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                    <p className="mt-0.5 text-xs text-gray-500">Ta sama wartość co w polu Telefon powyżej.</p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
