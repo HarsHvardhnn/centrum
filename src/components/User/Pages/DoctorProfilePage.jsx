@@ -11,7 +11,8 @@ import { useUser } from '../../../context/userContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from '../../../utils/polandTimezone';
-import { PHONE_COUNTRY_CODES, countryCodeToFlagEmoji } from '../../../constants/phoneCountryCodes';
+import { PHONE_COUNTRY_CODES } from '../../../constants/phoneCountryCodes';
+import PhoneCodeSelect from '../../UtilComponents/PhoneCodeSelect';
 
 function BookingPatientFormSection({
   bookingForm,
@@ -141,21 +142,10 @@ function BookingPatientFormSection({
               Telefon* (9 cyfr)
             </label>
             <div className="flex w-full overflow-hidden">
-              <div className="relative flex-shrink-0">
-                <select
-                  name="phoneCode"
-                  value={bookingForm.phoneCode}
-                  onChange={handleInputChange}
-                  className="h-[42px] px-2 sm:px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white text-sm w-[90px] sm:w-[120px] appearance-none"
-                  style={{ lineHeight: '1.5' }}
-                >
-                  {phoneCountryCodes.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {countryCodeToFlagEmoji(country.flag)} {country.code}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <PhoneCodeSelect
+                value={bookingForm.phoneCode}
+                onChange={(code) => handleInputChange({ target: { name: "phoneCode", value: code } })}
+              />
               <input
                 type="tel"
                 name="phone"

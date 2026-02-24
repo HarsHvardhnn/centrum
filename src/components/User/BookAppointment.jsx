@@ -9,7 +9,8 @@ import { FaCalendarAlt, FaShare } from "react-icons/fa";
 import { useUser } from "../../context/userContext";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from "../../utils/polandTimezone";
-import { PHONE_COUNTRY_CODES, countryCodeToFlagEmoji } from "../../constants/phoneCountryCodes";
+import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
+import PhoneCodeSelect from "../UtilComponents/PhoneCodeSelect";
 
 export default function BookAppointment({
   page,
@@ -704,21 +705,13 @@ export default function BookAppointment({
                 <div className="col-span-1">
                   <label htmlFor="phone" className="sr-only">Telefon</label>
                   <div className="custom-phone-input relative">
-                    <div className="flex">
-                      <div className="relative">
-                        <Field
-                          as="select"
-                          name="phoneCode"
-                          autoComplete="off"
-                          className="p-2.5 sm:p-3 text-sm sm:text-base outline-none bg-white border border-[#062b47] text-[#062b47] rounded-l appearance-none pr-8 min-w-[100px]"
-                        >
-                          {phoneCountryCodes.map((country) => (
-                            <option key={country.code} value={country.code}>
-                              {countryCodeToFlagEmoji(country.flag)} {country.code}
-                            </option>
-                          ))}
-                        </Field>
-                      </div>
+                    <div className="flex items-stretch">
+                      <PhoneCodeSelect
+                        value={values.phoneCode}
+                        onChange={(code) => setFieldValue("phoneCode", code)}
+                        className="flex-1 flex items-stretch"
+                        triggerClassName="border border-[#062b47] text-[#062b47] rounded-l rounded-r-none p-2.5 sm:p-3 text-sm sm:text-base h-full min-h-0 border-r-0"
+                      />
                       <input
                         id="phone"
                         name="phone"
@@ -727,7 +720,7 @@ export default function BookAppointment({
                         onChange={(e) => handlePhoneChange(e, setFieldValue)}
                         placeholder="123 456 789"
                         autoComplete="tel"
-                        className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-gray-400 rounded-r border-l-0"
+                        className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-gray-400 rounded-r border-l-0 focus:ring-1 focus:ring-[#062b47]"
                       />
                     </div>
                   </div>
