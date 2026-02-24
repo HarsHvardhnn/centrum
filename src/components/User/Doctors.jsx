@@ -1184,64 +1184,60 @@ export default function Doctors({
                         </div>
                       </div>
 
-                      {/* Step 3: PESEL / International patient (offline & online) */}
+                      {/* Step 3: PESEL (main, centered) then checkbox underneath */}
                       <div className="mb-6">
                         <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 3: Identyfikacja (PESEL opcjonalnie)</h5>
-                        <div className="mb-4">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={bookingForm.isInternationalPatient}
-                                onChange={(e) => {
-                                  const checked = e.target.checked;
-                                  setBookingForm((prev) => ({
-                                    ...prev,
-                                    isInternationalPatient: checked,
-                                    govtId: checked ? "" : prev.govtId,
-                                    documentCountry: checked ? prev.documentCountry : "",
-                                    documentType: checked ? prev.documentType : "",
-                                    documentNumber: checked ? prev.documentNumber : "",
-                                  }));
-                                  if (formErrors.govtId || formErrors.documentCountry || formErrors.documentType || formErrors.documentNumber) {
-                                    setFormErrors((prev) => ({ ...prev, govtId: null, documentCountry: null, documentType: null, documentNumber: null }));
-                                  }
-                                }}
-                                className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                              />
-                              <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
-                            </label>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            {!bookingForm.isInternationalPatient && (
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  PESEL (opcjonalnie)
-                                </label>
-                                <input
-                                  type="text"
-                                  name="govtId"
-                                  value={bookingForm.govtId}
-                                  onChange={(e) => {
-                                    const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
-                                    handleInputChange({ target: { name: 'govtId', value } });
-                                  }}
-                                  className={`w-full px-3 py-2 border ${
-                                    formErrors.govtId
-                                      ? "border-red-500"
-                                      : "border-gray-300"
-                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                  placeholder="Wprowadź numer PESEL (11 cyfr)"
-                                  maxLength={11}
-                                />
-                                {formErrors.govtId && (
-                                  <p className="text-red-500 text-xs mt-1">
-                                    {formErrors.govtId}
-                                  </p>
-                                )}
-                              </div>
+                        <div className="flex flex-col items-center w-full mb-4">
+                          <div className="w-full max-w-sm">
+                            <label className="block text-sm font-medium text-gray-700 mb-1 text-center md:text-left">PESEL (opcjonalnie)</label>
+                            <input
+                              type="text"
+                              name="govtId"
+                              value={bookingForm.govtId}
+                              disabled={!!bookingForm.isInternationalPatient}
+                              onChange={(e) => {
+                                if (!bookingForm.isInternationalPatient) {
+                                  const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
+                                  handleInputChange({ target: { name: 'govtId', value } });
+                                }
+                              }}
+                              className={`w-full px-3 py-2 border ${
+                                formErrors.govtId
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                              placeholder="Wprowadź numer PESEL (11 cyfr)"
+                              maxLength={11}
+                            />
+                            {formErrors.govtId && (
+                              <p className="text-red-500 text-xs mt-1">{formErrors.govtId}</p>
                             )}
+                          </div>
+                          <label className="flex items-center gap-2 cursor-pointer mt-3">
+                            <input
+                              type="checkbox"
+                              checked={bookingForm.isInternationalPatient}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setBookingForm((prev) => ({
+                                  ...prev,
+                                  isInternationalPatient: checked,
+                                  govtId: checked ? "" : prev.govtId,
+                                  documentCountry: checked ? prev.documentCountry : "",
+                                  documentType: checked ? prev.documentType : "",
+                                  documentNumber: checked ? prev.documentNumber : "",
+                                }));
+                                if (formErrors.govtId || formErrors.documentCountry || formErrors.documentType || formErrors.documentNumber) {
+                                  setFormErrors((prev) => ({ ...prev, govtId: null, documentCountry: null, documentType: null, documentNumber: null }));
+                                }
+                              }}
+                              className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                            />
+                            <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
+                          </label>
+                        </div>
 
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             {bookingForm.consultationType === "online" && (
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -779,49 +779,26 @@ export default function BookAppointment({
                   />
                 </div>
 
-                {/* PESEL / International patient / Address (basic data) */}
+                {/* PESEL (main) then checkbox underneath */}
                 <div className="col-span-1 sm:col-span-2 mb-4 mt-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <Field name="isInternationalPatient">
-                      {({ field, form }) => (
-                        <input
-                          type="checkbox"
-                          {...field}
-                          checked={!!field.value}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            form.setFieldValue("isInternationalPatient", checked);
-                            if (checked) form.setFieldValue("govtId", "");
-                            else {
-                              form.setFieldValue("documentCountry", "");
-                              form.setFieldValue("documentType", "");
-                              form.setFieldValue("documentNumber", "");
-                            }
-                          }}
-                          className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                        />
-                      )}
-                    </Field>
-                    <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
-                  </label>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 col-span-1 sm:col-span-2">
-                  {!values.isInternationalPatient && (
-                    <div className="col-span-1">
-                      <label htmlFor="govtId" className="block text-sm font-medium text-gray-700 mb-1">PESEL (opcjonalnie)</label>
+                  <div className="flex flex-col items-center w-full">
+                    <div className="w-full max-w-sm">
+                      <label htmlFor="govtId" className="block text-sm font-medium text-gray-700 mb-1 text-center sm:text-left">PESEL (opcjonalnie)</label>
                       <Field name="govtId">
                         {({ field, form }) => (
                           <input
                             id="govtId"
                             type="text"
                             {...field}
+                            disabled={!!values.isInternationalPatient}
                             onChange={(e) => {
-                              const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
-                              form.setFieldValue('govtId', value);
+                              if (!values.isInternationalPatient) {
+                                const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
+                                form.setFieldValue('govtId', value);
+                              }
                             }}
                             autoComplete="off"
-                            className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                            className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                             placeholder="Wprowadź numer PESEL (11 cyfr)"
                             maxLength={11}
                           />
@@ -829,7 +806,33 @@ export default function BookAppointment({
                       </Field>
                       <ErrorMessage name="govtId" component="div" className="text-red-600 text-xs sm:text-sm mt-1" />
                     </div>
-                  )}
+                    <label className="flex items-center gap-2 cursor-pointer mt-3">
+                      <Field name="isInternationalPatient">
+                        {({ field, form }) => (
+                          <input
+                            type="checkbox"
+                            {...field}
+                            checked={!!field.value}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              form.setFieldValue("isInternationalPatient", checked);
+                              if (checked) form.setFieldValue("govtId", "");
+                              else {
+                                form.setFieldValue("documentCountry", "");
+                                form.setFieldValue("documentType", "");
+                                form.setFieldValue("documentNumber", "");
+                              }
+                            }}
+                            className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                          />
+                        )}
+                      </Field>
+                      <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 col-span-1 sm:col-span-2">
 
                   {values.consultationType === "online" && (
                     <div className="col-span-1">
