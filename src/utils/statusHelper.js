@@ -29,12 +29,22 @@ export const getStatusStyle = (status) => {
 
 /** Display label for created-by role (Polish). Used in patient list and visit history. */
 export const getCreatedByRoleLabel = (appointment) => {
-  const role = appointment?.createdByRole != null ? appointment.createdByRole : "online";
+  const role =
+    appointment?.role != null
+      ? appointment.role
+      : appointment?.createdByRole != null
+        ? appointment.createdByRole
+        : typeof appointment?.createdBy === "string"
+          ? appointment.createdBy
+          : appointment?.createdBy?.role != null
+            ? appointment.createdBy.role
+            : "online";
   const labels = {
     online: "Online",
     receptionist: "Recepcja",
     admin: "Administracja",
     doctor: "Lekarz",
+    patient: "Online",
   };
   return labels[role?.toLowerCase?.()] ?? labels[role] ?? role;
 };
