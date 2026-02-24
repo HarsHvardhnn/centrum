@@ -11,6 +11,7 @@ import { useUser } from '../../../context/userContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from '../../../utils/polandTimezone';
+import { PHONE_COUNTRY_CODES, countryCodeToFlagEmoji } from '../../../constants/phoneCountryCodes';
 
 function BookingPatientFormSection({
   bookingForm,
@@ -150,7 +151,7 @@ function BookingPatientFormSection({
                 >
                   {phoneCountryCodes.map((country) => (
                     <option key={country.code} value={country.code}>
-                      {country.flag} {country.code}
+                      {countryCodeToFlagEmoji(country.flag)} {country.code}
                     </option>
                   ))}
                 </select>
@@ -563,19 +564,7 @@ const DoctorProfilePage = () => {
   // Cache week availability data to avoid redundant API calls
   const [weekAvailabilityCache, setWeekAvailabilityCache] = useState(null);
 
-  // Phone country codes configuration
-  const phoneCountryCodes = [
-    { code: "+48", country: "Polska", flag: "🇵🇱", maxLength: 9, default: true },
-    { code: "+380", country: "Ukraina", flag: "🇺🇦", maxLength: 9 },
-    { code: "+49", country: "Niemcy", flag: "🇩🇪", maxLength: 11 },
-    { code: "+44", country: "Wielka Brytania", flag: "🇬🇧", maxLength: 10 },
-    { code: "+34", country: "Hiszpania", flag: "🇪🇸", maxLength: 9 },
-    { code: "+33", country: "Francja", flag: "🇫🇷", maxLength: 9 },
-    { code: "+43", country: "Austria", flag: "🇦🇹", maxLength: 10 },
-    { code: "+39", country: "Włochy", flag: "🇮🇹", maxLength: 10 },
-    { code: "+420", country: "Czechy", flag: "🇨🇿", maxLength: 9 },
-    { code: "+1", country: "USA", flag: "🇺🇸", maxLength: 10 }
-  ];
+  const phoneCountryCodes = PHONE_COUNTRY_CODES;
 
   useEffect(() => {
     fetchDoctorBySlug();
