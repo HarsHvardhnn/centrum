@@ -1698,7 +1698,7 @@ const DoctorProfilePage = () => {
                                 Zapoznałem(-am) się z{" "}
                                                         <button
                           type="button"
-                          onClick={() => window.open('/regulamin', '_blank')}
+                          onClick={() => window.open("/regulamin", "_blank")}
                           className="text-teal-600 hover:text-teal-800 underline"
                         >
                           Regulaminem
@@ -1706,7 +1706,7 @@ const DoctorProfilePage = () => {
                         i{" "}
                         <button
                           type="button"
-                          onClick={() => window.open('/polityka-prywatnosci', '_blank')}
+                          onClick={() => window.open("/polityka-prywatnosci", "_blank")}
                           className="text-teal-600 hover:text-teal-800 underline"
                         >
                           Polityką Prywatności
