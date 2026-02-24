@@ -74,7 +74,8 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
       documentType: reg.documentType ?? "",
       documentNumber: reg.documentNumber ?? ""
     });
-    setCompleteRegPesel("");
+    const peselFromReg = (reg.pendingPesel ?? reg.govtId ?? reg.pesel ?? reg.npesei ?? "").toString().trim();
+    setCompleteRegPesel(peselFromReg ? normalizePesel(peselFromReg) : "");
     setPeselExists(false);
     setExistingPatientData(null);
     setPeselWarningFromApi(null);

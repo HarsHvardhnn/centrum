@@ -142,6 +142,12 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
         ...prev,
         [name]: digitsOnly
       }));
+    } else if (name === "isInternational" && type === "checkbox" && checked) {
+      setAppointmentData(prev => ({
+        ...prev,
+        isInternational: true,
+        newPatientPesel: ""
+      }));
     } else {
       setAppointmentData(prev => ({
         ...prev,
@@ -516,21 +522,36 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                     </select>
                   </div>
                 </div>
+
+                {/* PESEL (main, centered) then checkbox underneath */}
+                <div className="flex flex-col items-center w-full mt-4">
+                  <div className="w-full max-w-sm">
+                    <label className="block text-sm text-gray-600 mb-1 text-center md:text-left">PESEL (11 cyfr)</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={11}
+                      name="newPatientPesel"
+                      value={appointmentData.newPatientPesel}
+                      onChange={handleInputChange}
+                      disabled={!!appointmentData.isInternational}
+                      className="w-full p-2 border rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      placeholder="11 cyfr"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer mt-3">
+                    <input
+                      type="checkbox"
+                      name="isInternational"
+                      checked={appointmentData.isInternational}
+                      onChange={handleInputChange}
+                      className="h-4 w-4 text-teal-600"
+                    />
+                    <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
+                  </label>
+                </div>
               </div>
             )}
-
-            <div className="bg-teal-50 p-4 rounded-lg">
-              <div className="flex items-center mb-3">
-                <input
-                  type="checkbox"
-                  name="isInternational"
-                  checked={appointmentData.isInternational}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-teal-600"
-                />
-                <label className="ml-2 text-sm">Pacjent międzynarodowy</label>
-              </div>
-            </div>
           </div>
         );
 

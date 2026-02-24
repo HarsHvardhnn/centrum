@@ -1367,7 +1367,25 @@ function AppointmentFormModal({
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">PESEL (11 cyfr)</label>
+                <label className="block text-sm text-gray-600 mb-1">Płeć*</label>
+                <select
+                  name="newPatientSex"
+                  value={appointmentData.newPatientSex}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded-lg"
+                >
+                  <option value="">Wybierz płeć</option>
+                  <option value="Male">Mężczyzna</option>
+                  <option value="Female">Kobieta</option>
+                  <option value="Others">Inna</option>
+                </select>
+              </div>
+            </div>
+
+            {/* PESEL (main, centered) then checkbox underneath */}
+            <div className="flex flex-col items-center w-full mt-4">
+              <div className="w-full max-w-sm">
+                <label className="block text-sm text-gray-600 mb-1 text-center md:text-left">PESEL (11 cyfr)</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -1375,7 +1393,8 @@ function AppointmentFormModal({
                   name="newPatientPesel"
                   value={appointmentData.newPatientPesel}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg"
+                  disabled={!!appointmentData.isInternational}
+                  className="w-full p-2 border rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="11 cyfr"
                 />
                 {firstTimePeselCheckLoading && <p className="text-xs text-gray-500 mt-1">Sprawdzam PESEL...</p>}
@@ -1407,36 +1426,19 @@ function AppointmentFormModal({
                   </div>
                 )}
               </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Płeć*</label>
-                <select
-                  name="newPatientSex"
-                  value={appointmentData.newPatientSex}
+              <label className="flex items-center gap-2 cursor-pointer mt-3">
+                <input
+                  type="checkbox"
+                  name="isInternational"
+                  checked={appointmentData.isInternational}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg"
-                >
-                  <option value="">Wybierz płeć</option>
-                  <option value="Male">Mężczyzna</option>
-                  <option value="Female">Kobieta</option>
-                  <option value="Others">Inna</option>
-                </select>
-              </div>
+                  className="h-4 w-4 text-teal-600"
+                />
+                <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
+              </label>
             </div>
           </div>
         )}
-
-        <div className="bg-teal-50 p-4 rounded-lg">
-          <div className="flex items-center mb-3">
-            <input
-              type="checkbox"
-              name="isInternational"
-              checked={appointmentData.isInternational}
-              onChange={handleInputChange}
-              className="h-4 w-4 text-teal-600"
-            />
-            <label className="ml-2 text-sm">Pacjent międzynarodowy</label>
-          </div>
-        </div>
       </div>
     );
   };
