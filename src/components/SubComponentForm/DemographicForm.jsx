@@ -6,108 +6,7 @@ import patientService from "../../helpers/patientHelper";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
-
-// SVG Flag Components
-const FlagIcon = ({ countryCode, className = "w-4 h-4" }) => {
-  const flags = {
-    PL: (
-      <svg viewBox="0 0 640 480" className={className}>
-        <g fillRule="evenodd">
-          <rect width="640" height="480" fill="#fff"/>
-          <rect width="640" height="240" y="240" fill="#dc143c"/>
-        </g>
-      </svg>
-    ),
-    UA: (
-      <svg viewBox="0 0 640 480" className={className}>
-        <g fillRule="evenodd">
-          <rect width="640" height="240" fill="#005bbb"/>
-          <rect width="640" height="240" y="240" fill="#ffd700"/>
-        </g>
-      </svg>
-    ),
-    DE: (
-      <svg viewBox="0 0 640 480" className={className}>
-        <g fillRule="evenodd">
-          <rect width="640" height="160" fill="#000"/>
-          <rect width="640" height="160" y="160" fill="#dd0000"/>
-          <rect width="640" height="160" y="320" fill="#ffce00"/>
-        </g>
-      </svg>
-    ),
-    GB: (
-      <svg viewBox="0 0 640 480" className={className}>
-        <g fillRule="evenodd">
-          <rect width="640" height="480" fill="#012169"/>
-          <path d="M0 0l640 480M640 0L0 480" stroke="#fff" strokeWidth="3"/>
-          <path d="M0 0l640 480M640 0L0 480" stroke="#C8102E" strokeWidth="2"/>
-          <path d="M320 0v480M0 240h640" stroke="#fff" strokeWidth="6"/>
-          <path d="M320 0v480M0 240h640" stroke="#C8102E" strokeWidth="4"/>
-        </g>
-      </svg>
-    ),
-    ES: (
-      <svg viewBox="0 0 640 480" className={className}>
-        <g fillRule="evenodd">
-          <rect width="640" height="480" fill="#c60b1e"/>
-          <rect width="640" height="240" y="120" fill="#ffc400"/>
-        </g>
-      </svg>
-    ),
-    FR: (
-      <svg viewBox="0 0 640 480" className={className}>
-        <g fillRule="evenodd">
-          <rect width="213.3" height="480" fill="#fff"/>
-          <rect width="213.3" height="480" x="213.3" fill="#00267f"/>
-          <rect width="213.3" height="480" x="426.6" fill="#f31830"/>
-        </g>
-      </svg>
-    ),
-    AT: (
-      <svg viewBox="0 0 640 480" className={className}>
-        <g fillRule="evenodd">
-          <rect width="640" height="160" fill="#fff"/>
-          <rect width="640" height="160" y="160" fill="#c8102e"/>
-          <rect width="640" height="160" y="320" fill="#fff"/>
-        </g>
-      </svg>
-    ),
-    IT: (
-      <svg viewBox="0 0 640 480" className={className}>
-        <g fillRule="evenodd">
-          <rect width="213.3" height="480" fill="#fff"/>
-          <rect width="213.3" height="480" x="213.3" fill="#009246"/>
-          <rect width="213.3" height="480" x="426.6" fill="#ce2b37"/>
-        </g>
-      </svg>
-    ),
-    CZ: (
-      <svg viewBox="0 0 640 480" className={className}>
-        <g fillRule="evenodd">
-          <rect width="640" height="240" fill="#fff"/>
-          <rect width="640" height="240" y="240" fill="#d7141a"/>
-          <path d="M0 0l320 240L0 480z" fill="#11457e"/>
-        </g>
-      </svg>
-    ),
-    US: (
-      <svg viewBox="0 0 640 480" className={className}>
-        <g fillRule="evenodd">
-          <rect width="640" height="480" fill="#fff"/>
-          <rect width="640" height="37" fill="#b22234"/>
-          <rect width="640" height="37" y="74" fill="#b22234"/>
-          <rect width="640" height="37" y="148" fill="#b22234"/>
-          <rect width="640" height="37" y="222" fill="#b22234"/>
-          <rect width="640" height="37" y="296" fill="#b22234"/>
-          <rect width="640" height="37" y="370" fill="#b22234"/>
-          <rect width="320" height="259" fill="#3c3b6e"/>
-        </g>
-      </svg>
-    )
-  };
-  
-  return flags[countryCode] || <span className={className}>🏳️</span>;
-};
+import { PHONE_COUNTRY_CODES, FlagIcon } from "../../constants/phoneCountryCodes";
 
 const DOCUMENT_TYPES = [
   { value: "", label: "Wybierz typ" },
@@ -144,6 +43,8 @@ const DemographicsForm = ({
   const [peselExists, setPeselExists] = useState(false);
   const [peselCheckLoading, setPeselCheckLoading] = useState(false);
 
+  const phoneCountryCodes = externalPhoneCountryCodes ?? PHONE_COUNTRY_CODES;
+
   // When adding (not editing) and PESEL has 11 digits and not international, check if patient already exists
   useEffect(() => {
     if (isEditMode || formData.isInternationalPatient || !formData.govtId || normalizePesel(formData.govtId).length !== 11) {
@@ -174,24 +75,6 @@ const DemographicsForm = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdownOpen]);
-  
-
-
-  // Phone country codes with validation - Using SVG flags for better compatibility
-  const phoneCountryCodes = [
-    { code: "+48", country: "Polska", flag: <FlagIcon countryCode="PL" />, maxLength: 9, default: true },
-    { code: "+380", country: "Ukraina", flag: <FlagIcon countryCode="UA" />, maxLength: 9 },
-    { code: "+49", country: "Niemcy", flag: <FlagIcon countryCode="DE" />, maxLength: 11 },
-    { code: "+44", country: "Wielka Brytania", flag: <FlagIcon countryCode="GB" />, maxLength: 10 },
-    { code: "+34", country: "Hiszpania", flag: <FlagIcon countryCode="ES" />, maxLength: 9 },
-    { code: "+33", country: "Francja", flag: <FlagIcon countryCode="FR" />, maxLength: 9 },
-    { code: "+43", country: "Austria", flag: <FlagIcon countryCode="AT" />, maxLength: 10 },
-    { code: "+39", country: "Włochy", flag: <FlagIcon countryCode="IT" />, maxLength: 10 },
-    { code: "+420", country: "Czechy", flag: <FlagIcon countryCode="CZ" />, maxLength: 9 },
-    { code: "+1", country: "USA", flag: <FlagIcon countryCode="US" />, maxLength: 10 }
-  ];
-
-
 
   // Get current phone code from form data, external props, or default to +48
   const currentPhoneCode = formData.phoneCode || selectedPhoneCode || "+48";
@@ -512,7 +395,7 @@ const DemographicsForm = ({
                         currentPhoneCode === country.code ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
                       }`}
                     >
-                      <span className="mr-2">{country.flag}</span>
+                      <span className="mr-2"><FlagIcon countryCode={country.flag} /></span>
                       <span className="mr-2">{country.code}</span>
                       <span className="text-xs text-gray-500">{country.country}</span>
                     </button>

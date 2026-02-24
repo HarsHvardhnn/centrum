@@ -119,6 +119,9 @@ function LabAppointmentsContent({ clinic }) {
   const isVisitOnlyAppointment = (apt) =>
     apt?.isVisitOnly === true || !(apt?.patient?.id || apt?.patient?._id);
 
+  /** Cancelled status (case-insensitive). */
+  const isCancelled = (apt) => apt?.status?.toLowerCase() === "cancelled";
+
   /** Display name: patient name, or registrationData, or fallback (never undefined) */
   const getAppointmentPatientDisplayName = (apt) => {
     const name =
@@ -798,8 +801,8 @@ function LabAppointmentsContent({ clinic }) {
                   {appointments.map((appointment) => (
                     <div
                       key={appointment.id}
-                      title={isVisitOnlyAppointment(appointment) ? 'Tylko wizyta – brak przypisanego pacjenta. Kliknij, aby zakończyć rejestrację.' : undefined}
-                      className={`px-6 py-4 hover:bg-gray-50 transition-colors ${selectedAppointmentIds.includes(appointment.id) ? 'bg-red-50' : ''} ${isVisitOnlyAppointment(appointment) ? 'border-l-4 border-amber-500 bg-amber-50/50' : ''}`}
+                      title={isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'Tylko wizyta – brak przypisanego pacjenta. Kliknij, aby zakończyć rejestrację.' : isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'Wizyta anulowana – brak rejestracji.' : undefined}
+                      className={`px-6 py-4 hover:bg-gray-50 transition-colors ${selectedAppointmentIds.includes(appointment.id) ? 'bg-red-50' : ''} ${isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'border-l-4 border-red-500 bg-red-50/50' : ''} ${isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'border-l-4 border-amber-500 bg-amber-50/50' : ''}`}
                     >
                       <div className="grid grid-cols-12 gap-4 items-center h-[60px]">
                         {/* Checkbox - only for admin */}
@@ -816,14 +819,14 @@ function LabAppointmentsContent({ clinic }) {
                         )}
                         {/* Patient Info - adjusted columns */}
                         <div 
-                          title={isVisitOnlyAppointment(appointment) ? 'Tylko wizyta – brak pacjenta. Kliknij: Zakończ rejestrację.' : undefined}
-                          className={`${user?.role === "admin" ? "col-span-4" : "col-span-5"} flex items-center gap-3 min-w-0 ${appointment.isAppointment !== false ? 'cursor-pointer' : ''}`}
+                          title={isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'Tylko wizyta – brak pacjenta. Kliknij: Zakończ rejestrację.' : undefined}
+                          className={`${user?.role === "admin" ? "col-span-4" : "col-span-5"} flex items-center gap-3 min-w-0 ${appointment.isAppointment !== false && !(isVisitOnlyAppointment(appointment) && isCancelled(appointment)) ? 'cursor-pointer' : ''}`}
                           onClick={() => {
                             if (appointment.isAppointment !== false) {
-                              if (isVisitOnlyAppointment(appointment)) {
+                              if (isVisitOnlyAppointment(appointment) && !isCancelled(appointment)) {
                                 setSelectedAppointment(appointment);
                                 setShowCompleteRegModal(true);
-                              } else {
+                              } else if (!isVisitOnlyAppointment(appointment)) {
                                 navigate(
                                   `/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`
                                 );
@@ -831,7 +834,7 @@ function LabAppointmentsContent({ clinic }) {
                             }
                           }}
                         >
-                          <div className={`h-10 w-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center ${isVisitOnlyAppointment(appointment) ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-500'}`}>
+                          <div className={`h-10 w-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center ${isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'bg-red-100 text-red-700' : isVisitOnlyAppointment(appointment) ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-500'}`}>
                             {!isVisitOnlyAppointment(appointment) && appointment.patient?.profilePicture ? (
                               <img
                                 src={appointment.patient.profilePicture}
@@ -850,9 +853,9 @@ function LabAppointmentsContent({ clinic }) {
                                 {getAppointmentPatientDisplayName(appointment)}
                               </span>
                               {isVisitOnlyAppointment(appointment) && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 shrink-0" title="Wizyta bez pacjenta – zakończ rejestrację">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${isCancelled(appointment) ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-amber-100 text-amber-800 border border-amber-200'}`} title={isCancelled(appointment) ? 'Wizyta anulowana' : 'Wizyta bez pacjenta – zakończ rejestrację'}>
                                   <UserPlus size={12} />
-                                  Do rejestracji
+                                  {isCancelled(appointment) ? 'Anulowana' : 'Do rejestracji'}
                                 </span>
                               )}
                             </div>
@@ -916,7 +919,7 @@ function LabAppointmentsContent({ clinic }) {
                                   sideOffset={5}
                                   align="end"
                                 >
-                                  {isVisitOnlyAppointment(appointment) ? (
+                                  {isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? (
                                     <DropdownMenu.Item
                                       className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer"
                                       onClick={() => {
@@ -927,7 +930,7 @@ function LabAppointmentsContent({ clinic }) {
                                       <UserCheck size={16} className="mr-2 flex-shrink-0" />
                                       Zakończ rejestrację
                                     </DropdownMenu.Item>
-                                  ) : (
+                                  ) : !isVisitOnlyAppointment(appointment) ? (
                                     <DropdownMenu.Item
                                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                       onClick={() => {
@@ -939,7 +942,7 @@ function LabAppointmentsContent({ clinic }) {
                                       <Eye size={16} className="mr-2 flex-shrink-0" />
                                       Zobacz szczegóły
                                     </DropdownMenu.Item>
-                                  )}
+                                  ) : null}
 
                                   {appointment.patient && appointment.status === "booked" && (
                                     <DropdownMenu.Item
@@ -1057,11 +1060,11 @@ function LabAppointmentsContent({ clinic }) {
                 {appointments.map((appointment) => (
                   <tr
                     key={appointment.id}
-                    title={isVisitOnlyAppointment(appointment) ? 'Tylko wizyta – brak przypisanego pacjenta. Kliknij, aby zakończyć rejestrację.' : undefined}
-                    className={`border-b hover:bg-gray-50 ${selectedAppointmentIds.includes(appointment.id) ? 'bg-red-50' : ''} ${isVisitOnlyAppointment(appointment) ? 'bg-amber-50/50' : ''}`}
+                    title={isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'Tylko wizyta – brak przypisanego pacjenta. Kliknij, aby zakończyć rejestrację.' : isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'Wizyta anulowana.' : undefined}
+                    className={`border-b hover:bg-gray-50 ${selectedAppointmentIds.includes(appointment.id) ? 'bg-red-50' : ''} ${isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'bg-red-50/50 border-l-4 border-l-red-500' : ''} ${isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'bg-amber-50/50' : ''}`}
                   >
                     {user?.role === "admin" && (
-                      <td className={`px-4 py-3 ${isVisitOnlyAppointment(appointment) ? 'border-l-4 border-l-amber-500' : ''}`} onClick={(e) => e.stopPropagation()}>
+                      <td className={`px-4 py-3 ${isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'border-l-4 border-l-red-500' : ''} ${isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'border-l-4 border-l-amber-500' : ''}`} onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selectedAppointmentIds.includes(appointment.id)}
@@ -1071,14 +1074,14 @@ function LabAppointmentsContent({ clinic }) {
                       </td>
                     )}
                     <td
-                      title={isVisitOnlyAppointment(appointment) ? 'Tylko wizyta – brak pacjenta. Kliknij: Zakończ rejestrację.' : undefined}
-                      className={`px-4 py-3 truncate ${appointment.isAppointment !== false ? 'cursor-pointer' : ''} ${user?.role !== "admin" && isVisitOnlyAppointment(appointment) ? 'border-l-4 border-l-amber-500' : ''}`}
+                      title={isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'Tylko wizyta – brak pacjenta. Kliknij: Zakończ rejestrację.' : undefined}
+                      className={`px-4 py-3 truncate ${appointment.isAppointment !== false && !(isVisitOnlyAppointment(appointment) && isCancelled(appointment)) ? 'cursor-pointer' : ''} ${user?.role !== "admin" && isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'border-l-4 border-l-red-500' : ''} ${user?.role !== "admin" && isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'border-l-4 border-l-amber-500' : ''}`}
                       onClick={() => {
                         if (appointment.isAppointment !== false) {
-                          if (isVisitOnlyAppointment(appointment)) {
+                          if (isVisitOnlyAppointment(appointment) && !isCancelled(appointment)) {
                             setSelectedAppointment(appointment);
                             setShowCompleteRegModal(true);
-                          } else {
+                          } else if (!isVisitOnlyAppointment(appointment)) {
                             navigate(
                               `/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`
                             );
@@ -1087,7 +1090,7 @@ function LabAppointmentsContent({ clinic }) {
                       }}
                     >
                       <div className="flex items-center">
-                        <div className={`h-8 w-8 rounded-full overflow-hidden mr-2 flex-shrink-0 flex items-center justify-center ${isVisitOnlyAppointment(appointment) ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-500'}`}>
+                        <div className={`h-8 w-8 rounded-full overflow-hidden mr-2 flex-shrink-0 flex items-center justify-center ${isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'bg-red-100 text-red-700' : ''} ${isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'bg-amber-100 text-amber-700' : ''} ${!isVisitOnlyAppointment(appointment) ? 'bg-gray-200 text-gray-500' : ''}`}>
                           {!isVisitOnlyAppointment(appointment) && appointment.patient?.profilePicture ? (
                             <img
                               src={appointment.patient.profilePicture}
@@ -1106,9 +1109,9 @@ function LabAppointmentsContent({ clinic }) {
                               {getAppointmentPatientDisplayName(appointment)}
                             </span>
                             {isVisitOnlyAppointment(appointment) && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 shrink-0" title="Wizyta bez pacjenta – zakończ rejestrację">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${isCancelled(appointment) ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-amber-100 text-amber-800 border border-amber-200'}`} title={isCancelled(appointment) ? 'Wizyta anulowana' : 'Wizyta bez pacjenta – zakończ rejestrację'}>
                                 <UserPlus size={10} />
-                                Do rejestracji
+                                {isCancelled(appointment) ? 'Anulowana' : 'Do rejestracji'}
                               </span>
                             )}
                           </div>
@@ -1183,7 +1186,7 @@ function LabAppointmentsContent({ clinic }) {
                                 className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
                                 sideOffset={5}
                               >
-                                {isVisitOnlyAppointment(appointment) ? (
+                                {isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? (
                                   <DropdownMenu.Item
                                     className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer"
                                     onClick={() => {
@@ -1194,7 +1197,7 @@ function LabAppointmentsContent({ clinic }) {
                                     <UserCheck size={16} className="mr-2" />
                                     Zakończ rejestrację
                                   </DropdownMenu.Item>
-                                ) : (
+                                ) : !isVisitOnlyAppointment(appointment) ? (
                                   <DropdownMenu.Item
                                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                     onClick={() => {
@@ -1206,7 +1209,7 @@ function LabAppointmentsContent({ clinic }) {
                                     <Eye size={16} className="mr-2" />
                                     Zobacz szczegóły
                                   </DropdownMenu.Item>
-                                )}
+                                ) : null}
 
                                 {appointment.patient && appointment.status === "booked" && (
                                   <DropdownMenu.Item

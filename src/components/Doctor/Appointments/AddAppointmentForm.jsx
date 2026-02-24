@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { apiCaller } from "../../../utils/axiosInstance";
 import { normalizePesel, getPeselChecksumWarning } from "../../../utils/peselUtils";
 import patientService from "../../../helpers/patientHelper";
+import { PHONE_COUNTRY_CODES, FlagIcon } from "../../../constants/phoneCountryCodes";
 
 /**
  * AppointmentFormModal - Component for adding new appointments
@@ -107,132 +108,7 @@ function AppointmentFormModal({
   const [availableSlots, setAvailableSlots] = useState([]);
   const [phoneDropdownOpen, setPhoneDropdownOpen] = useState(false);
 
-  // FlagIcon component for SVG flags
-  const FlagIcon = ({ countryCode }) => {
-    const flags = {
-      PL: (
-        <svg viewBox="0 0 640 480" className="w-4 h-4">
-          <g fillRule="evenodd">
-            <path fill="#fff" d="M640 480H0V0h640z"/>
-            <path fill="#dc143c" d="M640 480H0V240h640z"/>
-          </g>
-        </svg>
-      ),
-      UA: (
-        <svg viewBox="0 0 640 480" className="w-4 h-4">
-          <g fillRule="evenodd">
-            <path fill="#005bbb" d="M0 0h640v240H0z"/>
-            <path fill="#ffd700" d="M0 240h640v240H0z"/>
-          </g>
-        </svg>
-      ),
-      DE: (
-        <svg viewBox="0 0 640 480" className="w-4 h-4">
-          <g fillRule="evenodd">
-            <path d="M0 0h640v480H0z"/>
-            <path fill="#d00" d="M0 160h640v160H0z"/>
-            <path fill="#ffce00" d="M0 320h640v160H0z"/>
-          </g>
-        </svg>
-      ),
-      GB: (
-        <svg viewBox="0 0 640 480" className="w-4 h-4">
-          <g fillRule="evenodd">
-            <path fill="#012169" d="M0 0h640v480H0z"/>
-            <path fill="#FFF" d="m75 0 244 181L562 0h78v62L400 241l240 178v61h-80L320 301 81 480H0v-60l239-178L0 64V0h75z"/>
-            <path fill="#C8102E" d="m424 281 216 159v40L369 281h55zm-184 20 6 35L54 480H0l240-179zM640 0v3L391 191l2-44L590 0h50zM0 0l239 176h-60L0 42V0z"/>
-            <path fill="#FFF" d="M241 0v480h160V0H241zM0 160v160h640V160H0z"/>
-            <path fill="#C8102E" d="M0 193v96h640v-96H0zM273 0v480h96V0h-96z"/>
-          </g>
-        </svg>
-      ),
-      ES: (
-        <svg viewBox="0 0 640 480" className="w-4 h-4">
-          <g fillRule="evenodd">
-            <path fill="#c60b1e" d="M0 0h640v480H0z"/>
-            <path fill="#ffc400" d="M0 120h640v240H0z"/>
-          </g>
-        </svg>
-      ),
-      FR: (
-        <svg viewBox="0 0 640 480" className="w-4 h-4">
-          <g fillRule="evenodd">
-            <path fill="#fff" d="M0 0h640v480H0z"/>
-            <path fill="#00267f" d="M0 0h213.3v480H0z"/>
-            <path fill="#f31830" d="M426.7 0H640v480H426.7z"/>
-          </g>
-        </svg>
-      ),
-      AT: (
-        <svg viewBox="0 0 640 480" className="w-4 h-4">
-          <g fillRule="evenodd">
-            <path fill="#fff" d="M0 0h640v480H0z"/>
-            <path fill="#c8102e" d="M0 160h640v160H0z"/>
-          </g>
-        </svg>
-      ),
-      IT: (
-        <svg viewBox="0 0 640 480" className="w-4 h-4">
-          <g fillRule="evenodd">
-            <path fill="#fff" d="M0 0h640v480H0z"/>
-            <path fill="#009246" d="M0 0h213.3v480H0z"/>
-            <path fill="#ce2b37" d="M426.7 0H640v480H426.7z"/>
-          </g>
-        </svg>
-      ),
-      CZ: (
-        <svg viewBox="0 0 640 480" className="w-4 h-4">
-          <g fillRule="evenodd">
-            <path fill="#fff" d="M0 0h640v240H0z"/>
-            <path fill="#d7141a" d="M0 240h640v240H0z"/>
-            <path fill="#11457e" d="M240 0h160v480H240z"/>
-          </g>
-        </svg>
-      ),
-      US: (
-        <svg viewBox="0 0 640 480" className="w-4 h-4">
-          <g fillRule="evenodd">
-            <path fill="#bd3d44" d="M0 0h640v480H0z"/>
-            <path stroke="#fff" strokeWidth="37" d="M0 55.3h640M0 129h640M0 203h640M0 277h640M0 351h640M0 425h640"/>
-            <path fill="#192f5d" d="M0 0h364.8v258.5H0z"/>
-            <g fill="#fff">
-              <g id="d">
-                <g id="c">
-                  <g id="e">
-                    <g id="b">
-                      <path id="a" d="M24.8 25l3.2 9.8h10.3l-8.4 6.1 3.2 9.8-8.3-6.1-8.3 6.1 3.2-9.8-8.4-6.1h10.3z"/>
-                      <use href="#a" y="19.5"/>
-                      <use href="#a" y="39"/>
-                    </g>
-                    <use href="#b" y="78"/>
-                  </g>
-                  <use href="#e" y="78"/>
-                </g>
-                <use href="#c" y="156"/>
-              </g>
-              <use href="#d" y="312"/>
-            </g>
-          </g>
-        </svg>
-      )
-    };
-    
-    return flags[countryCode] || <span>🏳️</span>;
-  };
-
-  // Phone country codes with validation
-  const phoneCountryCodes = [
-    { code: "+48", country: "Polska", flag: "PL", maxLength: 9, default: true },
-    { code: "+380", country: "Ukraina", flag: "UA", maxLength: 9 },
-    { code: "+49", country: "Niemcy", flag: "DE", maxLength: 11 },
-    { code: "+44", country: "Wielka Brytania", flag: "GB", maxLength: 10 },
-    { code: "+34", country: "Hiszpania", flag: "ES", maxLength: 9 },
-    { code: "+33", country: "Francja", flag: "FR", maxLength: 9 },
-    { code: "+43", country: "Austria", flag: "AT", maxLength: 10 },
-    { code: "+39", country: "Włochy", flag: "IT", maxLength: 10 },
-    { code: "+420", country: "Czechy", flag: "CZ", maxLength: 9 },
-    { code: "+1", country: "USA", flag: "US", maxLength: 10 }
-  ];
+  const phoneCountryCodes = PHONE_COUNTRY_CODES;
 
   // Update allServices when availableServices changes or use context services as fallback
   useEffect(() => {
