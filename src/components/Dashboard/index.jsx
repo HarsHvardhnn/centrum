@@ -30,7 +30,7 @@ import billingHelper from "../../helpers/billingHelper";
 import { createPortal } from "react-dom";
 import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
-import { translateStatus, getStatusStyle, getVisitModeLabel, getVisitModeStyle } from '../../utils/statusHelper';
+import { translateStatus, getStatusStyle, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import RescheduleModal from "./RescheduleModal";
 
@@ -622,10 +622,10 @@ const PatientList = () => {
   /** Visit-only: no patient linked (dashboard API uses patient_id) */
   const isVisitOnlyAppointment = (apt) => !apt?.patient_id;
 
-  /** Cancelled status (case-insensitive; accepts both "cancelled" and "canceled"). */
+  /** Cancelled status (case-insensitive; accepts "cancelled", "canceled", or any variant). */
   const isCancelled = (apt) => {
-    const s = apt?.status?.toLowerCase();
-    return s === "cancelled" || s === "canceled";
+    const s = (apt?.status ?? apt?.appointmentStatus ?? "").toString().toLowerCase().trim();
+    return s === "cancelled" || s === "canceled" || s.startsWith("cancel");
   };
 
   const fetchVisitConsents = async (visitId) => {
@@ -1064,6 +1064,9 @@ const PatientList = () => {
                   Tryb wizyty
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                  Utworzono przez
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   Akcje
                 </th>
               </tr>
@@ -1083,7 +1086,8 @@ const PatientList = () => {
                   <td
                     className="py-4 px-4 cursor-pointer"
                     onClick={() => {
-                      if (isVisitOnlyAppointment(patient) && !isCancelled(patient)) {
+                      const activeStatus = ["booked", "checkedIn", ""].includes((patient.status ?? "").toString().toLowerCase().trim());
+                      if (isVisitOnlyAppointment(patient) && !isCancelled(patient) && activeStatus) {
                         setSelectedAppointment(patient);
                         setShowCompleteRegModal(true);
                       } else if (!isVisitOnlyAppointment(patient)) {
@@ -1137,14 +1141,17 @@ const PatientList = () => {
                   <td className="py-4 px-4 text-gray-600">
                     {new Date(patient.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }) || "N/A"}
                   </td>
-                  <td className="py-4 px-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getVisitModeStyle(patient)}`}
-                    >
-                      {getVisitModeLabel(patient)}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4">
+                    <td className="py-4 px-4">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${getVisitModeStyle(patient)}`}
+                      >
+                        {getVisitModeLabel(patient)}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-sm text-gray-600">
+                      {getCreatedByRoleLabel(patient)}
+                    </td>
+                    <td className="py-4 px-4">
                     <div className="flex justify-center">
                       <DropdownMenu.Root>
                         <DropdownMenu.Trigger asChild>
@@ -1160,7 +1167,7 @@ const PatientList = () => {
                             className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
                             sideOffset={5}
                           >
-                            {isVisitOnlyAppointment(patient) && !isCancelled(patient) ? (
+                            {isVisitOnlyAppointment(patient) && !isCancelled(patient) && ["booked", "checkedIn", ""].includes((patient.status ?? "").toString().toLowerCase().trim()) ? (
                               <DropdownMenu.Item
                                 className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer"
                                 onClick={() => {

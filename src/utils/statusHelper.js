@@ -27,6 +27,18 @@ export const getStatusStyle = (status) => {
   return styleMap[key] ?? styleMap[status] ?? "bg-gray-100 text-gray-800";
 };
 
+/** Display label for created-by role (Polish). Used in patient list and visit history. */
+export const getCreatedByRoleLabel = (appointment) => {
+  const role = appointment?.createdByRole != null ? appointment.createdByRole : "online";
+  const labels = {
+    online: "Online",
+    receptionist: "Recepcja",
+    admin: "Administracja",
+    doctor: "Lekarz",
+  };
+  return labels[role?.toLowerCase?.()] ?? labels[role] ?? role;
+};
+
 /** Visit mode from API: visitMode or mode; fallback "offline" per API contract. */
 export const getVisitMode = (appointment) => {
   const mode = appointment?.visitMode ?? appointment?.mode ?? "offline";

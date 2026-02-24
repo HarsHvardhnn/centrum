@@ -27,7 +27,7 @@ import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
-import { translateStatus, getStatusStyle, getVisitMode, getVisitModeLabel, getVisitModeStyle } from '../../utils/statusHelper';
+import { translateStatus, getStatusStyle, getVisitMode, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import PatientStepForm from "../SubComponentForm/PatientStepForm";
@@ -907,6 +907,9 @@ function LabAppointmentsContent({ clinic }) {
                           <div className="text-sm text-gray-500 truncate">
                             {appointment.doctor?.name || "-"}
                           </div>
+                          <div className="text-xs text-gray-400 truncate mt-0.5">
+                            Utworzono: {getCreatedByRoleLabel(appointment)}
+                          </div>
                         </div>
 
                         {/* Tryb wizyty (visit mode) - clinic card layout */}
@@ -1098,6 +1101,7 @@ function LabAppointmentsContent({ clinic }) {
                   <th className="px-4 py-3 w-[16%] font-medium">Lekarz</th>
                   <th className="px-4 py-3 w-[7%] font-medium">Wiek pacjenta</th>
                   <th className="px-4 py-3 w-[14%] font-medium">Status wizyty</th>
+                  <th className="px-4 py-3 w-[10%] font-medium">Utworzono przez</th>
                   <th className="px-4 py-3 w-[8%] font-medium">Akcje</th>
                 </tr>
               </thead>
@@ -1212,6 +1216,11 @@ function LabAppointmentsContent({ clinic }) {
                         className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getStatusStyle(appointment.status)}`}
                       >
                         {translateStatus(appointment.status)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 truncate text-center">
+                      <span className="text-sm text-gray-600">
+                        {getCreatedByRoleLabel(appointment)}
                       </span>
                     </td>
                     <td className="px-4 py-3 relative">
