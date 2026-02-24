@@ -75,6 +75,11 @@ function LabAppointmentsContent({ clinic }) {
     id: null
   });
   const [showCompleteRegModal, setShowCompleteRegModal] = useState(false);
+  const [showConsentsModal, setShowConsentsModal] = useState(false);
+  const [consentsModalVisitId, setConsentsModalVisitId] = useState(null);
+  const [consentsData, setConsentsData] = useState(null);
+  const [consentsLoading, setConsentsLoading] = useState(false);
+  const [consentsError, setConsentsError] = useState(null);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -119,8 +124,37 @@ function LabAppointmentsContent({ clinic }) {
   const isVisitOnlyAppointment = (apt) =>
     apt?.isVisitOnly === true || !(apt?.patient?.id || apt?.patient?._id);
 
-  /** Cancelled status (case-insensitive). */
-  const isCancelled = (apt) => apt?.status?.toLowerCase() === "cancelled";
+  /** Cancelled status (case-insensitive; accepts both "cancelled" and "canceled"). */
+  const isCancelled = (apt) => {
+    const s = apt?.status?.toLowerCase();
+    return s === "cancelled" || s === "canceled";
+  };
+
+  const fetchVisitConsents = async (visitId) => {
+    setConsentsModalVisitId(visitId);
+    setShowConsentsModal(true);
+    setConsentsError(null);
+    setConsentsData(null);
+    setConsentsLoading(true);
+    try {
+      const res = await apiCaller("GET", `/appointments/${visitId}/consents`);
+      const data = res?.data ?? res;
+      if (data?.success) {
+        setConsentsData({
+          visitId: data.visitId,
+          source: data.source,
+          consents: Array.isArray(data.consents) ? data.consents : [],
+        });
+      } else {
+        setConsentsError(data?.message || "Nie udało się pobrać zgód.");
+      }
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Nie udało się pobrać zgód.";
+      setConsentsError(msg);
+    } finally {
+      setConsentsLoading(false);
+    }
+  };
 
   /** Display name: patient name, or registrationData, or fallback (never undefined) */
   const getAppointmentPatientDisplayName = (apt) => {
@@ -1002,6 +1036,17 @@ function LabAppointmentsContent({ clinic }) {
                                   </DropdownMenu.Item>
                                 )}
 
+                                {/* See consents - only for cancelled visits when clinic=false (visit history) */}
+                                {!clinic && isCancelled(appointment) && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={() => fetchVisitConsents(appointment.id)}
+                                  >
+                                    <FileText size={16} className="mr-2 flex-shrink-0" />
+                                    Zobacz zgody
+                                  </DropdownMenu.Item>
+                                )}
+
                                 {/* Edit Patient button - only when visit has a patient */}
                                 {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                   <DropdownMenu.Item
@@ -1247,6 +1292,17 @@ function LabAppointmentsContent({ clinic }) {
                                   </DropdownMenu.Item>
                                 )}
 
+                                {/* See consents - only for cancelled visits when clinic=false (visit history) */}
+                                {!clinic && isCancelled(appointment) && (
+                                  <DropdownMenu.Item
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                    onClick={() => fetchVisitConsents(appointment.id)}
+                                  >
+                                    <FileText size={16} className="mr-2" />
+                                    Zobacz zgody
+                                  </DropdownMenu.Item>
+                                )}
+
                                 {/* Edit Patient button - only when visit has a patient */}
                                 {!clinic && appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                   <DropdownMenu.Item
@@ -1362,6 +1418,72 @@ function LabAppointmentsContent({ clinic }) {
             fetchAppointments(pagination.page);
           }}
         />
+
+        {/* Visit consents modal (cancelled visits, clinic=false) */}
+        {showConsentsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg max-w-lg w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
+              <div className="flex justify-between items-center border-b px-4 py-3">
+                <h3 className="text-lg font-medium text-gray-900">Zgody wizyty</h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConsentsModal(false);
+                    setConsentsModalVisitId(null);
+                    setConsentsData(null);
+                    setConsentsError(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700 p-1"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-4 overflow-y-auto flex-1">
+                {consentsLoading && (
+                  <div className="py-8 text-center text-gray-500">Ładowanie zgód…</div>
+                )}
+                {consentsError && (
+                  <div className="py-4 text-red-600 text-sm">{consentsError}</div>
+                )}
+                {!consentsLoading && !consentsError && consentsData && (
+                  <>
+                    <div className="mb-4 text-sm text-gray-600">
+                      Źródło:{" "}
+                      <span className="font-medium">
+                        {consentsData.source === "patient"
+                          ? "Pacjent"
+                          : consentsData.source === "registration"
+                            ? "Rejestracja (dane wizyty)"
+                            : consentsData.source}
+                      </span>
+                    </div>
+                    {consentsData.consents.length === 0 ? (
+                      <p className="text-gray-500">Brak zapisanych zgód.</p>
+                    ) : (
+                      <ul className="space-y-3">
+                        {consentsData.consents.map((c) => (
+                          <li
+                            key={c.id ?? c.text}
+                            className="flex items-start gap-2 p-3 bg-gray-50 rounded-md"
+                          >
+                            <span
+                              className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded flex items-center justify-center text-xs font-medium ${
+                                c.agreed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {c.agreed ? "Tak" : "Nie"}
+                            </span>
+                            <span className="text-sm text-gray-700">{c.text}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Add Patient Modal */}
         {showAddPatientModal && (

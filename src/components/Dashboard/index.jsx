@@ -15,7 +15,9 @@ import {
   UserPlus,
   DollarSign,
   FileText,
+  X,
 } from "lucide-react";
+import { apiCaller } from "../../utils/axiosInstance";
 import patientService from "../../helpers/patientHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
@@ -601,6 +603,11 @@ const PatientList = () => {
   const [billingServices, setBillingServices] = useState([]);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [showCompleteRegModal, setShowCompleteRegModal] = useState(false);
+  const [showConsentsModal, setShowConsentsModal] = useState(false);
+  const [consentsModalVisitId, setConsentsModalVisitId] = useState(null);
+  const [consentsData, setConsentsData] = useState(null);
+  const [consentsLoading, setConsentsLoading] = useState(false);
+  const [consentsError, setConsentsError] = useState(null);
   const [sendSMSNotification, setSendSMSNotification] = useState(false);
   const [sendEmailNotification, setSendEmailNotification] = useState(false);
   const [pagination, setPagination] = useState({
@@ -614,6 +621,38 @@ const PatientList = () => {
 
   /** Visit-only: no patient linked (dashboard API uses patient_id) */
   const isVisitOnlyAppointment = (apt) => !apt?.patient_id;
+
+  /** Cancelled status (case-insensitive; accepts both "cancelled" and "canceled"). */
+  const isCancelled = (apt) => {
+    const s = apt?.status?.toLowerCase();
+    return s === "cancelled" || s === "canceled";
+  };
+
+  const fetchVisitConsents = async (visitId) => {
+    setConsentsModalVisitId(visitId);
+    setShowConsentsModal(true);
+    setConsentsError(null);
+    setConsentsData(null);
+    setConsentsLoading(true);
+    try {
+      const res = await apiCaller("GET", `/appointments/${visitId}/consents`);
+      const data = res?.data ?? res;
+      if (data?.success) {
+        setConsentsData({
+          visitId: data.visitId,
+          source: data.source,
+          consents: Array.isArray(data.consents) ? data.consents : [],
+        });
+      } else {
+        setConsentsError(data?.message || "Nie udało się pobrać zgód.");
+      }
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Nie udało się pobrać zgód.";
+      setConsentsError(msg);
+    } finally {
+      setConsentsLoading(false);
+    }
+  };
 
   // Function to handle billing confirmation
   const handleBillPatient = async (appointmentId, patientId) => {
@@ -1033,15 +1072,21 @@ const PatientList = () => {
               {patients.map((patient) => (
                 <tr
                   key={patient.id}
-                  className={`hover:bg-gray-50 ${isVisitOnlyAppointment(patient) ? "border-l-4 border-l-amber-500 bg-amber-50/50" : ""}`}
+                  className={`hover:bg-gray-50 ${
+                    isCancelled(patient)
+                      ? "border-l-4 border-l-red-500 bg-red-50/50"
+                      : isVisitOnlyAppointment(patient)
+                        ? "border-l-4 border-l-amber-500 bg-amber-50/50"
+                        : ""
+                  }`}
                 >
                   <td
                     className="py-4 px-4 cursor-pointer"
                     onClick={() => {
-                      if (isVisitOnlyAppointment(patient)) {
+                      if (isVisitOnlyAppointment(patient) && !isCancelled(patient)) {
                         setSelectedAppointment(patient);
                         setShowCompleteRegModal(true);
-                      } else {
+                      } else if (!isVisitOnlyAppointment(patient)) {
                         navigate(`/szczegoly-pacjenta/${patient.patient_id}?appointmentId=${patient._id}`);
                       }
                     }}
@@ -1049,9 +1094,16 @@ const PatientList = () => {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium">{isVisitOnlyAppointment(patient) ? "Nieznany pacjent" : (patient.name || "Nieznany pacjent")}</span>
                       {isVisitOnlyAppointment(patient) && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200 shrink-0" title="Wizyta bez pacjenta – zakończ rejestrację">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${
+                            isCancelled(patient)
+                              ? "bg-red-100 text-red-800 border border-red-200"
+                              : "bg-amber-100 text-amber-800 border border-amber-200"
+                          }`}
+                          title={isCancelled(patient) ? "Wizyta anulowana" : "Wizyta bez pacjenta – zakończ rejestrację"}
+                        >
                           <UserPlus size={12} />
-                          Do rejestracji
+                          {isCancelled(patient) ? "Anulowana" : "Do rejestracji"}
                         </span>
                       )}
                     </div>
@@ -1108,7 +1160,7 @@ const PatientList = () => {
                             className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
                             sideOffset={5}
                           >
-                            {isVisitOnlyAppointment(patient) ? (
+                            {isVisitOnlyAppointment(patient) && !isCancelled(patient) ? (
                               <DropdownMenu.Item
                                 className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer"
                                 onClick={() => {
@@ -1119,7 +1171,7 @@ const PatientList = () => {
                                 <UserPlus size={16} className="mr-2" />
                                 Zakończ rejestrację
                               </DropdownMenu.Item>
-                            ) : (
+                            ) : !isVisitOnlyAppointment(patient) ? (
                               <DropdownMenu.Item
                                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                                 onClick={() => {
@@ -1130,6 +1182,16 @@ const PatientList = () => {
                               >
                                 <Eye size={16} className="mr-2" />
                                 Zobacz szczegóły
+                              </DropdownMenu.Item>
+                            ) : null}
+
+                            {isCancelled(patient) && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                onClick={() => fetchVisitConsents(patient._id)}
+                              >
+                                <FileText size={16} className="mr-2" />
+                                Zobacz zgody
                               </DropdownMenu.Item>
                             )}
 
@@ -1170,9 +1232,9 @@ const PatientList = () => {
                               </DropdownMenu.Item>
                             )}
 
-                            {patient.status === "booked" && (
+                            {!["checkedIn", "completed", "cancelled", "canceled"].includes(patient.status?.toLowerCase?.()) && (
                               <DropdownMenu.Item
-                                className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-md cursor-pointer"
+                                className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
                                 onClick={(e) => {
                                   handleCancelClick(e, patient._id);
                                 }}
@@ -1247,6 +1309,72 @@ const PatientList = () => {
           setRefreshCounter((c) => c + 1);
         }}
       />
+
+      {/* Visit consents modal (cancelled visits) */}
+      {showConsentsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-lg w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center border-b px-4 py-3">
+              <h3 className="text-lg font-medium text-gray-900">Zgody wizyty</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConsentsModal(false);
+                  setConsentsModalVisitId(null);
+                  setConsentsData(null);
+                  setConsentsError(null);
+                }}
+                className="text-gray-500 hover:text-gray-700 p-1"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1">
+              {consentsLoading && (
+                <div className="py-8 text-center text-gray-500">Ładowanie zgód…</div>
+              )}
+              {consentsError && (
+                <div className="py-4 text-red-600 text-sm">{consentsError}</div>
+              )}
+              {!consentsLoading && !consentsError && consentsData && (
+                <>
+                  <div className="mb-4 text-sm text-gray-600">
+                    Źródło:{" "}
+                    <span className="font-medium">
+                      {consentsData.source === "patient"
+                        ? "Pacjent"
+                        : consentsData.source === "registration"
+                          ? "Rejestracja (dane wizyty)"
+                          : consentsData.source}
+                    </span>
+                  </div>
+                  {consentsData.consents.length === 0 ? (
+                    <p className="text-gray-500">Brak zapisanych zgód.</p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {consentsData.consents.map((c) => (
+                        <li
+                          key={c.id ?? c.text}
+                          className="flex items-start gap-2 p-3 bg-gray-50 rounded-md"
+                        >
+                          <span
+                            className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded flex items-center justify-center text-xs font-medium ${
+                              c.agreed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {c.agreed ? "Tak" : "Nie"}
+                          </span>
+                          <span className="text-sm text-gray-700">{c.text}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="p-4 flex items-center justify-between border-t border-gray-200">
         <button
