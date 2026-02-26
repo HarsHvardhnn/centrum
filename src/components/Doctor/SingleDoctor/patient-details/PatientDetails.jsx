@@ -149,7 +149,7 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
     "Dane medyczne": filterEmptyFields({
       "Alergie": patientData.allergies,
       "Status": translateStatus(patientData.status),
-      "Pacjent międzynarodowy": patientData.isInternationalPatient ? "Tak" : "Nie",
+      "Pacjent międzynarodowy": (patientData.isInternational === true || patientData.isInternationalPatient === true) ? "Tak" : "Nie",
       "Zgoda na SMS": patientData.smsConsentAgreed ? "Tak" : "Nie",
       "Schorzenia przewlekłe": patientData.chronicConditions?.length > 0 ? patientData.chronicConditions.join(", ") : null,
       "Cele": patientData.goals?.length > 0 ? patientData.goals.join(", ") : null,
@@ -162,6 +162,23 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
     }),
   };
 
+  // International patient: document + npesei section (show when isInternational or isInternationalPatient)
+  const isInternational = patientData.isInternational === true || patientData.isInternationalPatient === true;
+  if (isInternational) {
+    const docFields = filterEmptyFields({
+      "NPESEI": patientData.npesei,
+      "Kraj dokumentu": patientData.documentCountry,
+      "Typ dokumentu": patientData.documentType,
+      "Numer dokumentu": patientData.documentNumber,
+      "Data urodzenia (z dokumentu)": patientData.documentDateOfBirth ? formatDate(patientData.documentDateOfBirth) : null,
+      "Data ważności dokumentu": patientData.documentExpiryDate ? formatDate(patientData.documentExpiryDate) : null,
+      "Obywatelstwo": patientData.citizenship,
+      "Klucz dokumentu": patientData.internationalPatientDocumentKey,
+    });
+    if (Object.keys(docFields).length > 0) {
+      sections["Dokument i identyfikacja (pacjent międzynarodowy)"] = docFields;
+    }
+  }
 
   console.log("patinet data",patientData)
 
@@ -1153,6 +1170,36 @@ const PatientDetailsPage = () => {
                 <Info size={16} />
                 Pokaż szczegóły
               </button>
+
+            {/* International patient: document + npesei (visible on main page) */}
+            {(patientData.isInternational === true || patientData.isInternationalPatient === true) && (
+              <div className="w-full mt-4 p-4 bg-teal-50/80 rounded-lg border border-teal-200">
+                <h4 className="text-sm font-semibold text-teal-800 mb-3">Dokument i identyfikacja (pacjent międzynarodowy)</h4>
+                <div className="space-y-2 text-sm">
+                  {patientData.npesei && (
+                    <div><span className="text-gray-600">NPESEI:</span> <span className="font-medium">{patientData.npesei}</span></div>
+                  )}
+                  {patientData.documentCountry && (
+                    <div><span className="text-gray-600">Kraj dokumentu:</span> <span className="font-medium">{patientData.documentCountry}</span></div>
+                  )}
+                  {patientData.documentType && (
+                    <div><span className="text-gray-600">Typ dokumentu:</span> <span className="font-medium">{patientData.documentType}</span></div>
+                  )}
+                  {patientData.documentNumber && (
+                    <div><span className="text-gray-600">Numer dokumentu:</span> <span className="font-medium">{patientData.documentNumber}</span></div>
+                  )}
+                  {patientData.documentDateOfBirth && (
+                    <div><span className="text-gray-600">Data urodzenia (z dokumentu):</span> <span className="font-medium">{new Date(patientData.documentDateOfBirth).toLocaleDateString("pl-PL", { year: "numeric", month: "long", day: "numeric" })}</span></div>
+                  )}
+                  {patientData.documentExpiryDate && (
+                    <div><span className="text-gray-600">Data ważności dokumentu:</span> <span className="font-medium">{new Date(patientData.documentExpiryDate).toLocaleDateString("pl-PL", { year: "numeric", month: "long", day: "numeric" })}</span></div>
+                  )}
+                  {patientData.citizenship && (
+                    <div><span className="text-gray-600">Obywatelstwo:</span> <span className="font-medium">{patientData.citizenship}</span></div>
+                  )}
+                </div>
+              </div>
+            )}
             </div>
             
             {/* Always show appointments section */}
