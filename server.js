@@ -446,8 +446,13 @@ const generateSEOHTML = async (path, dynamicData = null) => {
   // Generate canonical URL - use the actual path, removing trailing slash
   // This ensures consistency and prevents redirect loops
   const cleanPath = path.replace(/\/$/, '') || '/';
-  const canonicalUrl = `${BASE_URL}${cleanPath}`;
-  
+  let canonicalUrl = `${BASE_URL}${cleanPath}`;
+  // USG page: always use /uslugi/usg-skarzysko-kamienna for sharing and canonical
+  const isUsgPage = normalizedPath === '/usg-skarzysko-kamienna' || normalizedPath === '/usg-skarzysko-kamienna/' ||
+    normalizedPath === '/uslugi/usg-skarzysko-kamienna' || normalizedPath === '/uslugi/usg-skarzysko-kamienna/';
+  if (isUsgPage) {
+    canonicalUrl = `${BASE_URL}/uslugi/usg-skarzysko-kamienna`;
+  }
   console.log(`🔗 Canonical URL for ${path}: ${canonicalUrl}`);
   
   // Final verification for specific route - FORCE correct values if somehow they got overwritten
