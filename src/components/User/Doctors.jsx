@@ -474,8 +474,14 @@ export default function Doctors({
       errors.phone = "Numer telefonu musi składać się z 9 cyfr";
     }
 
-    // PESEL is optional (offline & online). When provided, must be exactly 11 digits.
-    if (bookingForm.govtId.trim() && bookingForm.govtId.trim().length !== 11) {
+    // PESEL: mandatory for online (unless international patient); optional for in-person. When provided, must be exactly 11 digits.
+    if (bookingForm.consultationType === "online" && !bookingForm.isInternationalPatient) {
+      if (!bookingForm.govtId.trim()) {
+        errors.govtId = "Numer PESEL jest wymagany dla wizyty online";
+      } else if (bookingForm.govtId.trim().length !== 11) {
+        errors.govtId = "Numer PESEL musi mieć dokładnie 11 cyfr";
+      }
+    } else if (bookingForm.govtId.trim() && bookingForm.govtId.trim().length !== 11) {
       errors.govtId = "Numer PESEL musi mieć dokładnie 11 cyfr";
     }
     if (bookingForm.isInternationalPatient) {
@@ -1186,10 +1192,14 @@ export default function Doctors({
 
                       {/* Step 3: PESEL (main, centered) then checkbox underneath */}
                       <div className="mb-6">
-                        <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 3: Identyfikacja (PESEL opcjonalnie)</h5>
+                        <h5 className="text-md font-semibold text-gray-800 mb-3">
+                          Krok 3: Identyfikacja {bookingForm.consultationType === "online" && !bookingForm.isInternationalPatient ? "(PESEL wymagane)" : "(PESEL opcjonalnie)"}
+                        </h5>
                         <div className="flex flex-col items-center w-full mb-4">
                           <div className="w-full max-w-sm">
-                            <label className="block text-sm font-medium text-gray-700 mb-1 text-center md:text-left">PESEL (opcjonalnie)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 text-center md:text-left">
+                              {bookingForm.consultationType === "online" && !bookingForm.isInternationalPatient ? "PESEL (wymagane dla wizyty online) *" : "PESEL (opcjonalnie)"}
+                            </label>
                             <input
                               type="text"
                               name="govtId"

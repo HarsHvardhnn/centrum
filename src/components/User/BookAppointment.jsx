@@ -154,12 +154,12 @@ export default function BookAppointment({
     message: Yup.string().min(10, "Za krótka wiadomość").required("Wymagane"),
     consultationType: Yup.string().oneOf(['online', 'offline']).required("Wymagane"),
     govtId: Yup.string()
-      .test('pesel-length', 'Numer PESEL musi mieć dokładnie 11 cyfr', val => !val || val.trim() === '' || val.trim().length === 11)
       .matches(/^[0-9]*$/, "Numer PESEL może zawierać tylko cyfry")
       .when(['consultationType', 'isInternationalPatient'], {
-        is: (consultationType, isInternationalPatient) => consultationType === 'online' && isInternationalPatient,
-        then: (schema) => schema.trim(),
+        is: (consultationType, isInternationalPatient) => consultationType === 'online' && !isInternationalPatient,
+        then: (schema) => schema.trim().required("Numer PESEL jest wymagany dla wizyty online").length(11, "Numer PESEL musi mieć dokładnie 11 cyfr"),
         otherwise: (schema) => schema
+          .test('pesel-length', 'Numer PESEL musi mieć dokładnie 11 cyfr', val => !val || val.trim() === '' || val.trim().length === 11)
       }),
     documentCountry: Yup.string().when('isInternationalPatient', {
       is: true,
@@ -783,7 +783,9 @@ export default function BookAppointment({
                 <div className="col-span-1 sm:col-span-2 mb-4 mt-2">
                   <div className="flex flex-col items-center w-full">
                     <div className="w-full max-w-sm">
-                      <label htmlFor="govtId" className="block text-sm font-medium text-gray-700 mb-1 text-center sm:text-left">PESEL (opcjonalnie)</label>
+                      <label htmlFor="govtId" className="block text-sm font-medium text-gray-700 mb-1 text-center sm:text-left">
+                        {values.consultationType === "online" && !values.isInternationalPatient ? "PESEL (wymagane dla wizyty online) *" : "PESEL (opcjonalnie)"}
+                      </label>
                       <Field name="govtId">
                         {({ field, form }) => (
                           <input
