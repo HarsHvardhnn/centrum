@@ -952,7 +952,7 @@ function LabAppointmentsContent({ clinic }) {
 
                               <DropdownMenu.Portal>
                                 <DropdownMenu.Content
-                                  className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
+                                  className="min-w-[220px] max-h-[min(70vh,320px)] overflow-y-auto bg-white rounded-md shadow-lg z-[100] border p-1"
                                   sideOffset={5}
                                   align="end"
                                 >
@@ -1039,16 +1039,14 @@ function LabAppointmentsContent({ clinic }) {
                                   </DropdownMenu.Item>
                                 )}
 
-                                {/* See consents - only for cancelled visits when clinic=false (visit history) */}
-                                {!clinic && isCancelled(appointment) && (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={() => fetchVisitConsents(appointment.id)}
-                                  >
-                                    <FileText size={16} className="mr-2 flex-shrink-0" />
-                                    Zobacz zgody
-                                  </DropdownMenu.Item>
-                                )}
+                                {/* See consents - for any visit (clinic and history) */}
+                                <DropdownMenu.Item
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                  onClick={() => fetchVisitConsents(appointment.id)}
+                                >
+                                  <FileText size={16} className="mr-2 flex-shrink-0" />
+                                  Zobacz zgody
+                                </DropdownMenu.Item>
 
                                 {/* Edit Patient button - only when visit has a patient */}
                                 {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
@@ -1237,8 +1235,9 @@ function LabAppointmentsContent({ clinic }) {
 
                             <DropdownMenu.Portal>
                               <DropdownMenu.Content
-                                className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
+                                className="min-w-[220px] max-h-[min(70vh,320px)] overflow-y-auto bg-white rounded-md shadow-lg z-[100] border p-1"
                                 sideOffset={5}
+                                align="end"
                               >
                                 {isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? (
                                   <DropdownMenu.Item
@@ -1301,16 +1300,14 @@ function LabAppointmentsContent({ clinic }) {
                                   </DropdownMenu.Item>
                                 )}
 
-                                {/* See consents - only for cancelled visits when clinic=false (visit history) */}
-                                {!clinic && isCancelled(appointment) && (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={() => fetchVisitConsents(appointment.id)}
-                                  >
-                                    <FileText size={16} className="mr-2" />
-                                    Zobacz zgody
-                                  </DropdownMenu.Item>
-                                )}
+                                {/* See consents - for any visit (clinic and history) */}
+                                <DropdownMenu.Item
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                  onClick={() => fetchVisitConsents(appointment.id)}
+                                >
+                                  <FileText size={16} className="mr-2" />
+                                  Zobacz zgody
+                                </DropdownMenu.Item>
 
                                 {/* Edit Patient button - only when visit has a patient */}
                                 {!clinic && appointment.patient && (appointment.patient.id || appointment.patient._id) && (
@@ -1428,7 +1425,7 @@ function LabAppointmentsContent({ clinic }) {
           }}
         />
 
-        {/* Visit consents modal (cancelled visits, clinic=false) */}
+        {/* Visit consents modal */}
         {showConsentsModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg max-w-lg w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
