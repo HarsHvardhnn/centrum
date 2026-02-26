@@ -281,6 +281,19 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       twitterTitle = 'Leczenie stopy cukrzycowej – poradnia chirurgiczna Skarżysko';
       twitterDescription = 'Objawy stopy cukrzycowej? Umów wizytę u doświadczonego chirurga w Skarżysku-Kamiennej. Leczenie ran i powikłań cukrzycowych bez skierowania.';
       break;
+    case '/usg-skarzysko-kamienna':
+    case '/usg-skarzysko-kamienna/':
+    case '/uslugi/usg-skarzysko-kamienna':
+    case '/uslugi/usg-skarzysko-kamienna/':
+      title = 'USG Skarżysko-Kamienna – prywatnie, bez skierowania';
+      description = 'USG Skarżysko-Kamienna. USG tarczycy, trzustki, piersi, jamy brzusznej. Badania dla dzieci i dorosłych, bez skierowania, szybkie terminy.';
+      keywords = 'USG Skarżysko-Kamienna, USG tarczycy, USG jamy brzusznej, USG piersi, badania USG, centrum medyczne 7';
+      ogImage = '/assets/static-assets/usg_section1.png';
+      ogTitle = 'USG Skarżysko-Kamienna – prywatnie, bez skierowania';
+      ogDescription = 'USG Skarżysko-Kamienna. USG tarczycy, trzustki, piersi, jamy brzusznej. Badania dla dzieci i dorosłych, bez skierowania, szybkie terminy.';
+      twitterTitle = 'USG Skarżysko-Kamienna – prywatnie, bez skierowania';
+      twitterDescription = 'USG Skarżysko-Kamienna. USG tarczycy, trzustki, piersi, jamy brzusznej. Badania dla dzieci i dorosłych, bez skierowania, szybkie terminy.';
+      break;
     default:
       // Handle dynamic routes with real data
       // Check specific routes FIRST before general patterns
@@ -305,7 +318,9 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym',
           '/uslugi/wszywka-alkoholowa-skarzysko-kamienna',
           '/uslugi/konsultacja-neurologiczna-dla-dzieci',
-          '/uslugi/leczenie-stopy-cukrzycowej'
+          '/uslugi/leczenie-stopy-cukrzycowej',
+          '/uslugi/usg-skarzysko-kamienna',
+          '/usg-skarzysko-kamienna'
         ];
         
         // If this route has static meta tags defined, skip dynamic data override
