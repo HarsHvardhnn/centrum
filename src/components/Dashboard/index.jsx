@@ -51,57 +51,29 @@ const MedicalDashboard = () => {
   );
 };
 
-// Doctor Appointment Chart Component
+// Doctor Appointment Chart Component (Wizyty lekarskie – tiles + date range only)
 const DoctorAppointmentChart = () => {
   const { showLoader, hideLoader } = useLoader();
   const { user } = useUser();
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState("");
   const [timeframe, setTimeframe] = useState("month");
-  const [chartData, setChartData] = useState([]);
+  const [statsData, setStatsData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isTimeframeOpen, setIsTimeframeOpen] = useState(false);
-  const [totalAppointments, setTotalAppointments] = useState(0);
-  
-  // Labels for the chart series
-  const seriesLabels = {
-    series1: "Zarezerwowane",
-    series2: "Zakończone",
-    series3: "Anulowane"
-  };
-  
-  // Colors for the chart series
-  const seriesColors = {
-    series1: "bg-teal-500",
-    series2: "bg-teal-300",
-    series3: "bg-teal-100" 
-  };
-  
-  // Month names in Polish
-  const monthNames = [
-    "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
-    "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
-  ];
-  
-  // Fetch doctors list on component mount
+
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
         setLoading(true);
         showLoader();
         const response = await doctorStatsHelper.getDoctorsList();
-        
         if (response.success) {
-          setDoctors(response.data);
-          
-          // If user is a doctor, set their own ID as the selected doctor
+          setDoctors(response.data || []);
           if (user?.role === "doctor" && (user?._id || user?.id)) {
             setSelectedDoctor(user._id || user.id);
-          }
-          // Otherwise set the first doctor as default if available
-          else if (response.data && response.data.length > 0) {
+          } else if (response.data?.length > 0) {
             setSelectedDoctor(response.data[0]._id);
           }
         } else {
@@ -115,119 +87,39 @@ const DoctorAppointmentChart = () => {
         hideLoader();
       }
     };
-    
     fetchDoctors();
   }, []);
-  
-  // Fetch statistics when selected doctor or timeframe changes
+
   useEffect(() => {
     if (selectedDoctor) {
       fetchStatistics();
+    } else {
+      setStatsData(null);
     }
   }, [selectedDoctor, timeframe]);
-  
+
   const fetchStatistics = async () => {
+    if (!selectedDoctor) return;
     try {
       setLoading(true);
+      setError(null);
       showLoader();
-      
-      const options = {
-        doctorId: selectedDoctor,
-        timeframe: timeframe
-      };
-      
-      const response = await doctorStatsHelper.getDoctorStats(options);
-      
-      if (response.success) {
-        // Format the statistics data for the chart using the data field
-        const formattedData = formatChartData(response.data);
-        setChartData(formattedData.chartData);
-        setTotalAppointments(formattedData.total);
-        setError(null);
+      const response = await doctorStatsHelper.getAppointmentStats(selectedDoctor, timeframe);
+      if (response?.success && response?.data) {
+        setStatsData(response.data);
       } else {
         setError("Nie udało się pobrać statystyk");
       }
     } catch (err) {
-      console.error("Error fetching statistics:", err);
-      setError("Błąd podczas pobierania statystyk");
-      setChartData([]);
+      console.error("Error fetching appointment stats:", err);
+      setError(err.response?.data?.message || "Błąd podczas pobierania statystyk");
+      setStatsData(null);
     } finally {
       setLoading(false);
       hideLoader();
     }
   };
-  
-  // Format data from API for the chart
-  const formatChartData = (data) => {
-    let total = 0;
-    
-    // Handle the new API response structure
-    if (!data || !data.stats || !Array.isArray(data.stats)) {
-      return { chartData: [], total: 0 };
-    }
-    
-    const formattedData = data.stats.map(item => {
-      // Get period from datePeriod (format YYYY-MM or YYYY-MM-DD)
-      const periodParts = item.datePeriod.split('-');
-      let periodLabel;
-      
-      // Check if datePeriod contains day component (YYYY-MM-DD format)
-      if (periodParts.length === 3) {
-        // Daily data - show day number
-        const day = parseInt(periodParts[2]);
-        const monthIndex = parseInt(periodParts[1]) - 1;
-        periodLabel = `${day}`; // Just show the day number
-      } else if (periodParts.length === 2) {
-        // Monthly data - show month name
-        const monthIndex = parseInt(periodParts[1]) - 1;
-        periodLabel = monthNames[monthIndex];
-      } else {
-        // For other formats, use the period as is
-        periodLabel = item.datePeriod;
-      }
-      
-      // Sum total appointments
-      const appointments = item.appointments || {};
-      const itemTotal = appointments.total || 0;
-      total += itemTotal;
-      
-      // Map to our chart format
-      return {
-        label: periodLabel,
-        series1: appointments.booked || 0,
-        series2: appointments.completed || 0,
-        series3: appointments.cancelled || 0,
-        total: itemTotal // Store total for scaling
-      };
-    });
-    
-    return {
-      chartData: formattedData,
-      total: total
-    };
-  };
-  
-  // Get the current month name
-  const getCurrentMonthName = () => {
-    const date = new Date();
-    return monthNames[date.getMonth()];
-  };
-  
-  // Get display text for timeframe
-  const getTimeframeDisplay = () => {
-    switch(timeframe) {
-      case 'day':
-        return 'Dzień';
-      case 'week':
-        return 'Tydzień';
-      case 'month':
-        return 'Miesiąc';
-      default:
-        return 'Miesiąc';
-    }
-  };
-  
-  // Find selected doctor name
+
   const getSelectedDoctorName = () => {
     const doctor = doctors.find(d => d._id === selectedDoctor);
     return doctor ? doctor.name : "Wszyscy lekarze";
@@ -237,26 +129,23 @@ const DoctorAppointmentChart = () => {
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-medium">Wizyty lekarskie</h2>
-        
         <div className="flex items-center gap-2">
-          {/* Doctor selector - only visible if user is not a doctor */}
           {user?.role !== "doctor" ? (
             <div className="relative">
-              <button 
+              <button
                 className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-1"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
                 <span className="text-sm">{getSelectedDoctorName()}</span>
                 <ChevronDown size={16} />
               </button>
-              
               {isDropdownOpen && (
                 <div className="absolute z-10 right-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-100">
                   <ul className="py-1 max-h-60 overflow-y-auto">
                     {doctors.map((doctor) => (
-                      <li 
+                      <li
                         key={doctor._id}
-                        className={`px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm ${selectedDoctor === doctor._id ? 'bg-teal-50 text-teal-700' : ''}`}
+                        className={`px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm ${selectedDoctor === doctor._id ? "bg-teal-50 text-teal-700" : ""}`}
                         onClick={() => {
                           setSelectedDoctor(doctor._id);
                           setIsDropdownOpen(false);
@@ -270,59 +159,34 @@ const DoctorAppointmentChart = () => {
               )}
             </div>
           ) : (
-            // For doctors, just display their name without dropdown
             <div className="border border-gray-200 rounded-md px-3 py-1">
               <span className="text-sm">{getSelectedDoctorName()}</span>
             </div>
           )}
-          
-          {/* Timeframe selector */}
-          <div className="relative">
-            <button 
-              className="flex items-center gap-2 border border-gray-200 rounded-md px-3 py-1"
-              onClick={() => setIsTimeframeOpen(!isTimeframeOpen)}
+          <div className="flex items-center gap-1 border border-gray-200 rounded-md p-0.5">
+            <button
+              type="button"
+              className={`px-3 py-1 text-sm rounded ${timeframe === "day" ? "bg-teal-100 text-teal-700 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+              onClick={() => setTimeframe("day")}
             >
-              <span className="text-sm">{getTimeframeDisplay()}</span>
-              <ChevronDown size={16} />
+              Dzień
             </button>
-            
-            {isTimeframeOpen && (
-              <div className="absolute z-10 right-0 mt-1 w-40 bg-white rounded-md shadow-lg border border-gray-100">
-                <ul className="py-1">
-                  <li 
-                    className={`px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm ${timeframe === 'day' ? 'bg-teal-50 text-teal-700' : ''}`}
-                    onClick={() => {
-                      setTimeframe('day');
-                      setIsTimeframeOpen(false);
-                    }}
-                  >
-                    Dzień
-                  </li>
-                  <li 
-                    className={`px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm ${timeframe === 'week' ? 'bg-teal-50 text-teal-700' : ''}`}
-                    onClick={() => {
-                      setTimeframe('week');
-                      setIsTimeframeOpen(false);
-                    }}
-                  >
-                    Tydzień
-                  </li>
-                  <li 
-                    className={`px-4 py-2 hover:bg-gray-50 cursor-pointer text-sm ${timeframe === 'month' ? 'bg-teal-50 text-teal-700' : ''}`}
-                    onClick={() => {
-                      setTimeframe('month');
-                      setIsTimeframeOpen(false);
-                    }}
-                  >
-                    Miesiąc
-                  </li>
-                </ul>
-              </div>
-            )}
+            <button
+              type="button"
+              className={`px-3 py-1 text-sm rounded ${timeframe === "week" ? "bg-teal-100 text-teal-700 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+              onClick={() => setTimeframe("week")}
+            >
+              Tydzień
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1 text-sm rounded ${timeframe === "month" ? "bg-teal-100 text-teal-700 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
+              onClick={() => setTimeframe("month")}
+            >
+              Miesiąc
+            </button>
           </div>
-          
-          {/* Refresh button */}
-          <button 
+          <button
             className="flex items-center justify-center w-8 h-8 border border-gray-200 rounded-md"
             onClick={fetchStatistics}
             title="Odśwież"
@@ -332,143 +196,45 @@ const DoctorAppointmentChart = () => {
         </div>
       </div>
 
-      <div className="mb-4">
-        <div className="inline-block bg-teal-50 rounded-md px-3 py-2">
-          <span className="text-sm text-gray-700">{getCurrentMonthName()}</span>
-          <span className="text-sm font-semibold text-gray-800 ml-1">{totalAppointments}</span>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-4 mb-4">
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-          <span className="text-xs text-gray-500">{seriesLabels.series1}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-teal-300"></div>
-          <span className="text-xs text-gray-500">{seriesLabels.series2}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-teal-200"></div>
-          <span className="text-xs text-gray-500">{seriesLabels.series3}</span>
-        </div>
-      </div>
-
       {loading ? (
-        <div className="flex justify-center items-center h-64">
+        <div className="flex justify-center items-center py-16">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center h-64 text-center">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
           <AlertCircle size={32} className="text-red-500 mb-2" />
           <p className="text-gray-600">{error}</p>
-          <button 
+          <button
             className="mt-4 px-4 py-2 bg-teal-100 text-teal-700 rounded-md text-sm"
             onClick={fetchStatistics}
           >
             Spróbuj ponownie
           </button>
         </div>
-      ) : chartData.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 text-center">
+      ) : !statsData ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-gray-600">Brak danych dla wybranego lekarza i okresu</p>
         </div>
-      ) : totalAppointments === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 text-center">
-          <p className="text-gray-600">Brak wizyt dla wybranego lekarza i okresu</p>
-          <p className="text-sm text-gray-500 mt-2">Wybrany lekarz nie ma jeszcze żadnych wizyt w tym okresie</p>
-        </div>
       ) : (
-        <div className="relative h-64">
-          {(() => {
-            // Calculate global max value across all bars for consistent scaling
-            const maxTotal = Math.max(...chartData.map(d => d.total || 0), 1);
-            // Round up to nearest nice number for Y-axis
-            const getNiceMax = (max) => {
-              const magnitude = Math.pow(10, Math.floor(Math.log10(max)));
-              const normalized = max / magnitude;
-              let nice;
-              if (normalized <= 1) nice = 1;
-              else if (normalized <= 2) nice = 2;
-              else if (normalized <= 5) nice = 5;
-              else nice = 10;
-              return nice * magnitude;
-            };
-            const yAxisMax = getNiceMax(maxTotal);
-            const chartHeight = 192; // h-48 = 12rem = 192px
-            const scale = yAxisMax > 0 ? chartHeight / yAxisMax : 1;
-            
-            // Generate Y-axis labels
-            const yAxisSteps = 5;
-            const yAxisLabels = [];
-            for (let i = yAxisSteps; i >= 0; i--) {
-              const value = Math.round((yAxisMax / yAxisSteps) * i);
-              const position = (i / yAxisSteps) * chartHeight;
-              yAxisLabels.push({ value, position });
-            }
-            
-            return (
-              <>
-                {/* Y-axis labels */}
-                {yAxisLabels.map((label, idx) => (
-                  <div
-                    key={idx}
-                    className="absolute left-0 text-xs text-gray-500"
-                    style={{ 
-                      bottom: `${label.position}px`, 
-                      transform: 'translateY(50%)' 
-                    }}
-                  >
-                    {label.value}
-                  </div>
-                ))}
-
-                {/* Y-axis title */}
-                <div className="absolute -left-12 top-24 transform -rotate-90 text-xs text-gray-500 whitespace-nowrap">
-                  Liczba wizyt
-                </div>
-
-                {/* Chart content */}
-                <div className="flex items-end justify-between h-48 pl-16 gap-2">
-                  {chartData.map((data, index) => {
-                    // Calculate heights for each segment (stacked bar)
-                    const series1Height = (data.series1 || 0) * scale;
-                    const series2Height = (data.series2 || 0) * scale;
-                    const series3Height = (data.series3 || 0) * scale;
-                    
-                    return (
-                      <div key={index} className="flex flex-col items-center">
-                        <div className="w-8 flex flex-col-reverse" style={{ height: `${chartHeight}px` }}>
-                          <div
-                            className="bg-teal-500 w-full"
-                            style={{ height: `${series1Height}px`, minHeight: series1Height > 0 ? '1px' : '0' }}
-                            title={`${seriesLabels.series1}: ${data.series1}`}
-                          ></div>
-                          <div
-                            className="bg-teal-300 w-full"
-                            style={{ height: `${series2Height}px`, minHeight: series2Height > 0 ? '1px' : '0' }}
-                            title={`${seriesLabels.series2}: ${data.series2}`}
-                          ></div>
-                          <div
-                            className="bg-teal-100 w-full"
-                            style={{ height: `${series3Height}px`, minHeight: series3Height > 0 ? '1px' : '0' }}
-                            title={`${seriesLabels.series3}: ${data.series3}`}
-                          ></div>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-2 whitespace-nowrap">{data.label}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            );
-          })()}
-
-          {/* X-axis label */}
-          <div className="text-xs text-gray-500 text-center mt-8">
-            {timeframe === 'day' ? 'Dzień' : timeframe === 'week' ? 'Tydzień' : 'Miesiąc'}
+        <>
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="bg-teal-50 border border-teal-100 rounded-lg p-4 text-center">
+              <p className="text-2xl font-semibold text-teal-800">{statsData.zarezerwowane ?? 0}</p>
+              <p className="text-sm font-medium text-gray-600 mt-1">Zarezerwowane</p>
+            </div>
+            <div className="bg-teal-50 border border-teal-100 rounded-lg p-4 text-center">
+              <p className="text-2xl font-semibold text-teal-800">{statsData.zakończone ?? 0}</p>
+              <p className="text-sm font-medium text-gray-600 mt-1">Zakończone</p>
+            </div>
+            <div className="bg-teal-50 border border-teal-100 rounded-lg p-4 text-center">
+              <p className="text-2xl font-semibold text-teal-800">{statsData.anulowane ?? 0}</p>
+              <p className="text-sm font-medium text-gray-600 mt-1">Anulowane</p>
+            </div>
           </div>
-        </div>
+          {statsData.rangeLabel && (
+            <p className="text-sm text-gray-500">{statsData.rangeLabel}</p>
+          )}
+        </>
       )}
     </div>
   );
