@@ -9,7 +9,7 @@ import { apiCaller, setCookie } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { useUser } from "../../context/userContext";
 
-const AuthForm = ({ isLogin = false }) => {
+const AuthForm = ({ isLogin = false, onSwitchToPatientPortal }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showOtpScreen, setShowOtpScreen] = useState(false);
@@ -916,6 +916,17 @@ const AuthForm = ({ isLogin = false }) => {
                           Skontaktuj się z nami
                         </a>
                       </div>
+                      {onSwitchToPatientPortal && (
+                        <div className="pt-2 border-t border-gray-200">
+                          <button
+                            type="button"
+                            onClick={onSwitchToPatientPortal}
+                            className="text-[#089090] hover:text-[#067a7a] text-sm font-medium"
+                          >
+                            Portal pacjenta (zaloguj / utwórz konto) →
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </Form>

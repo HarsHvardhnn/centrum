@@ -1,15 +1,28 @@
-import React from "react";
+import React, { useState } from "react";
 import LoginForm from "./Login";
+import PatientPortalFlow from "./PatientPortalFlow";
 
 const LoginScreen = ({ screenImg, isLogin }) => {
+  const [flow, setFlow] = useState("patient"); // "patient" | "staff"
+
   return (
     <div className="h-screen w-screen flex items-center justify-center overflow-hidden">
       <div className="flex flex-col md:flex-row bg-white rounded-lg overflow-hidden w-[98%] max-w-full h-[97vh] md:h-[95vh]">
-        {/* Left Section - Login Form */}
+        {/* Left Section - Login Form or Patient Portal */}
         <div className="w-full md:w-1/2 flex items-center justify-center h-full">
           <div className="w-full  px-6 py-8 md:py-0 flex-1 flex items-center">
             <div className="w-full">
-              <LoginForm isLogin={isLogin} />
+              {flow === "patient" ? (
+                <PatientPortalFlow
+                  onAlreadyHasAccount={() => setFlow("staff")}
+                  onSwitchToStaff={() => setFlow("staff")}
+                />
+              ) : (
+                <LoginForm
+                  isLogin={isLogin}
+                  onSwitchToPatientPortal={() => setFlow("patient")}
+                />
+              )}
             </div>
           </div>
         </div>
