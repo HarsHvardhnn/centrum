@@ -1247,32 +1247,32 @@ export default function Doctors({
                           </label>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            {bookingForm.consultationType === "online" && (
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  Data urodzenia*
-                                </label>
-                                <input
-                                  type="date"
-                                  name="dateOfBirth"
-                                  value={bookingForm.dateOfBirth}
-                                  onChange={handleInputChange}
-                                  className={`w-full px-3 py-2 border ${
-                                    formErrors.dateOfBirth
-                                      ? "border-red-500"
-                                      : "border-gray-300"
-                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                  max={new Date().toISOString().split("T")[0]}
-                                />
-                                {formErrors.dateOfBirth && (
-                                  <p className="text-red-500 text-xs mt-1">
-                                    {formErrors.dateOfBirth}
-                                  </p>
-                                )}
-                              </div>
-                            )}
+                        {bookingForm.consultationType === "online" && (
+                          <div className="flex flex-col items-center w-full mb-4">
+                            <div className="w-full max-w-sm">
+                              <label className="block text-sm font-medium text-gray-700 mb-1 text-center md:text-left">
+                                Data urodzenia*
+                              </label>
+                              <input
+                                type="date"
+                                name="dateOfBirth"
+                                value={bookingForm.dateOfBirth}
+                                onChange={handleInputChange}
+                                className={`w-full px-3 py-2 border ${
+                                  formErrors.dateOfBirth
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                                max={new Date().toISOString().split("T")[0]}
+                              />
+                              {formErrors.dateOfBirth && (
+                                <p className="text-red-500 text-xs mt-1">
+                                  {formErrors.dateOfBirth}
+                                </p>
+                              )}
+                            </div>
                           </div>
+                        )}
 
                           {bookingForm.isInternationalPatient && (
                             <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">

@@ -226,10 +226,10 @@ function BookingPatientFormSection({
           </label>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          {bookingForm.consultationType === "online" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+        {bookingForm.consultationType === "online" && (
+          <div className="flex flex-col items-center w-full mb-4">
+            <div className="w-full max-w-sm">
+              <label className="block text-sm font-medium text-gray-700 mb-1 text-center md:text-left">
                 Data urodzenia*
               </label>
               <input
@@ -250,8 +250,8 @@ function BookingPatientFormSection({
                 </p>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {bookingForm.isInternationalPatient && (
           <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
