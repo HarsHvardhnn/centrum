@@ -318,7 +318,7 @@ const PatientsList = ({
                             {patient?.avatar ? (
                               <img
                                 src={patient.avatar}
-                                alt={patient?.name}
+                                alt={patient.name?.trim() || "Wizyta bez pacjenta"}
                                 className="h-full w-full object-cover"
                               />
                             ) : (
@@ -329,8 +329,10 @@ const PatientsList = ({
                             )}
                           </div>
                     <div>
-                      <div className="font-medium">{patient.name}</div>
-                      <div className="text-sm text-gray-500">{patient.patient_id}</div>
+                      <div className="font-medium">
+                        {patient.name?.trim() || "Wizyta bez pacjenta"}
+                      </div>
+                      <div className="text-sm text-gray-500">{patient.patient_id ?? "—"}</div>
                     </div>
                   </div>
                   <div className="flex items-center justify-center">{translateSexToPolish(patient.sex)}</div>
