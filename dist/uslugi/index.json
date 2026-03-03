@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-02-18T04:28:34.921Z",
-  "count": 9,
+  "generatedAt": "2026-03-03T04:20:05.420Z",
+  "count": 27,
   "slugs": [
     "konsultacja-chirurgiczna",
     "konsultacja-proktologiczna",
@@ -10,6 +10,24 @@
     "leczenie-chirurgiczne-wrastajacych-paznokci",
     "implantacja-wszywki-alkoholowej-disulfiram-esperal-1",
     "usuwanie-zmian-skornych-chirurgiczne-z-ocena-histopatologiczna",
-    "leczenie-stopy-cukrzycowej"
+    "leczenie-stopy-cukrzycowej",
+    "konsultacja-ortopedy-dzieciecego",
+    "usg-bioderek",
+    "usg-tarczycy",
+    "usg-piersi",
+    "usg-trzustki",
+    "usg-jader",
+    "usg-u-dzieci",
+    "usg-slinianek",
+    "usg-prostaty",
+    "usg-jamy-brzusznej",
+    "usg-wezlow-chlonnych",
+    "usg-pachwin",
+    "usg-powlok-brzusznych",
+    "usg-ukladu-moczowego",
+    "usg-tkanek-miekkich",
+    "usg-watroby-i-drog-zolciowych-1",
+    "konsultacja-lekarza-medycyny-sportowej",
+    "kwalifikacja-do-uprawiania-sportu"
   ]
 }

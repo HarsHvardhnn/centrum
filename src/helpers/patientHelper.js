@@ -421,6 +421,9 @@ const patientService = {
         sortBy = "date",
         sortOrder = "desc",
         status,
+        startDate,
+        endDate,
+        patientLessOnly,
         doctor,
         sex,
         minAge,
@@ -436,6 +439,9 @@ const patientService = {
       if (sortBy) queryParams.append("sortBy", sortBy);
       if (sortOrder) queryParams.append("sortOrder", sortOrder);
       if (status) queryParams.append("status", status);
+      if (startDate) queryParams.append("startDate", startDate);
+      if (endDate) queryParams.append("endDate", endDate);
+      if (patientLessOnly === true) queryParams.append("patientLessOnly", "true");
       if (doctor) queryParams.append("doctor", doctor);
       if (sex) queryParams.append("sex", sex);
       if (minAge) queryParams.append("minAge", minAge);

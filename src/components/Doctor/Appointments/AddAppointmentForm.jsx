@@ -1789,59 +1789,61 @@ function AppointmentFormModal({
           </div>
         )}
 
-        {/* SMS Consent Checkbox */}
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-          <h4 className="text-md font-medium text-blue-800 mb-3">Zgoda na SMS</h4>
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="smsConsentAgreed"
-              checked={appointmentData.smsConsentAgreed}
-              onChange={(e) => setAppointmentData(prev => ({ ...prev, smsConsentAgreed: e.target.checked }))}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="smsConsentAgreed" className="text-sm font-medium text-blue-800">
-              Pacjent wyraża zgodę na otrzymywanie powiadomień SMS o wizytach
-            </label>
-          </div>
-          <p className="text-xs text-blue-600 mt-2">
-            Zgoda na SMS pozwala na automatyczne wysyłanie przypomnień o wizytach i ważnych informacji.
-          </p>
-          {(() => {
-            const today = new Date().toISOString().split("T")[0];
-            const isSelectedDateInPast = appointmentData.selectedDate < today;
-            
-            if (isSelectedDateInPast) {
-              return (
-                <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded">
-                  <p className="text-xs text-yellow-800">
-                    <strong>Uwaga:</strong> Wybrana data jest w przeszłości. Zgoda na SMS została automatycznie odznaczona, 
-                    ale możesz ją zaznaczyć jeśli chcesz wysłać SMS dla tej wizyty.
-                  </p>
-                </div>
-              );
-            }
-            return null;
-          })()}
-          
-          {/* Persist SMS Consent Checkbox - only show if smsConsentAgreed is true */}
-          {appointmentData.smsConsentAgreed && (
-            <div className="mt-4 pt-4 border-t border-blue-300">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="persistSmsConsent"
-                  checked={appointmentData.persistSmsConsent}
-                  onChange={(e) => setAppointmentData(prev => ({ ...prev, persistSmsConsent: e.target.checked }))}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="persistSmsConsent" className="text-sm font-medium text-blue-800">
-                  Jeśli nie chcesz wysyłać SMS i e-maili dla tej wizyty, zaznacz to pole
-                </label>
-              </div>
+        {/* SMS Consent - only show when patient was added (option 1 or 2); hide entirely for visit-only (option 3) */}
+        {!isVisitOnly && (
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h4 className="text-md font-medium text-blue-800 mb-3">Zgoda na SMS</h4>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="smsConsentAgreed"
+                checked={appointmentData.smsConsentAgreed}
+                onChange={(e) => setAppointmentData(prev => ({ ...prev, smsConsentAgreed: e.target.checked }))}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="smsConsentAgreed" className="text-sm font-medium text-blue-800">
+                Pacjent wyraża zgodę na otrzymywanie powiadomień SMS o wizytach
+              </label>
             </div>
-          )}
-        </div>
+            <p className="text-xs text-blue-600 mt-2">
+              Zgoda na SMS pozwala na automatyczne wysyłanie przypomnień o wizytach i ważnych informacji.
+            </p>
+            {(() => {
+              const today = new Date().toISOString().split("T")[0];
+              const isSelectedDateInPast = appointmentData.selectedDate < today;
+              
+              if (isSelectedDateInPast) {
+                return (
+                  <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded">
+                    <p className="text-xs text-yellow-800">
+                      <strong>Uwaga:</strong> Wybrana data jest w przeszłości. Zgoda na SMS została automatycznie odznaczona, 
+                      ale możesz ją zaznaczyć jeśli chcesz wysłać SMS dla tej wizyty.
+                    </p>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+            
+            {/* Persist SMS Consent Checkbox - only show if smsConsentAgreed is true */}
+            {appointmentData.smsConsentAgreed && (
+              <div className="mt-4 pt-4 border-t border-blue-300">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="persistSmsConsent"
+                    checked={appointmentData.persistSmsConsent}
+                    onChange={(e) => setAppointmentData(prev => ({ ...prev, persistSmsConsent: e.target.checked }))}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="persistSmsConsent" className="text-sm font-medium text-blue-800">
+                    Jeśli nie chcesz wysyłać SMS i e-maili dla tej wizyty, zaznacz to pole
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Current Appointment Summary */}
         <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">

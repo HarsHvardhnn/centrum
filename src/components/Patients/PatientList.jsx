@@ -100,6 +100,8 @@ function LabAppointmentsContent({ clinic }) {
     startDate: null,
     endDate: null,
   });
+  /** Only on /klinika: when true, show only patient-less (visit-only) appointments. */
+  const [patientLessOnly, setPatientLessOnly] = useState(false);
 
   // Ref for filter dropdown
   const filterRef = useRef(null);
@@ -183,6 +185,7 @@ function LabAppointmentsContent({ clinic }) {
         ...(searchQuery && { search: searchQuery }),
         ...(user?.role === "doctor" && { doctorId: user?.id }),
         ...(clinic && { isClinicIp: clinic }),
+        ...(clinic && patientLessOnly && { patientLessOnly: true }),
         ...(appointmentIdFromUrl && { appointmentId: appointmentIdFromUrl }),
       };
       
@@ -276,7 +279,7 @@ function LabAppointmentsContent({ clinic }) {
     }, 300);
 
     return () => clearTimeout(debounceTimeout);
-  }, [searchQuery, statusFilter, dateRange, user?.id, clinic, searchParams]);
+  }, [searchQuery, statusFilter, dateRange, user?.id, clinic, searchParams, patientLessOnly]);
 
   // Force refetch when clinic prop changes to clear cache
   useEffect(() => {
@@ -290,7 +293,8 @@ function LabAppointmentsContent({ clinic }) {
     });
     setSearchQuery("");
     setStatusFilter(clinic ? "booked" : "All");
-    
+    setPatientLessOnly(false);
+
     // Preserve date from query parameters when switching routes, otherwise set today's date only for clinic
     const startDateFromUrl = searchParams.get('startDate');
     const dateFromUrl = searchParams.get('date');
@@ -646,13 +650,14 @@ function LabAppointmentsContent({ clinic }) {
         <div className="flex w-full justify-between">
           <div>
             <h1 className="text-2xl font-bold mb-1">
-              {clinic ? "Wizyty w Przychodni" : "Lista pacjentów"}
+              {clinic ? "Wizyty w Przychodni" : "Lista pacjentów"} ({appointments.length})
             </h1>
             <div className="flex items-center gap-2 mb-4">
               <p className="text-gray-600">
                 Wyświetlane: {dateRange.startDate ? `Wizyty z dnia ${new Date(dateRange.startDate).toLocaleDateString('pl-PL')}` : "Wszystkie wizyty"}
                 {clinic && " (Przychodnia)"}
                 {statusFilter === "booked" && " - Status: Zarezerwowane"}
+                {clinic && patientLessOnly && " - Tylko wizyty bez pacjenta"}
               </p>
               {dateRange.startDate && (
                 <button
@@ -767,6 +772,20 @@ function LabAppointmentsContent({ clinic }) {
                         </div>
                       </div>
                     </div>
+
+                    {clinic && (
+                      <div className="border-t mt-2 pt-2">
+                        <label className="flex items-center gap-2 px-3 py-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={patientLessOnly}
+                            onChange={(e) => setPatientLessOnly(e.target.checked)}
+                            className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                          />
+                          <span className="text-sm font-medium">Tylko wizyty bez pacjenta</span>
+                        </label>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

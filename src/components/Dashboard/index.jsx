@@ -382,6 +382,12 @@ const PatientList = () => {
     pages: 1,
   });
   const [refreshCounter, setRefreshCounter] = useState(0);
+  /** Status filter for today's list: 'all' | 'reserved' | 'completed' | 'cancelled' (sent to API). */
+  const [statusFilter, setStatusFilter] = useState("all");
+  /** Date for the list (YYYY-MM-DD); default today. */
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
+  /** When true, show only patient-less (visit-only) appointments. */
+  const [patientLessOnly, setPatientLessOnly] = useState(false);
 
   const navigate = useNavigate();
 
@@ -391,7 +397,16 @@ const PatientList = () => {
   /** Cancelled status (case-insensitive; accepts "cancelled", "canceled", or any variant). */
   const isCancelled = (apt) => {
     const s = (apt?.status ?? apt?.appointmentStatus ?? "").toString().toLowerCase().trim();
-    return s === "cancelled" || s === "canceled" || s.startsWith("cancel");
+    return s === "cancelled" || s === "canceled" || s.startsWith("cancel") || s === "no-show";
+  };
+
+  /** Map UI status filter to API status param (booked | completed | cancelled; omit for 'all'). */
+  const getApiStatus = () => {
+    if (statusFilter === "all") return undefined;
+    if (statusFilter === "reserved") return "booked";
+    if (statusFilter === "completed") return "completed";
+    if (statusFilter === "cancelled") return "cancelled";
+    return undefined;
   };
 
   const fetchVisitConsents = async (visitId) => {
@@ -512,13 +527,26 @@ const PatientList = () => {
       setSelectedAppointment(null);
       setSendSMSNotification(false);
       setSendEmailNotification(false);
-      // Refresh the patient list after cancellation
-      const response = await patientService.getSimpliefiedAppointmentsList({
+      // Refresh the patient list after cancellation (same date + status filter)
+      const apiStatus = getApiStatus();
+      const refreshParams = {
         page: pagination.currentPage,
         limit: 10,
-        ...(user?.role === "doctor" && user?.id ? { doctor: user.id } : {})
-      });
-      setPatients(response.appointments);
+        sortBy: "date",
+        sortOrder: "desc",
+        startDate: selectedDate,
+        endDate: selectedDate,
+        ...(apiStatus && { status: apiStatus }),
+        ...(patientLessOnly && { patientLessOnly: true }),
+        ...(user?.role === "doctor" && user?.id ? { doctor: user.id } : {}),
+      };
+      const response = await patientService.getSimpliefiedAppointmentsList(refreshParams);
+      setPatients(response.appointments || []);
+      setPagination((prev) => ({
+        ...prev,
+        total: response.total ?? prev.total,
+        pages: response.pages ?? prev.pages,
+      }));
     } catch (err) {
       console.error("Error canceling appointment:", err);
       setError("błąd serwera");
@@ -533,30 +561,31 @@ const PatientList = () => {
     ));
   };
 
-  // Fetch patients on component mount and when page changes
+  // Fetch patients for selected date; filter by status on backend via API params
   useEffect(() => {
     const fetchPatients = async () => {
       try {
         setLoading(true);
-        
-        // Prepare parameters for the API call
         const params = {
           page: pagination.currentPage,
           limit: 10,
+          sortBy: "date",
+          sortOrder: "desc",
+          startDate: selectedDate,
+          endDate: selectedDate,
         };
-        
-        // If user is a doctor, include their doctor ID to filter patients
-        if (user?.role === "doctor" && user?.id) {
-          params.doctor = user.id;
-        }
-        
+        const apiStatus = getApiStatus();
+        if (apiStatus) params.status = apiStatus;
+        if (patientLessOnly) params.patientLessOnly = true;
+        if (user?.role === "doctor" && user?.id) params.doctor = user.id;
+
         const response = await patientService.getSimpliefiedAppointmentsList(params);
 
-        setPatients(response.appointments);
+        setPatients(response.appointments || []);
         setPagination({
-          currentPage: response.currentPage,
-          total: response.total,
-          pages: response.pages,
+          currentPage: response.currentPage ?? pagination.currentPage,
+          total: response.total ?? 0,
+          pages: response.pages ?? 1,
         });
         setError(null);
       } catch (err) {
@@ -568,7 +597,12 @@ const PatientList = () => {
     };
 
     fetchPatients();
-  }, [pagination.currentPage, user, refreshCounter]);
+  }, [pagination.currentPage, user, refreshCounter, statusFilter, selectedDate, patientLessOnly]);
+
+  // Reset to first page when status, date or patientLessOnly changes
+  useEffect(() => {
+    setPagination((prev) => (prev.currentPage === 1 ? prev : { ...prev, currentPage: 1 }));
+  }, [statusFilter, selectedDate, patientLessOnly]);
 
 
   const translateSexToPolish = (sex) => {
@@ -661,7 +695,7 @@ const PatientList = () => {
     setShowRescheduleModal(true);
   };
 
-  const handleRescheduleSuccess = (rescheduledData) => {
+  const handleRescheduleSuccess = async (rescheduledData) => {
     // Update the appointment in the list with new data
     setPatients(patients.map(patient => 
       patient._id === selectedAppointment._id 
@@ -674,56 +708,103 @@ const PatientList = () => {
         : patient
     ));
     
-    // Refresh the patient list
-    const fetchPatients = async () => {
-      try {
-        setLoading(true);
-        
-        const params = {
-          page: pagination.currentPage,
-          limit: 10,
-        };
-        
-        if (user?.role === "doctor" && user?.id) {
-          params.doctor = user.id;
-        }
-        
-        const response = await patientService.getSimpliefiedAppointmentsList(params);
-
-        setPatients(response.appointments);
-        setPagination({
-          currentPage: response.currentPage,
-          total: response.total,
-          pages: response.pages,
-        });
-        setError(null);
-      } catch (err) {
-        setError("błąd serwera");
-        console.error("Error fetching patients:", err);
-      } finally {
-        setLoading(false);
-      }
+    // Refresh the patient list (same date + status filter)
+    const apiStatus = getApiStatus();
+    const params = {
+      page: pagination.currentPage,
+      limit: 10,
+      sortBy: "date",
+      sortOrder: "desc",
+      startDate: selectedDate,
+      endDate: selectedDate,
+      ...(apiStatus && { status: apiStatus }),
+      ...(patientLessOnly && { patientLessOnly: true }),
+      ...(user?.role === "doctor" && user?.id ? { doctor: user.id } : {}),
     };
-
-    fetchPatients();
+    try {
+      setLoading(true);
+      const response = await patientService.getSimpliefiedAppointmentsList(params);
+      setPatients(response.appointments || []);
+      setPagination((prev) => ({
+        ...prev,
+        currentPage: response.currentPage ?? prev.currentPage,
+        total: response.total ?? prev.total,
+        pages: response.pages ?? prev.pages,
+      }));
+      setError(null);
+    } catch (err) {
+      setError("błąd serwera");
+      console.error("Error fetching patients:", err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const isToday = selectedDate === new Date().toISOString().split("T")[0];
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
-      <div className="p-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Lista pacjentów</h2>
-          <span className="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
-          {pagination.total} {pagination.total === 1 
-  ? "członek" 
-  : pagination.total > 1 && pagination.total < 5 
-    ? "członkowie" 
-    : "członków"}
-          </span>
+      <div className="p-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <h2 className="text-lg font-semibold">
+            {isToday ? "Wizyty dzisiaj" : "Wizyty na dzień"} ({pagination.total})
+          </h2>
+          <label className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Data:</span>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            />
+          </label>
         </div>
-        <button>
-          <MoreVertical size={20} className="text-gray-500" />
-        </button>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <button className="text-gray-500 hover:text-gray-700 focus:outline-none p-1">
+              <MoreVertical size={20} />
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              className="min-w-[180px] bg-white rounded-md shadow-lg z-50 border p-1"
+              sideOffset={5}
+              align="end"
+            >
+              <DropdownMenu.Item
+                className={`flex items-center px-4 py-2 text-sm rounded-md cursor-pointer ${statusFilter === "all" ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+                onClick={() => setStatusFilter("all")}
+              >
+                Wszystkie
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className={`flex items-center px-4 py-2 text-sm rounded-md cursor-pointer ${statusFilter === "reserved" ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+                onClick={() => setStatusFilter("reserved")}
+              >
+                Zarezerwowane
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className={`flex items-center px-4 py-2 text-sm rounded-md cursor-pointer ${statusFilter === "completed" ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+                onClick={() => setStatusFilter("completed")}
+              >
+                Zakończone
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className={`flex items-center px-4 py-2 text-sm rounded-md cursor-pointer ${statusFilter === "cancelled" ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+                onClick={() => setStatusFilter("cancelled")}
+              >
+                Anulowane
+              </DropdownMenu.Item>
+              <DropdownMenu.Separator className="h-px bg-gray-200 my-1" />
+              <DropdownMenu.Item
+                className={`flex items-center px-4 py-2 text-sm rounded-md cursor-pointer ${patientLessOnly ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+                onClick={() => setPatientLessOnly((prev) => !prev)}
+              >
+                {patientLessOnly ? "✓ " : ""}Tylko wizyty bez pacjenta
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       </div>
 
       {showCancelModal && (

@@ -23,6 +23,7 @@ class AppointmentService {
         ...(filters.endDate && { endDate: filters.endDate }),
         ...(filters.doctorId && { doctorId: filters.doctorId }),
         ...(filters.isClinicIp && { isClinicIp: filters.isClinicIp }),
+        ...(filters.patientLessOnly === true && { patientLessOnly: "true" }),
       });
 
       const response = await apiCaller(
