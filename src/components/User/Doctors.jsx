@@ -1161,6 +1161,7 @@ export default function Doctors({
                               <PhoneCodeSelect
                                 value={bookingForm.phoneCode}
                                 onChange={(code) => handleInputChange({ target: { name: "phoneCode", value: code } })}
+                                className="flex-shrink-0"
                               />
                               <input
                                 type="tel"

@@ -709,7 +709,7 @@ export default function BookAppointment({
                       <PhoneCodeSelect
                         value={values.phoneCode}
                         onChange={(code) => setFieldValue("phoneCode", code)}
-                        className="flex-1 flex items-stretch"
+                        className="flex items-stretch"
                         triggerClassName="border border-[#062b47] text-[#062b47] rounded-l rounded-r-none p-2.5 sm:p-3 text-sm sm:text-base h-full min-h-0 border-r-0"
                       />
                       <input
@@ -720,7 +720,7 @@ export default function BookAppointment({
                         onChange={(e) => handlePhoneChange(e, setFieldValue)}
                         placeholder="123 456 789"
                         autoComplete="tel"
-                        className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-gray-400 rounded-r border-l-0 focus:ring-1 focus:ring-[#062b47]"
+                        className="flex-1 min-w-0 p-2.5 sm:p-3 text-sm sm:text-base outline-none bg-white border border-[#062b47] text-[#062b47] placeholder:text-gray-400 rounded-r border-l-0 focus:ring-1 focus:ring-[#062b47]"
                       />
                     </div>
                   </div>
@@ -781,9 +781,9 @@ export default function BookAppointment({
 
                 {/* PESEL (main) then checkbox underneath */}
                 <div className="col-span-1 sm:col-span-2 mb-4 mt-2">
-                  <div className="flex flex-col items-center w-full">
-                    <div className="w-full max-w-sm">
-                      <label htmlFor="govtId" className="block text-sm font-medium text-gray-700 mb-1 text-center sm:text-left">
+                  <div className="flex flex-col w-full">
+                    <div className="w-full">
+                      <label htmlFor="govtId" className="block text-sm font-medium text-gray-700 mb-1 text-left">
                         {values.consultationType === "online" && !values.isInternationalPatient ? "PESEL (wymagane dla wizyty online) *" : "PESEL (opcjonalnie)"}
                       </label>
                       <Field name="govtId">

@@ -609,7 +609,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     }).replace(/<\/script>/gi, '<\\/script>')}</script>
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-BmA6s-nk.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-I-2k74Ld.css">
 </head>
 <body>
     <!-- SEO content for crawlers: visible in DOM for snippet selection, not displayed on screen -->
@@ -622,7 +622,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-BssI2cVU.js"></script>
+    <script type="module" crossorigin src="/assets/index-BAs7NH5-.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>

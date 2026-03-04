@@ -80,7 +80,7 @@ export default function PhoneCodeSelect({ value, onChange, className = "", trigg
   ) : null;
 
   return (
-    <div className={`relative flex ${className}`}>
+    <div className={`relative flex flex-shrink-0 ${className}`}>
       <button
         ref={triggerRef}
         type="button"
@@ -91,7 +91,7 @@ export default function PhoneCodeSelect({ value, onChange, className = "", trigg
         }}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`w-full min-h-[42px] h-full px-2 sm:px-3 py-2 border border-gray-300 rounded-l-md bg-white text-sm text-left focus:outline-none focus:ring-1 focus:ring-teal-500 flex items-center justify-between min-w-[90px] sm:min-w-[120px] ${triggerClassName}`}
+        className={`w-auto min-w-[76px] max-w-[88px] min-h-[42px] h-full px-2 py-2 rounded-l-md bg-white text-sm text-left focus:outline-none focus:ring-1 focus:ring-teal-500 flex items-center justify-between ${triggerClassName ? triggerClassName : "border border-gray-300"}`}
         style={{ lineHeight: "1.5" }}
       >
         <span className="flex items-center gap-1.5 truncate min-w-0">
