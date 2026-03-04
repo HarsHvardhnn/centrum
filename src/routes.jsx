@@ -36,6 +36,7 @@ import ServicesManagement from "./components/admin/Services";
 
 import NewsPage from "./components/User/Pages/NewsPage";
 import PatientDetailsPage from "./components/Doctor/SingleDoctor/patient-details/PatientDetails";
+import PatientDetailsHeader from "./components/Doctor/SingleDoctor/patient-details/PatientDetailsHeader";
 import NewsManagement from "./components/admin/NewManagement";
 import NewsDetail from "./components/User/NewsDetail";
 import PatientMedicalDetails from "./components/User/MyDetails";
@@ -89,10 +90,12 @@ const RootRoute = () => {
 
 // Modified App component to include the sidebar
 function MainLayout() {
+  const location = useLocation();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user, logout } = useUser();
   const { showPopup, inactivityTimeout, handleStayActive, setOnLogout } = useInactivityTracker();
+  const isPatientDetailsPage = /^\/szczegoly-pacjenta\/[^/]+$/.test(location.pathname);
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -118,9 +121,9 @@ function MainLayout() {
         <title>CM7Med</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      {/* Fixed Header */}
+      {/* Fixed Header - use patient-details header on patient details page */}
       <div className="fixed top-0 left-0 right-0 z-10">
-        <Header />
+        {isPatientDetailsPage ? <PatientDetailsHeader /> : <Header />}
       </div>
 
       <div className="flex bg-gray-50">
