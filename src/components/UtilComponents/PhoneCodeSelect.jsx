@@ -91,14 +91,11 @@ export default function PhoneCodeSelect({ value, onChange, className = "", trigg
         }}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`w-auto min-w-[76px] max-w-[88px] min-h-[42px] h-full px-2 py-2 rounded-l-md bg-white text-sm text-left focus:outline-none focus:ring-1 focus:ring-teal-500 flex items-center justify-between ${triggerClassName ? triggerClassName : "border border-gray-300"}`}
+        className={`w-auto min-w-[72px] min-h-[42px] h-full px-2 py-2 rounded-l-md bg-white text-sm text-left focus:outline-none focus:ring-1 focus:ring-teal-500 flex items-center justify-between ${triggerClassName ? triggerClassName : "border border-gray-300"}`}
         style={{ lineHeight: "1.5" }}
       >
-        <span className="flex items-center gap-1.5 truncate min-w-0">
-          <span className="flex-shrink-0 overflow-visible inline-flex">
-            <FlagIcon countryCode={current.flag} className="w-5 h-4" />
-          </span>
-          <span>{current.code}</span>
+        <span className="flex items-center justify-between gap-1 min-w-0">
+          <span className="truncate">{current.code}</span>
         </span>
         <svg className="w-3 h-3 text-gray-400 flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
