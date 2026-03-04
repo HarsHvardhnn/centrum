@@ -1880,11 +1880,13 @@ function AppointmentFormModal({
                   : `${appointmentData.customDuration || appointmentData.duration || 30} min`
               }
             </div>
-            <div>
-              <span className="font-medium">Zgoda na SMS:</span> {
-                appointmentData.smsConsentAgreed ? "✓ Tak" : "✗ Nie"
-              }
-            </div>
+            {!isVisitOnly && (
+              <div>
+                <span className="font-medium">Zgoda na SMS:</span> {
+                  appointmentData.smsConsentAgreed ? "✓ Tak" : "✗ Nie"
+                }
+              </div>
+            )}
             {(appointmentData.customDuration || appointmentData.customStartTime || appointmentData.selectedSlot) && (
               <>
                 <div>
