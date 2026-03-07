@@ -104,34 +104,36 @@ const DoctorDashboard = ({
             />
           </div>
 
-          <div>
-            <div className="rounded-lg p-4">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium">Szczegóły pacjenta</h2>
-                {selectedPatient && (
-                  <button
-                    onClick={handleViewDetails}
-                    className="text-white bg-teal-400 hover:bg-teal-500 px-4 py-2 font-medium rounded-md text-sm"
-                  >
-                    Zobacz szczegóły
-                  </button>
-                )}
+          <div className="flex flex-col rounded-lg bg-white border border-gray-200 overflow-hidden">
+            <div className="flex justify-between items-start gap-4 p-4 border-b border-gray-100">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Szczegóły pacjenta</h2>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mt-0.5">Karta podglądu operacyjnego</p>
               </div>
-
-              {/* Wyświetl komunikat, gdy nie wybrano pacjenta */}
-              {!selectedPatient && (
-                <div className="flex flex-col items-center justify-center p-6 text-gray-500">
-                  <p className="text-center mb-2">Nie wybrano pacjenta</p>
-                  <p className="text-sm text-center text-gray-400">
-                    Wybierz pacjenta z listy, aby zobaczyć jego szczegóły
-                  </p>
-                </div>
+              {selectedPatient && (
+                <button
+                  onClick={handleViewDetails}
+                  className="flex-shrink-0 text-white font-medium rounded-lg text-sm px-4 py-2.5 shadow-sm hover:shadow transition-colors"
+                  style={{ backgroundColor: "#0d9488" }}
+                >
+                  Przejdź do wizyty
+                </button>
               )}
             </div>
-            <div>
-              {/* Przekaż szczegóły pacjenta do komponentu PatientInfo */}
-              {patientDetails && <PatientInfo patientData={patientDetails} />}
-            </div>
+
+            {!selectedPatient ? (
+              <div className="flex flex-col items-center justify-center p-8 text-gray-500">
+                <p className="text-center mb-2">Nie wybrano pacjenta</p>
+                <p className="text-sm text-center text-gray-400">
+                  Wybierz pacjenta z listy, aby zobaczyć jego szczegóły
+                </p>
+              </div>
+            ) : patientDetails ? (
+              <PatientInfo
+                patientData={patientDetails}
+                currentAppointment={patients.find((p) => p.id === selectedPatient) || null}
+              />
+            ) : null}
           </div>
         </div>
       </div>
