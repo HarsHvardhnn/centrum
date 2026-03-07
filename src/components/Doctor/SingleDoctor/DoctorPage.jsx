@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useLoader } from "../../../context/LoaderContext";
 import doctorService from "../../../helpers/doctorHelper";
 import AppointmentFormModal from "../Appointments/AddAppointmentForm";
+import CheckInModal from "../../admin/CheckinModal";
+import RescheduleModal from "../../Dashboard/RescheduleModal";
 import { toast } from "sonner";
 import appointmentHelper from "../../../helpers/appointmentHelper";
 import { formatDateToYYYYMMDD } from "../../../utils/formatDate";
@@ -25,6 +27,10 @@ function DoctorsPage() {
   const [totalPatients, setTotalPatients] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [dailySummary, setDailySummary] = useState({ liczbaWizyt: 0, pozostaloWizyt: 0 });
+  const [showCheckIn, setShowCheckIn] = useState(false);
+  const [checkInAppointment, setCheckInAppointment] = useState(null);
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [rescheduleAppointment, setRescheduleAppointment] = useState(null);
   const itemsPerPage = 10;
 
   /** Count appointments by status. Excludes cancelled. Liczba wizyt = Zarezerwowana + Zameldowana + Zakończona; Pozostało = Zarezerwowana + Zameldowana. Backend may return liczbaWizyt/pozostaloWizyt for full-day accuracy (when list is paginated). */
@@ -245,6 +251,30 @@ function DoctorsPage() {
     setCurrentPage(page);
   };
 
+  const handleCheckIn = (appointmentRow) => {
+    setCheckInAppointment(appointmentRow);
+    setShowCheckIn(true);
+  };
+
+  const handleReschedule = (appointmentRow) => {
+    setRescheduleAppointment(appointmentRow);
+    setShowReschedule(true);
+  };
+
+  const handleAppointmentUpdate = (appointmentId, newStatus) => {
+    setPatients((prev) =>
+      prev.map((p) => (p.id === appointmentId ? { ...p, status: newStatus } : p))
+    );
+    setShowCheckIn(false);
+    setCheckInAppointment(null);
+  };
+
+  const handleRescheduleSuccess = () => {
+    setShowReschedule(false);
+    setRescheduleAppointment(null);
+    if (doctorInfo?.id) fetchPatientsByDoctor(doctorInfo.id);
+  };
+
   return (
     <>
       <DoctorDashboard
@@ -268,6 +298,8 @@ function DoctorsPage() {
         onPageChange={handlePageChange}
         totalPatients={totalPatients}
         itemsPerPage={itemsPerPage}
+        onCheckIn={handleCheckIn}
+        onReschedule={handleReschedule}
       />
 
       {/* Appointment Form Modal */}
@@ -276,13 +308,28 @@ function DoctorsPage() {
           onClose={() => setShowAppointmentModal(false)}
           onComplete={handleAppointmentComplete}
           doctorId={doctorInfo.id}
-          doctorInfo={doctorInfo} // Pass the full doctor info
-          isReceptionistMode={true} // Enable receptionist workflow
-          workflowOrder="appointmentFirst" // Use appointment-first workflow
-          allowPastDates={false} // Don't auto-enable past dates checkbox
-          skipDoctorSelection={true} // Skip doctor selection step
+          doctorInfo={doctorInfo}
+          isReceptionistMode={true}
+          workflowOrder="appointmentFirst"
+          allowPastDates={false}
+          skipDoctorSelection={true}
         />
       )}
+
+      <CheckInModal
+        isOpen={showCheckIn}
+        setIsOpen={setShowCheckIn}
+        patientData={checkInAppointment || {}}
+        appointmentId={checkInAppointment?.id}
+        onAppointmentUpdate={handleAppointmentUpdate}
+      />
+
+      <RescheduleModal
+        isOpen={showReschedule}
+        onClose={() => { setShowReschedule(false); setRescheduleAppointment(null); }}
+        appointment={rescheduleAppointment}
+        onRescheduleSuccess={handleRescheduleSuccess}
+      />
     </>
   );
 }

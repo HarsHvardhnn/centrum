@@ -1,19 +1,20 @@
 import React, { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   MoreVertical,
-  UserCheck,
   UserX,
-  Video,
   X,
-  FileText,
+  PlayCircle,
+  UserCheck,
+  Calendar,
 } from "lucide-react";
-import { apiCaller } from "../../../utils/axiosInstance";
-import { translateStatus } from "../../../utils/statusHelper";
 import appointmentHelper from "../../../helpers/appointmentHelper";
 import { toast } from "sonner";
+
+const HIGHLIGHT_COLOR = "#008C8C";
 
 const PatientsList = ({
   totalPatients = 0,
@@ -24,22 +25,18 @@ const PatientsList = ({
   selectedPatient,
   patientsData = [],
   itemsPerPage = 10,
+  onCheckIn,
+  onReschedule,
 }) => {
-  const [sortConfig, setSortConfig] = React.useState({
-    key: null,
-    direction: null,
-  });
+  const navigate = useNavigate();
   const [showCancelModal, setShowCancelModal] = React.useState(false);
   const [sendSMSNotification, setSendSMSNotification] = React.useState(false);
   const [sendEmailNotification, setSendEmailNotification] = React.useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = React.useState(null);
 
-  // Calculate total pages
   const totalPages = Math.ceil(totalPatients / itemsPerPage);
 
-  // Notify parent component when selection changes
   const handlePatientSelect = (patientId, appointmentId) => {
-    // If the same appointment is clicked again, unselect it
     if (selectedPatient === appointmentId) {
       if (onPatientSelect) onPatientSelect(null);
       if (setAppointmentId) setAppointmentId(null);
@@ -49,123 +46,52 @@ const PatientsList = ({
     }
   };
 
-  const sortedPatients = useMemo(() => {
-    let sortableItems = [...patientsData];
-    if (sortConfig.key) {
-      sortableItems.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key])
-          return sortConfig.direction === "ascending" ? -1 : 1;
-        if (a[sortConfig.key] > b[sortConfig.key])
-          return sortConfig.direction === "ascending" ? 1 : -1;
-        return 0;
-      });
+  const handleStartVisit = (patient) => {
+    if (patient.patient_id) {
+      navigate(`/szczegoly-pacjenta/${patient.patient_id}`);
     }
-    return sortableItems;
-  }, [patientsData, sortConfig]);
-
-  const requestSort = (key) => {
-    let direction =
-      sortConfig.direction === "ascending" ? "descending" : "ascending";
-    setSortConfig({ key, direction });
   };
+
+  // Only show Zarezerwowana (booked) and Zameldowana (checkedIn). Sort ascending by start time.
+  const sortedPatients = useMemo(() => {
+    const active = (patientsData || []).filter(
+      (p) => p.status === "booked" || p.status === "checkedIn"
+    );
+    return [...active].sort((a, b) => {
+      const tA = a.startTime || a.start_time || "";
+      const tB = b.startTime || b.start_time || "";
+      return tA.localeCompare(tB);
+    });
+  }, [patientsData]);
 
   const StatusBadge = ({ status }) => {
-    const statusStyles = {
-      Finished: {
-        bgColor: "bg-green-50",
-        textColor: "text-green-700",
-        dotColor: "bg-green-600",
-      },
-      booked: {
-        bgColor: "bg-yellow-50",
-        textColor: "text-yellow-700",
-        dotColor: "bg-yellow-600",
-      },
-      Cancelled: {
-        bgColor: "bg-red-50",
-        textColor: "text-red-700",
-        dotColor: "bg-red-600",
-      },
-    };
-    
-    const statusTranslations = {
-      Finished: "Zakończona",
-      booked: "Oczekuje",
-      Cancelled: "Anulowana"
-    };
-
-    const { bgColor, textColor, dotColor } = statusStyles[status] || {
-      bgColor: "bg-gray-50",
-      textColor: "text-gray-700",
-      dotColor: "bg-gray-600",
-    };
-
-    return (
-      <div
-        className={`flex items-center px-4 text-sm h-fit py-1 rounded-full capitalize ${bgColor} ${textColor}`}
-      >
-        <div className={`w-2 h-2 rounded-full ${dotColor} mr-2`} />
-        {statusTranslations[status] || status}
-      </div>
-    );
-  };
-
-  const AppointmentModeBadge = ({ mode, joiningLink }) => {
-    const modeStyles = {
-      online: {
-        bgColor: "bg-blue-50",
-        textColor: "text-blue-700",
-        dotColor: "bg-blue-600",
-      },
-      offline: {
-        bgColor: "bg-purple-50",
-        textColor: "text-purple-700",
-        dotColor: "bg-purple-600",
-      },
-      phone: {
-        bgColor: "bg-indigo-50",
-        textColor: "text-indigo-700",
-        dotColor: "bg-indigo-600",
-      },
-    };
-
-    const modeTranslations = {
-      online: "Online",
-      offline: "Stacjonarnie",
-      phone: "Telefon",
-      inPerson: "Osobista"
-    };
-
-    const { bgColor, textColor, dotColor } = modeStyles[mode] || {
-      bgColor: "bg-gray-50",
-      textColor: "text-gray-700",
-      dotColor: "bg-gray-600",
-    };
-
-    const BadgeContent = () => (
-      <div
-        className={`flex items-center px-4 text-sm h-fit py-1 rounded-full capitalize ${bgColor} ${textColor} ${mode === "online" && joiningLink ? "cursor-pointer hover:bg-blue-100" : ""}`}
-      >
-        <div className={`w-2 h-2 rounded-full ${dotColor} mr-2`} />
-        {mode === "online" && <Video size={14} className="mr-1" />}
-        {modeTranslations[mode] || mode}
-      </div>
-    );
-
-    if (mode === "online" && joiningLink) {
+    const s = (status || "").toLowerCase();
+    if (s === "booked") {
       return (
-        <a
-          href={joiningLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block"
-        >
-          <BadgeContent />
-        </a>
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+          Zarezerwowana
+        </span>
       );
     }
+    if (s === "checkedin") {
+      return (
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+          Zameldowana
+        </span>
+      );
+    }
+    return null;
+  };
 
-    return <BadgeContent />;
+  const formatTimeRange = (p) => {
+    const start = p.startTime || p.start_time || "—";
+    const end = p.endTime || p.end_time || "—";
+    return `${start}–${end}`;
+  };
+
+  const patientIdLabel = (p) => {
+    const id = p.patient_id || p.patientId;
+    return id ? String(id) : "Niezweryfikowany";
   };
 
   const EmptyState = () => (
@@ -244,122 +170,105 @@ const PatientsList = ({
 
     return pages;
   };
-  const translateSexToPolish = (sex) => {
-    switch (sex) {
-      case "Male":
-        return "Mężczyzna";
-      case "Female":
-        return "Kobieta";
-      case "Others":
-        return "Inna";
-      default:
-        return "Nieznany";
-    }
-  };
-  
+
+  const displayTotal = totalPatients;
 
   return (
     <div className="bg-white border rounded-lg shadow-sm">
-      {/* Header */}
+      {/* Header: title + circular counter "X wizyt dzisiaj", no three-dot */}
       <div className="flex justify-between items-center p-4 border-b">
-        <div className="flex gap-8 items-center">
-          <h2 className="text-lg font-semibold">Lista pacjentów</h2>
-          <span className="text-sm text-teal-400 bg-teal-100 rounded-full px-3 py-1">
-            {totalPatients} {totalPatients === 1 ? "użytkownik" : "użytkowników"}
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-gray-900">Lista pacjentów</h2>
+          <span
+            className="inline-flex items-center justify-center min-w-[2.25rem] h-9 rounded-full text-sm font-medium bg-teal-100 text-teal-800 px-3"
+            style={{ backgroundColor: "var(--counter-bg, #ccfbf1)", color: "var(--counter-text, #0f766e)" }}
+          >
+            {displayTotal} {displayTotal === 1 ? "wizyta dzisiaj" : "wizyt dzisiaj"}
           </span>
-        </div>
-        <div className="flex items-center space-x-4">
-          <MoreVertical size={18} />
         </div>
       </div>
 
-      {/* Table or Empty State */}
+      {/* Table: Pacjent | Czas | Status | Akcje */}
       <div className="overflow-x-auto">
-        <div className="min-w-[1000px]">
-          {patientsData.length > 0 ? (
+        <div className="min-w-[600px]">
+          {sortedPatients.length > 0 ? (
             <div>
-              {/* Table Header */}
-              <div className="w-full grid grid-cols-6 px-4 py-3 bg-gray-50 border-b">
-                <div className="col-span-2">Imię i nazwisko</div>
-                <div className="text-center">Płeć</div>
-                <div
-                  className="flex items-center cursor-pointer justify-center"
-                  onClick={() => requestSort("status")}
-                >
-                  Status
-                  <ChevronDown size={16} />
-                </div>
-                <div
-                  className="flex items-center cursor-pointer justify-center"
-                  onClick={() => requestSort("appointmentMode")}
-                >
-                  Tryb
-                  <ChevronDown size={16} />
-                </div>
-                <div className="text-center">Akcja</div>
+              <div className="w-full grid grid-cols-[1fr_8rem_10rem_3rem] gap-4 px-4 py-3 bg-gray-50 border-b text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <div>Pacjent</div>
+                <div className="text-center">Czas</div>
+                <div className="text-center">Status</div>
+                <div className="text-right">Akcje</div>
               </div>
-
-              {/* Table Body */}
               {sortedPatients.map((patient) => (
                 <div
                   key={patient.id}
-                  className="w-full grid grid-cols-6 px-4 py-3 border-b hover:bg-gray-50"
+                  className="w-full grid grid-cols-[1fr_8rem_10rem_3rem] gap-4 px-4 py-3 border-b hover:bg-gray-50/80 items-center"
                 >
-                  <div className="col-span-2 flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedPatient === patient.id}
-                      onChange={() => {
-                        handlePatientSelect(patient.patient_id, patient.id);
-                      }}
-                      className="w-4 h-4 mr-3"
-                    />
-                    <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                            {patient?.avatar ? (
-                              <img
-                                src={patient.avatar}
-                                alt={patient.name?.trim() || "Wizyta bez pacjenta"}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center bg-gray-200 text-gray-500">
-                                <UserCheck
-                                 size={24} />
-                              </div>
-                            )}
-                          </div>
-                    <div>
-                      <div className="font-medium">
-                        {patient.name?.trim() || "Wizyta bez pacjenta"}
-                      </div>
-                      <div className="text-sm text-gray-500">{patient.patient_id ?? "—"}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-center">{translateSexToPolish(patient.sex)}</div>
-                  <div className="flex items-center justify-center">
-                    <StatusBadge status={translateStatus(patient.status)} />
-                  </div>
-                  <div className="flex items-center justify-center">
-                    <AppointmentModeBadge mode={patient.mode} joiningLink={patient.joining_link} />
-                  </div>
-                  <div className="flex items-center justify-center gap-2">
-                    {/* {true && (
-                      <button
-                        onClick={() => handleGenerateVisitCard(patient.id)}
-                        className="flex items-center px-3 py-1 bg-teal-500 text-white rounded-md hover:bg-teal-600 transition-colors"
-                      >
-                        <FileText size={16} className="mr-1" />
-                        Karta wizyty
-                      </button>
-                    )} */}
+                  <div className="min-w-0">
                     <button
-                      onClick={() => handleCancelAppointment(patient.id)}
-                      disabled={patient.status !== "booked"}
-                      className={`flex items-center px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors ${patient.status !== "booked" ? "opacity-50 cursor-not-allowed" : ""}`}
+                      type="button"
+                      onClick={() => handlePatientSelect(patient.patient_id, patient.id)}
+                      className="text-left w-full rounded focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+                      style={{
+                        color: selectedPatient === patient.id ? HIGHLIGHT_COLOR : undefined,
+                        fontWeight: selectedPatient === patient.id ? 600 : 500,
+                      }}
                     >
-                      <X size={16} className="mr-1" />
-                      Anuluj
+                      {patient.name?.trim() || "Wizyta bez pacjenta"}
                     </button>
+                    <p className="text-sm text-gray-500 mt-0.5 truncate">{patientIdLabel(patient)}</p>
+                  </div>
+                  <div className="text-center text-gray-800 text-sm">{formatTimeRange(patient)}</div>
+                  <div className="flex justify-center">
+                    <StatusBadge status={patient.status} />
+                  </div>
+                  <div className="flex justify-end">
+                    <DropdownMenu.Root>
+                      <DropdownMenu.Trigger asChild>
+                        <button
+                          type="button"
+                          className="p-1.5 text-gray-500 hover:text-gray-700 rounded focus:outline-none"
+                        >
+                          <MoreVertical size={18} />
+                        </button>
+                      </DropdownMenu.Trigger>
+                      <DropdownMenu.Portal>
+                        <DropdownMenu.Content
+                          className="min-w-[200px] bg-white rounded-lg shadow-lg border p-1 z-[100]"
+                          sideOffset={4}
+                          align="end"
+                        >
+                          <DropdownMenu.Item
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                            onSelect={() => handleStartVisit(patient)}
+                          >
+                            <PlayCircle size={16} /> Rozpocznij wizytę
+                          </DropdownMenu.Item>
+                          {onCheckIn && (
+                            <DropdownMenu.Item
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                              onSelect={() => onCheckIn(patient)}
+                            >
+                              <UserCheck size={16} /> Zamelduj
+                            </DropdownMenu.Item>
+                          )}
+                          <DropdownMenu.Item
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
+                            onSelect={() => handleCancelAppointment(patient.id)}
+                          >
+                            <X size={16} /> Anuluj wizytę
+                          </DropdownMenu.Item>
+                          {onReschedule && (
+                            <DropdownMenu.Item
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                              onSelect={() => onReschedule(patient)}
+                            >
+                              <Calendar size={16} /> Przełóż wizytę
+                            </DropdownMenu.Item>
+                          )}
+                        </DropdownMenu.Content>
+                      </DropdownMenu.Portal>
+                    </DropdownMenu.Root>
                   </div>
                 </div>
               ))}
@@ -370,11 +279,11 @@ const PatientsList = ({
         </div>
       </div>
 
-      {/* Pagination - Only show if there are patients */}
+      {/* Pagination */}
       {patientsData.length > 0 && (
         <div className="flex justify-between items-center px-4 py-3 border-t">
           <div className="text-sm text-gray-500">
-            Pokazuje {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, totalPatients)} z {totalPatients} pacjentów
+            Pokazuje {(currentPage - 1) * itemsPerPage + 1} – {Math.min(currentPage * itemsPerPage, totalPatients)} z {totalPatients} pacjentów
           </div>
           <div className="flex items-center space-x-2">
             <button

@@ -25,7 +25,9 @@ const DoctorDashboard = ({
   currentPage,
   onPageChange,
   totalPatients,
-  itemsPerPage
+  itemsPerPage,
+  onCheckIn,
+  onReschedule,
 }) => {
   const navigate = useNavigate();
   //("patiend eta;same",patientDetails)
@@ -89,16 +91,16 @@ const DoctorDashboard = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <PatientsList
-              variant="default"
               setAppointmentId={setAppointmentId}
               patientsData={patients}
               onPatientSelect={onPatientSelect}
               selectedPatient={selectedPatient}
-              title="Lista pacjentów"
               currentPage={currentPage}
               onPageChange={onPageChange}
               totalPatients={totalPatients}
               itemsPerPage={itemsPerPage}
+              onCheckIn={onCheckIn}
+              onReschedule={onReschedule}
             />
           </div>
 
