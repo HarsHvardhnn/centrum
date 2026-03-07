@@ -55,6 +55,8 @@ import ReportsDashboard from "./components/Reports/ReportsDashboard";
 import AppointmentConfigPage from "./components/admin/AppointmentConfigPage";
 import JWTSettingsPage from "./components/admin/JWTSettingsPage";
 import PermanentDeletePage from "./components/admin/PermanentDeletePage";
+import SystemSettingsPage from "./components/admin/SystemSettingsPage";
+import DocumentTemplatesPlaceholder from "./components/admin/DocumentTemplatesPlaceholder";
 import TokenExpiryPopup from "./components/UtilComponents/TokenExpiryPopup";
 import InactivityPopup from "./components/UtilComponents/InactivityPopup";
 import { useInactivityTracker } from "./hooks/useInactivityTracker";
@@ -239,6 +241,8 @@ const routes = createBrowserRouter([
           { path: "/administracja/konfiguracja-wizyt", element: <AppointmentConfigPage /> },
           { path: "/administracja/ustawienia-jwt", element: <JWTSettingsPage /> },
           { path: "/administracja/trwale-usuwanie", element: <PermanentDeletePage /> },
+          { path: "/ustawienia", element: <SystemSettingsPage /> },
+          { path: "/administracja/szablony-dokumentow", element: <DocumentTemplatesPlaceholder /> },
         ],
       },
     ],
@@ -376,6 +380,10 @@ const routes = createBrowserRouter([
   {
     path: "/admin/jwt-settings",
     element: <Navigate to="/administracja/ustawienia-jwt" replace />,
+  },
+  {
+    path: "/settings",
+    element: <Navigate to="/ustawienia" replace />,
   },
 
   // Catch all route

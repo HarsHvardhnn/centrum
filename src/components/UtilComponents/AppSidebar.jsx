@@ -235,11 +235,8 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
           <NavItem
             icon={<Settings size={ICON_SIZE} strokeWidth={2} />}
             label="Ustawienia"
-            to={user?.role === "doctor" ? "/lekarz/ustawienia" : "/administracja/konta"}
-            isActive={
-              currentPath === "/lekarz/ustawienia" ||
-              currentPath === "/administracja/konta"
-            }
+            to="/ustawienia"
+            isActive={currentPath === "/ustawienia"}
             collapsed={collapsed}
           />
         </SidebarSection>
