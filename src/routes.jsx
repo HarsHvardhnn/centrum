@@ -19,7 +19,6 @@ import OurDoctorsPage from "./components/User/Pages/OurDoctorsPage";
 import OurServicesPage from "./components/User/Pages/OurServicesPage";
 import ServicesDetailPage from "./components/User/Pages/ServicesDetailPage";
 import MedicalDashboard from "./components/Dashboard";
-import Header from "./components/UtilComponents/Header";
 import DoctorDetailPage from "./components/Doctor/DoctorDetailsPage";
 import NotFound404 from "./components/UtilComponents/NotFound";
 import {
@@ -93,12 +92,10 @@ const RootRoute = () => {
 
 // Modified App component to include the sidebar
 function MainLayout() {
-  const location = useLocation();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user, logout } = useUser();
   const { showPopup, inactivityTimeout, handleStayActive, setOnLogout } = useInactivityTracker();
-  const isPatientDetailsPage = /^\/szczegoly-pacjenta\/[^/]+$/.test(location.pathname);
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -124,9 +121,9 @@ function MainLayout() {
         <title>CM7Med</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      {/* Fixed Header - use patient-details header on patient details page */}
+      {/* Fixed Header - same navbar with search on all pages */}
       <div className="fixed top-0 left-0 right-0 z-10">
-        {isPatientDetailsPage ? <PatientDetailsHeader /> : <Header />}
+        <PatientDetailsHeader />
       </div>
 
       <div className="flex bg-gray-50">

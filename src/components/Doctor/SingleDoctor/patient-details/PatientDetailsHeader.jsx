@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, Clock, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../../../context/userContext";
+import appointmentHelper from "../../../../helpers/appointmentHelper";
 
 const HEADER_BG = "#2a9d8f";
+const SEARCH_DEBOUNCE_MS = 300;
 const TOP_ACCENT = "#4bcad4";
 const TEXT_PRIMARY = "#89e9f2";   // brand, session, name, time - bright light blue/cyan
 const TEXT_SECONDARY = "#6dd5e0"; // profession - slightly darker cyan
@@ -25,11 +27,15 @@ function getInitials(name) {
   return name.charAt(0).toUpperCase();
 }
 
-const PatientDetailsHeader = ({ onSearchPatient, notificationCount = 3 }) => {
+const PatientDetailsHeader = ({ notificationCount = 3 }) => {
   const navigate = useNavigate();
   const { user } = useUser();
   const [searchValue, setSearchValue] = useState("");
   const [currentTime, setCurrentTime] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const searchContainerRef = useRef(null);
 
   // Live clock
   useEffect(() => {
@@ -42,10 +48,59 @@ const PatientDetailsHeader = ({ onSearchPatient, notificationCount = 3 }) => {
     return () => clearInterval(t);
   }, []);
 
+  // Debounced search: fetch appointments (search by name, PESEL, phone, email)
+  useEffect(() => {
+    if (!searchValue.trim()) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      setShowDropdown(true);
+      try {
+        const response = await appointmentHelper.getAllAppointments(
+          1,
+          15,
+          searchValue.trim(),
+          {},
+          "date",
+          "desc"
+        );
+        const list = response?.data ?? [];
+        setSearchResults(Array.isArray(list) ? list : []);
+      } catch (e) {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchValue]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectAppointment = (appointment) => {
+    const patientId = appointment.patient_id || appointment.patient?._id || appointment.patient?.id;
+    if (!patientId) return;
+    setSearchValue("");
+    setSearchResults([]);
+    setShowDropdown(false);
+    navigate(`/szczegoly-pacjenta/${patientId}?appointmentId=${appointment._id || appointment.id}`);
+  };
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (onSearchPatient && searchValue.trim()) {
-      onSearchPatient(searchValue.trim());
+    if (searchResults.length > 0) {
+      handleSelectAppointment(searchResults[0]);
     }
   };
 
@@ -73,9 +128,9 @@ const PatientDetailsHeader = ({ onSearchPatient, notificationCount = 3 }) => {
 
       {/* Search - centered, aligned */}
       <form onSubmit={handleSearchSubmit} className="flex-1 flex justify-center min-w-0 max-w-xl">
-        <div className="relative w-full">
+        <div ref={searchContainerRef} className="relative w-full">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-[1]"
             size={20}
             strokeWidth={2}
             style={{ color: SEARCH_PLACEHOLDER }}
@@ -84,10 +139,41 @@ const PatientDetailsHeader = ({ onSearchPatient, notificationCount = 3 }) => {
             type="text"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
-            placeholder="Szukaj pacjenta (PESEL / Nazwisko)"
+            onFocus={() => searchValue.trim() && setShowDropdown(true)}
+            placeholder="Szukaj pacjenta (PESEL / Nazwisko / telefon / email)"
             className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white text-gray-800 border border-gray-200 focus:ring-2 focus:ring-offset-0 focus:ring-white/50 outline-none"
             style={{ color: "#1f2937" }}
           />
+          {showDropdown && searchValue.trim() && (
+            <div
+              className="absolute left-0 right-0 top-full mt-1 rounded-lg bg-white border border-gray-200 shadow-lg max-h-[320px] overflow-y-auto z-20"
+              role="listbox"
+            >
+              {searchLoading ? (
+                <div className="px-4 py-3 text-gray-500 text-sm">Wyszukiwanie…</div>
+              ) : searchResults.length === 0 ? (
+                <div className="px-4 py-3 text-gray-500 text-sm">Brak wyników</div>
+              ) : (
+                searchResults.map((item) => {
+                  const p = item.patient;
+                  const name = p?.name ?? "—";
+                  const idDisplay = p?.patientId ?? p?.govtId ?? item.patient_id ?? "—";
+                  return (
+                    <button
+                      key={item._id || item.id}
+                      type="button"
+                      role="option"
+                      onClick={() => handleSelectAppointment(item)}
+                      className="w-full text-left px-4 py-2.5 hover:bg-gray-100 border-b border-gray-100 last:border-b-0 first:rounded-t-lg last:rounded-b-lg"
+                    >
+                      <span className="font-medium text-gray-800 block truncate">{name}</span>
+                      <span className="text-xs text-gray-500 truncate block">ID: {idDisplay}</span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          )}
         </div>
       </form>
 
