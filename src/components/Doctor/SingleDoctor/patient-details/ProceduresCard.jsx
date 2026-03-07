@@ -3,11 +3,11 @@ import { Search, X } from "lucide-react";
 
 const DEBOUNCE_MS = 300;
 
-const DiagnosisCard = ({
-  diagnoses = [],
-  onAddDiagnosis,
-  onRemoveDiagnosis,
-  onSearchIcd10,
+const ProceduresCard = ({
+  procedures = [],
+  onAddProcedure,
+  onRemoveProcedure,
+  onSearchIcd9,
   disabled,
 }) => {
   const [searchValue, setSearchValue] = useState("");
@@ -17,7 +17,7 @@ const DiagnosisCard = ({
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    if (!onSearchIcd10 || !searchValue.trim()) {
+    if (!onSearchIcd9 || !searchValue.trim()) {
       setSearchResults([]);
       setShowDropdown(false);
       return;
@@ -26,7 +26,7 @@ const DiagnosisCard = ({
       setSearchLoading(true);
       setShowDropdown(true);
       try {
-        const results = await onSearchIcd10(searchValue);
+        const results = await onSearchIcd9(searchValue);
         setSearchResults(Array.isArray(results) ? results : []);
       } catch (e) {
         setSearchResults([]);
@@ -35,7 +35,7 @@ const DiagnosisCard = ({
       }
     }, DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [searchValue, onSearchIcd10]);
+  }, [searchValue, onSearchIcd9]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -48,7 +48,7 @@ const DiagnosisCard = ({
   }, []);
 
   const handleSelectResult = (item) => {
-    onAddDiagnosis?.({ code: item.code, name: item.name || item.title, isPrimary: diagnoses.length === 0 });
+    onAddProcedure?.({ code: item.code, name: item.name || item.title });
     setSearchValue("");
     setSearchResults([]);
     setShowDropdown(false);
@@ -56,7 +56,7 @@ const DiagnosisCard = ({
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
-      <h3 className="text-base font-semibold text-gray-900 mb-4">Rozpoznanie (ICD-10)</h3>
+      <h3 className="text-base font-semibold text-gray-900 mb-4">Badania i skierowania (ICD-9)</h3>
       <div className="relative mb-4" ref={dropdownRef}>
         <Search
           className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -67,7 +67,7 @@ const DiagnosisCard = ({
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
-          placeholder="Wyszukaj wg kodu ICD-10 lub nazwy choroby..."
+          placeholder="Wyszukaj wg kodu ICD-9 lub nazwy procedury..."
           disabled={disabled}
           className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none disabled:bg-gray-50"
         />
@@ -93,22 +93,19 @@ const DiagnosisCard = ({
           </div>
         )}
       </div>
-      {diagnoses.length > 0 && (
+      {procedures.length > 0 && (
         <div className="space-y-2 mb-4">
-          {diagnoses.map((d, i) => (
+          {procedures.map((p, i) => (
             <div
-              key={d.id || d._id || i}
+              key={p.id || p._id || i}
               className="flex items-center flex-wrap gap-2 px-3 py-2 rounded-lg bg-teal-50 border border-teal-100"
             >
-              <span className="text-xs font-medium text-teal-800 px-2 py-0.5 rounded bg-teal-100">
-                {d.isPrimary ? "Główne" : "Dodatkowe"}
-              </span>
               <span className="text-sm text-gray-800 flex-1 min-w-0 truncate">
-                {d.code} {d.name}
+                {p.code} {p.name}
               </span>
               <button
                 type="button"
-                onClick={() => onRemoveDiagnosis?.(d.id || d._id)}
+                onClick={() => onRemoveProcedure?.(p.id || p._id)}
                 disabled={disabled}
                 className="p-1 rounded hover:bg-teal-200/50 text-gray-500 hover:text-gray-700 disabled:opacity-50"
                 aria-label="Usuń"
@@ -119,9 +116,9 @@ const DiagnosisCard = ({
           ))}
         </div>
       )}
-      <p className="text-xs text-gray-500">Wpisz kod lub nazwę, wybierz z listy, aby dodać rozpoznanie.</p>
+      <p className="text-xs text-gray-500">Wpisz kod lub nazwę, wybierz z listy, aby dodać procedurę.</p>
     </div>
   );
 };
 
-export default DiagnosisCard;
+export default ProceduresCard;

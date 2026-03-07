@@ -337,6 +337,67 @@ class AppointmentService {
     }
   }
 
+  // --- ICD-10 / ICD-9 (visit diagnoses & procedures) ---
+  async getVisitDiagnoses(visitId) {
+    try {
+      const response = await apiCaller("GET", `/appointments/${visitId}/diagnoses`);
+      return response.data?.data ?? [];
+    } catch (error) {
+      console.error("Error fetching visit diagnoses:", error);
+      return [];
+    }
+  }
+
+  async getVisitProcedures(visitId) {
+    try {
+      const response = await apiCaller("GET", `/appointments/${visitId}/procedures`);
+      return response.data?.data ?? [];
+    } catch (error) {
+      console.error("Error fetching visit procedures:", error);
+      return [];
+    }
+  }
+
+  async addVisitDiagnosis(visitId, payload) {
+    const response = await apiCaller("POST", `/appointments/${visitId}/diagnoses`, payload);
+    return response.data;
+  }
+
+  async removeVisitDiagnosis(visitId, diagnosisId) {
+    await apiCaller("DELETE", `/appointments/${visitId}/diagnoses/${diagnosisId}`);
+  }
+
+  async addVisitProcedure(visitId, payload) {
+    const response = await apiCaller("POST", `/appointments/${visitId}/procedures`, payload);
+    return response.data;
+  }
+
+  async removeVisitProcedure(visitId, procedureId) {
+    await apiCaller("DELETE", `/appointments/${visitId}/procedures/${procedureId}`);
+  }
+
+  async searchIcd10(query) {
+    if (!query?.trim()) return [];
+    try {
+      const response = await apiCaller("GET", `/api/icd10/search?q=${encodeURIComponent(query.trim())}`);
+      return Array.isArray(response.data) ? response.data : response.data?.data ?? [];
+    } catch (error) {
+      console.error("Error searching ICD-10:", error);
+      return [];
+    }
+  }
+
+  async searchIcd9(query) {
+    if (!query?.trim()) return [];
+    try {
+      const response = await apiCaller("GET", `/api/icd9/search?q=${encodeURIComponent(query.trim())}`);
+      return Array.isArray(response.data) ? response.data : response.data?.data ?? [];
+    } catch (error) {
+      console.error("Error searching ICD-9:", error);
+      return [];
+    }
+  }
+
   // Create new appointment
   async createAppointment(data) {
     try {

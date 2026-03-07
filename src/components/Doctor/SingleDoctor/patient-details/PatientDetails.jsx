@@ -12,6 +12,7 @@ import PatientHeaderCard from "./PatientHeaderCard";
 import VisitHistoryCard from "./VisitHistoryCard";
 import LifeParamsCard from "./LifeParamsCard";
 import DiagnosisCard from "./DiagnosisCard";
+import ProceduresCard from "./ProceduresCard";
 import DocumentationCard from "./DocumentationCard";
 import NotesCard from "./NotesCard";
 import MedicalDocumentsCard from "./MedicalDocumentsCard";
@@ -421,8 +422,9 @@ const PatientDetailsPage = () => {
   const [showVisitCardModal, setShowVisitCardModal] = useState(false);
   const [pendingVisitCardData, setPendingVisitCardData] = useState(null);
 
-  // Diagnoses (ICD-10) - API to be wired later
+  // Diagnoses (ICD-10) and procedures (ICD-9) – from visit APIs
   const [diagnoses, setDiagnoses] = useState([]);
+  const [procedures, setProcedures] = useState([]);
   const [lastSavedTime, setLastSavedTime] = useState(null);
 
   // Auto-save functionality for patient details (direct save)
@@ -548,7 +550,7 @@ const PatientDetailsPage = () => {
     }
   }, [id, appointmentIdFromUrl]);
 
-  // Fetch appointment details
+  // Fetch appointment details (including ICD-10 diagnoses and ICD-9 procedures)
   const fetchAppointmentDetails = async (appointmentId) => {
     try {
       showLoader();
@@ -579,6 +581,20 @@ const PatientDetailsPage = () => {
             height: appointmentPatientData.height || prevData.height || null
           }));
         }
+      }
+
+      // Fetch visit diagnoses (ICD-10) and procedures (ICD-9)
+      try {
+        const [diagnosesList, proceduresList] = await Promise.all([
+          appointmentHelper.getVisitDiagnoses(appointmentId),
+          appointmentHelper.getVisitProcedures(appointmentId),
+        ]);
+        setDiagnoses(Array.isArray(diagnosesList) ? diagnosesList : []);
+        setProcedures(Array.isArray(proceduresList) ? proceduresList : []);
+      } catch (e) {
+        console.error("Error fetching visit medical codes:", e);
+        setDiagnoses([]);
+        setProcedures([]);
       }
     } catch (error) {
       console.error("Error fetching appointment details:", error);
@@ -1112,8 +1128,55 @@ const PatientDetailsPage = () => {
               <>
                 <DiagnosisCard
                   diagnoses={diagnoses}
-                  onAddDiagnosis={() => setDiagnoses((prev) => [...prev, { id: Date.now(), code: "I10", name: "Nadciśnienie tętnicze samoistne" }])}
-                  onRemoveDiagnosis={(idOrIndex) => setDiagnoses((prev) => prev.filter((d, i) => d.id !== idOrIndex && i !== idOrIndex))}
+                  onSearchIcd10={(q) => appointmentHelper.searchIcd10(q)}
+                  onAddDiagnosis={async (item) => {
+                    if (!currentAppointmentId) return;
+                    try {
+                      await appointmentHelper.addVisitDiagnosis(currentAppointmentId, item);
+                      const list = await appointmentHelper.getVisitDiagnoses(currentAppointmentId);
+                      setDiagnoses(list);
+                      toast.success("Dodano rozpoznanie");
+                    } catch (e) {
+                      toast.error(e.response?.data?.message || "Nie udało się dodać rozpoznania");
+                    }
+                  }}
+                  onRemoveDiagnosis={async (id) => {
+                    if (!currentAppointmentId) return;
+                    try {
+                      await appointmentHelper.removeVisitDiagnosis(currentAppointmentId, id);
+                      const list = await appointmentHelper.getVisitDiagnoses(currentAppointmentId);
+                      setDiagnoses(list);
+                      toast.success("Usunięto rozpoznanie");
+                    } catch (e) {
+                      toast.error(e.response?.data?.message || "Nie udało się usunąć rozpoznania");
+                    }
+                  }}
+                />
+                <ProceduresCard
+                  procedures={procedures}
+                  onSearchIcd9={(q) => appointmentHelper.searchIcd9(q)}
+                  onAddProcedure={async (item) => {
+                    if (!currentAppointmentId) return;
+                    try {
+                      await appointmentHelper.addVisitProcedure(currentAppointmentId, item);
+                      const list = await appointmentHelper.getVisitProcedures(currentAppointmentId);
+                      setProcedures(list);
+                      toast.success("Dodano procedurę");
+                    } catch (e) {
+                      toast.error(e.response?.data?.message || "Nie udało się dodać procedury");
+                    }
+                  }}
+                  onRemoveProcedure={async (id) => {
+                    if (!currentAppointmentId) return;
+                    try {
+                      await appointmentHelper.removeVisitProcedure(currentAppointmentId, id);
+                      const list = await appointmentHelper.getVisitProcedures(currentAppointmentId);
+                      setProcedures(list);
+                      toast.success("Usunięto procedurę");
+                    } catch (e) {
+                      toast.error(e.response?.data?.message || "Nie udało się usunąć procedury");
+                    }
+                  }}
                 />
                 <DocumentationCard
                   title="Wywiad z pacjentem"
