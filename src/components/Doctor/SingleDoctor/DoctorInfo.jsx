@@ -1,80 +1,56 @@
 import React from "react";
-import { FaStethoscope } from "react-icons/fa6";
 
-const DoctorInfoCard = ({ doctor }) => {
-  const {
-    name,
-    specialty,
-    timeSlot,
-    timeZone = "BST",
-    description,
-    avatarUrl,
-  } = doctor;
+const formatDateLong = (date) => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) return "";
+  const s = new Date(date).toLocaleDateString("pl-PL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
+const DoctorInfoCard = ({ doctor, dailySummary, selectedDate }) => {
+  const { name, timeSlot, avatarUrl } = doctor || {};
+  const liczbaWizyt = dailySummary?.liczbaWizyt ?? 0;
+  const pozostaloWizyt = dailySummary?.pozostaloWizyt ?? 0;
+  const workingHours = timeSlot || "—";
 
   return (
-    <div className="flex items-start p-2  rounded-lg">
-      {/* Doctor Avatar */}
-      <div className="mr-3 flex-shrink-0">
-        <img
-          src={avatarUrl}
-          alt={name || "Lekarz"}
-          referrerPolicy="no-referrer"
-          className="w-24 h-24 rounded-full object-cover border border-blue-100"
-        />
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-gray-200">
+      {/* Left: Doctor details */}
+      <div className="flex items-center gap-4 min-w-0">
+        <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
+          <img
+            src={avatarUrl}
+            alt={name || "Lekarz"}
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-gray-900 truncate">{name || ""}</h1>
+          {selectedDate && (
+            <p className="text-sm text-gray-500 mt-0.5">{formatDateLong(selectedDate)}</p>
+          )}
+        </div>
       </div>
 
-      {/* Doctor Information */}
-      <div className="flex flex-col">
-        {/* Name */}
-        <h2 className="text-lg font-bold text-gray-800 mb-1">{name || ""}</h2>
-
-        {/* Specialty and Time Slot */}
-        <div className="flex items-center mb-2">
-          <div className="flex items-center mr-4 gap-2">
-            <FaStethoscope />
-            <span className="text-gray-600 text-sm">{specialty}</span>
-          </div>
-
-          <div className="flex items-center">
-            <svg
-              className="w-4 h-4 text-gray-500 mr-[6px]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              ></path>
-            </svg>
-            <span className="text-gray-600 text-sm">
-              {timeSlot} {timeZone}
-            </span>
-          </div>
+      {/* Right: Daily summary – three cards */}
+      <div className="flex flex-wrap gap-3 sm:gap-4 w-full sm:w-auto sm:flex-shrink-0">
+        {/* GODZINY PRACY – teal card */}
+        <div className="flex-1 min-w-[140px] rounded-xl px-4 py-3 bg-teal-50 border border-teal-100">
+          <p className="text-xs font-bold uppercase tracking-wide text-teal-800">Godziny pracy</p>
+          <p className="text-lg font-bold text-teal-800 mt-0.5">{workingHours}</p>
         </div>
-
-        {/* Description */}
-        <div className="flex gap-2">
-          <svg
-            className="size-4 text-gray-700 mt-1 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            ></path>
-          </svg>
-          <p className="text-gray-600 text-sm leading-snug line-clamp-4">
-            {description}
-          </p>
+        <div className="flex-1 min-w-[120px] rounded-xl px-4 py-3 bg-white border border-gray-200 shadow-sm">
+          <p className="text-2xl font-bold text-gray-900">{liczbaWizyt}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 mt-0.5">Wizyt dziś</p>
+        </div>
+        <div className="flex-1 min-w-[120px] rounded-xl px-4 py-3 bg-white border border-gray-200 shadow-sm">
+          <p className="text-2xl font-bold text-gray-900">{pozostaloWizyt}</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 mt-0.5">Pozostało</p>
         </div>
       </div>
     </div>

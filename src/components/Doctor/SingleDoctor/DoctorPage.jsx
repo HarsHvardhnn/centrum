@@ -24,7 +24,29 @@ function DoctorsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPatients, setTotalPatients] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [dailySummary, setDailySummary] = useState({ liczbaWizyt: 0, pozostaloWizyt: 0 });
   const itemsPerPage = 10;
+
+  /** Count appointments by status. Excludes cancelled. Liczba wizyt = Zarezerwowana + Zameldowana + Zakończona; Pozostało = Zarezerwowana + Zameldowana. Backend may return liczbaWizyt/pozostaloWizyt for full-day accuracy (when list is paginated). */
+  const computeDailySummary = (list, fromBackend) => {
+    if (fromBackend && fromBackend.liczbaWizyt != null && fromBackend.pozostaloWizyt != null) {
+      return { liczbaWizyt: fromBackend.liczbaWizyt, pozostaloWizyt: fromBackend.pozostaloWizyt };
+    }
+    if (!Array.isArray(list)) return { liczbaWizyt: 0, pozostaloWizyt: 0 };
+    let liczbaWizyt = 0;
+    let pozostaloWizyt = 0;
+    const cancelled = ["cancelled", "canceled"];
+    for (const apt of list) {
+      const s = String(apt.status || "").toLowerCase().replace(/\s+/g, "");
+      if (cancelled.includes(s)) continue;
+      const isBooked = s === "booked";
+      const isCheckedIn = s === "checkedin";
+      const isCompleted = s === "completed" || s === "finished";
+      if (isBooked || isCheckedIn || isCompleted) liczbaWizyt += 1;
+      if (isBooked || isCheckedIn) pozostaloWizyt += 1;
+    }
+    return { liczbaWizyt, pozostaloWizyt };
+  };
 
   useEffect(() => {
     const fetchDoctorData = async () => {
@@ -91,6 +113,11 @@ function DoctorsPage() {
       if (response && response.success) {
         setPatients(response.data);
         setTotalPatients(response.total || response.data.length);
+        const summary = computeDailySummary(response.data, {
+          liczbaWizyt: response.liczbaWizyt,
+          pozostaloWizyt: response.pozostaloWizyt,
+        });
+        setDailySummary(summary);
       } else {
         console.error("Failed to load patients data");
       }
@@ -223,6 +250,7 @@ function DoctorsPage() {
       <DoctorDashboard
         doctor={doctorInfo}
         patients={patients}
+        dailySummary={dailySummary}
         stats={stats}
         selectedPatient={appointmentId}
         patientDetails={patientDetails}

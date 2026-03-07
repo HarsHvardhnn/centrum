@@ -9,21 +9,11 @@ import PatientInfo from "./PatientInfo";
 import Breadcrumb from "./BreadCrumb";
 import { useUser } from "../../../context/userContext";
 
-const formatSelectedDateLabel = (date) => {
-  if (!date || !(date instanceof Date) || isNaN(date.getTime())) return "";
-  const s = new Date(date).toLocaleDateString("pl-PL", {
-    weekday: "long",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-  return s.charAt(0).toUpperCase() + s.slice(1);
-};
-
 const DoctorDashboard = ({
   doctor,
   patients,
   patientDetails,
+  dailySummary,
   onDateSelect,
   onSearch,
   onFilter,
@@ -80,7 +70,7 @@ const DoctorDashboard = ({
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between gap-20">
           <div className="w-full">
-            <DoctorInfoCard doctor={doctor} />
+            <DoctorInfoCard doctor={doctor} dailySummary={dailySummary} selectedDate={selectedDate} />
           </div>
 
           {/* <div className="md:col-span-3">
@@ -89,11 +79,6 @@ const DoctorDashboard = ({
         </div>
 
         <div className="w-full mx-auto">
-          {selectedDate && (
-            <p className="text-gray-700 font-medium mb-2">
-              {formatSelectedDateLabel(selectedDate)}
-            </p>
-          )}
           <Calendar
             viewMode="month"
             selectedDate={selectedDate || new Date()}
