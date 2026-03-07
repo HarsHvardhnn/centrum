@@ -17,7 +17,7 @@ const DoctorInfoCard = ({ doctor }) => {
       <div className="mr-3 flex-shrink-0">
         <img
           src={avatarUrl}
-          alt={`Dr. ${name}`}
+          alt={name || "Lekarz"}
           referrerPolicy="no-referrer"
           className="w-24 h-24 rounded-full object-cover border border-blue-100"
         />
@@ -26,7 +26,7 @@ const DoctorInfoCard = ({ doctor }) => {
       {/* Doctor Information */}
       <div className="flex flex-col">
         {/* Name */}
-        <h2 className="text-lg font-bold text-gray-800 mb-1">Dr. {name}</h2>
+        <h2 className="text-lg font-bold text-gray-800 mb-1">{name || ""}</h2>
 
         {/* Specialty and Time Slot */}
         <div className="flex items-center mb-2">

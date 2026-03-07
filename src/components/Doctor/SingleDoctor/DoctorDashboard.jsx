@@ -9,6 +9,17 @@ import PatientInfo from "./PatientInfo";
 import Breadcrumb from "./BreadCrumb";
 import { useUser } from "../../../context/userContext";
 
+const formatSelectedDateLabel = (date) => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) return "";
+  const s = new Date(date).toLocaleDateString("pl-PL", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
 const DoctorDashboard = ({
   doctor,
   patients,
@@ -16,9 +27,9 @@ const DoctorDashboard = ({
   onDateSelect,
   onSearch,
   onFilter,
-  onBookAppointment,
   onPatientSelect,
   selectedPatient,
+  selectedDate,
   breadcrumbs,
   setAppointmentId,
   currentPage,
@@ -63,19 +74,6 @@ const DoctorDashboard = ({
             />
           </div> */}
 
-          {/* <button
-            onClick={onFilter}
-            className="p-2 border border-gray-300 rounded-lg"
-          >
-            <Filter size={18} className="text-gray-600" />
-          </button> */}
-
-          <button
-            onClick={onBookAppointment}
-            className="bg-teal-500 text-white px-4 py-2 rounded-lg"
-          >
-            Umów wizytę
-          </button>
         </div>
       </div>
 
@@ -91,9 +89,14 @@ const DoctorDashboard = ({
         </div>
 
         <div className="w-full mx-auto">
+          {selectedDate && (
+            <p className="text-gray-700 font-medium mb-2">
+              {formatSelectedDateLabel(selectedDate)}
+            </p>
+          )}
           <Calendar
             viewMode="month"
-            selectedDate={new Date()}
+            selectedDate={selectedDate || new Date()}
             onDateSelect={onDateSelect}
           />
         </div>

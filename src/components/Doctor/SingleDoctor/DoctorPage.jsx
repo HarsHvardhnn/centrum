@@ -127,9 +127,10 @@ function DoctorsPage() {
   };
 
   const transformToDoctorInfo = (apiDoctor) => {
-    const fullName = `${apiDoctor.name?.first || ""} ${
+    let fullName = `${apiDoctor.name?.first || ""} ${
       apiDoctor.name?.last || ""
     }`.trim();
+    fullName = fullName.replace(/^\s*(dr\.?|lek\.?|prof\.?|inż\.?)\s*/gi, "").trim() || fullName;
     const specialty = apiDoctor.specialization?.[0]?.name || "General Practitioner";
 
     // Determine available time slot (optional enhancement using weeklyShifts)
@@ -228,13 +229,13 @@ function DoctorsPage() {
         onPatientSelect={handlePatientSelect}
         setAppointmentId={setAppointmentId}
         onDateSelect={setSelectedDate}
+        selectedDate={selectedDate}
         breadcrumbs={[
           { label: "Panel główny", onClick: () => navigate("/administracja") },
           { label: "Wizyty lekarskie", onClick: null },
         ]}
         onSearch={handleSearch}
         onFilter={() => {}}
-        onBookAppointment={() => setShowAppointmentModal(true)}
         currentPage={currentPage}
         onPageChange={handlePageChange}
         totalPatients={totalPatients}
