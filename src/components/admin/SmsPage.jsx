@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { apiCaller } from "../../utils/axiosInstance";
+import { useUser } from "../../context/userContext";
+import { toast } from "sonner";
 import SmsHistory from "./SmsHistory";
 
 /**
@@ -22,6 +24,9 @@ import SmsHistory from "./SmsHistory";
  */
 
 const UserMessaging = () => {
+  const { user } = useUser();
+  const isAdmin = user?.role === "admin";
+
   // Add tab state
   const [activeTab, setActiveTab] = useState("send");
   
@@ -42,6 +47,10 @@ const UserMessaging = () => {
   const [showTemplates, setShowTemplates] = useState(false);
   const [newTemplate, setNewTemplate] = useState({ title: "", description: "" });
   const [editingTemplate, setEditingTemplate] = useState(null);
+  // Bulk permanent delete – SMS templates (admin only)
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState([]);
+  const [showBulkDeleteTemplatesModal, setShowBulkDeleteTemplatesModal] = useState(false);
+  const [bulkDeleteTemplatesSubmitting, setBulkDeleteTemplatesSubmitting] = useState(false);
   
   // Character counter state
   const [characterCount, setCharacterCount] = useState(0);
@@ -328,6 +337,48 @@ const UserMessaging = () => {
       setTimeout(() => setError(null), 3000);
     } finally {
       setTemplateSubmitting(false);
+    }
+  };
+
+  // Bulk permanent delete – SMS templates (admin only)
+  const handleTemplateSelect = (templateId) => {
+    setSelectedTemplateIds((prev) =>
+      prev.includes(templateId)
+        ? prev.filter((id) => id !== templateId)
+        : [...prev, templateId]
+    );
+  };
+  const handleTemplateSelectAll = () => {
+    if (selectedTemplateIds.length === templates.length) {
+      setSelectedTemplateIds([]);
+    } else {
+      setSelectedTemplateIds(templates.map((t) => t._id));
+    }
+  };
+  const handleBulkDeleteTemplatesConfirm = async () => {
+    if (selectedTemplateIds.length === 0) return;
+    setBulkDeleteTemplatesSubmitting(true);
+    try {
+      const response = await apiCaller("POST", "/api/sms-templates/bulk-delete", {
+        ids: selectedTemplateIds,
+      });
+      if (response.data?.success) {
+        const count = response.data.deletedCount ?? selectedTemplateIds.length;
+        toast.success(response.data.message || `Trwale usunięto ${count} szablonów SMS`);
+        setShowBulkDeleteTemplatesModal(false);
+        setSelectedTemplateIds([]);
+        await fetchTemplates();
+        if (editingTemplate && selectedTemplateIds.includes(editingTemplate._id)) {
+          setEditingTemplate(null);
+          setNewTemplate({ title: "", description: "" });
+        }
+      } else {
+        toast.error(response.data?.message || "Nie udało się trwale usunąć szablonów");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Błąd podczas trwałego usuwania szablonów SMS");
+    } finally {
+      setBulkDeleteTemplatesSubmitting(false);
     }
   };
 
@@ -718,6 +769,31 @@ const UserMessaging = () => {
                   
                   <div>
                     <h4 className="text-md font-medium mb-2">Dostępne szablony</h4>
+                    {isAdmin && templates.length > 0 && (
+                      <div className="flex items-center gap-3 mb-3">
+                        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedTemplateIds.length === templates.length && templates.length > 0}
+                            onChange={handleTemplateSelectAll}
+                            className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                          />
+                          Zaznacz wszystkie
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setShowBulkDeleteTemplatesModal(true)}
+                          disabled={selectedTemplateIds.length === 0}
+                          className={`px-3 py-1.5 text-sm rounded-lg ${
+                            selectedTemplateIds.length === 0
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
+                          }`}
+                        >
+                          Trwale usuń wybrane ({selectedTemplateIds.length})
+                        </button>
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {templatesLoading ? (
                         <p className="text-gray-500">Ładowanie szablonów...</p>
@@ -727,9 +803,17 @@ const UserMessaging = () => {
                         templates.map((template) => (
                           <div key={template._id} className={`border rounded-lg p-3 hover:shadow-md ${
                             template.isActive ? 'bg-white' : 'bg-gray-50'
-                          }`}>
+                          } ${selectedTemplateIds.includes(template._id) ? 'ring-2 ring-red-300' : ''}`}>
                             <div className="flex justify-between items-center mb-1">
                               <div className="flex items-center gap-2">
+                                {isAdmin && (
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedTemplateIds.includes(template._id)}
+                                    onChange={() => handleTemplateSelect(template._id)}
+                                    className="rounded border-gray-300 text-red-600 focus:ring-red-500 flex-shrink-0"
+                                  />
+                                )}
                                 <h5 className="font-medium">{template.title}</h5>
                                 {!template.isActive && (
                                   <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
@@ -874,6 +958,41 @@ const UserMessaging = () => {
       ) : (
         // History Tab Content
         <SmsHistory />
+      )}
+
+      {/* Bulk permanent delete – SMS templates confirmation (admin only) */}
+      {showBulkDeleteTemplatesModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Trwałe usunięcie szablonów SMS
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Ta operacja jest <strong>nieodwracalna</strong>. Wybrane szablony SMS ({selectedTemplateIds.length}) zostaną trwale usunięte z bazy danych. Nie będzie można ich przywrócić.
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Czy na pewno chcesz kontynuować?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => !bulkDeleteTemplatesSubmitting && setShowBulkDeleteTemplatesModal(false)}
+                disabled={bulkDeleteTemplatesSubmitting}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Anuluj
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteTemplatesConfirm}
+                disabled={bulkDeleteTemplatesSubmitting}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {bulkDeleteTemplatesSubmitting ? "Usuwanie..." : "Tak, trwale usuń"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

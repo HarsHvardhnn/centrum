@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from "react";
 import Calendar from "./SingleDoctor/Calendar";
-import { GoDotFill } from "react-icons/go";
-import { IoIosStar } from "react-icons/io";
-import { FiThumbsUp } from "react-icons/fi";
-import { MdOutlineVerifiedUser } from "react-icons/md";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
 import { FaPlus, FaArrowLeftLong } from "react-icons/fa6";
 import { useNavigate, useParams } from "react-router-dom";
@@ -11,7 +7,6 @@ import doctorService from "../../helpers/doctorHelper";
 import { useLoader } from "../../context/LoaderContext";
 import ServiceSelectionModal from "./SingleDoctor/patient-details/ServiceSelectionModal";
 import { toast } from "sonner";
-import { apiCaller } from "../../utils/axiosInstance";
 import userServiceHelper from "../../helpers/userServiceHelper";
 
 // Doctor services helper
@@ -301,7 +296,7 @@ export default function DoctorDetailPage() {
   );
 }
 
-// Other components remain unchanged
+// Left column: only photo, name, specialization
 const DoctorCard = ({ data }) => (
   <div className="text-center p-4 w-full shadow rounded-lg flex flex-col gap-2">
     <div className="relative inline-block w-fit mx-auto rounded-full">
@@ -312,32 +307,8 @@ const DoctorCard = ({ data }) => (
       />
       <RiVerifiedBadgeFill className="absolute bottom-2 right-2 text-blue-500 text-xl" />
     </div>
-
     <h2 className="text-lg font-semibold">{data.name}</h2>
-    {/* Commenting out rating section as it's not being used
-    <p className="text-sm font-medium text-gray-700 bg-[#e6f4f4] rounded w-fit mx-auto px-3 py-1 flex gap-2 items-center">
-      <IoIosStar className="text-[#deae37] " />
-      {data.rating}
-    </p>
-    */}
-    <p className="text-sm">{data?.qualification}</p>
-    <p className="text-sm">{data?.specialization || "Ogólny"}</p>
-    <p className="text-sm">{data?.experience}</p>
-    {/* Commenting out votes and reviews section as it's not being used
-    <p className="mt-4 font-medium text-sm flex items-center justify-center gap-2">
-      <FiThumbsUp className="text-lg" />
-      98% ({data.votes} głosów)
-    </p>
-    */}
-    <p className="font-medium mb-4 text-sm flex items-center justify-center gap-2">
-      <MdOutlineVerifiedUser className="text-lg" />
-      Rejestracja Medyczna Zweryfikowana
-    </p>
-    {/* Commenting out share review button as it's not being used
-    <button className="w-full font-medium text-[#99d1d1] underline">
-      Podziel się swoją opinią
-    </button>
-    */}
+    <p className="text-sm text-gray-600">{data?.specialization || "Ogólny"}</p>
   </div>
 );
 
@@ -438,86 +409,9 @@ const AvailableTime = ({ data }) => {
   );
 };
 
-const DoctorBackground = ({ data, onDeleteService ,setIsServiceModalOpen}) => {
-  const [docData, setData] = useState(
-    data || {
-      services: [],
-      specializations: [],
-    }
-  );
-
-  // Helper function to determine if a section should be shown
-  const shouldShowSection = (section) => {
-    return section && section.length > 0;
-  };
-
+const DoctorBackground = ({ data, onDeleteService, setIsServiceModalOpen }) => {
   return (
-    <div className="p-4 space-y-6">
-      <section>
-        <h3 className="text-lg font-semibold mb-2">Biografia</h3>
-        <div className="text-sm text-gray-700 max-h-[300px] overflow-y-auto p-4 bg-gray-50 rounded-lg">
-          <p className="whitespace-pre-line">{data.biography}</p>
-        </div>
-      </section>
-
-      {shouldShowSection(data.education) && (
-        <section className="grid md:grid-cols-2 gap-8">
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Edukacja</h3>
-            {data.education.map((edu, idx) => (
-              <div key={idx} className="flex items-start gap-2 mb-4">
-                <GoDotFill className="text-teal-600 " />
-                <div className="flex flex-col gap-1">
-                  <p className="font-semibold text-sm">{edu.institute}</p>
-                  <p className="text-sm text-gray-600">{edu.degree}</p>
-                  <p className="text-sm text-gray-500">{edu.duration}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {shouldShowSection(data.experienceList) && (
-            <div>
-              <h3 className="text-lg font-semibold mb-4">
-                Praca i Doświadczenie
-              </h3>
-              {data.experienceList.map((exp, idx) => (
-                <div key={idx} className="flex items-start gap-2 mb-4">
-                  <GoDotFill className="text-teal-600" />
-                  <div className="flex flex-col gap-1">
-                    <p className="font-semibold text-sm">{exp.workplace}</p>
-                    <p className="text-sm text-gray-500">{exp.duration}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-
-      <hr className="my-6" />
-
-      {shouldShowSection(data.achievements) && (
-        <section className="border-b pb-4 mb-6">
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Osiągnięcia</h3>
-            <div className="flex gap-4">
-              {data.achievements.map((ach, idx) => (
-                <div key={idx} className="flex w-full items-start gap-4 mb-4">
-                  <GoDotFill className="text-teal-600 size-6" />
-                  <div className="flex flex-col gap-1">
-                    <p className="font-semibold text-sm">{ach.title}</p>
-                    <p className="text-sm font-medium">{ach.date}</p>
-                    <p className="text-sm text-gray-600">{ach.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Selected Services Section */}
+    <div className="p-4">
       <section className="bg-white shadow rounded-lg p-5">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Usługi Lekarza</h3>

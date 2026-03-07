@@ -1,13 +1,22 @@
 import { useState, useEffect } from "react";
 import { apiCaller } from "../../utils/axiosInstance";
+import { useUser } from "../../context/userContext";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 
 const SmsHistory = () => {
+  const { user } = useUser();
+  const isAdmin = user?.role === "admin";
+
   // State for SMS data
   const [smsData, setSmsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Bulk permanent delete – SMS history (admin only)
+  const [selectedHistoryIds, setSelectedHistoryIds] = useState([]);
+  const [showBulkDeleteHistoryModal, setShowBulkDeleteHistoryModal] = useState(false);
+  const [bulkDeleteHistorySubmitting, setBulkDeleteHistorySubmitting] = useState(false);
   
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -125,6 +134,42 @@ const SmsHistory = () => {
   const handleViewDetails = (sms) => {
     setSelectedSms(sms);
     setShowDetails(true);
+  };
+
+  // Bulk permanent delete – SMS history (admin only)
+  const handleHistorySelect = (id) => {
+    setSelectedHistoryIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+  const handleHistorySelectAll = () => {
+    if (selectedHistoryIds.length === smsData.length) {
+      setSelectedHistoryIds([]);
+    } else {
+      setSelectedHistoryIds(smsData.map((s) => s._id));
+    }
+  };
+  const handleBulkDeleteHistoryConfirm = async () => {
+    if (selectedHistoryIds.length === 0) return;
+    setBulkDeleteHistorySubmitting(true);
+    try {
+      const response = await apiCaller("POST", "/sms-data/bulk-delete", {
+        ids: selectedHistoryIds,
+      });
+      if (response.data?.success) {
+        const count = response.data.deletedCount ?? selectedHistoryIds.length;
+        toast.success(response.data.message || `Trwale usunięto ${count} wpisów historii SMS`);
+        setShowBulkDeleteHistoryModal(false);
+        setSelectedHistoryIds([]);
+        await fetchSmsData();
+      } else {
+        toast.error(response.data?.message || "Nie udało się trwale usunąć wpisów historii SMS");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Błąd podczas trwałego usuwania historii SMS");
+    } finally {
+      setBulkDeleteHistorySubmitting(false);
+    }
   };
   
   // Format date for display
@@ -381,7 +426,21 @@ const SmsHistory = () => {
           {loading && <span className="text-blue-500">Ładowanie danych...</span>}
           {error && <span className="text-red-500">{error}</span>}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap items-center">
+          {isAdmin && smsData.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowBulkDeleteHistoryModal(true)}
+              disabled={selectedHistoryIds.length === 0}
+              className={`px-3 py-2 rounded-lg flex items-center gap-1 text-sm ${
+                selectedHistoryIds.length === 0
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
+              }`}
+            >
+              Trwale usuń wybrane ({selectedHistoryIds.length})
+            </button>
+          )}
           <button
             onClick={exportToCSV}
             disabled={loading || smsData.length === 0}
@@ -415,6 +474,16 @@ const SmsHistory = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead>
             <tr>
+              {isAdmin && (
+                <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
+                  <input
+                    type="checkbox"
+                    checked={smsData.length > 0 && selectedHistoryIds.length === smsData.length}
+                    onChange={handleHistorySelectAll}
+                    className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                </th>
+              )}
               <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ID wiadomości
               </th>
@@ -438,7 +507,7 @@ const SmsHistory = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan="6" className="text-center py-8">
+                <td colSpan={isAdmin ? 7 : 6} className="text-center py-8">
                   <div className="flex justify-center items-center">
                     <svg className="animate-spin h-6 w-6 text-blue-500 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -450,19 +519,29 @@ const SmsHistory = () => {
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan="6" className="text-center py-4 text-red-500">
+                <td colSpan={isAdmin ? 7 : 6} className="text-center py-4 text-red-500">
                   {error}
                 </td>
               </tr>
             ) : smsData.length === 0 ? (
               <tr>
-                <td colSpan="6" className="text-center py-4">
+                <td colSpan={isAdmin ? 7 : 6} className="text-center py-4">
                   Nie znaleziono wiadomości SMS
                 </td>
               </tr>
             ) : (
               smsData.map((sms) => (
-                <tr key={sms._id} className="hover:bg-gray-50">
+                <tr key={sms._id} className={selectedHistoryIds.includes(sms._id) ? "bg-red-50 hover:bg-red-50" : "hover:bg-gray-50"}>
+                  {isAdmin && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={selectedHistoryIds.includes(sms._id)}
+                        onChange={() => handleHistorySelect(sms._id)}
+                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      />
+                    </td>
+                  )}
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {sms.messageId || "N/A"}
                   </td>
@@ -559,6 +638,41 @@ const SmsHistory = () => {
         </div>
       )}
       
+      {/* Bulk permanent delete – SMS history confirmation (admin only) */}
+      {showBulkDeleteHistoryModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Trwałe usunięcie wpisów historii SMS
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Ta operacja jest <strong>nieodwracalna</strong>. Wybrane wpisy historii SMS ({selectedHistoryIds.length}) zostaną trwale usunięte z bazy danych. Nie będzie można ich przywrócić.
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Czy na pewno chcesz kontynuować?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => !bulkDeleteHistorySubmitting && setShowBulkDeleteHistoryModal(false)}
+                disabled={bulkDeleteHistorySubmitting}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Anuluj
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteHistoryConfirm}
+                disabled={bulkDeleteHistorySubmitting}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {bulkDeleteHistorySubmitting ? "Usuwanie..." : "Tak, trwale usuń"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SMS Details Modal */}
       {showDetails && selectedSms && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

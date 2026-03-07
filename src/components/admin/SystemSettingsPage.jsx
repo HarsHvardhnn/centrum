@@ -3,11 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/userContext";
 import {
   User,
+  Users,
   ShieldCheck,
   Clock,
   Stethoscope,
   BarChart3,
   FileStack,
+  MessageSquare,
+  Trash2,
   ArrowRight,
 } from "lucide-react";
 
@@ -20,6 +23,15 @@ const settingsCards = [
     icon: User,
     to: "/administracja/profil",
     roles: ["admin", "doctor", "receptionist"],
+  },
+  {
+    id: "user-settings",
+    title: "Ustawienia użytkowników",
+    description:
+      "Zarządzanie kontami użytkowników, role, uprawnienia oraz lista personelu i pacjentów",
+    icon: Users,
+    to: "/administracja/konta",
+    roles: ["admin"],
   },
   {
     id: "2fa",
@@ -64,6 +76,24 @@ const settingsCards = [
       "Zarządzanie repozytorium plików i wzorów dokumentacji do uzupełnienia danymi pacjenta",
     icon: FileStack,
     to: "/administracja/szablony-dokumentow",
+    roles: ["admin"],
+  },
+  {
+    id: "sms",
+    title: "Ustawienia SMS",
+    description:
+      "Szablony wiadomości SMS, wysyłanie powiadomień oraz konfiguracja komunikacji z pacjentami",
+    icon: MessageSquare,
+    to: "/administracja/sms",
+    roles: ["admin"],
+  },
+  {
+    id: "permanent-delete",
+    title: "Trwale usuwanie",
+    description:
+      "Trwałe usuwanie rekordów z bazy danych, statystyki usunięć oraz zarządzanie danymi usuniętymi z systemu",
+    icon: Trash2,
+    to: "/administracja/trwale-usuwanie",
     roles: ["admin"],
   },
 ];
