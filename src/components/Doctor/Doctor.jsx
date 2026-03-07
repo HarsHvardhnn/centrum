@@ -176,24 +176,20 @@ const BillingPage = () => {
   }, [searchTerm, activeFilters, allDoctors]);
 
   return (
-    <div className="container mx-auto px-4 h-screen flex flex-col">
-      {/* Reusable Header */}
-      <Header
-        title="Lista Lekarzy"
-        subtitle="Wszystkie konsultacje Lekarzy"
-        onSearch={(term) => setSearchTerm(term)}
-        onFilter={(filters) => setActiveFilters(filters)}
-        onAddDoctor={() => setShowAddDoctorModal(true)}
-        filterOptions={filterOptions}
-      />
+    <div className="min-h-screen bg-gray-100">
+      <div className="w-full mx-auto px-4 py-8">
+        {/* Header: title + search + add (same style as Lista pacjentów) */}
+        <Header
+          title="Lista lekarzy"
+          onSearch={(term) => setSearchTerm(term)}
+          onFilter={(filters) => setActiveFilters(filters)}
+          onAddDoctor={() => setShowAddDoctorModal(true)}
+          filterOptions={filterOptions}
+          compact
+        />
 
-      {/* Doctor Listing */}
-      <div className="flex-grow overflow-y-auto">
-        {filteredDoctors.length ? (
-          <DoctorListing doctors={filteredDoctors} />
-        ) : (
-          <p>Nie znaleziono lekarzy.</p>
-        )}
+        {/* Doctor Listing - card table */}
+        <DoctorListing doctors={filteredDoctors} />
       </div>
 
       {/* Add Doctor Modal Form */}

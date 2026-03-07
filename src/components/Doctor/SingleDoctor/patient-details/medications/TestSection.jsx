@@ -1,9 +1,46 @@
 import React, { useState } from "react";
+import { Search, Trash2, Plus, Zap } from "lucide-react";
 import { TestForm } from "./TestForm";
 
-export const TestsSection = ({ tests = [], setTests, showForm, setShowForm, className = "" }) => {
-  const [editingTest, setEditingTest] = useState(null);
+const SECTION_BG = "bg-white";
+const INPUT_CLASS = "w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400";
+
+export const TestsSection = ({
+  tests = [],
+  setTests,
+  showForm,
+  setShowForm,
+  onAddTest,
+  onRemoveTest,
+  className = "",
+}) => {
+  const [collapsed, setCollapsed] = useState(false);
+  const [search, setSearch] = useState("");
   const [editingIndex, setEditingIndex] = useState(-1);
+  const [editingTest, setEditingTest] = useState(null);
+
+  const filtered = tests.filter(
+    (t) => !search || (t.name && t.name.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const handleSave = (data) => {
+    if (editingIndex >= 0) {
+      const next = [...tests];
+      next[editingIndex] = { ...next[editingIndex], ...data };
+      setTests(next);
+    } else {
+      setTests([...tests, data]);
+    }
+    setShowForm(false);
+    setEditingIndex(-1);
+    setEditingTest(null);
+  };
+
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditingIndex(-1);
+    setEditingTest(null);
+  };
 
   const handleAddClick = () => {
     setEditingTest(null);
@@ -11,161 +48,147 @@ export const TestsSection = ({ tests = [], setTests, showForm, setShowForm, clas
     setShowForm(true);
   };
 
-  const handleEditClick = (test, index) => {
+  const handleEdit = (test, index) => {
     setEditingTest(test);
     setEditingIndex(index);
     setShowForm(true);
   };
 
-  const handleDeleteClick = (index) => {
-    const updatedTests = [...tests];
-    updatedTests.splice(index, 1);
-    setTests(updatedTests);
-  };
-
-  const handleSave = (testData) => {
-    let updatedTests;
-
-    if (editingIndex >= 0) {
-      updatedTests = [...tests];
-      updatedTests[editingIndex] = testData;
-    } else {
-      updatedTests = [...tests, testData];
-    }
-
-    setTests(updatedTests);
-    setShowForm(false);
-  };
-
-  const handleCancel = () => {
-    setShowForm(false);
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "Brak";
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  };
-
-  const formatResults = (results) => {
-    if (!results) return "Brak";
-    if (typeof results === "object") {
-      return (
-        JSON.stringify(results).substring(0, 30) +
-        (JSON.stringify(results).length > 30 ? "..." : "")
-      );
-    }
-    return results.substring(0, 30) + (results.length > 30 ? "..." : "");
-  };
-
   return (
-    <div className={`bg-white rounded-lg shadow-sm p-4 mb-4 w-full ${className}`}>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-medium text-gray-800">Badania</h2>
-        <button
-          onClick={handleAddClick}
-          className="flex items-center text-sm bg-[#80c5c5] hover:bg-teal-500 text-white px-3 py-1 rounded-md"
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mr-1"
-          >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Dodaj badanie
-        </button>
-      </div>
+    <div className={`${SECTION_BG} rounded border border-gray-200 overflow-hidden ${className}`}>
+      <button
+        type="button"
+        onClick={() => setCollapsed(!collapsed)}
+        className="w-full flex items-center justify-between p-5 text-left"
+      >
+        <h2 className="text-base font-semibold text-gray-800">Badania i skierowania</h2>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`text-gray-600 transition-transform ${collapsed ? "" : "rotate-180"}`}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {!collapsed && (
+        <div className="px-5 pb-5 space-y-4">
+          <div className="relative">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Szukaj badania wg ICD-9..."
+              className={`${INPUT_CLASS} pl-10`}
+            />
+          </div>
 
-      {showForm && (
-        <TestForm
-          test={editingTest}
-          isEditing={!!editingTest}
-          onSave={handleSave}
-          onCancel={handleCancel}
-        />
-      )}
+          {showForm && (
+            <div className="bg-white border border-gray-200 rounded p-4">
+              <TestForm
+                test={editingTest}
+                isEditing={!!editingTest}
+                onSave={handleSave}
+                onCancel={handleCancel}
+              />
+            </div>
+          )}
 
-      {tests.length === 0 ? (
-        <div className="text-center py-4 text-gray-500">
-          Nie dodano jeszcze żadnych badań.
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nazwa badania
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Data
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Wyniki
-                </th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Akcje
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {tests.map((test, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-3 py-3 whitespace-nowrap text-sm">
-                    {test.name}
-                  </td>
-                  <td className="px-3 py-3 whitespace-nowrap text-sm">
-                    {formatDate(test.date)}
-                  </td>
-                  <td className="px-3 py-3 text-sm">
-                    {formatResults(test.results)}
-                  </td>
-                  <td className="px-3 py-3 whitespace-nowrap text-sm">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                        test.status === "Normalny"
-                          ? "bg-green-100 text-green-800"
-                          : test.status === "Nieprawidłowy"
-                          ? "bg-red-100 text-red-800"
-                          : test.status === "Oczekujący"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : test.status === "Zakończony"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {test.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 whitespace-nowrap text-sm text-right">
-                    <button
-                      onClick={() => handleEditClick(test, index)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-3"
-                    >
-                      Edytuj
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(index)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Usuń
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {filtered.map((test) => {
+            const fullIndex = tests.indexOf(test);
+            return (
+            <div
+              key={fullIndex}
+              className="bg-white border border-gray-200 rounded p-4 space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-gray-800">{test.name || "—"}</span>
+                <button
+                  type="button"
+                  onClick={() => onRemoveTest?.(fullIndex)}
+                  className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Rozpoznanie (ICD-10)</label>
+                <input
+                  type="text"
+                  value={test.diagnosis ?? ""}
+                  onChange={(e) => {
+                    const next = [...tests];
+                    next[fullIndex] = { ...next[fullIndex], diagnosis: e.target.value };
+                    setTests(next);
+                  }}
+                  className={INPUT_CLASS}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Kod ICD-10...</label>
+                <input
+                  type="text"
+                  value={test.icd10Code ?? ""}
+                  onChange={(e) => {
+                    const next = [...tests];
+                    next[fullIndex] = { ...next[fullIndex], icd10Code: e.target.value };
+                    setTests(next);
+                  }}
+                  className={INPUT_CLASS}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Tryb wykonania</label>
+                <select
+                  value={test.mode ?? "Planowe"}
+                  onChange={(e) => {
+                    const next = [...tests];
+                    next[fullIndex] = { ...next[fullIndex], mode: e.target.value };
+                    setTests(next);
+                  }}
+                  className={INPUT_CLASS}
+                >
+                  <option value="Planowe">Planowe</option>
+                  <option value="Pilne">Pilne</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Uzasadnienie</label>
+                <textarea
+                  value={test.justification ?? ""}
+                  onChange={(e) => {
+                    const next = [...tests];
+                    next[fullIndex] = { ...next[fullIndex], justification: e.target.value };
+                    setTests(next);
+                  }}
+                  placeholder="Uzasadnienie skierowania..."
+                  rows={2}
+                  className={INPUT_CLASS}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleEdit(test, fullIndex)}
+                className="text-xs text-teal-600 hover:text-teal-700"
+              >
+                Edytuj
+              </button>
+            </div>
+          );})}
+
+          <div className="flex items-center gap-4 flex-wrap">
+            <button
+              type="button"
+              onClick={handleAddClick}
+              className="flex items-center gap-1 text-teal-700 hover:text-teal-800 text-sm font-medium"
+            >
+              <Plus size={18} />
+              Dodaj badanie
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded text-sm font-medium hover:bg-teal-700"
+            >
+              <Zap size={18} />
+              Wystaw e-skierowanie
+            </button>
+          </div>
         </div>
       )}
     </div>

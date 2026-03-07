@@ -1,13 +1,21 @@
-// PatientDetailsPage.jsx - Updated with Medications, Tests, and Services
+// PatientDetailsPage.jsx - Redesigned layout: visit header, two columns, footer
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import BreadcrumbNav from "./BreadcrumbNav";
 import PatientProfile from "./PatientProfile";
 import ConsultationForm from "./ConsultationForm";
-import ActionButtons from "./ActionButtons"
+import ActionButtons from "./ActionButtons";
 import ServiceSelectionModal from "./ServiceSelectionModal";
 import ReportUploader from "./ReportUploader";
 import ReportsList from "./ReportsList";
+import VisitInfoHeader from "./VisitInfoHeader";
+import PatientHeaderCard from "./PatientHeaderCard";
+import VisitHistoryCard from "./VisitHistoryCard";
+import LifeParamsCard from "./LifeParamsCard";
+import DiagnosisCard from "./DiagnosisCard";
+import DocumentationCard from "./DocumentationCard";
+import NotesCard from "./NotesCard";
+import MedicalDocumentsCard from "./MedicalDocumentsCard";
+import PatientDetailsFooter from "./PatientDetailsFooter";
 import patientService from "../../../../helpers/patientHelper";
 import patientServicesHelper from "../../../../helpers/patientServicesHelper";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
@@ -413,6 +421,10 @@ const PatientDetailsPage = () => {
   const [showVisitCardModal, setShowVisitCardModal] = useState(false);
   const [pendingVisitCardData, setPendingVisitCardData] = useState(null);
 
+  // Diagnoses (ICD-10) - API to be wired later
+  const [diagnoses, setDiagnoses] = useState([]);
+  const [lastSavedTime, setLastSavedTime] = useState(null);
+
   // Auto-save functionality for patient details (direct save)
   const directSaveFunction = async (dataToSave, meta) => {
     if (!currentAppointmentId) return;
@@ -617,8 +629,8 @@ const PatientDetailsPage = () => {
     }
   };
 
-  // Handle save functionality
-  const handleSave = async () => {
+  // Handle save functionality; endVisit = true navigates to rozliczenia after save
+  const handleSave = async (endVisit = false) => {
     if (!currentAppointmentId) {
       toast.error("Nie wybrano spotkania");
       return;
@@ -640,7 +652,6 @@ const PatientDetailsPage = () => {
         return;
       }
 
-      // Update appointment details using the correct function name
       const response = await appointmentHelper.updateAppointmentDetails(
         currentAppointmentId,
         {
@@ -649,18 +660,18 @@ const PatientDetailsPage = () => {
           medications,
           tests,
           uploadedFiles,
-          notes: consultationData.notes // Add notes to the save payload
+          notes: consultationData.notes
         }
       );
 
       if (response.success) {
         toast.success("Szczegóły spotkania zaktualizowane pomyślnie");
         setSaveSuccess(true);
-        
-        // Refresh appointment details
+        setLastSavedTime(new Date().toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" }));
         await fetchAppointmentDetails(currentAppointmentId);
-
-        navigate(`/administracja/rozliczenia?appointment=${currentAppointmentId}&step=edit`)
+        if (endVisit) {
+          navigate(`/administracja/rozliczenia?appointment=${currentAppointmentId}&step=edit`);
+        }
       } else {
         throw new Error(response.message || "Nie udało się zaktualizować szczegółów spotkania");
       }
@@ -786,10 +797,9 @@ const PatientDetailsPage = () => {
     }
   };
 
-  // Handle report upload success
-  const handleReportUploadSuccess = (newReport) => {
-    setReports(prev => [...prev, newReport]);
-    setShowReportUploader(false);
+  // Handle report upload success – refetch so reports list updates
+  const handleReportUploadSuccess = () => {
+    if (currentAppointmentId) fetchAppointmentDetails(currentAppointmentId);
   };
 
   // Handle report deletion
@@ -802,137 +812,67 @@ const PatientDetailsPage = () => {
     navigate(-1);
   };
 
-  // Komponent wyświetlający usługi
+  // Usługi – collapsible section, cards with name, price, x
   const PatientServicesSection = () => {
+    const [collapsed, setCollapsed] = useState(false);
+
     if (isServicesLoading) {
       return (
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-4 w-full">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-medium text-gray-800">Usługi</h3>
-          </div>
+        <div className="bg-white rounded border border-gray-200 p-5 w-full">
+          <h3 className="text-base font-semibold text-gray-800 mb-4">Usługi</h3>
           <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500" />
           </div>
         </div>
       );
     }
-    
-    if (!patientServices || patientServices.length === 0) {
-      return (
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-4 w-full">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-medium text-gray-800">Usługi</h3>
-            <button
-              onClick={handleAddServices}
-              className="text-sm font-medium text-teal-500 hover:text-teal-700"
-            >
-              + Dodaj usługi
-            </button>
-          </div>
-          <div className="text-center py-6 text-gray-500">
-            Brak przypisanych usług dla tego pacjenta
-          </div>
-        </div>
-      );
-    }
-    
-    const totalAmount = patientServices.reduce(
-      (sum, service) => sum + parseFloat(service.totalPrice || 0), 
-      0
-    ).toFixed(2);
-    
+
     return (
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-4 w-full">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-medium text-gray-800">Usługi</h3>
-          <div className="flex gap-2">
+      <div className="bg-white rounded border border-gray-200 overflow-hidden w-full">
+        <button
+          type="button"
+          onClick={() => setCollapsed(!collapsed)}
+          className="w-full flex items-center justify-between p-5 text-left"
+        >
+          <h3 className="text-base font-semibold text-gray-800">Usługi</h3>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`text-gray-600 transition-transform ${collapsed ? "" : "rotate-180"}`}>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        {!collapsed && (
+          <div className="px-5 pb-5 space-y-3">
+            {(!patientServices || patientServices.length === 0) ? (
+              <p className="text-sm text-gray-500 py-4">Brak przypisanych usług.</p>
+            ) : (
+              patientServices.map((service) => (
+                <div
+                  key={service._id}
+                  className="bg-white border border-gray-200 rounded p-4 flex items-center justify-between"
+                >
+                  <span className="text-sm font-medium text-gray-800">{service.title}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-700">{Number(service.totalPrice || service.price || 0).toFixed(2).replace(".", ",")} zł</span>
+                    <button
+                      type="button"
+                      onClick={() => initiateServiceDeletion(service.serviceId)}
+                      className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-red-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
             <button
-              onClick={initiateRemoveAllServices}
-              className="text-sm font-medium text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50"
-            >
-              Usuń wszystkie
-            </button>
-            <button
+              type="button"
               onClick={handleAddServices}
-              className="text-sm font-medium text-teal-500 hover:text-teal-700 px-2 py-1 rounded hover:bg-teal-50"
+              className="flex items-center gap-1 text-teal-700 hover:text-teal-800 text-sm font-medium"
             >
-              + Dodaj usługi
+              <PlusCircle size={18} />
+              Dodaj usługę
             </button>
           </div>
-        </div>
-        
-        <div className="overflow-hidden border border-gray-100 rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nazwa
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cena
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ilość
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Razem
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Akcje
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {patientServices.map((service) => (
-                <tr key={service._id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{service.title}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{service.price} zł</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{service.quantity}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{service.totalPrice} zł</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                      ${service.status === 'active' ? 'bg-green-100 text-green-800' : 
-                        service.status === 'completed' ? 'bg-blue-100 text-blue-800' : 
-                        'bg-gray-100 text-gray-800'}`}
-                    >
-                      {service.status === 'active' ? 'Aktywny' : 
-                       service.status === 'completed' ? 'Zakończony' : 
-                       service.status === 'cancelled' ? 'Anulowany' : service.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => initiateServiceDeletion(service.serviceId)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              <tr className="bg-gray-50">
-                <td colSpan="3" className="px-6 py-4 text-right font-medium">
-                  Suma:
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-bold text-gray-900">{totalAmount} zł</div>
-                </td>
-                <td colSpan="2"></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        )}
       </div>
     );
   };
@@ -1137,182 +1077,85 @@ const PatientDetailsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <BreadcrumbNav patientName={patientData.name} />
-      
-      {/* Auto-save indicator */}
-      {currentAppointmentId && (
-        <div className="container mx-auto px-4 pt-4">
-          <div className="bg-teal-50 border border-teal-200 rounded-lg p-2 flex items-center gap-2 text-sm text-teal-700">
-            <Save size={16} />
-            <span>Automatyczne zapisywanie włączone - zmiany są zapisywane automatycznie</span>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+      {/* Visit info header */}
+      {selectedAppointment && (
+        <VisitInfoHeader
+          appointment={selectedAppointment}
+          consultationData={consultationData}
+        />
       )}
-      
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Patient Profile */}
-          <div className="lg:col-span-1">
-            <div className="w-[300px] min-w-[300px] bg-slate-50 rounded-lg p-4 flex flex-col items-center">
-              <PatientProfile 
-                patient={{
-                  ...patientData,
-                  gender: patientData.gender === "Male" ? "Mężczyzna" : patientData.gender === "Female" ? "Kobieta" : patientData.sex
-                }} 
-                setPatientData={setPatientData}
-              />
-              <button
-                onClick={handleShowDetails}
-                className="mt-2 mb-4 bg-teal-500 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-1 hover:bg-teal-600 transition-colors shadow"
-                style={{ alignSelf: 'center' }}
-              >
-                <Info size={16} />
-                Pokaż szczegóły
-              </button>
 
-            {/* International patient: document + npesei (visible on main page) */}
-            {(patientData.isInternational === true || patientData.isInternationalPatient === true) && (
-              <div className="w-full mt-4 p-4 bg-teal-50/80 rounded-lg border border-teal-200">
-                <h4 className="text-sm font-semibold text-teal-800 mb-3">Dokument i identyfikacja (pacjent międzynarodowy)</h4>
-                <div className="space-y-2 text-sm">
-                  {patientData.npesei && (
-                    <div><span className="text-gray-600">NPESEI:</span> <span className="font-medium">{patientData.npesei}</span></div>
-                  )}
-                  {patientData.documentCountry && (
-                    <div><span className="text-gray-600">Kraj dokumentu:</span> <span className="font-medium">{patientData.documentCountry}</span></div>
-                  )}
-                  {patientData.documentType && (
-                    <div><span className="text-gray-600">Typ dokumentu:</span> <span className="font-medium">{patientData.documentType}</span></div>
-                  )}
-                  {patientData.documentNumber && (
-                    <div><span className="text-gray-600">Numer dokumentu:</span> <span className="font-medium">{patientData.documentNumber}</span></div>
-                  )}
-                  {patientData.documentDateOfBirth && (
-                    <div><span className="text-gray-600">Data urodzenia (z dokumentu):</span> <span className="font-medium">{new Date(patientData.documentDateOfBirth).toLocaleDateString("pl-PL", { year: "numeric", month: "long", day: "numeric" })}</span></div>
-                  )}
-                  {patientData.documentExpiryDate && (
-                    <div><span className="text-gray-600">Data ważności dokumentu:</span> <span className="font-medium">{new Date(patientData.documentExpiryDate).toLocaleDateString("pl-PL", { year: "numeric", month: "long", day: "numeric" })}</span></div>
-                  )}
-                  {patientData.citizenship && (
-                    <div><span className="text-gray-600">Obywatelstwo:</span> <span className="font-medium">{patientData.citizenship}</span></div>
-                  )}
-                </div>
-              </div>
-            )}
-            </div>
-            
-            {/* Always show appointments section */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
-              <h3 className="text-lg font-semibold mb-4">Historia Wizyt</h3>
-              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-                {appointments.map((apt) => (
-                  <div
-                    key={apt._id}
-                    className={`p-4 rounded-lg cursor-pointer transition-all ${
-                      currentAppointmentId === apt._id
-                        ? "bg-teal-50 border-2 border-teal-500"
-                        : "bg-gray-50 hover:bg-gray-100"
-                    }`}
-                    onClick={() => handleAppointmentSelect(apt._id)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">
-                          {new Date(apt.date).toLocaleDateString('pl-PL')}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {apt.consultationType || 'Konsultacja standardowa'}
-                        </p>
-                        <span
-                          className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${getVisitModeStyle(apt)}`}
-                        >
-                          {getVisitModeLabel(apt)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            apt.status === "completed"
-                              ? "bg-green-100 text-green-800"
-                              : apt.status === "cancelled"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {apt.status === "completed" 
-                            ? "Zakończona" 
-                            : apt.status === "cancelled" 
-                            ? "Anulowana" 
-                            : "Zaplanowana"}
-                        </span>
-                        {apt.status === "completed" && (
-                          <button
-                            onClick={(e) => handleGenerateVisitCard(apt._id, e)}
-                            className="flex items-center p-1 text-teal-600 hover:text-teal-700 transition-colors"
-                            title="Generuj kartę wizyty"
-                          >
-                            <FileText size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+      <div className="flex-1 container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left column */}
+          <div className="lg:col-span-1 space-y-6">
+            <PatientHeaderCard
+              patient={{
+                ...patientData,
+                gender: patientData.gender === "Male" ? "Mężczyzna" : patientData.gender === "Female" ? "Kobieta" : patientData.sex,
+                patientId: patientData.patientId || patientData.patient_id || id,
+              }}
+              onShowMoreDetails={handleShowDetails}
+            />
+            <VisitHistoryCard
+              appointments={appointments}
+              currentAppointmentId={currentAppointmentId}
+              onSelectVisit={handleAppointmentSelect}
+            />
+            <LifeParamsCard patient={patientData} />
           </div>
 
-          {/* Right Column - Consultation Form and Other Sections */}
-          <div className="lg:col-span-2">
+          {/* Right column */}
+          <div className="lg:col-span-2 space-y-6">
             {selectedAppointment && (
               <>
-                <AppointmentDetails appointment={selectedAppointment} />
-                <ConsultationForm
-                  consultationData={consultationData}
-                  setConsultationData={setConsultationData}
-                  uploadedFiles={uploadedFiles}
-                  onFileUpload={handleFileUpload}
-                  onRemoveFile={handleRemoveFile}
-                  patientData={patientData}
-                  setPatientData={setPatientData}
-                  onSave={handleSave}
-                  isSaving={isSaving}
-                  appointmentId={currentAppointmentId}
-                  className="bg-white rounded-lg shadow-sm p-4 w-full"
+                <DiagnosisCard
+                  diagnoses={diagnoses}
+                  onAddDiagnosis={() => setDiagnoses((prev) => [...prev, { id: Date.now(), code: "I10", name: "Nadciśnienie tętnicze samoistne" }])}
+                  onRemoveDiagnosis={(idOrIndex) => setDiagnoses((prev) => prev.filter((d, i) => d.id !== idOrIndex && i !== idOrIndex))}
                 />
-                
-                {/* Medical Reports Section */}
-                <div className="mt-6">
-                  {!showReportUploader ? (
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-semibold">Dokumenty medyczne wizyty</h3>
-                      <button 
-                        onClick={() => setShowReportUploader(true)}
-                        className="flex items-center text-teal-600 hover:text-teal-800 text-sm font-medium"
-                      >
-                        <PlusCircle size={16} className="mr-1" />
-                        Dodaj Dokument
-                      </button>
-                    </div>
-                  ) : (
-                    <ReportUploader 
-                      appointmentId={currentAppointmentId} 
-                      onSuccess={handleReportUploadSuccess}
-                    />
-                  )}
-                  
-                  {!showReportUploader && (
-                    <ReportsList 
-                      appointmentId={currentAppointmentId}
-                      reports={reports}
-                      onReportDeleted={handleReportDeleted}
-                    />
-                  )}
-                </div>
-                
+                <DocumentationCard
+                  title="Wywiad z pacjentem"
+                  value={consultationData.interview}
+                  onChange={(v) => setConsultationData((prev) => ({ ...prev, interview: v }))}
+                  placeholder="Dokumentacja wywiadu z pacjentem..."
+                />
+                <DocumentationCard
+                  title="Badanie przedmiotowe"
+                  value={consultationData.physicalExamination}
+                  onChange={(v) => setConsultationData((prev) => ({ ...prev, physicalExamination: v }))}
+                  placeholder="Opis badania przedmiotowego..."
+                />
+                <DocumentationCard
+                  title="Zastosowane leczenie"
+                  value={consultationData.treatment}
+                  onChange={(v) => setConsultationData((prev) => ({ ...prev, treatment: v }))}
+                  placeholder="Opis zastosowanego leczenia..."
+                />
+                <DocumentationCard
+                  title="Zalecenia"
+                  value={consultationData.recommendations}
+                  onChange={(v) => setConsultationData((prev) => ({ ...prev, recommendations: v }))}
+                  placeholder="Zalecenia dla pacjenta..."
+                />
+
+                <NotesCard
+                  value={consultationData.notes}
+                  onChange={(v) => setConsultationData((prev) => ({ ...prev, notes: v }))}
+                />
+
+                <MedicalDocumentsCard
+                  appointmentId={currentAppointmentId}
+                  onSuccess={handleReportUploadSuccess}
+                />
+                <ReportsList
+                  appointmentId={currentAppointmentId}
+                  reports={reports}
+                  onReportDeleted={handleReportDeleted}
+                />
+
                 <PatientServicesSection />
-                
                 <MedicationsSection
                   medications={medications}
                   setMedications={setMedications}
@@ -1320,9 +1163,7 @@ const PatientDetailsPage = () => {
                   setShowForm={setShowMedicationForm}
                   onAddMedication={handleAddMedicine}
                   onRemoveMedication={handleRemoveMedication}
-                  className="bg-white rounded-lg shadow-sm p-4 w-full"
                 />
-                
                 <TestsSection
                   tests={tests}
                   setTests={setTests}
@@ -1330,28 +1171,23 @@ const PatientDetailsPage = () => {
                   setShowForm={setShowTestForm}
                   onAddTest={handleAddTest}
                   onRemoveTest={handleRemoveTest}
-                  className="bg-white rounded-lg shadow-sm p-4 w-full"
-                />
-                
-                <ActionButtons
-                  patientId={id}
-                  onAddMedicine={handleAddMedicine}
-                  onAddTest={handleAddTest}
-                  onAddServicesClick={handleAddServices}
-                  onSave={handleSave}
-                  onBack={handleBack}
-                  isSaving={isSaving}
-                  saveError={saveError}
-                  notifyPatient={notifyPatient}
-                  setNotifyPatient={setNotifyPatient}
-                  className="mt-6"
-                  appointmentId={currentAppointmentId}
                 />
               </>
             )}
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      {selectedAppointment && (
+        <PatientDetailsFooter
+          onDownloadVisitCard={() => handleGenerateVisitCard(currentAppointmentId, { stopPropagation: () => {} })}
+          onSaveVisit={() => handleSave(false)}
+          lastSavedTime={lastSavedTime}
+          onEndVisit={() => handleSave(true)}
+          isSaving={isSaving}
+        />
+      )}
 
       {/* Existing modals */}
       <ServiceSelectionModal

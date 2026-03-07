@@ -644,164 +644,154 @@ function LabAppointmentsContent({ clinic }) {
     fetchAppointments(pagination.page);
   };
 
+  const statusLabelForDisplay =
+    statusFilter === "All"
+      ? "Wszystkie"
+      : statusFilter === "booked"
+      ? "Zarezerwowane"
+      : statusFilter === "checkedIn"
+      ? "Zameldowany"
+      : statusFilter?.toLowerCase() === "cancelled" || statusFilter?.toLowerCase() === "canceled"
+      ? "Anulowane"
+      : statusFilter === "completed"
+      ? "Zakończone"
+      : statusFilter;
+
+  const dateRangeText = clinic
+    ? dateRange.startDate && dateRange.endDate
+      ? `Wizyty od ${new Date(dateRange.startDate).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })} do ${new Date(dateRange.endDate).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })}`
+      : dateRange.startDate
+      ? `Wizyty od ${new Date(dateRange.startDate).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })}`
+      : "Wszystkie wizyty"
+    : dateRange.startDate
+    ? `Wizyty z dnia ${new Date(dateRange.startDate).toLocaleDateString("pl-PL")}`
+    : "Wszystkie wizyty";
+
+  const getPatientPesel = (p) => p?.govtId || p?.pesel || p?.PESEL || "—";
+  const getPatientGenderLetter = (p) =>
+    p?.sex === "Male" || p?.gender === "Male"
+      ? "M"
+      : p?.sex === "Female" || p?.gender === "Female"
+      ? "K"
+      : "—";
+  const formatFirstVisit = (apt) => {
+    if (!apt?.date) return "—";
+    const d = new Date(apt.date);
+    const dateStr = d.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" });
+    return apt.startTime ? `${dateStr} ${apt.startTime}` : dateStr;
+  };
+
   return (
-    <div className="bg-white min-h-screen">
+    <div className={`min-h-screen ${clinic ? "bg-white" : "bg-gray-100"}`}>
       <div className="w-full mx-auto px-4 py-8">
-        <div className="flex w-full justify-between">
+        <div className={clinic ? "mb-6" : "mb-6"}>
           <div>
-            <h1 className="text-2xl font-bold mb-1">
-              {clinic ? "Wizyty w Przychodni" : "Lista pacjentów"} ({appointments.length})
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              {clinic ? "Historia wizyt" : "Lista pacjentów"}
+              {!clinic && ` (${appointments.length})`}
             </h1>
-            <div className="flex items-center gap-2 mb-4">
-              <p className="text-gray-600">
-                Wyświetlane: {dateRange.startDate ? `Wizyty z dnia ${new Date(dateRange.startDate).toLocaleDateString('pl-PL')}` : "Wszystkie wizyty"}
-                {clinic && " (Przychodnia)"}
-                {statusFilter === "booked" && " - Status: Zarezerwowane"}
-                {clinic && patientLessOnly && " - Tylko wizyty bez pacjenta"}
-              </p>
-              {dateRange.startDate && (
-                <button
-                  onClick={() => setDateRange({ startDate: null, endDate: null })}
-                  className="text-sm text-teal-600 hover:text-teal-800 underline"
-                >
-                  Wyczyść filtr daty
-                </button>
-              )}
-            </div>
+            {clinic && (
+            <p className="text-sm text-gray-500">
+              Wyświetlane: {dateRangeText}
+              {statusFilter !== "All" && ` - Status: ${statusLabelForDisplay}`}
+              {patientLessOnly && " - Tylko wizyty bez pacjenta"}
+            </p>
+            )}
+            {!clinic && dateRange.startDate && (
+              <button
+                onClick={() => setDateRange({ startDate: null, endDate: null })}
+                className="text-sm text-teal-600 hover:text-teal-800 underline mt-1"
+              >
+                Wyczyść filtr daty
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 mb-6 w-[50%]">
-            <div className="flex-1 relative">
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <Search size={20} className="text-gray-400" />
+          {clinic && (
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1 relative max-w-xl">
+                <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Szukaj pacjenta..."
+                  className="w-full py-2.5 pl-10 pr-4 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Szukaj wizyt..."
-                className="py-2 pl-4 pr-10 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            {/* Filter Dropdown */}
-            <div className="relative" ref={filterRef}>
-              <button
-                className="flex items-center gap-2 px-4 py-2 border rounded-lg bg-white text-gray-700"
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-              >
-                <Filter size={18} />
-                Filtry
-              </button>
-
-              {isFilterOpen && (
-                <div className="absolute right-0 mt-2 bg-white border rounded-md shadow-lg z-10 min-w-[200px]">
-                  <div className="p-2">
-                    <h3 className="font-medium px-3 py-2">
-                      Filtruj według statusu
-                    </h3>
-                    <div className="space-y-2 px-3 py-1">
-                      {["All", "booked", "checkedIn", "Cancelled", "Completed"].map(
-                        (status) => (
-                          <label
-                            key={status}
-                            className="flex items-center gap-2 cursor-pointer"
-                          >
-                            <input
-                              type="radio"
-                              name="status"
-                              checked={statusFilter === status}
-                              onChange={() => {
-                                setStatusFilter(status);
-                                setIsFilterOpen(false);
-                              }}
-                              className="rounded-full"
-                            />
-                            <span>
-                              {status === "All"
-                                ? "Wszystkie"
-                                : status === "booked"
-                                ? "Zarezerwowane"
-                                : status === "checkedIn"
-                                ? "Zameldowany"
-                                : status === "Cancelled"
-                                ? "Anulowane"
-                                : status === "Completed"
-                                ? "Zakończone"
-                                : status}
-                            </span>
-                          </label>
-                        )
-                      )}
+              <div className="relative" ref={filterRef}>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50"
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                >
+                  Filtry
+                  <ChevronDown size={18} className={isFilterOpen ? "rotate-180" : ""} />
+                </button>
+                {isFilterOpen && (
+                  <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[200px] p-3">
+                    <h3 className="font-medium text-gray-800 px-2 py-1 mb-2">Status</h3>
+                    <div className="space-y-1">
+                      {["All", "booked", "checkedIn", "Cancelled", "Completed"].map((status) => (
+                        <label key={status} className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-gray-50">
+                          <input
+                            type="radio"
+                            name="status-clinic"
+                            checked={statusFilter === status}
+                            onChange={() => { setStatusFilter(status); setIsFilterOpen(false); }}
+                            className="rounded-full"
+                          />
+                          <span className="text-sm">
+                            {status === "All" ? "Wszystkie" : status === "booked" ? "Zarezerwowane" : status === "checkedIn" ? "Zameldowany" : status === "Cancelled" ? "Anulowane" : status === "Completed" ? "Zakończone" : status}
+                          </span>
+                        </label>
+                      ))}
                     </div>
-
                     <div className="border-t mt-2 pt-2">
-                      <h3 className="font-medium px-3 py-2">Zakres dat</h3>
-                      <div className="space-y-2 px-3 py-1">
-                        <div>
-                          <label className="text-sm text-gray-600">
-                            Data początkowa
-                          </label>
-                          <input
-                            type="date"
-                            className="w-full mt-1 p-2 border rounded"
-                            value={dateRange.startDate || ""}
-                            onChange={(e) =>
-                              setDateRange((prev) => ({
-                                ...prev,
-                                startDate: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm text-gray-600">
-                            Data końcowa
-                          </label>
-                          <input
-                            type="date"
-                            className="w-full mt-1 p-2 border rounded"
-                            value={dateRange.endDate || ""}
-                            onChange={(e) =>
-                              setDateRange((prev) => ({
-                                ...prev,
-                                endDate: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
+                      <h3 className="font-medium text-gray-800 px-2 py-1 mb-2">Zakres dat</h3>
+                      <div className="space-y-2 px-2">
+                        <input type="date" className="w-full p-2 border border-gray-300 rounded text-sm" value={dateRange.startDate || ""} onChange={(e) => setDateRange((prev) => ({ ...prev, startDate: e.target.value }))} />
+                        <input type="date" className="w-full p-2 border border-gray-300 rounded text-sm" value={dateRange.endDate || ""} onChange={(e) => setDateRange((prev) => ({ ...prev, endDate: e.target.value }))} />
                       </div>
                     </div>
-
                     {clinic && (
                       <div className="border-t mt-2 pt-2">
-                        <label className="flex items-center gap-2 px-3 py-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={patientLessOnly}
-                            onChange={(e) => setPatientLessOnly(e.target.checked)}
-                            className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                          />
-                          <span className="text-sm font-medium">Tylko wizyty bez pacjenta</span>
+                        <label className="flex items-center gap-2 px-2 py-2 cursor-pointer">
+                          <input type="checkbox" checked={patientLessOnly} onChange={(e) => setPatientLessOnly(e.target.checked)} className="rounded border-gray-300 text-teal-600" />
+                          <span className="text-sm">Tylko wizyty bez pacjenta</span>
                         </label>
                       </div>
                     )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
+          )}
 
-            {/* Replace Add Appointment Button with Add Patient Button */}
-            {user?.role !== "doctor" && !clinic && (
+          {!clinic && (
+          <div className="flex items-center gap-3 mt-4">
+            <div className="flex-1 relative max-w-xl">
+              <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Szukaj pacjenta..."
+                className="w-full py-2.5 pl-10 pr-4 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            {user?.role !== "doctor" && (
               <button
-                className="bg-teal-500 text-white rounded-lg px-4 py-2 flex items-center gap-2"
+                type="button"
+                className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2.5 flex items-center gap-2 font-medium shrink-0"
                 onClick={() => setShowAddPatientModal(true)}
               >
-                <UserCheck size={18} />
-                Dodaj Pacjenta
+                <Plus size={18} />
+                Dodaj pacjenta
               </button>
             )}
           </div>
+          )}
         </div>
 
         {/* Bulk Delete Button for Appointments */}
@@ -821,567 +811,250 @@ function LabAppointmentsContent({ clinic }) {
         )}
 
         {clinic ? (
-          // Clinic appointments - Date focused layout
-          <div className="space-y-6">
-            {Object.entries(groupAppointmentsByDate(appointments)).map(([date, appointments]) => (
-              <div key={date} className="bg-white rounded-lg shadow-sm border">
-                <div className="bg-gray-50 px-6 py-4 border-b flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    {formatDateHeader(date)}
-                  </h2>
-                  {user?.role === "admin" && (
-                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={appointments.every(apt => selectedAppointmentIds.includes(apt.id)) && appointments.length > 0}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedAppointmentIds(prev => [
-                              ...prev,
-                              ...appointments.map(apt => apt.id).filter(id => !prev.includes(id))
-                            ]);
-                          } else {
-                            setSelectedAppointmentIds(prev => prev.filter(id => !appointments.map(apt => apt.id).includes(id)));
-                          }
-                        }}
-                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                      />
-                      <span>Zaznacz wszystkie</span>
-                    </label>
-                  )}
-                </div>
-                <div className="divide-y">
-                  {appointments.map((appointment) => (
+          /* Historia wizyt – flat list of white cards */
+          <div className="space-y-3">
+            {appointments.length === 0 ? (
+              <div className="bg-white border border-gray-200 rounded-lg py-12 text-center text-gray-500">
+                Brak wizyt w wybranym okresie.
+              </div>
+            ) : (
+              appointments.map((appointment) => {
+                const isCompleted = appointment.status === "completed" || appointment.status === "Completed";
+                const isCancelledStatus = isCancelled(appointment);
+                const statusPillClass = isCancelledStatus
+                  ? "bg-red-100 text-red-800"
+                  : isCompleted
+                  ? "bg-green-100 text-green-800"
+                  : "bg-gray-100 text-gray-800";
+                const visitDateStr = appointment.date
+                  ? new Date(appointment.date).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })
+                  : "—";
+                const patientIdStr = isVisitOnlyAppointment(appointment)
+                  ? "—"
+                  : (appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "—");
+
+                return (
+                  <div
+                    key={appointment.id}
+                    className="bg-white border border-gray-200 rounded-lg shadow-sm px-5 py-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow"
+                  >
                     <div
-                      key={appointment.id}
-                      title={isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'Tylko wizyta – brak przypisanego pacjenta. Kliknij, aby zakończyć rejestrację.' : isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'Wizyta anulowana – brak rejestracji.' : undefined}
-                      className={`px-6 py-4 hover:bg-gray-50 transition-colors ${selectedAppointmentIds.includes(appointment.id) ? 'bg-red-50' : ''} ${isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'border-l-4 border-red-500 bg-red-50/50' : ''} ${isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'border-l-4 border-amber-500 bg-amber-50/50' : ''}`}
+                      className="flex-1 min-w-0 cursor-pointer"
+                      onClick={() => {
+                        if (isVisitOnlyAppointment(appointment) && !isCancelledStatus) {
+                          setSelectedAppointment(appointment);
+                          setShowCompleteRegModal(true);
+                        } else if (!isVisitOnlyAppointment(appointment)) {
+                          navigate(`/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`);
+                        }
+                      }}
                     >
-                      <div className="grid grid-cols-12 gap-4 items-center h-[60px]">
-                        {/* Checkbox - only for admin */}
-                        {user?.role === "admin" && (
-                          <div className="col-span-1 flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={selectedAppointmentIds.includes(appointment.id)}
-                              onChange={() => handleSelectAppointment(appointment.id)}
-                              onClick={(e) => e.stopPropagation()}
-                              className="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                            />
-                          </div>
-                        )}
-                        {/* Patient Info - adjusted columns */}
-                        <div 
-                          title={isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'Tylko wizyta – brak pacjenta. Kliknij: Zakończ rejestrację.' : undefined}
-                          className={`${user?.role === "admin" ? "col-span-4" : "col-span-5"} flex items-center gap-3 min-w-0 ${appointment.isAppointment !== false && !(isVisitOnlyAppointment(appointment) && isCancelled(appointment)) ? 'cursor-pointer' : ''}`}
-                          onClick={() => {
-                            if (appointment.isAppointment !== false) {
-                              if (isVisitOnlyAppointment(appointment) && !isCancelled(appointment)) {
-                                setSelectedAppointment(appointment);
-                                setShowCompleteRegModal(true);
-                              } else if (!isVisitOnlyAppointment(appointment)) {
-                                navigate(
-                                  `/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`
-                                );
-                              }
-                            }
-                          }}
-                        >
-                          <div className={`h-10 w-10 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center ${isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'bg-red-100 text-red-700' : isVisitOnlyAppointment(appointment) ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-500'}`}>
-                            {!isVisitOnlyAppointment(appointment) && appointment.patient?.profilePicture ? (
-                              <img
-                                src={appointment.patient.profilePicture}
-                                alt={getAppointmentPatientDisplayName(appointment)}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : isVisitOnlyAppointment(appointment) ? (
-                              <UserPlus size={20} />
-                            ) : (
-                              <UserCheck size={20} />
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium text-gray-900 truncate max-w-[250px]">
-                                {getAppointmentPatientDisplayName(appointment)}
-                              </span>
-                              {isVisitOnlyAppointment(appointment) && (
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${isCancelled(appointment) ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-amber-100 text-amber-800 border border-amber-200'}`} title={isCancelled(appointment) ? 'Wizyta anulowana' : 'Wizyta bez pacjenta – zakończ rejestrację'}>
-                                  <UserPlus size={12} />
-                                  {isCancelled(appointment) ? 'Anulowana' : 'Do rejestracji'}
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-sm text-gray-500 truncate max-w-[250px]">
-                              {isVisitOnlyAppointment(appointment) ? "—" : (appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "—")}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Time and Doctor - adjusted columns */}
-                        <div className={`${user?.role === "admin" ? "col-span-2" : "col-span-3"} flex flex-col min-w-0`}>
-                          <div className="font-medium text-gray-900 truncate">
-                            {appointment.startTime} - {appointment.endTime}
-                          </div>
-                          <div className="text-sm text-gray-500 truncate">
-                            {appointment.doctor?.name || "-"}
-                          </div>
-                          <div className="text-xs text-gray-400 truncate mt-0.5">
-                            Utworzono: {getCreatedByRoleLabel(appointment)}
-                          </div>
-                        </div>
-
-                        {/* Tryb wizyty (visit mode) - clinic card layout */}
-                        <div className="col-span-1 flex items-center">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getVisitModeStyle(appointment)}`}
-                          >
-                            {getVisitModeLabel(appointment)}
-                          </span>
-                        </div>
-
-                        {/* Status - 2 columns */}
-                        <div className="col-span-2 flex items-center justify-end">
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${getStatusStyle(appointment.status)}`}>
-                            {translateStatus(appointment.status)}
-                          </span>
-                        </div>
-
-                        {/* Actions - 1 column */}
-                        <div className="col-span-1 flex justify-end items-center gap-2">
-                          {user?.role === "admin" && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePermanentDeleteClick(appointment.id);
-                              }}
-                              className="text-red-600 hover:text-red-800"
-                              title="Trwale usuń"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          )}
-                          {appointment.isAppointment !== false && (
-                            <DropdownMenu.Root>
-                              <DropdownMenu.Trigger asChild>
-                                <button className="text-gray-500 hover:text-gray-700 focus:outline-none p-1">
-                                  <MoreVertical size={18} />
-                                </button>
-                              </DropdownMenu.Trigger>
-
-                              <DropdownMenu.Portal>
-                                <DropdownMenu.Content
-                                  className="min-w-[220px] max-h-[min(70vh,320px)] overflow-y-auto bg-white rounded-md shadow-lg z-[100] border p-1"
-                                  sideOffset={5}
-                                  align="end"
-                                >
-                                  {isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? (
-                                    <DropdownMenu.Item
-                                      className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer"
-                                      onClick={() => {
-                                        setSelectedAppointment(appointment);
-                                        setShowCompleteRegModal(true);
-                                      }}
-                                    >
-                                      <UserCheck size={16} className="mr-2 flex-shrink-0" />
-                                      Zakończ rejestrację
-                                    </DropdownMenu.Item>
-                                  ) : !isVisitOnlyAppointment(appointment) ? (
-                                    <DropdownMenu.Item
-                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                      onClick={() => {
-                                        navigate(
-                                          `/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`
-                                        );
-                                      }}
-                                    >
-                                      <Eye size={16} className="mr-2 flex-shrink-0" />
-                                      Zobacz szczegóły
-                                    </DropdownMenu.Item>
-                                  ) : null}
-
-                                  {appointment.patient && appointment.status === "booked" && (
-                                    <DropdownMenu.Item
-                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                      onClick={() => {
-                                        setSelectedAppointment(appointment);
-                                        setShowCheckin(true);
-                                      }}
-                                    >
-                                      <UserCheck size={16} className="mr-2 flex-shrink-0" />
-                                      Zamelduj
-                                    </DropdownMenu.Item>
-                                  )}
-
-                                  {/* Reschedule option for admin and receptionist in clinic cases */}
-                                  {(user?.role === "admin" || user?.role === "receptionist") && appointment.status === "booked" && (
-                                    <DropdownMenu.Item
-                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                      onClick={() => handleRescheduleClick(appointment)}
-                                    >
-                                      <Clock size={16} className="mr-2 flex-shrink-0" />
-                                      Przełóż wizytę
-                                    </DropdownMenu.Item>
-                                  )}
-
-                                  {appointment.patient && ["checkedIn", "booked"].includes(appointment.status) && (
-                                    <DropdownMenu.Item
-                                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                      onClick={() => {
-                                        setSelectedAppointment(appointment);
-                                        handleBillPatient(appointment.id, appointment.patient.id || appointment.patient._id);
-                                      }}
-                                    >
-                                      <DollarSign size={16} className="mr-2" />
-                                      Wystaw rachunek
-                                    </DropdownMenu.Item>
-                                  )}
-
-                                                                  {appointment.status === "completed" && (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={() => handleGenerateVisitCard(appointment.id)}
-                                  >
-                                    <FileText size={16} className="mr-2" />
-                                    Karta wizyty
-                                  </DropdownMenu.Item>
-                                )}
-
-                                {/* Cancel appointment button - only show if not checked in or completed */}
-                                {!["checkedIn", "completed", "cancelled"].includes(appointment.status) && (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
-                                    onClick={(e) => handleCancelClick(e, appointment.id)}
-                                  >
-                                    <X size={16} className="mr-2" />
-                                    Anuluj wizytę
-                                  </DropdownMenu.Item>
-                                )}
-
-                                {/* See consents - for any visit (clinic and history) */}
-                                <DropdownMenu.Item
-                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                  onClick={() => fetchVisitConsents(appointment.id)}
-                                >
-                                  <FileText size={16} className="mr-2 flex-shrink-0" />
-                                  Zobacz zgody
-                                </DropdownMenu.Item>
-
-                                {/* Edit Patient button - only when visit has a patient */}
-                                {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={() => {
-                                      const currentPath = clinic ? '/klinika' : '/pacjenci';
-                                      const returnUrl = encodeURIComponent(currentPath);
-                                      navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${returnUrl}`);
-                                    }}
-                                  >
-                                    <Eye size={16} className="mr-2" />
-                                    Edytuj pacjenta
-                                  </DropdownMenu.Item>
-                                )}
-                              </DropdownMenu.Content>
-                              </DropdownMenu.Portal>
-                            </DropdownMenu.Root>
-                          )}
-                        </div>
+                      <div className="font-semibold text-gray-900 truncate">
+                        {getAppointmentPatientDisplayName(appointment)}
+                      </div>
+                      <div className="text-sm text-gray-500 mt-0.5">
+                        ID: {patientIdStr} | {visitDateStr}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+                    <div className="flex-shrink-0 text-center min-w-[100px]">
+                      <div className="font-semibold text-gray-900">
+                        {appointment.startTime} – {appointment.endTime}
+                      </div>
+                      <div className="text-sm text-gray-500 mt-0.5">
+                        {appointment.doctor?.name || "—"}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap ${statusPillClass}`}>
+                        {translateStatus(appointment.status)}
+                      </span>
+                      {appointment.isAppointment !== false && (
+                        <DropdownMenu.Root>
+                          <DropdownMenu.Trigger asChild>
+                            <button type="button" className="p-1.5 text-gray-500 hover:text-gray-700 rounded focus:outline-none">
+                              <MoreVertical size={20} />
+                            </button>
+                          </DropdownMenu.Trigger>
+                          <DropdownMenu.Portal>
+                            <DropdownMenu.Content className="min-w-[220px] bg-white rounded-lg shadow-lg z-[100] border p-1" sideOffset={5} align="end">
+                              {isVisitOnlyAppointment(appointment) && !isCancelledStatus && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCompleteRegModal(true); }}>
+                                  <UserCheck size={16} className="mr-2" /> Zakończ rejestrację
+                                </DropdownMenu.Item>
+                              )}
+                              {!isVisitOnlyAppointment(appointment) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => navigate(`/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`)}>
+                                  <Eye size={16} className="mr-2" /> Zobacz szczegóły
+                                </DropdownMenu.Item>
+                              )}
+                              {appointment.patient && appointment.status === "booked" && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCheckin(true); }}>
+                                  <UserCheck size={16} className="mr-2" /> Zamelduj
+                                </DropdownMenu.Item>
+                              )}
+                              {(user?.role === "admin" || user?.role === "receptionist") && appointment.status === "booked" && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => handleRescheduleClick(appointment)}>
+                                  <Clock size={16} className="mr-2" /> Przełóż wizytę
+                                </DropdownMenu.Item>
+                              )}
+                              {appointment.patient && ["checkedIn", "booked"].includes(appointment.status) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); handleBillPatient(appointment.id, appointment.patient.id || appointment.patient._id); }}>
+                                  <DollarSign size={16} className="mr-2" /> Wystaw rachunek
+                                </DropdownMenu.Item>
+                              )}
+                              {appointment.status === "completed" && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => handleGenerateVisitCard(appointment.id)}>
+                                  <FileText size={16} className="mr-2" /> Karta wizyty
+                                </DropdownMenu.Item>
+                              )}
+                              {!["checkedIn", "completed", "cancelled"].includes(appointment.status) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer" onClick={(e) => handleCancelClick(e, appointment.id)}>
+                                  <X size={16} className="mr-2" /> Anuluj wizytę
+                                </DropdownMenu.Item>
+                              )}
+                              <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => fetchVisitConsents(appointment.id)}>
+                                <FileText size={16} className="mr-2" /> Zobacz zgody
+                              </DropdownMenu.Item>
+                              {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${encodeURIComponent("/klinika")}`); }}>
+                                  <Eye size={16} className="mr-2" /> Edytuj pacjenta
+                                </DropdownMenu.Item>
+                              )}
+                              {user?.role === "admin" && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer" onClick={() => handlePermanentDeleteClick(appointment.id)}>
+                                  <Trash2 size={16} className="mr-2" /> Trwale usuń
+                                </DropdownMenu.Item>
+                              )}
+                            </DropdownMenu.Content>
+                          </DropdownMenu.Portal>
+                        </DropdownMenu.Root>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         ) : (
-          // Original Lab appointments table layout
-          <div className="overflow-x-auto shadow-sm border rounded-lg">
-            <table className="w-full table-fixed border-collapse">
-              <thead>
-                <tr className="text-left text-gray-500 border-b bg-gray-50">
-                  {user?.role === "admin" && (
-                    <th className="px-4 py-3 w-[3%] font-medium">
-                      <input
-                        type="checkbox"
-                        checked={appointments.length > 0 && selectedAppointmentIds.length === appointments.length}
-                        onChange={handleSelectAllAppointments}
-                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                      />
-                    </th>
-                  )}
-                  <th className="px-4 py-3 w-[16%] font-medium">Pacjent</th>
-                  <th className="px-4 py-3 w-[12%] font-medium">
-                    Data i godzina
-                  </th>
-                  <th className="px-4 py-3 w-[7%] font-medium">Tryb</th>
-                  <th className="px-4 py-3 w-[8%] font-medium">Telefon</th>
-                  <th className="px-4 py-3 w-[16%] font-medium">Lekarz</th>
-                  <th className="px-4 py-3 w-[7%] font-medium">Wiek pacjenta</th>
-                  <th className="px-4 py-3 w-[14%] font-medium">Status wizyty</th>
-                  <th className="px-4 py-3 w-[10%] font-medium">Utworzono przez</th>
-                  <th className="px-4 py-3 w-[8%] font-medium">Akcje</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.map((appointment) => (
-                  <tr
+          /* Lista pacjentów – card layout */
+          <div className="space-y-3">
+            {/* Column headers */}
+            <div className="grid grid-cols-[1fr_4rem_3rem_6rem_7rem_8rem_2.5rem] gap-3 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
+              <div>Pacjent i ID</div>
+              <div>Wiek</div>
+              <div>Płeć</div>
+              <div>PESEL</div>
+              <div>Telefon</div>
+              <div>Pierwsza wizyta</div>
+              <div className="text-right">Akcje</div>
+            </div>
+            {appointments.length === 0 ? (
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm py-12 text-center text-gray-500">
+                Brak pacjentów.
+              </div>
+            ) : (
+              appointments.map((appointment) => {
+                const patientIdStr = isVisitOnlyAppointment(appointment)
+                  ? "—"
+                  : (appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "—");
+                return (
+                  <div
                     key={appointment.id}
-                    title={isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'Tylko wizyta – brak przypisanego pacjenta. Kliknij, aby zakończyć rejestrację.' : isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'Wizyta anulowana.' : undefined}
-                    className={`border-b hover:bg-gray-50 ${selectedAppointmentIds.includes(appointment.id) ? 'bg-red-50' : ''} ${isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'bg-red-50/50 border-l-4 border-l-red-500' : ''} ${isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'bg-amber-50/50' : ''}`}
+                    className={`bg-white border border-gray-200 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-shadow grid grid-cols-[1fr_4rem_3rem_6rem_7rem_8rem_2.5rem] gap-3 px-4 py-3 items-center ${selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
                   >
-                    {user?.role === "admin" && (
-                      <td className={`px-4 py-3 ${isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'border-l-4 border-l-red-500' : ''} ${isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'border-l-4 border-l-amber-500' : ''}`} onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={selectedAppointmentIds.includes(appointment.id)}
-                          onChange={() => handleSelectAppointment(appointment.id)}
-                          className="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                        />
-                      </td>
-                    )}
-                    <td
-                      title={isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'Tylko wizyta – brak pacjenta. Kliknij: Zakończ rejestrację.' : undefined}
-                      className={`px-4 py-3 truncate ${appointment.isAppointment !== false && !(isVisitOnlyAppointment(appointment) && isCancelled(appointment)) ? 'cursor-pointer' : ''} ${user?.role !== "admin" && isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'border-l-4 border-l-red-500' : ''} ${user?.role !== "admin" && isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'border-l-4 border-l-amber-500' : ''}`}
+                    <div
+                      className="min-w-0 cursor-pointer"
                       onClick={() => {
                         if (appointment.isAppointment !== false) {
                           if (isVisitOnlyAppointment(appointment) && !isCancelled(appointment)) {
                             setSelectedAppointment(appointment);
                             setShowCompleteRegModal(true);
                           } else if (!isVisitOnlyAppointment(appointment)) {
-                            navigate(
-                              `/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`
-                            );
+                            navigate(`/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`);
                           }
                         }
                       }}
                     >
-                      <div className="flex items-center">
-                        <div className={`h-8 w-8 rounded-full overflow-hidden mr-2 flex-shrink-0 flex items-center justify-center ${isVisitOnlyAppointment(appointment) && isCancelled(appointment) ? 'bg-red-100 text-red-700' : ''} ${isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? 'bg-amber-100 text-amber-700' : ''} ${!isVisitOnlyAppointment(appointment) ? 'bg-gray-200 text-gray-500' : ''}`}>
-                          {!isVisitOnlyAppointment(appointment) && appointment.patient?.profilePicture ? (
-                            <img
-                              src={appointment.patient.profilePicture}
-                              alt={getAppointmentPatientDisplayName(appointment)}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : isVisitOnlyAppointment(appointment) ? (
-                            <UserPlus size={16} />
-                          ) : (
-                            <UserCheck size={16} />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium truncate">
-                              {getAppointmentPatientDisplayName(appointment)}
-                            </span>
-                            {isVisitOnlyAppointment(appointment) && (
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${isCancelled(appointment) ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-amber-100 text-amber-800 border border-amber-200'}`} title={isCancelled(appointment) ? 'Wizyta anulowana' : 'Wizyta bez pacjenta – zakończ rejestrację'}>
-                                <UserPlus size={10} />
-                                {isCancelled(appointment) ? 'Anulowana' : 'Do rejestracji'}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-sm text-gray-500 truncate">
-                            {isVisitOnlyAppointment(appointment) ? "—" : (appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "—")}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 truncate">
-                      <div className="font-medium">
-                        {new Date(appointment.date).toLocaleDateString()}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {appointment.startTime} - {appointment.endTime}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 truncate">
-                      <span
-                        title={
-                          getVisitMode(appointment) === "online"
-                            ? "Kliknij, aby dołączyć do spotkania"
-                            : ""
-                        }
-                        onClick={() => {
-                          if (getVisitMode(appointment) === "online" && appointment.meetLink) {
-                            window.open(appointment.meetLink, "_blank");
-                          }
-                        }}
-                        className={`px-2 py-1 rounded-full text-xs font-medium inline-block transition-colors ${
-                          getVisitMode(appointment) === "online"
-                            ? "bg-blue-100 text-blue-800 cursor-pointer hover:bg-blue-200"
-                            : "bg-purple-100 text-purple-800"
-                        }`}
-                      >
-                        {getVisitModeLabel(appointment)}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3 truncate">
-                      {appointment.patient?.phoneNumber ?? appointment.registrationData?.phone ?? "-"}
-                    </td>
-                    <td className="px-4 py-3 truncate">
-                      <div className="font-medium truncate">
-                        {appointment.doctor?.name || "-"}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 truncate text-center">
-                      {appointment.patient?.age ?? "N/A"} lat
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getStatusStyle(appointment.status)}`}
-                      >
-                        {translateStatus(appointment.status)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 truncate text-center">
-                      <span className="text-sm text-gray-600">
-                        {getCreatedByRoleLabel(appointment)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 relative">
-                      <div className="flex justify-center">
-                        {appointment.isAppointment !== false && (
-                          <DropdownMenu.Root>
-                            <DropdownMenu.Trigger asChild>
-                              <button
-                                className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                              >
-                                <MoreVertical size={18} />
-                              </button>
-                            </DropdownMenu.Trigger>
-
-                            <DropdownMenu.Portal>
-                              <DropdownMenu.Content
-                                className="min-w-[220px] max-h-[min(70vh,320px)] overflow-y-auto bg-white rounded-md shadow-lg z-[100] border p-1"
-                                sideOffset={5}
-                                align="end"
-                              >
-                                {isVisitOnlyAppointment(appointment) && !isCancelled(appointment) ? (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer"
-                                    onClick={() => {
-                                      setSelectedAppointment(appointment);
-                                      setShowCompleteRegModal(true);
-                                    }}
-                                  >
-                                    <UserCheck size={16} className="mr-2" />
-                                    Zakończ rejestrację
-                                  </DropdownMenu.Item>
-                                ) : !isVisitOnlyAppointment(appointment) ? (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={() => {
-                                      navigate(
-                                        `/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`
-                                      );
-                                    }}
-                                  >
-                                    <Eye size={16} className="mr-2" />
-                                    Zobacz szczegóły
-                                  </DropdownMenu.Item>
-                                ) : null}
-
-                                {appointment.patient && appointment.status === "booked" && (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={() => {
-                                      setSelectedAppointment(appointment);
-                                      setShowCheckin(true);
-                                    }}
-                                  >
-                                    <UserCheck size={16} className="mr-2" />
-                                    Zamelduj
-                                  </DropdownMenu.Item>
-                                )}
-
-                                {appointment.patient && ["checkedIn", "booked"].includes(appointment.status) && (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={() => {
-                                      setSelectedAppointment(appointment);
-                                      handleBillPatient(appointment.id, appointment.patient.id || appointment.patient._id);
-                                    }}
-                                  >
-                                    <DollarSign size={16} className="mr-2" />
-                                    Wystaw rachunek
-                                  </DropdownMenu.Item>
-                                )}
-
-                                {appointment.status === "completed" && (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={() => handleGenerateVisitCard(appointment.id)}
-                                  >
-                                    <FileText size={16} className="mr-2" />
-                                    Karta wizyty
-                                  </DropdownMenu.Item>
-                                )}
-
-                                {/* See consents - for any visit (clinic and history) */}
-                                <DropdownMenu.Item
-                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                  onClick={() => fetchVisitConsents(appointment.id)}
-                                >
-                                  <FileText size={16} className="mr-2" />
-                                  Zobacz zgody
+                      <div className="font-semibold text-gray-900 truncate">{getAppointmentPatientDisplayName(appointment)}</div>
+                      <div className="text-sm text-gray-500 truncate">ID: {patientIdStr}</div>
+                    </div>
+                    <div className="text-gray-800 truncate">{appointment.patient?.age ?? "—"}</div>
+                    <div className="text-gray-800 truncate">{getPatientGenderLetter(appointment.patient)}</div>
+                    <div className="text-gray-800 truncate text-sm">{getPatientPesel(appointment.patient)}</div>
+                    <div className="text-gray-800 truncate text-sm">{appointment.patient?.phoneNumber ?? appointment.registrationData?.phone ?? "—"}</div>
+                    <div className="text-gray-800 truncate text-sm">{formatFirstVisit(appointment)}</div>
+                    <div className="flex justify-end">
+                      {appointment.isAppointment !== false && (
+                        <DropdownMenu.Root>
+                          <DropdownMenu.Trigger asChild>
+                            <button type="button" className="text-gray-500 hover:text-gray-700 focus:outline-none p-1">
+                              <MoreVertical size={18} />
+                            </button>
+                          </DropdownMenu.Trigger>
+                          <DropdownMenu.Portal>
+                            <DropdownMenu.Content className="min-w-[220px] max-h-[min(70vh,320px)] overflow-y-auto bg-white rounded-lg shadow-lg z-[100] border p-1" sideOffset={5} align="end">
+                              {isVisitOnlyAppointment(appointment) && !isCancelled(appointment) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCompleteRegModal(true); }}>
+                                  <UserCheck size={16} className="mr-2" /> Zakończ rejestrację
                                 </DropdownMenu.Item>
-
-                                {/* Edit Patient button - only when visit has a patient */}
-                                {!clinic && appointment.patient && (appointment.patient.id || appointment.patient._id) && (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={() => {
-                                      const currentPath = '/pacjenci';
-                                      const returnUrl = encodeURIComponent(currentPath);
-                                      navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${returnUrl}`);
-                                    }}
-                                  >
-                                    <Pen size={16} className="mr-2" />
-                                    Edytuj pacjenta
-                                  </DropdownMenu.Item>
-                                )}
-
-                                {/* Permanent Delete - only for admin */}
-                                {user?.role === "admin" && (
-                                  <DropdownMenu.Item
-                                    className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
-                                    onClick={() => handlePermanentDeleteClick(appointment.id)}
-                                  >
-                                    <Trash2 size={16} className="mr-2" />
-                                    Trwale usuń
-                                  </DropdownMenu.Item>
-                                )}
-                              </DropdownMenu.Content>
-                            </DropdownMenu.Portal>
-                          </DropdownMenu.Root>
-                        )}
-
-{(!clinic && !appointment.isAppointment) && (
-                                  <div
-                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                    onClick={() => {
-                                      const currentPath = '/pacjenci';
-                                      const returnUrl = encodeURIComponent(currentPath);
-                                      navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id}&returnUrl=${returnUrl}`);
-                                    }}
-                                  >
-                                    <Pen size={16} className="mr-2" />
-                                    Edytuj pacjenta
-                                  </div>
-                                )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                              )}
+                              {!isVisitOnlyAppointment(appointment) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => navigate(`/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`)}>
+                                  <Eye size={16} className="mr-2" /> Zobacz szczegóły
+                                </DropdownMenu.Item>
+                              )}
+                              {appointment.patient && appointment.status === "booked" && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCheckin(true); }}>
+                                  <UserCheck size={16} className="mr-2" /> Zamelduj
+                                </DropdownMenu.Item>
+                              )}
+                              {(user?.role === "admin" || user?.role === "receptionist") && appointment.status === "booked" && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => handleRescheduleClick(appointment)}>
+                                  <Clock size={16} className="mr-2" /> Przełóż wizytę
+                                </DropdownMenu.Item>
+                              )}
+                              {appointment.patient && ["checkedIn", "booked"].includes(appointment.status) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); handleBillPatient(appointment.id, appointment.patient.id || appointment.patient._id); }}>
+                                  <DollarSign size={16} className="mr-2" /> Wystaw rachunek
+                                </DropdownMenu.Item>
+                              )}
+                              {appointment.status === "completed" && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => handleGenerateVisitCard(appointment.id)}>
+                                  <FileText size={16} className="mr-2" /> Karta wizyty
+                                </DropdownMenu.Item>
+                              )}
+                              {!["checkedIn", "completed", "cancelled"].includes(appointment.status) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer" onClick={(e) => handleCancelClick(e, appointment.id)}>
+                                  <X size={16} className="mr-2" /> Anuluj wizytę
+                                </DropdownMenu.Item>
+                              )}
+                              <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => fetchVisitConsents(appointment.id)}>
+                                <FileText size={16} className="mr-2" /> Zobacz zgody
+                              </DropdownMenu.Item>
+                              {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${encodeURIComponent("/pacjenci")}`); }}>
+                                  <Pen size={16} className="mr-2" /> Edytuj pacjenta
+                                </DropdownMenu.Item>
+                              )}
+                              {user?.role === "admin" && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer" onClick={() => handlePermanentDeleteClick(appointment.id)}>
+                                  <Trash2 size={16} className="mr-2" /> Trwale usuń
+                                </DropdownMenu.Item>
+                              )}
+                            </DropdownMenu.Content>
+                          </DropdownMenu.Portal>
+                        </DropdownMenu.Root>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
 
-        {/* Pagination */}
-        {pagination.pages > 1 && (
+        {/* Pagination - hidden on clinic (Historia wizyt) */}
+        {pagination.pages > 1 && !clinic && (
           <div className="flex justify-center mt-4 gap-2">
             <button
               onClick={() => fetchAppointments(pagination.page - 1)}

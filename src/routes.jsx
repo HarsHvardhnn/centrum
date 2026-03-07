@@ -9,6 +9,7 @@ import DoctorCalendar from "./components/admin/DoctorCalendar";
 
 import { createBrowserRouter, Outlet, Navigate, useLocation } from "react-router-dom";
 import Sidebar from "./components/UtilComponents/Sidebar";
+import AppSidebar from "./components/UtilComponents/AppSidebar";
 import BillingPage from "./components/Doctor/Doctor";
 import DoctorsPage from "./components/Doctor/SingleDoctor/DoctorPage";
 import UserLayout from "./UserLayout";
@@ -36,6 +37,7 @@ import ServicesManagement from "./components/admin/Services";
 
 import NewsPage from "./components/User/Pages/NewsPage";
 import PatientDetailsPage from "./components/Doctor/SingleDoctor/patient-details/PatientDetails";
+import PatientDetailsHeader from "./components/Doctor/SingleDoctor/patient-details/PatientDetailsHeader";
 import NewsManagement from "./components/admin/NewManagement";
 import NewsDetail from "./components/User/NewsDetail";
 import PatientMedicalDetails from "./components/User/MyDetails";
@@ -53,6 +55,8 @@ import ReportsDashboard from "./components/Reports/ReportsDashboard";
 import AppointmentConfigPage from "./components/admin/AppointmentConfigPage";
 import JWTSettingsPage from "./components/admin/JWTSettingsPage";
 import PermanentDeletePage from "./components/admin/PermanentDeletePage";
+import SystemSettingsPage from "./components/admin/SystemSettingsPage";
+import DocumentTemplatesPlaceholder from "./components/admin/DocumentTemplatesPlaceholder";
 import TokenExpiryPopup from "./components/UtilComponents/TokenExpiryPopup";
 import InactivityPopup from "./components/UtilComponents/InactivityPopup";
 import { useInactivityTracker } from "./hooks/useInactivityTracker";
@@ -89,10 +93,12 @@ const RootRoute = () => {
 
 // Modified App component to include the sidebar
 function MainLayout() {
+  const location = useLocation();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user, logout } = useUser();
   const { showPopup, inactivityTimeout, handleStayActive, setOnLogout } = useInactivityTracker();
+  const isPatientDetailsPage = /^\/szczegoly-pacjenta\/[^/]+$/.test(location.pathname);
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -118,15 +124,15 @@ function MainLayout() {
         <title>CM7Med</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      {/* Fixed Header */}
+      {/* Fixed Header - use patient-details header on patient details page */}
       <div className="fixed top-0 left-0 right-0 z-10">
-        <Header />
+        {isPatientDetailsPage ? <PatientDetailsHeader /> : <Header />}
       </div>
 
       <div className="flex bg-gray-50">
         {/* Sidebar with adjusted positioning */}
         {user?.role != "patient" && (
-          <Sidebar
+          <AppSidebar
             isDarkMode={isDarkMode}
             toggleTheme={toggleTheme}
             isOpen={isSidebarOpen}
@@ -137,7 +143,7 @@ function MainLayout() {
         {/* Main content with proper spacing */}
         <div
           className={`transition-all duration-300 ${
-            isSidebarOpen ? "ml-72" : "ml-20"
+            isSidebarOpen ? "ml-64" : "ml-20"
           } flex-1 min-h-screen pt-24 md:pt-28 ${
             isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-800"
           }`}
@@ -235,6 +241,8 @@ const routes = createBrowserRouter([
           { path: "/administracja/konfiguracja-wizyt", element: <AppointmentConfigPage /> },
           { path: "/administracja/ustawienia-jwt", element: <JWTSettingsPage /> },
           { path: "/administracja/trwale-usuwanie", element: <PermanentDeletePage /> },
+          { path: "/ustawienia", element: <SystemSettingsPage /> },
+          { path: "/administracja/szablony-dokumentow", element: <DocumentTemplatesPlaceholder /> },
         ],
       },
     ],
@@ -372,6 +380,10 @@ const routes = createBrowserRouter([
   {
     path: "/admin/jwt-settings",
     element: <Navigate to="/administracja/ustawienia-jwt" replace />,
+  },
+  {
+    path: "/settings",
+    element: <Navigate to="/ustawienia" replace />,
   },
 
   // Catch all route
