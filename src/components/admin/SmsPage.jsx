@@ -341,7 +341,7 @@ const UserMessaging = () => {
   };
 
   // Bulk permanent delete – SMS templates (admin only)
-  const handleTemplateSelect = (templateId) => {
+  const handleTemplateCheckboxSelect = (templateId) => {
     setSelectedTemplateIds((prev) =>
       prev.includes(templateId)
         ? prev.filter((id) => id !== templateId)
@@ -810,7 +810,7 @@ const UserMessaging = () => {
                                   <input
                                     type="checkbox"
                                     checked={selectedTemplateIds.includes(template._id)}
-                                    onChange={() => handleTemplateSelect(template._id)}
+                                    onChange={() => handleTemplateCheckboxSelect(template._id)}
                                     className="rounded border-gray-300 text-red-600 focus:ring-red-500 flex-shrink-0"
                                   />
                                 )}
