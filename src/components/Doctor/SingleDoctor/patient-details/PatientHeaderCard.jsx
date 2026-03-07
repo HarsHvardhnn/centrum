@@ -1,0 +1,78 @@
+import React from "react";
+import { User } from "lucide-react";
+
+const PatientHeaderCard = ({ patient, onShowMoreDetails }) => {
+  const name =
+    typeof patient?.name === "string"
+      ? patient.name
+      : [patient?.name?.first, patient?.name?.last].filter(Boolean).join(" ") || "—";
+  const age = patient?.age ?? "—";
+  const gender =
+    patient?.gender === "Male" || patient?.sex === "Male"
+      ? "Mężczyzna"
+      : patient?.gender === "Female" || patient?.sex === "Female"
+      ? "Kobieta"
+      : patient?.gender || patient?.sex || "—";
+  const patientId = patient?.patientId || patient?.patient_id || patient?.id || "—";
+  const pesel = patient?.govtId || patient?.pesel || patient?.PESEL || "—";
+  const phone =
+    patient?.phone &&
+    String(patient.phone).trim() &&
+    !String(patient.phone).trim().startsWith("__no_phone_")
+      ? patient.phone
+      : "—";
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-5">
+        {/* Header: avatar + name + age · gender */}
+        <div className="flex items-start gap-4">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 bg-teal-100">
+            <User className="w-8 h-8 text-teal-600" strokeWidth={2} />
+          </div>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h2 className="text-lg font-bold text-gray-900">{name}</h2>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {age} lat · {gender}
+            </p>
+          </div>
+        </div>
+
+        {/* Details: label – value, two-column style */}
+        <div className="mt-5 space-y-3">
+          <div className="flex justify-between items-baseline gap-4">
+            <span className="text-sm text-gray-500">ID:</span>
+            <span className="text-sm font-medium text-gray-900 text-right tabular-nums">
+              {patientId}
+            </span>
+          </div>
+          <div className="flex justify-between items-baseline gap-4">
+            <span className="text-sm text-gray-500">PESEL:</span>
+            <span className="text-sm font-medium text-gray-900 text-right tabular-nums">
+              {pesel}
+            </span>
+          </div>
+          <div className="flex justify-between items-baseline gap-4">
+            <span className="text-sm text-gray-500">Telefon:</span>
+            <span className="text-sm font-medium text-gray-900 text-right tabular-nums">
+              {phone}
+            </span>
+          </div>
+        </div>
+
+        {/* Action: centered, teal text, light background */}
+        <div className="mt-5 flex justify-center">
+          <button
+            type="button"
+            onClick={() => onShowMoreDetails?.()}
+            className="px-4 py-2 rounded text-sm font-medium text-teal-600 hover:text-teal-700 hover:bg-teal-50/80 bg-gray-50/50 transition-colors"
+          >
+            Pokaż więcej szczegółów
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PatientHeaderCard;

@@ -1,3 +1,7 @@
+/**
+ * Legacy sidebar – kept for reference.
+ * Layout now uses AppSidebar (UtilComponents/AppSidebar.jsx) which matches the new design.
+ */
 import React from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { MdOutlineMedicalServices, MdSms } from "react-icons/md";

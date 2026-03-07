@@ -9,6 +9,7 @@ import DoctorCalendar from "./components/admin/DoctorCalendar";
 
 import { createBrowserRouter, Outlet, Navigate, useLocation } from "react-router-dom";
 import Sidebar from "./components/UtilComponents/Sidebar";
+import AppSidebar from "./components/UtilComponents/AppSidebar";
 import BillingPage from "./components/Doctor/Doctor";
 import DoctorsPage from "./components/Doctor/SingleDoctor/DoctorPage";
 import UserLayout from "./UserLayout";
@@ -129,7 +130,7 @@ function MainLayout() {
       <div className="flex bg-gray-50">
         {/* Sidebar with adjusted positioning */}
         {user?.role != "patient" && (
-          <Sidebar
+          <AppSidebar
             isDarkMode={isDarkMode}
             toggleTheme={toggleTheme}
             isOpen={isSidebarOpen}
@@ -140,7 +141,7 @@ function MainLayout() {
         {/* Main content with proper spacing */}
         <div
           className={`transition-all duration-300 ${
-            isSidebarOpen ? "ml-72" : "ml-20"
+            isSidebarOpen ? "ml-64" : "ml-20"
           } flex-1 min-h-screen pt-24 md:pt-28 ${
             isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-800"
           }`}
