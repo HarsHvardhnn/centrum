@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Trash2,
   ArrowRight,
+  Server,
 } from "lucide-react";
 
 const settingsCards = [
@@ -94,6 +95,15 @@ const settingsCards = [
       "Trwałe usuwanie rekordów z bazy danych, statystyki usunięć oraz zarządzanie danymi usuniętymi z systemu",
     icon: Trash2,
     to: "/administracja/trwale-usuwanie",
+    roles: ["admin"],
+  },
+  {
+    id: "ip-config",
+    title: "Konfiguracja IP",
+    description:
+      "Ustawienia adresów IP i dostępu sieciowego do systemu (tylko administrator)",
+    icon: Server,
+    to: "/administracja/konfiguracja-ip",
     roles: ["admin"],
   },
 ];

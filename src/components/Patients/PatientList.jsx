@@ -8,7 +8,7 @@ import {
   MoreVertical,
   Plus,
   X,
-  Calendar,
+  Calendar as CalendarIcon,
   FileText,
   Eye,
   UserCheck,
@@ -35,6 +35,7 @@ import patientService from "../../helpers/patientHelper";
 import RescheduleModal from "../Dashboard/RescheduleModal";
 import BulkDeleteByIdsDialog from "../admin/BulkDeleteByIdsDialog";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
+import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 
 // Add billingHelper with the generateBill function
 const billingHelper = {
@@ -102,6 +103,13 @@ function LabAppointmentsContent({ clinic }) {
   });
   /** Only on /klinika: when true, show only patient-less (visit-only) appointments. */
   const [patientLessOnly, setPatientLessOnly] = useState(false);
+  /** Doctor filter for Historia wizyt (clinic) */
+  const [doctorFilterId, setDoctorFilterId] = useState("");
+  const [doctorsList, setDoctorsList] = useState([]);
+  /** Forma konsultacji: all | offline (Stacjonarna) | online */
+  const [consultationMode, setConsultationMode] = useState("all");
+  /** Typ wizyty (visit type) filter */
+  const [visitTypeFilter, setVisitTypeFilter] = useState("");
 
   // Ref for filter dropdown
   const filterRef = useRef(null);
@@ -178,14 +186,15 @@ function LabAppointmentsContent({ clinic }) {
       const dateFromUrl = searchParams.get('date');
       
       const filters = {
-        ...(statusFilter !== "All" && { status: statusFilter }),
+        ...(statusFilter !== "All" && statusFilter !== "patientLess" && { status: statusFilter }),
         ...(dateRange.startDate && { startDate: dateRange.startDate }),
         ...(dateRange.endDate && { endDate: dateRange.endDate }),
         ...(dateFromUrl && { date: dateFromUrl }),
         ...(searchQuery && { search: searchQuery }),
         ...(user?.role === "doctor" && { doctorId: user?.id }),
+        ...(clinic && doctorFilterId && { doctorId: doctorFilterId }),
         ...(clinic && { isClinicIp: clinic }),
-        ...(clinic && patientLessOnly && { patientLessOnly: true }),
+        ...(clinic && (patientLessOnly || statusFilter === "patientLess") && { patientLessOnly: true }),
         ...(appointmentIdFromUrl && { appointmentId: appointmentIdFromUrl }),
       };
       
@@ -279,7 +288,24 @@ function LabAppointmentsContent({ clinic }) {
     }, 300);
 
     return () => clearTimeout(debounceTimeout);
-  }, [searchQuery, statusFilter, dateRange, user?.id, clinic, searchParams, patientLessOnly]);
+  }, [searchQuery, statusFilter, dateRange, user?.id, clinic, searchParams, patientLessOnly, doctorFilterId]);
+
+  // Fetch doctors list for clinic (Historia wizyt) filter
+  useEffect(() => {
+    if (!clinic) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await doctorStatsHelper.getDoctorsList();
+        if (response?.success && response?.data && !cancelled) {
+          setDoctorsList(Array.isArray(response.data) ? response.data : []);
+        }
+      } catch (e) {
+        if (!cancelled) setDoctorsList([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [clinic]);
 
   // Force refetch when clinic prop changes to clear cache
   useEffect(() => {
@@ -294,6 +320,9 @@ function LabAppointmentsContent({ clinic }) {
     setSearchQuery("");
     setStatusFilter(clinic ? "booked" : "All");
     setPatientLessOnly(false);
+    setDoctorFilterId("");
+    setConsultationMode("all");
+    setVisitTypeFilter("");
 
     // Preserve date from query parameters when switching routes, otherwise set today's date only for clinic
     const startDateFromUrl = searchParams.get('startDate');
@@ -655,6 +684,8 @@ function LabAppointmentsContent({ clinic }) {
       ? "Anulowane"
       : statusFilter === "completed"
       ? "Zakończone"
+      : statusFilter === "patientLess"
+      ? "Do rejestracji"
       : statusFilter;
 
   const dateRangeText = clinic
@@ -729,39 +760,139 @@ function LabAppointmentsContent({ clinic }) {
                   <ChevronDown size={18} className={isFilterOpen ? "rotate-180" : ""} />
                 </button>
                 {isFilterOpen && (
-                  <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[200px] p-3">
-                    <h3 className="font-medium text-gray-800 px-2 py-1 mb-2">Status</h3>
-                    <div className="space-y-1">
-                      {["All", "booked", "checkedIn", "Cancelled", "Completed"].map((status) => (
-                        <label key={status} className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-gray-50">
-                          <input
-                            type="radio"
-                            name="status-clinic"
-                            checked={statusFilter === status}
-                            onChange={() => { setStatusFilter(status); setIsFilterOpen(false); }}
-                            className="rounded-full"
-                          />
-                          <span className="text-sm">
-                            {status === "All" ? "Wszystkie" : status === "booked" ? "Zarezerwowane" : status === "checkedIn" ? "Zameldowany" : status === "Cancelled" ? "Anulowane" : status === "Completed" ? "Zakończone" : status}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                    <div className="border-t mt-2 pt-2">
-                      <h3 className="font-medium text-gray-800 px-2 py-1 mb-2">Zakres dat</h3>
-                      <div className="space-y-2 px-2">
-                        <input type="date" className="w-full p-2 border border-gray-300 rounded text-sm" value={dateRange.startDate || ""} onChange={(e) => setDateRange((prev) => ({ ...prev, startDate: e.target.value }))} />
-                        <input type="date" className="w-full p-2 border border-gray-300 rounded text-sm" value={dateRange.endDate || ""} onChange={(e) => setDateRange((prev) => ({ ...prev, endDate: e.target.value }))} />
+                  <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[300px] w-[320px] p-4">
+                    {/* Zakres dat */}
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-800 mb-2">Zakres dat</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Data początkowa</label>
+                          <div className="relative">
+                            <input
+                              type="date"
+                              className="w-full p-2 pr-8 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+                              value={dateRange.startDate || ""}
+                              onChange={(e) => setDateRange((prev) => ({ ...prev, startDate: e.target.value }))}
+                            />
+                            <CalendarIcon size={16} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Data końcowa</label>
+                          <div className="relative">
+                            <input
+                              type="date"
+                              className="w-full p-2 pr-8 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+                              value={dateRange.endDate || ""}
+                              onChange={(e) => setDateRange((prev) => ({ ...prev, endDate: e.target.value }))}
+                            />
+                            <CalendarIcon size={16} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    {clinic && (
-                      <div className="border-t mt-2 pt-2">
-                        <label className="flex items-center gap-2 px-2 py-2 cursor-pointer">
-                          <input type="checkbox" checked={patientLessOnly} onChange={(e) => setPatientLessOnly(e.target.checked)} className="rounded border-gray-300 text-teal-600" />
-                          <span className="text-sm">Tylko wizyty bez pacjenta</span>
-                        </label>
+                    {/* Filtruj według lekarza */}
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-800 mb-2">Filtruj według lekarza</h3>
+                      <select
+                        value={doctorFilterId}
+                        onChange={(e) => setDoctorFilterId(e.target.value)}
+                        className="w-full p-2.5 pr-9 border border-teal-500/50 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 appearance-none cursor-pointer"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center' }}
+                      >
+                        <option value="">Wybierz lekarza...</option>
+                        {doctorsList.map((d) => (
+                          <option key={d._id || d.id} value={d._id || d.id}>{d.name || "Lekarz"}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {/* Typ wizyty */}
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-800 mb-2">Typ wizyty</h3>
+                      <select
+                        value={visitTypeFilter}
+                        onChange={(e) => setVisitTypeFilter(e.target.value)}
+                        className="w-full p-2.5 pr-9 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 appearance-none cursor-pointer"
+                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center' }}
+                      >
+                        <option value="">Wybierz typ wizyty...</option>
+                        <option value="first-time">Pierwsza wizyta</option>
+                        <option value="re-visit">Kontrolna</option>
+                        <option value="consultation">Konsultacja</option>
+                      </select>
+                    </div>
+                    {/* Forma konsultacji */}
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-800 mb-2">Forma konsultacji</h3>
+                      <div className="space-y-2">
+                        {[
+                          { value: "all", label: "Wszystkie" },
+                          { value: "offline", label: "Stacjonarna" },
+                          { value: "online", label: "Online" },
+                        ].map((opt) => (
+                          <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="consultation-mode"
+                              checked={consultationMode === opt.value}
+                              onChange={() => setConsultationMode(opt.value)}
+                              className="rounded-full border-gray-300 text-teal-600 focus:ring-teal-500"
+                            />
+                            <span className="text-sm text-gray-700">{opt.label}</span>
+                          </label>
+                        ))}
                       </div>
-                    )}
+                    </div>
+                    {/* Filtruj według statusu */}
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-800 mb-2">Filtruj według statusu</h3>
+                      <div className="space-y-2">
+                        {[
+                          { value: "All", label: "Wszystkie" },
+                          { value: "booked", label: "Zarezerwowane" },
+                          { value: "checkedIn", label: "Zameldowany" },
+                          { value: "Cancelled", label: "Anulowane" },
+                          { value: "Completed", label: "Zakończone" },
+                          { value: "patientLess", label: "Do rejestracji" },
+                        ].map((status) => (
+                          <label key={status.value} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="status-clinic"
+                              checked={statusFilter === status.value}
+                              onChange={() => setStatusFilter(status.value)}
+                              className="rounded-full border-gray-300 text-teal-600 focus:ring-teal-500"
+                            />
+                            <span className="text-sm text-gray-700">{status.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Buttons */}
+                    <div className="flex gap-3 pt-2 border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStatusFilter(clinic ? "booked" : "All");
+                          setDateRange({ startDate: clinic ? new Date().toISOString().split("T")[0] : null, endDate: null });
+                          setDoctorFilterId("");
+                          setPatientLessOnly(false);
+                          setConsultationMode("all");
+                          setVisitTypeFilter("");
+                          setIsFilterOpen(false);
+                        }}
+                        className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-700 text-sm font-medium hover:bg-gray-50"
+                      >
+                        Resetuj
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsFilterOpen(false)}
+                        className="flex-1 px-4 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium"
+                      >
+                        Zastosuj
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

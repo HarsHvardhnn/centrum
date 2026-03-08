@@ -162,6 +162,13 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
             collapsed={collapsed}
           />
           <NavItem
+            icon={<FileEdit size={ICON_SIZE} strokeWidth={2} />}
+            label="Dodaj wizytę"
+            to="/wizyta/utworz"
+            isActive={currentPath === "/wizyta/utworz"}
+            collapsed={collapsed}
+          />
+          <NavItem
             icon={<Stethoscope size={ICON_SIZE} strokeWidth={2} />}
             label="Wizyty lekarskie"
             to={wizytyPath}
@@ -205,13 +212,6 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
             label="e-ZLA"
             isExternal
             externalHref="https://www.zus.pl/ezus/logowanie?logout-manually=true"
-            collapsed={collapsed}
-          />
-          <NavItem
-            icon={<FileEdit size={ICON_SIZE} strokeWidth={2} />}
-            label="Dodaj wizytę"
-            to="/wizyta/utworz"
-            isActive={currentPath === "/wizyta/utworz"}
             collapsed={collapsed}
           />
         </SidebarSection>
