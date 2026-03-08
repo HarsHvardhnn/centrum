@@ -557,13 +557,17 @@ const PatientDetailsPage = () => {
       const response = await appointmentHelper.getAppointmentById(appointmentId);
       
       if (response.data) {
-        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports, patientData: appointmentPatientData, notes } = response.data;
+        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports, patientData: appointmentPatientData, notes, date: aptDate, startTime: aptStartTime, endTime: aptEndTime } = response.data;
         
-        // Update consultation data with notes
+        // Update consultation data with notes and appointment date/time
         setConsultationData(prevConsultation => ({
           ...prevConsultation,
           ...consultation,
-          notes: notes || "" // Add notes from appointment
+          notes: notes || "",
+          date: aptDate || prevConsultation.date,
+          consultationDate: aptDate || prevConsultation.consultationDate,
+          time: aptStartTime || prevConsultation.time,
+          endTime: aptEndTime || prevConsultation.endTime
         }));
         setMedications(appointmentMedications || []);
         setTests(appointmentTests || []);
@@ -611,6 +615,57 @@ const PatientDetailsPage = () => {
     const selected = appointments.find(apt => apt._id === appointmentId);
     setSelectedAppointment(selected);
     await fetchAppointmentDetails(appointmentId);
+  };
+
+  const isVisitCompleted = selectedAppointment?.status === "completed" || selectedAppointment?.status === "Completed";
+
+  const toDateStr = (d) => {
+    if (!d) return "";
+    if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+    const date = new Date(d);
+    return isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
+  };
+
+  const handleDateChange = async (newDate) => {
+    setConsultationData((prev) => ({ ...prev, date: newDate, consultationDate: newDate }));
+    if (!currentAppointmentId || isVisitCompleted) return;
+    try {
+      const startTime = consultationData.time || selectedAppointment?.startTime || "09:00";
+      const endTime = consultationData.endTime || selectedAppointment?.endTime || "09:30";
+      await appointmentHelper.rescheduleAppointment(currentAppointmentId, {
+        date: newDate,
+        startTime,
+        endTime
+      });
+      toast.success("Data wizyty zaktualizowana");
+      setSelectedAppointment((prev) => (prev ? { ...prev, date: newDate } : null));
+      setAppointments((prev) =>
+        prev.map((apt) => (apt._id === currentAppointmentId ? { ...apt, date: newDate } : apt))
+      );
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Nie udało się zmienić daty wizyty");
+    }
+  };
+
+  const handleTimeChange = async (newTime) => {
+    setConsultationData((prev) => ({ ...prev, time: newTime }));
+    if (!currentAppointmentId || isVisitCompleted) return;
+    try {
+      const dateStr = toDateStr(consultationData.consultationDate || consultationData.date || selectedAppointment?.date);
+      const endTime = selectedAppointment?.endTime || newTime;
+      await appointmentHelper.rescheduleAppointment(currentAppointmentId, {
+        date: dateStr,
+        startTime: newTime,
+        endTime
+      });
+      toast.success("Godzina wizyty zaktualizowana");
+      setSelectedAppointment((prev) => (prev ? { ...prev, startTime: newTime } : null));
+      setAppointments((prev) =>
+        prev.map((apt) => (apt._id === currentAppointmentId ? { ...apt, startTime: newTime } : apt))
+      );
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Nie udało się zmienić godziny wizyty");
+    }
   };
 
   // Fetch patient services
@@ -1099,6 +1154,9 @@ const PatientDetailsPage = () => {
         <VisitInfoHeader
           appointment={selectedAppointment}
           consultationData={consultationData}
+          onDateChange={handleDateChange}
+          onTimeChange={handleTimeChange}
+          readOnly={isVisitCompleted}
         />
       )}
 
@@ -1114,12 +1172,17 @@ const PatientDetailsPage = () => {
               }}
               onShowMoreDetails={handleShowDetails}
             />
+            <LifeParamsCard
+              patient={patientData}
+              onLifeParamsChange={(updates) =>
+                setPatientData((prev) => ({ ...prev, ...updates }))
+              }
+            />
             <VisitHistoryCard
               appointments={appointments}
               currentAppointmentId={currentAppointmentId}
               onSelectVisit={handleAppointmentSelect}
             />
-            <LifeParamsCard patient={patientData} />
           </div>
 
           {/* Right column */}

@@ -16,6 +16,8 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  MessageCircle,
+  Mail,
 } from "lucide-react";
 
 const SECTION_HEADING = "text-xs font-bold uppercase tracking-wider text-gray-500";
@@ -239,10 +241,24 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
             isActive={currentPath === "/ustawienia"}
             collapsed={collapsed}
           />
+          <NavItem
+            icon={<Mail size={ICON_SIZE} strokeWidth={2} />}
+            label="Wiadomości kontaktowe"
+            to="/administracja/wiadomosci-kontaktowe"
+            isActive={currentPath === "/administracja/wiadomosci-kontaktowe"}
+            collapsed={collapsed}
+          />
         </SidebarSection>
 
-        {/* Separator + Wyloguj się */}
+        {/* Chat + Wyloguj się */}
         <div className="border-t border-gray-200 pt-4 mt-4">
+          <NavItem
+            icon={<MessageCircle size={ICON_SIZE} strokeWidth={2} />}
+            label="Chat"
+            to="/centrum-pomocy"
+            isActive={currentPath === "/centrum-pomocy"}
+            collapsed={collapsed}
+          />
           <NavItem
             icon={<LogOut size={ICON_SIZE} strokeWidth={2} />}
             label="Wyloguj się"

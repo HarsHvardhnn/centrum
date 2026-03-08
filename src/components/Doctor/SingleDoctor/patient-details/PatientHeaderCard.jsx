@@ -60,12 +60,12 @@ const PatientHeaderCard = ({ patient, onShowMoreDetails }) => {
           </div>
         </div>
 
-        {/* Action: centered, teal text, light background */}
+        {/* Action: 90% width, teal text, darker gray hover */}
         <div className="mt-5 flex justify-center">
           <button
             type="button"
             onClick={() => onShowMoreDetails?.()}
-            className="px-4 py-2 rounded text-sm font-medium text-teal-600 hover:text-teal-700 hover:bg-teal-50/80 bg-gray-50/50 transition-colors"
+            className="w-[90%] px-4 py-2 rounded text-sm font-medium text-teal-600 hover:text-teal-700 bg-gray-50/50 hover:bg-gray-100 transition-colors"
           >
             Pokaż więcej szczegółów
           </button>

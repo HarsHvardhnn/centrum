@@ -13,6 +13,8 @@ import {
   Trash2,
   ArrowRight,
   Server,
+  Newspaper,
+  Package,
 } from "lucide-react";
 
 const settingsCards = [
@@ -104,6 +106,24 @@ const settingsCards = [
       "Ustawienia adresów IP i dostępu sieciowego do systemu (tylko administrator)",
     icon: Server,
     to: "/administracja/konfiguracja-ip",
+    roles: ["admin"],
+  },
+  {
+    id: "news",
+    title: "Aktualności",
+    description:
+      "Zarządzanie aktualnościami i komunikatami wyświetlanymi na stronie",
+    icon: Newspaper,
+    to: "/administracja/aktualnosci",
+    roles: ["admin"],
+  },
+  {
+    id: "services",
+    title: "Usługi",
+    description:
+      "Zarządzanie usługami medycznymi oferowanymi w placówce",
+    icon: Package,
+    to: "/administracja/uslugi",
     roles: ["admin"],
   },
 ];
