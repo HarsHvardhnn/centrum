@@ -13,7 +13,7 @@ const PatientHeaderCard = ({ patient, onShowMoreDetails }) => {
       : patient?.gender === "Female" || patient?.sex === "Female"
       ? "Kobieta"
       : patient?.gender || patient?.sex || "—";
-  const patientId = patient?.patientId || patient?.patient_id || patient?.id || "—";
+  const patientId = patient?.patientId ?? patient?.patient_id ?? "—";
   const pesel = patient?.govtId || patient?.pesel || patient?.PESEL || "—";
   const phone =
     patient?.phone &&

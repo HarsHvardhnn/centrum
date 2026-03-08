@@ -191,7 +191,7 @@ export const MedicationsSection = ({
               className="flex items-center gap-1 text-teal-700 hover:text-teal-800 text-sm font-medium"
             >
               <Plus size={18} />
-              Dodaj kolejny lek
+              Dodaj lek
             </button>
             <button
               type="button"

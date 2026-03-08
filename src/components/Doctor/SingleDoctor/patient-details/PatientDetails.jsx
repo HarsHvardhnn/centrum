@@ -473,7 +473,15 @@ const PatientDetailsPage = () => {
     directSave: true,
     directSaveFunction: directSaveFunction,
     onSaveSuccess: () => {
-      // Silent success - don't show toast for auto-saves
+      setLastSavedTime(
+        new Date().toLocaleTimeString("pl-PL", {
+          timeZone: "Europe/Warsaw",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false
+        })
+      );
     },
     onSaveError: (error) => {
       // Silent error - data is saved to localStorage as fallback
@@ -738,7 +746,15 @@ const PatientDetailsPage = () => {
       if (response.success) {
         toast.success("Szczegóły spotkania zaktualizowane pomyślnie");
         setSaveSuccess(true);
-        setLastSavedTime(new Date().toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" }));
+        setLastSavedTime(
+          new Date().toLocaleTimeString("pl-PL", {
+            timeZone: "Europe/Warsaw",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+          })
+        );
         await fetchAppointmentDetails(currentAppointmentId);
         if (endVisit) {
           navigate(`/administracja/rozliczenia?appointment=${currentAppointmentId}&step=edit`);
@@ -1168,7 +1184,7 @@ const PatientDetailsPage = () => {
               patient={{
                 ...patientData,
                 gender: patientData.gender === "Male" ? "Mężczyzna" : patientData.gender === "Female" ? "Kobieta" : patientData.sex,
-                patientId: patientData.patientId || patientData.patient_id || id,
+                patientId: patientData.patientId ?? patientData.patient_id,
               }}
               onShowMoreDetails={handleShowDetails}
             />
