@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Clock, Bell } from "lucide-react";
+import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../../../context/userContext";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
@@ -27,7 +27,7 @@ function getInitials(name) {
   return name.charAt(0).toUpperCase();
 }
 
-const PatientDetailsHeader = ({ notificationCount = 3 }) => {
+const PatientDetailsHeader = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const [searchValue, setSearchValue] = useState("");
@@ -126,8 +126,8 @@ const PatientDetailsHeader = ({ notificationCount = 3 }) => {
         CM7MED
       </button>
 
-      {/* Search - centered, aligned */}
-      <form onSubmit={handleSearchSubmit} className="flex-1 flex justify-center min-w-0 max-w-xl">
+      {/* Search - centered, wide */}
+      <form onSubmit={handleSearchSubmit} className="flex-1 flex justify-center min-w-0 max-w-4xl">
         <div ref={searchContainerRef} className="relative w-full">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 z-[1]"
@@ -177,24 +177,8 @@ const PatientDetailsHeader = ({ notificationCount = 3 }) => {
         </div>
       </form>
 
-      {/* Right section: Session, Notifications, User, Time - all vertically centered */}
+      {/* Right section: User, Time */}
       <div className="flex items-center gap-5 shrink-0">
-        {/* Session */}
-        <div className="flex items-center gap-2 whitespace-nowrap" style={{ color: TEXT_PRIMARY }}>
-          <Clock size={20} strokeWidth={2} className="shrink-0" />
-          <span className="text-sm font-medium">Sesja: 14:20 min</span>
-        </div>
-
-        {/* Notifications */}
-        <button type="button" className="relative p-1 rounded hover:opacity-90 flex items-center justify-center" style={{ color: TEXT_PRIMARY }} aria-label="Powiadomienia">
-          <Bell size={22} strokeWidth={2} />
-          {notificationCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
-              {notificationCount}
-            </span>
-          )}
-        </button>
-
         {/* User - avatar/placeholder + name block aligned */}
         <div className="flex items-center gap-3 min-w-0">
           {user?.profilePicture ? (

@@ -33,7 +33,8 @@ function AppointmentFormModal({
   isReceptionistMode = false,
   workflowOrder = "patientFirst", // "patientFirst" or "appointmentFirst"
   allowPastDates = false, // Whether to allow selecting dates in the past
-  skipDoctorSelection = false // Whether to skip doctor selection step
+  skipDoctorSelection = false, // Whether to skip doctor selection step
+  embedded = false // When true, render as page content (no modal overlay); used on /wizyta/utworz
 }) {
   const { services: contextServices, loading: contextLoading } = useServices();
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -2127,11 +2128,19 @@ function AppointmentFormModal({
     };
   }, [phoneDropdownOpen]);
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Dodaj wizytę</h2>
+  const content = (
+    <div className={embedded ? "bg-white rounded-lg p-6 w-full shadow-sm" : "bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto"}>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-gray-800">Dodaj wizytę</h2>
+        {embedded ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-1.5 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
+          >
+            Wstecz
+          </button>
+        ) : (
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700"
@@ -2151,7 +2160,8 @@ function AppointmentFormModal({
               />
             </svg>
           </button>
-        </div>
+        )}
+      </div>
 
         <StepIndicator />
         
@@ -2213,7 +2223,12 @@ function AppointmentFormModal({
             )}
           </div>
         </div>
-      </div>
+    </div>
+  );
+
+  return embedded ? content : (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      {content}
     </div>
   );
 }

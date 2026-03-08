@@ -111,6 +111,7 @@ function AppointmentPage() {
         isReceptionistMode={true} // Enable receptionist workflow
         workflowOrder="appointmentFirst" // New workflow order
         allowPastDates={false} // Don't auto-enable past dates checkbox
+        embedded={true}
       />
 
     </div>

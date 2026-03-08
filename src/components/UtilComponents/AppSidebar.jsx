@@ -209,7 +209,7 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
           />
           <NavItem
             icon={<FileEdit size={ICON_SIZE} strokeWidth={2} />}
-            label="Utwórz dokument"
+            label="Dodaj wizytę"
             to="/wizyta/utworz"
             isActive={currentPath === "/wizyta/utworz"}
             collapsed={collapsed}
