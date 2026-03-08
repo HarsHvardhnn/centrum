@@ -21,6 +21,14 @@ const DoctorListing = ({ doctors = [] }) => {
       ? doc.specialty.name
       : doc.specialty || "Ogólny";
 
+  const statusLabel = (doc) => {
+    const s = (doc.status || "").trim().toLowerCase();
+    if (s === "available") return "Dostępny";
+    if (s === "unavailable") return "Niedostępny";
+    if (doc.status) return doc.status;
+    return doc.available ? "Dostępny" : "Niedostępny";
+  };
+
   return (
     <div className="space-y-3">
       {/* Column headers */}
@@ -63,7 +71,7 @@ const DoctorListing = ({ doctors = [] }) => {
             </div>
             <div className="text-gray-800 truncate text-sm">{specialtyLabel(doctor)}</div>
             <div className="text-gray-800 truncate text-sm">
-              {doctor.status || (doctor.available ? "Dostępny" : "Niedostępny")}
+              {statusLabel(doctor)}
             </div>
             <div className="text-gray-800 truncate text-sm">{doctor.date || "—"}</div>
             <div className="flex items-center justify-end gap-2 flex-wrap">

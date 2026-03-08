@@ -53,6 +53,8 @@ const PatientInfo = ({ patientData, currentAppointment }) => {
   const pesel = getPesel(patientData);
   const phone = getPhone(patientData);
   const patientId = getPatientId(patientData);
+  const isInternational = patientData?.isInternational === true || patientData?.isInternationalPatient === true;
+  const documentId = patientData?.documentId ?? patientData?.internationalPatientDocumentKey ?? "";
 
   // Active medications only (status "Aktywny" or "active"), max 5 in list
   const medications = Array.isArray(patientData?.medications)
@@ -85,12 +87,25 @@ const PatientInfo = ({ patientData, currentAppointment }) => {
         <div className="border rounded-2xl p-4 bg-white">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">{name || "—"}</h2>
           <div className="flex flex-wrap gap-3">
-            <div
-              className={`rounded-lg border px-4 py-2.5 min-w-[140px] ${pesel ? "border-teal-300 bg-teal-50 text-teal-800" : "border-gray-200 bg-gray-50"}`}
-            >
-              <p className={`text-xs font-semibold uppercase mb-0.5 ${pesel ? "text-teal-600" : "text-gray-500"}`}>PESEL</p>
-              <p className={`text-sm font-medium ${pesel ? "text-teal-900" : "text-gray-900"}`}>{pesel ? pesel : "Brak PESEL – niezweryfikowany"}</p>
-            </div>
+            {isInternational ? (
+              <>
+                <div className="rounded-lg border border-teal-300 bg-teal-50 text-teal-800 px-4 py-2.5 min-w-[140px]">
+                  <p className="text-xs font-semibold uppercase mb-0.5 text-teal-600">ID dokumentu</p>
+                  <p className="text-sm font-medium text-teal-900">{documentId || "—"}</p>
+                </div>
+                <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 min-w-[140px]">
+                  <p className="text-xs font-semibold uppercase mb-0.5 text-amber-700">Pacjent międzynarodowy</p>
+                  <p className="text-sm font-medium text-amber-900">Tak</p>
+                </div>
+              </>
+            ) : (
+              <div
+                className={`rounded-lg border px-4 py-2.5 min-w-[140px] ${pesel ? "border-teal-300 bg-teal-50 text-teal-800" : "border-gray-200 bg-gray-50"}`}
+              >
+                <p className={`text-xs font-semibold uppercase mb-0.5 ${pesel ? "text-teal-600" : "text-gray-500"}`}>PESEL</p>
+                <p className={`text-sm font-medium ${pesel ? "text-teal-900" : "text-gray-900"}`}>{pesel ? pesel : "Brak PESEL – niezweryfikowany"}</p>
+              </div>
+            )}
             <div className="rounded-lg border border-gray-200 bg-white px-4 py-2.5 min-w-[140px]">
               <p className="text-xs font-semibold uppercase text-gray-500 mb-0.5">Telefon</p>
               <p className="text-sm text-gray-900">{phone || ""}</p>
