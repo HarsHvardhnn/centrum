@@ -123,15 +123,17 @@ const doctorService = {
   /**
    * Get doctor by ID
    * @param {string} id - Doctor ID
-   * @returns {Promise} - API response with doctor data
+   * @param {string} [date] - Optional date (YYYY-MM-DD) to get shiftsForDate for that day
+   * @returns {Promise} - API response with doctor data (and shiftsForDate when date is provided)
    */
-  getDoctorById: async (id) => {
+  getDoctorById: async (id, date) => {
     try {
       if (!id) {
         throw new Error("Doctor ID is required");
       }
 
-      const response = await apiCaller("GET", `/docs/${id}`);
+      const url = date ? `/docs/${id}?date=${encodeURIComponent(date)}` : `/docs/${id}`;
+      const response = await apiCaller("GET", url);
       return response.data;
     } catch (error) {
       console.error(`Error fetching doctor with ID ${id}:`, error);

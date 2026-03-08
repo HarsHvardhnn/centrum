@@ -57,19 +57,20 @@ function DoctorsPage() {
   useEffect(() => {
     const fetchDoctorData = async () => {
       try {
-        // Get doctor ID from query params
         const doctorId = router.id;
-
-        if (!doctorId) return; // Wait until we have the ID
+        if (!doctorId) return;
 
         showLoader();
-        const response = await doctorService.getDoctorById(doctorId);
+        const dateStr = formatDateToYYYYMMDD(selectedDate);
+        const response = await doctorService.getDoctorById(doctorId, dateStr);
 
         if (response.success && response.doctor) {
-          // Transform the API data to match our component structure
-          const transformedData = transformToDoctorInfo(response.doctor);
+          const transformedData = transformToDoctorInfo(
+            response.doctor,
+            response.shiftsForDate,
+            selectedDate
+          );
           setDoctorInfo(transformedData);
-          //("doctor data", transformedData);
         } else {
           setError("błąd serwera");
         }
@@ -82,7 +83,7 @@ function DoctorsPage() {
     };
 
     fetchDoctorData();
-  }, [router.id, showLoader, hideLoader]);
+  }, [router.id, selectedDate, showLoader, hideLoader]);
 
   useEffect(() => {
     if (doctorInfo && doctorInfo.id) {
@@ -159,16 +160,33 @@ function DoctorsPage() {
     }
   };
 
-  const transformToDoctorInfo = (apiDoctor) => {
+  const DAY_NAMES_PL = ["Niedziela", "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota"];
+
+  const transformToDoctorInfo = (apiDoctor, shiftsForDate, forDate) => {
     let fullName = `${apiDoctor.name?.first || ""} ${
       apiDoctor.name?.last || ""
     }`.trim();
     fullName = fullName.replace(/^\s*(dr\.?|lek\.?|prof\.?|inż\.?)\s*/gi, "").trim() || fullName;
     const specialty = apiDoctor.specialization?.[0]?.name || "General Practitioner";
 
-    // Determine available time slot (optional enhancement using weeklyShifts)
-    let timeSlot = "09:00am - 01:00pm";
-    if (apiDoctor.weeklyShifts?.length) {
+    // Prefer shift for the selected date (shiftsForDate.timeBlocks), else weekly shift for that day, else first weekly shift
+    let timeSlot = "09:00 - 17:00";
+    if (shiftsForDate?.timeBlocks?.length) {
+      const blocks = shiftsForDate.timeBlocks;
+      timeSlot = blocks.map((b) => `${b.startTime} - ${b.endTime}`).join(", ");
+    } else if (apiDoctor.weeklyShifts?.length && forDate) {
+      const dayIndex = new Date(forDate).getDay();
+      const dayName = DAY_NAMES_PL[dayIndex];
+      const dayShift = apiDoctor.weeklyShifts.find(
+        (s) => (s.dayOfWeek || "").toLowerCase() === (dayName || "").toLowerCase()
+      );
+      if (dayShift) {
+        timeSlot = `${dayShift.startTime} - ${dayShift.endTime}`;
+      } else {
+        const firstShift = apiDoctor.weeklyShifts[0];
+        timeSlot = `${firstShift.startTime} - ${firstShift.endTime}`;
+      }
+    } else if (apiDoctor.weeklyShifts?.length) {
       const firstShift = apiDoctor.weeklyShifts[0];
       timeSlot = `${firstShift.startTime} - ${firstShift.endTime}`;
     }
@@ -179,7 +197,7 @@ function DoctorsPage() {
       name: fullName,
       specialty: specialty,
       timeSlot: timeSlot,
-      timeZone: "BST", // You can dynamically determine this if needed
+      timeZone: "BST",
       description:
         apiDoctor.bio ||
         "Infectious Diseases Hub aims to provide up-to-date, essential research and on aspects of microbiology, virology, and parasitology.",

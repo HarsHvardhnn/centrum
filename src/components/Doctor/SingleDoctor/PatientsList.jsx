@@ -90,8 +90,10 @@ const PatientsList = ({
   };
 
   const patientIdLabel = (p) => {
-    const id = p.patient_id || p.patientId;
-    return id ? String(id) : "Niezweryfikowany";
+    const patientId = p.patient?.patientId ?? p.patientId;
+    const hasPatientId = patientId != null && String(patientId).trim() !== "";
+    const id = hasPatientId ? patientId : (p.patient_id ?? p.patient?.patient_id ?? p.patient?._id);
+    return id != null && String(id).trim() !== "" ? String(id) : "Niezweryfikowany";
   };
 
   const EmptyState = () => (
@@ -244,7 +246,7 @@ const PatientsList = ({
                           >
                             <PlayCircle size={16} /> Rozpocznij wizytę
                           </DropdownMenu.Item>
-                          {onCheckIn && (
+                          {onCheckIn && patient.status === "booked" && (
                             <DropdownMenu.Item
                               className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
                               onSelect={() => onCheckIn(patient)}
