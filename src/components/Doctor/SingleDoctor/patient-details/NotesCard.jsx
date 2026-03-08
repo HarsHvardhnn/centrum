@@ -1,11 +1,24 @@
 import React from "react";
+import { FileText } from "lucide-react";
 
-const NotesCard = ({ value, onChange }) => {
+const NotesCard = ({ value, onChange, onChooseTemplate }) => {
   return (
     <div className="bg-white rounded border border-gray-200 p-5">
       <div className="flex items-center justify-between gap-2 mb-3">
         <h3 className="text-base font-semibold text-gray-800">Notatki</h3>
-        <span className="text-xs text-gray-500">Wewnętrzne / z rejestracji online</span>
+        <div className="flex items-center gap-2 shrink-0">
+          {onChooseTemplate && (
+            <button
+              type="button"
+              onClick={onChooseTemplate}
+              className="flex items-center gap-1.5 text-sm text-teal-600 hover:text-teal-700 border border-teal-200 hover:border-teal-300 rounded px-3 py-1.5 transition-colors"
+            >
+              <FileText size={14} />
+              Wybierz szablon…
+            </button>
+          )}
+          <span className="text-xs text-gray-500">Wewnętrzne / z rejestracji online</span>
+        </div>
       </div>
       <textarea
         value={value ?? ""}

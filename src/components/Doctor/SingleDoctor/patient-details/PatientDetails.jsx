@@ -16,6 +16,8 @@ import ProceduresCard from "./ProceduresCard";
 import DocumentationCard from "./DocumentationCard";
 import NotesCard from "./NotesCard";
 import MedicalDocumentsCard from "./MedicalDocumentsCard";
+import SectionTemplatePickerModal from "./SectionTemplatePickerModal";
+import GlobalTemplatePickerModal from "./GlobalTemplatePickerModal";
 import PatientDetailsFooter from "./PatientDetailsFooter";
 import patientService from "../../../../helpers/patientHelper";
 import patientServicesHelper from "../../../../helpers/patientServicesHelper";
@@ -426,6 +428,18 @@ const PatientDetailsPage = () => {
   const [diagnoses, setDiagnoses] = useState([]);
   const [procedures, setProcedures] = useState([]);
   const [lastSavedTime, setLastSavedTime] = useState(null);
+
+  // Visit documentation template pickers (section = one field, global = full visit)
+  const [sectionTemplatePickerKey, setSectionTemplatePickerKey] = useState(null);
+  const [globalTemplatePickerOpen, setGlobalTemplatePickerOpen] = useState(false);
+
+  const SECTION_LABELS = {
+    interview: "Wywiad z pacjentem",
+    physicalExamination: "Badanie przedmiotowe",
+    treatment: "Zastosowane leczenie",
+    recommendations: "Zalecenia",
+    notes: "Notatki"
+  };
 
   // Auto-save functionality for patient details (direct save)
   const directSaveFunction = async (dataToSave, meta) => {
@@ -1257,34 +1271,77 @@ const PatientDetailsPage = () => {
                     }
                   }}
                 />
+                {/* Załaduj szablon globalny – fills all documentation sections at once */}
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setGlobalTemplatePickerOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+                  >
+                    <FileText size={18} />
+                    Załaduj szablon globalny
+                  </button>
+                </div>
+                <SectionTemplatePickerModal
+                  isOpen={!!sectionTemplatePickerKey}
+                  onClose={() => setSectionTemplatePickerKey(null)}
+                  sectionKey={sectionTemplatePickerKey}
+                  sectionLabel={sectionTemplatePickerKey ? SECTION_LABELS[sectionTemplatePickerKey] : null}
+                  onSelect={(content) => {
+                    if (sectionTemplatePickerKey) {
+                      setConsultationData((prev) => ({ ...prev, [sectionTemplatePickerKey]: content ?? "" }));
+                      setSectionTemplatePickerKey(null);
+                    }
+                  }}
+                />
+                <GlobalTemplatePickerModal
+                  isOpen={globalTemplatePickerOpen}
+                  onClose={() => setGlobalTemplatePickerOpen(false)}
+                  onSelect={(sections) => {
+                    setConsultationData((prev) => ({
+                      ...prev,
+                      interview: sections.interview ?? prev.interview,
+                      physicalExamination: sections.physicalExamination ?? prev.physicalExamination,
+                      treatment: sections.treatment ?? prev.treatment,
+                      recommendations: sections.recommendations ?? prev.recommendations,
+                      notes: sections.notes ?? prev.notes
+                    }));
+                    setGlobalTemplatePickerOpen(false);
+                  }}
+                />
                 <DocumentationCard
                   title="Wywiad z pacjentem"
                   value={consultationData.interview}
                   onChange={(v) => setConsultationData((prev) => ({ ...prev, interview: v }))}
                   placeholder="Dokumentacja wywiadu z pacjentem..."
+                  onChooseTemplate={() => setSectionTemplatePickerKey("interview")}
                 />
                 <DocumentationCard
                   title="Badanie przedmiotowe"
                   value={consultationData.physicalExamination}
                   onChange={(v) => setConsultationData((prev) => ({ ...prev, physicalExamination: v }))}
                   placeholder="Opis badania przedmiotowego..."
+                  onChooseTemplate={() => setSectionTemplatePickerKey("physicalExamination")}
                 />
                 <DocumentationCard
                   title="Zastosowane leczenie"
                   value={consultationData.treatment}
                   onChange={(v) => setConsultationData((prev) => ({ ...prev, treatment: v }))}
                   placeholder="Opis zastosowanego leczenia..."
+                  onChooseTemplate={() => setSectionTemplatePickerKey("treatment")}
                 />
                 <DocumentationCard
                   title="Zalecenia"
                   value={consultationData.recommendations}
                   onChange={(v) => setConsultationData((prev) => ({ ...prev, recommendations: v }))}
                   placeholder="Zalecenia dla pacjenta..."
+                  onChooseTemplate={() => setSectionTemplatePickerKey("recommendations")}
                 />
 
                 <NotesCard
                   value={consultationData.notes}
                   onChange={(v) => setConsultationData((prev) => ({ ...prev, notes: v }))}
+                  onChooseTemplate={() => setSectionTemplatePickerKey("notes")}
                 />
 
                 <MedicalDocumentsCard

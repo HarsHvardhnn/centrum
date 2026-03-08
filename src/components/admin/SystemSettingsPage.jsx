@@ -76,10 +76,10 @@ const settingsCards = [
     id: "document-templates",
     title: "Szablony dokumentów",
     description:
-      "Zarządzanie repozytorium plików i wzorów dokumentacji do uzupełnienia danymi pacjenta",
+      "Szablony sekcji i szablony globalne do karty wizyty (dokumentacja)",
     icon: FileStack,
     to: "/administracja/szablony-dokumentow",
-    roles: ["admin"],
+    roles: ["admin", "doctor"],
   },
   {
     id: "sms",
