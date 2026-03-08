@@ -26,7 +26,7 @@ const DoctorListing = ({ doctors = [] }) => {
       {/* Column headers */}
       <div className="grid grid-cols-[1fr_10rem_8rem_7rem_1fr] gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
         <div>Lekarz i ID</div>
-        <div>Specjalność</div>
+        <div>Specjalizacja</div>
         <div>Status</div>
         <div>Data</div>
         <div className="text-right">Akcje</div>

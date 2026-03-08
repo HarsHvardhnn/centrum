@@ -939,7 +939,7 @@ function LabAppointmentsContent({ clinic }) {
           /* Lista pacjentów – card layout */
           <div className="space-y-3">
             {/* Column headers */}
-            <div className="grid grid-cols-[1fr_4rem_3rem_6rem_7rem_8rem_2.5rem] gap-3 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
+            <div className="grid grid-cols-7 gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
               <div>Pacjent i ID</div>
               <div>Wiek</div>
               <div>Płeć</div>
@@ -960,7 +960,7 @@ function LabAppointmentsContent({ clinic }) {
                 return (
                   <div
                     key={appointment.id}
-                    className={`bg-white border border-gray-200 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-shadow grid grid-cols-[1fr_4rem_3rem_6rem_7rem_8rem_2.5rem] gap-3 px-4 py-3 items-center ${selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
+                    className={`bg-white border border-gray-200 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-shadow grid grid-cols-7 gap-4 px-4 py-3 items-center ${selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
                   >
                     <div
                       className="min-w-0 cursor-pointer"

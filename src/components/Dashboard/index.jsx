@@ -963,7 +963,7 @@ const PatientList = () => {
                     </div>
                   </td>
                   <td className="py-4 px-4 text-gray-600">
-                    {patient.id || "N/A"}
+                    {isVisitOnlyAppointment(patient) ? "—" : (patient.patientId || patient.patient_id || "N/A")}
                   </td>
                   <td className="py-4 px-4 text-gray-600">
                     {translateSexToPolish(patient.sex) || "N/A"}
