@@ -400,6 +400,14 @@ const PatientList = () => {
     return s === "cancelled" || s === "canceled" || s.startsWith("cancel") || s === "no-show";
   };
 
+  /** Receptionist goes to edit patient (Settings); admin/doctor go to appointment card. */
+  const getPatientViewUrl = (patientId, appointmentId) => {
+    if (user?.role === "receptionist") {
+      return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname)}`;
+    }
+    return `/szczegoly-pacjenta/${patientId}${appointmentId ? `?appointmentId=${appointmentId}` : ""}`;
+  };
+
   /** Map UI status filter to API status param (booked | completed | cancelled; omit for 'all'). */
   const getApiStatus = () => {
     if (statusFilter === "all") return undefined;
@@ -938,7 +946,7 @@ const PatientList = () => {
                         setSelectedAppointment(patient);
                         setShowCompleteRegModal(true);
                       } else if (!isVisitOnlyAppointment(patient)) {
-                        navigate(`/szczegoly-pacjenta/${patient.patient_id}?appointmentId=${patient._id}`);
+                        navigate(getPatientViewUrl(patient.patient_id, patient._id));
                       }
                     }}
                   >
@@ -1028,11 +1036,7 @@ const PatientList = () => {
                             ) : !isVisitOnlyAppointment(patient) ? (
                               <DropdownMenu.Item
                                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                onClick={() => {
-                                  navigate(
-                                    `/szczegoly-pacjenta/${patient.patient_id}?appointmentId=${patient._id}`
-                                  );
-                                }}
+                                onClick={() => navigate(getPatientViewUrl(patient.patient_id, patient._id))}
                               >
                                 <Eye size={16} className="mr-2" />
                                 Zobacz szczegóły
@@ -1494,11 +1498,7 @@ const UpcomingAppointments = () => {
                     >
                       <DropdownMenu.Item
                         className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                        onClick={() => {
-                          navigate(
-                            `/szczegoly-pacjenta/${appointment.patient.id}?appointmentId=${appointment.id}`
-                          );
-                        }}
+                        onClick={() => navigate(getPatientViewUrl(appointment.patient.id, appointment.id))}
                       >
                         <Eye size={16} className="mr-2 flex-shrink-0" />
                         Zobacz szczegóły

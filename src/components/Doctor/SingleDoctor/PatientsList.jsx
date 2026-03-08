@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "../../../context/userContext";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   ChevronLeft,
@@ -29,6 +30,7 @@ const PatientsList = ({
   onReschedule,
 }) => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [showCancelModal, setShowCancelModal] = React.useState(false);
   const [sendSMSNotification, setSendSMSNotification] = React.useState(false);
   const [sendEmailNotification, setSendEmailNotification] = React.useState(false);
@@ -48,7 +50,11 @@ const PatientsList = ({
 
   const handleStartVisit = (patient) => {
     if (patient.patient_id) {
-      navigate(`/szczegoly-pacjenta/${patient.patient_id}`);
+      if (user?.role === "receptionist") {
+        navigate(`/administracja/konta?edytujPacjenta=${patient.patient_id}&returnUrl=${encodeURIComponent(window.location.pathname)}`);
+      } else {
+        navigate(`/szczegoly-pacjenta/${patient.patient_id}`);
+      }
     }
   };
 

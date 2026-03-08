@@ -140,6 +140,14 @@ function LabAppointmentsContent({ clinic }) {
     return s === "cancelled" || s === "canceled";
   };
 
+  /** Receptionist goes to edit patient (Settings); admin/doctor go to appointment card. */
+  const getPatientViewUrl = (patientId, appointmentId) => {
+    if (user?.role === "receptionist") {
+      return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname)}`;
+    }
+    return `/szczegoly-pacjenta/${patientId}${appointmentId ? `?appointmentId=${appointmentId}` : ""}`;
+  };
+
   const fetchVisitConsents = async (visitId) => {
     setConsentsModalVisitId(visitId);
     setShowConsentsModal(true);
@@ -976,7 +984,7 @@ function LabAppointmentsContent({ clinic }) {
                           setSelectedAppointment(appointment);
                           setShowCompleteRegModal(true);
                         } else if (!isVisitOnlyAppointment(appointment)) {
-                          navigate(`/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`);
+                          navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id));
                         }
                       }}
                     >
@@ -1014,7 +1022,7 @@ function LabAppointmentsContent({ clinic }) {
                                 </DropdownMenu.Item>
                               )}
                               {!isVisitOnlyAppointment(appointment) && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => navigate(`/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`)}>
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id))}>
                                   <Eye size={16} className="mr-2" /> Zobacz szczegóły
                                 </DropdownMenu.Item>
                               )}
@@ -1101,7 +1109,7 @@ function LabAppointmentsContent({ clinic }) {
                             setSelectedAppointment(appointment);
                             setShowCompleteRegModal(true);
                           } else if (!isVisitOnlyAppointment(appointment)) {
-                            navigate(`/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`);
+                            navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id));
                           }
                         }
                       }}
@@ -1130,7 +1138,7 @@ function LabAppointmentsContent({ clinic }) {
                                 </DropdownMenu.Item>
                               )}
                               {!isVisitOnlyAppointment(appointment) && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => navigate(`/szczegoly-pacjenta/${appointment.patient.id || appointment.patient._id}?appointmentId=${appointment.id}`)}>
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id))}>
                                   <Eye size={16} className="mr-2" /> Zobacz szczegóły
                                 </DropdownMenu.Item>
                               )}

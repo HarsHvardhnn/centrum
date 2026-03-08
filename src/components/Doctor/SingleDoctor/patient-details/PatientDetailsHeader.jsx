@@ -94,7 +94,11 @@ const PatientDetailsHeader = () => {
     setSearchValue("");
     setSearchResults([]);
     setShowDropdown(false);
-    navigate(`/szczegoly-pacjenta/${patientId}?appointmentId=${appointment._id || appointment.id}`);
+    if (user?.role === "receptionist") {
+      navigate(`/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname)}`);
+    } else {
+      navigate(`/szczegoly-pacjenta/${patientId}?appointmentId=${appointment._id || appointment.id}`);
+    }
   };
 
   const handleSearchSubmit = (e) => {

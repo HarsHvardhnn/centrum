@@ -36,6 +36,7 @@ import ServicesManagement from "./components/admin/Services";
 
 import NewsPage from "./components/User/Pages/NewsPage";
 import PatientDetailsPage from "./components/Doctor/SingleDoctor/patient-details/PatientDetails";
+import PatientDetailsGuard from "./components/Doctor/SingleDoctor/patient-details/PatientDetailsGuard";
 import PatientDetailsHeader from "./components/Doctor/SingleDoctor/patient-details/PatientDetailsHeader";
 import NewsManagement from "./components/admin/NewManagement";
 import NewsDetail from "./components/User/NewsDetail";
@@ -200,9 +201,9 @@ const routes = createBrowserRouter([
     element: <Navigate to="/logowanie" replace />,
   },
 
-  // Doctor & Admin protected routes
+  // Doctor, Admin & Receptionist protected routes (receptionist cannot open appointment card; see PatientDetailsGuard)
   {
-    element: <ProtectedRoute allowedRoles={["doctor", "admin"]} />,
+    element: <ProtectedRoute allowedRoles={["doctor", "admin", "receptionist"]} />,
     children: [
       
       {
@@ -214,7 +215,7 @@ const routes = createBrowserRouter([
           { path: "/pacjenci", element: <LabAppointments key="patients" clinic={false} /> },
           { path: "/klinika", element: <LabAppointments key="clinic" clinic={true} /> },
           { path: "/wizyta/utworz", element: <AppointmentPage /> },
-          { path: "/szczegoly-pacjenta/:id", element: <PatientDetailsPage /> },
+          { path: "/szczegoly-pacjenta/:id", element: <PatientDetailsGuard /> },
           { path: "/administracja", element: <MedicalDashboard /> },
           { path: "/administracja/sms", element: <UserMessaging /> },
           { path: "/lekarz/utworz", element: <AddDoctorForm /> },

@@ -30,14 +30,18 @@ const DoctorDashboard = ({
   onReschedule,
 }) => {
   const navigate = useNavigate();
+  const { user } = useUser();
   //("patiend eta;same",patientDetails)
 
   const handleViewDetails = () => {
     if (selectedPatient) {
-      // Find the selected appointment from patients array
       const selectedAppointment = patients.find(p => p.id === selectedPatient);
-      if (selectedAppointment) {
-        navigate(`/szczegoly-pacjenta/${selectedAppointment.patient_id}`);
+      if (selectedAppointment?.patient_id) {
+        if (user?.role === "receptionist") {
+          navigate(`/administracja/konta?edytujPacjenta=${selectedAppointment.patient_id}&returnUrl=${encodeURIComponent(window.location.pathname)}`);
+        } else {
+          navigate(`/szczegoly-pacjenta/${selectedAppointment.patient_id}`);
+        }
       }
     }
   };
