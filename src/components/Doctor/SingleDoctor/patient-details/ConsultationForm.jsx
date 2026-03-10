@@ -1,10 +1,11 @@
 // ConsultationForm.jsx
 import React, { useEffect, useState, useRef } from "react";
-import { ChevronDown, Upload, Trash2, Search, Clock } from "lucide-react";
+import { ChevronDown, Upload, Trash2, Search, Clock, CheckCircle } from "lucide-react";
 import FileUploadArea from "./FileUploadArea";
 import FileListItem from "./FileListItem";
 import { toast } from "sonner";
 import { apiCaller } from "../../../../utils/axiosInstance";
+import appointmentHelper from "../../../../helpers/appointmentHelper";
 
 const ConsultationForm = ({
   patientData,
@@ -31,6 +32,12 @@ const ConsultationForm = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef(null);
+
+  // Visit reason dictionary for doctor verification
+  const [visitReasonsData, setVisitReasonsData] = useState({ categories: [] });
+  const [verifyVisitReasonCategoryId, setVerifyVisitReasonCategoryId] = useState("");
+  const [verifyVisitReasonDisplayName, setVerifyVisitReasonDisplayName] = useState("");
+  const [isVerifyingVisitType, setIsVerifyingVisitType] = useState(false);
 
   // Opcje kategorii leczenia
   const treatmentCategories = [
@@ -149,6 +156,50 @@ const ConsultationForm = ({
     setSearchTerm("");
   };
 
+  // Fetch visit reason dictionary for verification
+  useEffect(() => {
+    let cancelled = false;
+    appointmentHelper.getVisitReasons().then((res) => {
+      if (cancelled) return;
+      const data = res?.data ?? res;
+      const categories = data?.categories ?? [];
+      setVisitReasonsData({ categories: Array.isArray(categories) ? categories : [] });
+    }).catch(() => {
+      if (!cancelled) setVisitReasonsData({ categories: [] });
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleConfirmVisitType = async () => {
+    const displayName = verifyVisitReasonDisplayName || consultationData.visitReason || consultationData.consultationType;
+    if (!displayName) {
+      toast.error("Wybierz rodzaj wizyty z listy");
+      return;
+    }
+    if (!appointmentId) return;
+    setIsVerifyingVisitType(true);
+    try {
+      await appointmentHelper.updateConsultation(appointmentId, {
+        visitReason: displayName,
+        visitTypeVerified: true,
+      });
+      setConsultationData((prev) => ({
+        ...prev,
+        visitReason: displayName,
+        visitTypeVerified: true,
+        consultationType: displayName,
+      }));
+      setVerifyVisitReasonDisplayName("");
+      setVerifyVisitReasonCategoryId("");
+      toast.success("Rodzaj wizyty został potwierdzony");
+    } catch (e) {
+      console.error("Error verifying visit type:", e);
+      toast.error(e?.response?.data?.message || "Nie udało się potwierdzić rodzaju wizyty");
+    } finally {
+      setIsVerifyingVisitType(false);
+    }
+  };
+
   const consultationTypes = [
     "Konsultacja w przychodni",
     "Konsultacja online",
@@ -172,30 +223,58 @@ const ConsultationForm = ({
             className="w-full p-2.5 border border-gray-200 rounded-lg"
           />
         </div>
-        <div>
-          <label className="block text-sm text-gray-600 mb-1">
-            Rodzaj konsultacji
-          </label>
-          <div className="relative">
-            <select
-              value={consultationData.consultationType || ""}
-              onChange={(e) =>
-                handleConsultationChange("consultationType", e.target.value)
-              }
-              className="w-full p-2.5 border border-gray-200 rounded-lg appearance-none pr-8"
-            >
-              <option value="" disabled>
-                Wybierz rodzaj konsultacji
-              </option>
-              {consultationTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-              <ChevronDown size={16} className="text-gray-500" />
-            </div>
+        {/* Rodzaj wizyty – weryfikacja przez lekarza (słownik) */}
+        <div className="md:col-span-2">
+          <label className="block text-sm text-gray-600 mb-1">Rodzaj wizyty</label>
+          <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-sm font-medium text-gray-800 mb-2">
+              {consultationData.visitReason || consultationData.consultationType || "—"}
+            </p>
+            {consultationData.visitTypeVerified ? (
+              <span className="inline-flex items-center gap-1 text-sm text-teal-700">
+                <CheckCircle size={16} />
+                Zweryfikowano
+              </span>
+            ) : (
+              <>
+                <p className="text-xs text-amber-700 mb-2">Lekarz musi potwierdzić lub zmienić rodzaj wizyty przed zamknięciem.</p>
+                {visitReasonsData.categories.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                    <select
+                      value={verifyVisitReasonCategoryId}
+                      onChange={(e) => {
+                        setVerifyVisitReasonCategoryId(e.target.value);
+                        setVerifyVisitReasonDisplayName("");
+                      }}
+                      className="w-full p-2 border border-gray-300 rounded text-sm"
+                    >
+                      <option value="">Kategoria...</option>
+                      {visitReasonsData.categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.label}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={verifyVisitReasonDisplayName}
+                      onChange={(e) => setVerifyVisitReasonDisplayName(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded text-sm"
+                    >
+                      <option value="">Typ wizyty...</option>
+                      {(visitReasonsData.categories.find((c) => c.id === verifyVisitReasonCategoryId)?.types ?? []).map((t) => (
+                        <option key={t.id} value={t.displayName}>{t.displayName}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleConfirmVisitType}
+                  disabled={isVerifyingVisitType || (!verifyVisitReasonDisplayName && !(consultationData.visitReason || consultationData.consultationType))}
+                  className="px-3 py-1.5 bg-teal-600 text-white text-sm rounded hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isVerifyingVisitType ? "Zapisywanie..." : "Potwierdź rodzaj wizyty"}
+                </button>
+              </>
+            )}
           </div>
         </div>
 

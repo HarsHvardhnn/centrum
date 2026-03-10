@@ -18,7 +18,8 @@ const VisitInfoHeader = ({
     ? `${appointment.doctor.name?.first || ""} ${appointment.doctor.name?.last || ""}`.trim() || "—"
     : "—";
   const status = appointment.status;
-  const visitType = consultationData?.consultationType || appointment.consultationType || "Wizyta kontrolna";
+  const visitType = consultationData?.visitReason || consultationData?.consultationType || appointment.visitReason || appointment.consultationType || "—";
+  const needsVerification = (consultationData?.visitTypeVerified === false || appointment.visitTypeVerified === false) && appointment.status !== "completed" && appointment.status !== "Completed";
   const statusClass = getStatusStyle(status);
 
   const formatTimeForInput = (t) => {
@@ -75,19 +76,14 @@ const VisitInfoHeader = ({
           {translateStatus(status) || status || "—"}
         </span>
       </div>
-      <div className="flex items-center gap-2">
-        <label className="text-sm text-gray-600 shrink-0">Typ wizyty</label>
-        <select
-          value={visitType}
-          onChange={(e) => onVisitTypeChange?.(e.target.value)}
-          disabled={readOnly}
-          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm min-w-[160px]"
-        >
-          <option value="Wizyta kontrolna">Wizyta kontrolna</option>
-          <option value="Konsultacja w przychodni">Konsultacja w przychodni</option>
-          <option value="Konsultacja online">Konsultacja online</option>
-          <option value="Wizyta domowa">Wizyta domowa</option>
-        </select>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm text-gray-600 shrink-0">Rodzaj wizyty:</span>
+        <span className="text-sm font-medium text-gray-900">{visitType}</span>
+        {needsVerification && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+            Do weryfikacji
+          </span>
+        )}
       </div>
     </header>
   );

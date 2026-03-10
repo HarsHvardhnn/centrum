@@ -28,8 +28,11 @@ const VisitHistoryCard = ({ appointments, currentAppointmentId, onSelectVisit })
                   })}
                 </p>
                 <p className="text-sm text-gray-600 truncate">
-                  {apt.consultationType || apt.metadata?.visitType || "Konsultacja standardowa"}
+                  {apt.visitReason || apt.consultationType || apt.metadata?.visitType || "Konsultacja standardowa"}
                 </p>
+                {apt.visitTypeVerified === false && apt.status !== "completed" && apt.status !== "Completed" && (
+                  <span className="inline-block mt-1 text-xs text-amber-700">Do weryfikacji</span>
+                )}
               </div>
               <span
                 className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusStyle(apt.status)}`}

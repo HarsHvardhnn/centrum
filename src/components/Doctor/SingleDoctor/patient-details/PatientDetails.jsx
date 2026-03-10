@@ -771,14 +771,28 @@ const PatientDetailsPage = () => {
         );
         await fetchAppointmentDetails(currentAppointmentId);
         if (endVisit) {
-          navigate(`/administracja/rozliczenia?appointment=${currentAppointmentId}&step=edit`);
+          try {
+            const statusResponse = await appointmentHelper.updateAppointmentStatus(currentAppointmentId, { status: "completed" });
+            if (statusResponse?.success !== false) {
+              navigate(`/administracja/rozliczenia?appointment=${currentAppointmentId}&step=edit`);
+            }
+          } catch (statusErr) {
+            const data = statusErr?.response?.data ?? statusErr?.data;
+            const code = data?.code;
+            const message = data?.message || statusErr?.message || "Nie udało się zakończyć wizyty.";
+            if (code === "VISIT_TYPE_NOT_VERIFIED") {
+              toast.error(message || "Nie można zamknąć wizyty bez weryfikacji rodzaju wizyty. Potwierdź lub zmień rodzaj wizyty w sekcji „Rodzaj wizyty”.");
+            } else {
+              toast.error(message);
+            }
+          }
         }
       } else {
         throw new Error(response.message || "Nie udało się zaktualizować szczegółów spotkania");
       }
     } catch (error) {
       console.error("Error saving appointment details:", error);
-      setSaveError(error.message || "Nie udało się zapisać szczegółów spotkania. Proszę spróbować ponownie.");
+      setSaveError(error?.response?.data?.message || error?.message || "Nie udało się zapisać szczegółów spotkania. Proszę spróbować ponownie.");
       toast.error("Nie udało się zapisać szczegółów spotkania");
     } finally {
       setIsSaving(false);
@@ -1061,13 +1075,16 @@ const PatientDetailsPage = () => {
                 {translateStatus(appointment.status)}
               </span>
             </div>
-            {appointment.consultationType && (
-              <div className="flex items-center gap-2 mb-2">
+            {(appointment.visitReason || appointment.consultationType) && (
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <FileText size={16} className="text-teal-500" />
-                <span className="text-sm text-gray-600">Typ konsultacji:</span>
+                <span className="text-sm text-gray-600">Rodzaj wizyty:</span>
                 <span className="text-sm font-medium">
-                  {appointment.consultationType}
+                  {appointment.visitReason || appointment.consultationType}
                 </span>
+                {appointment.visitTypeVerified === false && appointment.status !== "completed" && appointment.status !== "Completed" && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Do weryfikacji</span>
+                )}
               </div>
             )}
           </div>

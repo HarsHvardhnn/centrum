@@ -104,10 +104,13 @@ function AppointmentFormModal({
       // SMS consent field - will be updated by useEffect based on date
       smsConsentAgreed: true, // Default to true, will be updated by useEffect
       persistSmsConsent: false, // Default to false - whether to save SMS consent for future appointments
+      visitReason: "", // Rodzaj wizyty: displayName from dictionary (e.g. "Konsultacja pierwszorazowa")
+      visitReasonCategoryId: "", // Category id for two-step dropdown
     };
   });
   const [availableSlots, setAvailableSlots] = useState([]);
   const [phoneDropdownOpen, setPhoneDropdownOpen] = useState(false);
+  const [visitReasonsData, setVisitReasonsData] = useState({ categories: [] });
 
   const phoneCountryCodes = PHONE_COUNTRY_CODES;
 
@@ -122,6 +125,20 @@ function AppointmentFormModal({
     // Update loading state based on both props and context
     setLoadingServices(isLoadingServices || contextLoading);
   }, [availableServices, contextServices, isLoadingServices, contextLoading]);
+
+  // Visit reason dictionary for registration (category → type, send displayName as visitReason)
+  useEffect(() => {
+    let cancelled = false;
+    appointmentHelper.getVisitReasons().then((res) => {
+      if (cancelled) return;
+      const data = res?.data ?? res;
+      const categories = data?.categories ?? [];
+      setVisitReasonsData({ categories: Array.isArray(categories) ? categories : [] });
+    }).catch(() => {
+      if (!cancelled) setVisitReasonsData({ categories: [] });
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   // Update duration when time changes or slot is selected
   useEffect(() => {
@@ -1212,6 +1229,53 @@ function AppointmentFormModal({
               <span className="ml-2">Wizyta bez pacjenta (recepcja)</span>
             </label>
           </div>
+
+          {/* Rodzaj wizyty: dictionary category → type (displayName sent as visitReason) */}
+          {visitReasonsData.categories.length > 0 && (
+            <div className="mt-4 bg-white p-4 rounded-lg border border-gray-200">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaj wizyty</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Kategoria</label>
+                  <select
+                    value={appointmentData.visitReasonCategoryId || ""}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      setAppointmentData((prev) => ({
+                        ...prev,
+                        visitReasonCategoryId: id,
+                        visitReason: "",
+                      }));
+                    }}
+                    className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value="">Wybierz kategorię...</option>
+                    {visitReasonsData.categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Typ wizyty</label>
+                  <select
+                    value={appointmentData.visitReason || ""}
+                    onChange={(e) => setAppointmentData((prev) => ({ ...prev, visitReason: e.target.value }))}
+                    className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value="">Wybierz typ...</option>
+                    {(() => {
+                      const cat = visitReasonsData.categories.find((c) => c.id === appointmentData.visitReasonCategoryId);
+                      const types = cat?.types ?? [];
+                      return types.map((t) => (
+                        <option key={t.id} value={t.displayName}>{t.displayName}</option>
+                      ));
+                    })()}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
           {appointmentData.visitType === "visit-only" && (
             <div className="bg-white p-4 rounded-lg border border-gray-200 mt-2">
               <p className="text-sm text-gray-600 mb-3">
@@ -1985,6 +2049,7 @@ function AppointmentFormModal({
         endTime: endTime,
         duration: duration,
         consultationType: "offline",
+        ...(appointmentData.visitReason && { visitReason: appointmentData.visitReason }),
         message: appointmentData.notes || "",
         smsConsentAgreed: appointmentData.smsConsentAgreed,
         persistSmsConsent: appointmentData.persistSmsConsent || false,
@@ -2025,6 +2090,7 @@ function AppointmentFormModal({
         // Metadata fields
         metadata: {
           visitType: appointmentData.visitType || "",
+          ...(appointmentData.visitReason && { visitReason: appointmentData.visitReason }),
           isEmergency: appointmentData.isEmergency || false,
           isWalkin: appointmentData.isWalkin || false,
           needsAttention: appointmentData.needsAttention || false,

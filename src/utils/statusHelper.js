@@ -55,9 +55,9 @@ export const getVisitMode = (appointment) => {
   return mode === "online" ? "online" : "offline";
 };
 
-/** Display label for visit mode (Polish). */
+/** Display label for visit mode: "Online" | "Offline" (Stacjonarna). */
 export const getVisitModeLabel = (appointment) => {
-  return getVisitMode(appointment) === "online" ? "Online" : "W przychodni";
+  return getVisitMode(appointment) === "online" ? "Online" : "Offline";
 };
 
 /** Tailwind classes for visit mode badge. */

@@ -992,6 +992,7 @@ function LabAppointmentsContent({ clinic }) {
               appointments.map((appointment) => {
                 const isCompleted = appointment.status === "completed" || appointment.status === "Completed";
                 const isCancelledStatus = isCancelled(appointment);
+                const isVisitOnly = isVisitOnlyAppointment(appointment);
                 const statusPillClass = isCancelledStatus
                   ? "bg-red-100 text-red-800"
                   : isCompleted
@@ -1000,34 +1001,57 @@ function LabAppointmentsContent({ clinic }) {
                 const visitDateStr = appointment.date
                   ? new Date(appointment.date).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })
                   : "—";
-                const patientIdStr = isVisitOnlyAppointment(appointment)
+                const patientIdStr = isVisitOnly
                   ? "—"
                   : (appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "—");
+                const idOrPeselLine = isVisitOnly
+                  ? (appointment.registrationData?.pesel ? `PESEL: ${appointment.registrationData.pesel}` : "—") + ` | ${visitDateStr}`
+                  : `ID: ${patientIdStr} | ${visitDateStr}`;
+                const cardBorderBg =
+                  isCancelledStatus
+                    ? "border-l-4 border-l-red-500 bg-red-50/50"
+                    : isVisitOnly
+                    ? "border-l-4 border-l-amber-500 bg-amber-50/50"
+                    : "";
 
                 return (
                   <div
                     key={appointment.id}
-                    className="bg-white border border-gray-200 rounded-lg shadow-sm px-5 py-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow"
+                    className={`bg-white border border-gray-200 rounded-lg shadow-sm px-5 py-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow ${cardBorderBg}`}
                   >
                     <div
                       className="flex-1 min-w-0 cursor-pointer"
                       onClick={() => {
-                        if (isVisitOnlyAppointment(appointment) && !isCancelledStatus) {
+                        if (isVisitOnly && !isCancelledStatus) {
                           setSelectedAppointment(appointment);
                           setShowCompleteRegModal(true);
-                        } else if (!isVisitOnlyAppointment(appointment)) {
+                        } else if (!isVisitOnly) {
                           navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id));
                         }
                       }}
                     >
-                      <div className="font-semibold text-gray-900 truncate">
-                        {getAppointmentPatientDisplayName(appointment)}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-gray-900 truncate">
+                          {getAppointmentPatientDisplayName(appointment)}
+                        </span>
+                        {isVisitOnly && !isCancelledStatus && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 bg-amber-100 text-amber-800 border border-amber-200">
+                            <UserPlus size={12} />
+                            Do rejestracji
+                          </span>
+                        )}
                       </div>
                       <div className="text-sm text-gray-500 mt-0.5">
-                        ID: {patientIdStr} | {visitDateStr}
-                        {appointment.registrationType && (
+                        {idOrPeselLine}
+                        {!isVisitOnly && appointment.registrationType && (
                           <span className="ml-1">· {getRegistrationTypeLabel(appointment.registrationType)}</span>
                         )}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-0.5">
+                        {appointment.visitReason || appointment.consultationType || "—"}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        Utworzono przez: {getCreatedByRoleLabel(appointment)}
                       </div>
                     </div>
                     <div className="flex-shrink-0 text-center min-w-[100px]">
@@ -1037,6 +1061,9 @@ function LabAppointmentsContent({ clinic }) {
                       <div className="text-sm text-gray-500 mt-0.5">
                         {appointment.doctor?.name || "—"}
                       </div>
+                      <span className={`inline-block mt-1.5 px-2 py-1 rounded text-xs font-medium ${getVisitModeStyle(appointment)}`}>
+                        {getVisitModeLabel(appointment)}
+                      </span>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <span className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap ${statusPillClass}`}>

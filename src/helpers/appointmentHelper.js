@@ -157,6 +157,59 @@ class AppointmentService {
     }
   }
 
+  /**
+   * Get visit reason dictionary (categories + types) for registration and doctor verification.
+   * GET /api/appointments/visit-reasons
+   */
+  async getVisitReasons() {
+    try {
+      const response = await apiCaller("GET", "/appointments/visit-reasons");
+      return response?.data ?? response;
+    } catch (error) {
+      console.error("Error fetching visit reasons:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update consultation (doctor verification of visit type).
+   * PUT /api/appointments/:id/consultation
+   * Body: { visitReason?, visitTypeVerified?, interview?, physicalExamination?, treatment?, recommendations?, ... }
+   */
+  async updateConsultation(appointmentId, data) {
+    try {
+      const response = await apiCaller(
+        "PUT",
+        `/appointments/${appointmentId}/consultation`,
+        data
+      );
+      return response?.data ?? response;
+    } catch (error) {
+      console.error("Error updating consultation:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update appointment status (e.g. complete visit).
+   * PATCH /api/appointments/:id/status
+   * Body: { status: "completed" }
+   * May return 400 with code VISIT_TYPE_NOT_VERIFIED if visit type not verified.
+   */
+  async updateAppointmentStatus(appointmentId, body) {
+    try {
+      const response = await apiCaller(
+        "PATCH",
+        `/appointments/${appointmentId}/status`,
+        body
+      );
+      return response?.data ?? response;
+    } catch (error) {
+      console.error("Error updating appointment status:", error);
+      throw error;
+    }
+  }
+
   // Get patient's appointment history
   async getPatientAppointments(patientId, filters = {}) {
     try {
