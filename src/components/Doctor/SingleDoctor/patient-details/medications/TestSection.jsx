@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Search, Trash2, Plus, Zap } from "lucide-react";
 import { TestForm } from "./TestForm";
+import FeatureComingSoonModal from "../FeatureComingSoonModal";
 
 const SECTION_BG = "bg-white";
 const INPUT_CLASS = "w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400";
@@ -18,6 +19,7 @@ export const TestsSection = ({
   const [search, setSearch] = useState("");
   const [editingIndex, setEditingIndex] = useState(-1);
   const [editingTest, setEditingTest] = useState(null);
+  const [showESkierowanieModal, setShowESkierowanieModal] = useState(false);
 
   const filtered = tests.filter(
     (t) => !search || (t.name && t.name.toLowerCase().includes(search.toLowerCase()))
@@ -183,6 +185,7 @@ export const TestsSection = ({
             </button>
             <button
               type="button"
+              onClick={() => setShowESkierowanieModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded text-sm font-medium hover:bg-teal-700"
             >
               <Zap size={18} />
@@ -191,6 +194,11 @@ export const TestsSection = ({
           </div>
         </div>
       )}
+      <FeatureComingSoonModal
+        isOpen={showESkierowanieModal}
+        onClose={() => setShowESkierowanieModal(false)}
+        featureName="E-skierowanie"
+      />
     </div>
   );
 };

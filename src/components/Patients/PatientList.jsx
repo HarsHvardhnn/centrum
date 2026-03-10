@@ -315,6 +315,13 @@ function LabAppointmentsContent({ clinic }) {
     return () => { cancelled = true; };
   }, [clinic]);
 
+  // Doctor role on clinic: show only own visits; set and lock doctor filter to current user
+  useEffect(() => {
+    if (clinic && user?.role === "doctor" && user?.id) {
+      setDoctorFilterId(user.id);
+    }
+  }, [clinic, user?.role, user?.id]);
+
   // Force refetch when clinic prop changes to clear cache
   useEffect(() => {
     // Clear appointments and pagination when clinic prop changes to prevent cache issues
@@ -328,7 +335,7 @@ function LabAppointmentsContent({ clinic }) {
     setSearchQuery("");
     setStatusFilter(clinic ? "booked" : "All");
     setPatientLessOnly(false);
-    setDoctorFilterId("");
+    setDoctorFilterId(clinic && user?.role === "doctor" && user?.id ? user.id : "");
     setConsultationMode("all");
     setVisitTypeFilter("");
 
@@ -816,7 +823,7 @@ function LabAppointmentsContent({ clinic }) {
                         </div>
                       </div>
                     </div>
-                    {/* Filtruj według lekarza */}
+                    {/* Filtruj według lekarza — dla roli lekarz tylko własna wartość */}
                     <div className="mb-4">
                       <h3 className="text-sm font-medium text-gray-800 mb-2">Filtruj według lekarza</h3>
                       <select
@@ -825,10 +832,18 @@ function LabAppointmentsContent({ clinic }) {
                         className="w-full p-2.5 pr-9 border border-teal-500/50 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 appearance-none cursor-pointer"
                         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center' }}
                       >
-                        <option value="">Wybierz lekarza...</option>
-                        {doctorsList.map((d) => (
-                          <option key={d._id || d.id} value={d._id || d.id}>{d.name || "Lekarz"}</option>
-                        ))}
+                        {clinic && user?.role === "doctor" ? (
+                          <>
+                            <option value={user.id}>{user.name || "Ty (lekarz)"}</option>
+                          </>
+                        ) : (
+                          <>
+                            <option value="">Wybierz lekarza...</option>
+                            {doctorsList.map((d) => (
+                              <option key={d._id || d.id} value={d._id || d.id}>{d.name || "Lekarz"}</option>
+                            ))}
+                          </>
+                        )}
                       </select>
                     </div>
                     {/* Typ wizyty */}
@@ -900,7 +915,7 @@ function LabAppointmentsContent({ clinic }) {
                         onClick={() => {
                           setStatusFilter(clinic ? "booked" : "All");
                           setDateRange({ startDate: clinic ? new Date().toISOString().split("T")[0] : null, endDate: null });
-                          setDoctorFilterId("");
+                          setDoctorFilterId(clinic && user?.role === "doctor" && user?.id ? user.id : "");
                           setPatientLessOnly(false);
                           setConsultationMode("all");
                           setVisitTypeFilter("");

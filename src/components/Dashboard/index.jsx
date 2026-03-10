@@ -873,11 +873,11 @@ const PatientList = () => {
       )}
 
       {loading ? (
-        <div className="p-8 text-center text-gray-500">Loading patients...</div>
+        <div className="p-8 text-center text-gray-500">Ładowanie pacjentów...</div>
       ) : error ? (
         <div className="p-8 text-center text-red-500">{error}</div>
       ) : patients.length === 0 ? (
-        <div className="p-8 text-center text-gray-500">No patients found</div>
+        <div className="p-8 text-center text-gray-500">Brak pacjentów</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -1439,11 +1439,11 @@ const UpcomingAppointments = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-8">Loading appointments...</div>
+        <div className="text-center py-8">Ładowanie wizyt...</div>
       ) : error ? (
         <div className="text-red-500 text-center py-8">{error}</div>
       ) : appointments.length === 0 ? (
-        <div className="text-center py-8">No upcoming appointments found.</div>
+        <div className="text-center py-8">Brak nadchodzących wizyt.</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {appointments.map((appointment) => (

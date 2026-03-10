@@ -633,6 +633,59 @@ function AppointmentFormModal({
     return visitTypeMap[visitType] || "Standardowa";
   };
 
+  // Step titles by workflow (used for validation messages and step indicator)
+  const getStepTitle = (step) => {
+    if (workflowOrder === "appointmentFirst") {
+      if (skipDoctorSelection) {
+        switch (step) {
+          case 1: return "Termin Wizyty";
+          case 2: return "Dane Pacjenta";
+          case 3: return "Usługi";
+          case 4: return "Szczegóły";
+          case 5: return "Opcje Recepcjonisty";
+          default: return String(step);
+        }
+      }
+      switch (step) {
+        case 1: return "Lekarz i Termin";
+        case 2: return "Dane Pacjenta";
+        case 3: return "Usługi";
+        case 4: return "Szczegóły";
+        case 5: return "Opcje Recepcjonisty";
+        default: return String(step);
+      }
+    }
+    if (skipDoctorSelection) {
+      switch (step) {
+        case 1: return "Dane Pacjenta";
+        case 2: return "Termin Wizyty";
+        case 3: return "Usługi";
+        case 4: return "Szczegóły";
+        case 5: return "Opcje Recepcjonisty";
+        default: return String(step);
+      }
+    }
+    switch (step) {
+      case 1: return "Dane Pacjenta";
+      case 2: return "Lekarz i Termin";
+      case 3: return "Usługi";
+      case 4: return "Szczegóły";
+      case 5: return "Opcje Recepcjonisty";
+      default: return String(step);
+    }
+  };
+
+  // Map validation error key to step number for clear error messages
+  const getStepForValidationError = (errorKey) => {
+    const isAppointmentFirst = workflowOrder === "appointmentFirst";
+    const timeStep = isAppointmentFirst && skipDoctorSelection ? 1 : 2;
+    const patientStep = isAppointmentFirst ? 2 : 1;
+    const timeKeys = ["timeSelection", "customDuration", "customTime", "date"];
+    if (timeKeys.includes(errorKey)) return { step: timeStep, title: getStepTitle(timeStep) };
+    if (errorKey === "phone") return { step: patientStep, title: getStepTitle(patientStep) };
+    return { step: null, title: "" };
+  };
+
   const canProceedToNextStep = () => {
     if (workflowOrder === "appointmentFirst") {
       // New workflow: Appointment first, then patient
@@ -712,54 +765,6 @@ function AppointmentFormModal({
   };
 
   const StepIndicator = () => {
-    const getStepTitle = (step) => {
-      if (workflowOrder === "appointmentFirst") {
-        // New workflow: Appointment first, then patient
-        if (skipDoctorSelection) {
-          // When doctor is pre-selected, still show date/slot selection
-          switch (step) {
-            case 1: return "Termin Wizyty";
-            case 2: return "Dane Pacjenta";
-            case 3: return "Usługi";
-            case 4: return "Szczegóły";
-            case 5: return "Opcje Recepcjonisty";
-            default: return step;
-          }
-        } else {
-          switch (step) {
-            case 1: return "Lekarz i Termin";
-            case 2: return "Dane Pacjenta";
-            case 3: return "Usługi";
-            case 4: return "Szczegóły";
-            case 5: return "Opcje Recepcjonisty";
-            default: return step;
-          }
-        }
-      } else {
-        // Original workflow: Patient first, then appointment
-        if (skipDoctorSelection) {
-          // When doctor is pre-selected, still show date/slot selection
-          switch (step) {
-            case 1: return "Dane Pacjenta";
-            case 2: return "Termin Wizyty";
-            case 3: return "Usługi";
-            case 4: return "Szczegóły";
-            case 5: return "Opcje Recepcjonisty";
-            default: return step;
-          }
-        } else {
-          switch (step) {
-            case 1: return "Dane Pacjenta";
-            case 2: return "Lekarz i Termin";
-            case 3: return "Usługi";
-            case 4: return "Szczegóły";
-            case 5: return "Opcje Recepcjonisty";
-            default: return step;
-          }
-        }
-      }
-    };
-
     const totalSteps = 5; // Always 5 steps now
     const stepsArray = Array.from({ length: totalSteps }, (_, i) => i + 1);
 
@@ -1924,10 +1929,14 @@ function AppointmentFormModal({
     // Validate form before submission
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
-      // Show validation errors
-      Object.values(validationErrors).forEach(error => {
-        toast.error(error);
+      let firstErrorStep = null;
+      Object.entries(validationErrors).forEach(([key, message]) => {
+        const { step, title } = getStepForValidationError(key);
+        const prefix = step && title ? `Krok ${step} (${title}): ` : "";
+        toast.error(prefix + message);
+        if (firstErrorStep == null && step != null) firstErrorStep = step;
       });
+      if (firstErrorStep != null) setCurrentStep(firstErrorStep);
       return;
     }
 
@@ -2081,8 +2090,38 @@ function AppointmentFormModal({
       // Use the new reception appointment API
       onComplete(appointmentSubmissionData);
     } else {
-      // Show validation message
-      toast.error("Proszę uzupełnić wszystkie wymagane pola");
+      // Build specific missing-field messages with step info
+      const isAppointmentFirst = workflowOrder === "appointmentFirst";
+      const timeStep = isAppointmentFirst && skipDoctorSelection ? 1 : 2;
+      const patientStep = isAppointmentFirst ? 2 : 1;
+      const timeTitle = getStepTitle(timeStep);
+      const patientTitle = getStepTitle(patientStep);
+      const missing = [];
+
+      if (!skipDoctorSelection && !appointmentData.selectedDoctor) missing.push({ step: timeStep, title: timeTitle, message: "Wybierz lekarza" });
+      if (!appointmentData.selectedDate) missing.push({ step: timeStep, title: timeTitle, message: "Wybierz datę wizyty" });
+      if (!appointmentData.customStartTime && !appointmentData.selectedSlot) missing.push({ step: timeStep, title: timeTitle, message: "Wybierz termin wizyty (godzinę lub slot)" });
+
+      const hasPatient = selectedPatient || isNewPatientValid || isVisitOnly;
+      if (!hasPatient) {
+        if (!appointmentData.visitType) missing.push({ step: patientStep, title: patientTitle, message: "Wybierz typ wizyty" });
+        else if (isVisitOnly && !isVisitOnlyValid) missing.push({ step: patientStep, title: patientTitle, message: "Uzupełnij imię i nazwisko (wizyta bez pacjenta)" });
+        else if (isFirstTimeVisit && !isNewPatientValid) {
+          if (!appointmentData.newPatientFirstName?.trim()) missing.push({ step: patientStep, title: patientTitle, message: "Imię jest wymagane" });
+          if (!appointmentData.newPatientLastName?.trim()) missing.push({ step: patientStep, title: patientTitle, message: "Nazwisko jest wymagane" });
+          if (!appointmentData.newPatientSex?.trim()) missing.push({ step: patientStep, title: patientTitle, message: "Płeć jest wymagana" });
+          if (!appointmentData.newPatientPhone?.trim()) missing.push({ step: patientStep, title: patientTitle, message: "Numer telefonu jest wymagany" });
+          else {
+            const phoneErr = validatePhone(appointmentData.newPatientPhone);
+            if (phoneErr) missing.push({ step: patientStep, title: patientTitle, message: phoneErr });
+          }
+        } else if (!isFirstTimeVisit && !isVisitOnly) missing.push({ step: patientStep, title: patientTitle, message: "Wybierz pacjenta z listy" });
+      }
+
+      if (missing.length === 0) missing.push({ step: 1, title: getStepTitle(1), message: "Proszę uzupełnić wszystkie wymagane pola" });
+      missing.forEach(({ step, title, message }) => toast.error(`Krok ${step} (${title}): ${message}`));
+      const firstStep = missing[0]?.step;
+      if (firstStep != null) setCurrentStep(firstStep);
     }
   };
 

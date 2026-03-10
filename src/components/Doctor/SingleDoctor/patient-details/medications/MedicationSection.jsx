@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Search, Trash2, Plus, Zap } from "lucide-react";
 import { MedicationForm } from "./MedicationForm";
+import FeatureComingSoonModal from "../FeatureComingSoonModal";
 
 const SECTION_BG = "bg-white";
 const INPUT_CLASS = "w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400";
@@ -18,6 +19,7 @@ export const MedicationsSection = ({
   const [search, setSearch] = useState("");
   const [editingIndex, setEditingIndex] = useState(-1);
   const [editingMedication, setEditingMedication] = useState(null);
+  const [showEReceptaModal, setShowEReceptaModal] = useState(false);
 
   const filtered = medications.filter(
     (m) =>
@@ -195,6 +197,7 @@ export const MedicationsSection = ({
             </button>
             <button
               type="button"
+              onClick={() => setShowEReceptaModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded text-sm font-medium hover:bg-teal-700"
             >
               <Zap size={18} />
@@ -203,6 +206,11 @@ export const MedicationsSection = ({
           </div>
         </div>
       )}
+      <FeatureComingSoonModal
+        isOpen={showEReceptaModal}
+        onClose={() => setShowEReceptaModal(false)}
+        featureName="E-recepta"
+      />
     </div>
   );
 };
