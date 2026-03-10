@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { apiCaller } from "../../../utils/axiosInstance";
 import { normalizePesel, getPeselChecksumWarning } from "../../../utils/peselUtils";
 import patientService from "../../../helpers/patientHelper";
+import appointmentHelper from "../../../helpers/appointmentHelper";
 import { PHONE_COUNTRY_CODES, FlagIcon } from "../../../constants/phoneCountryCodes";
 
 /**
