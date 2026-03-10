@@ -58,6 +58,7 @@ import PermanentDeletePage from "./components/admin/PermanentDeletePage";
 import SystemSettingsPage from "./components/admin/SystemSettingsPage";
 import VisitTemplatesPage from "./components/admin/VisitTemplatesPage";
 import DocumentTemplatesPlaceholder from "./components/admin/DocumentTemplatesPlaceholder";
+import DocumentRepositoryPlaceholder from "./components/admin/DocumentRepositoryPlaceholder";
 import TokenExpiryPopup from "./components/UtilComponents/TokenExpiryPopup";
 import InactivityPopup from "./components/UtilComponents/InactivityPopup";
 import { useInactivityTracker } from "./hooks/useInactivityTracker";
@@ -242,6 +243,7 @@ const routes = createBrowserRouter([
           { path: "/administracja/trwale-usuwanie", element: <PermanentDeletePage /> },
           { path: "/ustawienia", element: <SystemSettingsPage /> },
           { path: "/administracja/szablony-dokumentow", element: <DocumentTemplatesPlaceholder /> },
+          { path: "/administracja/repo-dokumentow", element: <DocumentRepositoryPlaceholder /> },
         ],
       },
     ],

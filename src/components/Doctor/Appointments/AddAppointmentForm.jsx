@@ -2207,7 +2207,7 @@ function AppointmentFormModal({
                 disabled={!canProceedToNextStep()}
                 className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
               >
-                Zarezerwuj Wizytę z Nadpisaniem
+                Zarezerwuj Wizytę
               </button>
             )}
           </div>

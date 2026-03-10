@@ -720,6 +720,23 @@ function LabAppointmentsContent({ clinic }) {
     return apt.startTime ? `${dateStr} ${apt.startTime}` : dateStr;
   };
 
+  /** registrationType from API → Polish label */
+  const getRegistrationTypeLabel = (value) => {
+    if (!value || typeof value !== "string") return "—";
+    const v = value.toLowerCase().trim();
+    const map = {
+      "online registration": "Rejestracja online",
+      "online": "Rejestracja online",
+      "reception": "W recepcji",
+      "walk-in": "W recepcji",
+      "walkin": "W recepcji",
+      "in-person": "W recepcji",
+      "phone": "Rejestracja telefoniczna",
+      "telephone": "Rejestracja telefoniczna",
+    };
+    return map[v] ?? value;
+  };
+
   return (
     <div className={`min-h-screen ${clinic ? "bg-white" : "bg-gray-100"}`}>
       <div className="w-full mx-auto px-4 py-8">
@@ -993,6 +1010,9 @@ function LabAppointmentsContent({ clinic }) {
                       </div>
                       <div className="text-sm text-gray-500 mt-0.5">
                         ID: {patientIdStr} | {visitDateStr}
+                        {appointment.registrationType && (
+                          <span className="ml-1">· {getRegistrationTypeLabel(appointment.registrationType)}</span>
+                        )}
                       </div>
                     </div>
                     <div className="flex-shrink-0 text-center min-w-[100px]">
@@ -1078,12 +1098,13 @@ function LabAppointmentsContent({ clinic }) {
           /* Lista pacjentów – card layout */
           <div className="space-y-3">
             {/* Column headers */}
-            <div className="grid grid-cols-7 gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
+            <div className="grid grid-cols-8 gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
               <div>Pacjent i ID</div>
               <div>Wiek</div>
               <div>Płeć</div>
               <div>PESEL</div>
               <div>Telefon</div>
+              <div>Typ rejestracji</div>
               <div>Pierwsza wizyta</div>
               <div className="text-right">Akcje</div>
             </div>
@@ -1099,7 +1120,7 @@ function LabAppointmentsContent({ clinic }) {
                 return (
                   <div
                     key={appointment.id}
-                    className={`bg-white border border-gray-200 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-shadow grid grid-cols-7 gap-4 px-4 py-3 items-center ${selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
+                    className={`bg-white border border-gray-200 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-shadow grid grid-cols-8 gap-4 px-4 py-3 items-center ${selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
                   >
                     <div
                       className="min-w-0 cursor-pointer"
@@ -1121,6 +1142,7 @@ function LabAppointmentsContent({ clinic }) {
                     <div className="text-gray-800 truncate">{getPatientGenderLetter(appointment.patient)}</div>
                     <div className="text-gray-800 truncate text-sm">{getPatientPesel(appointment.patient)}</div>
                     <div className="text-gray-800 truncate text-sm">{appointment.patient?.phoneNumber ?? appointment.registrationData?.phone ?? "—"}</div>
+                    <div className="text-gray-800 truncate text-sm">{getRegistrationTypeLabel(appointment.registrationType)}</div>
                     <div className="text-gray-800 truncate text-sm">{formatFirstVisit(appointment)}</div>
                     <div className="flex justify-end">
                       {appointment.isAppointment !== false && (

@@ -15,6 +15,7 @@ import {
   Server,
   Newspaper,
   Package,
+  CalendarCheck,
 } from "lucide-react";
 
 const settingsCards = [
@@ -60,6 +61,15 @@ const settingsCards = [
     description:
       "Tworzenie i edycja predefiniowanych opisów medycznych wykorzystywanych w trakcie karty badania",
     icon: Stethoscope,
+    to: "/administracja/szablony-dokumentow",
+    roles: ["admin", "doctor"],
+  },
+  {
+    id: "visit-config",
+    title: "Konfiguracja wizyty",
+    description:
+      "Ustawienia wizyt, terminów i konfiguracja rezerwacji (tylko administrator)",
+    icon: CalendarCheck,
     to: "/administracja/konfiguracja-wizyt",
     roles: ["admin"],
   },
@@ -76,10 +86,10 @@ const settingsCards = [
     id: "document-templates",
     title: "Szablony dokumentów",
     description:
-      "Szablony sekcji i szablony globalne do karty wizyty (dokumentacja)",
+      "Zarządzanie repozytorium plików i wzorów dokumentacji do uzupełnienia danymi pacjenta",
     icon: FileStack,
-    to: "/administracja/szablony-dokumentow",
-    roles: ["admin", "doctor"],
+    to: "/administracja/repo-dokumentow",
+    roles: ["admin"],
   },
   {
     id: "sms",
