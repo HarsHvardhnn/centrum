@@ -6,6 +6,7 @@ import {
   MoreHorizontal,
   User,
   LogOut,
+  Settings,
 } from "lucide-react";
 import { useUser } from "../../context/userContext";
 import { useNavigate } from "react-router-dom";
@@ -46,6 +47,11 @@ const Header = () => {
 
   const handleViewProfile = () => {
     navigate("/admin/profile");
+    setIsDropdownOpen(false);
+  };
+
+  const handleSettings = () => {
+    navigate("/ustawienia");
     setIsDropdownOpen(false);
   };
 
@@ -145,13 +151,19 @@ const Header = () => {
                 <User size={16} className="mr-2" />
                 Zobacz profil
               </button>
-
+              <button
+                onClick={handleSettings}
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <Settings size={16} className="mr-2" />
+                Ustawienia
+              </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
               >
                 <LogOut size={16} className="mr-2" />
-                Wyloguj 
+                Wyloguj
               </button>
             </div>
           )}

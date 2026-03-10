@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search } from "lucide-react";
+import { Search, MoreHorizontal, User, Settings, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../../../context/userContext";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
@@ -29,13 +29,15 @@ function getInitials(name) {
 
 const PatientDetailsHeader = () => {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, setUser } = useUser();
   const [searchValue, setSearchValue] = useState("");
   const [currentTime, setCurrentTime] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const searchContainerRef = useRef(null);
+  const menuRef = useRef(null);
 
   // Live clock
   useEffect(() => {
@@ -108,6 +110,33 @@ const PatientDetailsHeader = () => {
     }
   };
 
+  const handleViewProfile = () => {
+    setMenuOpen(false);
+    navigate("/admin/profile");
+  };
+
+  const handleSettings = () => {
+    setMenuOpen(false);
+    navigate("/ustawienia");
+  };
+
+  const handleLogout = () => {
+    setMenuOpen(false);
+    localStorage.clear();
+    setUser(null);
+    window.location.href = "/logowanie";
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const displayName = user?.name ? (user.role === "doctor" ? `Dr ${user.name}` : user.name) : "Użytkownik";
   const specialization = user?.role === "doctor" ? "Lekarz" : user?.role === "admin" ? "Administrator" : "Recepcja";
   const initials = getInitials(user?.name);
@@ -123,9 +152,10 @@ const PatientDetailsHeader = () => {
       {/* Logo - vertically centered */}
       <button
         type="button"
-        onClick={() => navigate("/lekarze/wizyty")}
+        onClick={() => window.location.reload()}
         className="font-bold text-lg uppercase tracking-tight shrink-0 flex items-center"
         style={{ color: TEXT_PRIMARY }}
+        title="Odśwież stronę"
       >
         CM7MED
       </button>
@@ -214,6 +244,53 @@ const PatientDetailsHeader = () => {
         <span className="text-sm font-medium tabular-nums shrink-0" style={{ color: TEXT_PRIMARY }}>
           {currentTime}
         </span>
+
+        {/* Three-dots menu: Zobacz profil, Ustawienia, Wyloguj */}
+        <div className="relative shrink-0" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            className="p-2 rounded-lg border-2 border-white/60 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/50"
+            style={{ color: TEXT_PRIMARY }}
+            aria-label="Opcje"
+          >
+            <MoreHorizontal size={22} />
+          </button>
+          {menuOpen && (
+            <div
+              className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
+              role="menu"
+            >
+              <button
+                type="button"
+                onClick={handleViewProfile}
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                role="menuitem"
+              >
+                <User size={16} className="mr-2" />
+                Zobacz profil
+              </button>
+              <button
+                type="button"
+                onClick={handleSettings}
+                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                role="menuitem"
+              >
+                <Settings size={16} className="mr-2" />
+                Ustawienia
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                role="menuitem"
+              >
+                <LogOut size={16} className="mr-2" />
+                Wyloguj
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
