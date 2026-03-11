@@ -86,28 +86,41 @@ const doctorService = {
   
 
   /**
-   * Get all doctors
-   * @param {Object} filters - Optional filters for doctors
-   * @returns {Promise} - API response with list of doctors
+   * Get all doctors with optional filters (Lista lekarzy + other consumers).
+   * Query params sent to backend: search, specialization, date, status, visitType, availability,
+   * experience, department (see backend spec BACKEND_DOCTORS_LIST_FILTERS.md).
+   * @param {Object} filters - Optional: search, specialization/specialty, date, status, visitType, availability, experience, department, doctor (alias for search)
+   * @returns {Promise} - API response with { doctors: [...] }
    */
   getAllDoctors: async (filters = {}) => {
     try {
-      // Convert filters to query parameters if needed
       const queryParams = new URLSearchParams();
-
-      if (filters.specialization) {
-        queryParams.append("specialization", filters.specialization);
+      const search = filters.search ?? filters.doctor ?? "";
+      if (search && String(search).trim()) {
+        queryParams.append("search", String(search).trim());
       }
-
-      if (filters.experience) {
+      const specialization = filters.specialization ?? filters.specialty ?? "";
+      if (specialization) {
+        queryParams.append("specialization", specialization);
+      }
+      if (filters.date) {
+        queryParams.append("date", filters.date);
+      }
+      if (filters.status) {
+        queryParams.append("status", filters.status);
+      }
+      if (filters.visitType) {
+        queryParams.append("visitType", filters.visitType);
+      }
+      if (filters.availability === true) {
+        queryParams.append("availability", "true");
+      }
+      if (filters.experience != null && filters.experience !== "") {
         queryParams.append("experience", filters.experience);
       }
-         if (filters.department) {
-           queryParams.append("department", filters.department);
-         }
-
-
-      // Add more filters as needed
+      if (filters.department) {
+        queryParams.append("department", filters.department);
+      }
 
       const queryString = queryParams.toString();
       const url = queryString ? `/docs?${queryString}` : "/docs";

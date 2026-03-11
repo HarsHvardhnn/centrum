@@ -746,7 +746,7 @@ function LabAppointmentsContent({ clinic }) {
 
   return (
     <div className={`min-h-screen ${clinic ? "bg-white" : "bg-gray-100"}`}>
-      <div className="w-full mx-auto px-4 py-8">
+      <div className={`w-full mx-auto py-8 ${clinic ? "px-6 sm:px-8 lg:px-10" : "px-4"}`}>
         <div className={clinic ? "mb-6" : "mb-6"}>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">
@@ -771,8 +771,8 @@ function LabAppointmentsContent({ clinic }) {
           </div>
 
           {clinic && (
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex-1 relative max-w-xl">
+            <div className="flex items-center gap-3 mb-6 flex-wrap">
+              <div className="flex-1 relative min-w-[280px] max-w-2xl">
                 <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
@@ -982,8 +982,8 @@ function LabAppointmentsContent({ clinic }) {
         )}
 
         {clinic ? (
-          /* Historia wizyt – flat list of white cards */
-          <div className="space-y-3">
+          /* Historia wizyt – flat list of white cards, full width */
+          <div className="w-full max-w-full space-y-3">
             {appointments.length === 0 ? (
               <div className="bg-white border border-gray-200 rounded-lg py-12 text-center text-gray-500">
                 Brak wizyt w wybranym okresie.

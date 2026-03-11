@@ -450,7 +450,21 @@ const patientService = {
       const url = `/patients/data/appointments?${queryParams.toString()}`;
 
       const response = await apiCaller("GET", url);
-      return response.data;
+      const body = response.data || {};
+      // Support both shapes: { data, pagination } and { appointments, currentPage, total, pages }
+      const rawList = body.appointments ?? body.data ?? [];
+      const pagination = body.pagination ?? {};
+      const normalizedList = rawList.map((a) => ({
+        ...a,
+        visitReason: a.visitReason ?? a.metadata?.visitType ?? a.consultationType,
+        visitTypeVerified: a.visitTypeVerified,
+      }));
+      return {
+        appointments: normalizedList,
+        currentPage: body.currentPage ?? pagination.page ?? 1,
+        total: body.total ?? pagination.total ?? 0,
+        pages: body.pages ?? pagination.pages ?? 1,
+      };
     } catch (error) {
       console.error("Error fetching patients:", error);
       throw error;

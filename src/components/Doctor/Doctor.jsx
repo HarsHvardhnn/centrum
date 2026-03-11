@@ -1,59 +1,73 @@
 import React, { useState, useEffect } from "react";
 import Header from "./DoctorHeader";
 import DoctorListing from "./DoctorList";
-import { doctors } from "../../utils/doctorsData/doctors";
 import AddDoctorForm from "./CreateDoctor";
 import doctorService from "../../helpers/doctorHelper";
 import { toast } from "sonner";
 import { useLoader } from "../../context/LoaderContext";
 import { format } from "date-fns";
 
+const formatDoctorName = (name) =>
+  typeof name === "object" && name !== null
+    ? [name.first, name.last].filter(Boolean).join(" ") || ""
+    : String(name || "");
+
+const transformDoctorsResponse = (doctorsList) =>
+  (doctorsList || []).map((doc) => ({
+    id: doc.id || doc._id,
+    name: `lek. ${formatDoctorName(doc.name)}`.trim() || "lek.",
+    specialty: doc.specialty || doc.specializations?.[0] || "Ogólny",
+    timing: "9:30 - 13:00",
+    date: doc.date ? format(new Date(doc.date), "dd.MM.yyyy") : "",
+    description:
+      doc.bio ||
+      "Centrum Chorób Zakaźnych ma na celu dostarczanie aktualnych, istotnych badań dotyczących aspektów mikrobiologii, wirusologii i parazytologii.",
+    image: doc.image || "https://placehold.jp/250x50.png?",
+    status: doc.status || (doc.available ? "Dostępny" : "Niedostępny"),
+    visitType: doc.visitType || "Konsultacja",
+    available: doc.available ?? true,
+  }));
+
+const SEARCH_DEBOUNCE_MS = 400;
+
 const BillingPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState({});
-  const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
   const [allDoctors, setAllDoctors] = useState([]);
 
   const { showLoader, hideLoader } = useLoader();
 
-    useEffect(() => {
-      const fetchDoctors = async () => {
-        try {
-          showLoader()
-          const response = await doctorService.getAllDoctors();
+  // Debounce search term for API calls
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
-          const formatDoctorName = (name) =>
-            typeof name === "object" && name !== null
-              ? [name.first, name.last].filter(Boolean).join(" ") || ""
-              : String(name || "");
-          const transformed = response.doctors.map((doc, index) => ({
-            id: doc.id || doc._id,
-            name: `lek. ${formatDoctorName(doc.name)}`.trim() || "lek.",
-            specialty: doc.specialty || doc.specializations?.[0] || "Ogólny",
-            timing: "9:30 - 13:00", 
-            date: format( new Date(doc.date), "dd.MM.yyyy"),
-            description:
-              doc.bio ||
-              "Centrum Chorób Zakaźnych ma na celu dostarczanie aktualnych, istotnych badań dotyczących aspektów mikrobiologii, wirusologii i parazytologii.",
-            image: doc.image || "https://placehold.jp/250x50.png?",
-            status: doc.status || (doc.available ? "Dostępny" : "Niedostępny"),
-            visitType: doc.visitType || "Konsultacja",
-            available: doc.available ?? true,
-          }));
+  // Fetch doctors from API with filters and search (Lista lekarzy)
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        showLoader();
+        const apiFilters = {
+          ...activeFilters,
+          search: debouncedSearch?.trim() || undefined,
+          doctor: undefined,
+        };
+        const response = await doctorService.getAllDoctors(apiFilters);
+        const transformed = transformDoctorsResponse(response.doctors || []);
+        setAllDoctors(transformed);
+      } catch (error) {
+        console.error("Nie udało się pobrać lekarzy:", error);
+        setAllDoctors([]);
+      } finally {
+        hideLoader();
+      }
+    };
 
-          setAllDoctors(transformed);
-        } catch (error) {
-          console.error("Nie udało się pobrać lekarzy:", error);
-        }
-        finally {
-          hideLoader()
-        }
-        
-      };
-
-      fetchDoctors();
-    }, []);
+    fetchDoctors();
+  }, [activeFilters, debouncedSearch]);
 
   // Sample filter options
   const filterOptions = {
@@ -130,51 +144,6 @@ const BillingPage = () => {
     }
   };
 
-  // Filter doctors based on search term and filters
-  useEffect(() => {
-    let results = [...allDoctors];
-
-    if (searchTerm) {
-      results = results.filter((doctor) =>
-        doctor.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (activeFilters.doctor) {
-      results = results.filter((doctor) =>
-        doctor.name.toLowerCase().includes(activeFilters.doctor.toLowerCase())
-      );
-    }
-
-    if (activeFilters.specialty) {
-      results = results.filter(
-        (doctor) => doctor.specialty === activeFilters.specialty
-      );
-    }
-
-    if (activeFilters.availability) {
-      results = results.filter((doctor) => doctor.available === true);
-    }
-
-    if (activeFilters.date) {
-      results = results.filter((doctor) => doctor.date === activeFilters.date);
-    }
-
-    if (activeFilters.status) {
-      results = results.filter(
-        (doctor) => doctor.status === activeFilters.status
-      );
-    }
-
-    if (activeFilters.visitType) {
-      results = results.filter(
-        (doctor) => doctor.visitType === activeFilters.visitType
-      );
-    }
-
-    setFilteredDoctors(results);
-  }, [searchTerm, activeFilters, allDoctors]);
-
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="w-full mx-auto px-4 py-8">
@@ -189,7 +158,7 @@ const BillingPage = () => {
         />
 
         {/* Doctor Listing - card table */}
-        <DoctorListing doctors={filteredDoctors} />
+        <DoctorListing doctors={allDoctors} />
       </div>
 
       {/* Add Doctor Modal Form */}

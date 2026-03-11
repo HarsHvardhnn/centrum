@@ -690,6 +690,20 @@ const PatientDetailsPage = () => {
     }
   };
 
+  const handleVisitTypeChange = (newVisitReason) => {
+    if (!newVisitReason) return;
+    setConsultationData((prev) => ({
+      ...prev,
+      visitReason: newVisitReason,
+      consultationType: newVisitReason,
+      visitTypeVerified: true,
+    }));
+    setSelectedAppointment((prev) => (prev ? { ...prev, visitReason: newVisitReason, visitTypeVerified: true } : null));
+    setAppointments((prev) =>
+      prev.map((apt) => (apt._id === currentAppointmentId ? { ...apt, visitReason: newVisitReason, visitTypeVerified: true } : apt))
+    );
+  };
+
   // Fetch patient services
   const fetchPatientServices = async () => {
     try {
@@ -1203,6 +1217,7 @@ const PatientDetailsPage = () => {
           consultationData={consultationData}
           onDateChange={handleDateChange}
           onTimeChange={handleTimeChange}
+          onVisitTypeChange={handleVisitTypeChange}
           readOnly={isVisitCompleted}
         />
       )}

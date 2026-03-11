@@ -1231,52 +1231,6 @@ function AppointmentFormModal({
             </label>
           </div>
 
-          {/* Rodzaj wizyty: dictionary category → type (displayName sent as visitReason) */}
-          {visitReasonsData.categories.length > 0 && (
-            <div className="mt-4 bg-white p-4 rounded-lg border border-gray-200">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaj wizyty</label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Kategoria</label>
-                  <select
-                    value={appointmentData.visitReasonCategoryId || ""}
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      setAppointmentData((prev) => ({
-                        ...prev,
-                        visitReasonCategoryId: id,
-                        visitReason: "",
-                      }));
-                    }}
-                    className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                  >
-                    <option value="">Wybierz kategorię...</option>
-                    {visitReasonsData.categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Typ wizyty</label>
-                  <select
-                    value={appointmentData.visitReason || ""}
-                    onChange={(e) => setAppointmentData((prev) => ({ ...prev, visitReason: e.target.value }))}
-                    className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                  >
-                    <option value="">Wybierz typ...</option>
-                    {(() => {
-                      const cat = visitReasonsData.categories.find((c) => c.id === appointmentData.visitReasonCategoryId);
-                      const types = cat?.types ?? [];
-                      return types.map((t) => (
-                        <option key={t.id} value={t.displayName}>{t.displayName}</option>
-                      ));
-                    })()}
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-
           {appointmentData.visitType === "visit-only" && (
             <div className="bg-white p-4 rounded-lg border border-gray-200 mt-2">
               <p className="text-sm text-gray-600 mb-3">
@@ -1644,6 +1598,52 @@ function AppointmentFormModal({
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-medium mb-4">Dodatkowe Informacje</h3>
+
+        {/* Rodzaj wizyty (type of consultation) – dictionary category → type */}
+        {visitReasonsData.categories.length > 0 && (
+          <div className="bg-teal-50/50 p-4 rounded-lg border border-teal-200">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaj wizyty (typ konsultacji)</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Kategoria</label>
+                <select
+                  value={appointmentData.visitReasonCategoryId || ""}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setAppointmentData((prev) => ({
+                      ...prev,
+                      visitReasonCategoryId: id,
+                      visitReason: "",
+                    }));
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white"
+                >
+                  <option value="">Wybierz kategorię...</option>
+                  {visitReasonsData.categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Typ konsultacji</label>
+                <select
+                  value={appointmentData.visitReason || ""}
+                  onChange={(e) => setAppointmentData((prev) => ({ ...prev, visitReason: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white"
+                >
+                  <option value="">Wybierz typ...</option>
+                  {(() => {
+                    const cat = visitReasonsData.categories.find((c) => c.id === appointmentData.visitReasonCategoryId);
+                    const types = cat?.types ?? [];
+                    return types.map((t) => (
+                      <option key={t.id} value={t.displayName}>{t.displayName}</option>
+                    ));
+                  })()}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Walk-in and Attention Flags */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

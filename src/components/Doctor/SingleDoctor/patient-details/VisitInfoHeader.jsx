@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Calendar, Clock } from "lucide-react";
 import { translateStatus, getStatusStyle } from "../../../../utils/statusHelper";
+import appointmentHelper from "../../../../helpers/appointmentHelper";
+import { toast } from "sonner";
 
 const VisitInfoHeader = ({
   appointment,
@@ -10,6 +12,24 @@ const VisitInfoHeader = ({
   onVisitTypeChange,
   readOnly = false,
 }) => {
+  const [visitReasonsFlat, setVisitReasonsFlat] = useState([]);
+  const [savingVisitType, setSavingVisitType] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    appointmentHelper.getVisitReasons().then((res) => {
+      if (cancelled) return;
+      const data = res?.data ?? res;
+      const categories = data?.categories ?? [];
+      const flat = [];
+      (Array.isArray(categories) ? categories : []).forEach((cat) => {
+        (cat.types || []).forEach((t) => flat.push({ displayName: t.displayName }));
+      });
+      setVisitReasonsFlat(flat);
+    }).catch(() => { if (!cancelled) setVisitReasonsFlat([]); });
+    return () => { cancelled = true; };
+  }, []);
+
   if (!appointment) return null;
 
   const dateValue = consultationData?.date || consultationData?.consultationDate || appointment.date;
@@ -18,9 +38,30 @@ const VisitInfoHeader = ({
     ? `${appointment.doctor.name?.first || ""} ${appointment.doctor.name?.last || ""}`.trim() || "—"
     : "—";
   const status = appointment.status;
-  const visitType = consultationData?.visitReason || consultationData?.consultationType || appointment.visitReason || appointment.consultationType || "—";
+  const visitType = consultationData?.visitReason || consultationData?.consultationType || appointment.visitReason || appointment.consultationType || "";
   const needsVerification = (consultationData?.visitTypeVerified === false || appointment.visitTypeVerified === false) && appointment.status !== "completed" && appointment.status !== "Completed";
   const statusClass = getStatusStyle(status);
+  const appointmentId = appointment.id || appointment._id;
+  const isVisitCompleted = appointment.status === "completed" || appointment.status === "Completed";
+
+  const handleVisitTypeChange = async (e) => {
+    const newReason = e.target.value;
+    if (!newReason || !appointmentId) return;
+    setSavingVisitType(true);
+    try {
+      await appointmentHelper.updateConsultation(appointmentId, {
+        visitReason: newReason,
+        visitTypeVerified: true,
+      });
+      onVisitTypeChange?.(newReason);
+      toast.success("Rodzaj wizyty zaktualizowany");
+    } catch (err) {
+      console.error("Error updating visit type:", err);
+      toast.error(err?.response?.data?.message || "Nie udało się zmienić rodzaju wizyty");
+    } finally {
+      setSavingVisitType(false);
+    }
+  };
 
   const formatTimeForInput = (t) => {
     if (!t) return "";
@@ -77,12 +118,38 @@ const VisitInfoHeader = ({
         </span>
       </div>
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-sm text-gray-600 shrink-0">Rodzaj wizyty:</span>
-        <span className="text-sm font-medium text-gray-900">{visitType}</span>
-        {needsVerification && (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-            Do weryfikacji
-          </span>
+        <label className="text-sm text-gray-600 shrink-0">Rodzaj wizyty</label>
+        {readOnly || isVisitCompleted ? (
+          <>
+            <span className="text-sm font-medium text-gray-900">{visitType || "—"}</span>
+            {needsVerification && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                Do weryfikacji
+              </span>
+            )}
+          </>
+        ) : (
+          <>
+            <select
+              value={visitType}
+              onChange={handleVisitTypeChange}
+              disabled={savingVisitType || visitReasonsFlat.length === 0}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm min-w-[180px] bg-white disabled:opacity-60"
+            >
+              <option value="">Wybierz rodzaj wizyty...</option>
+              {visitType && !visitReasonsFlat.some((t) => t.displayName === visitType) && (
+                <option value={visitType}>{visitType}</option>
+              )}
+              {visitReasonsFlat.map((t) => (
+                <option key={t.displayName} value={t.displayName}>{t.displayName}</option>
+              ))}
+            </select>
+            {needsVerification && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                Do weryfikacji
+              </span>
+            )}
+          </>
         )}
       </div>
     </header>

@@ -140,11 +140,11 @@ function MainLayout() {
           />
         )}
 
-        {/* Main content with proper spacing */}
+        {/* Main content with proper spacing - full width so pages like Historia wizyt use space */}
         <div
           className={`transition-all duration-300 ${
             isSidebarOpen ? "ml-64" : "ml-20"
-          } flex-1 min-h-screen pt-14 ${
+          } flex-1 min-w-0 w-full min-h-screen pt-14 ${
             isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-800"
           }`}
         >
