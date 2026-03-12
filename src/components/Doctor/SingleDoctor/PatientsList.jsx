@@ -95,11 +95,11 @@ const PatientsList = ({
     return `${start}–${end}`;
   };
 
+  /** Display only the human-readable patientId (e.g. P-1773235177267), never system _id/patient_id. */
   const patientIdLabel = (p) => {
     const patientId = p.patient?.patientId ?? p.patientId;
-    const hasPatientId = patientId != null && String(patientId).trim() !== "";
-    const id = hasPatientId ? patientId : (p.patient_id ?? p.patient?.patient_id ?? p.patient?._id);
-    return id != null && String(id).trim() !== "" ? String(id) : "Niezweryfikowany";
+    if (patientId != null && String(patientId).trim() !== "") return String(patientId).trim();
+    return "Niezweryfikowany";
   };
 
   const EmptyState = () => (

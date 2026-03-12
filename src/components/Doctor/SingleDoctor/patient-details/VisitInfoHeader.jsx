@@ -12,7 +12,7 @@ const VisitInfoHeader = ({
   onVisitTypeChange,
   readOnly = false,
 }) => {
-  const [visitReasonsFlat, setVisitReasonsFlat] = useState([]);
+  const [visitReasonsCategories, setVisitReasonsCategories] = useState([]);
   const [savingVisitType, setSavingVisitType] = useState(false);
 
   useEffect(() => {
@@ -21,12 +21,8 @@ const VisitInfoHeader = ({
       if (cancelled) return;
       const data = res?.data ?? res;
       const categories = data?.categories ?? [];
-      const flat = [];
-      (Array.isArray(categories) ? categories : []).forEach((cat) => {
-        (cat.types || []).forEach((t) => flat.push({ displayName: t.displayName }));
-      });
-      setVisitReasonsFlat(flat);
-    }).catch(() => { if (!cancelled) setVisitReasonsFlat([]); });
+      setVisitReasonsCategories(Array.isArray(categories) ? categories : []);
+    }).catch(() => { if (!cancelled) setVisitReasonsCategories([]); });
     return () => { cancelled = true; };
   }, []);
 
@@ -133,15 +129,19 @@ const VisitInfoHeader = ({
             <select
               value={visitType}
               onChange={handleVisitTypeChange}
-              disabled={savingVisitType || visitReasonsFlat.length === 0}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm min-w-[180px] bg-white disabled:opacity-60"
+              disabled={savingVisitType || visitReasonsCategories.length === 0}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm min-w-[200px] bg-white disabled:opacity-60"
             >
               <option value="">Wybierz rodzaj wizyty...</option>
-              {visitType && !visitReasonsFlat.some((t) => t.displayName === visitType) && (
+              {visitType && !visitReasonsCategories.some((cat) => (cat.types || []).some((t) => t.displayName === visitType)) && (
                 <option value={visitType}>{visitType}</option>
               )}
-              {visitReasonsFlat.map((t) => (
-                <option key={t.displayName} value={t.displayName}>{t.displayName}</option>
+              {visitReasonsCategories.map((cat) => (
+                <optgroup key={cat.id} label={cat.label || cat.id}>
+                  {(cat.types || []).map((t) => (
+                    <option key={t.id} value={t.displayName}>{t.displayName}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
             {needsVerification && (
