@@ -1,6 +1,7 @@
 // ConsultationForm.jsx
 import React, { useEffect, useState, useRef } from "react";
 import { ChevronDown, Upload, Trash2, Search, Clock, CheckCircle } from "lucide-react";
+import VisitReasonCascadeDropdown from "../../../UtilComponents/VisitReasonCascadeDropdown";
 import FileUploadArea from "./FileUploadArea";
 import FileListItem from "./FileListItem";
 import { toast } from "sonner";
@@ -239,30 +240,19 @@ const ConsultationForm = ({
               <>
                 <p className="text-xs text-amber-700 mb-2">Lekarz musi potwierdzić lub zmienić rodzaj wizyty przed zamknięciem.</p>
                 {visitReasonsData.categories.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-                    <select
-                      value={verifyVisitReasonCategoryId}
-                      onChange={(e) => {
-                        setVerifyVisitReasonCategoryId(e.target.value);
-                        setVerifyVisitReasonDisplayName("");
-                      }}
-                      className="w-full p-2 border border-gray-300 rounded text-sm"
-                    >
-                      <option value="">Kategoria...</option>
-                      {visitReasonsData.categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>{cat.label}</option>
-                      ))}
-                    </select>
-                    <select
+                  <div className="mb-2">
+                    <VisitReasonCascadeDropdown
+                      categories={visitReasonsData.categories}
                       value={verifyVisitReasonDisplayName}
-                      onChange={(e) => setVerifyVisitReasonDisplayName(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded text-sm"
-                    >
-                      <option value="">Typ wizyty...</option>
-                      {(visitReasonsData.categories.find((c) => c.id === verifyVisitReasonCategoryId)?.types ?? []).map((t) => (
-                        <option key={t.id} value={t.displayName}>{t.displayName}</option>
-                      ))}
-                    </select>
+                      onChange={(displayName) => {
+                        const cat = visitReasonsData.categories.find((c) =>
+                          (c.types || []).some((t) => t.displayName === displayName)
+                        );
+                        setVerifyVisitReasonCategoryId(cat?.id ?? "");
+                        setVerifyVisitReasonDisplayName(displayName);
+                      }}
+                      placeholder="Wybierz typ wizyty..."
+                    />
                   </div>
                 )}
                 <button

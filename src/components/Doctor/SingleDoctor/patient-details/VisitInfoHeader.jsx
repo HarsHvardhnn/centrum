@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Calendar, Clock } from "lucide-react";
 import { translateStatus, getStatusStyle } from "../../../../utils/statusHelper";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
+import VisitReasonCascadeDropdown from "../../../UtilComponents/VisitReasonCascadeDropdown";
 import { toast } from "sonner";
 
 const VisitInfoHeader = ({
@@ -40,8 +41,7 @@ const VisitInfoHeader = ({
   const appointmentId = appointment.id || appointment._id;
   const isVisitCompleted = appointment.status === "completed" || appointment.status === "Completed";
 
-  const handleVisitTypeChange = async (e) => {
-    const newReason = e.target.value;
+  const handleVisitTypeSelect = async (newReason) => {
     if (!newReason || !appointmentId) return;
     setSavingVisitType(true);
     try {
@@ -126,24 +126,13 @@ const VisitInfoHeader = ({
           </>
         ) : (
           <>
-            <select
+            <VisitReasonCascadeDropdown
+              categories={visitReasonsCategories}
               value={visitType}
-              onChange={handleVisitTypeChange}
-              disabled={savingVisitType || visitReasonsCategories.length === 0}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm min-w-[200px] bg-white disabled:opacity-60"
-            >
-              <option value="">Wybierz rodzaj wizyty...</option>
-              {visitType && !visitReasonsCategories.some((cat) => (cat.types || []).some((t) => t.displayName === visitType)) && (
-                <option value={visitType}>{visitType}</option>
-              )}
-              {visitReasonsCategories.map((cat) => (
-                <optgroup key={cat.id} label={cat.label || cat.id}>
-                  {(cat.types || []).map((t) => (
-                    <option key={t.id} value={t.displayName}>{t.displayName}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+              onChange={handleVisitTypeSelect}
+              disabled={savingVisitType}
+              placeholder="Wybierz rodzaj wizyty..."
+            />
             {needsVerification && (
               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
                 Do weryfikacji

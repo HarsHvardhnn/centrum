@@ -3,6 +3,7 @@ import PatientSearchField from "../../AppointmentForm/PatientSearchField"
 import DoctorSelectionWithSlots from "../../admin/DoctorsAppointments";
 import userServiceHelper from "../../../helpers/userServiceHelper";
 import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react";
+import VisitReasonCascadeDropdown from "../../UtilComponents/VisitReasonCascadeDropdown";
 import { useServices } from "../../../context/serviceContext.jsx";
 import { toast } from "sonner";
 import { apiCaller } from "../../../utils/axiosInstance";
@@ -1599,49 +1600,25 @@ function AppointmentFormModal({
       <div className="space-y-4">
         <h3 className="text-lg font-medium mb-4">Dodatkowe Informacje</h3>
 
-        {/* Rodzaj wizyty (type of consultation) – dictionary category → type */}
+        {/* Rodzaj wizyty (type of consultation) – Windows-style category → type cascade */}
         {visitReasonsData.categories.length > 0 && (
           <div className="bg-teal-50/50 p-4 rounded-lg border border-teal-200">
             <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaj wizyty (typ konsultacji)</label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Kategoria</label>
-                <select
-                  value={appointmentData.visitReasonCategoryId || ""}
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    setAppointmentData((prev) => ({
-                      ...prev,
-                      visitReasonCategoryId: id,
-                      visitReason: "",
-                    }));
-                  }}
-                  className="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white"
-                >
-                  <option value="">Wybierz kategorię...</option>
-                  {visitReasonsData.categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Typ konsultacji</label>
-                <select
-                  value={appointmentData.visitReason || ""}
-                  onChange={(e) => setAppointmentData((prev) => ({ ...prev, visitReason: e.target.value }))}
-                  className="w-full p-2 border border-gray-300 rounded-lg text-sm bg-white"
-                >
-                  <option value="">Wybierz typ...</option>
-                  {(() => {
-                    const cat = visitReasonsData.categories.find((c) => c.id === appointmentData.visitReasonCategoryId);
-                    const types = cat?.types ?? [];
-                    return types.map((t) => (
-                      <option key={t.id} value={t.displayName}>{t.displayName}</option>
-                    ));
-                  })()}
-                </select>
-              </div>
-            </div>
+            <VisitReasonCascadeDropdown
+              categories={visitReasonsData.categories}
+              value={appointmentData.visitReason}
+              onChange={(displayName) => {
+                const cat = visitReasonsData.categories.find((c) =>
+                  (c.types || []).some((t) => t.displayName === displayName)
+                );
+                setAppointmentData((prev) => ({
+                  ...prev,
+                  visitReason: displayName,
+                  visitReasonCategoryId: cat?.id ?? prev.visitReasonCategoryId,
+                }));
+              }}
+              placeholder="Wybierz rodzaj wizyty..."
+            />
           </div>
         )}
         
