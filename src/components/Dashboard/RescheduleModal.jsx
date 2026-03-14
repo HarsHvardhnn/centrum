@@ -8,7 +8,9 @@ const RescheduleModal = ({
   isOpen, 
   onClose, 
   appointment, 
-  onRescheduleSuccess 
+  onRescheduleSuccess,
+  /** When opened from a doctor's page, pass the doctor ID from URL/context so reschedule can find slots */
+  doctorId: doctorIdProp
 }) => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -109,30 +111,24 @@ const RescheduleModal = ({
     }
   };
 
-  // Get doctor ID from appointment data
+  // Get doctor ID: prefer prop (e.g. from doctor's page URL), then from appointment data
   const getDoctorId = () => {
+    if (doctorIdProp) return doctorIdProp;
     if (!appointment) return null;
-    
-    console.log(
-    "appointment", appointment
-    )
-    // Try different possible doctor ID field names
-    const doctorId = appointment?.doctor_id || 
-                    appointment.doctor?.id || 
-                    appointment.doctorId || 
-                    appointment.doctor;
-    
-    // If doctor is a string (name), we might need to fetch the doctor ID
-    // For now, we'll assume it's an ID if it's not a string or if it looks like an ID
-    if (typeof doctorId === 'string' && doctorId.length > 10) {
-      return doctorId; // Likely an ID
-    } else if (typeof doctorId === 'string' && doctorId.length <= 10) {
-      // This might be a doctor name, we need to handle this case
-      console.warn('Doctor ID might be a name instead of ID:', doctorId);
-      return null; // We'll need to implement doctor name to ID lookup
+
+    const fromAppointment =
+      appointment?.doctor_id ||
+      appointment?.doctor?.id ||
+      appointment?.doctorId ||
+      appointment?.doctor;
+
+    if (typeof fromAppointment === "string" && fromAppointment.length > 10) {
+      return fromAppointment;
     }
-    
-    return doctorId;
+    if (typeof fromAppointment === "string" && fromAppointment.length <= 10) {
+      return null;
+    }
+    return fromAppointment ?? null;
   };
 
   // Handle date selection

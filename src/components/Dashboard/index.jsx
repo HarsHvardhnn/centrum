@@ -898,6 +898,9 @@ const PatientList = () => {
                   Imię i Nazwisko Pacjenta
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                  Rodzaj wizyty
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   ID Pacjenta
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 flex items-center">
@@ -914,9 +917,6 @@ const PatientList = () => {
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   Data wizyty
-                </th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                  Rodzaj wizyty
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   Tryb wizyty
@@ -974,7 +974,15 @@ const PatientList = () => {
                     </div>
                   </td>
                   <td className="py-4 px-4 text-gray-600">
-                    {isVisitOnlyAppointment(patient) ? "—" : (patient.patientId || patient.patient_id || "N/A")}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span>{patient.visitReason || patient.consultationType || "—"}</span>
+                      {patient.visitTypeVerified === false && patient.status !== "completed" && patient.status !== "Completed" && (
+                        <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Do weryfikacji</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-gray-600">
+                    {isVisitOnlyAppointment(patient) ? "—" : (patient.patientId || patient.patient_id || "—")}
                   </td>
                   <td className="py-4 px-4 text-gray-600">
                     {translateSexToPolish(patient.sex) || "N/A"}
@@ -998,14 +1006,6 @@ const PatientList = () => {
                   </td>
                   <td className="py-4 px-4 text-gray-600">
                     {new Date(patient.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }) || "N/A"}
-                  </td>
-                  <td className="py-4 px-4 text-gray-600">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span>{patient.visitReason || patient.consultationType || "—"}</span>
-                      {patient.visitTypeVerified === false && patient.status !== "completed" && patient.status !== "Completed" && (
-                        <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Do weryfikacji</span>
-                      )}
-                    </div>
                   </td>
                     <td className="py-4 px-4">
                       <span

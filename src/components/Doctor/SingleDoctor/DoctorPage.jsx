@@ -347,6 +347,7 @@ function DoctorsPage() {
         onClose={() => { setShowReschedule(false); setRescheduleAppointment(null); }}
         appointment={rescheduleAppointment}
         onRescheduleSuccess={handleRescheduleSuccess}
+        doctorId={doctorInfo?.id ?? router?.id}
       />
     </>
   );

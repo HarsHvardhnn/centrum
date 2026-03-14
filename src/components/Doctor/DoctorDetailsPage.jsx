@@ -352,13 +352,13 @@ const AvailableTime = ({ data }) => {
     setSelectedDate(date);
   };
 
-  // Format time from 24h to 12h format
+  // Format time in 24-hour format (Polish standard)
   const formatTime = (time) => {
+    if (!time) return "";
     const [hours, minutes] = time.split(":");
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? "pm" : "am";
-    const formattedHour = hour % 12 || 12;
-    return `${formattedHour}:${minutes} ${ampm}`;
+    const h = parseInt(hours, 10);
+    const m = minutes != null && minutes !== "" ? String(minutes).padStart(2, "0") : "00";
+    return `${String(h).padStart(2, "0")}:${m}`;
   };
 
   return (
