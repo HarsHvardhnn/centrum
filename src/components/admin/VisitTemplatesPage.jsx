@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { FileStack, Plus, Pencil, Trash2, X } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { FileStack, Plus, Pencil, Trash2, X, Search } from "lucide-react";
 import visitTemplatesHelper from "../../helpers/visitTemplatesHelper";
+import appointmentHelper from "../../helpers/appointmentHelper";
 import { toast } from "sonner";
+
+const DEBOUNCE_MS = 300;
 
 const SECTION_KEYS = [
   { key: "interview", label: "Wywiad z pacjentem" },
@@ -32,6 +35,20 @@ export default function VisitTemplatesPage() {
     recommendations: "",
     notes: "",
   });
+  const [formDiagnoses, setFormDiagnoses] = useState([]); // { code, name, isPrimary }[]
+  const [formProcedures, setFormProcedures] = useState([]); // { code, name }[]
+  // ICD-10 search (Rozpoznanie)
+  const [icd10SearchValue, setIcd10SearchValue] = useState("");
+  const [icd10SearchResults, setIcd10SearchResults] = useState([]);
+  const [icd10SearchLoading, setIcd10SearchLoading] = useState(false);
+  const [icd10ShowDropdown, setIcd10ShowDropdown] = useState(false);
+  const icd10DropdownRef = useRef(null);
+  // ICD-9 search (Procedury)
+  const [icd9SearchValue, setIcd9SearchValue] = useState("");
+  const [icd9SearchResults, setIcd9SearchResults] = useState([]);
+  const [icd9SearchLoading, setIcd9SearchLoading] = useState(false);
+  const [icd9ShowDropdown, setIcd9ShowDropdown] = useState(false);
+  const icd9DropdownRef = useRef(null);
 
   const loadSectionKeys = () => {
     visitTemplatesHelper
@@ -135,6 +152,14 @@ export default function VisitTemplatesPage() {
       recommendations: "",
       notes: "",
     });
+    setFormDiagnoses([]);
+    setFormProcedures([]);
+    setIcd10SearchValue("");
+    setIcd10SearchResults([]);
+    setIcd10ShowDropdown(false);
+    setIcd9SearchValue("");
+    setIcd9SearchResults([]);
+    setIcd9ShowDropdown(false);
     setShowGlobalForm(true);
   };
 
@@ -148,7 +173,89 @@ export default function VisitTemplatesPage() {
       recommendations: t.sections?.recommendations ?? "",
       notes: t.sections?.notes ?? "",
     });
+    setFormDiagnoses(Array.isArray(t.diagnoses) ? t.diagnoses.map((d) => ({ code: d.code ?? "", name: d.name ?? "", isPrimary: !!d.isPrimary })) : []);
+    setFormProcedures(Array.isArray(t.procedures) ? t.procedures.map((p) => ({ code: p.code ?? "", name: p.name ?? "" })) : []);
+    setIcd10SearchValue("");
+    setIcd10SearchResults([]);
+    setIcd10ShowDropdown(false);
+    setIcd9SearchValue("");
+    setIcd9SearchResults([]);
+    setIcd9ShowDropdown(false);
     setShowGlobalForm(true);
+  };
+
+  const removeDiagnosis = (index) => setFormDiagnoses((prev) => prev.filter((_, i) => i !== index));
+  const updateDiagnosis = (index, field, value) =>
+    setFormDiagnoses((prev) => prev.map((d, i) => (i === index ? { ...d, [field]: value } : d)));
+
+  const removeProcedure = (index) => setFormProcedures((prev) => prev.filter((_, i) => i !== index));
+
+  // Debounced ICD-10 search
+  useEffect(() => {
+    if (!showGlobalForm || !icd10SearchValue.trim()) {
+      setIcd10SearchResults([]);
+      setIcd10ShowDropdown(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIcd10SearchLoading(true);
+      setIcd10ShowDropdown(true);
+      try {
+        const results = await appointmentHelper.searchIcd10(icd10SearchValue);
+        setIcd10SearchResults(Array.isArray(results) ? results : []);
+      } catch (e) {
+        setIcd10SearchResults([]);
+      } finally {
+        setIcd10SearchLoading(false);
+      }
+    }, DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [showGlobalForm, icd10SearchValue]);
+
+  // Debounced ICD-9 search
+  useEffect(() => {
+    if (!showGlobalForm || !icd9SearchValue.trim()) {
+      setIcd9SearchResults([]);
+      setIcd9ShowDropdown(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIcd9SearchLoading(true);
+      setIcd9ShowDropdown(true);
+      try {
+        const results = await appointmentHelper.searchIcd9(icd9SearchValue);
+        setIcd9SearchResults(Array.isArray(results) ? results : []);
+      } catch (e) {
+        setIcd9SearchResults([]);
+      } finally {
+        setIcd9SearchLoading(false);
+      }
+    }, DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [showGlobalForm, icd9SearchValue]);
+
+  // Click outside to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (icd10DropdownRef.current && !icd10DropdownRef.current.contains(e.target)) setIcd10ShowDropdown(false);
+      if (icd9DropdownRef.current && !icd9DropdownRef.current.contains(e.target)) setIcd9ShowDropdown(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const addDiagnosisFromSearch = (item) => {
+    setFormDiagnoses((prev) => [...prev, { code: item.code, name: item.name || item.title || "", isPrimary: prev.length === 0 }]);
+    setIcd10SearchValue("");
+    setIcd10SearchResults([]);
+    setIcd10ShowDropdown(false);
+  };
+
+  const addProcedureFromSearch = (item) => {
+    setFormProcedures((prev) => [...prev, { code: item.code, name: item.name || item.title || "" }]);
+    setIcd9SearchValue("");
+    setIcd9SearchResults([]);
+    setIcd9ShowDropdown(false);
   };
 
   const saveGlobalTemplate = async () => {
@@ -156,17 +263,27 @@ export default function VisitTemplatesPage() {
       toast.error("Nazwa szablonu jest wymagana");
       return;
     }
+    const diagnoses = formDiagnoses
+      .map((d) => ({ code: (d.code ?? "").trim(), name: (d.name ?? "").trim(), isPrimary: !!d.isPrimary }))
+      .filter((d) => d.code || d.name);
+    const procedures = formProcedures
+      .map((p) => ({ code: (p.code ?? "").trim(), name: (p.name ?? "").trim() }))
+      .filter((p) => p.code || p.name);
     try {
       if (editingGlobalId) {
         await visitTemplatesHelper.updateGlobalTemplate(editingGlobalId, {
           name: formName.trim(),
           sections: formSections,
+          diagnoses,
+          procedures,
         });
         toast.success("Szablon globalny zaktualizowany");
       } else {
         await visitTemplatesHelper.createGlobalTemplate({
           name: formName.trim(),
           sections: formSections,
+          diagnoses,
+          procedures,
         });
         toast.success("Szablon globalny utworzony");
       }
@@ -443,6 +560,118 @@ export default function VisitTemplatesPage() {
                   />
                 </div>
               ))}
+
+              {/* Rozpoznanie (ICD-10) – search API, select from dropdown */}
+              <div className="border-t border-gray-200 pt-4" ref={icd10DropdownRef}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Rozpoznanie (ICD-10)</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="text"
+                    value={icd10SearchValue}
+                    onChange={(e) => setIcd10SearchValue(e.target.value)}
+                    onFocus={() => icd10SearchResults.length > 0 && setIcd10ShowDropdown(true)}
+                    placeholder="Wyszukaj wg kodu ICD-10 lub nazwy choroby..."
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
+                  />
+                  {icd10ShowDropdown && (icd10SearchValue.trim() || icd10SearchResults.length > 0) && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                      {icd10SearchLoading ? (
+                        <div className="p-3 text-sm text-gray-500">Szukam...</div>
+                      ) : icd10SearchResults.length === 0 ? (
+                        <div className="p-3 text-sm text-gray-500">Brak wyników</div>
+                      ) : (
+                        icd10SearchResults.map((item, i) => (
+                          <button
+                            key={(item.code || "") + i}
+                            type="button"
+                            onClick={() => addDiagnosisFromSearch(item)}
+                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-teal-50 border-b border-gray-100 last:border-0"
+                          >
+                            <span className="font-medium text-teal-800">{item.code}</span>
+                            <span className="text-gray-700 ml-2">{item.name || item.title}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+                {formDiagnoses.length > 0 && (
+                  <ul className="space-y-2 mt-2">
+                    {formDiagnoses.map((d, index) => (
+                      <li key={index} className="flex flex-wrap items-center gap-2 p-2 bg-teal-50 rounded-lg border border-teal-100">
+                        <span className="text-xs font-medium text-teal-800 px-2 py-0.5 rounded bg-teal-100">
+                          {d.isPrimary ? "Główne" : "Dodatkowe"}
+                        </span>
+                        <span className="text-sm text-gray-800 flex-1 min-w-0 truncate">{d.code} {d.name}</span>
+                        <label className="flex items-center gap-1.5 text-sm text-gray-600 whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={!!d.isPrimary}
+                            onChange={(e) => updateDiagnosis(index, "isPrimary", e.target.checked)}
+                            className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                          />
+                          główne
+                        </label>
+                        <button type="button" onClick={() => removeDiagnosis(index)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Usuń">
+                          <Trash2 size={16} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="text-xs text-gray-500 mt-1">Wpisz kod lub nazwę, wybierz z listy, aby dodać rozpoznanie.</p>
+              </div>
+
+              {/* Procedury (ICD-9) – search API, select from dropdown */}
+              <div className="border-t border-gray-200 pt-4" ref={icd9DropdownRef}>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Procedury (ICD-9)</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="text"
+                    value={icd9SearchValue}
+                    onChange={(e) => setIcd9SearchValue(e.target.value)}
+                    onFocus={() => icd9SearchResults.length > 0 && setIcd9ShowDropdown(true)}
+                    placeholder="Wyszukaj wg kodu ICD-9 lub nazwy procedury..."
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
+                  />
+                  {icd9ShowDropdown && (icd9SearchValue.trim() || icd9SearchResults.length > 0) && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                      {icd9SearchLoading ? (
+                        <div className="p-3 text-sm text-gray-500">Szukam...</div>
+                      ) : icd9SearchResults.length === 0 ? (
+                        <div className="p-3 text-sm text-gray-500">Brak wyników</div>
+                      ) : (
+                        icd9SearchResults.map((item, i) => (
+                          <button
+                            key={(item.code || "") + i}
+                            type="button"
+                            onClick={() => addProcedureFromSearch(item)}
+                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-teal-50 border-b border-gray-100 last:border-0"
+                          >
+                            <span className="font-medium text-teal-800">{item.code}</span>
+                            <span className="text-gray-700 ml-2">{item.name || item.title}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+                {formProcedures.length > 0 && (
+                  <ul className="space-y-2 mt-2">
+                    {formProcedures.map((p, index) => (
+                      <li key={index} className="flex flex-wrap items-center gap-2 p-2 bg-teal-50 rounded-lg border border-teal-100">
+                        <span className="text-sm text-gray-800 flex-1 min-w-0 truncate">{p.code} {p.name}</span>
+                        <button type="button" onClick={() => removeProcedure(index)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Usuń">
+                          <Trash2 size={16} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="text-xs text-gray-500 mt-1">Wpisz kod lub nazwę, wybierz z listy, aby dodać procedurę.</p>
+              </div>
             </div>
             <div className="p-4 border-t flex justify-end gap-2">
               <button type="button" onClick={() => setShowGlobalForm(false)} className="px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-50">

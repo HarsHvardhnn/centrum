@@ -202,7 +202,14 @@ const PatientProfile = ({ patient, setPatientData }) => {
         </div>
         <div className="flex flex-col">
           <p className="text-xs text-gray-500">Numer telefonu</p>
-          <p className="text-sm">{(patient.phone != null && String(patient.phone).trim() !== "" && !String(patient.phone).trim().startsWith("__no_phone_")) ? patient.phone : "Numer telefonu niedostępny"}</p>
+          <p className="text-sm">
+            {(() => {
+              const raw = patient?.phone != null ? String(patient.phone).trim() : "";
+              const noPhone = !raw || raw.startsWith("__no_phone_") || raw.replace(/\D/g, "").length < 6;
+              if (noPhone) return "—";
+              return raw.startsWith("+") ? raw : `+${raw}`;
+            })()}
+          </p>
         </div>
         <div className="flex flex-col">
           <p className="text-xs text-gray-500">PESEL</p>

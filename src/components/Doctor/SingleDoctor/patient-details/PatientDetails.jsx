@@ -148,7 +148,12 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
     "Dane osobowe": filterEmptyFields({
       "Imię i nazwisko": `${patientData.name?.first || ""} ${patientData.name?.last || ""}`.trim(),
       "Email": patientData.email,
-      "Telefon": (patientData.phone != null && String(patientData.phone).trim() !== "" && !String(patientData.phone).trim().startsWith("__no_phone_")) ? patientData.phone : "Numer telefonu niedostępny",
+      "Telefon": (() => {
+        const raw = patientData?.phone != null ? String(patientData.phone).trim() : "";
+        const noPhone = !raw || raw.startsWith("__no_phone_") || raw.replace(/\D/g, "").length < 6;
+        if (noPhone) return "—";
+        return raw.startsWith("+") ? raw : `+${raw}`;
+      })(),
       "PESEL": patientData.govtId || patientData.pesel || patientData.PESEL || "Nie określono",
       "Płeć": patientData.sex === "Male" ? "Mężczyzna" : patientData.sex === "Female" ? "Kobieta" : patientData.sex,
       "Data urodzenia": patientData.dateOfBirth ? formatDate(patientData.dateOfBirth) : null,
@@ -579,7 +584,7 @@ const PatientDetailsPage = () => {
       const response = await appointmentHelper.getAppointmentById(appointmentId);
       
       if (response.data) {
-        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports, patientData: appointmentPatientData, notes, date: aptDate, startTime: aptStartTime, endTime: aptEndTime } = response.data;
+        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports, patientData: appointmentPatientData, patient: appointmentPatient, notes, date: aptDate, startTime: aptStartTime, endTime: aptEndTime } = response.data;
         
         // Update consultation data with notes and appointment date/time
         setConsultationData(prevConsultation => ({
@@ -595,16 +600,19 @@ const PatientDetailsPage = () => {
         setTests(appointmentTests || []);
         setReports(reports || []);
 
-        // Update patient data if it exists in appointment, preserving existing data
-        if (appointmentPatientData) {
+        // Update patient data from appointment: prefer patient (main API shape), then patientData
+        const fromAppointment = appointmentPatient || appointmentPatientData;
+        if (fromAppointment) {
           setPatientData(prevData => ({
             ...prevData,
-            ...appointmentPatientData,
-            // Explicitly set health metrics from appointment data
-            bloodPressure: appointmentPatientData.bloodPressure || prevData.bloodPressure || null,
-            temperature: appointmentPatientData.temperature || prevData.temperature || null,
-            weight: appointmentPatientData.weight || prevData.weight || null,
-            height: appointmentPatientData.height || prevData.height || null
+            ...fromAppointment,
+            // Ensure user-facing patientId from API is shown in the card (data.patient.patientId)
+            patientId: fromAppointment.patientId ?? fromAppointment.patient_id ?? prevData.patientId ?? prevData.patient_id,
+            patient_id: fromAppointment.patient_id ?? fromAppointment._id ?? prevData.patient_id,
+            bloodPressure: fromAppointment.bloodPressure ?? prevData.bloodPressure ?? null,
+            temperature: fromAppointment.temperature ?? prevData.temperature ?? null,
+            weight: fromAppointment.weight ?? prevData.weight ?? null,
+            height: fromAppointment.height ?? prevData.height ?? null
           }));
         }
       }
@@ -655,9 +663,9 @@ const PatientDetailsPage = () => {
       const startTime = consultationData.time || selectedAppointment?.startTime || "09:00";
       const endTime = consultationData.endTime || selectedAppointment?.endTime || "09:30";
       await appointmentHelper.rescheduleAppointment(currentAppointmentId, {
-        date: newDate,
-        startTime,
-        endTime
+        newDate,
+        newStartTime: startTime,
+        newEndTime: endTime
       });
       toast.success("Data wizyty zaktualizowana");
       setSelectedAppointment((prev) => (prev ? { ...prev, date: newDate } : null));
@@ -674,19 +682,40 @@ const PatientDetailsPage = () => {
     if (!currentAppointmentId || isVisitCompleted) return;
     try {
       const dateStr = toDateStr(consultationData.consultationDate || consultationData.date || selectedAppointment?.date);
-      const endTime = selectedAppointment?.endTime || newTime;
+      const endTime = consultationData.endTime || selectedAppointment?.endTime || newTime;
       await appointmentHelper.rescheduleAppointment(currentAppointmentId, {
-        date: dateStr,
-        startTime: newTime,
-        endTime
+        newDate: dateStr,
+        newStartTime: newTime,
+        newEndTime: endTime
       });
-      toast.success("Godzina wizyty zaktualizowana");
+      toast.success("Godzina rozpoczęcia zaktualizowana");
       setSelectedAppointment((prev) => (prev ? { ...prev, startTime: newTime } : null));
       setAppointments((prev) =>
         prev.map((apt) => (apt._id === currentAppointmentId ? { ...apt, startTime: newTime } : apt))
       );
     } catch (e) {
       toast.error(e?.response?.data?.message || "Nie udało się zmienić godziny wizyty");
+    }
+  };
+
+  const handleEndTimeChange = async (newEndTime) => {
+    setConsultationData((prev) => ({ ...prev, endTime: newEndTime }));
+    if (!currentAppointmentId || isVisitCompleted) return;
+    try {
+      const dateStr = toDateStr(consultationData.consultationDate || consultationData.date || selectedAppointment?.date);
+      const startTime = consultationData.time || selectedAppointment?.startTime || "09:00";
+      await appointmentHelper.rescheduleAppointment(currentAppointmentId, {
+        newDate: dateStr,
+        newStartTime: startTime,
+        newEndTime: newEndTime
+      });
+      toast.success("Godzina zakończenia zaktualizowana");
+      setSelectedAppointment((prev) => (prev ? { ...prev, endTime: newEndTime } : null));
+      setAppointments((prev) =>
+        prev.map((apt) => (apt._id === currentAppointmentId ? { ...apt, endTime: newEndTime } : apt))
+      );
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Nie udało się zmienić godziny zakończenia");
     }
   };
 
@@ -1217,6 +1246,7 @@ const PatientDetailsPage = () => {
           consultationData={consultationData}
           onDateChange={handleDateChange}
           onTimeChange={handleTimeChange}
+          onEndTimeChange={handleEndTimeChange}
           onVisitTypeChange={handleVisitTypeChange}
           readOnly={isVisitCompleted}
         />

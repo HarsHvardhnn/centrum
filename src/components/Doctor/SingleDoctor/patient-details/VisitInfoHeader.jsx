@@ -10,6 +10,7 @@ const VisitInfoHeader = ({
   consultationData,
   onDateChange,
   onTimeChange,
+  onEndTimeChange,
   onVisitTypeChange,
   readOnly = false,
 }) => {
@@ -31,6 +32,7 @@ const VisitInfoHeader = ({
 
   const dateValue = consultationData?.date || consultationData?.consultationDate || appointment.date;
   const timeValue = consultationData?.time || appointment.startTime;
+  const endTimeValue = consultationData?.endTime || appointment.endTime;
   const doctorName = appointment.doctor
     ? `${appointment.doctor.name?.first || ""} ${appointment.doctor.name?.last || ""}`.trim() || "—"
     : "—";
@@ -93,11 +95,22 @@ const VisitInfoHeader = ({
       </div>
       <div className="flex items-center gap-2">
         <Clock size={18} className="text-gray-500 shrink-0" />
-        <label className="text-sm text-gray-600 shrink-0">Godzina</label>
+        <label className="text-sm text-gray-600 shrink-0">Godzina rozpoczęcia</label>
         <input
           type="time"
           value={formatTimeForInput(timeValue)}
           onChange={(e) => onTimeChange?.(e.target.value)}
+          disabled={readOnly}
+          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <Clock size={18} className="text-gray-500 shrink-0" />
+        <label className="text-sm text-gray-600 shrink-0">Godzina zakończenia</label>
+        <input
+          type="time"
+          value={formatTimeForInput(endTimeValue)}
+          onChange={(e) => onEndTimeChange?.(e.target.value)}
           disabled={readOnly}
           className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
         />

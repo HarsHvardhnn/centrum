@@ -61,20 +61,24 @@ const visitTemplatesHelper = {
     return [];
   },
 
-  async createGlobalTemplate({ name, sections }) {
+  async createGlobalTemplate({ name, sections, diagnoses, procedures }) {
     const res = await apiCaller("POST", `${BASE}/global`, {
       name,
       sections: sections ?? {},
+      ...(Array.isArray(diagnoses) && { diagnoses }),
+      ...(Array.isArray(procedures) && { procedures }),
     });
     const data = res?.data ?? res;
     if (data?.success) return data.data;
     throw new Error(data?.message || "Nie udało się utworzyć szablonu globalnego");
   },
 
-  async updateGlobalTemplate(id, { name, sections }) {
+  async updateGlobalTemplate(id, { name, sections, diagnoses, procedures }) {
     const res = await apiCaller("PATCH", `${BASE}/global/${id}`, {
       ...(name !== undefined && { name }),
       ...(sections !== undefined && { sections }),
+      ...(diagnoses !== undefined && { diagnoses }),
+      ...(procedures !== undefined && { procedures }),
     });
     const data = res?.data ?? res;
     if (data?.success) return data.data;
