@@ -429,11 +429,21 @@ class AppointmentService {
     await apiCaller("DELETE", `/appointments/${visitId}/procedures/${procedureId}`);
   }
 
+  /** Normalize ICD search result so each item has { code, name } for dropdown and add */
+  _normalizeIcdItem(item) {
+    if (!item || typeof item !== "object") return null;
+    const code = item.code ?? item.icdCode ?? item.id ?? item._id ?? "";
+    const name = item.name ?? item.title ?? item.displayName ?? item.description ?? item.label ?? "";
+    if (!code && !name) return null;
+    return { code: String(code), name: String(name) };
+  }
+
   async searchIcd10(query) {
     if (!query?.trim()) return [];
     try {
       const response = await apiCaller("GET", `/api/icd10/search?q=${encodeURIComponent(query.trim())}`);
-      return Array.isArray(response.data) ? response.data : response.data?.data ?? [];
+      const raw = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
+      return raw.map((item) => this._normalizeIcdItem(item)).filter(Boolean);
     } catch (error) {
       console.error("Error searching ICD-10:", error);
       return [];
@@ -444,7 +454,8 @@ class AppointmentService {
     if (!query?.trim()) return [];
     try {
       const response = await apiCaller("GET", `/api/icd9/search?q=${encodeURIComponent(query.trim())}`);
-      return Array.isArray(response.data) ? response.data : response.data?.data ?? [];
+      const raw = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
+      return raw.map((item) => this._normalizeIcdItem(item)).filter(Boolean);
     } catch (error) {
       console.error("Error searching ICD-9:", error);
       return [];
