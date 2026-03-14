@@ -28,6 +28,7 @@ const DoctorDashboard = ({
   itemsPerPage,
   onCheckIn,
   onReschedule,
+  onPermanentDelete,
 }) => {
   const navigate = useNavigate();
   const { user } = useUser();
@@ -105,6 +106,7 @@ const DoctorDashboard = ({
               itemsPerPage={itemsPerPage}
               onCheckIn={onCheckIn}
               onReschedule={onReschedule}
+              onPermanentDelete={onPermanentDelete}
             />
           </div>
 

@@ -11,6 +11,7 @@ import {
   PlayCircle,
   UserCheck,
   Calendar,
+  Trash2,
 } from "lucide-react";
 import appointmentHelper from "../../../helpers/appointmentHelper";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ const PatientsList = ({
   itemsPerPage = 10,
   onCheckIn,
   onReschedule,
+  onPermanentDelete,
 }) => {
   const navigate = useNavigate();
   const { user } = useUser();
@@ -272,6 +274,14 @@ const PatientsList = ({
                               onSelect={() => onReschedule(patient)}
                             >
                               <Calendar size={16} /> Przełóż wizytę
+                            </DropdownMenu.Item>
+                          )}
+                          {onPermanentDelete && (
+                            <DropdownMenu.Item
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
+                              onSelect={() => onPermanentDelete(patient.id)}
+                            >
+                              <Trash2 size={16} /> Trwale usuń
                             </DropdownMenu.Item>
                           )}
                         </DropdownMenu.Content>

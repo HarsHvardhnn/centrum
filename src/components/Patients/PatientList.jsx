@@ -699,15 +699,35 @@ function LabAppointmentsContent({ clinic }) {
     setSelectedAppointmentIds([]);
   };
 
+  const deleteFromVisitHistoryRef = useRef(false);
+
   const handlePermanentDeleteClick = (appointmentId) => {
+    deleteFromVisitHistoryRef.current = false;
     setDeleteDialog({
       open: true,
       id: appointmentId
     });
   };
 
+  const handlePermanentDeleteFromVisitHistory = (visitId) => {
+    deleteFromVisitHistoryRef.current = true;
+    setDeleteDialog({ open: true, id: visitId });
+  };
+
   const handlePermanentDeleteSuccess = () => {
     fetchAppointments(pagination.page);
+    if (deleteFromVisitHistoryRef.current && visitHistoryPatient?.id) {
+      deleteFromVisitHistoryRef.current = false;
+      setVisitHistoryLoading(true);
+      patientService.getPatientVisits(visitHistoryPatient.id).then((res) => {
+        const data = res?.data ?? [];
+        setVisitHistoryData(Array.isArray(data) ? data : []);
+        setVisitHistoryError(res?.success === false ? res?.message : null);
+      }).catch((err) => {
+        setVisitHistoryError(err?.response?.data?.message || err?.message || "Nie udało się pobrać historii wizyt.");
+        setVisitHistoryData([]);
+      }).finally(() => setVisitHistoryLoading(false));
+    }
   };
 
   const statusLabelForDisplay =
@@ -1395,16 +1415,27 @@ function LabAppointmentsContent({ clinic }) {
                             {visit.visitType ? visit.visitType : null}
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowVisitHistoryModal(false);
-                            navigate(getPatientViewUrl(visitHistoryPatient?.id, visit.visitId));
-                          }}
-                          className="text-sm text-teal-600 hover:text-teal-800 font-medium shrink-0"
-                        >
-                          Zobacz szczegóły
-                        </button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowVisitHistoryModal(false);
+                              navigate(getPatientViewUrl(visitHistoryPatient?.id, visit.visitId));
+                            }}
+                            className="text-sm text-teal-600 hover:text-teal-800 font-medium"
+                          >
+                            Zobacz szczegóły
+                          </button>
+                          {user?.role === "admin" && (
+                            <button
+                              type="button"
+                              onClick={() => handlePermanentDeleteFromVisitHistory(visit.visitId)}
+                              className="text-sm text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
+                            >
+                              <Trash2 size={14} /> Trwale usuń
+                            </button>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>

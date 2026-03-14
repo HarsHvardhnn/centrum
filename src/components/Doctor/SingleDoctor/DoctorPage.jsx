@@ -6,9 +6,11 @@ import doctorService from "../../../helpers/doctorHelper";
 import AppointmentFormModal from "../Appointments/AddAppointmentForm";
 import CheckInModal from "../../admin/CheckinModal";
 import RescheduleModal from "../../Dashboard/RescheduleModal";
+import PermanentDeleteDialog from "../../admin/PermanentDeleteDialog";
 import { toast } from "sonner";
 import appointmentHelper from "../../../helpers/appointmentHelper";
 import { formatDateToYYYYMMDD } from "../../../utils/formatDate";
+import { useUser } from "../../../context/userContext";
 
 function DoctorsPage() {
   const router = useParams();
@@ -31,7 +33,9 @@ function DoctorsPage() {
   const [checkInAppointment, setCheckInAppointment] = useState(null);
   const [showReschedule, setShowReschedule] = useState(false);
   const [rescheduleAppointment, setRescheduleAppointment] = useState(null);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
   const itemsPerPage = 10;
+  const { user } = useUser();
 
   /** Count appointments by status. Excludes cancelled. Liczba wizyt = Zarezerwowana + Zameldowana + Zakończona; Pozostało = Zarezerwowana + Zameldowana. Backend may return liczbaWizyt/pozostaloWizyt for full-day accuracy (when list is paginated). */
   const computeDailySummary = (list, fromBackend) => {
@@ -293,6 +297,15 @@ function DoctorsPage() {
     if (doctorInfo?.id) fetchPatientsByDoctor(doctorInfo.id);
   };
 
+  const handlePermanentDeleteClick = (appointmentId) => {
+    setDeleteDialog({ open: true, id: appointmentId });
+  };
+
+  const handlePermanentDeleteSuccess = () => {
+    setDeleteDialog({ open: false, id: null });
+    if (doctorInfo?.id) fetchPatientsByDoctor(doctorInfo.id);
+  };
+
   return (
     <>
       <DoctorDashboard
@@ -318,6 +331,7 @@ function DoctorsPage() {
         itemsPerPage={itemsPerPage}
         onCheckIn={handleCheckIn}
         onReschedule={handleReschedule}
+        onPermanentDelete={user?.role === "admin" ? handlePermanentDeleteClick : undefined}
       />
 
       {/* Appointment Form Modal */}
@@ -348,6 +362,16 @@ function DoctorsPage() {
         appointment={rescheduleAppointment}
         onRescheduleSuccess={handleRescheduleSuccess}
         doctorId={doctorInfo?.id ?? router?.id}
+      />
+
+      <PermanentDeleteDialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ open: false, id: null })}
+        type="appointment"
+        id={deleteDialog.id}
+        title="Trwale usuń wizytę?"
+        message="Ta operacja jest nieodwracalna. Wizyta oraz powiązane rekordy zostaną trwale usunięte."
+        onSuccess={handlePermanentDeleteSuccess}
       />
     </>
   );

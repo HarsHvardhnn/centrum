@@ -33,6 +33,7 @@ import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
 import { translateStatus, getStatusStyle, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import RescheduleModal from "./RescheduleModal";
+import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 
 const MedicalDashboard = () => {
   const { user } = useUser();
@@ -388,6 +389,7 @@ const PatientList = () => {
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
   /** When true, show only patient-less (visit-only) appointments. */
   const [patientLessOnly, setPatientLessOnly] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
 
   const navigate = useNavigate();
 
@@ -1112,6 +1114,15 @@ const PatientList = () => {
                                 Anuluj wizytę
                               </DropdownMenu.Item>
                             )}
+                            {user?.role === "admin" && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
+                                onClick={() => setDeleteDialog({ open: true, id: patient._id })}
+                              >
+                                <Trash2 size={16} className="mr-2" />
+                                Trwale usuń
+                              </DropdownMenu.Item>
+                            )}
                           </DropdownMenu.Content>
                         </DropdownMenu.Portal>
                       </DropdownMenu.Root>
@@ -1150,6 +1161,20 @@ const PatientList = () => {
         onClose={() => setShowRescheduleModal(false)}
         appointment={selectedAppointment}
         onRescheduleSuccess={handleRescheduleSuccess}
+      />
+
+      {/* Permanent Delete Dialog (admin) */}
+      <PermanentDeleteDialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ open: false, id: null })}
+        type="appointment"
+        id={deleteDialog.id}
+        title="Trwale usuń wizytę?"
+        message="Ta operacja jest nieodwracalna. Wizyta oraz powiązane rekordy zostaną trwale usunięte."
+        onSuccess={() => {
+          setDeleteDialog({ open: false, id: null });
+          fetchPatients();
+        }}
       />
 
       {/* Complete registration modal - for visits without patient */}
