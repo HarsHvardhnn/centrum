@@ -224,10 +224,6 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
         toast.error("Imię i nazwisko są wymagane.");
         return;
       }
-      if (!formData.dateOfBirth?.trim()) {
-        toast.error("Data urodzenia jest wymagana dla pacjenta międzynarodowego.");
-        return;
-      }
       if (!formData.documentCountry?.trim() || !formData.documentType?.trim() || !formData.documentNumber?.trim()) {
         toast.error("Wypełnij wszystkie pola dokumentu (kraj wydania, typ dokumentu, numer).");
         return;
@@ -326,7 +322,7 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
 
   const isInternational = !!formData.isInternationalPatient;
   const canSubmit = isInternational
-    ? (formData.firstName?.trim() && formData.lastName?.trim() && formData.dateOfBirth?.trim() &&
+    ? (formData.firstName?.trim() && formData.lastName?.trim() &&
        formData.documentCountry?.trim() && formData.documentType?.trim() && formData.documentNumber?.trim())
     : (normalizePesel(completeRegPesel).length === 11 &&
        formData.firstName?.trim() && formData.lastName?.trim() && formData.sex?.trim());
@@ -397,48 +393,48 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
                 }}
                 className="h-4 w-4 text-teal-600 border-gray-300 rounded"
               />
-              <label htmlFor="complete-reg-international" className="text-sm text-gray-700">International patient (no PESEL)</label>
+              <label htmlFor="complete-reg-international" className="text-sm text-gray-700">Pacjent międzynarodowy (bez PESEL)</label>
             </div>
             {isInternational && (
-              <p className="mt-1 text-sm text-gray-500">PESEL does not apply to international patients.</p>
+              <p className="mt-1 text-sm text-gray-500">PESEL nie dotyczy pacjentów międzynarodowych.</p>
             )}
           </div>
 
           {isInternational && (
             <div className="border-t border-gray-200 pt-4">
-              <h3 className="text-base font-medium text-gray-800 mb-3">Document Data</h3>
+              <h3 className="text-base font-medium text-gray-800 mb-3">Dane dokumentu</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Country of document issuance <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Kraj wydania dokumentu <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={formData.documentCountry}
                     onChange={(e) => setFormData((prev) => ({ ...prev, documentCountry: e.target.value }))}
-                    placeholder="e.g. Germany, Poland"
+                    placeholder="np. Niemcy, Polska"
                     className="w-full p-2 border border-gray-300 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Document type <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Typ dokumentu <span className="text-red-500">*</span></label>
                   <select
                     value={formData.documentType}
                     onChange={(e) => setFormData((prev) => ({ ...prev, documentType: e.target.value }))}
                     className="w-full p-2 border border-gray-300 rounded-lg"
                   >
-                    <option value="">Select</option>
-                    <option value="Passport">Passport</option>
-                    <option value="ID Card">ID Card</option>
-                    <option value="Residence Card">Residence Card</option>
-                    <option value="Other">Other</option>
+                    <option value="">Wybierz</option>
+                    <option value="Passport">Paszport</option>
+                    <option value="ID Card">Dowód osobisty</option>
+                    <option value="Residence Card">Karta pobytu</option>
+                    <option value="Other">Inny</option>
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Document number <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Numer dokumentu <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={formData.documentNumber}
                     onChange={(e) => setFormData((prev) => ({ ...prev, documentNumber: e.target.value }))}
-                    placeholder="Document number"
+                    placeholder="Numer dokumentu"
                     className="w-full p-2 border border-gray-300 rounded-lg"
                   />
                 </div>

@@ -42,7 +42,7 @@ const DoctorInfoCard = ({ doctor, dailySummary, selectedDate }) => {
         {/* GODZINY PRACY – teal card */}
         <div className="flex-1 min-w-[140px] rounded-xl px-4 py-3 bg-teal-50 border border-teal-100">
           <p className="text-xs font-bold uppercase tracking-wide text-teal-800">Godziny pracy</p>
-          <p className="text-lg font-bold text-teal-800 mt-0.5">{workingHours}</p>
+          <p className="text-lg font-bold text-teal-800 mt-0.5 whitespace-nowrap">{workingHours}</p>
         </div>
         <div className="flex-1 min-w-[120px] rounded-xl px-4 py-3 bg-white border border-gray-200 shadow-sm">
           <p className="text-2xl font-bold text-gray-900">{liczbaWizyt}</p>

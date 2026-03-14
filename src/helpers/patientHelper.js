@@ -488,6 +488,23 @@ const patientService = {
     }
   },
 
+  /**
+   * Get patient visit history (simple list for modals).
+   * GET /patients/:patientId/visits
+   * @param {string} patientId - Patient _id
+   * @returns {Promise<{ success: boolean, count: number, data: Array<{ visitId, date, time, startTime, endTime, doctor, visitType, mode, status }> }>}
+   */
+  getPatientVisits: async (patientId) => {
+    try {
+      if (!patientId) throw new Error("Patient ID is required");
+      const response = await apiCaller("GET", `/patients/${patientId}/visits`);
+      return response.data ?? response;
+    } catch (error) {
+      console.error("Error fetching patient visits:", error);
+      throw error;
+    }
+  },
+
   getPatientsByDoctors: async (doctorId) => {
     try {
       if (!doctorId) throw new Error("Patient ID is required");

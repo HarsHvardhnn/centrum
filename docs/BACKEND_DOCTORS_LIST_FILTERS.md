@@ -1,6 +1,35 @@
 # Backend prompt: Doctors list (GET /docs) – filter support
 
-Use this in your **backend repo** so the **Lista lekarzy** (List of doctors) filters work. The frontend now sends all filter values as query parameters; the backend should apply them and return only doctors that match.
+Use this in your **backend repo** so the **Lista lekarzy** (List of doctors) filters work on **http://localhost:5173/lekarze**. The frontend sends all filter values as query parameters; the backend should apply them and return only doctors that match.
+
+---
+
+## API reference (quick list for backend)
+
+**Endpoint:** `GET /docs`
+
+**Query parameters the frontend sends** (only non-empty values; all optional):
+
+| Query param      | Type   | Example values / format | When sent |
+|------------------|--------|--------------------------|-----------|
+| `search`         | string | Free text                | Header "Szukaj lekarza" or filter "Imię specjalisty" (debounced ~400 ms). |
+| `specialization` | string | `Kardiolog`, `Dermatolog`, `Neurolog`, `Pediatra` | Filter "Filtruj według specjalisty". |
+| `date`           | string | `YYYY-MM-DD` (e.g. `2026-03-11`) | Filter "Filtruj według wizyty" → data. |
+| `status`         | string | `Zaplanowane`, `Anulowane`, `Zakończone` | Filter "Filtruj według wizyty" → status. |
+| `visitType`      | string | `Konsultacja`, `Zabieg`, `Kontrola` | Filter "Filtruj według wizyty" → typ wizyty. |
+| `availability`   | string | `true` (only when checked) | Filter "Pokaż tylko dostępnych Lekarzy". |
+| `experience`     | string | (not currently in UI; reserved) | — |
+| `department`     | string | (not currently in UI; reserved) | — |
+
+**Example request:**
+
+```
+GET /docs?search=jan&specialization=Kardiolog&date=2026-03-11&status=Zaplanowane&visitType=Konsultacja&availability=true
+```
+
+**Response shape (unchanged):** `{ doctors: [ ... ] }` — same as current list endpoint.
+
+**Backend:** Implement filtering for each param above (see sections below). You may map Polish status/visitType to your enums (e.g. Zaplanowane → booked, Anulowane → cancelled, Zakończone → completed; Konsultacja/Zabieg/Kontrola as needed).
 
 ---
 

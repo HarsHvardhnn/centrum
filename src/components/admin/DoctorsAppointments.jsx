@@ -12,6 +12,7 @@ const DoctorSelectionWithSlots = ({
   loadingNextAvailableDate = false,
   hideDoctorSelection = false,
   selectedDoctor: propSelectedDoctor = null,
+  hideSlotList = false, // when true, receptionist uses "set own date" – no slot list, no auto-fetch
 }) => {
   const { specializations } = useSpecializations();
   const [selectedSpecialization, setSelectedSpecialization] = useState("");
@@ -48,8 +49,9 @@ const DoctorSelectionWithSlots = ({
     fetchDoctors();
   }, [selectedSpecialization, hideDoctorSelection]);
 
-  // Fetch available slots when doctor or date changes
+  // Fetch available slots when doctor or date changes (skip when hideSlotList – "set own date" mode)
   useEffect(() => {
+    if (hideSlotList) return;
     const fetchAvailableSlots = async () => {
       if (!selectedDoctor || !selectedDate) return;
 
@@ -68,7 +70,7 @@ const DoctorSelectionWithSlots = ({
     };
 
     fetchAvailableSlots();
-  }, [selectedDoctor, selectedDate]);
+  }, [selectedDoctor, selectedDate, hideSlotList]);
 
   const handleSpecializationChange = (e) => {
     setSelectedSpecialization(e.target.value);
@@ -301,28 +303,23 @@ const DoctorSelectionWithSlots = ({
                         {doctor.image ? (
                           <img
                             src={doctor.image}
-                            alt={`Dr. ${doctor.name}`}
+                            alt={doctor.name || "Lekarz"}
                             className="h-full w-full object-cover"
                             referrerPolicy="no-referrer"
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-gray-500 text-xl font-medium">
-                            {doctor.name?.charAt(0) || "D"}
+                            {doctor.name?.charAt(0) || "L"}
                           </div>
                         )}
                       </div>
                       <div>
                         <h3 className="font-medium text-gray-900">
-                          Dr {doctor.name || "NA"}
+                          {doctor.name || "NA"}
                         </h3>
                         <p className="text-sm text-gray-500">
                           {doctor.specialization?.join(", ")}
                         </p>
-                        {doctor.experience && (
-                          <p className="text-xs text-gray-400 mt-1">
-                            {doctor.experience} lat doświadczenia
-                          </p>
-                        )}
                       </div>
 
                       {selectedDoctor && selectedDoctor._id === doctor._id && (
@@ -350,7 +347,7 @@ const DoctorSelectionWithSlots = ({
         )}
 
         {/* Time Slots - show if doctor is selected (either from selection or pre-selected) */}
-        {selectedDoctor && (
+        {selectedDoctor && !hideSlotList && (
           <div className="mb-3">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">

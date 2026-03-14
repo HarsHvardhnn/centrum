@@ -142,11 +142,15 @@ const Header = ({
                       className="w-full p-2 border border-gray-300 rounded-md appearance-none"
                     >
                       <option value="">Wszystkie specjalności</option>
-                      {filterOptions?.specialties?.map((specialty) => (
-                        <option key={specialty} value={specialty}>
-                          {specialty}
-                        </option>
-                      ))}
+                      {filterOptions?.specialties?.map((specialty) => {
+                        const value = typeof specialty === "object" ? specialty?.id : specialty;
+                        const label = typeof specialty === "object" ? specialty?.name : specialty;
+                        return (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                   <div>

@@ -3,6 +3,7 @@ import Header from "./DoctorHeader";
 import DoctorListing from "./DoctorList";
 import AddDoctorForm from "./CreateDoctor";
 import doctorService from "../../helpers/doctorHelper";
+import { useSpecializations } from "../../context/SpecializationContext";
 import { toast } from "sonner";
 import { useLoader } from "../../context/LoaderContext";
 import { format } from "date-fns";
@@ -38,6 +39,7 @@ const BillingPage = () => {
   const [allDoctors, setAllDoctors] = useState([]);
 
   const { showLoader, hideLoader } = useLoader();
+  const { specializations } = useSpecializations();
 
   // Debounce search term for API calls
   useEffect(() => {
@@ -69,14 +71,12 @@ const BillingPage = () => {
     fetchDoctors();
   }, [activeFilters, debouncedSearch]);
 
-  // Sample filter options
+  // Filter options: specialties from API (/admin/specs), rest static
   const filterOptions = {
-    specialties: [
-      "Kardiolog",
-      "Dermatolog",
-      "Neurolog",
-      "Pediatra",
-    ],
+    specialties: (specializations || []).map((spec) => ({
+      id: spec._id || spec.id,
+      name: spec.name || "",
+    })),
     statuses: ["Zaplanowane", "Anulowane", "Zakończone"],
     visitTypes: ["Konsultacja", "Zabieg", "Kontrola"],
   };

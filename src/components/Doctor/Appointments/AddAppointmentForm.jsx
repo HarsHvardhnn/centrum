@@ -113,6 +113,8 @@ function AppointmentFormModal({
   const [availableSlots, setAvailableSlots] = useState([]);
   const [phoneDropdownOpen, setPhoneDropdownOpen] = useState(false);
   const [visitReasonsData, setVisitReasonsData] = useState({ categories: [] });
+  /** When true, hide slot list and auto-fetch; receptionist sets only date + custom time (avoids scroll/selection errors). */
+  const [useCustomDateOnly, setUseCustomDateOnly] = useState(false);
 
   const phoneCountryCodes = PHONE_COUNTRY_CODES;
 
@@ -530,6 +532,12 @@ function AppointmentFormModal({
     }));
   };
 
+  // Switch to "set your own date" mode: hide slot list, stop auto-fetch, use only date + custom time
+  const switchToCustomDateOnly = () => {
+    setUseCustomDateOnly(true);
+    clearSlotSelection();
+  };
+
   // Update service quantity
   const updateServiceQuantity = (serviceId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -919,6 +927,29 @@ function AppointmentFormModal({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Wybierz datę i termin
           </label>
+          {useCustomDateOnly ? (
+            <p className="text-sm text-teal-700 mb-2">
+              Tryb własnej daty i godziny – ustaw datę i czas poniżej.{" "}
+              <button
+                type="button"
+                onClick={() => setUseCustomDateOnly(false)}
+                className="text-teal-600 hover:text-teal-800 underline font-medium"
+              >
+                Wybierz z listy terminów
+              </button>
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600 mb-2">
+              <button
+                type="button"
+                onClick={switchToCustomDateOnly}
+                className="text-teal-600 hover:text-teal-800 underline font-medium"
+              >
+                Ustaw własną datę i godzinę
+              </button>
+              {" "}– bez przeglądania listy terminów
+            </p>
+          )}
           <DoctorSelectionWithSlots
             selectedDoctor={appointmentData.selectedDoctor}
             selectedDate={appointmentData.selectedDate}
@@ -928,7 +959,8 @@ function AppointmentFormModal({
             onSlotSelect={handleSlotSelect}
             selectedPatient={selectedPatient}
             loadingNextAvailableDate={loadingNextAvailableDate}
-            hideDoctorSelection={true} // Hide doctor selection when pre-selected
+            hideDoctorSelection={true}
+            hideSlotList={useCustomDateOnly}
           />
         </div>
 
@@ -1048,6 +1080,29 @@ function AppointmentFormModal({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Wybierz lekarza
           </label>
+          {useCustomDateOnly ? (
+            <p className="text-sm text-teal-700 mb-2">
+              Tryb własnej daty i godziny – ustaw datę i czas poniżej.{" "}
+              <button
+                type="button"
+                onClick={() => setUseCustomDateOnly(false)}
+                className="text-teal-600 hover:text-teal-800 underline font-medium"
+              >
+                Wybierz z listy terminów
+              </button>
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600 mb-2">
+              <button
+                type="button"
+                onClick={switchToCustomDateOnly}
+                className="text-teal-600 hover:text-teal-800 underline font-medium"
+              >
+                Ustaw własną datę i godzinę
+              </button>
+              {" "}– bez przeglądania listy terminów
+            </p>
+          )}
           <DoctorSelectionWithSlots
             selectedDoctor={appointmentData.selectedDoctor}
             selectedDate={appointmentData.selectedDate}
@@ -1057,6 +1112,7 @@ function AppointmentFormModal({
             onSlotSelect={handleSlotSelect}
             selectedPatient={selectedPatient}
             loadingNextAvailableDate={loadingNextAvailableDate}
+            hideSlotList={useCustomDateOnly}
           />
         </div>
 

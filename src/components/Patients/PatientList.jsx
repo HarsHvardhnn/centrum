@@ -8,7 +8,6 @@ import {
   MoreVertical,
   Plus,
   X,
-  Calendar as CalendarIcon,
   FileText,
   Eye,
   UserCheck,
@@ -16,7 +15,8 @@ import {
   DollarSign,
   Trash2,
   Pen,
-  Clock
+  Clock,
+  History
 } from "lucide-react";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
@@ -81,6 +81,11 @@ function LabAppointmentsContent({ clinic }) {
   const [consentsData, setConsentsData] = useState(null);
   const [consentsLoading, setConsentsLoading] = useState(false);
   const [consentsError, setConsentsError] = useState(null);
+  const [showVisitHistoryModal, setShowVisitHistoryModal] = useState(false);
+  const [visitHistoryPatient, setVisitHistoryPatient] = useState(null);
+  const [visitHistoryData, setVisitHistoryData] = useState([]);
+  const [visitHistoryLoading, setVisitHistoryLoading] = useState(false);
+  const [visitHistoryError, setVisitHistoryError] = useState(null);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -172,6 +177,23 @@ function LabAppointmentsContent({ clinic }) {
     } finally {
       setConsentsLoading(false);
     }
+  };
+
+  const openVisitHistoryModal = (patientId, patientName) => {
+    if (!patientId) return;
+    setVisitHistoryPatient({ id: patientId, name: patientName || "Pacjent" });
+    setShowVisitHistoryModal(true);
+    setVisitHistoryError(null);
+    setVisitHistoryData([]);
+    setVisitHistoryLoading(true);
+    patientService.getPatientVisits(patientId).then((res) => {
+      const data = res?.data ?? [];
+      setVisitHistoryData(Array.isArray(data) ? data : []);
+      setVisitHistoryError(res?.success === false ? res?.message : null);
+    }).catch((err) => {
+      setVisitHistoryError(err?.response?.data?.message || err?.message || "Nie udało się pobrać historii wizyt.");
+      setVisitHistoryData([]);
+    }).finally(() => setVisitHistoryLoading(false));
   };
 
   /** Display name: patient name, or registrationData, or fallback (never undefined) */
@@ -799,27 +821,21 @@ function LabAppointmentsContent({ clinic }) {
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <label className="block text-xs text-gray-500 mb-1">Data początkowa</label>
-                          <div className="relative">
-                            <input
-                              type="date"
-                              className="w-full p-2 pr-8 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
-                              value={dateRange.startDate || ""}
-                              onChange={(e) => setDateRange((prev) => ({ ...prev, startDate: e.target.value }))}
-                            />
-                            <CalendarIcon size={16} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                          </div>
+                          <input
+                            type="date"
+                            className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+                            value={dateRange.startDate || ""}
+                            onChange={(e) => setDateRange((prev) => ({ ...prev, startDate: e.target.value }))}
+                          />
                         </div>
                         <div>
                           <label className="block text-xs text-gray-500 mb-1">Data końcowa</label>
-                          <div className="relative">
-                            <input
-                              type="date"
-                              className="w-full p-2 pr-8 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
-                              value={dateRange.endDate || ""}
-                              onChange={(e) => setDateRange((prev) => ({ ...prev, endDate: e.target.value }))}
-                            />
-                            <CalendarIcon size={16} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                          </div>
+                          <input
+                            type="date"
+                            className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+                            value={dateRange.endDate || ""}
+                            onChange={(e) => setDateRange((prev) => ({ ...prev, endDate: e.target.value }))}
+                          />
                         </div>
                       </div>
                     </div>
@@ -1043,9 +1059,6 @@ function LabAppointmentsContent({ clinic }) {
                       </div>
                       <div className="text-sm text-gray-500 mt-0.5">
                         {idOrPeselLine}
-                        {!isVisitOnly && appointment.registrationType && (
-                          <span className="ml-1">· {getRegistrationTypeLabel(appointment.registrationType)}</span>
-                        )}
                       </div>
                       <div className="text-sm text-gray-600 mt-0.5">
                         {appointment.visitReason || appointment.consultationType || "—"}
@@ -1086,6 +1099,11 @@ function LabAppointmentsContent({ clinic }) {
                               {!isVisitOnlyAppointment(appointment) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id))}>
                                   <Eye size={16} className="mr-2" /> Zobacz szczegóły
+                                </DropdownMenu.Item>
+                              )}
+                              {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => openVisitHistoryModal(appointment.patient.id || appointment.patient._id, getAppointmentPatientDisplayName(appointment))}>
+                                  <History size={16} className="mr-2" /> Historia wizyt
                                 </DropdownMenu.Item>
                               )}
                               {appointment.patient && appointment.status === "booked" && (
@@ -1206,6 +1224,11 @@ function LabAppointmentsContent({ clinic }) {
                                   <Eye size={16} className="mr-2" /> Zobacz szczegóły
                                 </DropdownMenu.Item>
                               )}
+                              {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => openVisitHistoryModal(appointment.patient.id || appointment.patient._id, getAppointmentPatientDisplayName(appointment))}>
+                                  <History size={16} className="mr-2" /> Historia wizyt
+                                </DropdownMenu.Item>
+                              )}
                               {appointment.patient && appointment.status === "booked" && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCheckin(true); }}>
                                   <UserCheck size={16} className="mr-2" /> Zamelduj
@@ -1319,6 +1342,77 @@ function LabAppointmentsContent({ clinic }) {
             fetchAppointments(pagination.page);
           }}
         />
+
+        {/* Visit history modal – GET /patients/:patientId/visits */}
+        {showVisitHistoryModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col mx-4">
+              <div className="flex justify-between items-center border-b border-gray-200 px-4 py-3">
+                <h3 className="text-lg font-semibold text-gray-900">Historia wizyt – {visitHistoryPatient?.name ?? "Pacjent"}</h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowVisitHistoryModal(false);
+                    setVisitHistoryPatient(null);
+                    setVisitHistoryData([]);
+                    setVisitHistoryError(null);
+                  }}
+                  className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                {visitHistoryLoading ? (
+                  <div className="py-8 text-center text-gray-500">Ładowanie historii wizyt...</div>
+                ) : visitHistoryError ? (
+                  <div className="py-4 text-red-600 text-sm">{visitHistoryError}</div>
+                ) : visitHistoryData.length === 0 ? (
+                  <div className="py-8 text-center text-gray-500">Brak wizyt dla tego pacjenta.</div>
+                ) : (
+                  <ul className="space-y-3">
+                    {visitHistoryData.map((visit) => (
+                      <li
+                        key={visit.visitId}
+                        className="flex flex-wrap items-start gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium text-gray-900">{visit.date ?? "—"}</span>
+                            <span className="text-gray-600">{visit.time ?? "—"}</span>
+                            <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${getStatusStyle(visit.status)}`}>
+                              {translateStatus(visit.status)}
+                            </span>
+                            {visit.mode && (
+                              <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${visit.mode === "online" ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"}`}>
+                                {visit.mode === "online" ? "Online" : "Offline"}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            {visit.doctor?.name ? `Lekarz: ${visit.doctor.name}` : null}
+                            {visit.doctor?.name && visit.visitType ? " · " : null}
+                            {visit.visitType ? visit.visitType : null}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowVisitHistoryModal(false);
+                            navigate(getPatientViewUrl(visitHistoryPatient?.id, visit.visitId));
+                          }}
+                          className="text-sm text-teal-600 hover:text-teal-800 font-medium shrink-0"
+                        >
+                          Zobacz szczegóły
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Visit consents modal */}
         {showConsentsModal && (
