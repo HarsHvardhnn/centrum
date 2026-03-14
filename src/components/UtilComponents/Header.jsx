@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useUser } from "../../context/userContext";
 import { useNavigate } from "react-router-dom";
+import { stripDoctorTitle } from "../../utils/statusHelper";
 
 const Header = () => {
   // Use the useUser hook to access user context data
@@ -115,7 +116,7 @@ const Header = () => {
               </div>
             )}
             <div className="ml-3">
-              <p className="font-medium text-sm">{user.name || "User"}</p>
+              <p className="font-medium text-sm">{stripDoctorTitle(user.name) || "User"}</p>
               <p className="text-xs text-white/80">
                 {user.email || "No email"}
               </p>

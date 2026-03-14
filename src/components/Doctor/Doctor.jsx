@@ -16,7 +16,7 @@ const formatDoctorName = (name) =>
 const transformDoctorsResponse = (doctorsList) =>
   (doctorsList || []).map((doc) => ({
     id: doc.id || doc._id,
-    name: `lek. ${formatDoctorName(doc.name)}`.trim() || "lek.",
+    name: formatDoctorName(doc.name) || "",
     specialty: doc.specialty || doc.specializations?.[0] || "Ogólny",
     timing: "9:30 - 13:00",
     date: doc.date ? format(new Date(doc.date), "dd.MM.yyyy") : "",
@@ -91,9 +91,9 @@ const BillingPage = () => {
       const newDoctor = {
         id: createdDoctor.id || createdDoctor.d_id || `lek-${Date.now()}`,
         name:
-          `lek. ${createdDoctor.name && typeof createdDoctor.name === "object"
+          (createdDoctor.name && typeof createdDoctor.name === "object"
             ? [createdDoctor.name.first, createdDoctor.name.last].filter(Boolean).join(" ")
-            : createdDoctor.name || `${doctorData.firstName} ${doctorData.lastName}`}`.trim() || "lek.",
+            : createdDoctor.name || `${doctorData.firstName} ${doctorData.lastName}`) || "",
         specialty:
           createdDoctor.specializations?.[0] ||
           doctorData.specialization?.[0] ||

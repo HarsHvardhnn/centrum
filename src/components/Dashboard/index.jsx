@@ -30,7 +30,7 @@ import billingHelper from "../../helpers/billingHelper";
 import { createPortal } from "react-dom";
 import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
-import { translateStatus, getStatusStyle, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel } from '../../utils/statusHelper';
+import { translateStatus, getStatusStyle, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel, stripDoctorTitle } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import RescheduleModal from "./RescheduleModal";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
@@ -123,7 +123,7 @@ const DoctorAppointmentChart = () => {
 
   const getSelectedDoctorName = () => {
     const doctor = doctors.find(d => d._id === selectedDoctor);
-    return doctor ? doctor.name : "Wszyscy lekarze";
+    return doctor ? stripDoctorTitle(doctor.name) : "Wszyscy lekarze";
   };
 
   return (
@@ -152,7 +152,7 @@ const DoctorAppointmentChart = () => {
                           setIsDropdownOpen(false);
                         }}
                       >
-                        {doctor.name}
+                        {stripDoctorTitle(doctor.name)}
                       </li>
                     ))}
                   </ul>
@@ -1004,7 +1004,7 @@ const PatientList = () => {
                     )}
                   </td>
                   <td className="py-4 px-4 text-gray-600">
-                    {patient.doctor || "N/A"}
+                    {stripDoctorTitle(patient.doctor) || "N/A"}
                   </td>
                   <td className="py-4 px-4 text-gray-600">
                     {new Date(patient.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }) || "N/A"}

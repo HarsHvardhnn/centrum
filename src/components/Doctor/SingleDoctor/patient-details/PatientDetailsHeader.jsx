@@ -3,6 +3,7 @@ import { Search, MoreHorizontal, User, Settings, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../../../context/userContext";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
+import { stripDoctorTitle } from "../../../../utils/statusHelper";
 
 const HEADER_BG = "#2a9d8f";
 const SEARCH_DEBOUNCE_MS = 300;
@@ -137,8 +138,8 @@ const PatientDetailsHeader = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const displayName = user?.name ? (user.role === "doctor" ? `Dr ${user.name}` : user.name) : "Użytkownik";
-  const specialization = user?.role === "doctor" ? "Lekarz" : user?.role === "admin" ? "Administrator" : "Recepcja";
+  const displayName = user?.name ? stripDoctorTitle(user.name) : "Użytkownik";
+  const specialization = user?.role === "admin" ? "Administrator" : user?.role === "receptionist" ? "Recepcja" : "";
   const initials = getInitials(user?.name);
 
   return (

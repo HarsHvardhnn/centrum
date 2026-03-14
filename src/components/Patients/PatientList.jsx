@@ -27,7 +27,7 @@ import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
-import { translateStatus, getStatusStyle, getVisitMode, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel } from '../../utils/statusHelper';
+import { translateStatus, getStatusStyle, getVisitMode, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel, stripDoctorTitle } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import PatientStepForm from "../SubComponentForm/PatientStepForm";
@@ -1092,7 +1092,7 @@ function LabAppointmentsContent({ clinic }) {
                         {appointment.startTime} – {appointment.endTime}
                       </div>
                       <div className="text-sm text-gray-500 mt-0.5">
-                        {appointment.doctor?.name || "—"}
+                        {stripDoctorTitle(appointment.doctor?.name) || "—"}
                       </div>
                       <span className={`inline-block mt-1.5 px-2 py-1 rounded text-xs font-medium ${getVisitModeStyle(appointment)}`}>
                         {getVisitModeLabel(appointment)}
@@ -1410,7 +1410,7 @@ function LabAppointmentsContent({ clinic }) {
                             )}
                           </div>
                           <div className="text-sm text-gray-600 mt-1">
-                            {visit.doctor?.name ? `Lekarz: ${visit.doctor.name}` : null}
+                            {visit.doctor?.name ? stripDoctorTitle(visit.doctor.name) : null}
                             {visit.doctor?.name && visit.visitType ? " · " : null}
                             {visit.visitType ? visit.visitType : null}
                           </div>

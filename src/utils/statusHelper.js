@@ -65,4 +65,10 @@ export const getVisitModeStyle = (appointment) => {
   return getVisitMode(appointment) === "online"
     ? "bg-blue-100 text-blue-800"
     : "bg-purple-100 text-purple-800";
-}; 
+};
+
+/** Remove Dr / lek / Lekarz (and variants) from start of name for display. Use for headers, lists, visit cards. */
+export function stripDoctorTitle(name) {
+  if (name == null || typeof name !== "string") return "";
+  return name.replace(/^\s*(dr\.?|lek\.?|doktor|lekarz)\s+/i, "").trim() || name.trim();
+} 

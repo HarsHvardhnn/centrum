@@ -3,6 +3,7 @@ import { useFormContext } from "../../context/SubStepFormContext";
 import { useEffect, useState } from "react";
 import doctorService from "../../helpers/doctorHelper";
 import { useSpecializations } from "../../context/SpecializationContext";
+import { stripDoctorTitle } from "../../utils/statusHelper";
 
 const ReferrerForm = () => {
   const { formData, updateFormData } = useFormContext();
@@ -275,7 +276,7 @@ const ReferrerForm = () => {
                   </option>
                   {doctors.map((doctor) => (
                     <option key={doctor._id} value={doctor._id}>
-                      Dr. {doctor.name || `Lekarz ${doctor._id}`}
+                      {stripDoctorTitle(doctor.name || `Lekarz ${doctor._id}`)}
                     </option>
                   ))}
                   {/* Show a message if the selected doctor is not in the current list */}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, Clock } from "lucide-react";
-import { translateStatus, getStatusStyle } from "../../../../utils/statusHelper";
+import { translateStatus, getStatusStyle, stripDoctorTitle } from "../../../../utils/statusHelper";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
 import VisitReasonCascadeDropdown from "../../../UtilComponents/VisitReasonCascadeDropdown";
 import { toast } from "sonner";
@@ -33,9 +33,10 @@ const VisitInfoHeader = ({
   const dateValue = consultationData?.date || consultationData?.consultationDate || appointment.date;
   const timeValue = consultationData?.time || appointment.startTime;
   const endTimeValue = consultationData?.endTime || appointment.endTime;
-  const doctorName = appointment.doctor
-    ? `${appointment.doctor.name?.first || ""} ${appointment.doctor.name?.last || ""}`.trim() || "—"
+  const doctorNameRaw = appointment.doctor
+    ? `${appointment.doctor.name?.first || ""} ${appointment.doctor.name?.last || ""}`.trim() || (typeof appointment.doctor.name === "string" ? appointment.doctor.name : "—")
     : "—";
+  const doctorName = stripDoctorTitle(doctorNameRaw) || "—";
   const status = appointment.status;
   const visitType = consultationData?.visitReason || consultationData?.consultationType || appointment.visitReason || appointment.consultationType || "";
   const needsVerification = (consultationData?.visitTypeVerified === false || appointment.visitTypeVerified === false) && appointment.status !== "completed" && appointment.status !== "Completed";
@@ -116,7 +117,6 @@ const VisitInfoHeader = ({
         />
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-600 shrink-0">Lekarz:</span>
         <span className="text-sm font-medium text-gray-900">{doctorName}</span>
       </div>
       <div className="flex items-center gap-2">

@@ -27,7 +27,7 @@ import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
 import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity, Save } from "lucide-react";
 import { toast } from "sonner";
-import { translateStatus, getVisitModeLabel, getVisitModeStyle } from "../../../../utils/statusHelper";
+import { translateStatus, getVisitModeLabel, getVisitModeStyle, stripDoctorTitle } from "../../../../utils/statusHelper";
 import { useAutoSave } from "../../../../hooks/useAutoSave";
 
 // Confirmation Modal Component
@@ -1091,7 +1091,7 @@ const PatientDetailsPage = () => {
               <User size={16} className="text-teal-500" />
               <span className="text-sm text-gray-600">Lekarz:</span>
               <span className="text-sm font-medium">
-                Lek. {appointment.doctor?.name?.first} {appointment.doctor?.name?.last}
+                {stripDoctorTitle([appointment.doctor?.name?.first, appointment.doctor?.name?.last].filter(Boolean).join(" ") || (typeof appointment.doctor?.name === "string" ? appointment.doctor.name : "")) || "—"}
               </span>
             </div>
           </div>
