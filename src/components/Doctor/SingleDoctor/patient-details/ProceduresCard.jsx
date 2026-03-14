@@ -56,7 +56,7 @@ const ProceduresCard = ({
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
-      <h3 className="text-base font-semibold text-gray-900 mb-4">Badania i skierowania (ICD-9)</h3>
+      <h3 className="text-base font-semibold text-gray-900 mb-4">Procedury (ICD-9)</h3>
       <div className="relative mb-4" ref={dropdownRef}>
         <Search
           className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
