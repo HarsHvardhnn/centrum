@@ -1020,6 +1020,19 @@ function LabAppointmentsContent({ clinic }) {
         {clinic ? (
           /* Historia wizyt – flat list of white cards, full width */
           <div className="w-full max-w-full space-y-3">
+            {user?.role === "admin" && appointments.length > 0 && (
+              <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                    checked={selectedAppointmentIds.length === appointments.length && appointments.length > 0}
+                    onChange={handleSelectAllAppointments}
+                  />
+                  Zaznacz wszystkie
+                </label>
+              </div>
+            )}
             {appointments.length === 0 ? (
               <div className="bg-white border border-gray-200 rounded-lg py-12 text-center text-gray-500">
                 Brak wizyt w wybranym okresie.
@@ -1053,8 +1066,18 @@ function LabAppointmentsContent({ clinic }) {
                 return (
                   <div
                     key={appointment.id}
-                    className={`bg-white border border-gray-200 rounded-lg shadow-sm px-5 py-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow ${cardBorderBg}`}
+                    className={`bg-white border border-gray-200 rounded-lg shadow-sm px-5 py-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow ${cardBorderBg} ${user?.role === "admin" && selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
                   >
+                    {user?.role === "admin" && (
+                      <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                          checked={selectedAppointmentIds.includes(appointment.id)}
+                          onChange={() => handleSelectAppointment(appointment.id)}
+                        />
+                      </div>
+                    )}
                     <div
                       className="flex-1 min-w-0 cursor-pointer"
                       onClick={() => {
