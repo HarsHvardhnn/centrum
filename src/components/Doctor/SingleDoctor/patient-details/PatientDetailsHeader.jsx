@@ -7,7 +7,9 @@ import { stripDoctorTitle } from "../../../../utils/statusHelper";
 
 const HEADER_BG = "#2a9d8f";
 const SEARCH_DEBOUNCE_MS = 300;
-const TOP_ACCENT = "#4bcad4";
+/** Top stripe: subtle lighter-teal to match header, 1px for a clean uxpilot-style bar */
+const TOP_ACCENT = "rgba(255,255,255,0.35)";
+const TOP_ACCENT_HEIGHT = "2px";
 const TEXT_PRIMARY = "#89e9f2";   // brand, session, name, time - bright light blue/cyan
 const TEXT_SECONDARY = "#6dd5e0"; // profession - slightly darker cyan
 const SEARCH_PLACEHOLDER = "#9ca3af"; // light grey for search icon & placeholder
@@ -144,10 +146,11 @@ const PatientDetailsHeader = () => {
 
   return (
     <header
-      className="w-full flex items-center justify-between gap-4 px-6 min-h-[56px] z-20 shadow-sm"
+      className="w-full flex items-center justify-between gap-4 px-6 min-h-[56px] z-20"
       style={{
         backgroundColor: HEADER_BG,
-        borderTop: `3px solid ${TOP_ACCENT}`,
+        borderTop: `${TOP_ACCENT_HEIGHT} solid ${TOP_ACCENT}`,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
       }}
     >
       {/* Logo - vertically centered */}

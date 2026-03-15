@@ -1073,7 +1073,7 @@ function LabAppointmentsContent({ clinic }) {
 
         {clinic ? (
           /* Historia wizyt – flat list of white cards, full width */
-          <div className="w-full max-w-full space-y-3">
+          <div className="w-full max-w-full space-y-4">
             {user?.role === "admin" && appointments.length > 0 && (
               <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
                 <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
@@ -1116,7 +1116,7 @@ function LabAppointmentsContent({ clinic }) {
                 return (
                   <div
                     key={appointment.id}
-                    className={`bg-white border border-gray-200 rounded-lg shadow-sm px-5 py-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow ${cardBorderBg} ${user?.role === "admin" && selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
+                    className={`bg-white border border-gray-200 rounded-lg shadow-sm px-6 py-5 flex items-center gap-6 hover:shadow-md transition-shadow ${cardBorderBg} ${user?.role === "admin" && selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
                   >
                     {user?.role === "admin" && (
                       <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -1129,7 +1129,7 @@ function LabAppointmentsContent({ clinic }) {
                       </div>
                     )}
                     <div
-                      className="flex-1 min-w-0 cursor-pointer"
+                      className="min-w-0 flex-1 cursor-pointer"
                       onClick={() => {
                         if (isVisitOnly && !isCancelledStatus) {
                           setSelectedAppointment(appointment);
@@ -1150,21 +1150,21 @@ function LabAppointmentsContent({ clinic }) {
                           </span>
                         )}
                       </div>
-                      <div className="text-sm text-gray-500 mt-0.5">
+                      <div className="text-sm text-gray-500 mt-1">
                         {idOrPeselLine}
                       </div>
-                      <div className="text-sm text-gray-600 mt-0.5">
+                      <div className="text-sm text-gray-600 mt-1">
                         {appointment.visitReason || appointment.consultationType || "—"}
                       </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
+                      <div className="text-xs text-gray-500 mt-1">
                         Utworzono przez: {getCreatedByRoleLabel(appointment)}
                       </div>
                     </div>
-                    <div className="flex-shrink-0 text-center min-w-[100px]">
+                    <div className="flex flex-col items-center justify-center text-center min-w-[120px] shrink-0">
                       <div className="font-semibold text-gray-900">
                         {appointment.startTime} – {appointment.endTime}
                       </div>
-                      <div className="text-sm text-gray-500 mt-0.5">
+                      <div className="text-sm text-gray-500 mt-1">
                         {stripDoctorTitle(appointment.doctor?.name) || "—"}
                       </div>
                       <span
@@ -1183,12 +1183,12 @@ function LabAppointmentsContent({ clinic }) {
                             setOnlineDetailsAppointment(appointment);
                           }
                         }}
-                        className={`inline-block mt-1.5 px-2 py-1 rounded text-xs font-medium ${getVisitModeStyle(appointment)} ${getVisitMode(appointment) === "online" ? "cursor-pointer hover:opacity-90" : ""}`}
+                        className={`inline-block mt-2 px-2 py-1 rounded text-xs font-medium ${getVisitModeStyle(appointment)} ${getVisitMode(appointment) === "online" ? "cursor-pointer hover:opacity-90" : ""}`}
                       >
                         {getVisitModeLabel(appointment)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex items-center justify-end gap-3 flex-shrink-0 min-w-0 flex-1">
                       <span className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap ${statusPillClass}`}>
                         {translateStatus(appointment.status)}
                       </span>

@@ -3,6 +3,7 @@ import Header from "./DoctorHeader";
 import DoctorListing from "./DoctorList";
 import AddDoctorForm from "./CreateDoctor";
 import doctorService from "../../helpers/doctorHelper";
+import appointmentHelper from "../../helpers/appointmentHelper";
 import { useSpecializations } from "../../context/SpecializationContext";
 import { toast } from "sonner";
 import { useLoader } from "../../context/LoaderContext";
@@ -37,6 +38,7 @@ const BillingPage = () => {
   const [activeFilters, setActiveFilters] = useState({});
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
   const [allDoctors, setAllDoctors] = useState([]);
+  const [visitTypesFromApi, setVisitTypesFromApi] = useState([]);
 
   const { showLoader, hideLoader } = useLoader();
   const { specializations } = useSpecializations();
@@ -71,14 +73,34 @@ const BillingPage = () => {
     fetchDoctors();
   }, [activeFilters, debouncedSearch]);
 
-  // Filter options: specialties from API (/admin/specs), rest static
+  // Fetch visit reasons for dynamic "Typ wizyty" filter
+  useEffect(() => {
+    let cancelled = false;
+    appointmentHelper
+      .getVisitReasons()
+      .then((res) => {
+        if (cancelled) return;
+        const data = res?.data ?? res;
+        const categories = data?.categories ?? [];
+        const displayNames = (Array.isArray(categories) ? categories : [])
+          .flatMap((cat) => (cat.types || []).map((t) => t.displayName).filter(Boolean))
+          .filter((name, idx, arr) => arr.indexOf(name) === idx);
+        setVisitTypesFromApi(displayNames);
+      })
+      .catch(() => {
+        if (!cancelled) setVisitTypesFromApi([]);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Filter options: specialties and visit types from API, statuses static
   const filterOptions = {
     specialties: (specializations || []).map((spec) => ({
       id: spec._id || spec.id,
       name: spec.name || "",
     })),
     statuses: ["Zaplanowane", "Anulowane", "Zakończone"],
-    visitTypes: ["Konsultacja", "Zabieg", "Kontrola"],
+    visitTypes: visitTypesFromApi.length > 0 ? visitTypesFromApi : ["Konsultacja", "Zabieg", "Kontrola"],
   };
 
   const handleAddDoctor = async (doctorData, resetForm, closeModal) => {
