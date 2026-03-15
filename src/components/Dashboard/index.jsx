@@ -18,6 +18,7 @@ import {
 import patientService from "../../helpers/patientHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
+import { sortDoctorsWithPinnedFirst } from "../../utils/doctorSort";
 import { useUser } from "../../context/userContext";
 import { useNavigate } from "react-router-dom";
 import { useLoader } from "../../context/LoaderContext";
@@ -89,7 +90,7 @@ const DoctorAppointmentChart = () => {
         const response = await doctorStatsHelper.getDoctorsList();
         
         if (response.success) {
-          setDoctors(response.data);
+          setDoctors(sortDoctorsWithPinnedFirst(response.data));
           
           // If user is a doctor, set their own ID as the selected doctor
           if (user?.role === "doctor" && (user?._id || user?.id)) {

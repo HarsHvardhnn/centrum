@@ -2,6 +2,7 @@
 import { useFormContext } from "../../context/SubStepFormContext";
 import { useEffect, useState } from "react";
 import doctorService from "../../helpers/doctorHelper";
+import { sortDoctorsWithPinnedFirst } from "../../utils/doctorSort";
 import { useSpecializations } from "../../context/SpecializationContext";
 
 const ReferrerForm = () => {
@@ -42,7 +43,7 @@ const ReferrerForm = () => {
           doctors: fetchedDoctors.map(d => ({ id: d._id, name: d.name })),
           currentSelectedDoctor: formData.consultingDoctor
         });
-        setDoctors(fetchedDoctors);
+        setDoctors(sortDoctorsWithPinnedFirst(fetchedDoctors));
 
         // If we have doctors and no consultingDoctor is set, set the first doctor
         if (fetchedDoctors.length > 0 && !formData.consultingDoctor) {

@@ -15,6 +15,7 @@ import { generateDoctorProfileUrl } from "../../utils/slugUtils";
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from "../../utils/polandTimezone";
+import { sortDoctorsWithPinnedFirst } from "../../utils/doctorSort";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import PhoneCodeSelect from "../UtilComponents/PhoneCodeSelect";
 
@@ -288,7 +289,7 @@ export default function Doctors({
         }));
 
         //("trans", transformedDoctors);
-        setDoctors(transformedDoctors);
+        setDoctors(sortDoctorsWithPinnedFirst(transformedDoctors));
       } catch (err) {
         console.error("Błąd podczas pobierania lekarzy:", err);
         setError(

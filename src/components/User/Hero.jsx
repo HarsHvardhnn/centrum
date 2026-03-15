@@ -5,6 +5,7 @@ import { FaRegCircleUser } from "react-icons/fa6";
 import { IoLocationOutline } from "react-icons/io5";
 import { FaChevronDown } from "react-icons/fa6";
 import doctorService from "../../helpers/doctorHelper";
+import { sortDoctorsWithPinnedFirst } from "../../utils/doctorSort";
 import { useIsMobile } from "./useIsMobile";
 import { useSpecializations } from "../../context/SpecializationContext";
 import { useAppointmentContext } from "../../UserLayout";
@@ -67,7 +68,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
               : doctor.name,
         }));
 
-        setDoctors(transformedDoctors);
+        setDoctors(sortDoctorsWithPinnedFirst(transformedDoctors));
       } catch (error) {
         console.error("Failed to fetch doctors:", error);
         setDoctors([]);

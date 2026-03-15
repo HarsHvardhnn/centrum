@@ -10,6 +10,7 @@ import { Select, DatePicker, Card, Typography, Button, Tooltip, Badge, Modal, De
 import { VideoCameraOutlined, ClockCircleOutlined, DesktopOutlined, UserOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { apiCaller } from '../../utils/axiosInstance';
+import { sortDoctorsWithPinnedFirst } from '../../utils/doctorSort';
 import doctorStatsHelper from '../../helpers/doctorStatsHelper';
 import { useUser } from '../../context/userContext';
 
@@ -121,7 +122,7 @@ const DoctorCalendar = () => {
   const fetchDoctors = async () => {
     try {
       const response = await doctorStatsHelper.getDoctorsList();
-      setDoctors(response.data);
+      setDoctors(sortDoctorsWithPinnedFirst(response.data));
     } catch (error) {
       console.error('Error fetching doctors:', error);
     }
