@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, MoreHorizontal, User, Settings, LogOut } from "lucide-react";
+import { Search, MoreHorizontal, User, Settings, LogOut, Clock, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../../../context/userContext";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
 import { stripDoctorTitle } from "../../../../utils/statusHelper";
 
-const HEADER_BG = "#2a9d8f";
+// Header colors: deep teal bar, light cyan text
+const HEADER_BG = "#1a7f73";
 const SEARCH_DEBOUNCE_MS = 300;
-/** Top stripe: subtle lighter-teal to match header, 1px for a clean uxpilot-style bar */
-const TOP_ACCENT = "rgba(255,255,255,0.35)";
-const TOP_ACCENT_HEIGHT = "2px";
-const TEXT_PRIMARY = "#89e9f2";   // brand, session, name, time - bright light blue/cyan
-const TEXT_SECONDARY = "#6dd5e0"; // profession - slightly darker cyan
-const SEARCH_PLACEHOLDER = "#9ca3af"; // light grey for search icon & placeholder
+const TEXT_PRIMARY = "#a8f0f5";
+const TEXT_SECONDARY = "#7de0e8";
+const SEARCH_PLACEHOLDER = "#9ca3af";
 
 function cleanProfilePictureUrl(url) {
   if (url?.includes("https://lh3.googleusercontent.com/")) {
@@ -141,15 +139,29 @@ const PatientDetailsHeader = () => {
   }, []);
 
   const displayName = user?.name ? stripDoctorTitle(user.name) : "Użytkownik";
-  const specialization = user?.role === "admin" ? "Administrator" : user?.role === "receptionist" ? "Recepcja" : "";
+  const specialization = user?.role === "admin" ? "Administrator" : user?.role === "receptionist" ? "Recepcja" : (user?.specialization || user?.specialty || "");
   const initials = getInitials(user?.name);
+
+  // Session elapsed time (minutes) for "Sesja: XX min"
+  const [sessionMinutes, setSessionMinutes] = useState(0);
+  const sessionStartRef = useRef(Date.now());
+  useEffect(() => {
+    const update = () => {
+      const elapsed = Math.floor((Date.now() - sessionStartRef.current) / 60000);
+      setSessionMinutes(elapsed);
+    };
+    update();
+    const t = setInterval(update, 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  const notificationCount = 0; // TODO: wire to real notifications API
 
   return (
     <header
-      className="w-full flex items-center justify-between gap-4 px-6 min-h-[56px] z-20"
+      className="w-full flex items-center justify-between gap-4 px-6 min-h-[56px] z-20 relative"
       style={{
         backgroundColor: HEADER_BG,
-        borderTop: `${TOP_ACCENT_HEIGHT} solid ${TOP_ACCENT}`,
         boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
       }}
     >
@@ -178,7 +190,7 @@ const PatientDetailsHeader = () => {
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             onFocus={() => searchValue.trim() && setShowDropdown(true)}
-            placeholder="Szukaj pacjenta (PESEL / Nazwisko / telefon / email)"
+            placeholder="Szukaj pacjenta (PESEL / Nazwisko)"
             className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white text-gray-800 border border-gray-200 focus:ring-2 focus:ring-offset-0 focus:ring-white/50 outline-none"
             style={{ color: "#1f2937" }}
           />
@@ -215,8 +227,34 @@ const PatientDetailsHeader = () => {
         </div>
       </form>
 
-      {/* Right section: User, Time */}
-      <div className="flex items-center gap-5 shrink-0">
+      {/* Right section: Session, Notifications, User, Time */}
+      <div className="flex items-center gap-4 shrink-0">
+        {/* Session timer */}
+        <div className="flex items-center gap-1.5 shrink-0" style={{ color: TEXT_PRIMARY }} title="Czas sesji">
+          <Clock size={18} strokeWidth={2} />
+          <span className="text-sm font-medium whitespace-nowrap">Sesja: {sessionMinutes} min</span>
+        </div>
+
+        {/* Notifications */}
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            className="p-2 rounded-lg hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/50"
+            style={{ color: TEXT_PRIMARY }}
+            aria-label="Powiadomienia"
+          >
+            <Bell size={20} strokeWidth={2} />
+          </button>
+          {notificationCount > 0 && (
+            <span
+              className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold px-1"
+              aria-hidden
+            >
+              {notificationCount > 99 ? "99+" : notificationCount}
+            </span>
+          )}
+        </div>
+
         {/* User - avatar/placeholder + name block aligned */}
         <div className="flex items-center gap-3 min-w-0">
           {user?.profilePicture ? (

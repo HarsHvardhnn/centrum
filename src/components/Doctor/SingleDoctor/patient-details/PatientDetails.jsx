@@ -375,6 +375,10 @@ const PatientDetailsPage = () => {
     temperature: null,
     weight: null,
     height: null,
+    bloodPressureSystolic: null,
+    bloodPressureDiastolic: null,
+    pulse: null,
+    oxygenSaturation: null,
     govtId: ""
   });
 
@@ -535,7 +539,11 @@ const PatientDetailsPage = () => {
           bloodPressure: patientResponse.patientData?.bloodPressure || null,
           temperature: patientResponse.patientData?.temperature || null,
           weight: patientResponse.patientData?.weight || null,
-          height: patientResponse.patientData?.height || null
+          height: patientResponse.patientData?.height || null,
+          bloodPressureSystolic: patientResponse.patientData?.bloodPressureSystolic ?? null,
+          bloodPressureDiastolic: patientResponse.patientData?.bloodPressureDiastolic ?? null,
+          pulse: patientResponse.patientData?.pulse ?? null,
+          oxygenSaturation: patientResponse.patientData?.oxygenSaturation ?? null
         }));
 
         // Fetch patient services
@@ -612,7 +620,11 @@ const PatientDetailsPage = () => {
             bloodPressure: fromAppointment.bloodPressure ?? prevData.bloodPressure ?? null,
             temperature: fromAppointment.temperature ?? prevData.temperature ?? null,
             weight: fromAppointment.weight ?? prevData.weight ?? null,
-            height: fromAppointment.height ?? prevData.height ?? null
+            height: fromAppointment.height ?? prevData.height ?? null,
+            bloodPressureSystolic: fromAppointment.bloodPressureSystolic ?? prevData.bloodPressureSystolic ?? null,
+            bloodPressureDiastolic: fromAppointment.bloodPressureDiastolic ?? prevData.bloodPressureDiastolic ?? null,
+            pulse: fromAppointment.pulse ?? prevData.pulse ?? null,
+            oxygenSaturation: fromAppointment.oxygenSaturation ?? prevData.oxygenSaturation ?? null
           }));
         }
       }
