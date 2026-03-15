@@ -49,13 +49,14 @@ export const getCreatedByRoleLabel = (appointment) => {
   return labels[role?.toLowerCase?.()] ?? labels[role] ?? role;
 };
 
-/** Visit mode from API: visitMode or mode; fallback "offline" per API contract. */
+/** Visit mode from API: visitMode or mode; fallback "offline" per API contract. Normalized to lowercase. */
 export const getVisitMode = (appointment) => {
-  const mode = appointment?.visitMode ?? appointment?.mode ?? "offline";
+  const raw = appointment?.visitMode ?? appointment?.mode ?? "offline";
+  const mode = typeof raw === "string" ? raw.trim().toLowerCase() : String(raw).toLowerCase();
   return mode === "online" ? "online" : "offline";
 };
 
-/** Display label for visit mode: "Online" | "Stacjonarna" (stationary/in-person). */
+/** Display label for visit mode. Always "Online" or "Stacjonarna" — never "Offline". */
 export const getVisitModeLabel = (appointment) => {
   return getVisitMode(appointment) === "online" ? "Online" : "Stacjonarna";
 };

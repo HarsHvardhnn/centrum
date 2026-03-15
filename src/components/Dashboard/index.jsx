@@ -953,7 +953,7 @@ const PatientList = () => {
                     }}
                   >
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium">{isVisitOnlyAppointment(patient) ? "Nieznany pacjent" : (patient.name || "Nieznany pacjent")}</span>
+                      <span className="font-medium">{patient.name || patient.registrationData?.name || (patient.patient?.name ?? "Nieznany pacjent")}</span>
                       {isVisitOnlyAppointment(patient) && (
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${
@@ -1135,7 +1135,7 @@ const PatientList = () => {
         onClose={() => setShowBillingModal(false)}
         onConfirm={confirmBilling}
         patientServicesData={billingServices}
-        patientName={isVisitOnlyAppointment(selectedAppointment) ? "Nieznany pacjent" : (selectedAppointment?.patient?.name || "Nieznany pacjent")}
+        patientName={selectedAppointment?.name || selectedAppointment?.registrationData?.name || selectedAppointment?.patient?.name || "Nieznany pacjent"}
         appointmentId={selectedAppointment?.id}
         patientId={selectedAppointment?.patient_id}
       />
