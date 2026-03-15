@@ -784,7 +784,7 @@ export default function BookAppointment({
                   <div className="flex flex-col w-full">
                     <div className="w-full">
                       <label htmlFor="govtId" className="block text-sm font-medium text-gray-700 mb-1 text-left">
-                        {values.consultationType === "online" && !values.isInternationalPatient ? "PESEL (wymagane dla wizyty online) *" : "PESEL (opcjonalnie)"}
+                        {values.consultationType === "online" && !values.isInternationalPatient ? "PESEL (wymagane dla wizyty online) *" : "PESEL (opcjonalnie – dla naszych pacjentów)"}
                       </label>
                       <Field name="govtId">
                         {({ field, form }) => (

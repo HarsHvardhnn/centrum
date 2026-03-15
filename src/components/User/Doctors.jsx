@@ -1194,12 +1194,12 @@ export default function Doctors({
                       {/* Step 3: PESEL (main, centered) then checkbox underneath */}
                       <div className="mb-6">
                         <h5 className="text-md font-semibold text-gray-800 mb-3">
-                          Krok 3: Identyfikacja {bookingForm.consultationType === "online" && !bookingForm.isInternationalPatient ? "(PESEL wymagane)" : "(PESEL opcjonalnie)"}
+                          Krok 3: Identyfikacja {bookingForm.consultationType === "online" && !bookingForm.isInternationalPatient ? "(PESEL wymagane)" : "(PESEL opcjonalnie – dla naszych pacjentów)"}
                         </h5>
                         <div className="flex flex-col items-center w-full mb-4">
                           <div className="w-full max-w-sm">
                             <label className="block text-sm font-medium text-gray-700 mb-1 text-center md:text-left">
-                              {bookingForm.consultationType === "online" && !bookingForm.isInternationalPatient ? "PESEL (wymagane dla wizyty online) *" : "PESEL (opcjonalnie)"}
+                              {bookingForm.consultationType === "online" && !bookingForm.isInternationalPatient ? "PESEL (wymagane dla wizyty online) *" : "PESEL (opcjonalnie – dla naszych pacjentów)"}
                             </label>
                             <input
                               type="text"
