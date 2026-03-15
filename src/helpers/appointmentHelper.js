@@ -24,6 +24,7 @@ class AppointmentService {
         ...(filters.doctorId && { doctorId: filters.doctorId }),
         ...(filters.isClinicIp && { isClinicIp: filters.isClinicIp }),
         ...(filters.patientLessOnly === true && { patientLessOnly: "true" }),
+        ...(filters.visitReason && { visitReason: filters.visitReason }),
       });
 
       const response = await apiCaller(
@@ -488,6 +489,20 @@ class AppointmentService {
       return response.data;
     } catch (error) {
       console.error('Error generating visit card:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all visit cards for a patient. Returns list with appointment context and visitCard.url per visit.
+   * GET /visit-cards/patient/:patientId
+   */
+  async getVisitCardsByPatient(patientId) {
+    try {
+      const response = await apiCaller("GET", `/visit-cards/patient/${patientId}`);
+      return response?.data ?? response;
+    } catch (error) {
+      console.error("Error fetching visit cards by patient:", error);
       throw error;
     }
   }

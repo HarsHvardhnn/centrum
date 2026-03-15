@@ -36,6 +36,7 @@ import RescheduleModal from "../Dashboard/RescheduleModal";
 import BulkDeleteByIdsDialog from "../admin/BulkDeleteByIdsDialog";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
+import VisitReasonCascadeDropdown from "../UtilComponents/VisitReasonCascadeDropdown";
 
 // Add billingHelper with the generateBill function
 const billingHelper = {
@@ -86,6 +87,13 @@ function LabAppointmentsContent({ clinic }) {
   const [visitHistoryData, setVisitHistoryData] = useState([]);
   const [visitHistoryLoading, setVisitHistoryLoading] = useState(false);
   const [visitHistoryError, setVisitHistoryError] = useState(null);
+  const [showVisitCardModal, setShowVisitCardModal] = useState(false);
+  const [visitCardPatientId, setVisitCardPatientId] = useState(null);
+  const [visitCardPatientName, setVisitCardPatientName] = useState("");
+  const [visitCardsList, setVisitCardsList] = useState([]);
+  const [visitCardsLoading, setVisitCardsLoading] = useState(false);
+  const [visitCardsError, setVisitCardsError] = useState(null);
+  const [onlineDetailsAppointment, setOnlineDetailsAppointment] = useState(null);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -113,8 +121,10 @@ function LabAppointmentsContent({ clinic }) {
   const [doctorsList, setDoctorsList] = useState([]);
   /** Forma konsultacji: all | offline (Stacjonarna) | online */
   const [consultationMode, setConsultationMode] = useState("all");
-  /** Typ wizyty (visit type) filter */
+  /** Typ wizyty (visit type) filter – value is visit reason displayName sent to backend */
   const [visitTypeFilter, setVisitTypeFilter] = useState("");
+  /** Visit reasons from API (categories + types) for filter dropdown */
+  const [visitReasonsCategories, setVisitReasonsCategories] = useState([]);
 
   // Ref for filter dropdown
   const filterRef = useRef(null);
@@ -209,7 +219,10 @@ function LabAppointmentsContent({ clinic }) {
     return name;
   };
 
+  const fetchIdRef = useRef(0);
   const fetchAppointments = async (page = 1) => {
+    const thisFetchId = fetchIdRef.current + 1;
+    fetchIdRef.current = thisFetchId;
     try {
       showLoader();
       const appointmentIdFromUrl = searchParams.get('appointmentId');
@@ -226,15 +239,8 @@ function LabAppointmentsContent({ clinic }) {
         ...(clinic && { isClinicIp: clinic }),
         ...(clinic && (patientLessOnly || statusFilter === "patientLess") && { patientLessOnly: true }),
         ...(appointmentIdFromUrl && { appointmentId: appointmentIdFromUrl }),
+        ...(visitTypeFilter && { visitReason: visitTypeFilter }),
       };
-      
-      // Log the current filters for debugging
-      console.log('Filters applied:', { 
-        statusFilter, 
-        dateRange, 
-        clinic, 
-        filters 
-      });
 
       const response = await appointmentHelper.getAllAppointments(
         page,
@@ -243,27 +249,33 @@ function LabAppointmentsContent({ clinic }) {
         filters
       );
 
-      if (response.success) {
-        setAppointments(response.data);
-        setPagination(response.pagination);
+      if (thisFetchId !== fetchIdRef.current) return;
+
+      const list = Array.isArray(response?.data) ? response.data : (response?.data?.data ?? []);
+      const pag = response?.pagination ?? response?.data?.pagination ?? { total: 0, page: 1, pages: 1, limit: 10 };
+
+      if (response?.success !== false) {
+        setAppointments(list);
+        setPagination(pag);
       } else {
         toast.error("Nie udało się pobrać wizyt");
       }
     } catch (error) {
+      if (thisFetchId !== fetchIdRef.current) return;
       console.error("Failed to fetch appointments:", error);
       toast.error("Nie udało się pobrać wizyt");
     } finally {
-      hideLoader();
+      if (thisFetchId === fetchIdRef.current) hideLoader();
     }
   };
 
-  // Initialize filters from URL parameters
+  // Sync filters from URL when URL has date params. Do not reset to default when URL has no date,
+  // so we don't overwrite the user's chosen filters when this effect re-runs (e.g. new searchParams ref).
   useEffect(() => {
     const startDateFromUrl = searchParams.get('startDate');
     const dateFromUrl = searchParams.get('date');
     const appointmentIdFromUrl = searchParams.get('appointmentId');
     
-    // Handle both 'startDate' and 'date' parameters
     const dateToSet = startDateFromUrl || dateFromUrl;
     
     if (dateToSet) {
@@ -271,26 +283,10 @@ function LabAppointmentsContent({ clinic }) {
         ...prev,
         startDate: dateToSet
       }));
-    } else {
-      // Only set today's date as default for clinic cases
-      if (clinic) {
-        const today = new Date().toISOString().split('T')[0];
-        setDateRange(prev => ({
-          ...prev,
-          startDate: today
-        }));
-      } else {
-        // Clear date filter for non-clinic cases
-        setDateRange(prev => ({
-          ...prev,
-          startDate: null
-        }));
-      }
     }
+    // When URL has no date, leave dateRange as-is (initial default is set by the clinic-toggle effect only).
     
-    // Store appointmentId for API filtering
     if (appointmentIdFromUrl) {
-      // You can add appointmentId to state if needed for UI display
       console.log('Appointment ID from URL:', appointmentIdFromUrl);
     }
   }, [searchParams, clinic]);
@@ -318,7 +314,7 @@ function LabAppointmentsContent({ clinic }) {
     }, 300);
 
     return () => clearTimeout(debounceTimeout);
-  }, [searchQuery, statusFilter, dateRange, user?.id, clinic, searchParams, patientLessOnly, doctorFilterId]);
+  }, [searchQuery, statusFilter, dateRange, user?.id, clinic, searchParams, patientLessOnly, doctorFilterId, visitTypeFilter]);
 
   // Fetch doctors list for clinic (Historia wizyt) filter
   useEffect(() => {
@@ -337,6 +333,19 @@ function LabAppointmentsContent({ clinic }) {
     return () => { cancelled = true; };
   }, [clinic]);
 
+  // Fetch visit reasons (categories + types) for clinic visit-type filter
+  useEffect(() => {
+    if (!clinic) return;
+    let cancelled = false;
+    appointmentHelper.getVisitReasons().then((res) => {
+      if (cancelled) return;
+      const data = res?.data ?? res;
+      const categories = data?.categories ?? [];
+      setVisitReasonsCategories(Array.isArray(categories) ? categories : []);
+    }).catch(() => { if (!cancelled) setVisitReasonsCategories([]); });
+    return () => { cancelled = true; };
+  }, [clinic]);
+
   // Doctor role on clinic: show only own visits; set and lock doctor filter to current user
   useEffect(() => {
     if (clinic && user?.role === "doctor" && user?.id) {
@@ -344,8 +353,16 @@ function LabAppointmentsContent({ clinic }) {
     }
   }, [clinic, user?.role, user?.id]);
 
-  // Force refetch when clinic prop changes to clear cache
+  // Force refetch and reset filters only when switching between clinic / non-clinic (or on initial mount).
+  // Do not run when only searchParams reference changes, or filtered results get overwritten by default filters.
+  const clinicRef = useRef(null); // null = not yet run; after first run holds previous clinic value
   useEffect(() => {
+    const prevClinic = clinicRef.current;
+    clinicRef.current = clinic;
+    const isFirstRun = prevClinic === null;
+    const clinicToggled = !isFirstRun && prevClinic !== clinic;
+    if (!isFirstRun && !clinicToggled) return; // Skip when only searchParams or other deps changed
+
     // Clear appointments and pagination when clinic prop changes to prevent cache issues
     setAppointments([]);
     setPagination({
@@ -642,6 +659,25 @@ function LabAppointmentsContent({ clinic }) {
     }
   };
 
+  const openVisitCardModal = (patientId, patientName) => {
+    if (!patientId) return;
+    setVisitCardPatientId(patientId);
+    setVisitCardPatientName(patientName || "Pacjent");
+    setShowVisitCardModal(true);
+    setVisitCardsList([]);
+    setVisitCardsError(null);
+    setVisitCardsLoading(true);
+    appointmentHelper.getVisitCardsByPatient(patientId).then((res) => {
+      const data = res?.data ?? res;
+      const list = Array.isArray(data?.visitCards) ? data.visitCards : [];
+      setVisitCardsList(list);
+      setVisitCardsError(res?.success === false ? res?.message : null);
+    }).catch((err) => {
+      setVisitCardsError(err?.response?.data?.message || err?.message || "Nie udało się pobrać listy kart wizyt.");
+      setVisitCardsList([]);
+    }).finally(() => setVisitCardsLoading(false));
+  };
+
   const handleRescheduleClick = (appointment) => {
     setSelectedAppointment(appointment);
     setShowRescheduleModal(true);
@@ -756,6 +792,13 @@ function LabAppointmentsContent({ clinic }) {
     : "Wszystkie wizyty";
 
   const getPatientPesel = (p) => p?.govtId || p?.pesel || p?.PESEL || "—";
+  const getPhoneDisplay = (value) => {
+    const v = value ?? "";
+    const s = typeof v === "string" ? v.trim() : String(v).trim();
+    if (!s) return "brak numeru";
+    if (/^_no_phone_/i.test(s) || s === "_no_phone" || /^brak\s*numeru$/i.test(s)) return "brak numeru";
+    return s;
+  };
   const getPatientGenderLetter = (p) =>
     p?.sex === "Male" || p?.gender === "Male"
       ? "M"
@@ -777,11 +820,15 @@ function LabAppointmentsContent({ clinic }) {
       "online registration": "Rejestracja online",
       "online": "Rejestracja online",
       "reception": "W recepcji",
+      "receptionist registration": "Rejestracja w recepcji",
+      "receptionist": "Rejestracja w recepcji",
       "walk-in": "W recepcji",
       "walkin": "W recepcji",
       "in-person": "W recepcji",
       "phone": "Rejestracja telefoniczna",
       "telephone": "Rejestracja telefoniczna",
+      "admin registration": "Rejestracja przez administrację",
+      "administracja": "Rejestracja przez administrację",
     };
     return map[v] ?? value;
   };
@@ -813,7 +860,7 @@ function LabAppointmentsContent({ clinic }) {
           </div>
 
           {clinic && (
-            <div className="flex items-center gap-3 mb-6 flex-wrap">
+            <div className="flex items-center gap-3 mb-6 flex-wrap mt-5">
               <div className="flex-1 relative min-w-[280px] max-w-2xl">
                 <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input
@@ -882,20 +929,27 @@ function LabAppointmentsContent({ clinic }) {
                         )}
                       </select>
                     </div>
-                    {/* Typ wizyty */}
+                    {/* Typ wizyty – from API with category segregation */}
                     <div className="mb-4">
                       <h3 className="text-sm font-medium text-gray-800 mb-2">Typ wizyty</h3>
-                      <select
-                        value={visitTypeFilter}
-                        onChange={(e) => setVisitTypeFilter(e.target.value)}
-                        className="w-full p-2.5 pr-9 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 appearance-none cursor-pointer"
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center' }}
-                      >
-                        <option value="">Wybierz typ wizyty...</option>
-                        <option value="first-time">Pierwsza wizyta</option>
-                        <option value="re-visit">Kontrolna</option>
-                        <option value="consultation">Konsultacja</option>
-                      </select>
+                      {visitReasonsCategories.length > 0 ? (
+                        <VisitReasonCascadeDropdown
+                          categories={visitReasonsCategories}
+                          value={visitTypeFilter}
+                          onChange={setVisitTypeFilter}
+                          placeholder="Wybierz typ wizyty..."
+                          className="w-full min-w-0"
+                        />
+                      ) : (
+                        <select
+                          value={visitTypeFilter}
+                          onChange={(e) => setVisitTypeFilter(e.target.value)}
+                          className="w-full p-2.5 pr-9 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 appearance-none cursor-pointer"
+                          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center' }}
+                        >
+                          <option value="">Wybierz typ wizyty...</option>
+                        </select>
+                      )}
                     </div>
                     {/* Forma konsultacji */}
                     <div className="mb-4">
@@ -1042,11 +1096,7 @@ function LabAppointmentsContent({ clinic }) {
                 const isCompleted = appointment.status === "completed" || appointment.status === "Completed";
                 const isCancelledStatus = isCancelled(appointment);
                 const isVisitOnly = isVisitOnlyAppointment(appointment);
-                const statusPillClass = isCancelledStatus
-                  ? "bg-red-100 text-red-800"
-                  : isCompleted
-                  ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-800";
+                const statusPillClass = getStatusStyle(appointment.status);
                 const visitDateStr = appointment.date
                   ? new Date(appointment.date).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })
                   : "—";
@@ -1117,7 +1167,24 @@ function LabAppointmentsContent({ clinic }) {
                       <div className="text-sm text-gray-500 mt-0.5">
                         {stripDoctorTitle(appointment.doctor?.name) || "—"}
                       </div>
-                      <span className={`inline-block mt-1.5 px-2 py-1 rounded text-xs font-medium ${getVisitModeStyle(appointment)}`}>
+                      <span
+                        role={getVisitMode(appointment) === "online" ? "button" : undefined}
+                        tabIndex={getVisitMode(appointment) === "online" ? 0 : undefined}
+                        onClick={(e) => {
+                          if (getVisitMode(appointment) === "online") {
+                            e.stopPropagation();
+                            setOnlineDetailsAppointment(appointment);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (getVisitMode(appointment) === "online" && (e.key === "Enter" || e.key === " ")) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setOnlineDetailsAppointment(appointment);
+                          }
+                        }}
+                        className={`inline-block mt-1.5 px-2 py-1 rounded text-xs font-medium ${getVisitModeStyle(appointment)} ${getVisitMode(appointment) === "online" ? "cursor-pointer hover:opacity-90" : ""}`}
+                      >
                         {getVisitModeLabel(appointment)}
                       </span>
                     </div>
@@ -1164,8 +1231,8 @@ function LabAppointmentsContent({ clinic }) {
                                   <DollarSign size={16} className="mr-2" /> Wystaw rachunek
                                 </DropdownMenu.Item>
                               )}
-                              {appointment.status === "completed" && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => handleGenerateVisitCard(appointment.id)}>
+                              {appointment.status === "completed" && appointment.patient && (appointment.patient.id || appointment.patient._id) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => openVisitCardModal(appointment.patient.id || appointment.patient._id, getAppointmentPatientDisplayName(appointment))}>
                                   <FileText size={16} className="mr-2" /> Karta wizyty
                                 </DropdownMenu.Item>
                               )}
@@ -1244,7 +1311,7 @@ function LabAppointmentsContent({ clinic }) {
                     <div className="text-gray-800 truncate">{appointment.patient?.age ?? "—"}</div>
                     <div className="text-gray-800 truncate">{getPatientGenderLetter(appointment.patient)}</div>
                     <div className="text-gray-800 truncate text-sm">{getPatientPesel(appointment.patient)}</div>
-                    <div className="text-gray-800 truncate text-sm">{appointment.patient?.phoneNumber ?? appointment.registrationData?.phone ?? "—"}</div>
+                    <div className="text-gray-800 truncate text-sm">{getPhoneDisplay(appointment.patient?.phoneNumber ?? appointment.registrationData?.phone)}</div>
                     <div className="text-gray-800 truncate text-sm">{getRegistrationTypeLabel(appointment.registrationType)}</div>
                     <div className="text-gray-800 truncate text-sm">{formatFirstVisit(appointment)}</div>
                     <div className="flex justify-end">
@@ -1287,8 +1354,8 @@ function LabAppointmentsContent({ clinic }) {
                                   <DollarSign size={16} className="mr-2" /> Wystaw rachunek
                                 </DropdownMenu.Item>
                               )}
-                              {appointment.status === "completed" && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => handleGenerateVisitCard(appointment.id)}>
+                              {appointment.status === "completed" && appointment.patient && (appointment.patient.id || appointment.patient._id) && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => openVisitCardModal(appointment.patient.id || appointment.patient._id, getAppointmentPatientDisplayName(appointment))}>
                                   <FileText size={16} className="mr-2" /> Karta wizyty
                                 </DropdownMenu.Item>
                               )}
@@ -1463,6 +1530,134 @@ function LabAppointmentsContent({ clinic }) {
                     ))}
                   </ul>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Visit card picker modal – choose which visit's card to download */}
+        {showVisitCardModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col mx-4">
+              <div className="flex justify-between items-center border-b border-gray-200 px-4 py-3">
+                <h3 className="text-lg font-semibold text-gray-900">Karta wizyty – {visitCardPatientName}</h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowVisitCardModal(false);
+                    setVisitCardPatientId(null);
+                    setVisitCardsList([]);
+                    setVisitCardsError(null);
+                  }}
+                  className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                {visitCardsLoading ? (
+                  <div className="py-8 text-center text-gray-500">Ładowanie kart wizyt...</div>
+                ) : visitCardsError ? (
+                  <div className="py-4 text-red-600 text-sm">{visitCardsError}</div>
+                ) : visitCardsList.length === 0 ? (
+                  <div className="py-8 text-center text-gray-500">Brak kart wizyt dla tego pacjenta.</div>
+                ) : (
+                  <ul className="space-y-3">
+                    {visitCardsList.map((item) => {
+                      const dateStr = item.date ? new Date(item.date).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+                      const doctorName = item.doctor?.name ?? "—";
+                      const hasCard = item.visitCard?.url;
+                      return (
+                        <li
+                          key={item.appointmentId}
+                          className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50"
+                        >
+                          <div className="min-w-0">
+                            <div className="font-medium text-gray-900">{dateStr} · {item.startTime || "—"}{item.endTime ? ` – ${item.endTime}` : ""}</div>
+                            <div className="text-sm text-gray-600">{doctorName}</div>
+                            <div className="text-xs text-gray-500 mt-0.5">
+                              {item.status ? (item.status === "completed" ? "Zakończona" : item.status) : "—"}
+                              {hasCard ? " · Karta dostępna" : " · Brak karty"}
+                            </div>
+                          </div>
+                          <div className="shrink-0">
+                            {hasCard ? (
+                              <button
+                                type="button"
+                                onClick={() => window.open(item.visitCard.url, "_blank")}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg"
+                              >
+                                <FileText size={16} /> Pobierz
+                              </button>
+                            ) : (
+                              <span className="text-sm text-gray-400">Brak karty</span>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Online visit details modal */}
+        {onlineDetailsAppointment && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setOnlineDetailsAppointment(null)}>
+            <div className="bg-white rounded-lg max-w-md w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-between items-center border-b px-4 py-3">
+                <h3 className="text-lg font-medium text-gray-900">Wizyta online – szczegóły</h3>
+                <button
+                  type="button"
+                  onClick={() => setOnlineDetailsAppointment(null)}
+                  className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                <div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Pacjent</div>
+                  <div className="text-gray-900 font-medium">{getAppointmentPatientDisplayName(onlineDetailsAppointment)}</div>
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Telefon</div>
+                  <div className="text-gray-900">{getPhoneDisplay(onlineDetailsAppointment.patient?.phoneNumber ?? onlineDetailsAppointment.registrationData?.phone) || "—"}</div>
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Data i godzina</div>
+                  <div className="text-gray-900">{onlineDetailsAppointment.date ? new Date(onlineDetailsAppointment.date).toLocaleDateString("pl-PL", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }) : "—"} · {onlineDetailsAppointment.startTime || "—"}{onlineDetailsAppointment.endTime ? ` – ${onlineDetailsAppointment.endTime}` : ""}</div>
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Lekarz</div>
+                  <div className="text-gray-900">{stripDoctorTitle(onlineDetailsAppointment.doctor?.name) || "—"}</div>
+                </div>
+                <div className="pt-2 border-t space-y-2">
+                  {onlineDetailsAppointment.meetLink ? (
+                    <a
+                      href={onlineDetailsAppointment.meetLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 w-full justify-center px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm"
+                    >
+                      <Eye size={16} /> Otwórz link do wizyty online
+                    </a>
+                  ) : null}
+                  {(onlineDetailsAppointment.patient?.id ?? onlineDetailsAppointment.patient?._id) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOnlineDetailsAppointment(null);
+                        navigate(getPatientViewUrl(onlineDetailsAppointment.patient?.id ?? onlineDetailsAppointment.patient?._id, onlineDetailsAppointment.id));
+                      }}
+                      className="flex items-center gap-2 w-full justify-center px-4 py-2.5 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-medium text-sm"
+                    >
+                      <Eye size={16} /> Otwórz kartę pacjenta
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
