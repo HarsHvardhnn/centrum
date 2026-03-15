@@ -902,9 +902,6 @@ const PatientList = () => {
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   Rodzaj wizyty
                 </th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                  ID Pacjenta
-                </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 flex items-center">
                   Płeć <ArrowDown size={14} className="ml-1" />
                 </th>
@@ -972,7 +969,7 @@ const PatientList = () => {
                       )}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {isVisitOnlyAppointment(patient) ? "—" : (patient.username || "—")}
+                      {isVisitOnlyAppointment(patient) ? "—" : (patient.patientId || patient.patient_id || "—")}
                     </div>
                   </td>
                   <td className="py-4 px-4 text-gray-600">
@@ -982,9 +979,6 @@ const PatientList = () => {
                         <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Do weryfikacji</span>
                       )}
                     </div>
-                  </td>
-                  <td className="py-4 px-4 text-gray-600">
-                    {isVisitOnlyAppointment(patient) ? "—" : (patient.patientId || patient.patient_id || "—")}
                   </td>
                   <td className="py-4 px-4 text-gray-600">
                     {translateSexToPolish(patient.sex) || "N/A"}

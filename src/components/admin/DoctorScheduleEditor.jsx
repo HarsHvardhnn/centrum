@@ -350,7 +350,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
     }
   };
 
-  // Delete schedule
+  // Delete schedule (by date – used when _id not available)
   const handleDeleteSchedule = async (date) => {
     if (!window.confirm("Czy na pewno chcesz usunąć harmonogram dla tego dnia?")) {
       return;
@@ -366,7 +366,37 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
       }
     } catch (err) {
       console.error("Error deleting schedule:", err);
-      toast.error("Nie udało się usunąć harmonogramu");
+      toast.error(err?.response?.data?.message || "Nie udało się usunąć harmonogramu");
+    } finally {
+      hideLoader();
+    }
+  };
+
+  // Permanent delete schedule (by _id when available, otherwise by doctorId + date). Use from Edit modal or calendar cell.
+  const handlePermanentDeleteSchedule = async (schedule) => {
+    if (!window.confirm("Czy na pewno usunąć ten harmonogram? Operacja jest nieodwracalna.")) {
+      return;
+    }
+
+    const wasEditingThis = editingSchedule?._id === schedule._id;
+
+    try {
+      showLoader();
+      const response = schedule._id
+        ? await doctorService.deleteScheduleById(schedule._id)
+        : await doctorService.deleteSchedule(doctorId, schedule.date);
+
+      if (response?.success) {
+        toast.success("Harmonogram został trwale usunięty");
+        fetchDoctorSchedule();
+        if (wasEditingThis) {
+          setShowScheduleModal(false);
+          resetScheduleForm();
+        }
+      }
+    } catch (err) {
+      console.error("Error permanently deleting schedule:", err);
+      toast.error(err?.response?.data?.message || "Nie udało się usunąć harmonogramu");
     } finally {
       hideLoader();
     }
@@ -1146,15 +1176,24 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
                     {isCurrentMonthDay && !isPast && (
                       <div className="mt-1 space-y-1">
                         {schedule && (
-                          <button
-                            onClick={() => {
-                              console.log("Edit schedule button clicked for:", schedule);
-                              handleEditSchedule(schedule);
-                            }}
-                            className="w-full text-xs bg-green-500 text-white p-1 rounded hover:bg-green-600"
-                          >
-                            Edytuj
-                          </button>
+                          <>
+                            <button
+                              onClick={() => {
+                                console.log("Edit schedule button clicked for:", schedule);
+                                handleEditSchedule(schedule);
+                              }}
+                              className="w-full text-xs bg-green-500 text-white p-1 rounded hover:bg-green-600"
+                            >
+                              Edytuj
+                            </button>
+                            <button
+                              onClick={() => handlePermanentDeleteSchedule(schedule)}
+                              className="w-full text-xs bg-red-500 text-white p-1 rounded hover:bg-red-600 flex items-center justify-center gap-0.5"
+                            >
+                              <Trash2 size={12} />
+                              Usuń na stałe
+                            </button>
+                          </>
                         )}
                         {!schedule && (
                           <button
@@ -1174,12 +1213,23 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
                       </div>
                     )}
                     
-                    {/* For past dates, show a disabled indicator */}
+                    {/* For past dates: allow permanent delete if schedule exists, otherwise show "Data miniona" */}
                     {isCurrentMonthDay && isPast && (
-                      <div className="mt-1">
-                        <div className="w-full text-xs bg-gray-300 text-gray-500 p-1 rounded text-center cursor-not-allowed">
-                          Data miniona
-                        </div>
+                      <div className="mt-1 space-y-1">
+                        {schedule ? (
+                          <button
+                            onClick={() => handlePermanentDeleteSchedule(schedule)}
+                            className="w-full text-xs bg-red-500 text-white p-1 rounded hover:bg-red-600 flex items-center justify-center gap-0.5"
+                            title="Trwale usuń stary harmonogram"
+                          >
+                            <Trash2 size={12} />
+                            Usuń na stałe
+                          </button>
+                        ) : (
+                          <div className="w-full text-xs bg-gray-300 text-gray-500 p-1 rounded text-center cursor-not-allowed">
+                            Data miniona
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1229,10 +1279,12 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
                             <Edit size={16} />
                           </button>
                           <button
-                            onClick={() => handleDeleteSchedule(schedule.date)}
-                            className="text-red-600 hover:text-red-800"
+                            onClick={() => handlePermanentDeleteSchedule(schedule)}
+                            className="text-red-600 hover:text-red-800 flex items-center gap-1"
+                            title="Usuń na stałe"
                           >
                             <Trash2 size={16} />
+                            Usuń na stałe
                           </button>
                         </div>
                       </div>
@@ -1407,24 +1459,38 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 mt-6">
-            <button
-              type="button"
-              onClick={() => {
-                setShowScheduleModal(false);
-                resetScheduleForm();
-              }}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
-            >
-              Anuluj
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 flex items-center"
-            >
-              <Save size={16} className="mr-1" />
-              Zapisz
-            </button>
+          <div className="flex justify-between mt-6">
+            <div>
+              {editingSchedule && (
+                <button
+                  type="button"
+                  onClick={() => handlePermanentDeleteSchedule(editingSchedule)}
+                  className="px-4 py-2 text-red-600 border border-red-300 rounded hover:bg-red-50 flex items-center gap-1"
+                >
+                  <Trash2 size={16} />
+                  Usuń na stałe
+                </button>
+              )}
+            </div>
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowScheduleModal(false);
+                  resetScheduleForm();
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+              >
+                Anuluj
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 flex items-center"
+              >
+                <Save size={16} className="mr-1" />
+                Zapisz
+              </button>
+            </div>
           </div>
         </form>
       </div>

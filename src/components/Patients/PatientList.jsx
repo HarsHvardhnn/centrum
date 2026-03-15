@@ -1428,7 +1428,7 @@ function LabAppointmentsContent({ clinic }) {
                             </span>
                             {visit.mode && (
                               <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${visit.mode === "online" ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"}`}>
-                                {visit.mode === "online" ? "Online" : "Offline"}
+                                {visit.mode === "online" ? "Online" : "Stacjonarna"}
                               </span>
                             )}
                           </div>

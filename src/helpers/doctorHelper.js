@@ -459,6 +459,24 @@ const doctorService = {
   },
 
   /**
+   * Permanently delete schedule by its MongoDB _id (e.g. from Edit modal).
+   * @param {string} scheduleId - Schedule document _id
+   * @returns {Promise} - API response
+   */
+  deleteScheduleById: async (scheduleId) => {
+    try {
+      const response = await apiCaller(
+        "DELETE",
+        `/api/schedule/schedule/id/${scheduleId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting schedule by id:", error);
+      throw error;
+    }
+  },
+
+  /**
    * Create schedule exception
    * @param {Object} exceptionData - Exception data
    * @returns {Promise} - API response

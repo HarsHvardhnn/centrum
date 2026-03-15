@@ -55,9 +55,9 @@ export const getVisitMode = (appointment) => {
   return mode === "online" ? "online" : "offline";
 };
 
-/** Display label for visit mode: "Online" | "Offline" (Stacjonarna). */
+/** Display label for visit mode: "Online" | "Stacjonarna" (stationary/in-person). */
 export const getVisitModeLabel = (appointment) => {
-  return getVisitMode(appointment) === "online" ? "Online" : "Offline";
+  return getVisitMode(appointment) === "online" ? "Online" : "Stacjonarna";
 };
 
 /** Tailwind classes for visit mode badge. */
