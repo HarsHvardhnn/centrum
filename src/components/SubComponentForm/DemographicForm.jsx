@@ -411,7 +411,7 @@ const DemographicsForm = ({
               value={formData.mobileNumber || ""}
               onChange={handleChange}
               onBlur={() => setTouched(prev => ({ ...prev, mobileNumber: true }))}
-              placeholder={`Wprowadź ${currentCountry.maxLength} cyfr`}
+              placeholder={(formData.mobileNumber || "").trim() ? `Wprowadź ${currentCountry.maxLength} cyfr` : "-"}
               maxLength={currentCountry.maxLength}
               className={`flex-1 h-[42px] px-3 border ${touched.mobileNumber && errors.mobileNumber ? 'border-red-500' : 'border-gray-300'} rounded-r-md focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
             />

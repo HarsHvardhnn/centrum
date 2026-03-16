@@ -3,13 +3,32 @@ import { Search, MoreHorizontal, User, Settings, LogOut, Clock, Bell } from "luc
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../../../context/userContext";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
+import appointmentConfigService from "../../../../helpers/appointmentConfigHelper";
 import { stripDoctorTitle } from "../../../../utils/statusHelper";
 
-// Header colors: deep teal bar, light cyan text
+const SESSION_STORAGE_KEY = "cm7_session_start";
+
+function parseSessionDurationToMs(value) {
+  if (value == null || value === "") return 0;
+  if (typeof value === "number") return value * 60 * 1000;
+  if (typeof value !== "string") return 0;
+  const match = value.trim().match(/^(\d+)([mhdw])?$/i);
+  if (match) {
+    const num = parseInt(match[1], 10);
+    const unit = (match[2] || "m").toLowerCase();
+    if (unit === "m") return num * 60 * 1000;
+    if (unit === "h") return num * 60 * 60 * 1000;
+    if (unit === "d") return num * 24 * 60 * 60 * 1000;
+    if (unit === "w") return num * 7 * 24 * 60 * 60 * 1000;
+  }
+  return parseInt(value, 10) * 60 * 1000 || 0;
+}
+
+// Header colors: deep teal bar, white text
 const HEADER_BG = "#1a7f73";
 const SEARCH_DEBOUNCE_MS = 300;
-const TEXT_PRIMARY = "#a8f0f5";
-const TEXT_SECONDARY = "#7de0e8";
+const TEXT_PRIMARY = "#ffffff";
+const TEXT_SECONDARY = "rgba(255,255,255,0.9)";
 const SEARCH_PLACEHOLDER = "#9ca3af";
 
 function cleanProfilePictureUrl(url) {
@@ -142,24 +161,58 @@ const PatientDetailsHeader = () => {
   const specialization = user?.role === "admin" ? "Administrator" : user?.role === "receptionist" ? "Recepcja" : (user?.specialization || user?.specialty || "");
   const initials = getInitials(user?.name);
 
-  // Session elapsed time (minutes) for "Sesja: XX min"
-  const [sessionMinutes, setSessionMinutes] = useState(0);
-  const sessionStartRef = useRef(Date.now());
+  // Session countdown: time remaining until session ends (uses INACTIVITY_TIMEOUT from config)
+  const [sessionRemainingMs, setSessionRemainingMs] = useState(null);
+  const [sessionDurationMs, setSessionDurationMs] = useState(30 * 60 * 1000); // default 30 min
+
   useEffect(() => {
+    let cancelled = false;
+    const initStart = () => {
+      const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      if (stored) return parseInt(stored, 10);
+      const start = Date.now();
+      sessionStorage.setItem(SESSION_STORAGE_KEY, String(start));
+      return start;
+    };
+    const startTime = initStart();
+
+    const fetchDuration = async () => {
+      try {
+        const res = await appointmentConfigService.getConfig("INACTIVITY_TIMEOUT");
+        const raw = res?.data?.value;
+        const ms = parseSessionDurationToMs(raw);
+        if (ms > 0 && !cancelled) setSessionDurationMs(ms);
+      } catch (_) {}
+    };
+    fetchDuration();
+
     const update = () => {
-      const elapsed = Math.floor((Date.now() - sessionStartRef.current) / 60000);
-      setSessionMinutes(elapsed);
+      if (cancelled) return;
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, sessionDurationMs - elapsed);
+      setSessionRemainingMs(remaining);
     };
     update();
-    const t = setInterval(update, 60000);
-    return () => clearInterval(t);
-  }, []);
+    const t = setInterval(update, 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, [sessionDurationMs]);
+
+  const sessionRemainingMin = sessionRemainingMs != null ? Math.ceil(sessionRemainingMs / 60000) : null;
+  const sessionLabel =
+    sessionRemainingMin != null
+      ? sessionRemainingMin <= 0
+        ? "Sesja: 0 min"
+        : `Pozostało: ${sessionRemainingMin} min`
+      : "Sesja: —";
 
   const notificationCount = 0; // TODO: wire to real notifications API
 
   return (
     <header
-      className="w-full flex items-center justify-between gap-4 px-6 min-h-[56px] z-20 relative"
+      className="w-full flex items-center justify-between gap-6 py-5 px-10 min-h-[80px] z-20 relative"
       style={{
         backgroundColor: HEADER_BG,
         boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
@@ -176,9 +229,9 @@ const PatientDetailsHeader = () => {
         CM7MED
       </button>
 
-      {/* Search - centered, wide */}
-      <form onSubmit={handleSearchSubmit} className="flex-1 flex justify-center min-w-0 max-w-4xl">
-        <div ref={searchContainerRef} className="relative w-full">
+      {/* Search - centered, wide, with breathing room */}
+      <form onSubmit={handleSearchSubmit} className="flex-1 flex justify-center min-w-0 max-w-4xl mx-4">
+        <div ref={searchContainerRef} className="relative w-full max-w-2xl">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 z-[1]"
             size={20}
@@ -229,10 +282,10 @@ const PatientDetailsHeader = () => {
 
       {/* Right section: Session, Notifications, User, Time */}
       <div className="flex items-center gap-4 shrink-0">
-        {/* Session timer */}
-        <div className="flex items-center gap-1.5 shrink-0" style={{ color: TEXT_PRIMARY }} title="Czas sesji">
+        {/* Session countdown: time remaining until session ends */}
+        <div className="flex items-center gap-1.5 shrink-0" style={{ color: TEXT_PRIMARY }} title="Pozostały czas sesji">
           <Clock size={18} strokeWidth={2} />
-          <span className="text-sm font-medium whitespace-nowrap">Sesja: {sessionMinutes} min</span>
+          <span className="text-sm font-medium whitespace-nowrap">{sessionLabel}</span>
         </div>
 
         {/* Notifications */}

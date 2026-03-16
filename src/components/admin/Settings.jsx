@@ -546,13 +546,16 @@ export default function UserManagement() {
       showLoader();
       const patientData = await patientService.getPatientById(userId);
       let patientDetails=patientData;
+      const rawPhone = patientDetails.phone;
+      const hasRealPhone = rawPhone != null && String(rawPhone).trim() !== "" && !/^_no_phone_/i.test(String(rawPhone).trim());
+      const phoneForForm = hasRealPhone ? rawPhone : "";
       //(patientData, "patient data")
       const mappedFormData = {
         // Demographics
         fullName:
           patientDetails.name?.first + " " + (patientDetails.name?.last || ""),
         email: patientDetails.email,
-        mobileNumber: patientDetails.phone,
+        mobileNumber: phoneForForm,
         patient_id: patientDetails._id,
         dateOfBirth: patientDetails.dateOfBirth,
         motherTongue: patientDetails.motherTongue,
@@ -615,19 +618,18 @@ export default function UserManagement() {
         reviewNotes: patientDetails.reviewNotes,
       };
 
-      // Extract phone code from existing phone number if it exists
-      if (patientDetails.phone) {
-        const phoneWithCode = patientDetails.phone;
-        const foundCountry = phoneCountryCodes.find(country => 
+      // Extract phone code from existing phone number if it exists (ignore _no_phone_* placeholders)
+      if (hasRealPhone) {
+        const phoneWithCode = String(rawPhone).trim();
+        const foundCountry = phoneCountryCodes.find(country =>
           phoneWithCode.startsWith(country.code)
         );
-        
+
         if (foundCountry) {
           mappedFormData.phoneCode = foundCountry.code;
-          mappedFormData.mobileNumber = phoneWithCode.replace(foundCountry.code, '');
+          mappedFormData.mobileNumber = phoneWithCode.replace(foundCountry.code, '').trim();
           setSelectedPhoneCode(foundCountry.code);
         } else {
-          // Default to Poland if no code found
           mappedFormData.phoneCode = "+48";
           mappedFormData.mobileNumber = phoneWithCode;
           setSelectedPhoneCode("+48");
