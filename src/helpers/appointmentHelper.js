@@ -232,7 +232,7 @@ class AppointmentService {
     }
   }
 
-  // Get doctor's appointments
+  // Get doctor's appointments. When excludeCancelled is true, backend should return only non-cancelled and total count should match (so counts and list stay in sync).
   async getDoctorAppointments(
     doctorId,
     startDate,
@@ -240,6 +240,8 @@ class AppointmentService {
     status = "all",
     page = 1,
     limit = 10,
+    searchQuery = "",
+    excludeCancelled = true,
   ) {
     try {
       const queryParams = new URLSearchParams({
@@ -248,6 +250,8 @@ class AppointmentService {
         status,
         page,
         limit,
+        ...(excludeCancelled && { excludeCancelled: "true" }),
+        ...(searchQuery && { search: searchQuery }),
       });
 
       const response = await apiCaller(

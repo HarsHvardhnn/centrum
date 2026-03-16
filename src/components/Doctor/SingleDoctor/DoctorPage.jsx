@@ -108,6 +108,16 @@ function DoctorsPage() {
     }
   }, [appointmentId, patients]);
 
+  /** Exclude cancelled/canceled so list and counts do not include them. */
+  const nonCancelledAppointments = (list) => {
+    if (!Array.isArray(list)) return [];
+    const cancelled = ["cancelled", "canceled"];
+    return list.filter((apt) => {
+      const s = String(apt.status || "").toLowerCase().replace(/\s+/g, "");
+      return !cancelled.includes(s);
+    });
+  };
+
   const fetchPatientsByDoctor = async (doctorId) => {
     try {
       showLoader();
@@ -118,13 +128,20 @@ function DoctorsPage() {
         "all",
         currentPage,
         itemsPerPage,
-        searchQuery
+        searchQuery,
+        true // excludeCancelled – backend may support it; we also filter below
       );
 
       if (response && response.success) {
-        setPatients(response.data);
-        setTotalPatients(response.total || response.data.length);
-        const summary = computeDailySummary(response.data, {
+        const list = response.data || [];
+        const filtered = nonCancelledAppointments(list);
+        setPatients(filtered);
+        // Use filtered count so "X wizyta dzisiaj" and list stay in sync (backend may return total excluding cancelled when excludeCancelled is supported)
+        const total = response.total != null && filtered.length === list.length
+          ? response.total
+          : filtered.length;
+        setTotalPatients(total);
+        const summary = computeDailySummary(filtered, {
           liczbaWizyt: response.liczbaWizyt,
           pozostaloWizyt: response.pozostaloWizyt,
         });
