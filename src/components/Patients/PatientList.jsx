@@ -25,7 +25,7 @@ import { useLoader } from "../../context/LoaderContext";
 import { useUser } from "../../context/userContext";
 import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
 import { translateStatus, getStatusStyle, getVisitMode, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel, stripDoctorTitle } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
@@ -96,6 +96,7 @@ function LabAppointmentsContent({ clinic }) {
   const [onlineDetailsAppointment, setOnlineDetailsAppointment] = useState(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   // Appointments data
   const [appointments, setAppointments] = useState([]);
@@ -1430,6 +1431,7 @@ function LabAppointmentsContent({ clinic }) {
           patientName={selectedAppointment ? getAppointmentPatientDisplayName(selectedAppointment) : ""}
           appointmentId={selectedAppointment?.id}
           patientId={selectedAppointment?.patient?.id}
+          returnPath={location.pathname + location.search}
         />
 
         {/* Reschedule Modal */}

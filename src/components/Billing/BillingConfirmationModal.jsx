@@ -13,7 +13,8 @@ const BillingConfirmationModal = ({
   patientName,
   appointmentId,
   patientId,
-
+  /** When set, after generating a bill navigate here (e.g. /administracja, /pacjenci, /klinika, /lekarze/wizyty/:id) instead of billing page */
+  returnPath,
 }) => {
   //(appointmentId,patientId, "patientServicesData");
   const navigate = useNavigate();
@@ -299,14 +300,15 @@ const BillingConfirmationModal = ({
                     totalAmount,
                     paymentMethod,
                   });
-                  
-                  // Check if we're currently on admin billing page
-                  if (location.pathname === '/administracja/rozliczenia') {
-                    // If on admin billing page, redirect to patients with today's date
-                    const today = new Date().toISOString().split('T')[0];
+
+                  onClose?.();
+                  // Return to the view we started from (main panel, visit history, or doctor panel)
+                  if (returnPath) {
+                    navigate(returnPath);
+                  } else if (location.pathname === "/administracja/rozliczenia") {
+                    const today = new Date().toISOString().split("T")[0];
                     navigate(`/pacjenci?date=${today}`);
                   } else {
-                    // Otherwise, redirect to admin billing page with appointment ID and step
                     navigate(`/administracja/rozliczenia/?appointment=${appointmentId}&step=edit`);
                   }
                 } catch (error) {

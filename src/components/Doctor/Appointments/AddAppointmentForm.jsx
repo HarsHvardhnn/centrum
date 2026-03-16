@@ -1722,25 +1722,54 @@ function AppointmentFormModal({
   };
 
   const renderReceptionistOverridesStep = () => {
+    const hasTimeRange = appointmentData.selectedSlot
+      ? (appointmentData.selectedSlot.startTime && appointmentData.selectedSlot.endTime)
+      : (appointmentData.customStartTime && appointmentData.customEndTime);
+    const timeRangeLabel = appointmentData.selectedSlot
+      ? `${appointmentData.selectedSlot.startTime} – ${appointmentData.selectedSlot.endTime}`
+      : appointmentData.customStartTime && appointmentData.customEndTime
+        ? `${appointmentData.customStartTime} – ${appointmentData.customEndTime}`
+        : null;
+
     return (
       <div className="space-y-6">
         <h3 className="text-lg font-medium mb-4">Opcje Recepcjonisty</h3>
-        
-        {/* Custom Duration - only show when user set custom time (not when they selected a slot) */}
+
+        {/* Appointment time: show range when we have one (slot or custom start+end); otherwise blank and use duration */}
+        {(appointmentData.selectedSlot || appointmentData.customStartTime || appointmentData.customEndTime) && (
+          <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+            <p className="text-sm text-gray-800">
+              <strong>Termin wizyty:</strong>{" "}
+              {hasTimeRange ? timeRangeLabel : "— (wybierz czas trwania poniżej)"}
+            </p>
+          </div>
+        )}
+
+        {/* Appointment time & duration – show when custom time is used (not when a slot was selected) */}
         {!appointmentData.selectedSlot && (appointmentData.customStartTime || appointmentData.customEndTime) && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 className="text-md font-medium text-blue-800 mb-3">Czas Trwania Wizyty</h4>
+            <h4 className="text-md font-medium text-blue-800 mb-3">Termin wizyty i czas trwania</h4>
 
+            {/* Show time range only when both start and end are set; otherwise leave blank and use duration */}
             {appointmentData.customStartTime && appointmentData.customEndTime ? (
-              <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg">
-                <p className="text-sm text-green-800">
-                  <strong>✓ Automatycznie obliczony czas trwania:</strong> {appointmentData.customDuration || 0} minut
+              <>
+                <p className="text-sm text-blue-800 mb-2">
+                  <strong>Termin wizyty:</strong> {appointmentData.customStartTime} – {appointmentData.customEndTime}
                 </p>
-                <p className="text-xs text-green-700 mt-1">
-                  Na podstawie wybranego czasu: {appointmentData.customStartTime} - {appointmentData.customEndTime}
-                </p>
-              </div>
-            ) : null}
+                <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    <strong>✓ Automatycznie obliczony czas trwania:</strong> {appointmentData.customDuration || 0} minut
+                  </p>
+                  <p className="text-xs text-green-700 mt-1">
+                    Na podstawie wybranego czasu: {appointmentData.customStartTime} – {appointmentData.customEndTime}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-blue-800 mb-3">
+                <strong>Termin wizyty:</strong> — (podaj czas trwania poniżej)
+              </p>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1760,7 +1789,7 @@ function AppointmentFormModal({
                 <p className="text-xs text-gray-500 mt-1">
                   {appointmentData.customStartTime && appointmentData.customEndTime
                     ? "Możesz zmienić automatycznie obliczony czas trwania"
-                    : "1-480 minut (1-8 godzin) - lub ustaw czas rozpoczęcia i zakończenia w kroku terminu aby automatycznie obliczyć"}
+                    : "1–480 minut (1–8 h). Ustaw czas rozpoczęcia i zakończenia w kroku terminu, aby obliczyć automatycznie."}
                 </p>
                 {appointmentData.customDuration && validateCustomDuration(appointmentData.customDuration) && (
                   <p className="text-red-500 text-xs mt-1">
@@ -1968,10 +1997,12 @@ function AppointmentFormModal({
             <div>
               <span className="font-medium">Czas:</span> {
                 appointmentData.selectedSlot 
-                  ? `${appointmentData.selectedSlot.startTime} - ${appointmentData.selectedSlot.endTime} (wybrany termin)`
-                  : appointmentData.customStartTime 
-                    ? `${appointmentData.customStartTime}${appointmentData.customEndTime ? ` - ${appointmentData.customEndTime}` : ''} (własny termin)`
-                    : "Nie wybrano"
+                  ? `${appointmentData.selectedSlot.startTime} – ${appointmentData.selectedSlot.endTime} (wybrany termin)`
+                  : appointmentData.customStartTime && appointmentData.customEndTime 
+                    ? `${appointmentData.customStartTime} – ${appointmentData.customEndTime} (własny termin)`
+                    : appointmentData.customStartTime 
+                      ? "— (podaj czas trwania)"
+                      : "Nie wybrano"
               }
             </div>
             <div>

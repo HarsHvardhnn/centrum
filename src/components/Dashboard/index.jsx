@@ -22,7 +22,7 @@ import patientService from "../../helpers/patientHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 import { useUser } from "../../context/userContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useLoader } from "../../context/LoaderContext";
 import { toast } from "sonner";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
@@ -392,6 +392,7 @@ const PatientList = () => {
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   /** Visit-only: no patient linked (dashboard API uses patient_id) */
   const isVisitOnlyAppointment = (apt) => !apt?.patient_id;
@@ -1138,6 +1139,7 @@ const PatientList = () => {
         patientName={selectedAppointment?.name || selectedAppointment?.registrationData?.name || selectedAppointment?.patient?.name || "Nieznany pacjent"}
         appointmentId={selectedAppointment?.id}
         patientId={selectedAppointment?.patient_id}
+        returnPath={location.pathname + location.search}
       />
 
       {/* Check-in Modal */}
