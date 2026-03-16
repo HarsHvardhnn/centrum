@@ -79,8 +79,14 @@ const PatientSearchField = ({ onPatientSelect }) => {
     }
   };
 
+  const getDisplayId = (patient) => {
+    const peselOrId = patient?.pesel ?? patient?.peselNumber ?? patient?.govtId ?? patient?.idNumber ?? patient?.documentId ?? patient?.identityNumber;
+    return peselOrId != null && String(peselOrId).trim() !== "" ? String(peselOrId).trim() : patient?.id;
+  };
+
   const handleSelect = (patient) => {
-    setSearchTerm(`${patient.name} (${patient.id})`);
+    const displayId = getDisplayId(patient);
+    setSearchTerm(displayId ? `${patient.name} (${displayId})` : patient.name || "");
     setIsDropdownOpen(false);
     onPatientSelect(patient);
   };

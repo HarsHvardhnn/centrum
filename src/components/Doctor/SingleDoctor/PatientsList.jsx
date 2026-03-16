@@ -60,10 +60,12 @@ const PatientsList = ({
     }
   };
 
-  // Only show Zarezerwowana (booked) and Zameldowana (checkedIn). Sort ascending by start time.
+  // Only show Zarezerwowana (booked) and Zameldowana (checkedIn) with a linked patient (patientLessVisit !== true). Sort ascending by start time.
   const sortedPatients = useMemo(() => {
     const active = (patientsData || []).filter(
-      (p) => p.status === "booked" || p.status === "checkedIn"
+      (p) =>
+        (p.status === "booked" || p.status === "checkedIn") &&
+        p.patientLessVisit !== true
     );
     return [...active].sort((a, b) => {
       const tA = a.startTime || a.start_time || "";

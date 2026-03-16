@@ -975,7 +975,17 @@ const PatientList = () => {
                   </td>
                   <td className="py-4 px-4 text-gray-600">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span>{patient.visitReason || patient.consultationType || "—"}</span>
+                      <span>
+                        {(() => {
+                          const raw = patient.visitReason || patient.consultationType || patient.metadata?.visitType || "";
+                          const s = typeof raw === "string" ? raw.trim() : String(raw).trim();
+                          if (!s) return "Konsultacja lekarska";
+                          const lower = s.toLowerCase();
+                          if (lower === "re-visit") return "Konsultacja lekarska";
+                          if (lower === "first-time") return "Konsultacja pierwszorazowa";
+                          return s;
+                        })()}
+                      </span>
                       {patient.visitTypeVerified === false && patient.status !== "completed" && patient.status !== "Completed" && (
                         <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Do weryfikacji</span>
                       )}

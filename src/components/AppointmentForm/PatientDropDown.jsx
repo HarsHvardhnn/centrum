@@ -24,6 +24,25 @@ const PatientDropdown = ({
         return "Nieznany";
     }
   };
+
+  const getPeselOrDocumentId = (patient) => {
+    const possibleValues = [
+      patient?.pesel,
+      patient?.peselNumber,
+      patient?.idNumber,
+      patient?.documentId,
+      patient?.identityNumber,
+    ].filter(Boolean);
+    return possibleValues[0] || "—";
+  };
+
+  const getPhoneDisplay = (rawPhone) => {
+    const v = rawPhone ?? "";
+    const s = typeof v === "string" ? v.trim() : String(v).trim();
+    if (!s) return "—";
+    if (/_no_phone_/i.test(s)) return "—";
+    return s;
+  };
   
   return (
     <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
@@ -70,8 +89,8 @@ const PatientDropdown = ({
               />
             </div>
             <div className="w-1/3">Imię i nazwisko</div>
-            <div className="w-1/4">ID Pacjenta</div>
-            <div className="w-1/6">Płeć</div>
+            <div className="w-1/4">PESEL / Nr dokumentu</div>
+            <div className="w-1/5">Telefon</div>
             <div className="w-1/6 flex items-center">
               Wiek
               <svg
@@ -125,12 +144,12 @@ const PatientDropdown = ({
                 <div>
                   <div className="font-medium">{patient.name}</div>
                   <div className="text-sm text-gray-500">
-                    {patient.username}
+                    ID: {patient.id}
                   </div>
                 </div>
               </div>
-              <div className="w-1/4">{patient.id}</div>
-              <div className="w-1/6">{translateSexToPolish(patient.sex)}</div>
+              <div className="w-1/4">{getPeselOrDocumentId(patient)}</div>
+              <div className="w-1/5">{getPhoneDisplay(patient.phone)}</div>
               <div className="w-1/6">{patient.age}</div>
               <div className="w-1/6 text-right">
                 <button

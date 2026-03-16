@@ -1658,23 +1658,33 @@ function AppointmentFormModal({
 
         {/* Rodzaj wizyty (type of consultation) – Windows-style category → type cascade */}
         {visitReasonsData.categories.length > 0 && (
-          <div className="bg-teal-50/50 p-4 rounded-lg border border-teal-200">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaj wizyty (typ konsultacji)</label>
-            <VisitReasonCascadeDropdown
-              categories={visitReasonsData.categories}
-              value={appointmentData.visitReason}
-              onChange={(displayName) => {
-                const cat = visitReasonsData.categories.find((c) =>
-                  (c.types || []).some((t) => t.displayName === displayName)
-                );
-                setAppointmentData((prev) => ({
-                  ...prev,
-                  visitReason: displayName,
-                  visitReasonCategoryId: cat?.id ?? prev.visitReasonCategoryId,
-                }));
-              }}
-              placeholder="Wybierz rodzaj wizyty..."
-            />
+          <div className="bg-teal-50/50 p-4 rounded-lg border border-teal-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaj wizyty (typ konsultacji)</label>
+              <VisitReasonCascadeDropdown
+                categories={visitReasonsData.categories}
+                value={appointmentData.visitReason}
+                onChange={(displayName) => {
+                  const cat = visitReasonsData.categories.find((c) =>
+                    (c.types || []).some((t) => t.displayName === displayName)
+                  );
+                  setAppointmentData((prev) => ({
+                    ...prev,
+                    visitReason: displayName,
+                    visitReasonCategoryId: cat?.id ?? prev.visitReasonCategoryId,
+                  }));
+                }}
+                placeholder="Wybierz rodzaj wizyty..."
+              />
+            </div>
+            <div className="md:w-56 flex-shrink-0">
+              <p className="text-xs font-medium text-gray-500 mb-1 text-right md:text-left">
+                Czas trwania wizyty
+              </p>
+              <div className="inline-flex items-center justify-center md:justify-start w-full px-3 py-2 rounded-lg bg-white border border-teal-100 text-sm font-semibold text-teal-700">
+                {appointmentData.customDuration || appointmentData.duration || 30} min
+              </div>
+            </div>
           </div>
         )}
         
@@ -1796,24 +1806,6 @@ function AppointmentFormModal({
                     {validateCustomDuration(appointmentData.customDuration)}
                   </p>
                 )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Typ wizyty
-                </label>
-                <select
-                  name="visitType"
-                  value={appointmentData.visitType || ""}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Wybierz typ wizyty</option>
-                  <option value="consultation">Konsultacja</option>
-                  <option value="emergency">Nagły przypadek</option>
-                  <option value="followup">Wizyta kontrolna</option>
-                  <option value="quick_check">Szybka kontrola</option>
-                  <option value="extended_consultation">Rozszerzona konsultacja</option>
-                </select>
               </div>
             </div>
           </div>

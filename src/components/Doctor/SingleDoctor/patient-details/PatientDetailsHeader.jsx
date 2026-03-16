@@ -164,6 +164,7 @@ const PatientDetailsHeader = () => {
   // Session countdown: time remaining until session ends (uses INACTIVITY_TIMEOUT from config)
   const [sessionRemainingMs, setSessionRemainingMs] = useState(null);
   const [sessionDurationMs, setSessionDurationMs] = useState(30 * 60 * 1000); // default 30 min
+  const [showSessionExpiryModal, setShowSessionExpiryModal] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -174,7 +175,7 @@ const PatientDetailsHeader = () => {
       sessionStorage.setItem(SESSION_STORAGE_KEY, String(start));
       return start;
     };
-    const startTime = initStart();
+    initStart(); // ensure key exists
 
     const fetchDuration = async () => {
       try {
@@ -188,6 +189,8 @@ const PatientDetailsHeader = () => {
 
     const update = () => {
       if (cancelled) return;
+      const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      const startTime = stored ? parseInt(stored, 10) : Date.now();
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, sessionDurationMs - elapsed);
       setSessionRemainingMs(remaining);
@@ -199,6 +202,18 @@ const PatientDetailsHeader = () => {
       clearInterval(t);
     };
   }, [sessionDurationMs]);
+
+  // Show "session will expire soon / extend?" modal when remaining reaches 0
+  useEffect(() => {
+    if (sessionRemainingMs !== null && sessionRemainingMs <= 0) {
+      setShowSessionExpiryModal(true);
+    }
+  }, [sessionRemainingMs]);
+
+  const handleExtendSession = () => {
+    sessionStorage.setItem(SESSION_STORAGE_KEY, String(Date.now()));
+    setShowSessionExpiryModal(false);
+  };
 
   const sessionRemainingMin = sessionRemainingMs != null ? Math.ceil(sessionRemainingMs / 60000) : null;
   const sessionLabel =
@@ -387,6 +402,40 @@ const PatientDetailsHeader = () => {
           )}
         </div>
       </div>
+
+      {/* Session expiry modal: when counter is 0 min, ask to extend or logout */}
+      {showSessionExpiryModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="session-expiry-title">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 id="session-expiry-title" className="text-lg font-semibold text-gray-900 mb-2">
+              Sesja wkrótce wygaśnie
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Czas sesji dobiegł końca. Czy chcesz przedłużyć sesję i pozostać zalogowany?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSessionExpiryModal(false);
+                  handleLogout();
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
+              >
+                Wyloguj
+              </button>
+              <button
+                type="button"
+                onClick={handleExtendSession}
+                className="px-4 py-2 text-sm font-medium text-white rounded-lg"
+                style={{ backgroundColor: HEADER_BG }}
+              >
+                Przedłuż sesję
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

@@ -1135,7 +1135,15 @@ const PatientDetailsPage = () => {
                 <FileText size={16} className="text-teal-500" />
                 <span className="text-sm text-gray-600">Rodzaj wizyty:</span>
                 <span className="text-sm font-medium">
-                  {appointment.visitReason || appointment.consultationType}
+                  {(() => {
+                    const raw = appointment.visitReason || appointment.consultationType || "";
+                    const s = typeof raw === "string" ? raw.trim() : String(raw).trim();
+                    if (!s) return "—";
+                    const lower = s.toLowerCase();
+                    if (lower === "re-visit") return "Konsultacja lekarska";
+                    if (lower === "first-time") return "Konsultacja pierwszorazowa";
+                    return s;
+                  })()}
                 </span>
                 {appointment.visitTypeVerified === false && appointment.status !== "completed" && appointment.status !== "Completed" && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Do weryfikacji</span>

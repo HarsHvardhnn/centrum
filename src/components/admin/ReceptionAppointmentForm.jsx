@@ -866,6 +866,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                 </p>
               </div>
               
+              {/* Notatki (notes) – hidden for now, not sent to backend
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2">Notatki do wizyty</label>
                 <textarea
@@ -877,6 +878,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                   placeholder="Opcjonalne notatki..."
                 />
               </div>
+              */}
 
               <label className="inline-flex items-center">
                 <input
@@ -969,7 +971,8 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
             : appointmentData.selectedSlot?.endTime,
           duration: appointmentData.customDuration || appointmentData.duration,
           consultationType: "offline",
-          message: appointmentData.notes || "",
+          // message (Notatki) – not sent for now; field commented out in step 4
+          message: "",
           smsConsentAgreed: true,
           isBackdated: appointmentData.isBackdated || false,
           customDuration: appointmentData.customDuration || null,

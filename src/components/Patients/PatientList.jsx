@@ -1155,7 +1155,15 @@ function LabAppointmentsContent({ clinic }) {
                         {idOrPeselLine}
                       </div>
                       <div className="text-sm text-gray-600 mt-1">
-                        {appointment.visitReason || appointment.consultationType || "—"}
+                        {(() => {
+                          const raw = appointment.visitReason || appointment.consultationType || appointment.metadata?.visitType || "";
+                          const s = typeof raw === "string" ? raw.trim() : String(raw).trim();
+                          if (!s) return "Konsultacja lekarska";
+                          const lower = s.toLowerCase();
+                          if (lower === "re-visit") return "Konsultacja lekarska";
+                          if (lower === "first-time") return "Konsultacja pierwszorazowa";
+                          return s;
+                        })()}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
                         Utworzono przez: {getCreatedByRoleLabel(appointment)}
