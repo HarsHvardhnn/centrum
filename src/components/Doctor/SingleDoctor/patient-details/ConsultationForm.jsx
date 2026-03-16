@@ -7,6 +7,7 @@ import FileListItem from "./FileListItem";
 import { toast } from "sonner";
 import { apiCaller } from "../../../../utils/axiosInstance";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
+import { stripDoctorTitle } from "../../../../utils/statusHelper";
 
 const ConsultationForm = ({
   patientData,
@@ -216,13 +217,9 @@ const ConsultationForm = ({
           <label className="block text-sm text-gray-600 mb-1">
             Lekarz prowadzący
           </label>
-          <input
-            type="text"
-            disabled
-            value={consultationData.consultationDoctor}
-            onChange={(e) => handleConsultationChange("doctor", e.target.value)}
-            className="w-full p-2.5 border border-gray-200 rounded-lg"
-          />
+          <p className="w-full p-2.5 text-sm font-medium text-gray-900 bg-gray-50 border border-gray-200 rounded-lg">
+            {stripDoctorTitle(consultationData.consultationDoctor || "") || "—"}
+          </p>
         </div>
         {/* Rodzaj wizyty – weryfikacja przez lekarza (słownik) */}
         <div className="md:col-span-2">

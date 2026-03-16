@@ -618,21 +618,34 @@ export default function UserManagement() {
         reviewNotes: patientDetails.reviewNotes,
       };
 
-      // Extract phone code from existing phone number if it exists (ignore _no_phone_* placeholders)
+      // Extract phone code from existing phone number (ignore _no_phone_* placeholders).
+      // Prefer backend phoneCode when present; otherwise normalize and match longest code (e.g. +380 before +38).
       if (hasRealPhone) {
-        const phoneWithCode = String(rawPhone).trim();
-        const foundCountry = phoneCountryCodes.find(country =>
-          phoneWithCode.startsWith(country.code)
-        );
-
-        if (foundCountry) {
-          mappedFormData.phoneCode = foundCountry.code;
-          mappedFormData.mobileNumber = phoneWithCode.replace(foundCountry.code, '').trim();
-          setSelectedPhoneCode(foundCountry.code);
+        const apiPhoneCode = patientDetails.phoneCode ? String(patientDetails.phoneCode).trim() : null;
+        if (apiPhoneCode && phoneCountryCodes.some((c) => c.code === apiPhoneCode)) {
+          mappedFormData.phoneCode = apiPhoneCode;
+          let num = String(rawPhone).trim();
+          if (num.startsWith(apiPhoneCode)) num = num.slice(apiPhoneCode.length).trim();
+          mappedFormData.mobileNumber = num.replace(/\s+/g, "");
+          setSelectedPhoneCode(apiPhoneCode);
         } else {
-          mappedFormData.phoneCode = "+48";
-          mappedFormData.mobileNumber = phoneWithCode;
-          setSelectedPhoneCode("+48");
+          let phoneWithCode = String(rawPhone).trim();
+          if (!phoneWithCode.startsWith("+")) {
+            phoneWithCode = phoneWithCode.replace(/^0+/, "");
+            if (phoneWithCode.length > 0) phoneWithCode = "+" + phoneWithCode;
+          }
+          const sortedCodes = [...phoneCountryCodes].sort((a, b) => b.code.length - a.code.length);
+          const foundCountry = sortedCodes.find((country) => phoneWithCode.startsWith(country.code));
+
+          if (foundCountry) {
+            mappedFormData.phoneCode = foundCountry.code;
+            mappedFormData.mobileNumber = phoneWithCode.replace(foundCountry.code, "").trim().replace(/\s+/g, "");
+            setSelectedPhoneCode(foundCountry.code);
+          } else {
+            mappedFormData.phoneCode = "+48";
+            mappedFormData.mobileNumber = "";
+            setSelectedPhoneCode("+48");
+          }
         }
       } else {
         mappedFormData.phoneCode = "+48";
@@ -670,6 +683,26 @@ export default function UserManagement() {
           } catch (e) {
             console.warn("PESEL check failed:", e);
           }
+        }
+      }
+
+      // When international patient, validate that document number does not already exist (another patient)
+      if (formData.isInternationalPatient && formData.documentCountry?.trim() && formData.documentType?.trim() && formData.documentNumber?.trim()) {
+        try {
+          const res = await patientService.getPatientByDocumentNumber(
+            formData.documentNumber.trim(),
+            formData.documentCountry.trim(),
+            formData.documentType.trim()
+          );
+          if (res?.exists) {
+            const existingId = res.patientId ?? res.patient?._id ?? res.patient?.id;
+            if (!isEditMode || (existingId && existingId !== currentPatientId)) {
+              toast.error("Pacjent z podanym numerem dokumentu już istnieje w systemie.");
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn("Document number check failed:", e);
         }
       }
 

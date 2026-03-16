@@ -1291,7 +1291,7 @@ function AppointmentFormModal({
           {appointmentData.visitType === "visit-only" && (
             <div className="bg-white p-4 rounded-lg border border-gray-200 mt-2">
               <p className="text-sm text-gray-600 mb-3">
-                Utwórz wizytę bez pacjenta. Podaj imię (wymagane); nazwisko opcjonalnie. PESEL i pełna rejestracja pacjenta — później przez „Zakończ rejestrację” z listy wizyt.
+                Wizyta bez pacjenta. Podaj imię (wymagane), nazwisko opcjonalnie. PESEL oraz pełna rejestracja pacjenta zostaną uzupełnione później poprzez „Zakończ rejestrację” z listy wizyt. Chcesz podać numer telefonu lub PESEL już teraz? Wybierz typ wizyty „Pierwsza wizyta".
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -1914,8 +1914,24 @@ function AppointmentFormModal({
           </div>
         )}
 
-        {/* SMS Consent - only show when patient was added (option 1 or 2); hide entirely for visit-only (option 3) */}
-        {!isVisitOnly && (
+        {/* SMS Consent - only show when patient was added (option 1 or 2) AND we have a phone number; hide for visit-only (option 3) or when no phone */}
+        {(() => {
+          const hasPatientPhone = (() => {
+            if (isVisitOnly) return false;
+            if (isFirstTimeVisit) {
+              const p = appointmentData.newPatientPhone ?? "";
+              const s = String(p).trim();
+              return s.length > 0 && !/_no_phone_/i.test(s);
+            }
+            if (selectedPatient) {
+              const raw = selectedPatient.phone ?? selectedPatient.phoneNumber ?? "";
+              const s = String(raw).trim();
+              return s.length > 0 && !/_no_phone_/i.test(s);
+            }
+            return false;
+          })();
+          return !isVisitOnly && hasPatientPhone;
+        })() && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <h4 className="text-md font-medium text-blue-800 mb-3">Zgoda na SMS</h4>
             <div className="flex items-center space-x-2">
@@ -2009,9 +2025,15 @@ function AppointmentFormModal({
             </div>
             {!isVisitOnly && (
               <div>
-                <span className="font-medium">Zgoda na SMS:</span> {
-                  appointmentData.smsConsentAgreed ? "✓ Tak" : "✗ Nie"
-                }
+                <span className="font-medium">Zgoda na SMS:</span>{" "}
+                {(() => {
+                  const hasPhone = isFirstTimeVisit
+                    ? (String(appointmentData.newPatientPhone ?? "").trim().length > 0 && !/_no_phone_/i.test(String(appointmentData.newPatientPhone ?? "")))
+                    : selectedPatient
+                      ? (String(selectedPatient.phone ?? selectedPatient.phoneNumber ?? "").trim().length > 0 && !/_no_phone_/i.test(String(selectedPatient.phone ?? selectedPatient.phoneNumber ?? "")))
+                      : false;
+                  return hasPhone ? (appointmentData.smsConsentAgreed ? "✓ Tak" : "✗ Nie") : "Nie dotyczy (brak numeru telefonu)";
+                })()}
               </div>
             )}
             {(appointmentData.customDuration || appointmentData.customStartTime || appointmentData.selectedSlot) && (
@@ -2098,6 +2120,22 @@ function AppointmentFormModal({
         return;
       }
 
+      // Only send SMS consent when we have a phone number (no point for visit-only or when phone not provided)
+      const hasPatientPhoneForSubmit = (() => {
+        if (appointmentData.visitType === "visit-only") return false;
+        if (appointmentData.visitType === "first-time") {
+          const p = appointmentData.newPatientPhone ?? "";
+          const s = String(p).trim();
+          return s.length > 0 && !/_no_phone_/i.test(s);
+        }
+        if (selectedPatient) {
+          const raw = selectedPatient.phone ?? selectedPatient.phoneNumber ?? "";
+          const s = String(raw).trim();
+          return s.length > 0 && !/_no_phone_/i.test(s);
+        }
+        return false;
+      })();
+
       // Collect all data for backend submission using the new reception appointment API
       const appointmentSubmissionData = {
         date: appointmentData.selectedDate,
@@ -2108,7 +2146,7 @@ function AppointmentFormModal({
         consultationType: "offline",
         ...(appointmentData.visitReason && { visitReason: appointmentData.visitReason }),
         message: appointmentData.notes || "",
-        smsConsentAgreed: appointmentData.smsConsentAgreed,
+        smsConsentAgreed: hasPatientPhoneForSubmit ? appointmentData.smsConsentAgreed : false,
         persistSmsConsent: appointmentData.persistSmsConsent || false,
         // Receptionist override capabilities
         isBackdated: appointmentData.isBackdated || false,

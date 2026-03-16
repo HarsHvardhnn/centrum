@@ -178,6 +178,7 @@ function LabAppointmentsContent({ clinic }) {
           visitId: data.visitId,
           source: data.source,
           consents: Array.isArray(data.consents) ? data.consents : [],
+          patientData: data.patientData ?? null,
         });
       } else {
         setConsentsError(data?.message || "Nie udało się pobrać zgód.");
@@ -1701,6 +1702,27 @@ function LabAppointmentsContent({ clinic }) {
                 )}
                 {!consentsLoading && !consentsError && consentsData && (
                   <>
+                    {consentsData.patientData && (
+                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <h4 className="text-sm font-medium text-gray-800 mb-2">Dane pacjenta</h4>
+                        <dl className="grid grid-cols-1 gap-1.5 text-sm">
+                          {(consentsData.patientData.name != null && String(consentsData.patientData.name).trim() !== "") && (
+                            <div><dt className="text-gray-500 inline">Imię i nazwisko: </dt><dd className="inline text-gray-900">{consentsData.patientData.name}</dd></div>
+                          )}
+                          {(consentsData.patientData.firstName != null && String(consentsData.patientData.firstName).trim() !== "") && (
+                            <div><dt className="text-gray-500 inline">Imię: </dt><dd className="inline text-gray-900">{consentsData.patientData.firstName}</dd></div>
+                          )}
+                          {(consentsData.patientData.lastName != null && String(consentsData.patientData.lastName).trim() !== "") && (
+                            <div><dt className="text-gray-500 inline">Nazwisko: </dt><dd className="inline text-gray-900">{consentsData.patientData.lastName}</dd></div>
+                          )}
+                          <div><dt className="text-gray-500 inline">E-mail: </dt><dd className="inline text-gray-900">{consentsData.patientData.email != null && String(consentsData.patientData.email).trim() !== "" ? consentsData.patientData.email : "—"}</dd></div>
+                          <div><dt className="text-gray-500 inline">Telefon: </dt><dd className="inline text-gray-900">{consentsData.patientData.phone != null && String(consentsData.patientData.phone).trim() !== "" && !/_no_phone_/i.test(String(consentsData.patientData.phone)) ? (consentsData.patientData.phoneCode ? `${consentsData.patientData.phoneCode} ${consentsData.patientData.phone}` : consentsData.patientData.phone) : "—"}</dd></div>
+                          <div><dt className="text-gray-500 inline">Płeć: </dt><dd className="inline text-gray-900">{consentsData.patientData.sex != null && String(consentsData.patientData.sex).trim() !== "" ? (consentsData.patientData.sex === "Male" ? "Mężczyzna" : consentsData.patientData.sex === "Female" ? "Kobieta" : consentsData.patientData.sex) : "—"}</dd></div>
+                          <div><dt className="text-gray-500 inline">Data urodzenia: </dt><dd className="inline text-gray-900">{consentsData.patientData.dateOfBirth != null && String(consentsData.patientData.dateOfBirth).trim() !== "" ? (typeof consentsData.patientData.dateOfBirth === "string" && consentsData.patientData.dateOfBirth.match(/^\d{4}-\d{2}-\d{2}/) ? new Date(consentsData.patientData.dateOfBirth).toLocaleDateString("pl-PL") : consentsData.patientData.dateOfBirth) : "—"}</dd></div>
+                          <div><dt className="text-gray-500 inline">PESEL / Nr dokumentu: </dt><dd className="inline text-gray-900">{consentsData.patientData.govtId != null && String(consentsData.patientData.govtId).trim() !== "" ? consentsData.patientData.govtId : "—"}</dd></div>
+                        </dl>
+                      </div>
+                    )}
                     <div className="mb-4 text-sm text-gray-600">
                       Źródło:{" "}
                       <span className="font-medium">

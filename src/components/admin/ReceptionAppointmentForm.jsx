@@ -411,7 +411,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
               {appointmentData.visitType === "visit-only" && (
                 <div className="bg-white p-4 rounded-lg border border-gray-200 mt-2">
                   <p className="text-sm text-gray-600 mb-3">
-                    Utwórz wizytę bez pacjenta. Podaj imię i nazwisko. PESEL i pełna rejestracja pacjenta — później przez „Zakończ rejestrację” z listy wizyt.
+                    Wizyta bez pacjenta. Podaj imię (wymagane), nazwisko opcjonalnie. PESEL oraz pełna rejestracja pacjenta zostaną uzupełnione później poprzez „Zakończ rejestrację” z listy wizyt. Chcesz podać numer telefonu lub PESEL już teraz? Wybierz typ wizyty „Pierwsza wizyta".
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>

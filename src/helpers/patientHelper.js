@@ -562,6 +562,32 @@ const patientService = {
   },
 
   /**
+   * Check if a patient exists by identity document (for international patients).
+   * Uses GET /patients/by-document. Key format: "country|documentType|documentNumber".
+   * @param {string} documentNumber - Document number (required)
+   * @param {string} [documentCountry] - Country of document issue
+   * @param {string} [documentType] - Document type (e.g. Passport, ID Card)
+   * @returns {Promise<{ success?: boolean, exists: boolean, message?: string, patientId?: string, patient?: object }>}
+   */
+  getPatientByDocumentNumber: async (documentNumber, documentCountry, documentType) => {
+    try {
+      const num = String(documentNumber ?? "").trim();
+      if (!num) return { exists: false };
+      const key = [documentCountry, documentType, num].filter(Boolean).map((s) => String(s).trim()).join("|");
+      if (!key) return { exists: false };
+      const response = await apiCaller(
+        "GET",
+        `/patients/by-document?${new URLSearchParams({ key: key }).toString()}`
+      );
+      return response.data ?? response;
+    } catch (error) {
+      if (error.response?.status === 404) return { exists: false };
+      console.error("Error checking patient by document number:", error);
+      throw error;
+    }
+  },
+
+  /**
    * Check if a patient is available for appointment
    * @param {string} patientId - Patient ID
    * @param {string} date - Date in ISO format

@@ -37,13 +37,44 @@ const DemographicsForm = ({
     fullName: "",
     govtId: "",
     sex: "",
-    mobileNumber: ""
+    mobileNumber: "",
+    documentNumber: ""
   });
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [peselExists, setPeselExists] = useState(false);
   const [peselCheckLoading, setPeselCheckLoading] = useState(false);
+  const [documentNumberExists, setDocumentNumberExists] = useState(false);
+  const [documentNumberCheckLoading, setDocumentNumberCheckLoading] = useState(false);
 
   const phoneCountryCodes = externalPhoneCountryCodes ?? PHONE_COUNTRY_CODES;
+
+  // When international patient and document fields filled, check if document number already exists
+  useEffect(() => {
+    if (!formData.isInternationalPatient || !formData.documentNumber?.trim() || !formData.documentCountry?.trim() || !formData.documentType?.trim()) {
+      setDocumentNumberExists(false);
+      return;
+    }
+    let cancelled = false;
+    setDocumentNumberCheckLoading(true);
+    setDocumentNumberExists(false);
+    patientService.getPatientByDocumentNumber(
+      formData.documentNumber.trim(),
+      formData.documentCountry.trim(),
+      formData.documentType.trim()
+    ).then((res) => {
+      if (cancelled) return;
+      const existingId = res.patientId ?? res.patient?._id ?? res.patient?.id;
+      const isOtherPatient = res?.exists && (!isEditMode || (existingId && existingId !== currentPatientId));
+      setDocumentNumberExists(!!isOtherPatient);
+      setErrors((prev) => ({ ...prev, documentNumber: isOtherPatient ? "Pacjent z tym numerem dokumentu już istnieje w systemie." : "" }));
+    }).catch(() => {
+      if (!cancelled) setDocumentNumberExists(false);
+      if (!cancelled) setErrors((prev) => ({ ...prev, documentNumber: "" }));
+    }).finally(() => {
+      if (!cancelled) setDocumentNumberCheckLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [formData.isInternationalPatient, formData.documentNumber, formData.documentCountry, formData.documentType, isEditMode, currentPatientId]);
 
   // When adding (not editing) and PESEL has 11 digits and not international, check if patient already exists
   useEffect(() => {
@@ -553,8 +584,14 @@ const DemographicsForm = ({
                   value={formData.documentNumber || ""}
                   onChange={handleChange}
                   placeholder="Numer dokumentu"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className={`w-full px-3 py-2 border rounded-md ${errors.documentNumber ? "border-red-500" : "border-gray-300"}`}
                 />
+                {documentNumberCheckLoading && (
+                  <p className="mt-0.5 text-xs text-gray-500">Sprawdzanie numeru dokumentu…</p>
+                )}
+                {errors.documentNumber && (
+                  <p className="mt-1 text-sm text-red-500">{errors.documentNumber}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -227,7 +227,7 @@ const PatientDetailsHeader = () => {
 
   return (
     <header
-      className="w-full flex items-center justify-between gap-6 py-5 px-10 min-h-[80px] z-20 relative"
+      className="w-full flex items-center justify-between gap-4 py-2.5 px-6 min-h-0 z-20 relative"
       style={{
         backgroundColor: HEADER_BG,
         boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
@@ -237,7 +237,7 @@ const PatientDetailsHeader = () => {
       <button
         type="button"
         onClick={() => window.location.reload()}
-        className="font-bold text-lg uppercase tracking-tight shrink-0 flex items-center"
+        className="font-bold text-base uppercase tracking-tight shrink-0 flex items-center"
         style={{ color: TEXT_PRIMARY }}
         title="Odśwież stronę"
       >
@@ -259,7 +259,7 @@ const PatientDetailsHeader = () => {
             onChange={(e) => setSearchValue(e.target.value)}
             onFocus={() => searchValue.trim() && setShowDropdown(true)}
             placeholder="Szukaj pacjenta (PESEL / Nazwisko)"
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white text-gray-800 border border-gray-200 focus:ring-2 focus:ring-offset-0 focus:ring-white/50 outline-none"
+            className="w-full pl-10 pr-4 py-2 rounded-lg bg-white text-gray-800 border border-gray-200 focus:ring-2 focus:ring-offset-0 focus:ring-white/50 outline-none text-sm"
             style={{ color: "#1f2937" }}
           />
           {showDropdown && searchValue.trim() && (
@@ -296,11 +296,11 @@ const PatientDetailsHeader = () => {
       </form>
 
       {/* Right section: Session, Notifications, User, Time */}
-      <div className="flex items-center gap-4 shrink-0">
+      <div className="flex items-center gap-3 shrink-0">
         {/* Session countdown: time remaining until session ends */}
-        <div className="flex items-center gap-1.5 shrink-0" style={{ color: TEXT_PRIMARY }} title="Pozostały czas sesji">
-          <Clock size={18} strokeWidth={2} />
-          <span className="text-sm font-medium whitespace-nowrap">{sessionLabel}</span>
+        <div className="flex items-center gap-1 shrink-0" style={{ color: TEXT_PRIMARY }} title="Pozostały czas sesji">
+          <Clock size={16} strokeWidth={2} />
+          <span className="text-xs font-medium whitespace-nowrap">{sessionLabel}</span>
         </div>
 
         {/* Notifications */}
@@ -311,7 +311,7 @@ const PatientDetailsHeader = () => {
             style={{ color: TEXT_PRIMARY }}
             aria-label="Powiadomienia"
           >
-            <Bell size={20} strokeWidth={2} />
+            <Bell size={18} strokeWidth={2} />
           </button>
           {notificationCount > 0 && (
             <span
@@ -324,48 +324,48 @@ const PatientDetailsHeader = () => {
         </div>
 
         {/* User - avatar/placeholder + name block aligned */}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
           {user?.profilePicture ? (
             <img
               src={cleanProfilePictureUrl(user.profilePicture)}
               alt={user.name}
-              className="rounded-full h-10 w-10 object-cover shrink-0 border-2 border-white"
+              className="rounded-full h-8 w-8 object-cover shrink-0 border-2 border-white"
               referrerPolicy="no-referrer"
             />
           ) : (
             <div
-              className="rounded-full h-10 w-10 min-w-[2.5rem] flex items-center justify-center font-semibold text-sm shrink-0 border-2 border-white"
+              className="rounded-full h-8 w-8 min-w-[2rem] flex items-center justify-center font-semibold text-xs shrink-0 border-2 border-white"
               style={{ backgroundColor: "rgba(255,255,255,0.3)", color: TEXT_PRIMARY }}
             >
               {initials}
             </div>
           )}
           <div className="flex flex-col items-start justify-center min-w-0">
-            <span className="text-sm font-semibold leading-tight truncate max-w-[140px]" style={{ color: TEXT_PRIMARY }}>
+            <span className="text-xs font-semibold leading-tight truncate max-w-[120px]" style={{ color: TEXT_PRIMARY }}>
               {displayName}
             </span>
-            <span className="text-xs leading-tight font-normal" style={{ color: TEXT_SECONDARY }}>
+            <span className="text-[11px] leading-tight font-normal" style={{ color: TEXT_SECONDARY }}>
               {specialization}
             </span>
           </div>
         </div>
 
         {/* Time */}
-        <span className="text-sm font-medium tabular-nums shrink-0" style={{ color: TEXT_PRIMARY }}>
+        <span className="text-xs font-medium tabular-nums shrink-0" style={{ color: TEXT_PRIMARY }}>
           {currentTime}
         </span>
 
         {/* Three-dots menu: Zobacz profil, Ustawienia, Wyloguj */}
         <div className="relative shrink-0" ref={menuRef}>
-          <button
-            type="button"
-            onClick={() => setMenuOpen((prev) => !prev)}
-            className="p-2 rounded-lg border-2 border-white/60 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/50"
-            style={{ color: TEXT_PRIMARY }}
-            aria-label="Opcje"
-          >
-            <MoreHorizontal size={22} />
-          </button>
+        <button
+          type="button"
+          onClick={() => setMenuOpen((prev) => !prev)}
+          className="p-1.5 rounded-lg border-2 border-white/60 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/50"
+          style={{ color: TEXT_PRIMARY }}
+          aria-label="Opcje"
+        >
+          <MoreHorizontal size={18} />
+        </button>
           {menuOpen && (
             <div
               className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"

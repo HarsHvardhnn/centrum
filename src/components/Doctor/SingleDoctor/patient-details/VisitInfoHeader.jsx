@@ -117,6 +117,7 @@ const VisitInfoHeader = ({
         />
       </div>
       <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-600 shrink-0">Lekarz:</span>
         <span className="text-sm font-medium text-gray-900">{doctorName}</span>
       </div>
       <div className="flex items-center gap-2">

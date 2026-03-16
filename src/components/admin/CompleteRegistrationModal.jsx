@@ -228,6 +228,20 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
         toast.error("Wypełnij wszystkie pola dokumentu (kraj wydania, typ dokumentu, numer).");
         return;
       }
+      // Check if document number already exists (another patient) before submitting
+      try {
+        const res = await patientService.getPatientByDocumentNumber(
+          formData.documentNumber.trim(),
+          formData.documentCountry.trim(),
+          formData.documentType.trim()
+        );
+        if (res?.exists && !editingExistingPatientId) {
+          toast.error("Pacjent z podanym numerem dokumentu już istnieje w systemie.");
+          return;
+        }
+      } catch (e) {
+        console.warn("Document number check failed:", e);
+      }
     }
     setLoading(true);
     try {
