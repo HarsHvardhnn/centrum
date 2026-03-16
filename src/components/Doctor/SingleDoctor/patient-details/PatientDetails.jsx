@@ -150,7 +150,7 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
       "Email": patientData.email,
       "Telefon": (() => {
         const raw = patientData?.phone != null ? String(patientData.phone).trim() : "";
-        const noPhone = !raw || raw.startsWith("__no_phone_") || raw.replace(/\D/g, "").length < 6;
+        const noPhone = !raw || /_no_phone_/i.test(raw) || raw.replace(/\D/g, "").length < 6;
         if (noPhone) return "—";
         return raw.startsWith("+") ? raw : `+${raw}`;
       })(),

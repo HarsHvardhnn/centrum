@@ -16,12 +16,12 @@ const PatientHeaderCard = ({ patient, onShowMoreDetails }) => {
   const patientId = patient?.patientId ?? patient?.patient_id ?? "—";
   const pesel = patient?.govtId || patient?.pesel || patient?.PESEL || "—";
 
-  // Phone: show "—" when empty, only country code (e.g. "+48"), or placeholder; otherwise ensure area code starts with +
+  // Phone: show "—" when empty, only country code (e.g. "+48"), or backend placeholder (_no_phone_*); otherwise ensure area code starts with +
   const rawPhone = patient?.phone != null ? String(patient.phone).trim() : "";
   const isNoPhone =
     !rawPhone ||
-    rawPhone.startsWith("__no_phone_") ||
-    rawPhone.replace(/\D/g, "").length < 6; // e.g. "+48" or "48" with no subscriber digits
+    /_no_phone_/i.test(rawPhone) ||
+    rawPhone.replace(/\D/g, "").length < 6; // e.g. "+48" or "48" with no subscriber digits, or "+48_no_phone_..."
   const phone = isNoPhone
     ? "—"
     : rawPhone.startsWith("+")
