@@ -183,7 +183,8 @@ const PatientsList = ({
     return pages;
   };
 
-  const displayTotal = totalPatients;
+  // Counter in header should match what we actually render in the list
+  const displayTotal = sortedPatients.length;
 
   return (
     <div className="bg-white border rounded-lg shadow-sm">
