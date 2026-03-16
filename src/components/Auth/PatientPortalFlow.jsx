@@ -6,6 +6,9 @@ import { toast } from "sonner";
 const PESEL_LENGTH = 11;
 const PESEL_REGEX = /^\d{11}$/;
 
+const PESEL_NOT_FOUND_MESSAGE =
+  "Podany numer PESEL nie został znaleziony w naszym systemie. Portal pacjenta jest dostępny tylko dla pacjentów, którzy mieli już wizytę w Centrum Medycznym 7. Proszę skontaktować się z rejestracją pod numerem 797 127 487, aby utworzyć konto.\n\nThe provided PESEL number was not found in our system. The patient portal is available only for patients who have already had a visit at Centrum Medyczne 7. Please contact reception at 797 127 487 to create your account.";
+
 /**
  * Patient Portal flow: PESEL → check-by-pesel → (if found) email → create-account.
  * Supports both success sources: existing_patient (has visited) and pending_visit (PESEL in tempPesel/pendingPesel).
@@ -41,13 +44,13 @@ const PatientPortalFlow = ({ onAlreadyHasAccount, onSwitchToStaff }) => {
         setPatientId(response.data.patientId ?? null);
         setStep("email");
       } else {
-        setError("Nie znaleziono konta pacjenta. Proszę skontaktować się z rejestracją.");
+        setError(PESEL_NOT_FOUND_MESSAGE);
       }
     } catch (err) {
       const status = err.response?.status;
       const data = err.response?.data;
       if (status === 404 || data?.found === false) {
-        setError("Nie znaleziono konta pacjenta. Proszę skontaktować się z rejestracją.");
+        setError(PESEL_NOT_FOUND_MESSAGE);
       } else if (status === 400 && data?.message) {
         setError(data.message);
       } else {
@@ -89,7 +92,7 @@ const PatientPortalFlow = ({ onAlreadyHasAccount, onSwitchToStaff }) => {
         }
         setError(data?.message || "Ten adres e-mail jest już przypisany do innego konta. Użyj innego adresu e-mail lub skontaktuj się z rejestracją.");
       } else if (status === 404 || data?.found === false) {
-        setError("Nie znaleziono konta pacjenta. Proszę skontaktować się z rejestracją.");
+        setError(PESEL_NOT_FOUND_MESSAGE);
       } else if (status === 400 && data?.message) {
         setError(data.message);
       } else {
@@ -150,7 +153,7 @@ const PatientPortalFlow = ({ onAlreadyHasAccount, onSwitchToStaff }) => {
               </div>
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                  <p className="text-sm text-red-800">{error}</p>
+                  <p className="text-sm text-red-800 whitespace-pre-line">{error}</p>
                 </div>
               )}
               <button
@@ -191,7 +194,7 @@ const PatientPortalFlow = ({ onAlreadyHasAccount, onSwitchToStaff }) => {
               </div>
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                  <p className="text-sm text-red-800">{error}</p>
+                  <p className="text-sm text-red-800 whitespace-pre-line">{error}</p>
                 </div>
               )}
               <div className="flex gap-3">
@@ -242,7 +245,7 @@ const PatientPortalFlow = ({ onAlreadyHasAccount, onSwitchToStaff }) => {
               onClick={onSwitchToStaff}
               className="text-sm text-gray-600 hover:text-[#003f78]"
             >
-              Logowanie dla personelu →
+              Masz już konto? Zaloguj się →
             </button>
           </div>
         )}

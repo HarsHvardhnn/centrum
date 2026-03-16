@@ -74,8 +74,19 @@ const AuthForm = ({ isLogin = false, onSwitchToPatientPortal }) => {
   // Validation schemas
   const loginSchema = Yup.object().shape({
     email: Yup.string()
-      .email("Nieprawidłowy format email")
-      .required("Email jest wymagany"),
+      .required("Email lub PESEL jest wymagany")
+      .test(
+        "email-or-pesel",
+        "Podaj poprawny adres e-mail lub numer PESEL (11 cyfr)",
+        (value) => {
+          if (!value) return false;
+          const trimmed = value.trim();
+          const emailRegex =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const peselRegex = /^\d{11}$/;
+          return emailRegex.test(trimmed) || peselRegex.test(trimmed.replace(/\D/g, ""));
+        }
+      ),
     password: Yup.string()
       .min(8, "Hasło musi mieć co najmniej 8 znaków")
       .required("Hasło jest wymagane"),
@@ -216,13 +227,24 @@ const AuthForm = ({ isLogin = false, onSwitchToPatientPortal }) => {
     }
   };
 
+  const isEmailFormat = (value) => {
+    const trimmed = (value || "").trim();
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(trimmed);
+  };
+
   // Enhanced login submission handler with 2FA support
   const handleLoginSubmit = async (values, { setSubmitting, setErrors }) => {
     try {
-      const response = await apiCaller("POST", "/auth/login", {
-        email: values.email,
-        password: values.password,
-      });
+      const identifier = (values.email || "").trim();
+      const peselDigits = identifier.replace(/\D/g, "").trim();
+
+      const payload = isEmailFormat(identifier)
+        ? { email: identifier, password: values.password }
+        : { pesel: peselDigits, password: values.password };
+
+      const response = await apiCaller("POST", "/auth/login", payload);
 
       // Check if 2FA is required
       if (response.data.requiresTwoFactor) {
@@ -675,14 +697,12 @@ const AuthForm = ({ isLogin = false, onSwitchToPatientPortal }) => {
           // Login/Signup Screen
           <>
             <h2 className="text-3xl font-bold text-black mb-2 text-center">
-              {isLogin
-                ? "Logowanie dla personelu"
-                : "Utwórz konto"}
+              {isLogin ? "Logowanie" : "Utwórz konto"}
             </h2>
 
             {isLogin && (
               <p className="text-gray-600 mb-8 text-center">
-                Dostęp tylko dla uprawnionych pracowników. Proszę wprowadzić dane logowania.
+                Zaloguj się, podając adres e-mail lub numer PESEL oraz hasło.
               </p>
             )}
 
@@ -753,13 +773,17 @@ const AuthForm = ({ isLogin = false, onSwitchToPatientPortal }) => {
                       htmlFor="email"
                       className="block text-[#003f78] font-medium mb-2"
                     >
-                      {isLogin ? "Nazwa użytkownika" : "Email*"}
+                      {isLogin ? "E-mail lub PESEL" : "Email*"}
                     </label>
                     <Field
-                      type="email"
+                      type="text"
                       id="email"
                       name="email"
-                      placeholder={isLogin ? "Wprowadź nazwę użytkownika (adres email przypisany do konta)" : "hello@example.com"}
+                      placeholder={
+                        isLogin
+                          ? "Wprowadź adres e-mail lub numer PESEL (11 cyfr)"
+                          : "hello@example.com"
+                      }
                       className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none bg-gray-50 ${
                         errors.email && touched.email
                           ? "border-red-500"
