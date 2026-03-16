@@ -51,10 +51,10 @@ const PatientDetailsFooter = ({
         </button>
       </div>
 
-      {/* Middle: last saved + current time (Poland) */}
+      {/* Middle: last auto-save time + current time (Poland) */}
       <div className="flex items-center justify-center gap-6">
         <span className="text-sm text-gray-500">
-          Ostatni zapis: {lastSavedTime ?? "—"}
+          Ostatni autozapis: {lastSavedTime ?? "—"}
         </span>
         <span className="text-sm text-gray-500">
           Godzina: {currentTime}

@@ -1326,6 +1326,17 @@ const PatientDetailsPage = () => {
                       toast.error(e.response?.data?.message || "Nie udało się usunąć rozpoznania");
                     }
                   }}
+                  onTogglePrimary={async (diagnosisId, isPrimary) => {
+                    if (!currentAppointmentId) return;
+                    try {
+                      await appointmentHelper.updateVisitDiagnosis(currentAppointmentId, diagnosisId, { isPrimary });
+                      const list = await appointmentHelper.getVisitDiagnoses(currentAppointmentId);
+                      setDiagnoses(list);
+                      toast.success(isPrimary ? "Ustawiono jako główne rozpoznanie" : "Ustawiono jako rozpoznanie dodatkowe");
+                    } catch (e) {
+                      toast.error(e.response?.data?.message || "Nie udało się zmienić typu rozpoznania");
+                    }
+                  }}
                 />
                 <ProceduresCard
                   procedures={procedures}

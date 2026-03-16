@@ -3,10 +3,16 @@ import { Search, X } from "lucide-react";
 
 const DEBOUNCE_MS = 300;
 
+const DIAGNOSIS_TYPE_LABELS = {
+  primary: "Główne",
+  additional: "Dodatkowe",
+};
+
 const DiagnosisCard = ({
   diagnoses = [],
   onAddDiagnosis,
   onRemoveDiagnosis,
+  onTogglePrimary,
   onSearchIcd10,
   disabled,
 }) => {
@@ -61,7 +67,7 @@ const DiagnosisCard = ({
       <h3 className="text-base font-semibold text-gray-900 mb-4">Rozpoznanie (ICD-10)</h3>
       <div className="relative mb-4" ref={dropdownRef}>
         <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-teal-700"
           size={18}
         />
         <input
@@ -71,10 +77,10 @@ const DiagnosisCard = ({
           onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
           placeholder="Wyszukaj wg kodu ICD-10 lub nazwy choroby..."
           disabled={disabled}
-          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none disabled:bg-gray-50"
+          className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm placeholder-gray-500 focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700 outline-none disabled:bg-gray-50"
         />
         {showDropdown && (searchValue.trim() || searchResults.length > 0) && (
-          <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] max-h-60 overflow-y-auto">
+          <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-teal-200 rounded-lg shadow-lg z-[100] max-h-60 overflow-y-auto">
             {searchLoading ? (
               <div className="p-3 text-sm text-gray-500">Szukam...</div>
             ) : searchResults.length === 0 ? (
@@ -85,10 +91,10 @@ const DiagnosisCard = ({
                   key={(item?.code ?? "") + "-" + i}
                   type="button"
                   onClick={() => handleSelectResult(item)}
-                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-teal-50 border-b border-gray-100 last:border-0"
+                  className="w-full text-left px-4 py-2.5 text-sm hover:bg-teal-50 border-b border-gray-100 last:border-0 focus:bg-teal-50"
                 >
                   <span className="font-medium text-teal-800">{item?.code ?? ""}</span>
-                  <span className="text-gray-700 ml-2">{item?.name ?? item?.title ?? ""}</span>
+                  <span className="text-gray-800 ml-2">{item?.name ?? item?.title ?? ""}</span>
                 </button>
               ))
             )}
@@ -97,28 +103,42 @@ const DiagnosisCard = ({
       </div>
       {diagnoses.length > 0 && (
         <div className="space-y-2 mb-4">
-          {diagnoses.map((d, i) => (
-            <div
-              key={d.id || d._id || i}
-              className="flex items-center flex-wrap gap-2 px-3 py-2 rounded-lg bg-teal-50 border border-teal-100"
-            >
-              <span className="text-xs font-medium text-teal-800 px-2 py-0.5 rounded bg-teal-100">
-                {d.isPrimary ? "Główne" : "Dodatkowe"}
-              </span>
-              <span className="text-sm text-gray-800 flex-1 min-w-0 truncate">
-                {d.code} {d.name}
-              </span>
-              <button
-                type="button"
-                onClick={() => onRemoveDiagnosis?.(d.id || d._id)}
-                disabled={disabled}
-                className="p-1 rounded hover:bg-teal-200/50 text-gray-500 hover:text-gray-700 disabled:opacity-50"
-                aria-label="Usuń"
+          {diagnoses.map((d, i) => {
+            const diagId = d.id || d._id;
+            const isPrimary = !!d.isPrimary;
+            const label = isPrimary ? DIAGNOSIS_TYPE_LABELS.primary : DIAGNOSIS_TYPE_LABELS.additional;
+            return (
+              <div
+                key={diagId || i}
+                className="flex items-center flex-wrap gap-2 rounded-r-lg border-l-4 border-l-teal-700 bg-[#e0f7f9] py-2 pl-2 pr-3"
               >
-                <X size={16} />
-              </button>
-            </div>
-          ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (disabled || !onTogglePrimary) return;
+                    onTogglePrimary(diagId, !isPrimary);
+                  }}
+                  disabled={disabled || !onTogglePrimary}
+                  className={`text-xs font-semibold px-2.5 py-1 rounded cursor-pointer disabled:cursor-default disabled:opacity-70 transition-colors ${isPrimary ? "bg-teal-700 text-white hover:bg-teal-800" : "bg-teal-100 text-teal-800 hover:bg-teal-200 border border-teal-200"}`}
+                  title={onTogglePrimary ? "Kliknij, aby zmienić na " + (isPrimary ? "Dodatkowe" : "Główne") : undefined}
+                >
+                  {label}
+                </button>
+                <span className="text-sm text-gray-900 flex-1 min-w-0 truncate">
+                  {d.code} {d.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onRemoveDiagnosis?.(diagId)}
+                  disabled={disabled}
+                  className="p-1 rounded hover:bg-teal-200/60 text-gray-500 hover:text-gray-800 disabled:opacity-50"
+                  aria-label="Usuń"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
       <p className="text-xs text-gray-500">Wpisz kod lub nazwę, wybierz z listy, aby dodać rozpoznanie.</p>

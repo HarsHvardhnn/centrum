@@ -242,6 +242,7 @@ function LabAppointmentsContent({ clinic }) {
         ...(clinic && (patientLessOnly || statusFilter === "patientLess") && { patientLessOnly: true }),
         ...(appointmentIdFromUrl && { appointmentId: appointmentIdFromUrl }),
         ...(visitTypeFilter && { visitReason: visitTypeFilter }),
+        ...(clinic && consultationMode && consultationMode !== "all" && { mode: consultationMode }),
       };
 
       const response = await appointmentHelper.getAllAppointments(
@@ -316,7 +317,7 @@ function LabAppointmentsContent({ clinic }) {
     }, 300);
 
     return () => clearTimeout(debounceTimeout);
-  }, [searchQuery, statusFilter, dateRange, user?.id, clinic, searchParams, patientLessOnly, doctorFilterId, visitTypeFilter]);
+  }, [searchQuery, statusFilter, dateRange, user?.id, clinic, searchParams, patientLessOnly, doctorFilterId, visitTypeFilter, consultationMode]);
 
   // Fetch doctors list for clinic (Historia wizyt) filter
   useEffect(() => {
@@ -836,39 +837,44 @@ function LabAppointmentsContent({ clinic }) {
   };
 
   return (
-    <div className={`min-h-screen ${clinic ? "bg-white" : "bg-gray-100"}`}>
-      <div className={`w-full mx-auto py-8 ${clinic ? "px-6 sm:px-8 lg:px-10" : "px-4"}`}>
-        <div className={clinic ? "mb-6" : "mb-6"}>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              {clinic ? "Historia wizyt" : "Lista pacjentów"}
-              {!clinic && ` (${appointments.length})`}
-            </h1>
-            {clinic && (
-            <p className="text-sm text-gray-500">
-              Wyświetlane: {dateRangeText}
-              {statusFilter !== "All" && ` - Status: ${statusLabelForDisplay}`}
-              {patientLessOnly && " - Tylko wizyty bez pacjenta"}
+    <div className={`min-h-screen ${clinic ? "bg-white" : "bg-emerald-50/40"}`}>
+      {/* Dark green header bar (Figma-style) */}
+      <div className="bg-teal-800 text-white shadow-md">
+        <div className={`w-full mx-auto ${clinic ? "px-6 sm:px-8 lg:px-10" : "px-4"} py-4`}>
+          <h1 className="text-2xl font-bold text-white mb-0">
+            {clinic ? "Historia wizyt" : "Lista pacjentów"}
+            {!clinic && <span className="font-normal text-teal-200 ml-1">({appointments.length})</span>}
+          </h1>
+          {clinic && (
+            <p className="text-sm text-teal-200 mt-1">
+              {dateRangeText}
+              {statusFilter !== "All" && ` – Status: ${statusLabelForDisplay}`}
+              {patientLessOnly && " – Tylko wizyty bez pacjenta"}
             </p>
-            )}
-            {!clinic && dateRange.startDate && (
+          )}
+        </div>
+      </div>
+      <div className={`w-full mx-auto py-6 ${clinic ? "px-6 sm:px-8 lg:px-10" : "px-4"}`}>
+        <div className={clinic ? "mb-6" : "mb-6"}>
+          {!clinic && dateRange.startDate && (
+            <div className="mb-3">
               <button
                 onClick={() => setDateRange({ startDate: null, endDate: null })}
-                className="text-sm text-teal-600 hover:text-teal-800 underline mt-1"
+                className="text-sm text-teal-700 hover:text-teal-900 font-medium underline"
               >
                 Wyczyść filtr daty
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {clinic && (
-            <div className="flex items-center gap-3 mb-6 flex-wrap mt-5">
+            <div className="flex items-center gap-3 mb-6 flex-wrap mt-2">
               <div className="flex-1 relative min-w-[280px] max-w-2xl">
                 <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Szukaj pacjenta..."
-                  className="w-full py-2.5 pl-10 pr-4 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                  className="w-full py-2.5 pl-10 pr-4 border border-teal-200 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -876,7 +882,7 @@ function LabAppointmentsContent({ clinic }) {
               <div className="relative" ref={filterRef}>
                 <button
                   type="button"
-                  className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50"
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${isFilterOpen ? "bg-teal-800 text-white hover:bg-teal-900" : "border border-teal-700 text-teal-800 bg-white hover:bg-teal-50"}`}
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
                 >
                   Filtry
@@ -1020,7 +1026,7 @@ function LabAppointmentsContent({ clinic }) {
                       <button
                         type="button"
                         onClick={() => setIsFilterOpen(false)}
-                        className="flex-1 px-4 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium"
+                        className="flex-1 px-4 py-2.5 rounded-lg bg-teal-800 hover:bg-teal-900 text-white text-sm font-medium"
                       >
                         Zastosuj
                       </button>
@@ -1046,7 +1052,7 @@ function LabAppointmentsContent({ clinic }) {
             {user?.role !== "doctor" && (
               <button
                 type="button"
-                className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2.5 flex items-center gap-2 font-medium shrink-0"
+                className="bg-teal-800 hover:bg-teal-900 text-white rounded-lg px-4 py-2.5 flex items-center gap-2 font-medium shrink-0 shadow-sm"
                 onClick={() => setShowAddPatientModal(true)}
               >
                 <Plus size={18} />
@@ -1113,12 +1119,12 @@ function LabAppointmentsContent({ clinic }) {
                     ? "border-l-4 border-l-red-500 bg-red-50/50"
                     : isVisitOnly
                     ? "border-l-4 border-l-amber-500 bg-amber-50/50"
-                    : "";
+                    : "border-l-4 border-l-teal-700";
 
                 return (
                   <div
                     key={appointment.id}
-                    className={`bg-white border border-gray-200 rounded-lg shadow-sm px-6 py-5 flex items-center gap-6 hover:shadow-md transition-shadow ${cardBorderBg} ${user?.role === "admin" && selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
+                    className={`bg-white border border-teal-100 rounded-lg shadow-sm px-6 py-5 flex items-center gap-6 hover:shadow-md transition-shadow ${cardBorderBg} ${user?.role === "admin" && selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
                   >
                     {user?.role === "admin" && (
                       <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -1137,7 +1143,16 @@ function LabAppointmentsContent({ clinic }) {
                           setSelectedAppointment(appointment);
                           setShowCompleteRegModal(true);
                         } else if (!isVisitOnly) {
-                          navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id));
+                          const patientId = appointment.patient.id || appointment.patient._id;
+                          if (user?.role === "receptionist") {
+                            // For receptionists on Historia wizyt: open visit history modal instead of card/edit
+                            openVisitHistoryModal(
+                              patientId,
+                              getAppointmentPatientDisplayName(appointment)
+                            );
+                          } else {
+                            navigate(getPatientViewUrl(patientId, appointment.id));
+                          }
                         }
                       }}
                     >
@@ -1212,12 +1227,22 @@ function LabAppointmentsContent({ clinic }) {
                           <DropdownMenu.Portal>
                             <DropdownMenu.Content className="min-w-[220px] bg-white rounded-lg shadow-lg z-[100] border p-1" sideOffset={5} align="end">
                               {isVisitOnlyAppointment(appointment) && !isCancelledStatus && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCompleteRegModal(true); }}>
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-teal-800 hover:bg-teal-50 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCompleteRegModal(true); }}>
                                   <UserCheck size={16} className="mr-2" /> Zakończ rejestrację
                                 </DropdownMenu.Item>
                               )}
                               {!isVisitOnlyAppointment(appointment) && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id))}>
+                                <DropdownMenu.Item
+                                  className="flex items-center px-4 py-2 text-sm text-teal-800 hover:bg-teal-50 rounded-md cursor-pointer"
+                                  onClick={() => {
+                                    const patientId = appointment.patient.id || appointment.patient._id;
+                                    if (user?.role === "receptionist") {
+                                      navigate(`/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent("/klinika")}`);
+                                    } else {
+                                      navigate(getPatientViewUrl(patientId, appointment.id));
+                                    }
+                                  }}
+                                >
                                   <Eye size={16} className="mr-2" /> Zobacz szczegóły
                                 </DropdownMenu.Item>
                               )}
@@ -1277,8 +1302,8 @@ function LabAppointmentsContent({ clinic }) {
         ) : (
           /* Lista pacjentów – card layout */
           <div className="space-y-3">
-            {/* Column headers */}
-            <div className="grid grid-cols-8 gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
+            {/* Column headers - dark green theme */}
+            <div className="grid grid-cols-8 gap-4 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-teal-800 bg-teal-50 border border-teal-100 rounded-t-lg">
               <div>Pacjent i ID</div>
               <div>Wiek</div>
               <div>Płeć</div>
@@ -1300,7 +1325,7 @@ function LabAppointmentsContent({ clinic }) {
                 return (
                   <div
                     key={appointment.id}
-                    className={`bg-white border border-gray-200 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-shadow grid grid-cols-8 gap-4 px-4 py-3 items-center ${selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
+                    className={`bg-white border border-teal-100 border-l-4 border-l-teal-600 rounded-r-lg shadow-sm hover:shadow-md transition-shadow grid grid-cols-8 gap-4 px-4 py-3 items-center ${selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
                   >
                     <div
                       className="min-w-0 cursor-pointer"
@@ -1310,7 +1335,12 @@ function LabAppointmentsContent({ clinic }) {
                             setSelectedAppointment(appointment);
                             setShowCompleteRegModal(true);
                           } else if (!isVisitOnlyAppointment(appointment)) {
-                            navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id));
+                            const patientId = appointment.patient.id || appointment.patient._id;
+                            if (user?.role === "receptionist") {
+                              navigate(`/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent("/pacjenci")}`);
+                            } else {
+                              navigate(getPatientViewUrl(patientId, appointment.id));
+                            }
                           }
                         }
                       }}
@@ -1340,7 +1370,17 @@ function LabAppointmentsContent({ clinic }) {
                                 </DropdownMenu.Item>
                               )}
                               {!isVisitOnlyAppointment(appointment) && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id))}>
+                                <DropdownMenu.Item
+                                  className="flex items-center px-4 py-2 text-sm text-teal-800 hover:bg-teal-50 rounded-md cursor-pointer"
+                                  onClick={() => {
+                                    const patientId = appointment.patient.id || appointment.patient._id;
+                                    if (user?.role === "receptionist") {
+                                      navigate(`/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent("/pacjenci")}`);
+                                    } else {
+                                      navigate(getPatientViewUrl(patientId, appointment.id));
+                                    }
+                                  }}
+                                >
                                   <Eye size={16} className="mr-2" /> Zobacz szczegóły
                                 </DropdownMenu.Item>
                               )}
@@ -1401,21 +1441,21 @@ function LabAppointmentsContent({ clinic }) {
 
         {/* Pagination - hidden on clinic (Historia wizyt) */}
         {pagination.pages > 1 && !clinic && (
-          <div className="flex justify-center mt-4 gap-2">
+          <div className="flex justify-center mt-6 gap-2">
             <button
               onClick={() => fetchAppointments(pagination.page - 1)}
               disabled={pagination.page === 1}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-4 py-2 border border-teal-600 text-teal-800 rounded-lg font-medium hover:bg-teal-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Poprzednia
             </button>
-            <span className="px-3 py-1">
+            <span className="px-4 py-2 text-teal-800 font-medium">
               Strona {pagination.page} z {pagination.pages}
             </span>
             <button
               onClick={() => fetchAppointments(pagination.page + 1)}
               disabled={pagination.page === pagination.pages}
-              className="px-3 py-1 border rounded disabled:opacity-50"
+              className="px-4 py-2 bg-teal-800 text-white rounded-lg font-medium hover:bg-teal-900 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Następna
             </button>

@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, Trash2, Plus, Zap } from "lucide-react";
 import { TestForm } from "./TestForm";
 import FeatureComingSoonModal from "../FeatureComingSoonModal";
+import appointmentHelper from "../../../../../helpers/appointmentHelper";
 
 const SECTION_BG = "bg-white";
 const INPUT_CLASS = "w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400";
+const DEBOUNCE_MS = 300;
 
 export const TestsSection = ({
   tests = [],
@@ -17,13 +19,77 @@ export const TestsSection = ({
 }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [search, setSearch] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [editingTest, setEditingTest] = useState(null);
   const [showESkierowanieModal, setShowESkierowanieModal] = useState(false);
+  const searchRef = useRef(null);
 
   const filtered = tests.filter(
     (t) => !search || (t.name && t.name.toLowerCase().includes(search.toLowerCase()))
   );
+
+  // ICD-9 remote search (like ProceduresCard)
+  useEffect(() => {
+    if (!search.trim()) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      setShowDropdown(true);
+      try {
+        const results = await appointmentHelper.searchIcd9(search);
+        if (!cancelled) {
+          setSearchResults(Array.isArray(results) ? results : []);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setSearchResults([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setSearchLoading(false);
+        }
+      }
+    }, DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [search]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectIcd9 = (item) => {
+    const code = item?.code ?? "";
+    const name = item?.name ?? item?.title ?? "";
+    const newTest = {
+      name: name || "",
+      icd9Code: code,
+      status: "Oczekujący",
+      mode: "Planowe",
+    };
+    const next = [...tests, newTest];
+    setTests(next);
+    onAddTest?.(newTest);
+    setSearch("");
+    setSearchResults([]);
+    setShowDropdown(false);
+  };
 
   const handleSave = (data) => {
     if (editingIndex >= 0) {
@@ -70,7 +136,7 @@ export const TestsSection = ({
       </button>
       {!collapsed && (
         <div className="px-5 pb-5 space-y-4">
-          <div className="relative">
+          <div className="relative" ref={searchRef}>
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
@@ -79,6 +145,27 @@ export const TestsSection = ({
               placeholder="Szukaj badania wg ICD-9..."
               className={`${INPUT_CLASS} pl-10`}
             />
+            {showDropdown && (search.trim() || searchResults.length > 0) && (
+              <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] max-h-60 overflow-y-auto">
+                {searchLoading ? (
+                  <div className="p-3 text-sm text-gray-500">Szukam...</div>
+                ) : searchResults.length === 0 ? (
+                  <div className="p-3 text-sm text-gray-500">Brak wyników</div>
+                ) : (
+                  searchResults.map((item, i) => (
+                    <button
+                      key={(item?.code ?? "") + "-" + i}
+                      type="button"
+                      onClick={() => handleSelectIcd9(item)}
+                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-teal-50 border-b border-gray-100 last:border-0"
+                    >
+                      <span className="font-medium text-teal-800">{item?.code ?? ""}</span>
+                      <span className="text-gray-700 ml-2">{item?.name ?? item?.title ?? ""}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
           {showForm && (
@@ -110,6 +197,11 @@ export const TestsSection = ({
                 </button>
               </div>
               <div>
+                {test.icd9Code && (
+                  <div className="text-xs text-gray-600 mb-1">
+                    Kod ICD-9: <span className="font-medium">{test.icd9Code}</span>
+                  </div>
+                )}
                 <label className="block text-xs text-gray-500 mb-1">Rozpoznanie (ICD-10)</label>
                 <input
                   type="text"

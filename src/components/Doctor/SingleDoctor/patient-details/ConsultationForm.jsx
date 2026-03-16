@@ -341,6 +341,9 @@ const ConsultationForm = ({
               value={tempDate || ""}
               onChange={(e) => setTempDate(e.target.value)}
               className="w-full p-2.5 border border-teal-300 rounded-lg"
+              min=""
+              max=""
+              title="Dowolna data (także z przeszłości)"
             />
           ) : (
             <div className="flex items-center">
@@ -379,6 +382,9 @@ const ConsultationForm = ({
                 if (timeError) setTimeError("");
               }}
               className={`w-full p-2.5 border ${timeError ? "border-red-300" : "border-teal-300"} rounded-lg`}
+              min=""
+              max=""
+              title="Dowolna godzina (także z przeszłości)"
             />
           ) : (
             <input
@@ -402,6 +408,9 @@ const ConsultationForm = ({
                 if (timeError) setTimeError("");
               }}
               className={`w-full p-2.5 border ${timeError ? "border-red-300" : "border-teal-300"} rounded-lg`}
+              min=""
+              max=""
+              title="Dowolna godzina (także z przeszłości)"
             />
           ) : (
             <input

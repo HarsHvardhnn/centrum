@@ -25,6 +25,7 @@ class AppointmentService {
         ...(filters.isClinicIp && { isClinicIp: filters.isClinicIp }),
         ...(filters.patientLessOnly === true && { patientLessOnly: "true" }),
         ...(filters.visitReason && { visitReason: filters.visitReason }),
+        ...(filters.mode && { mode: filters.mode }),
       });
 
       const response = await apiCaller(
@@ -419,6 +420,11 @@ class AppointmentService {
 
   async removeVisitDiagnosis(visitId, diagnosisId) {
     await apiCaller("DELETE", `/appointments/${visitId}/diagnoses/${diagnosisId}`);
+  }
+
+  async updateVisitDiagnosis(visitId, diagnosisId, payload) {
+    const response = await apiCaller("PATCH", `/appointments/${visitId}/diagnoses/${diagnosisId}`, payload);
+    return response?.data;
   }
 
   async addVisitProcedure(visitId, payload) {

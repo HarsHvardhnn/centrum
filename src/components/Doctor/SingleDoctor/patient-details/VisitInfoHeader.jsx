@@ -92,6 +92,9 @@ const VisitInfoHeader = ({
           onChange={(e) => onDateChange?.(e.target.value)}
           disabled={readOnly}
           className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+          min=""
+          max=""
+          title="Dowolna data (także z przeszłości)"
         />
       </div>
       <div className="flex items-center gap-2">
@@ -103,6 +106,9 @@ const VisitInfoHeader = ({
           onChange={(e) => onTimeChange?.(e.target.value)}
           disabled={readOnly}
           className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+          min=""
+          max=""
+          title="Dowolna godzina (także z przeszłości)"
         />
       </div>
       <div className="flex items-center gap-2">
@@ -114,6 +120,9 @@ const VisitInfoHeader = ({
           onChange={(e) => onEndTimeChange?.(e.target.value)}
           disabled={readOnly}
           className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+          min=""
+          max=""
+          title="Dowolna godzina (także z przeszłości)"
         />
       </div>
       <div className="flex items-center gap-2">
