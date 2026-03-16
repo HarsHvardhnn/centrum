@@ -372,6 +372,37 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
     }
   };
 
+  // Delete a single time block (Edit modal). On success: if scheduleDeleted close modal and refetch; else update local timeBlocks.
+  const handleDeleteScheduleTimeBlock = async (blockIndex) => {
+    const scheduleId = editingSchedule?._id;
+    if (!scheduleId) return;
+    if (!window.confirm("Czy na pewno usunąć ten blok czasowy? Operacja jest nieodwracalna.")) {
+      return;
+    }
+    try {
+      showLoader();
+      const response = await doctorService.deleteScheduleTimeBlock(scheduleId, blockIndex);
+      if (response?.success) {
+        if (response.scheduleDeleted) {
+          toast.success("Ostatni blok usunięty – harmonogram został usunięty");
+          setShowScheduleModal(false);
+          resetScheduleForm();
+          fetchDoctorSchedule();
+        } else {
+          toast.success("Blok czasowy został usunięty");
+          const remaining = response.remainingBlocks ?? [];
+          setScheduleForm((prev) => ({ ...prev, timeBlocks: remaining }));
+          setEditingSchedule((prev) => (prev ? { ...prev, timeBlocks: remaining } : null));
+        }
+      }
+    } catch (err) {
+      console.error("Error deleting schedule time block:", err);
+      toast.error(err?.response?.data?.message || "Nie udało się usunąć bloku czasowego");
+    } finally {
+      hideLoader();
+    }
+  };
+
   // Permanent delete schedule (by _id when available, otherwise by doctorId + date). Use from Edit modal or calendar cell.
   const handlePermanentDeleteSchedule = async (schedule) => {
     if (!window.confirm("Czy na pewno usunąć ten harmonogram? Operacja jest nieodwracalna.")) {
@@ -1398,7 +1429,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
                 Bloki czasowe
               </label>
               {scheduleForm.timeBlocks.map((block, index) => (
-                <div key={index} className="flex items-center space-x-2 mb-2">
+                <div key={index} className="flex items-center flex-wrap gap-2 mb-2">
                   <input
                     type="time"
                     value={block.startTime}
@@ -1423,13 +1454,25 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
                     />
                     <span className="text-sm">Aktywny</span>
                   </label>
-                  {scheduleForm.timeBlocks.length > 1 && (
+                  {scheduleForm.timeBlocks.length > 1 && !editingSchedule && (
                     <button
                       type="button"
                       onClick={() => removeTimeBlock(index)}
-                      className="text-red-600 hover:text-red-800"
+                      className="text-red-600 hover:text-red-800 p-1"
+                      title="Usuń blok z formularza"
                     >
                       <Trash2 size={16} />
+                    </button>
+                  )}
+                  {editingSchedule && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteScheduleTimeBlock(index)}
+                      className="text-red-600 hover:text-red-800 border border-red-200 rounded px-2 py-1 text-sm flex items-center gap-1"
+                      title="Usuń ten blok czasowy na stałe"
+                    >
+                      <Trash2 size={14} />
+                      Usuń blok
                     </button>
                   )}
                 </div>

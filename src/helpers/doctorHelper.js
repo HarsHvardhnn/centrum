@@ -477,6 +477,26 @@ const doctorService = {
   },
 
   /**
+   * Delete a single time block from a schedule.
+   * DELETE /api/schedule/schedule/id/:scheduleId/blocks/:blockIndex
+   * @param {string} scheduleId - Schedule document _id
+   * @param {number} blockIndex - 0-based index of the block in timeBlocks
+   * @returns {Promise<{ success, remainingBlocks?, scheduleDeleted? }>} - remainingBlocks when block removed; scheduleDeleted true when last block removed and schedule deleted
+   */
+  deleteScheduleTimeBlock: async (scheduleId, blockIndex) => {
+    try {
+      const response = await apiCaller(
+        "DELETE",
+        `/api/schedule/schedule/id/${scheduleId}/blocks/${blockIndex}`
+      );
+      return response?.data ?? response;
+    } catch (error) {
+      console.error("Error deleting schedule time block:", error);
+      throw error;
+    }
+  },
+
+  /**
    * Create schedule exception
    * @param {Object} exceptionData - Exception data
    * @returns {Promise} - API response

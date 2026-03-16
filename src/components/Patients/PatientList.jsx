@@ -1364,7 +1364,7 @@ function LabAppointmentsContent({ clinic }) {
                           </DropdownMenu.Trigger>
                           <DropdownMenu.Portal>
                             <DropdownMenu.Content className="min-w-[220px] max-h-[min(70vh,320px)] overflow-y-auto bg-white rounded-lg shadow-lg z-[100] border p-1" sideOffset={5} align="end">
-                              {isVisitOnlyAppointment(appointment) && !isCancelled(appointment) && (
+                              {clinic && isVisitOnlyAppointment(appointment) && !isCancelled(appointment) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCompleteRegModal(true); }}>
                                   <UserCheck size={16} className="mr-2" /> Zakończ rejestrację
                                 </DropdownMenu.Item>
@@ -1389,27 +1389,27 @@ function LabAppointmentsContent({ clinic }) {
                                   <History size={16} className="mr-2" /> Historia wizyt
                                 </DropdownMenu.Item>
                               )}
-                              {appointment.patient && appointment.status === "booked" && (
+                              {clinic && appointment.patient && appointment.status === "booked" && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCheckin(true); }}>
                                   <UserCheck size={16} className="mr-2" /> Zamelduj
                                 </DropdownMenu.Item>
                               )}
-                              {(user?.role === "admin" || user?.role === "receptionist") && appointment.status === "booked" && (
+                              {clinic && (user?.role === "admin" || user?.role === "receptionist") && appointment.status === "booked" && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => handleRescheduleClick(appointment)}>
                                   <Clock size={16} className="mr-2" /> Przełóż wizytę
                                 </DropdownMenu.Item>
                               )}
-                              {appointment.patient && ["checkedIn", "booked"].includes(appointment.status) && (
+                              {clinic && appointment.patient && ["checkedIn", "booked"].includes(appointment.status) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); handleBillPatient(appointment.id, appointment.patient.id || appointment.patient._id); }}>
                                   <DollarSign size={16} className="mr-2" /> Wystaw rachunek
                                 </DropdownMenu.Item>
                               )}
-                              {appointment.status === "completed" && appointment.patient && (appointment.patient.id || appointment.patient._id) && (
+                              {clinic && appointment.status === "completed" && appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => openVisitCardModal(appointment.patient.id || appointment.patient._id, getAppointmentPatientDisplayName(appointment))}>
                                   <FileText size={16} className="mr-2" /> Karta wizyty
                                 </DropdownMenu.Item>
                               )}
-                              {!["checkedIn", "completed", "cancelled"].includes(appointment.status) && (
+                              {clinic && !["checkedIn", "completed", "cancelled"].includes(appointment.status) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer" onClick={(e) => handleCancelClick(e, appointment.id)}>
                                   <X size={16} className="mr-2" /> Anuluj wizytę
                                 </DropdownMenu.Item>
