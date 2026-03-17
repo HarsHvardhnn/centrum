@@ -1,6 +1,5 @@
 import React from "react";
 import { FaArrowRight } from "react-icons/fa";
-import { Link } from "react-router-dom";
 import { useServices } from "../../context/serviceContext";
 
 const ServiceCard = ({ service }) => {
@@ -55,12 +54,12 @@ const ServiceCard = ({ service }) => {
           </p>
         </div>
         {hasRedirectionUrl && (
-          <Link
-            to={getRedirectionUrl()}
+          <a
+            href={getRedirectionUrl()}
             className="text-main flex items-center gap-1 mt-3 font-medium hover:underline"
           >
             Dowiedz się więcej <FaArrowRight />
-          </Link>
+          </a>
         )}
       </div>
     </div>
