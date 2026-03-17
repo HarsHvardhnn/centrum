@@ -1868,18 +1868,20 @@ function AppointmentFormModal({
           </div>
         </div>
 
-        {/* Receptionist Notes */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h4 className="text-md font-medium text-gray-800 mb-3">Notatki Recepcjonisty</h4>
-          <textarea
-            name="receptionistNotes"
-            value={appointmentData.receptionistNotes}
-            onChange={handleInputChange}
-            rows={3}
-            className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-            placeholder="Dodatkowe informacje o nadpisaniu, powody, uwagi..."
-          />
-        </div>
+      {/*
+      // Receptionist Notes (hidden as per request)
+      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <h4 className="text-md font-medium text-gray-800 mb-3">Notatki Recepcjonisty</h4>
+        <textarea
+          name="receptionistNotes"
+          value={appointmentData.receptionistNotes}
+          onChange={handleInputChange}
+          rows={3}
+          className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+          placeholder="Dodatkowe informacje o nadpisaniu, powody, uwagi..."
+        />
+      </div>
+      */}
 
         {/* Active Overrides Summary */}
         {(appointmentData.customDuration || appointmentData.isBackdated || appointmentData.overrideConflicts || appointmentData.isEmergency) && (
