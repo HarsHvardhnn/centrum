@@ -123,7 +123,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
     let fileUploadError = null;
 
     try {
-      // If files are provided, upload them (optional - don't block check-in if this fails)
+      // If files are provided, upload them. Successful upload now IMPLIES check-in.
       if (files.length > 0) {
         try {
           const formData = new FormData();
@@ -144,27 +144,41 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
             fileUploadSuccess = false;
             fileUploadError = "Przesyłanie plików nie powiodło się";
           } else {
+            // Upload endpoint performs check-in itself.
             setUploadSuccess(true);
+            toast.success("Pacjent został pomyślnie zameldowany");
+
+            // Close modal and reset state
+            setIsOpen(false);
+            setFiles([]);
+            setUploadSuccess(false);
+            setUploadError(null);
+
+            // Call callbacks
+            if (typeof onCheckinSuccess === "function") {
+              onCheckinSuccess(appointmentId);
+            }
+            if (typeof onAppointmentUpdate === "function") {
+              onAppointmentUpdate(appointmentId, "checkedIn");
+            }
+
+            // Since upload already checked in the patient, we can return early
+            return;
           }
         } catch (fileError) {
           console.error("Error uploading files:", fileError);
           fileUploadSuccess = false;
           fileUploadError = fileError.message || "Nie udało się przesłać plików";
-          // Continue with check-in even if file upload fails
+          // Continue with separate check-in even if file upload fails
         }
       }
 
-      // Always proceed with check-in API call regardless of file upload status
+      // If no files were uploaded, or upload failed, proceed with explicit check-in API.
       try {
-        // If completeCheckIn doesn't throw, it means check-in was successful
-        await appointmentHelper.completeCheckIn(
-          appointmentId,
-          patient.patient_id
-        );
+        await appointmentHelper.completeCheckIn(appointmentId, patient.patient_id);
 
-        // If we reach here, check-in was successful (no exception thrown)
         toast.success("Pacjent został pomyślnie zameldowany");
-        
+
         // Show warning if file upload failed but check-in succeeded
         if (!fileUploadSuccess && fileUploadError) {
           toast.warning(`Zameldowanie zakończone, ale: ${fileUploadError}`);
