@@ -387,12 +387,17 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
           toast.success("Ostatni blok usunięty – harmonogram został usunięty");
           setShowScheduleModal(false);
           resetScheduleForm();
-          fetchDoctorSchedule();
         } else {
           toast.success("Blok czasowy został usunięty");
           const remaining = response.remainingBlocks ?? [];
           setScheduleForm((prev) => ({ ...prev, timeBlocks: remaining }));
           setEditingSchedule((prev) => (prev ? { ...prev, timeBlocks: remaining } : null));
+        }
+
+        // In both cases, refetch schedule and force full page reload so calendar view is fully up to date
+        fetchDoctorSchedule();
+        if (typeof window !== "undefined" && window.location) {
+          window.location.reload();
         }
       }
     } catch (err) {
@@ -420,6 +425,10 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
       if (response?.success) {
         toast.success("Harmonogram został trwale usunięty");
         fetchDoctorSchedule();
+        // Ensure calendar view and related state are fully refreshed so deleted blocks are not repeated
+        if (typeof window !== "undefined" && window.location) {
+          window.location.reload();
+        }
         if (wasEditingThis) {
           setShowScheduleModal(false);
           resetScheduleForm();

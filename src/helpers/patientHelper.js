@@ -573,11 +573,20 @@ const patientService = {
     try {
       const num = String(documentNumber ?? "").trim();
       if (!num) return { exists: false };
-      const key = [documentCountry, documentType, num].filter(Boolean).map((s) => String(s).trim()).join("|");
+      const key = [documentCountry, documentType, num]
+        .filter(Boolean)
+        .map((s) => String(s).trim())
+        .join("|");
       if (!key) return { exists: false };
+
+      // Backend contract: prefer canonical internationalPatientDocumentKey, also send raw documentNumber.
+      const params = new URLSearchParams();
+      params.append("internationalPatientDocumentKey", key);
+      params.append("documentNumber", num);
+
       const response = await apiCaller(
         "GET",
-        `/patients/by-document?${new URLSearchParams({ key: key }).toString()}`
+        `/patients/by-document?${params.toString()}`
       );
       return response.data ?? response;
     } catch (error) {

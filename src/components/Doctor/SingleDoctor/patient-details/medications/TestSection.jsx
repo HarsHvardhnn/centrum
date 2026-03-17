@@ -83,9 +83,7 @@ export const TestsSection = ({
       status: "Oczekujący",
       mode: "Planowe",
     };
-    const next = [...tests, newTest];
-    setTests(next);
-    onAddTest?.(newTest);
+    setTests((prev) => [...prev, newTest]);
     setSearch("");
     setSearchResults([]);
     setShowDropdown(false);
