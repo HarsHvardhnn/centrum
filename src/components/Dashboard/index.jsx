@@ -1184,28 +1184,16 @@ const PatientList = () => {
         }}
       />
 
-      {/* Complete registration modal - for visits without patient */}
+      {/* Complete registration modal - for visits without patient.
+          Dashboard appointments endpoint now returns full registrationData,
+          so we can pass selectedAppointment directly and let the modal prefill from it. */}
       <CompleteRegistrationModal
         isOpen={showCompleteRegModal}
         onClose={() => {
           setShowCompleteRegModal(false);
           setSelectedAppointment(null);
         }}
-        appointment={
-          selectedAppointment
-            ? {
-                id: selectedAppointment._id,
-                _id: selectedAppointment._id,
-                registrationData: {
-                  firstName: selectedAppointment.name?.split?.(" ")?.[0] ?? "",
-                  lastName: selectedAppointment.name?.split?.(" ")?.slice(1)?.join(" ") ?? "",
-                  email: selectedAppointment.email ?? "",
-                  phone: (selectedAppointment.phone || "").replace(/\D/g, "").slice(0, 9),
-                  sex: selectedAppointment.sex ?? "",
-                },
-              }
-            : null
-        }
+        appointment={selectedAppointment}
         onSuccess={() => {
           setRefreshCounter((c) => c + 1);
         }}
@@ -1531,68 +1519,84 @@ const UpcomingAppointments = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex items-center text-gray-600 text-sm">
-                  <Calendar size={16} className="mr-2 text-teal-500" />
-                  {new Date(appointment.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+              <div className="space-y-1 mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center text-gray-600 text-sm">
+                    <Calendar size={16} className="mr-2 text-teal-500" />
+                    {new Date(appointment.date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                  </div>
+                  <div className="flex items-center text-gray-600 text-sm">
+                    <Clock size={16} className="mr-2 text-teal-500" />
+                    {appointment.time}
+                  </div>
                 </div>
-                <div className="flex items-center text-gray-600 text-sm">
-                  <Clock size={16} className="mr-2 text-teal-500" />
-                  {(appointment.time)}
-                </div>
+                {appointment.patientName && (
+                  <div className="text-sm text-gray-600">
+                    Pacjent: <span className="font-medium text-gray-800">{appointment.patientName}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between">
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(appointment.status)}`}>
                   {translateStatus(appointment.status)}
                 </span>
-                
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger asChild>
-                    <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
-                      <MoreVertical size={18} />
-                    </button>
-                  </DropdownMenu.Trigger>
 
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.Content
-                      className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
-                      sideOffset={5}
-                      align="end"
-                    >
-                      <DropdownMenu.Item
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                        onClick={() => navigate(getPatientViewUrl(appointment.patient.id, appointment.id))}
+                {appointment.patientObjectId && (
+                  <DropdownMenu.Root>
+                    <DropdownMenu.Trigger asChild>
+                      <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
+                        <MoreVertical size={18} />
+                      </button>
+                    </DropdownMenu.Trigger>
+
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.Content
+                        className="min-w-[220px] bg-white rounded-md shadow-lg z-50 border p-1"
+                        sideOffset={5}
+                        align="end"
                       >
-                        <Eye size={16} className="mr-2 flex-shrink-0" />
-                        Zobacz szczegóły
-                      </DropdownMenu.Item>
-
-                      {appointment.status === "booked" && (
                         <DropdownMenu.Item
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                          onClick={() => {
-                            setSelectedAppointment(appointment);
-                            setShowCheckin(true);
-                          }}
+                          onClick={() => navigate(getPatientViewUrl(appointment.patientObjectId, appointment.id))}
                         >
-                          <UserCheck size={16} className="mr-2 flex-shrink-0" />
-                          Zamelduj
+                          <Eye size={16} className="mr-2 flex-shrink-0" />
+                          Zobacz szczegóły pacjenta
                         </DropdownMenu.Item>
-                      )}
 
-                      {appointment.status === "completed" && appointment.isAppointment && (
-                        <DropdownMenu.Item
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                          onClick={() => handleGenerateVisitCard(appointment.id)}
-                        >
-                          <FileText size={16} className="mr-2 flex-shrink-0" />
-                          Generuj kartę wizyty
-                        </DropdownMenu.Item>
-                      )}
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Root>
+                        {appointment.status === "booked" && (
+                          <DropdownMenu.Item
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                            onClick={() => {
+                              setSelectedAppointment({
+                                ...appointment,
+                                patient: {
+                                  id: appointment.patientObjectId,
+                                  _id: appointment.patientObjectId,
+                                  name: appointment.patientName,
+                                },
+                              });
+                              setShowCheckin(true);
+                            }}
+                          >
+                            <UserCheck size={16} className="mr-2 flex-shrink-0" />
+                            Zamelduj
+                          </DropdownMenu.Item>
+                        )}
+
+                        {appointment.status === "completed" && appointment.isAppointment && (
+                          <DropdownMenu.Item
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                            onClick={() => handleGenerateVisitCard(appointment.id)}
+                          >
+                            <FileText size={16} className="mr-2 flex-shrink-0" />
+                            Generuj kartę wizyty
+                          </DropdownMenu.Item>
+                        )}
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Root>
+                )}
               </div>
             </div>
           ))}

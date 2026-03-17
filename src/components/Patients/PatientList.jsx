@@ -837,25 +837,23 @@ function LabAppointmentsContent({ clinic }) {
   };
 
   return (
-    <div className={`min-h-screen ${clinic ? "bg-white" : "bg-emerald-50/40"}`}>
-      {/* Dark green header bar (Figma-style) */}
-      <div className="bg-teal-800 text-white shadow-md">
-        <div className={`w-full mx-auto ${clinic ? "px-6 sm:px-8 lg:px-10" : "px-4"} py-4`}>
-          <h1 className="text-2xl font-bold text-white mb-0">
-            {clinic ? "Historia wizyt" : "Lista pacjentów"}
-            {!clinic && <span className="font-normal text-teal-200 ml-1">({appointments.length})</span>}
-          </h1>
-          {clinic && (
-            <p className="text-sm text-teal-200 mt-1">
-              {dateRangeText}
-              {statusFilter !== "All" && ` – Status: ${statusLabelForDisplay}`}
-              {patientLessOnly && " – Tylko wizyty bez pacjenta"}
-            </p>
-          )}
-        </div>
-      </div>
-      <div className={`w-full mx-auto py-6 ${clinic ? "px-6 sm:px-8 lg:px-10" : "px-4"}`}>
+    <div className={`min-h-screen ${clinic ? "bg-white" : "bg-gray-100"}`}>
+      <div className={`w-full mx-auto py-8 ${clinic ? "px-6 sm:px-8 lg:px-10" : "px-4"}`}>
         <div className={clinic ? "mb-6" : "mb-6"}>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              {clinic ? "Historia wizyt" : "Lista pacjentów"}
+              {!clinic && ` (${appointments.length})`}
+            </h1>
+            {clinic && (
+              <p className="text-sm text-gray-500">
+                {dateRangeText}
+                {statusFilter !== "All" && ` - Status: ${statusLabelForDisplay}`}
+                {patientLessOnly && " - Tylko wizyty bez pacjenta"}
+              </p>
+            )}
+          </div>
+
           {!clinic && dateRange.startDate && (
             <div className="mb-3">
               <button
@@ -868,13 +866,13 @@ function LabAppointmentsContent({ clinic }) {
           )}
 
           {clinic && (
-            <div className="flex items-center gap-3 mb-6 flex-wrap mt-2">
+            <div className="flex items-center gap-3 mb-6 flex-wrap mt-5">
               <div className="flex-1 relative min-w-[280px] max-w-2xl">
                 <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Szukaj pacjenta..."
-                  className="w-full py-2.5 pl-10 pr-4 border border-teal-200 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600"
+                  className="w-full py-2.5 pl-10 pr-4 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -882,7 +880,7 @@ function LabAppointmentsContent({ clinic }) {
               <div className="relative" ref={filterRef}>
                 <button
                   type="button"
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${isFilterOpen ? "bg-teal-800 text-white hover:bg-teal-900" : "border border-teal-700 text-teal-800 bg-white hover:bg-teal-50"}`}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50"
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
                 >
                   Filtry
@@ -1023,13 +1021,13 @@ function LabAppointmentsContent({ clinic }) {
                       >
                         Resetuj
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsFilterOpen(false)}
-                        className="flex-1 px-4 py-2.5 rounded-lg bg-teal-800 hover:bg-teal-900 text-white text-sm font-medium"
-                      >
-                        Zastosuj
-                      </button>
+                <button
+                  type="button"
+                  onClick={() => setIsFilterOpen(false)}
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium"
+                >
+                  Zastosuj
+                </button>
                     </div>
                   </div>
                 )}
@@ -1302,8 +1300,8 @@ function LabAppointmentsContent({ clinic }) {
         ) : (
           /* Lista pacjentów – card layout */
           <div className="space-y-3">
-            {/* Column headers - dark green theme */}
-            <div className="grid grid-cols-8 gap-4 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-teal-800 bg-teal-50 border border-teal-100 rounded-t-lg">
+            {/* Column headers */}
+            <div className="grid grid-cols-8 gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
               <div>Pacjent i ID</div>
               <div>Wiek</div>
               <div>Płeć</div>
@@ -1325,7 +1323,7 @@ function LabAppointmentsContent({ clinic }) {
                 return (
                   <div
                     key={appointment.id}
-                    className={`bg-white border border-teal-100 border-l-4 border-l-teal-600 rounded-r-lg shadow-sm hover:shadow-md transition-shadow grid grid-cols-8 gap-4 px-4 py-3 items-center ${selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
+                    className={`bg-white border border-gray-200 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-shadow grid grid-cols-8 gap-4 px-4 py-3 items-center ${selectedAppointmentIds.includes(appointment.id) ? "ring-1 ring-red-300 bg-red-50/30" : ""}`}
                   >
                     <div
                       className="min-w-0 cursor-pointer"
@@ -1441,21 +1439,21 @@ function LabAppointmentsContent({ clinic }) {
 
         {/* Pagination - hidden on clinic (Historia wizyt) */}
         {pagination.pages > 1 && !clinic && (
-          <div className="flex justify-center mt-6 gap-2">
+          <div className="flex justify-center mt-4 gap-2">
             <button
               onClick={() => fetchAppointments(pagination.page - 1)}
               disabled={pagination.page === 1}
-              className="px-4 py-2 border border-teal-600 text-teal-800 rounded-lg font-medium hover:bg-teal-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 border rounded disabled:opacity-50"
             >
               Poprzednia
             </button>
-            <span className="px-4 py-2 text-teal-800 font-medium">
+            <span className="px-3 py-1">
               Strona {pagination.page} z {pagination.pages}
             </span>
             <button
               onClick={() => fetchAppointments(pagination.page + 1)}
               disabled={pagination.page === pagination.pages}
-              className="px-4 py-2 bg-teal-800 text-white rounded-lg font-medium hover:bg-teal-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 border rounded disabled:opacity-50"
             >
               Następna
             </button>
