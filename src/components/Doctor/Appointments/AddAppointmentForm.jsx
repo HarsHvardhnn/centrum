@@ -1759,8 +1759,8 @@ function AppointmentFormModal({
           </div>
         )}
 
-        {/* Appointment time & duration – show when custom time is used (not when a slot was selected) */}
-        {!appointmentData.selectedSlot && (appointmentData.customStartTime || appointmentData.customEndTime) && (
+        {/* Hidden: Appointment time & duration duplicate on step 5 */}
+        {false && !appointmentData.selectedSlot && (appointmentData.customStartTime || appointmentData.customEndTime) && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <h4 className="text-md font-medium text-blue-800 mb-3">Termin wizyty i czas trwania</h4>
 
