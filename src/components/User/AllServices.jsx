@@ -24,6 +24,11 @@ const ServiceCard = ({ service }) => {
   const getRedirectionUrl = () => {
     if (!hasRedirectionUrl) return "#";
     const url = service.redirectionUrl.trim();
+    // If it's an absolute URL (e.g. https://..., http://...), use as-is.
+    // Otherwise treat it as a path on our site.
+    if (/^https?:\/\//i.test(url)) {
+      return url;
+    }
     return url.startsWith('/') ? url : `/${url}`;
   };
 
