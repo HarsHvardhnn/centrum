@@ -9,6 +9,8 @@ const PatientDetailsFooter = ({
   lastSavedTime,
   onEndVisit,
   isSaving,
+  isVisitReasonVerified = null,
+  isVisitReasonVerifyLoading = false,
 }) => {
   const [currentTime, setCurrentTime] = useState("");
 
@@ -35,10 +37,16 @@ const PatientDetailsFooter = ({
         <button
           type="button"
           onClick={onDownloadVisitCard}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-100 border border-gray-200 text-gray-700 rounded text-sm font-medium hover:bg-gray-200/80 transition-colors"
+          disabled={isSaving || isVisitReasonVerifyLoading || isVisitReasonVerified === false}
+          className="flex items-center gap-2 px-4 py-2 bg-gray-100 border border-gray-200 text-gray-700 rounded text-sm font-medium hover:bg-gray-200/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title={isVisitReasonVerified === false ? "Najpierw zweryfikuj rodzaj wizyty" : undefined}
         >
           <Download size={18} className="text-gray-600" />
-          Pobierz kartę wizyty
+          {isVisitReasonVerifyLoading
+            ? "Sprawdzanie..."
+            : isVisitReasonVerified === false
+            ? "Pobierz po weryfikacji"
+            : "Pobierz kartę wizyty"}
         </button>
         <button
           type="button"

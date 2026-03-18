@@ -13,6 +13,10 @@ const VisitInfoHeader = ({
   onEndTimeChange,
   onVisitTypeChange,
   readOnly = false,
+  visitReasonVerified = null,
+  visitReasonVerifyLoading = false,
+  canVerifyVisitReason = false,
+  onVerifyVisitReason,
 }) => {
   const [visitReasonsCategories, setVisitReasonsCategories] = useState([]);
   const [savingVisitType, setSavingVisitType] = useState(false);
@@ -39,7 +43,14 @@ const VisitInfoHeader = ({
   const doctorName = stripDoctorTitle(doctorNameRaw) || "—";
   const status = appointment.status;
   const visitType = consultationData?.visitReason || consultationData?.consultationType || appointment.visitReason || appointment.consultationType || "";
-  const needsVerification = (consultationData?.visitTypeVerified === false || appointment.visitTypeVerified === false) && appointment.status !== "completed" && appointment.status !== "Completed";
+  const effectiveVisitReasonVerified =
+    visitReasonVerified ?? appointment.visitReasonVerified ?? appointment.visitTypeVerified ?? null;
+
+  const needsVerification =
+    effectiveVisitReasonVerified === false &&
+    appointment.status !== "completed" &&
+    appointment.status !== "Completed";
+
   const statusClass = getStatusStyle(status);
   const appointmentId = appointment.id || appointment._id;
   const isVisitCompleted = appointment.status === "completed" || appointment.status === "Completed";
@@ -50,7 +61,6 @@ const VisitInfoHeader = ({
     try {
       await appointmentHelper.updateConsultation(appointmentId, {
         visitReason: newReason,
-        visitTypeVerified: true,
       });
       onVisitTypeChange?.(newReason);
       toast.success("Rodzaj wizyty zaktualizowany");
@@ -60,6 +70,31 @@ const VisitInfoHeader = ({
     } finally {
       setSavingVisitType(false);
     }
+  };
+
+  const renderVerificationPill = () => {
+    if (visitReasonVerifyLoading) {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+          Sprawdzanie...
+        </span>
+      );
+    }
+    if (effectiveVisitReasonVerified === true) {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-800">
+          Zweryfikowano
+        </span>
+      );
+    }
+    if (needsVerification) {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+          Do weryfikacji
+        </span>
+      );
+    }
+    return null;
   };
 
   const formatTimeForInput = (t) => {
@@ -141,11 +176,7 @@ const VisitInfoHeader = ({
         {readOnly || isVisitCompleted ? (
           <>
             <span className="text-sm font-medium text-gray-900">{visitType || "—"}</span>
-            {needsVerification && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                Do weryfikacji
-              </span>
-            )}
+            {renderVerificationPill()}
           </>
         ) : (
           <>
@@ -156,10 +187,23 @@ const VisitInfoHeader = ({
               disabled={savingVisitType}
               placeholder="Wybierz rodzaj wizyty..."
             />
-            {needsVerification && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
-                Do weryfikacji
-              </span>
+            {renderVerificationPill()}
+
+            {canVerifyVisitReason && !isVisitCompleted && (
+              <button
+                type="button"
+                onClick={onVerifyVisitReason}
+                disabled={
+                  visitReasonVerifyLoading ||
+                  effectiveVisitReasonVerified === true ||
+                  !visitType ||
+                  visitType === "—"
+                }
+                className="px-3 py-1.5 bg-teal-600 text-white text-sm rounded hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title={!visitType ? "Najpierw wybierz rodzaj wizyty" : "Zweryfikuj rodzaj wizyty"}
+              >
+                {visitReasonVerifyLoading ? "Weryfikowanie..." : "Zweryfikuj"}
+              </button>
             )}
           </>
         )}

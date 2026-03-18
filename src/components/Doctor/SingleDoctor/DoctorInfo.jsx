@@ -40,15 +40,15 @@ const DoctorInfoCard = ({ doctor, dailySummary, selectedDate }) => {
       {/* Right: Daily summary – three cards */}
       <div className="flex flex-wrap gap-3 sm:gap-4 w-full sm:w-auto sm:flex-shrink-0">
         {/* GODZINY PRACY – teal card */}
-        <div className="flex-1 min-w-[140px] rounded-xl px-4 py-3 bg-teal-50 border border-teal-100">
+        <div className="flex-1 min-w-[160px] rounded-xl px-5 py-3 bg-teal-50 border border-teal-100 text-center">
           <p className="text-xs font-bold uppercase tracking-wide text-teal-800">Godziny pracy</p>
           <p className="text-lg font-bold text-teal-800 mt-0.5 whitespace-nowrap">{workingHours}</p>
         </div>
-        <div className="flex-1 min-w-[120px] rounded-xl px-4 py-3 bg-white border border-gray-200 shadow-sm">
+        <div className="flex-1 min-w-[120px] rounded-xl px-4 py-3 bg-white border border-gray-200 shadow-sm text-center">
           <p className="text-2xl font-bold text-gray-900">{liczbaWizyt}</p>
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500 mt-0.5">Wizyt dziś</p>
         </div>
-        <div className="flex-1 min-w-[120px] rounded-xl px-4 py-3 bg-white border border-gray-200 shadow-sm">
+        <div className="flex-1 min-w-[120px] rounded-xl px-4 py-3 bg-white border border-gray-200 shadow-sm text-center">
           <p className="text-2xl font-bold text-gray-900">{pozostaloWizyt}</p>
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500 mt-0.5">Pozostało</p>
         </div>

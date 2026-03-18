@@ -27,6 +27,13 @@ export const TestsSection = ({
   const [showESkierowanieModal, setShowESkierowanieModal] = useState(false);
   const searchRef = useRef(null);
 
+  // ICD-10 remote search for "Rozpoznanie (ICD-10)" field
+  const [icd10Search, setIcd10Search] = useState("");
+  const [icd10Results, setIcd10Results] = useState([]);
+  const [icd10Loading, setIcd10Loading] = useState(false);
+  const [showIcd10Dropdown, setShowIcd10Dropdown] = useState(false);
+  const [icd10ActiveIndex, setIcd10ActiveIndex] = useState(null); // index in `tests`
+
   const filtered = tests.filter(
     (t) => !search || (t.name && t.name.toLowerCase().includes(search.toLowerCase()))
   );
@@ -63,6 +70,41 @@ export const TestsSection = ({
     };
   }, [search]);
 
+  // ICD-10 remote search (for Rozpoznanie field)
+  useEffect(() => {
+    if (icd10ActiveIndex == null) {
+      setIcd10Results([]);
+      setShowIcd10Dropdown(false);
+      return;
+    }
+
+    if (!icd10Search.trim()) {
+      setIcd10Results([]);
+      setShowIcd10Dropdown(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIcd10Loading(true);
+    setShowIcd10Dropdown(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const results = await appointmentHelper.searchIcd10(icd10Search);
+        if (!cancelled) setIcd10Results(Array.isArray(results) ? results : []);
+      } catch (e) {
+        if (!cancelled) setIcd10Results([]);
+      } finally {
+        if (!cancelled) setIcd10Loading(false);
+      }
+    }, DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [icd10Search, icd10ActiveIndex]);
+
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -87,6 +129,24 @@ export const TestsSection = ({
     setSearch("");
     setSearchResults([]);
     setShowDropdown(false);
+  };
+
+  const handleSelectIcd10 = (item) => {
+    if (icd10ActiveIndex == null) return;
+    const code = item?.code ?? "";
+    const name = item?.name ?? item?.title ?? "";
+
+    const next = [...tests];
+    next[icd10ActiveIndex] = {
+      ...next[icd10ActiveIndex],
+      diagnosis: name || "",
+      icd10Code: code || next[icd10ActiveIndex]?.icd10Code || "",
+    };
+    setTests(next);
+
+    setIcd10Search(name || "");
+    setIcd10Results([]);
+    setShowIcd10Dropdown(false);
   };
 
   const handleSave = (data) => {
@@ -201,16 +261,53 @@ export const TestsSection = ({
                   </div>
                 )}
                 <label className="block text-xs text-gray-500 mb-1">Rozpoznanie (ICD-10)</label>
-                <input
-                  type="text"
-                  value={test.diagnosis ?? ""}
-                  onChange={(e) => {
-                    const next = [...tests];
-                    next[fullIndex] = { ...next[fullIndex], diagnosis: e.target.value };
-                    setTests(next);
-                  }}
-                  className={INPUT_CLASS}
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={icd10ActiveIndex === fullIndex ? icd10Search : (test.diagnosis ?? "")}
+                    onFocus={() => {
+                      setIcd10ActiveIndex(fullIndex);
+                      setIcd10Search(test.diagnosis ?? "");
+                      setShowIcd10Dropdown(false);
+                    }}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setIcd10Search(val);
+
+                      // Keep diagnosis editable; code will be set only after selecting from dropdown.
+                      const next = [...tests];
+                      next[fullIndex] = { ...next[fullIndex], diagnosis: val };
+                      setTests(next);
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setShowIcd10Dropdown(false), 150);
+                    }}
+                    className={INPUT_CLASS}
+                  />
+
+                  {icd10ActiveIndex === fullIndex && showIcd10Dropdown && (icd10Search.trim() || icd10Results.length > 0) && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[120] max-h-60 overflow-y-auto">
+                      {icd10Loading ? (
+                        <div className="p-3 text-sm text-gray-500">Szukam...</div>
+                      ) : icd10Results.length === 0 ? (
+                        <div className="p-3 text-sm text-gray-500">Brak wyników</div>
+                      ) : (
+                        icd10Results.map((item, i) => (
+                          <button
+                            key={(item?.code ?? "") + "-" + i}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleSelectIcd10(item)}
+                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-teal-50 border-b border-gray-100 last:border-0"
+                          >
+                            <span className="font-medium text-teal-800">{item?.code ?? ""}</span>
+                            <span className="text-gray-700 ml-2">{item?.name ?? item?.title ?? ""}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Kod ICD-10...</label>

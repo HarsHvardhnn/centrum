@@ -193,6 +193,45 @@ class AppointmentService {
   }
 
   /**
+   * Verify visit reason (doctor/admin only).
+   * PATCH /appointments/visit-reason/verify/:id
+   *
+   * Sets consultation.visitReasonVerified = true on backend.
+   */
+  async verifyVisitReason(appointmentId) {
+    try {
+      const response = await apiCaller(
+        "PATCH",
+        `/appointments/visit-reason/verify/${appointmentId}`,
+        {}
+      );
+      return response?.data ?? response;
+    } catch (error) {
+      console.error("Error verifying visit reason:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get visit reason verification status.
+   * GET /appointments/visit-reason/verify/:id/status
+   *
+   * Returns: { success: true, appointmentId, visitReasonVerified: boolean }
+   */
+  async getVisitReasonVerifyStatus(appointmentId) {
+    try {
+      const response = await apiCaller(
+        "GET",
+        `/appointments/visit-reason/verify/${appointmentId}/status`
+      );
+      return response?.data ?? response;
+    } catch (error) {
+      console.error("Error fetching visit reason verify status:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Update appointment status (e.g. complete visit).
    * PATCH /api/appointments/:id/status
    * Body: { status: "completed" }

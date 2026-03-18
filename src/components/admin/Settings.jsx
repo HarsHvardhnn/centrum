@@ -941,6 +941,13 @@ export default function UserManagement() {
     }
   };
 
+  const getUserDisplayId = (u) => {
+    if (!u) return "";
+    if (u.role === "patient") return u.patientId || u._id;
+    if (u.role === "doctor") return u.doctorId || u._id;
+    return u._id;
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -1207,7 +1214,7 @@ export default function UserManagement() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{user._id}</div>
+                    <div className="text-sm text-gray-900">{getUserDisplayId(user)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">

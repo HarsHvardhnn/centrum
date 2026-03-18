@@ -29,6 +29,7 @@ import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Ac
 import { toast } from "sonner";
 import { translateStatus, getVisitModeLabel, getVisitModeStyle, getVisitTypeDisplayLabel, stripDoctorTitle } from "../../../../utils/statusHelper";
 import { useAutoSave } from "../../../../hooks/useAutoSave";
+import { useUser } from "../../../../context/userContext";
 
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
@@ -344,6 +345,7 @@ const PatientDetailsPage = () => {
   const appointmentIdFromUrl = searchParams.get('appointmentId');
   const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
+  const { user } = useUser();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -438,6 +440,10 @@ const PatientDetailsPage = () => {
   const [procedures, setProcedures] = useState([]);
   const [lastSavedTime, setLastSavedTime] = useState(null);
 
+  // Visit reason verification (API2 + API1)
+  const [visitReasonVerified, setVisitReasonVerified] = useState(null); // boolean | null (unknown)
+  const [visitReasonVerifyLoading, setVisitReasonVerifyLoading] = useState(false);
+
   // Visit documentation template pickers (section = one field, global = full visit)
   const [sectionTemplatePickerKey, setSectionTemplatePickerKey] = useState(null);
   const [globalTemplatePickerOpen, setGlobalTemplatePickerOpen] = useState(false);
@@ -518,6 +524,44 @@ const PatientDetailsPage = () => {
       fetchPatientServices();
     }
   }, [currentAppointmentId]);
+
+  // Fetch visit reason verification status (API 2) whenever appointment changes.
+  useEffect(() => {
+    if (!currentAppointmentId) return;
+
+    let cancelled = false;
+    setVisitReasonVerifyLoading(true);
+
+    // Best-effort initial value (before the API call resolves)
+    const initial =
+      selectedAppointment?.visitReasonVerified ??
+      selectedAppointment?.visitTypeVerified ??
+      null;
+    setVisitReasonVerified(initial);
+
+    appointmentHelper
+      .getVisitReasonVerifyStatus(currentAppointmentId)
+      .then((res) => {
+        if (cancelled) return;
+        const v = res?.visitReasonVerified;
+        // API contract: boolean
+        if (typeof v === "boolean") setVisitReasonVerified(v);
+        else setVisitReasonVerified(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.warn("visitReasonVerifyStatus fetch failed:", err);
+        setVisitReasonVerified(false);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setVisitReasonVerifyLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentAppointmentId, selectedAppointment]);
 
   // Modify the useEffect to handle appointmentId from query params
   useEffect(() => {
@@ -733,16 +777,69 @@ const PatientDetailsPage = () => {
 
   const handleVisitTypeChange = (newVisitReason) => {
     if (!newVisitReason) return;
+    // Selecting a new visit reason requires verification again.
+    setVisitReasonVerified(false);
     setConsultationData((prev) => ({
       ...prev,
       visitReason: newVisitReason,
       consultationType: newVisitReason,
-      visitTypeVerified: true,
+      // Verification is a separate step (API 1); selecting a type resets it locally.
+      visitTypeVerified: false,
     }));
-    setSelectedAppointment((prev) => (prev ? { ...prev, visitReason: newVisitReason, visitTypeVerified: true } : null));
-    setAppointments((prev) =>
-      prev.map((apt) => (apt._id === currentAppointmentId ? { ...apt, visitReason: newVisitReason, visitTypeVerified: true } : apt))
+    setSelectedAppointment((prev) =>
+      prev ? { ...prev, visitReason: newVisitReason, visitTypeVerified: false } : null
     );
+    setAppointments((prev) =>
+      prev.map((apt) =>
+        apt._id === currentAppointmentId
+          ? { ...apt, visitReason: newVisitReason, visitTypeVerified: false }
+          : apt
+      )
+    );
+
+    // Refresh verification status (API 2) so UI reflects backend truth.
+    if (currentAppointmentId) {
+      setVisitReasonVerifyLoading(true);
+      appointmentHelper
+        .getVisitReasonVerifyStatus(currentAppointmentId)
+        .then((res) => {
+          const v = res?.visitReasonVerified;
+          setVisitReasonVerified(typeof v === "boolean" ? v : false);
+        })
+        .catch((err) => {
+          console.warn("Failed to refresh visit reason verify status:", err);
+          setVisitReasonVerified(false);
+        })
+        .finally(() => {
+          setVisitReasonVerifyLoading(false);
+        });
+    }
+  };
+
+  const canVerifyVisitReason = user?.role === "doctor" || user?.role === "admin";
+
+  const handleVerifyVisitReason = async () => {
+    if (!currentAppointmentId) return;
+    if (!canVerifyVisitReason) return;
+
+    setVisitReasonVerifyLoading(true);
+    try {
+      await appointmentHelper.verifyVisitReason(currentAppointmentId);
+      const res = await appointmentHelper.getVisitReasonVerifyStatus(currentAppointmentId);
+      const v = res?.visitReasonVerified;
+      setVisitReasonVerified(typeof v === "boolean" ? v : true);
+      toast.success("Rodzaj wizyty zweryfikowany");
+    } catch (err) {
+      const code = err?.response?.data?.code;
+      if (code === "VISIT_REASON_NOT_SET") {
+        toast.error("Najpierw wybierz rodzaj wizyty");
+      } else {
+        toast.error(err?.response?.data?.message || "Nie udało się zweryfikować rodzaju wizyty");
+      }
+      setVisitReasonVerified(false);
+    } finally {
+      setVisitReasonVerifyLoading(false);
+    }
   };
 
   // Fetch patient services
@@ -1137,7 +1234,7 @@ const PatientDetailsPage = () => {
                 <span className="text-sm font-medium">
                   {getVisitTypeDisplayLabel(appointment)}
                 </span>
-                {appointment.visitTypeVerified === false && appointment.status !== "completed" && appointment.status !== "Completed" && (
+                {visitReasonVerified === false && appointment.status !== "completed" && appointment.status !== "Completed" && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Do weryfikacji</span>
                 )}
               </div>
@@ -1195,7 +1292,13 @@ const PatientDetailsPage = () => {
   };
 
   const handleGenerateVisitCard = async (appointmentId, e, forceNew = false) => {
-    e.stopPropagation(); // Prevent appointment selection when clicking the button
+    e?.stopPropagation?.(); // Prevent appointment selection when clicking the button
+
+    // Block generating visit card until visit reason is verified (API 1/2).
+    if (visitReasonVerifyLoading || visitReasonVerified === false) {
+      toast.warning("Najpierw zweryfikuj rodzaj wizyty, aby pobrać kartę.");
+      return;
+    }
     try {
       const response = await appointmentHelper.generateVisitCard(appointmentId, forceNew);
       
@@ -1261,6 +1364,10 @@ const PatientDetailsPage = () => {
           onEndTimeChange={handleEndTimeChange}
           onVisitTypeChange={handleVisitTypeChange}
           readOnly={isVisitCompleted}
+          visitReasonVerified={visitReasonVerified}
+          visitReasonVerifyLoading={visitReasonVerifyLoading}
+          canVerifyVisitReason={canVerifyVisitReason}
+          onVerifyVisitReason={handleVerifyVisitReason}
         />
       )}
 
@@ -1470,6 +1577,8 @@ const PatientDetailsPage = () => {
           lastSavedTime={lastSavedTime}
           onEndVisit={() => handleSave(true)}
           isSaving={isSaving}
+          isVisitReasonVerified={visitReasonVerified}
+          isVisitReasonVerifyLoading={visitReasonVerifyLoading}
         />
       )}
 
