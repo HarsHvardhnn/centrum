@@ -633,7 +633,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
 </head>
 <body>
     <!-- SEO content for crawlers: visible in DOM for snippet selection, not displayed on screen -->
-    <div id="seo-content" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;">
+    <!-- Off-screen SEO content for crawlers (avoid clip-only hiding). -->
+    <div id="seo-content" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">
         <h1>${escapeHtml(title)}</h1>
         <p>${escapeHtml(description)}</p>
     </div>
