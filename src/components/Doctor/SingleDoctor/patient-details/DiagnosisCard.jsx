@@ -112,18 +112,15 @@ const DiagnosisCard = ({
                 key={diagId || i}
                 className="flex items-center flex-wrap gap-2 rounded-r-lg border-l-4 border-l-teal-700 bg-[#e0f7f9] py-2 pl-2 pr-3"
               >
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (disabled || !onTogglePrimary) return;
-                    onTogglePrimary(diagId, !isPrimary);
-                  }}
-                  disabled={disabled || !onTogglePrimary}
-                  className={`text-xs font-semibold px-2.5 py-1 rounded cursor-pointer disabled:cursor-default disabled:opacity-70 transition-colors ${isPrimary ? "bg-teal-700 text-white hover:bg-teal-800" : "bg-teal-100 text-teal-800 hover:bg-teal-200 border border-teal-200"}`}
-                  title={onTogglePrimary ? "Kliknij, aby zmienić na " + (isPrimary ? "Dodatkowe" : "Główne") : undefined}
+                <span
+                  className={`text-xs font-semibold px-2.5 py-1 rounded ${
+                    isPrimary
+                      ? "bg-teal-700 text-white"
+                      : "bg-teal-100 text-teal-800 border border-teal-200"
+                  }`}
                 >
                   {label}
-                </button>
+                </span>
                 <span className="text-sm text-gray-900 flex-1 min-w-0 truncate">
                   {d.code} {d.name}
                 </span>
