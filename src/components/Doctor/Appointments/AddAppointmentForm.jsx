@@ -1746,7 +1746,11 @@ function AppointmentFormModal({
         <h3 className="text-lg font-medium mb-4">Opcje Recepcjonisty</h3>
 
         {/* Appointment time: show range when we have one (slot or custom start+end); otherwise blank and use duration */}
-        {(appointmentData.selectedSlot || appointmentData.customStartTime || appointmentData.customEndTime) && (
+        {/*
+          Hide duplicate "Termin wizyty" summary on step 5.
+          The real time editor/summary already appears below in "Termin wizyty i czas trwania".
+        */}
+        {false && (appointmentData.selectedSlot || appointmentData.customStartTime || appointmentData.customEndTime) && (
           <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
             <p className="text-sm text-gray-800">
               <strong>Termin wizyty:</strong>{" "}
