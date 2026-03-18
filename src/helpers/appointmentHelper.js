@@ -315,11 +315,19 @@ class AppointmentService {
     }
   }
 
-  async getAppointmentsDashboard(page = 1, limit = 4) {
+  /**
+   * Fetch appointments for admin dashboard (e.g. "Nadchodzące Wizyty").
+   * @param {number} page
+   * @param {number} limit
+   * @param {boolean} excludePatientLess - If true, request only appointments that have a patient (backend may support query param).
+   */
+  async getAppointmentsDashboard(page = 1, limit = 4, excludePatientLess = true) {
     try {
+      const params = new URLSearchParams({ page, limit });
+      if (excludePatientLess) params.set("excludePatientLess", "true");
       const response = await apiCaller(
         "GET",
-        `/appointments/dashboard?page=${page}&limit=${limit}`
+        `/appointments/dashboard?${params.toString()}`
       );
       return response.data;
     } catch (error) {

@@ -1404,14 +1404,18 @@ const UpcomingAppointments = () => {
       const response = await appointmentHelper.getAppointmentsDashboard(
         page,
         pagination.limit,
-        "",
-        filters,
-        "date",
-        "asc"
+        true // excludePatientLess: only appointments with a patient
       );
 
-      setAppointments(response.data);
-      setPagination(response.pagination);
+      const rawList = response?.data ?? [];
+      const withPatient = rawList.filter(
+        (apt) =>
+          apt.patient_id != null ||
+          apt.patientId != null ||
+          (apt.patient != null && (apt.patient.id ?? apt.patient._id))
+      );
+      setAppointments(withPatient);
+      setPagination(response?.pagination ?? pagination);
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch appointments:", err);
