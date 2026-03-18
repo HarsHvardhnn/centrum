@@ -68,6 +68,28 @@ export const getVisitModeStyle = (appointment) => {
     : "bg-purple-100 text-purple-800";
 };
 
+/**
+ * Display label for visit/consultation type in visit history and lists.
+ * - re-visit → "Konsultacja lekarska"
+ * - first-time → "Konsultacja pierwszorazowa"
+ * - role "patient" + online → "Konsultacja online"
+ * - role "patient" + offline → "Konsultacja lekarska"
+ * - receptionist/admin, no type (existing patient) → "Konsultacja lekarska"
+ * - receptionist, first-time (no patient id) → "Konsultacja pierwszorazowa" (via visitReason)
+ */
+export const getVisitTypeDisplayLabel = (appointment) => {
+  const raw = appointment?.visitReason ?? appointment?.consultationType ?? appointment?.metadata?.visitType ?? "";
+  const s = typeof raw === "string" ? raw.trim() : String(raw ?? "").trim();
+  const lower = s.toLowerCase();
+  const role = (appointment?.role ?? appointment?.createdByRole ?? "").toString().trim().toLowerCase();
+
+  if (lower === "re-visit") return "Konsultacja lekarska";
+  if (lower === "first-time") return "Konsultacja pierwszorazowa";
+  if (role === "patient") return getVisitMode(appointment) === "online" ? "Konsultacja online" : "Konsultacja lekarska";
+  if (!s) return "Konsultacja lekarska";
+  return s;
+};
+
 /** Remove Dr / Dr med. / lek / Lekarz (and variants) from start of name for display. Use for headers, lists, visit cards. */
 export function stripDoctorTitle(name) {
   if (name == null || typeof name !== "string") return "";

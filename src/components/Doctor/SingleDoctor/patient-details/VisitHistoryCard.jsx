@@ -1,5 +1,5 @@
 import React from "react";
-import { translateStatus, getStatusStyle } from "../../../../utils/statusHelper";
+import { translateStatus, getStatusStyle, getVisitTypeDisplayLabel } from "../../../../utils/statusHelper";
 
 const VisitHistoryCard = ({ appointments, currentAppointmentId, onSelectVisit }) => {
   return (
@@ -28,15 +28,7 @@ const VisitHistoryCard = ({ appointments, currentAppointmentId, onSelectVisit })
                   })}
                 </p>
                 <p className="text-sm text-gray-600 truncate">
-                  {(() => {
-                    const raw = apt.visitReason || apt.consultationType || apt.metadata?.visitType || "";
-                    const s = typeof raw === "string" ? raw.trim() : String(raw).trim();
-                    if (!s) return "Konsultacja standardowa";
-                    const lower = s.toLowerCase();
-                    if (lower === "re-visit") return "Konsultacja lekarska";
-                    if (lower === "first-time") return "Konsultacja pierwszorazowa";
-                    return s;
-                  })()}
+                  {getVisitTypeDisplayLabel(apt)}
                 </p>
                 {apt.visitTypeVerified === false && apt.status !== "completed" && apt.status !== "Completed" && (
                   <span className="inline-block mt-1 text-xs text-amber-700">Do weryfikacji</span>

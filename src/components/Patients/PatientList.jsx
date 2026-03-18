@@ -27,7 +27,7 @@ import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
-import { translateStatus, getStatusStyle, getVisitMode, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel, stripDoctorTitle } from '../../utils/statusHelper';
+import { translateStatus, getStatusStyle, getVisitMode, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel, getVisitTypeDisplayLabel, stripDoctorTitle } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import PatientStepForm from "../SubComponentForm/PatientStepForm";
@@ -1169,15 +1169,7 @@ function LabAppointmentsContent({ clinic }) {
                         {idOrPeselLine}
                       </div>
                       <div className="text-sm text-gray-600 mt-1">
-                        {(() => {
-                          const raw = appointment.visitReason || appointment.consultationType || appointment.metadata?.visitType || "";
-                          const s = typeof raw === "string" ? raw.trim() : String(raw).trim();
-                          if (!s) return "Konsultacja lekarska";
-                          const lower = s.toLowerCase();
-                          if (lower === "re-visit") return "Konsultacja lekarska";
-                          if (lower === "first-time") return "Konsultacja pierwszorazowa";
-                          return s;
-                        })()}
+                        {getVisitTypeDisplayLabel(appointment)}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
                         Utworzono przez: {getCreatedByRoleLabel(appointment)}

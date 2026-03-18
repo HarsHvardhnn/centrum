@@ -30,7 +30,7 @@ import billingHelper from "../../helpers/billingHelper";
 import { createPortal } from "react-dom";
 import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
-import { translateStatus, getStatusStyle, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel, stripDoctorTitle } from '../../utils/statusHelper';
+import { translateStatus, getStatusStyle, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel, getVisitTypeDisplayLabel, stripDoctorTitle } from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import RescheduleModal from "./RescheduleModal";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
@@ -977,15 +977,7 @@ const PatientList = () => {
                   <td className="py-4 px-4 text-gray-600">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span>
-                        {(() => {
-                          const raw = patient.visitReason || patient.consultationType || patient.metadata?.visitType || "";
-                          const s = typeof raw === "string" ? raw.trim() : String(raw).trim();
-                          if (!s) return "Konsultacja lekarska";
-                          const lower = s.toLowerCase();
-                          if (lower === "re-visit") return "Konsultacja lekarska";
-                          if (lower === "first-time") return "Konsultacja pierwszorazowa";
-                          return s;
-                        })()}
+                        {getVisitTypeDisplayLabel(patient)}
                       </span>
                       {patient.visitTypeVerified === false && patient.status !== "completed" && patient.status !== "Completed" && (
                         <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Do weryfikacji</span>
@@ -1375,6 +1367,7 @@ const ChevronDown = ({ size }) => (
 // Upcoming Appointments Component
 const UpcomingAppointments = () => {
   const { user } = useUser();
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -1384,6 +1377,15 @@ const UpcomingAppointments = () => {
     limit: 4,
     totalPages: 0,
   });
+  const [showCheckin, setShowCheckin] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+
+  const getPatientViewUrl = (patientId, appointmentId) => {
+    if (user?.role === "receptionist") {
+      return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname)}`;
+    }
+    return `/szczegoly-pacjenta/${patientId}${appointmentId ? `?appointmentId=${appointmentId}` : ""}`;
+  };
 
   useEffect(() => {
     fetchAppointments();
@@ -1392,26 +1394,22 @@ const UpcomingAppointments = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      
-      // Default filter object
-      const filters = {};
-      
-      // If user is a doctor, include doctor ID filter
-      if (user?.role === "doctor" && user?._id) {
-        filters.doctorId = user._id;
-      }
-      
+
       const response = await appointmentHelper.getAppointmentsDashboard(
         page,
-        pagination.limit,
-        "",
-        filters,
-        "date",
-        "asc"
+        pagination.limit
       );
 
-      setAppointments(response.data);
-      setPagination(response.pagination);
+      const rawList = response?.data ?? [];
+      const withPatient = rawList.filter(
+        (apt) =>
+          apt.patientObjectId != null ||
+          apt.patient_id != null ||
+          apt.patientId != null ||
+          (apt.patient != null && (apt.patient.id ?? apt.patient._id))
+      );
+      setAppointments(withPatient);
+      setPagination(response?.pagination ?? { total: 0, limit: 4, totalPages: 0 });
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch appointments:", err);
@@ -1545,7 +1543,11 @@ const UpcomingAppointments = () => {
                 {appointment.patientObjectId && (
                   <DropdownMenu.Root>
                     <DropdownMenu.Trigger asChild>
-                      <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
+                      <button
+                        type="button"
+                        className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                        aria-label="Otwórz menu"
+                      >
                         <MoreVertical size={18} />
                       </button>
                     </DropdownMenu.Trigger>
@@ -1558,7 +1560,10 @@ const UpcomingAppointments = () => {
                       >
                         <DropdownMenu.Item
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                          onClick={() => navigate(getPatientViewUrl(appointment.patientObjectId, appointment.id))}
+                          onSelect={() => {
+                            const aptId = appointment.id ?? appointment._id;
+                            navigate(getPatientViewUrl(appointment.patientObjectId, aptId));
+                          }}
                         >
                           <Eye size={16} className="mr-2 flex-shrink-0" />
                           Zobacz szczegóły pacjenta
@@ -1567,9 +1572,13 @@ const UpcomingAppointments = () => {
                         {appointment.status === "booked" && (
                           <DropdownMenu.Item
                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                            onClick={() => {
+                            onSelect={() => {
+                              const aptId = appointment.id ?? appointment._id;
                               setSelectedAppointment({
                                 ...appointment,
+                                id: aptId,
+                                _id: aptId,
+                                patient_id: appointment.patientObjectId,
                                 patient: {
                                   id: appointment.patientObjectId,
                                   _id: appointment.patientObjectId,
@@ -1584,10 +1593,10 @@ const UpcomingAppointments = () => {
                           </DropdownMenu.Item>
                         )}
 
-                        {appointment.status === "completed" && appointment.isAppointment && (
+                        {appointment.status === "completed" && appointment.isAppointment !== false && (
                           <DropdownMenu.Item
                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                            onClick={() => handleGenerateVisitCard(appointment.id)}
+                            onSelect={() => handleGenerateVisitCard(appointment.id ?? appointment._id)}
                           >
                             <FileText size={16} className="mr-2 flex-shrink-0" />
                             Generuj kartę wizyty
@@ -1602,6 +1611,26 @@ const UpcomingAppointments = () => {
           ))}
         </div>
       )}
+
+      <CheckInModal
+        isOpen={showCheckin}
+        setIsOpen={setShowCheckin}
+        patientData={
+          selectedAppointment
+            ? {
+                ...selectedAppointment,
+                id: selectedAppointment.patient_id ?? selectedAppointment.patient?.id ?? selectedAppointment.patient?._id,
+              }
+            : null
+        }
+        appointmentId={selectedAppointment?.id ?? selectedAppointment?._id}
+        onCheckinSuccess={() => {
+          setShowCheckin(false);
+          setSelectedAppointment(null);
+          fetchAppointments();
+        }}
+        onAppointmentUpdate={() => fetchAppointments()}
+      />
     </div>
   );
 };

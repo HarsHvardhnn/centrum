@@ -27,7 +27,7 @@ import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
 import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity, Save } from "lucide-react";
 import { toast } from "sonner";
-import { translateStatus, getVisitModeLabel, getVisitModeStyle, stripDoctorTitle } from "../../../../utils/statusHelper";
+import { translateStatus, getVisitModeLabel, getVisitModeStyle, getVisitTypeDisplayLabel, stripDoctorTitle } from "../../../../utils/statusHelper";
 import { useAutoSave } from "../../../../hooks/useAutoSave";
 
 // Confirmation Modal Component
@@ -1130,20 +1130,12 @@ const PatientDetailsPage = () => {
                 {translateStatus(appointment.status)}
               </span>
             </div>
-            {(appointment.visitReason || appointment.consultationType) && (
+            {appointment && (
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <FileText size={16} className="text-teal-500" />
                 <span className="text-sm text-gray-600">Rodzaj wizyty:</span>
                 <span className="text-sm font-medium">
-                  {(() => {
-                    const raw = appointment.visitReason || appointment.consultationType || "";
-                    const s = typeof raw === "string" ? raw.trim() : String(raw).trim();
-                    if (!s) return "—";
-                    const lower = s.toLowerCase();
-                    if (lower === "re-visit") return "Konsultacja lekarska";
-                    if (lower === "first-time") return "Konsultacja pierwszorazowa";
-                    return s;
-                  })()}
+                  {getVisitTypeDisplayLabel(appointment)}
                 </span>
                 {appointment.visitTypeVerified === false && appointment.status !== "completed" && appointment.status !== "Completed" && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Do weryfikacji</span>
