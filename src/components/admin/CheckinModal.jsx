@@ -269,13 +269,13 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
             </div>
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 text-sm">
-              <div>
+              <div className="min-w-0">
                 <p className="text-gray-500">Email</p>
-                <p>{patient.email}</p>
+                <p className="break-all min-w-0">{patient.email}</p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-gray-500">Telefon</p>
-                <p>{(patient.phone != null && String(patient.phone).trim() !== "" && !String(patient.phone).trim().startsWith("__no_phone_")) ? patient.phone : "Numer telefonu niedostępny"}</p>
+                <p className="break-all min-w-0">{(patient.phone != null && String(patient.phone).trim() !== "" && !String(patient.phone).trim().startsWith("__no_phone_")) ? patient.phone : "Numer telefonu niedostępny"}</p>
               </div>
               {/* <div>
                 <p className="text-gray-500">Schorzenia</p>
