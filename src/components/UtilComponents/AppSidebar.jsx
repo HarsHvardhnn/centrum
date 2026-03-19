@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useUser } from "../../context/userContext";
 import {
@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Mail,
 } from "lucide-react";
+import FeatureComingSoonModal from "../Doctor/SingleDoctor/patient-details/FeatureComingSoonModal";
 
 const SECTION_HEADING = "text-xs font-bold uppercase tracking-wider text-gray-500";
 const ACTIVE_BG = "#e2f6f7";
@@ -116,6 +117,10 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
   const location = useLocation();
   const { user } = useUser();
   const currentPath = location.pathname;
+  const [comingSoonModal, setComingSoonModal] = useState({ open: false, featureName: "" });
+
+  const openComingSoon = (featureName) => () => setComingSoonModal({ open: true, featureName });
+  const closeComingSoon = () => setComingSoonModal((prev) => ({ ...prev, open: false }));
 
   const handleLogout = () => {
     localStorage.clear();
@@ -198,22 +203,22 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
           <NavItem
             icon={<Pill size={ICON_SIZE} strokeWidth={2} />}
             label="E-recepta"
-            to="#"
+            onClick={openComingSoon("E-recepta")}
             isActive={false}
             collapsed={collapsed}
           />
           <NavItem
             icon={<FilePlus size={ICON_SIZE} strokeWidth={2} />}
             label="E-skierowanie"
-            to="#"
+            onClick={openComingSoon("E-skierowanie")}
             isActive={false}
             collapsed={collapsed}
           />
           <NavItem
             icon={<FileCheck size={ICON_SIZE} strokeWidth={2} />}
             label="e-ZLA"
-            isExternal
-            externalHref="https://www.zus.pl/ezus/logowanie?logout-manually=true"
+            onClick={openComingSoon("e-ZLA")}
+            isActive={false}
             collapsed={collapsed}
           />
         </SidebarSection>
@@ -268,6 +273,11 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
           />
         </div>
       </nav>
+      <FeatureComingSoonModal
+        isOpen={comingSoonModal.open}
+        onClose={closeComingSoon}
+        featureName={comingSoonModal.featureName || "Ta funkcja"}
+      />
     </aside>
   );
 };
