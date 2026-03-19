@@ -35,7 +35,8 @@ const ReportsDashboard = () => {
     doctorId: '',
     patientId: '',
     status: 'all',
-    serviceType: 'all'
+    serviceType: 'all',
+    patientLessVisitsOnly: false
   });
 
   // Get user permissions
@@ -320,6 +321,20 @@ const ReportsDashboard = () => {
               <option value="online">Online</option>
               <option value="offline">Przychodnia</option>
             </select>
+          </div>
+
+          {/* Patient-less visits only */}
+          <div className="flex items-center">
+            <input
+              id="patientLessVisitsOnly"
+              type="checkbox"
+              checked={filters.patientLessVisitsOnly === true}
+              onChange={(e) => setFilters(prev => ({ ...prev, patientLessVisitsOnly: e.target.checked }))}
+              className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+            />
+            <label htmlFor="patientLessVisitsOnly" className="ml-2 block text-sm text-gray-700">
+              Tylko wizyty bez pacjenta
+            </label>
           </div>
 
           {/* Action Buttons */}

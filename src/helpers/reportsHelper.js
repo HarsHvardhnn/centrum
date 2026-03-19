@@ -27,6 +27,7 @@ export const generateReport = async (filters) => {
     if (filters.serviceType && filters.serviceType !== 'all') {
       queryParams.append('serviceType', filters.serviceType);
     }
+    queryParams.append('patientLessVisitsOnly', filters.patientLessVisitsOnly === true ? 'true' : 'false');
 
     const response = await apiCaller('GET', `/api/reports/generate?${queryParams.toString()}`);
     return response.data;
@@ -70,6 +71,7 @@ export const exportReportToPDF = async (filters) => {
     if (filters.serviceType && filters.serviceType !== 'all') {
       queryParams.append('serviceType', filters.serviceType);
     }
+    queryParams.append('patientLessVisitsOnly', filters.patientLessVisitsOnly === true ? 'true' : 'false');
 
     const url = `/api/reports/export/pdf?${queryParams.toString()}`;
     console.log('🔍 Requesting PDF from:', url);
@@ -217,6 +219,7 @@ export const exportReportToCSV = async (filters) => {
     if (filters.serviceType && filters.serviceType !== 'all') {
       queryParams.append('serviceType', filters.serviceType);
     }
+    queryParams.append('patientLessVisitsOnly', filters.patientLessVisitsOnly === true ? 'true' : 'false');
 
     // Use axiosInstance directly for binary responses
     const response = await axiosInstance({
