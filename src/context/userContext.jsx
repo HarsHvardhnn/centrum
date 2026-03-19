@@ -3,6 +3,7 @@ import { apiCaller, setCookie, getCookie, removeCookie } from "../utils/axiosIns
 
 // Create the context
 const UserContext = createContext(null);
+const SESSION_STORAGE_KEY = "cm7_session_start";
 
 // Custom hook
 export const useUser = () => useContext(UserContext);
@@ -147,6 +148,8 @@ export const UserProvider = ({ children }) => {
     setCookie('authToken', token, 7);
     // Store user data in localStorage
     localStorage.setItem('user', JSON.stringify(userData));
+    // Reset session countdown start on every fresh login
+    sessionStorage.setItem(SESSION_STORAGE_KEY, String(Date.now()));
   };
 
   const logout = () => {
@@ -155,6 +158,8 @@ export const UserProvider = ({ children }) => {
     // Clear both cookie and localStorage
     removeCookie('authToken');
     localStorage.removeItem('user');
+    // Clear session countdown marker so next login starts clean
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
   };
 
   const hasRole = (allowedRoles) => {

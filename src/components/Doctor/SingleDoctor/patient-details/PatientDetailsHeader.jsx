@@ -165,6 +165,7 @@ const PatientDetailsHeader = () => {
   const [sessionRemainingMs, setSessionRemainingMs] = useState(null);
   const [sessionDurationMs, setSessionDurationMs] = useState(30 * 60 * 1000); // default 30 min
   const [showSessionExpiryModal, setShowSessionExpiryModal] = useState(false);
+  const [sessionTimerReady, setSessionTimerReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -194,6 +195,7 @@ const PatientDetailsHeader = () => {
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, sessionDurationMs - elapsed);
       setSessionRemainingMs(remaining);
+      setSessionTimerReady(true);
     };
     update();
     const t = setInterval(update, 1000);
@@ -205,10 +207,10 @@ const PatientDetailsHeader = () => {
 
   // Show "session will expire soon / extend?" modal when remaining reaches 0
   useEffect(() => {
-    if (sessionRemainingMs !== null && sessionRemainingMs <= 0) {
+    if (sessionTimerReady && sessionRemainingMs !== null && sessionRemainingMs <= 0) {
       setShowSessionExpiryModal(true);
     }
-  }, [sessionRemainingMs]);
+  }, [sessionTimerReady, sessionRemainingMs]);
 
   const handleExtendSession = () => {
     sessionStorage.setItem(SESSION_STORAGE_KEY, String(Date.now()));
