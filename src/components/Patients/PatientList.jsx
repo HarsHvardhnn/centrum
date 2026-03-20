@@ -106,6 +106,7 @@ function LabAppointmentsContent({ clinic }) {
     pages: 1,
     limit: 10,
   });
+  const [totalPatientsCount, setTotalPatientsCount] = useState(0);
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -260,6 +261,13 @@ function LabAppointmentsContent({ clinic }) {
       if (response?.success !== false) {
         setAppointments(list);
         setPagination(pag);
+        // Backend now returns totalPatients at root; fallback to pagination.total (or current page length).
+        const rootTotalPatients =
+          response?.totalPatients ??
+          response?.data?.totalPatients ??
+          pag?.totalPatients;
+        const fallbackTotal = pag?.total ?? list?.length ?? 0;
+        setTotalPatientsCount(Number(rootTotalPatients ?? fallbackTotal) || 0);
       } else {
         toast.error("Nie udało się pobrać wizyt");
       }
@@ -843,7 +851,7 @@ function LabAppointmentsContent({ clinic }) {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">
               {clinic ? "Historia wizyt" : "Lista pacjentów"}
-              {!clinic && ` (${appointments.length})`}
+              {!clinic && ` (${totalPatientsCount})`}
             </h1>
             {clinic && (
               <p className="text-sm text-gray-500">

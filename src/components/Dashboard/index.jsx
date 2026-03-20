@@ -375,6 +375,14 @@ const PatientList = () => {
   const [consentsData, setConsentsData] = useState(null);
   const [consentsLoading, setConsentsLoading] = useState(false);
   const [consentsError, setConsentsError] = useState(null);
+
+  // Visit history modal (used for receptionist)
+  const [showVisitHistoryModal, setShowVisitHistoryModal] = useState(false);
+  const [visitHistoryPatient, setVisitHistoryPatient] = useState(null);
+  const [visitHistoryData, setVisitHistoryData] = useState([]);
+  const [visitHistoryLoading, setVisitHistoryLoading] = useState(false);
+  const [visitHistoryError, setVisitHistoryError] = useState(null);
+
   const [sendSMSNotification, setSendSMSNotification] = useState(false);
   const [sendEmailNotification, setSendEmailNotification] = useState(false);
   const [pagination, setPagination] = useState({
@@ -409,6 +417,30 @@ const PatientList = () => {
       return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname)}`;
     }
     return `/szczegoly-pacjenta/${patientId}${appointmentId ? `?appointmentId=${appointmentId}` : ""}`;
+  };
+
+  const openVisitHistoryModal = (patientId, patientName) => {
+    if (!patientId) return;
+    setVisitHistoryPatient({ id: patientId, name: patientName || "Pacjent" });
+    setShowVisitHistoryModal(true);
+    setVisitHistoryError(null);
+    setVisitHistoryData([]);
+    setVisitHistoryLoading(true);
+
+    patientService
+      .getPatientVisits(patientId)
+      .then((res) => {
+        const data = res?.data ?? res;
+        setVisitHistoryData(Array.isArray(data) ? data : []);
+        setVisitHistoryError(res?.success === false ? res?.message : null);
+      })
+      .catch((err) => {
+        setVisitHistoryError(
+          err?.response?.data?.message || err?.message || "Nie udało się pobrać historii wizyt."
+        );
+        setVisitHistoryData([]);
+      })
+      .finally(() => setVisitHistoryLoading(false));
   };
 
   /** Map UI status filter to API status param (booked | completed | cancelled; omit for 'all'). */
@@ -950,7 +982,17 @@ const PatientList = () => {
                         setSelectedAppointment(patient);
                         setShowCompleteRegModal(true);
                       } else if (!isVisitOnlyAppointment(patient)) {
-                        navigate(getPatientViewUrl(patient.patient_id, patient._id));
+                        if (user?.role === "receptionist") {
+                          const patientId =
+                            patient.patientObjectId ??
+                            patient.patient_id ??
+                            patient.patientId ??
+                            patient.patient?.id ??
+                            patient.patient?._id;
+                          openVisitHistoryModal(patientId, patient.name || patient.registrationData?.name || "Pacjent");
+                        } else {
+                          navigate(getPatientViewUrl(patient.patient_id, patient._id));
+                        }
                       }
                     }}
                   >
@@ -1147,6 +1189,90 @@ const PatientList = () => {
           return user?.role === "doctor" && doctorId ? `/lekarze/wizyty/${doctorId}` : "/lekarze";
         })()}
       />
+
+      {/* Visit history modal */}
+      {showVisitHistoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col mx-4">
+            <div className="flex justify-between items-center border-b border-gray-200 px-4 py-3">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Historia wizyt – {visitHistoryPatient?.name ?? "Pacjent"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowVisitHistoryModal(false);
+                  setVisitHistoryPatient(null);
+                  setVisitHistoryData([]);
+                  setVisitHistoryError(null);
+                }}
+                className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {visitHistoryLoading ? (
+                <div className="py-8 text-center text-gray-500">Ładowanie historii wizyt...</div>
+              ) : visitHistoryError ? (
+                <div className="py-4 text-red-600 text-sm">{visitHistoryError}</div>
+              ) : visitHistoryData.length === 0 ? (
+                <div className="py-8 text-center text-gray-500">Brak wizyt dla tego pacjenta.</div>
+              ) : (
+                <ul className="space-y-3">
+                  {visitHistoryData.map((visit, idx) => {
+                    const key = visit.visitId ?? visit._id ?? `${visit.date ?? ""}-${visit.time ?? idx}`;
+                    const timeLabel =
+                      visit.time ??
+                      (visit.startTime && visit.endTime ? `${visit.startTime} – ${visit.endTime}` : "—");
+
+                    return (
+                      <li
+                        key={key}
+                        className="p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-medium text-gray-900">
+                              {visit.date
+                                ? new Date(visit.date).toLocaleDateString("pl-PL")
+                                : "—"}
+                            </div>
+                            <div className="text-sm text-gray-600">{timeLabel}</div>
+                            {visit.doctor?.name && (
+                              <div className="text-xs text-gray-500 mt-1 truncate">
+                                Lekarz: {visit.doctor.name}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <span
+                              className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${getStatusStyle(
+                                visit.status
+                              )}`}
+                            >
+                              {translateStatus(visit.status)}
+                            </span>
+                            {visit.mode && (
+                              <span
+                                className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${getVisitModeStyle({
+                                  mode: visit.mode,
+                                })}`}
+                              >
+                                {visit.mode === "online" ? "Online" : "Stacjonarna"}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Check-in Modal */}
       <CheckInModal
