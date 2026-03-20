@@ -443,6 +443,29 @@ const PatientList = () => {
       .finally(() => setVisitHistoryLoading(false));
   };
 
+  const formatPolishDate = (dateValue) => {
+    if (!dateValue) return "—";
+    const s = String(dateValue).trim();
+    if (!s) return "—";
+
+    // Backend sends: DD.MM.YYYY (e.g. 20.03.2026)
+    const m = s.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (m) {
+      const day = Number(m[1]);
+      const monthIndex = Number(m[2]) - 1;
+      const year = Number(m[3]);
+      const d = new Date(year, monthIndex, day);
+      if (!Number.isNaN(d.getTime())) {
+        return d.toLocaleDateString("pl-PL");
+      }
+    }
+
+    // Fallback: try native parsing (ISO, etc.)
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) return d.toLocaleDateString("pl-PL");
+    return s; // last resort: show raw string
+  };
+
   /** Map UI status filter to API status param (booked | completed | cancelled; omit for 'all'). */
   const getApiStatus = () => {
     if (statusFilter === "all") return undefined;
@@ -1234,9 +1257,7 @@ const PatientList = () => {
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <div className="font-medium text-gray-900">
-                              {visit.date
-                                ? new Date(visit.date).toLocaleDateString("pl-PL")
-                                : "—"}
+                              {formatPolishDate(visit.date)}
                             </div>
                             <div className="text-sm text-gray-600">{timeLabel}</div>
                             {visit.doctor?.name && (
