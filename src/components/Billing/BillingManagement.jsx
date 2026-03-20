@@ -55,6 +55,14 @@ const BillingManagement = () => {
   const step = queryParams.get('step');
 
   console.log("appointment id ", appointmentId, "step", step)
+
+  const getReturnPathAfterAppointmentRedirect = () => {
+    const doctorId = user?.d_id || user?.id || "";
+    if (user?.role === "doctor" && doctorId) {
+      return `/lekarze/wizyty/${doctorId}`;
+    }
+    return "/lekarze";
+  };
   
   // Add state for confirmation modal
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -218,8 +226,7 @@ const BillingManagement = () => {
           
           // If user was redirected from appointment, redirect back to patients page
           if (isRedirectedFromAppointment) {
-            const today = new Date().toISOString().split('T')[0];
-            navigate(`/patients?date=${today}`);
+            navigate(getReturnPathAfterAppointmentRedirect());
           }
         } else {
           toast.error("Nie udało się zaktualizować faktury");
@@ -853,8 +860,7 @@ const BillingManagement = () => {
     
     // If user was redirected from appointment, redirect back to patients page
     if (isRedirectedFromAppointment) {
-      const today = new Date().toISOString().split('T')[0];
-      navigate(`/patients?date=${today}`);
+      navigate(getReturnPathAfterAppointmentRedirect());
     }
   };
 
@@ -865,8 +871,7 @@ const BillingManagement = () => {
     
     // If user was redirected from appointment, redirect back to patients page
     if (isRedirectedFromAppointment) {
-      const today = new Date().toISOString().split('T')[0];
-      navigate(`/patients?date=${today}`);
+      navigate(getReturnPathAfterAppointmentRedirect());
     }
   };
 
@@ -878,8 +883,7 @@ const BillingManagement = () => {
     
     // If user was redirected from appointment, redirect back to patients page
     if (isRedirectedFromAppointment) {
-      const today = new Date().toISOString().split('T')[0];
-      navigate(`/clinic?date=${today}`);
+      navigate(getReturnPathAfterAppointmentRedirect());
     }
   };
   
