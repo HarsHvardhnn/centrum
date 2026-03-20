@@ -1470,7 +1470,10 @@ function LabAppointmentsContent({ clinic }) {
           patientName={selectedAppointment ? getAppointmentPatientDisplayName(selectedAppointment) : ""}
           appointmentId={selectedAppointment?.id}
           patientId={selectedAppointment?.patient?.id}
-          returnPath={location.pathname + location.search}
+          returnPath={(() => {
+            const doctorId = user?.d_id || user?.id || "";
+            return user?.role === "doctor" && doctorId ? `/lekarze/wizyty/${doctorId}` : "/lekarze";
+          })()}
         />
 
         {/* Reschedule Modal */}

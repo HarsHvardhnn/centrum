@@ -1142,7 +1142,10 @@ const PatientList = () => {
         patientName={selectedAppointment?.name || selectedAppointment?.registrationData?.name || selectedAppointment?.patient?.name || "Nieznany pacjent"}
         appointmentId={selectedAppointment?.id}
         patientId={selectedAppointment?.patient_id}
-        returnPath={location.pathname + location.search}
+        returnPath={(() => {
+          const doctorId = user?.d_id || user?.id || "";
+          return user?.role === "doctor" && doctorId ? `/lekarze/wizyty/${doctorId}` : "/lekarze";
+        })()}
       />
 
       {/* Check-in Modal */}
