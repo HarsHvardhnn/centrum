@@ -1327,7 +1327,7 @@ function LabAppointmentsContent({ clinic }) {
                           } else if (!isVisitOnlyAppointment(appointment)) {
                             const patientId = appointment.patient.id || appointment.patient._id;
                             if (user?.role === "receptionist") {
-                              navigate(`/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent("/pacjenci")}`);
+                              openVisitHistoryModal(patientId, getAppointmentPatientDisplayName(appointment));
                             } else {
                               navigate(getPatientViewUrl(patientId, appointment.id));
                             }

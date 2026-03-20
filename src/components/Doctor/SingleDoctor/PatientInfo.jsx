@@ -78,7 +78,11 @@ const PatientInfo = ({ patientData, currentAppointment }) => {
   const visitStatus = currentAppointment?.status ?? "";
 
   const idDisplay = patientId ? (patientId.startsWith(PATIENT_ID_PREFIX) ? patientId : `${PATIENT_ID_PREFIX}${patientId}`) : "Brak ID – niezweryfikowany";
-  const allergiesText = allergies && String(allergies).trim() ? allergies : "Brak zgłoszonych";
+  const allergiesValue = allergies && String(allergies).trim() ? String(allergies).trim() : "";
+  const hasAllergies = !!allergiesValue;
+  const hasMeds = displayMeds.length > 0;
+
+  const allergiesText = hasAllergies ? allergiesValue : "Brak zgłoszonych";
 
   return (
     <div className="bg-gray-50 flex flex-col">
@@ -163,45 +167,47 @@ const PatientInfo = ({ patientData, currentAppointment }) => {
         </div>
 
         {/* Single column: PROFIL MEDYCZNY block (full width) */}
-        <div className="rounded-2xl border bg-gray-50/80 border-gray-200 p-4">
-          <h3 className="text-xs font-semibold uppercase text-gray-500 tracking-wide mb-4">Profil medyczny</h3>
-          <div className="space-y-4 text-sm">
-            <div>
-              <p className="text-xs text-red-600 font-medium mb-0.5">Alergie</p>
-              <p className="text-red-600">{allergiesText}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 mb-2">Leki stałe</p>
-              {displayMeds.length === 0 ? (
-                <p className="text-gray-500">Brak informacji</p>
-              ) : (
-                <ul className="space-y-2">
-                  {displayMeds.map((med, i) => (
-                    <li key={i} className="flex flex-wrap items-center gap-2">
-                      <span className="text-gray-900">
-                        {med.name ?? med.nazwa ?? ""} {med.dosage ?? med.dawkowanie ?? ""}
-                      </span>
-                      {(med.frequency ?? med.czystotliwosc) && (
-                        <span className="inline-flex px-2.5 py-1 rounded-lg text-xs font-medium bg-teal-100 text-teal-800 border border-teal-200">
-                          {String(med.frequency ?? med.czystotliwosc).toUpperCase()}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+        {(hasAllergies || hasMeds) && (
+          <div className="rounded-2xl border bg-gray-50/80 border-gray-200 p-4">
+            <h3 className="text-xs font-semibold uppercase text-gray-500 tracking-wide mb-4">Profil medyczny</h3>
+            <div className="space-y-4 text-sm">
+              {hasAllergies && (
+                <div>
+                  <p className="text-xs text-red-600 font-medium mb-0.5">Alergie</p>
+                  <p className="text-red-600">{allergiesText}</p>
+                </div>
               )}
-              {hasMoreMeds && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllMedsModal(true)}
-                  className="mt-3 text-sm font-medium text-teal-600 hover:text-teal-700 border border-teal-400 rounded-lg px-4 py-2"
-                >
-                  ZOBACZ PEŁNĄ HISTORIĘ LEKÓW
-                </button>
+              {hasMeds && (
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">Leki stałe</p>
+                  <ul className="space-y-2">
+                    {displayMeds.map((med, i) => (
+                      <li key={i} className="flex flex-wrap items-center gap-2">
+                        <span className="text-gray-900">
+                          {med.name ?? med.nazwa ?? ""} {med.dosage ?? med.dawkowanie ?? ""}
+                        </span>
+                        {(med.frequency ?? med.czystotliwosc) && (
+                          <span className="inline-flex px-2.5 py-1 rounded-lg text-xs font-medium bg-teal-100 text-teal-800 border border-teal-200">
+                            {String(med.frequency ?? med.czystotliwosc).toUpperCase()}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  {hasMoreMeds && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllMedsModal(true)}
+                      className="mt-3 text-sm font-medium text-teal-600 hover:text-teal-700 border border-teal-400 rounded-lg px-4 py-2"
+                    >
+                      ZOBACZ PEŁNĄ HISTORIĘ LEKÓW
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Modal: all active medications */}

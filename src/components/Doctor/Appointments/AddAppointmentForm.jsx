@@ -1678,12 +1678,42 @@ function AppointmentFormModal({
               />
             </div>
             <div className="md:w-56 flex-shrink-0">
-              <p className="text-xs font-medium text-gray-500 mb-1 text-right md:text-left">
-                Czas trwania wizyty
-              </p>
-              <div className="inline-flex items-center justify-center md:justify-start w-full px-3 py-2 rounded-lg bg-white border border-teal-100 text-sm font-semibold text-teal-700">
-                {appointmentData.customDuration || appointmentData.duration || 30} min
-              </div>
+              {(!appointmentData.selectedSlot && (appointmentData.customStartTime || appointmentData.customEndTime)) ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Czas trwania (minuty)
+                  </label>
+                  <input
+                    type="number"
+                    name="customDuration"
+                    value={appointmentData.customDuration || ""}
+                    onChange={handleInputChange}
+                    min="1"
+                    max="480"
+                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="30"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {appointmentData.customStartTime && appointmentData.customEndTime
+                      ? "Możesz zmienić automatycznie obliczony czas trwania"
+                      : "1–480 minut (1–8 h). Ustaw czas rozpoczęcia i zakończenia w kroku terminu, aby obliczyć automatycznie."}
+                  </p>
+                  {appointmentData.customDuration && validateCustomDuration(appointmentData.customDuration) && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {validateCustomDuration(appointmentData.customDuration)}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs font-medium text-gray-500 mb-1 text-right md:text-left">
+                    Czas trwania wizyty
+                  </p>
+                  <div className="inline-flex items-center justify-center md:justify-start w-full px-3 py-2 rounded-lg bg-white border border-teal-100 text-sm font-semibold text-teal-700">
+                    {appointmentData.customDuration || appointmentData.duration || 30} min
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
