@@ -9,6 +9,7 @@ import { FaCalendarAlt, FaShare } from "react-icons/fa";
 import { useUser } from "../../context/userContext";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from "../../utils/polandTimezone";
+import { filterPublicDoctorList } from "../../utils/publicDoctorFilters";
 
 export default function BookAppointment({
   page,
@@ -217,7 +218,9 @@ export default function BookAppointment({
         specialization: specializationId,
       });
 
-      setDoctors(response.doctors || []);
+      setDoctors(
+        filterPublicDoctorList(response.doctors || [], (d) => d._id ?? d.id)
+      );
     } catch (error) {
       console.error(
         `Error fetching doctors for specialization ${specializationId}:`,

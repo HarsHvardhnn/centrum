@@ -10,6 +10,7 @@ import { useSpecializations } from "../../context/SpecializationContext";
 import { useAppointmentContext } from "../../UserLayout";
 import { useSearchParams } from "react-router-dom";
 import heroImage from "../../assets/a6cac98caf0f70d2a113ae6f901a2da389eae67e.png";
+import { filterPublicDoctorList } from "../../utils/publicDoctorFilters";
 
 // Import your actual doctor service here
 // import doctorService from '../services/doctorService';
@@ -67,7 +68,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
               : doctor.name,
         }));
 
-        setDoctors(transformedDoctors);
+        setDoctors(filterPublicDoctorList(transformedDoctors, (d) => d.id));
       } catch (error) {
         console.error("Failed to fetch doctors:", error);
         setDoctors([]);

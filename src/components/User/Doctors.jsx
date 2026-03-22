@@ -15,6 +15,7 @@ import { generateDoctorProfileUrl } from "../../utils/slugUtils";
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from "../../utils/polandTimezone";
+import { filterPublicDoctorList } from "../../utils/publicDoctorFilters";
 
 export default function Doctors({
   selectedDoctorId,
@@ -293,8 +294,7 @@ export default function Doctors({
           consultationFee: doctor.consultationFee,
         }));
 
-        //("trans", transformedDoctors);
-        setDoctors(transformedDoctors);
+        setDoctors(filterPublicDoctorList(transformedDoctors, (d) => d.id));
       } catch (err) {
         console.error("Błąd podczas pobierania lekarzy:", err);
         setError(
