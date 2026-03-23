@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-03T04:20:05.420Z",
-  "count": 27,
+  "generatedAt": "2026-03-23T05:54:17.209Z",
+  "count": 32,
   "slugs": [
     "konsultacja-chirurgiczna",
     "konsultacja-proktologiczna",
@@ -28,6 +28,11 @@
     "usg-tkanek-miekkich",
     "usg-watroby-i-drog-zolciowych-1",
     "konsultacja-lekarza-medycyny-sportowej",
-    "kwalifikacja-do-uprawiania-sportu"
+    "kwalifikacja-do-uprawiania-sportu",
+    "usg-doppler-naczyn-szyjnych",
+    "usg-stawow",
+    "konsultacja-lekarska",
+    "usg-doppler-naczyn-konczyny-gornej",
+    "usg-doppler-naczyn-konczyny-dolnej"
   ]
 }
