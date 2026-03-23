@@ -95,7 +95,7 @@ const routes = createBrowserRouter([
       { path: "o-nas", element: <LazyRouteWrapper><AboutUsPage /></LazyRouteWrapper> },
       { path: "lekarze", element: <LazyRouteWrapper><OurDoctorsPage /></LazyRouteWrapper> },
       { path: "lekarze/michal-szczubkowski", element: <LazyRouteWrapper><MichalSzczubkowskiPage /></LazyRouteWrapper> },
-      { path: "lekarze/:doctorSlug", element: <LazyRouteWrapper><DoctorProfilePage /></LazyRouteWrapper> },
+      { path: "lekarze/:doctorSlug", element: <LazyRouteWrapper><DoctorProfilePage hidePrices /></LazyRouteWrapper> },
       { path: "uslugi", element: <LazyRouteWrapper><OurServicesPage /></LazyRouteWrapper> },
       // { path: "uslugi/:service", element: <LazyRouteWrapper><ServicesDetailPage /></LazyRouteWrapper> },
       { path: "aktualnosci", element: <LazyRouteWrapper><NewsPage /></LazyRouteWrapper> },

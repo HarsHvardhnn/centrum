@@ -12,7 +12,7 @@ import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from '../../../utils/polandTimezone';
 
-const DoctorProfilePage = () => {
+const DoctorProfilePage = ({ hidePrices = false }) => {
   const { doctorSlug } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
@@ -718,8 +718,9 @@ const DoctorProfilePage = () => {
       "offers": []
     };
 
-    // Add consultation offers
-    if (doctor.onlineConsultationPrice !== undefined) {
+    // Add consultation offers (optional)
+    // When `hidePrices` is enabled we intentionally omit price data.
+    if (!hidePrices && doctor.onlineConsultationPrice !== undefined) {
       structuredData.offers.push({
         "@type": "Offer",
         "name": "Konsultacja online",
@@ -728,7 +729,7 @@ const DoctorProfilePage = () => {
       });
     }
 
-    if (doctor.offlineConsultationPrice !== undefined) {
+    if (!hidePrices && doctor.offlineConsultationPrice !== undefined) {
       structuredData.offers.push({
         "@type": "Offer",
         "name": "Konsultacja stacjonarna",
@@ -761,7 +762,9 @@ const DoctorProfilePage = () => {
   const metaTitle = `Lek. ${doctorName} – ${specializations} | Centrum Medyczne 7`;
   
   // Description: Use shortDescription if available, otherwise generate default
-  const metaDescription = doctor.shortDescription || `Lek. ${doctorName} – ${specializations}${specializations ? ' przyjmujący pacjentów' : ''} w Centrum Medycznym 7 w Skarżysku-Kamiennej.${experience ? ` ${experience}.` : ''} ${doctor.onlineConsultationPrice !== undefined ? `Konsultacje online od ${doctor.onlineConsultationPrice} zł.` : 'Konsultacje dostępne.'}`;
+  const defaultMetaDescriptionWithPrices = `Lek. ${doctorName} – ${specializations}${specializations ? ' przyjmujący pacjentów' : ''} w Centrum Medycznym 7 w Skarżysku-Kamiennej.${experience ? ` ${experience}.` : ''} ${doctor.onlineConsultationPrice !== undefined ? `Konsultacje online od ${doctor.onlineConsultationPrice} zł.` : 'Konsultacje dostępne.'}`;
+  const defaultMetaDescriptionNoPrices = `Lek. ${doctorName} – ${specializations}${specializations ? ' przyjmujący pacjentów' : ''} w Centrum Medycznym 7 w Skarżysku-Kamiennej.${experience ? ` ${experience}.` : ''} Konsultacje dostępne.`;
+  const metaDescription = hidePrices ? defaultMetaDescriptionNoPrices : (doctor.shortDescription || defaultMetaDescriptionWithPrices);
 
   return (
     <>
@@ -1004,9 +1007,11 @@ const DoctorProfilePage = () => {
 
               {/* Pricing Card */}
               <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">Cennik i Rezerwacja</h3>
+                <h3 className="text-xl font-bold text-gray-800 mb-4">
+                  {hidePrices ? "Rezerwacja" : "Cennik i Rezerwacja"}
+                </h3>
                 
-                {doctor.offlineConsultationPrice !== undefined && (
+                {!hidePrices && doctor.offlineConsultationPrice !== undefined && (
                   <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                     <div className="font-semibold text-gray-800">Wizyta stacjonarna</div>
                     <div className="text-2xl font-bold text-teal-600">
@@ -1015,7 +1020,7 @@ const DoctorProfilePage = () => {
                   </div>
                 )}
 
-                {doctor.onlineConsultationPrice !== undefined && (
+                {!hidePrices && doctor.onlineConsultationPrice !== undefined && (
                   <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                     <div className="font-semibold text-gray-800">Konsultacja online</div>
                     <div className="text-2xl font-bold text-teal-600">
