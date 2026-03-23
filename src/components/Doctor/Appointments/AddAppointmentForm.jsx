@@ -2044,9 +2044,16 @@ function AppointmentFormModal({
                   ? `${appointmentData.selectedSlot.startTime} – ${appointmentData.selectedSlot.endTime} (wybrany termin)`
                   : appointmentData.customStartTime && appointmentData.customEndTime 
                     ? `${appointmentData.customStartTime} – ${appointmentData.customEndTime} (własny termin)`
-                    : appointmentData.customStartTime 
-                      ? "— (podaj czas trwania)"
-                      : "Nie wybrano"
+                    : appointmentData.customStartTime && appointmentData.customDuration
+                      ? `${appointmentData.customStartTime} – ${
+                          calculateEndTime(
+                            appointmentData.customStartTime,
+                            appointmentData.customDuration
+                          ) || "—"
+                        } (własny termin)`
+                      : appointmentData.customStartTime
+                        ? "— (podaj czas trwania)"
+                        : "Nie wybrano"
               }
             </div>
             <div>

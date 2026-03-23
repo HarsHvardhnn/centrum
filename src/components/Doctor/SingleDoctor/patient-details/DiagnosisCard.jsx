@@ -116,7 +116,7 @@ const DiagnosisCard = ({
                   className={`text-xs font-semibold px-2.5 py-1 rounded ${
                     isPrimary
                       ? "bg-teal-700 text-white"
-                      : "bg-teal-100 text-teal-800 border border-teal-200"
+                      : "bg-white text-teal-800 border border-teal-300"
                   }`}
                 >
                   {label}
