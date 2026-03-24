@@ -9,7 +9,9 @@ import { FaCalendarAlt, FaShare } from "react-icons/fa";
 import { useUser } from "../../context/userContext";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from "../../utils/polandTimezone";
-import { filterPublicDoctorList } from "../../utils/publicDoctorFilters";
+import { sortDoctorsWithPinnedFirst } from "../../utils/doctorSort";
+import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
+import PhoneCodeSelect from "../UtilComponents/PhoneCodeSelect";
 
 export default function BookAppointment({
   page,
@@ -27,6 +29,7 @@ export default function BookAppointment({
     success: false,
     error: null,
   });
+  const [lastBookedVisit, setLastBookedVisit] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
@@ -109,18 +112,7 @@ export default function BookAppointment({
   const specializationFromUrl = searchParams.get('specjalizacja') || selectedSpecialization;
 
   // Phone country codes configuration
-  const phoneCountryCodes = [
-    { code: "+48", country: "Polska", flag: "🇵🇱", maxLength: 9, default: true },
-    { code: "+380", country: "Ukraina", flag: "🇺🇦", maxLength: 9 },
-    { code: "+49", country: "Niemcy", flag: "🇩🇪", maxLength: 11 },
-    { code: "+44", country: "Wielka Brytania", flag: "🇬🇧", maxLength: 10 },
-    { code: "+34", country: "Hiszpania", flag: "🇪🇸", maxLength: 9 },
-    { code: "+33", country: "Francja", flag: "🇫🇷", maxLength: 9 },
-    { code: "+43", country: "Austria", flag: "🇦🇹", maxLength: 10 },
-    { code: "+39", country: "Włochy", flag: "🇮🇹", maxLength: 10 },
-    { code: "+420", country: "Czechy", flag: "🇨🇿", maxLength: 9 },
-    { code: "+1", country: "USA", flag: "🇺🇸", maxLength: 10 }
-  ];
+  const phoneCountryCodes = PHONE_COUNTRY_CODES;
 
   const initialValues = {
     name: user?.name || "",
@@ -139,9 +131,13 @@ export default function BookAppointment({
     medicalDataProcessingAgreed: false,
     teleportationConfirmed: false,
     contactConsentAgreed: false,
-    govtId: "", // PESEL number
+    govtId: "", // PESEL number (optional)
     address: "", // Residential address
     dateOfBirth: "", // Date of birth
+    isInternationalPatient: false,
+    documentCountry: "",
+    documentType: "",
+    documentNumber: "",
   };
 
   const validationSchema = Yup.object({
@@ -158,12 +154,27 @@ export default function BookAppointment({
     specialization: Yup.string().required("Wymagane"),
     message: Yup.string().min(10, "Za krótka wiadomość").required("Wymagane"),
     consultationType: Yup.string().oneOf(['online', 'offline']).required("Wymagane"),
-    govtId: Yup.string().when('consultationType', {
-      is: 'online',
-      then: (schema) => schema
-        .required("Numer PESEL jest wymagany")
-        .max(15, "Numer PESEL nie może być dłuższy niż 15 znaków")
-        .matches(/^[a-zA-Z0-9]+$/, "Numer PESEL może zawierać tylko litery i cyfry"),
+    govtId: Yup.string()
+      .matches(/^[0-9]*$/, "Numer PESEL może zawierać tylko cyfry")
+      .when(['consultationType', 'isInternationalPatient'], {
+        is: (consultationType, isInternationalPatient) => consultationType === 'online' && !isInternationalPatient,
+        then: (schema) => schema.trim().required("Numer PESEL jest wymagany dla wizyty online").length(11, "Numer PESEL musi mieć dokładnie 11 cyfr"),
+        otherwise: (schema) => schema
+          .test('pesel-length', 'Numer PESEL musi mieć dokładnie 11 cyfr', val => !val || val.trim() === '' || val.trim().length === 11)
+      }),
+    documentCountry: Yup.string().when('isInternationalPatient', {
+      is: true,
+      then: (schema) => schema.required("Kraj wydania dokumentu jest wymagany").trim(),
+      otherwise: (schema) => schema
+    }),
+    documentType: Yup.string().when('isInternationalPatient', {
+      is: true,
+      then: (schema) => schema.required("Typ dokumentu jest wymagany").trim(),
+      otherwise: (schema) => schema
+    }),
+    documentNumber: Yup.string().when('isInternationalPatient', {
+      is: true,
+      then: (schema) => schema.required("Numer dokumentu jest wymagany").trim(),
       otherwise: (schema) => schema
     }),
     address: Yup.string().when('consultationType', {
@@ -375,10 +386,14 @@ export default function BookAppointment({
       setSubmitting(true);
       setSubmitStatus({ success: false, error: null });
 
-      // Additional validation for required fields
+      // Document fields required when international (offline & online)
+      if (values.isInternationalPatient && (!values.documentCountry?.trim() || !values.documentType?.trim() || !values.documentNumber?.trim())) {
+        throw new Error("Wypełnij wszystkie pola dokumentu tożsamości");
+      }
+      // Online: address and dateOfBirth required
       if (values.consultationType === "online") {
-        if (!values.govtId || !values.address || !values.dateOfBirth) {
-          throw new Error("Wszystkie wymagane pola muszą być wypełnione dla konsultacji online");
+        if (!values.address || !values.dateOfBirth) {
+          throw new Error("Adres i data urodzenia są wymagane dla konsultacji online");
         }
       }
 
@@ -413,14 +428,30 @@ export default function BookAppointment({
         return;
       }
 
-      // Format date and time if needed
-      const formData = {
+      // Format date and time; PESEL or document (backend: never create PATIENT_ID)
+      const baseData = {
         ...values,
         phone: `${values.phoneCode}${values.phone}`,
         recaptchaToken,
         isV2Fallback,
-        consent: true // Add consent field for CAPTCHA verification
+        consent: true
       };
+      const formData = { ...baseData };
+      if (values.isInternationalPatient) {
+        const dc = values.documentCountry?.trim() || "";
+        const dt = values.documentType?.trim() || "";
+        const dn = values.documentNumber?.trim() || "";
+        formData.isInternationalPatient = true;
+        formData.documentCountry = dc;
+        formData.documentType = dt;
+        formData.documentNumber = dn;
+        if (dc && dt && dn) formData.internationalPatientDocumentKey = `${dc}|${dt}|${dn}`;
+        delete formData.govtId;
+      } else if (values.govtId?.trim()) {
+        formData.govtId = values.govtId.trim();
+      } else {
+        delete formData.govtId;
+      }
 
       console.log('Sending form data with captcha:', { 
         ...formData, 
@@ -444,7 +475,9 @@ export default function BookAppointment({
         return;
       }
 
-      // Success case
+      // Success case: backend creates visit only (no patient, no PATIENT_ID)
+      const appointment = response.data?.appointment ?? response.data?.data ?? response.data;
+      setLastBookedVisit(appointment ?? null);
       setSubmitStatus({ success: true, error: null });
       resetForm();
       setShowV2Captcha(false);
@@ -591,8 +624,22 @@ export default function BookAppointment({
 
                 {/* Status Messages */}
                 {submitStatus.success && (
-                  <div className="col-span-1 sm:col-span-2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-sm sm:text-base">
-                    Wizyta została pomyślnie zarezerwowana!
+                  <div className="col-span-1 sm:col-span-2 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-sm sm:text-base space-y-2">
+                    <p className="font-medium">Wizyta została pomyślnie zarezerwowana!</p>
+                    {lastBookedVisit && (
+                      <>
+                        {lastBookedVisit.booking_source === "ONLINE" && (
+                          <p className="text-green-800 font-medium">Rejestracja online</p>
+                        )}
+                        {lastBookedVisit.date && (
+                          <p className="text-green-800">
+                            Data: {typeof lastBookedVisit.date === "string" ? lastBookedVisit.date : new Date(lastBookedVisit.date).toLocaleDateString("pl-PL")}
+                            {lastBookedVisit.startTime && `, godz. ${lastBookedVisit.startTime}`}
+                            {lastBookedVisit.doctor?.name && ` — ${lastBookedVisit.doctor.name.first || ""} ${lastBookedVisit.doctor.name.last || ""}`.trim()}
+                          </p>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -617,8 +664,7 @@ export default function BookAppointment({
                     >
                       Wizyta stacjonarna
                     </button>
-                    {/* Temporarily hidden - will be needed later */}
-                    {/* <button
+                    <button
                       type="button"
                       onClick={() => setFieldValue("consultationType", "online")}
                       className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
@@ -628,7 +674,7 @@ export default function BookAppointment({
                       }`}
                     >
                       Wizyta online
-                    </button> */}
+                    </button>
                   </div>
                   {errors.consultationType && touched.consultationType && (
                     <div className="text-red-600 text-xs sm:text-sm mt-1">
@@ -660,24 +706,42 @@ export default function BookAppointment({
                 </div>
 
                 <div className="col-span-1">
-                  <label htmlFor="gender" className="sr-only">Płeć</label>
-                  <Field
-                    as="select"
-                    id="gender"
-                    name="gender"
-                    autoComplete="off"
-                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
-                  >
-                    <option value="">Wybierz płeć</option>
-                    <option value="male">Mężczyzna</option>
-                    <option value="female">Kobieta</option>
-                    <option value="other">Inna</option>
-                  </Field>
-                  <ErrorMessage
-                    name="gender"
-                    component="div"
-                    className="text-red-600 text-xs sm:text-sm mt-1"
-                  />
+                  <label htmlFor="phone" className="sr-only">Telefon</label>
+                  <div className="custom-phone-input relative">
+                    <div className="flex items-stretch">
+                      <PhoneCodeSelect
+                        value={values.phoneCode}
+                        onChange={(code) => setFieldValue("phoneCode", code)}
+                        className="flex items-stretch"
+                        triggerClassName="border border-[#062b47] text-[#062b47] rounded-l rounded-r-none p-2.5 sm:p-3 text-sm sm:text-base h-full min-h-0 border-r-0"
+                      />
+                      <input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        value={values.phone}
+                        onChange={(e) => handlePhoneChange(e, setFieldValue)}
+                        placeholder="123 456 789"
+                        autoComplete="tel"
+                        className="flex-1 min-w-0 p-2.5 sm:p-3 text-sm sm:text-base outline-none bg-white border border-[#062b47] text-[#062b47] placeholder:text-gray-400 rounded-r border-l-0 focus:ring-1 focus:ring-[#062b47]"
+                      />
+                    </div>
+                  </div>
+                  {errors.phone && touched.phone && (
+                    <div className="text-red-600 text-xs sm:text-sm mt-1">
+                      {errors.phone}
+                    </div>
+                  )}
+                  {errors.phoneCode && touched.phoneCode && (
+                    <div className="text-red-600 text-xs sm:text-sm mt-1">
+                      {errors.phoneCode}
+                    </div>
+                  )}
+                  {values.phone && !errors.phone && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      {values.phoneCode} {formatPhoneDisplay(values.phone)}
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-span-1">
@@ -698,51 +762,170 @@ export default function BookAppointment({
                 </div>
 
                 <div className="col-span-1">
-                  <label htmlFor="phone" className="sr-only">Telefon</label>
-                  <div className="custom-phone-input relative">
-                    <div className="flex">
-                      <div className="relative">
-                        <Field
-                          as="select"
-                          name="phoneCode"
-                          autoComplete="off"
-                          className="p-2.5 sm:p-3 text-sm sm:text-base outline-none bg-white border border-[#062b47] text-[#062b47] rounded-l appearance-none pr-8 min-w-[100px]"
-                        >
-                          {phoneCountryCodes.map((country) => (
-                            <option key={country.code} value={country.code}>
-                              {country.flag} {country.code}
-                            </option>
-                          ))}
-                        </Field>
-                      </div>
-                      <input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        value={values.phone}
-                        onChange={(e) => handlePhoneChange(e, setFieldValue)}
-                        placeholder="123 456 789"
-                        autoComplete="tel"
-                        className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-gray-400 rounded-r border-l-0"
-                      />
+                  <label htmlFor="gender" className="sr-only">Płeć</label>
+                  <Field
+                    as="select"
+                    id="gender"
+                    name="gender"
+                    autoComplete="off"
+                    className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
+                  >
+                    <option value="">Wybierz płeć</option>
+                    <option value="male">Mężczyzna</option>
+                    <option value="female">Kobieta</option>
+                    <option value="other">Inna</option>
+                  </Field>
+                  <ErrorMessage
+                    name="gender"
+                    component="div"
+                    className="text-red-600 text-xs sm:text-sm mt-1"
+                  />
+                </div>
+
+                {/* PESEL (main) then checkbox underneath */}
+                <div className="col-span-1 sm:col-span-2 mb-4 mt-2">
+                  <div className="flex flex-col w-full">
+                    <div className="w-full">
+                      <label htmlFor="govtId" className="block text-sm font-medium text-gray-700 mb-1 text-left">
+                        {values.consultationType === "online" && !values.isInternationalPatient ? "PESEL (wymagane dla wizyty online) *" : "PESEL (opcjonalnie – dla naszych pacjentów)"}
+                      </label>
+                      <Field name="govtId">
+                        {({ field, form }) => (
+                          <input
+                            id="govtId"
+                            type="text"
+                            {...field}
+                            disabled={!!values.isInternationalPatient}
+                            onChange={(e) => {
+                              if (!values.isInternationalPatient) {
+                                const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
+                                form.setFieldValue('govtId', value);
+                              }
+                            }}
+                            autoComplete="off"
+                            className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                            placeholder="Wprowadź numer PESEL (11 cyfr)"
+                            maxLength={11}
+                          />
+                        )}
+                      </Field>
+                      <ErrorMessage name="govtId" component="div" className="text-red-600 text-xs sm:text-sm mt-1" />
                     </div>
+                    <label className="flex items-center gap-2 cursor-pointer mt-3">
+                      <Field name="isInternationalPatient">
+                        {({ field, form }) => (
+                          <input
+                            type="checkbox"
+                            {...field}
+                            checked={!!field.value}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              form.setFieldValue("isInternationalPatient", checked);
+                              if (checked) form.setFieldValue("govtId", "");
+                              else {
+                                form.setFieldValue("documentCountry", "");
+                                form.setFieldValue("documentType", "");
+                                form.setFieldValue("documentNumber", "");
+                              }
+                            }}
+                            className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                          />
+                        )}
+                      </Field>
+                      <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
+                    </label>
                   </div>
-                  {errors.phone && touched.phone && (
-                    <div className="text-red-600 text-xs sm:text-sm mt-1">
-                      {errors.phone}
-                    </div>
-                  )}
-                  {errors.phoneCode && touched.phoneCode && (
-                    <div className="text-red-600 text-xs sm:text-sm mt-1">
-                      {errors.phoneCode}
-                    </div>
-                  )}
-                  {values.phone && !errors.phone && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      {values.phoneCode} {formatPhoneDisplay(values.phone)}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 col-span-1 sm:col-span-2">
+
+                  {values.consultationType === "online" && (
+                    <div className="col-span-1">
+                      <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">Data urodzenia *</label>
+                      <Field name="dateOfBirth">
+                        {({ field, form }) => (
+                          <input
+                            id="dateOfBirth"
+                            type="date"
+                            {...field}
+                            autoComplete="off"
+                            className={`w-full px-3 py-2 border ${form.touched.dateOfBirth && form.errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                            max={getCurrentDateInPoland()}
+                          />
+                        )}
+                      </Field>
+                      <ErrorMessage
+                        name="dateOfBirth"
+                        component="div"
+                        className="text-red-600 text-xs sm:text-sm mt-1"
+                      />
                     </div>
                   )}
                 </div>
+
+                {values.isInternationalPatient && (
+                  <div className="col-span-1 sm:col-span-2 mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <h6 className="text-sm font-medium text-gray-700 mb-3">Dane dokumentu tożsamości</h6>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Kraj wydania dokumentu *</label>
+                        <Field
+                          name="documentCountry"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          placeholder="e.g. Germany, Poland"
+                        />
+                        <ErrorMessage name="documentCountry" component="div" className="text-red-600 text-xs mt-1" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Typ dokumentu *</label>
+                        <Field as="select" name="documentType" className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                          <option value="">Wybierz</option>
+                          <option value="Passport">Paszport</option>
+                          <option value="ID Card">Dowód osobisty</option>
+                          <option value="Residence Card">Karta pobytu</option>
+                          <option value="Other">Inny</option>
+                        </Field>
+                        <ErrorMessage name="documentType" component="div" className="text-red-600 text-xs mt-1" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Numer dokumentu *</label>
+                        <Field
+                          name="documentNumber"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          placeholder="Document number"
+                        />
+                        <ErrorMessage name="documentNumber" component="div" className="text-red-600 text-xs mt-1" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {values.consultationType === "online" && (
+                  <div className="col-span-1 sm:col-span-2">
+                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Adres zamieszkania *</label>
+                    <Field name="address">
+                      {({ field, form }) => (
+                        <textarea
+                          id="address"
+                          {...field}
+                          rows="2"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            form.setFieldValue('address', value.trim());
+                          }}
+                          autoComplete="off"
+                          className={`w-full px-3 py-2 border ${form.touched.address && form.errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                          placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
+                        />
+                      )}
+                    </Field>
+                    <ErrorMessage
+                      name="address"
+                      component="div"
+                      className="text-red-600 text-xs sm:text-sm mt-1"
+                    />
+                  </div>
+                )}
 
                 {/* Step 3: Specialization and Doctor Selection */}
                 <div className="col-span-1 sm:col-span-2 mb-4 mt-6">
@@ -816,90 +999,6 @@ export default function BookAppointment({
                     className="text-red-600 text-xs sm:text-sm mt-1"
                   />
                 </div>
-
-                {/* Step 4: Additional Information (only for online) */}
-                {values.consultationType === "online" && (
-                  <>
-                    <div className="col-span-1 sm:col-span-2 mb-4 mt-6">
-                      <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 4: Dodatkowe informacje (wymagane dla konsultacji online)</h5>
-                    </div>
-
-                    {/* PESEL field */}
-                    <div className="col-span-1">
-                      <label htmlFor="govtId" className="sr-only">Numer PESEL</label>
-                      <Field name="govtId">
-                        {({ field, form }) => (
-                          <input
-                            id="govtId"
-                            type="text"
-                            {...field}
-                            onChange={(e) => {
-                              const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
-                              form.setFieldValue('govtId', value);
-                            }}
-                            autoComplete="off"
-                            className={`w-full px-3 py-2 border ${form.touched.govtId && form.errors.govtId ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                            placeholder="Wprowadź numer PESEL"
-                            maxLength="15"
-                          />
-                        )}
-                      </Field>
-                      <ErrorMessage
-                        name="govtId"
-                        component="div"
-                        className="text-red-600 text-xs sm:text-sm mt-1"
-                      />
-                    </div>
-
-                    {/* Data urodzenia field */}
-                    <div className="col-span-1">
-                      <label htmlFor="dateOfBirth" className="sr-only">Data urodzenia</label>
-                      <Field name="dateOfBirth">
-                        {({ field, form }) => (
-                          <input
-                            id="dateOfBirth"
-                            type="date"
-                            {...field}
-                            autoComplete="off"
-                            className={`w-full px-3 py-2 border ${form.touched.dateOfBirth && form.errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                            max={getCurrentDateInPoland()}
-                          />
-                        )}
-                      </Field>
-                      <ErrorMessage
-                        name="dateOfBirth"
-                        component="div"
-                        className="text-red-600 text-xs sm:text-sm mt-1"
-                      />
-                    </div>
-
-                    {/* Adres zamieszkania field */}
-                    <div className="col-span-1 sm:col-span-2">
-                      <label htmlFor="address" className="sr-only">Adres zamieszkania</label>
-                      <Field name="address">
-                        {({ field, form }) => (
-                          <textarea
-                            id="address"
-                            {...field}
-                            rows="2"
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              form.setFieldValue('address', value.trim());
-                            }}
-                            autoComplete="off"
-                            className={`w-full px-3 py-2 border ${form.touched.address && form.errors.address ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                            placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
-                          />
-                        )}
-                      </Field>
-                      <ErrorMessage
-                        name="address"
-                        component="div"
-                        className="text-red-600 text-xs sm:text-sm mt-1"
-                      />
-                    </div>
-                  </>
-                )}
 
                 {/* Available Time Slots */}
                 <div className="col-span-1 sm:col-span-2">

@@ -11,6 +11,499 @@ import { useUser } from '../../../context/userContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from '../../../utils/polandTimezone';
+import { PHONE_COUNTRY_CODES } from '../../../constants/phoneCountryCodes';
+import PhoneCodeSelect from '../../UtilComponents/PhoneCodeSelect';
+
+function BookingPatientFormSection({
+  bookingForm,
+  setBookingForm,
+  formErrors,
+  setFormErrors,
+  handleInputChange,
+  handlePhoneChange,
+  phoneCountryCodes,
+}) {
+  return (
+    <div className="border-t pt-6 mt-6">
+      <h4 className="text-lg font-semibold mb-4">
+        Dane pacjenta
+      </h4>
+
+      {/* Step 1: Consultation Type Selection */}
+      <div className="mb-6">
+        <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 1: Typ konsultacji</h5>
+        <div className="flex items-center space-x-4">
+          <button
+            type="button"
+            onClick={() =>
+              setBookingForm({
+                ...bookingForm,
+                consultationType: "offline",
+              })
+            }
+            className={`px-4 py-2 rounded-md border ${
+              bookingForm.consultationType === "offline"
+                ? "bg-teal-600 text-white border-teal-600"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            Wizyta stacjonarna
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setBookingForm({
+                ...bookingForm,
+                consultationType: "online",
+              })
+            }
+            className={`px-4 py-2 rounded-md border ${
+              bookingForm.consultationType === "online"
+                ? "bg-teal-600 text-white border-teal-600"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            Wizyta online
+          </button>
+        </div>
+      </div>
+
+      {/* Step 2: Basic Information */}
+      <div className="mb-6">
+        <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 2: Podstawowe informacje</h5>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Imię i nazwisko*
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={bookingForm.name}
+              onChange={handleInputChange}
+              className={`w-full px-3 py-2 border ${
+                formErrors.name
+                  ? "border-red-500"
+                  : "border-gray-300"
+              } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+              placeholder="Jan Kowalski"
+            />
+            {formErrors.name && (
+              <p className="text-red-500 text-xs mt-1">
+                {formErrors.name}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Płeć
+            </label>
+            <select
+              name="gender"
+              value={bookingForm.gender}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
+            >
+              <option value="male">Mężczyzna</option>
+              <option value="female">Kobieta</option>
+              <option value="other">Inna</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Adres email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={bookingForm.email}
+              onChange={handleInputChange}
+              className={`w-full px-3 py-2 border ${
+                formErrors.email
+                  ? "border-red-500"
+                  : "border-gray-300"
+              } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+              placeholder="jan.kowalski@example.com"
+            />
+            {formErrors.email && (
+              <p className="text-red-500 text-xs mt-1">
+                {formErrors.email}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Telefon* (9 cyfr)
+            </label>
+            <div className="flex w-full overflow-hidden">
+              <PhoneCodeSelect
+                value={bookingForm.phoneCode}
+                onChange={(code) => handleInputChange({ target: { name: "phoneCode", value: code } })}
+                className="flex-shrink-0"
+              />
+              <input
+                type="tel"
+                name="phone"
+                value={bookingForm.phone}
+                onChange={handlePhoneChange}
+                className={`h-[42px] flex-1 min-w-0 px-3 py-2 border ${
+                  formErrors.phone
+                    ? "border-red-500"
+                    : "border-gray-300"
+                } rounded-r-md focus:outline-none focus:ring-1 focus:ring-teal-500 border-l-0`}
+                placeholder="123456789"
+                maxLength="9"
+                style={{ lineHeight: '1.5' }}
+              />
+            </div>
+            {formErrors.phone ? (
+              <p className="text-red-500 text-xs mt-1">
+                {formErrors.phone}
+              </p>
+            ) : (
+              <p className="text-gray-500 text-xs mt-1">
+                Format: 9 cyfr bez spacji i znaków specjalnych
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Step 3: PESEL (main, centered) then checkbox underneath */}
+      <div className="mb-6">
+        <h5 className="text-md font-semibold text-gray-800 mb-3">
+          Krok 3: Identyfikacja {bookingForm.consultationType === "online" && !bookingForm.isInternationalPatient ? "(PESEL wymagane)" : "(PESEL)"}
+        </h5>
+
+        <div className="flex flex-col items-center w-full mb-4">
+          <div className="w-full max-w-sm">
+            <label className="block text-sm font-medium text-gray-700 mb-1 text-center md:text-left">
+              {bookingForm.consultationType === "online" && !bookingForm.isInternationalPatient ? "PESEL (wymagane dla wizyty online) *" : "PESEL (opcjonalnie – dla naszych pacjentów)"}
+            </label>
+            <input
+              type="text"
+              name="govtId"
+              value={bookingForm.govtId}
+              disabled={!!bookingForm.isInternationalPatient}
+              onChange={(e) => {
+                if (!bookingForm.isInternationalPatient) {
+                  const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
+                  handleInputChange({ target: { name: 'govtId', value } });
+                }
+              }}
+              className={`w-full px-3 py-2 border ${formErrors.govtId ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
+              placeholder="Wprowadź numer PESEL (11 cyfr)"
+              maxLength={11}
+            />
+            {formErrors.govtId && <p className="text-red-500 text-xs mt-1">{formErrors.govtId}</p>}
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer mt-3">
+            <input
+              type="checkbox"
+              checked={bookingForm.isInternationalPatient}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setBookingForm((prev) => ({
+                  ...prev,
+                  isInternationalPatient: checked,
+                  govtId: checked ? "" : prev.govtId,
+                  documentCountry: checked ? prev.documentCountry : "",
+                  documentType: checked ? prev.documentType : "",
+                  documentNumber: checked ? prev.documentNumber : "",
+                }));
+                if (formErrors.govtId || formErrors.documentCountry || formErrors.documentType || formErrors.documentNumber) {
+                  setFormErrors((prev) => ({ ...prev, govtId: null, documentCountry: null, documentType: null, documentNumber: null }));
+                }
+              }}
+              className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+            />
+            <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
+          </label>
+        </div>
+
+        {bookingForm.consultationType === "online" && (
+          <div className="flex flex-col items-center w-full mb-4">
+            <div className="w-full max-w-sm">
+              <label className="block text-sm font-medium text-gray-700 mb-1 text-center md:text-left">
+                Data urodzenia*
+              </label>
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={bookingForm.dateOfBirth}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border ${
+                  formErrors.dateOfBirth
+                    ? "border-red-500"
+                    : "border-gray-300"
+                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                max={getCurrentDateInPoland()}
+              />
+              {formErrors.dateOfBirth && (
+                <p className="text-red-500 text-xs mt-1">
+                  {formErrors.dateOfBirth}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {bookingForm.isInternationalPatient && (
+          <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+            <h6 className="text-sm font-medium text-gray-700 mb-3">Dane dokumentu tożsamości</h6>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Kraj wydania dokumentu *</label>
+                <input
+                  type="text"
+                  name="documentCountry"
+                  value={bookingForm.documentCountry}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Germany, Poland"
+                  className={`w-full px-3 py-2 border ${formErrors.documentCountry ? "border-red-500" : "border-gray-300"} rounded-md`}
+                />
+                {formErrors.documentCountry && <p className="text-red-500 text-xs mt-1">{formErrors.documentCountry}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Typ dokumentu *</label>
+                <select
+                  name="documentType"
+                  value={bookingForm.documentType}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border ${formErrors.documentType ? "border-red-500" : "border-gray-300"} rounded-md`}
+                >
+                  <option value="">Wybierz</option>
+                  <option value="Passport">Paszport</option>
+                  <option value="ID Card">Dowód osobisty</option>
+                  <option value="Residence Card">Karta pobytu</option>
+                  <option value="Other">Inny</option>
+                </select>
+                {formErrors.documentType && <p className="text-red-500 text-xs mt-1">{formErrors.documentType}</p>}
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Numer dokumentu *</label>
+                <input
+                  type="text"
+                  name="documentNumber"
+                  value={bookingForm.documentNumber}
+                  onChange={handleInputChange}
+                  placeholder="Document number"
+                  className={`w-full px-3 py-2 border ${formErrors.documentNumber ? "border-red-500" : "border-gray-300"} rounded-md`}
+                />
+                {formErrors.documentNumber && <p className="text-red-500 text-xs mt-1">{formErrors.documentNumber}</p>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {bookingForm.consultationType === "online" && (
+          <>
+            <h5 className="text-md font-semibold text-gray-800 mb-3 mt-6">Dodatkowe informacje (wymagane dla konsultacji online)</h5>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Adres zamieszkania*
+              </label>
+              <textarea
+                name="address"
+                value={bookingForm.address}
+                onChange={handleInputChange}
+                rows="2"
+                className={`w-full px-3 py-2 border ${
+                  formErrors.address
+                    ? "border-red-500"
+                    : "border-gray-300"
+                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
+                placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
+              />
+              {formErrors.address && (
+                <p className="text-red-500 text-xs mt-1">
+                  {formErrors.address}
+                </p>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Additional Information */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Dodatkowe informacje
+          </label>
+          <textarea
+            name="message"
+            value={bookingForm.message}
+            onChange={handleInputChange}
+            rows="3"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
+            placeholder="Prosimy opisać krótko swój problem zdrowotny oraz wskazać usługę, którą są Państwo zainteresowani (np. konsultacja chirurgiczna, usunięcie zmiany skórnej)."
+          ></textarea>
+        </div>
+
+        {/* Consent Checkboxes */}
+        <div className="mb-4 space-y-4">
+          {/* Mandatory Privacy Policy Consent */}
+          <div>
+            <label className="flex items-start space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="privacyPolicyAgreed"
+                checked={bookingForm.privacyPolicyAgreed}
+                onChange={(e) =>
+                  setBookingForm({
+                    ...bookingForm,
+                    privacyPolicyAgreed: e.target.checked,
+                  })
+                }
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+              />
+              <span className="text-sm text-gray-700">
+                Zapoznałem(-am) się z{" "}
+                <button
+                  type="button"
+                  onClick={() => window.open("/regulamin", "_blank")}
+                  className="text-teal-600 hover:text-teal-800 underline"
+                >
+                  Regulaminem
+                </button>
+                {" "}
+                i{" "}
+                <button
+                  type="button"
+                  onClick={() => window.open("/polityka-prywatnosci", "_blank")}
+                  className="text-teal-600 hover:text-teal-800 underline"
+                >
+                  Polityką Prywatności
+                </button>
+                {" "}
+                i akceptuję ich postanowienia. <span className="text-red-500">*</span>
+              </span>
+            </label>
+            {formErrors.privacyPolicyAgreed && (
+              <p className="text-red-500 text-xs mt-1 ml-6">
+                {formErrors.privacyPolicyAgreed}
+              </p>
+            )}
+          </div>
+
+          {/* Voluntary SMS Consent */}
+          <div>
+            <label className="flex items-start space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="smsConsentAgreed"
+                checked={bookingForm.smsConsentAgreed}
+                onChange={(e) =>
+                  setBookingForm({
+                    ...bookingForm,
+                    smsConsentAgreed: e.target.checked,
+                  })
+                }
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+              />
+              <span className="text-sm text-gray-700">
+                Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).
+              </span>
+            </label>
+          </div>
+
+          {/* Online consultation specific consents */}
+          {bookingForm.consultationType === "online" && (
+            <>
+              {/* Medical Data Processing Consent */}
+              <div>
+                <label className="flex items-start space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="medicalDataProcessingAgreed"
+                    checked={bookingForm.medicalDataProcessingAgreed}
+                    onChange={(e) =>
+                      setBookingForm({
+                        ...bookingForm,
+                        medicalDataProcessingAgreed: e.target.checked,
+                      })
+                    }
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  />
+                  <span className="text-sm text-gray-700">
+                    Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym danych medycznych, w celu realizacji konsultacji medycznej online, zgodnie z art. 9 ust. 2 lit. h RODO. <span className="text-red-500">*</span>
+                  </span>
+                </label>
+                {formErrors.medicalDataProcessingAgreed && (
+                  <p className="text-red-500 text-xs mt-1 ml-6">
+                    {formErrors.medicalDataProcessingAgreed}
+                  </p>
+                )}
+              </div>
+
+              {/* Teleportation Confirmation */}
+              <div>
+                <label className="flex items-start space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="teleportationConfirmed"
+                    checked={bookingForm.teleportationConfirmed}
+                    onChange={(e) =>
+                      setBookingForm({
+                        ...bookingForm,
+                        teleportationConfirmed: e.target.checked,
+                      })
+                    }
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  />
+                  <span className="text-sm text-gray-700">
+                    Potwierdzam, że konsultacja medyczna odbędzie się w formie zdalnej (online) i jestem świadomy(-a) tej formy świadczenia zdrowotnego. <span className="text-red-500">*</span>
+                  </span>
+                </label>
+                {formErrors.teleportationConfirmed && (
+                  <p className="text-red-500 text-xs mt-1 ml-6">
+                    {formErrors.teleportationConfirmed}
+                  </p>
+                )}
+              </div>
+
+              {/* Contact Consent */}
+              <div>
+                <label className="flex items-start space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="contactConsentAgreed"
+                    checked={bookingForm.contactConsentAgreed}
+                    onChange={(e) =>
+                      setBookingForm({
+                        ...bookingForm,
+                        contactConsentAgreed: e.target.checked,
+                      })
+                    }
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  />
+                  <span className="text-sm text-gray-700">
+                    Wyrażam zgodę na kontakt telefoniczny lub e-mailowy w celu realizacji konsultacji online, w tym przesłania linku do spotkania. <span className="text-red-500">*</span>
+                  </span>
+                </label>
+                {formErrors.contactConsentAgreed && (
+                  <p className="text-red-500 text-xs mt-1 ml-6">
+                    {formErrors.contactConsentAgreed}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="text-xs text-gray-500 mt-2">
+          * Pola oznaczone gwiazdką są wymagane
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const DoctorProfilePage = ({ hidePrices = false }) => {
   const { doctorSlug } = useParams();
@@ -52,6 +545,10 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
     govtId: "",
     address: "",
     dateOfBirth: "",
+    isInternationalPatient: false,
+    documentCountry: "",
+    documentType: "",
+    documentNumber: "",
   });
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,19 +559,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
   // Cache week availability data to avoid redundant API calls
   const [weekAvailabilityCache, setWeekAvailabilityCache] = useState(null);
 
-  // Phone country codes configuration
-  const phoneCountryCodes = [
-    { code: "+48", country: "Polska", flag: "🇵🇱", maxLength: 9, default: true },
-    { code: "+380", country: "Ukraina", flag: "🇺🇦", maxLength: 9 },
-    { code: "+49", country: "Niemcy", flag: "🇩🇪", maxLength: 11 },
-    { code: "+44", country: "Wielka Brytania", flag: "🇬🇧", maxLength: 10 },
-    { code: "+34", country: "Hiszpania", flag: "🇪🇸", maxLength: 9 },
-    { code: "+33", country: "Francja", flag: "🇫🇷", maxLength: 9 },
-    { code: "+43", country: "Austria", flag: "🇦🇹", maxLength: 10 },
-    { code: "+39", country: "Włochy", flag: "🇮🇹", maxLength: 10 },
-    { code: "+420", country: "Czechy", flag: "🇨🇿", maxLength: 9 },
-    { code: "+1", country: "USA", flag: "🇺🇸", maxLength: 10 }
-  ];
+  const phoneCountryCodes = PHONE_COUNTRY_CODES;
 
   useEffect(() => {
     fetchDoctorBySlug();
@@ -388,14 +873,29 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
       errors.phone = "Numer telefonu musi składać się z 9 cyfr";
     }
 
-    // Validate PESEL (govtId) only for online consultation
-    if (bookingForm.consultationType === "online") {
+    // PESEL: mandatory for online (unless international patient); optional for in-person. When provided, must be exactly 11 digits.
+    if (bookingForm.consultationType === "online" && !bookingForm.isInternationalPatient) {
       if (!bookingForm.govtId.trim()) {
-        errors.govtId = "Numer PESEL jest wymagany";
-      } else if (bookingForm.govtId.length > 15) {
-        errors.govtId = "Numer PESEL nie może być dłuższy niż 15 znaków";
+        errors.govtId = "Numer PESEL jest wymagany dla wizyty online";
+      } else if (bookingForm.govtId.trim().length !== 11) {
+        errors.govtId = "Numer PESEL musi mieć dokładnie 11 cyfr";
       }
+    } else if (bookingForm.govtId.trim() && bookingForm.govtId.trim().length !== 11) {
+      errors.govtId = "Numer PESEL musi mieć dokładnie 11 cyfr";
+    }
+    if (bookingForm.isInternationalPatient) {
+      if (!bookingForm.documentCountry?.trim()) {
+        errors.documentCountry = "Kraj wydania dokumentu jest wymagany";
+      }
+      if (!bookingForm.documentType?.trim()) {
+        errors.documentType = "Typ dokumentu jest wymagany";
+      }
+      if (!bookingForm.documentNumber?.trim()) {
+        errors.documentNumber = "Numer dokumentu jest wymagany";
+      }
+    }
 
+    if (bookingForm.consultationType === "online") {
       // Validate address only for online consultation
       if (!bookingForm.address.trim()) {
         errors.address = "Adres zamieszkania jest wymagany";
@@ -507,7 +1007,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
         department: doctor.specializations?.[0] // Use first specialization
       };
 
-      // Prepare request data
+      // Prepare request data (backend: create VISIT_ID, booking_source=ONLINE; never create PATIENT_ID)
       const appointmentData = {
         date: selectedDate,
         department: doctor.specializations?.[0]?._id || doctor.specializations?.[0]?.id,
@@ -526,11 +1026,24 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
         contactConsentAgreed: bookingForm.contactConsentAgreed,
         recaptchaToken: token || recaptchaToken,
         consent: true, // Required by backend middleware
-        // Adding the new fields
-        govtId: bookingForm.govtId,
         address: bookingForm.address,
         dateOfBirth: bookingForm.dateOfBirth
       };
+      // PESEL or document: send only one. Backend links to existing PATIENT_ID if PESEL exists, else stores as pending.
+      if (bookingForm.isInternationalPatient) {
+        const dc = bookingForm.documentCountry?.trim() || "";
+        const dt = bookingForm.documentType?.trim() || "";
+        const dn = bookingForm.documentNumber?.trim() || "";
+        appointmentData.isInternationalPatient = true;
+        appointmentData.documentCountry = dc;
+        appointmentData.documentType = dt;
+        appointmentData.documentNumber = dn;
+        if (dc && dt && dn) {
+          appointmentData.internationalPatientDocumentKey = `${dc}|${dt}|${dn}`;
+        }
+      } else if (bookingForm.govtId?.trim()) {
+        appointmentData.govtId = bookingForm.govtId.trim();
+      }
 
       // Make API call to book appointment
       const response = await apiCaller(
@@ -539,8 +1052,13 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
         appointmentData
       );
 
-      // Handle success
-      toast.success("Wizyta została pomyślnie zarezerwowana!");
+      // Handle success: backend creates visit only (no patient); use visit data only
+      const appointment = response?.data?.appointment ?? response?.data?.data ?? response?.data;
+      if (appointment?.booking_source === "ONLINE") {
+        toast.success("Wizyta została pomyślnie zarezerwowana! Rejestracja online.");
+      } else {
+        toast.success("Wizyta została pomyślnie zarezerwowana!");
+      }
 
       // Close modal and reset form
       setShowBookingModal(false);
@@ -562,6 +1080,10 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
         govtId: "",
         address: "",
         dateOfBirth: "",
+        isInternationalPatient: false,
+        documentCountry: "",
+        documentType: "",
+        documentNumber: "",
       });
       setSelectedSlot(null);
       setRecaptchaToken(null);
@@ -1260,7 +1782,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                                 })}
                               </div>
                               <div className="font-semibold">
-                                {dayDate.getDate()}/{dayDate.getMonth() + 1}
+                                {`${dayDate.getDate()}/${dayDate.getMonth() + 1}`}
                               </div>
                               {isToday && <div className="text-xs">Dziś</div>}
                               {isPast && <div className="text-xs text-gray-400">Przeszły</div>}
@@ -1318,417 +1840,17 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                     </div>
 
                     {/* Patient Information Form */}
-                    {selectedSlot && (
-                      <div className="border-t pt-6 mt-6">
-                        <h4 className="text-lg font-semibold mb-4">
-                          Dane pacjenta
-                        </h4>
-
-                        {/* Step 1: Consultation Type Selection */}
-                        <div className="mb-6">
-                          <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 1: Typ konsultacji</h5>
-                          <div className="flex items-center space-x-4">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setBookingForm({
-                                  ...bookingForm,
-                                  consultationType: "offline",
-                                })
-                              }
-                              className={`px-4 py-2 rounded-md border ${
-                                bookingForm.consultationType === "offline"
-                                  ? "bg-teal-600 text-white border-teal-600"
-                                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                              }`}
-                            >
-                              Wizyta stacjonarna
-                            </button>
-                            {/* Temporarily hidden - will be needed later */}
-                            {/* <button
-                              type="button"
-                              onClick={() =>
-                                setBookingForm({
-                                  ...bookingForm,
-                                  consultationType: "online",
-                                })
-                              }
-                              className={`px-4 py-2 rounded-md border ${
-                                bookingForm.consultationType === "online"
-                                  ? "bg-teal-600 text-white border-teal-600"
-                                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                              }`}
-                            >
-                              Wizyta online
-                            </button> */}
-                          </div>
-                        </div>
-
-                        {/* Step 2: Basic Information */}
-                        <div className="mb-6">
-                          <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 2: Podstawowe informacje</h5>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Imię i nazwisko*
-                              </label>
-                              <input
-                                type="text"
-                                name="name"
-                                value={bookingForm.name}
-                                onChange={handleInputChange}
-                                className={`w-full px-3 py-2 border ${
-                                  formErrors.name
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                placeholder="Jan Kowalski"
-                              />
-                              {formErrors.name && (
-                                <p className="text-red-500 text-xs mt-1">
-                                  {formErrors.name}
-                                </p>
-                              )}
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Telefon* (9 cyfr)
-                              </label>
-                              <div className="flex w-full overflow-hidden">
-                                <div className="relative flex-shrink-0">
-                                  <select
-                                    name="phoneCode"
-                                    value={bookingForm.phoneCode}
-                                    onChange={handleInputChange}
-                                    className="h-[42px] px-2 sm:px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-1 focus:ring-teal-500 bg-white text-sm w-[90px] sm:w-[120px] appearance-none"
-                                    style={{ lineHeight: '1.5' }}
-                                  >
-                                    {phoneCountryCodes.map((country) => (
-                                      <option key={country.code} value={country.code}>
-                                        {country.flag} {country.code}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                                <input
-                                  type="tel"
-                                  name="phone"
-                                  value={bookingForm.phone}
-                                  onChange={handlePhoneChange}
-                                  className={`h-[42px] flex-1 min-w-0 px-3 py-2 border ${
-                                    formErrors.phone
-                                      ? "border-red-500"
-                                      : "border-gray-300"
-                                  } rounded-r-md focus:outline-none focus:ring-1 focus:ring-teal-500 border-l-0`}
-                                  placeholder="123456789"
-                                  maxLength="9"
-                                  style={{ lineHeight: '1.5' }}
-                                />
-                              </div>
-                              {formErrors.phone ? (
-                                <p className="text-red-500 text-xs mt-1">
-                                  {formErrors.phone}
-                                </p>
-                              ) : (
-                                <p className="text-gray-500 text-xs mt-1">
-                                  Format: 9 cyfr bez spacji i znaków specjalnych
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Adres email
-                              </label>
-                              <input
-                                type="email"
-                                name="email"
-                                value={bookingForm.email}
-                                onChange={handleInputChange}
-                                className={`w-full px-3 py-2 border ${
-                                  formErrors.email
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                placeholder="jan.kowalski@example.com"
-                              />
-                              {formErrors.email && (
-                                <p className="text-red-500 text-xs mt-1">
-                                  {formErrors.email}
-                                </p>
-                              )}
-                            </div>
-
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Płeć
-                              </label>
-                              <select
-                                name="gender"
-                                value={bookingForm.gender}
-                                onChange={handleInputChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
-                              >
-                                <option value="male">Mężczyzna</option>
-                                <option value="female">Kobieta</option>
-                                <option value="other">Inna</option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Step 3: Additional Information (only for online) */}
-                        {bookingForm.consultationType === "online" && (
-                          <div className="mb-6">
-                            <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 3: Dodatkowe informacje (wymagane dla konsultacji online)</h5>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  PESEL*
-                                </label>
-                                <input
-                                  type="text"
-                                  name="govtId"
-                                  value={bookingForm.govtId}
-                                  onChange={handleInputChange}
-                                  className={`w-full px-3 py-2 border ${
-                                    formErrors.govtId
-                                      ? "border-red-500"
-                                      : "border-gray-300"
-                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                  placeholder="Wprowadź numer PESEL"
-                                  maxLength="15"
-                                />
-                                {formErrors.govtId && (
-                                  <p className="text-red-500 text-xs mt-1">
-                                    {formErrors.govtId}
-                                  </p>
-                                )}
-                              </div>
-
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  Data urodzenia*
-                                </label>
-                                <input
-                                  type="date"
-                                  name="dateOfBirth"
-                                  value={bookingForm.dateOfBirth}
-                                  onChange={handleInputChange}
-                                  className={`w-full px-3 py-2 border ${
-                                    formErrors.dateOfBirth
-                                      ? "border-red-500"
-                                      : "border-gray-300"
-                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                  max={getCurrentDateInPoland()}
-                                />
-                                {formErrors.dateOfBirth && (
-                                  <p className="text-red-500 text-xs mt-1">
-                                    {formErrors.dateOfBirth}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="mb-4">
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Adres zamieszkania*
-                              </label>
-                              <textarea
-                                name="address"
-                                value={bookingForm.address}
-                                onChange={handleInputChange}
-                                rows="2"
-                                className={`w-full px-3 py-2 border ${
-                                  formErrors.address
-                                    ? "border-red-500"
-                                    : "border-gray-300"
-                                } rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500`}
-                                placeholder="Ulica, numer domu/mieszkania, kod pocztowy, miasto"
-                              />
-                              {formErrors.address && (
-                                <p className="text-red-500 text-xs mt-1">
-                                  {formErrors.address}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Additional Information */}
-                        <div className="mb-4">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Dodatkowe informacje
-                          </label>
-                          <textarea
-                            name="message"
-                            value={bookingForm.message}
-                            onChange={handleInputChange}
-                            rows="3"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500"
-                            placeholder="Prosimy opisać krótko swój problem zdrowotny oraz wskazać usługę, którą są Państwo zainteresowani (np. konsultacja chirurgiczna, usunięcie zmiany skórnej)."
-                          ></textarea>
-                        </div>
-
-                        {/* Consent Checkboxes */}
-                        <div className="mb-4 space-y-4">
-                          {/* Mandatory Privacy Policy Consent */}
-                          <div>
-                            <label className="flex items-start space-x-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                name="privacyPolicyAgreed"
-                                checked={bookingForm.privacyPolicyAgreed}
-                                onChange={(e) =>
-                                  setBookingForm({
-                                    ...bookingForm,
-                                    privacyPolicyAgreed: e.target.checked,
-                                  })
-                                }
-                                className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                              />
-                              <span className="text-sm text-gray-700">
-                                Zapoznałem(-am) się z{" "}
-                                                        <button
-                          type="button"
-                          onClick={() => window.open('/regulamin', '_blank')}
-                          className="text-teal-600 hover:text-teal-800 underline"
-                        >
-                          Regulaminem
-                        </button>{" "}
-                        i{" "}
-                        <button
-                          type="button"
-                          onClick={() => window.open('/polityka-prywatnosci', '_blank')}
-                          className="text-teal-600 hover:text-teal-800 underline"
-                        >
-                          Polityką Prywatności
-                        </button>{" "}
-                                i akceptuję ich postanowienia. <span className="text-red-500">*</span>
-                              </span>
-                            </label>
-                            {formErrors.privacyPolicyAgreed && (
-                              <p className="text-red-500 text-xs mt-1 ml-6">
-                                {formErrors.privacyPolicyAgreed}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Voluntary SMS Consent */}
-                          <div>
-                            <label className="flex items-start space-x-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                name="smsConsentAgreed"
-                                checked={bookingForm.smsConsentAgreed}
-                                onChange={(e) =>
-                                  setBookingForm({
-                                    ...bookingForm,
-                                    smsConsentAgreed: e.target.checked,
-                                  })
-                                }
-                                className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                              />
-                              <span className="text-sm text-gray-700">
-                                Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).
-                              </span>
-                            </label>
-                          </div>
-
-                          {/* Online consultation specific consents */}
-                          {bookingForm.consultationType === "online" && (
-                            <>
-                              {/* Medical Data Processing Consent */}
-                              <div>
-                                <label className="flex items-start space-x-2 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    name="medicalDataProcessingAgreed"
-                                    checked={bookingForm.medicalDataProcessingAgreed}
-                                    onChange={(e) =>
-                                      setBookingForm({
-                                        ...bookingForm,
-                                        medicalDataProcessingAgreed: e.target.checked,
-                                      })
-                                    }
-                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                                  />
-                                  <span className="text-sm text-gray-700">
-                                    Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym danych medycznych, w celu realizacji konsultacji medycznej online, zgodnie z art. 9 ust. 2 lit. h RODO. <span className="text-red-500">*</span>
-                                  </span>
-                                </label>
-                                {formErrors.medicalDataProcessingAgreed && (
-                                  <p className="text-red-500 text-xs mt-1 ml-6">
-                                    {formErrors.medicalDataProcessingAgreed}
-                                  </p>
-                                )}
-                              </div>
-
-                              {/* Teleportation Confirmation */}
-                              <div>
-                                <label className="flex items-start space-x-2 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    name="teleportationConfirmed"
-                                    checked={bookingForm.teleportationConfirmed}
-                                    onChange={(e) =>
-                                      setBookingForm({
-                                        ...bookingForm,
-                                        teleportationConfirmed: e.target.checked,
-                                      })
-                                    }
-                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                                  />
-                                  <span className="text-sm text-gray-700">
-                                    Potwierdzam, że konsultacja medyczna odbędzie się w formie zdalnej (online) i jestem świadomy(-a) tej formy świadczenia zdrowotnego. <span className="text-red-500">*</span>
-                                  </span>
-                                </label>
-                                {formErrors.teleportationConfirmed && (
-                                  <p className="text-red-500 text-xs mt-1 ml-6">
-                                    {formErrors.teleportationConfirmed}
-                                  </p>
-                                )}
-                              </div>
-
-                              {/* Contact Consent */}
-                              <div>
-                                <label className="flex items-start space-x-2 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    name="contactConsentAgreed"
-                                    checked={bookingForm.contactConsentAgreed}
-                                    onChange={(e) =>
-                                      setBookingForm({
-                                        ...bookingForm,
-                                        contactConsentAgreed: e.target.checked,
-                                      })
-                                    }
-                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                                  />
-                                  <span className="text-sm text-gray-700">
-                                    Wyrażam zgodę na kontakt telefoniczny lub e-mailowy w celu realizacji konsultacji online, w tym przesłania linku do spotkania. <span className="text-red-500">*</span>
-                                  </span>
-                                </label>
-                                {formErrors.contactConsentAgreed && (
-                                  <p className="text-red-500 text-xs mt-1 ml-6">
-                                    {formErrors.contactConsentAgreed}
-                                  </p>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        <div className="text-xs text-gray-500 mt-2">
-                          * Pola oznaczone gwiazdką są wymagane
-                        </div>
-                      </div>
-                    )}
+                    {selectedSlot ? (
+                      <BookingPatientFormSection
+                        bookingForm={bookingForm}
+                        setBookingForm={setBookingForm}
+                        formErrors={formErrors}
+                        setFormErrors={setFormErrors}
+                        handleInputChange={handleInputChange}
+                        handlePhoneChange={handlePhoneChange}
+                        phoneCountryCodes={phoneCountryCodes}
+                      />
+                    ) : null}
                   </div>
                 </div>
               </div>

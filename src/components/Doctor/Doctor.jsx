@@ -4,6 +4,7 @@ import DoctorListing from "./DoctorList";
 import { doctors } from "../../utils/doctorsData/doctors";
 import AddDoctorForm from "./CreateDoctor";
 import doctorService from "../../helpers/doctorHelper";
+import { sortDoctorsWithPinnedFirst } from "../../utils/doctorSort";
 import { toast } from "sonner";
 import { useLoader } from "../../context/LoaderContext";
 import { format } from "date-fns";
@@ -38,7 +39,7 @@ const BillingPage = () => {
             available: doc.available ?? true,
           }));
 
-          setAllDoctors(transformed);
+          setAllDoctors(sortDoctorsWithPinnedFirst(transformed));
         } catch (error) {
           console.error("Nie udało się pobrać lekarzy:", error);
         }

@@ -206,9 +206,13 @@ const DemographicsForm = () => {
             type="text"
             name="govtId"
             value={formData.govtId || ""}
-            onChange={handleChange}
-            placeholder="Wprowadź numer PESEL"
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
+              handleChange({ target: { name: 'govtId', value } });
+            }}
+            placeholder="Wprowadź numer PESEL (11 cyfr)"
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            maxLength={11}
           />
         </div>
 

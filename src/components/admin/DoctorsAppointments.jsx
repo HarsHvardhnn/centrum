@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import doctorService from "../../helpers/doctorHelper";
+import { sortDoctorsWithPinnedFirst } from "../../utils/doctorSort";
 import { useSpecializations } from "../../context/SpecializationContext";
 
 const DoctorSelectionWithSlots = ({
@@ -24,7 +25,7 @@ const DoctorSelectionWithSlots = ({
       try {
         const filters = { specialization: selectedSpecialization };
         const response = await doctorService.getAllDoctors(filters);
-        setDoctors(response.doctors || []);
+        setDoctors(sortDoctorsWithPinnedFirst(response.doctors || []));
       } catch (error) {
         console.error("Błąd podczas pobierania lekarzy:", error);
       } finally {
