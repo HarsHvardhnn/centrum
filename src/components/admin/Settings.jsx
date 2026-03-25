@@ -21,6 +21,47 @@ import { loadFormDraft, clearFormDraft, hasFormDraft, formatDraftAge } from "../
 import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 
+/** Default when API omits phoneCode or number is national digits only. */
+const DEFAULT_PATIENT_PHONE_CODE = "+48";
+
+/**
+ * Maps `patient.phone` (+ optional `patient.phoneCode`) to form `phoneCode` + `mobileNumber`.
+ * - Valid `phoneCode` from API → use it and strip prefix from `phone`.
+ * - Else if value looks like +CC… and matches a known dial code → use that code.
+ * - Else assume Poland (+48): national digits, optional leading 48 for 48XXXXXXXXX.
+ */
+function mapPatientPhoneToFormFields(rawPhone, apiPhoneCode, countryCodes) {
+  const list = countryCodes?.length ? countryCodes : PHONE_COUNTRY_CODES;
+  const sortedCodes = [...list].sort((a, b) => b.code.length - a.code.length);
+
+  const codeFromApi = apiPhoneCode != null ? String(apiPhoneCode).trim() : "";
+  if (codeFromApi && list.some((c) => c.code === codeFromApi)) {
+    let num = String(rawPhone).trim();
+    if (num.startsWith(codeFromApi)) num = num.slice(codeFromApi.length).trim();
+    return { phoneCode: codeFromApi, mobileNumber: num.replace(/\s+/g, "") };
+  }
+
+  let phoneWithCode = String(rawPhone).trim();
+  if (!phoneWithCode.startsWith("+")) {
+    phoneWithCode = phoneWithCode.replace(/^0+/, "");
+    if (phoneWithCode.length > 0) phoneWithCode = "+" + phoneWithCode;
+  }
+  const foundCountry = sortedCodes.find((country) => phoneWithCode.startsWith(country.code));
+  if (foundCountry) {
+    return {
+      phoneCode: foundCountry.code,
+      mobileNumber: phoneWithCode.replace(foundCountry.code, "").trim().replace(/\s+/g, ""),
+    };
+  }
+
+  let digitsOnly = String(rawPhone).trim().replace(/\D/g, "");
+  if (digitsOnly.startsWith("48") && digitsOnly.length >= 11) {
+    digitsOnly = digitsOnly.slice(2);
+  }
+  digitsOnly = digitsOnly.replace(/^0+/, "");
+  return { phoneCode: DEFAULT_PATIENT_PHONE_CODE, mobileNumber: digitsOnly };
+}
+
 export default function UserManagement() {
   // Add these translation mappings at the top of the component
   const roleTranslations = {
@@ -548,14 +589,13 @@ export default function UserManagement() {
       let patientDetails=patientData;
       const rawPhone = patientDetails.phone;
       const hasRealPhone = rawPhone != null && String(rawPhone).trim() !== "" && !/^_no_phone_/i.test(String(rawPhone).trim());
-      const phoneForForm = hasRealPhone ? rawPhone : "";
       //(patientData, "patient data")
       const mappedFormData = {
         // Demographics
         fullName:
           patientDetails.name?.first + " " + (patientDetails.name?.last || ""),
         email: patientDetails.email,
-        mobileNumber: phoneForForm,
+        mobileNumber: "",
         patient_id: patientDetails._id,
         dateOfBirth: patientDetails.dateOfBirth,
         motherTongue: patientDetails.motherTongue,
@@ -618,39 +658,20 @@ export default function UserManagement() {
         reviewNotes: patientDetails.reviewNotes,
       };
 
-      // Extract phone code from existing phone number (ignore _no_phone_* placeholders).
-      // Prefer backend phoneCode when present; otherwise normalize and match longest code (e.g. +380 before +38).
+      // Phone: use API phoneCode when valid; else match +prefix; else assume +48 (national / unknown format).
       if (hasRealPhone) {
-        const apiPhoneCode = patientDetails.phoneCode ? String(patientDetails.phoneCode).trim() : null;
-        if (apiPhoneCode && phoneCountryCodes.some((c) => c.code === apiPhoneCode)) {
-          mappedFormData.phoneCode = apiPhoneCode;
-          let num = String(rawPhone).trim();
-          if (num.startsWith(apiPhoneCode)) num = num.slice(apiPhoneCode.length).trim();
-          mappedFormData.mobileNumber = num.replace(/\s+/g, "");
-          setSelectedPhoneCode(apiPhoneCode);
-        } else {
-          let phoneWithCode = String(rawPhone).trim();
-          if (!phoneWithCode.startsWith("+")) {
-            phoneWithCode = phoneWithCode.replace(/^0+/, "");
-            if (phoneWithCode.length > 0) phoneWithCode = "+" + phoneWithCode;
-          }
-          const sortedCodes = [...phoneCountryCodes].sort((a, b) => b.code.length - a.code.length);
-          const foundCountry = sortedCodes.find((country) => phoneWithCode.startsWith(country.code));
-
-          if (foundCountry) {
-            mappedFormData.phoneCode = foundCountry.code;
-            mappedFormData.mobileNumber = phoneWithCode.replace(foundCountry.code, "").trim().replace(/\s+/g, "");
-            setSelectedPhoneCode(foundCountry.code);
-          } else {
-            mappedFormData.phoneCode = "+48";
-            mappedFormData.mobileNumber = "";
-            setSelectedPhoneCode("+48");
-          }
-        }
+        const { phoneCode, mobileNumber } = mapPatientPhoneToFormFields(
+          rawPhone,
+          patientDetails.phoneCode,
+          phoneCountryCodes
+        );
+        mappedFormData.phoneCode = phoneCode;
+        mappedFormData.mobileNumber = mobileNumber;
+        setSelectedPhoneCode(phoneCode);
       } else {
-        mappedFormData.phoneCode = "+48";
+        mappedFormData.phoneCode = DEFAULT_PATIENT_PHONE_CODE;
         mappedFormData.mobileNumber = "";
-        setSelectedPhoneCode("+48");
+        setSelectedPhoneCode(DEFAULT_PATIENT_PHONE_CODE);
       }
       //(mappedFormData, "mapped form data")
       setPatientFormData(mappedFormData);
