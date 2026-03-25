@@ -205,30 +205,34 @@ const PatientDetailsHeader = () => {
         localStorage.setItem("authToken", newToken);
         setCookie("authToken", newToken, 7);
         await refreshUserProfile();
-        toast.success("Token JWT został odświeżony");
+        toast.success("Sesja została odświeżona");
         setShowJwtExpiryModal(false);
       } else {
-        toast.error("Nie udało się odświeżyć tokenu");
+        toast.error("Nie udało się przedłużyć sesji");
       }
     } catch (err) {
       console.error("JWT refresh failed:", err);
-      toast.error("Nie udało się odświeżyć tokenu. Zaloguj się ponownie.");
+      toast.error("Nie udało się przedłużyć sesji. Zaloguj się ponownie.");
     } finally {
       setJwtRefreshLoading(false);
     }
   };
 
-  const jwtTooltipParts = [];
-  if (jwtExpiryConfig) jwtTooltipParts.push(`Ustawienie serwera (JWT_EXPIRY_TIME): ${jwtExpiryConfig}`);
-  jwtTooltipParts.push("Pozostały czas ważności tokena dostępu (JWT) do wygaśnięcia (pole exp).");
-  const jwtTooltip = jwtTooltipParts.join(" ");
+  const sessionTooltipParts = [];
+  if (jwtExpiryConfig) {
+    sessionTooltipParts.push(`Czas trwania sesji wg ustawień serwera: ${jwtExpiryConfig}.`);
+  }
+  sessionTooltipParts.push(
+    "Szacowany czas do automatycznego wylogowania (na podstawie ważności sesji)."
+  );
+  const sessionTooltip = sessionTooltipParts.join(" ");
 
   const sessionLabel = (() => {
     const token = getAccessToken();
-    if (!token) return "JWT: —";
-    if (jwtRemainingMs === null) return "JWT: —";
-    if (jwtRemainingMs <= 0) return "JWT wygasł";
-    return `JWT: ${formatTimeRemaining(jwtRemainingMs)}`;
+    if (!token) return "Sesja: —";
+    if (jwtRemainingMs === null) return "Sesja: —";
+    if (jwtRemainingMs <= 0) return "Sesja wygasła";
+    return `Pozostało: ${formatTimeRemaining(jwtRemainingMs)}`;
   })();
 
   const notificationCount = 0; // TODO: wire to real notifications API
@@ -305,8 +309,8 @@ const PatientDetailsHeader = () => {
 
       {/* Right section: Session, Notifications, User, Time */}
       <div className="flex items-center gap-3 shrink-0">
-        {/* JWT access token: time until exp (see JWT_EXPIRY_TIME in admin JWT settings) */}
-        <div className="flex items-center gap-1 shrink-0" style={{ color: TEXT_PRIMARY }} title={jwtTooltip}>
+        {/* Remaining session time (from access token exp; server default in JWT_EXPIRY_TIME) */}
+        <div className="flex items-center gap-1 shrink-0" style={{ color: TEXT_PRIMARY }} title={sessionTooltip}>
           <Clock size={16} strokeWidth={2} />
           <span className="text-xs font-medium whitespace-nowrap">{sessionLabel}</span>
         </div>
@@ -411,15 +415,15 @@ const PatientDetailsHeader = () => {
         </div>
       </div>
 
-      {/* JWT expired: refresh via refresh-token cookie or logout */}
+      {/* Session expired: refresh or logout */}
       {showJwtExpiryModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="jwt-expiry-title">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="session-expiry-title">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h2 id="jwt-expiry-title" className="text-lg font-semibold text-gray-900 mb-2">
-              Token JWT wygasł
+            <h2 id="session-expiry-title" className="text-lg font-semibold text-gray-900 mb-2">
+              Sesja wygasła
             </h2>
             <p className="text-gray-600 mb-6">
-              Czas ważności tokena dostępu dobiegł końca. Możesz odświeżyć token (o ile masz ważny token odświeżający w ciasteczku) lub wylogować się.
+              Twój czas sesji dobiegł końca. Możesz przedłużyć sesję (jeśli to możliwe) albo wylogować się i zalogować ponownie.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -439,7 +443,7 @@ const PatientDetailsHeader = () => {
                 className="px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50"
                 style={{ backgroundColor: HEADER_BG }}
               >
-                {jwtRefreshLoading ? "Odświeżanie…" : "Odśwież token JWT"}
+                {jwtRefreshLoading ? "Odświeżanie…" : "Przedłuż sesję"}
               </button>
             </div>
           </div>
