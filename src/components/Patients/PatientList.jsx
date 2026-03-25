@@ -100,11 +100,12 @@ function LabAppointmentsContent({ clinic }) {
   const [searchParams] = useSearchParams();
   // Appointments data
   const [appointments, setAppointments] = useState([]);
+  const ITEMS_PER_PAGE = 50;
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
     pages: 1,
-    limit: 10,
+    limit: ITEMS_PER_PAGE,
   });
   const [totalPatientsCount, setTotalPatientsCount] = useState(0);
 
@@ -248,15 +249,17 @@ function LabAppointmentsContent({ clinic }) {
 
       const response = await appointmentHelper.getAllAppointments(
         page,
-        10,
+        ITEMS_PER_PAGE,
         searchQuery,
-        filters
+        filters,
+        "date",
+        "desc"
       );
 
       if (thisFetchId !== fetchIdRef.current) return;
 
       const list = Array.isArray(response?.data) ? response.data : (response?.data?.data ?? []);
-      const pag = response?.pagination ?? response?.data?.pagination ?? { total: 0, page: 1, pages: 1, limit: 10 };
+      const pag = response?.pagination ?? response?.data?.pagination ?? { total: 0, page: 1, pages: 1, limit: ITEMS_PER_PAGE };
 
       if (response?.success !== false) {
         setAppointments(list);
@@ -380,7 +383,7 @@ function LabAppointmentsContent({ clinic }) {
       total: 0,
       page: 1,
       pages: 1,
-      limit: 10,
+      limit: ITEMS_PER_PAGE,
     });
     setSearchQuery("");
     setStatusFilter(clinic ? "booked" : "All");
@@ -1437,8 +1440,8 @@ function LabAppointmentsContent({ clinic }) {
           </div>
         )}
 
-        {/* Pagination - hidden on clinic (Historia wizyt) */}
-        {pagination.pages > 1 && !clinic && (
+        {/* Pagination (both /pacjenci and /klinika) */}
+        {pagination.pages > 1 && (
           <div className="flex justify-center mt-4 gap-2">
             <button
               onClick={() => fetchAppointments(pagination.page - 1)}
