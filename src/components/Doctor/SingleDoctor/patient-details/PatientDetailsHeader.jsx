@@ -1,28 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, MoreHorizontal, User, Settings, LogOut, Clock, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { useUser } from "../../../../context/userContext";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
 import appointmentConfigService from "../../../../helpers/appointmentConfigHelper";
 import { stripDoctorTitle } from "../../../../utils/statusHelper";
-
-const SESSION_STORAGE_KEY = "cm7_session_start";
-
-function parseSessionDurationToMs(value) {
-  if (value == null || value === "") return 0;
-  if (typeof value === "number") return value * 60 * 1000;
-  if (typeof value !== "string") return 0;
-  const match = value.trim().match(/^(\d+)([mhdw])?$/i);
-  if (match) {
-    const num = parseInt(match[1], 10);
-    const unit = (match[2] || "m").toLowerCase();
-    if (unit === "m") return num * 60 * 1000;
-    if (unit === "h") return num * 60 * 60 * 1000;
-    if (unit === "d") return num * 24 * 60 * 60 * 1000;
-    if (unit === "w") return num * 7 * 24 * 60 * 60 * 1000;
-  }
-  return parseInt(value, 10) * 60 * 1000 || 0;
-}
+import { getAccessToken, getTokenExpiry, formatTimeRemaining } from "../../../../utils/jwtUtils";
+import { apiCaller, setCookie } from "../../../../utils/axiosInstance";
 
 // Header colors: deep teal bar, white text
 const HEADER_BG = "#1a7f73";
@@ -49,7 +34,7 @@ function getInitials(name) {
 
 const PatientDetailsHeader = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useUser();
+  const { user, setUser, refreshUserProfile } = useUser();
   const [searchValue, setSearchValue] = useState("");
   const [currentTime, setCurrentTime] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -161,69 +146,90 @@ const PatientDetailsHeader = () => {
   const specialization = user?.role === "admin" ? "Administrator" : user?.role === "receptionist" ? "Recepcja" : (user?.specialization || user?.specialty || "");
   const initials = getInitials(user?.name);
 
-  // Session countdown: time remaining until session ends (uses INACTIVITY_TIMEOUT from config)
-  const [sessionRemainingMs, setSessionRemainingMs] = useState(null);
-  const [sessionDurationMs, setSessionDurationMs] = useState(30 * 60 * 1000); // default 30 min
-  const [showSessionExpiryModal, setShowSessionExpiryModal] = useState(false);
-  const [sessionTimerReady, setSessionTimerReady] = useState(false);
+  // JWT access token: time until `exp` claim (server TTL from JWT settings, e.g. JWT_EXPIRY_TIME)
+  const [jwtRemainingMs, setJwtRemainingMs] = useState(null);
+  const [jwtExpiryConfig, setJwtExpiryConfig] = useState(null);
+  const [showJwtExpiryModal, setShowJwtExpiryModal] = useState(false);
+  const [jwtRefreshLoading, setJwtRefreshLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const initStart = () => {
-      const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
-      if (stored) return parseInt(stored, 10);
-      const start = Date.now();
-      sessionStorage.setItem(SESSION_STORAGE_KEY, String(start));
-      return start;
-    };
-    initStart(); // ensure key exists
-
-    const fetchDuration = async () => {
-      try {
-        const res = await appointmentConfigService.getConfig("INACTIVITY_TIMEOUT");
-        const raw = res?.data?.value;
-        const ms = parseSessionDurationToMs(raw);
-        if (ms > 0 && !cancelled) setSessionDurationMs(ms);
-      } catch (_) {}
-    };
-    fetchDuration();
-
-    const update = () => {
-      if (cancelled) return;
-      const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
-      const startTime = stored ? parseInt(stored, 10) : Date.now();
-      const elapsed = Date.now() - startTime;
-      const remaining = Math.max(0, sessionDurationMs - elapsed);
-      setSessionRemainingMs(remaining);
-      setSessionTimerReady(true);
-    };
-    update();
-    const t = setInterval(update, 1000);
+    appointmentConfigService
+      .getConfig("JWT_EXPIRY_TIME")
+      .then((res) => {
+        if (!cancelled) setJwtExpiryConfig(res?.data?.value ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setJwtExpiryConfig(null);
+      });
     return () => {
       cancelled = true;
-      clearInterval(t);
     };
-  }, [sessionDurationMs]);
+  }, []);
 
-  // Show "session will expire soon / extend?" modal when remaining reaches 0
   useEffect(() => {
-    if (sessionTimerReady && sessionRemainingMs !== null && sessionRemainingMs <= 0) {
-      setShowSessionExpiryModal(true);
-    }
-  }, [sessionTimerReady, sessionRemainingMs]);
+    const tick = () => {
+      const token = getAccessToken();
+      if (!token) {
+        setJwtRemainingMs(null);
+        setShowJwtExpiryModal(false);
+        return;
+      }
+      const expMs = getTokenExpiry(token);
+      if (expMs == null) {
+        setJwtRemainingMs(null);
+        return;
+      }
+      setJwtRemainingMs(expMs - Date.now());
+    };
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, []);
 
-  const handleExtendSession = () => {
-    sessionStorage.setItem(SESSION_STORAGE_KEY, String(Date.now()));
-    setShowSessionExpiryModal(false);
+  useEffect(() => {
+    if (jwtRemainingMs === null) return;
+    if (jwtRemainingMs > 0) {
+      setShowJwtExpiryModal(false);
+    } else if (getAccessToken()) {
+      setShowJwtExpiryModal(true);
+    }
+  }, [jwtRemainingMs]);
+
+  const handleRefreshJwt = async () => {
+    try {
+      setJwtRefreshLoading(true);
+      const response = await apiCaller("POST", "/auth/refresh-token", undefined);
+      if (response.data && response.data.token) {
+        const newToken = response.data.token;
+        localStorage.setItem("authToken", newToken);
+        setCookie("authToken", newToken, 7);
+        await refreshUserProfile();
+        toast.success("Token JWT został odświeżony");
+        setShowJwtExpiryModal(false);
+      } else {
+        toast.error("Nie udało się odświeżyć tokenu");
+      }
+    } catch (err) {
+      console.error("JWT refresh failed:", err);
+      toast.error("Nie udało się odświeżyć tokenu. Zaloguj się ponownie.");
+    } finally {
+      setJwtRefreshLoading(false);
+    }
   };
 
-  const sessionRemainingMin = sessionRemainingMs != null ? Math.ceil(sessionRemainingMs / 60000) : null;
-  const sessionLabel =
-    sessionRemainingMin != null
-      ? sessionRemainingMin <= 0
-        ? "Sesja: 0 min"
-        : `Pozostało: ${sessionRemainingMin} min`
-      : "Sesja: —";
+  const jwtTooltipParts = [];
+  if (jwtExpiryConfig) jwtTooltipParts.push(`Ustawienie serwera (JWT_EXPIRY_TIME): ${jwtExpiryConfig}`);
+  jwtTooltipParts.push("Pozostały czas ważności tokena dostępu (JWT) do wygaśnięcia (pole exp).");
+  const jwtTooltip = jwtTooltipParts.join(" ");
+
+  const sessionLabel = (() => {
+    const token = getAccessToken();
+    if (!token) return "JWT: —";
+    if (jwtRemainingMs === null) return "JWT: —";
+    if (jwtRemainingMs <= 0) return "JWT wygasł";
+    return `JWT: ${formatTimeRemaining(jwtRemainingMs)}`;
+  })();
 
   const notificationCount = 0; // TODO: wire to real notifications API
 
@@ -299,8 +305,8 @@ const PatientDetailsHeader = () => {
 
       {/* Right section: Session, Notifications, User, Time */}
       <div className="flex items-center gap-3 shrink-0">
-        {/* Session countdown: time remaining until session ends */}
-        <div className="flex items-center gap-1 shrink-0" style={{ color: TEXT_PRIMARY }} title="Pozostały czas sesji">
+        {/* JWT access token: time until exp (see JWT_EXPIRY_TIME in admin JWT settings) */}
+        <div className="flex items-center gap-1 shrink-0" style={{ color: TEXT_PRIMARY }} title={jwtTooltip}>
           <Clock size={16} strokeWidth={2} />
           <span className="text-xs font-medium whitespace-nowrap">{sessionLabel}</span>
         </div>
@@ -405,21 +411,21 @@ const PatientDetailsHeader = () => {
         </div>
       </div>
 
-      {/* Session expiry modal: when counter is 0 min, ask to extend or logout */}
-      {showSessionExpiryModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="session-expiry-title">
+      {/* JWT expired: refresh via refresh-token cookie or logout */}
+      {showJwtExpiryModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="jwt-expiry-title">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h2 id="session-expiry-title" className="text-lg font-semibold text-gray-900 mb-2">
-              Sesja wkrótce wygaśnie
+            <h2 id="jwt-expiry-title" className="text-lg font-semibold text-gray-900 mb-2">
+              Token JWT wygasł
             </h2>
             <p className="text-gray-600 mb-6">
-              Czas sesji dobiegł końca. Czy chcesz przedłużyć sesję i pozostać zalogowany?
+              Czas ważności tokena dostępu dobiegł końca. Możesz odświeżyć token (o ile masz ważny token odświeżający w ciasteczku) lub wylogować się.
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => {
-                  setShowSessionExpiryModal(false);
+                  setShowJwtExpiryModal(false);
                   handleLogout();
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
@@ -428,11 +434,12 @@ const PatientDetailsHeader = () => {
               </button>
               <button
                 type="button"
-                onClick={handleExtendSession}
-                className="px-4 py-2 text-sm font-medium text-white rounded-lg"
+                onClick={handleRefreshJwt}
+                disabled={jwtRefreshLoading}
+                className="px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50"
                 style={{ backgroundColor: HEADER_BG }}
               >
-                Przedłuż sesję
+                {jwtRefreshLoading ? "Odświeżanie…" : "Odśwież token JWT"}
               </button>
             </div>
           </div>
