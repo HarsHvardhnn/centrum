@@ -229,8 +229,10 @@ export default function BookAppointment({
         specialization: specializationId,
       });
 
+      // Backend sometimes returns doctors at `response.doctors` or `response.data.doctors`
+      const rawDoctors = response?.doctors ?? response?.data?.doctors ?? [];
       setDoctors(
-        filterPublicDoctorList(response.doctors || [], (d) => d._id ?? d.id)
+        filterPublicDoctorList(rawDoctors, (d) => d._id ?? d.id)
       );
     } catch (error) {
       console.error(
@@ -969,7 +971,7 @@ export default function BookAppointment({
                   >
                     <option value="">Wybierz lekarza</option>
                     {doctors.map((doctor) => (
-                      <option key={doctor._id} value={doctor._id}>
+                      <option key={doctor._id ?? doctor.id} value={doctor._id ?? doctor.id}>
                         {doctor.name}
                       </option>
                     ))}

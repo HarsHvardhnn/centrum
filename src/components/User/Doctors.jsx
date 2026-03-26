@@ -289,9 +289,12 @@ export default function Doctors({
           consultationFee: doctor.consultationFee,
         }));
 
-        setDoctors(filterPublicDoctorList(transformedDoctors, (d) => d.id));
+        const filteredDoctors = filterPublicDoctorList(
+          transformedDoctors,
+          (d) => d.id
+        );
         //("trans", transformedDoctors);
-        setDoctors(sortDoctorsWithPinnedFirst(transformedDoctors));
+        setDoctors(sortDoctorsWithPinnedFirst(filteredDoctors));
       } catch (err) {
         console.error("Błąd podczas pobierania lekarzy:", err);
         setError(

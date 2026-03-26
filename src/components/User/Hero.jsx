@@ -69,8 +69,11 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
               : doctor.name,
         }));
 
-        setDoctors(filterPublicDoctorList(transformedDoctors, (d) => d.id));
-        setDoctors(sortDoctorsWithPinnedFirst(transformedDoctors));
+        const filteredDoctors = filterPublicDoctorList(
+          transformedDoctors,
+          (d) => d.id
+        );
+        setDoctors(sortDoctorsWithPinnedFirst(filteredDoctors));
       } catch (error) {
         console.error("Failed to fetch doctors:", error);
         setDoctors([]);
