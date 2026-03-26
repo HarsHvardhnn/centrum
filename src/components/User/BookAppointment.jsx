@@ -967,7 +967,7 @@ export default function BookAppointment({
                     onChange={(e) => handleDoctorChangeWithUpdate(e, values.date, setFieldValue, values)}
                     autoComplete="off"
                     className="p-2.5 sm:p-3 text-sm sm:text-base outline-none w-full bg-white border border-[#062b47] text-[#062b47] placeholder:text-[#062b47] rounded appearance-none"
-                    disabled={!values.specialization}
+                    disabled={doctors.length === 0}
                   >
                     <option value="">Wybierz lekarza</option>
                     {doctors.map((doctor) => (
