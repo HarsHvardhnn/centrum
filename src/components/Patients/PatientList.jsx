@@ -100,12 +100,12 @@ function LabAppointmentsContent({ clinic }) {
   const [searchParams] = useSearchParams();
   // Appointments data
   const [appointments, setAppointments] = useState([]);
-  const ITEMS_PER_PAGE = 50;
+  const [itemsPerPage, setItemsPerPage] = useState(50);
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
     pages: 1,
-    limit: ITEMS_PER_PAGE,
+    limit: 50,
   });
   const [totalPatientsCount, setTotalPatientsCount] = useState(0);
 
@@ -249,7 +249,7 @@ function LabAppointmentsContent({ clinic }) {
 
       const response = await appointmentHelper.getAllAppointments(
         page,
-        ITEMS_PER_PAGE,
+        itemsPerPage,
         searchQuery,
         filters,
         "date",
@@ -259,7 +259,7 @@ function LabAppointmentsContent({ clinic }) {
       if (thisFetchId !== fetchIdRef.current) return;
 
       const list = Array.isArray(response?.data) ? response.data : (response?.data?.data ?? []);
-      const pag = response?.pagination ?? response?.data?.pagination ?? { total: 0, page: 1, pages: 1, limit: ITEMS_PER_PAGE };
+      const pag = response?.pagination ?? response?.data?.pagination ?? { total: 0, page: 1, pages: 1, limit: itemsPerPage };
 
       if (response?.success !== false) {
         setAppointments(list);
@@ -383,7 +383,7 @@ function LabAppointmentsContent({ clinic }) {
       total: 0,
       page: 1,
       pages: 1,
-      limit: ITEMS_PER_PAGE,
+      limit: itemsPerPage,
     });
     setSearchQuery("");
     setStatusFilter(clinic ? "booked" : "All");
@@ -422,6 +422,11 @@ function LabAppointmentsContent({ clinic }) {
     // Refetch with fresh data
     fetchAppointments(1);
   }, [clinic, searchParams]);
+
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, page: 1, limit: itemsPerPage }));
+    fetchAppointments(1);
+  }, [itemsPerPage]);
 
   // Remove the frontend filtering logic and use the appointments directly from backend
   const groupAppointmentsByDate = (appointments) => {
@@ -1440,9 +1445,23 @@ function LabAppointmentsContent({ clinic }) {
           </div>
         )}
 
-        {/* Pagination (both /pacjenci and /klinika) */}
-        {pagination.pages > 1 && (
-          <div className="flex justify-center mt-4 gap-2">
+        <div className="flex items-center justify-between mt-4 gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Na stronę:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              className="px-2 py-1 border border-gray-300 rounded-md bg-white text-gray-700"
+            >
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          {/* Pagination (both /pacjenci and /klinika) */}
+          {pagination.pages > 1 ? (
+          <div className="flex justify-center gap-2">
             <button
               onClick={() => fetchAppointments(pagination.page - 1)}
               disabled={pagination.page === 1}
@@ -1461,7 +1480,8 @@ function LabAppointmentsContent({ clinic }) {
               Następna
             </button>
           </div>
-        )}
+          ) : <div />}
+        </div>
 
         {/* Check-in Modal */}
         <CheckInModal
