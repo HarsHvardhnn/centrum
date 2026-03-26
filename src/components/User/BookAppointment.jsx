@@ -12,6 +12,7 @@ import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDa
 import { sortDoctorsWithPinnedFirst } from "../../utils/doctorSort";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import PhoneCodeSelect from "../UtilComponents/PhoneCodeSelect";
+import { filterPublicDoctorList } from "../../utils/publicDoctorFilters";
 
 export default function BookAppointment({
   page,
