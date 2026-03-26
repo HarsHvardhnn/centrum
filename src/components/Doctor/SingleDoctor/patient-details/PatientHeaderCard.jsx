@@ -2,11 +2,34 @@ import React from "react";
 import { User } from "lucide-react";
 
 const PatientHeaderCard = ({ patient, onShowMoreDetails }) => {
+  const calculateAgeFromBirthDate = (birthDateValue) => {
+    if (!birthDateValue) return null;
+
+    const birthDate = new Date(birthDateValue);
+    if (Number.isNaN(birthDate.getTime())) return null;
+
+    const today = new Date();
+    let years = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      years -= 1;
+    }
+
+    return years >= 0 ? years : null;
+  };
+
   const name =
     typeof patient?.name === "string"
       ? patient.name
       : [patient?.name?.first, patient?.name?.last].filter(Boolean).join(" ") || "—";
-  const age = patient?.age ?? "—";
+  const birthDate =
+    patient?.dateOfBirth || patient?.birthDate || patient?.dob || null;
+  const computedAge = calculateAgeFromBirthDate(birthDate);
+  const age = patient?.age ?? computedAge ?? "—";
   const gender =
     patient?.gender === "Male" || patient?.sex === "Male"
       ? "Mężczyzna"

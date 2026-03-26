@@ -1300,6 +1300,7 @@ const PatientDetailsPage = () => {
       return;
     }
     try {
+      showLoader();
       const response = await appointmentHelper.generateVisitCard(appointmentId, forceNew);
       
       //("response", response);
@@ -1323,6 +1324,8 @@ const PatientDetailsPage = () => {
     } catch (error) {
       console.error("Error generating visit card:", error);
       toast.error("Wystąpił błąd podczas generowania karty wizyty");
+    } finally {
+      hideLoader();
     }
   };
 

@@ -193,8 +193,15 @@ function DoctorsPage() {
     // Prefer shift for the selected date (shiftsForDate.timeBlocks), else weekly shift for that day, else first weekly shift
     let timeSlot = "09:00 - 17:00";
     if (shiftsForDate?.timeBlocks?.length) {
-      const blocks = shiftsForDate.timeBlocks;
-      timeSlot = blocks.map((b) => `${b.startTime} - ${b.endTime}`).join(", ");
+      const blocks = shiftsForDate.timeBlocks.filter(
+        (b) => b?.startTime && b?.endTime
+      );
+
+      if (blocks.length) {
+        const starts = blocks.map((b) => b.startTime).sort();
+        const ends = blocks.map((b) => b.endTime).sort();
+        timeSlot = `${starts[0]} - ${ends[ends.length - 1]}`;
+      }
     } else if (apiDoctor.weeklyShifts?.length && forDate) {
       const dayIndex = new Date(forDate).getDay();
       const dayName = DAY_NAMES_PL[dayIndex];
