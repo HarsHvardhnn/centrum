@@ -69,12 +69,24 @@ const PatientDetailsFooter = ({
         </span>
       </div>
 
-      {/* Right: dark teal "Zakończ wizytę" */}
+      {/* Right: dark teal "Zakończ wizytę" — same rule as visit card: require verified visit reason */}
       <div>
         <button
           type="button"
           onClick={onEndVisit}
-          className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-medium rounded-sm hover:opacity-95 transition-opacity"
+          disabled={
+            isSaving ||
+            isVisitReasonVerifyLoading ||
+            isVisitReasonVerified !== true
+          }
+          title={
+            isVisitReasonVerified === false
+              ? "Najpierw zweryfikuj rodzaj wizyty"
+              : isVisitReasonVerified !== true && !isVisitReasonVerifyLoading
+              ? "Oczekiwanie na status weryfikacji rodzaju wizyty"
+              : undefined
+          }
+          className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-medium rounded-sm hover:opacity-95 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:opacity-100"
           style={{ backgroundColor: DARK_TEAL }}
         >
           <Check size={18} />
