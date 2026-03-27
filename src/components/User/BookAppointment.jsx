@@ -667,7 +667,21 @@ export default function BookAppointment({
                     >
                       Wizyta stacjonarna
                     </button>
-                    <button
+                    {/* Home page: hide "Wizyta online" — uncomment the block below (and drop page !== "home") to show online booking on the home section again */}
+                    {page !== "home" && (
+                      <button
+                        type="button"
+                        onClick={() => setFieldValue("consultationType", "online")}
+                        className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
+                          values.consultationType === "online"
+                            ? "bg-main text-white border-main"
+                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        Wizyta online
+                      </button>
+                    )}
+                    {/* <button
                       type="button"
                       onClick={() => setFieldValue("consultationType", "online")}
                       className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
@@ -677,7 +691,7 @@ export default function BookAppointment({
                       }`}
                     >
                       Wizyta online
-                    </button>
+                    </button> */}
                   </div>
                   {errors.consultationType && touched.consultationType && (
                     <div className="text-red-600 text-xs sm:text-sm mt-1">
