@@ -14,6 +14,8 @@ const VisitInfoHeader = ({
   onVisitTypeChange,
   readOnly = false,
   visitReasonVerified = null,
+  /** API still says verified but current visit reason no longer matches — show re-verify hint */
+  visitReasonOutOfSyncAfterChange = false,
   visitReasonVerifyLoading = false,
   canVerifyVisitReason = false,
   onVerifyVisitReason,
@@ -48,8 +50,16 @@ const VisitInfoHeader = ({
 
   const needsVerification =
     effectiveVisitReasonVerified === false &&
+    !visitReasonOutOfSyncAfterChange &&
     appointment.status !== "completed" &&
     appointment.status !== "Completed";
+
+  /** Dropdown + verify button colours: avoid blending with amber “booked” status */
+  const visitTypeVerificationHighlight = visitReasonVerifyLoading
+    ? "neutral"
+    : effectiveVisitReasonVerified === true
+    ? "verified"
+    : "unverified";
 
   const statusClass = getStatusStyle(status);
   const appointmentId = appointment.id || appointment._id;
@@ -80,6 +90,13 @@ const VisitInfoHeader = ({
         </span>
       );
     }
+    if (visitReasonOutOfSyncAfterChange) {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+          Wymaga ponownej weryfikacji
+        </span>
+      );
+    }
     if (effectiveVisitReasonVerified === true) {
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-800">
@@ -89,7 +106,7 @@ const VisitInfoHeader = ({
     }
     if (needsVerification) {
       return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 ring-1 ring-red-200/80">
           Do weryfikacji
         </span>
       );
@@ -185,7 +202,8 @@ const VisitInfoHeader = ({
               value={visitType}
               onChange={handleVisitTypeSelect}
               disabled={savingVisitType}
-              placeholder="Wybierz rodzaj wizyty..."
+              placeholder="Wybierz rodzaj wizyty z listy po lewej…"
+              verificationHighlight={visitTypeVerificationHighlight}
             />
             {renderVerificationPill()}
 
@@ -199,8 +217,22 @@ const VisitInfoHeader = ({
                   !visitType ||
                   visitType === "—"
                 }
-                className="px-3 py-1.5 bg-teal-600 text-white text-sm rounded hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                title={!visitType ? "Najpierw wybierz rodzaj wizyty" : "Zweryfikuj rodzaj wizyty"}
+                className={`px-3 py-1.5 text-white text-sm rounded font-semibold shadow-sm transition-colors disabled:cursor-not-allowed ${
+                  visitReasonVerifyLoading
+                    ? "bg-gray-500"
+                    : effectiveVisitReasonVerified === true
+                    ? "bg-emerald-600 opacity-95"
+                    : !visitType || visitType === "—"
+                    ? "bg-red-400 disabled:opacity-65"
+                    : "bg-red-600 hover:bg-red-700 hover:shadow"
+                }`}
+                title={
+                  !visitType
+                    ? "Najpierw wybierz rodzaj wizyty z listy po lewej"
+                    : visitReasonOutOfSyncAfterChange
+                    ? "Zweryfikuj ponownie po zmianie rodzaju wizyty"
+                    : "Zweryfikuj rodzaj wizyty"
+                }
               >
                 {visitReasonVerifyLoading ? "Weryfikowanie..." : "Zweryfikuj"}
               </button>

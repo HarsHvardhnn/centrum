@@ -12,6 +12,7 @@ import { ChevronDown } from "lucide-react";
  * @param {boolean} [props.disabled]
  * @param {string} [props.placeholder]
  * @param {string} [props.className]
+ * @param {'neutral'|'verified'|'unverified'|'loading'} [props.verificationHighlight] — patient header: red/green emphasis for visit-type verification
  */
 const VisitReasonCascadeDropdown = ({
   categories = [],
@@ -20,6 +21,7 @@ const VisitReasonCascadeDropdown = ({
   disabled = false,
   placeholder = "Wybierz rodzaj wizyty...",
   className = "",
+  verificationHighlight = "neutral",
 }) => {
   const [open, setOpen] = useState(false);
   const [hoveredCategoryIndex, setHoveredCategoryIndex] = useState(-1);
@@ -46,16 +48,38 @@ const VisitReasonCascadeDropdown = ({
 
   if (!categories.length) return null;
 
+  const triggerBorder =
+    verificationHighlight === "verified"
+      ? "border-2 border-emerald-600 bg-emerald-50/60 hover:border-emerald-700 hover:bg-emerald-50 shadow-sm"
+      : verificationHighlight === "unverified"
+      ? "border-2 border-red-600 bg-red-50/70 hover:border-red-700 hover:bg-red-50 shadow-[0_0_0_1px_rgba(220,38,38,0.25)]"
+      : "border border-gray-300 hover:border-gray-400 bg-white";
+
+  const labelClass = value
+    ? "text-gray-900 truncate"
+    : verificationHighlight === "verified"
+    ? "text-emerald-700 font-medium truncate"
+    : verificationHighlight === "unverified"
+    ? "text-red-600 font-semibold truncate"
+    : "text-gray-500 truncate";
+
+  const chevronClass =
+    verificationHighlight === "verified"
+      ? "text-emerald-700"
+      : verificationHighlight === "unverified"
+      ? "text-red-600"
+      : "text-gray-500";
+
   return (
     <div ref={containerRef} className={`relative inline-block ${className}`}>
       <button
         type="button"
         onClick={() => !disabled && setOpen((o) => !o)}
         disabled={disabled}
-        className="flex items-center justify-between gap-2 px-3 py-1.5 border border-gray-300 rounded-lg text-sm min-w-[200px] bg-white hover:border-gray-400 disabled:opacity-60 text-left"
+        className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-sm min-w-[200px] disabled:opacity-60 text-left transition-colors ${triggerBorder}`}
       >
-        <span className={value ? "text-gray-900" : "text-gray-500 truncate"}>{value || placeholder}</span>
-        <ChevronDown size={16} className={`text-gray-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+        <span className={labelClass}>{value || placeholder}</span>
+        <ChevronDown size={16} className={`${chevronClass} shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (

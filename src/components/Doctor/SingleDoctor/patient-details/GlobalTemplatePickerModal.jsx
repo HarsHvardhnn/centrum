@@ -60,7 +60,7 @@ const GlobalTemplatePickerModal = ({ isOpen, onClose, onSelect }) => {
                   <button
                     type="button"
                     onClick={() => handleSelect(t)}
-                    className="w-full text-left px-3 py-2 rounded-lg border border-gray-200 hover:bg-teal-50 hover:border-teal-200 text-sm text-gray-800"
+                    className="w-full text-left px-3 py-2 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-500 text-sm text-gray-800"
                   >
                     {t.name}
                   </button>
