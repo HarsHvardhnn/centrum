@@ -1,5 +1,5 @@
 import React from "react";
-import { Info, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 
 const DocumentationCard = ({
   title,
@@ -18,19 +18,12 @@ const DocumentationCard = ({
             <button
               type="button"
               onClick={onChooseTemplate}
-              className="flex items-center gap-1.5 text-sm text-teal-600 hover:text-teal-700 border border-teal-200 hover:border-teal-300 rounded px-3 py-1.5 transition-colors"
+              className="flex items-center gap-1.5 text-sm font-medium text-blue-900 bg-blue-50 hover:bg-blue-100 border-2 border-blue-500 hover:border-blue-600 rounded-md px-3 py-1.5 transition-colors shadow-sm"
             >
               <FileText size={14} />
               {templateLabel}
             </button>
           )}
-          <button
-            type="button"
-            className="w-6 h-6 rounded-full border border-gray-400 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
-            title="Informacja"
-          >
-            <Info size={14} />
-          </button>
         </div>
       </div>
       <textarea

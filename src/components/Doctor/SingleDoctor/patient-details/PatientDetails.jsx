@@ -1471,7 +1471,7 @@ const PatientDetailsPage = () => {
                   <button
                     type="button"
                     onClick={() => setGlobalTemplatePickerOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-900 bg-blue-100 border-2 border-blue-500 rounded-lg hover:bg-blue-200 hover:border-blue-600 transition-colors shadow-sm"
                   >
                     <FileText size={18} />
                     Załaduj szablon globalny
