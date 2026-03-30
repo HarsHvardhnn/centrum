@@ -80,6 +80,50 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+/** Pathname only — works whether config.url is relative or absolute. */
+const getRequestUrlPath = (config) => {
+  const u = config?.url;
+  if (!u || typeof u !== "string") return "";
+  if (u.startsWith("http")) {
+    try {
+      return new URL(u).pathname;
+    } catch {
+      return u.split("?")[0].split("#")[0] || "";
+    }
+  }
+  return u.split("?")[0].split("#")[0] || "";
+};
+
+/**
+ * 401 on these routes means invalid credentials / OTP / etc., not "access token expired".
+ * Do not call refresh-token — that causes extra requests and can trigger rate limits on failed login.
+ */
+const isPublicAuthFailurePath = (urlPath) => {
+  if (!urlPath) return false;
+  const exact = [
+    "/auth/login",
+    "/auth/signup",
+    "/auth/google",
+    "/auth/verify-otp",
+    "/auth/2fa/verify",
+    "/auth/2fa/resend",
+    "/auth/2fa/email-fallback",
+    "/auth/request-password-reset",
+    "/auth/resend-otp",
+    "/auth/reset-password",
+  ];
+  return exact.some((p) => urlPath === p || urlPath.endsWith(p));
+};
+
+const redirectToLoginAndClearSession = () => {
+  removeCookie("authToken");
+  removeCookie("user");
+  localStorage.clear();
+  if (window.location.pathname !== "/logowanie") {
+    window.location.href = "/logowanie";
+  }
+};
+
 // Response interceptor for handling responses
 axiosInstance.interceptors.response.use(
   (response) => {
@@ -93,20 +137,30 @@ axiosInstance.interceptors.response.use(
     if (error.response) {
       // Server responded with a status other than 2xx
       if (error.response.status === 401) {
+        const urlPath = getRequestUrlPath(originalRequest);
+
         // If this is a refresh token request that failed, redirect to login
-        if (originalRequest.url === '/auth/refresh-token' || originalRequest.url?.includes('/auth/refresh-token')) {
+        if (urlPath.includes("/auth/refresh-token")) {
           console.error("Refresh token failed. Redirecting to login.");
-          removeCookie('authToken');
-          removeCookie('user');
-          localStorage.clear();
-          if (window.location.pathname !== "/logowanie") {
-            window.location.href = "/logowanie";
-          }
+          redirectToLoginAndClearSession();
           return Promise.reject(error);
         }
 
-        // If we're already refreshing, queue this request
+        // Wrong password / invalid OTP / etc. — not an expired access token
+        if (isPublicAuthFailurePath(urlPath)) {
+          return Promise.reject(error);
+        }
+
+        // Already retried after refresh (or queued for retry) — stop; do not refresh again
+        if (originalRequest._retry) {
+          processQueue(error, null);
+          redirectToLoginAndClearSession();
+          return Promise.reject(error);
+        }
+
+        // If we're already refreshing, queue this request (mark so a 401 after retry won't re-enter refresh)
         if (isRefreshing) {
+          originalRequest._retry = true;
           return new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject });
           })
@@ -161,16 +215,7 @@ axiosInstance.interceptors.response.use(
         } catch (refreshError) {
           console.error("Token refresh failed:", refreshError);
           processQueue(refreshError, null);
-          
-          // Clear tokens and redirect to login
-          removeCookie('authToken');
-          removeCookie('user');
-          localStorage.clear();
-          
-          if (window.location.pathname !== "/logowanie") {
-            window.location.href = "/logowanie";
-          }
-          
+          redirectToLoginAndClearSession();
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;

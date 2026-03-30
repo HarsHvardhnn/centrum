@@ -31,6 +31,25 @@ import { translateStatus, getVisitModeLabel, getVisitModeStyle, getVisitTypeDisp
 import { useAutoSave } from "../../../../hooks/useAutoSave";
 import { useUser } from "../../../../context/userContext";
 
+/**
+ * Build consultation payload for PUT /appointments/:id/details.
+ * Header verification only updates `visitReasonVerified` state; ConsultationForm may only set
+ * `visitTypeVerified` on `consultationData`. Without merging, both flags stay false from the last fetch.
+ */
+function mergeConsultationVerificationFlags(consultationData, visitReasonVerifiedState) {
+  return {
+    ...consultationData,
+    visitReasonVerified:
+      consultationData.visitReasonVerified === true ||
+      visitReasonVerifiedState === true ||
+      consultationData.visitTypeVerified === true,
+    visitTypeVerified:
+      consultationData.visitTypeVerified === true ||
+      visitReasonVerifiedState === true ||
+      consultationData.visitReasonVerified === true,
+  };
+}
+
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   if (!isOpen) return null;
@@ -469,15 +488,16 @@ const PatientDetailsPage = () => {
       return;
     }
 
+    const cd = dataToSave.consultationData || consultationData;
     await appointmentHelper.updateAppointmentDetails(
       currentAppointmentId,
       {
         patientData: dataToSave.patientData || patientData,
-        consultationData: dataToSave.consultationData || consultationData,
+        consultationData: mergeConsultationVerificationFlags(cd, visitReasonVerified),
         medications: dataToSave.medications || medications,
         tests: dataToSave.tests || tests,
         uploadedFiles: dataToSave.uploadedFiles || uploadedFiles,
-        notes: (dataToSave.consultationData || consultationData).notes
+        notes: cd.notes
       }
     );
   };
@@ -827,7 +847,15 @@ const PatientDetailsPage = () => {
       await appointmentHelper.verifyVisitReason(currentAppointmentId);
       const res = await appointmentHelper.getVisitReasonVerifyStatus(currentAppointmentId);
       const v = res?.visitReasonVerified;
-      setVisitReasonVerified(typeof v === "boolean" ? v : true);
+      const verified = typeof v === "boolean" ? v : true;
+      setVisitReasonVerified(verified);
+      if (verified) {
+        setConsultationData((prev) => ({
+          ...prev,
+          visitReasonVerified: true,
+          visitTypeVerified: true,
+        }));
+      }
       toast.success("Rodzaj wizyty zweryfikowany");
     } catch (err) {
       const code = err?.response?.data?.code;
@@ -901,7 +929,7 @@ const PatientDetailsPage = () => {
         currentAppointmentId,
         {
           patientData,
-          consultationData,
+          consultationData: mergeConsultationVerificationFlags(consultationData, visitReasonVerified),
           medications,
           tests,
           uploadedFiles,

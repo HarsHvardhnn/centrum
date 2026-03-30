@@ -189,6 +189,7 @@ const ConsultationForm = ({
         ...prev,
         visitReason: displayName,
         visitTypeVerified: true,
+        visitReasonVerified: true,
         consultationType: displayName,
       }));
       setVerifyVisitReasonDisplayName("");
