@@ -492,7 +492,7 @@ const patientService = {
    * Get patient visit history (simple list for modals).
    * GET /patients/:patientId/visits
    * @param {string} patientId - Patient _id
-   * @returns {Promise<{ success: boolean, count: number, data: Array<{ visitId, date, time, startTime, endTime, doctor, visitType, mode, status }> }>}
+   * @returns {Promise<{ success: boolean, count: number, data: Array<{ visitId, date, time, startTime, endTime, doctor, visitType, mode, status, notes? }> }>}
    */
   getPatientVisits: async (patientId) => {
     try {

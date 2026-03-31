@@ -54,6 +54,41 @@ function formatAppointmentCreatedAt(appointment) {
   });
 }
 
+const VISIT_HISTORY_NOTES_PREVIEW_LEN = 220;
+
+/** Long notes in visit history modal — collapsed preview + read more / less */
+function VisitHistoryNotes({ notes }) {
+  const [expanded, setExpanded] = useState(false);
+  const raw =
+    notes == null
+      ? ""
+      : typeof notes === "string"
+        ? notes.trim()
+        : String(notes).trim();
+  if (!raw) return null;
+  const needsTruncate = raw.length > VISIT_HISTORY_NOTES_PREVIEW_LEN;
+  const collapsed = needsTruncate && !expanded;
+  const displayText = collapsed
+    ? `${raw.slice(0, VISIT_HISTORY_NOTES_PREVIEW_LEN).trimEnd()}…`
+    : raw;
+
+  return (
+    <div className="mt-2 pt-2 border-t border-gray-100">
+      <p className="text-xs font-medium text-gray-500 mb-1">Notatki</p>
+      <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">{displayText}</p>
+      {needsTruncate && (
+        <button
+          type="button"
+          onClick={() => setExpanded((e) => !e)}
+          className="mt-1.5 text-sm font-medium text-teal-600 hover:text-teal-800"
+        >
+          {expanded ? "Pokaż mniej" : "Czytaj więcej"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // Add billingHelper with the generateBill function
 const billingHelper = {
   generateBill: async (appointmentId, billData) => {
@@ -1597,6 +1632,7 @@ function LabAppointmentsContent({ clinic }) {
                             {visit.doctor?.name && visit.visitType ? " · " : null}
                             {visit.visitType ? visit.visitType : null}
                           </div>
+                          <VisitHistoryNotes notes={visit.notes ?? visit.consultationNotes} />
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <button
