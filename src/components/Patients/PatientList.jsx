@@ -38,6 +38,22 @@ import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 import VisitReasonCascadeDropdown from "../UtilComponents/VisitReasonCascadeDropdown";
 
+/** Formats appointment `created_at` / `createdAt` for "Utworzono przez: … (DD.MM.YYYY, HH:MM)" */
+function formatAppointmentCreatedAt(appointment) {
+  const raw = appointment?.created_at ?? appointment?.createdAt;
+  if (raw == null || raw === "") return null;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 // Add billingHelper with the generateBill function
 const billingHelper = {
   generateBill: async (appointmentId, billData) => {
@@ -1134,6 +1150,7 @@ function LabAppointmentsContent({ clinic }) {
                     : isVisitOnly
                     ? "border-l-4 border-l-amber-500 bg-amber-50/50"
                     : "border-l-4 border-l-teal-700";
+                const createdAtFormatted = formatAppointmentCreatedAt(appointment);
 
                 return (
                   <div
@@ -1189,6 +1206,7 @@ function LabAppointmentsContent({ clinic }) {
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
                         Utworzono przez: {getCreatedByRoleLabel(appointment)}
+                        {createdAtFormatted ? ` (${createdAtFormatted})` : ""}
                       </div>
                     </div>
                     <div className="flex flex-col items-center justify-center text-center min-w-[120px] shrink-0">

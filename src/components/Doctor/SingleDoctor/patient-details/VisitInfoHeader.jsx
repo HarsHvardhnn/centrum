@@ -125,7 +125,10 @@ const VisitInfoHeader = ({
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-3 flex flex-wrap items-center gap-4">
+    <header
+      className="sticky top-14 z-[9] shrink-0 bg-white border-b border-gray-200 px-6 py-3 flex flex-wrap items-center gap-4 shadow-sm"
+      aria-label="Szczegóły wizyty — data, godzina, weryfikacja"
+    >
       <div className="flex items-center gap-2">
         <Calendar size={18} className="text-gray-500 shrink-0" />
         <label className="text-sm text-gray-600 shrink-0">Data wizyty</label>
