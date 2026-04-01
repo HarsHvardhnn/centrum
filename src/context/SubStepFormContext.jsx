@@ -38,7 +38,7 @@ export const FormProvider = ({ children, initialData }) => {
     address: "",
     city: "",
     pinCode: "",
-    state: "",
+    state: "swietokrzyskie",
     country: "",
     district: "",
     isInternationalPatient: false,
