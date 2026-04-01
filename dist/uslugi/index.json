@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-03-31T04:31:51.283Z",
-  "count": 33,
+  "generatedAt": "2026-04-01T04:30:25.166Z",
+  "count": 34,
   "slugs": [
     "konsultacja-chirurgiczna",
     "konsultacja-proktologiczna",
@@ -34,6 +34,7 @@
     "konsultacja-lekarska-dla-dzieci-dyzur-weekendowy",
     "usg-doppler-naczyn-konczyny-gornej",
     "usg-doppler-naczyn-konczyny-dolnej",
-    "usg-doppler-naczyn-konczyn-dolnych-badanie-obustronne"
+    "usg-doppler-naczyn-konczyn-dolnych-badanie-obustronne",
+    "konsultacja-ortopedyczna"
   ]
 }

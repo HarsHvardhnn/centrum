@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/userContext";
 import {
@@ -16,7 +16,10 @@ import {
   Newspaper,
   Package,
   CalendarCheck,
+  GraduationCap,
+  LayoutGrid,
 } from "lucide-react";
+import SpecializationManagement from "./SpecializationManagement";
 
 const settingsCards = [
   {
@@ -182,15 +185,18 @@ const SettingsCard = ({ card }) => {
 const SystemSettingsPage = () => {
   const { user } = useUser();
   const role = user?.role || "admin";
+  const [activeTab, setActiveTab] = useState("overview");
 
   const visibleCards = settingsCards.filter(
     (card) => card.roles.includes(role)
   );
 
+  const showSpecializationsTab = role === "admin";
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="w-full max-w-6xl mx-auto px-4 py-8">
-        <header className="mb-8">
+        <header className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
             Ustawienia systemowe
           </h1>
@@ -199,11 +205,65 @@ const SystemSettingsPage = () => {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visibleCards.map((card) => (
-            <SettingsCard key={card.id} card={card} />
-          ))}
-        </div>
+        {showSpecializationsTab && (
+          <div
+            className="flex flex-wrap gap-2 border-b border-gray-200 mb-8"
+            role="tablist"
+            aria-label="Sekcje ustawień"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "overview"}
+              onClick={() => setActiveTab("overview")}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px transition-colors ${
+                activeTab === "overview"
+                  ? "border-teal-600 text-teal-700 bg-white"
+                  : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              <LayoutGrid size={18} aria-hidden />
+              Przegląd
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "specializations"}
+              onClick={() => setActiveTab("specializations")}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-px transition-colors ${
+                activeTab === "specializations"
+                  ? "border-teal-600 text-teal-700 bg-white"
+                  : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              <GraduationCap size={18} aria-hidden />
+              Specjalizacje lekarskie
+            </button>
+          </div>
+        )}
+
+        {activeTab === "overview" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleCards.map((card) => (
+              <SettingsCard key={card.id} card={card} />
+            ))}
+          </div>
+        )}
+
+        {showSpecializationsTab && activeTab === "specializations" && (
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 md:p-8">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-900">
+                Specjalizacje lekarskie
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Dodawaj i edytuj specjalizacje przypisywane do lekarzy przy tworzeniu konta oraz w
+                rezerwacjach.
+              </p>
+            </div>
+            <SpecializationManagement />
+          </div>
+        )}
       </div>
     </div>
   );
