@@ -1,9 +1,65 @@
 import React, { useState, useEffect } from "react";
 import { X, Plus, Minus, CheckCircle, AlertCircle } from "lucide-react";
 import { useServices } from "../../../../context/serviceContext";
+import userServiceHelper, {
+  mapDoctorServicesResponseToCatalog,
+} from "../../../../helpers/userServiceHelper";
 
-const ServiceSelectionModal = ({ isOpen, onClose, onSave, patientId }) => {
-  const { services, loading, error } = useServices();
+const ServiceSelectionModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  patientId,
+  /** When set, loads catalog via GET /user-services/:id/doctor instead of global GET /services */
+  doctorUserId = null,
+}) => {
+  const {
+    services: globalServices,
+    loading: globalLoading,
+    error: globalError,
+  } = useServices();
+
+  const [doctorServices, setDoctorServices] = useState([]);
+  const [doctorLoading, setDoctorLoading] = useState(false);
+  const [doctorError, setDoctorError] = useState(null);
+
+  const useDoctorCatalog = Boolean(doctorUserId);
+
+  useEffect(() => {
+    if (!isOpen || !doctorUserId) {
+      setDoctorServices([]);
+      setDoctorError(null);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      setDoctorLoading(true);
+      setDoctorError(null);
+      try {
+        const res = await userServiceHelper.getDoctorServices(doctorUserId);
+        if (cancelled) return;
+        setDoctorServices(mapDoctorServicesResponseToCatalog(res));
+      } catch (e) {
+        console.error("ServiceSelectionModal getDoctorServices:", e);
+        if (!cancelled) {
+          setDoctorError("Nie udało się załadować usług lekarza");
+          setDoctorServices([]);
+        }
+      } finally {
+        if (!cancelled) setDoctorLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, doctorUserId]);
+
+  const services = useDoctorCatalog ? doctorServices : globalServices;
+  const loading = useDoctorCatalog ? doctorLoading : globalLoading;
+  const error = useDoctorCatalog ? doctorError : globalError;
+
   const [selectedServices, setSelectedServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,51 +73,60 @@ const ServiceSelectionModal = ({ isOpen, onClose, onSave, patientId }) => {
   }, [isOpen]);
 
   const toggleService = (service) => {
-    const isSelected = selectedServices.some(s => s.serviceId === service._id);
-    
+    const isSelected = selectedServices.some((s) => s.serviceId === service._id);
+
     if (isSelected) {
-      setSelectedServices(selectedServices.filter(s => s.serviceId !== service._id));
+      setSelectedServices(
+        selectedServices.filter((s) => s.serviceId !== service._id)
+      );
     } else {
-      setSelectedServices([...selectedServices, { 
-        serviceId: service._id,
-        title: service.title, 
-        price: service.price,
-        quantity: 1 
-      }]);
+      setSelectedServices([
+        ...selectedServices,
+        {
+          serviceId: service._id,
+          title: service.title,
+          price: service.price,
+          quantity: 1,
+        },
+      ]);
     }
   };
 
   const updateQuantity = (serviceId, newQuantity) => {
     if (newQuantity < 1) return;
-    
-    setSelectedServices(selectedServices.map(service => 
-      service.serviceId === serviceId 
-        ? { ...service, quantity: newQuantity }
-        : service
-    ));
+
+    setSelectedServices(
+      selectedServices.map((service) =>
+        service.serviceId === serviceId
+          ? { ...service, quantity: newQuantity }
+          : service
+      )
+    );
   };
 
   const calculateTotal = () => {
-    return selectedServices.reduce((total, service) => {
-      return total + (parseFloat(service.price) * service.quantity);
-    }, 0).toFixed(2);
+    return selectedServices
+      .reduce((total, service) => {
+        return total + parseFloat(service.price) * service.quantity;
+      }, 0)
+      .toFixed(2);
   };
 
   const handleSave = async () => {
     try {
       setIsSubmitting(true);
-      
+
       const servicesData = {
         patientId,
-        services: selectedServices.map(s => ({
+        services: selectedServices.map((s) => ({
           serviceId: s.serviceId,
           title: s.title,
           price: s.price,
           quantity: s.quantity,
-          totalPrice: (parseFloat(s.price) * s.quantity).toFixed(2)
-        }))
+          totalPrice: (parseFloat(s.price) * s.quantity).toFixed(2),
+        })),
       };
-      
+
       await onSave(servicesData);
       setIsSubmitting(false);
     } catch (error) {
@@ -70,9 +135,10 @@ const ServiceSelectionModal = ({ isOpen, onClose, onSave, patientId }) => {
     }
   };
 
-  const filteredServices = searchTerm 
-    ? services.filter(service => 
-        service.title.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredServices = searchTerm
+    ? services.filter((service) =>
+        service.title.toLowerCase().includes(searchTerm.toLowerCase())
+      )
     : services;
 
   if (!isOpen) return null;
@@ -82,8 +148,15 @@ const ServiceSelectionModal = ({ isOpen, onClose, onSave, patientId }) => {
       <div className="bg-white rounded-xl shadow-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center border-b p-4">
-          <h3 className="text-lg font-medium text-gray-900">Wybierz usługi dla pacjenta</h3>
-          <button 
+          <h3 className="text-lg font-medium text-gray-900">
+            Wybierz usługi dla pacjenta
+            {useDoctorCatalog && (
+              <span className="block text-xs font-normal text-gray-500 mt-1">
+                Tylko usługi przypisane do lekarza z wizyty
+              </span>
+            )}
+          </h3>
+          <button
             onClick={onClose}
             disabled={isSubmitting}
             className="text-gray-400 hover:text-gray-500 focus:outline-none"
@@ -117,24 +190,30 @@ const ServiceSelectionModal = ({ isOpen, onClose, onSave, patientId }) => {
                 <p className="text-red-500">{error}</p>
               </div>
             ) : filteredServices.length === 0 ? (
-              <div className="text-gray-500 text-center py-8">Nie znaleziono usług</div>
+              <div className="text-gray-500 text-center py-8">
+                Nie znaleziono usług
+              </div>
             ) : (
               <div className="space-y-2">
                 {filteredServices.map((service) => {
-                  const isSelected = selectedServices.some(s => s.serviceId === service._id);
+                  const isSelected = selectedServices.some(
+                    (s) => s.serviceId === service._id
+                  );
                   return (
-                    <div 
+                    <div
                       key={service._id}
                       className={`p-3 rounded-lg cursor-pointer transition-all ${
-                        isSelected 
-                          ? "bg-teal-50 border border-teal-200" 
+                        isSelected
+                          ? "bg-teal-50 border border-teal-200"
                           : "bg-white border border-gray-100 hover:border-teal-200"
                       }`}
                       onClick={() => toggleService(service)}
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">{service.title}</h4>
+                          <h4 className="font-medium text-gray-900">
+                            {service.title}
+                          </h4>
                           {service.shortDescription && (
                             <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                               {service.shortDescription}
@@ -142,8 +221,15 @@ const ServiceSelectionModal = ({ isOpen, onClose, onSave, patientId }) => {
                           )}
                         </div>
                         <div className="flex items-center ml-4">
-                          {isSelected && <CheckCircle size={18} className="text-teal-500 mr-2" />}
-                          <span className="font-medium text-gray-900">{service.price} zł</span>
+                          {isSelected && (
+                            <CheckCircle
+                              size={18}
+                              className="text-teal-500 mr-2"
+                            />
+                          )}
+                          <span className="font-medium text-gray-900">
+                            {service.price} zł
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -157,7 +243,7 @@ const ServiceSelectionModal = ({ isOpen, onClose, onSave, patientId }) => {
           <div className="w-1/2 overflow-y-auto p-4 flex flex-col">
             <div className="flex-1">
               <h3 className="font-medium text-gray-800 mb-3">Wybrane usługi</h3>
-              
+
               {selectedServices.length === 0 ? (
                 <div className="text-gray-500 text-center py-8 border border-dashed border-gray-200 rounded-lg">
                   Nie wybrano żadnych usług
@@ -165,45 +251,66 @@ const ServiceSelectionModal = ({ isOpen, onClose, onSave, patientId }) => {
               ) : (
                 <div className="space-y-3">
                   {selectedServices.map((service) => (
-                    <div key={service.serviceId} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                    <div
+                      key={service.serviceId}
+                      className="bg-gray-50 rounded-lg p-3 border border-gray-100"
+                    >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">{service.title}</h4>
-                          <p className="text-sm text-gray-500">{service.price} zł / szt.</p>
+                          <h4 className="font-medium text-gray-900">
+                            {service.title}
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            {service.price} zł / szt.
+                          </p>
                         </div>
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleService({_id: service.serviceId, ...service});
+                            toggleService({
+                              _id: service.serviceId,
+                              ...service,
+                            });
                           }}
                           className="text-gray-400 hover:text-red-500 focus:outline-none"
                         >
                           <X size={18} />
                         </button>
                       </div>
-                      
+
                       <div className="flex items-center mt-2">
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            updateQuantity(service.serviceId, service.quantity - 1);
+                            updateQuantity(
+                              service.serviceId,
+                              service.quantity - 1
+                            );
                           }}
                           className="h-7 w-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100"
                         >
                           <Minus size={16} />
                         </button>
-                        <span className="mx-2 min-w-[40px] text-center">{service.quantity}</span>
-                        <button 
+                        <span className="mx-2 min-w-[40px] text-center">
+                          {service.quantity}
+                        </span>
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            updateQuantity(service.serviceId, service.quantity + 1);
+                            updateQuantity(
+                              service.serviceId,
+                              service.quantity + 1
+                            );
                           }}
                           className="h-7 w-7 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100"
                         >
                           <Plus size={16} />
                         </button>
                         <div className="ml-auto font-medium">
-                          {(parseFloat(service.price) * service.quantity).toFixed(2)} zł
+                          {(
+                            parseFloat(service.price) * service.quantity
+                          ).toFixed(2)}{" "}
+                          zł
                         </div>
                       </div>
                     </div>
@@ -211,14 +318,16 @@ const ServiceSelectionModal = ({ isOpen, onClose, onSave, patientId }) => {
                 </div>
               )}
             </div>
-            
+
             {/* Total and Actions */}
             <div className="mt-4 pt-4 border-t">
               <div className="flex justify-between items-center mb-4">
                 <span className="font-medium text-gray-800">Suma:</span>
-                <span className="font-bold text-lg text-gray-900">{calculateTotal()} zł</span>
+                <span className="font-bold text-lg text-gray-900">
+                  {calculateTotal()} zł
+                </span>
               </div>
-              
+
               <div className="flex justify-end gap-3">
                 <button
                   onClick={onClose}
@@ -254,4 +363,4 @@ const ServiceSelectionModal = ({ isOpen, onClose, onSave, patientId }) => {
   );
 };
 
-export default ServiceSelectionModal; 
+export default ServiceSelectionModal;

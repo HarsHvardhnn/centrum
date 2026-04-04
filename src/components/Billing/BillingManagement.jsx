@@ -31,6 +31,19 @@ import { useServices } from "../../context/serviceContext";
 import ServiceSelectionModal from "../Doctor/SingleDoctor/patient-details/ServiceSelectionModal";
 import BulkDeleteByIdsDialog from "../admin/BulkDeleteByIdsDialog";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
+import userServiceHelper, {
+  mapDoctorServicesResponseToCatalog,
+} from "../../helpers/userServiceHelper";
+
+/** Id for GET /user-services/:userId/doctor — from embedded appointment on bill or visit object. */
+function resolveVisitDoctorUserId(appointment, bill) {
+  const apt = bill?.appointment ?? appointment;
+  if (!apt) return null;
+  const doc = apt.doctor ?? apt.doctorId;
+  if (!doc) return null;
+  if (typeof doc === "string") return doc;
+  return doc._id || doc.id || doc.userId || doc.user_id || null;
+}
 
 // Simple Loader Component
 const LoaderOverlay = () => (
@@ -46,7 +59,6 @@ const BillingManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
-  const { services } = useServices();
   const [isLoading, setIsLoading] = useState(false);
   
   // Extract appointmentId and step from query parameters if present
@@ -109,10 +121,12 @@ const BillingManagement = () => {
   
   // Add EditBillModal component
   const EditBillModal = ({ isOpen, onClose, billId, onUpdate, isRedirectedFromAppointment }) => {
-    const { services } = useServices();
+    const { services: globalServices, loading: globalServicesLoading } = useServices();
     const [modalLoading, setModalLoading] = useState(false);
     const [billData, setBillData] = useState(null);
     const [selectedServices, setSelectedServices] = useState([]);
+    const [catalogServices, setCatalogServices] = useState([]);
+    const [catalogLoading, setCatalogLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [consultationCharges, setConsultationCharges] = useState(0);
     const [discount, setDiscount] = useState(0);
@@ -149,15 +163,6 @@ const BillingManagement = () => {
             setAdditionalCharges(response.data.additionalCharges || 0);
             setAdditionalChargeNote(response.data.additionalChargeNote || "");
             setTaxPercentage(response.data.taxPercentage ?? 0);
-
-            console.log(
-              "[Billing EditBillModal] Bill form loaded — line items from GET bill details (raw):",
-              response.data.services
-            );
-            console.log(
-              "[Billing EditBillModal] Bill form loaded — selectedServices (transformed for form):",
-              transformedServices
-            );
           } else {
             toast.error("Nie udało się pobrać szczegółów faktury");
           }
@@ -180,13 +185,42 @@ const BillingManagement = () => {
       };
     }, [billId, isOpen]);
 
+    const visitDoctorId = billData ? resolveVisitDoctorUserId(null, billData) : null;
+    const pickerServices = visitDoctorId ? catalogServices : globalServices;
+    const pickerLoading = visitDoctorId ? catalogLoading : globalServicesLoading;
+
     useEffect(() => {
-      if (!isOpen || !billData) return;
-      console.log(
-        "[Billing EditBillModal] Catalog for “Dodaj usługi” — useServices() / GET /services:",
-        services
-      );
-    }, [isOpen, billData, services]);
+      if (!isOpen || !billData) {
+        setCatalogServices([]);
+        return;
+      }
+      const doctorUserId = resolveVisitDoctorUserId(null, billData);
+      if (!doctorUserId) {
+        setCatalogServices([]);
+        return;
+      }
+      let cancelled = false;
+      (async () => {
+        setCatalogLoading(true);
+        try {
+          const res = await userServiceHelper.getDoctorServices(doctorUserId);
+          if (!cancelled) {
+            setCatalogServices(mapDoctorServicesResponseToCatalog(res));
+          }
+        } catch (e) {
+          console.error("EditBillModal getDoctorServices:", e);
+          if (!cancelled) {
+            setCatalogServices([]);
+            toast.error("Nie udało się załadować usług lekarza z wizyty");
+          }
+        } finally {
+          if (!cancelled) setCatalogLoading(false);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [isOpen, billData]);
 
     const handleServiceToggle = (service) => {
       const exists = selectedServices.find(s => s.serviceId === service._id);
@@ -258,10 +292,6 @@ const BillingManagement = () => {
 
     if (!isOpen || !billData) return null;
 
-    const filteredServices = searchTerm
-      ? services.filter(service => service.title.toLowerCase().includes(searchTerm.toLowerCase()))
-      : services;
-
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         {modalLoading && <LoaderOverlay />}
@@ -302,7 +332,14 @@ const BillingManagement = () => {
               </div>
 
               {/* Available Services Section */}
-              <h4 className="font-medium mb-2">Dodaj usługi</h4>
+              <h4 className="font-medium mb-2">
+                Dodaj usługi
+                {visitDoctorId && (
+                  <span className="block text-xs font-normal text-gray-500 mt-1">
+                    Tylko usługi lekarza z wizyty (GET /user-services/…/doctor)
+                  </span>
+                )}
+              </h4>
               <input
                 type="text"
                 placeholder="Szukaj usług..."
@@ -310,8 +347,13 @@ const BillingManagement = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+              {pickerLoading ? (
+                <div className="py-8 flex justify-center text-gray-500 text-sm">
+                  Ładowanie katalogu usług…
+                </div>
+              ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {services
+                {pickerServices
                   .filter(service => 
                     service.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
                     !selectedServices.some(s => s.serviceId === service._id)
@@ -330,6 +372,7 @@ const BillingManagement = () => {
                   ))
                 }
               </div>
+              )}
             </div>
 
             {/* Charges Section */}
@@ -563,21 +606,7 @@ const BillingManagement = () => {
             notes: serviceItem.notes
           }));
 
-          console.log(
-            "[Billing GenerateBillModal] Create bill form — raw getPatientServices response:",
-            response.data
-          );
-          console.log(
-            "[Billing GenerateBillModal] Create bill form — formatted services for list:",
-            formattedServices
-          );
-
           setServices(formattedServices);
-        } else {
-          console.log(
-            "[Billing GenerateBillModal] Create bill form — no services in getPatientServices response:",
-            response
-          );
         }
       } catch (error) {
         console.error("Error fetching patient services:", error);
@@ -870,8 +899,7 @@ const BillingManagement = () => {
           onClose={() => setShowServiceModal(false)}
           onSave={handleAddServices}
           patientId={patient?._id}
-          appointmentId={appointmentId}
-          existingServices={services}
+          doctorUserId={resolveVisitDoctorUserId(appointment, null)}
         />
       </div>
     );

@@ -1,5 +1,26 @@
 import { apiCaller } from "../utils/axiosInstance";
 
+/**
+ * Normalize GET /user-services/:userId/doctor response into catalog rows { _id, title, price, shortDescription }.
+ */
+export function mapDoctorServicesResponseToCatalog(response) {
+  const raw = response?.data?.data?.services ?? response?.data?.services ?? [];
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => {
+      const svc = item?.service ?? item;
+      if (!svc || (!svc._id && !svc.id)) return null;
+      const price = item?.price != null && item?.price !== "" ? item.price : svc.price;
+      return {
+        _id: svc._id || svc.id,
+        title: svc.title || "",
+        price,
+        shortDescription: svc.shortDescription,
+      };
+    })
+    .filter(Boolean);
+}
+
 // User services helper
 const userServiceHelper = {
   // Add services to a doctor
