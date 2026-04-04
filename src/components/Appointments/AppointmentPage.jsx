@@ -6,11 +6,15 @@ import { useLoader } from "../../context/LoaderContext";
 import { useNavigate } from "react-router-dom";
 import userServiceHelper from "../../helpers/userServiceHelper";
 import { useServices } from "../../context/serviceContext.jsx";
+import { useUser } from "../../context/userContext";
 
 function AppointmentPage() {
   const navigate = useNavigate();
+  const { user } = useUser();
   const { showLoader, hideLoader } = useLoader();
   const { services, loading } = useServices(); // Use the services context
+  const allowedDoctorId =
+    user?.role === "doctor" ? user?.d_id || user?.id || null : null;
   const [appointmentData, setAppointmentData] = useState(null);
   const [availableServices, setAvailableServices] = useState([]);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
@@ -106,6 +110,7 @@ function AppointmentPage() {
         onClose={handleClose}
         onComplete={handleAppointmentComplete}
         doctorId={null} // No doctorId means user can select any doctor
+        allowedDoctorId={allowedDoctorId}
         availableServices={availableServices}
         isLoadingServices={isLoadingServices}
         isReceptionistMode={true} // Enable receptionist workflow

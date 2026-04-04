@@ -2,6 +2,14 @@ import { useState, useEffect } from "react";
 import doctorService from "../../helpers/doctorHelper";
 import { useSpecializations } from "../../context/SpecializationContext";
 
+/** When set (e.g. logged-in doctor’s doc id), only that doctor appears in the list. */
+function doctorMatchesAllowedId(doctor, allowedDoctorId) {
+  if (allowedDoctorId == null || allowedDoctorId === "") return true;
+  const want = String(allowedDoctorId).trim();
+  const ids = [doctor?._id, doctor?.id, doctor?.d_id].filter(Boolean).map(String);
+  return ids.some((id) => id === want);
+}
+
 const DoctorSelectionWithSlots = ({
   onDoctorSelect,
   onSlotSelect,
@@ -13,6 +21,8 @@ const DoctorSelectionWithSlots = ({
   hideDoctorSelection = false,
   selectedDoctor: propSelectedDoctor = null,
   hideSlotList = false, // when true, receptionist uses "set own date" – no slot list, no auto-fetch
+  /** If set, filter fetched doctors to this id only (create-visit flow for logged-in doctor). */
+  allowedDoctorId = null,
 }) => {
   const { specializations } = useSpecializations();
   const [selectedSpecialization, setSelectedSpecialization] = useState("");
@@ -38,7 +48,11 @@ const DoctorSelectionWithSlots = ({
       try {
         const filters = { specialization: selectedSpecialization };
         const response = await doctorService.getAllDoctors(filters);
-        setDoctors(response.doctors || []);
+        const raw = response.doctors || [];
+        const filtered = allowedDoctorId
+          ? raw.filter((d) => doctorMatchesAllowedId(d, allowedDoctorId))
+          : raw;
+        setDoctors(filtered);
       } catch (error) {
         console.error("Błąd podczas pobierania lekarzy:", error);
       } finally {
@@ -47,7 +61,7 @@ const DoctorSelectionWithSlots = ({
     };
 
     fetchDoctors();
-  }, [selectedSpecialization, hideDoctorSelection]);
+  }, [selectedSpecialization, hideDoctorSelection, allowedDoctorId]);
 
   // Fetch available slots when doctor or date changes (skip when hideSlotList – "set own date" mode)
   useEffect(() => {

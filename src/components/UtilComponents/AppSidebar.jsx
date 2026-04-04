@@ -246,13 +246,15 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
             isActive={currentPath === "/ustawienia"}
             collapsed={collapsed}
           />
-          <NavItem
-            icon={<Mail size={ICON_SIZE} strokeWidth={2} />}
-            label="Wiadomości kontaktowe"
-            to="/administracja/wiadomosci-kontaktowe"
-            isActive={currentPath === "/administracja/wiadomosci-kontaktowe"}
-            collapsed={collapsed}
-          />
+          {user?.role !== "doctor" && (
+            <NavItem
+              icon={<Mail size={ICON_SIZE} strokeWidth={2} />}
+              label="Wiadomości kontaktowe"
+              to="/administracja/wiadomosci-kontaktowe"
+              isActive={currentPath === "/administracja/wiadomosci-kontaktowe"}
+              collapsed={collapsed}
+            />
+          )}
         </SidebarSection>
 
         {/* Chat + Wyloguj się */}

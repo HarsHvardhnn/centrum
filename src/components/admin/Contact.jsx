@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
+import { useUser } from "../../context/userContext";
 import PermanentDeleteDialog from "./PermanentDeleteDialog";
 import BulkDeleteComponent from "./BulkDeleteComponent";
 
 const PAGE_SIZE = 10;
 
-const Adminmsgs = () => {
+const AdminmsgsContent = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -162,4 +164,12 @@ const Adminmsgs = () => {
   );
 };
 
-export default Adminmsgs; 
+const Adminmsgs = () => {
+  const { user } = useUser();
+  if (user?.role === "doctor") {
+    return <Navigate to="/administracja" replace />;
+  }
+  return <AdminmsgsContent />;
+};
+
+export default Adminmsgs;

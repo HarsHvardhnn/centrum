@@ -36,7 +36,9 @@ function AppointmentFormModal({
   workflowOrder = "patientFirst", // "patientFirst" or "appointmentFirst"
   allowPastDates = false, // Whether to allow selecting dates in the past
   skipDoctorSelection = false, // Whether to skip doctor selection step
-  embedded = false // When true, render as page content (no modal overlay); used on /wizyta/utworz
+  embedded = false, // When true, render as page content (no modal overlay); used on /wizyta/utworz
+  /** Doctor document id: when set, doctor picker only lists this doctor (logged-in doctor on /wizyta/utworz). */
+  allowedDoctorId = null,
 }) {
   const { services: contextServices, loading: contextLoading } = useServices();
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -961,6 +963,7 @@ function AppointmentFormModal({
             loadingNextAvailableDate={loadingNextAvailableDate}
             hideDoctorSelection={true}
             hideSlotList={useCustomDateOnly}
+            allowedDoctorId={allowedDoctorId}
           />
         </div>
 
@@ -1113,6 +1116,7 @@ function AppointmentFormModal({
             selectedPatient={selectedPatient}
             loadingNextAvailableDate={loadingNextAvailableDate}
             hideSlotList={useCustomDateOnly}
+            allowedDoctorId={allowedDoctorId}
           />
         </div>
 

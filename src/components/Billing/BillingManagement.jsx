@@ -149,6 +149,15 @@ const BillingManagement = () => {
             setAdditionalCharges(response.data.additionalCharges || 0);
             setAdditionalChargeNote(response.data.additionalChargeNote || "");
             setTaxPercentage(response.data.taxPercentage ?? 0);
+
+            console.log(
+              "[Billing EditBillModal] Bill form loaded — line items from GET bill details (raw):",
+              response.data.services
+            );
+            console.log(
+              "[Billing EditBillModal] Bill form loaded — selectedServices (transformed for form):",
+              transformedServices
+            );
           } else {
             toast.error("Nie udało się pobrać szczegółów faktury");
           }
@@ -170,6 +179,14 @@ const BillingManagement = () => {
         isMounted = false;
       };
     }, [billId, isOpen]);
+
+    useEffect(() => {
+      if (!isOpen || !billData) return;
+      console.log(
+        "[Billing EditBillModal] Catalog for “Dodaj usługi” — useServices() / GET /services:",
+        services
+      );
+    }, [isOpen, billData, services]);
 
     const handleServiceToggle = (service) => {
       const exists = selectedServices.find(s => s.serviceId === service._id);
@@ -545,8 +562,22 @@ const BillingManagement = () => {
             status: serviceItem.status,
             notes: serviceItem.notes
           }));
-          
+
+          console.log(
+            "[Billing GenerateBillModal] Create bill form — raw getPatientServices response:",
+            response.data
+          );
+          console.log(
+            "[Billing GenerateBillModal] Create bill form — formatted services for list:",
+            formattedServices
+          );
+
           setServices(formattedServices);
+        } else {
+          console.log(
+            "[Billing GenerateBillModal] Create bill form — no services in getPatientServices response:",
+            response
+          );
         }
       } catch (error) {
         console.error("Error fetching patient services:", error);
