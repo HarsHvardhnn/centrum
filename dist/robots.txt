@@ -7,13 +7,29 @@ Allow: /aktualnosci
 Allow: /poradnik
 Allow: /kontakt
 
-# Disallow private routes
-Disallow: /user/*
+# Public doctor profile slugs under /lekarze/ (crawl allowed); blocked explicitly below for staff paths
+
+# Staff / CM7Med app — Polish routes (legacy English Disallow kept at bottom)
+Disallow: /logowanie
+Disallow: /zapomniane-haslo
+Disallow: /administracja
+Disallow: /pacjenci
+Disallow: /klinika
+Disallow: /wizyta/
+Disallow: /szczegoly-pacjenta
+Disallow: /lekarze/wizyty
+Disallow: /lekarz/
+Disallow: /centrum-pomocy
+Disallow: /ustawienia
+Disallow: /protected-image
+
+# Legacy / English-style paths
+Disallow: /user/
 Disallow: /login
 Disallow: /signup
 Disallow: /forgot-password
-Disallow: /admin/*
-Disallow: /doctors/*
+Disallow: /admin/
+Disallow: /doctors/
 Disallow: /appointments
 Disallow: /details
 Disallow: /profile
@@ -31,4 +47,4 @@ Disallow: /poradnik/undefined
 Disallow: /uslugi/undefined
 
 # Sitemap
-Sitemap: https://centrummedyczne7.pl/sitemap.xml 
+Sitemap: https://centrummedyczne7.pl/sitemap.xml

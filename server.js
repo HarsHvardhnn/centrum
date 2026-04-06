@@ -85,8 +85,34 @@ const isBot = (userAgent) => {
   return botPatterns.some(pattern => pattern.test(userAgent));
 };
 
+/**
+ * Only public marketing URLs should be indexable. Staff app, login, charts, billing, etc. must stay out of search.
+ */
+function shouldAllowIndexingForPath(requestPath) {
+  const p = (requestPath || '').split('?')[0].replace(/\/$/, '') || '/';
+  if (p === '/') return true;
+  const staticMarketing = new Set([
+    '/o-nas',
+    '/lekarze',
+    '/uslugi',
+    '/aktualnosci',
+    '/poradnik',
+    '/kontakt',
+  ]);
+  if (staticMarketing.has(p)) return true;
+  if (p.startsWith('/aktualnosci/') && !p.includes('undefined')) return true;
+  if (p.startsWith('/poradnik/') && !p.includes('undefined')) return true;
+  if (p.startsWith('/uslugi/') && !p.includes('undefined')) return true;
+  if (p.startsWith('/lekarze/')) {
+    if (p.startsWith('/lekarze/wizyty')) return false;
+    return true;
+  }
+  return false;
+}
+
 // SEO HTML generator
 const generateSEOHTML = async (path, dynamicData = null) => {
+  const robotsContent = shouldAllowIndexingForPath(path) ? 'index, follow' : 'noindex, nofollow';
   const BASE_URL = 'https://centrummedyczne7.pl';
   console.log("BASE_URL", BASE_URL);
   console.log("path", path);
@@ -239,8 +265,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <meta property="twitter:description" content="${description}">
     <meta property="twitter:image" content="${fullOgImage}">
     
-    <!-- Additional SEO -->
-    <meta name="robots" content="index, follow">
+    <!-- Crawling: index only for public marketing paths (see shouldAllowIndexingForPath) -->
+    <meta name="robots" content="${robotsContent}">
     <meta name="author" content="Centrum Medyczne 7">
     
     <!-- Favicon and Icons -->
@@ -422,6 +448,10 @@ const seoMiddleware = async (req, res, next) => {
   
   console.log(`📄 Serving SEO HTML for: ${userAgent.substring(0, 50)}...`);
   console.log(`🔗 Route: ${path}`);
+  
+  if (!shouldAllowIndexingForPath(path)) {
+    res.set('X-Robots-Tag', 'noindex, nofollow');
+  }
   
   // Fetch dynamic data for dynamic routes
   let dynamicData = null;

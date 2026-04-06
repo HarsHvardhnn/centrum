@@ -8,8 +8,31 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 3000; // Different port to avoid conflict
 
+function shouldAllowIndexingForPath(requestPath) {
+  const p = (requestPath || '').split('?')[0].replace(/\/$/, '') || '/';
+  if (p === '/') return true;
+  const staticMarketing = new Set([
+    '/o-nas',
+    '/lekarze',
+    '/uslugi',
+    '/aktualnosci',
+    '/poradnik',
+    '/kontakt',
+  ]);
+  if (staticMarketing.has(p)) return true;
+  if (p.startsWith('/aktualnosci/') && !p.includes('undefined')) return true;
+  if (p.startsWith('/poradnik/') && !p.includes('undefined')) return true;
+  if (p.startsWith('/uslugi/') && !p.includes('undefined')) return true;
+  if (p.startsWith('/lekarze/')) {
+    if (p.startsWith('/lekarze/wizyty')) return false;
+    return true;
+  }
+  return false;
+}
+
 // SEO HTML generator
 const generateSEOHTML = (path) => {
+  const robotsContent = shouldAllowIndexingForPath(path) ? 'index, follow' : 'noindex, nofollow';
   const BASE_URL = 'http://localhost:3000';
   
   let title, description, keywords, ogImage;
@@ -116,7 +139,7 @@ const generateSEOHTML = (path) => {
     <meta property="twitter:image" content="${fullOgImage}">
     
     <!-- Additional SEO -->
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="${robotsContent}">
     <meta name="author" content="Centrum Medyczne 7">
     
     <!-- Favicon -->
@@ -142,6 +165,9 @@ app.use('/images', express.static(path.join(__dirname, 'dist', 'images')));
 // Serve dynamic HTML with meta tags for all routes
 app.get('*', (req, res) => {
   console.log(`📄 Serving route: ${req.path} with dynamic meta tags`);
+  if (!shouldAllowIndexingForPath(req.path)) {
+    res.set('X-Robots-Tag', 'noindex, nofollow');
+  }
   const html = generateSEOHTML(req.path);
   res.send(html);
 });
