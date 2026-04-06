@@ -32,6 +32,7 @@ const AlcoholImplantPage = React.lazy(() => import("./components/User/Pages/Alco
 const PediatricNeurologyPage = React.lazy(() => import("./components/User/Pages/PediatricNeurologyPage"));
 const DiabeticFootPage = React.lazy(() => import("./components/User/Pages/DiabeticFootPage"));
 const USGSkarzyskoPage = React.lazy(() => import("./components/User/Pages/USGSkarzyskoPage"));
+const PediatricOrthopedistPage = React.lazy(() => import("./components/User/Pages/PediatricOrthopedistPage"));
 const MichalSzczubkowskiPage = React.lazy(() => import("./components/User/Pages/MichalSzczubkowskiPage"));
 
 // Loading component for Suspense
@@ -97,7 +98,6 @@ const routes = createBrowserRouter([
       { path: "lekarze/michal-szczubkowski", element: <LazyRouteWrapper><MichalSzczubkowskiPage /></LazyRouteWrapper> },
       { path: "lekarze/:doctorSlug", element: <LazyRouteWrapper><DoctorProfilePage hidePrices /></LazyRouteWrapper> },
       { path: "uslugi", element: <LazyRouteWrapper><OurServicesPage /></LazyRouteWrapper> },
-      // { path: "uslugi/:service", element: <LazyRouteWrapper><ServicesDetailPage /></LazyRouteWrapper> },
       { path: "aktualnosci", element: <LazyRouteWrapper><NewsPage /></LazyRouteWrapper> },
       { path: "poradnik", element: <LazyRouteWrapper><NewsPage isNews={false} /></LazyRouteWrapper> },
       { path: "kontakt", element: <LazyRouteWrapper><ContactPage /></LazyRouteWrapper> },
@@ -116,6 +116,8 @@ const routes = createBrowserRouter([
       { path: "uslugi/konsultacja-neurologiczna-dla-dzieci", element: <LazyRouteWrapper><PediatricNeurologyPage /></LazyRouteWrapper> },
       { path: "uslugi/leczenie-stopy-cukrzycowej", element: <LazyRouteWrapper><DiabeticFootPage /></LazyRouteWrapper> },
       { path: "uslugi/usg-skarzysko-kamienna", element: <LazyRouteWrapper><USGSkarzyskoPage /></LazyRouteWrapper> },
+      { path: "uslugi/ortopeda-dzieciecy-skarzysko", element: <LazyRouteWrapper><PediatricOrthopedistPage /></LazyRouteWrapper> },
+      { path: "uslugi/:service", element: <LazyRouteWrapper><ServicesDetailPage /></LazyRouteWrapper> },
       { path: "*", element: <NotFound404 /> },
     ],
   },

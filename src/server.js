@@ -119,6 +119,23 @@ async function fetchArticleData(slug, isNews) {
   }
 }
 
+// SEO: ortopeda dziecięcy – static landing (must be before /uslugi/:slug)
+app.get('/uslugi/ortopeda-dzieciecy-skarzysko', (req, res) => {
+  const titleText = 'Ortopeda dziecięcy Skarżysko – prywatnie, bez skierowania';
+  const descriptionText =
+    'Ortopeda dziecięcy Skarżysko – konsultacje dla dzieci i niemowląt. Diagnostyka wad postawy i rozwoju układu ruchu, w tym USG bioderek.';
+  const ogImage = '/section1_newpage.png';
+  const webPageSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: titleText,
+    description: descriptionText,
+    url: `https://centrummedyczne7.pl${req.path}`,
+  };
+  const structuredData = `<script type="application/ld+json">${JSON.stringify(webPageSchema)}</script>`;
+  renderWithSEO(res, titleText, descriptionText, ogImage, structuredData);
+});
+
 // SEO: inject visible pre-content for dynamic service pages
 app.get('/uslugi/:slug', (req, res) => {
   const serviceTitle = humanizeSlug(req.params.slug);

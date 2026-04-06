@@ -38,6 +38,7 @@ const SEO = () => {
     '/uslugi/konsultacja-proktologiczna',
     '/uslugi',
     '/uslugi/wszywka-alkoholowa-skarzysko-kamienna',
+    '/uslugi/ortopeda-dzieciecy-skarzysko',
     '/proktolog'
   ];
 
