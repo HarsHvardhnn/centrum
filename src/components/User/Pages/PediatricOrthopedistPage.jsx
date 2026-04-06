@@ -14,7 +14,8 @@ const META_TITLE = "Ortopeda dziecięcy Skarżysko – prywatnie, bez skierowani
 const META_DESCRIPTION =
   "Ortopeda dziecięcy Skarżysko – konsultacje dla dzieci i niemowląt. Diagnostyka wad postawy i rozwoju układu ruchu, w tym USG bioderek.";
 const HERO_IMAGE = "/section1_newpage.png";
-const APPOINTMENT_URL = "/?openAppointment=true#appointment-section";
+const PEDIATRIC_ORTHOPEDIST_DOCTOR_ID = "69a6177223a657890e846729";
+const APPOINTMENT_URL = `/?lekarz=${PEDIATRIC_ORTHOPEDIST_DOCTOR_ID}&openAppointment=true#appointment-section`;
 const REGISTRATION_TEL = "tel:+48797127487";
 const DOCTOR_PHOTO = "/lukas.png";
 const GOOGLE_MAPS_REVIEWS_URL =
