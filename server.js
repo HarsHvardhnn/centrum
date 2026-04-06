@@ -294,6 +294,19 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       twitterTitle = 'USG Skarżysko-Kamienna – prywatnie, bez skierowania';
       twitterDescription = 'USG Skarżysko-Kamienna. USG tarczycy, trzustki, piersi, jamy brzusznej. Badania dla dzieci i dorosłych, bez skierowania, szybkie terminy.';
       break;
+    case '/uslugi/ortopeda-dzieciecy-skarzysko':
+    case '/uslugi/ortopeda-dzieciecy-skarzysko/':
+      title = 'Ortopeda dziecięcy Skarżysko – prywatnie, bez skierowania';
+      description =
+        'Ortopeda dziecięcy Skarżysko – konsultacje dla dzieci i niemowląt. Diagnostyka wad postawy i rozwoju układu ruchu, w tym USG bioderek.';
+      keywords =
+        'ortopeda dziecięcy, Skarżysko-Kamienna, USG bioderek, niemowlęta, konsultacja ortopedyczna dziecięca, centrum medyczne 7';
+      ogImage = '/section1_newpage.png';
+      ogTitle = title;
+      ogDescription = description;
+      twitterTitle = title;
+      twitterDescription = description;
+      break;
     default:
       // Handle dynamic routes with real data
       // Check specific routes FIRST before general patterns
@@ -320,6 +333,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           '/uslugi/konsultacja-neurologiczna-dla-dzieci',
           '/uslugi/leczenie-stopy-cukrzycowej',
           '/uslugi/usg-skarzysko-kamienna',
+          '/uslugi/ortopeda-dzieciecy-skarzysko',
           '/usg-skarzysko-kamienna'
         ];
         
@@ -519,6 +533,18 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       }
     };
     structuredData = `<script type="application/ld+json">${JSON.stringify(proctologyStructuredData)}</script>`;
+  } else if (
+    normalizedPath === '/uslugi/ortopeda-dzieciecy-skarzysko' ||
+    normalizedPath === '/uslugi/ortopeda-dzieciecy-skarzysko/'
+  ) {
+    const orthoChildWebPage = {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: title,
+      description,
+      url: `${BASE_URL}/uslugi/ortopeda-dzieciecy-skarzysko`,
+    };
+    structuredData = `<script type="application/ld+json">${JSON.stringify(orthoChildWebPage)}</script>`;
   } else if (path.startsWith('/uslugi/') && dynamicData && typeof dynamicData === 'object' && dynamicData.title) {
     // Service-specific structured data to reinforce meta description
     const serviceStructuredData = {
@@ -983,7 +1009,8 @@ const knownClientSideRoutes = [
   '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym',
   '/uslugi/wszywka-alkoholowa-skarzysko-kamienna',
   '/uslugi/konsultacja-neurologiczna-dla-dzieci',
-  '/uslugi/leczenie-stopy-cukrzycowej'
+  '/uslugi/leczenie-stopy-cukrzycowej',
+  '/uslugi/ortopeda-dzieciecy-skarzysko'
 ];
 
 // SEO Middleware - Return SEO HTML for EVERYONE (bots and users)
