@@ -17,6 +17,7 @@ const META_DESCRIPTION =
 const HERO_IMAGE = "/section1_newpage.png";
 const PEDIATRIC_ORTHOPEDIST_DOCTOR_ID = "69a6177223a657890e846729";
 const APPOINTMENT_URL = `/?lekarz=${PEDIATRIC_ORTHOPEDIST_DOCTOR_ID}&openAppointment=true#appointment-section`;
+const ORTHOPEDA_SERVICE_URL = "https://centrummedyczne7.pl/uslugi/ortopeda-skarzysko";
 const REGISTRATION_TEL = "tel:+48797127487";
 const DOCTOR_PHOTO = "/lukas.png";
 const GOOGLE_MAPS_REVIEWS_URL =
@@ -177,6 +178,52 @@ const PediatricOrthopedistPage = () => {
     url: `https://centrummedyczne7.pl${PAGE_PATH}`,
   };
 
+  const proceduresGraphStructuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "MedicalBusiness",
+        name: "Centrum Medyczne 7",
+        address: {
+          ...cm7PostalAddressLd,
+          streetAddress: "ul. Powstańców Warszawy 7/1.5",
+        },
+        telephone: "+48 797 127 487",
+      },
+      {
+        "@type": "MedicalProcedure",
+        name: "Konsultacja ortopedy dziecięcego",
+        procedureType: "Orthopedic consultation",
+        bodyLocation: "układ ruchu",
+        provider: {
+          "@type": "MedicalBusiness",
+          name: "Centrum Medyczne 7",
+          address: {
+            ...cm7PostalAddressLd,
+            streetAddress: "ul. Powstańców Warszawy 7/1.5",
+          },
+        },
+        areaServed: "Skarżysko-Kamienna",
+        offers: {
+          "@type": "Offer",
+          price: "300",
+          priceCurrency: "PLN",
+        },
+      },
+      {
+        "@type": "MedicalProcedure",
+        name: "USG bioderek u niemowląt",
+        procedureType: "Ultrasound hip examination",
+        bodyLocation: "staw biodrowy",
+        provider: {
+          "@type": "MedicalBusiness",
+          name: "Centrum Medyczne 7",
+        },
+        areaServed: "Skarżysko-Kamienna",
+      },
+    ],
+  };
+
   return (
     <>
       <MetaTags
@@ -192,6 +239,7 @@ const PediatricOrthopedistPage = () => {
       />
       <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
       <script type="application/ld+json">{JSON.stringify(physicianStructuredData)}</script>
+      <script type="application/ld+json">{JSON.stringify(proceduresGraphStructuredData)}</script>
 
       <main className="min-h-screen bg-white">
         <section
@@ -320,7 +368,7 @@ const PediatricOrthopedistPage = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        window.location.href = APPOINTMENT_URL;
+                        window.location.href = ORTHOPEDA_SERVICE_URL;
                       }}
                       className="w-full inline-flex items-center justify-center bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors text-sm sm:text-base whitespace-nowrap"
                     >
@@ -714,7 +762,7 @@ const PediatricOrthopedistPage = () => {
               </div>
               <div className="flex justify-center mt-8 sm:mt-10">
                 <a
-                  href="/uslugi"
+                  href="https://cm7zdrowie.pl/medycyna-sportowa-skarzysko/"
                   className="inline-flex items-center justify-center bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 sm:px-8 rounded-lg transition-colors text-sm sm:text-base text-center"
                 >
                   Medycyna sportowa - zobacz więcej
@@ -748,16 +796,16 @@ const PediatricOrthopedistPage = () => {
             </p>
 
             <ul
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 list-none p-0 m-0 mb-8 sm:mb-10"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5 list-none p-0 m-0 mb-8 sm:mb-10"
               role="list"
             >
               {SECTION8_CITY_LABELS.map((city) => (
                 <li key={city}>
-                  <div className="bg-white rounded-lg border border-gray-100 shadow-sm px-1.5 py-2.5 sm:px-2 sm:py-3 text-center flex flex-col items-center justify-center min-h-[3.75rem] sm:min-h-[4.25rem]">
-                    <span className="block text-[11px] sm:text-xs md:text-sm font-semibold text-gray-900 leading-tight">
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] px-2 py-3 sm:px-3 sm:py-4 text-center flex flex-col items-center justify-center min-h-[4.5rem] sm:min-h-[5rem]">
+                    <span className="block text-xs sm:text-sm font-medium text-[#4B5563] leading-tight">
                       Ortopeda
                     </span>
-                    <span className="block text-[10px] sm:text-xs md:text-sm text-slate-700 mt-1 leading-snug whitespace-nowrap">
+                    <span className="block text-xs sm:text-sm font-medium text-[#4B5563] mt-1 leading-snug whitespace-nowrap">
                       {formatCityNoBreak(city)}
                     </span>
                   </div>
