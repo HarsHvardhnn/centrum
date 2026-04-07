@@ -363,7 +363,12 @@ const PediatricOrthopedistPage = () => {
                 />
                 <div className="p-6 sm:p-8 text-center space-y-2">
                   <h3 className="text-xl sm:text-2xl font-bold text-gray-900">lek. Łukasz Dubiel</h3>
-                  <p className="text-teal-600 font-medium text-base sm:text-lg pb-4">Ortopeda dziecięcy</p>
+                  <a
+                    href={ORTHOPEDA_SERVICE_URL}
+                    className="block cursor-pointer text-teal-600 font-medium text-base sm:text-lg pb-4 hover:text-teal-700 underline-offset-2 hover:underline"
+                  >
+                    Ortopeda dziecięcy
+                  </a>
                   <div className="flex flex-col gap-3">
                     <button
                       type="button"
