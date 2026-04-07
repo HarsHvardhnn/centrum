@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import axios from 'axios';
 import { fileURLToPath } from 'url';
+import { cm7PostalAddressLd } from './src/data/cm7PostalAddressLd.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -294,8 +295,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       twitterTitle = 'USG Skarżysko-Kamienna – prywatnie, bez skierowania';
       twitterDescription = 'USG Skarżysko-Kamienna. USG tarczycy, trzustki, piersi, jamy brzusznej. Badania dla dzieci i dorosłych, bez skierowania, szybkie terminy.';
       break;
-    case '/uslugi/ortopeda-dzieciecy-skarzysko':
-    case '/uslugi/ortopeda-dzieciecy-skarzysko/':
+    case '/ortopeda-dzieciecy-skarzysko':
+    case '/ortopeda-dzieciecy-skarzysko/':
       title = 'Ortopeda dziecięcy Skarżysko – prywatnie, bez skierowania';
       description =
         'Ortopeda dziecięcy Skarżysko – konsultacje dla dzieci i niemowląt. Diagnostyka wad postawy i rozwoju układu ruchu, w tym USG bioderek.';
@@ -333,7 +334,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           '/uslugi/konsultacja-neurologiczna-dla-dzieci',
           '/uslugi/leczenie-stopy-cukrzycowej',
           '/uslugi/usg-skarzysko-kamienna',
-          '/uslugi/ortopeda-dzieciecy-skarzysko',
+          '/ortopeda-dzieciecy-skarzysko',
           '/usg-skarzysko-kamienna'
         ];
         
@@ -515,7 +516,11 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       "provider": {
         "@type": "MedicalClinic",
         "name": "Centrum Medyczne 7",
-        "url": `${BASE_URL}/`
+        "url": `${BASE_URL}/`,
+        "address": {
+          ...cm7PostalAddressLd,
+          "addressRegion": "świętokrzyskie"
+        }
       },
       "medicalSpecialty": "Proctology",
       "availableService": {
@@ -534,15 +539,15 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     };
     structuredData = `<script type="application/ld+json">${JSON.stringify(proctologyStructuredData)}</script>`;
   } else if (
-    normalizedPath === '/uslugi/ortopeda-dzieciecy-skarzysko' ||
-    normalizedPath === '/uslugi/ortopeda-dzieciecy-skarzysko/'
+    normalizedPath === '/ortopeda-dzieciecy-skarzysko' ||
+    normalizedPath === '/ortopeda-dzieciecy-skarzysko/'
   ) {
     const orthoChildWebPage = {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
       name: title,
       description,
-      url: `${BASE_URL}/uslugi/ortopeda-dzieciecy-skarzysko`,
+      url: `${BASE_URL}/ortopeda-dzieciecy-skarzysko`,
     };
     structuredData = `<script type="application/ld+json">${JSON.stringify(orthoChildWebPage)}</script>`;
   } else if (path.startsWith('/uslugi/') && dynamicData && typeof dynamicData === 'object' && dynamicData.title) {
@@ -557,9 +562,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
         "name": "Centrum Medyczne 7",
         "url": BASE_URL,
         "address": {
-          "@type": "PostalAddress",
-          "addressLocality": "Skarżysko-Kamienna",
-          "addressCountry": "PL"
+          ...cm7PostalAddressLd
         }
       },
       "areaServed": {
@@ -578,9 +581,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       "logo": `${BASE_URL}/images/mainlogo.png`,
       "description": description,
       "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Skarżysko-Kamienna",
-        "addressCountry": "PL"
+        ...cm7PostalAddressLd
       },
       "telephone": "797-097-487"
     };
@@ -669,7 +670,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-DDie0XH4.js"></script>
+    <script type="module" crossorigin src="/assets/index-Br9YcSt3.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -939,7 +940,12 @@ const handleSecurityPaths = (req, res, next) => {
 // Middleware to handle invalid/undefined slugs and trailing slashes
 const handleInvalidSlugs = (req, res, next) => {
   const path = req.normalizedPath || req.path;
-  
+  const noTrail = path.replace(/\/$/, '') || '/';
+  if (noTrail === '/uslugi/ortopeda-dzieciecy-skarzysko') {
+    console.log('🔄 Redirecting legacy URL /uslugi/ortopeda-dzieciecy-skarzysko -> /ortopeda-dzieciecy-skarzysko');
+    return res.redirect(301, '/ortopeda-dzieciecy-skarzysko');
+  }
+
   // Check for undefined slugs in URLs
   if (path === '/aktualnosci/undefined' || 
       path === '/poradnik/undefined' || 
@@ -1010,7 +1016,7 @@ const knownClientSideRoutes = [
   '/uslugi/wszywka-alkoholowa-skarzysko-kamienna',
   '/uslugi/konsultacja-neurologiczna-dla-dzieci',
   '/uslugi/leczenie-stopy-cukrzycowej',
-  '/uslugi/ortopeda-dzieciecy-skarzysko'
+  '/ortopeda-dzieciecy-skarzysko'
 ];
 
 // SEO Middleware - Return SEO HTML for EVERYONE (bots and users)

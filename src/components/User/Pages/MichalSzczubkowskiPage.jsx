@@ -4,6 +4,7 @@ import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaPhone, FaGraduationCap, FaB
 import { IoLocationOutline, IoLocation } from "react-icons/io5";
 import { Activity, Stethoscope, HeartPulse, GraduationCap, Briefcase, Star, ClipboardList, MessageCircle, FileText } from "lucide-react";
 import starIcon from '../../../assets/star.png';
+import { cm7PostalAddressLd } from '../../../data/cm7PostalAddressLd';
 
 const MichalSzczubkowskiPage = () => {
   // Structured Data (JSON-LD)
@@ -16,10 +17,8 @@ const MichalSzczubkowskiPage = () => {
       "@type": "MedicalBusiness",
       "name": "Centrum Medyczne 7",
       "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Skarżysko-Kamienna",
-        "addressRegion": "świętokrzyskie",
-        "addressCountry": "PL"
+        ...cm7PostalAddressLd,
+        "addressRegion": "świętokrzyskie"
       },
       "telephone": "797-097-487",
       "url": "https://centrummedyczne7.pl"

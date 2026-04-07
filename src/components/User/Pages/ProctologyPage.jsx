@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import MetaTags from '../../UtilComponents/MetaTags';
 import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaMapMarkerAlt, FaPhone, FaExclamationTriangle, FaTint, FaHandPaper, FaCircle, FaClock, FaEyeDropper } from "react-icons/fa";
 import { IoLocation } from "react-icons/io5";
+import { cm7PostalAddressLd } from '../../../data/cm7PostalAddressLd';
 
 const ProctologyPage = () => {
   const navigate = useNavigate();
@@ -17,10 +18,8 @@ const ProctologyPage = () => {
       "@type": "MedicalBusiness",
       "name": "Centrum Medyczne 7",
       "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Skarżysko-Kamienna",
-        "addressRegion": "świętokrzyskie",
-        "addressCountry": "PL"
+        ...cm7PostalAddressLd,
+        "addressRegion": "świętokrzyskie"
       },
       "telephone": "797-097-487",
       "url": "https://centrummedyczne7.pl"
@@ -42,10 +41,8 @@ const ProctologyPage = () => {
       "@type": "MedicalBusiness",
       "name": "Centrum Medyczne 7",
       "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Skarżysko-Kamienna",
-        "addressRegion": "świętokrzyskie",
-        "addressCountry": "PL"
+        ...cm7PostalAddressLd,
+        "addressRegion": "świętokrzyskie"
       }
     },
     "medicalSpecialty": "Proctology",

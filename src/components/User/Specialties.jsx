@@ -32,11 +32,13 @@ export default function Specialties() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
         {Array.isArray(specialtiesData) ? specialtiesData.map((specialty) => {
           const handleSpecialtyClick = () => {
-            // Check if specialization name is "Proktolog" (case-insensitive)
-            if (specialty.name && specialty.name.toLowerCase().includes('proktolog')) {
-              navigate('/proktolog');
+            const name = (specialty.name || "").toLowerCase();
+            if (name.includes("proktolog")) {
+              navigate("/proktolog");
+            } else if (name.includes("ortopeda") && name.includes("dzieci")) {
+              navigate("/ortopeda-dzieciecy-skarzysko");
             } else {
-              navigate(`/lekarze`);
+              navigate("/lekarze");
             }
           };
 

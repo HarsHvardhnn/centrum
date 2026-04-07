@@ -251,6 +251,8 @@ function generateSEOHTML(route, data = null) {
       "description": "Profesjonalna klinika w Skarżysku-Kamiennej oferująca kompleksową opiekę medyczną",
       "address": {
         "@type": "PostalAddress",
+        "streetAddress": "Powstańców Warszawy 7/1.5",
+        "postalCode": "26-110",
         "addressLocality": "Skarżysko-Kamienna",
         "addressRegion": "Świętokrzyskie",
         "addressCountry": "PL"

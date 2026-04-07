@@ -119,8 +119,8 @@ async function fetchArticleData(slug, isNews) {
   }
 }
 
-// SEO: ortopeda dziecięcy – static landing (must be before /uslugi/:slug)
-app.get('/uslugi/ortopeda-dzieciecy-skarzysko', (req, res) => {
+// SEO: ortopeda dziecięcy – static landing at root path (canonical, no /uslugi)
+app.get('/ortopeda-dzieciecy-skarzysko', (req, res) => {
   const titleText = 'Ortopeda dziecięcy Skarżysko – prywatnie, bez skierowania';
   const descriptionText =
     'Ortopeda dziecięcy Skarżysko – konsultacje dla dzieci i niemowląt. Diagnostyka wad postawy i rozwoju układu ruchu, w tym USG bioderek.';
@@ -130,10 +130,14 @@ app.get('/uslugi/ortopeda-dzieciecy-skarzysko', (req, res) => {
     '@type': 'WebPage',
     name: titleText,
     description: descriptionText,
-    url: `https://centrummedyczne7.pl${req.path}`,
+    url: 'https://centrummedyczne7.pl/ortopeda-dzieciecy-skarzysko',
   };
   const structuredData = `<script type="application/ld+json">${JSON.stringify(webPageSchema)}</script>`;
   renderWithSEO(res, titleText, descriptionText, ogImage, structuredData);
+});
+
+app.get('/uslugi/ortopeda-dzieciecy-skarzysko', (req, res) => {
+  res.redirect(301, '/ortopeda-dzieciecy-skarzysko');
 });
 
 // SEO: inject visible pre-content for dynamic service pages

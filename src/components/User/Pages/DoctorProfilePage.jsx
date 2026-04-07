@@ -12,6 +12,7 @@ import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from '../../../utils/polandTimezone';
 import { PHONE_COUNTRY_CODES } from '../../../constants/phoneCountryCodes';
+import { cm7PostalAddressLd } from '../../../data/cm7PostalAddressLd';
 import PhoneCodeSelect from '../../UtilComponents/PhoneCodeSelect';
 
 function BookingPatientFormSection({
@@ -1227,9 +1228,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
         "@type": "MedicalOrganization",
         "name": "CM7",
         "address": {
-          "@type": "PostalAddress",
-          "addressLocality": "Skarżysko-Kamienna",
-          "addressCountry": "PL"
+          ...cm7PostalAddressLd
         },
         "telephone": "797-097-487"
       },

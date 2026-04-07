@@ -3,6 +3,7 @@ import MetaTags from '../../UtilComponents/MetaTags';
 import { FaStar, FaCalendar, FaShieldAlt, FaCheck, FaPhone } from "react-icons/fa";
 import { IoLocationOutline } from "react-icons/io5";
 import { Brain, Activity, HeartPulse, Dumbbell, Baby, Bed, Calendar, Star } from "lucide-react";
+import { cm7PostalAddressLd } from '../../../data/cm7PostalAddressLd';
 
 const PediatricNeurologyPage = () => {
   // Structured Data (JSON-LD)
@@ -15,10 +16,8 @@ const PediatricNeurologyPage = () => {
       "@type": "MedicalBusiness",
       "name": "Centrum Medyczne 7",
       "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Skarżysko-Kamienna",
-        "addressRegion": "świętokrzyskie",
-        "addressCountry": "PL"
+        ...cm7PostalAddressLd,
+        "addressRegion": "świętokrzyskie"
       },
       "telephone": "797-097-487",
       "url": "https://centrummedyczne7.pl"
@@ -40,10 +39,8 @@ const PediatricNeurologyPage = () => {
       "@type": "MedicalBusiness",
       "name": "Centrum Medyczne 7",
       "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Skarżysko-Kamienna",
-        "addressRegion": "świętokrzyskie",
-        "addressCountry": "PL"
+        ...cm7PostalAddressLd,
+        "addressRegion": "świętokrzyskie"
       }
     },
     "medicalSpecialty": "Pediatric Neurology",

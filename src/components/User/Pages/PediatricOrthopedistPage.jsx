@@ -8,8 +8,9 @@ import {
   FaExclamationTriangle,
   FaCalendarAlt,
 } from "react-icons/fa";
+import { cm7PostalAddressLd } from '../../../data/cm7PostalAddressLd';
 
-const PAGE_PATH = "/uslugi/ortopeda-dzieciecy-skarzysko";
+const PAGE_PATH = "/ortopeda-dzieciecy-skarzysko";
 const META_TITLE = "Ortopeda dziecięcy Skarżysko – prywatnie, bez skierowania";
 const META_DESCRIPTION =
   "Ortopeda dziecięcy Skarżysko – konsultacje dla dzieci i niemowląt. Diagnostyka wad postawy i rozwoju układu ruchu, w tym USG bioderek.";
@@ -144,10 +145,8 @@ const PediatricOrthopedistPage = () => {
       "@type": "MedicalBusiness",
       name: "Centrum Medyczne 7",
       address: {
-        "@type": "PostalAddress",
-        addressLocality: "Skarżysko-Kamienna",
+        ...cm7PostalAddressLd,
         addressRegion: "świętokrzyskie",
-        addressCountry: "PL",
       },
       telephone: "797-127-487",
       url: "https://centrummedyczne7.pl",
@@ -169,12 +168,8 @@ const PediatricOrthopedistPage = () => {
       "@type": "MedicalBusiness",
       name: "Centrum Medyczne 7",
       address: {
-        "@type": "PostalAddress",
-        streetAddress: "ul. Powstańców Warszawy 7/1.5",
-        addressLocality: "Skarżysko-Kamienna",
-        postalCode: "26-110",
+        ...cm7PostalAddressLd,
         addressRegion: "świętokrzyskie",
-        addressCountry: "PL",
       },
       telephone: "+48797127487",
     },

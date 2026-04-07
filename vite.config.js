@@ -13,7 +13,7 @@ function escapeHtmlForMeta(str) {
 }
 
 const DEV_HTML_SEO_BY_PATH = {
-  '/uslugi/ortopeda-dzieciecy-skarzysko': {
+  '/ortopeda-dzieciecy-skarzysko': {
     title: 'Ortopeda dziecięcy Skarżysko – prywatnie, bez skierowania',
     description:
       'Ortopeda dziecięcy Skarżysko – konsultacje dla dzieci i niemowląt. Diagnostyka wad postawy i rozwoju układu ruchu, w tym USG bioderek.',

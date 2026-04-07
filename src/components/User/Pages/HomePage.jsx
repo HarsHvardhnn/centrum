@@ -11,6 +11,7 @@ import Hero from "../Hero";
 import ServicesMini from "../ServicesMini";
 import { useAppointmentContext } from "../../../UserLayout";
 import MetaTags from '../../UtilComponents/MetaTags';
+import { cm7PostalAddressLd } from '../../../data/cm7PostalAddressLd';
 
 const  HomePage = () => {
   const {
@@ -70,11 +71,7 @@ const  HomePage = () => {
       "image": "https://centrummedyczne7.pl/images/mainlogo.png",
       "description": "Prywatne wizyty u specjalistów: chirurg, proktolog, neurolog dziecięcy, kardiolog, radiolog. Bez skierowania – Skarżysko-Kamienna.",
       "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "ul. Powstańców Warszawy 7/1.5",
-        "addressLocality": "Skarżysko-Kamienna",
-        "postalCode": "26-110",
-        "addressCountry": "PL"
+        ...cm7PostalAddressLd
       },
       "telephone": "+48 797 127 487",
       "openingHoursSpecification": [

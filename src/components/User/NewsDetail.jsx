@@ -4,6 +4,7 @@ import { GoDotFill } from "react-icons/go";
 import { apiCaller } from "../../utils/axiosInstance";
 import DOMPurify from "dompurify";
 import MetaTags from '../UtilComponents/MetaTags';
+import { cm7PostalAddressLd } from '../../data/cm7PostalAddressLd';
 
 const NewsDetail = () => {
   const { slug } = useParams();
@@ -109,9 +110,7 @@ const NewsDetail = () => {
           "height": 60
         },
         "address": {
-          "@type": "PostalAddress",
-          "addressLocality": "Skarżysko-Kamienna",
-          "addressCountry": "PL"
+          ...cm7PostalAddressLd
         }
       },
       "datePublished": news.date,

@@ -75,6 +75,8 @@ const generateDoctorHTML = (doctor, slug, cssFile, jsFile) => {
       "name": "Centrum Medyczne 7",
       "address": {
         "@type": "PostalAddress",
+        "streetAddress": "Powstańców Warszawy 7/1.5",
+        "postalCode": "26-110",
         "addressLocality": "Skarżysko-Kamienna",
         "addressCountry": "PL"
       },
