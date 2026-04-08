@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaCalendarAlt, FaPhone, FaEnvelope, FaGraduationCap, FaClock, FaMapMarkerAlt, FaShare, FaTimes, FaChevronLeft, FaChevronRight, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaCalendarAlt, FaPhone, FaEnvelope, FaGraduationCap, FaMapMarkerAlt, FaShare, FaTimes, FaChevronLeft, FaChevronRight, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { apiCaller } from '../../../utils/axiosInstance';
 import MetaTags from '../../UtilComponents/MetaTags';
@@ -1230,7 +1230,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
         "address": {
           ...cm7PostalAddressLd
         },
-        "telephone": "797-097-487"
+        "telephone": "797-127-487"
       },
       "medicalSpecialty": doctor.specializations?.map(spec => spec.name),
       "image": doctor.image,
@@ -1276,7 +1276,15 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
 
   const doctorName = `${doctor.name?.first} ${doctor.name?.last}`;
   const specializations = doctor.specializations?.map(spec => spec.name).join(", ") || "lekarz";
-  const experience = doctor.experience ? `${doctor.experience} lat doświadczenia` : "";
+  const experienceYearsRaw =
+    doctor.experience != null && doctor.experience !== "" ? Number(doctor.experience) : NaN;
+  const experience =
+    Number.isFinite(experienceYearsRaw) && experienceYearsRaw > 0
+      ? `${experienceYearsRaw} lat doświadczenia`
+      : "";
+
+  const clinicPhoneTel = "tel:+48797127487";
+  const clinicPhoneDisplay = "797 127 487";
   
   // Generate meta title and description
   // Title format: Lek. {Name} – {specializations} | Centrum Medyczne 7
@@ -1496,22 +1504,18 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
               {/* Quick Info Card */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Informacje</h3>
-                
-                {doctor.experience && (
-                  <div className="flex items-center gap-3 mb-4">
-                    <FaClock className="text-teal-600 flex-shrink-0" />
-                    <div>
-                      <div className="font-medium text-gray-800">Doświadczenie</div>
-                      <div className="text-gray-600">{doctor.experience} lat</div>
-                    </div>
-                  </div>
-                )}
 
-                <div className="flex items-center gap-3 mb-4">
-                  <FaMapMarkerAlt className="text-teal-600 flex-shrink-0" />
+                <div className="flex items-start gap-3 mb-4">
+                  <FaMapMarkerAlt className="text-teal-600 flex-shrink-0 mt-1" />
                   <div>
-                    <div className="font-medium text-gray-800">Lokalizacja</div>
-                    <div className="text-gray-600">Skarżysko-Kamienna</div>
+                    <div className="font-medium text-gray-800">Lokalizacja / Location</div>
+                    <div className="text-gray-600 text-sm leading-relaxed">
+                      Centrum Medyczne 7
+                      <br />
+                      Powstańców Warszawy 7/1.5
+                      <br />
+                      26-110 Skarżysko-Kamienna
+                    </div>
                   </div>
                 </div>
 
@@ -1519,8 +1523,8 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                   <FaPhone className="text-teal-600 flex-shrink-0 scale-x-[-1]" />
                   <div>
                     <div className="font-medium text-gray-800">Rejestracja</div>
-                    <a href="tel:+48797097487" className="text-teal-600 hover:text-teal-800">
-                      797 097 487
+                    <a href={clinicPhoneTel} className="text-teal-600 hover:text-teal-800">
+                      {clinicPhoneDisplay}
                     </a>
                   </div>
                 </div>
@@ -1562,11 +1566,11 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                   <div className="text-center">
                     <p className="text-sm text-gray-600">lub zadzwoń</p>
                     <a 
-                      href="tel:+48797097487" 
+                      href={clinicPhoneTel} 
                       className="text-teal-600 font-semibold hover:text-teal-800 flex items-center justify-center gap-2 mt-1"
                     >
                       <FaPhone />
-                      797 097 487
+                      {clinicPhoneDisplay}
                     </a>
                   </div>
                 </div>
@@ -1579,8 +1583,8 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <FaPhone className="text-teal-600 scale-x-[-1]" />
-                    <a href="tel:+48797097487" className="text-gray-700 hover:text-teal-600">
-                      797 097 487
+                    <a href={clinicPhoneTel} className="text-gray-700 hover:text-teal-600">
+                      {clinicPhoneDisplay}
                     </a>
                   </div>
                   <div className="flex items-center gap-3">
