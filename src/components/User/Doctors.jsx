@@ -1051,7 +1051,7 @@ export default function Doctors({
                         Dane pacjenta
                       </h4>
 
-                      {/* Step 1: Consultation Type Selection */}
+                      {/* Step 1: Consultation type (in-person only; online booking disabled) */}
                       <div className="mb-6">
                         <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 1: Typ konsultacji</h5>
                         <div className="flex items-center space-x-4">
@@ -1070,22 +1070,6 @@ export default function Doctors({
                             }`}
                           >
                             Wizyta stacjonarna
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setBookingForm({
-                                ...bookingForm,
-                                consultationType: "online",
-                              })
-                            }
-                            className={`px-4 py-2 rounded-md border ${
-                              bookingForm.consultationType === "online"
-                                ? "bg-main text-white border-main"
-                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                            }`}
-                          >
-                            Wizyta online
                           </button>
                         </div>
                       </div>

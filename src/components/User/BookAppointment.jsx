@@ -154,7 +154,7 @@ export default function BookAppointment({
     doctor: Yup.string().required("Wymagane"),
     specialization: Yup.string().required("Wymagane"),
     message: Yup.string().min(10, "Za krótka wiadomość").required("Wymagane"),
-    consultationType: Yup.string().oneOf(['online', 'offline']).required("Wymagane"),
+    consultationType: Yup.string().oneOf(["offline"]).required("Wymagane"),
     govtId: Yup.string()
       .matches(/^[0-9]*$/, "Numer PESEL może zawierać tylko cyfry")
       .when(['consultationType', 'isInternationalPatient'], {
@@ -652,7 +652,7 @@ export default function BookAppointment({
                   </div>
                 )}
 
-                {/* Step 1: Consultation Type */}
+                {/* Step 1: Consultation type (in-person only; online booking disabled) */}
                 <div className="col-span-1 sm:col-span-2 mb-4">
                   <h5 className="text-md font-semibold text-gray-800 mb-3">Krok 1: Typ konsultacji</h5>
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
@@ -667,31 +667,6 @@ export default function BookAppointment({
                     >
                       Wizyta stacjonarna
                     </button>
-                    {/* Home page: hide "Wizyta online" — uncomment the block below (and drop page !== "home") to show online booking on the home section again */}
-                    {page !== "home" && (
-                      <button
-                        type="button"
-                        onClick={() => setFieldValue("consultationType", "online")}
-                        className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
-                          values.consultationType === "online"
-                            ? "bg-main text-white border-main"
-                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                        }`}
-                      >
-                        Wizyta online
-                      </button>
-                    )}
-                    {/* <button
-                      type="button"
-                      onClick={() => setFieldValue("consultationType", "online")}
-                      className={`px-4 py-2 rounded-md border text-sm sm:text-base ${
-                        values.consultationType === "online"
-                          ? "bg-main text-white border-main"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      Wizyta online
-                    </button> */}
                   </div>
                   {errors.consultationType && touched.consultationType && (
                     <div className="text-red-600 text-xs sm:text-sm mt-1">
