@@ -119,7 +119,7 @@ const USGSkarzyskoPage = () => {
               <div className="flex-1 w-full lg:w-1/2 pt-4 lg:pt-0">
                 {/* Main Heading - 4 lines, exact breaks */}
                 <h1 id="hero-heading" className="text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold leading-tight mb-6">
-                  <span className="block text-teal-600">Gabinet USG</span>
+                  <span className="block text-teal-600">USG</span>
                   <span className="block text-teal-600">Skarżysko-Kamienna</span>
                   <span className="block text-gray-900 font-bold">prywatnie, bez kolejek,</span>
                   <span className="block text-gray-900 font-bold">dla dzieci i dorosłych.</span>
@@ -127,7 +127,7 @@ const USGSkarzyskoPage = () => {
 
                 {/* Descriptive paragraph - single block, regular weight */}
                 <p className="text-gray-800 text-base md:text-lg leading-relaxed mb-6">
-                  Badania USG w Skarżysku-Kamiennej – prywatnie, bez skierowania i z dnia na dzień. Gabinet w sercu woj. świętokrzyskiego – dogodny dojazd z Kielc, Radomia, Starachowic czy Ostrowca. USG wykonują doświadczeni radiolodzy z praktyką kliniczną, na nowoczesnym sprzęcie Samsung z 2026 roku.
+                  Badania USG w Skarżysku-Kamiennej wykonujemy prywatnie, bez skierowania i z krótkimi terminami – często nawet z dnia na dzień. W Centrum Medycznym 7 wykonujemy badania USG dla pacjentów ze Skarżyska-Kamiennej oraz całego woj. świętokrzyskiego – z dogodnym dojazdem z Kielc, Radomia, Starachowic czy Ostrowca Świętokrzyskiego. Wykonujemy m.in. USG jamy brzusznej, USG tarczycy, USG piersi oraz USG Doppler naczyń. Badania realizują doświadczeni radiolodzy z praktyką kliniczną.
                 </p>
 
                 {/* Feature list with icons */}
@@ -299,6 +299,41 @@ const USGSkarzyskoPage = () => {
                   </p>
                   <p className="text-gray-800 text-sm sm:text-base leading-relaxed">
                     Absolwent I Wydziału Lekarskiego Warszawskiego Uniwersytetu Medycznego. Doświadczenie zawodowe zdobywał m.in. w Świętokrzyskim Centrum Onkologii w Kielcach, uczestnicząc w procesie diagnostyki obrazowej pacjentów z chorobami o zróżnicowanym charakterze. W praktyce klinicznej zajmuje się wykonywaniem oraz interpretacją badań ultrasonograficznych, stanowiących istotny element współczesnej diagnostyki medycznej. W swojej pracy kładzie nacisk na precyzyjną analizę obrazu oraz rzetelną ocenę wyniku w kontekście klinicznym, zapewniając wysoki standard diagnostyczny.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden max-w-4xl mx-auto mt-6">
+              <div className="flex flex-col md:flex-row">
+                <div className="md:w-2/5 flex flex-col items-center justify-center p-6 sm:p-8">
+                  <img
+                    src="/second_doctor_usg.png"
+                    alt="lek. Jacek Posobkiewicz - radiolog, Centrum Medyczne 7"
+                    className="w-full max-w-xs h-auto object-contain rounded-lg"
+                    loading="lazy"
+                  />
+                  <button
+                    onClick={() => window.location.href = APPOINTMENT_URL}
+                    className="mt-6 w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-base"
+                  >
+                    Umów wizytę
+                  </button>
+                </div>
+                <div className="md:w-3/5 p-6 sm:p-8 flex flex-col justify-center text-left">
+                  <h3 className="text-gray-900 font-bold text-lg sm:text-xl mb-1">
+                    <a
+                      href="https://www.centrummedyczne7.pl/lekarze/jacek-posobkiewicz"
+                      className="hover:text-teal-600 transition-colors"
+                    >
+                      lek. Jacek Posobkiewicz
+                    </a>
+                  </h3>
+                  <p className="text-teal-600 text-sm sm:text-base font-medium mb-4">
+                    Specjalista radiologii i diagnostyki obrazowej
+                  </p>
+                  <p className="text-gray-800 text-sm sm:text-base leading-relaxed">
+                    Lekarz z wieloletnim doswiadczeniem w zakresie diagnostyki obrazowej, zajmujacy sie wykonywaniem oraz interpretacja badan ultrasonograficznych. W codziennej praktyce klinicznej kladzie nacisk na rzetelna ocene obrazu oraz precyzyjna analize badania w kontekscie zglaszanych dolegliwosci i wskazan medycznych. USG stanowi istotny element jego pracy diagnostycznej, pozwalajac na szybkie i nieinwazyjne rozpoznanie wielu schorzen.
                   </p>
                 </div>
               </div>
