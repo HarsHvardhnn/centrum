@@ -112,7 +112,7 @@ const IPConfigPage = () => {
       }
     } catch (error) {
       console.error('Error loading IP list:', error);
-      toast.error('Nie udało się załadować listy IP');
+      toast.error('Failed to load IP list');
     } finally {
       hideLoader();
     }
@@ -152,11 +152,11 @@ const IPConfigPage = () => {
           isAllowed: false, // We don't know if it's allowed without backend check
           allowedIpInfo: null
         });
-        toast.info(`Twoje IP zostało wykryte: ${data.ip}`);
+        toast.info(`Your IP was detected: ${data.ip}`);
       }
     } catch (error) {
       console.error('Error detecting IP via external service:', error);
-      toast.error('Nie udało się wykryć adresu IP');
+      toast.error('Could not detect IP address');
     }
   };
 
@@ -184,12 +184,12 @@ const IPConfigPage = () => {
   const toggleRestrictions = async () => {
     if (!restrictionSettings.isEnabled) {
       // Enabling restrictions - show confirmation
-      if (!confirm('Czy na pewno chcesz włączyć ograniczenia IP? To może zablokować dostęp niektórym użytkownikom.')) {
+      if (!confirm('Enable IP restrictions? Some users may lose access.')) {
         return;
       }
     } else {
       // Disabling restrictions - show warning
-      if (!confirm('Czy na pewno chcesz wyłączyć ograniczenia IP? To pozwoli na dostęp z wszystkich adresów IP.')) {
+      if (!confirm('Disable IP restrictions? The system will be accessible from any IP address.')) {
         return;
       }
     }
@@ -203,7 +203,7 @@ const IPConfigPage = () => {
       }
     } catch (error) {
       console.error('Error toggling restrictions:', error);
-      toast.error(error.response?.data?.message || 'Nie udało się przełączyć ograniczeń IP');
+      toast.error(error.response?.data?.message || 'Failed to toggle IP restrictions');
     } finally {
       setToggling(false);
     }
@@ -215,13 +215,13 @@ const IPConfigPage = () => {
       const response = await apiCaller('PUT', '/api/ip-restrictions/settings', settingsFormData);
       
       if (response.data.success) {
-        toast.success('Ustawienia zostały zaktualizowane pomyślnie');
+        toast.success('Settings updated successfully');
         setShowSettingsModal(false);
         loadRestrictionSettings();
       }
     } catch (error) {
       console.error('Error updating settings:', error);
-      toast.error(error.response?.data?.message || 'Nie udało się zaktualizować ustawień');
+      toast.error(error.response?.data?.message || 'Failed to update settings');
     } finally {
       hideLoader();
     }
@@ -230,7 +230,7 @@ const IPConfigPage = () => {
   const addCurrentIP = async () => {
     console.log("currentIp", currentIp);
     if (!currentIp?.clientIp) {
-      toast.error('Nie udało się wykryć aktualnego adresu IP');
+      toast.error('Could not detect current IP address');
       return;
     }
 
@@ -238,18 +238,18 @@ const IPConfigPage = () => {
       showLoader();
       const response = await apiCaller('POST', '/api/ip-restrictions', {
         ipAddress: currentIp.clientIp,
-        description: `Automatycznie dodane IP - ${new Date().toLocaleDateString('pl-PL')}`,
+        description: `Auto-added IP — ${new Date().toLocaleDateString('en-US')}`,
         isActive: true
       });
 
       if (response.data.success) {
-        toast.success('Aktualne IP zostało dodane pomyślnie');
+        toast.success('Current IP added successfully');
         loadIPList();
         checkCurrentIP();
       }
     } catch (error) {
       console.error('Error adding current IP:', error);
-      toast.error(error.response?.data?.message || 'Nie udało się dodać aktualnego IP');
+      toast.error(error.response?.data?.message || 'Failed to add current IP');
     } finally {
       hideLoader();
     }
@@ -261,7 +261,7 @@ const IPConfigPage = () => {
       const response = await apiCaller('POST', '/api/ip-restrictions', formData);
       
       if (response.data.success) {
-        toast.success('Adres IP został dodany pomyślnie');
+        toast.success('IP address added successfully');
         setShowAddModal(false);
         resetForm();
         loadIPList();
@@ -269,7 +269,7 @@ const IPConfigPage = () => {
       }
     } catch (error) {
       console.error('Error adding IP:', error);
-      toast.error(error.response?.data?.message || 'Nie udało się dodać adresu IP');
+      toast.error(error.response?.data?.message || 'Failed to add IP address');
     } finally {
       hideLoader();
     }
@@ -281,7 +281,7 @@ const IPConfigPage = () => {
       const response = await apiCaller('PUT', `/api/ip-restrictions/${editingIp._id}`, formData);
       
       if (response.data.success) {
-        toast.success('Adres IP został zaktualizowany pomyślnie');
+        toast.success('IP address updated successfully');
         setShowEditModal(false);
         setEditingIp(null);
         resetForm();
@@ -290,27 +290,27 @@ const IPConfigPage = () => {
       }
     } catch (error) {
       console.error('Error updating IP:', error);
-      toast.error(error.response?.data?.message || 'Nie udało się zaktualizować adresu IP');
+      toast.error(error.response?.data?.message || 'Failed to update IP address');
     } finally {
       hideLoader();
     }
   };
 
   const handleDeleteIP = async (id) => {
-    if (!confirm('Czy na pewno chcesz usunąć ten adres IP?')) return;
+    if (!confirm('Delete this IP address?')) return;
 
     try {
       showLoader();
       const response = await apiCaller('DELETE', `/api/ip-restrictions/${id}`);
       
       if (response.data.success) {
-        toast.success('Adres IP został usunięty pomyślnie');
+        toast.success('IP address removed successfully');
         loadIPList();
         loadStatistics();
       }
     } catch (error) {
       console.error('Error deleting IP:', error);
-      toast.error(error.response?.data?.message || 'Nie udało się usunąć adresu IP');
+      toast.error(error.response?.data?.message || 'Failed to delete IP address');
     } finally {
       hideLoader();
     }
@@ -318,12 +318,12 @@ const IPConfigPage = () => {
 
   const handleBulkAction = async (action) => {
     if (selectedIps.length === 0) {
-      toast.error('Proszę wybrać przynajmniej jeden adres IP');
+      toast.error('Select at least one IP address');
       return;
     }
 
-    const actionText = action === 'activate' ? 'aktywować' : action === 'deactivate' ? 'dezaktywować' : 'usunąć';
-    if (!confirm(`Czy na pewno chcesz ${actionText} ${selectedIps.length} wybranych adresów IP?`)) return;
+    const actionVerb = action === 'activate' ? 'activate' : action === 'deactivate' ? 'deactivate' : 'delete';
+    if (!confirm(`Are you sure you want to ${actionVerb} ${selectedIps.length} selected IP address(es)?`)) return;
 
     try {
       showLoader();
@@ -333,15 +333,15 @@ const IPConfigPage = () => {
       });
 
       if (response.data.success) {
-        const successText = action === 'activate' ? 'aktywowano' : action === 'deactivate' ? 'dezaktywowano' : 'usunięto';
-        toast.success(`Pomyślnie ${successText} ${selectedIps.length} adresów IP`);
+        const pastVerb = action === 'activate' ? 'activated' : action === 'deactivate' ? 'deactivated' : 'deleted';
+        toast.success(`Successfully ${pastVerb} ${selectedIps.length} IP address(es)`);
         setSelectedIps([]);
         loadIPList();
         loadStatistics();
       }
     } catch (error) {
       console.error(`Error performing bulk ${action}:`, error);
-      toast.error(error.response?.data?.message || `Nie udało się ${actionText} adresów IP`);
+      toast.error(error.response?.data?.message || `Failed to ${actionVerb} IP addresses`);
     } finally {
       hideLoader();
     }
@@ -366,7 +366,7 @@ const IPConfigPage = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('pl-PL', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -394,46 +394,46 @@ const IPConfigPage = () => {
   const getStatusInfo = () => {
     if (!restrictionSettings.isEnabled) {
       return {
-        status: 'Wyłączone',
+        status: 'Disabled',
         color: 'text-red-600',
         bgColor: 'bg-red-100',
         icon: Unlock,
-        description: 'Ograniczenia IP są całkowicie wyłączone'
+        description: 'IP restrictions are fully disabled'
       };
     }
     
     switch (restrictionSettings.mode) {
       case 'development':
         return {
-          status: 'Tryb Deweloperski',
+          status: 'Development mode',
           color: 'text-orange-600',
           bgColor: 'bg-orange-100',
           icon: Wrench,
-          description: 'Localhost automatycznie dozwolony'
+          description: 'Localhost is automatically allowed'
         };
       case 'strict':
         return {
-          status: 'Tryb Ścisły',
+          status: 'Strict mode',
           color: 'text-green-600',
           bgColor: 'bg-green-100',
           icon: Lock,
-          description: 'Pełne ograniczenia włączone'
+          description: 'Full restrictions enabled'
         };
       case 'disabled':
         return {
-          status: 'Wyłączone (tryb)',
+          status: 'Disabled (mode)',
           color: 'text-gray-600',
           bgColor: 'bg-gray-100',
           icon: Pause,
-          description: 'Wyłączone przez ustawienie trybu'
+          description: 'Disabled via mode setting'
         };
       default:
         return {
-          status: 'Nieznany',
+          status: 'Unknown',
           color: 'text-gray-600',
           bgColor: 'bg-gray-100',
           icon: AlertTriangle,
-          description: 'Nieznany status'
+          description: 'Unknown status'
         };
     }
   };
@@ -457,10 +457,10 @@ const IPConfigPage = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
               <Shield className="text-blue-600" size={32} />
-              Kontrola Dostępu IP
+              IP access control
             </h1>
             <p className="text-gray-600 mt-2">
-              Zarządzaj autoryzowanymi adresami IP dla bezpiecznego dostępu do backend'u
+              Manage authorized IP addresses for secure access to the backend
             </p>
           </div>
           <div className="flex gap-3">
@@ -470,14 +470,14 @@ const IPConfigPage = () => {
               className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Globe size={16} />
-              Dodaj Aktualne IP
+              Add current IP
             </button>
             <button
               onClick={() => setShowAddModal(true)}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
             >
               <Plus size={16} />
-              Dodaj Adres IP
+              Add IP address
             </button>
           </div>
         </div>
@@ -489,8 +489,8 @@ const IPConfigPage = () => {
               <div className="flex items-center gap-3">
                 <Settings className="text-blue-600" size={24} />
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">System Ograniczeń IP</h2>
-                  <p className="text-sm text-gray-600">Kontroluj dostęp do całego systemu</p>
+                  <h2 className="text-xl font-semibold text-gray-900">IP restriction system</h2>
+                  <p className="text-sm text-gray-600">Control access to the entire system</p>
                 </div>
               </div>
               
@@ -500,7 +500,7 @@ const IPConfigPage = () => {
                   className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center gap-2"
                 >
                   <Settings size={16} />
-                  Ustawienia
+                  Settings
                 </button>
                 
                 <button
@@ -519,7 +519,7 @@ const IPConfigPage = () => {
                   ) : (
                     <ToggleRight size={16} />
                   )}
-                  {restrictionSettings.isEnabled ? 'Wyłącz Ograniczenia' : 'Włącz Ograniczenia'}
+                  {restrictionSettings.isEnabled ? 'Disable restrictions' : 'Enable restrictions'}
                 </button>
               </div>
             </div>
@@ -540,7 +540,7 @@ const IPConfigPage = () => {
                   </span>
                   {restrictionSettings.isEnabled && (
                     <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                      Aktywne
+                      Active
                     </span>
                   )}
                 </div>
@@ -548,8 +548,8 @@ const IPConfigPage = () => {
                 
                 {restrictionSettings.lastModifiedBy && (
                   <div className="text-xs text-gray-500">
-                    Ostatnia zmiana: {new Date(restrictionSettings.updatedAt).toLocaleString('pl-PL')} 
-                    {' przez '} {restrictionSettings.lastModifiedBy.name?.first} {restrictionSettings.lastModifiedBy.name?.last}
+                    Last change: {new Date(restrictionSettings.updatedAt).toLocaleString('en-US')} 
+                    {' by '} {restrictionSettings.lastModifiedBy.name?.first} {restrictionSettings.lastModifiedBy.name?.last}
                   </div>
                 )}
               </div>
@@ -557,17 +557,17 @@ const IPConfigPage = () => {
               {/* Quick Stats */}
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="text-sm font-medium text-gray-600">Tryb</div>
+                  <div className="text-sm font-medium text-gray-600">Mode</div>
                   <div className="text-lg font-bold text-gray-900 capitalize">{restrictionSettings.mode}</div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="text-sm font-medium text-gray-600">Max próby/h</div>
+                  <div className="text-sm font-medium text-gray-600">Max attempts/h</div>
                   <div className="text-lg font-bold text-gray-900">{restrictionSettings.maxUnauthorizedAttemptsPerHour}</div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="text-sm font-medium text-gray-600">Logowanie</div>
+                  <div className="text-sm font-medium text-gray-600">Logging</div>
                   <div className="text-lg font-bold text-gray-900">
-                    {restrictionSettings.enableDetailedLogging ? 'Tak' : 'Nie'}
+                    {restrictionSettings.enableDetailedLogging ? 'Yes' : 'No'}
                   </div>
                 </div>
               </div>
@@ -578,10 +578,10 @@ const IPConfigPage = () => {
               <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <div className="flex items-center gap-2 text-red-800">
                   <AlertTriangle size={20} />
-                  <span className="font-medium">Ostrzeżenie: Ograniczenia IP są wyłączone</span>
+                  <span className="font-medium">Warning: IP restrictions are disabled</span>
                 </div>
                 <p className="text-sm text-red-700 mt-1">
-                  Wszyscy użytkownicy mają dostęp do systemu niezależnie od adresu IP
+                  Everyone can access the system regardless of IP address
                 </p>
               </div>
             )}
@@ -590,10 +590,10 @@ const IPConfigPage = () => {
               <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <div className="flex items-center gap-2 text-orange-800">
                   <Wrench size={20} />
-                  <span className="font-medium">Tryb Deweloperski</span>
+                  <span className="font-medium">Development mode</span>
                 </div>
                 <p className="text-sm text-orange-700 mt-1">
-                  Localhost (127.0.0.1) jest automatycznie dozwolony niezależnie od listy IP
+                  Localhost (127.0.0.1) is always allowed regardless of the IP list
                 </p>
               </div>
             )}
@@ -612,16 +612,16 @@ const IPConfigPage = () => {
                 )}
               </div>
               <div>
-                <p className="font-medium">Twoje Aktualne IP: {currentIp?.clientIp}</p>
+                <p className="font-medium">Your current IP: {currentIp?.clientIp}</p>
                 <p className={`text-sm ${currentIp?.isAllowed ? 'text-green-600' : 'text-red-600'}`}>
-                  {currentIp?.isAllowed ? 'Dostęp Autoryzowany' : 'Nieautoryzowany - Dodaj do listy dozwolonych'}
+                  {currentIp?.isAllowed ? 'Access authorized' : 'Unauthorized — add to the allowlist'}
                 </p>
               </div>
             </div>
             {currentIp?.allowedIpInfo && (
               <div className="text-right text-sm text-gray-600">
-                <p>Przez: {currentIp.allowedIpInfo.description}</p>
-                <p>Ostatnio użyte: {formatDate(currentIp.allowedIpInfo.lastUsed)}</p>
+                <p>Via: {currentIp.allowedIpInfo.description}</p>
+                <p>Last used: {formatDate(currentIp.allowedIpInfo.lastUsed)}</p>
               </div>
             )}
           </div>
@@ -633,7 +633,7 @@ const IPConfigPage = () => {
         <div className="bg-white rounded-lg border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Wszystkie IP</p>
+              <p className="text-sm font-medium text-gray-600">All IPs</p>
               <p className="text-2xl font-bold text-gray-900">{statistics.totalIps || 0}</p>
             </div>
             <Server className="text-blue-600" size={24} />
@@ -643,7 +643,7 @@ const IPConfigPage = () => {
         <div className="bg-white rounded-lg border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Aktywne IP</p>
+              <p className="text-sm font-medium text-gray-600">Active IPs</p>
               <p className="text-2xl font-bold text-green-600">{statistics.activeIps || 0}</p>
             </div>
             <CheckCircle className="text-green-600" size={24} />
@@ -653,7 +653,7 @@ const IPConfigPage = () => {
         <div className="bg-white rounded-lg border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Ostatnio Używane</p>
+              <p className="text-sm font-medium text-gray-600">Recently used</p>
               <p className="text-2xl font-bold text-orange-600">{statistics.recentlyUsed || 0}</p>
             </div>
             <Activity className="text-orange-600" size={24} />
@@ -663,7 +663,7 @@ const IPConfigPage = () => {
         <div className="bg-white rounded-lg border p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Całkowite Użycie</p>
+              <p className="text-sm font-medium text-gray-600">Total usage</p>
               <p className="text-2xl font-bold text-purple-600">{statistics.totalUsage || 0}</p>
             </div>
             <Users className="text-purple-600" size={24} />
@@ -681,7 +681,7 @@ const IPConfigPage = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
-                  placeholder="Szukaj adresów IP lub opisów..."
+                  placeholder="Search IP addresses or descriptions..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 pr-4 py-2 border rounded-lg w-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -693,9 +693,9 @@ const IPConfigPage = () => {
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="all">Wszystkie Statusy</option>
-                <option value="active">Tylko Aktywne</option>
-                <option value="inactive">Tylko Nieaktywne</option>
+                <option value="all">All statuses</option>
+                <option value="active">Active only</option>
+                <option value="inactive">Inactive only</option>
               </select>
             </div>
 
@@ -707,21 +707,21 @@ const IPConfigPage = () => {
                   className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
                 >
                   <Power size={16} />
-                  Aktywuj ({selectedIps.length})
+                  Activate ({selectedIps.length})
                 </button>
                 <button
                   onClick={() => handleBulkAction('deactivate')}
                   className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 flex items-center gap-2"
                 >
                   <PowerOff size={16} />
-                  Dezaktywuj ({selectedIps.length})
+                  Deactivate ({selectedIps.length})
                 </button>
                 <button
                   onClick={() => handleBulkAction('delete')}
                   className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2"
                 >
                   <Trash2 size={16} />
-                  Usuń ({selectedIps.length})
+                  Delete ({selectedIps.length})
                 </button>
               </div>
             )}
@@ -742,25 +742,25 @@ const IPConfigPage = () => {
                   />
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Adres IP
+                  IP address
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Opis
+                  Description
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Użycie
+                  Usage
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ostatnio Użyte
+                  Last used
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Utworzone Przez
+                  Created by
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Akcje
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -782,7 +782,7 @@ const IPConfigPage = () => {
                       </span>
                       {ip.ipAddress === currentIp?.clientIp && (
                         <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                          Aktualny
+                          Current
                         </span>
                       )}
                     </div>
@@ -796,7 +796,7 @@ const IPConfigPage = () => {
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {ip.isActive ? 'Aktywny' : 'Nieaktywny'}
+                      {ip.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -804,7 +804,7 @@ const IPConfigPage = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="text-sm text-gray-600">
-                      {ip.lastUsed ? formatDate(ip.lastUsed) : 'Nigdy'}
+                      {ip.lastUsed ? formatDate(ip.lastUsed) : 'Never'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -830,14 +830,14 @@ const IPConfigPage = () => {
                             onClick={() => openEditModal(ip)}
                           >
                             <Edit size={16} className="mr-2" />
-                            Edytuj
+                            Edit
                           </DropdownMenu.Item>
                           <DropdownMenu.Item
                             className="flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
                             onClick={() => handleDeleteIP(ip._id)}
                           >
                             <Trash2 size={16} className="mr-2" />
-                            Usuń
+                            Delete
                           </DropdownMenu.Item>
                         </DropdownMenu.Content>
                       </DropdownMenu.Portal>
@@ -853,7 +853,7 @@ const IPConfigPage = () => {
         {pagination.totalPages > 1 && (
           <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
             <div className="text-sm text-gray-700">
-              Pokazywane {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} do {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} z {pagination.totalItems} wyników
+              Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} results
             </div>
             <div className="flex gap-2">
               <button
@@ -861,14 +861,14 @@ const IPConfigPage = () => {
                 disabled={pagination.currentPage === 1}
                 className="disabled:opacity-50 px-3 py-1 border rounded hover:bg-gray-50"
               >
-                Poprzednia
+                Previous
               </button>
               <button
                 onClick={() => setPagination(prev => ({ ...prev, currentPage: prev.currentPage + 1 }))}
                 disabled={pagination.currentPage === pagination.totalPages}
                 className="disabled:opacity-50 px-3 py-1 border rounded hover:bg-gray-50"
               >
-                Następna
+                Next
               </button>
             </div>
           </div>
@@ -879,34 +879,34 @@ const IPConfigPage = () => {
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Dodaj Nowy Adres IP</h2>
+            <h2 className="text-xl font-bold mb-4">Add IP address</h2>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Adres IP *
+                  IP address *
                 </label>
                 <input
                   type="text"
                   value={formData.ipAddress}
                   onChange={(e) => setFormData(prev => ({ ...prev, ipAddress: e.target.value }))}
-                  placeholder="192.168.1.100 lub 192.168.1.0/24"
+                  placeholder="192.168.1.100 or 192.168.1.0/24"
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Obsługuje pojedyncze IP (192.168.1.100) lub zakresy CIDR (192.168.1.0/24)
+                  Supports single IPs (192.168.1.100) or CIDR ranges (192.168.1.0/24)
                 </p>
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Opis *
+                  Description *
                 </label>
                 <input
                   type="text"
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Dostęp z sieci biurowej"
+                  placeholder="Office network access"
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -920,7 +920,7 @@ const IPConfigPage = () => {
                   className="rounded border-gray-300"
                 />
                 <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
-                  Aktywuj natychmiast
+                  Activate immediately
                 </label>
               </div>
             </div>
@@ -933,14 +933,14 @@ const IPConfigPage = () => {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 onClick={handleAddIP}
                 disabled={!formData.ipAddress || !formData.description}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Dodaj Adres IP
+                Add IP address
               </button>
             </div>
           </div>
@@ -951,12 +951,12 @@ const IPConfigPage = () => {
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Edytuj Adres IP</h2>
+            <h2 className="text-xl font-bold mb-4">Edit IP address</h2>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Adres IP *
+                  IP address *
                 </label>
                 <input
                   type="text"
@@ -968,7 +968,7 @@ const IPConfigPage = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Opis *
+                  Description *
                 </label>
                 <input
                   type="text"
@@ -987,7 +987,7 @@ const IPConfigPage = () => {
                   className="rounded border-gray-300"
                 />
                 <label htmlFor="editIsActive" className="text-sm font-medium text-gray-700">
-                  Aktywny
+                  Active
                 </label>
               </div>
             </div>
@@ -1001,14 +1001,14 @@ const IPConfigPage = () => {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 onClick={handleEditIP}
                 disabled={!formData.ipAddress || !formData.description}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Zaktualizuj Adres IP
+                Update IP address
               </button>
             </div>
           </div>
@@ -1021,7 +1021,7 @@ const IPConfigPage = () => {
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Settings size={24} />
-              Ustawienia Ograniczeń IP
+              IP restriction settings
             </h2>
             
             <div className="space-y-6">
@@ -1030,10 +1030,10 @@ const IPConfigPage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-lg font-medium text-gray-900">
-                      Włącz Ograniczenia IP
+                      Enable IP restrictions
                     </label>
                     <p className="text-sm text-gray-600">
-                      Kontroluj dostęp do systemu na podstawie adresów IP
+                      Control access to the system based on IP addresses
                     </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -1051,26 +1051,26 @@ const IPConfigPage = () => {
               {/* Mode Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tryb Działania
+                  Operating mode
                 </label>
                 <select
                   value={settingsFormData.mode}
                   onChange={(e) => setSettingsFormData(prev => ({ ...prev, mode: e.target.value }))}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="development">🔧 Development - Localhost dozwolony</option>
-                  <option value="strict">🔒 Strict - Pełne ograniczenia</option>
-                  <option value="disabled">⏸️ Disabled - Wyłączone</option>
+                  <option value="development">🔧 Development — localhost allowed</option>
+                  <option value="strict">🔒 Strict — full restrictions</option>
+                  <option value="disabled">⏸️ Disabled</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Określa jak ścisłe są ograniczenia IP w systemie
+                  How strictly IP restrictions are applied
                 </p>
               </div>
 
               {/* Max Attempts */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Maksymalne próby na godzinę
+                  Max attempts per hour
                 </label>
                 <input
                   type="number"
@@ -1084,7 +1084,7 @@ const IPConfigPage = () => {
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Maksymalna liczba nieautoryzowanych prób dostępu na godzinę
+                  Maximum unauthorized access attempts per hour
                 </p>
               </div>
 
@@ -1102,7 +1102,7 @@ const IPConfigPage = () => {
                     className="rounded border-gray-300"
                   />
                   <label htmlFor="allowLocalhost" className="ml-2 text-sm font-medium text-gray-700">
-                    Dozwól localhost w produkcji
+                    Allow localhost in production
                   </label>
                 </div>
 
@@ -1118,7 +1118,7 @@ const IPConfigPage = () => {
                     className="rounded border-gray-300"
                   />
                   <label htmlFor="enableLogging" className="ml-2 text-sm font-medium text-gray-700">
-                    Włącz szczegółowe logowanie
+                    Enable detailed logging
                   </label>
                 </div>
               </div>
@@ -1126,7 +1126,7 @@ const IPConfigPage = () => {
               {/* Change Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Opis zmiany (opcjonalny)
+                  Change description (optional)
                 </label>
                 <textarea
                   rows={3}
@@ -1135,7 +1135,7 @@ const IPConfigPage = () => {
                     ...prev, 
                     lastChangeDescription: e.target.value 
                   }))}
-                  placeholder="Opisz powód wprowadzanych zmian..."
+                  placeholder="Briefly describe why you are changing these settings..."
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -1149,13 +1149,13 @@ const IPConfigPage = () => {
                 }}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 onClick={updateRestrictionSettings}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
-                Zapisz Ustawienia
+                Save settings
               </button>
             </div>
           </div>

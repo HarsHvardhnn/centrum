@@ -24,117 +24,117 @@ import SpecializationManagement from "./SpecializationManagement";
 const settingsCards = [
   {
     id: "profile",
-    title: "Mój profil",
+    title: "My profile",
     description:
-      "Zarządzanie danymi osobowymi użytkownika, aktualizacja numeru telefonu oraz zmiana hasła dostępu",
+      "Manage your personal data, update your phone number, and change your password",
     icon: User,
     to: "/administracja/profil",
     roles: ["admin", "doctor", "receptionist"],
   },
   {
     id: "user-settings",
-    title: "Ustawienia użytkowników",
+    title: "User accounts",
     description:
-      "Zarządzanie kontami użytkowników, role, uprawnienia oraz lista personelu i pacjentów",
+      "Manage user accounts, roles, permissions, and staff and patient lists",
     icon: Users,
     to: "/administracja/konta",
     roles: ["admin"],
   },
   {
     id: "2fa",
-    title: "Uwierzytelnianie 2FA",
+    title: "Two-factor authentication (2FA)",
     description:
-      "Konfiguracja wieloskładnikowej weryfikacji tożsamości w celu zwiększenia bezpieczeństwa logowania",
+      "Configure multi-factor identity verification to strengthen login security",
     icon: ShieldCheck,
     to: "/administracja/bezpieczenstwo/2fa",
     roles: ["admin", "doctor", "receptionist"],
   },
   {
     id: "schedule",
-    title: "Harmonogram",
+    title: "Schedule",
     description:
-      "Definiowanie godzin dostępności, planowanie przerw oraz zarządzanie kalendarzem pracy lekarza",
+      "Set availability hours, plan breaks, and manage the doctor’s work calendar",
     icon: Clock,
     to: "/lekarz/ustawienia",
     roles: ["doctor"],
   },
   {
     id: "visit-templates",
-    title: "Szablony wizyty",
+    title: "Visit templates",
     description:
-      "Tworzenie i edycja predefiniowanych opisów medycznych wykorzystywanych w trakcie karty badania",
+      "Create and edit predefined medical descriptions used during examination notes",
     icon: Stethoscope,
     to: "/administracja/szablony-dokumentow",
     roles: ["admin", "doctor"],
   },
   {
     id: "visit-config",
-    title: "Konfiguracja wizyty",
+    title: "Appointment configuration",
     description:
-      "Ustawienia wizyt, terminów i konfiguracja rezerwacji (tylko administrator)",
+      "Appointment settings, time slots, and booking configuration (admin only)",
     icon: CalendarCheck,
     to: "/administracja/konfiguracja-wizyt",
     roles: ["admin"],
   },
   {
     id: "reports",
-    title: "Raporty",
+    title: "Reports",
     description:
-      "Generowanie szczegółowych zestawień statystycznych oraz raportów z przeprowadzonych wizyt",
+      "Generate detailed statistics and reports from completed visits",
     icon: BarChart3,
     to: "/administracja/dane",
     roles: ["admin", "doctor", "receptionist"],
   },
   {
     id: "document-templates",
-    title: "Szablony dokumentów",
+    title: "Document templates",
     description:
-      "Zarządzanie repozytorium plików i wzorów dokumentacji do uzupełnienia danymi pacjenta",
+      "Manage the file repository and documentation templates filled with patient data",
     icon: FileStack,
     to: "/administracja/repo-dokumentow",
     roles: ["admin"],
   },
   {
     id: "sms",
-    title: "Ustawienia SMS",
+    title: "SMS settings",
     description:
-      "Szablony wiadomości SMS, wysyłanie powiadomień oraz konfiguracja komunikacji z pacjentami",
+      "SMS message templates, sending notifications, and patient communication settings",
     icon: MessageSquare,
     to: "/administracja/sms",
     roles: ["admin"],
   },
   {
     id: "permanent-delete",
-    title: "Trwale usuwanie",
+    title: "Permanent deletion",
     description:
-      "Trwałe usuwanie rekordów z bazy danych, statystyki usunięć oraz zarządzanie danymi usuniętymi z systemu",
+      "Permanently delete database records, deletion statistics, and manage purged data",
     icon: Trash2,
     to: "/administracja/trwale-usuwanie",
     roles: ["admin"],
   },
   {
     id: "ip-config",
-    title: "Konfiguracja IP",
+    title: "IP configuration",
     description:
-      "Ustawienia adresów IP i dostępu sieciowego do systemu (tylko administrator)",
+      "IP addresses and network access to the system (administrator only)",
     icon: Server,
     to: "/administracja/konfiguracja-ip",
     roles: ["admin"],
   },
   {
     id: "news",
-    title: "Aktualności",
+    title: "News",
     description:
-      "Zarządzanie aktualnościami i komunikatami wyświetlanymi na stronie",
+      "Manage news and announcements shown on the website",
     icon: Newspaper,
     to: "/administracja/aktualnosci",
     roles: ["admin"],
   },
   {
     id: "services",
-    title: "Usługi",
+    title: "Services",
     description:
-      "Zarządzanie usługami medycznymi oferowanymi w placówce",
+      "Manage medical services offered by the facility",
     icon: Package,
     to: "/administracja/uslugi",
     roles: ["admin"],
@@ -173,7 +173,7 @@ const SettingsCard = ({ card }) => {
           <h3 className="font-bold text-gray-800 mb-2">{card.title}</h3>
           <p className="text-sm text-gray-500 leading-snug mb-4">{card.description}</p>
           <span className="inline-flex items-center gap-1 text-sm font-medium text-teal-600 hover:underline">
-            Zarządzaj
+            Manage
             <ArrowRight size={16} className="flex-shrink-0" />
           </span>
         </div>
@@ -198,10 +198,10 @@ const SystemSettingsPage = () => {
       <div className="w-full max-w-6xl mx-auto px-4 py-8">
         <header className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
-            Ustawienia systemowe
+            System settings
           </h1>
           <p className="text-sm text-gray-500">
-            Konfiguruj system według swoich potrzeb i preferencji
+            Configure the system to match your needs and preferences
           </p>
         </header>
 
@@ -209,7 +209,7 @@ const SystemSettingsPage = () => {
           <div
             className="flex flex-wrap gap-2 border-b border-gray-200 mb-8"
             role="tablist"
-            aria-label="Sekcje ustawień"
+            aria-label="Settings sections"
           >
             <button
               type="button"
@@ -223,7 +223,7 @@ const SystemSettingsPage = () => {
               }`}
             >
               <LayoutGrid size={18} aria-hidden />
-              Przegląd
+              Overview
             </button>
             <button
               type="button"
@@ -237,7 +237,7 @@ const SystemSettingsPage = () => {
               }`}
             >
               <GraduationCap size={18} aria-hidden />
-              Specjalizacje lekarskie
+              Medical specialties
             </button>
           </div>
         )}
@@ -254,11 +254,10 @@ const SystemSettingsPage = () => {
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 md:p-8">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-gray-900">
-                Specjalizacje lekarskie
+                Medical specialties
               </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Dodawaj i edytuj specjalizacje przypisywane do lekarzy przy tworzeniu konta oraz w
-                rezerwacjach.
+                Add and edit specialties assigned to doctors when creating accounts and in bookings.
               </p>
             </div>
             <SpecializationManagement />

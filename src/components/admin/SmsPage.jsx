@@ -80,7 +80,7 @@ const UserMessaging = () => {
       if (response.data.success) {
         setTemplates(response.data.data);
       } else {
-        setError("Nie udało się pobrać szablonów SMS");
+        setError("Failed to load SMS templates");
       }
     } catch (err) {
       console.error("Error fetching templates:", err);
@@ -117,10 +117,10 @@ const UserMessaging = () => {
           totalUsers: response.data.data.pagination.totalUsers,
         }));
       } else {
-        setError("Nie udało się pobrać użytkowników");
+        setError("Failed to load users");
       }
     } catch (err) {
-      setError(err.message || "Błąd podczas pobierania użytkowników");
+      setError(err.message || "Error loading users");
     } finally {
       setLoading(false);
     }
@@ -252,11 +252,11 @@ const UserMessaging = () => {
           );
 
           if (response.data.success) {
-            setSuccessMessage("Szablon został zaktualizowany pomyślnie");
+            setSuccessMessage("Template updated successfully");
             await fetchTemplates(); // Refresh templates
             setEditingTemplate(null);
           } else {
-            setError(response.data.message || "Nie udało się zaktualizować szablonu");
+            setError(response.data.message || "Failed to update template");
           }
         } else {
           // Create new template
@@ -270,17 +270,17 @@ const UserMessaging = () => {
           );
 
           if (response.data.success) {
-            setSuccessMessage("Szablon został utworzony pomyślnie");
+            setSuccessMessage("Template created successfully");
             await fetchTemplates(); // Refresh templates
           } else {
-            setError(response.data.message || "Nie udało się utworzyć szablonu");
+            setError(response.data.message || "Failed to create template");
           }
         }
         
         setNewTemplate({ title: "", description: "" });
         setTimeout(() => setSuccessMessage(""), 3000);
       } catch (err) {
-        setError(err.message || "Błąd podczas operacji na szablonie");
+        setError(err.message || "Template operation failed");
         setTimeout(() => setError(null), 3000);
       } finally {
         setTemplateSubmitting(false);
@@ -301,18 +301,18 @@ const UserMessaging = () => {
       const response = await apiCaller("DELETE", `/api/sms-templates/${templateId}`);
       
       if (response.data.success) {
-        setSuccessMessage("Szablon został usunięty pomyślnie");
+        setSuccessMessage("Template deleted successfully");
         await fetchTemplates(); // Refresh templates
         if (editingTemplate && editingTemplate._id === templateId) {
           setEditingTemplate(null);
           setNewTemplate({ title: "", description: "" });
         }
       } else {
-        setError(response.data.message || "Nie udało się usunąć szablonu");
+        setError(response.data.message || "Failed to delete template");
       }
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
-      setError(err.message || "Błąd podczas usuwania szablonu");
+      setError(err.message || "Error deleting template");
       setTimeout(() => setError(null), 3000);
     } finally {
       setTemplateSubmitting(false);
@@ -326,14 +326,14 @@ const UserMessaging = () => {
       const response = await apiCaller("PATCH", `/api/sms-templates/${templateId}/toggle`);
       
       if (response.data.success) {
-        setSuccessMessage("Status szablonu został zmieniony pomyślnie");
+        setSuccessMessage("Template status updated successfully");
         await fetchTemplates(); // Refresh templates
       } else {
-        setError(response.data.message || "Nie udało się zmienić statusu szablonu");
+        setError(response.data.message || "Failed to change template status");
       }
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
-      setError(err.message || "Błąd podczas zmiany statusu szablonu");
+      setError(err.message || "Error changing template status");
       setTimeout(() => setError(null), 3000);
     } finally {
       setTemplateSubmitting(false);
@@ -364,7 +364,7 @@ const UserMessaging = () => {
       });
       if (response.data?.success) {
         const count = response.data.deletedCount ?? selectedTemplateIds.length;
-        toast.success(response.data.message || `Trwale usunięto ${count} szablonów SMS`);
+        toast.success(response.data.message || `Permanently deleted ${count} SMS template(s)`);
         setShowBulkDeleteTemplatesModal(false);
         setSelectedTemplateIds([]);
         await fetchTemplates();
@@ -373,10 +373,10 @@ const UserMessaging = () => {
           setNewTemplate({ title: "", description: "" });
         }
       } else {
-        toast.error(response.data?.message || "Nie udało się trwale usunąć szablonów");
+        toast.error(response.data?.message || "Failed to permanently delete templates");
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Błąd podczas trwałego usuwania szablonów SMS");
+      toast.error(err.response?.data?.message || "Error permanently deleting SMS templates");
     } finally {
       setBulkDeleteTemplatesSubmitting(false);
     }
@@ -385,13 +385,13 @@ const UserMessaging = () => {
   // Handle message sending
   const handleSendMessage = async () => {
     if (selectedUsers.length === 0) {
-      setError("Proszę wybrać co najmniej jednego użytkownika");
+      setError("Please select at least one user");
       setTimeout(() => setError(null), 3000);
       return;
     }
 
     if (!messageContent.trim()) {
-      setError("Proszę wprowadzić wiadomość");
+      setError("Please enter a message");
       setTimeout(() => setError(null), 3000);
       return;
     }
@@ -420,7 +420,7 @@ const UserMessaging = () => {
 
       if (response.data.success) {
         setSuccessMessage(
-          `Pomyślnie wysłano ${response.data.stats.sent} wiadomości (${response.data.stats.failed} nie udało się)`
+          `Successfully sent ${response.data.stats.sent} message(s) (${response.data.stats.failed} failed)`
         );
         setMessageResults({
           sent: response.data.sent || [],
@@ -454,7 +454,7 @@ const UserMessaging = () => {
           }
         }, 3000);
       } else {
-        setError(response.data.message || "Nie udało się wysłać wiadomości");
+        setError(response.data.message || "Failed to send message");
         // Still record any partial results
         if (response.data.sent || response.data.failed) {
           setMessageResults({
@@ -465,7 +465,7 @@ const UserMessaging = () => {
         }
       }
     } catch (err) {
-      setError(err.message || "Błąd podczas wysyłania wiadomości");
+      setError(err.message || "Error sending message");
       console.error("SMS sending error:", err);
     } finally {
       setSubmitting(false);
@@ -498,19 +498,18 @@ const UserMessaging = () => {
     return Math.ceil(characterCount / characterLimit);
   };
 
-  const translateRoleToPolish = (role) => {
-    //("role is", role)
+  const translateRoleToEnglish = (role) => {
     switch (role) {
       case "patient":
-        return "Pacjent";
+        return "Patient";
       case "doctor":
-        return "Lekarz";
+        return "Doctor";
       case "receptionist":
-        return "Recepcjonista";
+        return "Receptionist";
       case "admin":
         return "Administrator";
       default:
-        return "Nieznana rola";
+        return "Unknown role";
     }
   };
   return (
@@ -518,9 +517,9 @@ const UserMessaging = () => {
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-2xl font-semibold text-gray-800">
-          Wiadomości SMS
+          SMS messages
         </h2>
-        <p className="text-gray-600">Zarządzaj wiadomościami SMS w systemie</p>
+        <p className="text-gray-600">Send and manage SMS messages in the system</p>
       </div>
 
       {/* Tabs */}
@@ -534,7 +533,7 @@ const UserMessaging = () => {
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
-            Wyślij Wiadomości
+            Send messages
           </button>
           <button
             onClick={() => setActiveTab("history")}
@@ -544,7 +543,7 @@ const UserMessaging = () => {
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
-            Historia Wiadomości
+            Message history
           </button>
         </nav>
       </div>
@@ -557,7 +556,7 @@ const UserMessaging = () => {
             <div className="flex-1 min-w-[200px]">
               <input
                 type="text"
-                placeholder="Szukaj użytkowników..."
+                placeholder="Search users..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange("search", e.target.value)}
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -569,10 +568,10 @@ const UserMessaging = () => {
                 onChange={(e) => handleFilterChange("role", e.target.value)}
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Wszystkie Role</option>
-                <option value="patient">Pacjent</option>
-                <option value="doctor">Lekarz</option>
-                <option value="receptionist">Recepcjonista</option>
+                <option value="">All roles</option>
+                <option value="patient">Patient</option>
+                <option value="doctor">Doctor</option>
+                <option value="receptionist">Receptionist</option>
               </select>
             </div>
           </div>
@@ -591,19 +590,19 @@ const UserMessaging = () => {
                     />
                   </th>
                   <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Imię i Nazwisko
+                    Full name
                   </th>
                   <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Email
                   </th>
                   <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Telefon
+                    Phone
                   </th>
                   <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rola
+                    Role
                   </th>
                   <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Zgoda na SMS
+                  SMS consent
                   </th>
                 </tr>
               </thead>
@@ -611,7 +610,7 @@ const UserMessaging = () => {
                 {loading ? (
                   <tr>
                     <td colSpan="5" className="text-center py-4">
-                      Ładowanie...
+                      Loading...
                     </td>
                   </tr>
                 ) : error ? (
@@ -623,7 +622,7 @@ const UserMessaging = () => {
                 ) : users.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="text-center py-4">
-                      Nie znaleziono użytkowników
+                      No users found
                     </td>
                   </tr>
                 ) : (
@@ -648,10 +647,10 @@ const UserMessaging = () => {
                       <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{user.phone}</td>
                       <td className="px-6 py-4 whitespace-nowrap capitalize">
-                        {translateRoleToPolish(user.role)}
+                        {translateRoleToEnglish(user.role)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap capitalize">
-                        {user.smsConsentAgreed ? "Tak" : "Nie"}
+                        {user.smsConsentAgreed ? "Yes" : "No"}
                       </td>
                     </tr>
                   ))
@@ -663,7 +662,7 @@ const UserMessaging = () => {
           {/* Pagination */}
           <div className="flex justify-between items-center mb-6">
             <div className="text-sm text-gray-700">
-              Pokazano {users.length} z {pagination.totalUsers} użytkowników
+              Showing {users.length} of {pagination.totalUsers} users
             </div>
             <div className="flex gap-2">
               <button
@@ -675,7 +674,7 @@ const UserMessaging = () => {
                     : "bg-white text-gray-700 hover:bg-gray-50 border"
                 }`}
               >
-                Poprzednia
+                Previous
               </button>
               {getPageNumbers().map((pageNum) => (
                 <button
@@ -699,7 +698,7 @@ const UserMessaging = () => {
                     : "bg-white text-gray-700 hover:bg-gray-50 border"
                 }`}
               >
-                Następna
+                Next
               </button>
             </div>
           </div>
@@ -707,7 +706,7 @@ const UserMessaging = () => {
           {/* Message Composition */}
           <div className="mb-6">
             <h3 className="text-lg font-medium text-gray-800 mb-2">
-              Napisz Wiadomość
+              Compose message
             </h3>
             
             {/* Message Templates */}
@@ -717,10 +716,10 @@ const UserMessaging = () => {
                   onClick={() => setShowTemplates(!showTemplates)}
                   className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center"
                 >
-                  {showTemplates ? "Ukryj szablony" : "Pokaż szablony wiadomości"}
+                  {showTemplates ? "Hide templates" : "Show message templates"}
                 </button>
                 <span className="text-sm text-gray-500">
-                  Użyj gotowych szablonów lub stwórz własne
+                  Use built-in templates or create your own
                 </span>
               </div>
               
@@ -728,14 +727,14 @@ const UserMessaging = () => {
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                   <div className="mb-4">
                     <h4 className="text-md font-medium mb-2">
-                      {editingTemplate ? "Edytuj szablon" : "Dodaj nowy szablon"}
+                      {editingTemplate ? "Edit template" : "Add new template"}
                     </h4>
                     <div className="flex gap-2 mb-2">
                       <input
                         type="text"
                         value={newTemplate.title}
                         onChange={(e) => setNewTemplate({...newTemplate, title: e.target.value})}
-                        placeholder="Nazwa szablonu"
+                        placeholder="Template name"
                         className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <button
@@ -747,7 +746,7 @@ const UserMessaging = () => {
                             : "bg-blue-500 hover:bg-blue-600 text-white"
                         }`}
                       >
-                        {templateSubmitting ? "Przetwarzanie..." : (editingTemplate ? "Zapisz zmiany" : "Dodaj")}
+                        {templateSubmitting ? "Processing..." : (editingTemplate ? "Save changes" : "Add")}
                       </button>
                     </div>
                     <textarea
@@ -761,14 +760,14 @@ const UserMessaging = () => {
                         const sanitizedValue = convertedValue.replace(/[^\w\s.,!?()-\/:]/g, '');
                         setNewTemplate({...newTemplate, description: sanitizedValue});
                       }}
-                      placeholder="Treść szablonu..."
+                      placeholder="Template content..."
                       rows="3"
                       className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     ></textarea>
                   </div>
                   
                   <div>
-                    <h4 className="text-md font-medium mb-2">Dostępne szablony</h4>
+                    <h4 className="text-md font-medium mb-2">Available templates</h4>
                     {isAdmin && templates.length > 0 && (
                       <div className="flex items-center gap-3 mb-3">
                         <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
@@ -778,7 +777,7 @@ const UserMessaging = () => {
                             onChange={handleTemplateSelectAll}
                             className="rounded border-gray-300 text-red-600 focus:ring-red-500"
                           />
-                          Zaznacz wszystkie
+                          Select all
                         </label>
                         <button
                           type="button"
@@ -790,15 +789,15 @@ const UserMessaging = () => {
                               : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
                           }`}
                         >
-                          Trwale usuń wybrane ({selectedTemplateIds.length})
+                          Permanently delete selected ({selectedTemplateIds.length})
                         </button>
                       </div>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {templatesLoading ? (
-                        <p className="text-gray-500">Ładowanie szablonów...</p>
+                        <p className="text-gray-500">Loading templates...</p>
                       ) : templates.length === 0 ? (
-                        <p className="text-gray-500">Brak dostępnych szablonów. Utwórz nowy!</p>
+                        <p className="text-gray-500">No templates yet. Create one!</p>
                       ) : (
                         templates.map((template) => (
                           <div key={template._id} className={`border rounded-lg p-3 hover:shadow-md ${
@@ -817,7 +816,7 @@ const UserMessaging = () => {
                                 <h5 className="font-medium">{template.title}</h5>
                                 {!template.isActive && (
                                   <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
-                                    Nieaktywny
+                                    Inactive
                                   </span>
                                 )}
                               </div>
@@ -827,21 +826,21 @@ const UserMessaging = () => {
                                   disabled={templateSubmitting}
                                   className={`text-sm ${templateSubmitting ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:text-blue-800'}`}
                                 >
-                                  Edytuj
+                                  Edit
                                 </button>
                                 <button
                                   onClick={() => handleDeleteTemplate(template._id)}
                                   disabled={templateSubmitting}
                                   className={`text-sm ${templateSubmitting ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:text-red-800'}`}
                                 >
-                                  Usuń
+                                  Delete
                                 </button>
                                 <button
                                   onClick={() => handleToggleTemplateStatus(template._id)}
                                   disabled={templateSubmitting}
                                   className={`text-sm ${templateSubmitting ? 'text-gray-400 cursor-not-allowed' : (template.isActive ? 'text-green-600 hover:text-green-800' : 'text-gray-600 hover:text-gray-800')}`}
                                 >
-                                  {template.isActive ? 'Aktywny' : 'Nieaktywny'}
+                                  {template.isActive ? 'Active' : 'Inactive'}
                                 </button>
                               </div>
                             </div>
@@ -851,7 +850,7 @@ const UserMessaging = () => {
                               disabled={templateSubmitting}
                               className={`text-sm ${templateSubmitting ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:text-blue-800'}`}
                             >
-                              Użyj tego szablonu
+                              Use this template
                             </button>
                           </div>
                         ))
@@ -866,23 +865,23 @@ const UserMessaging = () => {
               <textarea
                 value={messageContent}
                 onChange={handleMessageChange}
-                placeholder="Wprowadź treść wiadomości (linki są dozwolone)..."
+                placeholder="Enter message text (links allowed)..."
                 rows="4"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               ></textarea>
               <div className="flex justify-between text-sm mt-2">
                 <div className="text-gray-600">
                   <span className={characterCount > 160 ? 'text-yellow-600' : 'text-gray-600'}>
-                    Znaki: {characterCount}
+                    Characters: {characterCount}
                   </span> | 
                   <span className={calculateSmsSegments() > 1 ? 'text-yellow-600 ml-1' : 'text-gray-600 ml-1'}>
-                    Segmenty SMS: {calculateSmsSegments()}
+                    SMS segments: {calculateSmsSegments()}
                   </span>
                 </div>
                 <div className="text-gray-500">
                   {characterCount > 160 && 
                     <span className="text-yellow-600">
-                      Wiadomość zostanie podzielona na {calculateSmsSegments()} SMS-y
+                      Message will be split into {calculateSmsSegments()} SMS part(s)
                     </span>
                   }
                 </div>
@@ -890,7 +889,7 @@ const UserMessaging = () => {
             </div>
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">
-                Wybrano {selectedUsers.length} użytkowników
+                {selectedUsers.length} user(s) selected
               </div>
               <button
                 onClick={handleSendMessage}
@@ -901,7 +900,7 @@ const UserMessaging = () => {
                     : "bg-blue-500 hover:bg-blue-600 text-white"
                 }`}
               >
-                {submitting ? "Wysyłanie..." : "Wyślij Wiadomość"}
+                {submitting ? "Sending..." : "Send message"}
               </button>
             </div>
           </div>
@@ -922,12 +921,12 @@ const UserMessaging = () => {
           {showResults && (messageResults.sent.length > 0 || messageResults.failed.length > 0) && (
             <div className="mt-6">
               <h3 className="text-lg font-medium text-gray-800 mb-4">
-                Wyniki Wysyłania
+                Send results
               </h3>
               {messageResults.sent.length > 0 && (
                 <div className="mb-4">
                   <h4 className="text-sm font-medium text-green-600 mb-2">
-                    Pomyślnie Wysłane ({messageResults.sent.length})
+                    Sent successfully ({messageResults.sent.length})
                   </h4>
                   <ul className="text-sm text-gray-600">
                     {messageResults.sent.map((result, index) => (
@@ -941,7 +940,7 @@ const UserMessaging = () => {
               {messageResults.failed.length > 0 && (
                 <div>
                   <h4 className="text-sm font-medium text-red-600 mb-2">
-                    Nie Udało Się Wysłać ({messageResults.failed.length})
+                    Failed to send ({messageResults.failed.length})
                   </h4>
                   <ul className="text-sm text-gray-600">
                     {messageResults.failed.map((result, index) => (
@@ -965,13 +964,13 @@ const UserMessaging = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Trwałe usunięcie szablonów SMS
+              Permanently delete SMS templates
             </h3>
             <p className="text-gray-600 mb-4">
-              Ta operacja jest <strong>nieodwracalna</strong>. Wybrane szablony SMS ({selectedTemplateIds.length}) zostaną trwale usunięte z bazy danych. Nie będzie można ich przywrócić.
+              This action is <strong>irreversible</strong>. The selected SMS template(s) ({selectedTemplateIds.length}) will be permanently removed from the database and cannot be restored.
             </p>
             <p className="text-sm text-gray-500 mb-6">
-              Czy na pewno chcesz kontynuować?
+              Are you sure you want to continue?
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -980,7 +979,7 @@ const UserMessaging = () => {
                 disabled={bulkDeleteTemplatesSubmitting}
                 className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 type="button"
@@ -988,7 +987,7 @@ const UserMessaging = () => {
                 disabled={bulkDeleteTemplatesSubmitting}
                 className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
               >
-                {bulkDeleteTemplatesSubmitting ? "Usuwanie..." : "Tak, trwale usuń"}
+                {bulkDeleteTemplatesSubmitting ? "Deleting..." : "Yes, delete permanently"}
               </button>
             </div>
           </div>

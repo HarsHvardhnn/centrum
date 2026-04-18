@@ -21,11 +21,10 @@ const AdminmsgsContent = () => {
     id: null
   });
 
-  // Function to convert privacy policy acceptance to Polish
   const getPrivacyPolicyStatus = (accepted) => {
-    if (accepted === true) return "Tak";
-    if (accepted === false) return "Nie";
-    return "Brak danych";
+    if (accepted === true) return "Yes";
+    if (accepted === false) return "No";
+    return "No data";
   };
 
   // Function to get status color
@@ -43,7 +42,7 @@ const AdminmsgsContent = () => {
       setMessages(res.data.data || []);
       setTotal(res.data.count || 0);
     } catch (err) {
-      setError("Błąd podczas pobierania wiadomości.");
+      setError("Failed to load messages.");
     } finally {
       setLoading(false);
     }
@@ -69,7 +68,7 @@ const AdminmsgsContent = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Wiadomości kontaktowe</h1>
+      <h1 className="text-2xl font-bold mb-6">Contact messages</h1>
       
       {/* Bulk Delete Component */}
       <div className="mb-6">
@@ -79,7 +78,7 @@ const AdminmsgsContent = () => {
         />
       </div>
       {loading ? (
-        <div className="text-center py-12">Ładowanie...</div>
+        <div className="text-center py-12">Loading...</div>
       ) : error ? (
         <div className="text-red-600 text-center py-12">{error}</div>
       ) : (
@@ -88,18 +87,18 @@ const AdminmsgsContent = () => {
             <table className="min-w-full bg-white">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 border-b text-left">Imię i nazwisko</th>
+                  <th className="px-4 py-3 border-b text-left">Full name</th>
                   <th className="px-4 py-3 border-b text-left">Email</th>
-                  <th className="px-4 py-3 border-b text-left">Temat</th>
-                  <th className="px-4 py-3 border-b text-left">Wiadomość</th>
-                  <th className="px-4 py-3 border-b text-left">Zgoda RODO</th>
-                  <th className="px-4 py-3 border-b text-left">Akcje</th>
+                  <th className="px-4 py-3 border-b text-left">Subject</th>
+                  <th className="px-4 py-3 border-b text-left">Message</th>
+                  <th className="px-4 py-3 border-b text-left">GDPR consent</th>
+                  <th className="px-4 py-3 border-b text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {messages.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-500">Brak wiadomości</td>
+                    <td colSpan={6} className="text-center py-8 text-gray-500">No messages</td>
                   </tr>
                 ) : (
                   messages.map((msg, idx) => (
@@ -115,10 +114,10 @@ const AdminmsgsContent = () => {
                         <button
                           onClick={() => handleDeleteClick(msg._id)}
                           className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                          title="Trwale usuń wiadomość"
+                          title="Permanently delete message"
                         >
                           <Trash2 size={16} />
-                          Trwale usuń
+                          Delete permanently
                         </button>
                       </td>
                     </tr>
@@ -135,15 +134,15 @@ const AdminmsgsContent = () => {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
-                Poprzednia
+                Previous
               </button>
-              <span className="mx-2">Strona {page} z {totalPages}</span>
+              <span className="mx-2">Page {page} of {totalPages}</span>
               <button
                 className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
               >
-                Następna
+                Next
               </button>
             </div>
           )}
@@ -156,8 +155,8 @@ const AdminmsgsContent = () => {
         onClose={() => setDeleteDialog({ open: false, id: null })}
         type="contact"
         id={deleteDialog.id}
-        title="Trwale usuń wiadomość kontaktową?"
-        message="Ta operacja jest nieodwracalna. Wiadomość kontaktowa zostanie trwale usunięta z systemu."
+        title="Permanently delete this contact message?"
+        message="This action cannot be undone. The contact message will be permanently removed from the system."
         onSuccess={handleDeleteSuccess}
       />
     </div>

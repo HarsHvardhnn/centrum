@@ -6,7 +6,7 @@ import { X, Construction } from "lucide-react";
  * features that are not yet implemented. Keeps buttons visible but informs
  * that the feature is in development.
  */
-const FeatureComingSoonModal = ({ isOpen, onClose, featureName = "Ta funkcja" }) => {
+const FeatureComingSoonModal = ({ isOpen, onClose, featureName = "This feature" }) => {
   if (!isOpen) return null;
 
   return (
@@ -30,18 +30,18 @@ const FeatureComingSoonModal = ({ isOpen, onClose, featureName = "Ta funkcja" })
               id="feature-coming-soon-title"
               className="text-lg font-semibold text-gray-900 mb-1"
             >
-              {featureName} — w przygotowaniu
+              {featureName} — coming soon
             </h2>
             <p className="text-gray-600 text-sm leading-relaxed">
-              Funkcja jest obecnie w trakcie wdrażania. Administrator poinformuje
-              Cię, gdy będzie gotowa do użycia. Dokument nie został wystawiony.
+              This feature is still being rolled out. An administrator will let you know when it is
+              ready. No document has been issued.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="flex-shrink-0 p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
-            aria-label="Zamknij"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
@@ -52,7 +52,7 @@ const FeatureComingSoonModal = ({ isOpen, onClose, featureName = "Ta funkcja" })
             onClick={onClose}
             className="px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
           >
-            Rozumiem
+            OK
           </button>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { apiCaller } from "../../utils/axiosInstance";
 import { useUser } from "../../context/userContext";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { pl } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 const SmsHistory = () => {
   const { user } = useUser();
@@ -76,12 +76,12 @@ const SmsHistory = () => {
           totalPages: response.data.pagination?.totalPages || 1,
         });
       } else {
-        setError("Nie udało się pobrać historii SMS");
+        setError("Failed to load SMS history");
         setSmsData([]);
       }
     } catch (err) {
       console.error("Error fetching SMS data:", err);
-      setError(err.message || "Błąd podczas pobierania historii SMS");
+      setError(err.message || "Error loading SMS history");
       setSmsData([]);
     } finally {
       setLoading(false);
@@ -158,15 +158,15 @@ const SmsHistory = () => {
       });
       if (response.data?.success) {
         const count = response.data.deletedCount ?? selectedHistoryIds.length;
-        toast.success(response.data.message || `Trwale usunięto ${count} wpisów historii SMS`);
+        toast.success(response.data.message || `Permanently deleted ${count} SMS history record(s)`);
         setShowBulkDeleteHistoryModal(false);
         setSelectedHistoryIds([]);
         await fetchSmsData();
       } else {
-        toast.error(response.data?.message || "Nie udało się trwale usunąć wpisów historii SMS");
+        toast.error(response.data?.message || "Failed to permanently delete history records");
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Błąd podczas trwałego usuwania historii SMS");
+      toast.error(err.response?.data?.message || "Error permanently deleting SMS history");
     } finally {
       setBulkDeleteHistorySubmitting(false);
     }
@@ -176,7 +176,7 @@ const SmsHistory = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     try {
-      return format(new Date(dateString), "dd MMM yyyy, HH:mm:ss", { locale: pl });
+      return format(new Date(dateString), "dd MMM yyyy, HH:mm:ss", { locale: enUS });
     } catch (e) {
       return "Invalid date";
     }
@@ -224,16 +224,16 @@ const SmsHistory = () => {
     
     // CSV headers
     const headers = [
-      'ID wiadomości',
-      'Numer telefonu',
-      'ID odbiorcy',
-      'Treść',
+      'Message ID',
+      'Phone number',
+      'Recipient ID',
+      'Content',
       'Status',
-      'Kod błędu',
-      'Opis błędu',
-      'Data utworzenia',
-      'Data wysłania',
-      'Data dostarczenia/niepowodzenia'
+      'Error code',
+      'Error description',
+      'Created at',
+      'Sent at',
+      'Delivered / failed at'
     ];
     
     // Format data for CSV
@@ -283,7 +283,7 @@ const SmsHistory = () => {
     <div className="flex flex-col">
       {/* Filters Section */}
       <div className="bg-gray-50 rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-medium text-gray-800 mb-3">Filtry</h3>
+        <h3 className="text-lg font-medium text-gray-800 mb-3">Filters</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           {/* Status Filter */}
@@ -294,52 +294,52 @@ const SmsHistory = () => {
               onChange={(e) => handleFilterChange("status", e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Wszystkie</option>
-              <option value="DELIVERED">Dostarczone</option>
-              <option value="PENDING">Oczekujące</option>
-              <option value="FAILED">Nieudane</option>
+              <option value="">All</option>
+              <option value="DELIVERED">Delivered</option>
+              <option value="PENDING">Pending</option>
+              <option value="FAILED">Failed</option>
             </select>
           </div>
           
           {/* Phone Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Numer telefonu</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Phone number</label>
             <input
               type="text"
               value={filters.phone}
               onChange={(e) => handleFilterChange("phone", e.target.value)}
-              placeholder="Wpisz numer telefonu"
+              placeholder="Enter phone number"
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           
           {/* Error Code Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Kod błędu</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Error code</label>
             <input
               type="text"
               value={filters.errorCode}
               onChange={(e) => handleFilterChange("errorCode", e.target.value)}
-              placeholder="np. UNKNOWN, INVALID_PHONE"
+              placeholder="e.g. UNKNOWN, INVALID_PHONE"
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           
           {/* Batch ID Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ID partii</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Batch ID</label>
             <input
               type="text"
               value={filters.batchId}
               onChange={(e) => handleFilterChange("batchId", e.target.value)}
-              placeholder="Wpisz ID partii"
+              placeholder="Enter batch ID"
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           
           {/* Start Date Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Data od</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">From date</label>
             <input
               type="date"
               value={filters.startDate}
@@ -350,7 +350,7 @@ const SmsHistory = () => {
           
           {/* End Date Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Data do</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">To date</label>
             <input
               type="date"
               value={filters.endDate}
@@ -361,12 +361,12 @@ const SmsHistory = () => {
           
           {/* Search Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Szukaj w treści</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Search in content</label>
             <input
               type="text"
               value={filters.search}
               onChange={(e) => handleFilterChange("search", e.target.value)}
-              placeholder="Wpisz frazę"
+              placeholder="Enter search phrase"
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -375,30 +375,30 @@ const SmsHistory = () => {
         {/* Sort Options */}
         <div className="flex flex-wrap gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Sortuj według</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Sort by</label>
             <select
               value={filters.sortBy}
               onChange={(e) => handleFilterChange("sortBy", e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="createdAt">Data utworzenia</option>
-              <option value="sentAt">Data wysłania</option>
-              <option value="deliveredAt">Data dostarczenia</option>
-              <option value="failedAt">Data niepowodzenia</option>
+              <option value="createdAt">Created at</option>
+              <option value="sentAt">Sent at</option>
+              <option value="deliveredAt">Delivered at</option>
+              <option value="failedAt">Failed at</option>
               <option value="status">Status</option>
-              <option value="error.code">Kod błędu</option>
+              <option value="error.code">Error code</option>
             </select>
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Kolejność</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
             <select
               value={filters.sortOrder}
               onChange={(e) => handleFilterChange("sortOrder", e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="desc">Malejąco</option>
-              <option value="asc">Rosnąco</option>
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
             </select>
           </div>
         </div>
@@ -409,13 +409,13 @@ const SmsHistory = () => {
             onClick={handleApplyFilters}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
-            Zastosuj filtry
+            Apply filters
           </button>
           <button
             onClick={handleResetFilters}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
           >
-            Zresetuj filtry
+            Reset filters
           </button>
         </div>
       </div>
@@ -423,7 +423,7 @@ const SmsHistory = () => {
       {/* Refresh Button and Status */}
       <div className="flex justify-between items-center mb-4">
         <div>
-          {loading && <span className="text-blue-500">Ładowanie danych...</span>}
+          {loading && <span className="text-blue-500">Loading...</span>}
           {error && <span className="text-red-500">{error}</span>}
         </div>
         <div className="flex gap-2 flex-wrap items-center">
@@ -438,7 +438,7 @@ const SmsHistory = () => {
                   : "bg-red-50 text-red-700 hover:bg-red-100 border border-red-200"
               }`}
             >
-              Trwale usuń wybrane ({selectedHistoryIds.length})
+              Permanently delete selected ({selectedHistoryIds.length})
             </button>
           )}
           <button
@@ -449,12 +449,12 @@ const SmsHistory = () => {
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                 : "bg-green-50 text-green-700 hover:bg-green-100"
             }`}
-            title={smsData.length === 0 ? "Brak danych do eksportu" : "Eksportuj do CSV"}
+            title={smsData.length === 0 ? "No data to export" : "Export to CSV"}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Eksportuj CSV
+            Export CSV
           </button>
           <button
             onClick={fetchSmsData}
@@ -464,7 +464,7 @@ const SmsHistory = () => {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Odśwież
+            Refresh
           </button>
         </div>
       </div>
@@ -485,22 +485,22 @@ const SmsHistory = () => {
                 </th>
               )}
               <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                ID wiadomości
+                Message ID
               </th>
               <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Odbiorca
+                Recipient
               </th>
               <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Treść
+                Content
               </th>
               <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
               <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Data utworzenia
+                Created at
               </th>
               <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Akcje
+                Actions
               </th>
             </tr>
           </thead>
@@ -513,7 +513,7 @@ const SmsHistory = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Ładowanie...
+                    Loading...
                   </div>
                 </td>
               </tr>
@@ -526,7 +526,7 @@ const SmsHistory = () => {
             ) : smsData.length === 0 ? (
               <tr>
                 <td colSpan={isAdmin ? 7 : 6} className="text-center py-4">
-                  Nie znaleziono wiadomości SMS
+                  No SMS messages found
                 </td>
               </tr>
             ) : (
@@ -553,14 +553,14 @@ const SmsHistory = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${getStatusBadgeColor(sms.status)}`}>
-                      {sms.status === "DELIVERED" && "Dostarczona"}
-                      {sms.status === "PENDING" && "Oczekująca"}
-                      {sms.status === "FAILED" && "Nieudana"}
+                      {sms.status === "DELIVERED" && "Delivered"}
+                      {sms.status === "PENDING" && "Pending"}
+                      {sms.status === "FAILED" && "Failed"}
                       {!["DELIVERED", "PENDING", "FAILED"].includes(sms.status) && sms.status}
                     </span>
                     {sms.status === "FAILED" && sms.error && (
-                      <div className="mt-1 text-xs text-red-500 truncate max-w-[150px]" title={sms.error.message || "Nieznany błąd"}>
-                        {sms.error.code ? `${sms.error.code}: ` : ""}{sms.error.message || "Nieznany błąd"}
+                      <div className="mt-1 text-xs text-red-500 truncate max-w-[150px]" title={sms.error.message || "Unknown error"}>
+                        {sms.error.code ? `${sms.error.code}: ` : ""}{sms.error.message || "Unknown error"}
                       </div>
                     )}
                   </td>
@@ -572,7 +572,7 @@ const SmsHistory = () => {
                       onClick={() => handleViewDetails(sms)}
                       className="text-blue-600 hover:text-blue-900"
                     >
-                      Szczegóły
+                      Details
                     </button>
                   </td>
                 </tr>
@@ -586,7 +586,7 @@ const SmsHistory = () => {
       {!loading && !error && smsData.length > 0 && (
         <div className="flex justify-between items-center mb-6">
           <div className="text-sm text-gray-700">
-            Pokazano {smsData.length} z {pagination.total} wiadomości
+            Showing {smsData.length} of {pagination.total} messages
           </div>
           <div className="flex gap-2">
             <button
@@ -598,7 +598,7 @@ const SmsHistory = () => {
                   : "bg-white text-gray-700 hover:bg-gray-50 border"
               }`}
             >
-              Poprzednia
+              Previous
             </button>
             
             {getPageNumbers().map((pageNum) => (
@@ -624,7 +624,7 @@ const SmsHistory = () => {
                   : "bg-white text-gray-700 hover:bg-gray-50 border"
               }`}
             >
-              Następna
+              Next
             </button>
           </div>
         </div>
@@ -633,8 +633,8 @@ const SmsHistory = () => {
       {/* No Data Message */}
       {!loading && !error && smsData.length === 0 && (
         <div className="bg-gray-50 rounded-lg p-8 text-center">
-          <p className="text-gray-500 mb-2">Brak danych do wyświetlenia</p>
-          <p className="text-sm text-gray-400">Spróbuj zmienić filtry lub wyślij nowe wiadomości</p>
+          <p className="text-gray-500 mb-2">No data to display</p>
+          <p className="text-sm text-gray-400">Try adjusting filters or send new messages</p>
         </div>
       )}
       
@@ -643,13 +643,13 @@ const SmsHistory = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Trwałe usunięcie wpisów historii SMS
+              Permanently delete SMS history records
             </h3>
             <p className="text-gray-600 mb-4">
-              Ta operacja jest <strong>nieodwracalna</strong>. Wybrane wpisy historii SMS ({selectedHistoryIds.length}) zostaną trwale usunięte z bazy danych. Nie będzie można ich przywrócić.
+              This action is <strong>irreversible</strong>. The selected SMS history record(s) ({selectedHistoryIds.length}) will be permanently removed from the database and cannot be restored.
             </p>
             <p className="text-sm text-gray-500 mb-6">
-              Czy na pewno chcesz kontynuować?
+              Are you sure you want to continue?
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -658,7 +658,7 @@ const SmsHistory = () => {
                 disabled={bulkDeleteHistorySubmitting}
                 className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 type="button"
@@ -666,7 +666,7 @@ const SmsHistory = () => {
                 disabled={bulkDeleteHistorySubmitting}
                 className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
               >
-                {bulkDeleteHistorySubmitting ? "Usuwanie..." : "Tak, trwale usuń"}
+                {bulkDeleteHistorySubmitting ? "Deleting..." : "Yes, delete permanently"}
               </button>
             </div>
           </div>
@@ -680,7 +680,7 @@ const SmsHistory = () => {
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold text-gray-800">
-                  Szczegóły wiadomości SMS
+                  SMS message details
                 </h3>
                 <button
                   onClick={() => setShowDetails(false)}
@@ -692,17 +692,17 @@ const SmsHistory = () => {
               
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">ID wiadomości</p>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Message ID</p>
                   <p className="text-base text-gray-900">{selectedSms.messageId || "N/A"}</p>
                 </div>
                 
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">ID partii</p>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Batch ID</p>
                   <p className="text-base text-gray-900">{selectedSms.batchId || "N/A"}</p>
                 </div>
                 
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Odbiorca</p>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Recipient</p>
                   <p className="text-base text-gray-900">
                     {selectedSms.recipient?.phone || "N/A"}
                     {selectedSms.recipient?.userId && ` (ID: ${selectedSms.recipient.userId})`}
@@ -713,9 +713,9 @@ const SmsHistory = () => {
                   <p className="text-sm font-medium text-gray-500 mb-1">Status</p>
                   <p className="flex items-center">
                     <span className={`px-2 py-1 text-xs rounded-full ${getStatusBadgeColor(selectedSms.status)}`}>
-                      {selectedSms.status === "DELIVERED" && "Dostarczona"}
-                      {selectedSms.status === "PENDING" && "Oczekująca"}
-                      {selectedSms.status === "FAILED" && "Nieudana"}
+                      {selectedSms.status === "DELIVERED" && "Delivered"}
+                      {selectedSms.status === "PENDING" && "Pending"}
+                      {selectedSms.status === "FAILED" && "Failed"}
                       {!["DELIVERED", "PENDING", "FAILED"].includes(selectedSms.status) && selectedSms.status}
                     </span>
                   </p>
@@ -724,22 +724,22 @@ const SmsHistory = () => {
                 {/* Error Information (for failed messages) */}
                 {selectedSms.status === "FAILED" && selectedSms.error && (
                   <div className="bg-red-50 border border-red-100 rounded-lg p-3">
-                    <p className="text-sm font-medium text-red-700 mb-1">Informacje o błędzie</p>
+                    <p className="text-sm font-medium text-red-700 mb-1">Error details</p>
                     {selectedSms.error.code && (
                       <p className="text-sm text-red-600 mb-1">
-                        <span className="font-medium">Kod błędu:</span> {selectedSms.error.code}
+                        <span className="font-medium">Error code:</span> {selectedSms.error.code}
                       </p>
                     )}
                     {selectedSms.error.message && (
                       <p className="text-sm text-red-600">
-                        <span className="font-medium">Komunikat:</span> {selectedSms.error.message}
+                        <span className="font-medium">Message:</span> {selectedSms.error.message}
                       </p>
                     )}
                   </div>
                 )}
                 
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Treść wiadomości</p>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Message content</p>
                   <p className="text-base text-gray-900 p-3 bg-gray-50 rounded-lg">
                     {selectedSms.content}
                   </p>
@@ -747,23 +747,23 @@ const SmsHistory = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500 mb-1">Data utworzenia</p>
+                    <p className="text-sm font-medium text-gray-500 mb-1">Created at</p>
                     <p className="text-base text-gray-900">{formatDate(selectedSms.createdAt)}</p>
                   </div>
                   
                   <div>
-                    <p className="text-sm font-medium text-gray-500 mb-1">Data wysłania</p>
+                    <p className="text-sm font-medium text-gray-500 mb-1">Sent at</p>
                     <p className="text-base text-gray-900">{formatDate(selectedSms.sentAt)}</p>
                   </div>
                   
                   {selectedSms.status === "DELIVERED" ? (
                     <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Data dostarczenia</p>
+                      <p className="text-sm font-medium text-gray-500 mb-1">Delivered at</p>
                       <p className="text-base text-gray-900">{formatDate(selectedSms.deliveredAt)}</p>
                     </div>
                   ) : selectedSms.status === "FAILED" ? (
                     <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Data niepowodzenia</p>
+                      <p className="text-sm font-medium text-gray-500 mb-1">Failed at</p>
                       <p className="text-base text-gray-900">{formatDate(selectedSms.failedAt)}</p>
                     </div>
                   ) : null}
@@ -772,7 +772,7 @@ const SmsHistory = () => {
                 {/* Provider Response (if available) */}
                 {selectedSms.providerResponse && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500 mb-1">Odpowiedź dostawcy SMS</p>
+                    <p className="text-sm font-medium text-gray-500 mb-1">SMS provider response</p>
                     <p className="text-sm text-gray-600 p-2 bg-gray-50 rounded border">
                       {typeof selectedSms.providerResponse === 'object'
                         ? JSON.stringify(selectedSms.providerResponse, null, 2)
@@ -787,7 +787,7 @@ const SmsHistory = () => {
                   onClick={() => setShowDetails(false)}
                   className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
                 >
-                  Zamknij
+                  Close
                 </button>
               </div>
             </div>

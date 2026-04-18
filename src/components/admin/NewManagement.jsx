@@ -76,7 +76,7 @@ const NewsManagement = () => {
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString("pl-PL", {
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -96,7 +96,7 @@ const NewsManagement = () => {
       setNewsArticles(response.data);
       setError(null);
     } catch (err) {
-      setError("Nie udało się pobrać artykułów. Spróbuj ponownie.");
+      setError("Failed to load articles. Please try again.");
       console.error("Error fetching news articles:", err);
     } finally {
       setLoading(false);
@@ -176,11 +176,11 @@ const NewsManagement = () => {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.title.trim()) errors.title = "Tytuł jest wymagany";
-    if (!formData.date.trim()) errors.date = "Data jest wymagana";
-    if (!formData.shortDescription.trim()) errors.shortDescription = "Krótki opis jest wymagany";
-    if (!formData.description.trim()) errors.description = "Opis jest wymagany";
-    if (!formData.category) errors.category = "Kategoria jest wymagana";
+    if (!formData.title.trim()) errors.title = "Title is required";
+    if (!formData.date.trim()) errors.date = "Date is required";
+    if (!formData.shortDescription.trim()) errors.shortDescription = "Short description is required";
+    if (!formData.description.trim()) errors.description = "Description is required";
+    if (!formData.category) errors.category = "Category is required";
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -188,7 +188,7 @@ const NewsManagement = () => {
 
   const validateCategoryForm = () => {
     const errors = {};
-    if (!categoryFormData.name.trim()) errors.name = "Nazwa kategorii jest wymagana";
+    if (!categoryFormData.name.trim()) errors.name = "Category name is required";
     setCategoryErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -234,7 +234,7 @@ const NewsManagement = () => {
       setIsModalOpen(false);
       fetchNewsArticles();
     } catch (err) {
-      setError("Nie udało się zapisać artykułu. Spróbuj ponownie.");
+      setError("Failed to save article. Please try again.");
       console.error("Error saving news article:", err);
     } finally {
       setIsSubmitting(false);
@@ -258,7 +258,7 @@ const NewsManagement = () => {
       setIsCategoryModalOpen(false);
     } catch (err) {
       setCategoryErrors({
-        name: "Nie udało się utworzyć kategorii. Może już istnieć."
+        name: "Could not create category. It may already exist."
       });
       console.error("Error creating category:", err);
     } finally {
@@ -276,7 +276,7 @@ const NewsManagement = () => {
       setIsCategoryDeleteModalOpen(false);
       setCategoryToDelete(null);
     } catch (err) {
-      setError("Nie udało się usunąć kategorii. Może być używana przez artykuły.");
+      setError("Failed to delete category. It may be in use by articles.");
       console.error("Error deleting category:", err);
     } finally {
       setLoading(false);
@@ -331,7 +331,7 @@ const NewsManagement = () => {
       setIsConfirmModalOpen(false);
       setArticleToDelete(null);
     } catch (err) {
-      setError("Nie udało się usunąć artykułu. Spróbuj ponownie.");
+      setError("Failed to delete article. Please try again.");
       console.error("Error deleting news article:", err);
     } finally {
       setLoading(false);
@@ -367,7 +367,7 @@ const NewsManagement = () => {
 
   const getCategoryName = (categoryId) => {
     const category = categories.find(cat => cat._id === categoryId);
-    return category ? category.name : "Nieznana";
+    return category ? category.name : "Unknown";
   };
 
   const filteredArticles = searchTerm
@@ -393,13 +393,13 @@ const NewsManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">
-          Zarządzanie Aktualnościami
+          News management
         </h1>
         <div className="flex items-center gap-4">
           <div className="relative">
             <input
               type="text"
-              placeholder="Szukaj aktualności..."
+              placeholder="Search news..."
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -414,14 +414,14 @@ const NewsManagement = () => {
             className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-300"
           >
             <Tag size={18} />
-            <span>Dodaj Kategorię</span>
+            <span>Add category</span>
           </button>
           <button
             onClick={openAddModal}
             className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg transition-colors duration-300"
           >
             <PlusCircle size={18} />
-            <span>Dodaj Aktualność</span>
+            <span>Add news item</span>
           </button>
         </div>
       </div>
@@ -439,7 +439,7 @@ const NewsManagement = () => {
 
       {/* Categories Section */}
       <div className="mb-6">
-        <h2 className="text-lg font-medium text-gray-800 mb-3">Kategorie</h2>
+        <h2 className="text-lg font-medium text-gray-800 mb-3">Categories</h2>
         <div className="flex flex-wrap gap-2">
           {categories.length > 0 ? (
             categories.map((category) => (
@@ -457,7 +457,7 @@ const NewsManagement = () => {
               </div>
             ))
           ) : (
-            <p className="text-gray-500 text-sm">Brak kategorii. Dodaj pierwszą, aby rozpocząć.</p>
+            <p className="text-gray-500 text-sm">No categories yet. Add one to get started.</p>
           )}
         </div>
       </div>
@@ -468,25 +468,25 @@ const NewsManagement = () => {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tytuł
+                Title
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Autor
+                Author
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Data
+                Date
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Kategoria
+                Category
               </th>
               {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Wyświetlenia/Polubienia
+                Views / likes
               </th> */}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Typ
+                Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Akcje
+                Actions
               </th>
             </tr>
           </thead>
@@ -494,7 +494,7 @@ const NewsManagement = () => {
             {loading && !newsArticles.length ? (
               <tr>
                 <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                  Ładowanie aktualności...
+                  Loading news...
                 </td>
               </tr>
             ) : filteredArticles.length ? (
@@ -527,7 +527,7 @@ const NewsManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium">
                       <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                        {article.category?.name || getCategoryName(article.category) || "Bez kategorii"}
+                        {article.category?.name || getCategoryName(article.category) || "Uncategorized"}
                       </span>
                     </div>
                   </td>
@@ -546,7 +546,7 @@ const NewsManagement = () => {
                           : "bg-blue-100 text-blue-800"
                       }`}
                     >
-                      {article.isNews ? "Aktualność" : "Artykuł"}
+                      {article.isNews ? "News" : "Article"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -570,7 +570,7 @@ const NewsManagement = () => {
             ) : (
               <tr>
                 <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                  Nie znaleziono aktualności.
+                  No news items found.
                 </td>
               </tr>
             )}
@@ -583,23 +583,23 @@ const NewsManagement = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Potwierdź usunięcie
+              Confirm deletion
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Czy na pewno chcesz usunąć "{articleToDelete?.title}"? Tej operacji nie można cofnąć.
+              Are you sure you want to delete &quot;{articleToDelete?.title}&quot;? This cannot be undone.
             </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setIsConfirmModalOpen(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 onClick={deleteArticle}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
               >
-                Usuń
+                Delete
               </button>
             </div>
           </div>
@@ -611,23 +611,23 @@ const NewsManagement = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Potwierdź usunięcie kategorii
+              Confirm category deletion
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Czy na pewno chcesz usunąć kategorię "{categoryToDelete?.name}"? Tej operacji nie można cofnąć.
+              Are you sure you want to delete category &quot;{categoryToDelete?.name}&quot;? This cannot be undone.
             </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setIsCategoryDeleteModalOpen(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 onClick={deleteCategory}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
               >
-                Usuń
+                Delete
               </button>
             </div>
           </div>
@@ -641,7 +641,7 @@ const NewsManagement = () => {
             <div className={modalStyles.content}>
               <div className={modalStyles.header}>
                 <h3 className="text-lg font-medium text-gray-900">
-                  {currentArticle ? "Edytuj Aktualność" : "Dodaj Nową Aktualność"}
+                  {currentArticle ? "Edit news item" : "Add news item"}
                 </h3>
                 <button
                   onClick={() => {
@@ -673,7 +673,7 @@ const NewsManagement = () => {
                       htmlFor="title"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Tytuł
+                      Title
                     </label>
                     <input
                       type="text"
@@ -699,7 +699,7 @@ const NewsManagement = () => {
                       htmlFor="author"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Autor
+                      Author
                     </label>
                     <input
                       type="text"
@@ -725,7 +725,7 @@ const NewsManagement = () => {
                       htmlFor="date"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Data
+                      Date
                     </label>
                     <input
                       type="date"
@@ -749,7 +749,7 @@ const NewsManagement = () => {
                       htmlFor="category"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Kategoria
+                      Category
                     </label>
                     <select
                       name="category"
@@ -764,7 +764,7 @@ const NewsManagement = () => {
                           : "border-gray-300 focus:border-teal-500 focus:ring-teal-500"
                       }`}
                     >
-                      <option value="">Wybierz kategorię</option>
+                      <option value="">Select a category</option>
                       {categories.map((category) => (
                         <option key={category._id} value={category._id}>
                           {category.name}
@@ -784,7 +784,7 @@ const NewsManagement = () => {
                     htmlFor="shortDescription"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    Krótki opis
+                    Short description
                   </label>
                   <textarea
                     name="shortDescription"
@@ -792,7 +792,7 @@ const NewsManagement = () => {
                     rows={2}
                     value={formData.shortDescription}
                     onChange={handleInputChange}
-                    placeholder="Wprowadź krótki opis, który będzie widoczny na liście aktualności"
+                    placeholder="Short summary shown in the news list"
                     className={`mt-1 block w-full rounded-md shadow-sm ${
                       formErrors.shortDescription
                         ? "border-red-300 focus:border-red-500 focus:ring-red-500"
@@ -811,7 +811,7 @@ const NewsManagement = () => {
                     htmlFor="description"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    Pełny opis
+                    Full description
                   </label>
                   <div className="mt-1">
                     <RichTextEditor
@@ -828,7 +828,7 @@ const NewsManagement = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Zdjęcie okładkowe
+                    Cover image
                   </label>
                   <div className="mt-1 flex items-center space-x-4">
                     <input
@@ -878,7 +878,7 @@ const NewsManagement = () => {
                     htmlFor="isNews"
                     className="ml-2 block text-sm text-gray-900"
                   >
-                    To jest aktualność (nie artykuł)
+                    This is a news item (not a long article)
                   </label>
                 </div>
 
@@ -893,7 +893,7 @@ const NewsManagement = () => {
                       disabled={isSubmitting}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Anuluj
+                      Cancel
                     </button>
                     <button
                       type="submit"
@@ -906,10 +906,10 @@ const NewsManagement = () => {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          {currentArticle ? "Zapisywanie..." : "Dodawanie..."}
+                          {currentArticle ? "Saving..." : "Adding..."}
                         </>
                       ) : (
-                        currentArticle ? "Zapisz zmiany" : "Dodaj"
+                        currentArticle ? "Save changes" : "Add"
                       )}
                     </button>
                   </div>
@@ -926,7 +926,7 @@ const NewsManagement = () => {
           <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium text-gray-900">
-                Dodaj Nową Kategorię
+                Add category
               </h3>
               <button
                 onClick={() => setIsCategoryModalOpen(false)}
@@ -954,7 +954,7 @@ const NewsManagement = () => {
                   htmlFor="categoryName"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Nazwa Kategorii
+                  Category name
                 </label>
                 <input
                   type="text"
@@ -987,10 +987,10 @@ const NewsManagement = () => {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Dodawanie...
+                      Adding...
                     </>
                   ) : (
-                    "Dodaj"
+                    "Add"
                   )}
                 </button>
               </div>

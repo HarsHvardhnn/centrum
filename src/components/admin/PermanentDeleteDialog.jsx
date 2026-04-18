@@ -18,7 +18,7 @@ const PermanentDeleteDialog = ({
 
   const handleDelete = async () => {
     if (inputText !== confirmText) {
-      toast.error(`Proszę wpisać "${confirmText}" aby potwierdzić`);
+      toast.error(`Please type "${confirmText}" to confirm`);
       return;
     }
 
@@ -38,13 +38,13 @@ const PermanentDeleteDialog = ({
 
       const result = await deleteRecord(endpoint, id);
       
-      toast.success(result.message || 'Rekord został trwale usunięty');
+      toast.success(result.message || 'Record permanently deleted');
       onSuccess?.();
       onClose();
       setInputText('');
     } catch (err) {
       console.error('Delete error:', err);
-      toast.error(err.message || 'Nie udało się usunąć rekordu');
+      toast.error(err.message || 'Failed to delete record');
     }
   };
 
@@ -73,7 +73,7 @@ const PermanentDeleteDialog = ({
         
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Wpisz <strong className="text-red-600">{confirmText}</strong> aby potwierdzić:
+            Type <strong className="text-red-600">{confirmText}</strong> to confirm:
           </label>
           <input
             type="text"
@@ -98,14 +98,14 @@ const PermanentDeleteDialog = ({
             disabled={loading}
             className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
           >
-            Anuluj
+            Cancel
           </button>
           <button
             onClick={handleDelete}
             disabled={loading || inputText !== confirmText}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Usuwanie...' : 'Trwale usuń'}
+            {loading ? 'Deleting...' : 'Delete permanently'}
           </button>
         </div>
       </div>

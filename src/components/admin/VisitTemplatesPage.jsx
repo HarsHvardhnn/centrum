@@ -7,11 +7,11 @@ import { toast } from "sonner";
 const DEBOUNCE_MS = 300;
 
 const SECTION_KEYS = [
-  { key: "interview", label: "Wywiad z pacjentem" },
-  { key: "physicalExamination", label: "Badanie przedmiotowe" },
-  { key: "treatment", label: "Zastosowane leczenie" },
-  { key: "recommendations", label: "Zalecenia" },
-  { key: "notes", label: "Notatki" },
+  { key: "interview", label: "Patient interview" },
+  { key: "physicalExamination", label: "Physical examination" },
+  { key: "treatment", label: "Treatment given" },
+  { key: "recommendations", label: "Recommendations" },
+  { key: "notes", label: "Notes" },
 ];
 
 export default function VisitTemplatesPage() {
@@ -64,7 +64,7 @@ export default function VisitTemplatesPage() {
     visitTemplatesHelper
       .listSectionTemplates(sectionFilter || null)
       .then(setSectionTemplates)
-      .catch(() => toast.error("Nie udało się pobrać szablonów sekcji"))
+      .catch(() => toast.error("Failed to load section templates"))
       .finally(() => setLoading(false));
   };
 
@@ -73,7 +73,7 @@ export default function VisitTemplatesPage() {
     visitTemplatesHelper
       .listGlobalTemplates()
       .then(setGlobalTemplates)
-      .catch(() => toast.error("Nie udało się pobrać szablonów globalnych"))
+      .catch(() => toast.error("Failed to load global templates"))
       .finally(() => setLoading(false));
   };
 
@@ -106,7 +106,7 @@ export default function VisitTemplatesPage() {
 
   const saveSectionTemplate = async () => {
     if (!formName.trim()) {
-      toast.error("Nazwa szablonu jest wymagana");
+      toast.error("Template name is required");
       return;
     }
     try {
@@ -115,30 +115,30 @@ export default function VisitTemplatesPage() {
           name: formName.trim(),
           content: formContent,
         });
-        toast.success("Szablon zaktualizowany");
+        toast.success("Template updated");
       } else {
         await visitTemplatesHelper.createSectionTemplate({
           sectionKey: formSectionKey,
           name: formName.trim(),
           content: formContent,
         });
-        toast.success("Szablon utworzony");
+        toast.success("Template created");
       }
       setShowSectionForm(false);
       loadSectionTemplates();
     } catch (e) {
-      toast.error(e?.message || "Nie udało się zapisać szablonu");
+      toast.error(e?.message || "Failed to save template");
     }
   };
 
   const deleteSectionTemplate = async (id) => {
-    if (!window.confirm("Czy na pewno usunąć ten szablon?")) return;
+    if (!window.confirm("Delete this template?")) return;
     try {
       await visitTemplatesHelper.deleteSectionTemplate(id);
-      toast.success("Szablon usunięty");
+      toast.success("Template deleted");
       loadSectionTemplates();
     } catch (e) {
-      toast.error(e?.message || "Nie udało się usunąć szablonu");
+      toast.error(e?.message || "Failed to delete template");
     }
   };
 
@@ -260,7 +260,7 @@ export default function VisitTemplatesPage() {
 
   const saveGlobalTemplate = async () => {
     if (!formName.trim()) {
-      toast.error("Nazwa szablonu jest wymagana");
+      toast.error("Template name is required");
       return;
     }
     const diagnoses = formDiagnoses
@@ -277,7 +277,7 @@ export default function VisitTemplatesPage() {
           diagnoses,
           procedures,
         });
-        toast.success("Szablon globalny zaktualizowany");
+        toast.success("Global template updated");
       } else {
         await visitTemplatesHelper.createGlobalTemplate({
           name: formName.trim(),
@@ -285,23 +285,23 @@ export default function VisitTemplatesPage() {
           diagnoses,
           procedures,
         });
-        toast.success("Szablon globalny utworzony");
+        toast.success("Global template created");
       }
       setShowGlobalForm(false);
       loadGlobalTemplates();
     } catch (e) {
-      toast.error(e?.message || "Nie udało się zapisać szablonu");
+      toast.error(e?.message || "Failed to save template");
     }
   };
 
   const deleteGlobalTemplate = async (id) => {
-    if (!window.confirm("Czy na pewno usunąć ten szablon globalny?")) return;
+    if (!window.confirm("Delete this global template?")) return;
     try {
       await visitTemplatesHelper.deleteGlobalTemplate(id);
-      toast.success("Szablon usunięty");
+      toast.success("Template deleted");
       loadGlobalTemplates();
     } catch (e) {
-      toast.error(e?.message || "Nie udało się usunąć szablonu");
+      toast.error(e?.message || "Failed to delete template");
     }
   };
 
@@ -313,9 +313,9 @@ export default function VisitTemplatesPage() {
             <FileStack size={24} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Szablony dokumentów</h1>
+            <h1 className="text-xl font-bold text-gray-900">Document templates</h1>
             <p className="text-sm text-gray-500">
-              Szablony sekcji (jedna sekcja) i szablony globalne (cała wizyta) do karty wizyty.
+              Section templates (single section) and global templates (full visit) for the visit note.
             </p>
           </div>
         </div>
@@ -330,7 +330,7 @@ export default function VisitTemplatesPage() {
                 : "text-gray-600 hover:bg-gray-100"
             }`}
           >
-            Szablony sekcji
+            Section templates
           </button>
           <button
             type="button"
@@ -341,7 +341,7 @@ export default function VisitTemplatesPage() {
                 : "text-gray-600 hover:bg-gray-100"
             }`}
           >
-            Szablony globalne
+            Global templates
           </button>
         </div>
 
@@ -353,7 +353,7 @@ export default function VisitTemplatesPage() {
                 onChange={(e) => setSectionFilter(e.target.value)}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
               >
-                <option value="">Wszystkie sekcje</option>
+                <option value="">All sections</option>
                 {sectionKeys.map((s) => (
                   <option key={s.key} value={s.key}>
                     {s.label}
@@ -366,13 +366,13 @@ export default function VisitTemplatesPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700"
               >
                 <Plus size={18} />
-                Dodaj szablon sekcji
+                Add section template
               </button>
             </div>
             {loading ? (
-              <p className="text-gray-500 py-8 text-center">Ładowanie…</p>
+              <p className="text-gray-500 py-8 text-center">Loading…</p>
             ) : sectionTemplates.length === 0 ? (
-              <p className="text-gray-500 py-8 text-center">Brak szablonów sekcji.</p>
+              <p className="text-gray-500 py-8 text-center">No section templates.</p>
             ) : (
               <ul className="space-y-3">
                 {sectionTemplates.map((t) => (
@@ -396,7 +396,7 @@ export default function VisitTemplatesPage() {
                         type="button"
                         onClick={() => openEditSectionForm(t)}
                         className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                        title="Edytuj"
+                        title="Edit"
                       >
                         <Pencil size={18} />
                       </button>
@@ -404,7 +404,7 @@ export default function VisitTemplatesPage() {
                         type="button"
                         onClick={() => deleteSectionTemplate(t._id)}
                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        title="Usuń"
+                        title="Delete"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -425,13 +425,13 @@ export default function VisitTemplatesPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700"
               >
                 <Plus size={18} />
-                Dodaj szablon globalny
+                Add global template
               </button>
             </div>
             {loading ? (
-              <p className="text-gray-500 py-8 text-center">Ładowanie…</p>
+              <p className="text-gray-500 py-8 text-center">Loading…</p>
             ) : globalTemplates.length === 0 ? (
-              <p className="text-gray-500 py-8 text-center">Brak szablonów globalnych.</p>
+              <p className="text-gray-500 py-8 text-center">No global templates.</p>
             ) : (
               <ul className="space-y-3">
                 {globalTemplates.map((t) => (
@@ -446,14 +446,14 @@ export default function VisitTemplatesPage() {
                         onClick={() => openEditGlobalForm(t)}
                         className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                       >
-                        <Pencil size={14} /> Edytuj
+                        <Pencil size={14} /> Edit
                       </button>
                       <button
                         type="button"
                         onClick={() => deleteGlobalTemplate(t._id)}
                         className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
                       >
-                        <Trash2 size={14} /> Usuń
+                        <Trash2 size={14} /> Delete
                       </button>
                     </div>
                   </li>
@@ -470,7 +470,7 @@ export default function VisitTemplatesPage() {
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="text-lg font-semibold">
-                {editingSectionId ? "Edytuj szablon sekcji" : "Nowy szablon sekcji"}
+                {editingSectionId ? "Edit section template" : "New section template"}
               </h3>
               <button type="button" onClick={() => setShowSectionForm(false)} className="p-1 rounded hover:bg-gray-100">
                 <X size={20} />
@@ -478,7 +478,7 @@ export default function VisitTemplatesPage() {
             </div>
             <div className="p-4 space-y-4 overflow-y-auto">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sekcja</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
                 <select
                   value={formSectionKey}
                   onChange={(e) => setFormSectionKey(e.target.value)}
@@ -491,32 +491,32 @@ export default function VisitTemplatesPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nazwa szablonu (po polsku)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Template name</label>
                 <input
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="np. Wywiad chirurgiczny"
+                  placeholder="e.g. Surgical history"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Treść</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
                 <textarea
                   value={formContent}
                   onChange={(e) => setFormContent(e.target.value)}
                   rows={8}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  placeholder="Tekst szablonu..."
+                  placeholder="Template text..."
                 />
               </div>
             </div>
             <div className="p-4 border-t flex justify-end gap-2">
               <button type="button" onClick={() => setShowSectionForm(false)} className="px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-50">
-                Anuluj
+                Cancel
               </button>
               <button type="button" onClick={saveSectionTemplate} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
-                Zapisz
+                Save
               </button>
             </div>
           </div>
@@ -529,7 +529,7 @@ export default function VisitTemplatesPage() {
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="text-lg font-semibold">
-                {editingGlobalId ? "Edytuj szablon globalny" : "Nowy szablon globalny"}
+                {editingGlobalId ? "Edit global template" : "New global template"}
               </h3>
               <button type="button" onClick={() => setShowGlobalForm(false)} className="p-1 rounded hover:bg-gray-100">
                 <X size={20} />
@@ -537,12 +537,12 @@ export default function VisitTemplatesPage() {
             </div>
             <div className="p-4 space-y-4 overflow-y-auto">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nazwa szablonu (po polsku)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Template name</label>
                 <input
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="np. Konsultacja chirurgiczna"
+                  placeholder="e.g. Surgical consultation"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 />
               </div>
@@ -556,14 +556,14 @@ export default function VisitTemplatesPage() {
                     }
                     rows={3}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    placeholder={`Treść dla ${s.label}...`}
+                    placeholder={`Content for ${s.label}...`}
                   />
                 </div>
               ))}
 
               {/* Rozpoznanie (ICD-10) – search API, select from dropdown */}
               <div className="border-t border-gray-200 pt-4" ref={icd10DropdownRef}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rozpoznanie (ICD-10)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Diagnosis (ICD-10)</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <input
@@ -571,15 +571,15 @@ export default function VisitTemplatesPage() {
                     value={icd10SearchValue}
                     onChange={(e) => setIcd10SearchValue(e.target.value)}
                     onFocus={() => icd10SearchResults.length > 0 && setIcd10ShowDropdown(true)}
-                    placeholder="Wyszukaj wg kodu ICD-10 lub nazwy choroby..."
+                    placeholder="Search by ICD-10 code or disease name..."
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
                   />
                   {icd10ShowDropdown && (icd10SearchValue.trim() || icd10SearchResults.length > 0) && (
                     <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                       {icd10SearchLoading ? (
-                        <div className="p-3 text-sm text-gray-500">Szukam...</div>
+                        <div className="p-3 text-sm text-gray-500">Searching...</div>
                       ) : icd10SearchResults.length === 0 ? (
-                        <div className="p-3 text-sm text-gray-500">Brak wyników</div>
+                        <div className="p-3 text-sm text-gray-500">No results</div>
                       ) : (
                         icd10SearchResults.map((item, i) => (
                           <button
@@ -601,7 +601,7 @@ export default function VisitTemplatesPage() {
                     {formDiagnoses.map((d, index) => (
                       <li key={index} className="flex flex-wrap items-center gap-2 p-2 bg-teal-50 rounded-lg border border-teal-100">
                         <span className="text-xs font-medium text-teal-800 px-2 py-0.5 rounded bg-teal-100">
-                          {d.isPrimary ? "Główne" : "Dodatkowe"}
+                          {d.isPrimary ? "Primary" : "Secondary"}
                         </span>
                         <span className="text-sm text-gray-800 flex-1 min-w-0 truncate">{d.code} {d.name}</span>
                         <label className="flex items-center gap-1.5 text-sm text-gray-600 whitespace-nowrap">
@@ -611,21 +611,21 @@ export default function VisitTemplatesPage() {
                             onChange={(e) => updateDiagnosis(index, "isPrimary", e.target.checked)}
                             className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                           />
-                          główne
+                          primary
                         </label>
-                        <button type="button" onClick={() => removeDiagnosis(index)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Usuń">
+                        <button type="button" onClick={() => removeDiagnosis(index)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Remove">
                           <Trash2 size={16} />
                         </button>
                       </li>
                     ))}
                   </ul>
                 )}
-                <p className="text-xs text-gray-500 mt-1">Wpisz kod lub nazwę, wybierz z listy, aby dodać rozpoznanie.</p>
+                <p className="text-xs text-gray-500 mt-1">Type a code or name and pick from the list to add a diagnosis.</p>
               </div>
 
               {/* Procedury (ICD-9) – search API, select from dropdown */}
               <div className="border-t border-gray-200 pt-4" ref={icd9DropdownRef}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Procedury (ICD-9)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Procedures (ICD-9)</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <input
@@ -633,15 +633,15 @@ export default function VisitTemplatesPage() {
                     value={icd9SearchValue}
                     onChange={(e) => setIcd9SearchValue(e.target.value)}
                     onFocus={() => icd9SearchResults.length > 0 && setIcd9ShowDropdown(true)}
-                    placeholder="Wyszukaj wg kodu ICD-9 lub nazwy procedury..."
+                    placeholder="Search by ICD-9 code or procedure name..."
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
                   />
                   {icd9ShowDropdown && (icd9SearchValue.trim() || icd9SearchResults.length > 0) && (
                     <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
                       {icd9SearchLoading ? (
-                        <div className="p-3 text-sm text-gray-500">Szukam...</div>
+                        <div className="p-3 text-sm text-gray-500">Searching...</div>
                       ) : icd9SearchResults.length === 0 ? (
-                        <div className="p-3 text-sm text-gray-500">Brak wyników</div>
+                        <div className="p-3 text-sm text-gray-500">No results</div>
                       ) : (
                         icd9SearchResults.map((item, i) => (
                           <button
@@ -663,22 +663,22 @@ export default function VisitTemplatesPage() {
                     {formProcedures.map((p, index) => (
                       <li key={index} className="flex flex-wrap items-center gap-2 p-2 bg-teal-50 rounded-lg border border-teal-100">
                         <span className="text-sm text-gray-800 flex-1 min-w-0 truncate">{p.code} {p.name}</span>
-                        <button type="button" onClick={() => removeProcedure(index)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Usuń">
+                        <button type="button" onClick={() => removeProcedure(index)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Remove">
                           <Trash2 size={16} />
                         </button>
                       </li>
                     ))}
                   </ul>
                 )}
-                <p className="text-xs text-gray-500 mt-1">Wpisz kod lub nazwę, wybierz z listy, aby dodać procedurę.</p>
+                <p className="text-xs text-gray-500 mt-1">Type a code or name and pick from the list to add a procedure.</p>
               </div>
             </div>
             <div className="p-4 border-t flex justify-end gap-2">
               <button type="button" onClick={() => setShowGlobalForm(false)} className="px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-50">
-                Anuluj
+                Cancel
               </button>
               <button type="button" onClick={saveGlobalTemplate} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
-                Zapisz
+                Save
               </button>
             </div>
           </div>

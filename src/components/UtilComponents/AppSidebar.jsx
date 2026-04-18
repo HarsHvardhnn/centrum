@@ -110,7 +110,7 @@ const SidebarSection = ({ title, children, dividerAbove, collapsed }) => (
 );
 
 /**
- * New sidebar matching the design: NAWIGACJA, SZYBKIE AKCJE, SYSTEMOWE, Wyloguj się.
+ * New sidebar: Navigation, Quick actions, System, Log out.
  * Previous component: UtilComponents/Sidebar.jsx (kept, not used).
  */
 const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) => {
@@ -147,8 +147,8 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
           type="button"
           onClick={toggleSidebar}
           className="p-2 rounded-lg text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors"
-          title={isOpen ? "Zwiń menu" : "Rozwiń menu"}
-          aria-label={isOpen ? "Zwiń menu" : "Rozwiń menu"}
+          title={isOpen ? "Collapse menu" : "Expand menu"}
+          aria-label={isOpen ? "Collapse menu" : "Expand menu"}
         >
           {isOpen ? (
             <PanelLeftClose size={22} strokeWidth={2} />
@@ -159,89 +159,89 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
       </div>
 
       <nav className={collapsed ? "px-2" : "px-3"}>
-        {/* NAWIGACJA */}
-        <SidebarSection title="Nawigacja" collapsed={collapsed}>
+        {/* Navigation */}
+        <SidebarSection title="Navigation" collapsed={collapsed}>
           <NavItem
             icon={<Home size={ICON_SIZE} strokeWidth={2} />}
-            label="Panel główny"
+            label="Dashboard"
             to="/administracja"
             isActive={currentPath === "/administracja"}
             collapsed={collapsed}
           />
           <NavItem
             icon={<FileEdit size={ICON_SIZE} strokeWidth={2} />}
-            label="Dodaj wizytę"
+            label="Add appointment"
             to="/wizyta/utworz"
             isActive={currentPath === "/wizyta/utworz"}
             collapsed={collapsed}
           />
           <NavItem
             icon={<Stethoscope size={ICON_SIZE} strokeWidth={2} />}
-            label="Wizyty lekarskie"
+            label="Medical appointments"
             to={wizytyPath}
             isActive={isWizytyActive}
             collapsed={collapsed}
           />
           <NavItem
             icon={<Calendar size={ICON_SIZE} strokeWidth={2} />}
-            label="Kalendarz"
+            label="Calendar"
             to="/administracja/kalendarz"
             isActive={currentPath === "/administracja/kalendarz"}
             collapsed={collapsed}
           />
           <NavItem
             icon={<Users size={ICON_SIZE} strokeWidth={2} />}
-            label="Lista pacjentów"
+            label="Patient list"
             to="/pacjenci"
             isActive={currentPath === "/pacjenci"}
             collapsed={collapsed}
           />
         </SidebarSection>
 
-        {/* SZYBKIE AKCJE */}
-        <SidebarSection title="Szybkie akcje" dividerAbove collapsed={collapsed}>
+        {/* Quick actions */}
+        <SidebarSection title="Quick actions" dividerAbove collapsed={collapsed}>
           <NavItem
             icon={<Pill size={ICON_SIZE} strokeWidth={2} />}
-            label="E-recepta"
-            onClick={openComingSoon("E-recepta")}
+            label="E-prescription"
+            onClick={openComingSoon("E-prescription")}
             isActive={false}
             collapsed={collapsed}
           />
           <NavItem
             icon={<FilePlus size={ICON_SIZE} strokeWidth={2} />}
-            label="E-skierowanie"
-            onClick={openComingSoon("E-skierowanie")}
+            label="E-referral"
+            onClick={openComingSoon("E-referral")}
             isActive={false}
             collapsed={collapsed}
           />
           <NavItem
             icon={<FileCheck size={ICON_SIZE} strokeWidth={2} />}
-            label="e-ZLA"
-            onClick={openComingSoon("e-ZLA")}
+            label="e-Sick leave"
+            onClick={openComingSoon("e-Sick leave")}
             isActive={false}
             collapsed={collapsed}
           />
         </SidebarSection>
 
-        {/* SYSTEMOWE */}
-        <SidebarSection title="Systemowe" dividerAbove collapsed={collapsed}>
+        {/* System */}
+        <SidebarSection title="System" dividerAbove collapsed={collapsed}>
           <NavItem
             icon={<History size={ICON_SIZE} strokeWidth={2} />}
-            label="Historia wizyt"
+            label="Visit history"
             to="/klinika"
             isActive={currentPath === "/klinika"}
             collapsed={collapsed}
           />
           <NavItem
             icon={<TrendingUp size={ICON_SIZE} strokeWidth={2} />}
-            label="Rozliczenia"
+            label="Billing"
             to="/administracja/rozliczenia"
             isActive={currentPath === "/administracja/rozliczenia"}
             collapsed={collapsed}
           />
           <NavItem
             icon={<Settings size={ICON_SIZE} strokeWidth={2} />}
-            label="Ustawienia"
+            label="Settings"
             to="/ustawienia"
             isActive={currentPath === "/ustawienia"}
             collapsed={collapsed}
@@ -249,7 +249,7 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
           {user?.role !== "doctor" && (
             <NavItem
               icon={<Mail size={ICON_SIZE} strokeWidth={2} />}
-              label="Wiadomości kontaktowe"
+              label="Contact messages"
               to="/administracja/wiadomosci-kontaktowe"
               isActive={currentPath === "/administracja/wiadomosci-kontaktowe"}
               collapsed={collapsed}
@@ -257,7 +257,7 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
           )}
         </SidebarSection>
 
-        {/* Chat + Wyloguj się */}
+        {/* Chat + Log out */}
         <div className="border-t border-gray-200 pt-4 mt-4">
           <NavItem
             icon={<MessageCircle size={ICON_SIZE} strokeWidth={2} />}
@@ -268,7 +268,7 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
           />
           <NavItem
             icon={<LogOut size={ICON_SIZE} strokeWidth={2} />}
-            label="Wyloguj się"
+            label="Log out"
             onClick={handleLogout}
             isActive={false}
             collapsed={collapsed}
@@ -278,7 +278,7 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
       <FeatureComingSoonModal
         isOpen={comingSoonModal.open}
         onClose={closeComingSoon}
-        featureName={comingSoonModal.featureName || "Ta funkcja"}
+        featureName={comingSoonModal.featureName || "This feature"}
       />
     </aside>
   );

@@ -78,11 +78,11 @@ const DoctorAppointmentChart = () => {
             setSelectedDoctor(response.data[0]._id);
           }
         } else {
-          setError("Nie udało się pobrać listy lekarzy");
+          setError("Failed to load doctor list");
         }
       } catch (err) {
         console.error("Error fetching doctors:", err);
-        setError("Błąd podczas pobierania listy lekarzy");
+        setError("Error loading doctor list");
       } finally {
         setLoading(false);
         hideLoader();
@@ -109,11 +109,11 @@ const DoctorAppointmentChart = () => {
       if (response?.success && response?.data) {
         setStatsData(response.data);
       } else {
-        setError("Nie udało się pobrać statystyk");
+        setError("Failed to load statistics");
       }
     } catch (err) {
       console.error("Error fetching appointment stats:", err);
-      setError(err.response?.data?.message || "Błąd podczas pobierania statystyk");
+      setError(err.response?.data?.message || "Error loading statistics");
       setStatsData(null);
     } finally {
       setLoading(false);
@@ -123,13 +123,13 @@ const DoctorAppointmentChart = () => {
 
   const getSelectedDoctorName = () => {
     const doctor = doctors.find(d => d._id === selectedDoctor);
-    return doctor ? stripDoctorTitle(doctor.name) : "Wszyscy lekarze";
+    return doctor ? stripDoctorTitle(doctor.name) : "All doctors";
   };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium">Wizyty lekarskie</h2>
+        <h2 className="text-lg font-medium">Medical appointments</h2>
         <div className="flex items-center gap-2">
           {user?.role !== "doctor" ? (
             <div className="relative">
@@ -170,27 +170,27 @@ const DoctorAppointmentChart = () => {
               className={`px-3 py-1 text-sm rounded ${timeframe === "day" ? "bg-teal-100 text-teal-700 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
               onClick={() => setTimeframe("day")}
             >
-              Dzień
+              Day
             </button>
             <button
               type="button"
               className={`px-3 py-1 text-sm rounded ${timeframe === "week" ? "bg-teal-100 text-teal-700 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
               onClick={() => setTimeframe("week")}
             >
-              Tydzień
+              Week
             </button>
             <button
               type="button"
               className={`px-3 py-1 text-sm rounded ${timeframe === "month" ? "bg-teal-100 text-teal-700 font-medium" : "text-gray-600 hover:bg-gray-50"}`}
               onClick={() => setTimeframe("month")}
             >
-              Miesiąc
+              Month
             </button>
           </div>
           <button
             className="flex items-center justify-center w-8 h-8 border border-gray-200 rounded-md"
             onClick={fetchStatistics}
-            title="Odśwież"
+            title="Refresh"
           >
             <RefreshCcw size={16} className="text-gray-600" />
           </button>
@@ -209,12 +209,12 @@ const DoctorAppointmentChart = () => {
             className="mt-4 px-4 py-2 bg-teal-100 text-teal-700 rounded-md text-sm"
             onClick={fetchStatistics}
           >
-            Spróbuj ponownie
+            Try again
           </button>
         </div>
       ) : !statsData ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-gray-600">Brak danych dla wybranego lekarza i okresu</p>
+          <p className="text-gray-600">No data for the selected doctor and period</p>
         </div>
       ) : (
         <>
@@ -225,7 +225,7 @@ const DoctorAppointmentChart = () => {
             </div>
             <div className="bg-teal-50 border border-teal-100 rounded-lg p-4 text-center">
               <p className="text-2xl font-semibold text-teal-800">{statsData.zakończone ?? 0}</p>
-              <p className="text-sm font-medium text-gray-600 mt-1">Zakończone</p>
+              <p className="text-sm font-medium text-gray-600 mt-1">Completed</p>
             </div>
             <div className="bg-teal-50 border border-teal-100 rounded-lg p-4 text-center">
               <p className="text-2xl font-semibold text-teal-800">{statsData.anulowane ?? 0}</p>
@@ -436,7 +436,7 @@ const PatientList = () => {
       })
       .catch((err) => {
         setVisitHistoryError(
-          err?.response?.data?.message || err?.message || "Nie udało się pobrać historii wizyt."
+          err?.response?.data?.message || err?.message || "Failed to load visit history."
         );
         setVisitHistoryData([]);
       })
@@ -492,10 +492,10 @@ const PatientList = () => {
           patientData: data.patientData ?? null,
         });
       } else {
-        setConsentsError(data?.message || "Nie udało się pobrać zgód.");
+        setConsentsError(data?.message || "Failed to load consents.");
       }
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Nie udało się pobrać zgód.";
+      const msg = err?.response?.data?.message || err?.message || "Failed to load consents.";
       setConsentsError(msg);
     } finally {
       setConsentsLoading(false);
@@ -518,7 +518,7 @@ const PatientList = () => {
       setLoading(false);
     } catch (error) {
       console.error("Failed to fetch patient services:", error);
-      toast.error("Nie udało się pobrać informacji o płatnościach");
+      toast.error("Failed to load payment information");
       setLoading(false);
     }
   };
@@ -567,7 +567,7 @@ const PatientList = () => {
       );
 
       toast.success(
-        `Rachunek wygenerowany pomyślnie na kwotę zł${billingData.totalAmount}`
+        `Invoice generated successfully for PLN ${billingData.totalAmount}`
       );
       setShowBillingModal(false);
       setLoading(false);
@@ -576,7 +576,7 @@ const PatientList = () => {
       navigate(`/administracja/rozliczenia/szczegoly/${response.data._id}`);
     } catch (error) {
       console.error("Failed to generate bill:", error);
-      toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
+      toast.error("Failed to generate invoice. Please try again.");
       setLoading(false);
     }
   };
@@ -616,7 +616,7 @@ const PatientList = () => {
       }));
     } catch (err) {
       console.error("Error canceling appointment:", err);
-      setError("błąd serwera");
+      setError("server error");
     }
   };
 
@@ -656,7 +656,7 @@ const PatientList = () => {
         });
         setError(null);
       } catch (err) {
-        setError("błąd serwera");
+        setError("server error");
         console.error("Error fetching patients:", err);
       } finally {
         setLoading(false);
@@ -675,9 +675,9 @@ const PatientList = () => {
   const translateSexToPolish = (sex) => {
     switch (sex) {
       case "Male":
-        return "Mężczyzna";
+        return "Male";
       case "Female":
-        return "Kobieta";
+        return "Female";
       case "Others":
         return "Inna";
       default:
@@ -749,11 +749,11 @@ const PatientList = () => {
       if (response.success && response.data.url) {
         window.open(response.data.url, '_blank');
       } else {
-        toast.error("Nie udało się wygenerować karty wizyty");
+        toast.error("Failed to generate visit card");
       }
     } catch (error) {
       console.error("Error generating visit card:", error);
-      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+      toast.error("An error occurred while generating the visit card");
     }
   };
 
@@ -800,7 +800,7 @@ const PatientList = () => {
       }));
       setError(null);
     } catch (err) {
-      setError("błąd serwera");
+      setError("server error");
       console.error("Error fetching patients:", err);
     } finally {
       setLoading(false);
@@ -814,7 +814,7 @@ const PatientList = () => {
       <div className="p-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-wrap">
           <h2 className="text-lg font-semibold">
-            {isToday ? "Wizyty dzisiaj" : "Wizyty na dzień"} ({pagination.total})
+            {isToday ? "Visits today" : "Visits for day"} ({pagination.total})
           </h2>
           <label className="flex items-center gap-2 text-sm text-gray-600">
             <span>Data:</span>
@@ -842,32 +842,32 @@ const PatientList = () => {
                 className={`flex items-center px-4 py-2 text-sm rounded-md cursor-pointer ${statusFilter === "all" ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
                 onClick={() => setStatusFilter("all")}
               >
-                Wszystkie
+                All
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 className={`flex items-center px-4 py-2 text-sm rounded-md cursor-pointer ${statusFilter === "reserved" ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
                 onClick={() => setStatusFilter("reserved")}
               >
-                Zarezerwowane
+                Reserved
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 className={`flex items-center px-4 py-2 text-sm rounded-md cursor-pointer ${statusFilter === "completed" ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
                 onClick={() => setStatusFilter("completed")}
               >
-                Zakończone
+                Completed
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 className={`flex items-center px-4 py-2 text-sm rounded-md cursor-pointer ${statusFilter === "cancelled" ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
                 onClick={() => setStatusFilter("cancelled")}
               >
-                Anulowane
+                Cancelled
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px bg-gray-200 my-1" />
               <DropdownMenu.Item
                 className={`flex items-center px-4 py-2 text-sm rounded-md cursor-pointer ${patientLessOnly ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
                 onClick={() => setPatientLessOnly((prev) => !prev)}
               >
-                {patientLessOnly ? "✓ " : ""}Tylko wizyty bez pacjenta
+                {patientLessOnly ? "✓ " : ""}Visit without patient only
               </DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
@@ -877,8 +877,8 @@ const PatientList = () => {
       {showCancelModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-medium mb-4">Potwierdź anulowanie</h3>
-            <p className="text-gray-600 mb-6">Czy na pewno chcesz anulować tę wizytę? Tej operacji nie można cofnąć.</p>
+            <h3 className="text-lg font-medium mb-4">Confirm cancellation</h3>
+            <p className="text-gray-600 mb-6">Are you sure you want to cancel this appointment? This cannot be undone.</p>
             
             <div className="mb-6">
               <div className="flex items-center">
@@ -890,7 +890,7 @@ const PatientList = () => {
                   className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                 />
                 <label htmlFor="smsNotification" className="ml-2 text-sm text-gray-700">
-                  Wyślij powiadomienie SMS o anulowaniu wizyty
+                  Send SMS notification about appointment cancellation
                 </label>
               </div>
 
@@ -903,7 +903,7 @@ const PatientList = () => {
                   className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                 />
                 <label htmlFor="emailNotification" className="ml-2 text-sm text-gray-700">
-                  Wyślij powiadomienie email o anulowaniu wizyty
+                  Send email notification about appointment cancellation
                 </label>
               </div>
             </div>
@@ -918,13 +918,13 @@ const PatientList = () => {
                   setSendEmailNotification(false);
                 }}
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
                 onClick={handleCancelAppointment}
               >
-                Potwierdź
+                Confirm
               </button>
             </div>
           </div>
@@ -932,11 +932,11 @@ const PatientList = () => {
       )}
 
       {loading ? (
-        <div className="p-8 text-center text-gray-500">Ładowanie pacjentów...</div>
+        <div className="p-8 text-center text-gray-500">Loading patients...</div>
       ) : error ? (
         <div className="p-8 text-center text-red-500">{error}</div>
       ) : patients.length === 0 ? (
-        <div className="p-8 text-center text-gray-500">Brak pacjentów</div>
+        <div className="p-8 text-center text-gray-500">No patients</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -954,34 +954,34 @@ const PatientList = () => {
                   />
                 </th> */}
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                  Imię i Nazwisko Pacjenta
+                  Patient name
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                  Rodzaj wizyty
+                  Visit type
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500 flex items-center">
-                  Płeć <ArrowDown size={14} className="ml-1" />
+                  Sex <ArrowDown size={14} className="ml-1" />
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                  Wiek
+                  Age
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   Status
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                  Lekarz prowadzący
+                  Attending doctor
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                  Data wizyty
+                  Visit date
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                  Tryb wizyty
+                  Visit mode
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                  Utworzono przez
+                  Created by
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                  Akcje
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -1028,7 +1028,7 @@ const PatientList = () => {
                               ? "bg-red-100 text-red-800 border border-red-200"
                               : "bg-amber-100 text-amber-800 border border-amber-200"
                           }`}
-                          title={isCancelled(patient) ? "Wizyta anulowana" : "Wizyta bez pacjenta – zakończ rejestrację"}
+                          title={isCancelled(patient) ? "Appointment cancelled" : "Visit without patient – complete registration"}
                         >
                           <UserPlus size={12} />
                           {isCancelled(patient) ? "Anulowana" : "Do rejestracji"}
@@ -1107,7 +1107,7 @@ const PatientList = () => {
                                 }}
                               >
                                 <UserPlus size={16} className="mr-2" />
-                                Zakończ rejestrację
+                                Complete registration
                               </DropdownMenu.Item>
                             ) : !isVisitOnlyAppointment(patient) ? (
                               <DropdownMenu.Item
@@ -1115,7 +1115,7 @@ const PatientList = () => {
                                 onClick={() => navigate(getPatientViewUrl(patient.patient_id, patient._id))}
                               >
                                 <Eye size={16} className="mr-2" />
-                                Zobacz szczegóły
+                                View details
                               </DropdownMenu.Item>
                             ) : null}
 
@@ -1149,7 +1149,7 @@ const PatientList = () => {
                                 onClick={() => handleRescheduleClick(patient)}
                               >
                                 <Clock size={16} className="mr-2" />
-                                Przełóż wizytę
+                                Reschedule visit
                               </DropdownMenu.Item>
                             )}
 
@@ -1174,7 +1174,7 @@ const PatientList = () => {
                                 }}
                               >
                                 <Trash2 size={16} className="mr-2" />
-                                Anuluj wizytę
+                                Cancel appointment
                               </DropdownMenu.Item>
                             )}
                             {user?.role === "admin" && (
@@ -1183,7 +1183,7 @@ const PatientList = () => {
                                 onClick={() => setDeleteDialog({ open: true, id: patient._id })}
                               >
                                 <Trash2 size={16} className="mr-2" />
-                                Trwale usuń
+                                Delete permanently
                               </DropdownMenu.Item>
                             )}
                           </DropdownMenu.Content>
@@ -1236,11 +1236,11 @@ const PatientList = () => {
             </div>
             <div className="flex-1 overflow-y-auto p-4">
               {visitHistoryLoading ? (
-                <div className="py-8 text-center text-gray-500">Ładowanie historii wizyt...</div>
+                <div className="py-8 text-center text-gray-500">Loading visit history...</div>
               ) : visitHistoryError ? (
                 <div className="py-4 text-red-600 text-sm">{visitHistoryError}</div>
               ) : visitHistoryData.length === 0 ? (
-                <div className="py-8 text-center text-gray-500">Brak wizyt dla tego pacjenta.</div>
+                <div className="py-8 text-center text-gray-500">No visits for this patient.</div>
               ) : (
                 <ul className="space-y-3">
                   {visitHistoryData.map((visit, idx) => {
@@ -1262,7 +1262,7 @@ const PatientList = () => {
                             <div className="text-sm text-gray-600">{timeLabel}</div>
                             {visit.doctor?.name && (
                               <div className="text-xs text-gray-500 mt-1 truncate">
-                                Lekarz: {visit.doctor.name}
+                                Doctor: {visit.doctor.name}
                               </div>
                             )}
                           </div>
@@ -1318,8 +1318,8 @@ const PatientList = () => {
         onClose={() => setDeleteDialog({ open: false, id: null })}
         type="appointment"
         id={deleteDialog.id}
-        title="Trwale usuń wizytę?"
-        message="Ta operacja jest nieodwracalna. Wizyta oraz powiązane rekordy zostaną trwale usunięte."
+        title="Permanently delete appointment?"
+        message="This cannot be undone. The appointment and related records will be permanently removed."
         onSuccess={() => {
           setDeleteDialog({ open: false, id: null });
           fetchPatients();
@@ -1362,7 +1362,7 @@ const PatientList = () => {
             </div>
             <div className="p-4 overflow-y-auto flex-1">
               {consentsLoading && (
-                <div className="py-8 text-center text-gray-500">Ładowanie zgód…</div>
+                <div className="py-8 text-center text-gray-500">Loading consents…</div>
               )}
               {consentsError && (
                 <div className="py-4 text-red-600 text-sm">{consentsError}</div>
@@ -1374,24 +1374,24 @@ const PatientList = () => {
                       <h4 className="text-sm font-medium text-gray-800 mb-2">Dane pacjenta</h4>
                       <dl className="grid grid-cols-1 gap-1.5 text-sm">
                         {(consentsData.patientData.name != null && String(consentsData.patientData.name).trim() !== "") && (
-                          <div><dt className="text-gray-500 inline">Imię i nazwisko: </dt><dd className="inline text-gray-900">{consentsData.patientData.name}</dd></div>
+                          <div><dt className="text-gray-500 inline">Full name: </dt><dd className="inline text-gray-900">{consentsData.patientData.name}</dd></div>
                         )}
                         {(consentsData.patientData.firstName != null && String(consentsData.patientData.firstName).trim() !== "") && (
-                          <div><dt className="text-gray-500 inline">Imię: </dt><dd className="inline text-gray-900">{consentsData.patientData.firstName}</dd></div>
+                          <div><dt className="text-gray-500 inline">First name: </dt><dd className="inline text-gray-900">{consentsData.patientData.firstName}</dd></div>
                         )}
                         {(consentsData.patientData.lastName != null && String(consentsData.patientData.lastName).trim() !== "") && (
                           <div><dt className="text-gray-500 inline">Nazwisko: </dt><dd className="inline text-gray-900">{consentsData.patientData.lastName}</dd></div>
                         )}
                         <div><dt className="text-gray-500 inline">E-mail: </dt><dd className="inline text-gray-900">{consentsData.patientData.email != null && String(consentsData.patientData.email).trim() !== "" ? consentsData.patientData.email : "—"}</dd></div>
                         <div><dt className="text-gray-500 inline">Telefon: </dt><dd className="inline text-gray-900">{consentsData.patientData.phone != null && String(consentsData.patientData.phone).trim() !== "" && !/_no_phone_/i.test(String(consentsData.patientData.phone)) ? (consentsData.patientData.phoneCode ? `${consentsData.patientData.phoneCode} ${consentsData.patientData.phone}` : consentsData.patientData.phone) : "—"}</dd></div>
-                        <div><dt className="text-gray-500 inline">Płeć: </dt><dd className="inline text-gray-900">{consentsData.patientData.sex != null && String(consentsData.patientData.sex).trim() !== "" ? (consentsData.patientData.sex === "Male" ? "Mężczyzna" : consentsData.patientData.sex === "Female" ? "Kobieta" : consentsData.patientData.sex) : "—"}</dd></div>
+                        <div><dt className="text-gray-500 inline">Sex: </dt><dd className="inline text-gray-900">{consentsData.patientData.sex != null && String(consentsData.patientData.sex).trim() !== "" ? (consentsData.patientData.sex === "Male" ? "Male" : consentsData.patientData.sex === "Female" ? "Female" : consentsData.patientData.sex) : "—"}</dd></div>
                         <div><dt className="text-gray-500 inline">Data urodzenia: </dt><dd className="inline text-gray-900">{consentsData.patientData.dateOfBirth != null && String(consentsData.patientData.dateOfBirth).trim() !== "" ? (typeof consentsData.patientData.dateOfBirth === "string" && consentsData.patientData.dateOfBirth.match(/^\d{4}-\d{2}-\d{2}/) ? new Date(consentsData.patientData.dateOfBirth).toLocaleDateString("pl-PL") : consentsData.patientData.dateOfBirth) : "—"}</dd></div>
                         <div><dt className="text-gray-500 inline">PESEL / Nr dokumentu: </dt><dd className="inline text-gray-900">{consentsData.patientData.govtId != null && String(consentsData.patientData.govtId).trim() !== "" ? consentsData.patientData.govtId : "—"}</dd></div>
                       </dl>
                     </div>
                   )}
                   <div className="mb-4 text-sm text-gray-600">
-                    Źródło:{" "}
+                    Source:{" "}
                     <span className="font-medium">
                       {consentsData.source === "patient"
                         ? "Pacjent"
@@ -1401,7 +1401,7 @@ const PatientList = () => {
                     </span>
                   </div>
                   {consentsData.consents.length === 0 ? (
-                    <p className="text-gray-500">Brak zapisanych zgód.</p>
+                    <p className="text-gray-500">No consents on file.</p>
                   ) : (
                     <ul className="space-y-3">
                       {consentsData.consents.map((c) => (
@@ -1439,7 +1439,7 @@ const PatientList = () => {
           disabled={pagination.currentPage === 1}
         >
           <ChevronLeft size={16} />
-          <span>Poprzednia</span>
+          <span>Previous</span>
         </button>
 
         <div className="flex items-center gap-2">
@@ -1467,7 +1467,7 @@ const PatientList = () => {
           onClick={() => handlePageChange(pagination.currentPage + 1)}
           disabled={pagination.currentPage === pagination.pages}
         >
-          <span>Następna</span>
+          <span>Next</span>
           <ChevronRight size={16} />
         </button>
       </div>
@@ -1563,7 +1563,7 @@ const UpcomingAppointments = () => {
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch appointments:", err);
-      setError("błąd serwera");
+      setError("server error");
       setLoading(false);
     }
   };
@@ -1590,7 +1590,7 @@ const UpcomingAppointments = () => {
       fetchAppointments();
     } catch (err) {
       console.error("Failed to cancel appointment:", err);
-      setError("błąd serwera");
+      setError("server error");
     }
   };
 
@@ -1608,18 +1608,18 @@ const UpcomingAppointments = () => {
       if (response.success && response.data.url) {
         window.open(response.data.url, '_blank');
       } else {
-        toast.error("Nie udało się wygenerować karty wizyty");
+        toast.error("Failed to generate visit card");
       }
     } catch (error) {
       console.error("Error generating visit card:", error);
-      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+      toast.error("An error occurred while generating the visit card");
     }
   };
 
   return (
     <div className="mt-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Nadchodzące Wizyty</h2>
+        <h2 className="text-lg font-semibold">Upcoming appointments</h2>
         <div className="flex gap-2">
           <button
             className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200"
@@ -1639,11 +1639,11 @@ const UpcomingAppointments = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-8">Ładowanie wizyt...</div>
+        <div className="text-center py-8">Loading appointments...</div>
       ) : error ? (
         <div className="text-red-500 text-center py-8">{error}</div>
       ) : appointments.length === 0 ? (
-        <div className="text-center py-8">Brak nadchodzących wizyt.</div>
+        <div className="text-center py-8">No upcoming appointments.</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {appointments.map((appointment) => (
@@ -1696,7 +1696,7 @@ const UpcomingAppointments = () => {
                       <button
                         type="button"
                         className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                        aria-label="Otwórz menu"
+                        aria-label="Open menu"
                       >
                         <MoreVertical size={18} />
                       </button>
@@ -1716,7 +1716,7 @@ const UpcomingAppointments = () => {
                           }}
                         >
                           <Eye size={16} className="mr-2 flex-shrink-0" />
-                          Zobacz szczegóły pacjenta
+                          View patient details
                         </DropdownMenu.Item>
 
                         {appointment.status === "booked" && (
@@ -1749,7 +1749,7 @@ const UpcomingAppointments = () => {
                             onSelect={() => handleGenerateVisitCard(appointment.id ?? appointment._id)}
                           >
                             <FileText size={16} className="mr-2 flex-shrink-0" />
-                            Generuj kartę wizyty
+                            Generate visit card
                           </DropdownMenu.Item>
                         )}
                       </DropdownMenu.Content>

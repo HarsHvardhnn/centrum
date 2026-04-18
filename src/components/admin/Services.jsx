@@ -50,7 +50,7 @@ const ServicesManagement = () => {
       setServices(response.data);
       setError(null);
     } catch (err) {
-      setError("Nie udało się pobrać usług. Spróbuj ponownie.");
+      setError("Failed to load services. Please try again.");
       console.error("Error fetching services:", err);
     } finally {
       setLoading(false);
@@ -136,12 +136,12 @@ const ServicesManagement = () => {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.title.trim()) errors.title = "Tytuł jest wymagany";
+    if (!formData.title.trim()) errors.title = "Title is required";
     
     if (!formData.price) {
-      errors.price = "Cena jest wymagana";
+      errors.price = "Price is required";
     } else if (isNaN(Number(formData.price)) || Number(formData.price) < 0) {
-      errors.price = "Cena musi być liczbą dodatnią";
+      errors.price = "Price must be a positive number";
     }
 
     setFormErrors(errors);
@@ -204,7 +204,7 @@ const ServicesManagement = () => {
       fetchServices();
       fetchServicesFromContext()
     } catch (err) {
-      setError("Nie udało się zapisać usługi. Spróbuj ponownie.");
+      setError("Failed to save service. Please try again.");
       console.error("Error saving service:", err);
     } finally {
       setIsSubmitting(false);
@@ -250,7 +250,7 @@ const ServicesManagement = () => {
       setIsConfirmModalOpen(false);
       setServiceToDelete(null);
     } catch (err) {
-      setError("Nie udało się usunąć usługi. Spróbuj ponownie.");
+      setError("Failed to delete service. Please try again.");
       console.error("Error deleting service:", err);
     } finally {
       setLoading(false);
@@ -294,13 +294,13 @@ const ServicesManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">
-          Zarządzanie Usługami
+          Service management
         </h1>
         <div className="flex items-center gap-4">
           <div className="relative">
             <input
               type="text"
-              placeholder="Szukaj usług..."
+              placeholder="Search services..."
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -312,7 +312,7 @@ const ServicesManagement = () => {
             className="flex items-center gap-2 bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600 transition-colors"
           >
             <PlusCircle className="h-5 w-5" />
-            Dodaj Usługę
+            Add service
           </button>
         </div>
       </div>
@@ -329,15 +329,15 @@ const ServicesManagement = () => {
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-teal-500 border-r-transparent"></div>
-          <p className="mt-4 text-gray-600">Ładowanie usług...</p>
+          <p className="mt-4 text-gray-600">Loading services...</p>
         </div>
       ) : filteredServices.length === 0 ? (
         <div className="text-center py-12">
           <FileText className="mx-auto h-12 w-12 text-gray-400" />
           <p className="mt-4 text-gray-600">
             {searchTerm
-              ? "Nie znaleziono usług pasujących do wyszukiwania"
-              : "Nie dodano jeszcze żadnych usług"}
+              ? "No services match your search"
+              : "No services added yet"}
           </p>
         </div>
       ) : (
@@ -363,7 +363,7 @@ const ServicesManagement = () => {
                   <h2 className="text-lg font-semibold text-gray-800">
                     {service.title}
                   </h2>
-                  <p className="text-teal-600 font-semibold">{service.price} zł</p>
+                  <p className="text-teal-600 font-semibold">{service.price} PLN</p>
                 </div>
                 <p className="text-gray-600 text-sm mb-4">
                   {service.shortDescription}
@@ -374,7 +374,7 @@ const ServicesManagement = () => {
                     className="flex items-center gap-1 text-blue-600 hover:text-blue-700"
                   >
                     <Edit2 className="h-4 w-4" />
-                    Edytuj
+                    Edit
                   </button>
                   <div className="flex items-center gap-2">
                     <button
@@ -382,7 +382,7 @@ const ServicesManagement = () => {
                       className="flex items-center gap-1 text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
-                      Usuń
+                      Delete
                     </button>
                   </div>
                 </div>
@@ -399,7 +399,7 @@ const ServicesManagement = () => {
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-800">
-                  {currentService ? "Edytuj Usługę" : "Dodaj Nową Usługę"}
+                  {currentService ? "Edit service" : "Add new service"}
                 </h2>
                 <button
                   onClick={() => {
@@ -431,7 +431,7 @@ const ServicesManagement = () => {
                       htmlFor="title"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Tytuł
+                      Title
                     </label>
                     <input
                       type="text"
@@ -457,7 +457,7 @@ const ServicesManagement = () => {
                       htmlFor="price"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Cena
+                      Price
                     </label>
                     <input
                       type="number"
@@ -485,7 +485,7 @@ const ServicesManagement = () => {
                       htmlFor="shortDescription"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Krótki Opis
+                      Short description
                     </label>
                     <input
                       type="text"
@@ -502,7 +502,7 @@ const ServicesManagement = () => {
                       htmlFor="description"
                       className="block text-sm font-medium text-gray-700"
                     >
-                      Pełny Opis
+                      Full description
                     </label>
                     <textarea
                       id="description"
@@ -534,7 +534,7 @@ const ServicesManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Punkty
+                      Bullet points
                     </label>
                     <div className="mt-1">
                       <input
@@ -542,7 +542,7 @@ const ServicesManagement = () => {
                         value={tempBulletPoint}
                         onChange={(e) => setTempBulletPoint(e.target.value)}
                         onKeyPress={handleBulletPointKeyPress}
-                        placeholder="Naciśnij Enter, aby dodać punkt"
+                        placeholder="Press Enter to add a bullet"
                         className="block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
                       />
                     </div>
@@ -569,7 +569,7 @@ const ServicesManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Zdjęcia
+                      Images
                     </label>
                     <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                       <div className="space-y-1 text-center">
@@ -592,7 +592,7 @@ const ServicesManagement = () => {
                             htmlFor="images"
                             className="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500"
                           >
-                            <span>Prześlij pliki</span>
+                            <span>Upload files</span>
                             <input
                               id="images"
                               name="images"
@@ -603,7 +603,7 @@ const ServicesManagement = () => {
                               onChange={handleImageChange}
                             />
                           </label>
-                          <p className="pl-1">lub przeciągnij i upuść</p>
+                          <p className="pl-1">or drag and drop</p>
                         </div>
                         <p className="text-xs text-gray-500">
                           PNG, JPG, GIF do 10MB
@@ -645,7 +645,7 @@ const ServicesManagement = () => {
                     }}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
                   >
-                    Anuluj
+                    Cancel
                   </button>
                   <button
                     type="submit"
@@ -660,10 +660,10 @@ const ServicesManagement = () => {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Zapisywanie...
+                        Saving...
                       </>
                     ) : (
-                      "Zapisz"
+                      "Save"
                     )}
                   </button>
                 </div>
@@ -678,10 +678,10 @@ const ServicesManagement = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Potwierdź usunięcie
+              Confirm deletion
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Czy na pewno chcesz usunąć tę usługę? Tej operacji nie można cofnąć.
+              Are you sure you want to delete this service? This cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -689,7 +689,7 @@ const ServicesManagement = () => {
                 onClick={() => setIsConfirmModalOpen(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 type="button"
@@ -699,7 +699,7 @@ const ServicesManagement = () => {
                   loading ? "opacity-75 cursor-not-allowed" : ""
                 }`}
               >
-                {loading ? "Usuwanie..." : "Usuń"}
+                {loading ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

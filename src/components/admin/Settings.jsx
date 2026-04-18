@@ -65,14 +65,14 @@ function mapPatientPhoneToFormFields(rawPhone, apiPhoneCode, countryCodes) {
 export default function UserManagement() {
   // Add these translation mappings at the top of the component
   const roleTranslations = {
-    doctor: "Lekarz",
-    patient: "Pacjent",
-    receptionist: "Recepcjonista"
+    doctor: "Doctor",
+    patient: "Patient",
+    receptionist: "Receptionist"
   };
 
   const statusTranslations = {
-    active: "Aktywny",
-    deleted: "Usunięty"
+    active: "Active",
+    deleted: "Deleted"
   };
 
   const phoneCountryCodes = PHONE_COUNTRY_CODES;
@@ -136,22 +136,22 @@ export default function UserManagement() {
   const [doctorDraftData, setDoctorDraftData] = useState(null); // For draft recovery
   const [returnUrl, setReturnUrl] = useState(null);
   const subStepTitles = [
-    "Dane Podstawowe",
-    "Skierowanie",
-    "Adres",
-    "Zgody",
-    "Szczegóły",
-    "Notatki",
+    "Basic details",
+    "Referral",
+    "Address",
+    "Consents",
+    "Details",
+    "Notes",
   ];
 
   // Add this function to handle email removal
   const handleRemoveEmail = async () => {
     if (!currentPatientId) {
-      toast.error("Brak ID pacjenta");
+      toast.error("Missing patient ID");
       return;
     }
 
-    if (!window.confirm('Czy na pewno chcesz usunąć email pacjenta? Tej operacji nie można cofnąć.')) {
+    if (!window.confirm('Remove this patient\'s email? This cannot be undone.')) {
       return;
     }
 
@@ -160,7 +160,7 @@ export default function UserManagement() {
       const response = await patientService.removePatientEmail(currentPatientId);
       
       if (response.success) {
-        toast.success("Email pacjenta został pomyślnie usunięty");
+        toast.success("Patient email removed successfully");
         
         // Close the modal and reset form state
         setShowAddPatientModal(false);
@@ -176,11 +176,11 @@ export default function UserManagement() {
           setReturnUrl(null); // Clear the return URL
         }
       } else {
-        toast.error(response.message || "Nie udało się usunąć email pacjenta");
+        toast.error(response.message || "Could not remove patient email");
       }
     } catch (error) {
       console.error("Error removing patient email:", error);
-      toast.error("Wystąpił błąd podczas usuwania email");
+      toast.error("An error occurred while removing email");
     } finally {
       hideLoader();
     }
@@ -194,11 +194,11 @@ export default function UserManagement() {
     if (!phoneNumber) return "";
     
     const country = phoneCountryCodes.find(c => c.code === countryCode);
-    if (!country) return "Nieprawidłowy kod kraju";
+    if (!country) return "Invalid country code";
     
     const cleanPhone = phoneNumber.replace(/\D/g, '');
     if (cleanPhone.length !== country.maxLength) {
-      return `Numer telefonu dla ${country.country} musi mieć ${country.maxLength} cyfr`;
+      return `Phone number for ${country.country} must have ${country.maxLength} digits`;
     }
     
     return "";
@@ -249,7 +249,7 @@ export default function UserManagement() {
       setIsLoading(false);
       hideLoader();
     } catch (error) {
-      setError("Nie udało się pobrać użytkowników");
+      setError("Failed to load users");
       setIsLoading(false);
       hideLoader();
     }
@@ -360,7 +360,7 @@ export default function UserManagement() {
 
   const handleBulkDeleteClick = () => {
     if (selectedUserIds.length === 0) {
-      toast.error('Proszę wybrać użytkowników do usunięcia');
+      toast.error('Select users to delete');
       return;
     }
     setBulkDeleteDialog({
@@ -380,7 +380,7 @@ export default function UserManagement() {
       showLoader();
       await adminHelper.markUserAsDeleted(selectedUser._id);
       setSuccess(
-        `Użytkownik ${selectedUser.name.first} ${selectedUser.name.last} został pomyślnie usunięty`
+        `User ${selectedUser.name.first} ${selectedUser.name.last} was deleted successfully`
       );
       setShowDeleteModal(false);
       hideLoader();
@@ -391,7 +391,7 @@ export default function UserManagement() {
         setSuccess("");
       }, 3000);
     } catch (error) {
-      setError("Nie udało się usunąć użytkownika");
+      setError("Failed to delete user");
       hideLoader();
     }
   };
@@ -400,7 +400,7 @@ export default function UserManagement() {
     try {
       showLoader();
       await adminHelper.reviveUser(userId);
-      setSuccess("Użytkownik został pomyślnie przywrócony");
+      setSuccess("User restored successfully");
       hideLoader();
       fetchUsers();
 
@@ -409,7 +409,7 @@ export default function UserManagement() {
         setSuccess("");
       }, 3000);
     } catch (error) {
-      setError("Nie udało się przywrócić użytkownika");
+      setError("Failed to restore user");
       hideLoader();
     }
   };
@@ -463,7 +463,7 @@ export default function UserManagement() {
       showLoader();
       await adminHelper.addReceptionist(formData);
       setError("");
-      setSuccess("Recepcjonista został dodany pomyślnie");
+      setSuccess("Receptionist added successfully");
       setShowAddModal(false);
       
       // Clear draft on successful submission
@@ -485,15 +485,15 @@ export default function UserManagement() {
         setSuccess("");
       }, 3000);
     } catch (error) {
-      toast.error( "Nie udało się dodać recepcjonisty: " +
+      toast.error( "Failed to add receptionist: " +
         (error.response?.data?.error ||
           error.response?.data?.message ||
-          "Nieznany błąd"))
+          "Unknown error"))
       setError(
-        "Nie udało się dodać recepcjonisty: " +
+        "Failed to add receptionist: " +
           (error.response?.data?.error ||
             error.response?.data?.message ||
-            "Nieznany błąd")
+            "Unknown error")
       );
       hideLoader();
     }
@@ -510,7 +510,7 @@ export default function UserManagement() {
         password: draft.formData.password || "",
         signupMethod: draft.formData.signupMethod || "email",
       });
-      toast.success("Szkic został przywrócony");
+      toast.success("Draft restored");
     }
     setShowDraftRecoveryModal({ show: false, formType: null, draft: null });
   };
@@ -519,7 +519,7 @@ export default function UserManagement() {
   const handleStartFresh = (formType) => {
     clearFormDraft(formType);
     setShowDraftRecoveryModal({ show: false, formType: null, draft: null });
-    toast.info("Rozpoczynasz od nowa");
+    toast.info("Starting fresh");
   };
 
   // Function to handle adding/updating a doctor
@@ -533,11 +533,11 @@ export default function UserManagement() {
         // Update existing doctor (API may return id or _id)
         const doctorId = selectedDoctor.id || selectedDoctor._id;
         response = await doctorService.updateDoctor(doctorId, doctorData);
-        setSuccess("Lekarz został zaktualizowany pomyślnie");
+        setSuccess("Doctor updated successfully");
       } else {
         // Create new doctor
         response = await doctorService.createDoctor(doctorData);
-        setSuccess("Lekarz został dodany pomyślnie");
+        setSuccess("Doctor added successfully");
       }
 
       hideLoader();
@@ -558,15 +558,15 @@ export default function UserManagement() {
       closeModal();
     } catch (error) {
       setError(
-        "Nie udało się " + (selectedDoctor ? "zaktualizować" : "dodać") + " lekarza: " +
+        "Failed to " + (selectedDoctor ? "update" : "add") + " doctor: " +
         (error.response?.data?.error ||
           error.response?.data?.message ||
-          "Nieznany błąd")
+          "Unknown error")
       );
-      toast.error(  "Nie udało się " + (selectedDoctor ? "zaktualizować" : "dodać") + " lekarza: " +
+      toast.error(  "Failed to " + (selectedDoctor ? "update" : "add") + " doctor: " +
       (error.response?.data?.error ||
         error.response?.data?.message ||
-        "Nieznany błąd"))
+        "Unknown error"))
       hideLoader();
     }
   };
@@ -576,7 +576,7 @@ export default function UserManagement() {
     if (draft && draft.formData) {
       // Store draft data to pass to AddDoctorForm
       setDoctorDraftData(draft.formData);
-      toast.success("Szkic został przywrócony");
+      toast.success("Draft restored");
     }
     setShowDraftRecoveryModal({ show: false, formType: null, draft: null });
   };
@@ -680,8 +680,8 @@ export default function UserManagement() {
       setShowAddPatientModal(true);
       hideLoader();
     } catch (error) {
-      toast.error("Nie udało się pobrać danych pacjenta: " + error.message)
-      setError("Nie udało się pobrać danych pacjenta: " + error.message);
+      toast.error("Failed to load patient data: " + error.message)
+      setError("Failed to load patient data: " + error.message);
       hideLoader();
     }
   };
@@ -698,7 +698,7 @@ export default function UserManagement() {
           try {
             const res = await patientService.getPatientByPesel(normalizedPesel);
             if (res?.exists) {
-              toast.error("Pacjent o podanym numerze PESEL już istnieje w systemie.");
+              toast.error("A patient with this PESEL already exists.");
               return;
             }
           } catch (e) {
@@ -718,7 +718,7 @@ export default function UserManagement() {
           if (res?.exists) {
             const existingId = res.patientId ?? res.patient?._id ?? res.patient?.id;
             if (!isEditMode || (existingId && existingId !== currentPatientId)) {
-              toast.error("Pacjent z podanym numerem dokumentu już istnieje w systemie.");
+              toast.error("A patient with this document number already exists.");
               return;
             }
           }
@@ -755,10 +755,10 @@ export default function UserManagement() {
       
       if (isEditMode && currentPatientId) {
         response = await patientService.updatePatient(currentPatientId, patientData);
-        setSuccess("Pacjent zaktualizowany pomyślnie");
+        setSuccess("Patient updated successfully");
       } else {
         response = await patientService.createPatient(patientData);
-        setSuccess("Pacjent dodany pomyślnie");
+        setSuccess("Patient added successfully");
       }
       
       hideLoader();
@@ -794,7 +794,7 @@ export default function UserManagement() {
 
       // Duplicate international patient document: do not create, offer link to existing record
       if (!isEditMode && (status === 409 || existingPatientId) && formData.isInternationalPatient) {
-        toast.error("Pacjent z tym dokumentem już istnieje w systemie.");
+        toast.error("A patient with this document already exists.");
         setShowAddPatientModal(false);
         if (existingPatientId) {
           handleEditPatient(existingPatientId);
@@ -803,12 +803,12 @@ export default function UserManagement() {
       }
 
       setError(
-        "Nie udało się " + (isEditMode ? "zaktualizować" : "dodać") + " pacjenta: " +
-        (data.error || data.message || "Nieznany błąd")
+        "Failed to " + (isEditMode ? "update" : "add") + " patient: " +
+        (data.error || data.message || "Unknown error")
       );
       toast.error(
-        "Nie udało się " + (isEditMode ? "zaktualizować" : "dodać") + " pacjenta: " +
-        (data.error || data.message || "Nieznany błąd")
+        "Failed to " + (isEditMode ? "update" : "add") + " patient: " +
+        (data.error || data.message || "Unknown error")
       );
     }
   };
@@ -831,7 +831,7 @@ export default function UserManagement() {
         setCurrentSubStep(draft.metadata.currentSubStep);
       }
       
-      toast.success("Szkic został przywrócony");
+      toast.success("Draft restored");
       
       // Reset flag after state updates
       setTimeout(() => {
@@ -957,7 +957,7 @@ export default function UserManagement() {
       setShowAddDoctorModal(true);
       hideLoader();
     } catch (error) {
-      setError("Nie udało się pobrać danych lekarza: " + error.message);
+      setError("Failed to load doctor data: " + error.message);
       hideLoader();
     }
   };
@@ -974,7 +974,7 @@ export default function UserManagement() {
       {/* Header */}
       <SpecializationModal isOpen={showSpecsModal} onClose={()=>{setShowSpecsModal(false)}}/>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-teal-700">Zarządzanie Użytkownikami</h1>
+        <h1 className="text-2xl font-bold text-teal-700">User management</h1>
 
         {/* Add User Dropdown Button - Modified for role-based access */}
         <div className="flex gap-4">
@@ -983,7 +983,7 @@ export default function UserManagement() {
               onClick={() => setShowSpecsModal(true)}
               className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
             >
-              Zarządzaj Specjalizacjami
+              Manage specializations
             </button>
           )}
           <div className="dropdown-container relative">
@@ -991,7 +991,7 @@ export default function UserManagement() {
               onClick={() => setShowAddDropdown(!showAddDropdown)}
               className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2"
             >
-              Dodaj Użytkownika <ChevronDown size={16} />
+              Add user <ChevronDown size={16} />
             </button>
 
             {showAddDropdown && (
@@ -1007,7 +1007,7 @@ export default function UserManagement() {
                           setShowAddDoctorModal(true);
                         }}
                       >
-                        Dodaj Specjalistę
+                        Add specialist
                       </button>
                       <button
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1017,7 +1017,7 @@ export default function UserManagement() {
                           setShowAddModal(true);
                         }}
                       >
-                        Dodaj Recepcjonistę
+                        Add receptionist
                       </button>
                     </>
                   )}
@@ -1029,7 +1029,7 @@ export default function UserManagement() {
                       setShowAddPatientModal(true);
                     }}
                   >
-                    Dodaj Pacjenta
+                    Add patient
                   </button>
                 </div>
               </div>
@@ -1043,7 +1043,7 @@ export default function UserManagement() {
         <form onSubmit={handleSearch} className="flex mb-4">
           <input
             type="text"
-            placeholder="Szukaj po nazwie, email lub telefonie..."
+            placeholder="Search by name, email, or phone..."
             className="p-2 border border-gray-300 rounded-l-md w-full"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -1052,27 +1052,27 @@ export default function UserManagement() {
             type="submit"
             className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-r-md"
           >
-            Szukaj
+            Search
           </button>
         </form>
 
         {searchTerm && (
           <div className="flex items-center mb-4">
             <span className="text-sm text-gray-600 mr-2">
-              Wyszukiwanie: "{searchTerm}"
+              Searching: &quot;{searchTerm}&quot;
             </span>
             <button
               onClick={handleClearSearch}
               className="text-sm text-teal-600 hover:text-teal-800"
             >
-              Wyczyść
+              Clear
             </button>
           </div>
         )}
 
         <div className="flex justify-end items-center">
           <label htmlFor="usersPerPage" className="mr-2 text-sm text-gray-600">
-            Użytkowników na stronę:
+            Users per page:
           </label>
           <select
             id="usersPerPage"
@@ -1104,14 +1104,14 @@ export default function UserManagement() {
       {isAdmin && selectedUserIds.length > 0 && (
         <div className="mb-4 flex items-center justify-between bg-red-50 border border-red-200 rounded-lg p-4">
           <span className="text-red-800 font-medium">
-            Wybrano {selectedUserIds.length} użytkownik(ów)
+            {selectedUserIds.length} user(s) selected
           </span>
           <button
             onClick={handleBulkDeleteClick}
             className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
           >
             <Trash2 size={18} />
-            Trwale usuń wybranych ({selectedUserIds.length})
+            Permanently delete selected ({selectedUserIds.length})
           </button>
         </div>
       )}
@@ -1136,7 +1136,7 @@ export default function UserManagement() {
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("name.first")}
               >
-                Użytkownik {getSortIcon("name.first")}
+                User {getSortIcon("name.first")}
               </th>
               <th
                 scope="col"
@@ -1149,21 +1149,21 @@ export default function UserManagement() {
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("phone")}
               >
-                Kontakt {getSortIcon("phone")}
+                Contact {getSortIcon("phone")}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("role")}
               >
-                Rola {getSortIcon("role")}
+                Role {getSortIcon("role")}
               </th>
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("signupMethod")}
               >
-                Metoda Rejestracji {getSortIcon("signupMethod")}
+                Sign-up method {getSortIcon("signupMethod")}
               </th>
               <th
                 scope="col"
@@ -1176,7 +1176,7 @@ export default function UserManagement() {
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                Akcje
+                Actions
               </th>
             </tr>
           </thead>
@@ -1192,7 +1192,7 @@ export default function UserManagement() {
             ) : users.length === 0 ? (
               <tr>
                 <td colSpan={isAdmin ? "8" : "7"} className="px-6 py-4 text-center text-gray-500">
-                  Nie znaleziono użytkowników
+                  No users found
                 </td>
               </tr>
             ) : (
@@ -1283,13 +1283,13 @@ export default function UserManagement() {
                                 onClick={() => handleManageSchedule(user)}
                                 className="text-blue-600 hover:text-blue-900"
                               >
-                                Harmonogram
+                                Schedule
                               </button>
                               <button
                                 onClick={() => handleEditDoctor(user._id)}
                                 className="text-blue-600 hover:text-blue-900"
                               >
-                                Edytuj
+                                Edit
                               </button>
                             </>
                           )}
@@ -1298,22 +1298,22 @@ export default function UserManagement() {
                               onClick={() => handleEditPatient(user._id)}
                               className="text-blue-600 hover:text-blue-900"
                             >
-                              Edytuj
+                              Edit
                             </button>
                           )}
                           <button
                             onClick={() => handleDeleteClick(user)}
                             className="text-red-600 hover:text-red-900"
                           >
-                            Usuń
+                            Delete
                           </button>
                           {isAdmin && (
                             <button
                               onClick={() => handlePermanentDeleteClick(user)}
                               className="text-red-800 hover:text-red-950 font-semibold ml-2"
-                              title="Trwale usuń (nieodwracalne)"
+                              title="Permanently delete (irreversible)"
                             >
-                              Trwale usuń
+                              Delete permanently
                             </button>
                           )}
                         </>
@@ -1323,7 +1323,7 @@ export default function UserManagement() {
                           onClick={() => handleReviveUser(user._id)}
                           className="text-green-600 hover:text-green-900"
                         >
-                          Przywróć
+                          Restore
                         </button>
                       )}
                     </div>
@@ -1339,7 +1339,7 @@ export default function UserManagement() {
       <div className="mt-4 flex justify-between items-center">
         <div>
           <p className="text-sm text-gray-700">
-            Strona {currentPage} z {totalPages}
+            Page {currentPage} of {totalPages}
           </p>
         </div>
         <div className="flex space-x-2">
@@ -1352,7 +1352,7 @@ export default function UserManagement() {
                 : "bg-teal-100 text-teal-700 hover:bg-teal-200"
             }`}
           >
-            Pierwsza
+            First
           </button>
           <button
             onClick={() => handlePageChange(currentPage - 1)}
@@ -1363,7 +1363,7 @@ export default function UserManagement() {
                 : "bg-teal-100 text-teal-700 hover:bg-teal-200"
             }`}
           >
-            Poprzednia
+            Previous
           </button>
           <button
             onClick={() => handlePageChange(currentPage + 1)}
@@ -1374,7 +1374,7 @@ export default function UserManagement() {
                 : "bg-teal-100 text-teal-700 hover:bg-teal-200"
             }`}
           >
-            Następna
+            Next
           </button>
           <button
             onClick={() => handlePageChange(totalPages)}
@@ -1385,7 +1385,7 @@ export default function UserManagement() {
                 : "bg-teal-100 text-teal-700 hover:bg-teal-200"
             }`}
           >
-            Ostatnia
+            Last
           </button>
         </div>
       </div>
@@ -1396,7 +1396,7 @@ export default function UserManagement() {
           <div className="bg-white rounded-lg p-8 w-full max-w-md shadow-xl transform transition-all duration-300 border border-teal-100">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-teal-700 border-b pb-2 border-teal-200 flex-1">
-                Dodaj Nowego Recepcjonistę
+                Add receptionist
               </h2>
               {!isEditMode && (
                 <AutoSaveIndicator 
@@ -1409,7 +1409,7 @@ export default function UserManagement() {
               <div className="space-y-5">
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    Imię
+                    First name
                   </label>
                   <input
                     type="text"
@@ -1423,7 +1423,7 @@ export default function UserManagement() {
 
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    Nazwisko
+                    Last name
                   </label>
                   <input
                     type="text"
@@ -1451,7 +1451,7 @@ export default function UserManagement() {
 
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    Telefon
+                    Phone
                   </label>
                   <input
                     type="tel"
@@ -1464,7 +1464,7 @@ export default function UserManagement() {
 
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">
-                    Hasło
+                    Password
                   </label>
                   <input
                     type="password"
@@ -1486,13 +1486,13 @@ export default function UserManagement() {
                   }}
                   className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-5 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
                 >
-                  Anuluj
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-5 rounded-md transition-colors duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
-                  Dodaj Recepcjonistę
+                  Add receptionist
                 </button>
               </div>
             </form>
@@ -1531,7 +1531,7 @@ export default function UserManagement() {
             <div className="flex justify-between items-center border-b p-4">
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-bold">
-                  {isEditMode ? "Edytuj Pacjenta" : "Dodaj Pacjenta"}
+                  {isEditMode ? "Edit patient" : "Add patient"}
                 </h2>
                 {!isEditMode && (
                   <AutoSaveIndicator 
@@ -1609,27 +1609,27 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4 text-red-600">
-              Potwierdź Usunięcie
+              Confirm deletion
             </h2>
             <p className="mb-6">
-              Czy na pewno chcesz usunąć użytkownika{" "}
+              Are you sure you want to delete{" "}
               <span className="font-bold">
                 {selectedUser.name.first} {selectedUser.name.last}
               </span>
-              ? Tej operacji nie można cofnąć.
+              ? This cannot be undone.
             </p>
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 onClick={confirmDelete}
                 className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
               >
-                Usuń
+                Delete
               </button>
             </div>
           </div>
@@ -1654,8 +1654,8 @@ export default function UserManagement() {
         onClose={() => setPermanentDeleteDialog({ open: false, id: null, userName: "" })}
         type="user"
         id={permanentDeleteDialog.id}
-        title="Trwale usuń konto użytkownika?"
-        message={`Konto użytkownika "${permanentDeleteDialog.userName}" oraz wszystkie powiązane rekordy (wizyty, faktury, usługi) zostaną trwale usunięte. Ta operacja jest nieodwracalna.`}
+        title="Permanently delete user account?"
+        message={`This will permanently delete "${permanentDeleteDialog.userName}" and all related records (appointments, invoices, services). This cannot be undone.`}
         onSuccess={handlePermanentDeleteSuccess}
       />
 
@@ -1665,7 +1665,7 @@ export default function UserManagement() {
         onClose={() => setBulkDeleteDialog({ open: false, ids: [] })}
         type="user"
         selectedIds={bulkDeleteDialog.ids}
-        itemName="użytkowników"
+        itemName="users"
         onSuccess={handlePermanentDeleteSuccess}
       />
 
@@ -1674,18 +1674,18 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
           <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
             <h2 className="text-xl font-bold mb-4 text-teal-700">
-              Znaleziono zapisany szkic
+              Saved draft found
             </h2>
             <p className="mb-4 text-gray-600">
-              Znaleziono zapisany szkic formularza. Czy chcesz go przywrócić?
+              A saved form draft was found. Restore it?
             </p>
             <div className="mb-4 p-3 bg-gray-50 rounded-md">
               <p className="text-sm text-gray-700">
-                <strong>Zapisano:</strong> {formatDraftAge(Date.now() - (showDraftRecoveryModal.draft.metadata?.timestamp || 0))}
+                <strong>Saved:</strong> {formatDraftAge(Date.now() - (showDraftRecoveryModal.draft.metadata?.timestamp || 0))}
               </p>
               {showDraftRecoveryModal.formType === 'patient' && showDraftRecoveryModal.draft.metadata?.currentSubStep !== undefined && (
                 <p className="text-sm text-gray-700 mt-1">
-                  <strong>Krok:</strong> {subStepTitles[showDraftRecoveryModal.draft.metadata.currentSubStep] || `Krok ${showDraftRecoveryModal.draft.metadata.currentSubStep + 1}`}
+                  <strong>Step:</strong> {subStepTitles[showDraftRecoveryModal.draft.metadata.currentSubStep] || `Step ${showDraftRecoveryModal.draft.metadata.currentSubStep + 1}`}
                 </p>
               )}
             </div>
@@ -1694,7 +1694,7 @@ export default function UserManagement() {
                 onClick={() => handleStartFresh(showDraftRecoveryModal.formType)}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition-colors"
               >
-                Rozpocznij od nowa
+                Start over
               </button>
               <button
                 onClick={() => {
@@ -1708,7 +1708,7 @@ export default function UserManagement() {
                 }}
                 className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
               >
-                Przywróć szkic
+                Restore draft
               </button>
             </div>
           </div>

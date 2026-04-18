@@ -125,7 +125,7 @@ const Header = () => {
       </div>
 
       <div className="flex justify-between items-center px-6 md:px-8 py-3 bg-[#F4F4F4]">
-      <img src="/images/mainlogo.png" alt="Logo strony" className="h-10 cursor-pointer" onClick={()=>window.location.reload()} />
+      <img src="/images/mainlogo.png" alt="Site logo" className="h-10 cursor-pointer" onClick={()=>window.location.reload()} />
 
         <nav className="hidden lg:flex gap-4 lg:gap-6 font-medium text-sm">
           <Link
@@ -136,7 +136,7 @@ const Header = () => {
                 : defaultLinkClass
             }`}
           >
-            Strona główna
+            Home
           </Link>
           <Link
             to="/o-nas"
@@ -144,7 +144,7 @@ const Header = () => {
               isActive("/o-nas") ? activeLinkClass : defaultLinkClass
             }`}
           >
-            O nas
+            About us
           </Link>
           <Link
             to="/uslugi"
@@ -152,7 +152,7 @@ const Header = () => {
               isActive("/uslugi") ? activeLinkClass : defaultLinkClass
             }`}
           >
-            Usługi
+            Services
           </Link>
           <Link
             to="/lekarze"
@@ -160,7 +160,7 @@ const Header = () => {
               isActive("/lekarze") ? activeLinkClass : defaultLinkClass
             }`}
           >
-            Specjaliści
+            Specialists
           </Link>
           <Link
             to="/aktualnosci"
@@ -168,7 +168,7 @@ const Header = () => {
               isActive("/aktualnosci") ? activeLinkClass : defaultLinkClass
             }`}
           >
-            Aktualności
+            News
           </Link>
           <Link
             to="/poradnik"
@@ -176,7 +176,7 @@ const Header = () => {
               isActive("/poradnik") ? activeLinkClass : defaultLinkClass
             }`}
           >
-            Wiedza Medyczna
+            Medical knowledge
           </Link>
           <Link
             to="/kontakt"
@@ -184,7 +184,7 @@ const Header = () => {
               isActive("/kontakt") ? activeLinkClass : defaultLinkClass
             }`}
           >
-            Kontakt
+            Contact
           </Link>
         </nav>
 
@@ -217,7 +217,7 @@ const Header = () => {
               }
               onClick={() => setMenuOpen(false)}
             >
-              Strona główna
+              Home
             </Link>
           
             <Link
@@ -229,7 +229,7 @@ const Header = () => {
               }
               onClick={() => setMenuOpen(false)}
             >
-              O nas
+              About us
             </Link>
             <Link
               to="/uslugi"
@@ -240,7 +240,7 @@ const Header = () => {
               }
               onClick={() => setMenuOpen(false)}
             >
-              Usługi
+              Services
             </Link>
             <Link
               to="/lekarze"
@@ -251,7 +251,7 @@ const Header = () => {
               }
               onClick={() => setMenuOpen(false)}
             >
-              Specjaliści
+              Specialists
             </Link>
             <Link
               to="/aktualnosci"
@@ -262,7 +262,7 @@ const Header = () => {
               }
               onClick={() => setMenuOpen(false)}
             >
-              Aktualności
+              News
             </Link>
             <Link
               to="/poradnik"
@@ -273,7 +273,7 @@ const Header = () => {
               }
               onClick={() => setMenuOpen(false)}
             >
-              Wiedza Medyczna
+              Medical knowledge
             </Link>
             <Link
               to="/kontakt"
@@ -284,7 +284,7 @@ const Header = () => {
               }
               onClick={() => setMenuOpen(false)}
             >
-              Kontakt
+              Contact
             </Link>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
@@ -313,7 +313,7 @@ const Header = () => {
                   }`}
                 >
                   <FaCalendarCheck />
-                  Moje wizyty
+                  My appointments
                 </Link>
                 <Link
                   to="/user/details"
@@ -323,7 +323,8 @@ const Header = () => {
                   }`}
                 >
                   <FaIdCard />
-                  Dokumentacja medyczna                </Link>
+                  Medical records
+                </Link>
                 <Link
                   to="/user/profile"
                   onClick={() => setMenuOpen(false)}
@@ -332,7 +333,7 @@ const Header = () => {
                   }`}
                 >
                   <FaUser />
-                  Mój profil
+                  My profile
                 </Link>
                 <Link
                   to="/security/2fa"
@@ -342,7 +343,7 @@ const Header = () => {
                   }`}
                 >
                   <FaCog />
-                  Bezpieczeństwo 2FA
+                  2FA security
                 </Link>
                 <button
                   onClick={() => {
@@ -352,7 +353,7 @@ const Header = () => {
                   className="flex items-center justify-center gap-2 border border-teal-700 text-teal-700 w-48 py-2 text-sm rounded-full"
                 >
                   <FaSignOutAlt />
-                  Wyloguj
+                  Log out
                 </button>
               </>
             ) : (
@@ -364,7 +365,7 @@ const Header = () => {
                   }}
                   className="bg-teal-800 text-white w-32 py-2 text-sm rounded-full"
                 >
-                  Zaloguj się
+                  Log in
                 </button>
                 <button
                   onClick={() => {
@@ -373,7 +374,7 @@ const Header = () => {
                   }}
                   className="border border-teal-700 text-teal-700 w-32 py-2 text-sm rounded-full"
                 >
-                  Zarejestruj się
+                  Sign up
                 </button> */}
               </>
             )}
@@ -409,7 +410,7 @@ const Header = () => {
                     onClick={() => setDropdownOpen(false)}
                   >
                     <FaCalendarCheck className="text-teal-800" />
-                    Moje wizyty
+                    My appointments
                   </Link>
                   <Link
                     to="/user/details"
@@ -421,7 +422,7 @@ const Header = () => {
                     onClick={() => setDropdownOpen(false)}
                   >
                       <FaIdCard className="text-teal-800" />
-                        Dokumentacja medyczna
+                        Medical records
                   </Link>
                   <Link
                     to="/user/profile"
@@ -433,7 +434,7 @@ const Header = () => {
                     onClick={() => setDropdownOpen(false)}
                   >
                     <FaCog className="text-teal-800" />
-                    Ustawienia
+                    Settings
                   </Link>
                   <Link
                     to="/security/2fa"
@@ -445,7 +446,7 @@ const Header = () => {
                     onClick={() => setDropdownOpen(false)}
                   >
                     <FaCog className="text-teal-800" />
-                    Bezpieczeństwo 2FA
+                    2FA security
                   </Link>
                   <button
                     onClick={() => {
@@ -455,7 +456,7 @@ const Header = () => {
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
                   >
                     <FaSignOutAlt className="text-teal-800" />
-                    Wyloguj
+                    Log out
                   </button>
                   
                 </div>
@@ -467,13 +468,13 @@ const Header = () => {
                 to="/logowanie"
                 className="bg-teal-800 text-white px-6 py-2 text-sm rounded-full"
               >
-                Zaloguj się
+                Log in
               </Link>
               <Link
                 to="/rejestracja"
                 className="border border-teal-700 text-teal-700 px-6 py-2 text-sm rounded-full"
               >
-                Zarejestruj się
+                Sign up
               </Link> */}
             </>
           )}

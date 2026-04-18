@@ -4,9 +4,10 @@ import format from 'date-fns/format';
 import parse from 'date-fns/parse';
 import startOfWeek from 'date-fns/startOfWeek';
 import getDay from 'date-fns/getDay';
-import pl from 'date-fns/locale/pl';
+import enUS from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Select, DatePicker, Card, Typography, Button, Tooltip, Badge, Modal, Descriptions } from 'antd';
+import antdDatePickerEn from 'antd/es/date-picker/locale/en_US';
 
 // Custom CSS to improve calendar appearance
 const calendarStyles = `
@@ -88,7 +89,7 @@ const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
 const locales = {
-  'pl': pl,
+  'en-US': enUS,
 };
 
 const localizer = dateFnsLocalizer({
@@ -100,69 +101,23 @@ const localizer = dateFnsLocalizer({
 });
 
 const messages = {
-  allDay: 'Cały dzień',
-  previous: 'Poprzedni',
-  next: 'Następny',
-  today: 'Dziś',
-  month: 'Miesiąc',
-  week: 'Tydzień',
-  day: 'Dzień',
+  allDay: 'All day',
+  previous: 'Previous',
+  next: 'Next',
+  today: 'Today',
+  month: 'Month',
+  week: 'Week',
+  day: 'Day',
   agenda: 'Agenda',
-  date: 'Data',
-  time: 'Czas',
-  event: 'Wydarzenie',
-  noEventsInRange: 'Brak wydarzeń w tym zakresie',
-  showMore: (total) => `+${total} więcej`,
-  work_week: 'Tydzień roboczy',
-  day_header: 'Nagłówek dnia',
-  week_header: 'Nagłówek tygodnia',
-  month_header: 'Nagłówek miesiąca',
-  agenda_header: 'Nagłówek agendy',
-  date_range: 'Zakres dat',
-  time_range: 'Zakres czasu',
-  event_range: 'Zakres wydarzeń',
-  all_day: 'Cały dzień',
-  more: 'Więcej',
-  no_events: 'Brak wydarzeń',
-  loading: 'Ładowanie...',
-  select: 'Wybierz',
-  event_click: 'Kliknij wydarzenie',
-  event_double_click: 'Podwójne kliknięcie wydarzenia',
-  event_key_press: 'Naciśnij klawisz wydarzenia',
-  event_key_down: 'Naciśnij klawisz w dół',
-  event_key_up: 'Naciśnij klawisz w górę',
-  event_key_enter: 'Naciśnij klawisz Enter',
-  event_key_escape: 'Naciśnij klawisz Escape',
-  event_key_space: 'Naciśnij klawisz Spacja',
-  event_key_delete: 'Naciśnij klawisz Delete',
-  event_key_backspace: 'Naciśnij klawisz Backspace',
-  event_key_tab: 'Naciśnij klawisz Tab',
-  event_key_shift: 'Naciśnij klawisz Shift',
-  event_key_ctrl: 'Naciśnij klawisz Ctrl',
-  event_key_alt: 'Naciśnij klawisz Alt',
-  event_key_meta: 'Naciśnij klawisz Meta',
-  event_key_win: 'Naciśnij klawisz Windows',
-  event_key_cmd: 'Naciśnij klawisz Command',
-  event_key_option: 'Naciśnij klawisz Option',
-  event_key_arrow_left: 'Naciśnij klawisz strzałki w lewo',
-  event_key_arrow_right: 'Naciśnij klawisz strzałki w prawo',
-  event_key_arrow_up: 'Naciśnij klawisz strzałki w górę',
-  event_key_arrow_down: 'Naciśnij klawisz strzałki w dół',
-  event_key_page_up: 'Naciśnij klawisz Page Up',
-  event_key_page_down: 'Naciśnij klawisz Page Down',
-  event_key_home: 'Naciśnij klawisz Home',
-  event_key_end: 'Naciśnij klawisz End',
-  event_key_insert: 'Naciśnij klawisz Insert',
-  event_key_delete_forward: 'Naciśnij klawisz Delete Forward',
-  event_key_delete_backward: 'Naciśnij klawisz Delete Backward',
-  event_key_clear: 'Naciśnij klawisz Clear',
-  event_key_help: 'Naciśnij klawisz Help',
-  event_key_pause: 'Naciśnij klawisz Pause',
-  event_key_break: 'Naciśnij klawisz Break',
-  event_key_print_screen: 'Naciśnij klawisz Print Screen',
-  event_key_scroll_lock: 'Naciśnij klawisz Scroll Lock',
-  event_key_num_lock: 'Naciśnij klawisz Num Lock',
-  event_key_caps_lock: 'Naciśnij klawisz Caps Lock',
+  date: 'Date',
+  time: 'Time',
+  event: 'Event',
+  noEventsInRange: 'No events in this range',
+  showMore: (total) => `+${total} more`,
+  work_week: 'Work week',
+  more: 'More',
+  no_events: 'No events',
+  loading: 'Loading...',
 };
 
 const DoctorCalendar = () => {
@@ -320,13 +275,13 @@ const DoctorCalendar = () => {
                     window.open(event.appointment.meetLink, '_blank');
                   }}
                 >
-                  Dołącz
+                  Join
                 </Button>
               )}
             </>
           ) : (
             <>
-              <UserOutlined /> W gabinecie
+              <UserOutlined /> In office
             </>
           )}
         </div>
@@ -339,7 +294,7 @@ const DoctorCalendar = () => {
 
     return (
       <Modal
-        title="Szczegóły wizyty"
+        title="Appointment details"
         open={visible}
         onCancel={onClose}
         footer={[
@@ -350,34 +305,34 @@ const DoctorCalendar = () => {
               icon={<VideoCameraOutlined />}
               onClick={() => window.open(appointment.meetLink, '_blank')}
             >
-              Dołącz do spotkania
+              Join meeting
             </Button>
           ),
           <Button key="close" onClick={onClose}>
-            Zamknij
+            Close
           </Button>
         ]}
       >
         <Descriptions column={1}>
-          <Descriptions.Item label="Pacjent">{appointment.patientName}</Descriptions.Item>
-          <Descriptions.Item label="Wiek">
-            {appointment.age ? `${appointment.age} lat` : 'Nie podano'}
+          <Descriptions.Item label="Patient">{appointment.patientName}</Descriptions.Item>
+          <Descriptions.Item label="Age">
+            {appointment.age ? `${appointment.age} years` : 'Not provided'}
           </Descriptions.Item>
-          <Descriptions.Item label="Płeć">
-            {appointment.gender === 'Male' ? 'Mężczyzna' : 
-             appointment.gender === 'Female' ? 'Kobieta' : 
-             appointment.gender === 'Others' ? 'Inna' : 'Nie podano'}
+          <Descriptions.Item label="Sex">
+            {appointment.gender === 'Male' ? 'Male' : 
+             appointment.gender === 'Female' ? 'Female' : 
+             appointment.gender === 'Others' ? 'Other' : 'Not provided'}
           </Descriptions.Item>
-          <Descriptions.Item label="Godzina">
+          <Descriptions.Item label="Time">
             {appointment.appointmentTime}
           </Descriptions.Item>
           <Descriptions.Item label="Status">
-            {appointment.status === 'booked' ? 'Zarezerwowana' : 
-             appointment.status === 'completed' ? 'Zakończona' :
-             appointment.status === 'cancelled' ? 'Anulowana' : appointment.status}
+            {appointment.status === 'booked' ? 'Booked' : 
+             appointment.status === 'completed' ? 'Completed' :
+             appointment.status === 'cancelled' ? 'Cancelled' : appointment.status}
           </Descriptions.Item>
-          <Descriptions.Item label="Tryb wizyty">
-            {appointment.mode === 'online' ? 'Online' : 'W gabinecie'}
+          <Descriptions.Item label="Visit mode">
+            {appointment.mode === 'online' ? 'Online' : 'In office'}
           </Descriptions.Item>
         </Descriptions>
       </Modal>
@@ -388,12 +343,12 @@ const DoctorCalendar = () => {
     <div style={{ padding: '24px' }}>
       <style>{calendarStyles}</style>
       <Card>
-        <Title level={4}>Kalendarz lekarza</Title>
+        <Title level={4}>Doctor calendar</Title>
         <div style={{ marginBottom: '24px', display: 'flex', gap: '16px' }}>
           {(user?.role === 'admin' || user?.role === 'receptionist') && (
             <Select
               style={{ width: '300px' }}
-              placeholder="Wybierz lekarza"
+              placeholder="Select a doctor"
               onChange={handleDoctorChange}
               value={selectedDoctor}
             >
@@ -408,37 +363,7 @@ const DoctorCalendar = () => {
             value={dateRange}
             onChange={handleDateRangeChange}
             style={{ width: '300px' }}
-            locale={{
-              lang: {
-                locale: 'pl',
-                today: 'Dziś',
-                now: 'Teraz',
-                backToToday: 'Powrót do dziś',
-                ok: 'OK',
-                clear: 'Wyczyść',
-                month: 'Miesiąc',
-                year: 'Rok',
-                timeSelect: 'Wybierz czas',
-                dateSelect: 'Wybierz datę',
-                monthSelect: 'Wybierz miesiąc',
-                yearSelect: 'Wybierz rok',
-                decadeSelect: 'Wybierz dekadę',
-                yearFormat: 'YYYY',
-                dateFormat: 'D/M/YYYY',
-                dayFormat: 'D',
-                dateTimeFormat: 'D/M/YYYY HH:mm:ss',
-                monthFormat: 'MMMM',
-                monthBeforeYear: true,
-                previousMonth: 'Poprzedni miesiąc (PageUp)',
-                nextMonth: 'Następny miesiąc (PageDown)',
-                previousYear: 'Poprzedni rok (Control + left)',
-                nextYear: 'Następny rok (Control + right)',
-                previousDecade: 'Poprzednia dekada',
-                nextDecade: 'Następna dekada',
-                previousCentury: 'Poprzedni wiek',
-                nextCentury: 'Następny wiek',
-              },
-            }}
+            locale={antdDatePickerEn}
           />
         </div>
         <div style={{ height: '700px' }}>
@@ -449,6 +374,7 @@ const DoctorCalendar = () => {
             endAccessor="end"
             style={{ height: '100%' }}
             messages={messages}
+            culture="en-US"
             components={{
               event: EventComponent,
               week: { event: EventComponent },
@@ -466,13 +392,13 @@ const DoctorCalendar = () => {
             min={new Date(0, 0, 0, 8, 0, 0)}
             max={new Date(0, 0, 0, 20, 0, 0)}
             formats={{
-              weekdayFormat: (date) => format(date, 'EEEE', { locale: pl }),
-              dayFormat: (date) => format(date, 'd EEE', { locale: pl }),
-              timeGutterFormat: (date) => format(date, 'HH:mm', { locale: pl }),
+              weekdayFormat: (date) => format(date, 'EEEE', { locale: enUS }),
+              dayFormat: (date) => format(date, 'd EEE', { locale: enUS }),
+              timeGutterFormat: (date) => format(date, 'HH:mm', { locale: enUS }),
               eventTimeRangeFormat: ({ start, end }) =>
-                `${format(start, 'HH:mm', { locale: pl })} - ${format(end, 'HH:mm', { locale: pl })}`,
+                `${format(start, 'HH:mm', { locale: enUS })} - ${format(end, 'HH:mm', { locale: enUS })}`,
               dayRangeHeaderFormat: ({ start, end }) =>
-                `${format(start, 'd MMMM', { locale: pl })} - ${format(end, 'd MMMM', { locale: pl })}`,
+                `${format(start, 'd MMMM', { locale: enUS })} - ${format(end, 'd MMMM', { locale: enUS })}`,
             }}
             eventPropGetter={(event) => ({
               style: {

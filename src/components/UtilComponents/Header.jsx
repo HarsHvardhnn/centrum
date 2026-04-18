@@ -74,7 +74,7 @@ const Header = () => {
           <div className=" w-40 py-4 h-16  flex items-center justify-center cursor-pointer" onClick={()=>window.location.reload()}>
             <img
               src="/images/białe.svg"
-              alt="Centrum Medyczne"
+              alt="Medical center"
               className="w-40"
             />
           </div>
@@ -150,21 +150,21 @@ const Header = () => {
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 <User size={16} className="mr-2" />
-                Zobacz profil
+                View profile
               </button>
               <button
                 onClick={handleSettings}
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 <Settings size={16} className="mr-2" />
-                Ustawienia
+                Settings
               </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
               >
                 <LogOut size={16} className="mr-2" />
-                Wyloguj
+                Log out
               </button>
             </div>
           )}

@@ -73,8 +73,8 @@ const JWTSettingsPage = () => {
       setOriginalInactivityTimeout(timeoutMinutes);
     } catch (err) {
       console.error("Error fetching JWT settings:", err);
-      setError("Wystąpił błąd podczas pobierania ustawień JWT.");
-      toast.error("Nie udało się pobrać ustawień JWT");
+      setError("An error occurred while loading JWT settings.");
+      toast.error("Failed to load JWT settings");
     } finally {
       setLoading(false);
       hideLoader();
@@ -99,7 +99,7 @@ const JWTSettingsPage = () => {
       if (refreshTokenExpiry !== originalRefreshTokenExpiry) {
         const refreshDays = parseInt(refreshTokenExpiry, 10);
         if (isNaN(refreshDays) || refreshDays < 1 || refreshDays > 365) {
-          toast.error("Czas wygaśnięcia tokena odświeżającego musi być między 1 a 365 dni");
+          toast.error("Refresh token expiry must be between 1 and 365 days");
           return;
         }
         promises.push(
@@ -111,7 +111,7 @@ const JWTSettingsPage = () => {
       const timeoutMinutes = parseInt(inactivityTimeout, 10);
       if (timeoutMinutes !== originalInactivityTimeout) {
         if (isNaN(timeoutMinutes) || timeoutMinutes < 1) {
-          toast.error("Czas nieaktywności musi być liczbą większą od 0 (w minutach)");
+          toast.error("Inactivity timeout must be greater than 0 (minutes)");
           return;
         }
         promises.push(
@@ -120,7 +120,7 @@ const JWTSettingsPage = () => {
       }
 
       if (promises.length === 0) {
-        toast.info("Brak zmian do zapisania");
+        toast.info("No changes to save");
         return;
       }
 
@@ -128,15 +128,15 @@ const JWTSettingsPage = () => {
       const allSuccessful = results.every(result => result.success);
 
       if (allSuccessful) {
-        toast.success("Ustawienia JWT zostały zapisane pomyślnie");
+        toast.success("JWT settings saved successfully");
         fetchSettings(); // Refresh to get updated values
       } else {
-        toast.error("Nie udało się zapisać niektórych ustawień");
+        toast.error("Failed to save some settings");
         fetchSettings();
       }
     } catch (err) {
       console.error("Error saving JWT settings:", err);
-      toast.error("Wystąpił błąd podczas zapisywania ustawień JWT");
+      toast.error("An error occurred while saving JWT settings");
     } finally {
       hideLoader();
     }
@@ -149,14 +149,14 @@ const JWTSettingsPage = () => {
       const response = await appointmentConfigService.resetConfig(configKey);
 
       if (response.success) {
-        toast.success(`Ustawienie ${configKey} zostało zresetowane do wartości domyślnej`);
+        toast.success(`Setting ${configKey} was reset to its default value`);
         fetchSettings();
       } else {
-        toast.error(`Nie udało się zresetować ustawienia ${configKey}`);
+        toast.error(`Failed to reset setting ${configKey}`);
       }
     } catch (err) {
       console.error(`Error resetting ${configKey}:`, err);
-      toast.error(`Wystąpił błąd podczas resetowania ustawienia ${configKey}`);
+      toast.error(`An error occurred while resetting setting ${configKey}`);
     } finally {
       hideLoader();
     }
@@ -172,7 +172,7 @@ const JWTSettingsPage = () => {
     <div className="container mx-auto p-6">
       <div className="flex items-center mb-6">
         <Shield className="text-teal-700 mr-3" size={28} />
-        <h1 className="text-2xl font-bold text-teal-700">Ustawienia JWT</h1>
+        <h1 className="text-2xl font-bold text-teal-700">JWT settings</h1>
       </div>
 
       {error && (
@@ -186,15 +186,15 @@ const JWTSettingsPage = () => {
         <div className="flex items-start">
           <Info className="text-blue-500 mr-2 mt-1" size={20} />
           <div>
-            <h3 className="font-medium text-blue-800">Informacja</h3>
+            <h3 className="font-medium text-blue-800">Information</h3>
             <p className="text-sm text-blue-700">
-              Ta strona pozwala na zarządzanie ustawieniami bezpieczeństwa JWT, w tym czasem wygaśnięcia tokenów oraz czasem nieaktywności użytkownika. 
-              Zmiany w tych ustawieniach wpłyną na bezpieczeństwo i wygodę użytkowników.
+              This page manages JWT security settings, including token expiry and user inactivity timeout.
+              Changes affect both security and user experience.
             </p>
             <ul className="text-sm text-blue-700 mt-2 list-disc list-inside">
-              <li><strong>Token dostępu (JWT):</strong> Krótkotrwały token używany do żądań API</li>
-              <li><strong>Token odświeżający:</strong> Długotrwały token przechowywany w bezpiecznym ciasteczku HTTP-only</li>
-              <li><strong>Czas nieaktywności:</strong> Czas po którym użytkownik zostanie automatycznie wylogowany z powodu braku aktywności</li>
+              <li><strong>Access token (JWT):</strong> Short-lived token used for API requests</li>
+              <li><strong>Refresh token:</strong> Long-lived token stored in a secure HTTP-only cookie</li>
+              <li><strong>Inactivity timeout:</strong> Time after which the user is logged out automatically due to inactivity</li>
             </ul>
           </div>
         </div>
@@ -212,7 +212,7 @@ const JWTSettingsPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <div className="flex items-center">
                   <Clock className="mr-2 text-teal-600" size={18} />
-                  Czas wygaśnięcia tokena dostępu (JWT)
+                  Access token (JWT) expiry
                 </div>
               </label>
               <div className="flex gap-3">
@@ -220,7 +220,7 @@ const JWTSettingsPage = () => {
                   type="text"
                   value={jwtExpiry}
                   onChange={(e) => setJwtExpiry(e.target.value)}
-                  placeholder="np. 1h, 30m, 2h, 1d, 7d"
+                  placeholder="e.g. 1h, 30m, 2h, 1d, 7d"
                   className={`flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 ${
                     jwtExpiry && !validateJwtExpiry(jwtExpiry)
                       ? 'border-red-300 focus:ring-red-500'
@@ -230,19 +230,19 @@ const JWTSettingsPage = () => {
                 <button
                   onClick={() => handleReset("JWT_EXPIRY_TIME")}
                   className="px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg flex items-center"
-                  title="Resetuj do wartości domyślnej"
+                  title="Reset to default"
                 >
                   <RotateCcw size={16} className="mr-1" />
-                  Resetuj
+                  Reset
                 </button>
               </div>
               {jwtExpiry && !validateJwtExpiry(jwtExpiry) && (
                 <p className="mt-1 text-sm text-red-600">
-                  Nieprawidłowy format. Użyj formatu: liczba + jednostka (m=minuty, h=godziny, d=dni, w=tygodnie)
+                  Invalid format. Use: number + unit (m=minutes, h=hours, d=days, w=weeks)
                 </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Przykłady: "30m" (30 minut), "1h" (1 godzina), "2h" (2 godziny), "1d" (1 dzień), "7d" (7 dni), "1w" (1 tydzień)
+                Examples: &quot;30m&quot; (30 minutes), &quot;1h&quot; (1 hour), &quot;2h&quot; (2 hours), &quot;1d&quot; (1 day), &quot;7d&quot; (7 days), &quot;1w&quot; (1 week)
               </p>
             </div>
 
@@ -251,7 +251,7 @@ const JWTSettingsPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <div className="flex items-center">
                   <Shield className="mr-2 text-teal-600" size={18} />
-                  Czas wygaśnięcia tokena odświeżającego (w dniach)
+                  Refresh token expiry (days)
                 </div>
               </label>
               <div className="flex gap-3">
@@ -261,20 +261,20 @@ const JWTSettingsPage = () => {
                   onChange={(e) => setRefreshTokenExpiry(e.target.value)}
                   min="1"
                   max="365"
-                  placeholder="np. 30"
+                  placeholder="e.g. 30"
                   className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
                 <button
                   onClick={() => handleReset("REFRESH_TOKEN_EXPIRY_DAYS")}
                   className="px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg flex items-center"
-                  title="Resetuj do wartości domyślnej"
+                  title="Reset to default"
                 >
                   <RotateCcw size={16} className="mr-1" />
-                  Resetuj
+                  Reset
                 </button>
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                Liczba dni (1-365). Token odświeżający jest przechowywany w bezpiecznym ciasteczku HTTP-only.
+                Number of days (1–365). The refresh token is stored in a secure HTTP-only cookie.
               </p>
             </div>
 
@@ -283,7 +283,7 @@ const JWTSettingsPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <div className="flex items-center">
                   <Clock className="mr-2 text-teal-600" size={18} />
-                  Czas nieaktywności (Timeout)
+                  Inactivity timeout
                 </div>
               </label>
               <div className="flex gap-3">
@@ -292,30 +292,30 @@ const JWTSettingsPage = () => {
                   value={inactivityTimeout}
                   onChange={(e) => setInactivityTimeout(e.target.value)}
                   min="1"
-                  placeholder="np. 30"
+                  placeholder="e.g. 30"
                   className={`flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 ${
                     inactivityTimeout && (isNaN(parseInt(inactivityTimeout, 10)) || parseInt(inactivityTimeout, 10) < 1)
                       ? 'border-red-300 focus:ring-red-500'
                       : 'border-gray-300 focus:ring-teal-500'
                   }`}
                 />
-                <span className="flex items-center px-3 text-gray-600">minut</span>
+                <span className="flex items-center px-3 text-gray-600">minutes</span>
                 <button
                   onClick={() => handleReset("INACTIVITY_TIMEOUT")}
                   className="px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg flex items-center"
-                  title="Resetuj do wartości domyślnej"
+                  title="Reset to default"
                 >
                   <RotateCcw size={16} className="mr-1" />
-                  Resetuj
+                  Reset
                 </button>
               </div>
               {inactivityTimeout && (isNaN(parseInt(inactivityTimeout, 10)) || parseInt(inactivityTimeout, 10) < 1) && (
                 <p className="mt-1 text-sm text-red-600">
-                  Czas nieaktywności musi być liczbą większą od 0 (w minutach)
+                  Inactivity timeout must be greater than 0 (minutes)
                 </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Czas w minutach (np. 30 = 30 minut, 60 = 1 godzina, 120 = 2 godziny). Po tym czasie użytkownik zostanie automatycznie wylogowany z powodu braku aktywności.
+                Time in minutes (e.g. 30 = 30 minutes, 60 = 1 hour, 120 = 2 hours). After this period the user is logged out due to inactivity.
               </p>
             </div>
 
@@ -331,7 +331,7 @@ const JWTSettingsPage = () => {
                 }`}
               >
                 <Save size={18} className="mr-2" />
-                Zapisz zmiany
+                Save changes
               </button>
             </div>
           </div>

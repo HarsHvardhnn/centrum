@@ -58,21 +58,19 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
         {/* Left Side Content */}
         <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
           <h1 className="text-2xl sm:text-2xl md:text-2xl lg:text-4xl xl:text-5xl leading-tight font-bold text-gray-900">
-            Zadbaj o Zdrowie          
-            
-          
+            Take care of your health
           </h1>
           <h1 className="text-2xl sm:text-2xl md:text-2xl lg:text-4xl xl:text-5xl leading-tight font-bold text-gray-900">
               {" "}
-              z <span className="text-teal-600">Najlepszymi Specjalistami</span>
+              with <span className="text-teal-600">the best specialists</span>
             </h1>
           <p className="text-gray-600 mt-4 max-w-md mx-auto md:mx-0 px-2 sm:px-0 text-md">
-            Tworzymy nową jakość opieki medycznej — bez kolejek, bez stresu, z
-            pełnym dostępem do najlepszych specjalistów. Wybierz lekarza 
-            i Zarezerwuj Wizytę w kilka sekund.
+            We deliver a new standard of care—no queues, no stress, with full
+            access to top specialists. Choose a doctor and book an appointment
+            in seconds.
           </p>
           <h2 className="text-xl sm:text-2xl mt-8 md:mt-6 font-bold">
-            Znajdź termin
+            Find an appointment
           </h2>
 
           {/* Search Form */}
@@ -94,9 +92,9 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
         }, 100);
       }}
     >
-      <option value="">Imię i nazwisko lekarza</option>
+      <option value="">Doctor name</option>
       {loading ? (
-        <option>Wczytywanie lekarzy...</option>
+        <option>Loading doctors...</option>
       ) : (
         doctors.map((doctor) => (
           <option key={doctor.id} value={doctor.id}>
@@ -168,7 +166,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
           <div className="flex flex-col items-center w-full sm:w-auto sm:flex-1 text-center">
             <h3 className="text-3xl md:text-4xl font-bold">100%</h3>
             <p className="text-sm sm:text-base lg:text-lg">
-              Pozytywnych Opinii
+              Positive reviews
             </p>
           </div>
 
@@ -179,7 +177,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
 
           <div className="flex flex-col items-center w-full sm:w-auto sm:flex-1 text-center">
             <h3 className="text-3xl md:text-4xl font-bold">24/7</h3>
-            <p className="text-sm sm:text-base lg:text-lg">Asystent AI</p>
+            <p className="text-sm sm:text-base lg:text-lg">AI assistant</p>
           </div>
 
           {/* Divider */}
@@ -188,7 +186,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
           {/* Active Patients */}
           <div className="flex flex-col items-center w-full sm:w-auto sm:flex-1 text-center">
             <h3 className="text-3xl md:text-4xl font-bold">+20</h3>
-            <p className="text-sm sm:text-base lg:text-lg">Lat Doświadczenia</p>
+            <p className="text-sm sm:text-base lg:text-lg">Years of experience</p>
           </div>
         </div>
       </div>

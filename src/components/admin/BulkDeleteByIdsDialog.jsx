@@ -9,19 +9,19 @@ const BulkDeleteByIdsDialog = ({
   type, 
   selectedIds, 
   onSuccess,
-  itemName = "rekordów"
+  itemName = "records"
 }) => {
   const { bulkDeleteByIds, loading, error } = usePermanentDelete();
   const [inputText, setInputText] = useState('');
 
   const handleDelete = async () => {
     if (inputText !== 'DELETE') {
-      toast.error('Proszę wpisać "DELETE" aby potwierdzić');
+      toast.error('Type "DELETE" to confirm');
       return;
     }
 
     if (!selectedIds || selectedIds.length === 0) {
-      toast.error('Brak wybranych rekordów do usunięcia');
+      toast.error('No records selected to delete');
       return;
     }
 
@@ -36,13 +36,13 @@ const BulkDeleteByIdsDialog = ({
 
       const endpoint = endpointMap[type];
       if (!endpoint) {
-        throw new Error('Nieprawidłowy typ usuwania');
+        throw new Error('Invalid delete type');
       }
 
       const result = await bulkDeleteByIds(endpoint, selectedIds);
       
       const deletedCount = result.deletedCount || result.deletedRecords?.[endpoint] || selectedIds.length;
-      toast.success(`Pomyślnie usunięto ${deletedCount} ${itemName}`);
+      toast.success(`Successfully deleted ${deletedCount} ${itemName}`);
       onSuccess?.();
       onClose();
       setInputText('');
@@ -56,11 +56,11 @@ const BulkDeleteByIdsDialog = ({
 
   const getTypeLabel = () => {
     const labels = {
-      patient: 'pacjentów',
-      appointment: 'wizyt',
-      contact: 'wiadomości kontaktowych',
-      user: 'użytkowników',
-      invoice: 'faktur'
+      patient: 'patients',
+      appointment: 'appointments',
+      contact: 'contact messages',
+      user: 'users',
+      invoice: 'invoices'
     };
     return labels[type] || itemName;
   };
@@ -82,20 +82,20 @@ const BulkDeleteByIdsDialog = ({
           </div>
           <div className="flex-1">
             <h2 className="text-xl font-bold text-red-600 mb-2">
-              Trwale usuń {selectedIds.length} {getTypeLabel()}?
+              Permanently delete {selectedIds.length} {getTypeLabel()}?
             </h2>
             <p className="text-gray-700 mb-2">
-              Zostanie trwale usuniętych <strong>{selectedIds.length} {getTypeLabel()}</strong>.
+              This will permanently delete <strong>{selectedIds.length} {getTypeLabel()}</strong>.
             </p>
             <p className="text-sm text-red-600 font-medium">
-              ⚠️ Ta operacja jest nieodwracalna! Wszystkie powiązane rekordy również zostaną usunięte.
+              ⚠️ This cannot be undone. Related records will also be removed.
             </p>
           </div>
         </div>
         
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Wpisz <strong className="text-red-600">DELETE</strong> aby potwierdzić:
+            Type <strong className="text-red-600">DELETE</strong> to confirm:
           </label>
           <input
             type="text"
@@ -120,14 +120,14 @@ const BulkDeleteByIdsDialog = ({
             disabled={loading}
             className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
           >
-            Anuluj
+            Cancel
           </button>
           <button
             onClick={handleDelete}
             disabled={loading || inputText !== 'DELETE' || selectedIds.length === 0}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Usuwanie...' : `Usuń ${selectedIds.length} rekord(ów)`}
+            {loading ? 'Deleting...' : `Delete ${selectedIds.length} record(s)`}
           </button>
         </div>
       </div>
