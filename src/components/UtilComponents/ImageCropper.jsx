@@ -94,7 +94,7 @@ export default function ImageCropper({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
-        <h3 className="text-xl font-medium text-gray-900 mb-4">Przytnij zdjęcie</h3>
+        <h3 className="text-xl font-medium text-gray-900 mb-4">Crop image</h3>
         
         <div className="crop-container max-h-[60vh] overflow-auto mb-4">
           <ReactCrop
@@ -120,14 +120,14 @@ export default function ImageCropper({
             onClick={onCancel}
             className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
           >
-            Anuluj
+            Cancel
           </button>
           <button 
             type="button" 
             onClick={handleCropComplete}
             className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600"
           >
-            Zapisz zdjęcie
+            Save image
           </button>
         </div>
       </div>

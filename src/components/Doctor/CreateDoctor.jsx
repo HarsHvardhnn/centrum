@@ -19,14 +19,14 @@ import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
 // Base schema fields (same for create and edit)
 const getDoctorSchema = (isEditMode) =>
   Yup.object().shape({
-    firstName: Yup.string().required("Imię jest wymagane"),
-    lastName: Yup.string().required("Nazwisko jest wymagane"),
+    firstName: Yup.string().required("First name is required"),
+    lastName: Yup.string().required("Last name is required"),
     email: Yup.string()
-      .email("Nieprawidłowy adres email")
-      .required("Email jest wymagany"),
+      .email("Invalid email address")
+      .required("Email is required"),
     phone: Yup.string()
-      .required("Numer telefonu jest wymagany")
-      .matches(/^\d{9}$/, "Numer telefonu musi składać się z dokładnie 9 cyfr"),
+      .required("Phone number is required")
+      .matches(/^\d{9}$/, "Phone number must be exactly 9 digits"),
     // Create: required + min 8. Edit: optional; if provided, min 8
     password: isEditMode
       ? Yup.string()
@@ -35,12 +35,12 @@ const getDoctorSchema = (isEditMode) =>
           .transform((v) => (v === "" || v === undefined ? undefined : v))
           .test("password-edit", function (value) {
             if (value == null || (typeof value === "string" && value.trim() === "")) return true;
-            if (value.length < 8) return this.createError({ path: this.path, message: "Hasło musi zawierać co najmniej 8 znaków" });
+            if (value.length < 8) return this.createError({ path: this.path, message: "Password must be at least 8 characters" });
             return true;
           })
       : Yup.string()
-          .required("Hasło jest wymagane")
-          .min(8, "Hasło musi zawierać co najmniej 8 znaków"),
+          .required("Password is required")
+          .min(8, "Password must be at least 8 characters"),
     confirmPassword: isEditMode
       ? Yup.string()
           .optional()
@@ -49,29 +49,29 @@ const getDoctorSchema = (isEditMode) =>
           .test("confirm-edit", function (value) {
             const password = this.parent.password;
             if (password == null || (typeof password === "string" && password.trim() === "")) return true;
-            if (value != null && value !== password) return this.createError({ path: this.path, message: "Hasła muszą być zgodne" });
+            if (value != null && value !== password) return this.createError({ path: this.path, message: "Passwords must match" });
             return true;
           })
       : Yup.string()
-          .required("Potwierdzenie hasła jest wymagane")
-          .oneOf([Yup.ref("password"), null], "Hasła muszą być zgodne"),
+          .required("Password confirmation is required")
+          .oneOf([Yup.ref("password"), null], "Passwords must match"),
     specialization: Yup.array()
-      .min(1, "Wymagana jest co najmniej jedna specjalizacja")
-      .required("Specjalizacja jest wymagana"),
+      .min(1, "At least one specialization is required")
+      .required("Specialization is required"),
     qualifications: Yup.array()
-      .min(1, "Wymagana jest co najmniej jedna kwalifikacja")
-      .required("Kwalifikacja jest wymagana"),
+      .min(1, "At least one qualification is required")
+      .required("Qualification is required"),
     shortDescription: Yup.string()
-      .required("Krótki opis jest wymagany")
-      .min(10, "Krótki opis musi zawierać co najmniej 10 znaków")
-      .max(200, "Krótki opis nie może przekraczać 200 znaków"),
-    bio: Yup.string().required("Bio jest wymagane"),
+      .required("Short description is required")
+      .min(10, "Short description must be at least 10 characters")
+      .max(200, "Short description must be at most 200 characters"),
+    bio: Yup.string().required("Bio is required"),
     // Create: required (File). Edit: optional
     profilePicture: isEditMode
       ? Yup.mixed().notRequired()
       : Yup.mixed()
-          .required("Zdjęcie profilowe jest wymagane")
-          .test("is-file", "Zdjęcie profilowe jest wymagane", (value) => value instanceof File),
+          .required("Profile photo is required")
+          .test("is-file", "Profile photo is required", (value) => value instanceof File),
   });
 
 
@@ -186,7 +186,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-semibold text-gray-800">
-              {isEditMode ? "Edytuj Lekarza" : "Dodaj Nowego Lekarza"}
+              {isEditMode ? "Edit doctor" : "Add new doctor"}
             </h2>
             {!isEditMode && saveStatus && (
               <AutoSaveIndicator status={saveStatus} />
@@ -244,7 +244,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
               setSubmitting(false);
             } catch (error) {
               setSubmitting(false);
-              console.error("Błąd podczas przesyłania formularza:", error);
+              console.error("Error submitting form:", error);
             }
           }}
         >
@@ -270,7 +270,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
               <Form className="space-y-6" onSubmit={handleSubmit}>
               {Object.keys(errors).length > 0 && (
                 <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-                  Formularz zawiera błędy. Proszę poprawić zaznaczone pola poniżej.
+                  The form has errors. Please fix the highlighted fields below.
                 </div>
               )}
               <div className="flex flex-col md:flex-row gap-8">
@@ -282,7 +282,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         {profileImage ? (
                           <img
                             src={profileImage}
-                            alt="Podgląd Profilu"
+                            alt="Profile preview"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -292,7 +292,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       <label
                         htmlFor="profilePicture"
                         className="absolute bottom-0 right-0 bg-teal-500 rounded-full p-2 cursor-pointer hover:bg-teal-600 transition-colors"
-                        title={isEditMode && initialData?.profilePicture ? "Zmień zdjęcie profilowe" : "Dodaj zdjęcie profilowe"}
+                        title={isEditMode && initialData?.profilePicture ? "Change profile photo" : "Add profile photo"}
                       >
                         <input
                           id="profilePicture"
@@ -317,7 +317,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                   )}
                   {isEditMode && initialData?.profilePicture && !errors.profilePicture && (
                     <div className="text-green-600 text-xs text-center">
-                      Zdjęcie profilowe już istnieje. Kliknij ikonę, aby zmienić.
+                      A profile photo is already set. Click the icon to change it.
                     </div>
                   )}
 
@@ -327,7 +327,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         htmlFor="firstName"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Imię*
+                        First name*
                       </label>
                       <Field
                         type="text"
@@ -347,7 +347,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         htmlFor="lastName"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Nazwisko*
+                        Last name*
                       </label>
                       <Field
                         type="text"
@@ -394,7 +394,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       htmlFor="phone"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Numer Telefonu*
+                      Phone number*
                     </label>
                     <Field
                       type="text"
@@ -415,14 +415,14 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         htmlFor="password"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Hasło{isEditMode ? " (opcjonalne)" : "*"}
+                        Password{isEditMode ? " (optional)" : "*"}
                       </label>
                       <Field
                         type="password"
                         name="password"
                         id="password"
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                        placeholder={isEditMode ? "Zostaw puste, aby zachować obecne hasło" : ""}
+                        placeholder={isEditMode ? "Leave blank to keep current password" : ""}
                       />
                       {errors.password && touched.password && (
                         <div className="text-red-500 text-xs mt-1">{errors.password}</div>
@@ -434,14 +434,14 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         htmlFor="confirmPassword"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Potwierdź Hasło{isEditMode ? " (opcjonalne)" : "*"}
+                        Confirm password{isEditMode ? " (optional)" : "*"}
                       </label>
                       <Field
                         type="password"
                         name="confirmPassword"
                         id="confirmPassword"
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                        placeholder={isEditMode ? "Zostaw puste, aby zachować obecne hasło" : ""}
+                        placeholder={isEditMode ? "Leave blank to keep current password" : ""}
                       />
                       {errors.confirmPassword && touched.confirmPassword && (
                         <div className="text-red-500 text-xs mt-1">{errors.confirmPassword}</div>
@@ -457,7 +457,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       htmlFor="department"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Oddział*
+                      Department*
                     </label>
                     <div className="relative">
                       <Field
@@ -466,7 +466,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         id="department"
                         className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500 appearance-none bg-white"
                       >
-                        <option value="">Wybierz Oddział</option>
+                        <option value="">Select department</option>
                         {DEPARTMENTS.map((dept) => (
                           <option key={dept} value={dept}>
                             {dept}
@@ -504,7 +504,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Kwalifikacje*
+                      Qualifications*
                     </label>
                     <div className="flex items-center">
                       <div className="relative flex-grow">
@@ -515,7 +515,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                             setQualificationInput(e.target.value)
                           }
                           className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                          placeholder="Dodaj kwalifikację"
+                          placeholder="Add a qualification"
                         />
                         <BookOpen
                           size={16}
@@ -529,7 +529,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         }
                         className="ml-2 bg-teal-500 text-white p-2 rounded-md hover:bg-teal-600"
                       >
-                        Dodaj
+                        Add
                       </button>
                     </div>
                     {values.qualifications.length > 0 && (
@@ -569,7 +569,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       htmlFor="shortDescription"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      Krótki Opis*
+                      Short description*
                     </label>
                     <div className="relative">
                       <Field
@@ -578,7 +578,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         id="shortDescription"
                         rows="2"
                         className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                        placeholder="Krótki opis lekarza (np. specjalizacja, doświadczenie)"
+                        placeholder="Brief summary (e.g. specialty, experience)"
                       />
                       <FileText
                         size={16}
@@ -611,7 +611,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         id="bio"
                         rows="4"
                         className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                        placeholder="Doświadczenie zawodowe i specjalizacja lekarza..."
+                        placeholder="Professional experience and clinical focus..."
                       />
                       <FileText
                         size={16}
@@ -625,7 +625,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         className="text-red-500"
                       />
                       <span className="text-gray-500">
-                        {values.bio?.length || 0} znaków
+                        {values.bio?.length || 0} characters
                       </span>
                     </div>
                   </div>
@@ -638,14 +638,14 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                   onClick={onClose}
                   className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                 >
-                  Anuluj
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="px-6 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:opacity-50"
                 >
-                  {isSubmitting ? "Zapisywanie..." : "Zapisz Lekarza"}
+                  {isSubmitting ? "Saving..." : "Save doctor"}
                 </button>
               </div>
             </Form>

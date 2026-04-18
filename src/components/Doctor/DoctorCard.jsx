@@ -20,7 +20,7 @@ const DoctorCard = ({ doctor }) => {
           </h3>
           <div className="flex items-center gap-2 mb-2">
             <FaStethoscope className="text-gray-700" />
-            <span className="text-gray-medium">{doctor?.specialty?.name || "Ogólny"}</span>
+            <span className="text-gray-medium">{doctor?.specialty?.name || "General"}</span>
 
             {/* <svg
               className="w-5 h-5 text-gray-medium ml-4"
@@ -85,7 +85,7 @@ const DoctorCard = ({ doctor }) => {
           }}
           className="bg-primary-light font-semibold text-white py-3 px-5 rounded-lg hover:bg-primary transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
         >
-          Zobacz wizyty
+          View appointments
           <svg
             className="w-5 h-5"
             fill="none"
@@ -103,7 +103,7 @@ const DoctorCard = ({ doctor }) => {
         </button>
 
         <button onClick={()=>{navigateReplace(`/szczegoly-lekarza/${doctor.id}`)}} className="text-gray-dark font-semibold border border-gray-300 py-3 px-5 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
-          Zobacz szczegóły lekarza
+          Doctor details
         </button>
       </div>
     </div>

@@ -14,21 +14,21 @@ export default function AutoSaveIndicator({ status, className = "" }) {
       case 'saving':
         return {
           icon: <Loader2 className="w-3 h-3 animate-spin" />,
-          text: 'Zapisywanie...',
+          text: 'Saving...',
           color: 'text-blue-500',
           bgColor: 'bg-blue-50',
         };
       case 'saved':
         return {
           icon: <CheckCircle2 className="w-3 h-3" />,
-          text: 'Zapisano',
+          text: 'Saved',
           color: 'text-green-500',
           bgColor: 'bg-green-50',
         };
       case 'error':
         return {
           icon: <AlertCircle className="w-3 h-3" />,
-          text: 'Błąd zapisu',
+          text: 'Save failed',
           color: 'text-red-500',
           bgColor: 'bg-red-50',
         };

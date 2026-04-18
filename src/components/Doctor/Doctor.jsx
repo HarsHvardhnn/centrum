@@ -18,15 +18,15 @@ const transformDoctorsResponse = (doctorsList) =>
   (doctorsList || []).map((doc) => ({
     id: doc.id || doc._id,
     name: formatDoctorName(doc.name) || "",
-    specialty: doc.specialty || doc.specializations?.[0] || "Ogólny",
+    specialty: doc.specialty || doc.specializations?.[0] || "General",
     timing: "9:30 - 13:00",
     date: doc.date ? format(new Date(doc.date), "dd.MM.yyyy") : "",
     description:
       doc.bio ||
-      "Centrum Chorób Zakaźnych ma na celu dostarczanie aktualnych, istotnych badań dotyczących aspektów mikrobiologii, wirusologii i parazytologii.",
+      "Infectious disease center focused on current research in microbiology, virology, and parasitology.",
     image: doc.image || "https://placehold.jp/250x50.png?",
-    status: doc.status || (doc.available ? "Dostępny" : "Niedostępny"),
-    visitType: doc.visitType || "Konsultacja",
+    status: doc.status || (doc.available ? "Available" : "Unavailable"),
+    visitType: doc.visitType || "Consultation",
     available: doc.available ?? true,
   }));
 
@@ -63,7 +63,7 @@ const BillingPage = () => {
         const transformed = transformDoctorsResponse(response.doctors || []);
         setAllDoctors(transformed);
       } catch (error) {
-        console.error("Nie udało się pobrać lekarzy:", error);
+        console.error("Failed to fetch doctors:", error);
         setAllDoctors([]);
       } finally {
         hideLoader();
@@ -73,7 +73,7 @@ const BillingPage = () => {
     fetchDoctors();
   }, [activeFilters, debouncedSearch]);
 
-  // Fetch visit reasons for dynamic "Typ wizyty" filter
+  // Fetch visit reasons for dynamic "Visit type" filter
   useEffect(() => {
     let cancelled = false;
     appointmentHelper
@@ -93,14 +93,30 @@ const BillingPage = () => {
     return () => { cancelled = true; };
   }, []);
 
-  // Filter options: specialties and visit types from API, statuses static
+  // Filter options: specialties and visit types from API; status values match backend (see BACKEND_DOCTORS_LIST_FILTERS.md)
+  const visitTypeFallback = [
+    { value: "Konsultacja", label: "Consultation" },
+    { value: "Zabieg", label: "Procedure" },
+    { value: "Kontrola", label: "Follow-up" },
+  ];
+  const visitTypeOptions =
+    visitTypesFromApi.length > 0
+      ? visitTypesFromApi.map((t) =>
+          typeof t === "string" ? { value: t, label: t } : t
+        )
+      : visitTypeFallback;
+
   const filterOptions = {
     specialties: (specializations || []).map((spec) => ({
       id: spec._id || spec.id,
       name: spec.name || "",
     })),
-    statuses: ["Zaplanowane", "Anulowane", "Zakończone"],
-    visitTypes: visitTypesFromApi.length > 0 ? visitTypesFromApi : ["Konsultacja", "Zabieg", "Kontrola"],
+    statuses: [
+      { value: "Zaplanowane", label: "Scheduled" },
+      { value: "Anulowane", label: "Cancelled" },
+      { value: "Zakończone", label: "Completed" },
+    ],
+    visitTypes: visitTypeOptions,
   };
 
   const handleAddDoctor = async (doctorData, resetForm, closeModal) => {
@@ -121,12 +137,12 @@ const BillingPage = () => {
           doctorData.specialization?.[0] ||
           "",
         available: createdDoctor.available || true,
-        status: createdDoctor.status || "Dostępny",
+        status: createdDoctor.status || "Available",
         department:createdDoctor?.department || "",
         experience:
-          createdDoctor.experience || `${doctorData.experience} lat`,
+          createdDoctor.experience || `${doctorData.experience} years`,
         image: createdDoctor.image || doctorData.profilePicture,
-        visitType: "Konsultacja",
+        visitType: "Consultation",
         date: new Date().toISOString().split("T")[0],
         email: createdDoctor.email || doctorData.email,
         phone: createdDoctor.phone || doctorData.phone,
@@ -145,7 +161,7 @@ const BillingPage = () => {
 
       setAllDoctors((prevDoctors) => [...prevDoctors, newDoctor]);
 
-      toast.success("Nowy lekarz został dodany pomyślnie");
+      toast.success("Doctor added successfully");
 
       // Only reset form and close modal on success
       resetForm();
@@ -153,10 +169,10 @@ const BillingPage = () => {
 
       return newDoctor;
     } catch (error) {
-      console.error("Błąd podczas dodawania lekarza:", error);
+      console.error("Error adding doctor:", error);
 
       toast.error(
-        error.response?.data?.message || error.message || "Nie udało się dodać lekarza"
+        error.response?.data?.message || error.message || "Could not add doctor"
       );
 
       // Don't close modal or reset form on error
@@ -169,9 +185,9 @@ const BillingPage = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="w-full mx-auto px-4 py-8">
-        {/* Header: title + search + add (same style as Lista pacjentów) */}
+        {/* Header: title + search + add (same style as patient list) */}
         <Header
-          title="Lista lekarzy"
+          title="Doctors"
           onSearch={(term) => setSearchTerm(term)}
           onFilter={(filters) => setActiveFilters(filters)}
           onAddDoctor={() => setShowAddDoctorModal(true)}

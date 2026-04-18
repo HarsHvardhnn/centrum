@@ -59,7 +59,7 @@ const Header = ({
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
                   <input
                     type="text"
-                    placeholder="Szukaj lekarza..."
+                    placeholder="Search doctors..."
                     value={searchTerm}
                     onChange={handleSearchChange}
                     className="w-full py-2.5 pl-10 pr-4 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
@@ -71,7 +71,7 @@ const Header = ({
                   className="px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                 >
                   <Filter size={18} />
-                  Filtry
+                  Filters
                 </button>
                 <RoleAccess allowedRoles={["admin", "receptionist"]}>
                   <button
@@ -80,7 +80,7 @@ const Header = ({
                     className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-4 py-2.5 flex items-center gap-2 font-medium shrink-0"
                   >
                     <Plus size={18} />
-                    Dodaj specjalistę
+                    Add specialist
                   </button>
                 </RoleAccess>
               </div>
@@ -89,7 +89,7 @@ const Header = ({
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Szukaj po emailu lub imieniu"
+                    placeholder="Search by email or name"
                     value={searchTerm}
                     onChange={handleSearchChange}
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
@@ -101,12 +101,12 @@ const Header = ({
                   className="px-4 py-2 border border-gray-300 rounded-lg flex items-center bg-white text-gray-dark"
                 >
                   <Filter size={20} className="mr-2" />
-                  Filtruj
+                  Filter
                 </button>
                 <RoleAccess allowedRoles={["admin", "receptionist"]}>
                   <button onClick={onAddDoctor} className="px-4 py-2 bg-teal-600 text-white rounded-lg flex items-center">
                     <Plus size={20} className="mr-2" />
-                    Dodaj specjalistę
+                    Add specialist
                   </button>
                 </RoleAccess>
               </div>
@@ -120,12 +120,12 @@ const Header = ({
             <div className="flex flex-wrap">
               {/* Filter by Doctor */}
               <div className="w-full md:w-1/2 px-4">
-                <h3 className="text-lg font-medium mb-4">Filtruj według specjalisty</h3>
+                <h3 className="text-lg font-medium mb-4">Filter by specialist</h3>
                 <div className="space-y-4">
                   <div>
                     <input
                       type="text"
-                      placeholder="Imię specjalisty"
+                      placeholder="Specialist name"
                       value={filters.doctor}
                       onChange={(e) =>
                         handleFilterChange("doctor", e.target.value)
@@ -141,7 +141,7 @@ const Header = ({
                       }
                       className="w-full p-2 border border-gray-300 rounded-md appearance-none"
                     >
-                      <option value="">Wszystkie specjalności</option>
+                      <option value="">All specialties</option>
                       {filterOptions?.specialties?.map((specialty) => {
                         const value = typeof specialty === "object" ? specialty?.id : specialty;
                         const label = typeof specialty === "object" ? specialty?.name : specialty;
@@ -167,7 +167,7 @@ const Header = ({
                         }
                         className="mr-2"
                       />
-                      <span>Pokaż tylko dostępnych Lekarzy</span>
+                      <span>Show only available doctors</span>
                     </label>
                   </div>
                 </div>
@@ -176,7 +176,7 @@ const Header = ({
               {/* Filter by Appointment */}
               <div className="w-full md:w-1/2 px-4">
                 <h3 className="text-lg font-medium mb-4">
-                  Filtruj według wizyty
+                  Filter by appointment
                 </h3>
                 <div className="space-y-4">
                   <div>
@@ -197,12 +197,22 @@ const Header = ({
                       }
                       className="w-full p-2 border border-gray-300 rounded-md appearance-none"
                     >
-                      <option value="">Wszystkie statusy</option>
-                      {filterOptions?.statuses?.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
+                      <option value="">All statuses</option>
+                      {filterOptions?.statuses?.map((status) => {
+                        const value =
+                          typeof status === "object" && status !== null
+                            ? status.value ?? status
+                            : status;
+                        const label =
+                          typeof status === "object" && status !== null
+                            ? status.label ?? String(value)
+                            : status;
+                        return (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                   <div>
@@ -213,12 +223,22 @@ const Header = ({
                       }
                       className="w-full p-2 border border-gray-300 rounded-md appearance-none"
                     >
-                      <option value="">Wszystkie typy wizyt</option>
-                      {filterOptions?.visitTypes?.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
+                      <option value="">All visit types</option>
+                      {filterOptions?.visitTypes?.map((type) => {
+                        const value =
+                          typeof type === "object" && type !== null
+                            ? type.value ?? type
+                            : type;
+                        const label =
+                          typeof type === "object" && type !== null
+                            ? type.label ?? String(value)
+                            : type;
+                        return (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                 </div>
@@ -241,7 +261,7 @@ const Header = ({
                 }}
                 className="px-6 py-2 border border-gray-300 rounded-md bg-white"
               >
-                Resetuj
+                Reset
               </button>
               <button
                 onClick={() => {
@@ -250,7 +270,7 @@ const Header = ({
                 }}
                 className="px-6 py-2 bg-teal-600 text-white rounded-md"
               >
-                Zastosuj filtry
+                Apply filters
               </button>
             </div>
           </div>
