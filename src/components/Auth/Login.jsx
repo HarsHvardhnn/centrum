@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import LogoMark from "/images/new_logo_cm7.png";
-import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { apiCaller, setCookie } from "../../utils/axiosInstance";
@@ -10,7 +9,6 @@ import { toast } from "sonner";
 import { useUser } from "../../context/userContext";
 
 const AuthForm = ({ isLogin = false }) => {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showOtpScreen, setShowOtpScreen] = useState(false);
   const [registrationData, setRegistrationData] = useState(null);
@@ -74,31 +72,31 @@ const AuthForm = ({ isLogin = false }) => {
   // Validation schemas
   const loginSchema = Yup.object().shape({
     email: Yup.string()
-      .email("Nieprawidłowy format email")
-      .required("Email jest wymagany"),
+      .email("Invalid email format")
+      .required("Email is required"),
     password: Yup.string()
-      .min(8, "Hasło musi mieć co najmniej 8 znaków")
-      .required("Hasło jest wymagane"),
+      .min(8, "Password must be at least 8 characters")
+      .required("Password is required"),
   });
 
   const signupSchema = Yup.object().shape({
-    firstName: Yup.string().required("Imię jest wymagane"),
-    lastName: Yup.string().required("Nazwisko jest wymagane"),
+    firstName: Yup.string().required("First name is required"),
+    lastName: Yup.string().required("Last name is required"),
     email: Yup.string()
-      .email("Nieprawidłowy format email")
-      .required("Email jest wymagany"),
+      .email("Invalid email format")
+      .required("Email is required"),
     password: Yup.string()
-      .min(8, "Hasło musi mieć co najmniej 8 znaków")
-      .required("Hasło jest wymagane"),
+      .min(8, "Password must be at least 8 characters")
+      .required("Password is required"),
     phone: Yup.string()
-      .matches(/^\d{9}$/, "Numer telefonu musi składać się z dokładnie 9 cyfr")
+      .matches(/^\d{9}$/, "Phone number must be exactly 9 digits")
       .optional(),
   });
 
   const otpSchema = Yup.object().shape({
     otp: Yup.string()
-      .required("Kod weryfikacyjny jest wymagany")
-      .length(6, "Kod OTP musi mieć 6 cyfr"),
+      .required("Verification code is required")
+      .length(6, "OTP must be 6 digits"),
   });
 
   // 2FA API Functions
@@ -118,7 +116,7 @@ const AuthForm = ({ isLogin = false }) => {
         localStorage.setItem("user", userStr);
         setUser(response.data.user || {});
 
-        toast.success("Logowanie zakończone sukcesem!");
+        toast.success("Signed in successfully");
 
         if (response.data.user.role === "patient") {
           navigate("/user");
@@ -138,7 +136,7 @@ const AuthForm = ({ isLogin = false }) => {
       console.error('2FA verification error:', error);
       return { 
         success: false, 
-        error: error.response?.data?.message || "Błąd podczas weryfikacji kodu" 
+        error: error.response?.data?.message || "Error verifying code" 
       };
     }
   };
@@ -163,7 +161,7 @@ const AuthForm = ({ isLogin = false }) => {
       console.error('Resend code error:', error);
       return { 
         success: false, 
-        error: error.response?.data?.message || "Błąd podczas wysyłania kodu" 
+        error: error.response?.data?.message || "Error sending code" 
       };
     }
   };
@@ -183,7 +181,7 @@ const AuthForm = ({ isLogin = false }) => {
       console.error('Email fallback error:', error);
       return { 
         success: false, 
-        error: error.response?.data?.message || "Błąd podczas wysyłania kodu email" 
+        error: error.response?.data?.message || "Error sending email code" 
       };
     }
   };
@@ -194,7 +192,7 @@ const AuthForm = ({ isLogin = false }) => {
       const response = await apiCaller("POST", "/auth/google", {
         token: credentialResponse.credential,
       });
-      toast.success("Logowanie przez Google powiodło się");
+      toast.success("Signed in with Google");
 
       const userStr = JSON.stringify(response.data.user);
       setCookie('authToken', response.data.token, 7);
@@ -210,7 +208,7 @@ const AuthForm = ({ isLogin = false }) => {
       navigate("/administracja");
     } catch (error) {
       toast.error(
-        "Logowanie przez Google nie powiodło się: " + 
+        "Google sign-in failed: " + 
         (error.response?.data?.message || error.message)
       );
     }
@@ -239,7 +237,7 @@ const AuthForm = ({ isLogin = false }) => {
         setActiveTab(defaultMethod);
         setShowTwoFactor(true);
         
-        toast.info("Kod weryfikacyjny został wysłany");
+        toast.info("Verification code sent");
       } else {
         // Normal login - store token and redirect
         const userStr = JSON.stringify(response.data.user);
@@ -251,7 +249,7 @@ const AuthForm = ({ isLogin = false }) => {
 
         console.log("response",response.data.user.role)
 
-        toast.success("Logowanie zakończone sukcesem!");
+        toast.success("Signed in successfully");
 
         if (response.data.user.role === "patient") {
           navigate("/user");
@@ -267,7 +265,7 @@ const AuthForm = ({ isLogin = false }) => {
       setErrors({
         submit:
           error.response?.data?.message ||
-          "Logowanie nie powiodło się. Spróbuj ponownie.",
+          "Sign-in failed. Please try again.",
       });
     } finally {
       setSubmitting(false);
@@ -301,7 +299,7 @@ const AuthForm = ({ isLogin = false }) => {
         setTwoFactorError(result.error);
       }
     } catch (error) {
-      setTwoFactorError('Błąd podczas weryfikacji kodu');
+      setTwoFactorError('Error verifying code');
     } finally {
       setIsVerifying(false);
     }
@@ -314,13 +312,13 @@ const AuthForm = ({ isLogin = false }) => {
       
       if (result.success) {
         setResendCooldown(60);
-        toast.success(`Kod ${method === 'sms' ? 'SMS' : 'email'} został wysłany ponownie`);
+        toast.success(`${method === 'sms' ? 'SMS' : 'Email'} code sent again`);
         setTwoFactorError('');
       } else {
         setTwoFactorError(result.error);
       }
     } catch (error) {
-      setTwoFactorError('Błąd podczas wysyłania kodu');
+      setTwoFactorError('Error sending code');
     }
   };
 
@@ -332,12 +330,12 @@ const AuthForm = ({ isLogin = false }) => {
       if (result.success) {
         setActiveTab('email');
         setTwoFactorError('');
-        toast.success('Kod został wysłany na email');
+        toast.success('Code sent to your email');
       } else {
         setTwoFactorError(result.error);
       }
     } catch (error) {
-      setTwoFactorError('Błąd podczas wysyłania kodu email');
+      setTwoFactorError('Error sending email code');
     }
   };
 
@@ -371,7 +369,7 @@ const AuthForm = ({ isLogin = false }) => {
       setErrors({
         submit:
           error.response?.data?.message ||
-          "Rejestracja nie powiodła się. Spróbuj ponownie.",
+          "Registration failed. Please try again.",
       });
     } finally {
       setSubmitting(false);
@@ -400,7 +398,7 @@ const AuthForm = ({ isLogin = false }) => {
       setErrors({
         submit:
           error.response?.data?.message ||
-          "Weryfikacja kodu OTP nie powiodła się. Spróbuj ponownie.",
+          "OTP verification failed. Please try again.",
       });
     } finally {
       setSubmitting(false);
@@ -422,20 +420,20 @@ const AuthForm = ({ isLogin = false }) => {
         phone: registrationData.phone || "",
       });
 
-      alert("Kod OTP wysłany ponownie!");
+      alert("OTP code sent again.");
     } catch (error) {
       console.error(
         "Failed to resend OTP:",
         error.response?.data?.message || error.message
       );
-      alert("Nie udało się wysłać kodu OTP. Spróbuj ponownie.");
+      alert("Could not resend OTP. Please try again.");
     }
   };
 
   return (
     <div className="w-full px-4 flex flex-col items-center gap-6 py-8">
       <div className="flex items-center justify-center w-full ">
-        <img src={LogoMark} alt="Centrum Medyczne" className="h-44 w-auto max-w-sm" />
+        <img src={LogoMark} alt="Medical center" className="h-44 w-auto max-w-sm" />
       </div>
 
       <div className="flex flex-col gap-2 w-full max-w-md">
@@ -443,10 +441,10 @@ const AuthForm = ({ isLogin = false }) => {
           // 2FA Verification Screen
           <div className="two-factor-form">
             <h2 className="text-3xl font-bold text-[#003f78] mb-2 text-center">
-              Weryfikacja dwuskładnikowa
+              Two-factor verification
             </h2>
             <p className="text-gray-500 mb-6 text-center">
-              Wybierz metodę weryfikacji:
+              Choose a verification method:
             </p>
             
             {/* Method Tabs */}
@@ -484,7 +482,7 @@ const AuthForm = ({ isLogin = false }) => {
                   }`}
                   onClick={() => setActiveTab('backup')}
                 >
-                  Kod zapasowy
+                  Backup code
                 </button>
               )}
             </div>
@@ -494,11 +492,11 @@ const AuthForm = ({ isLogin = false }) => {
               {activeTab === 'sms' && (
                 <div className="tab-content">
                   <p className="text-sm text-gray-600 mb-4">
-                    Kod został wysłany na numer {twoFactorData.phone}
+                    A code was sent to {twoFactorData.phone}
                   </p>
                   <input
                     type="text"
-                    placeholder="Wprowadź kod SMS"
+                    placeholder="Enter SMS code"
                     value={codes.sms}
                     onChange={(e) => handleCodeChange('sms', e.target.value)}
                     maxLength="6"
@@ -512,7 +510,7 @@ const AuthForm = ({ isLogin = false }) => {
                       disabled={resendCooldown > 0 || isVerifying}
                       className="text-sm text-[#089090] hover:text-[#067a7a] hover:underline disabled:text-gray-400 disabled:no-underline"
                     >
-                      {resendCooldown > 0 ? `Wyślij ponownie (${resendCooldown}s)` : 'Wyślij ponownie SMS'}
+                      {resendCooldown > 0 ? `Resend (${resendCooldown}s)` : 'Resend SMS'}
                     </button>
                     <button
                       type="button"
@@ -520,7 +518,7 @@ const AuthForm = ({ isLogin = false }) => {
                       disabled={isVerifying}
                       className="text-sm bg-yellow-100 text-yellow-800 py-2 px-3 rounded-md hover:bg-yellow-200 transition-colors"
                     >
-                      Nie otrzymałem SMS - wyślij email
+                      Did not get SMS — send email instead
                     </button>
                   </div>
                 </div>
@@ -530,11 +528,11 @@ const AuthForm = ({ isLogin = false }) => {
               {activeTab === 'email' && (
                 <div className="tab-content">
                   <p className="text-sm text-gray-600 mb-4">
-                    Kod został wysłany na adres {twoFactorData.email}
+                    A code was sent to {twoFactorData.email}
                   </p>
                   <input
                     type="text"
-                    placeholder="Wprowadź kod z email"
+                    placeholder="Enter code from email"
                     value={codes.email}
                     onChange={(e) => handleCodeChange('email', e.target.value)}
                     maxLength="6"
@@ -547,7 +545,7 @@ const AuthForm = ({ isLogin = false }) => {
                     disabled={resendCooldown > 0 || isVerifying}
                     className="text-sm text-[#089090] hover:text-[#067a7a] hover:underline disabled:text-gray-400 disabled:no-underline mt-4"
                   >
-                    {resendCooldown > 0 ? `Wyślij ponownie (${resendCooldown}s)` : 'Wyślij ponownie email'}
+                    {resendCooldown > 0 ? `Resend (${resendCooldown}s)` : 'Resend email'}
                   </button>
                 </div>
               )}
@@ -556,11 +554,11 @@ const AuthForm = ({ isLogin = false }) => {
               {activeTab === 'backup' && (
                 <div className="tab-content">
                   <p className="text-sm text-gray-600 mb-4">
-                    Wprowadź jeden z kodów zapasowych otrzymanych podczas włączania 2FA
+                    Enter one of the backup codes you received when you enabled 2FA
                   </p>
                   <input
                     type="text"
-                    placeholder="Wprowadź kod zapasowy (np. A1B2C3D4)"
+                    placeholder="Backup code (e.g. A1B2C3D4)"
                     value={codes.backup}
                     onChange={(e) => handleCodeChange('backup', e.target.value.toUpperCase())}
                     maxLength="8"
@@ -569,7 +567,7 @@ const AuthForm = ({ isLogin = false }) => {
                   />
                   <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                     <p className="text-xs text-yellow-800">
-                      ⚠️ Każdy kod zapasowy można użyć tylko raz
+                      ⚠️ Each backup code can only be used once
                     </p>
                   </div>
                 </div>
@@ -587,7 +585,7 @@ const AuthForm = ({ isLogin = false }) => {
                   onClick={() => setShowTwoFactor(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  Wstecz
+                  Back
                 </button>
                 <button
                   type="submit"
@@ -597,10 +595,10 @@ const AuthForm = ({ isLogin = false }) => {
                   {isVerifying ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Weryfikacja...
+                      Verifying...
                     </>
                   ) : (
-                    'Zweryfikuj kod'
+                    'Verify code'
                   )}
                 </button>
               </div>
@@ -610,10 +608,10 @@ const AuthForm = ({ isLogin = false }) => {
           // OTP Verification Screen (for registration)
           <>
             <h2 className="text-3xl font-bold text-[#003f78] mb-2 text-center">
-              Zweryfikuj swój email
+              Verify your email
             </h2>
             <p className="text-gray-500 mb-6 text-center">
-              Wysłaliśmy kod weryfikacyjny na adres <strong>{email}</strong>
+              We sent a verification code to <strong>{email}</strong>
             </p>
 
             <Formik
@@ -628,13 +626,13 @@ const AuthForm = ({ isLogin = false }) => {
                       htmlFor="otp"
                       className="block text-[#003f78] font-medium mb-2"
                     >
-                      Kod weryfikacyjny*
+                      Verification code*
                     </label>
                     <Field
                       type="text"
                       id="otp"
                       name="otp"
-                      placeholder="Wprowadź 6-cyfrowy kod"
+                      placeholder="Enter 6-digit code"
                       className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none bg-gray-50 ${
                         errors.otp && touched.otp
                           ? "border-red-500"
@@ -657,7 +655,7 @@ const AuthForm = ({ isLogin = false }) => {
                     disabled={isSubmitting}
                     className="w-full bg-[#089090] border-2 border-[#003F78] text-white py-3 px-4 rounded-lg hover:bg-[#067a7a] transition duration-200 font-semibold"
                   >
-                    {isSubmitting ? "Weryfikowanie..." : "Zweryfikuj kod"}
+                    {isSubmitting ? "Verifying..." : "Verify code"}
                   </button>
 
                   <div className="text-center">
@@ -666,7 +664,7 @@ const AuthForm = ({ isLogin = false }) => {
                       onClick={handleResendOTP}
                       className="text-sm text-[#089090] hover:text-[#067a7a] hover:underline"
                     >
-                      Nie otrzymałeś kodu? Wyślij ponownie
+                      Did not receive a code? Resend
                     </button>
                   </div>
                 </Form>
@@ -678,13 +676,13 @@ const AuthForm = ({ isLogin = false }) => {
           <>
             <h2 className="text-3xl font-bold text-black mb-2 text-center">
               {isLogin
-                ? "Logowanie dla personelu"
-                : "Utwórz konto"}
+                ? "Staff sign-in"
+                : "Create an account"}
             </h2>
 
             {isLogin && (
               <p className="text-gray-600 mb-8 text-center">
-                Dostęp tylko dla uprawnionych pracowników. Proszę wprowadzić dane logowania.
+                For authorized staff only. Enter your sign-in details below.
               </p>
             )}
 
@@ -703,7 +701,7 @@ const AuthForm = ({ isLogin = false }) => {
                           htmlFor="firstName"
                           className="block text-[#003f78] font-medium mb-2"
                         >
-                          Imię*
+                          First name*
                         </label>
                         <Field
                           type="text"
@@ -727,7 +725,7 @@ const AuthForm = ({ isLogin = false }) => {
                           htmlFor="lastName"
                           className="block text-[#003f78] font-medium mb-2"
                         >
-                          Nazwisko*
+                          Last name*
                         </label>
                         <Field
                           type="text"
@@ -755,13 +753,13 @@ const AuthForm = ({ isLogin = false }) => {
                       htmlFor="email"
                       className="block text-[#003f78] font-medium mb-2"
                     >
-                      {isLogin ? "Nazwa użytkownika" : "Email*"}
+                      {isLogin ? "Username" : "Email*"}
                     </label>
                     <Field
                       type="email"
                       id="email"
                       name="email"
-                      placeholder={isLogin ? "Wprowadź nazwę użytkownika (adres email przypisany do konta)" : "hello@example.com"}
+                      placeholder={isLogin ? "Enter the email address linked to your account" : "hello@example.com"}
                       className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none bg-gray-50 ${
                         errors.email && touched.email
                           ? "border-red-500"
@@ -781,14 +779,14 @@ const AuthForm = ({ isLogin = false }) => {
                       htmlFor="password"
                       className="block text-[#003f78] font-medium mb-2"
                     >
-                      Hasło
+                      Password
                     </label>
                     <div className="relative">
                       <Field
                         type={showPassword ? "text" : "password"}
                         id="password"
                         name="password"
-                        placeholder="Wprowadź hasło"
+                        placeholder="Enter password"
                         className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none bg-gray-50 pr-12 ${
                           errors.password && touched.password
                             ? "border-red-500"
@@ -834,7 +832,7 @@ const AuthForm = ({ isLogin = false }) => {
                     </div>
                     {!isLogin && (
                       <p className="text-xs text-gray-500 mt-1">
-                        Musi mieć co najmniej 8 znaków.
+                        At least 8 characters.
                       </p>
                     )}
                     <ErrorMessage
@@ -851,7 +849,7 @@ const AuthForm = ({ isLogin = false }) => {
                         htmlFor="phone"
                         className="block text-[#003f78] font-medium mb-2"
                       >
-                        Telefon (opcjonalnie)
+                        Phone (optional)
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
@@ -872,7 +870,7 @@ const AuthForm = ({ isLogin = false }) => {
                         className="text-xs text-red-500 mt-1"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Wprowadź 9 cyfr bez kierunkowego i spacji.
+                        Enter 9 digits without country code or spaces.
                       </p>
                     </div>
                   )}
@@ -889,11 +887,11 @@ const AuthForm = ({ isLogin = false }) => {
                   >
                     {isSubmitting
                       ? isLogin
-                        ? "Logowanie..."
-                        : "Tworzenie konta..."
+                        ? "Signing in..."
+                        : "Creating account..."
                       : isLogin
-                      ? "Zaloguj się"
-                      : "Utwórz konto"}
+                      ? "Sign in"
+                      : "Create account"}
                   </button>
 
                   {/* Forgot Password and Contact Links */}
@@ -905,17 +903,17 @@ const AuthForm = ({ isLogin = false }) => {
                           onClick={handleForgotPassword}
                           className="text-gray-600 hover:text-[#003f78] text-sm"
                         >
-                          Nie pamiętasz hasła?
+                          Forgot password?
                         </button>
                       </div>
                       
                       <div className="text-sm text-gray-600">
-                        Nie masz konta?{" "}
+                        No account?{" "}
                         <a 
                           href="/kontakt" 
                           className="text-[#089090] hover:text-[#067a7a] underline"
                         >
-                          Skontaktuj się z nami
+                          Contact us
                         </a>
                       </div>
                     </div>

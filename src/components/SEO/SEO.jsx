@@ -84,7 +84,7 @@ const SEO = () => {
         };
       case '/logowanie':
       case '/zapomniane-haslo':
-        return { title: 'CM7Med - Logowanie do systemu', titleOnly: true, robots: 'noindex, nofollow' };
+        return { title: 'CM7Med - Sign in', titleOnly: true, robots: 'noindex, nofollow' };
       case '/lekarze':
         return {
           title: 'Nasi lekarze – CM7 Skarżysko-Kamienna | Zespół specjalistów',

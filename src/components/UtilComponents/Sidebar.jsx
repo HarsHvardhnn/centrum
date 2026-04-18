@@ -50,7 +50,7 @@ const Sidebar = () => {
         <nav>
           <NavItem
             icon={<FiBarChart2 className="text-xl text-teal-400" />}
-            label="Panel główny"
+            label="Dashboard"
             to="/administracja"
             isActive={currentPath === "/administracja"}
             isEnabled={true}
@@ -58,7 +58,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<LuCalendarPlus2 className="text-xl text-teal-400" />}
-            label="Wizyty lekarskie"
+            label="Medical appointments"
             to={
               user?.role == "admin" || user?.role == "receptionist"
                 ? "/lekarze"
@@ -70,7 +70,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<BsCalendarPlusFill className="text-xl text-teal-400" />}
-            label="Dodaj wizytę"
+            label="Add appointment"
             to="/wizyta/utworz"
             isActive={currentPath === "/wizyta/utworz"}
             isEnabled={true}
@@ -81,7 +81,7 @@ const Sidebar = () => {
               icon={
                 <MdOutlineMedicalServices className="text-xl text-teal-400" />
               }
-              label="Usługi"
+              label="Services"
               to="/administracja/uslugi"
               isActive={currentPath === "/administracja/uslugi"}
               isEnabled={true}
@@ -90,7 +90,7 @@ const Sidebar = () => {
           {(user?.role === "admin" || user?.role === "receptionist" )&& (
             <NavItem
               icon={<MdSms className="text-xl text-teal-400" />}
-              label="Zarządzanie SMS"
+              label="SMS management"
               to="/administracja/sms"
               isActive={currentPath === "/administracja/sms"}
               isEnabled={true}
@@ -98,7 +98,7 @@ const Sidebar = () => {
           )}
                <NavItem
               icon={<Calendar1 className=" text-teal-400" />}
-              label="Kalendarz"
+              label="Calendar"
               to="/administracja/kalendarz"
               isActive={currentPath === "/administracja/kalendarz"}
               isEnabled={true}
@@ -108,7 +108,7 @@ const Sidebar = () => {
               icon={
                 <MdOutlineMedicalServices className="text-xl text-teal-400" />
               }
-              label="Aktualności"
+              label="News"
               to="/administracja/aktualnosci"
               isActive={currentPath === "/administracja/aktualnosci"}
               isEnabled={true}
@@ -117,7 +117,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<FiUsers className="text-xl text-teal-400" />}
-            label="Lista pacjentów"
+            label="Patient list"
             to="/pacjenci"
             isActive={currentPath === "/pacjenci"}
             isEnabled={true}
@@ -126,7 +126,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<RiHomeLine className="text-xl text-teal-400" />}
-            label="Historia wizyt"
+            label="Visit history"
             to="/klinika"
             isActive={currentPath === "/klinika"}
             isEnabled={true}
@@ -135,7 +135,7 @@ const Sidebar = () => {
       
             <NavItem
               icon={<LuFileChartColumn className="text-xl text-teal-400" />}
-              label="Rozliczenia"
+              label="Billing"
               to="/administracja/rozliczenia"
               isActive={currentPath === "/administracja/rozliczenia"}
               isEnabled={true}
@@ -143,7 +143,7 @@ const Sidebar = () => {
 
             <NavItem
               icon={<BarChart3 className="text-xl text-teal-400" />}
-              label="Raporty"
+              label="Reports"
               to="/administracja/dane"
               isActive={currentPath === "/administracja/dane"}
               isEnabled={true}
@@ -151,7 +151,7 @@ const Sidebar = () => {
           
          {user?.role !== "doctor" && <NavItem
             icon={<FiMessageCircle className="text-xl text-teal-400" />}
-            label="Kontakty"
+            label="Contact messages"
             to="/administracja/wiadomosci-kontaktowe"
             isActive={currentPath === "/administracja/wiadomosci-kontaktowe"}
             isEnabled={true}
@@ -159,7 +159,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<FiUser className="text-xl text-teal-400" />}
-            label="Konto"
+            label="Account"
             to="/administracja/profil"
             isActive={currentPath === "/administracja/profil"}
             isEnabled={true}
@@ -167,7 +167,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<Shield className="text-xl text-teal-400" />}
-            label="Uwierzytelnianie 2FA"
+            label="Two-factor authentication"
             to="/administracja/bezpieczenstwo/2fa"
             isActive={currentPath === "/administracja/bezpieczenstwo/2fa"}
             isEnabled={true}
@@ -179,28 +179,28 @@ const Sidebar = () => {
             <>
               <NavItem
                 icon={<Shield className="text-xl text-teal-400" />}
-                label="Kontrola dostępu IP"
+                label="IP access control"
                 to="/administracja/konfiguracja-ip"
                 isActive={currentPath === "/administracja/konfiguracja-ip"}
                 isEnabled={true}
               />
               <NavItem
                 icon={<Settings className="text-xl text-teal-400" />}
-                label="Konfiguracja wizyt"
+                label="Appointment settings"
                 to="/administracja/konfiguracja-wizyt"
                 isActive={currentPath === "/administracja/konfiguracja-wizyt"}
                 isEnabled={true}
               />
               <NavItem
                 icon={<Shield className="text-xl text-teal-400" />}
-                label="Ustawienia JWT"
+                label="JWT settings"
                 to="/administracja/ustawienia-jwt"
                 isActive={currentPath === "/administracja/ustawienia-jwt"}
                 isEnabled={true}
               />
               <NavItem
                 icon={<Trash2 className="text-xl text-red-400" />}
-                label="Trwałe usuwanie"
+                label="Permanent deletion"
                 to="/administracja/trwale-usuwanie"
                 isActive={currentPath === "/administracja/trwale-usuwanie"}
                 isEnabled={true}
@@ -210,7 +210,7 @@ const Sidebar = () => {
 
             <NavItem
               icon={<Settings className="text-xl text-teal-400" />}
-              label="Ustawienia"
+              label="Settings"
               to={`/administracja/konta`}
               isActive={currentPath === "/administracja/konta"}
               isEnabled={true}
@@ -218,7 +218,7 @@ const Sidebar = () => {
             {
               user?.role == "doctor" &&    <NavItem
               icon={<FiSettings className="text-xl text-teal-400" />}
-              label="Harmonogram"
+              label="Schedule"
               to={`/lekarz/ustawienia`}
               isActive={currentPath === "/lekarz/ustawienia"}
               isEnabled={true}
@@ -241,7 +241,7 @@ const Sidebar = () => {
 
           <NavItem
             icon={<CgLogOut className="text-xl text-teal-400 rotate-180" />}
-            label="Wyloguj"
+            label="Log out"
             to="#"
             onClick={(e) => {
               e.preventDefault();
@@ -264,9 +264,9 @@ const Sidebar = () => {
                 </div>
               </div>
             </div>
-            <h3 className="text-center font-medium mb-1">Centrum pomocy</h3>
+            <h3 className="text-center font-medium mb-1">Help center</h3>
             <p className="text-center text-gray-700 text-xs mb-3">
-            W razie pytań lub problemów, rozpocznij rozmowę na czacie klikając poniższy przycisk
+            If you have questions or issues, start a chat using the button below
             </p>
             <button
               onClick={() => {
@@ -274,7 +274,7 @@ const Sidebar = () => {
               }}
               className="w-full bg-teal-400 hover:bg-teal-600 text-white py-3 px-4 rounded-md font-medium"
             >
-              Przejdź do centrum pomocy
+              Go to help center
             </button>
           </div>
         </div>
