@@ -43,13 +43,13 @@ const BillDetails = () => {
       if (response.success) {
         setBillData(response.data);
       } else {
-        setError("Nie udało się załadować szczegółów faktury");
-        toast.error("Nie można załadować szczegółów faktury");
+        setError("Could not load invoice details");
+        toast.error("Could not load invoice details");
       }
     } catch (error) {
-      console.error("Błąd podczas pobierania szczegółów faktury:", error);
-      setError("Wystąpił błąd podczas ładowania szczegółów faktury");
-      toast.error("Błąd podczas ładowania szczegółów faktury");
+      console.error("Error fetching invoice details:", error);
+      setError("An error occurred while loading invoice details");
+      toast.error("Error loading invoice details");
     } finally {
       setLoading(false);
       hideLoader();
@@ -63,20 +63,20 @@ const BillDetails = () => {
       const response = await billingHelper.updatePaymentStatus(billId, {
         paymentStatus: newStatus,
         paymentMethod,
-        notes: paymentNotes || `Płatność oznaczona jako ${newStatus}`
+        notes: paymentNotes || `Payment marked as ${newStatus}`
       });
       
       if (response.success) {
-        toast.success(`Status płatności zaktualizowany na ${newStatus}`);
+        toast.success(`Payment status updated to ${newStatus}`);
         setShowPaymentModal(false);
         // Refresh bill details
         fetchBillDetails();
       } else {
-        toast.error("Nie udało się zaktualizować statusu płatności");
+        toast.error("Could not update payment status");
       }
     } catch (error) {
-      console.error("Błąd podczas aktualizacji statusu płatności:", error);
-      toast.error("Nie udało się zaktualizować statusu płatności");
+      console.error("Error updating payment status:", error);
+      toast.error("Could not update payment status");
     } finally {
       hideLoader();
     }
@@ -93,14 +93,14 @@ const BillDetails = () => {
       if (response.success) {
         window.open(response.data.invoiceUrl, '_blank');
         // Open the invoice in a new tab
-        toast.success("Pomyślnie wygenerowano fakturę");
+        toast.success("Invoice generated successfully");
       } else {
-        toast.error("Nie udało się wygenerować faktury");
+        toast.error("Could not generate invoice");
       }
       navigate(`/patients?date=${new Date().toISOString().split('T')[0]}`)
     } catch (error) {
-      console.error("Błąd podczas generowania faktury:", error);
-      toast.error("Nie udało się wygenerować faktury");
+      console.error("Error generating invoice:", error);
+      toast.error("Could not generate invoice");
     } finally {
       setGeneratingInvoice(false);
       hideLoader();
@@ -113,13 +113,13 @@ const BillDetails = () => {
   
   // Format currency
   const formatCurrency = (amount) => {
-    return `${parseFloat(amount).toFixed(2)} zł`;
+    return `${parseFloat(amount).toFixed(2)} PLN`;
   };
   
   // Format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL', {
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -144,37 +144,35 @@ const BillDetails = () => {
     }
   };
   
-  // Polish translation for payment status
   const translatePaymentStatus = (status) => {
     switch(status?.toLowerCase()) {
       case 'paid':
-        return 'Opłacone';
+        return 'Paid';
       case 'pending':
-        return 'Oczekujące';
+        return 'Pending';
       case 'overdue':
-        return 'Zaległe';
+        return 'Overdue';
       case 'partial':
-        return 'Częściowo opłacone';
+        return 'Partially paid';
       default:
         return status;
     }
   };
   
-  // Polish translation for payment method
   const translatePaymentMethod = (method) => {
     switch(method?.toLowerCase()) {
       case 'cash':
-        return 'Gotówka';
+        return 'Cash';
       case 'card':
-        return 'Karta kredytowa/debetowa';
+        return 'Credit/debit card';
       case 'bank_transfer':
-        return 'Przelew bankowy';
+        return 'Bank transfer';
       case 'insurance':
-        return 'Ubezpieczenie';
+        return 'Insurance';
       case 'mobile_payment':
-        return 'Płatność mobilna';
+        return 'Mobile payment';
       default:
-        return method || 'Nie określono';
+        return method || 'Not specified';
     }
   };
   
@@ -192,14 +190,14 @@ const BillDetails = () => {
         <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-sm p-8">
           <div className="text-center">
             <FileText size={48} className="mx-auto text-gray-400 mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-800 mb-2">Nie znaleziono faktury</h2>
-            <p className="text-gray-600 mb-6">{error || "Nie można znaleźć żądanej faktury."}</p>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-2">Invoice not found</h2>
+            <p className="text-gray-600 mb-6">{error || "The requested invoice could not be found."}</p>
             <button
               onClick={() => navigate('/administracja/rozliczenia')}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-teal-600 hover:bg-teal-700"
             >
               <ChevronLeft size={16} className="mr-2" />
-              Powrót do Faktur
+              Back to billing
             </button>
           </div>
         </div>
@@ -220,9 +218,9 @@ const BillDetails = () => {
               <ChevronLeft size={20} />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Faktura #{(billData?.invoiceId && billData.invoiceId !== "") ? billData.invoiceId : billData._id}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Invoice #{(billData?.invoiceId && billData.invoiceId !== "") ? billData.invoiceId : billData._id}</h1>
               <p className="text-gray-600">
-                Wygenerowano dnia {formatDate(billData.billedAt)}
+                Generated on {formatDate(billData.billedAt)}
               </p>
             </div>
           </div>
@@ -233,7 +231,7 @@ const BillDetails = () => {
               className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
             >
               <Download size={16} className="mr-2" />
-              Generuj Fakturę
+              Generate invoice
             </button>
             
             {billData.paymentStatus === "pending" && (
@@ -242,7 +240,7 @@ const BillDetails = () => {
                 className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700"
               >
                 <DollarSign size={16} className="mr-2" />
-                Oznacz jako Opłacone
+                Mark as paid
               </button>
             )}
           </div>
@@ -254,18 +252,18 @@ const BillDetails = () => {
             {/* Bill Header */}
             <div className="flex flex-wrap justify-between items-start mb-8">
               <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-1">Faktura</h2>
-                <p className="text-sm text-gray-600 mb-3">Faktura #{(billData?.invoiceId && billData.invoiceId !== "") ? billData.invoiceId : billData._id}</p>
+                <h2 className="text-xl font-bold text-gray-900 mb-1">Invoice</h2>
+                <p className="text-sm text-gray-600 mb-3">Invoice #{(billData?.invoiceId && billData.invoiceId !== "") ? billData.invoiceId : billData._id}</p>
                 
                 <div className="flex items-center text-sm text-gray-600 mb-1">
                   <Calendar size={16} className="mr-2 text-gray-400" />
-                  <span>Data: {formatDate(billData.billedAt)}</span>
+                  <span>Date: {formatDate(billData.billedAt)}</span>
                 </div>
                 
                 <div className="flex items-center text-sm text-gray-600">
                   <Clock size={16} className="mr-2 text-gray-400" />
                   <span>
-                    Status: 
+                    Status:
                     <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${getStatusColor(billData.paymentStatus)}`}>
                       {translatePaymentStatus(billData.paymentStatus)}
                     </span>
@@ -275,7 +273,7 @@ const BillDetails = () => {
               
               <div className="mt-4 sm:mt-0">
                 <div className="text-right">
-                  <div className="text-gray-600 text-sm">Metoda Płatności</div>
+                  <div className="text-gray-600 text-sm">Payment method</div>
                   <div className="flex items-center justify-end mt-1">
                     <CreditCard size={16} className="mr-2 text-gray-400" />
                     <span className="font-medium">{translatePaymentMethod(billData.paymentMethod)}</span>
@@ -287,29 +285,29 @@ const BillDetails = () => {
             {/* Client & Provider Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Pacjent</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Patient</h3>
                 <div className="text-sm">
                   <p className="font-medium text-gray-900">
                     {billData.patient?.name?.first} {billData.patient?.name?.last}
                   </p>
                   <p className="text-gray-600 mt-1">ID: {billData.patient?.patientId}</p>
                   <p className="text-gray-600 mt-1">{billData.patient?.email}</p>
-                  <p className="text-gray-600 mt-1">{billData.patient?.phone || "Brak numeru telefonu"}</p>
+                  <p className="text-gray-600 mt-1">{billData.patient?.phone || "No phone number"}</p>
                 </div>
               </div>
               
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Lekarz</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Doctor</h3>
                 <div className="text-sm">
                   <p className="font-medium text-gray-900">
                     {billData.appointment?.doctor?.name?.first} {billData.appointment?.doctor?.name?.last}
                   </p>
-                  <p className="text-gray-600 mt-1">{billData.appointment?.doctor?.specialization || "Ogólny"}</p>
+                  <p className="text-gray-600 mt-1">{billData.appointment?.doctor?.specialization || "General"}</p>
                   <p className="text-gray-600 mt-1">
-                    Wizyta: {formatDate(billData.appointment?.date)}
+                    Visit: {formatDate(billData.appointment?.date)}
                   </p>
                   <p className="text-gray-600 mt-1">
-                    Godzina: {billData.appointment?.startTime} - {billData.appointment?.endTime}
+                    Time: {billData.appointment?.startTime} - {billData.appointment?.endTime}
                   </p>
                 </div>
               </div>
@@ -317,23 +315,23 @@ const BillDetails = () => {
             
             {/* Services Table */}
             <div className="mb-8">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">Usługi</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">Services</h3>
               
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Opis
+                        Description
                       </th>
                       <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Cena
+                        Price
                       </th>
                       <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Ilość
+                        Qty
                       </th>
                       <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Suma
+                        Total
                       </th>
                     </tr>
                   </thead>
@@ -364,38 +362,38 @@ const BillDetails = () => {
               <div className="flex justify-end">
                 <div className="w-full sm:w-64">
                   <div className="flex justify-between py-2 text-sm">
-                    <span className="text-gray-600">Suma częściowa</span>
+                    <span className="text-gray-600">Subtotal</span>
                     <span className="font-medium">{formatCurrency(billData.subtotal)}</span>
                   </div>
                   
                   <div className="flex justify-between py-2 text-sm">
-                    <span className="text-gray-600">Podatek ({billData.taxPercentage}%{billData.taxPercentage === 0 ? ' ZW' : ''})</span>
+                    <span className="text-gray-600">Tax ({billData.taxPercentage}%{billData.taxPercentage === 0 ? ' — Exempt' : ''})</span>
                     <span className="font-medium">{formatCurrency(billData.taxAmount)}</span>
                   </div>
                   
                   {billData.appointment?.mode === 'online' && billData.consultationCharges > 0 && (
                     <div className="flex justify-between py-2 text-sm">
-                      <span className="text-gray-600">Opłata za konsultację </span>
-                      <span className="font-medium">OPŁACONE</span>
+                      <span className="text-gray-600">Consultation fee</span>
+                      <span className="font-medium">PAID</span>
                     </div>
                   )}
                   
                   {billData.additionalCharges > 0 && (
                     <div className="flex justify-between py-2 text-sm">
-                      <span className="text-gray-600">Dodatkowe opłaty</span>
+                      <span className="text-gray-600">Additional charges</span>
                       <span className="font-medium">{formatCurrency(billData.additionalCharges)}</span>
                     </div>
                   )}
                   
                   {billData.discount > 0 && (
                     <div className="flex justify-between py-2 text-sm">
-                      <span className="text-gray-600">Zniżka</span>
+                      <span className="text-gray-600">Discount</span>
                       <span className="font-medium text-red-600">-{formatCurrency(billData.discount)}</span>
                     </div>
                   )}
                   
                   <div className="flex justify-between py-2 mt-2 border-t border-gray-200 text-base font-semibold">
-                    <span>Razem</span>
+                    <span>Total</span>
                     <span>{formatCurrency(billData.totalAmount)}</span>
                   </div>
                 </div>
@@ -405,7 +403,7 @@ const BillDetails = () => {
             {/* Notes */}
             {billData.additionalChargeNote && (
               <div className="mt-8 pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wider">Notatki</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wider">Notes</h3>
                 <p className="text-sm text-gray-600">{billData.additionalChargeNote}</p>
               </div>
             )}
@@ -417,35 +415,35 @@ const BillDetails = () => {
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Oznacz fakturę jako opłaconą</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Mark invoice as paid</h3>
             
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Metoda płatności
+                Payment method
               </label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500"
               >
-                <option value="cash">Gotówka</option>
-                <option value="card">Karta kredytowa/debetowa</option>
-                <option value="bank_transfer">Przelew bankowy</option>
-                <option value="insurance">Ubezpieczenie</option>
-                <option value="mobile_payment">Płatność mobilna</option>
+                <option value="cash">Cash</option>
+                <option value="card">Credit/debit card</option>
+                <option value="bank_transfer">Bank transfer</option>
+                <option value="insurance">Insurance</option>
+                <option value="mobile_payment">Mobile payment</option>
               </select>
             </div>
             
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notatki dotyczące płatności (Opcjonalnie)
+                Payment notes (optional)
               </label>
               <textarea
                 value={paymentNotes}
                 onChange={(e) => setPaymentNotes(e.target.value)}
                 rows={3}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500"
-                placeholder="Dodaj notatki dotyczące tej płatności..."
+                placeholder="Add notes about this payment..."
               />
             </div>
             
@@ -454,14 +452,14 @@ const BillDetails = () => {
                 onClick={() => setShowPaymentModal(false)}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 onClick={() => handleUpdatePaymentStatus("paid")}
                 className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 flex items-center"
               >
                 <Check size={16} className="mr-2" />
-                Potwierdź płatność
+                Confirm payment
               </button>
             </div>
           </div>

@@ -156,9 +156,9 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
         documentNumber: patient.documentNumber ?? ""
       });
       setEditingExistingPatientId(patient._id ?? patient.id ?? null);
-      toast.success("Dane pacjenta załadowane. Możesz je edytować i kliknąć «Zakończ rejestrację».");
+      toast.success("Patient data loaded. You can edit it and click “Complete registration”.");
     }).catch((err) => {
-      const msg = err.response?.data?.message || err.message || "Nie udało się pobrać danych pacjenta.";
+      const msg = err.response?.data?.message || err.message || "Could not load patient data.";
       toast.error(msg);
     }).finally(() => setLoadingFullPatient(false));
   };
@@ -172,7 +172,7 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
       setFullExistingPatient(data);
       setShowExistingPatientModal(true);
     }).catch((err) => {
-      const msg = err.response?.data?.message || err.message || "Nie udało się pobrać danych pacjenta.";
+      const msg = err.response?.data?.message || err.message || "Could not load patient data.";
       toast.error(msg);
     }).finally(() => setLoadingFullPatient(false));
   };
@@ -181,7 +181,7 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
     if (!fullExistingPatient || !visitId) return;
     const patientId = fullExistingPatient._id ?? fullExistingPatient.id;
     if (!patientId) {
-      toast.error("Brak ID pacjenta.");
+      toast.error("Missing patient ID.");
       return;
     }
     setLinkingToExisting(true);
@@ -190,13 +190,13 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
         isExisting: true,
         patientId
       });
-      toast.success("Wizyta została przypisana do istniejącego pacjenta.");
+      toast.success("Visit linked to existing patient.");
       setShowExistingPatientModal(false);
       setFullExistingPatient(null);
       onSuccess?.(response);
       onClose();
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || "Nie udało się przypisać wizyty do pacjenta.";
+      const msg = err.response?.data?.message || err.message || "Could not link visit to patient.";
       toast.error(msg);
     } finally {
       setLinkingToExisting(false);
@@ -208,24 +208,24 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
     if (!isInternational) {
       const normalizedPesel = normalizePesel(completeRegPesel);
       if (normalizedPesel.length !== 11) {
-        toast.error("Wprowadź prawidłowy numer PESEL (11 cyfr).");
+        toast.error("Enter a valid PESEL (11 digits).");
         return;
       }
       if (!formData.firstName?.trim() || !formData.lastName?.trim()) {
-        toast.error("Imię i nazwisko są wymagane.");
+        toast.error("First and last name are required.");
         return;
       }
       if (!formData.sex?.trim()) {
-        toast.error("Płeć jest wymagana.");
+        toast.error("Gender is required.");
         return;
       }
     } else {
       if (!formData.firstName?.trim() || !formData.lastName?.trim()) {
-        toast.error("Imię i nazwisko są wymagane.");
+        toast.error("First and last name are required.");
         return;
       }
       if (!formData.documentCountry?.trim() || !formData.documentType?.trim() || !formData.documentNumber?.trim()) {
-        toast.error("Wypełnij wszystkie pola dokumentu (kraj wydania, typ dokumentu, numer).");
+        toast.error("Fill in all document fields (country, type, number).");
         return;
       }
       // Check if document number already exists (another patient) before submitting
@@ -236,7 +236,7 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
           formData.documentType.trim()
         );
         if (res?.exists && !editingExistingPatientId) {
-          toast.error("Pacjent z podanym numerem dokumentu już istnieje w systemie.");
+          toast.error("A patient with this document number already exists.");
           return;
         }
       } catch (e) {
@@ -321,11 +321,11 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
       if (response?.peselWarning) {
         toast.warning(response.peselWarning);
       }
-      toast.success(editingExistingPatientId ? "Wizyta przypisana do pacjenta; dane zaktualizowane." : "Rejestracja zakończona.");
+      toast.success(editingExistingPatientId ? "Visit linked to patient; details updated." : "Registration completed.");
       onSuccess?.(response);
       onClose();
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || "Nie udało się zakończyć rejestracji.";
+      const msg = err.response?.data?.message || err.message || "Could not complete registration.";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -345,18 +345,18 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Zakończ rejestrację pacjenta</h2>
+          <h2 className="text-xl font-bold text-gray-800">Complete patient registration</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <p className="text-sm text-gray-600 mb-4">Wprowadź PESEL i dane pacjenta. Identyfikator pacjenta zostanie utworzony po zatwierdzeniu.</p>
+        <p className="text-sm text-gray-600 mb-4">Enter PESEL and patient details. A patient ID will be created when you confirm.</p>
         {editingExistingPatientId && (
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm font-medium text-blue-800">Edytujesz dane istniejącego pacjenta</p>
-            <p className="text-xs text-blue-700 mt-0.5">Po zatwierdzeniu wizyta zostanie przypisana do tego pacjenta z zaktualizowanymi danymi (np. nowy adres).</p>
+            <p className="text-sm font-medium text-blue-800">You are editing an existing patient</p>
+            <p className="text-xs text-blue-700 mt-0.5">On submit, the visit will be linked to this patient with the updated details (e.g. new address).</p>
           </div>
         )}
         <div className="space-y-4">
@@ -368,23 +368,23 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
               maxLength={11}
               value={completeRegPesel}
               onChange={(e) => setCompleteRegPesel(normalizePesel(e.target.value))}
-              placeholder={isInternational ? "Nie dotyczy – pacjent międzynarodowy" : "11 cyfr"}
+              placeholder={isInternational ? "N/A – international patient" : "11 digits"}
               disabled={isInternational}
               className={`w-full p-2 border border-gray-300 rounded-lg ${isInternational ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
             />
-            {!isInternational && peselCheckLoading && <p className="text-xs text-gray-500 mt-1">Sprawdzam PESEL...</p>}
+            {!isInternational && peselCheckLoading && <p className="text-xs text-gray-500 mt-1">Checking PESEL...</p>}
             {!isInternational && completeRegPesel.length === 11 && (peselWarningFromApi ?? getPeselChecksumWarning(completeRegPesel)) && (
               <p className="mt-1 text-sm text-amber-600">{peselWarningFromApi ?? getPeselChecksumWarning(completeRegPesel)}</p>
             )}
             {!isInternational && peselExists && (
               <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">Pacjent o podanym numerze PESEL już istnieje w systemie.</p>
+                <p className="text-sm text-blue-800">A patient with this PESEL already exists.</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button type="button" onClick={handleUseExistingPatient} disabled={loadingFullPatient} className="px-3 py-1.5 bg-teal-600 text-white text-sm rounded-md hover:bg-teal-700 disabled:opacity-50">
-                    {loadingFullPatient ? "Pobieram dane..." : "Użyj tego pacjenta"}
+                    {loadingFullPatient ? "Loading..." : "Use this patient"}
                   </button>
                   <button type="button" onClick={handleLoadExisting} disabled={loadingFullPatient} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50">
-                    {loadingFullPatient ? "Ładowanie..." : "Załaduj dane do formularza (edycja)"}
+                    {loadingFullPatient ? "Loading..." : "Load into form (edit)"}
                   </button>
                 </div>
               </div>
@@ -407,48 +407,48 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
                 }}
                 className="h-4 w-4 text-teal-600 border-gray-300 rounded"
               />
-              <label htmlFor="complete-reg-international" className="text-sm text-gray-700">Pacjent międzynarodowy (bez PESEL)</label>
+              <label htmlFor="complete-reg-international" className="text-sm text-gray-700">International patient (no PESEL)</label>
             </div>
             {isInternational && (
-              <p className="mt-1 text-sm text-gray-500">PESEL nie dotyczy pacjentów międzynarodowych.</p>
+              <p className="mt-1 text-sm text-gray-500">PESEL does not apply to international patients.</p>
             )}
           </div>
 
           {isInternational && (
             <div className="border-t border-gray-200 pt-4">
-              <h3 className="text-base font-medium text-gray-800 mb-3">Dane dokumentu</h3>
+              <h3 className="text-base font-medium text-gray-800 mb-3">Document details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Kraj wydania dokumentu <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Document country <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={formData.documentCountry}
                     onChange={(e) => setFormData((prev) => ({ ...prev, documentCountry: e.target.value }))}
-                    placeholder="np. Niemcy, Polska"
+                    placeholder="e.g. Germany, Poland"
                     className="w-full p-2 border border-gray-300 rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Typ dokumentu <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Document type <span className="text-red-500">*</span></label>
                   <select
                     value={formData.documentType}
                     onChange={(e) => setFormData((prev) => ({ ...prev, documentType: e.target.value }))}
                     className="w-full p-2 border border-gray-300 rounded-lg"
                   >
-                    <option value="">Wybierz</option>
-                    <option value="Passport">Paszport</option>
-                    <option value="ID Card">Dowód osobisty</option>
-                    <option value="Residence Card">Karta pobytu</option>
-                    <option value="Other">Inny</option>
+                    <option value="">Select</option>
+                    <option value="Passport">Passport</option>
+                    <option value="ID Card">ID card</option>
+                    <option value="Residence Card">Residence card</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Numer dokumentu <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Document number <span className="text-red-500">*</span></label>
                   <input
                     type="text"
                     value={formData.documentNumber}
                     onChange={(e) => setFormData((prev) => ({ ...prev, documentNumber: e.target.value }))}
-                    placeholder="Numer dokumentu"
+                    placeholder="Document number"
                     className="w-full p-2 border border-gray-300 rounded-lg"
                   />
                 </div>
@@ -458,28 +458,28 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Imię*</label>
+              <label className="block text-sm text-gray-600 mb-1">First name*</label>
               <input type="text" value={formData.firstName} onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))} className="w-full p-2 border rounded-lg" />
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Nazwisko*</label>
+              <label className="block text-sm text-gray-600 mb-1">Last name*</label>
               <input type="text" value={formData.lastName} onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))} className="w-full p-2 border rounded-lg" />
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Data urodzenia</label>
+              <label className="block text-sm text-gray-600 mb-1">Date of birth</label>
               <input type="date" value={formData.dateOfBirth} onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))} className="w-full p-2 border rounded-lg" />
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Płeć*</label>
+              <label className="block text-sm text-gray-600 mb-1">Gender*</label>
               <select value={formData.sex} onChange={(e) => setFormData(prev => ({ ...prev, sex: e.target.value }))} className="w-full p-2 border rounded-lg">
-                <option value="">Wybierz płeć</option>
-                <option value="Male">Mężczyzna</option>
-                <option value="Female">Kobieta</option>
-                <option value="Others">Inna</option>
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Others">Other</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Telefon</label>
+              <label className="block text-sm text-gray-600 mb-1">Phone</label>
               <div className="flex">
                 <div className="relative w-24">
                   <button
@@ -527,7 +527,7 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
                     const maxLen = country?.maxLength ?? 9;
                     setFormData((prev) => ({ ...prev, phone: e.target.value.replace(/\D/g, "").slice(0, maxLen) }));
                   }}
-                  placeholder={PHONE_COUNTRY_CODES.find((c) => c.code === formData.phoneCode)?.maxLength ? `${PHONE_COUNTRY_CODES.find((c) => c.code === formData.phoneCode).maxLength} cyfr` : "9 cyfr"}
+                  placeholder={PHONE_COUNTRY_CODES.find((c) => c.code === formData.phoneCode)?.maxLength ? `${PHONE_COUNTRY_CODES.find((c) => c.code === formData.phoneCode).maxLength} digits` : "9 digits"}
                   className="flex-1 h-[42px] px-3 border border-gray-300 rounded-r-lg min-w-0"
                 />
               </div>
@@ -538,26 +538,26 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">Adres (opcjonalnie)</p>
+            <p className="text-sm font-medium text-gray-700 mb-2">Address (optional)</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-3">
-                <label className="block text-sm text-gray-600 mb-1">Ulica</label>
-                <input type="text" value={formData.street} onChange={(e) => setFormData(prev => ({ ...prev, street: e.target.value }))} placeholder="np. ul. Marszałkowska 1" className="w-full p-2 border border-gray-300 rounded-lg" />
+                <label className="block text-sm text-gray-600 mb-1">Street</label>
+                <input type="text" value={formData.street} onChange={(e) => setFormData(prev => ({ ...prev, street: e.target.value }))} placeholder="e.g. 1 Example St" className="w-full p-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Kod pocztowy</label>
+                <label className="block text-sm text-gray-600 mb-1">Postal code</label>
                 <input type="text" value={formData.zipCode} onChange={(e) => setFormData(prev => ({ ...prev, zipCode: e.target.value.replace(/\s/g, "").slice(0, 10) }))} placeholder="00-001" className="w-full p-2 border border-gray-300 rounded-lg" />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm text-gray-600 mb-1">Miasto</label>
-                <input type="text" value={formData.city} onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))} placeholder="np. Warszawa" className="w-full p-2 border border-gray-300 rounded-lg" />
+                <label className="block text-sm text-gray-600 mb-1">City</label>
+                <input type="text" value={formData.city} onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))} placeholder="e.g. Warsaw" className="w-full p-2 border border-gray-300 rounded-lg" />
               </div>
             </div>
           </div>
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Anuluj</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
             <button type="button" onClick={handleSubmit} disabled={!canSubmit || loading} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed">
-              {loading ? "Zapisywanie..." : "Zakończ rejestrację"}
+              {loading ? "Saving..." : "Complete registration"}
             </button>
           </div>
         </div>
@@ -568,7 +568,7 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
           <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800">Dane istniejącego pacjenta</h3>
+              <h3 className="text-lg font-bold text-gray-800">Existing patient details</h3>
               <button type="button" onClick={() => { setShowExistingPatientModal(false); setFullExistingPatient(null); }} className="text-gray-500 hover:text-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -576,21 +576,21 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
               </button>
             </div>
             <div className="space-y-2 text-sm">
-              <p><span className="text-gray-500">Imię i nazwisko:</span> {[fullExistingPatient.name?.first, fullExistingPatient.name?.last].filter(Boolean).join(" ") || "—"}</p>
+              <p><span className="text-gray-500">Full name:</span> {[fullExistingPatient.name?.first, fullExistingPatient.name?.last].filter(Boolean).join(" ") || "—"}</p>
               <p><span className="text-gray-500">PESEL:</span> {fullExistingPatient.govtId || "—"}</p>
-              <p><span className="text-gray-500">ID pacjenta:</span> {fullExistingPatient.patientId || fullExistingPatient._id || "—"}</p>
+              <p><span className="text-gray-500">Patient ID:</span> {fullExistingPatient.patientId || fullExistingPatient._id || "—"}</p>
               <p><span className="text-gray-500">Email:</span> {fullExistingPatient.email || "—"}</p>
-              <p><span className="text-gray-500">Telefon:</span> {(fullExistingPatient.phone != null && String(fullExistingPatient.phone).trim() !== "" && !String(fullExistingPatient.phone).trim().startsWith("__no_phone_")) ? fullExistingPatient.phone : "Numer telefonu niedostępny"}</p>
-              {fullExistingPatient.dateOfBirth && <p><span className="text-gray-500">Data urodzenia:</span> {new Date(fullExistingPatient.dateOfBirth).toLocaleDateString("pl-PL")}</p>}
-              {fullExistingPatient.sex && <p><span className="text-gray-500">Płeć:</span> {fullExistingPatient.sex === "Male" ? "Mężczyzna" : fullExistingPatient.sex === "Female" ? "Kobieta" : fullExistingPatient.sex}</p>}
+              <p><span className="text-gray-500">Phone:</span> {(fullExistingPatient.phone != null && String(fullExistingPatient.phone).trim() !== "" && !String(fullExistingPatient.phone).trim().startsWith("__no_phone_")) ? fullExistingPatient.phone : "Phone unavailable"}</p>
+              {fullExistingPatient.dateOfBirth && <p><span className="text-gray-500">Date of birth:</span> {new Date(fullExistingPatient.dateOfBirth).toLocaleDateString("en-US")}</p>}
+              {fullExistingPatient.sex && <p><span className="text-gray-500">Gender:</span> {fullExistingPatient.sex === "Male" ? "Male" : fullExistingPatient.sex === "Female" ? "Female" : fullExistingPatient.sex}</p>}
             </div>
-            <p className="mt-4 text-sm text-gray-600">Przypisz tę wizytę do tego pacjenta bez tworzenia nowego wpisu.</p>
+            <p className="mt-4 text-sm text-gray-600">Link this visit to this patient without creating a new record.</p>
             <div className="mt-4 flex gap-3">
               <button type="button" onClick={() => { setShowExistingPatientModal(false); setFullExistingPatient(null); }} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                Anuluj
+                Cancel
               </button>
               <button type="button" onClick={handleConfirmUseExistingPatient} disabled={linkingToExisting} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                {linkingToExisting ? "Przypisywanie..." : "Użyj tego pacjenta"}
+                {linkingToExisting ? "Linking..." : "Use this patient"}
               </button>
             </div>
           </div>

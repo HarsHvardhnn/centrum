@@ -99,12 +99,12 @@ const RescheduleModal = ({
       if (response.data.success) {
         setAvailableSlots(response.data.data);
       } else {
-        setError("Nie udało się pobrać dostępnych terminów");
+        setError("Could not load available slots");
         setAvailableSlots([]);
       }
     } catch (error) {
       console.error("Error fetching available slots:", error);
-      setError("Wystąpił błąd podczas pobierania dostępnych terminów");
+      setError("An error occurred while loading available slots");
       setAvailableSlots([]);
     } finally {
       setSlotsLoading(false);
@@ -143,7 +143,7 @@ const RescheduleModal = ({
     } else {
       setAvailableSlots([]);
       if (newDate && !doctorId) {
-        setError("Nie można znaleźć ID lekarza dla tej wizyty");
+        setError("Could not find doctor ID for this appointment");
       }
     }
   };
@@ -167,20 +167,20 @@ const RescheduleModal = ({
   // Validate time range
   const validateTimeRange = () => {
     if (!customStartTime || !customEndTime) {
-      return "Proszę wybrać godzinę rozpoczęcia i zakończenia";
+      return "Please select start and end time";
     }
     
     const startTime = new Date(`2000-01-01T${customStartTime}`);
     const endTime = new Date(`2000-01-01T${customEndTime}`);
     
     if (startTime >= endTime) {
-      return "Godzina rozpoczęcia musi być wcześniejsza niż godzina zakończenia";
+      return "Start time must be before end time";
     }
     
     // Check if duration is reasonable (maximum 4 hours)
     const duration = (endTime - startTime) / (1000 * 60); // duration in minutes
     if (duration > 240) {
-      return "Maksymalny czas wizyty to 4 godziny";
+      return "Maximum visit duration is 4 hours";
     }
     
     return null;
@@ -189,14 +189,14 @@ const RescheduleModal = ({
   // Handle reschedule submission
   const handleReschedule = async () => {
     if (!selectedDate) {
-      setError("Proszę wybrać datę");
+      setError("Please select a date");
       return;
     }
 
     // Validate based on selection mode
     if (selectionMode === "slots") {
       if (!selectedSlot) {
-        setError("Proszę wybrać godzinę z dostępnych terminów");
+        setError("Please select a time from available slots");
         return;
       }
     } else if (selectionMode === "timeRange") {
@@ -209,7 +209,7 @@ const RescheduleModal = ({
 
     const doctorId = getDoctorId();
     if (!doctorId) {
-      setError("Nie można znaleźć ID lekarza dla tej wizyty");
+      setError("Could not find doctor ID for this appointment");
       return;
     }
 
@@ -249,7 +249,7 @@ const RescheduleModal = ({
       );
 
       if (response.success) {
-        toast.success("Wizyta została pomyślnie przełożona!");
+        toast.success("Appointment rescheduled successfully!");
         
         // Call success callback with new appointment data
         if (onRescheduleSuccess) {
@@ -258,11 +258,11 @@ const RescheduleModal = ({
         
         onClose();
       } else {
-        setError(response.message || "Nie udało się przełożyć wizyty");
+        setError(response.message || "Could not reschedule appointment");
       }
     } catch (error) {
       console.error("Error rescheduling appointment:", error);
-      const errorMessage = error.response?.data?.message || "Wystąpił błąd podczas przełożenia wizyty";
+      const errorMessage = error.response?.data?.message || "An error occurred while rescheduling";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -309,11 +309,11 @@ const RescheduleModal = ({
   // Get week display text
   const getWeekDisplayText = () => {
     if (currentWeek === 0) {
-      return "Ten tydzień";
+      return "This week";
     } else if (currentWeek === 1) {
-      return "Następny tydzień";
+      return "Next week";
     } else {
-      return `${currentWeek + 1}. tydzień`;
+      return `Week ${currentWeek + 1}`;
     }
   };
 
@@ -335,10 +335,10 @@ const RescheduleModal = ({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                Przełóż wizytę
+                Reschedule appointment
               </h3>
               <p className="text-sm text-gray-500">
-                Wybierz nową datę i godzinę wizyty
+                Choose a new date and time
               </p>
             </div>
           </div>
@@ -353,7 +353,7 @@ const RescheduleModal = ({
         {/* Current Appointment Info */}
         <div className="p-6 border-b border-gray-200">
           <h4 className="text-sm font-medium text-gray-700 mb-3">
-            Aktualna wizyta
+            Current appointment
           </h4>
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-center gap-3 mb-2">
@@ -365,7 +365,7 @@ const RescheduleModal = ({
             <div className="flex items-center gap-3 mb-2">
               <Calendar className="w-4 h-4 text-gray-500" />
               <span className="text-gray-700">
-                {new Date(appointment.date).toLocaleDateString('pl-PL')}
+                {new Date(appointment.date).toLocaleDateString('en-US')}
               </span>
             </div>
             <div className="flex items-center gap-3">
@@ -382,7 +382,7 @@ const RescheduleModal = ({
           {/* Consultation Type */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Typ konsultacji
+              Consultation type
             </label>
             <div className="flex gap-3">
               <label className="flex items-center">
@@ -394,7 +394,7 @@ const RescheduleModal = ({
                   onChange={(e) => setConsultationType(e.target.value)}
                   className="mr-2"
                 />
-                <span className="text-sm">W gabinecie</span>
+                <span className="text-sm">In office</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -413,13 +413,13 @@ const RescheduleModal = ({
           {/* SMS Reminder Options */}
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <h4 className="text-sm font-medium text-blue-800 mb-3">
-              Powiadomienia SMS
+              SMS notifications
             </h4>
             
             {/* SMS Consent Status */}
             <div className="mb-3">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-700">Status zgody na SMS:</span>
+                <span className="text-sm text-gray-700">SMS consent status:</span>
                 {smsConsentLoading ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
                 ) : (
@@ -428,14 +428,14 @@ const RescheduleModal = ({
                       ? 'bg-green-100 text-green-800' 
                       : 'bg-red-100 text-red-800'
                   }`}>
-                    {smsConsentAgreed ? 'Zgoda udzielona' : 'Brak zgody'}
+                    {smsConsentAgreed ? 'Consent given' : 'No consent'}
                   </span>
                 )}
               </div>
               <p className="text-xs text-gray-600 mt-1">
                 {smsConsentAgreed 
-                  ? 'Pacjent wyraził zgodę na otrzymywanie powiadomień SMS'
-                  : 'Pacjent nie wyraził zgody na powiadomienia SMS'
+                  ? 'The patient agreed to receive SMS notifications'
+                  : 'The patient did not agree to SMS notifications'
                 }
               </p>
             </div>
@@ -456,19 +456,19 @@ const RescheduleModal = ({
                   !smsConsentAgreed ? 'text-gray-400' : 'text-blue-800'
                 }`}
               >
-                Wyślij powiadomienie SMS o przełożeniu wizyty
+                Send SMS notification about reschedule
               </label>
             </div>
             
             {!smsConsentAgreed && (
               <p className="text-xs text-red-600 mt-2">
-                ⚠️ Nie można wysłać SMS - pacjent nie wyraził zgody na powiadomienia
+                ⚠️ Cannot send SMS — patient did not consent to notifications
               </p>
             )}
             
             {sendSmsReminder && smsConsentAgreed && (
               <p className="text-xs text-green-600 mt-2">
-                ✓ Pacjent otrzyma SMS z informacją o nowym terminie wizyty
+                ✓ Patient will receive an SMS with the new appointment time
               </p>
             )}
             
@@ -484,7 +484,7 @@ const RescheduleModal = ({
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <label htmlFor="persistSmsConsent" className="text-sm font-medium text-blue-800">
-                    Jeśli nie chcesz wysyłać SMS i e-maili dla tej wizyty, zaznacz to pole
+                    Check this if you do not want SMS or emails sent for this visit
                   </label>
                 </div>
               </div>
@@ -494,7 +494,7 @@ const RescheduleModal = ({
           {/* Selection Mode */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Sposób wyboru czasu
+              Time selection mode
             </label>
             <div className="flex gap-3">
               <label className="flex items-center">
@@ -511,7 +511,7 @@ const RescheduleModal = ({
                   }}
                   className="mr-2"
                 />
-                <span className="text-sm">Z dostępnych terminów</span>
+                <span className="text-sm">From available slots</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -527,7 +527,7 @@ const RescheduleModal = ({
                   }}
                   className="mr-2"
                 />
-                <span className="text-sm">Własny zakres czasu</span>
+                <span className="text-sm">Custom time range</span>
               </label>
             </div>
           </div>
@@ -536,7 +536,7 @@ const RescheduleModal = ({
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <label className="block text-sm font-medium text-gray-700">
-                Wybierz nową datę
+                Choose new date
               </label>
               <div className="flex items-center gap-2">
                 <button
@@ -576,7 +576,7 @@ const RescheduleModal = ({
                     {new Date(date).getDate()}
                   </div>
                   <div className="text-xs opacity-75">
-                    {new Date(date).toLocaleDateString('pl-PL', { weekday: 'short' })}
+                    {new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}
                   </div>
                 </button>
               ))}
@@ -589,7 +589,7 @@ const RescheduleModal = ({
               {selectionMode === "slots" ? (
                 <>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Wybierz godzinę z dostępnych terminów
+                    Choose a time from available slots
                   </label>
                   
                   {slotsLoading ? (
@@ -619,7 +619,7 @@ const RescheduleModal = ({
                     <div className="text-center py-6 bg-gray-50 rounded-lg">
                       <AlertCircle className="mx-auto text-gray-400 mb-2" size={24} />
                       <p className="text-gray-700">
-                        Brak dostępnych terminów w wybranym dniu
+                        No available slots on this day
                       </p>
                     </div>
                   )}
@@ -627,12 +627,12 @@ const RescheduleModal = ({
               ) : (
                 <>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Wybierz własny zakres czasu
+                    Custom time range
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Godzina rozpoczęcia
+                        Start time
                       </label>
                       <input
                         type="time"
@@ -643,7 +643,7 @@ const RescheduleModal = ({
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Godzina zakończenia
+                        End time
                       </label>
                       <input
                         type="time"
@@ -656,7 +656,7 @@ const RescheduleModal = ({
                   {customStartTime && customEndTime && (
                     <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <p className="text-sm text-blue-700">
-                        <strong>Czas trwania:</strong> {(() => {
+                        <strong>Duration:</strong> {(() => {
                           const start = new Date(`2000-01-01T${customStartTime}`);
                           const end = new Date(`2000-01-01T${customEndTime}`);
                           const duration = (end - start) / (1000 * 60);
@@ -689,7 +689,7 @@ const RescheduleModal = ({
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               disabled={loading}
             >
-              Anuluj
+              Cancel
             </button>
             <button
               onClick={handleReschedule}
@@ -704,12 +704,12 @@ const RescheduleModal = ({
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Przełóż...
+                  Rescheduling...
                 </>
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  Przełóż wizytę
+                  Reschedule
                 </>
               )}
             </button>

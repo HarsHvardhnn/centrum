@@ -236,7 +236,10 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
             icon={<TrendingUp size={ICON_SIZE} strokeWidth={2} />}
             label="Billing"
             to="/administracja/rozliczenia"
-            isActive={currentPath === "/administracja/rozliczenia"}
+            isActive={
+              currentPath === "/administracja/rozliczenia" ||
+              currentPath.startsWith("/administracja/rozliczenia/szczegoly")
+            }
             collapsed={collapsed}
           />
           <NavItem

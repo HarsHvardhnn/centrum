@@ -38,13 +38,13 @@ import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 import VisitReasonCascadeDropdown from "../UtilComponents/VisitReasonCascadeDropdown";
 
-/** Formats appointment `created_at` / `createdAt` for "Utworzono przez: … (DD.MM.YYYY, HH:MM)" */
+/** Formats appointment `created_at` / `createdAt` for "Created by: …" */
 function formatAppointmentCreatedAt(appointment) {
   const raw = appointment?.created_at ?? appointment?.createdAt;
   if (raw == null || raw === "") return null;
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleString("pl-PL", {
+  return d.toLocaleString("en-US", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -74,7 +74,7 @@ function VisitHistoryNotes({ notes }) {
 
   return (
     <div className="mt-2 pt-2 border-t border-gray-100">
-      <p className="text-xs font-medium text-gray-500 mb-1">Notatki</p>
+      <p className="text-xs font-medium text-gray-500 mb-1">Notes</p>
       <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">{displayText}</p>
       {needsTruncate && (
         <button
@@ -82,7 +82,7 @@ function VisitHistoryNotes({ notes }) {
           onClick={() => setExpanded((e) => !e)}
           className="mt-1.5 text-sm font-medium text-teal-600 hover:text-teal-800"
         >
-          {expanded ? "Pokaż mniej" : "Czytaj więcej"}
+          {expanded ? "Show less" : "Read more"}
         </button>
       )}
     </div>
@@ -191,12 +191,12 @@ function LabAppointmentsContent({ clinic }) {
   const [currentPatientId, setCurrentPatientId] = useState(null);
   const [patientFormData, setPatientFormData] = useState({});
   const subStepTitles = [
-    "Dane Podstawowe",
-    "Skierowanie",
-    "Adres",
-    "Zgody",
-    "Szczegóły",
-    "Notatki",
+    "Basic details",
+    "Referral",
+    "Address",
+    "Consents",
+    "Details",
+    "Notes",
   ];
 
   /** Visit-only: no patient linked (use backend isVisitOnly flag or fallback to missing patient) */
@@ -234,10 +234,10 @@ function LabAppointmentsContent({ clinic }) {
           patientData: data.patientData ?? null,
         });
       } else {
-        setConsentsError(data?.message || "Nie udało się pobrać zgód.");
+        setConsentsError(data?.message || "Could not load consents.");
       }
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Nie udało się pobrać zgód.";
+      const msg = err?.response?.data?.message || err?.message || "Could not load consents.";
       setConsentsError(msg);
     } finally {
       setConsentsLoading(false);
@@ -246,7 +246,7 @@ function LabAppointmentsContent({ clinic }) {
 
   const openVisitHistoryModal = (patientId, patientName) => {
     if (!patientId) return;
-    setVisitHistoryPatient({ id: patientId, name: patientName || "Pacjent" });
+    setVisitHistoryPatient({ id: patientId, name: patientName || "Patient" });
     setShowVisitHistoryModal(true);
     setVisitHistoryError(null);
     setVisitHistoryData([]);
@@ -256,7 +256,7 @@ function LabAppointmentsContent({ clinic }) {
       setVisitHistoryData(Array.isArray(data) ? data : []);
       setVisitHistoryError(res?.success === false ? res?.message : null);
     }).catch((err) => {
-      setVisitHistoryError(err?.response?.data?.message || err?.message || "Nie udało się pobrać historii wizyt.");
+      setVisitHistoryError(err?.response?.data?.message || err?.message || "Could not load visit history.");
       setVisitHistoryData([]);
     }).finally(() => setVisitHistoryLoading(false));
   };
@@ -269,7 +269,7 @@ function LabAppointmentsContent({ clinic }) {
       (apt?.registrationData?.firstName && apt?.registrationData?.lastName
         ? `${apt.registrationData.firstName} ${apt.registrationData.lastName}`.trim()
         : null);
-    const fallback = "Nieznany pacjent";
+    const fallback = "Unknown patient";
     if (name == null || name === "" || String(name) === "undefined") return fallback;
     return name;
   };
@@ -323,12 +323,12 @@ function LabAppointmentsContent({ clinic }) {
         const fallbackTotal = pag?.total ?? list?.length ?? 0;
         setTotalPatientsCount(Number(rootTotalPatients ?? fallbackTotal) || 0);
       } else {
-        toast.error("Nie udało się pobrać wizyt");
+        toast.error("Could not load appointments");
       }
     } catch (error) {
       if (thisFetchId !== fetchIdRef.current) return;
       console.error("Failed to fetch appointments:", error);
-      toast.error("Nie udało się pobrać wizyt");
+      toast.error("Could not load appointments");
     } finally {
       if (thisFetchId === fetchIdRef.current) hideLoader();
     }
@@ -524,7 +524,7 @@ function LabAppointmentsContent({ clinic }) {
       hideLoader();
     } catch (error) {
       console.error("Failed to fetch patient services:", error);
-      toast.error("Nie udało się pobrać informacji o płatnościach");
+      toast.error("Could not load billing information");
       hideLoader();
     }
   };
@@ -573,7 +573,7 @@ function LabAppointmentsContent({ clinic }) {
       );
 
       toast.success(
-        `Rachunek wygenerowany pomyślnie na kwotę zł${billingData.totalAmount}`
+        `Bill generated successfully for PLN ${billingData.totalAmount}`
       );
       setShowBillingModal(false);
       setIsLoading(false);
@@ -582,7 +582,7 @@ function LabAppointmentsContent({ clinic }) {
       navigate(`/administracja/rozliczenia/szczegoly/${response.data._id}`);
     } catch (error) {
       console.error("Failed to generate bill:", error);
-      toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
+      toast.error("Could not generate bill. Please try again.");
       setIsLoading(false);
     }
   };
@@ -600,7 +600,7 @@ function LabAppointmentsContent({ clinic }) {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) {
       console.warn('Invalid date in formatDateHeader:', dateStr);
-      return 'Data nieznana';
+      return 'Unknown date';
     }
 
     const today = new Date();
@@ -613,13 +613,13 @@ function LabAppointmentsContent({ clinic }) {
     date.setHours(0, 0, 0, 0);
     
     if (date.getTime() === today.getTime()) {
-      return "Dzisiaj";
+      return "Today";
     } else if (date.getTime() === tomorrow.getTime()) {
-      return "Jutro";
+      return "Tomorrow";
     }
 
     try {
-      return date.toLocaleDateString('pl-PL', { 
+      return date.toLocaleDateString('en-US', { 
         weekday: 'long', 
         day: 'numeric', 
         month: 'long',
@@ -627,7 +627,7 @@ function LabAppointmentsContent({ clinic }) {
       });
     } catch (error) {
       console.error('Error formatting date:', error);
-      return 'Data nieznana';
+      return 'Unknown date';
     }
   };
 
@@ -641,9 +641,9 @@ function LabAppointmentsContent({ clinic }) {
   const handleCancelAppointment = async () => {
     try {
       showLoader();
-      const response = await appointmentHelper.cancelAppointment(selectedAppointment, "Anulowane przez administratora", sendSMSNotification, sendEmailNotification);
+      const response = await appointmentHelper.cancelAppointment(selectedAppointment, "Cancelled by administrator", sendSMSNotification, sendEmailNotification);
       if (response.success) {
-        toast.success("Wizyta została anulowana");
+        toast.success("Appointment cancelled");
         // Update the appointments list
         setAppointments(appointments.map(apt => 
           apt.id === selectedAppointment 
@@ -651,11 +651,11 @@ function LabAppointmentsContent({ clinic }) {
             : apt
         ));
       } else {
-        toast.error("Nie udało się anulować wizyty");
+        toast.error("Could not cancel appointment");
       }
     } catch (error) {
       console.error("Failed to cancel appointment:", error);
-      toast.error("Nie udało się anulować wizyty");
+      toast.error("Could not cancel appointment");
     } finally {
       hideLoader();
       setShowCancelModal(false);
@@ -692,10 +692,10 @@ function LabAppointmentsContent({ clinic }) {
       
       if (isEditMode && currentPatientId) {
         response = await patientService.updatePatient(currentPatientId, formData);
-        toast.success("Pacjent został zaktualizowany");
+        toast.success("Patient updated");
       } else {
         response = await patientService.createPatient(formData);
-        toast.success("Pacjent został dodany");
+        toast.success("Patient added");
       }
       
       hideLoader();
@@ -708,8 +708,8 @@ function LabAppointmentsContent({ clinic }) {
 
     } catch (err) {
       toast.error(
-        "Nie udało się " + (isEditMode ? "zaktualizować" : "dodać") + " pacjenta: " +
-        (err.response?.data?.error || err.response?.data?.message || "Nieznany błąd")
+        "Could not " + (isEditMode ? "update" : "add") + " patient: " +
+        (err.response?.data?.error || err.response?.data?.message || "Unknown error")
       );
       hideLoader();
     }
@@ -721,18 +721,18 @@ function LabAppointmentsContent({ clinic }) {
       if (response.success && response.data.url) {
         window.open(response.data.url, '_blank');
       } else {
-        toast.error("Nie udało się wygenerować karty wizyty");
+        toast.error("Could not generate visit card");
       }
     } catch (error) {
       console.error("Error generating visit card:", error);
-      toast.error("Wystąpił błąd podczas generowania karty wizyty");
+      toast.error("An error occurred while generating the visit card");
     }
   };
 
   const openVisitCardModal = (patientId, patientName) => {
     if (!patientId) return;
     setVisitCardPatientId(patientId);
-    setVisitCardPatientName(patientName || "Pacjent");
+    setVisitCardPatientName(patientName || "Patient");
     setShowVisitCardModal(true);
     setVisitCardsList([]);
     setVisitCardsError(null);
@@ -743,7 +743,7 @@ function LabAppointmentsContent({ clinic }) {
       setVisitCardsList(list);
       setVisitCardsError(res?.success === false ? res?.message : null);
     }).catch((err) => {
-      setVisitCardsError(err?.response?.data?.message || err?.message || "Nie udało się pobrać listy kart wizyt.");
+      setVisitCardsError(err?.response?.data?.message || err?.message || "Could not load visit cards.");
       setVisitCardsList([]);
     }).finally(() => setVisitCardsLoading(false));
   };
@@ -791,7 +791,7 @@ function LabAppointmentsContent({ clinic }) {
 
   const handleBulkDeleteAppointments = () => {
     if (selectedAppointmentIds.length === 0) {
-      toast.error('Proszę wybrać wizyty do usunięcia');
+      toast.error("Please select appointments to delete");
       return;
     }
     setBulkDeleteDialog({
@@ -830,7 +830,7 @@ function LabAppointmentsContent({ clinic }) {
         setVisitHistoryData(Array.isArray(data) ? data : []);
         setVisitHistoryError(res?.success === false ? res?.message : null);
       }).catch((err) => {
-        setVisitHistoryError(err?.response?.data?.message || err?.message || "Nie udało się pobrać historii wizyt.");
+        setVisitHistoryError(err?.response?.data?.message || err?.message || "Could not load visit history.");
         setVisitHistoryData([]);
       }).finally(() => setVisitHistoryLoading(false));
     }
@@ -838,35 +838,35 @@ function LabAppointmentsContent({ clinic }) {
 
   const statusLabelForDisplay =
     statusFilter === "All"
-      ? "Wszystkie"
+      ? "All"
       : statusFilter === "booked"
-      ? "Zarezerwowane"
+      ? "Booked"
       : statusFilter === "checkedIn"
-      ? "Zameldowany"
+      ? "Checked in"
       : statusFilter?.toLowerCase() === "cancelled" || statusFilter?.toLowerCase() === "canceled"
-      ? "Anulowane"
+      ? "Cancelled"
       : statusFilter === "completed"
-      ? "Zakończone"
+      ? "Completed"
       : statusFilter === "patientLess"
-      ? "Do rejestracji"
+      ? "Pending registration"
       : statusFilter;
 
   const dateRangeText = clinic
     ? dateRange.startDate && dateRange.endDate
-      ? `Wizyty od ${new Date(dateRange.startDate).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })} do ${new Date(dateRange.endDate).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })}`
+      ? `Appointments from ${new Date(dateRange.startDate).toLocaleDateString("en-US", { day: "2-digit", month: "2-digit", year: "numeric" })} to ${new Date(dateRange.endDate).toLocaleDateString("en-US", { day: "2-digit", month: "2-digit", year: "numeric" })}`
       : dateRange.startDate
-      ? `Wizyty od ${new Date(dateRange.startDate).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })}`
-      : "Wszystkie wizyty"
+      ? `Appointments from ${new Date(dateRange.startDate).toLocaleDateString("en-US", { day: "2-digit", month: "2-digit", year: "numeric" })}`
+      : "All appointments"
     : dateRange.startDate
-    ? `Wizyty z dnia ${new Date(dateRange.startDate).toLocaleDateString("pl-PL")}`
-    : "Wszystkie wizyty";
+    ? `Appointments on ${new Date(dateRange.startDate).toLocaleDateString("en-US")}`
+    : "All appointments";
 
   const getPatientPesel = (p) => p?.govtId || p?.pesel || p?.PESEL || "—";
   const getPhoneDisplay = (value) => {
     const v = value ?? "";
     const s = typeof v === "string" ? v.trim() : String(v).trim();
-    if (!s) return "brak numeru";
-    if (/^_no_phone_/i.test(s) || s === "_no_phone" || /^brak\s*numeru$/i.test(s)) return "brak numeru";
+    if (!s) return "no number";
+    if (/^_no_phone_/i.test(s) || s === "_no_phone" || /^brak\s*numeru$/i.test(s)) return "no number";
     return s;
   };
   const getPatientGenderLetter = (p) =>
@@ -878,27 +878,27 @@ function LabAppointmentsContent({ clinic }) {
   const formatFirstVisit = (apt) => {
     if (!apt?.date) return "—";
     const d = new Date(apt.date);
-    const dateStr = d.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" });
+    const dateStr = d.toLocaleDateString("en-US", { day: "2-digit", month: "2-digit", year: "numeric" });
     return apt.startTime ? `${dateStr} ${apt.startTime}` : dateStr;
   };
 
-  /** registrationType from API → Polish label */
+  /** registrationType from API → display label */
   const getRegistrationTypeLabel = (value) => {
     if (!value || typeof value !== "string") return "—";
     const v = value.toLowerCase().trim();
     const map = {
-      "online registration": "Rejestracja online",
-      "online": "Rejestracja online",
-      "reception": "W recepcji",
-      "receptionist registration": "Rejestracja w recepcji",
-      "receptionist": "Rejestracja w recepcji",
-      "walk-in": "W recepcji",
-      "walkin": "W recepcji",
-      "in-person": "W recepcji",
-      "phone": "Rejestracja telefoniczna",
-      "telephone": "Rejestracja telefoniczna",
-      "admin registration": "Rejestracja przez administrację",
-      "administracja": "Rejestracja przez administrację",
+      "online registration": "Online registration",
+      "online": "Online registration",
+      "reception": "At reception",
+      "receptionist registration": "Reception registration",
+      "receptionist": "Reception registration",
+      "walk-in": "At reception",
+      "walkin": "At reception",
+      "in-person": "At reception",
+      "phone": "Phone registration",
+      "telephone": "Phone registration",
+      "admin registration": "Admin registration",
+      "administracja": "Admin registration",
     };
     return map[v] ?? value;
   };
@@ -909,14 +909,14 @@ function LabAppointmentsContent({ clinic }) {
         <div className={clinic ? "mb-6" : "mb-6"}>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              {clinic ? "Historia wizyt" : "Lista pacjentów"}
+              {clinic ? "Visit history" : "Patient list"}
               {!clinic && ` (${totalPatientsCount})`}
             </h1>
             {clinic && (
               <p className="text-sm text-gray-500">
                 {dateRangeText}
                 {statusFilter !== "All" && ` - Status: ${statusLabelForDisplay}`}
-                {patientLessOnly && " - Tylko wizyty bez pacjenta"}
+                {patientLessOnly && " - Visit-only (no patient)"}
               </p>
             )}
           </div>
@@ -927,7 +927,7 @@ function LabAppointmentsContent({ clinic }) {
                 onClick={() => setDateRange({ startDate: null, endDate: null })}
                 className="text-sm text-teal-700 hover:text-teal-900 font-medium underline"
               >
-                Wyczyść filtr daty
+                Clear date filter
               </button>
             </div>
           )}
@@ -938,7 +938,7 @@ function LabAppointmentsContent({ clinic }) {
                 <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Szukaj pacjenta..."
+                  placeholder="Search patients..."
                   className="w-full py-2.5 pl-10 pr-4 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -950,17 +950,17 @@ function LabAppointmentsContent({ clinic }) {
                   className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50"
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
                 >
-                  Filtry
+                  Filters
                   <ChevronDown size={18} className={isFilterOpen ? "rotate-180" : ""} />
                 </button>
                 {isFilterOpen && (
                   <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[300px] w-[320px] p-4">
                     {/* Zakres dat */}
                     <div className="mb-4">
-                      <h3 className="text-sm font-medium text-gray-800 mb-2">Zakres dat</h3>
+                      <h3 className="text-sm font-medium text-gray-800 mb-2">Date range</h3>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">Data początkowa</label>
+                          <label className="block text-xs text-gray-500 mb-1">Start date</label>
                           <input
                             type="date"
                             className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
@@ -969,7 +969,7 @@ function LabAppointmentsContent({ clinic }) {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">Data końcowa</label>
+                          <label className="block text-xs text-gray-500 mb-1">End date</label>
                           <input
                             type="date"
                             className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
@@ -981,7 +981,7 @@ function LabAppointmentsContent({ clinic }) {
                     </div>
                     {/* Filtruj według lekarza — dla roli lekarz tylko własna wartość */}
                     <div className="mb-4">
-                      <h3 className="text-sm font-medium text-gray-800 mb-2">Filtruj według lekarza</h3>
+                      <h3 className="text-sm font-medium text-gray-800 mb-2">Filter by doctor</h3>
                       <select
                         value={doctorFilterId}
                         onChange={(e) => setDoctorFilterId(e.target.value)}
@@ -990,13 +990,13 @@ function LabAppointmentsContent({ clinic }) {
                       >
                         {clinic && user?.role === "doctor" ? (
                           <>
-                            <option value={user.id}>{user.name || "Ty (lekarz)"}</option>
+                            <option value={user.id}>{user.name || "You (doctor)"}</option>
                           </>
                         ) : (
                           <>
-                            <option value="">Wybierz lekarza...</option>
+                            <option value="">Select a doctor...</option>
                             {doctorsList.map((d) => (
-                              <option key={d._id || d.id} value={d._id || d.id}>{d.name || "Lekarz"}</option>
+                              <option key={d._id || d.id} value={d._id || d.id}>{d.name || "Doctor"}</option>
                             ))}
                           </>
                         )}
@@ -1004,13 +1004,13 @@ function LabAppointmentsContent({ clinic }) {
                     </div>
                     {/* Typ wizyty – from API with category segregation */}
                     <div className="mb-4">
-                      <h3 className="text-sm font-medium text-gray-800 mb-2">Typ wizyty</h3>
+                      <h3 className="text-sm font-medium text-gray-800 mb-2">Visit type</h3>
                       {visitReasonsCategories.length > 0 ? (
                         <VisitReasonCascadeDropdown
                           categories={visitReasonsCategories}
                           value={visitTypeFilter}
                           onChange={setVisitTypeFilter}
-                          placeholder="Wybierz typ wizyty..."
+                          placeholder="Select visit type..."
                           className="w-full min-w-0"
                         />
                       ) : (
@@ -1020,17 +1020,17 @@ function LabAppointmentsContent({ clinic }) {
                           className="w-full p-2.5 pr-9 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 appearance-none cursor-pointer"
                           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center' }}
                         >
-                          <option value="">Wybierz typ wizyty...</option>
+                          <option value="">Select visit type...</option>
                         </select>
                       )}
                     </div>
                     {/* Forma konsultacji */}
                     <div className="mb-4">
-                      <h3 className="text-sm font-medium text-gray-800 mb-2">Forma konsultacji</h3>
+                      <h3 className="text-sm font-medium text-gray-800 mb-2">Consultation mode</h3>
                       <div className="space-y-2">
                         {[
-                          { value: "all", label: "Wszystkie" },
-                          { value: "offline", label: "Stacjonarna" },
+                          { value: "all", label: "All" },
+                          { value: "offline", label: "In-person" },
                           { value: "online", label: "Online" },
                         ].map((opt) => (
                           <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
@@ -1048,15 +1048,15 @@ function LabAppointmentsContent({ clinic }) {
                     </div>
                     {/* Filtruj według statusu */}
                     <div className="mb-4">
-                      <h3 className="text-sm font-medium text-gray-800 mb-2">Filtruj według statusu</h3>
+                      <h3 className="text-sm font-medium text-gray-800 mb-2">Filter by status</h3>
                       <div className="space-y-2">
                         {[
-                          { value: "All", label: "Wszystkie" },
-                          { value: "booked", label: "Zarezerwowane" },
-                          { value: "checkedIn", label: "Zameldowany" },
-                          { value: "Cancelled", label: "Anulowane" },
-                          { value: "Completed", label: "Zakończone" },
-                          { value: "patientLess", label: "Do rejestracji" },
+                          { value: "All", label: "All" },
+                          { value: "booked", label: "Booked" },
+                          { value: "checkedIn", label: "Checked in" },
+                          { value: "Cancelled", label: "Cancelled" },
+                          { value: "Completed", label: "Completed" },
+                          { value: "patientLess", label: "Pending registration" },
                         ].map((status) => (
                           <label key={status.value} className="flex items-center gap-2 cursor-pointer">
                             <input
@@ -1086,14 +1086,14 @@ function LabAppointmentsContent({ clinic }) {
                         }}
                         className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-700 text-sm font-medium hover:bg-gray-50"
                       >
-                        Resetuj
+                        Reset
                       </button>
                 <button
                   type="button"
                   onClick={() => setIsFilterOpen(false)}
                   className="flex-1 px-4 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium"
                 >
-                  Zastosuj
+                  Apply
                 </button>
                     </div>
                   </div>
@@ -1108,7 +1108,7 @@ function LabAppointmentsContent({ clinic }) {
               <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Szukaj pacjenta..."
+                placeholder="Search patients..."
                 className="w-full py-2.5 pl-10 pr-4 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1121,7 +1121,7 @@ function LabAppointmentsContent({ clinic }) {
                 onClick={() => setShowAddPatientModal(true)}
               >
                 <Plus size={18} />
-                Dodaj pacjenta
+                Add patient
               </button>
             )}
           </div>
@@ -1132,14 +1132,14 @@ function LabAppointmentsContent({ clinic }) {
         {user?.role === "admin" && selectedAppointmentIds.length > 0 && (
           <div className="mb-4 flex items-center justify-between bg-red-50 border border-red-200 rounded-lg p-4">
             <span className="text-red-800 font-medium">
-              Wybrano {selectedAppointmentIds.length} wizyt(y)
+              {selectedAppointmentIds.length} appointment(s) selected
             </span>
             <button
               onClick={handleBulkDeleteAppointments}
               className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
               <Trash2 size={18} />
-              Trwale usuń wybrane ({selectedAppointmentIds.length})
+              Permanently delete selected ({selectedAppointmentIds.length})
             </button>
           </div>
         )}
@@ -1156,13 +1156,13 @@ function LabAppointmentsContent({ clinic }) {
                     checked={selectedAppointmentIds.length === appointments.length && appointments.length > 0}
                     onChange={handleSelectAllAppointments}
                   />
-                  Zaznacz wszystkie
+                  Select all
                 </label>
               </div>
             )}
             {appointments.length === 0 ? (
               <div className="bg-white border border-gray-200 rounded-lg py-12 text-center text-gray-500">
-                Brak wizyt w wybranym okresie.
+                No appointments in the selected period.
               </div>
             ) : (
               appointments.map((appointment) => {
@@ -1171,7 +1171,7 @@ function LabAppointmentsContent({ clinic }) {
                 const isVisitOnly = isVisitOnlyAppointment(appointment);
                 const statusPillClass = getStatusStyle(appointment.status);
                 const visitDateStr = appointment.date
-                  ? new Date(appointment.date).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })
+                  ? new Date(appointment.date).toLocaleDateString("en-US", { day: "2-digit", month: "2-digit", year: "numeric" })
                   : "—";
                 const patientIdStr = isVisitOnly
                   ? "—"
@@ -1229,7 +1229,7 @@ function LabAppointmentsContent({ clinic }) {
                         {isVisitOnly && !isCancelledStatus && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 bg-amber-100 text-amber-800 border border-amber-200">
                             <UserPlus size={12} />
-                            Do rejestracji
+                            Pending registration
                           </span>
                         )}
                       </div>
@@ -1240,7 +1240,7 @@ function LabAppointmentsContent({ clinic }) {
                         {getVisitTypeDisplayLabel(appointment)}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
-                        Utworzono przez: {getCreatedByRoleLabel(appointment)}
+                        Created by: {getCreatedByRoleLabel(appointment)}
                         {createdAtFormatted ? ` (${createdAtFormatted})` : ""}
                       </div>
                     </div>
@@ -1287,7 +1287,7 @@ function LabAppointmentsContent({ clinic }) {
                             <DropdownMenu.Content className="min-w-[220px] bg-white rounded-lg shadow-lg z-[100] border p-1" sideOffset={5} align="end">
                               {isVisitOnlyAppointment(appointment) && !isCancelledStatus && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-teal-800 hover:bg-teal-50 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCompleteRegModal(true); }}>
-                                  <UserCheck size={16} className="mr-2" /> Zakończ rejestrację
+                                  <UserCheck size={16} className="mr-2" /> Complete registration
                                 </DropdownMenu.Item>
                               )}
                               {!isVisitOnlyAppointment(appointment) && (
@@ -1302,50 +1302,50 @@ function LabAppointmentsContent({ clinic }) {
                                     }
                                   }}
                                 >
-                                  <Eye size={16} className="mr-2" /> Zobacz szczegóły
+                                  <Eye size={16} className="mr-2" /> View details
                                 </DropdownMenu.Item>
                               )}
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => openVisitHistoryModal(appointment.patient.id || appointment.patient._id, getAppointmentPatientDisplayName(appointment))}>
-                                  <History size={16} className="mr-2" /> Historia wizyt
+                                  <History size={16} className="mr-2" /> Visit history
                                 </DropdownMenu.Item>
                               )}
                               {appointment.patient && appointment.status === "booked" && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCheckin(true); }}>
-                                  <UserCheck size={16} className="mr-2" /> Zamelduj
+                                  <UserCheck size={16} className="mr-2" /> Check in
                                 </DropdownMenu.Item>
                               )}
                               {(user?.role === "admin" || user?.role === "receptionist") && appointment.status === "booked" && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => handleRescheduleClick(appointment)}>
-                                  <Clock size={16} className="mr-2" /> Przełóż wizytę
+                                  <Clock size={16} className="mr-2" /> Reschedule
                                 </DropdownMenu.Item>
                               )}
                               {appointment.patient && ["checkedIn", "booked"].includes(appointment.status) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); handleBillPatient(appointment.id, appointment.patient.id || appointment.patient._id); }}>
-                                  <DollarSign size={16} className="mr-2" /> Wystaw rachunek
+                                  <DollarSign size={16} className="mr-2" /> Create bill
                                 </DropdownMenu.Item>
                               )}
                               {appointment.status === "completed" && appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => openVisitCardModal(appointment.patient.id || appointment.patient._id, getAppointmentPatientDisplayName(appointment))}>
-                                  <FileText size={16} className="mr-2" /> Karta wizyty
+                                  <FileText size={16} className="mr-2" /> Visit card
                                 </DropdownMenu.Item>
                               )}
                               {!["checkedIn", "completed", "cancelled"].includes(appointment.status) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer" onClick={(e) => handleCancelClick(e, appointment.id)}>
-                                  <X size={16} className="mr-2" /> Anuluj wizytę
+                                  <X size={16} className="mr-2" /> Cancel appointment
                                 </DropdownMenu.Item>
                               )}
                               <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => fetchVisitConsents(appointment.id)}>
-                                <FileText size={16} className="mr-2" /> Zobacz zgody
+                                <FileText size={16} className="mr-2" /> View consents
                               </DropdownMenu.Item>
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${encodeURIComponent("/klinika")}`); }}>
-                                  <Eye size={16} className="mr-2" /> Edytuj pacjenta
+                                  <Eye size={16} className="mr-2" /> Edit patient
                                 </DropdownMenu.Item>
                               )}
                               {user?.role === "admin" && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer" onClick={() => handlePermanentDeleteClick(appointment.id)}>
-                                  <Trash2 size={16} className="mr-2" /> Trwale usuń
+                                  <Trash2 size={16} className="mr-2" /> Delete permanently
                                 </DropdownMenu.Item>
                               )}
                             </DropdownMenu.Content>
@@ -1363,18 +1363,18 @@ function LabAppointmentsContent({ clinic }) {
           <div className="space-y-3">
             {/* Column headers */}
             <div className="grid grid-cols-8 gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
-              <div>Pacjent i ID</div>
-              <div>Wiek</div>
-              <div>Płeć</div>
+              <div>Patient & ID</div>
+              <div>Age</div>
+              <div>Gender</div>
               <div>PESEL</div>
-              <div>Telefon</div>
-              <div>Typ rejestracji</div>
-              <div>Pierwsza wizyta</div>
-              <div className="text-right">Akcje</div>
+              <div>Phone</div>
+              <div>Registration type</div>
+              <div>First visit</div>
+              <div className="text-right">Actions</div>
             </div>
             {appointments.length === 0 ? (
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm py-12 text-center text-gray-500">
-                Brak pacjentów.
+                No patients found.
               </div>
             ) : (
               appointments.map((appointment) => {
@@ -1425,7 +1425,7 @@ function LabAppointmentsContent({ clinic }) {
                             <DropdownMenu.Content className="min-w-[220px] max-h-[min(70vh,320px)] overflow-y-auto bg-white rounded-lg shadow-lg z-[100] border p-1" sideOffset={5} align="end">
                               {clinic && isVisitOnlyAppointment(appointment) && !isCancelled(appointment) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-teal-700 hover:bg-teal-50 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCompleteRegModal(true); }}>
-                                  <UserCheck size={16} className="mr-2" /> Zakończ rejestrację
+                                  <UserCheck size={16} className="mr-2" /> Complete registration
                                 </DropdownMenu.Item>
                               )}
                               {!isVisitOnlyAppointment(appointment) && (
@@ -1440,50 +1440,50 @@ function LabAppointmentsContent({ clinic }) {
                                     }
                                   }}
                                 >
-                                  <Eye size={16} className="mr-2" /> Zobacz szczegóły
+                                  <Eye size={16} className="mr-2" /> View details
                                 </DropdownMenu.Item>
                               )}
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => openVisitHistoryModal(appointment.patient.id || appointment.patient._id, getAppointmentPatientDisplayName(appointment))}>
-                                  <History size={16} className="mr-2" /> Historia wizyt
+                                  <History size={16} className="mr-2" /> Visit history
                                 </DropdownMenu.Item>
                               )}
                               {clinic && appointment.patient && appointment.status === "booked" && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCheckin(true); }}>
-                                  <UserCheck size={16} className="mr-2" /> Zamelduj
+                                  <UserCheck size={16} className="mr-2" /> Check in
                                 </DropdownMenu.Item>
                               )}
                               {clinic && (user?.role === "admin" || user?.role === "receptionist") && appointment.status === "booked" && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => handleRescheduleClick(appointment)}>
-                                  <Clock size={16} className="mr-2" /> Przełóż wizytę
+                                  <Clock size={16} className="mr-2" /> Reschedule
                                 </DropdownMenu.Item>
                               )}
                               {clinic && appointment.patient && ["checkedIn", "booked"].includes(appointment.status) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); handleBillPatient(appointment.id, appointment.patient.id || appointment.patient._id); }}>
-                                  <DollarSign size={16} className="mr-2" /> Wystaw rachunek
+                                  <DollarSign size={16} className="mr-2" /> Create bill
                                 </DropdownMenu.Item>
                               )}
                               {clinic && appointment.status === "completed" && appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => openVisitCardModal(appointment.patient.id || appointment.patient._id, getAppointmentPatientDisplayName(appointment))}>
-                                  <FileText size={16} className="mr-2" /> Karta wizyty
+                                  <FileText size={16} className="mr-2" /> Visit card
                                 </DropdownMenu.Item>
                               )}
                               {clinic && !["checkedIn", "completed", "cancelled"].includes(appointment.status) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer" onClick={(e) => handleCancelClick(e, appointment.id)}>
-                                  <X size={16} className="mr-2" /> Anuluj wizytę
+                                  <X size={16} className="mr-2" /> Cancel appointment
                                 </DropdownMenu.Item>
                               )}
                               <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => fetchVisitConsents(appointment.id)}>
-                                <FileText size={16} className="mr-2" /> Zobacz zgody
+                                <FileText size={16} className="mr-2" /> View consents
                               </DropdownMenu.Item>
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${encodeURIComponent("/pacjenci")}`); }}>
-                                  <Pen size={16} className="mr-2" /> Edytuj pacjenta
+                                  <Pen size={16} className="mr-2" /> Edit patient
                                 </DropdownMenu.Item>
                               )}
                               {user?.role === "admin" && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer" onClick={() => handlePermanentDeleteClick(appointment.id)}>
-                                  <Trash2 size={16} className="mr-2" /> Trwale usuń
+                                  <Trash2 size={16} className="mr-2" /> Delete permanently
                                 </DropdownMenu.Item>
                               )}
                             </DropdownMenu.Content>
@@ -1500,7 +1500,7 @@ function LabAppointmentsContent({ clinic }) {
 
         <div className="flex items-center justify-between mt-4 gap-3">
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span>Na stronę:</span>
+            <span>Per page:</span>
             <select
               value={itemsPerPage}
               onChange={(e) => setItemsPerPage(Number(e.target.value))}
@@ -1520,17 +1520,17 @@ function LabAppointmentsContent({ clinic }) {
               disabled={pagination.page === 1}
               className="px-3 py-1 border rounded disabled:opacity-50"
             >
-              Poprzednia
+              Previous
             </button>
             <span className="px-3 py-1">
-              Strona {pagination.page} z {pagination.pages}
+              Page {pagination.page} of {pagination.pages}
             </span>
             <button
               onClick={() => fetchAppointments(pagination.page + 1)}
               disabled={pagination.page === pagination.pages}
               className="px-3 py-1 border rounded disabled:opacity-50"
             >
-              Następna
+              Next
             </button>
           </div>
           ) : <div />}
@@ -1586,7 +1586,7 @@ function LabAppointmentsContent({ clinic }) {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col mx-4">
               <div className="flex justify-between items-center border-b border-gray-200 px-4 py-3">
-                <h3 className="text-lg font-semibold text-gray-900">Historia wizyt – {visitHistoryPatient?.name ?? "Pacjent"}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Visit history – {visitHistoryPatient?.name ?? "Patient"}</h3>
                 <button
                   type="button"
                   onClick={() => {
@@ -1602,11 +1602,11 @@ function LabAppointmentsContent({ clinic }) {
               </div>
               <div className="flex-1 overflow-y-auto p-4">
                 {visitHistoryLoading ? (
-                  <div className="py-8 text-center text-gray-500">Ładowanie historii wizyt...</div>
+                  <div className="py-8 text-center text-gray-500">Loading visit history...</div>
                 ) : visitHistoryError ? (
                   <div className="py-4 text-red-600 text-sm">{visitHistoryError}</div>
                 ) : visitHistoryData.length === 0 ? (
-                  <div className="py-8 text-center text-gray-500">Brak wizyt dla tego pacjenta.</div>
+                  <div className="py-8 text-center text-gray-500">No visits for this patient.</div>
                 ) : (
                   <ul className="space-y-3">
                     {visitHistoryData.map((visit) => (
@@ -1623,7 +1623,7 @@ function LabAppointmentsContent({ clinic }) {
                             </span>
                             {visit.mode && (
                               <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${visit.mode === "online" ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"}`}>
-                                {visit.mode === "online" ? "Online" : "Stacjonarna"}
+                                {visit.mode === "online" ? "Online" : "In-person"}
                               </span>
                             )}
                           </div>
@@ -1643,7 +1643,7 @@ function LabAppointmentsContent({ clinic }) {
                             }}
                             className="text-sm text-teal-600 hover:text-teal-800 font-medium"
                           >
-                            Zobacz szczegóły
+                            View details
                           </button>
                           {user?.role === "admin" && (
                             <button
@@ -1651,7 +1651,7 @@ function LabAppointmentsContent({ clinic }) {
                               onClick={() => handlePermanentDeleteFromVisitHistory(visit.visitId)}
                               className="text-sm text-red-600 hover:text-red-800 font-medium flex items-center gap-1"
                             >
-                              <Trash2 size={14} /> Trwale usuń
+                              <Trash2 size={14} /> Delete permanently
                             </button>
                           )}
                         </div>
@@ -1669,7 +1669,7 @@ function LabAppointmentsContent({ clinic }) {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col mx-4">
               <div className="flex justify-between items-center border-b border-gray-200 px-4 py-3">
-                <h3 className="text-lg font-semibold text-gray-900">Karta wizyty – {visitCardPatientName}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Visit card – {visitCardPatientName}</h3>
                 <button
                   type="button"
                   onClick={() => {
@@ -1685,15 +1685,15 @@ function LabAppointmentsContent({ clinic }) {
               </div>
               <div className="flex-1 overflow-y-auto p-4">
                 {visitCardsLoading ? (
-                  <div className="py-8 text-center text-gray-500">Ładowanie kart wizyt...</div>
+                  <div className="py-8 text-center text-gray-500">Loading visit cards...</div>
                 ) : visitCardsError ? (
                   <div className="py-4 text-red-600 text-sm">{visitCardsError}</div>
                 ) : visitCardsList.length === 0 ? (
-                  <div className="py-8 text-center text-gray-500">Brak kart wizyt dla tego pacjenta.</div>
+                  <div className="py-8 text-center text-gray-500">No visit cards for this patient.</div>
                 ) : (
                   <ul className="space-y-3">
                     {visitCardsList.map((item) => {
-                      const dateStr = item.date ? new Date(item.date).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+                      const dateStr = item.date ? new Date(item.date).toLocaleDateString("en-US", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
                       const doctorName = item.doctor?.name ?? "—";
                       const hasCard = item.visitCard?.url;
                       return (
@@ -1705,8 +1705,8 @@ function LabAppointmentsContent({ clinic }) {
                             <div className="font-medium text-gray-900">{dateStr} · {item.startTime || "—"}{item.endTime ? ` – ${item.endTime}` : ""}</div>
                             <div className="text-sm text-gray-600">{doctorName}</div>
                             <div className="text-xs text-gray-500 mt-0.5">
-                              {item.status ? (item.status === "completed" ? "Zakończona" : item.status) : "—"}
-                              {hasCard ? " · Karta dostępna" : " · Brak karty"}
+                              {item.status ? (item.status === "completed" ? "Completed" : item.status) : "—"}
+                              {hasCard ? " · Card available" : " · No card"}
                             </div>
                           </div>
                           <div className="shrink-0">
@@ -1716,10 +1716,10 @@ function LabAppointmentsContent({ clinic }) {
                                 onClick={() => window.open(item.visitCard.url, "_blank")}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg"
                               >
-                                <FileText size={16} /> Pobierz
+                                <FileText size={16} /> Download
                               </button>
                             ) : (
-                              <span className="text-sm text-gray-400">Brak karty</span>
+                              <span className="text-sm text-gray-400">No card</span>
                             )}
                           </div>
                         </li>
@@ -1737,7 +1737,7 @@ function LabAppointmentsContent({ clinic }) {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setOnlineDetailsAppointment(null)}>
             <div className="bg-white rounded-lg max-w-md w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center border-b px-4 py-3">
-                <h3 className="text-lg font-medium text-gray-900">Wizyta online – szczegóły</h3>
+                <h3 className="text-lg font-medium text-gray-900">Online visit – details</h3>
                 <button
                   type="button"
                   onClick={() => setOnlineDetailsAppointment(null)}
@@ -1748,19 +1748,19 @@ function LabAppointmentsContent({ clinic }) {
               </div>
               <div className="p-4 space-y-4">
                 <div>
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Pacjent</div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Patient</div>
                   <div className="text-gray-900 font-medium">{getAppointmentPatientDisplayName(onlineDetailsAppointment)}</div>
                 </div>
                 <div>
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Telefon</div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Phone</div>
                   <div className="text-gray-900">{getPhoneDisplay(onlineDetailsAppointment.patient?.phoneNumber ?? onlineDetailsAppointment.registrationData?.phone) || "—"}</div>
                 </div>
                 <div>
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Data i godzina</div>
-                  <div className="text-gray-900">{onlineDetailsAppointment.date ? new Date(onlineDetailsAppointment.date).toLocaleDateString("pl-PL", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }) : "—"} · {onlineDetailsAppointment.startTime || "—"}{onlineDetailsAppointment.endTime ? ` – ${onlineDetailsAppointment.endTime}` : ""}</div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Date & time</div>
+                  <div className="text-gray-900">{onlineDetailsAppointment.date ? new Date(onlineDetailsAppointment.date).toLocaleDateString("en-US", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }) : "—"} · {onlineDetailsAppointment.startTime || "—"}{onlineDetailsAppointment.endTime ? ` – ${onlineDetailsAppointment.endTime}` : ""}</div>
                 </div>
                 <div>
-                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Lekarz</div>
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Doctor</div>
                   <div className="text-gray-900">{stripDoctorTitle(onlineDetailsAppointment.doctor?.name) || "—"}</div>
                 </div>
                 <div className="pt-2 border-t space-y-2">
@@ -1771,7 +1771,7 @@ function LabAppointmentsContent({ clinic }) {
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 w-full justify-center px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium text-sm"
                     >
-                      <Eye size={16} /> Otwórz link do wizyty online
+                      <Eye size={16} /> Open online visit link
                     </a>
                   ) : null}
                   {(onlineDetailsAppointment.patient?.id ?? onlineDetailsAppointment.patient?._id) && (
@@ -1783,7 +1783,7 @@ function LabAppointmentsContent({ clinic }) {
                       }}
                       className="flex items-center gap-2 w-full justify-center px-4 py-2.5 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-medium text-sm"
                     >
-                      <Eye size={16} /> Otwórz kartę pacjenta
+                      <Eye size={16} /> Open patient chart
                     </button>
                   )}
                 </div>
@@ -1797,7 +1797,7 @@ function LabAppointmentsContent({ clinic }) {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg max-w-lg w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
               <div className="flex justify-between items-center border-b px-4 py-3">
-                <h3 className="text-lg font-medium text-gray-900">Zgody wizyty</h3>
+                <h3 className="text-lg font-medium text-gray-900">Visit consents</h3>
                 <button
                   type="button"
                   onClick={() => {
@@ -1813,7 +1813,7 @@ function LabAppointmentsContent({ clinic }) {
               </div>
               <div className="p-4 overflow-y-auto flex-1">
                 {consentsLoading && (
-                  <div className="py-8 text-center text-gray-500">Ładowanie zgód…</div>
+                  <div className="py-8 text-center text-gray-500">Loading consents…</div>
                 )}
                 {consentsError && (
                   <div className="py-4 text-red-600 text-sm">{consentsError}</div>
@@ -1822,37 +1822,37 @@ function LabAppointmentsContent({ clinic }) {
                   <>
                     {consentsData.patientData && (
                       <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                        <h4 className="text-sm font-medium text-gray-800 mb-2">Dane pacjenta</h4>
+                        <h4 className="text-sm font-medium text-gray-800 mb-2">Patient details</h4>
                         <dl className="grid grid-cols-1 gap-1.5 text-sm">
                           {(consentsData.patientData.name != null && String(consentsData.patientData.name).trim() !== "") && (
-                            <div><dt className="text-gray-500 inline">Imię i nazwisko: </dt><dd className="inline text-gray-900">{consentsData.patientData.name}</dd></div>
+                            <div><dt className="text-gray-500 inline">Full name: </dt><dd className="inline text-gray-900">{consentsData.patientData.name}</dd></div>
                           )}
                           {(consentsData.patientData.firstName != null && String(consentsData.patientData.firstName).trim() !== "") && (
-                            <div><dt className="text-gray-500 inline">Imię: </dt><dd className="inline text-gray-900">{consentsData.patientData.firstName}</dd></div>
+                            <div><dt className="text-gray-500 inline">First name: </dt><dd className="inline text-gray-900">{consentsData.patientData.firstName}</dd></div>
                           )}
                           {(consentsData.patientData.lastName != null && String(consentsData.patientData.lastName).trim() !== "") && (
-                            <div><dt className="text-gray-500 inline">Nazwisko: </dt><dd className="inline text-gray-900">{consentsData.patientData.lastName}</dd></div>
+                            <div><dt className="text-gray-500 inline">Last name: </dt><dd className="inline text-gray-900">{consentsData.patientData.lastName}</dd></div>
                           )}
                           <div><dt className="text-gray-500 inline">E-mail: </dt><dd className="inline text-gray-900">{consentsData.patientData.email != null && String(consentsData.patientData.email).trim() !== "" ? consentsData.patientData.email : "—"}</dd></div>
-                          <div><dt className="text-gray-500 inline">Telefon: </dt><dd className="inline text-gray-900">{consentsData.patientData.phone != null && String(consentsData.patientData.phone).trim() !== "" && !/_no_phone_/i.test(String(consentsData.patientData.phone)) ? (consentsData.patientData.phoneCode ? `${consentsData.patientData.phoneCode} ${consentsData.patientData.phone}` : consentsData.patientData.phone) : "—"}</dd></div>
-                          <div><dt className="text-gray-500 inline">Płeć: </dt><dd className="inline text-gray-900">{consentsData.patientData.sex != null && String(consentsData.patientData.sex).trim() !== "" ? (consentsData.patientData.sex === "Male" ? "Mężczyzna" : consentsData.patientData.sex === "Female" ? "Kobieta" : consentsData.patientData.sex) : "—"}</dd></div>
-                          <div><dt className="text-gray-500 inline">Data urodzenia: </dt><dd className="inline text-gray-900">{consentsData.patientData.dateOfBirth != null && String(consentsData.patientData.dateOfBirth).trim() !== "" ? (typeof consentsData.patientData.dateOfBirth === "string" && consentsData.patientData.dateOfBirth.match(/^\d{4}-\d{2}-\d{2}/) ? new Date(consentsData.patientData.dateOfBirth).toLocaleDateString("pl-PL") : consentsData.patientData.dateOfBirth) : "—"}</dd></div>
-                          <div><dt className="text-gray-500 inline">PESEL / Nr dokumentu: </dt><dd className="inline text-gray-900">{consentsData.patientData.govtId != null && String(consentsData.patientData.govtId).trim() !== "" ? consentsData.patientData.govtId : "—"}</dd></div>
+                          <div><dt className="text-gray-500 inline">Phone: </dt><dd className="inline text-gray-900">{consentsData.patientData.phone != null && String(consentsData.patientData.phone).trim() !== "" && !/_no_phone_/i.test(String(consentsData.patientData.phone)) ? (consentsData.patientData.phoneCode ? `${consentsData.patientData.phoneCode} ${consentsData.patientData.phone}` : consentsData.patientData.phone) : "—"}</dd></div>
+                          <div><dt className="text-gray-500 inline">Gender: </dt><dd className="inline text-gray-900">{consentsData.patientData.sex != null && String(consentsData.patientData.sex).trim() !== "" ? (consentsData.patientData.sex === "Male" ? "Male" : consentsData.patientData.sex === "Female" ? "Female" : consentsData.patientData.sex) : "—"}</dd></div>
+                          <div><dt className="text-gray-500 inline">Date of birth: </dt><dd className="inline text-gray-900">{consentsData.patientData.dateOfBirth != null && String(consentsData.patientData.dateOfBirth).trim() !== "" ? (typeof consentsData.patientData.dateOfBirth === "string" && consentsData.patientData.dateOfBirth.match(/^\d{4}-\d{2}-\d{2}/) ? new Date(consentsData.patientData.dateOfBirth).toLocaleDateString("en-US") : consentsData.patientData.dateOfBirth) : "—"}</dd></div>
+                          <div><dt className="text-gray-500 inline">PESEL / ID number: </dt><dd className="inline text-gray-900">{consentsData.patientData.govtId != null && String(consentsData.patientData.govtId).trim() !== "" ? consentsData.patientData.govtId : "—"}</dd></div>
                         </dl>
                       </div>
                     )}
                     <div className="mb-4 text-sm text-gray-600">
-                      Źródło:{" "}
+                      Source:{" "}
                       <span className="font-medium">
                         {consentsData.source === "patient"
-                          ? "Pacjent"
+                          ? "Patient"
                           : consentsData.source === "registration"
-                            ? "Rejestracja (dane wizyty)"
+                            ? "Registration (visit data)"
                             : consentsData.source}
                       </span>
                     </div>
                     {consentsData.consents.length === 0 ? (
-                      <p className="text-gray-500">Brak zapisanych zgód.</p>
+                      <p className="text-gray-500">No consents on record.</p>
                     ) : (
                       <ul className="space-y-3">
                         {consentsData.consents.map((c) => (
@@ -1865,7 +1865,7 @@ function LabAppointmentsContent({ clinic }) {
                                 c.agreed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                               }`}
                             >
-                              {c.agreed ? "Tak" : "Nie"}
+                              {c.agreed ? "Yes" : "No"}
                             </span>
                             <span className="text-sm text-gray-700">{c.text}</span>
                           </li>
@@ -1885,7 +1885,7 @@ function LabAppointmentsContent({ clinic }) {
             <div className="bg-white rounded-lg w-3/4 max-w-4xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center border-b p-4">
                 <h2 className="text-xl font-bold">
-                  {isEditMode ? "Edytuj Pacjenta" : "Dodaj Pacjenta"}
+                  {isEditMode ? "Edit patient" : "Add patient"}
                 </h2>
                 <button
                   className="text-gray-500 hover:text-gray-700"
@@ -1937,7 +1937,7 @@ function LabAppointmentsContent({ clinic }) {
             <div className="bg-white rounded-lg max-w-md w-full mx-4">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-gray-900">Anuluj wizytę</h3>
+                  <h3 className="text-lg font-medium text-gray-900">Cancel appointment</h3>
                   <button
                     onClick={() => {
                       setShowCancelModal(false);
@@ -1953,7 +1953,7 @@ function LabAppointmentsContent({ clinic }) {
 
                 <div className="mb-6">
                   <p className="text-gray-600 mb-4">
-                    Czy na pewno chcesz anulować tę wizytę? Tej operacji nie można cofnąć.
+                    Are you sure you want to cancel this appointment? This cannot be undone.
                   </p>
 
                   <div className="flex items-center">
@@ -1965,7 +1965,7 @@ function LabAppointmentsContent({ clinic }) {
                       className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                     />
                     <label htmlFor="smsNotification" className="ml-2 text-sm text-gray-700">
-                      Wyślij powiadomienie SMS o anulowaniu wizyty
+                      Send SMS notification about cancellation
                     </label>
                   </div>
 
@@ -1978,7 +1978,7 @@ function LabAppointmentsContent({ clinic }) {
                       className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                     />
                     <label htmlFor="emailNotification" className="ml-2 text-sm text-gray-700">
-                      Wyślij powiadomienie email o anulowaniu wizyty
+                      Send email notification about cancellation
                     </label>
                   </div>
                 </div>
@@ -1993,13 +1993,13 @@ function LabAppointmentsContent({ clinic }) {
                     }}
                     className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                   >
-                    Anuluj
+                    Close
                   </button>
                   <button
                     onClick={handleCancelAppointment}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
-                    Tak, anuluj wizytę
+                    Yes, cancel appointment
                   </button>
                 </div>
               </div>
@@ -2013,7 +2013,7 @@ function LabAppointmentsContent({ clinic }) {
           onClose={() => setBulkDeleteDialog({ open: false, ids: [] })}
           type="appointment"
           selectedIds={bulkDeleteDialog.ids}
-          itemName="wizyt"
+          itemName="appointment(s)"
           onSuccess={handleBulkDeleteSuccess}
         />
 
@@ -2023,8 +2023,8 @@ function LabAppointmentsContent({ clinic }) {
           onClose={() => setDeleteDialog({ open: false, id: null })}
           type="appointment"
           id={deleteDialog.id}
-          title="Trwale usuń wizytę?"
-          message="Ta operacja jest nieodwracalna. Wizyta oraz wszystkie powiązane rekordy (rachunki, raporty) zostaną trwale usunięte."
+          title="Permanently delete appointment?"
+          message="This cannot be undone. The appointment and all related records (bills, reports) will be permanently removed."
           onSuccess={handlePermanentDeleteSuccess}
         />
       </div>

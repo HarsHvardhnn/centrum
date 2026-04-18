@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, MoreHorizontal, User, Settings, LogOut, Clock, Bell } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useUser } from "../../../../context/userContext";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
@@ -32,8 +32,16 @@ function getInitials(name) {
   return name.charAt(0).toUpperCase();
 }
 
+/** Staff top bar: optional English label for the current section (e.g. Billing). */
+function getStaffSectionLabel(pathname) {
+  if (pathname === "/administracja/rozliczenia") return "Billing";
+  if (pathname.startsWith("/administracja/rozliczenia/szczegoly/")) return "Invoice";
+  return null;
+}
+
 const PatientDetailsHeader = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, setUser, refreshUserProfile } = useUser();
   const [searchValue, setSearchValue] = useState("");
   const [currentTime, setCurrentTime] = useState("");
@@ -48,7 +56,7 @@ const PatientDetailsHeader = () => {
   useEffect(() => {
     const formatTime = () => {
       const now = new Date();
-      setCurrentTime(now.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit", hour12: false }));
+      setCurrentTime(now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }));
     };
     formatTime();
     const t = setInterval(formatTime, 1000);
@@ -142,8 +150,8 @@ const PatientDetailsHeader = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const displayName = user?.name ? stripDoctorTitle(user.name) : "Użytkownik";
-  const specialization = user?.role === "admin" ? "Administrator" : user?.role === "receptionist" ? "Recepcja" : (user?.specialization || user?.specialty || "");
+  const displayName = user?.name ? stripDoctorTitle(user.name) : "User";
+  const specialization = user?.role === "admin" ? "Administrator" : user?.role === "receptionist" ? "Reception" : (user?.specialization || user?.specialty || "");
   const initials = getInitials(user?.name);
 
   // JWT access token: time until `exp` claim (server TTL from JWT settings, e.g. JWT_EXPIRY_TIME)
@@ -205,14 +213,14 @@ const PatientDetailsHeader = () => {
         localStorage.setItem("authToken", newToken);
         setCookie("authToken", newToken, 7);
         await refreshUserProfile();
-        toast.success("Sesja została odświeżona");
+        toast.success("Session refreshed");
         setShowJwtExpiryModal(false);
       } else {
-        toast.error("Nie udało się przedłużyć sesji");
+        toast.error("Could not extend session");
       }
     } catch (err) {
       console.error("JWT refresh failed:", err);
-      toast.error("Nie udało się przedłużyć sesji. Zaloguj się ponownie.");
+      toast.error("Could not extend session. Please sign in again.");
     } finally {
       setJwtRefreshLoading(false);
     }
@@ -220,20 +228,22 @@ const PatientDetailsHeader = () => {
 
   const sessionTooltipParts = [];
   if (jwtExpiryConfig) {
-    sessionTooltipParts.push(`Czas trwania sesji wg ustawień serwera: ${jwtExpiryConfig}.`);
+    sessionTooltipParts.push(`Session duration per server settings: ${jwtExpiryConfig}.`);
   }
   sessionTooltipParts.push(
-    "Szacowany czas do automatycznego wylogowania (na podstawie ważności sesji)."
+    "Estimated time until automatic sign-out (based on session validity)."
   );
   const sessionTooltip = sessionTooltipParts.join(" ");
 
   const sessionLabel = (() => {
     const token = getAccessToken();
-    if (!token) return "Sesja: —";
-    if (jwtRemainingMs === null) return "Sesja: —";
-    if (jwtRemainingMs <= 0) return "Sesja wygasła";
-    return `Pozostało: ${formatTimeRemaining(jwtRemainingMs)}`;
+    if (!token) return "Session: —";
+    if (jwtRemainingMs === null) return "Session: —";
+    if (jwtRemainingMs <= 0) return "Session expired";
+    return `Remaining: ${formatTimeRemaining(jwtRemainingMs)}`;
   })();
+
+  const sectionLabel = getStaffSectionLabel(location.pathname);
 
   const notificationCount = 0; // TODO: wire to real notifications API
 
@@ -246,15 +256,30 @@ const PatientDetailsHeader = () => {
       }}
     >
       {/* Logo - vertically centered */}
-      <button
-        type="button"
-        onClick={() => window.location.reload()}
-        className="font-bold text-base uppercase tracking-tight shrink-0 flex items-center"
-        style={{ color: TEXT_PRIMARY }}
-        title="Odśwież stronę"
-      >
-        CM7MED
-      </button>
+      <div className="flex items-center gap-3 shrink-0 min-w-0">
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="font-bold text-base uppercase tracking-tight flex items-center"
+          style={{ color: TEXT_PRIMARY }}
+          title="Refresh page"
+        >
+          CM7MED
+        </button>
+        {sectionLabel && (
+          <>
+            <span className="text-white/50 hidden sm:inline" aria-hidden>
+              |
+            </span>
+            <span
+              className="text-sm font-semibold truncate max-w-[140px] sm:max-w-[200px]"
+              style={{ color: TEXT_SECONDARY }}
+            >
+              {sectionLabel}
+            </span>
+          </>
+        )}
+      </div>
 
       {/* Search - centered, wide, with breathing room */}
       <form onSubmit={handleSearchSubmit} className="flex-1 flex justify-center min-w-0 max-w-4xl mx-4">
@@ -270,7 +295,7 @@ const PatientDetailsHeader = () => {
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             onFocus={() => searchValue.trim() && setShowDropdown(true)}
-            placeholder="Szukaj pacjenta (PESEL / Nazwisko)"
+            placeholder="Search patient (PESEL / surname)"
             className="w-full pl-10 pr-4 py-2 rounded-lg bg-white text-gray-800 border border-gray-200 focus:ring-2 focus:ring-offset-0 focus:ring-white/50 outline-none text-sm"
             style={{ color: "#1f2937" }}
           />
@@ -280,9 +305,9 @@ const PatientDetailsHeader = () => {
               role="listbox"
             >
               {searchLoading ? (
-                <div className="px-4 py-3 text-gray-500 text-sm">Wyszukiwanie…</div>
+                <div className="px-4 py-3 text-gray-500 text-sm">Searching…</div>
               ) : searchResults.length === 0 ? (
-                <div className="px-4 py-3 text-gray-500 text-sm">Brak wyników</div>
+                <div className="px-4 py-3 text-gray-500 text-sm">No results</div>
               ) : (
                 searchResults.map((item) => {
                   const p = item.patient;
@@ -321,7 +346,7 @@ const PatientDetailsHeader = () => {
             type="button"
             className="p-2 rounded-lg hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/50"
             style={{ color: TEXT_PRIMARY }}
-            aria-label="Powiadomienia"
+            aria-label="Notifications"
           >
             <Bell size={18} strokeWidth={2} />
           </button>
@@ -367,14 +392,14 @@ const PatientDetailsHeader = () => {
           {currentTime}
         </span>
 
-        {/* Three-dots menu: Zobacz profil, Ustawienia, Wyloguj */}
+        {/* Three-dots menu: profile, settings, log out */}
         <div className="relative shrink-0" ref={menuRef}>
         <button
           type="button"
           onClick={() => setMenuOpen((prev) => !prev)}
           className="p-1.5 rounded-lg border-2 border-white/60 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/50"
           style={{ color: TEXT_PRIMARY }}
-          aria-label="Opcje"
+          aria-label="Options"
         >
           <MoreHorizontal size={18} />
         </button>
@@ -390,7 +415,7 @@ const PatientDetailsHeader = () => {
                 role="menuitem"
               >
                 <User size={16} className="mr-2" />
-                Zobacz profil
+                View profile
               </button>
               <button
                 type="button"
@@ -399,7 +424,7 @@ const PatientDetailsHeader = () => {
                 role="menuitem"
               >
                 <Settings size={16} className="mr-2" />
-                Ustawienia
+                Settings
               </button>
               <button
                 type="button"
@@ -408,7 +433,7 @@ const PatientDetailsHeader = () => {
                 role="menuitem"
               >
                 <LogOut size={16} className="mr-2" />
-                Wyloguj
+                Log out
               </button>
             </div>
           )}
@@ -420,10 +445,10 @@ const PatientDetailsHeader = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="session-expiry-title">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <h2 id="session-expiry-title" className="text-lg font-semibold text-gray-900 mb-2">
-              Sesja wygasła
+              Session expired
             </h2>
             <p className="text-gray-600 mb-6">
-              Twój czas sesji dobiegł końca. Możesz przedłużyć sesję (jeśli to możliwe) albo wylogować się i zalogować ponownie.
+              Your session has ended. You can try to extend it (if allowed) or sign out and sign in again.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -434,7 +459,7 @@ const PatientDetailsHeader = () => {
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
               >
-                Wyloguj
+                Log out
               </button>
               <button
                 type="button"
@@ -443,7 +468,7 @@ const PatientDetailsHeader = () => {
                 className="px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50"
                 style={{ backgroundColor: HEADER_BG }}
               >
-                {jwtRefreshLoading ? "Odświeżanie…" : "Przedłuż sesję"}
+                {jwtRefreshLoading ? "Refreshing…" : "Extend session"}
               </button>
             </div>
           </div>

@@ -48,7 +48,7 @@ const BulkDeleteByIdsDialog = ({
       setInputText('');
     } catch (err) {
       console.error('Bulk delete error:', err);
-      toast.error(err.message || 'Nie udało się usunąć rekordów');
+      toast.error(err.message || 'Could not delete records');
     }
   };
 

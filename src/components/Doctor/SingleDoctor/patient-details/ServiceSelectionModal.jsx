@@ -43,7 +43,7 @@ const ServiceSelectionModal = ({
       } catch (e) {
         console.error("ServiceSelectionModal getDoctorServices:", e);
         if (!cancelled) {
-          setDoctorError("Nie udało się załadować usług lekarza");
+          setDoctorError("Could not load doctor services");
           setDoctorServices([]);
         }
       } finally {
@@ -149,10 +149,10 @@ const ServiceSelectionModal = ({
         {/* Header */}
         <div className="flex justify-between items-center border-b p-4">
           <h3 className="text-lg font-medium text-gray-900">
-            Wybierz usługi dla pacjenta
+            Select services for patient
             {useDoctorCatalog && (
               <span className="block text-xs font-normal text-gray-500 mt-1">
-                Tylko usługi przypisane do lekarza z wizyty
+                Only services assigned to the visit doctor
               </span>
             )}
           </h3>
@@ -169,7 +169,7 @@ const ServiceSelectionModal = ({
         <div className="p-4 border-b">
           <input
             type="text"
-            placeholder="Szukaj usług..."
+            placeholder="Search services..."
             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -191,7 +191,7 @@ const ServiceSelectionModal = ({
               </div>
             ) : filteredServices.length === 0 ? (
               <div className="text-gray-500 text-center py-8">
-                Nie znaleziono usług
+                No services found
               </div>
             ) : (
               <div className="space-y-2">
@@ -228,7 +228,7 @@ const ServiceSelectionModal = ({
                             />
                           )}
                           <span className="font-medium text-gray-900">
-                            {service.price} zł
+                            PLN {service.price}
                           </span>
                         </div>
                       </div>
@@ -242,11 +242,11 @@ const ServiceSelectionModal = ({
           {/* Selected Services */}
           <div className="w-1/2 overflow-y-auto p-4 flex flex-col">
             <div className="flex-1">
-              <h3 className="font-medium text-gray-800 mb-3">Wybrane usługi</h3>
+              <h3 className="font-medium text-gray-800 mb-3">Selected services</h3>
 
               {selectedServices.length === 0 ? (
                 <div className="text-gray-500 text-center py-8 border border-dashed border-gray-200 rounded-lg">
-                  Nie wybrano żadnych usług
+                  No services selected
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -261,7 +261,7 @@ const ServiceSelectionModal = ({
                             {service.title}
                           </h4>
                           <p className="text-sm text-gray-500">
-                            {service.price} zł / szt.
+                            PLN {service.price} / ea.
                           </p>
                         </div>
                         <button
@@ -310,7 +310,7 @@ const ServiceSelectionModal = ({
                           {(
                             parseFloat(service.price) * service.quantity
                           ).toFixed(2)}{" "}
-                          zł
+                          PLN
                         </div>
                       </div>
                     </div>
@@ -322,9 +322,9 @@ const ServiceSelectionModal = ({
             {/* Total and Actions */}
             <div className="mt-4 pt-4 border-t">
               <div className="flex justify-between items-center mb-4">
-                <span className="font-medium text-gray-800">Suma:</span>
+                <span className="font-medium text-gray-800">Total:</span>
                 <span className="font-bold text-lg text-gray-900">
-                  {calculateTotal()} zł
+                  PLN {calculateTotal()}
                 </span>
               </div>
 
@@ -334,7 +334,7 @@ const ServiceSelectionModal = ({
                   disabled={isSubmitting}
                   className="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                 >
-                  Anuluj
+                  Cancel
                 </button>
                 <button
                   onClick={handleSave}
@@ -348,10 +348,10 @@ const ServiceSelectionModal = ({
                   {isSubmitting ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Zapisywanie...
+                      Saving...
                     </>
                   ) : (
-                    "Zapisz"
+                    "Save"
                   )}
                 </button>
               </div>

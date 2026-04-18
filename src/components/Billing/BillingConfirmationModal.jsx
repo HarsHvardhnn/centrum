@@ -57,7 +57,7 @@ const BillingConfirmationModal = ({
       }
     } catch (error) {
       console.error("Error fetching patient services:", error);
-      toast.error("Nie udało się załadować usług pacjenta");
+      toast.error("Could not load patient services");
     } finally {
       setIsLoading(false);
     }
@@ -77,10 +77,10 @@ const BillingConfirmationModal = ({
       await patientServicesHelper.addServicesToPatient(patientId, servicesToAdd, { appointmentId });
       await fetchPatientServices();
       setShowServiceModal(false);
-      toast.success("Usługi dodane pomyślnie");
+      toast.success("Services added successfully");
     } catch (error) {
       console.error("Error adding services:", error);
-      toast.error("Nie udało się dodać usług");
+      toast.error("Could not add services");
     } finally {
       setIsLoading(false);
     }
@@ -91,10 +91,10 @@ const BillingConfirmationModal = ({
       setIsLoading(true);
       await patientServicesHelper.removeServiceFromPatient(patientId, serviceId, { appointmentId });
       await fetchPatientServices();
-      toast.success("Usługa usunięta pomyślnie");
+      toast.success("Service removed successfully");
     } catch (error) {
       console.error("Error removing service:", error);
-      toast.error("Nie udało się usunąć usługi");
+      toast.error("Could not remove service");
     } finally {
       setIsLoading(false);
     }
@@ -121,10 +121,10 @@ const BillingConfirmationModal = ({
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Generuj rachunek dla {patientName}
+            Generate bill for {patientName}
           </h3>
           <p className="text-sm text-gray-500 mb-4">
-            Utworzy to rachunek dla pacjenta na podstawie wybranych usług.
+            This creates a bill for the patient based on the selected services.
           </p>
 
           {isLoading ? (
@@ -135,13 +135,13 @@ const BillingConfirmationModal = ({
             <>
               <div className="border rounded-lg overflow-hidden mb-4">
                 <div className="bg-gray-50 px-4 py-2 border-b flex justify-between items-center">
-                  <h4 className="font-medium text-sm">Usługi</h4>
+                  <h4 className="font-medium text-sm">Services</h4>
                   <button
                     onClick={() => setShowServiceModal(true)}
                     className="text-sm text-teal-600 hover:text-teal-800 flex items-center"
                   >
                     <Plus size={16} className="mr-1" />
-                    Dodaj usługę
+                    Add service
                   </button>
                 </div>
 
@@ -157,12 +157,12 @@ const BillingConfirmationModal = ({
                             {service.title}
                           </p>
                           <p className="text-xs text-gray-500">
-                            Ilość: {service.quantity} | Status: {service.status === 'active' ? 'Aktywna' : service.status === 'completed' ? 'Zakończona' : service.status}
+                            Qty: {service.quantity} | Status: {service.status === 'active' ? 'Active' : service.status === 'completed' ? 'Completed' : service.status}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
                           <p className="text-sm">
-                            zł{service.totalPrice}
+                            PLN {service.totalPrice}
                           </p>
                           <button
                             onClick={() => handleRemoveService(service.serviceId)}
@@ -175,13 +175,13 @@ const BillingConfirmationModal = ({
                     ))}
 
                     <div className="px-4 py-2 flex justify-between items-center bg-gray-50">
-                      <p className="font-medium">Suma częściowa</p>
-                      <p className="font-medium">zł{subtotal.toFixed(2)}</p>
+                      <p className="font-medium">Subtotal</p>
+                      <p className="font-medium">PLN {subtotal.toFixed(2)}</p>
                     </div>
                   </div>
                 ) : (
                   <div className="p-4 text-center text-gray-500">
-                    Nie znaleziono usług dla tej wizyty.
+                    No services found for this visit.
                   </div>
                 )}
               </div>
@@ -190,7 +190,7 @@ const BillingConfirmationModal = ({
               <div className="space-y-3 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Podatek (%)
+                    Tax (%)
                   </label>
                   <div className="flex items-center">
                     <input
@@ -204,14 +204,14 @@ const BillingConfirmationModal = ({
                       className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                     />
                     <span className="ml-2 text-sm text-gray-500">
-                      ({taxPercentage === 0 ? "ZW" : `zł${taxAmount.toFixed(2)}`})
+                      ({taxPercentage === 0 ? "Exempt" : `PLN ${taxAmount.toFixed(2)}`})
                     </span>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Dodatkowe opłaty (zł)
+                    Additional charges (PLN)
                   </label>
                   <div className="flex items-center space-x-2">
                     <input
@@ -225,7 +225,7 @@ const BillingConfirmationModal = ({
                     />
                     <input
                       type="text"
-                      placeholder="Notatka (opcjonalna)"
+                      placeholder="Note (optional)"
                       value={additionalChargeNote}
                       onChange={(e) => setAdditionalChargeNote(e.target.value)}
                       className="block flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
@@ -235,7 +235,7 @@ const BillingConfirmationModal = ({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Rabat (zł)
+                    Discount (PLN)
                   </label>
                   <input
                     type="number"
@@ -250,18 +250,18 @@ const BillingConfirmationModal = ({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Metoda płatności
+                    Payment method
                   </label>
                   <select
                     value={paymentMethod}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                   >
-                    <option value="cash">Gotówka</option>
-                    <option value="card">Karta kredytowa/debetowa</option>
-                    <option value="insurance">Ubezpieczenie</option>
-                    <option value="bank_transfer">Przelew bankowy</option>
-                    <option value="mobile_payment">Płatność mobilna</option>
+                    <option value="cash">Cash</option>
+                    <option value="card">Credit/debit card</option>
+                    <option value="insurance">Insurance</option>
+                    <option value="bank_transfer">Bank transfer</option>
+                    <option value="mobile_payment">Mobile payment</option>
                   </select>
                 </div>
               </div>
@@ -269,9 +269,9 @@ const BillingConfirmationModal = ({
               {/* Total */}
               <div className="bg-gray-100 p-4 rounded-lg mb-4">
                 <div className="flex justify-between items-center">
-                  <p className="font-semibold text-lg">Łączna kwota</p>
+                  <p className="font-semibold text-lg">Total</p>
                   <p className="font-bold text-lg text-teal-600">
-                    zł{totalAmount}
+                    PLN {totalAmount}
                   </p>
                 </div>
               </div>
@@ -283,7 +283,7 @@ const BillingConfirmationModal = ({
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
               onClick={onClose}
             >
-              Anuluj
+              Cancel
             </button>
             <button
               className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center"
@@ -318,7 +318,7 @@ const BillingConfirmationModal = ({
               disabled={isLoading || services.length === 0}
             >
               <DollarSign size={16} className="mr-1" />
-              Generuj rachunek
+              Generate bill
             </button>
           </div>
         </div>

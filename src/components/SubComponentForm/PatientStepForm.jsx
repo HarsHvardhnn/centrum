@@ -33,7 +33,7 @@ const PatientStepForm = ({
         subStepTitles={subStepTitles}
         isEditMode={isEditMode}
       >
-        <SubStep title="Dane Podstawowe">
+        <SubStep title="Basic details">
           <DemographicsForm 
             selectedPhoneCode={selectedPhoneCode}
             onPhoneCodeChange={onPhoneCodeChange}
@@ -45,19 +45,19 @@ const PatientStepForm = ({
             currentPatientId={currentPatientId}
           />
         </SubStep>
-        <SubStep title="Skierowanie">
+        <SubStep title="Referral">
           <ReferrerForm />
         </SubStep>
-        <SubStep title="Adres">
+        <SubStep title="Address">
           <AddressForm />
         </SubStep>
-        <SubStep title="Zgody">
+        <SubStep title="Consents">
           <ConsentDocumentUpload currentPatientId={currentPatientId} />
         </SubStep>
-        <SubStep title="Szczegóły">
+        <SubStep title="Details">
           <DetailsForm />
         </SubStep>
-        <SubStep title="Notatki">
+        <SubStep title="Notes">
           <NotesForm />
         </SubStep>
       </SubStepForm>

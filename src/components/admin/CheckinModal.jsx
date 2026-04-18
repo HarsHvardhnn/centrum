@@ -12,16 +12,16 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
-  const translateSexToPolish = (sex) => {
+  const translateSexLabel = (sex) => {
     switch (sex) {
       case "Male":
-        return "Mężczyzna";
+        return "Male";
       case "Female":
-        return "Kobieta";
+        return "Female";
       case "Others":
-        return "Inna";
+        return "Other";
       default:
-        return "Nieznany";
+        return "Unknown";
     }
   };
 
@@ -35,10 +35,10 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
       return {
         name: patientData.patient.name,
         age: patientData.patient.age || 0,
-        sex: patientData.patient.sex || "Nieokreślony",
-        email: patientData.patient.email || "Nieokreślony",
-        phone: patientData.patient.phoneNumber || "Nieokreślony",
-        disease: patientData.patient.disease || "Nieokreślony",
+        sex: patientData.patient.sex || "Unspecified",
+        email: patientData.patient.email || "Unspecified",
+        phone: patientData.patient.phoneNumber || "Unspecified",
+        disease: patientData.patient.disease || "Unspecified",
         id: patientData.patient.id,
         avatar: patientData.patient.profilePicture,
         patient_id: patientData.patient.id
@@ -49,10 +49,10 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
     return {
       name: patientData.name,
       age: patientData.age || 0,
-      sex: patientData.sex || "Nieokreślony",
-      email: patientData.email || "Nieokreślony",
-      phone: patientData.phone || patientData.phoneNumber || "Nieokreślony",
-      disease: patientData.disease || "Nieokreślony",
+      sex: patientData.sex || "Unspecified",
+      email: patientData.email || "Unspecified",
+      phone: patientData.phone || patientData.phoneNumber || "Unspecified",
+      disease: patientData.disease || "Unspecified",
       id: patientData.patient_id || patientData.id,
       avatar: patientData.avatar || patientData.profilePicture,
       patient_id: patientData.patient_id || patientData.id
@@ -65,11 +65,11 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
   const patient = normalizedPatient || {
     name: "Demi Wilkinson",
     age: "22",
-    sex: "Mężczyzna",
+    sex: "Male",
     email: "wilkinson87@gmail.com",
     phone: "(704) 555-0783",
-    dateOfBirth: "14 Luty 2003",
-    disease: "Kardiologia",
+    dateOfBirth: "Feb 14, 2003",
+    disease: "Cardiology",
     id: "#PT-0025",
     avatar: null
   };
@@ -142,11 +142,11 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
 
           if (!response) {
             fileUploadSuccess = false;
-            fileUploadError = "Przesyłanie plików nie powiodło się";
+            fileUploadError = "File upload failed";
           } else {
             // Upload endpoint performs check-in itself.
             setUploadSuccess(true);
-            toast.success("Pacjent został pomyślnie zameldowany");
+            toast.success("Patient checked in successfully");
 
             // Close modal and reset state
             setIsOpen(false);
@@ -168,7 +168,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
         } catch (fileError) {
           console.error("Error uploading files:", fileError);
           fileUploadSuccess = false;
-          fileUploadError = fileError.message || "Nie udało się przesłać plików";
+          fileUploadError = fileError.message || "Could not upload files";
           // Continue with separate check-in even if file upload fails
         }
       }
@@ -177,11 +177,11 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
       try {
         await appointmentHelper.completeCheckIn(appointmentId, patient.patient_id);
 
-        toast.success("Pacjent został pomyślnie zameldowany");
+        toast.success("Patient checked in successfully");
 
         // Show warning if file upload failed but check-in succeeded
         if (!fileUploadSuccess && fileUploadError) {
-          toast.warning(`Zameldowanie zakończone, ale: ${fileUploadError}`);
+          toast.warning(`Check-in completed, but: ${fileUploadError}`);
         }
 
         // Close modal and reset state
@@ -200,7 +200,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
       } catch (checkInError) {
         console.error("Error during check-in:", checkInError);
         toast.error(
-          checkInError.message || "Wystąpił błąd podczas meldowania pacjenta"
+          checkInError.message || "An error occurred while checking in the patient"
         );
         // Show file upload error if it occurred
         if (fileUploadError) {
@@ -211,7 +211,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
     } catch (error) {
       console.error("Error in handleSubmit:", error);
       // This catch block handles any unexpected errors
-      toast.error("Wystąpił nieoczekiwany błąd");
+      toast.error("An unexpected error occurred");
     } finally {
       setUploading(false);
       setLoading(false);
@@ -225,7 +225,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
       <div className="bg-white rounded-lg w-full max-w-md overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-center border-b p-4">
-          <h2 className="text-lg font-medium">Zameldowanie</h2>
+          <h2 className="text-lg font-medium">Check-in</h2>
           <button
             className="text-gray-500 hover:text-gray-700"
             onClick={() => {
@@ -242,7 +242,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
         <div className="p-4">
           {/* Patient Details - New Compact Layout */}
           <div className="mb-6">
-            <h3 className="text-md font-medium mb-3">Dane Pacjenta</h3>
+            <h3 className="text-md font-medium mb-3">Patient details</h3>
             <div className="flex items-start mb-2">
               {patient.avatar ? (
                 <img
@@ -263,7 +263,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
                   </div>
                 </div>
                 <p className="text-gray-500 text-sm">
-                  {patient.age} Lat, {translateSexToPolish(patient.sex)}
+                  {patient.age} yrs, {translateSexLabel(patient.sex)}
                 </p>
               </div>
             </div>
@@ -274,8 +274,8 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
                 <p className="break-all min-w-0">{patient.email}</p>
               </div>
               <div className="min-w-0">
-                <p className="text-gray-500">Telefon</p>
-                <p className="break-all min-w-0">{(patient.phone != null && String(patient.phone).trim() !== "" && !String(patient.phone).trim().startsWith("__no_phone_")) ? patient.phone : "Numer telefonu niedostępny"}</p>
+                <p className="text-gray-500">Phone</p>
+                <p className="break-all min-w-0">{(patient.phone != null && String(patient.phone).trim() !== "" && !String(patient.phone).trim().startsWith("__no_phone_")) ? patient.phone : "Phone unavailable"}</p>
               </div>
               {/* <div>
                 <p className="text-gray-500">Schorzenia</p>
@@ -287,10 +287,10 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
           {/* File Upload Section - Simplified */}
           <div className="mb-5">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="text-md font-medium">Prześlij Dokumenty</h3>
+              <h3 className="text-md font-medium">Upload documents</h3>
             </div>
             <p className="text-gray-500 text-sm mb-3">
-              Prześlij dokument podpisany przez pacjenta (opcjonalne)
+              Upload a document signed by the patient (optional)
             </p>
 
             {/* Upload Area - Simplified */}
@@ -305,10 +305,10 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
                   <Upload size={24} />
                 </div>
                 <p className="text-gray-700 text-sm mb-1">
-                  Upuść pliki tutaj lub kliknij, aby przeglądać
+                  Drop files here or click to browse
                 </p>
                 <p className="text-gray-500 text-xs">
-                  Akceptowane formaty plików: PDF, JPG, PNG (Max: 10MB)
+                  Accepted: PDF, JPG, PNG (max 10MB)
                 </p>
               </div>
               <input
@@ -324,7 +324,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
             {/* File List */}
             {files.length > 0 && (
               <div className="mb-3">
-                <h4 className="text-sm font-medium mb-2">Przesłane Pliki</h4>
+                <h4 className="text-sm font-medium mb-2">Uploaded files</h4>
                 <div className="space-y-2">
                   {files.map((fileObj) => (
                     <div
@@ -384,7 +384,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
             {uploadSuccess && (
               <div className="flex items-center text-green-500 mb-3">
                 <Check size={16} className="mr-1" />
-                <p className="text-sm">Pliki zostały pomyślnie przesłane!</p>
+                <p className="text-sm">Files uploaded successfully!</p>
               </div>
             )}
           </div>
@@ -400,7 +400,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
                 setUploadSuccess(false);
               }}
             >
-              Anuluj
+              Cancel
             </button>
             <button
               className={`px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 ${
@@ -409,7 +409,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
               onClick={handleSubmit}
               disabled={uploading || loading}
             >
-              {(uploading || loading) ? "Zameldowywanie..." : "Zamelduj"}
+              {(uploading || loading) ? "Checking in..." : "Check in"}
             </button>
           </div>
         </div>

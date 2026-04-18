@@ -1,13 +1,13 @@
 export const translateStatus = (status) => {
   const statusMap = {
-    completed: "Zakończona",
-    checkedIn: "W trakcie wizyty",
-    cancelled: "Anulowana",
-    canceled: "Anulowana",
-    booked: "Zarezerwowana",
-    billed: "Rozliczona",
-    no_appointment: "Brak wizyty",
-    "in-treatment": "W trakcie"
+    completed: "Completed",
+    checkedIn: "In visit",
+    cancelled: "Cancelled",
+    canceled: "Cancelled",
+    booked: "Booked",
+    billed: "Billed",
+    no_appointment: "No appointment",
+    "in-treatment": "In treatment",
   };
   const key = status?.toLowerCase?.();
   return statusMap[key] ?? statusMap[status] ?? status;
@@ -27,7 +27,7 @@ export const getStatusStyle = (status) => {
   return styleMap[key] ?? styleMap[status] ?? "bg-gray-100 text-gray-800";
 };
 
-/** Display label for created-by role (Polish). Used in patient list and visit history. */
+/** Display label for created-by role. Used in patient list and visit history. */
 export const getCreatedByRoleLabel = (appointment) => {
   const role =
     appointment?.role != null
@@ -41,9 +41,9 @@ export const getCreatedByRoleLabel = (appointment) => {
             : "online";
   const labels = {
     online: "Online",
-    receptionist: "Recepcja",
-    admin: "Administracja",
-    doctor: "Lekarz",
+    receptionist: "Reception",
+    admin: "Admin",
+    doctor: "Doctor",
     patient: "Online",
   };
   return labels[role?.toLowerCase?.()] ?? labels[role] ?? role;
@@ -56,9 +56,9 @@ export const getVisitMode = (appointment) => {
   return mode === "online" ? "online" : "offline";
 };
 
-/** Display label for visit mode. Always "Online" or "Stacjonarna" — never "Offline". */
+/** Display label for visit mode. Always "Online" or in-person — never "Offline". */
 export const getVisitModeLabel = (appointment) => {
-  return getVisitMode(appointment) === "online" ? "Online" : "Stacjonarna";
+  return getVisitMode(appointment) === "online" ? "Online" : "In-person";
 };
 
 /** Tailwind classes for visit mode badge. */
@@ -70,12 +70,11 @@ export const getVisitModeStyle = (appointment) => {
 
 /**
  * Display label for visit/consultation type in visit history and lists.
- * - re-visit → "Konsultacja lekarska"
- * - first-time → "Konsultacja pierwszorazowa"
- * - role "patient" + online → "Konsultacja online"
- * - role "patient" + offline → "Konsultacja lekarska"
- * - receptionist/admin, no type (existing patient) → "Konsultacja lekarska"
- * - receptionist, first-time (no patient id) → "Konsultacja pierwszorazowa" (via visitReason)
+ * - re-visit → medical consultation
+ * - first-time → first visit
+ * - role "patient" + online → online consultation
+ * - role "patient" + offline → medical consultation
+ * - receptionist/admin, no type (existing patient) → medical consultation
  */
 export const getVisitTypeDisplayLabel = (appointment) => {
   const raw = appointment?.visitReason ?? appointment?.consultationType ?? appointment?.metadata?.visitType ?? "";
@@ -83,10 +82,10 @@ export const getVisitTypeDisplayLabel = (appointment) => {
   const lower = s.toLowerCase();
   const role = (appointment?.role ?? appointment?.createdByRole ?? "").toString().trim().toLowerCase();
 
-  if (lower === "re-visit") return "Konsultacja lekarska";
-  if (lower === "first-time") return "Konsultacja pierwszorazowa";
-  if (role === "patient") return getVisitMode(appointment) === "online" ? "Konsultacja online" : "Konsultacja lekarska";
-  if (!s) return "Konsultacja lekarska";
+  if (lower === "re-visit") return "Medical consultation";
+  if (lower === "first-time") return "First visit";
+  if (role === "patient") return getVisitMode(appointment) === "online" ? "Online consultation" : "Medical consultation";
+  if (!s) return "Medical consultation";
   return s;
 };
 

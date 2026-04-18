@@ -50,7 +50,7 @@ const LoaderOverlay = () => (
   <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
     <div className="bg-white p-4 rounded-lg flex items-center gap-2">
       <Loader className="animate-spin" size={24} />
-      <span>Ładowanie...</span>
+      <span>Loading...</span>
     </div>
   </div>
 );
@@ -164,12 +164,12 @@ const BillingManagement = () => {
             setAdditionalChargeNote(response.data.additionalChargeNote || "");
             setTaxPercentage(response.data.taxPercentage ?? 0);
           } else {
-            toast.error("Nie udało się pobrać szczegółów faktury");
+            toast.error("Could not load invoice details");
           }
         } catch (error) {
           console.error("Error fetching bill details:", error);
           if (isMounted) {
-            toast.error("Nie udało się pobrać szczegółów faktury");
+            toast.error("Could not load invoice details");
           }
         } finally {
           if (isMounted) {
@@ -211,7 +211,7 @@ const BillingManagement = () => {
           console.error("EditBillModal getDoctorServices:", e);
           if (!cancelled) {
             setCatalogServices([]);
-            toast.error("Nie udało się załadować usług lekarza z wizyty");
+            toast.error("Could not load visit doctor services");
           }
         } finally {
           if (!cancelled) setCatalogLoading(false);
@@ -271,7 +271,7 @@ const BillingManagement = () => {
 
         const response = await billingHelper.updateBill(billId, updateData);
         if (response.success) {
-          toast.success("Faktura została zaktualizowana");
+          toast.success("Invoice updated");
           onUpdate();
           onClose();
           
@@ -280,11 +280,11 @@ const BillingManagement = () => {
             navigate(getReturnPathAfterAppointmentRedirect());
           }
         } else {
-          toast.error("Nie udało się zaktualizować faktury");
+          toast.error("Could not update invoice");
         }
       } catch (error) {
         console.error("Error updating bill:", error);
-        toast.error("Nie udało się zaktualizować faktury");
+        toast.error("Could not update invoice");
       } finally {
         setModalLoading(false);
       }
@@ -297,7 +297,7 @@ const BillingManagement = () => {
         {modalLoading && <LoaderOverlay />}
         <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
           <div className="flex justify-between items-center border-b p-4">
-            <h3 className="text-lg font-medium">Edytuj fakturę</h3>
+            <h3 className="text-lg font-medium">Edit invoice</h3>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
               <X size={20} />
             </button>
@@ -306,7 +306,7 @@ const BillingManagement = () => {
           <div className="flex-1 overflow-y-auto p-4">
             {/* Selected Services Section */}
             <div className="mb-6">
-              <h4 className="font-medium mb-2">Wybrane usługi</h4>
+              <h4 className="font-medium mb-2">Selected services</h4>
               <div className="space-y-2 mb-4">
                 {selectedServices.map((service) => (
                   <div
@@ -315,41 +315,41 @@ const BillingManagement = () => {
                   >
                     <div>
                       <span className="font-medium">{service.title}</span>
-                      <span className="ml-4">{service.price} zł</span>
+                      <span className="ml-4">{service.price} PLN</span>
                     </div>
                     <button
                       onClick={() => handleRemoveService(service.serviceId)}
                       className="text-red-600 hover:text-red-800"
-                      title="Usuń usługę"
+                      title="Remove service"
                     >
                       <X size={18} />
                     </button>
                   </div>
                 ))}
                 {selectedServices.length === 0 && (
-                  <p className="text-gray-500 text-center py-4">Brak wybranych usług</p>
+                  <p className="text-gray-500 text-center py-4">No services selected</p>
                 )}
               </div>
 
               {/* Available Services Section */}
               <h4 className="font-medium mb-2">
-                Dodaj usługi
+                Add services
                 {visitDoctorId && (
                   <span className="block text-xs font-normal text-gray-500 mt-1">
-                    Tylko usługi lekarza z wizyty (GET /user-services/…/doctor)
+                    Only this visit’s doctor services (GET /user-services/…/doctor)
                   </span>
                 )}
               </h4>
               <input
                 type="text"
-                placeholder="Szukaj usług..."
+                placeholder="Search services..."
                 className="w-full px-3 py-2 border rounded-lg mb-3"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               {pickerLoading ? (
                 <div className="py-8 flex justify-center text-gray-500 text-sm">
-                  Ładowanie katalogu usług…
+                  Loading service catalog…
                 </div>
               ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -366,7 +366,7 @@ const BillingManagement = () => {
                     >
                       <div className="flex justify-between">
                         <span>{service.title}</span>
-                        <span className="font-medium">{service.price} zł</span>
+                        <span className="font-medium">{service.price} PLN</span>
                       </div>
                     </div>
                   ))
@@ -377,11 +377,11 @@ const BillingManagement = () => {
 
             {/* Charges Section */}
             <div className="mb-6">
-              <h4 className="font-medium mb-4">Opłaty i zniżki</h4>
+              <h4 className="font-medium mb-4">Charges and discounts</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Opłata za konsultację (zł)
+                    Consultation fee (PLN)
                   </label>
                   <input
                     type="number"
@@ -395,7 +395,7 @@ const BillingManagement = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Zniżka (zł)
+                    Discount (PLN)
                   </label>
                   <input
                     type="number"
@@ -409,7 +409,7 @@ const BillingManagement = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Dodatkowe opłaty (zł)
+                    Additional charges (PLN)
                   </label>
                   <input
                     type="number"
@@ -423,20 +423,20 @@ const BillingManagement = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Notatka do dodatkowych opłat
+                    Note for additional charges
                   </label>
                   <input
                     type="text"
                     value={additionalChargeNote}
                     onChange={(e) => setAdditionalChargeNote(e.target.value)}
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                    placeholder="Np. dodatkowe materiały"
+                    placeholder="e.g. extra materials"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Podatek VAT (%)
+                    VAT (%)
                   </label>
                   <div className="relative">
                     <input
@@ -450,7 +450,7 @@ const BillingManagement = () => {
                     />
                     {taxPercentage === 0 && (
                       <span className="absolute right-3 top-2 text-sm text-gray-500 bg-white px-1">
-                        ZW
+                        Exempt
                       </span>
                     )}
                   </div>
@@ -460,47 +460,47 @@ const BillingManagement = () => {
 
             {/* Summary Section */}
             <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="font-medium mb-3">Podsumowanie</h4>
+              <h4 className="font-medium mb-3">Summary</h4>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span>Suma usług</span>
-                  <span>{selectedServices.reduce((sum, service) => sum + Number(service.price), 0)} zł</span>
+                  <span>Services total</span>
+                  <span>{selectedServices.reduce((sum, service) => sum + Number(service.price), 0)} PLN</span>
                 </div>
                 <div className="flex justify-between text-sm font-medium border-t pt-2">
-                  <span>Suma częściowa</span>
+                  <span>Subtotal</span>
                   <span>
-                    {(selectedServices.reduce((sum, service) => sum + Number(service.price), 0)).toFixed(2)} zł
+                    {(selectedServices.reduce((sum, service) => sum + Number(service.price), 0)).toFixed(2)} PLN
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Podatek ({taxPercentage}%{taxPercentage === 0 ? ' ZW' : ''})</span>
+                  <span>Tax ({taxPercentage}%{taxPercentage === 0 ? ' — Exempt' : ''})</span>
                   <span>
-                    {((selectedServices.reduce((sum, service) => sum + Number(service.price), 0) * taxPercentage) / 100).toFixed(2)} zł
+                    {((selectedServices.reduce((sum, service) => sum + Number(service.price), 0) * taxPercentage) / 100).toFixed(2)} PLN
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Opłata za konsultację</span>
-                  <span>{consultationCharges} zł</span>
+                  <span>Consultation fee</span>
+                  <span>{consultationCharges} PLN</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Dodatkowe opłaty</span>
-                  <span>{additionalCharges} zł</span>
+                  <span>Additional charges</span>
+                  <span>{additionalCharges} PLN</span>
                 </div>
                 {Number(discount) > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span>Zniżka</span>
-                    <span className="text-red-600">-{discount} zł</span>
+                    <span>Discount</span>
+                    <span className="text-red-600">-{discount} PLN</span>
                   </div>
                 )}
                 <div className="flex justify-between font-medium text-lg pt-2 border-t mt-2">
-                  <span>Suma całkowita</span>
+                  <span>Grand total</span>
                   <span>
                     {(
                       selectedServices.reduce((sum, service) => sum + Number(service.price), 0) + // Services subtotal
                       ((selectedServices.reduce((sum, service) => sum + Number(service.price), 0) * taxPercentage) / 100) + // Tax amount
                       Number(consultationCharges) + // Consultation fee
                       Number(additionalCharges) // Additional charges
-                    ).toFixed(2)} zł
+                    ).toFixed(2)} PLN
                   </span>
                 </div>
               </div>
@@ -508,11 +508,11 @@ const BillingManagement = () => {
 
             {/* Add a debug section to verify calculations */}
             {/* <div className="mt-4 text-xs text-gray-500">
-              <div>Subtotal: {selectedServices.reduce((sum, service) => sum + Number(service.price), 0)} zł</div>
-              <div>Tax ({taxPercentage}%): {((selectedServices.reduce((sum, service) => sum + Number(service.price), 0) * taxPercentage) / 100).toFixed(2)} zł</div>
-              <div>Consultation: {consultationCharges} zł</div>
-              <div>Additional: {additionalCharges} zł</div>
-              <div>Discount: {discount} zł</div>
+              <div>Subtotal: {selectedServices.reduce((sum, service) => sum + Number(service.price), 0)} PLN</div>
+              <div>Tax ({taxPercentage}%): {((selectedServices.reduce((sum, service) => sum + Number(service.price), 0) * taxPercentage) / 100).toFixed(2)} PLN</div>
+              <div>Consultation: {consultationCharges} PLN</div>
+              <div>Additional: {additionalCharges} PLN</div>
+              <div>Discount: {discount} PLN</div>
             </div> */}
           </div>
 
@@ -521,14 +521,14 @@ const BillingManagement = () => {
               onClick={onClose}
               className="px-4 py-2 border rounded-lg hover:bg-gray-50"
             >
-              Anuluj
+              Cancel
             </button>
             <button
               onClick={handleSave}
               className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center gap-2"
             >
               <Save size={18} />
-              Zapisz zmiany
+              Save changes
             </button>
           </div>
         </div>
@@ -584,7 +584,7 @@ const BillingManagement = () => {
         }
       } catch (error) {
         console.error("Error fetching appointment data:", error);
-        toast.error("Nie udało się pobrać danych wizyty");
+        toast.error("Could not load visit data");
       } finally {
         setIsLoading(false);
       }
@@ -610,7 +610,7 @@ const BillingManagement = () => {
         }
       } catch (error) {
         console.error("Error fetching patient services:", error);
-        toast.error("Nie udało się załadować usług pacjenta");
+        toast.error("Could not load patient services");
       }
     };
 
@@ -628,10 +628,10 @@ const BillingManagement = () => {
         await patientServicesHelper.addServicesToPatient(patient._id, servicesToAdd, { appointmentId });
         await fetchPatientServices(patient._id);
         setShowServiceModal(false);
-        toast.success("Usługi dodane pomyślnie");
+        toast.success("Services added successfully");
       } catch (error) {
         console.error("Error adding services:", error);
-        toast.error("Nie udało się dodać usług");
+        toast.error("Could not add services");
       } finally {
         setIsLoading(false);
       }
@@ -642,10 +642,10 @@ const BillingManagement = () => {
         setIsLoading(true);
         await patientServicesHelper.removeServiceFromPatient(patient._id, serviceId, { appointmentId });
         await fetchPatientServices(patient._id);
-        toast.success("Usługa usunięta pomyślnie");
+        toast.success("Service removed successfully");
       } catch (error) {
         console.error("Error removing service:", error);
-        toast.error("Nie udało się usunąć usługi");
+        toast.error("Could not remove service");
       } finally {
         setIsLoading(false);
       }
@@ -695,7 +695,7 @@ const BillingManagement = () => {
         // Call the API to generate the bill
         const response = await billingHelper.generateBill(appointmentId, billingPayload);
 
-        toast.success(`Rachunek wygenerowany pomyślnie na kwotę zł${totalAmount}`);
+        toast.success(`Bill generated successfully for ${totalAmount} PLN`);
         onClose();
         onBillGenerated();
         
@@ -706,7 +706,7 @@ const BillingManagement = () => {
         }
       } catch (error) {
         console.error("Failed to generate bill:", error);
-        toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
+        toast.error("Could not generate bill. Please try again.");
       } finally {
         setIsLoading(false);
       }
@@ -717,10 +717,10 @@ const BillingManagement = () => {
         <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
           <div className="p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Generuj rachunek dla {patient?.name?.first} {patient?.name?.last}
+              Generate bill for {patient?.name?.first} {patient?.name?.last}
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Utworzy to rachunek dla pacjenta na podstawie wybranych usług.
+              This creates a bill for the patient based on the selected services.
             </p>
 
             {isLoading ? (
@@ -731,13 +731,13 @@ const BillingManagement = () => {
               <>
                 <div className="border rounded-lg overflow-hidden mb-4">
                   <div className="bg-gray-50 px-4 py-2 border-b flex justify-between items-center">
-                    <h4 className="font-medium text-sm">Usługi</h4>
+                    <h4 className="font-medium text-sm">Services</h4>
                     <button
                       onClick={() => setShowServiceModal(true)}
                       className="text-sm text-teal-600 hover:text-teal-800 flex items-center"
                     >
                       <Plus size={16} className="mr-1" />
-                      Dodaj usługę
+                      Add service
                     </button>
                   </div>
 
@@ -753,12 +753,12 @@ const BillingManagement = () => {
                               {service.title}
                             </p>
                             <p className="text-xs text-gray-500">
-                              Ilość: {service.quantity} | Status: {service.status === 'active' ? 'Aktywna' : service.status === 'completed' ? 'Zakończona' : service.status}
+                              Qty: {service.quantity} | Status: {service.status === 'active' ? 'Active' : service.status === 'completed' ? 'Completed' : service.status}
                             </p>
                           </div>
                           <div className="flex items-center gap-3">
                             <p className="text-sm">
-                              zł{service.totalPrice}
+                              {service.totalPrice} PLN
                             </p>
                             <button
                               onClick={() => handleRemoveService(service.serviceId)}
@@ -771,13 +771,13 @@ const BillingManagement = () => {
                       ))}
 
                       <div className="px-4 py-2 flex justify-between items-center bg-gray-50">
-                        <p className="font-medium">Suma częściowa</p>
-                        <p className="font-medium">zł{subtotal.toFixed(2)}</p>
+                        <p className="font-medium">Subtotal</p>
+                        <p className="font-medium">{subtotal.toFixed(2)} PLN</p>
                       </div>
                     </div>
                   ) : (
                     <div className="p-4 text-center text-gray-500">
-                      Nie znaleziono usług dla tej wizyty.
+                      No services found for this visit.
                     </div>
                   )}
                 </div>
@@ -786,7 +786,7 @@ const BillingManagement = () => {
                 <div className="space-y-3 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Podatek (%)
+                      Tax (%)
                     </label>
                     <div className="flex items-center">
                       <input
@@ -800,14 +800,14 @@ const BillingManagement = () => {
                         className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                       />
                       <span className="ml-2 text-sm text-gray-500">
-                        ({taxPercentage === 0 ? "ZW" : `zł${taxAmount.toFixed(2)}`})
+                        ({taxPercentage === 0 ? "Exempt" : `${taxAmount.toFixed(2)} PLN`})
                       </span>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Dodatkowe opłaty (zł)
+                      Additional charges (PLN)
                     </label>
                     <div className="flex items-center space-x-2">
                       <input
@@ -821,7 +821,7 @@ const BillingManagement = () => {
                       />
                       <input
                         type="text"
-                        placeholder="Notatka (opcjonalna)"
+                        placeholder="Note (optional)"
                         value={additionalChargeNote}
                         onChange={(e) => setAdditionalChargeNote(e.target.value)}
                         className="block flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
@@ -831,7 +831,7 @@ const BillingManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Rabat (zł)
+                      Discount (PLN)
                     </label>
                     <input
                       type="number"
@@ -846,18 +846,18 @@ const BillingManagement = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Metoda płatności
+                      Payment method
                     </label>
                     <select
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                     >
-                      <option value="cash">Gotówka</option>
-                      <option value="card">Karta kredytowa/debetowa</option>
-                      <option value="insurance">Ubezpieczenie</option>
-                      <option value="bank_transfer">Przelew bankowy</option>
-                      <option value="mobile_payment">Płatność mobilna</option>
+                      <option value="cash">Cash</option>
+                      <option value="card">Credit/debit card</option>
+                      <option value="insurance">Insurance</option>
+                      <option value="bank_transfer">Bank transfer</option>
+                      <option value="mobile_payment">Mobile payment</option>
                     </select>
                   </div>
                 </div>
@@ -865,9 +865,9 @@ const BillingManagement = () => {
                 {/* Total */}
                 <div className="bg-gray-100 p-4 rounded-lg mb-4">
                   <div className="flex justify-between items-center">
-                    <p className="font-semibold text-lg">Łączna kwota</p>
+                    <p className="font-semibold text-lg">Total amount</p>
                     <p className="font-bold text-lg text-teal-600">
-                      zł{totalAmount}
+                      {totalAmount} PLN
                     </p>
                   </div>
                 </div>
@@ -879,7 +879,7 @@ const BillingManagement = () => {
                 className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
                 onClick={onClose}
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center"
@@ -887,7 +887,7 @@ const BillingManagement = () => {
                 disabled={isLoading || services.length === 0}
               >
                 <DollarSign size={16} className="mr-1" />
-                Generuj rachunek
+                Generate bill
               </button>
             </div>
           </div>
@@ -967,11 +967,11 @@ const BillingManagement = () => {
         setBills(response.data);
         setPagination(response.pagination);
       } else {
-        toast.error("Nie udało się pobrać faktur");
+        toast.error("Could not load invoices");
       }
     } catch (error) {
-      console.error("Błąd podczas pobierania faktur:", error);
-      toast.error("Nie udało się załadować danych rozliczeniowych");
+      console.error("Error fetching invoices:", error);
+      toast.error("Could not load billing data");
     } finally {
       setIsLoading(false);
     }
@@ -1106,23 +1106,23 @@ const BillingManagement = () => {
         <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
           <div className="p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Potwierdź zmianę statusu płatności
+              Confirm payment status change
             </h3>
             <p className="text-gray-600 mb-6">
-              Czy na pewno chcesz oznaczyć fakturę nr {bill?._id} jako opłaconą?
+              Mark invoice {bill?._id} as paid?
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={onClose}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Anuluj
+                Cancel
               </button>
               <button
                 onClick={onConfirm}
                 className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
               >
-                Potwierdź
+                Confirm
               </button>
             </div>
           </div>
@@ -1151,18 +1151,18 @@ const BillingManagement = () => {
       
       const response = await billingHelper.updatePaymentStatus(billId, {
         paymentStatus: newStatus,
-        notes: `Status zaktualizowany na ${newStatus}`
+        notes: `Status updated to ${newStatus}`
       });
       
       if (response.success) {
-        toast.success(`Status płatności zaktualizowany na ${newStatus}`);
+        toast.success(`Payment status updated to ${newStatus}`);
         fetchBills(); // Refresh bills list
       } else {
-        toast.error("Nie udało się zaktualizować statusu płatności");
+        toast.error("Could not update payment status");
       }
     } catch (error) {
-      console.error("Błąd podczas aktualizacji statusu płatności:", error);
-      toast.error("Nie udało się zaktualizować statusu płatności");
+      console.error("Error updating payment status:", error);
+      toast.error("Could not update payment status");
     } finally {
       setIsLoading(false);
     }
@@ -1193,7 +1193,7 @@ const BillingManagement = () => {
 
   const handleBulkDeleteInvoices = () => {
     if (selectedInvoiceIds.length === 0) {
-      toast.error('Proszę wybrać faktury do usunięcia');
+      toast.error('Please select invoices to delete');
       return;
     }
     setBulkDeleteDialog({
@@ -1232,13 +1232,13 @@ const BillingManagement = () => {
       if (response.success) {
         // Open the invoice in a new tab
         window.open(response.data.invoiceUrl, '_blank');
-        toast.success("Pomyślnie wygenerowano fakturę");
+        toast.success("Invoice generated successfully");
       } else {
-        toast.error("Nie udało się wygenerować faktury");
+        toast.error("Could not generate invoice");
       }
     } catch (error) {
-      console.error("Błąd podczas generowania faktury:", error);
-      toast.error("Nie udało się wygenerować faktury");
+      console.error("Error generating invoice:", error);
+      toast.error("Could not generate invoice");
     } finally {
       setIsLoading(false);
     }
@@ -1246,13 +1246,13 @@ const BillingManagement = () => {
   
   // Format currency
   const formatCurrency = (amount) => {
-    return `${parseFloat(amount).toFixed(2)} zł`;
+    return `${parseFloat(amount).toFixed(2)} PLN`;
   };
   
   // Format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL', {
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
@@ -1275,17 +1275,16 @@ const BillingManagement = () => {
     }
   };
 
-  // Polish translation for payment status
   const translatePaymentStatus = (status) => {
     switch(status.toLowerCase()) {
       case 'paid':
-        return 'Opłacone';
+        return 'Paid';
       case 'pending':
-        return 'Oczekujące';
+        return 'Pending';
       case 'overdue':
-        return 'Zaległe';
+        return 'Overdue';
       case 'partial':
-        return 'Częściowo opłacone';
+        return 'Partially paid';
       default:
         return status;
     }
@@ -1313,8 +1312,8 @@ const BillingManagement = () => {
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Zarządzanie Fakturami</h1>
-          <p className="text-gray-600">Przeglądaj i zarządzaj fakturami pacjentów</p>
+          <h1 className="text-2xl font-bold text-gray-900">Billing</h1>
+          <p className="text-gray-600">View and manage patient invoices</p>
         </div>
         
         {/* Stats Cards */}
@@ -1322,7 +1321,7 @@ const BillingManagement = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Suma faktur</p>
+                <p className="text-sm text-gray-500">Total billed</p>
                 <h3 className="text-2xl font-semibold mt-1">{formatCurrency(stats.totalBilled)}</h3>
               </div>
               <div className="p-3 bg-teal-100 rounded-full">
@@ -1334,7 +1333,7 @@ const BillingManagement = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Opłacone</p>
+                <p className="text-sm text-gray-500">Paid</p>
                 <h3 className="text-2xl font-semibold mt-1">{formatCurrency(stats.totalPaid)}</h3>
               </div>
               <div className="p-3 bg-green-100 rounded-full">
@@ -1346,7 +1345,7 @@ const BillingManagement = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Oczekujące</p>
+                <p className="text-sm text-gray-500">Pending</p>
                 <h3 className="text-2xl font-semibold mt-1">{formatCurrency(stats.totalPending)}</h3>
               </div>
               <div className="p-3 bg-yellow-100 rounded-full">
@@ -1358,7 +1357,7 @@ const BillingManagement = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Zaległe</p>
+                <p className="text-sm text-gray-500">Overdue</p>
                 <h3 className="text-2xl font-semibold mt-1">{formatCurrency(stats.totalOverdue)}</h3>
               </div>
               <div className="p-3 bg-red-100 rounded-full">
@@ -1374,7 +1373,7 @@ const BillingManagement = () => {
             <div className="relative w-full md:w-64">
               <input
                 type="text"
-                placeholder="Szukaj po nazwisku pacjenta lub nr faktury"
+                placeholder="Search by patient name or invoice number"
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1388,7 +1387,7 @@ const BillingManagement = () => {
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg"
               >
                 <Filter size={18} />
-                <span>Filtry</span>
+                <span>Filters</span>
                 <ChevronDown size={16} />
               </button>
               {/*               
@@ -1406,7 +1405,7 @@ const BillingManagement = () => {
           {showFilters && (
             <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Zakres dat</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date range</label>
                 <div className="flex gap-2">
                   <input
                     type="date"
@@ -1414,7 +1413,7 @@ const BillingManagement = () => {
                     onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md"
                   />
-                  <span className="self-center text-gray-500">do</span>
+                  <span className="self-center text-gray-500">to</span>
                   <input
                     type="date"
                     value={dateRange.endDate}
@@ -1425,17 +1424,17 @@ const BillingManagement = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status płatności</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment status</label>
                 <select
                   value={paymentStatusFilter}
                   onChange={(e) => setPaymentStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  <option value="">Wszystkie statusy</option>
-                  <option value="paid">Opłacone</option>
-                  <option value="pending">Oczekujące</option>
-                  <option value="overdue">Zaległe</option>
-                  <option value="partial">Częściowo opłacone</option>
+                  <option value="">All statuses</option>
+                  <option value="paid">Paid</option>
+                  <option value="pending">Pending</option>
+                  <option value="overdue">Overdue</option>
+                  <option value="partial">Partially paid</option>
                 </select>
               </div>
               
@@ -1448,7 +1447,7 @@ const BillingManagement = () => {
                   }}
                   className="px-4 py-2 border border-gray-300 text-gray-600 rounded-md hover:bg-gray-50"
                 >
-                  Wyczyść filtry
+                  Clear filters
                 </button>
               </div>
             </div>
@@ -1459,14 +1458,14 @@ const BillingManagement = () => {
         {user?.role === "admin" && selectedInvoiceIds.length > 0 && (
           <div className="mb-4 flex items-center justify-between bg-red-50 border border-red-200 rounded-lg p-4">
             <span className="text-red-800 font-medium">
-              Wybrano {selectedInvoiceIds.length} faktur(y)
+              {selectedInvoiceIds.length} invoice{selectedInvoiceIds.length !== 1 ? "s" : ""} selected
             </span>
             <button
               onClick={handleBulkDeleteInvoices}
               className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
               <Trash2 size={18} />
-              Trwale usuń wybrane ({selectedInvoiceIds.length})
+              Permanently delete selected ({selectedInvoiceIds.length})
             </button>
           </div>
         )}
@@ -1493,7 +1492,7 @@ const BillingManagement = () => {
                     onClick={() => handleSort("billNumber")}
                   >
                     <div className="flex items-center">
-                      Nr faktury
+                      Invoice number
                       {sortConfig.key === "billNumber" && (
                         <ArrowUpDown size={16} className="ml-1" />
                       )}
@@ -1505,7 +1504,7 @@ const BillingManagement = () => {
                     onClick={() => handleSort("billNumber")}
                   >
                     <div className="flex items-center">
-                    numer faktury
+                    Invoice number
                       {sortConfig.key === "billNumber" && (
                         <ArrowUpDown size={16} className="ml-1" />
                       )}
@@ -1517,7 +1516,7 @@ const BillingManagement = () => {
                     onClick={() => handleSort("patientName")}
                   >
                     <div className="flex items-center">
-                      Pacjent
+                      Patient
                       {sortConfig.key === "patientName" && (
                         <ArrowUpDown size={16} className="ml-1" />
                       )}
@@ -1529,7 +1528,7 @@ const BillingManagement = () => {
                     onClick={() => handleSort("billedAt")}
                   >
                     <div className="flex items-center">
-                      Data
+                      Date
                       {sortConfig.key === "billedAt" && (
                         <ArrowUpDown size={16} className="ml-1" />
                       )}
@@ -1541,7 +1540,7 @@ const BillingManagement = () => {
                     onClick={() => handleSort("totalAmount")}
                   >
                     <div className="flex items-center">
-                      Kwota
+                      Amount
                       {sortConfig.key === "totalAmount" && (
                         <ArrowUpDown size={16} className="ml-1" />
                       )}
@@ -1563,7 +1562,7 @@ const BillingManagement = () => {
                     scope="col"
                     className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Akcje
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -1618,7 +1617,7 @@ const BillingManagement = () => {
                           <button
                             onClick={() => handleViewBillDetails(bill._id)}
                             className="text-indigo-600 hover:text-indigo-900"
-                            title="Zobacz szczegóły"
+                            title="View details"
                           >
                             <Eye size={18} />
                           </button>
@@ -1627,7 +1626,7 @@ const BillingManagement = () => {
                               <button
                             onClick={() => handleGenerateInvoice(bill._id)}
                             className="text-gray-600 hover:text-gray-900"
-                            title="Generuj fakturę"
+                            title="Generate invoice"
                           >
                             <FileText size={18} />
                           </button>)
@@ -1637,14 +1636,14 @@ const BillingManagement = () => {
                               <button
                                 onClick={() => handleEditBill(bill._id)}
                                 className="text-blue-600 hover:text-blue-900"
-                                title="Edytuj fakturę"
+                                title="Edit invoice"
                               >
                                 <Edit size={18} />
                               </button>
                               <button
                                 onClick={() => handleUpdatePaymentStatus(bill._id, "paid")}
                                 className="text-green-600 hover:text-green-900"
-                                title="Oznacz jako opłacone"
+                                title="Mark as paid"
                               >
                                 <DollarSign size={18} />
                               </button>
@@ -1654,7 +1653,7 @@ const BillingManagement = () => {
                             <button
                               onClick={() => handlePermanentDeleteClick(bill._id)}
                               className="text-red-600 hover:text-red-900"
-                              title="Trwale usuń fakturę"
+                              title="Permanently delete invoice"
                             >
                               <Trash2 size={18} />
                             </button>
@@ -1668,9 +1667,9 @@ const BillingManagement = () => {
                     <td colSpan={user?.role === "admin" ? "7" : "6"} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center">
                         <FileText size={48} className="text-gray-300 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-1">Nie znaleziono faktur</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">No invoices found</h3>
                         <p className="text-gray-500 max-w-sm">
-                          Brak faktur spełniających kryteria wyszukiwania. Spróbuj dostosować filtry lub utwórz nową fakturę.
+                          No invoices match your search. Try adjusting filters or create a new bill from a visit.
                         </p>
                       </div>
                     </td>
@@ -1684,11 +1683,11 @@ const BillingManagement = () => {
           {pagination.totalPages > 1 && (
             <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
               <div className="text-sm text-gray-700">
-                Wyświetlanie <span className="font-medium">{(pagination.currentPage - 1) * pagination.limit + 1}</span> do{" "}
+                Showing <span className="font-medium">{(pagination.currentPage - 1) * pagination.limit + 1}</span>–
                 <span className="font-medium">
                   {Math.min(pagination.currentPage * pagination.limit, pagination.totalBills)}
                 </span>{" "}
-                z <span className="font-medium">{pagination.totalBills}</span> wyników
+                of <span className="font-medium">{pagination.totalBills}</span> results
               </div>
               <div className="flex gap-2">
                 <button
@@ -1739,7 +1738,7 @@ const BillingManagement = () => {
         onClose={() => setBulkDeleteDialog({ open: false, ids: [] })}
         type="invoice"
         selectedIds={bulkDeleteDialog.ids}
-        itemName="faktur"
+        itemName="invoices"
         onSuccess={handleBulkDeleteSuccess}
       />
 
@@ -1749,8 +1748,8 @@ const BillingManagement = () => {
         onClose={() => setDeleteDialog({ open: false, id: null })}
         type="invoice"
         id={deleteDialog.id}
-        title="Trwale usuń fakturę?"
-        message="Ta operacja jest nieodwracalna. Faktura oraz wszystkie powiązane rekordy zostaną trwale usunięte."
+        title="Permanently delete invoice?"
+        message="This cannot be undone. The invoice and related records will be permanently removed."
         onSuccess={handlePermanentDeleteSuccess}
       />
     </div>
