@@ -46,7 +46,7 @@ const RecentPosts = ({ isNews }) => {
       </h2>
 
       {loading ? (
-        <p className="text-gray-500">Ładowanie...</p>
+        <p className="text-gray-500">Loading...</p>
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : filteredNews.length > 0 ? (

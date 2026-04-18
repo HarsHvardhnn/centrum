@@ -49,7 +49,7 @@ const SectionTemplatePickerModal = ({
         </div>
         <div className="p-4 overflow-y-auto flex-1">
           {loading && (
-            <p className="text-sm text-gray-500 text-center py-4">Ładowanie…</p>
+            <p className="text-sm text-gray-500 text-center py-4">Loading…</p>
           )}
           {error && (
             <p className="text-sm text-red-600 py-2">{error}</p>

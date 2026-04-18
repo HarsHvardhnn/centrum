@@ -21,7 +21,7 @@ const Categories = ({ selectedCategory, onCategorySelect }) => {
   }, []);
 
   if (loading) {
-    return <div className="bg-white p-6 rounded-lg">Ładowanie kategorii...</div>;
+    return <div className="bg-white p-6 rounded-lg">Loading kategorii...</div>;
   }
 
   return (

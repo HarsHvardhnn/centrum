@@ -8,14 +8,14 @@ export const LoaderProvider = ({ children }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [loaderProps, setLoaderProps] = useState({
     type: "medical",
-    message: "Ładowanie...",
+    message: "Loading...",
     subMessage: "Proszę poczekać, gdyż ładujemy Twoje dane",
   });
 
   const showLoader = useCallback((props = {}) => {
     setLoaderProps({
       type: props.type || "medical",
-      message: props.message || "Ładowanie...",
+      message: props.message || "Loading...",
       subMessage: props.subMessage || "Proszę poczekać, gdyż ładujemy Twoje dane",
     });
     setIsVisible(true);

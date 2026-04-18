@@ -50,7 +50,7 @@ const AllServices = () => {
   const { services, loading, error } = useServices();
 
   if (loading) {
-    return <div className="text-center py-20">Ładowanie usług...</div>;
+    return <div className="text-center py-20">Loading usług...</div>;
   }
 
   if (error) {

@@ -344,7 +344,7 @@ const DoctorScheduleSettings = () => {
                     />
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">Ładowanie danych użytkownika...</p>
+                      <p className="text-gray-500">Loading danych użytkownika...</p>
                     </div>
                   )}
                 </div>
@@ -363,7 +363,7 @@ const DoctorScheduleSettings = () => {
                   </h2>
 
                   {loading ? (
-                    <p>Ładowanie zmian...</p>
+                    <p>Loading zmian...</p>
                   ) : weeklyShifts.length === 0 ? (
                     <p className="text-gray-500 italic">
                       Nie ustawiono jeszcze żadnych zmian tygodniowych.
@@ -493,7 +493,7 @@ const DoctorScheduleSettings = () => {
                   </h2>
 
                   {loading ? (
-                    <p>Ładowanie harmonogramu czasu wolnego...</p>
+                    <p>Loading harmonogramu czasu wolnego...</p>
                   ) : offSchedule.length === 0 ? (
                     <p className="text-gray-500 italic">
                       Nie zaplanowano jeszcze czasu wolnego.

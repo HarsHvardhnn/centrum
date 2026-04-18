@@ -678,7 +678,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                 {loadingServices ? (
                   <div className="p-4 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
-                    <p>Ładowanie usług...</p>
+                    <p>Loading usług...</p>
                   </div>
                 ) : filteredServices.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">

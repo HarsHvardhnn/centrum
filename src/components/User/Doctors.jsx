@@ -485,7 +485,7 @@ export default function Doctors({
     return (
       <section className="py-16 px-6 bg-white text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-main font-serif">
-          Ładowanie lekarzy...
+          Loading lekarzy...
         </h2>
       </section>
     );

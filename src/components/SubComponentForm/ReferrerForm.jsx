@@ -231,7 +231,7 @@ const ReferrerForm = () => {
                     ))
                   ) : (
                     <option value="" disabled>
-                      Ładowanie specjalizacji...
+                      Loading specjalizacji...
                     </option>
                   )}
                 </select>
@@ -268,7 +268,7 @@ const ReferrerForm = () => {
                 >
                   <option value="">
                     {loading 
-                      ? "Ładowanie lekarzy..." 
+                      ? "Loading lekarzy..." 
                       : !formData.consultingSpecialization 
                         ? "Najpierw wybierz specjalizację"
                         : "Wybierz lekarza"

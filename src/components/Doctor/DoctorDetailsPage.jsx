@@ -379,7 +379,7 @@ const AvailableTime = ({ data }) => {
       <Calendar onDateSelect={handleDateSelect} />
 
       {isLoading ? (
-        <div className="text-center py-4">Ładowanie dostępnych terminów...</div>
+        <div className="text-center py-4">Loading dostępnych terminów...</div>
       ) : availableSlots.length > 0 ? (
         <div className="grid grid-cols-3 gap-2 mt-2">
           {availableSlots.map((slot, i) => (
