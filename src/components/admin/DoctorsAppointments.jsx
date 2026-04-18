@@ -54,7 +54,7 @@ const DoctorSelectionWithSlots = ({
           : raw;
         setDoctors(filtered);
       } catch (error) {
-        console.error("Błąd podczas pobierania lekarzy:", error);
+        console.error("Error fetching doctors:", error);
       } finally {
         setIsLoading(false);
       }
@@ -77,7 +77,7 @@ const DoctorSelectionWithSlots = ({
         );
         setAvailableSlots(response.data.data || []);
       } catch (error) {
-        console.error("Błąd podczas pobierania dostępnych terminów:", error);
+        console.error("Error fetching available slots:", error);
       } finally {
         setIsLoading(false);
       }
@@ -163,7 +163,7 @@ const DoctorSelectionWithSlots = ({
     );
   };
 
-  const renderLoadingState = (customMessage = "Ładowanie...") => (
+  const renderLoadingState = (customMessage = "Loading...") => (
     <div className="flex items-center justify-center py-8">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
       <span className="ml-2 text-gray-600">{customMessage}</span>
@@ -207,7 +207,7 @@ const DoctorSelectionWithSlots = ({
             >
               1
             </div>
-            <span className="ml-2 text-sm font-medium">Specjalizacja</span>
+            <span className="ml-2 text-sm font-medium">Specialization</span>
           </div>
           <div className="h-px w-12 bg-gray-200"></div>
           <div className="flex items-center">
@@ -220,7 +220,7 @@ const DoctorSelectionWithSlots = ({
             >
               2
             </div>
-            <span className="ml-2 text-sm font-medium">Lekarz</span>
+            <span className="ml-2 text-sm font-medium">Doctor</span>
           </div>
           <div className="h-px w-12 bg-gray-200"></div>
           <div className="flex items-center">
@@ -233,7 +233,7 @@ const DoctorSelectionWithSlots = ({
             >
               3
             </div>
-            <span className="ml-2 text-sm font-medium">Termin</span>
+            <span className="ml-2 text-sm font-medium">Time</span>
           </div>
         </div>
       </div>
@@ -243,7 +243,7 @@ const DoctorSelectionWithSlots = ({
         {!hideDoctorSelection && (
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Wybierz Specjalizację
+              Select specialization
             </label>
             <div className="relative">
               <select
@@ -251,7 +251,7 @@ const DoctorSelectionWithSlots = ({
                 value={selectedSpecialization}
                 onChange={handleSpecializationChange}
               >
-                <option value="">Wybierz specjalizację</option>
+                <option value="">Select specialization</option>
                 {specializations &&
                   specializations.map((spec) => (
                     <option key={spec._id} value={spec._id}>
@@ -282,21 +282,21 @@ const DoctorSelectionWithSlots = ({
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Wybierz Lekarza
+                Select doctor
               </label>
 
               {/* Doctor count badge */}
               {!isLoading && doctors.length > 0 && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
-                  {doctors.length} dostępnych
+                  {doctors.length} available
                 </span>
               )}
             </div>
 
             {isLoading && doctors.length === 0 ? (
-              renderLoadingState("Ładowanie lekarzy...")
+              renderLoadingState("Loading doctors...")
             ) : doctors.length === 0 ? (
-              renderEmptyState("Brak dostępnych lekarzy w tej specjalizacji")
+              renderEmptyState("No doctors available for this specialization")
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {doctors.map((doctor) => (
@@ -317,7 +317,7 @@ const DoctorSelectionWithSlots = ({
                         {doctor.image ? (
                           <img
                             src={doctor.image}
-                            alt={doctor.name || "Lekarz"}
+                            alt={doctor.name || "Doctor"}
                             className="h-full w-full object-cover"
                             referrerPolicy="no-referrer"
                           />
@@ -365,13 +365,13 @@ const DoctorSelectionWithSlots = ({
           <div className="mb-3">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Dostępne Terminy
+                Available slots
               </label>
               <span className="text-xs text-gray-500">
                 {selectedDate && (
                   <>
-                    Na dzień{" "}
-                    {new Date(selectedDate).toLocaleDateString("pl-PL", {
+                    For{" "}
+                    {new Date(selectedDate).toLocaleDateString("en-US", {
                       weekday: "long",
                       year: "numeric",
                       month: "long",
@@ -386,25 +386,25 @@ const DoctorSelectionWithSlots = ({
               {isLoading || loadingNextAvailableDate ? (
                 renderLoadingState(
                   loadingNextAvailableDate 
-                    ? "Sprawdzanie dostępności lekarza..." 
-                    : "Ładowanie terminów..."
+                    ? "Checking doctor availability..." 
+                    : "Loading slots..."
                 )
               ) : availableSlots.length === 0 ? (
                 renderEmptyState(
-                  "Brak dostępnych terminów dla tego lekarza w wybranym dniu"
+                  "No available slots for this doctor on the selected day"
                 )
               ) : (
                 <div className="space-y-6">
                   <TimeSlotSection
-                    title="Rano"
+                    title="Morning"
                     slots={groupedSlots.morning}
                   />
                   <TimeSlotSection
-                    title="Popołudnie"
+                    title="Afternoon"
                     slots={groupedSlots.afternoon}
                   />
                   <TimeSlotSection
-                    title="Wieczór"
+                    title="Evening"
                     slots={groupedSlots.evening}
                   />
                 </div>

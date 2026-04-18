@@ -104,12 +104,12 @@ const PatientSearchField = ({ onPatientSelect }) => {
 
   return (
     <div ref={dropdownRef} className="relative">
-      <div className="mb-2 text-sm font-medium">Imię i nazwisko pacjenta</div>
+      <div className="mb-2 text-sm font-medium">Patient name</div>
       <div className="flex">
         <input
           id="search"
           type="text"
-          placeholder="Wprowadź imię i numer pacjenta"
+          placeholder="Search by name or patient number"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onFocus={handleInputFocus}

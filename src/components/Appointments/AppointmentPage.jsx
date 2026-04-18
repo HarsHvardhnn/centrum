@@ -44,15 +44,15 @@ function AppointmentPage() {
 
       if (response && response.success) {
         // Show success notification with override information if applicable
-        let successMessage = "Wizyta została zarezerwowana pomyślnie!";
+        let successMessage = "Appointment booked successfully!";
         
         if (data.metadata?.overrideInfo) {
           const override = data.metadata.overrideInfo;
           if (override.customDuration || override.isBackdated || override.overrideConflicts) {
-            successMessage += "\n\nUżyto opcji nadpisania:";
-            if (override.customDuration) successMessage += `\n• Czas trwania: ${override.customDuration}`;
-            if (override.isBackdated) successMessage += "\n• Data wsteczna";
-            if (override.overrideConflicts) successMessage += "\n• Nadpisano konflikty czasowe";
+            successMessage += "\n\nOverride options used:";
+            if (override.customDuration) successMessage += `\n• Duration: ${override.customDuration}`;
+            if (override.isBackdated) successMessage += "\n• Backdated";
+            if (override.overrideConflicts) successMessage += "\n• Time conflicts overridden";
           }
         }
         
@@ -62,14 +62,14 @@ function AppointmentPage() {
         navigate("/clinic");
       } else {
         // Handle error from API that returns success: false
-        toast.error(response?.message || "Nie udało się zarezerwować wizyty");
+        toast.error(response?.message || "Could not book the appointment");
       }
     } catch (error) {
       // Handle exception from the API call
       console.error("Error creating appointment:", error);
       
       // Enhanced error handling for override-specific errors
-      let errorMessage = "Wystąpił błąd podczas rezerwacji wizyty";
+      let errorMessage = "An error occurred while booking the appointment";
       
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -79,11 +79,11 @@ function AppointmentPage() {
       
       // Check for specific override validation errors
       if (error.response?.data?.conflict) {
-        errorMessage += "\n\nAby nadpisać konflikt czasowy, zaznacz opcję 'Nadpisz konflikty czasowe'";
+        errorMessage += "\n\nTo override a time conflict, enable \"Override time conflicts\".";
       }
       
       if (error.response?.data?.pastDate) {
-        errorMessage += "\n\nAby umówić wizytę w przeszłości, zaznacz opcję 'Pozwól na daty z przeszłości'";
+        errorMessage += "\n\nTo book an appointment in the past, enable \"Allow past dates\".";
       }
       
       toast.error(errorMessage);
@@ -100,9 +100,9 @@ function AppointmentPage() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-teal-700 mb-2">Dodaj Nową Wizytę</h1>
+        <h1 className="text-2xl font-bold text-teal-700 mb-2">New appointment</h1>
         <p className="text-gray-600">
-          Nowy proces: Najpierw wybierz specjalizację, lekarza i termin, a następnie wprowadź dane pacjenta.
+          Choose specialization, doctor, and time slot first, then enter patient details.
         </p>
       </div>
       

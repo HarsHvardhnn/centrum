@@ -108,7 +108,7 @@ function AppointmentFormModal({
       // SMS consent field - will be updated by useEffect based on date
       smsConsentAgreed: true, // Default to true, will be updated by useEffect
       persistSmsConsent: false, // Default to false - whether to save SMS consent for future appointments
-      visitReason: "", // Rodzaj wizyty: displayName from dictionary (e.g. "Konsultacja pierwszorazowa")
+      visitReason: "", // Visit reason: displayName from dictionary (e.g. first consultation)
       visitReasonCategoryId: "", // Category id for two-step dropdown
     };
   });
@@ -211,15 +211,15 @@ function AppointmentFormModal({
   const validateEmail = (email) => {
     if (!email) return ""; // Empty is allowed
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email) ? "" : "Nieprawidłowy format adresu email";
+    return emailRegex.test(email) ? "" : "Invalid email format";
   };
 
   // Phone validation function
   const validatePhone = (phone) => {
-    if (!phone) return "Numer telefonu jest wymagany"; // Make phone mandatory
+    if (!phone) return "Phone number is required"; // Make phone mandatory
     const currentCountry = phoneCountryCodes.find(c => c.code === appointmentData.newPatientPhoneCode) || phoneCountryCodes[0];
     const phoneRegex = new RegExp(`^\\d{${currentCountry.maxLength}}$`);
-    return phoneRegex.test(phone) ? "" : `Numer telefonu dla ${currentCountry.country} musi mieć dokładnie ${currentCountry.maxLength} cyfr`;
+    return phoneRegex.test(phone) ? "" : `Phone number for ${currentCountry.country} must be exactly ${currentCountry.maxLength} digits`;
   };
 
   // Custom duration validation function
@@ -227,7 +227,7 @@ function AppointmentFormModal({
     if (!duration) return ""; // Empty is allowed
     const numDuration = parseInt(duration);
     if (isNaN(numDuration) || numDuration < 1 || numDuration > 480) {
-      return "Czas trwania musi być między 1 a 480 minutami";
+      return "Duration must be between 1 and 480 minutes";
     }
     return "";
   };
@@ -238,12 +238,12 @@ function AppointmentFormModal({
     
     // Validate that either slot is selected OR custom time is provided, but not both
     if (appointmentData.selectedSlot && (appointmentData.customStartTime || appointmentData.customEndTime)) {
-      errors.timeSelection = "Możesz wybrać termin z listy LUB ustawić własny czas, ale nie oba jednocześnie";
+      errors.timeSelection = "Pick a slot from the list OR set a custom time — not both";
     }
     
     // Validate that at least one time option is selected
     if (!appointmentData.selectedSlot && !appointmentData.customStartTime) {
-      errors.timeSelection = "Proszę wybrać termin z listy dostępnych terminów LUB ustawić własny czas";
+      errors.timeSelection = "Choose a slot from the list OR set a custom time";
     }
     
     // Validate custom duration if provided
@@ -263,13 +263,13 @@ function AppointmentFormModal({
          const end = new Date(`2000-01-01T${appointmentData.customEndTime}`);
         
         if (end <= start) {
-          errors.customTime = "Czas zakończenia musi być po czasie rozpoczęcia";
+          errors.customTime = "End time must be after start time";
         }
         
         // Duration should be reasonable (not too long)
         const duration = Math.round((end - start) / 60000);
         if (duration > 480) { // 8 hours max
-          errors.customTime = "Czas trwania wizyty nie może przekraczać 8 godzin";
+          errors.customTime = "Appointment duration cannot exceed 8 hours";
         }
       }
     }
@@ -281,14 +281,14 @@ function AppointmentFormModal({
       const daysDifference = Math.floor((currentDate - selectedDate) / (1000 * 60 * 60 * 24));
       
       if (daysDifference > 365) {
-        errors.date = "Nie można umówić wizyty sprzed więcej niż 1 roku";
+        errors.date = "Cannot book an appointment more than a year in the past";
       }
     }
 
     // Validate phone number for new patients
     if (appointmentData.visitType === "first-time") {
       if (!appointmentData.newPatientPhone || appointmentData.newPatientPhone.trim() === "") {
-        errors.phone = "Numer telefonu jest wymagany dla nowych pacjentów";
+        errors.phone = "Phone number is required for new patients";
       } else {
         const phoneError = validatePhone(appointmentData.newPatientPhone);
         if (phoneError) {
@@ -451,7 +451,7 @@ function AppointmentFormModal({
           setAvailableSlots(response.data.data.availableSlots || []);
         } else {
           // If no dates available in next 30 days
-          toast.error("Ten lekarz nie ma dostępnych terminów w ciągu najbliższych 30 dni.");
+          toast.error("This doctor has no available slots in the next 30 days.");
           setAppointmentData(prev => ({
             ...prev,
             selectedDate: new Date().toISOString().split("T")[0],
@@ -461,7 +461,7 @@ function AppointmentFormModal({
       }
     } catch (error) {
       console.error("Error fetching next available date:", error);
-      toast.error("Wystąpił błąd podczas sprawdzania dostępności lekarza.");
+      toast.error("An error occurred while checking doctor availability.");
       setAvailableSlots([]);
     } finally {
       setLoadingNextAvailableDate(false);
@@ -647,19 +647,18 @@ function AppointmentFormModal({
     appointmentData.newPatientPhone.trim() !== "" &&
     validatePhone(appointmentData.newPatientPhone) === "";
 
-  // Function to map visit types to Polish
-  const getVisitTypeInPolish = (visitType) => {
+  const getVisitTypeLabel = (visitType) => {
     const visitTypeMap = {
-      "first-time": "Pierwsza wizyta",
-      "re-visit": "Kolejna wizyta",
-      "visit-only": "Wizyta bez pacjenta (recepcja)",
-      "consultation": "Konsultacja",
-      "emergency": "Nagły przypadek",
-      "followup": "Wizyta kontrolna",
-      "quick_check": "Szybka kontrola",
-      "extended_consultation": "Rozszerzona konsultacja"
+      "first-time": "First visit",
+      "re-visit": "Follow-up visit",
+      "visit-only": "Visit without patient (reception)",
+      "consultation": "Consultation",
+      "emergency": "Emergency",
+      "followup": "Follow-up",
+      "quick_check": "Quick check",
+      "extended_consultation": "Extended consultation"
     };
-    return visitTypeMap[visitType] || "Standardowa";
+    return visitTypeMap[visitType] || "Standard";
   };
 
   // Step titles by workflow (used for validation messages and step indicator)
@@ -667,39 +666,39 @@ function AppointmentFormModal({
     if (workflowOrder === "appointmentFirst") {
       if (skipDoctorSelection) {
         switch (step) {
-          case 1: return "Termin Wizyty";
-          case 2: return "Dane Pacjenta";
-          case 3: return "Usługi";
-          case 4: return "Szczegóły";
-          case 5: return "Opcje Recepcjonisty";
+          case 1: return "Appointment time";
+          case 2: return "Patient details";
+          case 3: return "Services";
+          case 4: return "Details";
+          case 5: return "Reception options";
           default: return String(step);
         }
       }
       switch (step) {
-        case 1: return "Lekarz i Termin";
-        case 2: return "Dane Pacjenta";
-        case 3: return "Usługi";
-        case 4: return "Szczegóły";
-        case 5: return "Opcje Recepcjonisty";
+        case 1: return "Doctor & time";
+        case 2: return "Patient details";
+        case 3: return "Services";
+        case 4: return "Details";
+        case 5: return "Reception options";
         default: return String(step);
       }
     }
     if (skipDoctorSelection) {
       switch (step) {
-        case 1: return "Dane Pacjenta";
-        case 2: return "Termin Wizyty";
-        case 3: return "Usługi";
-        case 4: return "Szczegóły";
-        case 5: return "Opcje Recepcjonisty";
+        case 1: return "Patient details";
+        case 2: return "Appointment time";
+        case 3: return "Services";
+        case 4: return "Details";
+        case 5: return "Reception options";
         default: return String(step);
       }
     }
     switch (step) {
-      case 1: return "Dane Pacjenta";
-      case 2: return "Lekarz i Termin";
-      case 3: return "Usługi";
-      case 4: return "Szczegóły";
-      case 5: return "Opcje Recepcjonisty";
+      case 1: return "Patient details";
+      case 2: return "Doctor & time";
+      case 3: return "Services";
+      case 4: return "Details";
+      case 5: return "Reception options";
       default: return String(step);
     }
   };
@@ -810,7 +809,7 @@ function AppointmentFormModal({
                   ? "bg-teal-200 text-teal-700 hover:bg-teal-300"
                   : "bg-gray-200 text-gray-500 hover:bg-gray-300"
               }`}
-              title={`Krok ${step}: ${getStepTitle(step)}`}
+              title={`Step ${step}: ${getStepTitle(step)}`}
             >
               {step}
             </div>
@@ -902,12 +901,12 @@ function AppointmentFormModal({
   const renderDateSlotSelectionStep = () => {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-medium mb-4">Wybór Terminu Wizyty</h3>
+        <h3 className="text-lg font-medium mb-4">Appointment time</h3>
         
         {/* Show selected doctor info */}
         {appointmentData.selectedDoctor && (
           <div className="bg-teal-50 p-4 rounded-lg border border-teal-200 mb-4">
-            <h4 className="text-md font-medium text-teal-800 mb-2">Wybrany Lekarz</h4>
+            <h4 className="text-md font-medium text-teal-800 mb-2">Selected doctor</h4>
             <div className="flex items-center space-x-3">
               {appointmentData.selectedDoctor.profilePicture && (
                 <img
@@ -927,17 +926,17 @@ function AppointmentFormModal({
         {/* Date and Slot Selection - Doctor is pre-selected */}
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Wybierz datę i termin
+            Select date and time
           </label>
           {useCustomDateOnly ? (
             <p className="text-sm text-teal-700 mb-2">
-              Tryb własnej daty i godziny – ustaw datę i czas poniżej.{" "}
+              Custom date and time — set the date and time below.{" "}
               <button
                 type="button"
                 onClick={() => setUseCustomDateOnly(false)}
                 className="text-teal-600 hover:text-teal-800 underline font-medium"
               >
-                Wybierz z listy terminów
+                Pick from slot list
               </button>
             </p>
           ) : (
@@ -947,9 +946,9 @@ function AppointmentFormModal({
                 onClick={switchToCustomDateOnly}
                 className="text-teal-600 hover:text-teal-800 underline font-medium"
               >
-                Ustaw własną datę i godzinę
+                Set custom date and time
               </button>
-              {" "}– bez przeglądania listy terminów
+              {" "}– without browsing the slot list
             </p>
           )}
           <DoctorSelectionWithSlots
@@ -971,7 +970,7 @@ function AppointmentFormModal({
         {appointmentData.selectedDoctor && (
           <div className="bg-teal-50 p-4 rounded-lg">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Wybierz datę wizyty
+              Appointment date
             </label>
             <div className="flex gap-2 items-center">
               <input
@@ -984,7 +983,7 @@ function AppointmentFormModal({
               />
               {appointmentData.isBackdated && (
                 <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
-                  Data w przeszłości dozwolona
+                  Past dates allowed
                 </span>
               )}
             </div>
@@ -994,7 +993,7 @@ function AppointmentFormModal({
         {/* Custom Time Slot Input - Receptionist Override */}
         {appointmentData.selectedDoctor && appointmentData.selectedDate && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 className="text-md font-medium text-blue-800 mb-3">Ustaw Termin Wizyty</h4>
+            <h4 className="text-md font-medium text-blue-800 mb-3">Set appointment time</h4>
             
             {/* Show current selection status */}
             {appointmentData.selectedSlot && (
@@ -1002,10 +1001,10 @@ function AppointmentFormModal({
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-sm text-green-800">
-                      <strong>✓ Wybrano termin:</strong> {appointmentData.selectedSlot.startTime} - {appointmentData.selectedSlot.endTime}
+                      <strong>✓ Slot selected:</strong> {appointmentData.selectedSlot.startTime} - {appointmentData.selectedSlot.endTime}
                     </p>
                     <p className="text-xs text-green-700 mt-1">
-                      Możesz zmienić na własny termin poniżej, ale wtedy wybrany termin zostanie odznaczony.
+                      You can switch to a custom time below; the selected slot will be cleared.
                     </p>
                   </div>
                   <button
@@ -1013,20 +1012,20 @@ function AppointmentFormModal({
                     onClick={clearSlotSelection}
                     className="text-xs text-red-600 hover:text-red-800 underline"
                   >
-                    Wyczyść wybór
+                    Clear selection
                   </button>
                 </div>
               </div>
             )}
             
             <p className="text-xs text-blue-600 mb-3">
-              <strong>Uwaga:</strong> Możesz wybrać dostępny termin z listy powyżej LUB ustawić własny termin poniżej. 
-              Nie możesz używać obu opcji jednocześnie.
+              <strong>Note:</strong> You can pick an available slot from the list above OR set a custom time below.
+              You cannot use both at once.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Czas rozpoczęcia
+                  Start time
                 </label>
                 <input
                   type="time"
@@ -1040,7 +1039,7 @@ function AppointmentFormModal({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Czas zakończenia (opcjonalny)
+                  End time (optional)
                 </label>
                 <input
                   type="time"
@@ -1054,8 +1053,8 @@ function AppointmentFormModal({
               </div>
             </div>
             <p className="text-xs text-blue-600 mt-2">
-              Ustaw dowolny termin - możesz nadpisać istniejące wizyty lub umówić w niestandardowym czasie. 
-              <strong>Uwaga:</strong> Użyj wbudowanego selektora czasu (AM/PM jest automatycznie obsługiwane).
+              Set any time — you may override existing appointments or book at a non-standard time.
+              <strong>Note:</strong> Use the built-in time picker (12h/24h follows your browser).
             </p>
             {appointmentData.customStartTime && appointmentData.customEndTime && validateForm().customTime && (
               <p className="text-red-500 text-xs mt-2">
@@ -1076,22 +1075,22 @@ function AppointmentFormModal({
   const renderDoctorSelectionStep = () => {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-medium mb-4">Wybór Lekarza i Terminu</h3>
+        <h3 className="text-lg font-medium mb-4">Doctor and time</h3>
         
         {/* Doctor Selection */}
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Wybierz lekarza
+            Select doctor
           </label>
           {useCustomDateOnly ? (
             <p className="text-sm text-teal-700 mb-2">
-              Tryb własnej daty i godziny – ustaw datę i czas poniżej.{" "}
+              Custom date and time — set the date and time below.{" "}
               <button
                 type="button"
                 onClick={() => setUseCustomDateOnly(false)}
                 className="text-teal-600 hover:text-teal-800 underline font-medium"
               >
-                Wybierz z listy terminów
+                Pick from slot list
               </button>
             </p>
           ) : (
@@ -1101,9 +1100,9 @@ function AppointmentFormModal({
                 onClick={switchToCustomDateOnly}
                 className="text-teal-600 hover:text-teal-800 underline font-medium"
               >
-                Ustaw własną datę i godzinę
+                Set custom date and time
               </button>
-              {" "}– bez przeglądania listy terminów
+              {" "}– without browsing the slot list
             </p>
           )}
           <DoctorSelectionWithSlots
@@ -1124,7 +1123,7 @@ function AppointmentFormModal({
         {appointmentData.selectedDoctor && (
           <div className="bg-teal-50 p-4 rounded-lg">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Wybierz datę wizyty
+              Appointment date
             </label>
             <div className="flex gap-2 items-center">
               <input
@@ -1137,7 +1136,7 @@ function AppointmentFormModal({
               />
               {appointmentData.isBackdated && (
                 <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
-                  Data w przeszłości dozwolona
+                  Past dates allowed
                 </span>
               )}
             </div>
@@ -1147,7 +1146,7 @@ function AppointmentFormModal({
         {/* Custom Time Slot Input - Receptionist Override */}
         {appointmentData.selectedDoctor && appointmentData.selectedDate && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 className="text-md font-medium text-blue-800 mb-3">Ustaw Termin Wizyty</h4>
+            <h4 className="text-md font-medium text-blue-800 mb-3">Set appointment time</h4>
             
             {/* Show current selection status */}
             {appointmentData.selectedSlot && (
@@ -1155,10 +1154,10 @@ function AppointmentFormModal({
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-sm text-green-800">
-                      <strong>✓ Wybrano termin:</strong> {appointmentData.selectedSlot.startTime} - {appointmentData.selectedSlot.endTime}
+                      <strong>✓ Slot selected:</strong> {appointmentData.selectedSlot.startTime} - {appointmentData.selectedSlot.endTime}
                     </p>
                     <p className="text-xs text-green-700 mt-1">
-                      Możesz zmienić na własny termin poniżej, ale wtedy wybrany termin zostanie odznaczony.
+                      You can switch to a custom time below; the selected slot will be cleared.
                     </p>
                   </div>
                   <button
@@ -1166,20 +1165,20 @@ function AppointmentFormModal({
                     onClick={clearSlotSelection}
                     className="text-xs text-red-600 hover:text-red-800 underline"
                   >
-                    Wyczyść wybór
+                    Clear selection
                   </button>
                 </div>
               </div>
             )}
             
             <p className="text-xs text-blue-600 mb-3">
-              <strong>Uwaga:</strong> Możesz wybrać dostępny termin z listy powyżej LUB ustawić własny termin poniżej. 
-              Nie możesz używać obu opcji jednocześnie.
+              <strong>Note:</strong> You can pick an available slot from the list above OR set a custom time below.
+              You cannot use both at once.
             </p>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                <div>
                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                   Czas rozpoczęcia
+                   Start time
                  </label>
                  <input
                    type="time"
@@ -1193,7 +1192,7 @@ function AppointmentFormModal({
                </div>
                <div>
                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                   Czas zakończenia (opcjonalny)
+                   End time (optional)
                  </label>
                  <input
                    type="time"
@@ -1207,8 +1206,8 @@ function AppointmentFormModal({
                </div>
              </div>
                          <p className="text-xs text-blue-600 mt-2">
-               Ustaw dowolny termin - możesz nadpisać istniejące wizyty lub umówić w niestandardowym czasie. 
-               <strong>Uwaga:</strong> Użyj wbudowanego selektora czasu (AM/PM jest automatycznie obsługiwane).
+              Set any time — you may override existing appointments or book at a non-standard time.
+              <strong>Note:</strong> Use the built-in time picker (12h/24h follows your browser).
              </p>
             {appointmentData.customStartTime && appointmentData.customEndTime && validateForm().customTime && (
               <p className="text-red-500 text-xs mt-2">
@@ -1229,12 +1228,12 @@ function AppointmentFormModal({
   const renderPatientInfoStep = () => {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-medium mb-4">Informacje o Pacjencie</h3>
+        <h3 className="text-lg font-medium mb-4">Patient information</h3>
         
         {/* Show selected doctor info when skipDoctorSelection is true */}
         {skipDoctorSelection && appointmentData.selectedDoctor && (
           <div className="bg-teal-50 p-4 rounded-lg border border-teal-200 mb-4">
-            <h4 className="text-md font-medium text-teal-800 mb-2">Wybrany Lekarz</h4>
+            <h4 className="text-md font-medium text-teal-800 mb-2">Selected doctor</h4>
             <div className="flex items-center space-x-3">
               {appointmentData.selectedDoctor.profilePicture && (
                 <img
@@ -1254,7 +1253,7 @@ function AppointmentFormModal({
         {/* Visit Type Selection */}
         <div className="bg-teal-50 p-4 rounded-lg">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Typ wizyty
+            Visit type
           </label>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4">
             <label className="inline-flex items-center">
@@ -1266,7 +1265,7 @@ function AppointmentFormModal({
                 onChange={handleInputChange}
                 className="h-4 w-4 text-teal-600"
               />
-              <span className="ml-2">Pierwsza wizyta</span>
+              <span className="ml-2">First visit</span>
             </label>
             <label className="inline-flex items-center">
               <input
@@ -1277,7 +1276,7 @@ function AppointmentFormModal({
                 onChange={handleInputChange}
                 className="h-4 w-4 text-teal-600"
               />
-              <span className="ml-2">Kolejna wizyta</span>
+              <span className="ml-2">Follow-up visit</span>
             </label>
             <label className="inline-flex items-center">
               <input
@@ -1288,36 +1287,36 @@ function AppointmentFormModal({
                 onChange={handleInputChange}
                 className="h-4 w-4 text-teal-600"
               />
-              <span className="ml-2">Wizyta bez pacjenta (recepcja)</span>
+              <span className="ml-2">Visit without patient (reception)</span>
             </label>
           </div>
 
           {appointmentData.visitType === "visit-only" && (
             <div className="bg-white p-4 rounded-lg border border-gray-200 mt-2">
               <p className="text-sm text-gray-600 mb-3">
-                Wizyta bez pacjenta. Podaj imię (wymagane), nazwisko opcjonalnie. PESEL oraz pełna rejestracja pacjenta zostaną uzupełnione później poprzez „Zakończ rejestrację” z listy wizyt. Chcesz podać numer telefonu lub PESEL już teraz? Wybierz typ wizyty „Pierwsza wizyta".
+                Visit without a patient record. First name is required; last name optional. National ID (PESEL) and full registration can be completed later via &quot;Complete registration&quot; from the visit list. Need phone or PESEL now? Choose visit type &quot;First visit&quot;.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Imię*</label>
+                  <label className="block text-sm text-gray-600 mb-1">First name*</label>
                   <input
                     type="text"
                     name="newPatientFirstName"
                     value={appointmentData.newPatientFirstName}
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded-lg"
-                    placeholder="Imię"
+                    placeholder="First name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Nazwisko (opcjonalnie)</label>
+                  <label className="block text-sm text-gray-600 mb-1">Last name (optional)</label>
                   <input
                     type="text"
                     name="newPatientLastName"
                     value={appointmentData.newPatientLastName}
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded-lg"
-                    placeholder="Nazwisko"
+                    placeholder="Last name"
                   />
                 </div>
               </div>
@@ -1329,7 +1328,7 @@ function AppointmentFormModal({
           <div className="space-y-3">
             {selectedPatient && (
               <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg">
-                <p className="text-xs font-medium text-teal-700 uppercase tracking-wide mb-1">Wybrany pacjent</p>
+                <p className="text-xs font-medium text-teal-700 uppercase tracking-wide mb-1">Selected patient</p>
                 <p className="text-sm font-medium text-teal-900">
                   {typeof selectedPatient.name === "string"
                     ? selectedPatient.name
@@ -1338,7 +1337,7 @@ function AppointmentFormModal({
                     <span className="text-teal-600 font-normal ml-1">(PESEL: {selectedPatient.govtId})</span>
                   )}
                 </p>
-                <p className="text-xs text-teal-600 mt-0.5">Możesz wyszukać i wybrać innego pacjenta poniżej.</p>
+                <p className="text-xs text-teal-600 mt-0.5">You can search and select another patient below.</p>
               </div>
             )}
             <PatientSearchField onPatientSelect={handlePatientSelect} />
@@ -1349,7 +1348,7 @@ function AppointmentFormModal({
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Imię*</label>
+                <label className="block text-sm text-gray-600 mb-1">First name*</label>
                 <input
                   type="text"
                   name="newPatientFirstName"
@@ -1359,7 +1358,7 @@ function AppointmentFormModal({
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Nazwisko (opcjonalnie)</label>
+                <label className="block text-sm text-gray-600 mb-1">Last name (optional)</label>
                 <input
                   type="text"
                   name="newPatientLastName"
@@ -1376,7 +1375,7 @@ function AppointmentFormModal({
                   value={appointmentData.newPatientEmail}
                   onChange={handleInputChange}
                   className={`w-full p-2 border rounded-lg ${validationErrors.email ? 'border-red-500' : ''}`}
-                  placeholder="Opcjonalny"
+                  placeholder="Optional"
                 />
                 {validationErrors.email && (
                   <p className="text-red-500 text-xs mt-1">{validationErrors.email}</p>
@@ -1433,7 +1432,7 @@ function AppointmentFormModal({
                     value={appointmentData.newPatientPhone}
                     onChange={handleInputChange}
                     className={`flex-1 h-[42px] px-3 border border-gray-300 rounded-r-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${validationErrors.phone ? 'border-red-500' : ''}`}
-                    placeholder={`Wprowadź ${phoneCountryCodes.find(c => c.code === appointmentData.newPatientPhoneCode)?.maxLength || 9} cyfr`}
+                    placeholder={`Enter ${phoneCountryCodes.find(c => c.code === appointmentData.newPatientPhoneCode)?.maxLength || 9} digits`}
                     maxLength={phoneCountryCodes.find(c => c.code === appointmentData.newPatientPhoneCode)?.maxLength || 9}
                   />
                 </div>
@@ -1449,21 +1448,21 @@ function AppointmentFormModal({
                   value={appointmentData.newPatientDateOfBirth}
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded-lg"
-                  placeholder="Opcjonalna"
+                  placeholder="Optional"
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Płeć*</label>
+                <label className="block text-sm text-gray-600 mb-1">Sex*</label>
                 <select
                   name="newPatientSex"
                   value={appointmentData.newPatientSex}
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded-lg"
                 >
-                  <option value="">Wybierz płeć</option>
-                  <option value="Male">Mężczyzna</option>
-                  <option value="Female">Kobieta</option>
-                  <option value="Others">Inna</option>
+                  <option value="">Select sex</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Others">Other</option>
                 </select>
               </div>
             </div>
@@ -1471,7 +1470,7 @@ function AppointmentFormModal({
             {/* PESEL (main, centered) then checkbox underneath */}
             <div className="flex flex-col items-center w-full mt-4">
               <div className="w-full max-w-sm">
-                <label className="block text-sm text-gray-600 mb-1 text-center md:text-left">PESEL (11 cyfr)</label>
+                <label className="block text-sm text-gray-600 mb-1 text-center md:text-left">PESEL (11 digits)</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -1481,15 +1480,15 @@ function AppointmentFormModal({
                   onChange={handleInputChange}
                   disabled={!!appointmentData.isInternational}
                   className="w-full p-2 border rounded-lg disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  placeholder="11 cyfr"
+                  placeholder="11 digits"
                 />
-                {firstTimePeselCheckLoading && <p className="text-xs text-gray-500 mt-1">Sprawdzam PESEL...</p>}
+                {firstTimePeselCheckLoading && <p className="text-xs text-gray-500 mt-1">Checking PESEL...</p>}
                 {appointmentData.newPatientPesel.length === 11 && (firstTimePeselWarningFromApi ?? getPeselChecksumWarning(appointmentData.newPatientPesel)) && (
                   <p className="mt-1 text-sm text-amber-600">{firstTimePeselWarningFromApi ?? getPeselChecksumWarning(appointmentData.newPatientPesel)}</p>
                 )}
                 {firstTimePeselExists && firstTimeExistingPatientData && (
                   <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-800">Pacjent o podanym numerze PESEL już istnieje w systemie.</p>
+                    <p className="text-sm text-blue-800">A patient with this PESEL already exists.</p>
                     <button
                       type="button"
                       onClick={() => {
@@ -1500,14 +1499,14 @@ function AppointmentFormModal({
                           patientId: p.patientId,
                           firstName: name.first ?? "",
                           lastName: name.last ?? "",
-                          name: [name.first, name.last].filter(Boolean).join(" ") || "Nieznany pacjent",
+                          name: [name.first, name.last].filter(Boolean).join(" ") || "Unknown patient",
                           ...p
                         });
                         setAppointmentData(prev => ({ ...prev, visitType: "re-visit" }));
                       }}
                       className="mt-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
                     >
-                      Załaduj dane istniejącego pacjenta
+                      Load existing patient data
                     </button>
                   </div>
                 )}
@@ -1520,7 +1519,7 @@ function AppointmentFormModal({
                   onChange={handleInputChange}
                   className="h-4 w-4 text-teal-600"
                 />
-                <span className="text-sm text-gray-700">Nie posiadam numeru PESEL (pacjent międzynarodowy)</span>
+                <span className="text-sm text-gray-700">I do not have a PESEL number (international patient)</span>
               </label>
             </div>
           </div>
@@ -1532,7 +1531,7 @@ function AppointmentFormModal({
   const renderServicesStep = () => {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-medium mb-4">Wybór Usług</h3>
+        <h3 className="text-lg font-medium mb-4">Services</h3>
         
         {/* Services Search */}
         <div className="relative">
@@ -1541,7 +1540,7 @@ function AppointmentFormModal({
           </div>
           <input
             type="text"
-            placeholder="Szukaj usług..."
+            placeholder="Search services..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -1554,11 +1553,11 @@ function AppointmentFormModal({
             {loadingServices ? (
               <div className="p-4 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
-                <p>Ładowanie usług...</p>
+                <p>Loading services...</p>
               </div>
             ) : filteredServices.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
-                Nie znaleziono usług
+                No services found
               </div>
             ) : (
               filteredServices.map((service) => {
@@ -1589,7 +1588,7 @@ function AppointmentFormModal({
                           />
                           <span className="ml-2 font-medium">{service.title || service.name}</span>
                         </div>
-                        <div className="ml-6 mt-1 text-sm text-gray-600">{service.price} zł</div>
+                        <div className="ml-6 mt-1 text-sm text-gray-600">{service.price} PLN</div>
                       </div>
                       
                       {isSelected && (
@@ -1622,7 +1621,7 @@ function AppointmentFormModal({
           <div className="bg-teal-50 rounded-lg p-4 border border-teal-100">
             <h4 className="font-medium text-teal-800 mb-2 flex items-center">
               <CheckCircle size={16} className="mr-2" />
-              Wybrane usługi
+              Selected services
             </h4>
             <div className="space-y-2">
               {appointmentData.selectedServices.map((service) => (
@@ -1634,13 +1633,13 @@ function AppointmentFormModal({
                     )}
                   </div>
                   <div className="font-medium">
-                    {((parseFloat(service.price) || 0) * (service.quantity || 1)).toFixed(2)} zł
+                    {((parseFloat(service.price) || 0) * (service.quantity || 1)).toFixed(2)} PLN
                   </div>
                 </div>
               ))}
               <div className="border-t border-teal-200 mt-2 pt-2 flex justify-between font-medium">
-                <div>Łącznie:</div>
-                <div>{calculateTotalPrice().toFixed(2)} zł</div>
+                <div>Total:</div>
+                <div>{calculateTotalPrice().toFixed(2)} PLN</div>
               </div>
             </div>
           </div>
@@ -1648,8 +1647,8 @@ function AppointmentFormModal({
 
         {/* Note about services */}
         <div className="text-xs text-gray-500 italic px-1">
-          Wybrane usługi zostaną dodane bezpośrednio do wizyty. Możesz wybrać dowolną liczbę usług dostępnych w klinice, 
-          a następnie określić ilość dla każdej z nich. Całkowita cena zostanie automatycznie obliczona.
+          Selected services are attached to the appointment. Pick any number of clinic services
+          and set a quantity for each. The total is calculated automatically.
         </div>
       </div>
     );
@@ -1658,13 +1657,13 @@ function AppointmentFormModal({
   const renderAdditionalDetailsStep = () => {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-medium mb-4">Dodatkowe Informacje</h3>
+        <h3 className="text-lg font-medium mb-4">Additional information</h3>
 
-        {/* Rodzaj wizyty (type of consultation) – Windows-style category → type cascade */}
+        {/* Visit reason (type of consultation) – Windows-style category → type cascade */}
         {visitReasonsData.categories.length > 0 && (
           <div className="bg-teal-50/50 p-4 rounded-lg border border-teal-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaj wizyty (typ konsultacji)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Visit reason (consultation type)</label>
               <VisitReasonCascadeDropdown
                 categories={visitReasonsData.categories}
                 value={appointmentData.visitReason}
@@ -1678,14 +1677,14 @@ function AppointmentFormModal({
                     visitReasonCategoryId: cat?.id ?? prev.visitReasonCategoryId,
                   }));
                 }}
-                placeholder="Wybierz rodzaj wizyty..."
+                placeholder="Select visit reason..."
               />
             </div>
             <div className="md:w-56 flex-shrink-0">
               {(!appointmentData.selectedSlot && (appointmentData.customStartTime || appointmentData.customEndTime)) ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Czas trwania (minuty)
+                    Duration (minutes)
                   </label>
                   <input
                     type="number"
@@ -1699,8 +1698,8 @@ function AppointmentFormModal({
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     {appointmentData.customStartTime && appointmentData.customEndTime
-                      ? "Możesz zmienić automatycznie obliczony czas trwania"
-                      : "1–480 minut (1–8 h). Ustaw czas rozpoczęcia i zakończenia w kroku terminu, aby obliczyć automatycznie."}
+                      ? "You can adjust the automatically calculated duration"
+                      : "1–480 minutes (1–8 h). Set start and end time in the time step to calculate automatically."}
                   </p>
                   {appointmentData.customDuration && validateCustomDuration(appointmentData.customDuration) && (
                     <p className="text-red-500 text-xs mt-1">
@@ -1711,7 +1710,7 @@ function AppointmentFormModal({
               ) : (
                 <>
                   <p className="text-xs font-medium text-gray-500 mb-1 text-right md:text-left">
-                    Czas trwania wizyty
+                    Appointment duration
                   </p>
                   <div className="inline-flex items-center justify-center md:justify-start w-full px-3 py-2 rounded-lg bg-white border border-teal-100 text-sm font-semibold text-teal-700">
                     {appointmentData.customDuration || appointmentData.duration || 30} min
@@ -1732,7 +1731,7 @@ function AppointmentFormModal({
               onChange={handleInputChange}
               className="h-4 w-4 text-teal-600"
             />
-            <span>Pacjent bez wcześniejszej rezerwacji</span>
+            <span>Walk-in patient</span>
           </label>
           
           <label className="flex items-center space-x-2">
@@ -1743,14 +1742,14 @@ function AppointmentFormModal({
               onChange={handleInputChange}
               className="h-4 w-4 text-teal-600"
             />
-            <span>Wymaga szczególnej uwagi</span>
+            <span>Needs special attention</span>
           </label>
         </div>
 
         {/* Notes */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Notatki
+            Notes
           </label>
           <textarea
             name="notes"
@@ -1758,7 +1757,7 @@ function AppointmentFormModal({
             onChange={handleInputChange}
             rows={3}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            placeholder="Dodatkowe informacje o wizycie..."
+            placeholder="Additional notes about the visit..."
           />
         </div>
       </div>
@@ -1777,18 +1776,18 @@ function AppointmentFormModal({
 
     return (
       <div className="space-y-6">
-        <h3 className="text-lg font-medium mb-4">Opcje Recepcjonisty</h3>
+        <h3 className="text-lg font-medium mb-4">Reception options</h3>
 
         {/* Appointment time: show range when we have one (slot or custom start+end); otherwise blank and use duration */}
         {/*
-          Hide duplicate "Termin wizyty" summary on step 5.
-          The real time editor/summary already appears below in "Termin wizyty i czas trwania".
+          Hide duplicate appointment time summary on step 5.
+          The real time editor/summary already appears below.
         */}
         {false && (appointmentData.selectedSlot || appointmentData.customStartTime || appointmentData.customEndTime) && (
           <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
             <p className="text-sm text-gray-800">
-              <strong>Termin wizyty:</strong>{" "}
-              {hasTimeRange ? timeRangeLabel : "— (wybierz czas trwania poniżej)"}
+              <strong>Appointment time:</strong>{" "}
+              {hasTimeRange ? timeRangeLabel : "— (choose duration below)"}
             </p>
           </div>
         )}
@@ -1796,33 +1795,33 @@ function AppointmentFormModal({
         {/* Hidden: Appointment time & duration duplicate on step 5 */}
         {false && !appointmentData.selectedSlot && (appointmentData.customStartTime || appointmentData.customEndTime) && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 className="text-md font-medium text-blue-800 mb-3">Termin wizyty i czas trwania</h4>
+            <h4 className="text-md font-medium text-blue-800 mb-3">Appointment time and duration</h4>
 
             {/* Show time range only when both start and end are set; otherwise leave blank and use duration */}
             {appointmentData.customStartTime && appointmentData.customEndTime ? (
               <>
                 <p className="text-sm text-blue-800 mb-2">
-                  <strong>Termin wizyty:</strong> {appointmentData.customStartTime} – {appointmentData.customEndTime}
+                  <strong>Appointment time:</strong> {appointmentData.customStartTime} – {appointmentData.customEndTime}
                 </p>
                 <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg">
                   <p className="text-sm text-green-800">
-                    <strong>✓ Automatycznie obliczony czas trwania:</strong> {appointmentData.customDuration || 0} minut
+                    <strong>✓ Auto-calculated duration:</strong> {appointmentData.customDuration || 0} min
                   </p>
                   <p className="text-xs text-green-700 mt-1">
-                    Na podstawie wybranego czasu: {appointmentData.customStartTime} – {appointmentData.customEndTime}
+                    Based on selected time: {appointmentData.customStartTime} – {appointmentData.customEndTime}
                   </p>
                 </div>
               </>
             ) : (
               <p className="text-sm text-blue-800 mb-3">
-                <strong>Termin wizyty:</strong> — (podaj czas trwania poniżej)
+                <strong>Appointment time:</strong> — (enter duration below)
               </p>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Czas trwania (minuty)
+                  Duration (minutes)
                 </label>
                 <input
                   type="number"
@@ -1836,8 +1835,8 @@ function AppointmentFormModal({
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   {appointmentData.customStartTime && appointmentData.customEndTime
-                    ? "Możesz zmienić automatycznie obliczony czas trwania"
-                    : "1–480 minut (1–8 h). Ustaw czas rozpoczęcia i zakończenia w kroku terminu, aby obliczyć automatycznie."}
+                    ? "You can adjust the automatically calculated duration"
+                    : "1–480 minutes (1–8 h). Set start and end time in the time step to calculate automatically."}
                 </p>
                 {appointmentData.customDuration && validateCustomDuration(appointmentData.customDuration) && (
                   <p className="text-red-500 text-xs mt-1">
@@ -1851,7 +1850,7 @@ function AppointmentFormModal({
 
         {/* Override Options */}
         <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-          <h4 className="text-md font-medium text-yellow-800 mb-3">Opcje Nadpisania</h4>
+          <h4 className="text-md font-medium text-yellow-800 mb-3">Override options</h4>
           <div className="space-y-4">
             <label className="flex items-center space-x-2">
               <input
@@ -1861,14 +1860,14 @@ function AppointmentFormModal({
                 onChange={handleInputChange}
                 className="h-4 w-4 text-yellow-600"
               />
-              <span className="text-sm font-medium">Pozwól na daty z przeszłości (dla celów ewidencyjnych)</span>
+              <span className="text-sm font-medium">Allow past dates (for records)</span>
             </label>
             
             {appointmentData.isBackdated && appointmentData.selectedDate && (
               <div className="ml-6 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
                 <p className="text-sm text-yellow-800">
-                  <strong>Uwaga:</strong> Wybrana data ({appointmentData.selectedDate}) jest w przeszłości. 
-                  Ta opcja jest przydatna do rejestrowania wizyt, które już się odbyły.
+                  <strong>Note:</strong> The selected date ({appointmentData.selectedDate}) is in the past.
+                  Use this to record visits that already took place.
                 </p>
               </div>
             )}
@@ -1881,14 +1880,14 @@ function AppointmentFormModal({
                 onChange={handleInputChange}
                 className="h-4 w-4 text-yellow-600"
               />
-              <span className="text-sm font-medium">Nadpisz konflikty czasowe (wielu pacjentów jednocześnie)</span>
+              <span className="text-sm font-medium">Override time conflicts (multiple patients at once)</span>
             </label>
             
             {appointmentData.overrideConflicts && (
               <div className="ml-6 p-3 bg-orange-100 border border-orange-300 rounded-lg">
                 <p className="text-sm text-orange-800">
-                  <strong>Uwaga:</strong> Ta opcja pozwoli na umówienie wizyty w czasie, gdy lekarz ma już inne wizyty. 
-                  Upewnij się, że lekarz może obsłużyć wielu pacjentów jednocześnie.
+                  <strong>Note:</strong> This allows booking when the doctor already has other appointments.
+                  Only use if the doctor can see multiple patients at the same time.
                 </p>
               </div>
             )}
@@ -1901,7 +1900,7 @@ function AppointmentFormModal({
                 onChange={handleInputChange}
                 className="h-4 w-4 text-yellow-600"
               />
-              <span className="text-sm font-medium">Wizyta nagła (priorytetowa)</span>
+              <span className="text-sm font-medium">Emergency visit (priority)</span>
             </label>
           </div>
         </div>
@@ -1909,14 +1908,14 @@ function AppointmentFormModal({
       {/*
       // Receptionist Notes (hidden as per request)
       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-        <h4 className="text-md font-medium text-gray-800 mb-3">Notatki Recepcjonisty</h4>
+        <h4 className="text-md font-medium text-gray-800 mb-3">Reception notes</h4>
         <textarea
           name="receptionistNotes"
           value={appointmentData.receptionistNotes}
           onChange={handleInputChange}
           rows={3}
           className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent"
-          placeholder="Dodatkowe informacje o nadpisaniu, powody, uwagi..."
+          placeholder="Additional notes about overrides, reasons, remarks..."
         />
       </div>
       */}
@@ -1924,37 +1923,37 @@ function AppointmentFormModal({
         {/* Active Overrides Summary */}
         {(appointmentData.customDuration || appointmentData.isBackdated || appointmentData.overrideConflicts || appointmentData.isEmergency) && (
           <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-            <h4 className="text-md font-medium text-purple-800 mb-3">Aktywne Opcje Nadpisania</h4>
+            <h4 className="text-md font-medium text-purple-800 mb-3">Active overrides</h4>
             <div className="space-y-2 text-sm">
               {appointmentData.customDuration && (
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-purple-600" />
-                  <span>Niestandardowy czas trwania: {appointmentData.customDuration} minut</span>
+                  <span>Custom duration: {appointmentData.customDuration} min</span>
                 </div>
               )}
               {appointmentData.isBackdated && (
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-purple-600" />
-                  <span>Pozwolono na daty z przeszłości</span>
+                  <span>Past dates allowed</span>
                 </div>
               )}
               {appointmentData.overrideConflicts && (
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-purple-600" />
-                  <span>Nadpisano konflikty czasowe</span>
+                  <span>Time conflicts overridden</span>
                 </div>
               )}
               {appointmentData.isEmergency && (
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 text-purple-600" />
-                  <span>Wizyta nagła (priorytetowa)</span>
+                  <span>Emergency visit (priority)</span>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* SMS Consent - only show when patient was added (option 1 or 2) AND we have a phone number; hide for visit-only (option 3) or when no phone */}
+      {/* SMS Consent - only show when patient was added (option 1 or 2) AND we have a phone number; hide for visit-only (option 3) or when no phone */}
         {(() => {
           const hasPatientPhone = (() => {
             if (isVisitOnly) return false;
@@ -1973,7 +1972,7 @@ function AppointmentFormModal({
           return !isVisitOnly && hasPatientPhone;
         })() && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 className="text-md font-medium text-blue-800 mb-3">Zgoda na SMS</h4>
+            <h4 className="text-md font-medium text-blue-800 mb-3">SMS consent</h4>
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -1983,11 +1982,11 @@ function AppointmentFormModal({
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label htmlFor="smsConsentAgreed" className="text-sm font-medium text-blue-800">
-                Pacjent wyraża zgodę na otrzymywanie powiadomień SMS o wizytach
+                Patient consents to SMS notifications about appointments
               </label>
             </div>
             <p className="text-xs text-blue-600 mt-2">
-              Zgoda na SMS pozwala na automatyczne wysyłanie przypomnień o wizytach i ważnych informacji.
+              SMS consent enables automatic reminders and important updates.
             </p>
             {(() => {
               const today = new Date().toISOString().split("T")[0];
@@ -1997,8 +1996,8 @@ function AppointmentFormModal({
                 return (
                   <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded">
                     <p className="text-xs text-yellow-800">
-                      <strong>Uwaga:</strong> Wybrana data jest w przeszłości. Zgoda na SMS została automatycznie odznaczona, 
-                      ale możesz ją zaznaczyć jeśli chcesz wysłać SMS dla tej wizyty.
+                      <strong>Note:</strong> The selected date is in the past. SMS consent was cleared automatically;
+                      you can enable it if you still want to send an SMS for this visit.
                     </p>
                   </div>
                 );
@@ -2018,7 +2017,7 @@ function AppointmentFormModal({
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <label htmlFor="persistSmsConsent" className="text-sm font-medium text-blue-800">
-                    Jeśli nie chcesz wysyłać SMS i e-maili dla tej wizyty, zaznacz to pole
+                    Check if you do not want SMS or emails sent for this visit
                   </label>
                 </div>
               </div>
@@ -2028,43 +2027,43 @@ function AppointmentFormModal({
 
         {/* Current Appointment Summary */}
         <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
-          <h4 className="text-md font-medium text-teal-800 mb-3" onClick={()=>{console.log("Podsumowanie Wizyty",appointmentData.selectedSlot ,appointmentData.customStartTime,appointmentData.customEndTime ,appointmentData.customDuration)}}>Podsumowanie Wizyty</h4>
+          <h4 className="text-md font-medium text-teal-800 mb-3" onClick={()=>{console.log("Appointment summary",appointmentData.selectedSlot ,appointmentData.customStartTime,appointmentData.customEndTime ,appointmentData.customDuration)}}>Appointment summary</h4>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium">Pacjent:</span> {
+              <span className="font-medium">Patient:</span> {
                 (isFirstTimeVisit && isNewPatientValid) || (isVisitOnly && isVisitOnlyValid)
                   ? `${appointmentData.newPatientFirstName} ${appointmentData.newPatientLastName}`
                   : selectedPatient
                     ? `${selectedPatient.firstName || selectedPatient.name || "N/A"} ${selectedPatient.lastName || ""}`
-                    : "Nie wybrano"
+                    : "Not selected"
               }
             </div>
             <div>
-              <span className="font-medium">Data:</span> {appointmentData.selectedDate}
+              <span className="font-medium">Date:</span> {appointmentData.selectedDate}
             </div>
             <div>
-              <span className="font-medium">Czas:</span> {
+              <span className="font-medium">Time:</span> {
                 appointmentData.selectedSlot 
-                  ? `${appointmentData.selectedSlot.startTime} – ${appointmentData.selectedSlot.endTime} (wybrany termin)`
+                  ? `${appointmentData.selectedSlot.startTime} – ${appointmentData.selectedSlot.endTime} (slot)`
                   : appointmentData.customStartTime && appointmentData.customEndTime 
-                    ? `${appointmentData.customStartTime} – ${appointmentData.customEndTime} (własny termin)`
+                    ? `${appointmentData.customStartTime} – ${appointmentData.customEndTime} (custom)`
                     : appointmentData.customStartTime && appointmentData.customDuration
                       ? `${appointmentData.customStartTime} – ${
                           calculateEndTime(
                             appointmentData.customStartTime,
                             appointmentData.customDuration
                           ) || "—"
-                        } (własny termin)`
+                        } (custom)`
                       : appointmentData.customStartTime
-                        ? "— (podaj czas trwania)"
-                        : "Nie wybrano"
+                        ? "— (enter duration)"
+                        : "Not selected"
               }
             </div>
             <div>
-              <span className="font-medium">Lekarz:</span> {appointmentData.selectedDoctor?.name || "Nie wybrano"}
+              <span className="font-medium">Doctor:</span> {appointmentData.selectedDoctor?.name || "Not selected"}
             </div>
             <div>
-              <span className="font-medium">Czas trwania:</span> {
+              <span className="font-medium">Duration:</span> {
                 appointmentData.selectedSlot 
                   ? `${appointmentData.customDuration || 30} min`
                   : `${appointmentData.customDuration || appointmentData.duration || 30} min`
@@ -2072,41 +2071,41 @@ function AppointmentFormModal({
             </div>
             {!isVisitOnly && (
               <div>
-                <span className="font-medium">Zgoda na SMS:</span>{" "}
+                <span className="font-medium">SMS consent:</span>{" "}
                 {(() => {
                   const hasPhone = isFirstTimeVisit
                     ? (String(appointmentData.newPatientPhone ?? "").trim().length > 0 && !/_no_phone_/i.test(String(appointmentData.newPatientPhone ?? "")))
                     : selectedPatient
                       ? (String(selectedPatient.phone ?? selectedPatient.phoneNumber ?? "").trim().length > 0 && !/_no_phone_/i.test(String(selectedPatient.phone ?? selectedPatient.phoneNumber ?? "")))
                       : false;
-                  return hasPhone ? (appointmentData.smsConsentAgreed ? "✓ Tak" : "✗ Nie") : "Nie dotyczy (brak numeru telefonu)";
+                  return hasPhone ? (appointmentData.smsConsentAgreed ? "✓ Yes" : "✗ No") : "N/A (no phone)";
                 })()}
               </div>
             )}
             {(appointmentData.customDuration || appointmentData.customStartTime || appointmentData.selectedSlot) && (
               <>
                 <div>
-                  <span className="font-medium">Czas zakończenia:</span> {
+                  <span className="font-medium">End time:</span> {
                     appointmentData.selectedSlot
                       ? appointmentData.selectedSlot.endTime
                       : appointmentData.customStartTime 
                         ? calculateEndTime(appointmentData.customStartTime, appointmentData.customDuration || 30)
-                        : "Nie obliczono"
+                        : "Not calculated"
                   }
                 </div>
                 <div>
-                  <span className="font-medium">Typ:</span> {getVisitTypeInPolish(appointmentData.visitType)}
+                  <span className="font-medium">Type:</span> {getVisitTypeLabel(appointmentData.visitType)}
                 </div>
               </>
             )}
             {appointmentData.selectedSlot && (
               <div className="col-span-2">
-                <span className="font-medium text-green-600">✓ Użyto wybranego terminu</span>
+                <span className="font-medium text-green-600">✓ Using selected slot</span>
               </div>
             )}
             {appointmentData.customStartTime && (
               <div className="col-span-2">
-                <span className="font-medium text-blue-600">✓ Użyto własnego terminu</span>
+                <span className="font-medium text-blue-600">✓ Using custom time</span>
               </div>
             )}
           </div>
@@ -2122,7 +2121,7 @@ function AppointmentFormModal({
       let firstErrorStep = null;
       Object.entries(validationErrors).forEach(([key, message]) => {
         const { step, title } = getStepForValidationError(key);
-        const prefix = step && title ? `Krok ${step} (${title}): ` : "";
+        const prefix = step && title ? `Step ${step} (${title}): ` : "";
         toast.error(prefix + message);
         if (firstErrorStep == null && step != null) firstErrorStep = step;
       });
@@ -2163,7 +2162,7 @@ function AppointmentFormModal({
         endTime = appointmentData.selectedSlot.endTime;
       } else {
         // Fallback if no time is selected
-        toast.error("Proszę wybrać termin wizyty.");
+        toast.error("Please select an appointment time.");
         return;
       }
 
@@ -2306,28 +2305,28 @@ function AppointmentFormModal({
       const patientTitle = getStepTitle(patientStep);
       const missing = [];
 
-      if (!skipDoctorSelection && !appointmentData.selectedDoctor) missing.push({ step: timeStep, title: timeTitle, message: "Wybierz lekarza" });
-      if (!appointmentData.selectedDate) missing.push({ step: timeStep, title: timeTitle, message: "Wybierz datę wizyty" });
-      if (!appointmentData.customStartTime && !appointmentData.selectedSlot) missing.push({ step: timeStep, title: timeTitle, message: "Wybierz termin wizyty (godzinę lub slot)" });
+      if (!skipDoctorSelection && !appointmentData.selectedDoctor) missing.push({ step: timeStep, title: timeTitle, message: "Select a doctor" });
+      if (!appointmentData.selectedDate) missing.push({ step: timeStep, title: timeTitle, message: "Select appointment date" });
+      if (!appointmentData.customStartTime && !appointmentData.selectedSlot) missing.push({ step: timeStep, title: timeTitle, message: "Select a time or slot" });
 
       const hasPatient = selectedPatient || isNewPatientValid || isVisitOnly;
       if (!hasPatient) {
-        if (!appointmentData.visitType) missing.push({ step: patientStep, title: patientTitle, message: "Wybierz typ wizyty" });
-        else if (isVisitOnly && !isVisitOnlyValid) missing.push({ step: patientStep, title: patientTitle, message: "Uzupełnij imię i nazwisko (wizyta bez pacjenta)" });
+        if (!appointmentData.visitType) missing.push({ step: patientStep, title: patientTitle, message: "Select visit type" });
+        else if (isVisitOnly && !isVisitOnlyValid) missing.push({ step: patientStep, title: patientTitle, message: "Enter first and last name (visit without patient)" });
         else if (isFirstTimeVisit && !isNewPatientValid) {
-          if (!appointmentData.newPatientFirstName?.trim()) missing.push({ step: patientStep, title: patientTitle, message: "Imię jest wymagane" });
-          if (!appointmentData.newPatientLastName?.trim()) missing.push({ step: patientStep, title: patientTitle, message: "Nazwisko jest wymagane" });
-          if (!appointmentData.newPatientSex?.trim()) missing.push({ step: patientStep, title: patientTitle, message: "Płeć jest wymagana" });
-          if (!appointmentData.newPatientPhone?.trim()) missing.push({ step: patientStep, title: patientTitle, message: "Numer telefonu jest wymagany" });
+          if (!appointmentData.newPatientFirstName?.trim()) missing.push({ step: patientStep, title: patientTitle, message: "First name is required" });
+          if (!appointmentData.newPatientLastName?.trim()) missing.push({ step: patientStep, title: patientTitle, message: "Last name is required" });
+          if (!appointmentData.newPatientSex?.trim()) missing.push({ step: patientStep, title: patientTitle, message: "Sex is required" });
+          if (!appointmentData.newPatientPhone?.trim()) missing.push({ step: patientStep, title: patientTitle, message: "Phone number is required" });
           else {
             const phoneErr = validatePhone(appointmentData.newPatientPhone);
             if (phoneErr) missing.push({ step: patientStep, title: patientTitle, message: phoneErr });
           }
-        } else if (!isFirstTimeVisit && !isVisitOnly) missing.push({ step: patientStep, title: patientTitle, message: "Wybierz pacjenta z listy" });
+        } else if (!isFirstTimeVisit && !isVisitOnly) missing.push({ step: patientStep, title: patientTitle, message: "Select a patient from the list" });
       }
 
-      if (missing.length === 0) missing.push({ step: 1, title: getStepTitle(1), message: "Proszę uzupełnić wszystkie wymagane pola" });
-      missing.forEach(({ step, title, message }) => toast.error(`Krok ${step} (${title}): ${message}`));
+      if (missing.length === 0) missing.push({ step: 1, title: getStepTitle(1), message: "Please fill in all required fields" });
+      missing.forEach(({ step, title, message }) => toast.error(`Step ${step} (${title}): ${message}`));
       const firstStep = missing[0]?.step;
       if (firstStep != null) setCurrentStep(firstStep);
     }
@@ -2378,14 +2377,14 @@ function AppointmentFormModal({
   const content = (
     <div className={embedded ? "bg-white rounded-lg p-6 w-full shadow-sm" : "bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto"}>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-gray-800">Dodaj wizytę</h2>
+        <h2 className="text-xl font-bold text-gray-800">Add appointment</h2>
         {embedded ? (
           <button
             type="button"
             onClick={onClose}
             className="px-3 py-1.5 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm"
           >
-            Wstecz
+            Back
           </button>
         ) : (
           <button
@@ -2423,7 +2422,7 @@ function AppointmentFormModal({
               className="flex items-center px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
-              Wstecz
+              Back
             </button>
           )}
           
@@ -2432,7 +2431,7 @@ function AppointmentFormModal({
               onClick={onClose}
               className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
-              Anuluj
+              Cancel
             </button>
             
             {currentStep < 5 ? (
@@ -2445,7 +2444,7 @@ function AppointmentFormModal({
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
               >
-                Dalej
+                Next
                 <ChevronRight className="w-4 h-4 ml-2" />
               </button>
             ) : (
@@ -2454,7 +2453,7 @@ function AppointmentFormModal({
                 disabled={!canProceedToNextStep()}
                 className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
               >
-                Zarezerwuj Wizytę
+                Book appointment
               </button>
             )}
           </div>

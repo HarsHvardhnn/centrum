@@ -19,7 +19,7 @@ const VisitReasonCascadeDropdown = ({
   value,
   onChange,
   disabled = false,
-  placeholder = "Wybierz rodzaj wizyty...",
+  placeholder = "Select visit reason...",
   className = "",
   verificationHighlight = "neutral",
 }) => {
@@ -114,7 +114,7 @@ const VisitReasonCascadeDropdown = ({
                 ))}
               </ul>
             ) : (
-              <div className="px-3 py-4 text-sm text-gray-500">Najedź na kategorię</div>
+              <div className="px-3 py-4 text-sm text-gray-500">Hover a category</div>
             )}
           </div>
         </div>
