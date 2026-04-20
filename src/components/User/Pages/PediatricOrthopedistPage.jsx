@@ -23,8 +23,8 @@ const DOCTOR_PHOTO = "/lukas.png";
 const GOOGLE_MAPS_REVIEWS_URL =
   "https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skar%C5%BCysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dzieci%C4%99cy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu&g_ep=EgoyMDI1MDkwMy4wIKXMDSoASAFQAw%3D%3D";
 
-/** Usługa ortopedii dla dorosłych (slug z tytułu w CMS – dostosuj jeśli inny) */
-const ADULT_ORTHOPEDICS_SERVICE_PATH = "/uslugi/konsultacja-ortopedyczna";
+/** Strona ortopedy dla dorosłych */
+const ADULT_ORTHOPEDICS_SERVICE_PATH = "https://www.centrummedyczne7.pl/ortopeda-skarzysko";
 
 const SECTION3_VISIT_REASONS_LEFT = [
   "Dziecko utyka, skraca krok lub oszczędza jedną kończynę",
@@ -98,6 +98,13 @@ const SECTION8_CITY_LABELS = [
 ];
 
 const formatCityNoBreak = (label) => label.replace(/-/g, "\u2011");
+const SECTION8_CITY_PAGE_URLS = {
+  Kielce: "https://cm7zdrowie.pl/ortopeda-dzieciecy-kielce/",
+  Radom: "https://cm7zdrowie.pl/ortopeda-dzieciecy-radom/",
+  Starachowice: "https://cm7zdrowie.pl/ortopeda-dzieciecy-starachowice/",
+  "Suchedniów": "https://cm7zdrowie.pl/ortopeda-dzieciecy-suchedniow/",
+  "Szydłowiec": "https://cm7zdrowie.pl/ortopeda-dzieciecy-szydlowiec/",
+};
 
 const NBH = "\u2011";
 
@@ -267,7 +274,11 @@ const PediatricOrthopedistPage = () => {
 
                 <div className="space-y-4 mb-6 text-gray-700 text-base md:text-lg leading-relaxed px-4 md:px-0">
                   <p>
-                    Szukasz ortopedy dziecięcego w Skarżysku prywatnie? W Centrum Medycznym 7 oferujemy
+                    Szukasz ortopedy dziecięcego w Skarżysku prywatnie? W{" "}
+                    <Link to="/" className="text-teal-700 hover:text-teal-800 underline underline-offset-2">
+                      Centrum Medycznym 7
+                    </Link>{" "}
+                    oferujemy
                     konsultacje ortopedyczne dla dzieci – diagnostykę wad postawy, skoliozy, płaskostopia
                     oraz USG bioderek u niemowląt. Doświadczony ortopeda dziecięcy w Skarżysku prowadzi
                     diagnostykę oraz leczenie schorzeń narządu ruchu u dzieci i młodzieży – bez skierowania.
@@ -347,7 +358,12 @@ const PediatricOrthopedistPage = () => {
                 id="doctor-section-heading"
                 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 px-2"
               >
-                lek. Łukasz Dubiel - ortopeda dziecięcy Skarżysko
+                <a
+                  href="https://centrummedyczne7.pl/lekarze/lukasz-dubiel"
+                  className="hover:text-teal-700 transition-colors"
+                >
+                  lek. Łukasz Dubiel - ortopeda dziecięcy Skarżysko
+                </a>
               </h2>
               <div className="w-20 sm:w-24 h-1 bg-teal-600 mx-auto" aria-hidden />
             </div>
@@ -537,7 +553,12 @@ const PediatricOrthopedistPage = () => {
             <div className="rounded-xl sm:rounded-2xl bg-[#F0F7F6] p-5 sm:p-6 md:p-8 mb-10 sm:mb-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 sm:gap-6">
               <div className="text-left">
                 <p className="font-bold text-gray-900 text-base sm:text-lg md:text-xl">
-                  Konsultacja ortopedy dziecięcego
+                  <a
+                    href="https://centrummedyczne7.pl/uslugi/konsultacja-ortopedy-dzieciecego"
+                    className="hover:text-teal-700 transition-colors"
+                  >
+                    Konsultacja ortopedy dziecięcego
+                  </a>
                 </p>
                 <p className="text-gray-800 text-base sm:text-lg mt-1">300 zł</p>
               </div>
@@ -553,7 +574,13 @@ const PediatricOrthopedistPage = () => {
             </div>
 
             <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-4">
-              USG bioderek u niemowląt (diagnostyka dysplazji stawu biodrowego)
+              <a
+                href="https://www.centrummedyczne7.pl/uslugi/usg-bioderek"
+                className="hover:text-teal-700 transition-colors"
+              >
+                USG bioderek u niemowląt
+              </a>{" "}
+              (diagnostyka dysplazji stawu biodrowego)
             </h3>
             <div className="space-y-4 text-gray-700 text-sm sm:text-base md:text-lg leading-relaxed mb-8 max-w-4xl">
               <p>
@@ -571,7 +598,12 @@ const PediatricOrthopedistPage = () => {
             <div className="rounded-xl sm:rounded-2xl bg-[#F0F7F6] p-5 sm:p-6 md:p-8 mb-8 sm:mb-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 lg:gap-8">
               <div className="text-left max-w-xl">
                 <p className="font-bold text-gray-900 text-base sm:text-lg md:text-xl">
-                  USG bioderek u niemowląt
+                  <a
+                    href="https://www.centrummedyczne7.pl/uslugi/usg-bioderek"
+                    className="hover:text-teal-700 transition-colors"
+                  >
+                    USG bioderek u niemowląt
+                  </a>
                 </p>
                 <p className="text-gray-600 text-sm sm:text-base mt-2 leading-relaxed">
                   W ramach konsultacji, zgodnie ze wskazaniami medycznymi
@@ -687,8 +719,13 @@ const PediatricOrthopedistPage = () => {
               id="clinic-scope-heading"
               className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 text-left leading-tight mb-1"
             >
-              <span className="block">Poradnia ortopedyczna dla dzieci</span>
-              <span className="block mt-1">{`w${"\u00A0"}Skarżysku${"\u2011"}Kamiennej`}</span>
+              <a
+                href="https://cm7zdrowie.pl/poradnia-ortopedyczna-dla-dzieci/"
+                className="hover:text-teal-700 transition-colors"
+              >
+                <span className="block">Poradnia ortopedyczna dla dzieci</span>
+                <span className="block mt-1">{`w${"\u00A0"}Skarżysku${"\u2011"}Kamiennej`}</span>
+              </a>
             </h2>
             <div className="w-[4.5rem] sm:w-24 h-1 bg-teal-600 mb-6 sm:mb-8" aria-hidden />
 
@@ -753,7 +790,14 @@ const PediatricOrthopedistPage = () => {
               <div className="space-y-4 sm:space-y-5 text-gray-600 text-sm sm:text-base md:text-lg leading-relaxed">
                 <p>
                   Konsultacje w poradni medycyny sportowej w Skarżysku obejmują leczenie kontuzji
-                  sportowych, urazów i przeciążeń narządu ruchu oraz kwalifikację do uprawiania sportu.
+                  sportowych, urazów i przeciążeń narządu ruchu oraz{" "}
+                  <a
+                    href="https://centrummedyczne7.pl/uslugi/kwalifikacja-do-uprawiania-sportu"
+                    className="text-teal-700 hover:text-teal-800 underline underline-offset-2"
+                  >
+                    kwalifikację do uprawiania sportu
+                  </a>
+                  .
                 </p>
                 <p>
                   Lekarz medycyny sportowej przeprowadza diagnostykę dolegliwości związanych z aktywnością
@@ -761,7 +805,20 @@ const PediatricOrthopedistPage = () => {
                 </p>
                 <p>
                   Z konsultacji korzystają pacjenci ze Skarżyska-Kamiennej oraz okolicznych miast –
-                  Starachowic, Kielce, Radomia i całego województwa świętokrzyskiego. Oferujemy szybkie
+                  <a
+                    href="https://cm7zdrowie.pl/medycyna-sportowa-starachowice/"
+                    className="text-teal-700 hover:text-teal-800 underline underline-offset-2"
+                  >
+                    Starachowic
+                  </a>
+                  , Kielce,{" "}
+                  <a
+                    href="https://cm7zdrowie.pl/medycyna-sportowa-radom/"
+                    className="text-teal-700 hover:text-teal-800 underline underline-offset-2"
+                  >
+                    Radomia
+                  </a>{" "}
+                  i całego województwa świętokrzyskiego. Oferujemy szybkie
                   terminy wizyt oraz kompleksowe podejście do leczenia urazów sportowych i przeciążeń.
                 </p>
               </div>
@@ -804,18 +861,40 @@ const PediatricOrthopedistPage = () => {
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5 list-none p-0 m-0 mb-8 sm:mb-10"
               role="list"
             >
-              {SECTION8_CITY_LABELS.map((city) => (
-                <li key={city}>
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] px-2 py-3 sm:px-3 sm:py-4 text-center flex flex-col items-center justify-center min-h-[4.5rem] sm:min-h-[5rem]">
-                    <span className="block text-xs sm:text-sm font-medium text-[#4B5563] leading-tight">
-                      Ortopeda
-                    </span>
-                    <span className="block text-xs sm:text-sm font-medium text-[#4B5563] mt-1 leading-snug whitespace-nowrap">
-                      {formatCityNoBreak(city)}
-                    </span>
-                  </div>
-                </li>
-              ))}
+              {SECTION8_CITY_LABELS.map((city) => {
+                const cityPageUrl = SECTION8_CITY_PAGE_URLS[city];
+
+                if (cityPageUrl) {
+                  return (
+                    <li key={city}>
+                      <a
+                        href={cityPageUrl}
+                        className="bg-white rounded-xl border border-[#E5E7EB] px-2 py-3 sm:px-3 sm:py-4 text-center flex flex-col items-center justify-center min-h-[4.5rem] sm:min-h-[5rem] hover:border-teal-300 hover:bg-teal-50 transition-colors"
+                      >
+                        <span className="block text-xs sm:text-sm font-medium text-[#4B5563] leading-tight">
+                          Ortopeda
+                        </span>
+                        <span className="block text-xs sm:text-sm font-medium text-[#4B5563] mt-1 leading-snug whitespace-nowrap">
+                          {formatCityNoBreak(city)}
+                        </span>
+                      </a>
+                    </li>
+                  );
+                }
+
+                return (
+                  <li key={city}>
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] px-2 py-3 sm:px-3 sm:py-4 text-center flex flex-col items-center justify-center min-h-[4.5rem] sm:min-h-[5rem]">
+                      <span className="block text-xs sm:text-sm font-medium text-[#4B5563] leading-tight">
+                        Ortopeda
+                      </span>
+                      <span className="block text-xs sm:text-sm font-medium text-[#4B5563] mt-1 leading-snug whitespace-nowrap">
+                        {formatCityNoBreak(city)}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 sm:p-7 md:p-8">
@@ -904,9 +983,14 @@ const PediatricOrthopedistPage = () => {
             </div>
 
             <address className="not-italic text-xs sm:text-sm text-white/90 leading-relaxed space-y-0.5">
-              <p className="m-0">Centrum Medyczne 7</p>
-              <p className="m-0">ul. Powstańców Warszawy 7/1.5</p>
-              <p className="m-0">Skarżysko-Kamienna, świętokrzyskie</p>
+              <a
+                href="https://www.centrummedyczne7.pl/kontakt"
+                className="inline-block hover:text-white underline underline-offset-2"
+              >
+                <p className="m-0">Centrum Medyczne 7</p>
+                <p className="m-0">ul. Powstańców Warszawy 7/1.5</p>
+                <p className="m-0">Skarżysko-Kamienna, świętokrzyskie</p>
+              </a>
             </address>
           </div>
         </section>
@@ -921,17 +1005,28 @@ const PediatricOrthopedistPage = () => {
               id="adult-orthopedics-heading"
               className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 text-center leading-tight mb-2"
             >
-              <span className="block">Ortopeda Skarżysko –</span>
-              <span className="block mt-1">konsultacja dla dorosłych</span>
+              <a
+                href={ADULT_ORTHOPEDICS_SERVICE_PATH}
+                className="hover:text-teal-700 transition-colors"
+              >
+                <span className="block">Ortopeda Skarżysko –</span>
+                <span className="block mt-1">konsultacja dla dorosłych</span>
+              </a>
             </h2>
             <div className="w-16 sm:w-20 h-1 bg-teal-600 mx-auto mb-8 sm:mb-10" aria-hidden />
 
             <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm px-5 py-6 sm:px-8 sm:py-8 md:px-10 md:py-10">
               <div className="text-left text-slate-600 text-sm sm:text-base md:text-lg leading-relaxed space-y-4 sm:space-y-5 max-w-2xl mx-auto">
                 <p className="m-0">
-                  W Centrum Medycznym 7 w Skarżysku{"\u2011"}Kamiennej działa poradnia ortopedyczna, w której
-                  przyjmuje również ortopeda dla dorosłych. Konsultacje obejmują ocenę stanu narządu ruchu
-                  oraz diagnostykę dolegliwości ortopedycznych.
+                  W Centrum Medycznym 7 w Skarżysku{"\u2011"}Kamiennej działa{" "}
+                  <a
+                    href="https://cm7zdrowie.pl/poradnia-ortopedyczna-skarzysko/"
+                    className="text-teal-700 hover:text-teal-800 underline underline-offset-2"
+                  >
+                    poradnia ortopedyczna
+                  </a>
+                  , w której przyjmuje również ortopeda dla dorosłych. Konsultacje obejmują ocenę stanu
+                  narządu ruchu oraz diagnostykę dolegliwości ortopedycznych.
                 </p>
                 <p className="m-0">
                   Na stronie znajdziesz szczegółowe informacje dotyczące konsultacji ortopedycznych dla
@@ -939,12 +1034,12 @@ const PediatricOrthopedistPage = () => {
                 </p>
               </div>
               <div className="flex justify-center mt-8 sm:mt-10">
-                <Link
-                  to={ADULT_ORTHOPEDICS_SERVICE_PATH}
+                <a
+                  href={ADULT_ORTHOPEDICS_SERVICE_PATH}
                   className="inline-flex items-center justify-center bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 sm:px-8 rounded-lg transition-colors text-sm sm:text-base text-center"
                 >
                   Ortopeda Skarżysko - zobacz
-                </Link>
+                </a>
               </div>
             </div>
           </div>
