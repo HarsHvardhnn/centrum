@@ -98,13 +98,18 @@ const SECTION8_CITY_LABELS = [
 ];
 
 const formatCityNoBreak = (label) => label.replace(/-/g, "\u2011");
-const SECTION8_CITY_PAGE_URLS = {
-  Kielce: "https://cm7zdrowie.pl/ortopeda-dzieciecy-kielce/",
-  Radom: "https://cm7zdrowie.pl/ortopeda-dzieciecy-radom/",
-  Starachowice: "https://cm7zdrowie.pl/ortopeda-dzieciecy-starachowice/",
-  "Suchedniów": "https://cm7zdrowie.pl/ortopeda-dzieciecy-suchedniow/",
-  "Szydłowiec": "https://cm7zdrowie.pl/ortopeda-dzieciecy-szydlowiec/",
-};
+const slugifyCityForCm7Zdrowie = (city) =>
+  city
+    .replace(/ł/g, "l")
+    .replace(/Ł/g, "L")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const getCityOrthopedicsUrl = (city) =>
+  `https://cm7zdrowie.pl/ortopeda-dzieciecy-${slugifyCityForCm7Zdrowie(city)}/`;
 
 const NBH = "\u2011";
 
@@ -861,40 +866,21 @@ const PediatricOrthopedistPage = () => {
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5 list-none p-0 m-0 mb-8 sm:mb-10"
               role="list"
             >
-              {SECTION8_CITY_LABELS.map((city) => {
-                const cityPageUrl = SECTION8_CITY_PAGE_URLS[city];
-
-                if (cityPageUrl) {
-                  return (
-                    <li key={city}>
-                      <a
-                        href={cityPageUrl}
-                        className="bg-white rounded-xl border border-[#E5E7EB] px-2 py-3 sm:px-3 sm:py-4 text-center flex flex-col items-center justify-center min-h-[4.5rem] sm:min-h-[5rem] hover:border-teal-300 hover:bg-teal-50 transition-colors"
-                      >
-                        <span className="block text-xs sm:text-sm font-medium text-[#4B5563] leading-tight">
-                          Ortopeda
-                        </span>
-                        <span className="block text-xs sm:text-sm font-medium text-[#4B5563] mt-1 leading-snug whitespace-nowrap">
-                          {formatCityNoBreak(city)}
-                        </span>
-                      </a>
-                    </li>
-                  );
-                }
-
-                return (
-                  <li key={city}>
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] px-2 py-3 sm:px-3 sm:py-4 text-center flex flex-col items-center justify-center min-h-[4.5rem] sm:min-h-[5rem]">
-                      <span className="block text-xs sm:text-sm font-medium text-[#4B5563] leading-tight">
-                        Ortopeda
-                      </span>
-                      <span className="block text-xs sm:text-sm font-medium text-[#4B5563] mt-1 leading-snug whitespace-nowrap">
-                        {formatCityNoBreak(city)}
-                      </span>
-                    </div>
-                  </li>
-                );
-              })}
+              {SECTION8_CITY_LABELS.map((city) => (
+                <li key={city}>
+                  <a
+                    href={getCityOrthopedicsUrl(city)}
+                    className="bg-white rounded-xl border border-[#E5E7EB] px-2 py-3 sm:px-3 sm:py-4 text-center flex flex-col items-center justify-center min-h-[4.5rem] sm:min-h-[5rem] hover:border-teal-300 hover:bg-teal-50 transition-colors"
+                  >
+                    <span className="block text-xs sm:text-sm font-medium text-[#4B5563] leading-tight">
+                      Ortopeda
+                    </span>
+                    <span className="block text-xs sm:text-sm font-medium text-[#4B5563] mt-1 leading-snug whitespace-nowrap">
+                      {formatCityNoBreak(city)}
+                    </span>
+                  </a>
+                </li>
+              ))}
             </ul>
 
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 sm:p-7 md:p-8">
