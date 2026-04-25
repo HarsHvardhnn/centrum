@@ -467,6 +467,14 @@ const PatientDetailsPage = () => {
   const [sectionTemplatePickerKey, setSectionTemplatePickerKey] = useState(null);
   const [globalTemplatePickerOpen, setGlobalTemplatePickerOpen] = useState(false);
 
+  const resolveVisitDoctorUserId = (appointment) => {
+    if (!appointment) return null;
+    const doc = appointment.doctor ?? appointment.doctorId;
+    if (!doc) return null;
+    if (typeof doc === "string") return doc;
+    return doc._id || doc.id || doc.userId || doc.user_id || null;
+  };
+
   const SECTION_LABELS = {
     interview: "Wywiad z pacjentem",
     physicalExamination: "Badanie przedmiotowe",
@@ -837,6 +845,7 @@ const PatientDetailsPage = () => {
   };
 
   const canVerifyVisitReason = user?.role === "doctor" || user?.role === "admin";
+  const visitDoctorUserId = resolveVisitDoctorUserId(selectedAppointment);
 
   const handleVerifyVisitReason = async () => {
     if (!currentAppointmentId) return;
@@ -1619,8 +1628,7 @@ const PatientDetailsPage = () => {
         onClose={() => setShowServiceModal(false)}
         onSave={handleSaveServices}
         patientId={id}
-        appointmentId={currentAppointmentId}
-        existingServices={patientServices}
+        doctorUserId={visitDoctorUserId}
       />
       
       <ConfirmationModal

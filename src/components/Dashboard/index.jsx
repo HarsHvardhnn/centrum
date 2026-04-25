@@ -977,9 +977,11 @@ const PatientList = () => {
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   Tryb wizyty
                 </th>
-                <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                  Utworzono przez
-                </th>
+                {user?.role !== "doctor" && (
+                  <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                    Utworzono przez
+                  </th>
+                )}
                 <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
                   Akcje
                 </th>
@@ -1079,9 +1081,11 @@ const PatientList = () => {
                         {getVisitModeLabel(patient)}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-sm text-gray-600">
-                      {getCreatedByRoleLabel(patient)}
-                    </td>
+                    {user?.role !== "doctor" && (
+                      <td className="py-4 px-4 text-sm text-gray-600">
+                        {getCreatedByRoleLabel(patient)}
+                      </td>
+                    )}
                     <td className="py-4 px-4">
                     <div className="flex justify-center">
                       <DropdownMenu.Root>

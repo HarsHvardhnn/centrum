@@ -168,13 +168,15 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
             isActive={currentPath === "/administracja"}
             collapsed={collapsed}
           />
-          <NavItem
-            icon={<FileEdit size={ICON_SIZE} strokeWidth={2} />}
-            label="Dodaj wizytę"
-            to="/wizyta/utworz"
-            isActive={currentPath === "/wizyta/utworz"}
-            collapsed={collapsed}
-          />
+          {user?.role !== "doctor" && (
+            <NavItem
+              icon={<FileEdit size={ICON_SIZE} strokeWidth={2} />}
+              label="Dodaj wizytę"
+              to="/wizyta/utworz"
+              isActive={currentPath === "/wizyta/utworz"}
+              collapsed={collapsed}
+            />
+          )}
           <NavItem
             icon={<Stethoscope size={ICON_SIZE} strokeWidth={2} />}
             label="Wizyty lekarskie"

@@ -118,6 +118,7 @@ const BillingManagement = () => {
     totalPending: 0,
     totalOverdue: 0
   });
+  const [statsRefreshKey, setStatsRefreshKey] = useState(0);
   
   // Add EditBillModal component
   const EditBillModal = ({ isOpen, onClose, billId, onUpdate, isRedirectedFromAppointment }) => {
@@ -938,6 +939,7 @@ const BillingManagement = () => {
   const handleBillGenerated = () => {
     // Refresh the bills list
     fetchBills();
+    setStatsRefreshKey((prev) => prev + 1);
     setIsGenerateBillModalOpen(false);
     
     // If user was redirected from appointment, redirect back to patients page
@@ -1081,7 +1083,7 @@ const BillingManagement = () => {
     };
 
     fetchStats();
-  }, [dateRange.startDate, dateRange.endDate, appointmentId]); // Depend on date range and appointmentId for stats
+  }, [dateRange.startDate, dateRange.endDate, appointmentId, statsRefreshKey]); // Depend on date range, appointmentId, and invoice mutations for stats
   
   const handleSort = (key) => {
     setSortConfig(prev => ({
@@ -1141,7 +1143,6 @@ const BillingManagement = () => {
     }
 
     await updatePaymentStatus(billId, newStatus);
-    window.location.reload();
   };
 
   // Add new function to handle the actual update
@@ -1157,6 +1158,7 @@ const BillingManagement = () => {
       if (response.success) {
         toast.success(`Status płatności zaktualizowany na ${newStatus}`);
         fetchBills(); // Refresh bills list
+        setStatsRefreshKey((prev) => prev + 1);
       } else {
         toast.error("Nie udało się zaktualizować statusu płatności");
       }
@@ -1204,6 +1206,7 @@ const BillingManagement = () => {
 
   const handleBulkDeleteSuccess = () => {
     fetchBills();
+    setStatsRefreshKey((prev) => prev + 1);
     setSelectedInvoiceIds([]);
   };
 
@@ -1216,6 +1219,7 @@ const BillingManagement = () => {
 
   const handlePermanentDeleteSuccess = () => {
     fetchBills();
+    setStatsRefreshKey((prev) => prev + 1);
   };
   
   const handlePrintBill = (billId) => {

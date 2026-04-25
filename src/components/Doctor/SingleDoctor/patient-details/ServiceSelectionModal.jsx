@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Plus, Minus, CheckCircle, AlertCircle } from "lucide-react";
 import { useServices } from "../../../../context/serviceContext";
 import userServiceHelper, {
-  mapDoctorServicesResponseToCatalog,
+  mapServicesResponseToCatalog,
 } from "../../../../helpers/userServiceHelper";
 
 const ServiceSelectionModal = ({
@@ -10,7 +10,7 @@ const ServiceSelectionModal = ({
   onClose,
   onSave,
   patientId,
-  /** When set, loads catalog via GET /user-services/:id/doctor instead of global GET /services */
+  /** When set, loads catalog via GET /services?doctorId=:id instead of global GET /services */
   doctorUserId = null,
 }) => {
   const {
@@ -37,11 +37,11 @@ const ServiceSelectionModal = ({
       setDoctorLoading(true);
       setDoctorError(null);
       try {
-        const res = await userServiceHelper.getDoctorServices(doctorUserId);
+        const res = await userServiceHelper.getServicesCatalog(doctorUserId);
         if (cancelled) return;
-        setDoctorServices(mapDoctorServicesResponseToCatalog(res));
+        setDoctorServices(mapServicesResponseToCatalog(res));
       } catch (e) {
-        console.error("ServiceSelectionModal getDoctorServices:", e);
+        console.error("ServiceSelectionModal getServicesCatalog:", e);
         if (!cancelled) {
           setDoctorError("Nie udało się załadować usług lekarza");
           setDoctorServices([]);

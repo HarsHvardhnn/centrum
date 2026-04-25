@@ -68,13 +68,15 @@ const Sidebar = () => {
             isEnabled={true}
           />
 
-          <NavItem
-            icon={<BsCalendarPlusFill className="text-xl text-teal-400" />}
-            label="Dodaj wizytę"
-            to="/wizyta/utworz"
-            isActive={currentPath === "/wizyta/utworz"}
-            isEnabled={true}
-          />
+          {user?.role !== "doctor" && (
+            <NavItem
+              icon={<BsCalendarPlusFill className="text-xl text-teal-400" />}
+              label="Dodaj wizytę"
+              to="/wizyta/utworz"
+              isActive={currentPath === "/wizyta/utworz"}
+              isEnabled={true}
+            />
+          )}
 
           {user?.role === "admin" && (
             <NavItem

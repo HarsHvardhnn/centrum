@@ -16,7 +16,8 @@ import {
   Trash2,
   Pen,
   Clock,
-  History
+  History,
+  Settings
 } from "lucide-react";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
@@ -128,6 +129,8 @@ function LabAppointmentsContent({ clinic }) {
     id: null
   });
   const [showCompleteRegModal, setShowCompleteRegModal] = useState(false);
+  const [showStatusChangeModal, setShowStatusChangeModal] = useState(false);
+  const [selectedStatusAppointment, setSelectedStatusAppointment] = useState(null);
   const [showConsentsModal, setShowConsentsModal] = useState(false);
   const [consentsModalVisitId, setConsentsModalVisitId] = useState(null);
   const [consentsData, setConsentsData] = useState(null);
@@ -662,6 +665,48 @@ function LabAppointmentsContent({ clinic }) {
       setSelectedAppointment(null);
       setSendSMSNotification(false);
       setSendEmailNotification(false);
+    }
+  };
+
+  // Handle status change click
+  const handleStatusChangeClick = (appointment) => {
+    setSelectedStatusAppointment(appointment);
+    setShowStatusChangeModal(true);
+  };
+
+  // Handle status update
+  const handleStatusUpdate = async (newStatus) => {
+    if (!selectedStatusAppointment) return;
+    
+    try {
+      showLoader();
+      const response = await appointmentHelper.updateAppointmentStatusAdmin(
+        selectedStatusAppointment.id, 
+        { status: newStatus }
+      );
+      
+      if (response.success) {
+        toast.success("Status wizyty został zaktualizowany");
+        // Update the appointments list
+        setAppointments(appointments.map(apt =>
+          apt.id === selectedStatusAppointment.id
+            ? { ...apt, status: newStatus }
+            : apt
+        ));
+      } else {
+        toast.error("Nie udało się zaktualizować statusu wizyty");
+      }
+    } catch (error) {
+      console.error("Failed to update appointment status:", error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Nie udało się zaktualizować statusu wizyty");
+      }
+    } finally {
+      hideLoader();
+      setShowStatusChangeModal(false);
+      setSelectedStatusAppointment(null);
     }
   };
 
@@ -1239,10 +1284,12 @@ function LabAppointmentsContent({ clinic }) {
                       <div className="text-sm text-gray-600 mt-1">
                         {getVisitTypeDisplayLabel(appointment)}
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Utworzono przez: {getCreatedByRoleLabel(appointment)}
-                        {createdAtFormatted ? ` (${createdAtFormatted})` : ""}
-                      </div>
+                      {user?.role !== "doctor" && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Utworzono przez: {getCreatedByRoleLabel(appointment)}
+                          {createdAtFormatted ? ` (${createdAtFormatted})` : ""}
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-col items-center justify-center text-center min-w-[120px] shrink-0">
                       <div className="font-semibold text-gray-900">
@@ -1341,6 +1388,11 @@ function LabAppointmentsContent({ clinic }) {
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${encodeURIComponent("/klinika")}`); }}>
                                   <Eye size={16} className="mr-2" /> Edytuj pacjenta
+                                </DropdownMenu.Item>
+                              )}
+                              {user?.role === "admin" && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md cursor-pointer" onClick={() => handleStatusChangeClick(appointment)}>
+                                  <Settings size={16} className="mr-2" /> Zmień status
                                 </DropdownMenu.Item>
                               )}
                               {user?.role === "admin" && (
@@ -2000,6 +2052,77 @@ function LabAppointmentsContent({ clinic }) {
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
                     Tak, anuluj wizytę
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Status Change Modal */}
+        {showStatusChangeModal && selectedStatusAppointment && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg max-w-md w-full mx-4">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Zmień status wizyty</h3>
+                  <button
+                    onClick={() => {
+                      setShowStatusChangeModal(false);
+                      setSelectedStatusAppointment(null);
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="mb-6">
+                  <p className="text-gray-600 mb-4">
+                    Wybierz nowy status dla wizyty pacjenta: {selectedStatusAppointment?.patient?.firstName} {selectedStatusAppointment?.patient?.lastName}
+                  </p>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Obecny status: <span className="font-medium">{translateStatus(selectedStatusAppointment?.status)}</span>
+                  </p>
+
+                  <div className="space-y-3">
+                    {[
+                      { value: 'booked', label: translateStatus('booked'), color: getStatusStyle('booked') },
+                      { value: 'checkedIn', label: translateStatus('checkedIn'), color: getStatusStyle('checkedIn') },
+                      { value: 'completed', label: translateStatus('completed'), color: getStatusStyle('completed') },
+                      { value: 'cancelled', label: translateStatus('cancelled'), color: getStatusStyle('cancelled') },
+                      { value: 'no-show', label: translateStatus('no-show'), color: getStatusStyle('no-show') }
+                    ].map(status => (
+                      <button
+                        key={status.value}
+                        onClick={() => handleStatusUpdate(status.value)}
+                        disabled={selectedStatusAppointment?.status === status.value}
+                        className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
+                          selectedStatusAppointment?.status === status.value 
+                            ? 'border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed' 
+                            : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50 cursor-pointer'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{status.label}</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${status.color}`}>
+                            {status.value}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setShowStatusChangeModal(false);
+                      setSelectedStatusAppointment(null);
+                    }}
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Anuluj
                   </button>
                 </div>
               </div>

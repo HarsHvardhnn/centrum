@@ -7,7 +7,8 @@ export const translateStatus = (status) => {
     booked: "Zarezerwowana",
     billed: "Rozliczona",
     no_appointment: "Brak wizyty",
-    "in-treatment": "W trakcie"
+    "in-treatment": "W trakcie",
+    "no-show": "Niestawiennictwo"
   };
   const key = status?.toLowerCase?.();
   return statusMap[key] ?? statusMap[status] ?? status;
@@ -21,7 +22,8 @@ export const getStatusStyle = (status) => {
     canceled: "bg-red-100 text-red-800",
     booked: "bg-yellow-100 text-yellow-800",
     billed: "bg-purple-100 text-purple-800",
-    no_appointment: "bg-gray-100 text-gray-800"
+    no_appointment: "bg-gray-100 text-gray-800",
+    "no-show": "bg-gray-100 text-gray-800"
   };
   const key = status?.toLowerCase?.();
   return styleMap[key] ?? styleMap[status] ?? "bg-gray-100 text-gray-800";

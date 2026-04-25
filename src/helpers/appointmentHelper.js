@@ -251,6 +251,27 @@ class AppointmentService {
     }
   }
 
+  /**
+   * Admin appointment status update API.
+   * PATCH /api/appointments/admin/:appointmentId/status
+   * Body: { status: "completed" }
+   * Allows admin users to directly change appointment status to any allowed value.
+   * Available statuses: booked, cancelled, completed, checkedIn, no-show
+   */
+  async updateAppointmentStatusAdmin(appointmentId, body) {
+    try {
+      const response = await apiCaller(
+        "PATCH",
+        `/appointments/admin/${appointmentId}/status`,
+        body
+      );
+      return response?.data ?? response;
+    } catch (error) {
+      console.error("Error updating appointment status (admin):", error);
+      throw error;
+    }
+  }
+
   // Get patient's appointment history
   async getPatientAppointments(patientId, filters = {}) {
     try {

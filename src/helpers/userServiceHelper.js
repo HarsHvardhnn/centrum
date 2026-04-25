@@ -21,6 +21,24 @@ export function mapDoctorServicesResponseToCatalog(response) {
     .filter(Boolean);
 }
 
+/**
+ * Normalize GET /services response into catalog rows { _id, title, price, shortDescription }.
+ */
+export function mapServicesResponseToCatalog(response) {
+  const raw = Array.isArray(response?.data) ? response.data : [];
+  return raw
+    .map((svc) => {
+      if (!svc || (!svc._id && !svc.id)) return null;
+      return {
+        _id: svc._id || svc.id,
+        title: svc.title || "",
+        price: svc.price,
+        shortDescription: svc.shortDescription,
+      };
+    })
+    .filter(Boolean);
+}
+
 // User services helper
 const userServiceHelper = {
   // Add services to a doctor
@@ -88,6 +106,18 @@ const userServiceHelper = {
       return response;
     } catch (error) {
       console.error("Error getting all services:", error);
+      throw error;
+    }
+  },
+
+  // Get active services catalog; optional doctorId limits result to doctor's assigned services
+  getServicesCatalog: async (doctorId) => {
+    try {
+      const query = doctorId ? `?doctorId=${encodeURIComponent(doctorId)}` : "";
+      const response = await apiCaller("GET", `/services${query}`);
+      return response;
+    } catch (error) {
+      console.error("Error getting services catalog:", error);
       throw error;
     }
   }
