@@ -11,6 +11,29 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const REACT_ROUTES_FILE = path.join(__dirname, 'src', 'routes.jsx');
+const LEGACY_SERVICE_ROUTE_EXCLUSIONS = new Set([
+  '/uslugi/ortopeda-dzieciecy-skarzysko',
+]);
+
+const extractManualServiceRoutesFromReactRoutes = () => {
+  try {
+    const routesFileContent = fs.readFileSync(REACT_ROUTES_FILE, 'utf8');
+    const routeMatches = [...routesFileContent.matchAll(/path:\s*"([^"]+)"/g)];
+
+    const serviceRoutes = routeMatches
+      .map((match) => (match[1].startsWith('/') ? match[1] : `/${match[1]}`))
+      .filter((route) => route === '/proktolog' || route.startsWith('/uslugi/'))
+      .filter((route) => !route.includes(':') && !route.includes('*'))
+      .filter((route) => !LEGACY_SERVICE_ROUTE_EXCLUSIONS.has(route));
+
+    return [...new Set(serviceRoutes)];
+  } catch (error) {
+    console.error('❌ Could not read React routes for sitemap services:', error.message);
+    return [];
+  }
+};
+
 // Utility function to generate URL-friendly slugs
 const generateSlug = (text) => {
   if (!text) return '';
@@ -1204,26 +1227,16 @@ const generateDynamicSitemap = async () => {
       console.log('⚠️ Could not fetch blogs for sitemap:', blogError.message);
     }
     
-    // Fetch services if available
-    try {
-      console.log('🏥 Fetching services for sitemap...');
-      const servicesResponse = await axios.get(`${API_BASE_URL}/services`, { timeout: 5000 });
-      const serviceItems = servicesResponse.data || [];
-      
-      const validServiceUrls = serviceItems
-        .filter(item => isValidSlug(item.slug))
-        .map(item => ({
-          url: `/uslugi/${item.slug}`,
-          lastmod: item.updatedAt || item.date || now,
-          priority: '0.7',
-          changefreq: 'monthly'
-        }));
-      
-      dynamicRoutes = [...dynamicRoutes, ...validServiceUrls];
-      console.log(`✅ Added ${validServiceUrls.length} services to sitemap`);
-    } catch (serviceError) {
-      console.log('⚠️ Could not fetch services for sitemap:', serviceError.message);
-    }
+    // Services must come only from React route definitions (manual LIVE URLs).
+    const manualServiceRoutes = extractManualServiceRoutesFromReactRoutes();
+    const manualServiceUrls = manualServiceRoutes.map((serviceRoute) => ({
+      url: serviceRoute,
+      lastmod: now,
+      priority: '0.7',
+      changefreq: 'monthly',
+    }));
+    dynamicRoutes = [...dynamicRoutes, ...manualServiceUrls];
+    console.log(`✅ Added ${manualServiceUrls.length} manual service routes from src/routes.jsx`);
     
     // Fetch doctor profiles - Enhanced with better debugging and structure handling
     try {

@@ -12,13 +12,16 @@ const publicRoutes = [
   '/aktualnosci',
   '/poradnik',
   '/kontakt',
+  '/regulamin',
+  '/polityka-prywatnosci',
   '/uslugi/konsultacja-proktologiczna',
   '/proktolog',
   '/uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym',
   '/uslugi/wszywka-alkoholowa-skarzysko-kamienna',
   '/uslugi/konsultacja-neurologiczna-dla-dzieci',
+  '/uslugi/leczenie-stopy-cukrzycowej',
+  '/uslugi/usg-skarzysko-kamienna',
   '/ortopeda-dzieciecy-skarzysko',
-  '/leczenie-stopy-cukrzycowej',
 ];
 
 // Helper function to validate slug
@@ -61,24 +64,6 @@ const generateSitemap = async () => {
       }));
     
     dynamicUrls = [...dynamicUrls, ...validBlogUrls];
-    
-    // Fetch services if available
-    try {
-      const servicesResponse = await apiCaller('GET', '/services');
-      const serviceItems = servicesResponse.data || [];
-      
-      const validServiceUrls = serviceItems
-        .filter(item => isValidSlug(item.slug))
-        .map(item => ({
-          url: `/uslugi/${item.slug}`,
-          lastmod: item.updatedAt || item.date,
-          priority: '0.7'
-        }));
-      
-      dynamicUrls = [...dynamicUrls, ...validServiceUrls];
-    } catch (serviceError) {
-      console.log('Services not available for sitemap generation');
-    }
     
   } catch (error) {
     console.error('Error fetching dynamic content for sitemap:', error);
