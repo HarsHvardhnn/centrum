@@ -287,7 +287,13 @@ const PatientDetailsHeader = () => {
                 searchResults.map((item) => {
                   const p = item.patient;
                   const name = p?.name ?? "—";
-                  const idDisplay = p?.patientId ?? p?.govtId ?? item.patient_id ?? "—";
+                  const idDisplay = p?.patientId ?? item.patient_id ?? "—";
+                  const peselDisplay =
+                    p?.govtId ??
+                    p?.pesel ??
+                    p?.PESEL ??
+                    item?.registrationData?.pendingPesel ??
+                    "—";
                   return (
                     <button
                       key={item._id || item.id}
@@ -297,7 +303,9 @@ const PatientDetailsHeader = () => {
                       className="w-full text-left px-4 py-2.5 hover:bg-gray-100 border-b border-gray-100 last:border-b-0 first:rounded-t-lg last:rounded-b-lg"
                     >
                       <span className="font-medium text-gray-800 block truncate">{name}</span>
-                      <span className="text-xs text-gray-500 truncate block">ID: {idDisplay}</span>
+                      <span className="text-xs text-gray-500 truncate block">
+                        ID: {idDisplay} | PESEL: {peselDisplay}
+                      </span>
                     </button>
                   );
                 })

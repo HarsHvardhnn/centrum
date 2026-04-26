@@ -235,6 +235,7 @@ function LabAppointmentsContent({ clinic }) {
           source: data.source,
           consents: Array.isArray(data.consents) ? data.consents : [],
           patientData: data.patientData ?? null,
+          appointmentData: data.appointmentData ?? null,
         });
       } else {
         setConsentsError(data?.message || "Nie udało się pobrać zgód.");
@@ -1221,9 +1222,12 @@ function LabAppointmentsContent({ clinic }) {
                 const patientIdStr = isVisitOnly
                   ? "—"
                   : (appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "—");
+                const patientPeselStr = isVisitOnly
+                  ? (appointment.registrationData?.pesel ?? "—")
+                  : getPatientPesel(appointment.patient);
                 const idOrPeselLine = isVisitOnly
                   ? (appointment.registrationData?.pesel ? `PESEL: ${appointment.registrationData.pesel}` : "—") + ` | ${visitDateStr}`
-                  : `ID: ${patientIdStr} | ${visitDateStr}`;
+                  : `ID: ${patientIdStr} | PESEL: ${patientPeselStr} | ${visitDateStr}`;
                 const cardBorderBg =
                   isCancelledStatus
                     ? "border-l-4 border-l-red-500 bg-red-50/50"
@@ -1847,7 +1851,7 @@ function LabAppointmentsContent({ clinic }) {
         {/* Visit consents modal */}
         {showConsentsModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg max-w-lg w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
               <div className="flex justify-between items-center border-b px-4 py-3">
                 <h3 className="text-lg font-medium text-gray-900">Zgody wizyty</h3>
                 <button
@@ -1891,6 +1895,111 @@ function LabAppointmentsContent({ clinic }) {
                           <div><dt className="text-gray-500 inline">Data urodzenia: </dt><dd className="inline text-gray-900">{consentsData.patientData.dateOfBirth != null && String(consentsData.patientData.dateOfBirth).trim() !== "" ? (typeof consentsData.patientData.dateOfBirth === "string" && consentsData.patientData.dateOfBirth.match(/^\d{4}-\d{2}-\d{2}/) ? new Date(consentsData.patientData.dateOfBirth).toLocaleDateString("pl-PL") : consentsData.patientData.dateOfBirth) : "—"}</dd></div>
                           <div><dt className="text-gray-500 inline">PESEL / Nr dokumentu: </dt><dd className="inline text-gray-900">{consentsData.patientData.govtId != null && String(consentsData.patientData.govtId).trim() !== "" ? consentsData.patientData.govtId : "—"}</dd></div>
                         </dl>
+                      </div>
+                    )}
+                    {consentsData.appointmentData && (
+                      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                        <h4 className="text-sm font-medium text-gray-800 mb-2">Dane rezerwacji</h4>
+                        <dl className="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-sm">
+                          <div>
+                            <dt className="text-gray-500 inline">Status: </dt>
+                            <dd className="inline text-gray-900">{translateStatus(consentsData.appointmentData.status) || "—"}</dd>
+                          </div>
+                          <div>
+                            <dt className="text-gray-500 inline">Data: </dt>
+                            <dd className="inline text-gray-900">
+                              {consentsData.appointmentData.date
+                                ? new Date(consentsData.appointmentData.date).toLocaleDateString("pl-PL")
+                                : "—"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-gray-500 inline">Godzina: </dt>
+                            <dd className="inline text-gray-900">
+                              {consentsData.appointmentData.startTime || "—"} - {consentsData.appointmentData.endTime || "—"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-gray-500 inline">ID wizyty: </dt>
+                            <dd className="inline text-gray-900">{consentsData.appointmentData.visitId || consentsData.visitId || "—"}</dd>
+                          </div>
+                        </dl>
+
+                        {consentsData.appointmentData.reservation && (
+                          <div className="mt-3 pt-3 border-t border-blue-200">
+                            <h5 className="text-sm font-medium text-gray-800 mb-2">Szczegóły rezerwacji</h5>
+                            <dl className="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-sm">
+                              <div>
+                                <dt className="text-gray-500 inline">Utworzono przez: </dt>
+                                <dd className="inline text-gray-900">{consentsData.appointmentData.reservation.createdBy || "—"}</dd>
+                              </div>
+                              <div>
+                                <dt className="text-gray-500 inline">Utworzono: </dt>
+                                <dd className="inline text-gray-900">
+                                  {consentsData.appointmentData.reservation.createdAtDisplay ||
+                                    (consentsData.appointmentData.reservation.createdAt
+                                      ? new Date(consentsData.appointmentData.reservation.createdAt).toLocaleString("pl-PL")
+                                      : "—")}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt className="text-gray-500 inline">Przełożona: </dt>
+                                <dd className="inline text-gray-900">
+                                  {consentsData.appointmentData.reservation.wasRescheduled ? "Tak" : "Nie"}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt className="text-gray-500 inline">Ostatnio przełożył: </dt>
+                                <dd className="inline text-gray-900">{consentsData.appointmentData.reservation.latestRescheduledBy || "—"}</dd>
+                              </div>
+                              <div>
+                                <dt className="text-gray-500 inline">Ostatnie przełożenie: </dt>
+                                <dd className="inline text-gray-900">{consentsData.appointmentData.reservation.latestRescheduledAt || "—"}</dd>
+                              </div>
+                            </dl>
+
+                            {consentsData.appointmentData.reservation.summaryText && (
+                              <div className="mt-2 text-sm text-gray-700">
+                                <span className="font-medium">Podsumowanie: </span>
+                                {consentsData.appointmentData.reservation.summaryText}
+                              </div>
+                            )}
+
+                            {Array.isArray(consentsData.appointmentData.reservation.history) &&
+                              consentsData.appointmentData.reservation.history.length > 0 && (
+                                <div className="mt-3">
+                                  <h6 className="text-sm font-medium text-gray-800 mb-2">Historia zmian</h6>
+                                  <ul className="space-y-2">
+                                    {consentsData.appointmentData.reservation.history.map((h, idx) => (
+                                      <li key={`${h.at || idx}-${idx}`} className="text-xs bg-white border border-blue-100 rounded p-2 text-gray-700">
+                                        <div>
+                                          <span className="font-medium">Akcja:</span> {h.action || "—"} |{" "}
+                                          <span className="font-medium">Kto:</span> {h.by || "—"} |{" "}
+                                          <span className="font-medium">Kiedy:</span> {h.at || "—"}
+                                        </div>
+                                        <div className="mt-1">
+                                          <span className="font-medium">Z:</span>{" "}
+                                          {(h.previousDate ? new Date(h.previousDate).toLocaleDateString("pl-PL") : "—")} {h.previousStartTime || "—"}-{h.previousEndTime || "—"}
+                                          {" -> "}
+                                          <span className="font-medium">Na:</span>{" "}
+                                          {(h.newDate ? new Date(h.newDate).toLocaleDateString("pl-PL") : "—")} {h.newStartTime || "—"}-{h.newEndTime || "—"}
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                          </div>
+                        )}
+
+                        {consentsData.appointmentData.notes && (
+                          <div className="mt-3 pt-3 border-t border-blue-200">
+                            <h5 className="text-sm font-medium text-gray-800 mb-1">Notatka rezerwacji</h5>
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                              {consentsData.appointmentData.notes}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                     <div className="mb-4 text-sm text-gray-600">
