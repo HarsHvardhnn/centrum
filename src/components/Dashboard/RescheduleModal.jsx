@@ -24,32 +24,9 @@ const RescheduleModal = ({
   const [customStartTime, setCustomStartTime] = useState("");
   const [customEndTime, setCustomEndTime] = useState("");
   const [smsConsentAgreed, setSmsConsentAgreed] = useState(false);
-  const [sendSMSNotification, setSendSMSNotification] = useState(false);
-  const [sendEmailNotification, setSendEmailNotification] = useState(false);
+  const [sendSmsReminder, setSendSmsReminder] = useState(false);
   const [smsConsentLoading, setSmsConsentLoading] = useState(false);
-  const [overrideConflicts, setOverrideConflicts] = useState(false);
-  const [isBackdated, setIsBackdated] = useState(false);
-  const [overrideConfirm, setOverrideConfirm] = useState({ open: false, type: null });
-
-  const toMinutes = (time) => {
-    if (!time || !/^\d{2}:\d{2}$/.test(time)) return null;
-    const [h, m] = time.split(":").map(Number);
-    return h * 60 + m;
-  };
-
-  const toHHMM = (minutesTotal) => {
-    const mins = ((minutesTotal % (24 * 60)) + 24 * 60) % (24 * 60);
-    const h = String(Math.floor(mins / 60)).padStart(2, "0");
-    const m = String(mins % 60).padStart(2, "0");
-    return `${h}:${m}`;
-  };
-
-  const getDefaultDurationMinutes = () => {
-    const start = toMinutes(appointment?.startTime || appointment?.time);
-    const end = toMinutes(appointment?.endTime);
-    if (start != null && end != null && end > start) return end - start;
-    return 15;
-  };
+  const [persistSmsConsent, setPersistSmsConsent] = useState(false);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -63,11 +40,8 @@ const RescheduleModal = ({
       setSelectionMode("slots"); // Reset to slots mode
       setCustomStartTime("");
       setCustomEndTime("");
-      setSendSMSNotification(false);
-      setSendEmailNotification(false);
-      setOverrideConflicts(false);
-      setIsBackdated(false);
-      setOverrideConfirm({ open: false, type: null });
+      setSendSmsReminder(false);
+      setPersistSmsConsent(false);
       
       // Fetch SMS consent status
       fetchSmsConsentStatus();
@@ -158,8 +132,8 @@ const RescheduleModal = ({
   };
 
   // Handle date selection
-  const handleDateChange = (eOrValue) => {
-    const newDate = typeof eOrValue === "string" ? eOrValue : eOrValue?.target?.value;
+  const handleDateChange = (e) => {
+    const newDate = e.target.value;
     setSelectedDate(newDate);
     setSelectedSlot(null);
     
@@ -174,23 +148,6 @@ const RescheduleModal = ({
     }
   };
 
-  const handleCalendarJump = (e) => {
-    const newDate = e.target.value;
-    if (!newDate) return;
-    const today = new Date();
-    const target = new Date(newDate);
-    const diffDays = Math.floor((target - today) / (1000 * 60 * 60 * 24));
-    const weekOffset = Math.max(0, Math.floor(diffDays / 7));
-    setCurrentWeek(weekOffset);
-    handleDateChange(newDate);
-  };
-
-  const hasValidEmail = (() => {
-    const raw = appointment?.patient?.email ?? appointment?.registrationData?.email ?? "";
-    const email = String(raw || "").trim();
-    return email.length > 3 && email.includes("@");
-  })();
-
   // Handle slot selection
   const handleSlotSelect = (slot) => {
     if (slot.available) {
@@ -202,13 +159,6 @@ const RescheduleModal = ({
   const handleCustomTimeChange = (type, value) => {
     if (type === "start") {
       setCustomStartTime(value);
-      // Auto-fill end time when receptionist enters only start time
-      if (value && !customEndTime) {
-        const startMins = toMinutes(value);
-        if (startMins != null) {
-          setCustomEndTime(toHHMM(startMins + getDefaultDurationMinutes()));
-        }
-      }
     } else {
       setCustomEndTime(value);
     }
@@ -216,24 +166,13 @@ const RescheduleModal = ({
 
   // Validate time range
   const validateTimeRange = () => {
-    if (!customStartTime) {
-      return "Proszę wybrać godzinę rozpoczęcia";
+    if (!customStartTime || !customEndTime) {
+      return "Proszę wybrać godzinę rozpoczęcia i zakończenia";
     }
-
-    const effectiveEndTime =
-      customEndTime ||
-      (() => {
-        const startMins = toMinutes(customStartTime);
-        return startMins == null ? "" : toHHMM(startMins + getDefaultDurationMinutes());
-      })();
-
-    if (!effectiveEndTime) {
-      return "Nie udało się wyliczyć godziny zakończenia";
-    }
-
+    
     const startTime = new Date(`2000-01-01T${customStartTime}`);
-    const endTime = new Date(`2000-01-01T${effectiveEndTime}`);
-
+    const endTime = new Date(`2000-01-01T${customEndTime}`);
+    
     if (startTime >= endTime) {
       return "Godzina rozpoczęcia musi być wcześniejsza niż godzina zakończenia";
     }
@@ -245,48 +184,6 @@ const RescheduleModal = ({
     }
     
     return null;
-  };
-
-  const buildRescheduleData = (overrides = {}) => {
-    const nextOverrideConflicts = overrides.overrideConflicts ?? overrideConflicts;
-    const nextIsBackdated = overrides.isBackdated ?? isBackdated;
-
-    if (selectionMode === "slots") {
-      return {
-        newDate: selectedDate,
-        newStartTime: selectedSlot.startTime,
-        newEndTime: selectedSlot.endTime,
-        consultationType,
-        selectionType: "slot",
-        sendSMSNotification,
-        sendEmailNotification,
-        overrideConflicts: nextOverrideConflicts,
-        isBackdated: nextIsBackdated,
-      };
-    }
-
-    return {
-      newDate: selectedDate,
-      newStartTime: customStartTime,
-      newEndTime:
-        customEndTime ||
-        (() => {
-          const startMins = toMinutes(customStartTime);
-          return startMins == null ? customEndTime : toHHMM(startMins + getDefaultDurationMinutes());
-        })(),
-      consultationType,
-      selectionType: "timeRange",
-      sendSMSNotification,
-      sendEmailNotification,
-      overrideConflicts: nextOverrideConflicts,
-      isBackdated: nextIsBackdated,
-    };
-  };
-
-  const submitReschedule = async (overrides = {}) => {
-    const appointmentId = appointment._id || appointment.id;
-    const rescheduleData = buildRescheduleData(overrides);
-    return appointmentHelper.rescheduleAppointment(appointmentId, rescheduleData);
   };
 
   // Handle reschedule submission
@@ -319,7 +216,37 @@ const RescheduleModal = ({
     try {
       setLoading(true);
       setError("");
-      const response = await submitReschedule();
+
+      let rescheduleData;
+      
+      if (selectionMode === "slots") {
+        rescheduleData = {
+          newDate: selectedDate,
+          newStartTime: selectedSlot.startTime,
+          newEndTime: selectedSlot.endTime,
+          consultationType: consultationType,
+          selectionType: "slot",
+          smsToBeSent: sendSmsReminder,
+          persistSmsConsent: persistSmsConsent || false
+        };
+      } else {
+        rescheduleData = {
+          newDate: selectedDate,
+          newStartTime: customStartTime,
+          newEndTime: customEndTime,
+          consultationType: consultationType,
+          selectionType: "timeRange",
+          smsToBeSent: sendSmsReminder,
+          persistSmsConsent: persistSmsConsent || false
+        };
+      }
+
+      // Use the correct appointment ID field
+      const appointmentId = appointment._id || appointment.id;
+      const response = await appointmentHelper.rescheduleAppointment(
+        appointmentId,
+        rescheduleData
+      );
 
       if (response.success) {
         toast.success("Wizyta została pomyślnie przełożona!");
@@ -335,20 +262,8 @@ const RescheduleModal = ({
       }
     } catch (error) {
       console.error("Error rescheduling appointment:", error);
-      const statusCode = error?.response?.status;
-      const errorMessage = error?.response?.data?.message || "Wystąpił błąd podczas przełożenia wizyty";
-
-      if (statusCode === 409 && !overrideConflicts) {
-        setOverrideConfirm({ open: true, type: "overrideConflicts" });
-      } else if (
-        statusCode === 400 &&
-        !isBackdated &&
-        /isBackdated to true|przeszł|past date\/time/i.test(errorMessage)
-      ) {
-        setOverrideConfirm({ open: true, type: "isBackdated" });
-      } else {
-        setError(errorMessage);
-      }
+      const errorMessage = error.response?.data?.message || "Wystąpił błąd podczas przełożenia wizyty";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -495,10 +410,10 @@ const RescheduleModal = ({
             </div>
           </div>
 
-          {/* Notification Options */}
+          {/* SMS Reminder Options */}
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <h4 className="text-sm font-medium text-blue-800 mb-3">
-              Powiadomienia o przełożeniu
+              Powiadomienia SMS
             </h4>
             
             {/* SMS Consent Status */}
@@ -525,76 +440,55 @@ const RescheduleModal = ({
               </p>
             </div>
 
-            {/* SMS YES/NO */}
-            <div className="mt-3 pt-3 border-t border-blue-300">
-              <p className="text-sm font-medium text-blue-900 mb-2">
+            {/* Send SMS Reminder Option */}
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="sendSmsReminder"
+                checked={sendSmsReminder}
+                onChange={(e) => setSendSmsReminder(e.target.checked)}
+                disabled={!smsConsentAgreed}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <label 
+                htmlFor="sendSmsReminder" 
+                className={`text-sm font-medium ${
+                  !smsConsentAgreed ? 'text-gray-400' : 'text-blue-800'
+                }`}
+              >
                 Wyślij powiadomienie SMS o przełożeniu wizyty
-              </p>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="radio"
-                    name="sendSMSNotification"
-                    checked={sendSMSNotification === true}
-                    onChange={() => setSendSMSNotification(true)}
-                    disabled={!smsConsentAgreed}
-                    className="h-4 w-4 text-blue-600 border-gray-300"
-                  />
-                  Tak
-                </label>
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="radio"
-                    name="sendSMSNotification"
-                    checked={sendSMSNotification === false}
-                    onChange={() => setSendSMSNotification(false)}
-                    className="h-4 w-4 text-blue-600 border-gray-300"
-                  />
-                  Nie
-                </label>
-              </div>
+              </label>
             </div>
-
+            
             {!smsConsentAgreed && (
               <p className="text-xs text-red-600 mt-2">
                 ⚠️ Nie można wysłać SMS - pacjent nie wyraził zgody na powiadomienia
               </p>
             )}
-
-            {/* Email YES/NO */}
-            <div className="mt-3 pt-3 border-t border-blue-300">
-              <p className="text-sm font-medium text-blue-900 mb-2">
-                Wyślij powiadomienie e-mail o przełożeniu wizyty
+            
+            {sendSmsReminder && smsConsentAgreed && (
+              <p className="text-xs text-green-600 mt-2">
+                ✓ Pacjent otrzyma SMS z informacją o nowym terminie wizyty
               </p>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 text-sm text-gray-700">
+            )}
+            
+            {/* Persist SMS Consent Checkbox - only show if smsConsentAgreed is true */}
+            {smsConsentAgreed && (
+              <div className="mt-4 pt-4 border-t border-blue-300">
+                <div className="flex items-center space-x-2">
                   <input
-                    type="radio"
-                    name="sendEmailNotification"
-                    checked={sendEmailNotification === true}
-                    onChange={() => setSendEmailNotification(true)}
-                    disabled={!hasValidEmail}
-                    className="h-4 w-4 text-blue-600 border-gray-300"
+                    type="checkbox"
+                    id="persistSmsConsent"
+                    checked={persistSmsConsent}
+                    onChange={(e) => setPersistSmsConsent(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  Tak
-                </label>
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="radio"
-                    name="sendEmailNotification"
-                    checked={sendEmailNotification === false}
-                    onChange={() => setSendEmailNotification(false)}
-                    className="h-4 w-4 text-blue-600 border-gray-300"
-                  />
-                  Nie
-                </label>
+                  <label htmlFor="persistSmsConsent" className="text-sm font-medium text-blue-800">
+                    Jeśli nie chcesz wysyłać SMS i e-maili dla tej wizyty, zaznacz to pole
+                  </label>
+                </div>
               </div>
-              {!hasValidEmail && (
-                <p className="text-xs text-red-600 mt-2">
-                  ⚠️ Brak poprawnego adresu e-mail - nie można wysłać powiadomienia e-mail
-                </p>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Selection Mode */}
@@ -638,41 +532,6 @@ const RescheduleModal = ({
             </div>
           </div>
 
-          {/* Override Options */}
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-            <h4 className="text-sm font-medium text-amber-800 mb-3">Opcje nadpisania ograniczeń</h4>
-            <div className="space-y-3">
-              <label className="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={overrideConflicts}
-                  onChange={(e) => setOverrideConflicts(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 text-amber-600 border-gray-300 rounded"
-                />
-                <span className="text-sm text-gray-700">
-                  <span className="font-medium">Nadpisz konflikty terminów</span>
-                  <span className="block text-xs text-gray-500">
-                    Pozwala zapisać wizytę mimo konfliktu (ten sam lekarz, data i godzina).
-                  </span>
-                </span>
-              </label>
-              <label className="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isBackdated}
-                  onChange={(e) => setIsBackdated(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 text-amber-600 border-gray-300 rounded"
-                />
-                <span className="text-sm text-gray-700">
-                  <span className="font-medium">Zezwól na datę/godzinę w przeszłości</span>
-                  <span className="block text-xs text-gray-500">
-                    Użyj tylko gdy potrzebujesz ręcznie odtworzyć historyczną wizytę.
-                  </span>
-                </span>
-              </label>
-            </div>
-          </div>
-
           {/* Date Selection */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
@@ -702,19 +561,6 @@ const RescheduleModal = ({
                 </button>
               </div>
             </div>
-            {selectionMode === "slots" && (
-              <div className="mb-3">
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Szybki wybór daty (kalendarz)
-                </label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={handleCalendarJump}
-                  className="w-full sm:w-auto p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
-                />
-              </div>
-            )}
             <div className="grid grid-cols-7 gap-2">
               {getCurrentWeekDays().map((date) => (
                 <button
@@ -797,7 +643,7 @@ const RescheduleModal = ({
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Godzina zakończenia (opcjonalnie)
+                        Godzina zakończenia
                       </label>
                       <input
                         type="time"
@@ -805,24 +651,14 @@ const RescheduleModal = ({
                         onChange={(e) => handleCustomTimeChange("end", e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                       />
-                      <p className="text-[11px] text-gray-500 mt-1">
-                        Gdy puste, ustawimy automatycznie czas zakończenia wg długości obecnej wizyty.
-                      </p>
                     </div>
                   </div>
-                  {customStartTime && (
+                  {customStartTime && customEndTime && (
                     <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <p className="text-sm text-blue-700">
                         <strong>Czas trwania:</strong> {(() => {
                           const start = new Date(`2000-01-01T${customStartTime}`);
-                          const effectiveEndTime =
-                            customEndTime ||
-                            (() => {
-                              const startMins = toMinutes(customStartTime);
-                              return startMins == null ? "" : toHHMM(startMins + getDefaultDurationMinutes());
-                            })();
-                          if (!effectiveEndTime) return "—";
-                          const end = new Date(`2000-01-01T${effectiveEndTime}`);
+                          const end = new Date(`2000-01-01T${customEndTime}`);
                           const duration = (end - start) / (1000 * 60);
                           const hours = Math.floor(duration / 60);
                           const minutes = duration % 60;
@@ -860,7 +696,7 @@ const RescheduleModal = ({
               disabled={
                 !selectedDate || 
                 (selectionMode === "slots" && !selectedSlot) || 
-                (selectionMode === "timeRange" && !customStartTime) || 
+                (selectionMode === "timeRange" && (!customStartTime || !customEndTime)) || 
                 loading
               }
               className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -880,65 +716,6 @@ const RescheduleModal = ({
           </div>
         </div>
       </div>
-
-      {overrideConfirm.open && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div className="p-5 border-b border-gray-200">
-              <h4 className="text-lg font-semibold text-gray-900">Potwierdzenie nadpisania</h4>
-            </div>
-            <div className="p-5">
-              <p className="text-sm text-gray-700">
-                {overrideConfirm.type === "overrideConflicts"
-                  ? "Wykryto konflikt terminu. Czy chcesz ponowić przełożenie z włączonym nadpisaniem konfliktów?"
-                  : "Wybrana data/godzina jest w przeszłości. Czy chcesz ponowić przełożenie z włączoną opcją daty historycznej?"}
-              </p>
-            </div>
-            <div className="p-5 pt-0 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setOverrideConfirm({ open: false, type: null })}
-                className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Anuluj
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  const type = overrideConfirm.type;
-                  setOverrideConfirm({ open: false, type: null });
-                  try {
-                    setLoading(true);
-                    setError("");
-                    const response = await submitReschedule(
-                      type === "overrideConflicts"
-                        ? { overrideConflicts: true }
-                        : { isBackdated: true }
-                    );
-                    if (response?.success) {
-                      if (type === "overrideConflicts") setOverrideConflicts(true);
-                      if (type === "isBackdated") setIsBackdated(true);
-                      toast.success("Wizyta została pomyślnie przełożona!");
-                      if (onRescheduleSuccess) onRescheduleSuccess(response.data);
-                      onClose();
-                    } else {
-                      setError(response?.message || "Nie udało się przełożyć wizyty");
-                    }
-                  } catch (retryError) {
-                    const msg = retryError?.response?.data?.message || "Nie udało się przełożyć wizyty";
-                    setError(msg);
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                className="px-4 py-2 text-sm text-white bg-amber-600 rounded-lg hover:bg-amber-700"
-              >
-                Potwierdź i ponów
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
