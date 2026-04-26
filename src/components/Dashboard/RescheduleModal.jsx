@@ -31,6 +31,26 @@ const RescheduleModal = ({
   const [isBackdated, setIsBackdated] = useState(false);
   const [overrideConfirm, setOverrideConfirm] = useState({ open: false, type: null });
 
+  const toMinutes = (time) => {
+    if (!time || !/^\d{2}:\d{2}$/.test(time)) return null;
+    const [h, m] = time.split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  const toHHMM = (minutesTotal) => {
+    const mins = ((minutesTotal % (24 * 60)) + 24 * 60) % (24 * 60);
+    const h = String(Math.floor(mins / 60)).padStart(2, "0");
+    const m = String(mins % 60).padStart(2, "0");
+    return `${h}:${m}`;
+  };
+
+  const getDefaultDurationMinutes = () => {
+    const start = toMinutes(appointment?.startTime || appointment?.time);
+    const end = toMinutes(appointment?.endTime);
+    if (start != null && end != null && end > start) return end - start;
+    return 15;
+  };
+
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen && appointment) {
@@ -182,6 +202,13 @@ const RescheduleModal = ({
   const handleCustomTimeChange = (type, value) => {
     if (type === "start") {
       setCustomStartTime(value);
+      // Auto-fill end time when receptionist enters only start time
+      if (value && !customEndTime) {
+        const startMins = toMinutes(value);
+        if (startMins != null) {
+          setCustomEndTime(toHHMM(startMins + getDefaultDurationMinutes()));
+        }
+      }
     } else {
       setCustomEndTime(value);
     }
@@ -189,13 +216,24 @@ const RescheduleModal = ({
 
   // Validate time range
   const validateTimeRange = () => {
-    if (!customStartTime || !customEndTime) {
-      return "Proszę wybrać godzinę rozpoczęcia i zakończenia";
+    if (!customStartTime) {
+      return "Proszę wybrać godzinę rozpoczęcia";
     }
-    
+
+    const effectiveEndTime =
+      customEndTime ||
+      (() => {
+        const startMins = toMinutes(customStartTime);
+        return startMins == null ? "" : toHHMM(startMins + getDefaultDurationMinutes());
+      })();
+
+    if (!effectiveEndTime) {
+      return "Nie udało się wyliczyć godziny zakończenia";
+    }
+
     const startTime = new Date(`2000-01-01T${customStartTime}`);
-    const endTime = new Date(`2000-01-01T${customEndTime}`);
-    
+    const endTime = new Date(`2000-01-01T${effectiveEndTime}`);
+
     if (startTime >= endTime) {
       return "Godzina rozpoczęcia musi być wcześniejsza niż godzina zakończenia";
     }
@@ -230,7 +268,12 @@ const RescheduleModal = ({
     return {
       newDate: selectedDate,
       newStartTime: customStartTime,
-      newEndTime: customEndTime,
+      newEndTime:
+        customEndTime ||
+        (() => {
+          const startMins = toMinutes(customStartTime);
+          return startMins == null ? customEndTime : toHHMM(startMins + getDefaultDurationMinutes());
+        })(),
       consultationType,
       selectionType: "timeRange",
       sendSMSNotification,
@@ -754,7 +797,7 @@ const RescheduleModal = ({
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">
-                        Godzina zakończenia
+                        Godzina zakończenia (opcjonalnie)
                       </label>
                       <input
                         type="time"
@@ -762,14 +805,24 @@ const RescheduleModal = ({
                         onChange={(e) => handleCustomTimeChange("end", e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                       />
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        Gdy puste, ustawimy automatycznie czas zakończenia wg długości obecnej wizyty.
+                      </p>
                     </div>
                   </div>
-                  {customStartTime && customEndTime && (
+                  {customStartTime && (
                     <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <p className="text-sm text-blue-700">
                         <strong>Czas trwania:</strong> {(() => {
                           const start = new Date(`2000-01-01T${customStartTime}`);
-                          const end = new Date(`2000-01-01T${customEndTime}`);
+                          const effectiveEndTime =
+                            customEndTime ||
+                            (() => {
+                              const startMins = toMinutes(customStartTime);
+                              return startMins == null ? "" : toHHMM(startMins + getDefaultDurationMinutes());
+                            })();
+                          if (!effectiveEndTime) return "—";
+                          const end = new Date(`2000-01-01T${effectiveEndTime}`);
                           const duration = (end - start) / (1000 * 60);
                           const hours = Math.floor(duration / 60);
                           const minutes = duration % 60;
@@ -807,7 +860,7 @@ const RescheduleModal = ({
               disabled={
                 !selectedDate || 
                 (selectionMode === "slots" && !selectedSlot) || 
-                (selectionMode === "timeRange" && (!customStartTime || !customEndTime)) || 
+                (selectionMode === "timeRange" && !customStartTime) || 
                 loading
               }
               className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
