@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Calendar, Clock, User, AlertCircle, CheckCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiCaller } from "../../utils/axiosInstance";
 import appointmentHelper from "../../helpers/appointmentHelper";
+import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 import { toast } from "sonner";
 
 const RescheduleModal = ({ 
@@ -30,6 +31,9 @@ const RescheduleModal = ({
   const [overrideConflicts, setOverrideConflicts] = useState(false);
   const [isBackdated, setIsBackdated] = useState(false);
   const [overrideConfirm, setOverrideConfirm] = useState({ open: false, type: null });
+  const [doctors, setDoctors] = useState([]);
+  const [doctorsLoading, setDoctorsLoading] = useState(false);
+  const [selectedDoctorId, setSelectedDoctorId] = useState("");
 
   const toMinutes = (time) => {
     if (!time || !/^\d{2}:\d{2}$/.test(time)) return null;
@@ -68,9 +72,11 @@ const RescheduleModal = ({
       setOverrideConflicts(false);
       setIsBackdated(false);
       setOverrideConfirm({ open: false, type: null });
+      setSelectedDoctorId(getDoctorId() || "");
       
       // Fetch SMS consent status
       fetchSmsConsentStatus();
+      fetchDoctorsList();
       
       // Debug logging
       console.log("RescheduleModal opened with appointment:", appointment);
@@ -137,6 +143,23 @@ const RescheduleModal = ({
     }
   };
 
+  const fetchDoctorsList = async () => {
+    try {
+      setDoctorsLoading(true);
+      const res = await doctorStatsHelper.getDoctorsList();
+      if (res?.success) {
+        setDoctors(Array.isArray(res.data) ? res.data : []);
+      } else {
+        setDoctors([]);
+      }
+    } catch (e) {
+      console.error("Error fetching doctors list in reschedule modal:", e);
+      setDoctors([]);
+    } finally {
+      setDoctorsLoading(false);
+    }
+  };
+
   // Get doctor ID: prefer prop (e.g. from doctor's page URL), then from appointment data
   const getDoctorId = () => {
     if (doctorIdProp) return doctorIdProp;
@@ -157,13 +180,33 @@ const RescheduleModal = ({
     return fromAppointment ?? null;
   };
 
+  const currentDoctorId = getDoctorId();
+  const currentDoctorName =
+    appointment?.doctor?.name ||
+    appointment?.doctorName ||
+    "Nieznany lekarz";
+  const currentPatientName = (() => {
+    const p = appointment?.patient;
+    if (!p && appointment?.registrationData?.name) return appointment.registrationData.name;
+    if (!p) return "N/A";
+    if (typeof p?.name === "string" && p.name.trim()) return p.name.trim();
+    if (typeof p?.name === "object") {
+      const full = [p.name?.first, p.name?.last].filter(Boolean).join(" ").trim();
+      if (full) return full;
+    }
+    const flat = [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+    if (flat) return flat;
+    if (appointment?.registrationData?.name) return appointment.registrationData.name;
+    return "N/A";
+  })();
+
   // Handle date selection
   const handleDateChange = (eOrValue) => {
     const newDate = typeof eOrValue === "string" ? eOrValue : eOrValue?.target?.value;
     setSelectedDate(newDate);
     setSelectedSlot(null);
     
-    const doctorId = getDoctorId();
+    const doctorId = selectedDoctorId || getDoctorId();
     if (newDate && doctorId) {
       fetchAvailableSlots(doctorId, newDate);
     } else {
@@ -260,6 +303,7 @@ const RescheduleModal = ({
         selectionType: "slot",
         sendSMSNotification,
         sendEmailNotification,
+        newDoctorId: selectedDoctorId || getDoctorId(),
         overrideConflicts: nextOverrideConflicts,
         isBackdated: nextIsBackdated,
       };
@@ -278,6 +322,7 @@ const RescheduleModal = ({
       selectionType: "timeRange",
       sendSMSNotification,
       sendEmailNotification,
+      newDoctorId: selectedDoctorId || getDoctorId(),
       overrideConflicts: nextOverrideConflicts,
       isBackdated: nextIsBackdated,
     };
@@ -310,7 +355,7 @@ const RescheduleModal = ({
       }
     }
 
-    const doctorId = getDoctorId();
+    const doctorId = selectedDoctorId || getDoctorId();
     if (!doctorId) {
       setError("Nie można znaleźć ID lekarza dla tej wizyty");
       return;
@@ -444,7 +489,7 @@ const RescheduleModal = ({
             <div className="flex items-center gap-3 mb-2">
               <User className="w-4 h-4 text-gray-500" />
               <span className="font-medium text-gray-900">
-                {appointment.patient?.name || appointment.name || "N/A"}
+                {currentPatientName}
               </span>
             </div>
             <div className="flex items-center gap-3 mb-2">
@@ -457,6 +502,12 @@ const RescheduleModal = ({
               <Clock className="w-4 h-4 text-gray-500" />
               <span className="text-gray-700">
                 {appointment.startTime || appointment.time || "N/A"}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 mt-2">
+              <User className="w-4 h-4 text-gray-500" />
+              <span className="text-gray-700">
+                Lekarz: {currentDoctorName}
               </span>
             </div>
           </div>
@@ -493,6 +544,45 @@ const RescheduleModal = ({
                 <span className="text-sm">Online</span>
               </label>
             </div>
+          </div>
+
+          {/* Doctor Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Lekarz prowadzący po przełożeniu
+            </label>
+            <select
+              value={selectedDoctorId}
+              onChange={(e) => {
+                const nextDoctorId = e.target.value;
+                setSelectedDoctorId(nextDoctorId);
+                setSelectedSlot(null);
+                setAvailableSlots([]);
+                if (selectedDate && nextDoctorId) {
+                  fetchAvailableSlots(nextDoctorId, selectedDate);
+                }
+              }}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            >
+              {!selectedDoctorId && <option value="">Wybierz lekarza</option>}
+              {currentDoctorId && !doctors.some((d) => (d._id || d.id) === currentDoctorId) && (
+                <option value={currentDoctorId}>
+                  {currentDoctorName} (obecny)
+                </option>
+              )}
+              {doctorsLoading ? (
+                <option value="">Ładowanie lekarzy...</option>
+              ) : (
+                doctors.map((d) => (
+                  <option key={d._id || d.id} value={d._id || d.id}>
+                    {d.name || d.fullName || "Lekarz"}
+                  </option>
+                ))
+              )}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Możesz przełożyć wizytę do innego lekarza. Dostępne terminy są liczone dla wybranego lekarza.
+            </p>
           </div>
 
           {/* Notification Options */}
@@ -702,19 +792,17 @@ const RescheduleModal = ({
                 </button>
               </div>
             </div>
-            {selectionMode === "slots" && (
-              <div className="mb-3">
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Szybki wybór daty (kalendarz)
-                </label>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={handleCalendarJump}
-                  className="w-full sm:w-auto p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
-                />
-              </div>
-            )}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Szybki wybór daty (kalendarz)
+              </label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={handleCalendarJump}
+                className="w-full sm:w-auto p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
+              />
+            </div>
             <div className="grid grid-cols-7 gap-2">
               {getCurrentWeekDays().map((date) => (
                 <button

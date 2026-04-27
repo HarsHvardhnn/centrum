@@ -1387,7 +1387,7 @@ function LabAppointmentsContent({ clinic }) {
                                 </DropdownMenu.Item>
                               )}
                               <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => fetchVisitConsents(appointment.id)}>
-                                <FileText size={16} className="mr-2" /> Zobacz zgody
+                                <FileText size={16} className="mr-2" /> Zobacz szczegóły rezerwacji
                               </DropdownMenu.Item>
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${encodeURIComponent("/klinika")}`); }}>
@@ -1530,7 +1530,7 @@ function LabAppointmentsContent({ clinic }) {
                                 </DropdownMenu.Item>
                               )}
                               <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => fetchVisitConsents(appointment.id)}>
-                                <FileText size={16} className="mr-2" /> Zobacz zgody
+                                <FileText size={16} className="mr-2" /> Zobacz szczegóły rezerwacji
                               </DropdownMenu.Item>
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${encodeURIComponent("/pacjenci")}`); }}>
@@ -1977,6 +1977,14 @@ function LabAppointmentsContent({ clinic }) {
                                           <span className="font-medium">Kto:</span> {h.by || "—"} |{" "}
                                           <span className="font-medium">Kiedy:</span> {h.at || "—"}
                                         </div>
+                                        {(h.previousDoctor || h.newDoctor) && (
+                                          <div className="mt-1">
+                                            <span className="font-medium">Lekarz:</span>{" "}
+                                            {(h.previousDoctor?.name || "Nieznany")}
+                                            {" -> "}
+                                            {(h.newDoctor?.name || "Nieznany")}
+                                          </div>
+                                        )}
                                         <div className="mt-1">
                                           <span className="font-medium">Z:</span>{" "}
                                           {(h.previousDate ? new Date(h.previousDate).toLocaleDateString("pl-PL") : "—")} {h.previousStartTime || "—"}-{h.previousEndTime || "—"}
