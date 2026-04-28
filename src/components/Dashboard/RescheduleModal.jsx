@@ -871,6 +871,22 @@ const RescheduleModal = ({
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Wybierz własny zakres czasu
                   </label>
+                  <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isBackdated}
+                        onChange={(e) => setIsBackdated(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 text-amber-600 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-700">
+                        <span className="font-medium">Pozwól przełożyć na datę/godzinę z przeszłości</span>
+                        <span className="block text-xs text-gray-500">
+                          Włącz tę opcję, gdy ustawiasz ręczny zakres czasu dla wizyty historycznej.
+                        </span>
+                      </span>
+                    </label>
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">
