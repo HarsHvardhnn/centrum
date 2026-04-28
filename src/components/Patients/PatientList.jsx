@@ -234,6 +234,7 @@ function LabAppointmentsContent({ clinic }) {
           visitId: data.visitId,
           source: data.source,
           consents: Array.isArray(data.consents) ? data.consents : [],
+          bookingConsentsAtBooking: Array.isArray(data.bookingConsentsAtBooking) ? data.bookingConsentsAtBooking : [],
           patientData: data.patientData ?? null,
           appointmentData: data.appointmentData ?? null,
         });
@@ -908,6 +909,15 @@ function LabAppointmentsContent({ clinic }) {
     : "Wszystkie wizyty";
 
   const getPatientPesel = (p) => p?.govtId || p?.pesel || p?.PESEL || "—";
+
+  const localizeReservationSummary = (summary) => {
+    if (summary == null) return "";
+    return String(summary)
+      .replace(/Created by:/gi, "Utworzono przez:")
+      .replace(/rescheduled by:/gi, "Przełożono przez:")
+      .replace(/Reception/gi, "Recepcja")
+      .replace(/Online/gi, "Online");
+  };
   const getPhoneDisplay = (value) => {
     const v = value ?? "";
     const s = typeof v === "string" ? v.trim() : String(v).trim();
@@ -1389,7 +1399,7 @@ function LabAppointmentsContent({ clinic }) {
                                 </DropdownMenu.Item>
                               )}
                               <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => fetchVisitConsents(appointment.id)}>
-                                <FileText size={16} className="mr-2" /> Zobacz zgody
+                                <FileText size={16} className="mr-2" /> Zobacz szczegóły rezerwacji
                               </DropdownMenu.Item>
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${encodeURIComponent("/klinika")}`); }}>
@@ -1532,7 +1542,7 @@ function LabAppointmentsContent({ clinic }) {
                                 </DropdownMenu.Item>
                               )}
                               <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => fetchVisitConsents(appointment.id)}>
-                                <FileText size={16} className="mr-2" /> Zobacz zgody
+                                <FileText size={16} className="mr-2" /> Zobacz szczegóły rezerwacji
                               </DropdownMenu.Item>
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${encodeURIComponent("/pacjenci")}`); }}>
@@ -1855,7 +1865,7 @@ function LabAppointmentsContent({ clinic }) {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
               <div className="flex justify-between items-center border-b px-4 py-3">
-                <h3 className="text-lg font-medium text-gray-900">Zgody wizyty</h3>
+                <h3 className="text-lg font-medium text-gray-900">Zobacz szczegóły rezerwacji</h3>
                 <button
                   type="button"
                   onClick={() => {
@@ -1963,7 +1973,7 @@ function LabAppointmentsContent({ clinic }) {
                             {consentsData.appointmentData.reservation.summaryText && (
                               <div className="mt-2 text-sm text-gray-700">
                                 <span className="font-medium">Podsumowanie: </span>
-                                {consentsData.appointmentData.reservation.summaryText}
+                                {localizeReservationSummary(consentsData.appointmentData.reservation.summaryText)}
                               </div>
                             )}
 
@@ -1979,6 +1989,14 @@ function LabAppointmentsContent({ clinic }) {
                                           <span className="font-medium">Kto:</span> {h.by || "—"} |{" "}
                                           <span className="font-medium">Kiedy:</span> {h.at || "—"}
                                         </div>
+                                        {(h.previousDoctor || h.newDoctor) && (
+                                          <div className="mt-1">
+                                            <span className="font-medium">Lekarz:</span>{" "}
+                                            {(h.previousDoctor?.name || "Nieznany")}
+                                            {" -> "}
+                                            {(h.newDoctor?.name || "Nieznany")}
+                                          </div>
+                                        )}
                                         <div className="mt-1">
                                           <span className="font-medium">Z:</span>{" "}
                                           {(h.previousDate ? new Date(h.previousDate).toLocaleDateString("pl-PL") : "—")} {h.previousStartTime || "—"}-{h.previousEndTime || "—"}
@@ -2014,6 +2032,37 @@ function LabAppointmentsContent({ clinic }) {
                             : consentsData.source}
                       </span>
                     </div>
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-800 mb-2">
+                        Zgody w momencie rezerwacji
+                      </h4>
+                      {Array.isArray(consentsData.bookingConsentsAtBooking) &&
+                      consentsData.bookingConsentsAtBooking.length > 0 ? (
+                        <ul className="space-y-2">
+                          {consentsData.bookingConsentsAtBooking.map((c) => (
+                            <li
+                              key={`booking-${c.id ?? c.text}`}
+                              className="flex items-start gap-2 p-3 bg-gray-50 rounded-md border border-gray-100"
+                            >
+                              <span
+                                className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded flex items-center justify-center text-xs font-medium ${
+                                  c.agreed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {c.agreed ? "Tak" : "Nie"}
+                              </span>
+                              <span className="text-sm text-gray-700">{c.text}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-gray-500">Brak zapisanych zgód w momencie rezerwacji.</p>
+                      )}
+                    </div>
+                    <div className="mb-4">
+                      <h4 className="text-sm font-medium text-gray-800 mb-2">
+                        Aktualne zgody
+                      </h4>
                     {consentsData.consents.length === 0 ? (
                       <p className="text-gray-500">Brak zapisanych zgód.</p>
                     ) : (
@@ -2035,6 +2084,7 @@ function LabAppointmentsContent({ clinic }) {
                         ))}
                       </ul>
                     )}
+                    </div>
                   </>
                 )}
               </div>
@@ -2217,7 +2267,7 @@ function LabAppointmentsContent({ clinic }) {
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{status.label}</span>
                           <span className={`px-2 py-1 text-xs rounded-full ${status.color}`}>
-                            {status.value}
+                            {translateStatus(status.value)}
                           </span>
                         </div>
                       </button>
