@@ -1235,11 +1235,17 @@ function LabAppointmentsContent({ clinic }) {
                 const patientPeselStr = isVisitOnly
                   ? (appointment.registrationData?.pesel ?? "—")
                   : getPatientPesel(appointment.patient);
+                const hasPeselValue =
+                  patientPeselStr != null &&
+                  String(patientPeselStr).trim() !== "" &&
+                  String(patientPeselStr).trim() !== "—";
                 const idOrPeselLine = isVisitOnly
                   ? (appointment.registrationData?.pesel ? `PESEL: ${appointment.registrationData.pesel}` : "—") + ` | ${visitDateStr}`
                   : (user?.role === "doctor"
                     ? `ID: ${patientIdStr} | ${visitDateStr}`
-                    : `ID: ${patientIdStr} | PESEL: ${patientPeselStr} | ${visitDateStr}`);
+                    : hasPeselValue
+                      ? `ID: ${patientIdStr} | PESEL: ${patientPeselStr} | ${visitDateStr}`
+                      : `ID: ${patientIdStr} | ${visitDateStr}`);
                 const cardBorderBg =
                   isCancelledStatus
                     ? "border-l-4 border-l-red-500 bg-red-50/50"
