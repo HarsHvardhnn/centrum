@@ -34,6 +34,9 @@ const RescheduleModal = ({
   const [doctors, setDoctors] = useState([]);
   const [doctorsLoading, setDoctorsLoading] = useState(false);
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
+  const [visitTypeOptions, setVisitTypeOptions] = useState([]);
+  const [visitTypesLoading, setVisitTypesLoading] = useState(false);
+  const [selectedVisitType, setSelectedVisitType] = useState("");
 
   const toMinutes = (time) => {
     if (!time || !/^\d{2}:\d{2}$/.test(time)) return null;
@@ -73,10 +76,17 @@ const RescheduleModal = ({
       setIsBackdated(false);
       setOverrideConfirm({ open: false, type: null });
       setSelectedDoctorId(getDoctorId() || "");
+      setSelectedVisitType(
+        appointment?.metadata?.visitType ||
+        appointment?.visitType ||
+        appointment?.visitReason ||
+        ""
+      );
       
       // Fetch SMS consent status
       fetchSmsConsentStatus();
       fetchDoctorsList();
+      fetchVisitTypeOptions();
       
       // Debug logging
       console.log("RescheduleModal opened with appointment:", appointment);
@@ -157,6 +167,27 @@ const RescheduleModal = ({
       setDoctors([]);
     } finally {
       setDoctorsLoading(false);
+    }
+  };
+
+  const fetchVisitTypeOptions = async () => {
+    try {
+      setVisitTypesLoading(true);
+      const res = await appointmentHelper.getVisitReasons();
+      const categories = res?.data?.categories ?? res?.categories ?? [];
+      const opts = [];
+      categories.forEach((cat) => {
+        (cat?.types ?? []).forEach((t) => {
+          const label = t?.displayName;
+          if (label && !opts.includes(label)) opts.push(label);
+        });
+      });
+      setVisitTypeOptions(opts);
+    } catch (e) {
+      console.error("Error fetching visit type options:", e);
+      setVisitTypeOptions([]);
+    } finally {
+      setVisitTypesLoading(false);
     }
   };
 
@@ -304,6 +335,7 @@ const RescheduleModal = ({
         sendSMSNotification,
         sendEmailNotification,
         newDoctorId: selectedDoctorId || getDoctorId(),
+        ...(selectedVisitType ? { visitType: selectedVisitType } : {}),
         overrideConflicts: nextOverrideConflicts,
         isBackdated: nextIsBackdated,
       };
@@ -323,6 +355,7 @@ const RescheduleModal = ({
       sendSMSNotification,
       sendEmailNotification,
       newDoctorId: selectedDoctorId || getDoctorId(),
+      ...(selectedVisitType ? { visitType: selectedVisitType } : {}),
       overrideConflicts: nextOverrideConflicts,
       isBackdated: nextIsBackdated,
     };
@@ -472,6 +505,7 @@ const RescheduleModal = ({
               </p>
             </div>
           </div>
+
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -582,6 +616,30 @@ const RescheduleModal = ({
             </select>
             <p className="text-xs text-gray-500 mt-1">
               Możesz przełożyć wizytę do innego lekarza. Dostępne terminy są liczone dla wybranego lekarza.
+            </p>
+          </div>
+
+          {/* Visit Type Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Typ wizyty
+            </label>
+            <select
+              value={selectedVisitType}
+              onChange={(e) => setSelectedVisitType(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            >
+              <option value="">
+                {visitTypesLoading ? "Ładowanie typów wizyt..." : "Wybierz typ wizyty (opcjonalnie)"}
+              </option>
+              {visitTypeOptions.map((vt) => (
+                <option key={vt} value={vt}>
+                  {vt}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Wybrany typ zostanie zapisany podczas przełożenia wizyty.
             </p>
           </div>
 
@@ -871,22 +929,6 @@ const RescheduleModal = ({
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Wybierz własny zakres czasu
                   </label>
-                  <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <label className="flex items-start gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isBackdated}
-                        onChange={(e) => setIsBackdated(e.target.checked)}
-                        className="mt-0.5 h-4 w-4 text-amber-600 border-gray-300 rounded"
-                      />
-                      <span className="text-sm text-gray-700">
-                        <span className="font-medium">Pozwól przełożyć na datę/godzinę z przeszłości</span>
-                        <span className="block text-xs text-gray-500">
-                          Włącz tę opcję, gdy ustawiasz ręczny zakres czasu dla wizyty historycznej.
-                        </span>
-                      </span>
-                    </label>
-                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">
