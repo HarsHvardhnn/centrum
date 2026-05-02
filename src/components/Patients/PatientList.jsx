@@ -908,7 +908,30 @@ function LabAppointmentsContent({ clinic }) {
     ? `Wizyty z dnia ${new Date(dateRange.startDate).toLocaleDateString("pl-PL")}`
     : "Wszystkie wizyty";
 
-  const getPatientPesel = (p) => p?.govtId || p?.pesel || p?.PESEL || "—";
+  /** Empty, whitespace, dash-only placeholders, and common “missing” tokens — not a real PESEL / document id. */
+  const isPlaceholderPeselValue = (val) => {
+    if (val == null) return true;
+    const s = String(val).trim();
+    if (!s) return true;
+    if (/^[\u002D\u2010-\u2015\u2212\uFE58\uFE63\uFF0D−]+$/.test(s)) return true;
+    const lower = s.toLowerCase();
+    if (lower === "n/a" || lower === "na" || lower === "brak" || lower === "null" || lower === "undefined") return true;
+    return false;
+  };
+
+  const getPatientPeselRaw = (p) => {
+    if (!p) return null;
+    const candidates = [p.govtId, p.pesel, p.PESEL, p.registrationData?.pendingPesel];
+    for (const c of candidates) {
+      if (c != null && !isPlaceholderPeselValue(c)) return c;
+    }
+    return null;
+  };
+
+  const getPatientPesel = (p) => {
+    const raw = getPatientPeselRaw(p);
+    return raw != null ? String(raw).trim() : "—";
+  };
 
   const localizeReservationSummary = (summary) => {
     if (summary == null) return "";
@@ -917,6 +940,15 @@ function LabAppointmentsContent({ clinic }) {
       .replace(/rescheduled by:/gi, "Przełożono przez:")
       .replace(/Reception/gi, "Recepcja")
       .replace(/Online/gi, "Online");
+  };
+
+  const localizeReservationAction = (action) => {
+    if (!action) return "—";
+    const a = String(action).toLowerCase();
+    if (a === "rescheduled") return "przełożono";
+    if (a === "created") return "utworzono";
+    if (a === "updated") return "zaktualizowano";
+    return action;
   };
   const getPhoneDisplay = (value) => {
     const v = value ?? "";
@@ -1232,20 +1264,20 @@ function LabAppointmentsContent({ clinic }) {
                 const patientIdStr = isVisitOnly
                   ? "—"
                   : (appointment.patient?.patientId ?? appointment.patient?.id ?? appointment.patient?._id ?? "—");
-                const patientPeselStr = isVisitOnly
-                  ? (appointment.registrationData?.pesel ?? "—")
-                  : getPatientPesel(appointment.patient);
-                const hasPeselValue =
-                  patientPeselStr != null &&
-                  String(patientPeselStr).trim() !== "" &&
-                  String(patientPeselStr).trim() !== "—";
+                const peselRaw = isVisitOnly
+                  ? appointment.registrationData?.pesel
+                  : getPatientPeselRaw(appointment.patient);
+                const hasPeselValue = !isPlaceholderPeselValue(peselRaw);
+                const patientPeselStr = hasPeselValue ? String(peselRaw).trim() : "";
                 const idOrPeselLine = isVisitOnly
-                  ? (appointment.registrationData?.pesel ? `PESEL: ${appointment.registrationData.pesel}` : "—") + ` | ${visitDateStr}`
-                  : (user?.role === "doctor"
+                  ? hasPeselValue
+                    ? `PESEL: ${patientPeselStr} | ${visitDateStr}`
+                    : visitDateStr
+                  : user?.role === "doctor"
                     ? `ID: ${patientIdStr} | ${visitDateStr}`
                     : hasPeselValue
                       ? `ID: ${patientIdStr} | PESEL: ${patientPeselStr} | ${visitDateStr}`
-                      : `ID: ${patientIdStr} | ${visitDateStr}`);
+                      : `ID: ${patientIdStr} | ${visitDateStr}`;
                 const cardBorderBg =
                   isCancelledStatus
                     ? "border-l-4 border-l-red-500 bg-red-50/50"
@@ -1967,7 +1999,7 @@ function LabAppointmentsContent({ clinic }) {
                                 </dd>
                               </div>
                               <div>
-                                <dt className="text-gray-500 inline">Ostatnio przełożył: </dt>
+                                <dt className="text-gray-500 inline">Przełożone przez: </dt>
                                 <dd className="inline text-gray-900">{consentsData.appointmentData.reservation.latestRescheduledBy || "—"}</dd>
                               </div>
                               <div>
@@ -1991,7 +2023,7 @@ function LabAppointmentsContent({ clinic }) {
                                     {consentsData.appointmentData.reservation.history.map((h, idx) => (
                                       <li key={`${h.at || idx}-${idx}`} className="text-xs bg-white border border-blue-100 rounded p-2 text-gray-700">
                                         <div>
-                                          <span className="font-medium">Akcja:</span> {h.action || "—"} |{" "}
+                                          <span className="font-medium">Akcja:</span> {localizeReservationAction(h.action)} |{" "}
                                           <span className="font-medium">Kto:</span> {h.by || "—"} |{" "}
                                           <span className="font-medium">Kiedy:</span> {h.at || "—"}
                                         </div>

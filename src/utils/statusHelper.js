@@ -78,6 +78,7 @@ export const getVisitModeStyle = (appointment) => {
  * - role "patient" + offline → "Konsultacja lekarska"
  * - receptionist/admin, no type (existing patient) → "Konsultacja lekarska"
  * - receptionist, first-time (no patient id) → "Konsultacja pierwszorazowa" (via visitReason)
+ * - literal "consultation" (API/legacy) → "Konsultacja lekarska"
  */
 export const getVisitTypeDisplayLabel = (appointment) => {
   const raw = appointment?.visitReason ?? appointment?.consultationType ?? appointment?.metadata?.visitType ?? "";
@@ -87,6 +88,7 @@ export const getVisitTypeDisplayLabel = (appointment) => {
 
   if (lower === "re-visit") return "Konsultacja lekarska";
   if (lower === "first-time") return "Konsultacja pierwszorazowa";
+  if (lower === "consultation") return "Konsultacja lekarska";
   if (role === "patient") return getVisitMode(appointment) === "online" ? "Konsultacja online" : "Konsultacja lekarska";
   if (!s) return "Konsultacja lekarska";
   return s;
