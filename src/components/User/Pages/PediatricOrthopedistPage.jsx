@@ -148,6 +148,19 @@ const SECTION9_FAQ = [
   },
 ];
 
+const faqStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: SECTION9_FAQ.map(({ q, a }) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: a,
+    },
+  })),
+};
+
 const PediatricOrthopedistPage = () => {
   const structuredData = {
     "@context": "https://schema.org",
@@ -252,6 +265,7 @@ const PediatricOrthopedistPage = () => {
       <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
       <script type="application/ld+json">{JSON.stringify(physicianStructuredData)}</script>
       <script type="application/ld+json">{JSON.stringify(proceduresGraphStructuredData)}</script>
+      <script type="application/ld+json">{JSON.stringify(faqStructuredData)}</script>
 
       <main className="min-h-screen bg-white">
         <section
