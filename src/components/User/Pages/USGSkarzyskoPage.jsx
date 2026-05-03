@@ -524,21 +524,23 @@ const USGSkarzyskoPage = () => {
             >
               Umów wizytę u doświadczonego Radiologa w Skarżysku-Kamiennej
             </h2>
-            <p className="text-white text-base sm:text-lg md:text-xl mb-8 sm:mb-10 max-w-2xl mx-auto">
-              USG w Skarżysku-Kamiennej - profesjonalna opieka i szybkie terminy
+            <p className="text-white/95 font-normal text-base sm:text-lg md:text-xl mb-8 sm:mb-10 max-w-2xl mx-auto">
+              USG w Skarżysku-Kamiennej – profesjonalna opieka i szybkie terminy
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center">
               <button
+                type="button"
                 onClick={() => window.location.href = APPOINTMENT_URL}
-                className="bg-white text-teal-700 font-semibold py-3 px-6 rounded-xl border-2 border-teal-600 hover:bg-gray-50 transition-colors text-base sm:text-lg"
+                className="bg-white text-[#008C8C] font-semibold py-3 px-8 rounded-lg shadow-sm hover:bg-gray-50 transition-colors text-base sm:text-lg min-h-[48px]"
               >
                 Zarezerwuj termin
               </button>
               <button
+                type="button"
                 onClick={() => window.location.href = "tel:+48797127487"}
-                className="bg-teal-600 text-white font-semibold py-3 px-6 rounded-xl border-2 border-teal-600 hover:bg-teal-700 transition-colors flex items-center justify-center gap-2 text-base sm:text-lg"
+                className="bg-transparent text-white font-semibold py-3 px-8 rounded-lg border-2 border-white hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-base sm:text-lg min-h-[48px]"
               >
-                <FaPhone className="w-5 h-5 scale-x-[-1]" />
+                <FaPhone className="w-5 h-5 scale-x-[-1] text-white shrink-0" aria-hidden />
                 Zadzwoń
               </button>
             </div>

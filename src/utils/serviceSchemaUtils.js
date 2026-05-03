@@ -1,5 +1,5 @@
-import { generateServiceSlug } from "./slugUtils";
-import { cm7PostalAddressLd } from "../data/cm7PostalAddressLd";
+import { generateServiceSlug } from "./slugUtils.js";
+import { cm7PostalAddressLd } from "../data/cm7PostalAddressLd.js";
 
 export const CM7_SITE_URL = "https://centrummedyczne7.pl";
 

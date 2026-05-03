@@ -1,0 +1,1 @@
+const e=a=>({completed:"Zakończona",checkedIn:"W trakcie wizyty",cancelled:"Anulowana",booked:"Zarezerwowana",billed:"Rozliczona",no_appointment:"Brak wizyty","in-treatment":"W trakcie"})[a]||a;export{e as t};
