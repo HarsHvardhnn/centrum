@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Doctors from "../Doctors";
 import ContactSection from "../ContactSection";
 import { useParams } from "react-router-dom";
@@ -7,6 +7,7 @@ import PageHeader from "../PageHeader";
 import { useServices } from "../../../context/serviceContext";
 import { generateServiceSlug } from "../../../utils/slugUtils";
 import MetaTags from '../../UtilComponents/MetaTags';
+import { buildMedicalServiceDetailSchema } from "../../../utils/serviceSchemaUtils";
 
 const ServicesDetailPage = () => {
   const { service } = useParams();
@@ -64,6 +65,14 @@ const ServicesDetailPage = () => {
     shortDescription: "Szczegółowy opis usługi medycznej w Centrum Medycznym 7.",
   };
 
+  const medicalServiceSchema = useMemo(
+    () =>
+      currentService && service
+        ? buildMedicalServiceDetailSchema(currentService, service)
+        : null,
+    [currentService, service]
+  );
+
   return (
     <>
       <MetaTags 
@@ -71,6 +80,11 @@ const ServicesDetailPage = () => {
         description={serviceData.shortDescription || serviceData.description || "Szczegółowy opis usługi medycznej w Centrum Medycznym 7."}
         path={`/uslugi/${service}`}
       />
+      {medicalServiceSchema && (
+        <script type="application/ld+json">
+          {JSON.stringify(medicalServiceSchema)}
+        </script>
+      )}
       <PageHeader
         title={serviceData.title}
         path="Strona główna / Usługi"

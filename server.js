@@ -4,6 +4,7 @@ import fs from 'fs';
 import axios from 'axios';
 import { fileURLToPath } from 'url';
 import { cm7PostalAddressLd } from './src/data/cm7PostalAddressLd.js';
+import { parseServicePriceForSchema } from './src/utils/serviceSchemaUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -574,12 +575,14 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     };
     structuredData = `<script type="application/ld+json">${JSON.stringify(orthoChildWebPage)}</script>`;
   } else if (path.startsWith('/uslugi/') && dynamicData && typeof dynamicData === 'object' && dynamicData.title) {
-    // Service-specific structured data to reinforce meta description
+    // Service-specific structured data to reinforce meta description (matches client ServicesDetailPage)
+    const priceValue = parseServicePriceForSchema(dynamicData.price);
     const serviceStructuredData = {
       "@context": "https://schema.org",
       "@type": "MedicalService",
       "name": dynamicData.title,
       "description": description,
+      "url": `${BASE_URL}${normalizedPath}`,
       "provider": {
         "@type": "MedicalOrganization",
         "name": "Centrum Medyczne 7",
@@ -593,6 +596,13 @@ const generateSEOHTML = async (path, dynamicData = null) => {
         "name": "Skarżysko-Kamienna"
       }
     };
+    if (priceValue != null) {
+      serviceStructuredData.offers = {
+        "@type": "Offer",
+        "price": String(priceValue),
+        "priceCurrency": "PLN"
+      };
+    }
     structuredData = `<script type="application/ld+json">${JSON.stringify(serviceStructuredData)}</script>`;
   } else {
     // Generic MedicalOrganization for other pages

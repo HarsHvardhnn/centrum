@@ -1,14 +1,38 @@
 import React from "react";
 import MetaTags from '../../UtilComponents/MetaTags';
 import { FaStar, FaPhone, FaCalendar, FaExclamationTriangle, FaCheck, FaStethoscope, FaMapMarkerAlt, FaClock, FaHeartbeat } from "react-icons/fa";
+import { cm7PostalAddressLd } from '../../../data/cm7PostalAddressLd';
+
+const DIABETIC_FOOT_PATH = "/uslugi/leczenie-stopy-cukrzycowej";
 
 const DiabeticFootPage = () => {
+  const medicalServiceSchema = {
+    "@context": "https://schema.org",
+    "@type": "MedicalService",
+    "name": "Leczenie stopy cukrzycowej – poradnia chirurgiczna Skarżysko",
+    "description":
+      "Objawy stopy cukrzycowej? Umów wizytę u doświadczonego chirurga w Skarżysku-Kamiennej. Leczenie ran i powikłań cukrzycowych bez skierowania.",
+    "url": `https://centrummedyczne7.pl${DIABETIC_FOOT_PATH}`,
+    "provider": {
+      "@type": "MedicalOrganization",
+      "name": "Centrum Medyczne 7",
+      "url": "https://centrummedyczne7.pl",
+      "address": { ...cm7PostalAddressLd },
+    },
+    "areaServed": { "@type": "City", "name": "Skarżysko-Kamienna" },
+    "offers": {
+      "@type": "Offer",
+      "price": "500",
+      "priceCurrency": "PLN",
+    },
+  };
+
   return (
     <>
       <MetaTags 
         title="Leczenie stopy cukrzycowej – poradnia chirurgiczna Skarżysko"
         description="Objawy stopy cukrzycowej? Umów wizytę u doświadczonego chirurga w Skarżysku-Kamiennej. Leczenie ran i powikłań cukrzycowych bez skierowania."
-        path="/leczenie-stopy-cukrzycowej"
+        path={DIABETIC_FOOT_PATH}
         ogTitle="Leczenie stopy cukrzycowej – poradnia chirurgiczna Skarżysko"
         ogDescription="Objawy stopy cukrzycowej? Umów wizytę u doświadczonego chirurga w Skarżysku-Kamiennej. Leczenie ran i powikłań cukrzycowych bez skierowania."
         ogImage="/assets/static-assets/section1-newpage.png"
@@ -16,7 +40,8 @@ const DiabeticFootPage = () => {
         twitterDescription="Objawy stopy cukrzycowej? Umów wizytę u doświadczonego chirurga w Skarżysku-Kamiennej. Leczenie ran i powikłań cukrzycowych bez skierowania."
         twitterImage="/assets/static-assets/section1-newpage.png"
       />
-      
+      <script type="application/ld+json">{JSON.stringify(medicalServiceSchema)}</script>
+
       <main className="min-h-screen bg-white">
         {/* Hero Section - Section 1 */}
         <section className="bg-[#F7F9FA] pt-16 md:pt-28 lg:pt-32 pb-12 md:pb-16 lg:pb-20" aria-labelledby="hero-heading">
