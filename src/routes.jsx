@@ -32,6 +32,7 @@ const AlcoholImplantPage = React.lazy(() => import("./components/User/Pages/Alco
 const PediatricNeurologyPage = React.lazy(() => import("./components/User/Pages/PediatricNeurologyPage"));
 const DiabeticFootPage = React.lazy(() => import("./components/User/Pages/DiabeticFootPage"));
 const USGSkarzyskoPage = React.lazy(() => import("./components/User/Pages/USGSkarzyskoPage"));
+const EchoSercaPage = React.lazy(() => import("./components/User/Pages/EchoSercaPage"));
 const PediatricOrthopedistPage = React.lazy(() => import("./components/User/Pages/PediatricOrthopedistPage"));
 const MichalSzczubkowskiPage = React.lazy(() => import("./components/User/Pages/MichalSzczubkowskiPage"));
 
@@ -116,6 +117,7 @@ const routes = createBrowserRouter([
       { path: "uslugi/konsultacja-neurologiczna-dla-dzieci", element: <LazyRouteWrapper><PediatricNeurologyPage /></LazyRouteWrapper> },
       { path: "uslugi/leczenie-stopy-cukrzycowej", element: <LazyRouteWrapper><DiabeticFootPage /></LazyRouteWrapper> },
       { path: "uslugi/usg-skarzysko-kamienna", element: <LazyRouteWrapper><USGSkarzyskoPage /></LazyRouteWrapper> },
+      { path: "uslugi/echo-serca-skarzysko", element: <LazyRouteWrapper><EchoSercaPage /></LazyRouteWrapper> },
       { path: "ortopeda-dzieciecy-skarzysko", element: <LazyRouteWrapper><PediatricOrthopedistPage /></LazyRouteWrapper> },
       { path: "uslugi/ortopeda-dzieciecy-skarzysko", element: <Navigate to="/ortopeda-dzieciecy-skarzysko" replace /> },
       { path: "uslugi/:service", element: <LazyRouteWrapper><ServicesDetailPage /></LazyRouteWrapper> },

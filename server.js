@@ -319,6 +319,17 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       twitterTitle = 'USG Skarżysko-Kamienna – prywatnie, bez skierowania';
       twitterDescription = 'USG Skarżysko-Kamienna. USG tarczycy, trzustki, piersi, jamy brzusznej. Badania dla dzieci i dorosłych, bez skierowania, szybkie terminy.';
       break;
+    case '/uslugi/echo-serca-skarzysko':
+    case '/uslugi/echo-serca-skarzysko/':
+      title = 'Echo serca Skarżysko-Kamienna – USG serca (echokardiografia)';
+      description = 'Echo serca (USG serca) Skarżysko-Kamienna – badanie prywatne u kardiologa, bez skierowania. Umów wizytę online lub zadzwoń. Centrum Medyczne 7';
+      keywords = 'echo serca, usg serca, echokardiografia, kardiolog, skarżysko-kamienna, centrum medyczne 7';
+      ogImage = '/section1_new_service.png';
+      ogTitle = title;
+      ogDescription = description;
+      twitterTitle = title;
+      twitterDescription = description;
+      break;
     case '/ortopeda-dzieciecy-skarzysko':
     case '/ortopeda-dzieciecy-skarzysko/':
       title = 'Ortopeda dziecięcy Skarżysko – prywatnie, bez skierowania';
@@ -358,6 +369,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
           '/uslugi/konsultacja-neurologiczna-dla-dzieci',
           '/uslugi/leczenie-stopy-cukrzycowej',
           '/uslugi/usg-skarzysko-kamienna',
+          '/uslugi/echo-serca-skarzysko',
           '/ortopeda-dzieciecy-skarzysko',
           '/usg-skarzysko-kamienna'
         ];
@@ -689,7 +701,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     }).replace(/<\/script>/gi, '<\\/script>')}</script>
     
     <!-- React App CSS and JS will be injected here -->
-    <link rel="stylesheet" crossorigin href="/assets/index-BdDo8dHM.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-Cib4DM7Q.css">
 </head>
 <body>
     <!-- SEO content for crawlers: visible in DOM for snippet selection, not displayed on screen -->
@@ -703,7 +715,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-Bj06DynM.js"></script>
+    <script type="module" crossorigin src="/assets/index-C_IKLT-e.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
