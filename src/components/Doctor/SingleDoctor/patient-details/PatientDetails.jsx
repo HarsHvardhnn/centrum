@@ -50,6 +50,38 @@ function mergeConsultationVerificationFlags(consultationData, visitReasonVerifie
   };
 }
 
+/** Keep visit-type aliases in sync on patient details page.
+ * Source of truth: consultationType.
+ */
+function normalizeConsultationTypeAliases(consultationData) {
+  if (!consultationData || typeof consultationData !== "object") return consultationData;
+  const consultationType =
+    consultationData.consultationType ??
+    consultationData.visitReason ??
+    consultationData.visitType ??
+    "";
+  return {
+    ...consultationData,
+    consultationType,
+    visitReason: consultationType,
+    visitType: consultationType,
+  };
+}
+
+/** Strip backend/internal fields we should never echo back in PUT /appointments/:id/details. */
+function sanitizeConsultationDataForApi(consultationData) {
+  if (!consultationData || typeof consultationData !== "object") return consultationData;
+  const normalized = normalizeConsultationTypeAliases(consultationData);
+  const cleaned = { ...normalized };
+
+  // Never send backup shadow fields back; they can override current values server-side.
+  Object.keys(cleaned).forEach((key) => {
+    if (key.startsWith("backup_")) delete cleaned[key];
+  });
+
+  return cleaned;
+}
+
 // Confirmation Modal Component
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   if (!isOpen) return null;
@@ -496,12 +528,12 @@ const PatientDetailsPage = () => {
       return;
     }
 
-    const cd = dataToSave.consultationData || consultationData;
+    const cd = sanitizeConsultationDataForApi(dataToSave.consultationData || consultationData);
     await appointmentHelper.updateAppointmentDetails(
       currentAppointmentId,
       {
         patientData: dataToSave.patientData || patientData,
-        consultationData: mergeConsultationVerificationFlags(cd, visitReasonVerified),
+          consultationData: mergeConsultationVerificationFlags(cd, visitReasonVerified),
         medications: dataToSave.medications || medications,
         tests: dataToSave.tests || tests,
         uploadedFiles: dataToSave.uploadedFiles || uploadedFiles,
@@ -667,7 +699,7 @@ const PatientDetailsPage = () => {
         const { consultation, medications: appointmentMedications, tests: appointmentTests, reports, patientData: appointmentPatientData, patient: appointmentPatient, notes, date: aptDate, startTime: aptStartTime, endTime: aptEndTime } = response.data;
         
         // Update consultation data with notes and appointment date/time
-        setConsultationData(prevConsultation => ({
+        setConsultationData(prevConsultation => normalizeConsultationTypeAliases({
           ...prevConsultation,
           ...consultation,
           notes: notes || "",
@@ -809,18 +841,33 @@ const PatientDetailsPage = () => {
     setVisitReasonVerified(false);
     setConsultationData((prev) => ({
       ...prev,
-      visitReason: newVisitReason,
       consultationType: newVisitReason,
+      visitReason: newVisitReason,
+      visitType: newVisitReason,
       // Verification is a separate step (API 1); selecting a type resets it locally.
       visitTypeVerified: false,
     }));
     setSelectedAppointment((prev) =>
-      prev ? { ...prev, visitReason: newVisitReason, visitTypeVerified: false } : null
+      prev
+        ? {
+            ...prev,
+            consultationType: newVisitReason,
+            visitReason: newVisitReason,
+            visitType: newVisitReason,
+            visitTypeVerified: false,
+          }
+        : null
     );
     setAppointments((prev) =>
       prev.map((apt) =>
         apt._id === currentAppointmentId
-          ? { ...apt, visitReason: newVisitReason, visitTypeVerified: false }
+          ? {
+              ...apt,
+              consultationType: newVisitReason,
+              visitReason: newVisitReason,
+              visitType: newVisitReason,
+              visitTypeVerified: false,
+            }
           : apt
       )
     );
@@ -938,7 +985,10 @@ const PatientDetailsPage = () => {
         currentAppointmentId,
         {
           patientData,
-          consultationData: mergeConsultationVerificationFlags(consultationData, visitReasonVerified),
+          consultationData: mergeConsultationVerificationFlags(
+            sanitizeConsultationDataForApi(consultationData),
+            visitReasonVerified
+          ),
           medications,
           tests,
           uploadedFiles,
@@ -1628,7 +1678,7 @@ const PatientDetailsPage = () => {
         onClose={() => setShowServiceModal(false)}
         onSave={handleSaveServices}
         patientId={id}
-        doctorUserId={visitDoctorUserId}
+        doctorUserId={user?.role === "doctor" ? visitDoctorUserId : null}
       />
       
       <ConfirmationModal

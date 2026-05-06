@@ -101,7 +101,7 @@ const settingsCards = [
       "Szablony wiadomości SMS, wysyłanie powiadomień oraz konfiguracja komunikacji z pacjentami",
     icon: MessageSquare,
     to: "/administracja/sms",
-    roles: ["admin"],
+    roles: ["admin", "receptionist"],
   },
   {
     id: "permanent-delete",

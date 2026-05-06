@@ -42,7 +42,14 @@ const VisitInfoHeader = ({
     : "—";
   const doctorName = stripDoctorTitle(doctorNameRaw) || "—";
   const status = appointment.status;
-  const visitType = consultationData?.visitReason || consultationData?.consultationType || appointment.visitReason || appointment.consultationType || "";
+  const visitType =
+    consultationData?.consultationType ||
+    consultationData?.visitReason ||
+    consultationData?.visitType ||
+    appointment.consultationType ||
+    appointment.visitReason ||
+    appointment.visitType ||
+    "";
   const effectiveVisitReasonVerified =
     visitReasonVerified ?? appointment.visitReasonVerified ?? appointment.visitTypeVerified ?? null;
 
@@ -68,7 +75,9 @@ const VisitInfoHeader = ({
     setSavingVisitType(true);
     try {
       await appointmentHelper.updateConsultation(appointmentId, {
+        consultationType: newReason,
         visitReason: newReason,
+        visitType: newReason,
       });
       onVisitTypeChange?.(newReason);
       toast.success("Rodzaj wizyty zaktualizowany");
