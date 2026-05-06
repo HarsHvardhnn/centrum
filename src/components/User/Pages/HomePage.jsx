@@ -98,8 +98,8 @@ const  HomePage = () => {
   return (
     <>
       <MetaTags 
-        title="Centrum Medyczne 7 – poradnie specjalistyczne świętokrzyskie"
-        description="Poradnie CM7: chirurg, proktolog, neurolog dziecięcy, kardiolog, radiolog.  Wizyty prywatne, bez skierowania. Skarżysko-Kamienna, woj. świętokrzyskie."
+        title="Centrum Medyczne 7 Skarżysko - Prywatna opieka medyczna"
+        description="Centrum Medyczne 7 Skarżysko (świętokrzyskie) – chirurg, neurolog, ortopeda, kardiolog oraz badania USG, EEG, echo serca. Rejestracja online."
         path="/"
       />
       

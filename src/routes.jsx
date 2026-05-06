@@ -35,6 +35,7 @@ const USGSkarzyskoPage = React.lazy(() => import("./components/User/Pages/USGSka
 const EchoSercaPage = React.lazy(() => import("./components/User/Pages/EchoSercaPage"));
 const PediatricOrthopedistPage = React.lazy(() => import("./components/User/Pages/PediatricOrthopedistPage"));
 const MichalSzczubkowskiPage = React.lazy(() => import("./components/User/Pages/MichalSzczubkowskiPage"));
+const TempPage = React.lazy(() => import("./components/User/Pages/TempPage"));
 
 // Loading component for Suspense
 const PageLoader = () => (
@@ -110,6 +111,7 @@ const routes = createBrowserRouter([
       { path: "security/2fa", element: <LazyRouteWrapper><TwoFactorSettings /></LazyRouteWrapper> },
       { path: "regulamin", element: <LazyRouteWrapper><TermsPage /></LazyRouteWrapper> },
       { path: "polityka-prywatnosci", element: <LazyRouteWrapper><PrivacyPolicyPage /></LazyRouteWrapper> },
+      { path: "9173589602", element: <LazyRouteWrapper><TempPage /></LazyRouteWrapper> },
       { path: "uslugi/konsultacja-proktologiczna", element: <LazyRouteWrapper><ProctologyTestPage /></LazyRouteWrapper> },
       { path: "proktolog", element: <LazyRouteWrapper><ProctologyPage /></LazyRouteWrapper> },
       { path: "uslugi/usuwanie-zmian-skornych-z-badaniem-histopatologicznym", element: <LazyRouteWrapper><SkinLesionRemovalPage /></LazyRouteWrapper> },

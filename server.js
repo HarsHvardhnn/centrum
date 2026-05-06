@@ -167,7 +167,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
   const normalizedPath = path.replace(/\/$/, '') || '/';
   console.log("normalizedPath", normalizedPath);
   
-  let title, description, keywords, ogImage, ogType = 'website', ogTitle, ogDescription, twitterTitle, twitterDescription;
+  let title, description, keywords, ogImage, ogType = 'website', ogTitle, ogDescription, twitterTitle, twitterDescription, robots = 'index, follow';
   
   // EARLY RETURN for specific routes - check BEFORE switch to ensure it's handled
   // This MUST be checked first and MUST skip all dynamic data processing
@@ -207,8 +207,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
   
   switch (normalizedPath) {
     case '/':
-      title = 'Centrum Medyczne 7 – poradnie specjalistyczne świętokrzyskie';
-      description = 'Poradnie CM7: chirurg, proktolog, neurolog dziecięcy, kardiolog, radiolog.  Wizyty prywatne, bez skierowania. Skarżysko-Kamienna, woj. świętokrzyskie.';
+      title = 'Centrum Medyczne 7 Skarżysko - Prywatna opieka medyczna';
+      description = 'Centrum Medyczne 7 Skarżysko (świętokrzyskie) – chirurg, neurolog, ortopeda, kardiolog oraz badania USG, EEG, echo serca. Rejestracja online.';
       keywords = 'centrum medyczne 7, przychodnia Skarżysko-Kamienna, lekarze specjaliści, wizyta lekarska, opieka medyczna, cm7, poradnie specjalistyczne świętokrzyskie';
       ogImage = '/images/mainlogo.png';
       break;
@@ -259,6 +259,14 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       description = 'Polityka ochrony danych osobowych w Centrum Medycznym 7 w Skarżysku-Kamiennej. Dowiedz się jak chronimy Twoje dane osobowe.';
       keywords = 'polityka prywatności centrum medyczne 7, ochrona danych osobowych, rodo cm7, prywatność pacjentów';
       ogImage = '/images/mainlogo.png';
+      robots = 'noindex';
+      break;
+    case '/9173589602':
+      title = 'Strona tymczasowa';
+      description = 'Strona tymczasowa';
+      keywords = '';
+      ogImage = '/images/mainlogo.png';
+      robots = 'noindex';
       break;
     // Known client-side service routes with predefined meta tags
     case '/uslugi/konsultacja-proktologiczna':
@@ -663,7 +671,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <meta property="twitter:image" content="${fullOgImage}">
     
     <!-- Additional SEO -->
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="${robots}">
     <meta name="author" content="Centrum Medyczne 7">
     
     <!-- Favicon and Icons -->
@@ -715,7 +723,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-C_IKLT-e.js"></script>
+    <script type="module" crossorigin src="/assets/index-BsBO6OnF.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -1473,10 +1481,52 @@ app.use(handleInvalidSlugs);          // Second: handle undefined slugs (redirec
 app.use(handleTrailingSlash);         // Third: handle trailing slashes (before normalization)
 app.use(handleUrlNormalization);      // Fourth: handle URL normalization and case sensitivity
 
+// Handle specific PDF route with noindex before serving static files
+app.get('/polityka-prywatnosci.pdf', (req, res) => {
+  // Serve HTML with noindex meta tag for the PDF
+  const pdfHTML = `
+  <!DOCTYPE html>
+  <html lang="pl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polityka Prywatności - PDF | Centrum Medyczne 7</title>
+    <meta name="description" content="Polityka ochrony danych osobowych - dokument PDF">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="https://centrummedyczne7.pl/polityka-prywatnosci">
+  </head>
+  <body>
+    <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif;">
+      <h1>Polityka Prywatności</h1>
+      <p>Dokument PDF zostanie wyświetlony za chwilę...</p>
+      <script>
+        // Redirect to the actual PDF after a brief moment to allow indexing
+        setTimeout(function() {
+          window.location.replace('/pdf-files/polityka-prywatnosci.pdf');
+        }, 100);
+      </script>
+      <noscript>
+        <p><a href="/pdf-files/polityka-prywatnosci.pdf">Kliknij tutaj, aby wyświetlić dokument PDF</a></p>
+      </noscript>
+    </div>
+  </body>
+  </html>`;
+  
+  res.set({
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  
+  res.send(pdfHTML);
+});
+
 // Serve static assets (CSS, JS, images, PDFs) BEFORE SEO middleware
 app.use('/assets', express.static(path.join(__dirname, 'dist', 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'dist', 'images')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/pdf-files', express.static(path.join(__dirname, 'public')));
 
 // Middleware to serve static pages (doctors + articles) when they exist
 // Generated at build time for SEO and reliability

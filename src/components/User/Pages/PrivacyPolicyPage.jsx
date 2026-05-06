@@ -8,6 +8,7 @@ const PrivacyPolicyPage = () => {
         title="Polityka Prywatności - CM7"
         description="Polityka ochrony danych osobowych w Centrum Medycznym 7 w Skarżysku-Kamiennej"
         path="/polityka-prywatnosci"
+        robots="noindex"
       />
       
       <div className="min-h-screen bg-gray-50 pt-20">
