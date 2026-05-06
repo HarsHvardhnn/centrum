@@ -1744,6 +1744,12 @@ function LabAppointmentsContent({ clinic }) {
                           <button
                             type="button"
                             onClick={() => {
+                              if (user?.role === "receptionist") {
+                                // In visit-history modal, reception should open booking/consents details,
+                                // not redirect to patient edit.
+                                fetchVisitConsents(visit.visitId);
+                                return;
+                              }
                               setShowVisitHistoryModal(false);
                               navigate(getPatientViewUrl(visitHistoryPatient?.id, visit.visitId));
                             }}
