@@ -74,7 +74,7 @@ const VisitInfoHeader = ({
     if (!newReason || !appointmentId) return;
     setSavingVisitType(true);
     try {
-      await appointmentHelper.updateConsultation(appointmentId, {
+      await appointmentHelper.updateConsultationType(appointmentId, {
         consultationType: newReason,
         visitReason: newReason,
         visitType: newReason,

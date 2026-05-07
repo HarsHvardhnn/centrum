@@ -529,11 +529,11 @@ const PatientDetailsPage = () => {
     }
 
     const cd = sanitizeConsultationDataForApi(dataToSave.consultationData || consultationData);
-    await appointmentHelper.updateAppointmentDetails(
+    await appointmentHelper.updatePatientDetailsConsolidated(
       currentAppointmentId,
       {
         patientData: dataToSave.patientData || patientData,
-          consultationData: mergeConsultationVerificationFlags(cd, visitReasonVerified),
+        consultationData: mergeConsultationVerificationFlags(cd, visitReasonVerified),
         medications: dataToSave.medications || medications,
         tests: dataToSave.tests || tests,
         uploadedFiles: dataToSave.uploadedFiles || uploadedFiles,
@@ -623,62 +623,101 @@ const PatientDetailsPage = () => {
     };
   }, [currentAppointmentId, selectedAppointment]);
 
-  // Modify the useEffect to handle appointmentId from query params
+  // Updated useEffect to use consolidated API for data fetching
   useEffect(() => {
     const fetchData = async () => {
+      if (!appointmentIdFromUrl) {
+        // If no appointmentId, we need to get patient appointments first to find the most recent one
+        try {
+          setIsLoading(true);
+          showLoader();
+          
+          const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
+          const appointments = appointmentsResponse.data || [];
+          
+          if (appointments.length > 0) {
+            const mostRecentAppointment = appointments[0];
+            setCurrentAppointmentId(mostRecentAppointment._id);
+            // Redirect to include appointmentId in URL for consistency
+            navigate(`/szczegoly-pacjenta/${id}?appointmentId=${mostRecentAppointment._id}`, { replace: true });
+          } else {
+            setError("Brak wizyt dla tego pacjenta");
+            setIsLoading(false);
+            hideLoader();
+          }
+        } catch (err) {
+          console.error("Error fetching appointments:", err);
+          setError("Błąd podczas pobierania wizyt");
+          setIsLoading(false);
+          hideLoader();
+        }
+        return;
+      }
+
+      // Use consolidated API when we have appointmentId
       try {
         setIsLoading(true);
         showLoader();
         
-        // Fetch patient basic data
-        const patientResponse = await patientService.getPatientDetails(id);
-        console.log("Patient Response:", patientResponse);
-        console.log("Patient Data Fields:", Object.keys(patientResponse.patientData || {}));
-        //("patientResponse", patientResponse);
-
+        // Single API call to get all patient details data
+        const consolidatedResponse = await appointmentHelper.getPatientDetailsConsolidated(appointmentIdFromUrl);
+        const data = consolidatedResponse.data;
+        
+        // Set patient data
         setPatientData(prevData => ({
           ...prevData,
-          ...patientResponse.patientData,
-          age: patientResponse.patientData?.age || null,
-          bloodPressure: patientResponse.patientData?.bloodPressure || null,
-          temperature: patientResponse.patientData?.temperature || null,
-          weight: patientResponse.patientData?.weight || null,
-          height: patientResponse.patientData?.height || null,
-          bloodPressureSystolic: patientResponse.patientData?.bloodPressureSystolic ?? null,
-          bloodPressureDiastolic: patientResponse.patientData?.bloodPressureDiastolic ?? null,
-          pulse: patientResponse.patientData?.pulse ?? null,
-          oxygenSaturation: patientResponse.patientData?.oxygenSaturation ?? null
+          ...data.patient,
+          age: data.patient?.age || null,
+          bloodPressure: data.patient?.bloodPressure || null,
+          temperature: data.patient?.temperature || null,
+          weight: data.patient?.weight || null,
+          height: data.patient?.height || null,
+          bloodPressureSystolic: data.patient?.bloodPressureSystolic ?? null,
+          bloodPressureDiastolic: data.patient?.bloodPressureDiastolic ?? null,
+          pulse: data.patient?.pulse ?? null,
+          oxygenSaturation: data.patient?.oxygenSaturation ?? null
         }));
 
-        // Fetch patient services
-        await fetchPatientServices();
+        // Set appointment data
+        setCurrentAppointmentId(appointmentIdFromUrl);
+        setSelectedAppointment(data.appointment);
+        setAppointments(data.appointmentHistory || []);
 
-        // Always fetch all patient's appointments
-        const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
-        setAppointments(appointmentsResponse.data || []);
+        // Set consultation data
+        setConsultationData(prevConsultation => normalizeConsultationTypeAliases({
+          ...prevConsultation,
+          ...data.consultation,
+          notes: data.consultation?.notes || "",
+          date: data.appointment?.date || prevConsultation.date,
+          consultationDate: data.appointment?.date || prevConsultation.consultationDate,
+          time: data.appointment?.startTime || prevConsultation.time,
+          endTime: data.appointment?.endTime || prevConsultation.endTime
+        }));
 
-        // If we have a specific appointment ID from URL, select that one
-        if (appointmentIdFromUrl) {
-          const appointmentFromUrl = appointmentsResponse.data?.find(apt => apt._id === appointmentIdFromUrl);
-          if (appointmentFromUrl) {
-            setCurrentAppointmentId(appointmentIdFromUrl);
-            setSelectedAppointment(appointmentFromUrl);
-            await fetchAppointmentDetails(appointmentIdFromUrl);
-          }
-        } else if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
-          // Otherwise select the most recent one
-          const mostRecentAppointment = appointmentsResponse.data[0];
-          //("mostRecentAppointment", mostRecentAppointment);
-          setCurrentAppointmentId(mostRecentAppointment._id);
-          setSelectedAppointment(mostRecentAppointment);
-          await fetchAppointmentDetails(mostRecentAppointment._id);
-        }
+        // Set medications, tests, reports
+        setMedications(data.medications || []);
+        setTests(data.tests || []);
+        setReports(data.reports || []);
+
+        // Set diagnoses and procedures
+        setDiagnoses(Array.isArray(data.diagnoses) ? data.diagnoses : []);
+        setProcedures(Array.isArray(data.procedures) ? data.procedures : []);
+
+        // Set services (handled separately to maintain existing flow)
+        setPatientServices(data.services || []);
+
+        // Set visit reason verification status
+        setVisitReasonVerified(
+          data.consultation?.visitReasonVerified ?? 
+          data.consultation?.visitTypeVerified ?? 
+          null
+        );
 
         setIsLoading(false);
         hideLoader();
       } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("błąd serwera");
+        console.error("Error fetching consolidated patient details:", err);
+        setError("Błąd podczas pobierania danych pacjenta");
         setIsLoading(false);
         hideLoader();
       }
@@ -687,7 +726,7 @@ const PatientDetailsPage = () => {
     if (id) {
       fetchData();
     }
-  }, [id, appointmentIdFromUrl]);
+  }, [id, appointmentIdFromUrl, navigate]);
 
   // Fetch appointment details (including ICD-10 diagnoses and ICD-9 procedures)
   const fetchAppointmentDetails = async (appointmentId) => {
@@ -835,59 +874,79 @@ const PatientDetailsPage = () => {
     }
   };
 
-  const handleVisitTypeChange = (newVisitReason) => {
-    if (!newVisitReason) return;
-    // Selecting a new visit reason requires verification again.
-    setVisitReasonVerified(false);
-    setConsultationData((prev) => ({
-      ...prev,
-      consultationType: newVisitReason,
-      visitReason: newVisitReason,
-      visitType: newVisitReason,
-      // Verification is a separate step (API 1); selecting a type resets it locally.
-      visitTypeVerified: false,
-    }));
-    setSelectedAppointment((prev) =>
-      prev
-        ? {
-            ...prev,
-            consultationType: newVisitReason,
-            visitReason: newVisitReason,
-            visitType: newVisitReason,
-            visitTypeVerified: false,
-          }
-        : null
-    );
-    setAppointments((prev) =>
-      prev.map((apt) =>
-        apt._id === currentAppointmentId
+  const handleVisitTypeChange = async (newVisitReason) => {
+    if (!newVisitReason || !currentAppointmentId) return;
+
+    try {
+      setVisitReasonVerifyLoading(true);
+
+      // Use consolidated API to update visit type
+      const response = await appointmentHelper.updateConsultationType(currentAppointmentId, {
+        consultationType: newVisitReason,
+        visitReason: newVisitReason,
+        visitType: newVisitReason
+      });
+
+      // Update local state based on response
+      const updatedConsultation = response.data?.consultation;
+      if (updatedConsultation) {
+        setConsultationData((prev) => normalizeConsultationTypeAliases({
+          ...prev,
+          ...updatedConsultation
+        }));
+
+        // Update verification status from response
+        setVisitReasonVerified(
+          updatedConsultation.visitReasonVerified ?? 
+          updatedConsultation.visitTypeVerified ?? 
+          false
+        );
+      } else {
+        // Fallback: update local state manually
+        setVisitReasonVerified(false);
+        setConsultationData((prev) => ({
+          ...prev,
+          consultationType: newVisitReason,
+          visitReason: newVisitReason,
+          visitType: newVisitReason,
+          visitTypeVerified: false,
+        }));
+      }
+
+      // Update selected appointment
+      setSelectedAppointment((prev) =>
+        prev
           ? {
-              ...apt,
+              ...prev,
               consultationType: newVisitReason,
               visitReason: newVisitReason,
               visitType: newVisitReason,
               visitTypeVerified: false,
             }
-          : apt
-      )
-    );
+          : null
+      );
 
-    // Refresh verification status (API 2) so UI reflects backend truth.
-    if (currentAppointmentId) {
-      setVisitReasonVerifyLoading(true);
-      appointmentHelper
-        .getVisitReasonVerifyStatus(currentAppointmentId)
-        .then((res) => {
-          const v = res?.visitReasonVerified;
-          setVisitReasonVerified(typeof v === "boolean" ? v : false);
-        })
-        .catch((err) => {
-          console.warn("Failed to refresh visit reason verify status:", err);
-          setVisitReasonVerified(false);
-        })
-        .finally(() => {
-          setVisitReasonVerifyLoading(false);
-        });
+      // Update appointments list
+      setAppointments((prev) =>
+        prev.map((apt) =>
+          apt._id === currentAppointmentId
+            ? {
+                ...apt,
+                consultationType: newVisitReason,
+                visitReason: newVisitReason,
+                visitType: newVisitReason,
+                visitTypeVerified: false,
+              }
+            : apt
+        )
+      );
+
+      toast.success("Rodzaj wizyty zaktualizowany");
+    } catch (error) {
+      console.error("Error updating visit type:", error);
+      toast.error(error?.response?.data?.message || "Nie udało się zmienić rodzaju wizyty");
+    } finally {
+      setVisitReasonVerifyLoading(false);
     }
   };
 
@@ -900,18 +959,22 @@ const PatientDetailsPage = () => {
 
     setVisitReasonVerifyLoading(true);
     try {
-      await appointmentHelper.verifyVisitReason(currentAppointmentId);
-      const res = await appointmentHelper.getVisitReasonVerifyStatus(currentAppointmentId);
-      const v = res?.visitReasonVerified;
-      const verified = typeof v === "boolean" ? v : true;
-      setVisitReasonVerified(verified);
-      if (verified) {
+      // Use consolidated verify API
+      const response = await appointmentHelper.verifyVisitTypeConsolidated(currentAppointmentId);
+      
+      const visitReasonVerified = response?.visitReasonVerified ?? true;
+      const visitTypeVerified = response?.visitTypeVerified ?? true;
+      
+      setVisitReasonVerified(visitReasonVerified);
+      
+      if (visitReasonVerified && visitTypeVerified) {
         setConsultationData((prev) => ({
           ...prev,
           visitReasonVerified: true,
           visitTypeVerified: true,
         }));
       }
+      
       toast.success("Rodzaj wizyty zweryfikowany");
     } catch (err) {
       const code = err?.response?.data?.code;
@@ -981,7 +1044,7 @@ const PatientDetailsPage = () => {
         return;
       }
 
-      const response = await appointmentHelper.updateAppointmentDetails(
+      const response = await appointmentHelper.updatePatientDetailsConsolidated(
         currentAppointmentId,
         {
           patientData,

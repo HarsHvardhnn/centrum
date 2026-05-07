@@ -181,9 +181,10 @@ const ConsultationForm = ({
     if (!appointmentId) return;
     setIsVerifyingVisitType(true);
     try {
-      await appointmentHelper.updateConsultation(appointmentId, {
+      await appointmentHelper.updateConsultationType(appointmentId, {
+        consultationType: displayName,
         visitReason: displayName,
-        visitTypeVerified: true,
+        visitType: displayName,
       });
       setConsultationData((prev) => ({
         ...prev,
