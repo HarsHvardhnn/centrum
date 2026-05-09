@@ -68,16 +68,26 @@ function normalizeConsultationTypeAliases(consultationData) {
   };
 }
 
-/** Strip backend/internal fields we should never echo back in PUT /appointments/:id/details. */
+/**
+ * Strip backend/internal fields we should never echo back in PUT /appointments/:id/patient-details.
+ *
+ * Visit-type trio (`consultationType`, `visitType`, `visitReason`) is owned exclusively by the
+ * dedicated PUT /appointments/:id/consultation-type endpoint. Sending them here can overwrite
+ * the latest verified value with a stale one, so we always strip them from this payload.
+ */
 function sanitizeConsultationDataForApi(consultationData) {
   if (!consultationData || typeof consultationData !== "object") return consultationData;
-  const normalized = normalizeConsultationTypeAliases(consultationData);
-  const cleaned = { ...normalized };
+  const cleaned = { ...consultationData };
 
   // Never send backup shadow fields back; they can override current values server-side.
   Object.keys(cleaned).forEach((key) => {
     if (key.startsWith("backup_")) delete cleaned[key];
   });
+
+  // Never send the visit-type trio through patient-details; that's the consultation-type endpoint's job.
+  delete cleaned.consultationType;
+  delete cleaned.visitType;
+  delete cleaned.visitReason;
 
   return cleaned;
 }
