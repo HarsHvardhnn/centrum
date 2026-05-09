@@ -27,6 +27,69 @@ const DiabeticFootPage = () => {
     },
   };
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Czy potrzebuję skierowania na wizytę w poradni stopy cukrzycowej?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nie, przyjmujemy pacjentów prywatnie – bez skierowania. Można umówić wizytę bezpośrednio online lub telefonicznie."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy leczenie stopy cukrzycowej odbywa się bez hospitalizacji?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tak. Wszystkie zabiegi i konsultacje przeprowadzamy ambulatoryjnie, bez konieczności pozostania w szpitalu."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Z jakich miast przyjmowani są pacjenci w poradni leczenia stopy cukrzycowej?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Leczymy pacjentów nie tylko ze Skarżyska-Kamiennej, ale także z Kielc, Radomia, Starachowic, Szydłowca, Końskich i innych miejscowości woj. świętokrzyskiego i mazowieckiego."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Ile kosztuje leczenie stopy cukrzycowej?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cena leczenia stopy cukrzycowej w Centrum Medyczne 7 zaczyna się od 500 zł. Dokładny koszt ustalany jest po konsultacji i zależy od zakresu leczenia."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy mogę umówić pilną wizytę w przypadku pogorszenia stanu rany?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tak. W przypadkach nagłych możliwa jest wizyta w trybie przyspieszonym. Skontaktuj się z rejestracją pod numerem 797-097-487."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Czy w województwie świętokrzyskim jest poradnia leczenia stopy cukrzycowej?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tak, poradnia leczenia stopy cukrzycowej działa w Skarżysku-Kamiennej. W Centrum Medycznym 7 przyjmujemy pacjentów z całego województwa świętokrzyskiego."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Gdzie znajduje się poradnia leczenia stopy cukrzycowej w Skarżysku-Kamiennej?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Poradnia mieści się w Centrum Medycznym 7 przy ul. Powstańców Warszawy 7/1.5. Leczenie prowadzi doświadczony chirurg lek. Michał Szczubkowski bez potrzeby skierowania."
+        }
+      }
+    ]
+  };
+
   return (
     <>
       <MetaTags 
@@ -41,6 +104,7 @@ const DiabeticFootPage = () => {
         twitterImage="/assets/static-assets/section1-newpage.png"
       />
       <script type="application/ld+json">{JSON.stringify(medicalServiceSchema)}</script>
+      <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
 
       <main className="min-h-screen bg-white">
         {/* Hero Section - Section 1 */}

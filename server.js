@@ -253,6 +253,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
       description = 'Regulamin świadczenia usług medycznych w Centrum Medycznym 7 w Skarżysku-Kamiennej. Zapoznaj się z warunkami korzystania z naszych usług.';
       keywords = 'regulamin centrum medyczne 7, warunki usług medycznych, regulamin cm7, zasady korzystania z usług';
       ogImage = '/images/mainlogo.png';
+      robots = 'noindex';
       break;
     case '/polityka-prywatnosci':
       title = 'Polityka Prywatności – Centrum Medyczne 7 Skarżysko-Kamienna | Ochrona danych';
@@ -723,7 +724,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-BsBO6OnF.js"></script>
+    <script type="module" crossorigin src="/assets/index-B9HTZR26.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>
@@ -1507,6 +1508,47 @@ app.get('/polityka-prywatnosci.pdf', (req, res) => {
       </script>
       <noscript>
         <p><a href="/pdf-files/polityka-prywatnosci.pdf">Kliknij tutaj, aby wyświetlić dokument PDF</a></p>
+      </noscript>
+    </div>
+  </body>
+  </html>`;
+  
+  res.set({
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  
+  res.send(pdfHTML);
+});
+
+// Handle specific PDF route for regulamin with noindex before serving static files
+app.get('/regulamin.pdf', (req, res) => {
+  // Serve HTML with noindex meta tag for the PDF
+  const pdfHTML = `
+  <!DOCTYPE html>
+  <html lang="pl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regulamin - PDF | Centrum Medyczne 7</title>
+    <meta name="description" content="Regulamin świadczenia usług - dokument PDF">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="https://centrummedyczne7.pl/regulamin">
+  </head>
+  <body>
+    <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif;">
+      <h1>Regulamin</h1>
+      <p>Dokument PDF zostanie wyświetlony za chwilę...</p>
+      <script>
+        // Redirect to the actual PDF after a brief moment to allow indexing
+        setTimeout(function() {
+          window.location.replace('/pdf-files/regulamin.pdf');
+        }, 100);
+      </script>
+      <noscript>
+        <p><a href="/pdf-files/regulamin.pdf">Kliknij tutaj, aby wyświetlić dokument PDF</a></p>
       </noscript>
     </div>
   </body>

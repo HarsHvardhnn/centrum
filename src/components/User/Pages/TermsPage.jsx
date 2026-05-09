@@ -8,6 +8,7 @@ const TermsPage = () => {
         title="Regulamin - CM7"
         description="Regulamin świadczenia usług medycznych w Centrum Medycznym 7 w Skarżysku-Kamiennej"
         path="/regulamin"
+        robots="noindex"
       />
       
       <div className="min-h-screen bg-gray-50 pt-20">
