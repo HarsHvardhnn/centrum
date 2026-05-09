@@ -936,6 +936,7 @@ const PatientDetailsPage = () => {
                 visitReason: newVisitReason,
                 visitType: newVisitReason,
                 visitTypeVerified: false,
+                visitReasonVerified: false,
               }
             : apt
         )
@@ -973,6 +974,30 @@ const PatientDetailsPage = () => {
           visitReasonVerified: true,
           visitTypeVerified: true,
         }));
+        
+        // Update the appointments array to reflect verification status change
+        setAppointments((prev) =>
+          prev.map((apt) =>
+            apt._id === currentAppointmentId
+              ? {
+                  ...apt,
+                  visitReasonVerified: true,
+                  visitTypeVerified: true,
+                }
+              : apt
+          )
+        );
+        
+        // Update selected appointment as well
+        setSelectedAppointment((prev) =>
+          prev
+            ? {
+                ...prev,
+                visitReasonVerified: true,
+                visitTypeVerified: true,
+              }
+            : null
+        );
       }
       
       toast.success("Rodzaj wizyty zweryfikowany");
