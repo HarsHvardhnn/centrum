@@ -327,11 +327,16 @@ const RescheduleModal = ({
     const nextOverrideConflicts = overrides.overrideConflicts ?? overrideConflicts;
     const nextIsBackdated = overrides.isBackdated ?? isBackdated;
 
-    // For edit-only mode, only return visit type and doctor changes
+    // For edit-only mode, only send doctor / visit type / consultation type changes.
+    // Date and time stay as-is on backend.
     if (editMode === "edit-only") {
       return {
+        editOnly: true,
+        consultationType,
         ...(selectedVisitType ? { visitType: selectedVisitType } : {}),
         newDoctorId: selectedDoctorId || getDoctorId(),
+        sendSMSNotification,
+        sendEmailNotification,
       };
     }
 
@@ -786,81 +791,86 @@ const RescheduleModal = ({
             </div>
           </div>
 
-          {/* Selection Mode */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Sposób wyboru czasu
-            </label>
-            <div className="flex gap-3">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="selectionMode"
-                  value="slots"
-                  checked={selectionMode === "slots"}
-                  onChange={(e) => {
-                    setSelectionMode(e.target.value);
-                    setSelectedSlot(null);
-                    setCustomStartTime("");
-                    setCustomEndTime("");
-                  }}
-                  className="mr-2"
-                />
-                <span className="text-sm">Z dostępnych terminów</span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="selectionMode"
-                  value="timeRange"
-                  checked={selectionMode === "timeRange"}
-                  onChange={(e) => {
-                    setSelectionMode(e.target.value);
-                    setSelectedSlot(null);
-                    setCustomStartTime("");
-                    setCustomEndTime("");
-                  }}
-                  className="mr-2"
-                />
-                <span className="text-sm">Własny zakres czasu</span>
-              </label>
-            </div>
-          </div>
+          {/* Selection Mode + Override Options - Only relevant when changing date/time */}
+          {editMode === "reschedule" && (
+            <>
+              {/* Selection Mode */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sposób wyboru czasu
+                </label>
+                <div className="flex gap-3">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="selectionMode"
+                      value="slots"
+                      checked={selectionMode === "slots"}
+                      onChange={(e) => {
+                        setSelectionMode(e.target.value);
+                        setSelectedSlot(null);
+                        setCustomStartTime("");
+                        setCustomEndTime("");
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">Z dostępnych terminów</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="selectionMode"
+                      value="timeRange"
+                      checked={selectionMode === "timeRange"}
+                      onChange={(e) => {
+                        setSelectionMode(e.target.value);
+                        setSelectedSlot(null);
+                        setCustomStartTime("");
+                        setCustomEndTime("");
+                      }}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">Własny zakres czasu</span>
+                  </label>
+                </div>
+              </div>
 
-          {/* Override Options */}
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-            <h4 className="text-sm font-medium text-amber-800 mb-3">Opcje nadpisania ograniczeń</h4>
-            <div className="space-y-3">
-              <label className="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={overrideConflicts}
-                  onChange={(e) => setOverrideConflicts(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 text-amber-600 border-gray-300 rounded"
-                />
-                <span className="text-sm text-gray-700">
-                  <span className="font-medium">Nadpisz konflikty terminów</span>
-                  <span className="block text-xs text-gray-500">
-                    Pozwala zapisać wizytę mimo konfliktu (ten sam lekarz, data i godzina).
-                  </span>
-                </span>
-              </label>
-              <label className="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isBackdated}
-                  onChange={(e) => setIsBackdated(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 text-amber-600 border-gray-300 rounded"
-                />
-                <span className="text-sm text-gray-700">
-                  <span className="font-medium">Zezwól na datę/godzinę w przeszłości</span>
-                  <span className="block text-xs text-gray-500">
-                    Użyj tylko gdy potrzebujesz ręcznie odtworzyć historyczną wizytę.
-                  </span>
-                </span>
-              </label>
-            </div>
-          </div>
+              {/* Override Options */}
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <h4 className="text-sm font-medium text-amber-800 mb-3">Opcje nadpisania ograniczeń</h4>
+                <div className="space-y-3">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={overrideConflicts}
+                      onChange={(e) => setOverrideConflicts(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 text-amber-600 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700">
+                      <span className="font-medium">Nadpisz konflikty terminów</span>
+                      <span className="block text-xs text-gray-500">
+                        Pozwala zapisać wizytę mimo konfliktu (ten sam lekarz, data i godzina).
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isBackdated}
+                      onChange={(e) => setIsBackdated(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 text-amber-600 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700">
+                      <span className="font-medium">Zezwól na datę/godzinę w przeszłości</span>
+                      <span className="block text-xs text-gray-500">
+                        Użyj tylko gdy potrzebujesz ręcznie odtworzyć historyczną wizytę.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Date Selection - Only show in reschedule mode */}
           {editMode === "reschedule" && (
