@@ -558,7 +558,10 @@ const PatientDetailsPage = () => {
     },
     debounceMs: 3000, // 3 seconds debounce
     autoSaveInterval: 30000, // Auto-save every 30 seconds
-    enabled: !!currentAppointmentId, // Only enable if appointment is selected
+    // Only enable auto-save once an appointment is selected AND initial data has finished loading.
+    // This prevents an unintended PUT request right after the page loads (treating freshly-fetched
+    // data as user edits).
+    enabled: !!currentAppointmentId && !isLoading,
     directSave: true,
     directSaveFunction: directSaveFunction,
     onSaveSuccess: () => {
