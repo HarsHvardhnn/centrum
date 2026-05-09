@@ -34,6 +34,7 @@ const RescheduleModal = ({
   const [doctors, setDoctors] = useState([]);
   const [doctorsLoading, setDoctorsLoading] = useState(false);
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
+  const [editMode, setEditMode] = useState("reschedule"); // "reschedule" or "edit-only"
   const [visitTypeOptions, setVisitTypeOptions] = useState([]);
   const [visitTypesLoading, setVisitTypesLoading] = useState(false);
   const [selectedVisitType, setSelectedVisitType] = useState("");
@@ -75,6 +76,7 @@ const RescheduleModal = ({
       setOverrideConflicts(false);
       setIsBackdated(false);
       setOverrideConfirm({ open: false, type: null });
+      setEditMode("reschedule");
       setSelectedDoctorId(getDoctorId() || "");
       setSelectedVisitType(
         appointment?.metadata?.visitType ||
@@ -325,6 +327,14 @@ const RescheduleModal = ({
     const nextOverrideConflicts = overrides.overrideConflicts ?? overrideConflicts;
     const nextIsBackdated = overrides.isBackdated ?? isBackdated;
 
+    // For edit-only mode, only return visit type and doctor changes
+    if (editMode === "edit-only") {
+      return {
+        ...(selectedVisitType ? { visitType: selectedVisitType } : {}),
+        newDoctorId: selectedDoctorId || getDoctorId(),
+      };
+    }
+
     if (selectionMode === "slots") {
       return {
         newDate: selectedDate,
@@ -369,22 +379,25 @@ const RescheduleModal = ({
 
   // Handle reschedule submission
   const handleReschedule = async () => {
-    if (!selectedDate) {
-      setError("Proszę wybrać datę");
-      return;
-    }
+    // Skip date/time validation for edit-only mode
+    if (editMode === "reschedule") {
+      if (!selectedDate) {
+        setError("Proszę wybrać datę");
+        return;
+      }
 
-    // Validate based on selection mode
-    if (selectionMode === "slots") {
+      // Validate based on selection mode
+      if (selectionMode === "slots") {
       if (!selectedSlot) {
         setError("Proszę wybrać godzinę z dostępnych terminów");
         return;
       }
     } else if (selectionMode === "timeRange") {
-      const timeRangeError = validateTimeRange();
-      if (timeRangeError) {
-        setError(timeRangeError);
-        return;
+        const timeRangeError = validateTimeRange();
+        if (timeRangeError) {
+          setError(timeRangeError);
+          return;
+        }
       }
     }
 
@@ -498,10 +511,10 @@ const RescheduleModal = ({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                Przełóż wizytę
+                {editMode === "edit-only" ? "Edytuj wizytę" : "Przełóż lub edytuj wizytę"}
               </h3>
               <p className="text-sm text-gray-500">
-                Wybierz nową datę i godzinę wizyty
+                {editMode === "edit-only" ? "Zmień szczegóły wizyty" : "Wybierz nową datę i godzinę wizyty lub zmień szczegóły"}
               </p>
             </div>
           </div>
@@ -512,6 +525,34 @@ const RescheduleModal = ({
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
+        </div>
+
+        {/* Mode Toggle */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-center mb-4">
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setEditMode("reschedule")}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  editMode === "reschedule"
+                    ? "bg-teal-500 text-white shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Przełóż wizytę
+              </button>
+              <button
+                onClick={() => setEditMode("edit-only")}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  editMode === "edit-only"
+                    ? "bg-teal-500 text-white shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Tylko edytuj
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Current Appointment Info */}
@@ -821,7 +862,8 @@ const RescheduleModal = ({
             </div>
           </div>
 
-          {/* Date Selection */}
+          {/* Date Selection - Only show in reschedule mode */}
+          {editMode === "reschedule" && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <label className="block text-sm font-medium text-gray-700">
@@ -882,9 +924,10 @@ const RescheduleModal = ({
               ))}
             </div>
           </div>
+          )}
 
-          {/* Time Selection */}
-          {selectedDate && (
+          {/* Time Selection - Only show in reschedule mode */}
+          {editMode === "reschedule" && selectedDate && (
             <div className="mb-6">
               {selectionMode === "slots" ? (
                 <>
@@ -1004,17 +1047,19 @@ const RescheduleModal = ({
             <button
               onClick={handleReschedule}
               disabled={
-                !selectedDate || 
-                (selectionMode === "slots" && !selectedSlot) || 
-                (selectionMode === "timeRange" && !customStartTime) || 
-                loading
+                editMode === "reschedule" ? (
+                  !selectedDate ||
+                  (selectionMode === "slots" && !selectedSlot) ||
+                  (selectionMode === "timeRange" && !customStartTime) ||
+                  loading
+                ) : loading
               }
               className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Przełóż...
+                  {editMode === "edit-only" ? "Zapisywanie..." : "Przełóż..."}
                 </>
               ) : (
                 <>
