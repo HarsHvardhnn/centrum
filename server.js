@@ -207,8 +207,8 @@ const generateSEOHTML = async (path, dynamicData = null) => {
   
   switch (normalizedPath) {
     case '/':
-      title = 'Centrum Medyczne 7 Skarżysko - Prywatna opieka medyczna';
-      description = 'Centrum Medyczne 7 Skarżysko (świętokrzyskie) – chirurg, neurolog, ortopeda, kardiolog oraz badania USG, EEG, echo serca. Rejestracja online.';
+      title = 'Centrum Medyczne 7 Skarżysko (świętokrzyskie) – chirurg, neurolog, ortopeda, urolog, kardiolog oraz badania USG, EEG, echo serca. Rejestracja online';
+      description = 'Centrum Medyczne 7 Skarżysko (świętokrzyskie) – chirurg, neurolog, ortopeda, urolog, kardiolog oraz badania USG, EEG, echo serca. Rejestracja online.';
       keywords = 'centrum medyczne 7, przychodnia Skarżysko-Kamienna, lekarze specjaliści, wizyta lekarska, opieka medyczna, cm7, poradnie specjalistyczne świętokrzyskie';
       ogImage = '/images/mainlogo.png';
       break;
@@ -724,7 +724,7 @@ const generateSEOHTML = async (path, dynamicData = null) => {
     <div id="root"></div>
     
     <!-- React App JavaScript -->
-    <script type="module" crossorigin src="/assets/index-BigM22zS.js"></script>
+    <script type="module" crossorigin src="/assets/index-UF1m5xpq.js"></script>
     
     <noscript>
         <p>Ta strona wymaga JavaScript do pełnej funkcjonalności.</p>

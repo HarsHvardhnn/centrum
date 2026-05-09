@@ -147,7 +147,7 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
 
           {/* Description */}
           <p className="text-base xs:text-lg sm:text-lg md:text-lg lg:text-lg xl:text-xl text-gray-600 leading-relaxed mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8 max-w-2xl mx-auto md:mx-0">
-            <span className="block">Szeroki zakres specjalistów: chirurg, proktolog, neurolog, ortopeda, medycyna sportowa, kardiolog oraz badania diagnostyczne (USG, EEG, echo serca).</span>
+            <span className="block">Szeroki zakres specjalistów: chirurg, proktolog, neurolog, ortopeda, urolog, medycyna sportowa, kardiolog oraz badania diagnostyczne (USG, EEG, echo serca).</span>
             <span className="block">Prywatne wizyty bez skierowania - szybka rejestracja online. Konsultacje dla dzieci i dorosłych.</span>
           </p>
 
