@@ -393,7 +393,7 @@ const PediatricOrthopedistPage = () => {
                 <img
                   src={DOCTOR_PHOTO}
                   alt="lek. Łukasz Dubiel – ortopeda dziecięcy, Centrum Medyczne 7"
-                  className="w-full max-h-[min(70vh,480px)] object-cover object-top rounded-t-xl"
+                  className="w-full h-auto object-contain rounded-t-xl"
                   loading="lazy"
                 />
                 <div className="p-6 sm:p-8 text-center space-y-2">
