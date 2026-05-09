@@ -37,7 +37,8 @@ const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
   }
   
   // Helper function to get file icon
-  const getFileIcon = (fileType) => {
+  const getFileIcon = (report) => {
+    const fileType = report.fileExtension || report.fileType?.split('/')[1] || report.mimeType?.split('/')[1];
     switch(fileType?.toLowerCase()) {
       case 'pdf': return <File className="h-8 w-8 text-red-500" />;
       case 'jpg':
@@ -72,17 +73,17 @@ const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
           <div key={report._id} className="border rounded-lg overflow-hidden">
             <div className="p-4 flex items-start">
               <div className="flex-shrink-0 mr-4">
-                {getFileIcon(report.fileType)}
+                {getFileIcon(report)}
               </div>
               
               <div className="flex-grow">
-                <h4 className="font-medium text-gray-900">{report.name || 'Raport bez nazwy'}</h4>
+                <h4 className="font-medium text-gray-900">{report.fileName || report.originalName || 'Raport bez nazwy'}</h4>
                 <div className="flex items-center mt-1">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {report.type || 'Inne'}
+                    {report.documentType || report.type || 'Inne'}
                   </span>
                   <span className="text-gray-500 text-sm ml-2">
-                    Przesłano: {formatDate(report.uploadedAt)}
+                    Przesłano: {formatDate(report.uploadDate || report.uploadedAt)}
                   </span>
                 </div>
                 
@@ -95,7 +96,7 @@ const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
               
               <div className="flex-shrink-0 ml-4 flex space-x-2">
                 <a 
-                  href={report.fileUrl} 
+                  href={report.downloadUrl || report.url || report.path} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
