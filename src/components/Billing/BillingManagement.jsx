@@ -33,6 +33,7 @@ import BulkDeleteByIdsDialog from "../admin/BulkDeleteByIdsDialog";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 import userServiceHelper, {
   mapDoctorServicesResponseToCatalog,
+  mapServicesResponseToCatalog,
 } from "../../helpers/userServiceHelper";
 
 /** Id for GET /user-services/:userId/doctor — from embedded appointment on bill or visit object. */
@@ -187,14 +188,24 @@ const BillingManagement = () => {
     }, [billId, isOpen]);
 
     const visitDoctorId = billData ? resolveVisitDoctorUserId(null, billData) : null;
-    const pickerServices = visitDoctorId ? catalogServices : globalServices;
-    const pickerLoading = visitDoctorId ? catalogLoading : globalServicesLoading;
+    
+    // Role-based service filtering: admin sees all services, doctors see only their services
+    const shouldUseAllServices = user?.role === "admin";
+    const pickerServices = shouldUseAllServices ? globalServices : (visitDoctorId ? catalogServices : globalServices);
+    const pickerLoading = shouldUseAllServices ? globalServicesLoading : (visitDoctorId ? catalogLoading : globalServicesLoading);
 
     useEffect(() => {
       if (!isOpen || !billData) {
         setCatalogServices([]);
         return;
       }
+      
+      // If admin user, skip loading doctor-specific services (use global services)
+      if (user?.role === "admin") {
+        setCatalogServices([]);
+        return;
+      }
+      
       const doctorUserId = resolveVisitDoctorUserId(null, billData);
       if (!doctorUserId) {
         setCatalogServices([]);
@@ -204,9 +215,9 @@ const BillingManagement = () => {
       (async () => {
         setCatalogLoading(true);
         try {
-          const res = await userServiceHelper.getDoctorServices(doctorUserId);
+          const res = await userServiceHelper.getServicesCatalog(doctorUserId);
           if (!cancelled) {
-            setCatalogServices(mapDoctorServicesResponseToCatalog(res));
+            setCatalogServices(mapServicesResponseToCatalog(res));
           }
         } catch (e) {
           console.error("EditBillModal getDoctorServices:", e);
@@ -221,7 +232,7 @@ const BillingManagement = () => {
       return () => {
         cancelled = true;
       };
-    }, [isOpen, billData]);
+    }, [isOpen, billData, user?.role]);
 
     const handleServiceToggle = (service) => {
       const exists = selectedServices.find(s => s.serviceId === service._id);
@@ -335,11 +346,15 @@ const BillingManagement = () => {
               {/* Available Services Section */}
               <h4 className="font-medium mb-2">
                 Dodaj usługi
-                {visitDoctorId && (
+                {user?.role === "admin" ? (
+                  <span className="block text-xs font-normal text-gray-500 mt-1">
+                    Wszystkie dostępne usługi (admin)
+                  </span>
+                ) : visitDoctorId ? (
                   <span className="block text-xs font-normal text-gray-500 mt-1">
                     Tylko usługi lekarza z wizyty (GET /user-services/…/doctor)
                   </span>
-                )}
+                ) : null}
               </h4>
               <input
                 type="text"
@@ -900,7 +915,7 @@ const BillingManagement = () => {
           onClose={() => setShowServiceModal(false)}
           onSave={handleAddServices}
           patientId={patient?._id}
-          doctorUserId={resolveVisitDoctorUserId(appointment, null)}
+          doctorUserId={user?.role === "admin" ? null : resolveVisitDoctorUserId(appointment, null)}
         />
       </div>
     );
