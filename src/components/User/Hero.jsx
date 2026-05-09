@@ -127,8 +127,9 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
         <div className="md:w-1/2 lg:w-[48%] xl:w-1/2 text-center md:text-left mb-6 xs:mb-8 sm:mb-10 md:mb-0 w-full">
           {/* Main Heading */}
           <h1 className="text-2xl xs:text-3xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold leading-tight mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8">
-            <span className="text-teal-600 block">Prywatna przychodnia</span>
-            <span className="text-teal-600 block">specjalistyczna</span>
+            <span className="text-teal-600 block">Centrum Medyczne 7</span>
+            <span className="text-gray-800 block">przychodnia</span>
+            <span className="text-gray-800 block">specjalistyczna</span>
             <span className="text-gray-700 text-xl xs:text-2xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl block text-center md:text-left relative">
               {/* Mobile: Centered underline in middle of screen */}
               <span className="md:hidden block relative pb-3.5">
@@ -146,8 +147,8 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
 
           {/* Description */}
           <p className="text-base xs:text-lg sm:text-lg md:text-lg lg:text-lg xl:text-xl text-gray-600 leading-relaxed mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8 max-w-2xl mx-auto md:mx-0">
-            <span className="block">Chirurg, proktolog, neurolog dziecięcy, kardiolog, radiolog.</span>
-            <span className="block">Prywatne wizyty bez skierowania - szybka rejestracja online.</span>
+            <span className="block">Szeroki zakres specjalistów: chirurg, proktolog, neurolog, ortopeda, medycyna sportowa, kardiolog oraz badania diagnostyczne (USG, EEG, echo serca).</span>
+            <span className="block">Prywatne wizyty bez skierowania - szybka rejestracja online. Konsultacje dla dzieci i dorosłych.</span>
           </p>
 
           {/* Google Rating */}

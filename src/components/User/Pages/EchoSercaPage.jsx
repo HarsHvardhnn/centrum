@@ -62,7 +62,7 @@ const EchoSercaPage = () => {
       <script type="application/ld+json">{JSON.stringify(schemaGraph)}</script>
 
       <main className="min-h-screen" style={{ backgroundColor: '#F7F9FA' }}>
-        <section className="pt-16 md:pt-24 pb-12 md:pb-16" style={{ backgroundColor: '#F7F9FA' }} aria-labelledby="echo-serca-heading">
+        <section className="pt-24 md:pt-32 lg:pt-36 pb-12 md:pb-16" style={{ backgroundColor: '#F7F9FA' }} aria-labelledby="echo-serca-heading">
           <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-10 xl:px-12">
             <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8 lg:gap-10">
               <div className="w-full lg:w-1/2">
@@ -480,7 +480,7 @@ const EchoSercaPage = () => {
             {/* W cenie badania */}
             <div className="bg-[#E8F5F3] rounded-xl p-6 mb-8">
               <h3 className="text-lg font-bold text-gray-900 mb-4 text-center">W cenie badania</h3>
-              <div className="flex justify-between items-center flex-wrap gap-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-teal-600 rounded-full flex-shrink-0"></div>
                   <span className="text-sm text-gray-700 font-medium">Badanie echokardiograficzne</span>
@@ -528,7 +528,7 @@ const EchoSercaPage = () => {
                 
                 <div className="space-y-4">
                   {/* Telefon */}
-                  <div className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-3">
+                  <a href="tel:+48797127487" className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-3 hover:bg-teal-50 hover:shadow-md transition-all duration-200 cursor-pointer">
                     <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -536,12 +536,12 @@ const EchoSercaPage = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900 text-sm">Telefon</h4>
-                      <p className="text-xs text-gray-600">+48 797-127-487</p>
+                      <p className="text-xs text-gray-600 hover:text-teal-600 transition-colors">+48 797-127-487</p>
                     </div>
-                  </div>
+                  </a>
 
                   {/* Email */}
-                  <div className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-3">
+                  <a href="mailto:kontakt@centrummedyczne7.pl" className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-3 hover:bg-teal-50 hover:shadow-md transition-all duration-200 cursor-pointer">
                     <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -549,12 +549,12 @@ const EchoSercaPage = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900 text-sm">Email</h4>
-                      <p className="text-xs text-gray-600">kontakt@centrummedyczne7.pl</p>
+                      <p className="text-xs text-gray-600 hover:text-teal-600 transition-colors">kontakt@centrummedyczne7.pl</p>
                     </div>
-                  </div>
+                  </a>
 
                   {/* Adres */}
-                  <div className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-3">
+                  <a href="https://www.google.com/maps/place/Centrum+Medyczne+7+%7C+Przychodnia+Specjalistyczna+Skar%C5%BCysko-Kamienna+%7C+Chirurg,+Proktolog,+Neurolog+dzieci%C4%99cy/@51.1191214,20.864972,17z/data=!4m8!3m7!1s0x471839d944445df7:0x28ce2724c759c930!8m2!3d51.1191214!4d20.864972!9m1!1b1!16s%2Fg%2F11xfrlnfp0?entry=ttu" target="_blank" rel="noopener noreferrer" className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-3 hover:bg-teal-50 hover:shadow-md transition-all duration-200 cursor-pointer">
                     <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center flex-shrink-0">
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -563,9 +563,9 @@ const EchoSercaPage = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900 text-sm">Adres</h4>
-                      <p className="text-xs text-gray-600">ul. Powstańców Warszawy 7/1.5, Skarżysko-Kamienna</p>
+                      <p className="text-xs text-gray-600 hover:text-teal-600 transition-colors">ul. Powstańców Warszawy 7/1.5, Skarżysko-Kamienna</p>
                     </div>
-                  </div>
+                  </a>
 
                   {/* Godziny pracy */}
                   <div className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-3">
