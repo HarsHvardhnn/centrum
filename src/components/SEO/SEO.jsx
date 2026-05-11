@@ -34,6 +34,7 @@ const SEO = () => {
 
   // List of routes that have their own MetaTags component - skip SEO component for these
   const routesWithOwnMetaTags = [
+    '/',
     '/lekarze/michal-szczubkowski',
     '/uslugi/konsultacja-proktologiczna',
     '/uslugi',
@@ -100,8 +101,9 @@ const SEO = () => {
     switch (pathNorm) {
       case '/':
         return {
-          title: 'Centrum Medyczne 7 – poradnie specjalistyczne świętokrzyskie',
-          description: 'Poradnie CM7: chirurg, proktolog, neurolog dziecięcy, kardiolog, radiolog.  Wizyty prywatne, bez skierowania. Skarżysko-Kamienna, woj. świętokrzyskie.',
+          title: 'Centrum Medyczne 7 Skarżysko - Prywatna opieka medyczna',
+          description:
+            'Centrum Medyczne 7 Skarżysko (świętokrzyskie) – chirurg, neurolog, ortopeda, urolog, kardiolog oraz badania USG, EEG, echo serca. Rejestracja online.',
           keywords: 'centrum medyczne 7, przychodnia Skarżysko-Kamienna, lekarze specjaliści, wizyta lekarska, opieka medyczna, cm7, poradnie specjalistyczne świętokrzyskie',
           canonicalUrl: BASE_URL,
           ogImage: '/images/mainlogo.png'

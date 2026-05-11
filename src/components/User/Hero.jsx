@@ -127,7 +127,9 @@ export default function Hero({selectedDoctorId, setSelectedDoctorId}) {
         <div className="md:w-1/2 lg:w-[48%] xl:w-1/2 text-center md:text-left mb-6 xs:mb-8 sm:mb-10 md:mb-0 w-full">
           {/* Main Heading */}
           <h1 className="text-2xl xs:text-3xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold leading-tight mb-4 xs:mb-5 sm:mb-6 md:mb-6 lg:mb-8">
-            <span className="text-teal-600 block">Centrum Medyczne 7</span>
+            <span className="text-teal-600 block">
+              Centrum Medyczne{"\u00A0"}7
+            </span>
             <span className="text-gray-800 block">przychodnia</span>
             <span className="text-gray-800 block">specjalistyczna</span>
             <span className="text-gray-700 text-xl xs:text-2xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl block text-center md:text-left relative">

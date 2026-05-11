@@ -98,7 +98,7 @@ const  HomePage = () => {
   return (
     <>
       <MetaTags 
-        title="Centrum Medyczne 7 Skarżysko (świętokrzyskie) – chirurg, neurolog, ortopeda, urolog, kardiolog oraz badania USG, EEG, echo serca. Rejestracja online"
+        title="Centrum Medyczne 7 Skarżysko - Prywatna opieka medyczna"
         description="Centrum Medyczne 7 Skarżysko (świętokrzyskie) – chirurg, neurolog, ortopeda, urolog, kardiolog oraz badania USG, EEG, echo serca. Rejestracja online."
         path="/"
       />
