@@ -77,7 +77,8 @@ const RescheduleModal = ({
       setIsBackdated(false);
       setOverrideConfirm({ open: false, type: null });
       setEditMode("reschedule");
-      setSelectedDoctorId(getDoctorId() || "");
+      const initialDoctorId = getDoctorId() || "";
+      setSelectedDoctorId(initialDoctorId);
       setSelectedVisitType(
         appointment?.metadata?.visitType ||
         appointment?.visitType ||
@@ -89,6 +90,12 @@ const RescheduleModal = ({
       fetchSmsConsentStatus();
       fetchDoctorsList();
       fetchVisitTypeOptions();
+
+      // Pre-populate the date with the doctor's next available slot (same UX as Create Appointment).
+      // Silent so we don't toast at modal open if doctor has no upcoming availability.
+      if (initialDoctorId) {
+        fetchNextAvailableDate(initialDoctorId, { silent: true });
+      }
       
       // Debug logging
       console.log("RescheduleModal opened with appointment:", appointment);
@@ -149,6 +156,57 @@ const RescheduleModal = ({
     } catch (error) {
       console.error("Error fetching available slots:", error);
       setError("Wystąpił błąd podczas pobierania dostępnych terminów");
+      setAvailableSlots([]);
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  /**
+   * Fetch the doctor's next available date (within the next 30 days) and pre-populate the
+   * date picker + slots. Mirrors the UX in ReceptionAppointmentForm / AddAppointmentForm so
+   * receptionists don't need to click through weeks one by one when finding the soonest slot.
+   *
+   * @param {string} doctorId
+   * @param {{ silent?: boolean }} options - silent: suppress "no availability" toast
+   */
+  const fetchNextAvailableDate = async (doctorId, options = {}) => {
+    if (!doctorId) return;
+    const { silent = false } = options;
+
+    try {
+      setSlotsLoading(true);
+      setError("");
+
+      const response = await apiCaller("GET", `docs/schedule/next-available/${doctorId}`);
+
+      if (response?.data?.success) {
+        const payload = response.data.data;
+        if (payload?.nextAvailableDate) {
+          const nextDate = payload.nextAvailableDate;
+          setSelectedDate(nextDate);
+          setAvailableSlots(Array.isArray(payload.availableSlots) ? payload.availableSlots : []);
+          setSelectedSlot(null);
+          // Recompute current week so the calendar grid lands on the right week.
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const target = new Date(nextDate);
+          target.setHours(0, 0, 0, 0);
+          const diffDays = Math.floor((target - today) / (1000 * 60 * 60 * 24));
+          setCurrentWeek(Math.max(0, Math.floor(diffDays / 7)));
+        } else if (!silent) {
+          toast.error("Ten lekarz nie ma dostępnych terminów w ciągu najbliższych 30 dni.");
+          setAvailableSlots([]);
+        }
+      } else if (!silent) {
+        toast.error("Nie udało się pobrać najbliższego dostępnego terminu.");
+        setAvailableSlots([]);
+      }
+    } catch (error) {
+      console.error("Error fetching next available date:", error);
+      if (!silent) {
+        toast.error("Wystąpił błąd podczas sprawdzania dostępności lekarza.");
+      }
       setAvailableSlots([]);
     } finally {
       setSlotsLoading(false);
@@ -639,8 +697,10 @@ const RescheduleModal = ({
                 setSelectedDoctorId(nextDoctorId);
                 setSelectedSlot(null);
                 setAvailableSlots([]);
-                if (selectedDate && nextDoctorId) {
-                  fetchAvailableSlots(nextDoctorId, selectedDate);
+                // When user picks a new doctor, jump to that doctor's next available
+                // date instead of keeping the previous date (which might be invalid for them).
+                if (nextDoctorId) {
+                  fetchNextAvailableDate(nextDoctorId);
                 }
               }}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
@@ -906,16 +966,35 @@ const RescheduleModal = ({
                 </button>
               </div>
             </div>
-            <div className="mb-3">
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Szybki wybór daty (kalendarz)
-              </label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={handleCalendarJump}
-                className="w-full sm:w-auto p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
-              />
+            <div className="mb-3 flex flex-wrap items-end gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Szybki wybór daty (kalendarz)
+                </label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={handleCalendarJump}
+                  className="w-full sm:w-auto p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const doctorId = selectedDoctorId || getDoctorId();
+                  if (!doctorId) {
+                    toast.error("Najpierw wybierz lekarza.");
+                    return;
+                  }
+                  fetchNextAvailableDate(doctorId);
+                }}
+                disabled={slotsLoading}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Znajdź najbliższy dostępny termin u wybranego lekarza"
+              >
+                <Calendar className="w-4 h-4" />
+                Najbliższy dostępny termin
+              </button>
             </div>
             <div className="grid grid-cols-7 gap-2">
               {getCurrentWeekDays().map((date) => (
