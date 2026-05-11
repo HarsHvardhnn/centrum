@@ -328,15 +328,16 @@ const RescheduleModal = ({
     const nextIsBackdated = overrides.isBackdated ?? isBackdated;
 
     // For edit-only mode, only send doctor / visit type / consultation type changes.
-    // Date and time stay as-is on backend.
+    // Date and time stay as-is on backend. No SMS/email is sent — these notifications
+    // are only relevant when the visit is actually rescheduled.
     if (editMode === "edit-only") {
       return {
         editOnly: true,
         consultationType,
         ...(selectedVisitType ? { visitType: selectedVisitType } : {}),
         newDoctorId: selectedDoctorId || getDoctorId(),
-        sendSMSNotification,
-        sendEmailNotification,
+        sendSMSNotification: false,
+        sendEmailNotification: false,
       };
     }
 
@@ -689,7 +690,9 @@ const RescheduleModal = ({
             </p>
           </div>
 
-          {/* Notification Options */}
+          {/* Notification Options - Only when actually rescheduling (date/time changes).
+              In edit-only mode no SMS/email is sent, so we hide the whole section. */}
+          {editMode === "reschedule" && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <h4 className="text-sm font-medium text-blue-800 mb-3">
               Powiadomienia o przełożeniu
@@ -790,6 +793,7 @@ const RescheduleModal = ({
               )}
             </div>
           </div>
+          )}
 
           {/* Selection Mode + Override Options - Only relevant when changing date/time */}
           {editMode === "reschedule" && (
