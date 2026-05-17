@@ -1,5 +1,6 @@
 import { apiCaller } from '../utils/axiosInstance';
 import { axiosInstance } from '../utils/axiosInstance';
+import { translateStatus } from '../utils/statusHelper';
 
 // Generate report with filters
 export const generateReport = async (filters) => {
@@ -261,17 +262,8 @@ export const formatCurrency = (amount) => {
   return `${parseFloat(amount).toFixed(2)} PLN`;
 };
 
-// Get status display text
-export const getStatusText = (status) => {
-  const statusMap = {
-    'completed': 'Zakończone',
-    'cancelled': 'Anulowane',
-    'booked': 'Zarezerwowane',
-    'checkedIn': 'Zameldowane',
-    'pending': 'Oczekujące'
-  };
-  return statusMap[status] || status;
-};
+// Get status display text (Polish labels for all appointment statuses including no_show)
+export const getStatusText = (status) => translateStatus(status);
 
 // Get service type display text
 export const getServiceTypeText = (serviceType) => {

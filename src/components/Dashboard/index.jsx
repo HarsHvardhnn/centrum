@@ -30,7 +30,17 @@ import billingHelper from "../../helpers/billingHelper";
 import { createPortal } from "react-dom";
 import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
-import { translateStatus, getStatusStyle, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel, getVisitTypeDisplayLabel, stripDoctorTitle } from '../../utils/statusHelper';
+import {
+  translateStatus,
+  getStatusStyle,
+  getVisitModeLabel,
+  getVisitModeStyle,
+  getCreatedByRoleLabel,
+  getVisitTypeDisplayLabel,
+  stripDoctorTitle,
+  APPOINTMENT_STATUS_NO_SHOW,
+  isCancelledStatus,
+} from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import RescheduleModal from "./RescheduleModal";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
@@ -405,11 +415,8 @@ const PatientList = () => {
   /** Visit-only: no patient linked (dashboard API uses patient_id) */
   const isVisitOnlyAppointment = (apt) => !apt?.patient_id;
 
-  /** Cancelled status (case-insensitive; accepts "cancelled", "canceled", or any variant). */
-  const isCancelled = (apt) => {
-    const s = (apt?.status ?? apt?.appointmentStatus ?? "").toString().toLowerCase().trim();
-    return s === "cancelled" || s === "canceled" || s.startsWith("cancel") || s === "no-show";
-  };
+  /** Cancelled status (not the same as no_show / niestawiennictwo). */
+  const isCancelled = (apt) => isCancelledStatus(apt);
 
   /** Receptionist goes to edit patient (Settings); admin/doctor go to appointment card. */
   const getPatientViewUrl = (patientId, appointmentId) => {
@@ -466,12 +473,13 @@ const PatientList = () => {
     return s; // last resort: show raw string
   };
 
-  /** Map UI status filter to API status param (booked | completed | cancelled; omit for 'all'). */
+  /** Map UI status filter to API status param (omit for 'all'). */
   const getApiStatus = () => {
     if (statusFilter === "all") return undefined;
     if (statusFilter === "reserved") return "booked";
     if (statusFilter === "completed") return "completed";
     if (statusFilter === "cancelled") return "cancelled";
+    if (statusFilter === APPOINTMENT_STATUS_NO_SHOW) return APPOINTMENT_STATUS_NO_SHOW;
     return undefined;
   };
 
@@ -861,6 +869,12 @@ const PatientList = () => {
                 onClick={() => setStatusFilter("cancelled")}
               >
                 Anulowane
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className={`flex items-center px-4 py-2 text-sm rounded-md cursor-pointer ${statusFilter === APPOINTMENT_STATUS_NO_SHOW ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+                onClick={() => setStatusFilter(APPOINTMENT_STATUS_NO_SHOW)}
+              >
+                Niestawiennictwo
               </DropdownMenu.Item>
               <DropdownMenu.Separator className="h-px bg-gray-200 my-1" />
               <DropdownMenu.Item

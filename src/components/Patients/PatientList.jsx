@@ -28,7 +28,23 @@ import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
-import { translateStatus, getStatusStyle, getVisitMode, getVisitModeLabel, getVisitModeStyle, getCreatedByRoleLabel, getVisitTypeDisplayLabel, stripDoctorTitle } from '../../utils/statusHelper';
+import {
+  translateStatus,
+  getStatusStyle,
+  getVisitMode,
+  getVisitModeLabel,
+  getVisitModeStyle,
+  getCreatedByRoleLabel,
+  getVisitTypeDisplayLabel,
+  stripDoctorTitle,
+  CLINIC_STATUS_FILTER_OPTIONS,
+  APPOINTMENT_STATUS_CHANGE_OPTIONS,
+  APPOINTMENT_STATUS_NO_SHOW,
+  appointmentStatusesEqual,
+  isCancelledStatus,
+  isNoShowStatus,
+  normalizeAppointmentStatusKey,
+} from '../../utils/statusHelper';
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import PatientStepForm from "../SubComponentForm/PatientStepForm";
@@ -206,11 +222,8 @@ function LabAppointmentsContent({ clinic }) {
   const isVisitOnlyAppointment = (apt) =>
     apt?.isVisitOnly === true || !(apt?.patient?.id || apt?.patient?._id);
 
-  /** Cancelled status (case-insensitive; accepts both "cancelled" and "canceled"). */
-  const isCancelled = (apt) => {
-    const s = apt?.status?.toLowerCase();
-    return s === "cancelled" || s === "canceled";
-  };
+  /** Cancelled status (not the same as no-show / niestawiennictwo). */
+  const isCancelled = (apt) => isCancelledStatus(apt);
 
   /** Receptionist goes to edit patient (Settings); admin/doctor go to appointment card. */
   const getPatientViewUrl = (patientId, appointmentId) => {
@@ -886,17 +899,9 @@ function LabAppointmentsContent({ clinic }) {
   const statusLabelForDisplay =
     statusFilter === "All"
       ? "Wszystkie"
-      : statusFilter === "booked"
-      ? "Zarezerwowane"
-      : statusFilter === "checkedIn"
-      ? "Zameldowany"
-      : statusFilter?.toLowerCase() === "cancelled" || statusFilter?.toLowerCase() === "canceled"
-      ? "Anulowane"
-      : statusFilter === "completed"
-      ? "Zakończone"
       : statusFilter === "patientLess"
       ? "Do rejestracji"
-      : statusFilter;
+      : translateStatus(statusFilter);
 
   const dateRangeText = clinic
     ? dateRange.startDate && dateRange.endDate
@@ -1138,14 +1143,7 @@ function LabAppointmentsContent({ clinic }) {
                     <div className="mb-4">
                       <h3 className="text-sm font-medium text-gray-800 mb-2">Filtruj według statusu</h3>
                       <div className="space-y-2">
-                        {[
-                          { value: "All", label: "Wszystkie" },
-                          { value: "booked", label: "Zarezerwowane" },
-                          { value: "checkedIn", label: "Zameldowany" },
-                          { value: "Cancelled", label: "Anulowane" },
-                          { value: "Completed", label: "Zakończone" },
-                          { value: "patientLess", label: "Do rejestracji" },
-                        ].map((status) => (
+                        {CLINIC_STATUS_FILTER_OPTIONS.map((status) => (
                           <label key={status.value} className="flex items-center gap-2 cursor-pointer">
                             <input
                               type="radio"
@@ -1431,7 +1429,9 @@ function LabAppointmentsContent({ clinic }) {
                                   <FileText size={16} className="mr-2" /> Karta wizyty
                                 </DropdownMenu.Item>
                               )}
-                              {!["checkedIn", "completed", "cancelled"].includes(appointment.status) && (
+                              {!["checkedIn", "completed", "cancelled", APPOINTMENT_STATUS_NO_SHOW].includes(
+                                normalizeAppointmentStatusKey(appointment.status)
+                              ) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer" onClick={(e) => handleCancelClick(e, appointment.id)}>
                                   <X size={16} className="mr-2" /> Anuluj wizytę
                                 </DropdownMenu.Item>
@@ -1574,7 +1574,10 @@ function LabAppointmentsContent({ clinic }) {
                                   <FileText size={16} className="mr-2" /> Karta wizyty
                                 </DropdownMenu.Item>
                               )}
-                              {clinic && !["checkedIn", "completed", "cancelled"].includes(appointment.status) && (
+                              {clinic &&
+                                !["checkedIn", "completed", "cancelled", APPOINTMENT_STATUS_NO_SHOW].includes(
+                                  normalizeAppointmentStatusKey(appointment.status)
+                                ) && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer" onClick={(e) => handleCancelClick(e, appointment.id)}>
                                   <X size={16} className="mr-2" /> Anuluj wizytę
                                 </DropdownMenu.Item>
@@ -2291,27 +2294,21 @@ function LabAppointmentsContent({ clinic }) {
                   </p>
 
                   <div className="space-y-3">
-                    {[
-                      { value: 'booked', label: translateStatus('booked'), color: getStatusStyle('booked') },
-                      { value: 'checkedIn', label: translateStatus('checkedIn'), color: getStatusStyle('checkedIn') },
-                      { value: 'completed', label: translateStatus('completed'), color: getStatusStyle('completed') },
-                      { value: 'cancelled', label: translateStatus('cancelled'), color: getStatusStyle('cancelled') },
-                      { value: 'no-show', label: translateStatus('no-show'), color: getStatusStyle('no-show') }
-                    ].map(status => (
+                    {APPOINTMENT_STATUS_CHANGE_OPTIONS.map((status) => (
                       <button
-                        key={status.value}
-                        onClick={() => handleStatusUpdate(status.value)}
-                        disabled={selectedStatusAppointment?.status === status.value}
+                        key={status.apiValue}
+                        onClick={() => handleStatusUpdate(status.apiValue)}
+                        disabled={appointmentStatusesEqual(selectedStatusAppointment?.status, status.apiValue)}
                         className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
-                          selectedStatusAppointment?.status === status.value 
+                          appointmentStatusesEqual(selectedStatusAppointment?.status, status.apiValue)
                             ? 'border-gray-300 bg-gray-50 text-gray-400 cursor-not-allowed' 
                             : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50 cursor-pointer'
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-medium">{status.label}</span>
-                          <span className={`px-2 py-1 text-xs rounded-full ${status.color}`}>
-                            {translateStatus(status.value)}
+                          <span className="font-medium">{translateStatus(status.apiValue)}</span>
+                          <span className={`px-2 py-1 text-xs rounded-full ${getStatusStyle(status.apiValue)}`}>
+                            {translateStatus(status.apiValue)}
                           </span>
                         </div>
                       </button>
