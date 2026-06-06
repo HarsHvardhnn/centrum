@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, Clock } from "lucide-react";
-import { translateStatus, getStatusStyle, stripDoctorTitle } from "../../../../utils/statusHelper";
+import { translateStatus, getStatusStyle, getVisitTypeDisplayLabel, stripDoctorTitle } from "../../../../utils/statusHelper";
+import { isRadiologistAppointment } from "../../../../utils/radiologistVisitHelper";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
 import VisitReasonCascadeDropdown from "../../../UtilComponents/VisitReasonCascadeDropdown";
 import { toast } from "sonner";
@@ -52,8 +53,10 @@ const VisitInfoHeader = ({
     "";
   const effectiveVisitReasonVerified =
     visitReasonVerified ?? appointment.visitReasonVerified ?? appointment.visitTypeVerified ?? null;
+  const isRadiologistVisit = isRadiologistAppointment(appointment);
 
   const needsVerification =
+    !isRadiologistVisit &&
     effectiveVisitReasonVerified !== true &&
     !visitReasonVerifyLoading &&
     appointment.status !== "completed" &&
@@ -69,6 +72,7 @@ const VisitInfoHeader = ({
   const statusClass = getStatusStyle(status);
   const appointmentId = appointment.id || appointment._id;
   const isVisitCompleted = appointment.status === "completed" || appointment.status === "Completed";
+  const visitTypeDisplay = getVisitTypeDisplayLabel(appointment);
 
   const handleVisitTypeSelect = async (newReason) => {
     if (!newReason || !appointmentId) return;
@@ -193,9 +197,9 @@ const VisitInfoHeader = ({
       </div>
       <div className="flex items-center gap-2 flex-wrap">
         <label className="text-sm text-gray-600 shrink-0">Rodzaj wizyty</label>
-        {readOnly || isVisitCompleted ? (
+        {readOnly || isVisitCompleted || isRadiologistVisit ? (
           <>
-            <span className="text-sm font-medium text-gray-900">{visitType || "—"}</span>
+            <span className="text-sm font-medium text-gray-900">{visitTypeDisplay || "—"}</span>
             {renderVerificationPill()}
           </>
         ) : (

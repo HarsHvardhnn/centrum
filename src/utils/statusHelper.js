@@ -1,3 +1,8 @@
+import {
+  isRadiologistAppointment,
+  RADIOLOGIST_VISIT_TYPE_LABEL,
+} from "./radiologistVisitHelper";
+
 /** Canonical API status for patient no-show. */
 export const APPOINTMENT_STATUS_NO_SHOW = "no_show";
 
@@ -150,6 +155,10 @@ export const getVisitModeStyle = (appointment) => {
  * - literal "consultation" (API/legacy) → "Konsultacja lekarska"
  */
 export const getVisitTypeDisplayLabel = (appointment) => {
+  if (isRadiologistAppointment(appointment)) {
+    return RADIOLOGIST_VISIT_TYPE_LABEL;
+  }
+
   const apiVisitType = appointment?.visitType;
   if (apiVisitType != null && String(apiVisitType).trim() !== "") {
     return String(apiVisitType).trim();

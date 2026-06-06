@@ -9,6 +9,11 @@ import { useServices } from "../../context/serviceContext.jsx";
 import { toast } from "sonner";
 import { apiCaller } from "../../utils/axiosInstance";
 import { normalizePesel, getPeselChecksumWarning } from "../../utils/peselUtils";
+import {
+  isRadiologistDoctor,
+  getRadiologistVisitTypeFields,
+} from "../../utils/radiologistVisitHelper";
+import IpadSessionPanel from "./IpadSessionPanel";
 
 function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServices = [], isLoadingServices = false }) {
   const { services: contextServices, loading: contextLoading } = useServices();
@@ -58,6 +63,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   const [existingPatientData, setExistingPatientData] = useState(null);
   const [peselWarningFromApi, setPeselWarningFromApi] = useState(null);
   const [completeRegLoading, setCompleteRegLoading] = useState(false);
+  const [registrationMode, setRegistrationMode] = useState("manual"); // manual | ipad
   const [peselCheckLoading, setPeselCheckLoading] = useState(false);
 
   // Update allServices when availableServices changes or use context services as fallback
@@ -215,11 +221,13 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   };
 
   const handleDoctorSelect = (doctor) => {
+    const radiologistFields = doctor && isRadiologistDoctor(doctor) ? getRadiologistVisitTypeFields() : {};
     setAppointmentData({
       ...appointmentData,
       selectedDoctor: doctor,
       selectedServices: [],
       selectedSlot: null,
+      ...radiologistFields,
     });
     
     if (doctor && doctor._id) {
@@ -971,6 +979,9 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
             : appointmentData.selectedSlot?.endTime,
           duration: appointmentData.customDuration || appointmentData.duration,
           consultationType: "offline",
+          ...(isRadiologistDoctor(appointmentData.selectedDoctor)
+            ? getRadiologistVisitTypeFields()
+            : {}),
           // message (Notatki) – not sent for now; field commented out in step 4
           message: "",
           smsConsentAgreed: true,
@@ -1067,7 +1078,38 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
               </svg>
             </button>
           </div>
-          <p className="text-sm text-gray-600 mb-4">Wprowadź PESEL i dane pacjenta. Identyfikator pacjenta zostanie utworzony po zatwierdzeniu.</p>
+          <p className="text-sm text-gray-600 mb-4">Wybierz sposób rejestracji pacjenta dla tej wizyty.</p>
+          <div className="flex gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => setRegistrationMode("manual")}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium border ${registrationMode === "manual" ? "bg-teal-700 text-white border-teal-700" : "bg-white text-gray-700 border-gray-300"}`}
+            >
+              Rejestracja ręczna
+            </button>
+            <button
+              type="button"
+              onClick={() => setRegistrationMode("ipad")}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium border ${registrationMode === "ipad" ? "bg-teal-700 text-white border-teal-700" : "bg-white text-gray-700 border-gray-300"}`}
+            >
+              Rejestracja przez iPad
+            </button>
+          </div>
+
+          {registrationMode === "ipad" && (
+            <div className="mb-6">
+              <IpadSessionPanel
+                visitId={createdVisitId}
+                onSessionComplete={() => {
+                  toast.success("Rejestracja iPad zakończona.");
+                  onComplete && onComplete({ visitId: createdVisitId });
+                  onClose();
+                }}
+              />
+            </div>
+          )}
+
+          {registrationMode === "manual" && (
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">PESEL <span className="text-red-500">*</span></label>
@@ -1135,6 +1177,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
               </button>
             </div>
           </div>
+          )}
         </div>
       </div>
     );

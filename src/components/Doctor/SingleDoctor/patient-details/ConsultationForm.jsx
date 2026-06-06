@@ -7,7 +7,8 @@ import FileListItem from "./FileListItem";
 import { toast } from "sonner";
 import { apiCaller } from "../../../../utils/axiosInstance";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
-import { stripDoctorTitle } from "../../../../utils/statusHelper";
+import { stripDoctorTitle, getVisitTypeDisplayLabel } from "../../../../utils/statusHelper";
+import { isRadiologistAppointment } from "../../../../utils/radiologistVisitHelper";
 
 const ConsultationForm = ({
   patientData,
@@ -18,6 +19,7 @@ const ConsultationForm = ({
   onRemoveFile,
   setPatientData,
   appointmentId,
+  appointment = null,
   className = "",
 }) => {
 
@@ -172,7 +174,15 @@ const ConsultationForm = ({
     return () => { cancelled = true; };
   }, []);
 
+  const isRadiologistVisit = isRadiologistAppointment(
+    appointment || consultationData
+  );
+  const visitTypeDisplayLabel = getVisitTypeDisplayLabel(
+    appointment || consultationData
+  );
+
   const handleConfirmVisitType = async () => {
+    if (isRadiologistVisit) return;
     const displayName = verifyVisitReasonDisplayName || consultationData.visitReason || consultationData.consultationType;
     if (!displayName) {
       toast.error("Wybierz rodzaj wizyty z listy");
@@ -228,9 +238,14 @@ const ConsultationForm = ({
           <label className="block text-sm text-gray-600 mb-1">Rodzaj wizyty</label>
           <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
             <p className="text-sm font-medium text-gray-800 mb-2">
-              {consultationData.visitReason || consultationData.consultationType || "—"}
+              {visitTypeDisplayLabel || "—"}
             </p>
-            {consultationData.visitTypeVerified ? (
+            {isRadiologistVisit ? (
+              <span className="inline-flex items-center gap-1 text-sm text-teal-700">
+                <CheckCircle size={16} />
+                Badanie USG (radiolog)
+              </span>
+            ) : consultationData.visitTypeVerified ? (
               <span className="inline-flex items-center gap-1 text-sm text-teal-700">
                 <CheckCircle size={16} />
                 Zweryfikowano

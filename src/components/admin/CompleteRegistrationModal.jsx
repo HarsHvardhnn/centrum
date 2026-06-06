@@ -4,6 +4,7 @@ import appointmentHelper from "../../helpers/appointmentHelper";
 import patientService from "../../helpers/patientHelper";
 import { normalizePesel, getPeselChecksumWarning } from "../../utils/peselUtils";
 import { PHONE_COUNTRY_CODES, FlagIcon } from "../../constants/phoneCountryCodes";
+import IpadSessionPanel from "./IpadSessionPanel";
 
 /**
  * Admin: Complete registration for a visit that has no patient yet.
@@ -25,6 +26,7 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
   const [loadingFullPatient, setLoadingFullPatient] = useState(false);
   const [linkingToExisting, setLinkingToExisting] = useState(false);
   const [editingExistingPatientId, setEditingExistingPatientId] = useState(null);
+  const [registrationMode, setRegistrationMode] = useState("manual");
   const regInitial = appointment?.registrationData || {};
   const [formData, setFormData] = useState({
     firstName: regInitial?.firstName ?? (regInitial?.name ? regInitial.name.split(/\s+/)[0] : "") ?? "",
@@ -83,6 +85,7 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
     setShowExistingPatientModal(false);
     setFullExistingPatient(null);
     setEditingExistingPatientId(null);
+    setRegistrationMode("manual");
   }, [isOpen, appointment]);
 
   useEffect(() => {
@@ -352,7 +355,42 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
             </svg>
           </button>
         </div>
-        <p className="text-sm text-gray-600 mb-4">Wprowadź PESEL i dane pacjenta. Identyfikator pacjenta zostanie utworzony po zatwierdzeniu.</p>
+        <p className="text-sm text-gray-600 mb-4">Wybierz sposób rejestracji pacjenta dla tej wizyty.</p>
+
+        {!isInternational && (
+          <div className="flex gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => setRegistrationMode("manual")}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium border ${registrationMode === "manual" ? "bg-teal-700 text-white border-teal-700" : "bg-white text-gray-700 border-gray-300"}`}
+            >
+              Rejestracja ręczna
+            </button>
+            <button
+              type="button"
+              onClick={() => setRegistrationMode("ipad")}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium border ${registrationMode === "ipad" ? "bg-teal-700 text-white border-teal-700" : "bg-white text-gray-700 border-gray-300"}`}
+            >
+              Rejestracja przez iPad
+            </button>
+          </div>
+        )}
+
+        {registrationMode === "ipad" && !isInternational && (
+          <div className="mb-4">
+            <IpadSessionPanel
+              visitId={visitId}
+              onSessionComplete={() => {
+                toast.success("Rejestracja iPad zakończona.");
+                onSuccess?.();
+                onClose();
+              }}
+            />
+          </div>
+        )}
+
+        {(registrationMode === "manual" || isInternational) && (
+        <>
         {editingExistingPatientId && (
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm font-medium text-blue-800">Edytujesz dane istniejącego pacjenta</p>
@@ -561,6 +599,8 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
             </button>
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* Existing patient detail modal – full details and "Użyj tego pacjenta" */}

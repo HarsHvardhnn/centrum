@@ -1329,6 +1329,11 @@ function LabAppointmentsContent({ clinic }) {
                             Do rejestracji
                           </span>
                         )}
+                        {appointment.registrationData?.registrationMethod === "ipad_kiosk" && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 bg-teal-100 text-teal-800 border border-teal-200">
+                            iPad
+                          </span>
+                        )}
                       </div>
                       <div className="text-sm text-gray-500 mt-1">
                         {idOrPeselLine}

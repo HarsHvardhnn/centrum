@@ -28,6 +28,10 @@ import { TestsSection } from "./medications/TestSection";
 import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity, Save } from "lucide-react";
 import { toast } from "sonner";
 import { translateStatus, getVisitModeLabel, getVisitModeStyle, getVisitTypeDisplayLabel, stripDoctorTitle } from "../../../../utils/statusHelper";
+import {
+  isRadiologistAppointment,
+  getRadiologistVisitTypeFields,
+} from "../../../../utils/radiologistVisitHelper";
 import { useAutoSave } from "../../../../hooks/useAutoSave";
 import { useUser } from "../../../../context/userContext";
 
@@ -697,9 +701,13 @@ const PatientDetailsPage = () => {
         setAppointments(data.appointmentHistory || []);
 
         // Set consultation data
+        const radiologistVisitFields = isRadiologistAppointment(data.appointment)
+          ? getRadiologistVisitTypeFields()
+          : {};
         setConsultationData(prevConsultation => normalizeConsultationTypeAliases({
           ...prevConsultation,
           ...data.consultation,
+          ...radiologistVisitFields,
           notes: data.consultation?.notes || "",
           date: data.appointment?.date || prevConsultation.date,
           consultationDate: data.appointment?.date || prevConsultation.consultationDate,
@@ -721,9 +729,11 @@ const PatientDetailsPage = () => {
 
         // Set visit reason verification status
         setVisitReasonVerified(
-          data.consultation?.visitReasonVerified ?? 
-          data.consultation?.visitTypeVerified ?? 
-          null
+          isRadiologistAppointment(data.appointment)
+            ? true
+            : data.consultation?.visitReasonVerified ??
+              data.consultation?.visitTypeVerified ??
+              null
         );
 
         setIsLoading(false);
@@ -1422,7 +1432,10 @@ const PatientDetailsPage = () => {
                 <span className="text-sm font-medium">
                   {getVisitTypeDisplayLabel(appointment)}
                 </span>
-                {visitReasonVerified === false && appointment.status !== "completed" && appointment.status !== "Completed" && (
+                {visitReasonVerified === false &&
+                  !isRadiologistAppointment(appointment) &&
+                  appointment.status !== "completed" &&
+                  appointment.status !== "Completed" && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Do weryfikacji</span>
                 )}
               </div>
@@ -1483,7 +1496,10 @@ const PatientDetailsPage = () => {
     e?.stopPropagation?.(); // Prevent appointment selection when clicking the button
 
     // Block generating visit card until visit reason is verified (API 1/2).
-    if (visitReasonVerifyLoading || visitReasonVerified === false) {
+    if (
+      !isRadiologistAppointment(selectedAppointment) &&
+      (visitReasonVerifyLoading || visitReasonVerified === false)
+    ) {
       toast.warning("Najpierw zweryfikuj rodzaj wizyty, aby pobrać kartę.");
       return;
     }
