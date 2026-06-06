@@ -2,6 +2,7 @@ import { X, Plus, Check, Trash2 } from "lucide-react";
 import { useFormContext } from "../../context/SubStepFormContext";
 import { useState } from "react";
 import { apiCaller } from "../../utils/axiosInstance";
+import { resolveDocumentOpenUrl } from "../../utils/documentUrl";
 import { toast } from "sonner";
 
 const ConsentDocumentUpload = ({currentPatientId}) => {
@@ -164,8 +165,9 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
       if (document.file) {
         const pdfUrl = URL.createObjectURL(document.file);
         window.open(pdfUrl, "_blank");
-      } else if (document.preview || document.path) {
-        window.open(document.preview || document.path, "_blank");
+      } else {
+        const url = resolveDocumentOpenUrl(document);
+        if (url) window.open(url, "_blank");
       }
     } else if (isImageFile(document)) {
       // For images, open the preview or path URL in new tab

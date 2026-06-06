@@ -7,6 +7,7 @@ import {
   cancelSession,
   downloadPackage,
 } from "../../helpers/kioskHelper";
+import { resolveDocumentOpenUrl } from "../../utils/documentUrl";
 
 const STATUS_LABELS = {
   pending: "Oczekuje na PIN",
@@ -114,11 +115,13 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
       const docs = res.documents || [];
       if (docs.length > 1) {
         docs.forEach((doc) => {
-          if (doc.pdfUrl) window.open(doc.pdfUrl, "_blank");
+          const url = resolveDocumentOpenUrl(doc);
+          if (url) window.open(url, "_blank");
         });
         toast.success(`Otwarto ${docs.length} dokumentów.`);
       } else if (res.downloadUrl) {
-        window.open(res.downloadUrl, "_blank");
+        const url = resolveDocumentOpenUrl(res.downloadUrl);
+        if (url) window.open(url, "_blank");
         toast.success("Pobieranie dokumentów...");
       }
     } catch (err) {

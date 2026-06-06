@@ -28,6 +28,7 @@ import { TestsSection } from "./medications/TestSection";
 import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity, Save } from "lucide-react";
 import { toast } from "sonner";
 import { translateStatus, getVisitModeLabel, getVisitModeStyle, getVisitTypeDisplayLabel, stripDoctorTitle } from "../../../../utils/statusHelper";
+import { resolveDocumentOpenUrl } from "../../../../utils/documentUrl";
 import {
   isRadiologistAppointment,
   getRadiologistVisitTypeFields,
@@ -275,11 +276,8 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
               key={doc.id || index}
               className="bg-white rounded-lg p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow w-64 max-w-full relative group"
               onClick={() => {
-                if (doc.url) {
-                  window.open(doc.url, '_blank');
-                } else {
-                  window.open(doc.preview, '_blank');
-                }
+                const url = resolveDocumentOpenUrl(doc);
+                if (url) window.open(url, "_blank");
               }}
             >
               <div className="flex items-center gap-3">
