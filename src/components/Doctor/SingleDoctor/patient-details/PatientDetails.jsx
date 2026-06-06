@@ -28,6 +28,10 @@ import { TestsSection } from "./medications/TestSection";
 import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity, Save } from "lucide-react";
 import { toast } from "sonner";
 import { translateStatus, getVisitModeLabel, getVisitModeStyle, getVisitTypeDisplayLabel, stripDoctorTitle } from "../../../../utils/statusHelper";
+import {
+  isRadiologistAppointment,
+  getRadiologistVisitTypeFields,
+} from "../../../../utils/radiologistVisitHelper";
 import { useAutoSave } from "../../../../hooks/useAutoSave";
 import { useUser } from "../../../../context/userContext";
 
@@ -47,6 +51,22 @@ function mergeConsultationVerificationFlags(consultationData, visitReasonVerifie
       consultationData.visitTypeVerified === true ||
       visitReasonVerifiedState === true ||
       consultationData.visitReasonVerified === true,
+  };
+}
+
+/** Keep visit-type aliases in sync on patient details page. Source of truth: consultationType. */
+function normalizeConsultationTypeAliases(consultationData) {
+  if (!consultationData || typeof consultationData !== "object") return consultationData;
+  const consultationType =
+    consultationData.consultationType ??
+    consultationData.visitReason ??
+    consultationData.visitType ??
+    "";
+  return {
+    ...consultationData,
+    consultationType,
+    visitReason: consultationType,
+    visitType: consultationType,
   };
 }
 
@@ -636,7 +656,6 @@ const PatientDetailsPage = () => {
         } else if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
           // Otherwise select the most recent one
           const mostRecentAppointment = appointmentsResponse.data[0];
-          //("mostRecentAppointment", mostRecentAppointment);
           setCurrentAppointmentId(mostRecentAppointment._id);
           setSelectedAppointment(mostRecentAppointment);
           await fetchAppointmentDetails(mostRecentAppointment._id);
@@ -665,17 +684,26 @@ const PatientDetailsPage = () => {
       
       if (response.data) {
         const { consultation, medications: appointmentMedications, tests: appointmentTests, reports, patientData: appointmentPatientData, patient: appointmentPatient, notes, date: aptDate, startTime: aptStartTime, endTime: aptEndTime } = response.data;
-        
+        const appointmentRecord = response.data;
+        const radiologistVisitFields = isRadiologistAppointment(appointmentRecord)
+          ? getRadiologistVisitTypeFields()
+          : {};
+
         // Update consultation data with notes and appointment date/time
-        setConsultationData(prevConsultation => ({
+        setConsultationData(prevConsultation => normalizeConsultationTypeAliases({
           ...prevConsultation,
           ...consultation,
+          ...radiologistVisitFields,
           notes: notes || "",
           date: aptDate || prevConsultation.date,
           consultationDate: aptDate || prevConsultation.consultationDate,
           time: aptStartTime || prevConsultation.time,
           endTime: aptEndTime || prevConsultation.endTime
         }));
+
+        if (isRadiologistAppointment(appointmentRecord)) {
+          setVisitReasonVerified(true);
+        }
         setMedications(appointmentMedications || []);
         setTests(appointmentTests || []);
         setReports(reports || []);
@@ -1271,7 +1299,10 @@ const PatientDetailsPage = () => {
                 <span className="text-sm font-medium">
                   {getVisitTypeDisplayLabel(appointment)}
                 </span>
-                {visitReasonVerified === false && appointment.status !== "completed" && appointment.status !== "Completed" && (
+                {visitReasonVerified === false &&
+                  !isRadiologistAppointment(appointment) &&
+                  appointment.status !== "completed" &&
+                  appointment.status !== "Completed" && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Do weryfikacji</span>
                 )}
               </div>
@@ -1332,7 +1363,10 @@ const PatientDetailsPage = () => {
     e?.stopPropagation?.(); // Prevent appointment selection when clicking the button
 
     // Block generating visit card until visit reason is verified (API 1/2).
-    if (visitReasonVerifyLoading || visitReasonVerified === false) {
+    if (
+      !isRadiologistAppointment(selectedAppointment) &&
+      (visitReasonVerifyLoading || visitReasonVerified === false)
+    ) {
       toast.warning("Najpierw zweryfikuj rodzaj wizyty, aby pobrać kartę.");
       return;
     }

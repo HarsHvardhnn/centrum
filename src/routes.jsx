@@ -62,6 +62,7 @@ import DocumentRepositoryPlaceholder from "./components/admin/DocumentRepository
 import TokenExpiryPopup from "./components/UtilComponents/TokenExpiryPopup";
 import InactivityPopup from "./components/UtilComponents/InactivityPopup";
 import { useInactivityTracker } from "./hooks/useInactivityTracker";
+import KioskApp from "./components/Kiosk/KioskApp";
 
 // Protected image route component
 const ProtectedImage = () => {
@@ -189,6 +190,10 @@ const routes = createBrowserRouter([
       {
         path: "/kontakt",
         element: <ContactPage />,
+      },
+      {
+        path: "/kiosk",
+        element: <KioskApp />,
       },
     ],
   },

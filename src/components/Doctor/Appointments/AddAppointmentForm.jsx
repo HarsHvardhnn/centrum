@@ -11,6 +11,11 @@ import { normalizePesel, getPeselChecksumWarning } from "../../../utils/peselUti
 import patientService from "../../../helpers/patientHelper";
 import appointmentHelper from "../../../helpers/appointmentHelper";
 import { PHONE_COUNTRY_CODES, FlagIcon } from "../../../constants/phoneCountryCodes";
+import {
+  isRadiologistDoctor,
+  RADIOLOGIST_VISIT_TYPE_LABEL,
+  getRadiologistVisitTypeFields,
+} from "../../../utils/radiologistVisitHelper";
 
 /**
  * AppointmentFormModal - Component for adding new appointments
@@ -67,11 +72,18 @@ function AppointmentFormModal({
         _id: doctorInfo.id || doctorInfo._id,
         name: doctorInfo.name,
         specialty: doctorInfo.specialty,
+        specialization: doctorInfo.specialization,
+        specializations: doctorInfo.specializations,
         profilePicture: doctorInfo.avatarUrl || doctorInfo.profilePicture
       };
     } else if (doctorId) {
       selectedDoctor = { _id: doctorId };
     }
+
+    const radiologistInitFields =
+      selectedDoctor && isRadiologistDoctor(selectedDoctor)
+        ? getRadiologistVisitTypeFields()
+        : {};
     
     return {
       visitType: "",
@@ -110,6 +122,7 @@ function AppointmentFormModal({
       persistSmsConsent: false, // Default to false - whether to save SMS consent for future appointments
       visitReason: "", // Rodzaj wizyty: displayName from dictionary (e.g. "Konsultacja pierwszorazowa")
       visitReasonCategoryId: "", // Category id for two-step dropdown
+      ...radiologistInitFields,
     };
   });
   const [availableSlots, setAvailableSlots] = useState([]);
@@ -470,12 +483,14 @@ function AppointmentFormModal({
 
   // Modify the handleDoctorSelect function
   const handleDoctorSelect = (doctor) => {
+    const radiologistFields = doctor && isRadiologistDoctor(doctor) ? getRadiologistVisitTypeFields() : {};
     setAppointmentData({
       ...appointmentData,
       selectedDoctor: doctor,
-      selectedServices: [], // Reset selected services when doctor changes
+      selectedServices: [],
+      ...radiologistFields,
     });
-    
+
     if (doctor && doctor._id) {
       fetchDoctorServices(doctor._id);
       fetchNextAvailableDate(doctor._id); // Add this line to fetch next available date
@@ -1660,8 +1675,15 @@ function AppointmentFormModal({
       <div className="space-y-4">
         <h3 className="text-lg font-medium mb-4">Dodatkowe Informacje</h3>
 
-        {/* Rodzaj wizyty (type of consultation) – Windows-style category → type cascade */}
-        {visitReasonsData.categories.length > 0 && (
+        {/* Rodzaj wizyty – radiologist: fixed Badanie USG; others: cascade from API */}
+        {isRadiologistDoctor(appointmentData.selectedDoctor) ? (
+          <div className="bg-teal-50/50 p-4 rounded-lg border border-teal-200">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaj wizyty</label>
+            <p className="text-sm font-semibold text-gray-900">{RADIOLOGIST_VISIT_TYPE_LABEL}</p>
+            <p className="text-xs text-gray-500 mt-1">Dla specjalizacji radiolog — typ wizyty jest ustawiony automatycznie.</p>
+          </div>
+        ) : (
+        visitReasonsData.categories.length > 0 && (
           <div className="bg-teal-50/50 p-4 rounded-lg border border-teal-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex-1 min-w-0">
               <label className="block text-sm font-medium text-gray-700 mb-2">Rodzaj wizyty (typ konsultacji)</label>
@@ -1720,7 +1742,7 @@ function AppointmentFormModal({
               )}
             </div>
           </div>
-        )}
+        ))}
         
         {/* Walk-in and Attention Flags */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2191,7 +2213,9 @@ function AppointmentFormModal({
         endTime: endTime,
         duration: duration,
         consultationType: "offline",
-        ...(appointmentData.visitReason && { visitReason: appointmentData.visitReason }),
+        ...(isRadiologistDoctor(appointmentData.selectedDoctor)
+          ? getRadiologistVisitTypeFields()
+          : appointmentData.visitReason && { visitReason: appointmentData.visitReason }),
         message: appointmentData.notes || "",
         smsConsentAgreed: hasPatientPhoneForSubmit ? appointmentData.smsConsentAgreed : false,
         persistSmsConsent: appointmentData.persistSmsConsent || false,
@@ -2231,8 +2255,12 @@ function AppointmentFormModal({
         } : null,
         // Metadata fields
         metadata: {
-          visitType: appointmentData.visitType || "",
-          ...(appointmentData.visitReason && { visitReason: appointmentData.visitReason }),
+          visitType: isRadiologistDoctor(appointmentData.selectedDoctor)
+            ? RADIOLOGIST_VISIT_TYPE_LABEL
+            : appointmentData.visitType || "",
+          ...(isRadiologistDoctor(appointmentData.selectedDoctor)
+            ? getRadiologistVisitTypeFields()
+            : appointmentData.visitReason && { visitReason: appointmentData.visitReason }),
           isEmergency: appointmentData.isEmergency || false,
           isWalkin: appointmentData.isWalkin || false,
           needsAttention: appointmentData.needsAttention || false,

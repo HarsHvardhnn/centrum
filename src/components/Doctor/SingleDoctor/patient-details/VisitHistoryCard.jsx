@@ -1,5 +1,6 @@
 import React from "react";
 import { translateStatus, getStatusStyle, getVisitTypeDisplayLabel } from "../../../../utils/statusHelper";
+import { isRadiologistAppointment } from "../../../../utils/radiologistVisitHelper";
 
 const VisitHistoryCard = ({ appointments, currentAppointmentId, onSelectVisit }) => {
   return (
@@ -30,7 +31,10 @@ const VisitHistoryCard = ({ appointments, currentAppointmentId, onSelectVisit })
                 <p className="text-sm text-gray-600 truncate">
                   {getVisitTypeDisplayLabel(apt)}
                 </p>
-                {apt.visitTypeVerified === false && apt.status !== "completed" && apt.status !== "Completed" && (
+                {apt.visitTypeVerified === false &&
+                  !isRadiologistAppointment(apt) &&
+                  apt.status !== "completed" &&
+                  apt.status !== "Completed" && (
                   <span className="inline-block mt-1 text-xs text-amber-700">Do weryfikacji</span>
                 )}
               </div>
