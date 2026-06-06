@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Loader2 } from "lucide-react";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import SignaturePad from "./SignaturePad";
 
@@ -60,7 +61,11 @@ export default function AdultRegistrationForm({
   const readOnlyFields = isSignOnly;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl mx-auto">
+    <form
+      onSubmit={handleSubmit}
+      className={`space-y-5 max-w-2xl mx-auto ${loading ? "pointer-events-none opacity-60" : ""}`}
+      aria-busy={loading}
+    >
       {isSignOnly && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-900 text-sm space-y-2">
           <p className="font-medium">Pacjent jest już w systemie.</p>
@@ -260,9 +265,10 @@ export default function AdultRegistrationForm({
       <button
         type="submit"
         disabled={loading || !form.signature}
-        className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl transition-colors"
+        className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl transition-colors inline-flex items-center justify-center gap-2"
       >
-        {loading ? "Zapisywanie..." : "Zakończ rejestrację"}
+        {loading && <Loader2 className="w-5 h-5 animate-spin shrink-0" aria-hidden="true" />}
+        {loading ? "Zapisywanie rejestracji…" : "Zakończ rejestrację"}
       </button>
     </form>
   );

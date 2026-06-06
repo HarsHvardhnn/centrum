@@ -9,6 +9,7 @@ import {
 } from "../../helpers/kioskHelper";
 import { normalizePesel } from "../../utils/peselUtils";
 import AdultRegistrationForm from "./AdultRegistrationForm";
+import KioskLoadingOverlay from "./KioskLoadingOverlay";
 
 const STEPS = {
   PIN: "pin",
@@ -115,8 +116,30 @@ export default function KioskApp() {
 
   const stepIndicator = step === STEPS.PESEL ? 1 : step === STEPS.FORM ? 2 : step === STEPS.DONE ? 3 : 0;
 
+  const loadingOverlay =
+    loading && step !== STEPS.DONE
+      ? {
+          [STEPS.PIN]: {
+            title: "Łączenie z sesją…",
+            message: "Weryfikujemy kod PIN. Proszę czekać.",
+          },
+          [STEPS.PESEL]: {
+            title: "Sprawdzanie PESEL…",
+            message: "Weryfikujemy numer i przygotowujemy formularz.",
+          },
+          [STEPS.FORM]: {
+            title: "Kończenie rejestracji…",
+            message:
+              "Zapisujemy dane, generujemy podpisane dokumenty PDF i łączymy wizytę z pacjentem. Może to potrwać do minuty — proszę nie zamykać tej strony.",
+          },
+        }[step]
+      : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex flex-col">
+      {loadingOverlay && (
+        <KioskLoadingOverlay title={loadingOverlay.title} message={loadingOverlay.message} />
+      )}
       <header className="bg-white border-b border-gray-200 px-6 py-5 shadow-sm">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div>
