@@ -63,6 +63,9 @@ export default function Doctors({
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [weekLoading, setWeekLoading] = useState(false);
+  const [daysWithSlots, setDaysWithSlots] = useState(new Set());
+  const [checkingSlots, setCheckingSlots] = useState(false);
+  const [weekAvailabilityCache, setWeekAvailabilityCache] = useState(null);
   const [bookingForm, setBookingForm] = useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -188,6 +191,7 @@ export default function Doctors({
           });
           setNextDays(days);
           setWeekLoading(false);
+          fetchWeekSlotAvailability(doctor.id, days);
         }
         
         if (timeFromUrl && dateFromUrl) {
@@ -341,19 +345,117 @@ export default function Doctors({
   const fetchAvailableSlots = async (doctorId, date) => {
     try {
       setSlotsLoading(true);
+
+      if (weekAvailabilityCache?.availability) {
+        const cachedDay = weekAvailabilityCache.availability.find(
+          (day) => day.date === date
+        );
+        if (cachedDay?.hasSlots && cachedDay.availableSlots) {
+          setAvailableSlots(cachedDay.availableSlots);
+          return;
+        }
+        if (cachedDay && !cachedDay.hasSlots) {
+          setAvailableSlots([]);
+          return;
+        }
+      }
+
       const response = await apiCaller(
         "GET",
         `docs/schedule/available-slots/${doctorId}?date=${date}`
       );
       if (response.data.success) {
         setAvailableSlots(response.data.data);
+        if (response.data.data?.length > 0) {
+          const hasAvailableSlots = response.data.data.some((slot) => slot.available);
+          setDaysWithSlots((prev) => {
+            const next = new Set(prev);
+            if (hasAvailableSlots) next.add(date);
+            else next.delete(date);
+            return next;
+          });
+        } else {
+          setDaysWithSlots((prev) => {
+            const next = new Set(prev);
+            next.delete(date);
+            return next;
+          });
+        }
       } else {
         console.error("Failed to fetch available slots");
+        setDaysWithSlots((prev) => {
+          const next = new Set(prev);
+          next.delete(date);
+          return next;
+        });
       }
     } catch (error) {
       console.error("Error fetching available slots:", error);
+      setDaysWithSlots((prev) => {
+        const next = new Set(prev);
+        next.delete(date);
+        return next;
+      });
     } finally {
       setSlotsLoading(false);
+    }
+  };
+
+  const fetchWeekSlotAvailability = async (doctorId, days) => {
+    if (!doctorId || !days?.length) return;
+
+    try {
+      setCheckingSlots(true);
+      const startDate = days[0];
+      const endDate = days[days.length - 1];
+      const response = await doctorService.getWeekAvailability(doctorId, startDate, endDate);
+
+      if (response.success && response.data?.availability) {
+        const newDaysWithSlots = new Set();
+        response.data.availability.forEach((dayAvailability) => {
+          if (dayAvailability.hasSlots) {
+            newDaysWithSlots.add(dayAvailability.date);
+          }
+        });
+        setDaysWithSlots(newDaysWithSlots);
+        setWeekAvailabilityCache(response.data);
+      } else {
+        setDaysWithSlots(new Set());
+        setWeekAvailabilityCache(null);
+      }
+    } catch (error) {
+      console.error("Error fetching week slot availability:", error);
+      try {
+        const today = getCurrentDateInPoland();
+        const slotChecks = days
+          .filter((date) => date >= today)
+          .map(async (date) => {
+            try {
+              const response = await apiCaller(
+                "GET",
+                `docs/schedule/available-slots/${doctorId}?date=${date}`
+              );
+              if (response.data.success && response.data.data) {
+                const hasAvailableSlots = response.data.data.some((slot) => slot.available);
+                return { date, hasSlots: hasAvailableSlots };
+              }
+              return { date, hasSlots: false };
+            } catch {
+              return { date, hasSlots: false };
+            }
+          });
+
+        const results = await Promise.all(slotChecks);
+        const newDaysWithSlots = new Set();
+        results.forEach(({ date, hasSlots }) => {
+          if (hasSlots) newDaysWithSlots.add(date);
+        });
+        setDaysWithSlots(newDaysWithSlots);
+      } catch {
+        setDaysWithSlots(new Set());
+      }
+    } finally {
+      setCheckingSlots(false);
     }
   };
 
@@ -370,8 +472,9 @@ export default function Doctors({
   const handleBookAppointment = async (doctor) => {
     setSelectedDoctor(doctor);
     setShowModal(true);
-    // Reset the closed flag when opening modal
     modalClosedRef.current = false;
+    setDaysWithSlots(new Set());
+    setWeekAvailabilityCache(null);
     setWeekLoading(true);
 
     try {
@@ -411,12 +514,19 @@ export default function Doctors({
             return formatDateToPolandTimezone(date);
           });
           setNextDays(days);
+          await fetchWeekSlotAvailability(doctor.id, days);
         } else {
-          // If no available date found, use current date (Poland timezone)
           const currentDatePoland = getCurrentDateInPoland();
           setSelectedDate(currentDatePoland);
-          setWeekOffset(0); // Reset to current week
-          // Fetch slots for current date
+          setWeekOffset(0);
+          const days = Array.from({ length: 7 }, (_, i) => {
+            const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
+            const date = new Date(todayPoland);
+            date.setDate(date.getDate() + i);
+            return formatDateToPolandTimezone(date);
+          });
+          setNextDays(days);
+          await fetchWeekSlotAvailability(doctor.id, days);
           await fetchAvailableSlots(doctor.id, currentDatePoland);
         }
     } catch (error) {
@@ -688,7 +798,13 @@ export default function Doctors({
       return formatDateToPolandTimezone(date);
     });
     setNextDays(days);
-  }, [weekOffset]);
+    setWeekAvailabilityCache(null);
+
+    if (selectedDoctor && showModal && days.length > 0) {
+      fetchWeekSlotAvailability(selectedDoctor.id, days);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekOffset, selectedDoctor?.id, showModal]);
 
   // Initialize nextDays on component mount (using Poland timezone)
   useEffect(() => {
@@ -965,24 +1081,31 @@ export default function Doctors({
                     </div>
                     <div className="grid grid-cols-3 md:grid-cols-7 gap-2">
                       {nextDays.map((date) => {
+                        const dayDate = new Date(`${date}T12:00:00`);
                         const today = getCurrentDateInPoland();
                         const isToday = date === today;
                         const isActive = date === selectedDate;
-
                         const isPast = isDateInPast(date);
-                        const dayDate = new Date(date + "T12:00:00");
+                        const hasSlots = daysWithSlots.has(date);
+                        const isChecking = checkingSlots && !isPast;
 
                         return (
                           <button
                             key={date}
-                            onClick={() => !isPast && handleDateChange(date)}
-                            disabled={isPast}
-                            className={`px-2 py-3 rounded-lg border text-sm ${
+                            type="button"
+                            onClick={() => !isPast && hasSlots && handleDateChange(date)}
+                            disabled={isPast || !hasSlots}
+                            title={!hasSlots && !isPast ? "Brak dostępnych terminów" : ""}
+                            className={`px-2 py-3 rounded-lg border text-sm transition-all ${
                               isActive
                                 ? "bg-main text-white border-main"
                                 : isPast
-                                ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                                ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-50"
+                                : !hasSlots && !isChecking
+                                ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed opacity-40"
+                                : isChecking
+                                ? "bg-gray-100 text-gray-500 border-gray-300 cursor-wait"
+                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-main/40"
                             }`}
                           >
                             <div className="font-medium">
@@ -995,6 +1118,10 @@ export default function Doctors({
                             </div>
                             {isToday && <div className="text-xs">Dziś</div>}
                             {isPast && <div className="text-xs text-gray-400">Przeszły</div>}
+                            {!hasSlots && !isPast && !isChecking && (
+                              <div className="text-xs text-gray-400">Brak terminów</div>
+                            )}
+                            {isChecking && <div className="text-xs text-gray-400">Sprawdzanie...</div>}
                           </button>
                         );
                       })}
