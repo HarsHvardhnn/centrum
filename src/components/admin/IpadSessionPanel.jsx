@@ -8,6 +8,7 @@ import {
   getSessionStatus,
   cancelSession,
   downloadPackage,
+  getPdfJobBySession,
 } from "../../helpers/kioskHelper";
 import { resolveDocumentOpenUrl } from "../../utils/documentUrl";
 
@@ -33,6 +34,7 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [showQrEnlarged, setShowQrEnlarged] = useState(false);
+  const [pdfJob, setPdfJob] = useState(null);
 
   const refreshStatus = useCallback(async () => {
     if (!session?.id) return;
@@ -73,6 +75,29 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
     const interval = setInterval(refreshStatus, 4000);
     return () => clearInterval(interval);
   }, [session?.id, session?.status, refreshStatus]);
+
+  useEffect(() => {
+    if (!session?.id || session.status !== "completed") return;
+    let cancelled = false;
+    const pollPdfJob = async () => {
+      try {
+        const res = await getPdfJobBySession(session.id);
+        if (!cancelled) setPdfJob(res.job);
+        return res.job?.status;
+      } catch {
+        return null;
+      }
+    };
+    pollPdfJob();
+    const interval = setInterval(async () => {
+      const status = await pollPdfJob();
+      if (status === "completed" || status === "failed") clearInterval(interval);
+    }, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [session?.id, session?.status]);
 
   useEffect(() => {
     if (!showQrEnlarged) return;
@@ -280,14 +305,26 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
               </button>
             )}
             {session.status === "completed" && session.packageId && (
-              <button
-                type="button"
-                onClick={handleDownload}
-                disabled={loading}
-                className="text-sm bg-teal-700 text-white px-3 py-1.5 rounded-lg hover:bg-teal-800"
-              >
-                Pobierz dokumenty pacjenta
-              </button>
+              <>
+                {pdfJob && ["pending", "processing"].includes(pdfJob.status) && (
+                  <span className="text-sm text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
+                    Generowanie dokumentów PDF…
+                  </span>
+                )}
+                {pdfJob?.status === "failed" && (
+                  <span className="text-sm text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg">
+                    Błąd PDF: {pdfJob.errorMessage || "nieznany błąd"}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  disabled={loading || (pdfJob && pdfJob.status !== "completed")}
+                  className="text-sm bg-teal-700 text-white px-3 py-1.5 rounded-lg hover:bg-teal-800 disabled:opacity-50"
+                >
+                  Pobierz dokumenty pacjenta
+                </button>
+              </>
             )}
             {["completed", "cancelled", "expired", "locked"].includes(session.status) && (
               <button

@@ -77,6 +77,18 @@ export async function downloadPackage(packageId) {
   return res.data;
 }
 
+export async function getPdfJobBySession(sessionId) {
+  const res = await kioskApi.get(`/api/kiosk/pdf-jobs/by-session/${sessionId}`, {
+    headers: staffHeaders(),
+  });
+  return res.data;
+}
+
+export async function getPdfJob(jobId) {
+  const res = await kioskApi.get(`/api/kiosk/pdf-jobs/${jobId}`, { headers: staffHeaders() });
+  return res.data;
+}
+
 export async function activatePin(pin) {
   const res = await kioskApi.post("/api/kiosk/activate", { pin });
   if (res.data?.token) setKioskToken(res.data.token);

@@ -283,7 +283,7 @@ export default function KioskApp() {
           },
           [KIOSK_STEPS.SIGNATURE]: {
             title: "Kończenie rejestracji…",
-            message: "Zapisujemy dane i generujemy dokumenty PDF.",
+            message: "Zapisujemy dane pacjenta.",
           },
         }[step] || { title: "Zapisywanie…", message: "Proszę czekać." }
       : null;

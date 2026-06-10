@@ -8,6 +8,7 @@ import {
   getSessionStatus,
   cancelSession,
   downloadPackage,
+  getPdfJobBySession,
 } from "../../helpers/kioskHelper";
 import { resolveDocumentOpenUrl } from "../../utils/documentUrl";
 
@@ -32,6 +33,7 @@ export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) 
   const [pin, setPin] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [pdfJob, setPdfJob] = useState(null);
 
   const refreshStatus = useCallback(async () => {
     if (!session?.id) return;
@@ -75,6 +77,29 @@ export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) 
     const interval = setInterval(refreshStatus, 4000);
     return () => clearInterval(interval);
   }, [session?.id, session?.status, refreshStatus]);
+
+  useEffect(() => {
+    if (!session?.id || session.status !== "completed") return;
+    let cancelled = false;
+    const pollPdfJob = async () => {
+      try {
+        const res = await getPdfJobBySession(session.id);
+        if (!cancelled) setPdfJob(res.job);
+        return res.job?.status;
+      } catch {
+        return null;
+      }
+    };
+    pollPdfJob();
+    const interval = setInterval(async () => {
+      const status = await pollPdfJob();
+      if (status === "completed" || status === "failed") clearInterval(interval);
+    }, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [session?.id, session?.status]);
 
   const handleStart = async () => {
     if (!patientId) return;
@@ -217,13 +242,24 @@ export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) 
           )}
 
           {session.status === "completed" && session.packageId && (
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="text-sm text-teal-700 font-medium hover:underline"
-            >
-              Pobierz nową wersję dokumentów
-            </button>
+            <div className="space-y-2">
+              {pdfJob && ["pending", "processing"].includes(pdfJob.status) && (
+                <p className="text-xs text-amber-800">Generowanie dokumentów PDF…</p>
+              )}
+              {pdfJob?.status === "failed" && (
+                <p className="text-xs text-red-700">
+                  Błąd PDF: {pdfJob.errorMessage || "nieznany błąd"}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={handleDownload}
+                disabled={pdfJob && pdfJob.status !== "completed"}
+                className="text-sm text-teal-700 font-medium hover:underline disabled:opacity-50 disabled:no-underline"
+              >
+                Pobierz nową wersję dokumentów
+              </button>
+            </div>
           )}
         </div>
       )}
