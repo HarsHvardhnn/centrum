@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import QRCode from "react-qr-code";
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy, ExternalLink, Maximize2, X } from "lucide-react";
 import {
   createSession,
   getSessionByVisit,
@@ -32,6 +32,7 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
   const [pin, setPin] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [showQrEnlarged, setShowQrEnlarged] = useState(false);
 
   const refreshStatus = useCallback(async () => {
     if (!session?.id) return;
@@ -72,6 +73,15 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
     const interval = setInterval(refreshStatus, 4000);
     return () => clearInterval(interval);
   }, [session?.id, session?.status, refreshStatus]);
+
+  useEffect(() => {
+    if (!showQrEnlarged) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setShowQrEnlarged(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showQrEnlarged]);
 
   const handleStart = async () => {
     if (!visitId) {
@@ -168,17 +178,33 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
           <h3 className="font-semibold text-gray-900 mb-3">Rejestracja przez iPad</h3>
           <div className="flex flex-wrap items-start gap-4">
             <div className="bg-white border border-teal-200 rounded-xl p-3 shadow-sm shrink-0">
-              <QRCode
-                value={kioskUrl}
-                size={132}
-                level="M"
-                bgColor="#ffffff"
-                fgColor="#0c4e54"
-                title="Kod QR — adres kiosku rejestracji"
-              />
+              <button
+                type="button"
+                onClick={() => setShowQrEnlarged(true)}
+                className="block rounded-lg p-1 hover:bg-teal-50/80 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-400"
+                title="Kliknij, aby powiększyć kod QR"
+                aria-label="Powiększ kod QR kiosku"
+              >
+                <QRCode
+                  value={kioskUrl}
+                  size={132}
+                  level="M"
+                  bgColor="#ffffff"
+                  fgColor="#0c4e54"
+                  title="Kod QR — adres kiosku rejestracji"
+                />
+              </button>
               <p className="text-[10px] text-center text-gray-500 mt-2 leading-tight">
                 Zeskanuj na tablecie
               </p>
+              <button
+                type="button"
+                onClick={() => setShowQrEnlarged(true)}
+                className="mt-2 w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium text-teal-800 border border-teal-200 bg-teal-50/60 px-2 py-1.5 rounded-lg hover:bg-teal-100 transition-colors"
+              >
+                <Maximize2 size={12} />
+                Powiększ kod QR
+              </button>
             </div>
             <div className="flex-1 min-w-[200px] space-y-2">
               <p className="text-sm text-gray-600">
@@ -272,6 +298,58 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
                 Nowa sesja
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {showQrEnlarged && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setShowQrEnlarged(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ipad-qr-enlarge-title"
+        >
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowQrEnlarged(false)}
+              className="absolute top-3 right-3 p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+              aria-label="Zamknij"
+            >
+              <X size={20} />
+            </button>
+            <h4
+              id="ipad-qr-enlarge-title"
+              className="text-center text-lg font-semibold text-gray-900 mb-1 pr-8"
+            >
+              Kod QR kiosku
+            </h4>
+            <p className="text-center text-sm text-gray-600 mb-5">
+              Zeskanuj na tablecie, aby otworzyć stronę rejestracji
+            </p>
+            <div className="flex justify-center bg-white border border-teal-100 rounded-xl p-4">
+              <QRCode
+                value={kioskUrl}
+                size={280}
+                level="M"
+                bgColor="#ffffff"
+                fgColor="#0c4e54"
+              />
+            </div>
+            <p className="text-center text-xs text-gray-500 break-all font-mono mt-4 px-2">
+              {kioskUrl}
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowQrEnlarged(false)}
+              className="mt-5 w-full bg-teal-700 hover:bg-teal-800 text-white py-2.5 rounded-lg text-sm font-medium"
+            >
+              Zamknij
+            </button>
           </div>
         </div>
       )}

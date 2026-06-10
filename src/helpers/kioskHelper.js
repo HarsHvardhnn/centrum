@@ -82,6 +82,11 @@ export async function checkKioskPesel(pesel) {
   return res.data;
 }
 
+export async function checkKioskDocument(payload) {
+  const res = await kioskApi.post("/api/kiosk/check-document", payload, { headers: kioskHeaders() });
+  return res.data;
+}
+
 export async function completeKioskRegistration(payload) {
   const res = await kioskApi.post("/api/kiosk/complete", payload, { headers: kioskHeaders() });
   return res.data;
