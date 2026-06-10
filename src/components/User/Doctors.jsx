@@ -365,7 +365,7 @@ export default function Doctors({
         `docs/schedule/available-slots/${doctorId}?date=${date}`
       );
       if (response.data.success) {
-        setAvailableSlots(response.data.data);
+        setAvailableSlots(response.data.data || []);
         if (response.data.data?.length > 0) {
           const hasAvailableSlots = response.data.data.some((slot) => slot.available);
           setDaysWithSlots((prev) => {
@@ -383,6 +383,7 @@ export default function Doctors({
         }
       } else {
         console.error("Failed to fetch available slots");
+        setAvailableSlots([]);
         setDaysWithSlots((prev) => {
           const next = new Set(prev);
           next.delete(date);
@@ -391,6 +392,7 @@ export default function Doctors({
       }
     } catch (error) {
       console.error("Error fetching available slots:", error);
+      setAvailableSlots([]);
       setDaysWithSlots((prev) => {
         const next = new Set(prev);
         next.delete(date);
@@ -498,12 +500,14 @@ export default function Doctors({
           // Set the week offset to show the correct week
           setWeekOffset(weekOffset);
           
-          // Set the next available date
           setSelectedDate(nextAvailableDate);
-          // Set available slots
-          setAvailableSlots(nextAvailableResponse.data.availableSlots);
-          
-          // Update URL to reflect the selected date
+          setAvailableSlots(nextAvailableResponse.data.availableSlots || []);
+          setDaysWithSlots((prev) => {
+            const next = new Set(prev);
+            next.add(nextAvailableDate);
+            return next;
+          });
+
           updateUrlWithSelections(doctor.id, nextAvailableDate, "");
           
           // Force update the nextDays array to show the correct week immediately (using Poland timezone)
@@ -540,13 +544,13 @@ export default function Doctors({
   };
 
   const handleDateChange = (date) => {
-    // Don't allow selecting past dates (using Poland timezone)
-    if (isDateInPast(date)) {
+    if (isDateInPast(date) || !daysWithSlots.has(date)) {
       return;
     }
-    
+
     setSelectedDate(date);
-    setSelectedSlot(null); // Reset selected slot when date changes
+    setSelectedSlot(null);
+    setAvailableSlots([]);
     if (selectedDoctor) {
       fetchAvailableSlots(selectedDoctor.id, date);
       updateUrlWithSelections(selectedDoctor.id, date, "");
@@ -1054,12 +1058,12 @@ export default function Doctors({
                                 })()}
                             {selectedDate && weekOffset > 0 && (
                               <span className="block text-xs text-main">
-                                Następny termin: {new Date(selectedDate).toLocaleDateString('pl-PL')}
+                                Następny termin: {new Date(`${selectedDate}T12:00:00`).toLocaleDateString('pl-PL')}
                               </span>
                             )}
                             {nextDays.length > 0 && (
                               <span className="block text-xs text-gray-500">
-                                {new Date(nextDays[0]).toLocaleDateString('pl-PL')} - {new Date(nextDays[6]).toLocaleDateString('pl-PL')}
+                                {new Date(`${nextDays[0]}T12:00:00`).toLocaleDateString('pl-PL')} - {new Date(`${nextDays[6]}T12:00:00`).toLocaleDateString('pl-PL')}
                               </span>
                             )}
                           </>
