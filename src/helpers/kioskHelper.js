@@ -41,6 +41,22 @@ export async function createSession(visitId) {
   return res.data;
 }
 
+export async function createCorrectionSession(patientId) {
+  const res = await kioskApi.post(
+    "/api/kiosk/sessions/correction",
+    { patientId },
+    { headers: staffHeaders() }
+  );
+  return res.data;
+}
+
+export async function getSessionByPatient(patientId) {
+  const res = await kioskApi.get(`/api/kiosk/sessions/by-patient/${patientId}`, {
+    headers: staffHeaders(),
+  });
+  return res.data;
+}
+
 export async function getSessionByVisit(visitId) {
   const res = await kioskApi.get(`/api/kiosk/sessions/by-visit/${visitId}`, { headers: staffHeaders() });
   return res.data;

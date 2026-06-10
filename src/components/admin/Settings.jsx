@@ -20,6 +20,7 @@ import { useFormDraft } from "../../hooks/useFormDraft";
 import { loadFormDraft, clearFormDraft, hasFormDraft, formatDraftAge } from "../../utils/formDraftStorage";
 import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
+import PatientKioskCorrectionPanel from "./PatientKioskCorrectionPanel";
 
 /** Default when API omits phoneCode or number is national digits only. */
 const DEFAULT_PATIENT_PHONE_CODE = "+48";
@@ -1575,6 +1576,14 @@ export default function UserManagement() {
             </div>
 
             <div className="p-6">
+              {isEditMode && currentPatientId && (
+                <PatientKioskCorrectionPanel
+                  patientId={currentPatientId}
+                  onCompleted={() => {
+                    toast.success("Pacjent zaktualizował dane na tablecie. Odśwież formularz, aby zobaczyć zmiany.");
+                  }}
+                />
+              )}
               <FormProvider 
                 key={`patient-form-${isEditMode ? 'edit' : 'new'}`} 
                 initialData={patientFormData}
