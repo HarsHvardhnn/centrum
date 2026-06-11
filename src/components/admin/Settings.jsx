@@ -21,6 +21,7 @@ import { loadFormDraft, clearFormDraft, hasFormDraft, formatDraftAge } from "../
 import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import PatientKioskCorrectionPanel from "./PatientKioskCorrectionPanel";
+import { mapPatientAuthorizationFields } from "../../utils/authorizedPersons";
 
 /** Default when API omits phoneCode or number is national digits only. */
 const DEFAULT_PATIENT_PHONE_CODE = "+48";
@@ -141,7 +142,7 @@ export default function UserManagement() {
     "Skierowanie",
     "Adres",
     "Zgody",
-    "Szczegóły",
+    "Osoby Upoważnione",
     "Notatki",
   ];
 
@@ -639,19 +640,8 @@ export default function UserManagement() {
         // Photo
         photo: patientDetails.photo || null,
 
-        // Details
-        contactPerson1Name: patientDetails.contactPerson1Name,
-        contactPerson1PhoneCode: patientDetails.contactPerson1PhoneCode || "+48",
-        contactPerson1Phone: patientDetails.contactPerson1Phone,
-        contactPerson1Address: patientDetails.contactPerson1Address,
-        contactPerson1Pesel: patientDetails.contactPerson1Pesel,
-        contactPerson1Relationship: patientDetails.contactPerson1Relationship,
-        contactPerson2Name: patientDetails.contactPerson2Name,
-        contactPerson2PhoneCode: patientDetails.contactPerson2PhoneCode || "+48",
-        contactPerson2Phone: patientDetails.contactPerson2Phone,
-        contactPerson2Address: patientDetails.contactPerson2Address,
-        contactPerson2Pesel: patientDetails.contactPerson2Pesel,
-        contactPerson2Relationship: patientDetails.contactPerson2Relationship,
+        // Authorized persons
+        ...mapPatientAuthorizationFields(patientDetails),
         allergies: patientDetails.allergies,
         preferredLanguage: patientDetails.preferredLanguage,
 

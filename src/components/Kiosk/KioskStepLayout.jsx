@@ -1,4 +1,4 @@
-import { STEP_LABELS, STEP_ORDER_FULL } from "./kioskConstants";
+import { KIOSK_STEPS, STEP_LABELS, STEP_ORDER_FULL } from "./kioskConstants";
 
 export default function KioskStepLayout({
   currentStep,
@@ -13,6 +13,16 @@ export default function KioskStepLayout({
 
   return (
     <div className="min-h-[60vh] flex flex-col">
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="self-start text-sm text-teal-700 mb-4 hover:underline font-medium"
+        >
+          ← Wstecz
+        </button>
+      )}
+
       <div className="flex items-center justify-between gap-3 mb-4 text-sm text-gray-500">
         <span>
           Krok {stepIndex + 1} z {totalSteps}
@@ -32,15 +42,15 @@ export default function KioskStepLayout({
         />
       </div>
 
-      <div className="flex-1">{children}</div>
+      <div className="flex-1 pb-4">{children}</div>
 
       {footer && (
-        <div className="mt-8 pt-4 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3">
+        <div className="sticky bottom-0 z-20 -mx-6 sm:-mx-8 px-6 sm:px-8 pt-4 pb-2 mt-4 bg-white border-t border-gray-200 flex flex-wrap items-center justify-between gap-3 shadow-[0_-8px_24px_rgba(255,255,255,0.9)]">
           {onBack ? (
             <button
               type="button"
               onClick={onBack}
-              className="px-5 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium"
+              className="px-5 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium touch-manipulation"
             >
               Wstecz
             </button>
@@ -57,7 +67,9 @@ export default function KioskStepLayout({
 export function getStepIndex(step, mode) {
   const order =
     mode === "sign_only"
-      ? STEP_ORDER_FULL.filter((s) => s !== "personal" && s !== "address" && s !== "contact")
+      ? STEP_ORDER_FULL.filter(
+          (s) => s !== KIOSK_STEPS.PERSONAL && s !== KIOSK_STEPS.ADDRESS && s !== KIOSK_STEPS.CONTACT
+        )
       : STEP_ORDER_FULL;
   return { order, index: order.indexOf(step) };
 }

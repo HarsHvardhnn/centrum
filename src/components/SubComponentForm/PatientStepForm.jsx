@@ -54,7 +54,7 @@ const PatientStepForm = ({
         <SubStep title="Zgody">
           <ConsentDocumentUpload currentPatientId={currentPatientId} />
         </SubStep>
-        <SubStep title="Szczegóły">
+        <SubStep title="Osoby Upoważnione">
           <DetailsForm />
         </SubStep>
         <SubStep title="Notatki">

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-30T05:21:22.527Z",
-  "count": 35,
+  "generatedAt": "2026-06-11T15:43:41.314Z",
+  "count": 37,
   "slugs": [
     "konsultacja-chirurgiczna",
     "konsultacja-proktologiczna",
@@ -36,6 +36,8 @@
     "usg-doppler-naczyn-konczyny-dolnej",
     "usg-doppler-naczyn-konczyn-dolnych-badanie-obustronne",
     "konsultacja-ortopedyczna",
-    "echo-serca-usg-serca"
+    "echo-serca-usg-serca",
+    "konsultacja-urologiczna",
+    "konsultacja-neurologiczna"
   ]
 }

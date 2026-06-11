@@ -112,6 +112,10 @@ const patientService = {
       appendIfExists("contactPerson2Address", patientData.contactPerson2Address);
       appendIfExists("contactPerson2Pesel", patientData.contactPerson2Pesel);
       appendIfExists("contactPerson2Relationship", patientData.contactPerson2Relationship);
+      appendIfExists("authorizationChoice", patientData.authorizationChoice);
+      if (patientData.authorizedPersons !== undefined) {
+        formData.append("authorizedPersons", JSON.stringify(patientData.authorizedPersons || []));
+      }
       appendIfExists("allergies", patientData.allergies);
       appendIfExists("preferredLanguage", patientData.preferredLanguage);
 
@@ -217,6 +221,10 @@ const patientService = {
     if (patientData.contactPerson2Address !== undefined) formData.append("contactPerson2Address", patientData.contactPerson2Address);
     if (patientData.contactPerson2Pesel !== undefined) formData.append("contactPerson2Pesel", patientData.contactPerson2Pesel);
     if (patientData.contactPerson2Relationship !== undefined) formData.append("contactPerson2Relationship", patientData.contactPerson2Relationship);
+    if (patientData.authorizationChoice !== undefined) formData.append("authorizationChoice", patientData.authorizationChoice);
+    if (patientData.authorizedPersons !== undefined) {
+      formData.append("authorizedPersons", JSON.stringify(patientData.authorizedPersons || []));
+    }
     if (patientData.allergies !== undefined) formData.append("allergies", patientData.allergies);
     if (patientData.preferredLanguage !== undefined) formData.append("preferredLanguage", patientData.preferredLanguage);
 

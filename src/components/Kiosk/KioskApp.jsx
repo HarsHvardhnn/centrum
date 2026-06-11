@@ -9,7 +9,9 @@ import {
   getKioskForm,
   saveKioskForm,
 } from "../../helpers/kioskHelper";
-import { normalizePesel } from "../../utils/peselUtils";
+import { analyzePeselForKiosk, getPeselErrorDisplay, normalizePesel } from "../../utils/peselUtils";
+import KioskCenteredAlert from "./KioskCenteredAlert";
+import KioskNumericEntry from "./KioskNumericEntry";
 import KioskLoadingOverlay from "./KioskLoadingOverlay";
 import KioskStepLayout from "./KioskStepLayout";
 import KioskConsentsStep from "./KioskConsentsStep";
@@ -42,6 +44,7 @@ export default function KioskApp() {
   const [mode, setMode] = useState("full_registration");
   const [form, setForm] = useState(createDefaultKioskForm());
   const [consentErrors, setConsentErrors] = useState([]);
+  const [verificationError, setVerificationError] = useState(null);
   const idleTimerRef = useRef(null);
 
   const flowSteps =
@@ -64,6 +67,7 @@ export default function KioskApp() {
     setForm(createDefaultKioskForm());
     setMode("full_registration");
     setConsentErrors([]);
+    setVerificationError(null);
   }, []);
 
   const resetIdleTimer = useCallback(() => {
@@ -148,11 +152,34 @@ export default function KioskApp() {
     toast.success(res.message);
   };
 
+  const showVerificationError = (errorCode, message) => {
+    const display = getPeselErrorDisplay(errorCode, message);
+    setVerificationError(display);
+  };
+
   const handleVerification = async () => {
+    setVerificationError(null);
+
     const errors = validateVerificationStep(form);
     if (errors.length) {
-      toast.error(errors[0]);
+      if (!form.isInternationalPatient) {
+        showVerificationError("invalid_length", errors[0]);
+      } else {
+        setVerificationError({
+          title: "Uzupełnij dane dokumentu",
+          message: errors[0],
+        });
+      }
       return;
+    }
+
+    if (!form.isInternationalPatient) {
+      const normalized = normalizePesel(form.pesel);
+      const analysis = analyzePeselForKiosk(normalized);
+      if (!analysis.valid) {
+        showVerificationError(analysis.errorCode, analysis.message);
+        return;
+      }
     }
 
     setLoading(true);
@@ -178,13 +205,22 @@ export default function KioskApp() {
         applyCheckResponse(res, { pesel: normalized, isInternationalPatient: false });
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Błąd weryfikacji danych.");
+      const data = err.response?.data || {};
+      if (!form.isInternationalPatient && (data.errorCode || data.message)) {
+        showVerificationError(data.errorCode || "invalid_pesel", data.message);
+      } else {
+        setVerificationError({
+          title: form.isInternationalPatient ? "Nie można zweryfikować dokumentu" : "Nieprawidłowy numer PESEL",
+          message: data.message || "Błąd weryfikacji danych. Sprawdź wpisane informacje i spróbuj ponownie.",
+        });
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleInternationalToggle = (checked) => {
+    setVerificationError(null);
     setForm((prev) =>
       createDefaultKioskForm({
         ...prev,
@@ -198,15 +234,34 @@ export default function KioskApp() {
     );
   };
 
+  const getPreviousStep = () => {
+    const idx = flowSteps.indexOf(step);
+    if (idx > 0) return flowSteps[idx - 1];
+    if (isCorrectionMode) return KIOSK_STEPS.PIN;
+    if (mode === "full_registration" || mode === "sign_only") return KIOSK_STEPS.PESEL;
+    return KIOSK_STEPS.PIN;
+  };
+
   const goBack = () => {
-    if (step === KIOSK_STEPS.PESEL || (step === KIOSK_STEPS.PERSONAL && isCorrectionMode)) {
+    if (step === KIOSK_STEPS.PESEL) {
       resetToPin();
       return;
     }
-    const idx = flowSteps.indexOf(step);
-    if (idx > 0) setStep(flowSteps[idx - 1]);
-    else if (mode === "full_registration") setStep(KIOSK_STEPS.PESEL);
+
+    const previousStep = getPreviousStep();
+    if (previousStep === KIOSK_STEPS.PIN) {
+      resetToPin();
+      return;
+    }
+
+    setVerificationError(null);
+    setConsentErrors([]);
+    setStep(previousStep);
   };
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
 
   const goNext = () => {
     if (step === KIOSK_STEPS.PERSONAL) {
@@ -307,20 +362,18 @@ export default function KioskApp() {
       </header>
 
       <main className="flex-1 px-4 sm:px-6 py-8">
-        <div className="max-w-3xl mx-auto">
+        <div className={`mx-auto ${step === KIOSK_STEPS.PESEL ? "max-w-4xl" : "max-w-3xl"}`}>
           {step === KIOSK_STEPS.PIN && (
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
               <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Wprowadź kod PIN</h2>
-              <p className="text-center text-gray-500 mb-8">Kod otrzymasz od pracownika rejestracji</p>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
+              <p className="text-center text-gray-500 mb-8">Kod otrzymasz w recepcji</p>
+              <KioskNumericEntry
                 value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                className="w-full text-center text-4xl tracking-[0.5em] font-mono border-2 border-teal-200 rounded-xl py-6 mb-6 focus:border-teal-600 focus:outline-none"
-                placeholder="••••••"
-                autoFocus
+                onChange={setPin}
+                maxLength={6}
+                size="lg"
+                disabled={loading}
+                className="mb-6"
               />
               <button
                 type="button"
@@ -334,29 +387,48 @@ export default function KioskApp() {
           )}
 
           {step === KIOSK_STEPS.PESEL && (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-              <button type="button" onClick={resetToPin} className="text-sm text-teal-700 mb-4 hover:underline">
-                ← Wróć do PIN
-              </button>
-              <KioskVerificationStep
-                isInternational={!!form.isInternationalPatient}
-                onInternationalChange={handleInternationalToggle}
-                pesel={form.pesel}
-                onPeselChange={(value) => setForm((prev) => ({ ...prev, pesel: value }))}
-                documentCountry={form.documentCountry}
-                documentType={form.documentType}
-                documentNumber={form.documentNumber}
-                dateOfBirth={form.dateOfBirth}
-                onDocumentChange={(field, value) => setForm((prev) => ({ ...prev, [field]: value }))}
-              />
-              <button
-                type="button"
-                onClick={handleVerification}
-                disabled={loading}
-                className="w-full mt-6 bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl"
-              >
-                {loading ? "Sprawdzanie..." : "Dalej"}
-              </button>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
+              {!verificationError && (
+                <button type="button" onClick={resetToPin} className="text-sm text-teal-700 mb-4 hover:underline">
+                  ← Wróć do PIN
+                </button>
+              )}
+              {verificationError ? (
+                <KioskCenteredAlert
+                  title={verificationError.title}
+                  message={verificationError.message}
+                  onAction={() => setVerificationError(null)}
+                />
+              ) : (
+                <>
+                  <KioskVerificationStep
+                    isInternational={!!form.isInternationalPatient}
+                    onInternationalChange={handleInternationalToggle}
+                    pesel={form.pesel}
+                    onPeselChange={(value) => {
+                      setVerificationError(null);
+                      setForm((prev) => ({ ...prev, pesel: value }));
+                    }}
+                    documentCountry={form.documentCountry}
+                    documentType={form.documentType}
+                    documentNumber={form.documentNumber}
+                    dateOfBirth={form.dateOfBirth}
+                    onDocumentChange={(field, value) => {
+                      setVerificationError(null);
+                      setForm((prev) => ({ ...prev, [field]: value }));
+                    }}
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerification}
+                    disabled={loading}
+                    className="w-full mt-6 bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl"
+                  >
+                    {loading ? "Sprawdzanie..." : "Dalej"}
+                  </button>
+                </>
+              )}
             </div>
           )}
 

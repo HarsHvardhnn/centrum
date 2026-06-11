@@ -108,6 +108,7 @@ export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) 
       const res = await createCorrectionSession(patientId);
       setSession(res.session);
       setPin(res.pin);
+      setPdfJob(null);
       toast.success("Utworzono sesję aktualizacji. Podaj PIN pacjentowi na tablecie.");
     } catch (err) {
       const existing = err.response?.data?.session;
@@ -177,14 +178,18 @@ export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) 
             pozostanie w historii.
           </p>
         </div>
-        {!isActive && session?.status !== "completed" && (
+        {!isActive && (
           <button
             type="button"
             onClick={handleStart}
             disabled={loading}
             className="shrink-0 px-4 py-2 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium disabled:opacity-50"
           >
-            {loading ? "Tworzenie…" : "Wygeneruj PIN aktualizacji"}
+            {loading
+              ? "Tworzenie…"
+              : session?.status === "completed"
+                ? "Wygeneruj kolejny PIN aktualizacji"
+                : "Wygeneruj PIN aktualizacji"}
           </button>
         )}
       </div>
@@ -257,8 +262,11 @@ export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) 
                 disabled={pdfJob && pdfJob.status !== "completed"}
                 className="text-sm text-teal-700 font-medium hover:underline disabled:opacity-50 disabled:no-underline"
               >
-                Pobierz nową wersję dokumentów
+                Pobierz ostatnią wersję dokumentów
               </button>
+              <p className="text-xs text-gray-500">
+                Aby ponownie zaktualizować dane, kliknij „Wygeneruj kolejny PIN aktualizacji”.
+              </p>
             </div>
           )}
         </div>

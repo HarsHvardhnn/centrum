@@ -198,7 +198,7 @@ function LabAppointmentsContent({ clinic }) {
     "Skierowanie",
     "Adres",
     "Zgody",
-    "Szczegóły",
+    "Osoby Upoważnione",
     "Notatki",
   ];
 

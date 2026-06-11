@@ -1,6 +1,8 @@
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
+import { formatKioskDocumentLabel } from "./kioskConstants";
 import { VOIVODESHIPS } from "./kioskShared";
 import SignaturePad from "./SignaturePad";
+import KioskNumericEntry from "./KioskNumericEntry";
 
 const inputClass = "w-full border border-gray-300 rounded-lg px-4 py-3 text-lg";
 
@@ -40,7 +42,7 @@ export function KioskPersonalStep({ form, onChange, readOnly }) {
               <label className="block text-sm font-medium text-gray-700 mb-1">Dokument</label>
               <input
                 type="text"
-                value={[form.documentType, form.documentNumber].filter(Boolean).join(" · ")}
+                value={formatKioskDocumentLabel(form) || ""}
                 readOnly
                 className={`${inputClass} bg-gray-50`}
               />
@@ -172,19 +174,16 @@ export function KioskContactStep({ form, onChange }) {
             ))}
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Telefon *</label>
-          <input
-            type="tel"
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-3">Telefon *</label>
+          <KioskNumericEntry
             value={form.phone}
-            onChange={(e) =>
-              update(
-                "phone",
-                e.target.value.replace(/\D/g, "").slice(0, form.isInternationalPatient ? 15 : 9)
-              )
+            onChange={(value) =>
+              update("phone", value.slice(0, form.isInternationalPatient ? 15 : 9))
             }
-            className={inputClass}
-            required
+            maxLength={form.isInternationalPatient ? 15 : 9}
+            size="sm"
+            compactKeypad
           />
         </div>
       </div>

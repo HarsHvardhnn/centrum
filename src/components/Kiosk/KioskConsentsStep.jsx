@@ -4,6 +4,7 @@ import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import KioskPatientSummaryCard from "./KioskPatientSummaryCard";
 import KioskEditPatientModal from "./KioskEditPatientModal";
 import KioskDocumentUploadSection from "./KioskDocumentUploadSection";
+import KioskNumericEntry from "./KioskNumericEntry";
 import {
   CONSENT_TEXT,
   EMPTY_AUTHORIZED_PERSON,
@@ -63,14 +64,19 @@ function AuthorizedPersonCard({ person, index, onChange, onRemove, canRemove }) 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input label="Imię *" value={person.firstName} onChange={(v) => update("firstName", v)} />
         <Input label="Nazwisko *" value={person.lastName} onChange={(v) => update("lastName", v)} />
-        <Input
-          label="PESEL *"
-          value={person.pesel}
-          onChange={(v) => update("pesel", v.replace(/\D/g, "").slice(0, 11))}
-        />
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Numer telefonu *</label>
-          <div className="flex gap-2">
+        <div className="sm:col-span-2">
+          <label className="block text-xs font-medium text-gray-600 mb-2">PESEL *</label>
+          <KioskNumericEntry
+            value={person.pesel}
+            onChange={(value) => update("pesel", value)}
+            maxLength={11}
+            size="md"
+            compactKeypad
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-xs font-medium text-gray-600 mb-2">Numer telefonu *</label>
+          <div className="flex gap-2 mb-3">
             <select
               value={person.phoneCode}
               onChange={(e) => update("phoneCode", e.target.value)}
@@ -82,14 +88,14 @@ function AuthorizedPersonCard({ person, index, onChange, onRemove, canRemove }) 
                 </option>
               ))}
             </select>
-            <input
-              type="tel"
-              value={person.phone}
-              onChange={(e) => update("phone", e.target.value.replace(/\D/g, "").slice(0, 9))}
-              placeholder="123 456 789"
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
-            />
           </div>
+          <KioskNumericEntry
+            value={person.phone}
+            onChange={(value) => update("phone", value)}
+            maxLength={9}
+            size="sm"
+            compactKeypad
+          />
         </div>
         <Input
           label="Adres (ulica i numer) *"
