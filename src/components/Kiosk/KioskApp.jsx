@@ -9,10 +9,15 @@ import {
 } from "../../helpers/kioskHelper";
 import { normalizePesel } from "../../utils/peselUtils";
 import AdultRegistrationForm from "./AdultRegistrationForm";
+import InternationalRegistrationForm from "./InternationalRegistrationForm";
+import MinorRegistrationForm from "./MinorRegistrationForm";
+import InternationalPatientStep from "./InternationalPatientStep";
+import { detectPatientType, PATIENT_TYPES } from "./PatientTypeDetector";
 
 const STEPS = {
   PIN: "pin",
   PESEL: "pesel",
+  INTERNATIONAL: "international",
   FORM: "form",
   DONE: "done",
 };
@@ -27,6 +32,7 @@ export default function KioskApp() {
   const [sessionInfo, setSessionInfo] = useState(null);
   const [formData, setFormData] = useState({});
   const [mode, setMode] = useState("full_registration");
+  const [patientType, setPatientType] = useState(PATIENT_TYPES.ADULT);
   const idleTimerRef = useRef(null);
 
   const resetToPin = useCallback(() => {
@@ -37,6 +43,7 @@ export default function KioskApp() {
     setSessionInfo(null);
     setFormData({});
     setMode("full_registration");
+    setPatientType(PATIENT_TYPES.ADULT);
   }, []);
 
   const resetIdleTimer = useCallback(() => {
@@ -47,6 +54,39 @@ export default function KioskApp() {
       resetToPin();
     }, IDLE_TIMEOUT_MS);
   }, [step, resetToPin]);
+
+  const getFormTitle = (type) => {
+    switch (type) {
+      case PATIENT_TYPES.INTERNATIONAL:
+        return "Rejestracja pacjenta zagranicznego";
+      case PATIENT_TYPES.MINOR_UNDER_16:
+        return "Rejestracja pacjenta poniżej 16 lat";
+      case PATIENT_TYPES.MINOR_16_17:
+        return "Rejestracja pacjenta 16-17 lat";
+      default:
+        return "Dane rejestracyjne";
+    }
+  };
+
+  const renderForm = () => {
+    const commonProps = {
+      initialData: formData,
+      mode,
+      onSubmit: handleComplete,
+      onAutoSave: saveKioskForm,
+      loading,
+    };
+
+    switch (patientType) {
+      case PATIENT_TYPES.INTERNATIONAL:
+        return <InternationalRegistrationForm {...commonProps} />;
+      case PATIENT_TYPES.MINOR_UNDER_16:
+      case PATIENT_TYPES.MINOR_16_17:
+        return <MinorRegistrationForm {...commonProps} />;
+      default:
+        return <AdultRegistrationForm {...commonProps} />;
+    }
+  };
 
   useEffect(() => {
     const events = ["mousedown", "touchstart", "keydown", "scroll"];
@@ -78,21 +118,40 @@ export default function KioskApp() {
   };
 
   const handlePeselCheck = async () => {
-    const normalized = normalizePesel(pesel);
-    if (normalized.length !== 11) {
+    if (pesel.length !== 11) {
       toast.error("PESEL musi mieć 11 cyfr.");
       return;
     }
+
+    const normalized = normalizePesel(pesel);
     setLoading(true);
     try {
       const res = await checkKioskPesel(normalized);
-      if (res.peselWarning) toast.warning(res.peselWarning);
-      setFormData(res.formData || {});
+      const updatedFormData = { 
+        ...res.formData, 
+        pesel: normalized 
+      };
+      
+      // Detect patient type based on PESEL/age
+      const detectedType = detectPatientType(updatedFormData);
+      
+      setFormData(updatedFormData);
       setMode(res.mode || "full_registration");
+      setPatientType(detectedType);
+      setSessionInfo(res.sessionInfo || null);
       setStep(STEPS.FORM);
-      toast.success(res.message);
+      
+      // Show appropriate message based on patient type
+      let message = res.message || "PESEL zweryfikowany.";
+      if (detectedType === PATIENT_TYPES.MINOR_UNDER_16) {
+        message = "Pacjent poniżej 16 lat - wymagany podpis opiekuna.";
+      } else if (detectedType === PATIENT_TYPES.MINOR_16_17) {
+        message = "Pacjent 16-17 lat - wymagane podpisy pacjenta i opiekuna.";
+      }
+      
+      toast.success(message);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Błąd weryfikacji PESEL.");
+      toast.error(err.response?.data?.message || "Nie można zweryfikować PESEL.");
     } finally {
       setLoading(false);
     }
@@ -177,8 +236,9 @@ export default function KioskApp() {
               >
                 ← Wróć do PIN
               </button>
-              <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Numer PESEL</h2>
-              <p className="text-center text-gray-500 mb-8">Wprowadź swój numer PESEL</p>
+              <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Weryfikacja tożsamości</h2>
+              <p className="text-center text-gray-500 mb-8">Wprowadź numer PESEL lub wybierz pacjent zagraniczny</p>
+              
               <input
                 type="text"
                 inputMode="numeric"
@@ -189,36 +249,61 @@ export default function KioskApp() {
                 placeholder="00000000000"
                 autoFocus
               />
+              
               <button
                 type="button"
                 onClick={handlePeselCheck}
-                disabled={loading}
-                className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl"
+                disabled={loading || pesel.length !== 11}
+                className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl mb-4"
               >
-                {loading ? "Sprawdzanie..." : "Dalej"}
+                {loading ? "Sprawdzanie..." : "Weryfikuj PESEL"}
               </button>
+              
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setStep(STEPS.INTERNATIONAL)}
+                  className="text-teal-700 hover:text-teal-900 font-medium text-sm underline"
+                >
+                  Pacjent zagraniczny (bez PESEL)
+                </button>
+              </div>
             </div>
+          )}
+
+          {step === STEPS.INTERNATIONAL && (
+            <InternationalPatientStep
+              onVerified={(data) => {
+                setFormData(data.formData);
+                setPatientType(data.patientType);
+                setMode(data.mode);
+                setSessionInfo(data.sessionInfo);
+                setStep(STEPS.FORM);
+              }}
+              onBack={() => setStep(STEPS.PESEL)}
+              loading={loading}
+            />
           )}
 
           {step === STEPS.FORM && (
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
               <button
                 type="button"
-                onClick={() => setStep(STEPS.PESEL)}
+                onClick={() => {
+                  if (patientType === PATIENT_TYPES.INTERNATIONAL) {
+                    setStep(STEPS.INTERNATIONAL);
+                  } else {
+                    setStep(STEPS.PESEL);
+                  }
+                }}
                 className="text-sm text-teal-700 mb-4 hover:underline"
               >
-                ← Wróć do PESEL
+                ← Wróć do weryfikacji
               </button>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                {mode === "sign_only" ? "Podpis dokumentów" : "Dane rejestracyjne"}
+                {mode === "sign_only" ? "Podpis dokumentów" : getFormTitle(patientType)}
               </h2>
-              <AdultRegistrationForm
-                initialData={formData}
-                mode={mode}
-                onSubmit={handleComplete}
-                onAutoSave={saveKioskForm}
-                loading={loading}
-              />
+              {renderForm()}
             </div>
           )}
 
