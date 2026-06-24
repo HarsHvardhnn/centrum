@@ -13,6 +13,7 @@ import InternationalRegistrationForm from "./InternationalRegistrationForm";
 import MinorRegistrationForm from "./MinorRegistrationForm";
 import InternationalPatientStep from "./InternationalPatientStep";
 import { detectPatientType, PATIENT_TYPES } from "./PatientTypeDetector";
+import KioskNumericEntry from "./KioskNumericEntry";
 
 const STEPS = {
   PIN: "pin",
@@ -206,15 +207,13 @@ export default function KioskApp() {
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
               <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Wprowadź kod PIN</h2>
               <p className="text-center text-gray-500 mb-8">Kod otrzymasz od pracownika rejestracji</p>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
+              <KioskNumericEntry
                 value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                className="w-full text-center text-4xl tracking-[0.5em] font-mono border-2 border-teal-200 rounded-xl py-6 mb-6 focus:border-teal-600 focus:outline-none"
-                placeholder="••••••"
-                autoFocus
+                onChange={setPin}
+                maxLength={6}
+                size="lg"
+                disabled={loading}
+                className="mb-6"
               />
               <button
                 type="button"
@@ -239,15 +238,14 @@ export default function KioskApp() {
               <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Weryfikacja tożsamości</h2>
               <p className="text-center text-gray-500 mb-8">Wprowadź numer PESEL lub wybierz pacjent zagraniczny</p>
               
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={11}
+              <KioskNumericEntry
                 value={pesel}
-                onChange={(e) => setPesel(e.target.value.replace(/\D/g, "").slice(0, 11))}
-                className="w-full text-center text-3xl tracking-widest font-mono border-2 border-teal-200 rounded-xl py-5 mb-6 focus:border-teal-600 focus:outline-none"
-                placeholder="00000000000"
-                autoFocus
+                onChange={setPesel}
+                maxLength={11}
+                size="pesel"
+                showActiveCursor
+                disabled={loading}
+                className="mb-6"
               />
               
               <button
