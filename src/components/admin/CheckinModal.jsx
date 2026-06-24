@@ -290,7 +290,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
               <h3 className="text-md font-medium">Prześlij Dokumenty</h3>
             </div>
             <p className="text-gray-500 text-sm mb-3">
-              Prześlij dokument podpisany przez pacjenta (opcjonalne)
+              Dodaj dokument pacjenta do danej wizyty (np. wynik badania, dokumentacje medyczną)
             </p>
 
             {/* Upload Area - Simplified */}

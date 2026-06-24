@@ -38,6 +38,17 @@ export const useAutoSave = ({
   const isSavingRef = useRef(false);
   const pendingSaveRef = useRef(null);
   const draftIdRef = useRef(draftId); // Store draftId in ref so it's accessible in callbacks
+  const hasInitializedRef = useRef(false); // Track if we've seeded the baseline from initial formData
+
+  // Reset baseline initialization whenever the hook gets disabled (e.g. switching appointments).
+  // This ensures the next time it's enabled with newly loaded data, we re-seed correctly
+  // rather than immediately auto-saving the freshly-loaded data.
+  useEffect(() => {
+    if (!enabled) {
+      hasInitializedRef.current = false;
+      lastSavedDataRef.current = null;
+    }
+  }, [enabled]);
 
   // Update draftId ref when it changes - CRITICAL for immediate access
   useEffect(() => {
@@ -165,6 +176,16 @@ export const useAutoSave = ({
   // Save on form data change (debounced)
   useEffect(() => {
     if (!enabled || !user || !formType) return;
+
+    // Seed baseline on first run with non-empty formData so we don't auto-save
+    // the freshly-loaded data as if the user had edited it.
+    if (!hasInitializedRef.current) {
+      if (formData && Object.keys(formData).length > 0) {
+        lastSavedDataRef.current = JSON.parse(JSON.stringify(formData));
+        hasInitializedRef.current = true;
+      }
+      return;
+    }
 
     if (hasDataChanged(formData, lastSavedDataRef.current)) {
       debouncedSave(formData, metadata);

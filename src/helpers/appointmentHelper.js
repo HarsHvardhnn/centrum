@@ -50,6 +50,17 @@ class AppointmentService {
     }
   }
 
+  // NEW CONSOLIDATED API: Get all patient details data for patient details page
+  async getPatientDetailsConsolidated(appointmentId) {
+    try {
+      const response = await apiCaller("GET", `/appointments/${appointmentId}/patient-details`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching consolidated patient details:", error);
+      throw error;
+    }
+  }
+
   // Create new appointment
   async createAppointment(appointmentData) {
     try {
@@ -192,6 +203,21 @@ class AppointmentService {
     }
   }
 
+  // NEW CONSOLIDATED API: Update only visit type fields (consultationType, visitReason, visitType)
+  async updateConsultationType(appointmentId, visitTypeData) {
+    try {
+      const response = await apiCaller(
+        "PUT",
+        `/appointments/${appointmentId}/consultation-type`,
+        visitTypeData
+      );
+      return response?.data ?? response;
+    } catch (error) {
+      console.error("Error updating consultation type:", error);
+      throw error;
+    }
+  }
+
   /**
    * Verify visit reason (doctor/admin only).
    * PATCH /appointments/visit-reason/verify/:id
@@ -208,6 +234,21 @@ class AppointmentService {
       return response?.data ?? response;
     } catch (error) {
       console.error("Error verifying visit reason:", error);
+      throw error;
+    }
+  }
+
+  // NEW CONSOLIDATED API: Verify visit type (sets both visitReasonVerified and visitTypeVerified)
+  async verifyVisitTypeConsolidated(appointmentId) {
+    try {
+      const response = await apiCaller(
+        "PATCH",
+        `/appointments/${appointmentId}/verify-visit-type`,
+        {}
+      );
+      return response?.data ?? response;
+    } catch (error) {
+      console.error("Error verifying visit type (consolidated):", error);
       throw error;
     }
   }
@@ -255,8 +296,8 @@ class AppointmentService {
    * Admin appointment status update API.
    * PATCH /api/appointments/admin/:appointmentId/status
    * Body: { status: "completed" }
-   * Allows admin users to directly change appointment status to any allowed value.
-   * Available statuses: booked, cancelled, completed, checkedIn, no-show
+   * Allows admin, doctor, and receptionist to change appointment status.
+   * Available statuses: booked, cancelled, completed, checkedIn, no_show
    */
   async updateAppointmentStatusAdmin(appointmentId, body) {
     try {
@@ -452,6 +493,21 @@ class AppointmentService {
       return response.data;
     } catch (error) {
       console.error("Error updating appointment details:", error);
+      throw error;
+    }
+  }
+
+  // NEW CONSOLIDATED API: Update patient + consultation details (replaces updateAppointmentDetails)
+  async updatePatientDetailsConsolidated(appointmentId, data) {
+    try {
+      const response = await apiCaller(
+        "PUT",
+        `/appointments/${appointmentId}/patient-details`,
+        data
+      );
+      return response?.data ?? response;
+    } catch (error) {
+      console.error("Error updating patient details (consolidated):", error);
       throw error;
     }
   }

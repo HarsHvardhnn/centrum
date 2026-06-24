@@ -43,7 +43,14 @@ const VisitInfoHeader = ({
     : "—";
   const doctorName = stripDoctorTitle(doctorNameRaw) || "—";
   const status = appointment.status;
-  const visitType = consultationData?.visitReason || consultationData?.consultationType || appointment.visitReason || appointment.consultationType || "";
+  const visitType =
+    consultationData?.consultationType ||
+    consultationData?.visitReason ||
+    consultationData?.visitType ||
+    appointment.consultationType ||
+    appointment.visitReason ||
+    appointment.visitType ||
+    "";
   const effectiveVisitReasonVerified =
     visitReasonVerified ?? appointment.visitReasonVerified ?? appointment.visitTypeVerified ?? null;
   const isRadiologistVisit = isRadiologistAppointment(appointment);
@@ -71,8 +78,10 @@ const VisitInfoHeader = ({
     if (!newReason || !appointmentId) return;
     setSavingVisitType(true);
     try {
-      await appointmentHelper.updateConsultation(appointmentId, {
+      await appointmentHelper.updateConsultationType(appointmentId, {
+        consultationType: newReason,
         visitReason: newReason,
+        visitType: newReason,
       });
       onVisitTypeChange?.(newReason);
       toast.success("Rodzaj wizyty zaktualizowany");
@@ -205,21 +214,20 @@ const VisitInfoHeader = ({
             />
             {renderVerificationPill()}
 
-            {canVerifyVisitReason && !isVisitCompleted && (
+            {canVerifyVisitReason &&
+              !isVisitCompleted &&
+              effectiveVisitReasonVerified !== true && (
               <button
                 type="button"
                 onClick={onVerifyVisitReason}
                 disabled={
                   visitReasonVerifyLoading ||
-                  effectiveVisitReasonVerified === true ||
                   !visitType ||
                   visitType === "—"
                 }
                 className={`px-3 py-1.5 text-white text-sm rounded font-semibold shadow-sm transition-colors disabled:cursor-not-allowed ${
                   visitReasonVerifyLoading
                     ? "bg-gray-500"
-                    : effectiveVisitReasonVerified === true
-                    ? "bg-emerald-600 opacity-95"
                     : !visitType || visitType === "—"
                     ? "bg-red-400 disabled:opacity-65"
                     : "bg-red-600 hover:bg-red-700 hover:shadow"
