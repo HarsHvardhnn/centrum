@@ -2,82 +2,91 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import {
   activatePin,
-  checkKioskDocument,
   checkKioskPesel,
   clearKioskToken,
   completeKioskRegistration,
-  getKioskForm,
   saveKioskForm,
 } from "../../helpers/kioskHelper";
-import { analyzePeselForKiosk, getPeselErrorDisplay, normalizePesel } from "../../utils/peselUtils";
-import KioskCenteredAlert from "./KioskCenteredAlert";
-import KioskNumericEntry from "./KioskNumericEntry";
-import KioskLoadingOverlay from "./KioskLoadingOverlay";
-import KioskStepLayout from "./KioskStepLayout";
-import KioskConsentsStep from "./KioskConsentsStep";
-import KioskVerificationStep from "./KioskVerificationStep";
-import {
-  KIOSK_STEPS,
-  createDefaultKioskForm,
-  syncSmsConsentFromHealthcare,
-} from "./kioskConstants";
-import {
-  KioskPersonalStep,
-  KioskAddressStep,
-  KioskContactStep,
-  KioskSignatureStep,
-} from "./KioskFormSteps";
-import {
-  validatePersonalStep,
-  validateAddressStep,
-  validateContactStep,
-  validateConsentsStep,
-  validateVerificationStep,
-} from "./kioskShared";
+import { normalizePesel } from "../../utils/peselUtils";
+import AdultRegistrationForm from "./AdultRegistrationForm";
+import InternationalRegistrationForm from "./InternationalRegistrationForm";
+import MinorRegistrationForm from "./MinorRegistrationForm";
+import InternationalPatientStep from "./InternationalPatientStep";
+import { detectPatientType, PATIENT_TYPES } from "./PatientTypeDetector";
+
+const STEPS = {
+  PIN: "pin",
+  PESEL: "pesel",
+  INTERNATIONAL: "international",
+  FORM: "form",
+  DONE: "done",
+};
 
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
 
 export default function KioskApp() {
-  const [step, setStep] = useState(KIOSK_STEPS.PIN);
+  const [step, setStep] = useState(STEPS.PIN);
   const [pin, setPin] = useState("");
+  const [pesel, setPesel] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sessionInfo, setSessionInfo] = useState(null);
+  const [formData, setFormData] = useState({});
   const [mode, setMode] = useState("full_registration");
-  const [form, setForm] = useState(createDefaultKioskForm());
-  const [consentErrors, setConsentErrors] = useState([]);
-  const [verificationError, setVerificationError] = useState(null);
+  const [patientType, setPatientType] = useState(PATIENT_TYPES.ADULT);
   const idleTimerRef = useRef(null);
-
-  const flowSteps =
-    mode === "sign_only"
-      ? [KIOSK_STEPS.CONSENTS, KIOSK_STEPS.SIGNATURE]
-      : [
-          KIOSK_STEPS.PERSONAL,
-          KIOSK_STEPS.ADDRESS,
-          KIOSK_STEPS.CONTACT,
-          KIOSK_STEPS.CONSENTS,
-          KIOSK_STEPS.SIGNATURE,
-        ];
-
-  const isCorrectionMode = mode === "data_correction";
 
   const resetToPin = useCallback(() => {
     clearKioskToken();
-    setStep(KIOSK_STEPS.PIN);
+    setStep(STEPS.PIN);
     setPin("");
-    setForm(createDefaultKioskForm());
+    setPesel("");
+    setSessionInfo(null);
+    setFormData({});
     setMode("full_registration");
-    setConsentErrors([]);
-    setVerificationError(null);
+    setPatientType(PATIENT_TYPES.ADULT);
   }, []);
 
   const resetIdleTimer = useCallback(() => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    if (step === KIOSK_STEPS.PIN || step === KIOSK_STEPS.DONE) return;
+    if (step === STEPS.PIN || step === STEPS.DONE) return;
     idleTimerRef.current = setTimeout(() => {
       toast.info("Sesja wygasła z powodu braku aktywności.");
       resetToPin();
     }, IDLE_TIMEOUT_MS);
   }, [step, resetToPin]);
+
+  const getFormTitle = (type) => {
+    switch (type) {
+      case PATIENT_TYPES.INTERNATIONAL:
+        return "Rejestracja pacjenta zagranicznego";
+      case PATIENT_TYPES.MINOR_UNDER_16:
+        return "Rejestracja pacjenta poniżej 16 lat";
+      case PATIENT_TYPES.MINOR_16_17:
+        return "Rejestracja pacjenta 16-17 lat";
+      default:
+        return "Dane rejestracyjne";
+    }
+  };
+
+  const renderForm = () => {
+    const commonProps = {
+      initialData: formData,
+      mode,
+      onSubmit: handleComplete,
+      onAutoSave: saveKioskForm,
+      loading,
+    };
+
+    switch (patientType) {
+      case PATIENT_TYPES.INTERNATIONAL:
+        return <InternationalRegistrationForm {...commonProps} />;
+      case PATIENT_TYPES.MINOR_UNDER_16:
+      case PATIENT_TYPES.MINOR_16_17:
+        return <MinorRegistrationForm {...commonProps} />;
+      default:
+        return <AdultRegistrationForm {...commonProps} />;
+    }
+  };
 
   useEffect(() => {
     const events = ["mousedown", "touchstart", "keydown", "scroll"];
@@ -90,18 +99,6 @@ export default function KioskApp() {
     };
   }, [resetIdleTimer]);
 
-  const autoSaveTimer = useRef(null);
-  useEffect(() => {
-    if (step === KIOSK_STEPS.PIN || step === KIOSK_STEPS.PESEL || step === KIOSK_STEPS.DONE) return;
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    autoSaveTimer.current = setTimeout(() => {
-      saveKioskForm(syncSmsConsentFromHealthcare(form)).catch(() => {});
-    }, 800);
-    return () => {
-      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    };
-  }, [form, step]);
-
   const handleActivate = async () => {
     if (pin.replace(/\D/g, "").length !== 6) {
       toast.error("Wprowadź 6-cyfrowy kod PIN.");
@@ -109,25 +106,10 @@ export default function KioskApp() {
     }
     setLoading(true);
     try {
-      await activatePin(pin);
-      const formRes = await getKioskForm();
-      const sessionMode = formRes.session?.mode;
-      if (sessionMode === "data_correction") {
-        const nextForm = createDefaultKioskForm({
-          ...(formRes.formData || {}),
-          authorizationChoice: formRes.formData?.authorizationChoice || "",
-          authorizedPersons: formRes.formData?.authorizedPersons?.length
-            ? formRes.formData.authorizedPersons
-            : [{ firstName: "", lastName: "", pesel: "", phoneCode: "+48", phone: "", street: "", zipCode: "", city: "" }],
-        });
-        setForm(nextForm);
-        setMode("data_correction");
-        setStep(KIOSK_STEPS.PERSONAL);
-        toast.success("Sesja aktualizacji danych. Sprawdź i uzupełnij dane, następnie podpisz dokumenty.");
-      } else {
-        setStep(KIOSK_STEPS.PESEL);
-        toast.success("Połączono z sesją rejestracji.");
-      }
+      const res = await activatePin(pin);
+      setSessionInfo(res.session);
+      setStep(STEPS.PESEL);
+      toast.success("Połączono z sesją rejestracji.");
     } catch (err) {
       toast.error(err.response?.data?.message || "Nieprawidłowy kod PIN.");
     } finally {
@@ -135,185 +117,52 @@ export default function KioskApp() {
     }
   };
 
-  const applyCheckResponse = (res, overrides = {}) => {
-    if (res.peselWarning) toast.warning(res.peselWarning);
-    const nextForm = createDefaultKioskForm({
-      ...(res.formData || {}),
-      ...overrides,
-      authorizationChoice: res.formData?.authorizationChoice || "",
-      authorizedPersons: res.formData?.authorizedPersons?.length
-        ? res.formData.authorizedPersons
-        : [{ firstName: "", lastName: "", pesel: "", phoneCode: "+48", phone: "", street: "", zipCode: "", city: "" }],
-      documentScans: res.formData?.documentScans || [],
-    });
-    setForm(nextForm);
-    setMode(res.mode || "full_registration");
-    setStep(res.mode === "sign_only" ? KIOSK_STEPS.CONSENTS : KIOSK_STEPS.PERSONAL);
-    toast.success(res.message);
-  };
-
-  const showVerificationError = (errorCode, message) => {
-    const display = getPeselErrorDisplay(errorCode, message);
-    setVerificationError(display);
-  };
-
-  const handleVerification = async () => {
-    setVerificationError(null);
-
-    const errors = validateVerificationStep(form);
-    if (errors.length) {
-      if (!form.isInternationalPatient) {
-        showVerificationError("invalid_length", errors[0]);
-      } else {
-        setVerificationError({
-          title: "Uzupełnij dane dokumentu",
-          message: errors[0],
-        });
-      }
+  const handlePeselCheck = async () => {
+    if (pesel.length !== 11) {
+      toast.error("PESEL musi mieć 11 cyfr.");
       return;
     }
 
-    if (!form.isInternationalPatient) {
-      const normalized = normalizePesel(form.pesel);
-      const analysis = analyzePeselForKiosk(normalized);
-      if (!analysis.valid) {
-        showVerificationError(analysis.errorCode, analysis.message);
-        return;
-      }
-    }
-
+    const normalized = normalizePesel(pesel);
     setLoading(true);
     try {
-      if (form.isInternationalPatient) {
-        const res = await checkKioskDocument({
-          documentCountry: form.documentCountry?.trim(),
-          documentType: form.documentType?.trim(),
-          documentNumber: form.documentNumber?.trim(),
-          dateOfBirth: form.dateOfBirth ? String(form.dateOfBirth).slice(0, 10) : undefined,
-        });
-        applyCheckResponse(res, {
-          isInternationalPatient: true,
-          pesel: "",
-          documentCountry: form.documentCountry?.trim(),
-          documentType: form.documentType?.trim(),
-          documentNumber: form.documentNumber?.trim(),
-          dateOfBirth: form.dateOfBirth,
-        });
-      } else {
-        const normalized = normalizePesel(form.pesel);
-        const res = await checkKioskPesel(normalized);
-        applyCheckResponse(res, { pesel: normalized, isInternationalPatient: false });
+      const res = await checkKioskPesel(normalized);
+      const updatedFormData = { 
+        ...res.formData, 
+        pesel: normalized 
+      };
+      
+      // Detect patient type based on PESEL/age
+      const detectedType = detectPatientType(updatedFormData);
+      
+      setFormData(updatedFormData);
+      setMode(res.mode || "full_registration");
+      setPatientType(detectedType);
+      setSessionInfo(res.sessionInfo || null);
+      setStep(STEPS.FORM);
+      
+      // Show appropriate message based on patient type
+      let message = res.message || "PESEL zweryfikowany.";
+      if (detectedType === PATIENT_TYPES.MINOR_UNDER_16) {
+        message = "Pacjent poniżej 16 lat - wymagany podpis opiekuna.";
+      } else if (detectedType === PATIENT_TYPES.MINOR_16_17) {
+        message = "Pacjent 16-17 lat - wymagane podpisy pacjenta i opiekuna.";
       }
+      
+      toast.success(message);
     } catch (err) {
-      const data = err.response?.data || {};
-      if (!form.isInternationalPatient && (data.errorCode || data.message)) {
-        showVerificationError(data.errorCode || "invalid_pesel", data.message);
-      } else {
-        setVerificationError({
-          title: form.isInternationalPatient ? "Nie można zweryfikować dokumentu" : "Nieprawidłowy numer PESEL",
-          message: data.message || "Błąd weryfikacji danych. Sprawdź wpisane informacje i spróbuj ponownie.",
-        });
-      }
+      toast.error(err.response?.data?.message || "Nie można zweryfikować PESEL.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInternationalToggle = (checked) => {
-    setVerificationError(null);
-    setForm((prev) =>
-      createDefaultKioskForm({
-        ...prev,
-        isInternationalPatient: checked,
-        pesel: checked ? "" : prev.pesel,
-        documentCountry: checked ? prev.documentCountry : "",
-        documentType: checked ? prev.documentType : "",
-        documentNumber: checked ? prev.documentNumber : "",
-        internationalPatientDocumentKey: checked ? prev.internationalPatientDocumentKey : "",
-      })
-    );
-  };
-
-  const getPreviousStep = () => {
-    const idx = flowSteps.indexOf(step);
-    if (idx > 0) return flowSteps[idx - 1];
-    if (isCorrectionMode) return KIOSK_STEPS.PIN;
-    if (mode === "full_registration" || mode === "sign_only") return KIOSK_STEPS.PESEL;
-    return KIOSK_STEPS.PIN;
-  };
-
-  const goBack = () => {
-    if (step === KIOSK_STEPS.PESEL) {
-      resetToPin();
-      return;
-    }
-
-    const previousStep = getPreviousStep();
-    if (previousStep === KIOSK_STEPS.PIN) {
-      resetToPin();
-      return;
-    }
-
-    setVerificationError(null);
-    setConsentErrors([]);
-    setStep(previousStep);
-  };
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [step]);
-
-  const goNext = () => {
-    if (step === KIOSK_STEPS.PERSONAL) {
-      const errors = validatePersonalStep(form);
-      if (errors.length) {
-        toast.error(errors[0]);
-        return;
-      }
-    }
-    if (step === KIOSK_STEPS.ADDRESS) {
-      const errors = validateAddressStep(form);
-      if (errors.length) {
-        toast.error(errors[0]);
-        return;
-      }
-    }
-    if (step === KIOSK_STEPS.CONTACT) {
-      const errors = validateContactStep(form);
-      if (errors.length) {
-        toast.error(errors[0]);
-        return;
-      }
-    }
-    if (step === KIOSK_STEPS.CONSENTS) {
-      const errors = validateConsentsStep(form);
-      if (errors.length) {
-        setConsentErrors(errors);
-        toast.error("Uzupełnij wszystkie wymagane zgody.");
-        return;
-      }
-      setConsentErrors([]);
-    }
-    if (step === KIOSK_STEPS.SIGNATURE) {
-      if (!form.signature) {
-        toast.error("Podpis jest wymagany.");
-        return;
-      }
-      handleComplete();
-      return;
-    }
-
-    const idx = flowSteps.indexOf(step);
-    if (idx < flowSteps.length - 1) setStep(flowSteps[idx + 1]);
-  };
-
-  const handleComplete = async () => {
+  const handleComplete = async (form) => {
     setLoading(true);
     try {
-      const payload = syncSmsConsentFromHealthcare(form);
-      await saveKioskForm(payload);
-      const res = await completeKioskRegistration(payload);
-      setStep(KIOSK_STEPS.DONE);
+      await saveKioskForm(form);
+      const res = await completeKioskRegistration(form);
+      setStep(STEPS.DONE);
       toast.success(res.message || "Rejestracja zakończona.");
       setTimeout(resetToPin, 12000);
     } catch (err) {
@@ -323,31 +172,11 @@ export default function KioskApp() {
     }
   };
 
-  const stepIndex = flowSteps.indexOf(step);
-  const showWizard = flowSteps.includes(step);
-
-  const loadingOverlay =
-    loading && step !== KIOSK_STEPS.DONE
-      ? {
-          [KIOSK_STEPS.PIN]: { title: "Łączenie z sesją…", message: "Weryfikujemy kod PIN." },
-          [KIOSK_STEPS.PESEL]: {
-            title: "Sprawdzanie danych…",
-            message: form.isInternationalPatient
-              ? "Weryfikujemy dokument tożsamości."
-              : "Weryfikujemy numer PESEL.",
-          },
-          [KIOSK_STEPS.SIGNATURE]: {
-            title: "Kończenie rejestracji…",
-            message: "Zapisujemy dane pacjenta.",
-          },
-        }[step] || { title: "Zapisywanie…", message: "Proszę czekać." }
-      : null;
+  const stepIndicator = step === STEPS.PESEL ? 1 : step === STEPS.FORM ? 2 : step === STEPS.DONE ? 3 : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-white flex flex-col">
-      {loadingOverlay && <KioskLoadingOverlay title={loadingOverlay.title} message={loadingOverlay.message} />}
-
-      <header className="bg-white border-b border-gray-200 px-6 py-5 shadow-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex flex-col">
+      <header className="bg-white border-b border-gray-200 px-6 py-5 shadow-sm">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-900">Centrum Medyczne 7</h1>
@@ -359,21 +188,33 @@ export default function KioskApp() {
             className="h-10"
           />
         </div>
+        {stepIndicator > 0 && step !== STEPS.DONE && (
+          <div className="max-w-3xl mx-auto mt-4 flex gap-2">
+            {[1, 2].map((n) => (
+              <div
+                key={n}
+                className={`h-1.5 flex-1 rounded-full ${stepIndicator >= n ? "bg-teal-600" : "bg-gray-200"}`}
+              />
+            ))}
+          </div>
+        )}
       </header>
 
-      <main className="flex-1 px-4 sm:px-6 py-8">
-        <div className={`mx-auto ${step === KIOSK_STEPS.PESEL ? "max-w-4xl" : "max-w-3xl"}`}>
-          {step === KIOSK_STEPS.PIN && (
+      <main className="flex-1 px-6 py-8">
+        <div className="max-w-3xl mx-auto">
+          {step === STEPS.PIN && (
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
               <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Wprowadź kod PIN</h2>
-              <p className="text-center text-gray-500 mb-8">Kod otrzymasz w recepcji</p>
-              <KioskNumericEntry
-                value={pin}
-                onChange={setPin}
+              <p className="text-center text-gray-500 mb-8">Kod otrzymasz od pracownika rejestracji</p>
+              <input
+                type="text"
+                inputMode="numeric"
                 maxLength={6}
-                size="lg"
-                disabled={loading}
-                className="mb-6"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="w-full text-center text-4xl tracking-[0.5em] font-mono border-2 border-teal-200 rounded-xl py-6 mb-6 focus:border-teal-600 focus:outline-none"
+                placeholder="••••••"
+                autoFocus
               />
               <button
                 type="button"
@@ -386,99 +227,100 @@ export default function KioskApp() {
             </div>
           )}
 
-          {step === KIOSK_STEPS.PESEL && (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
-              {!verificationError && (
-                <button type="button" onClick={resetToPin} className="text-sm text-teal-700 mb-4 hover:underline">
-                  ← Wróć do PIN
-                </button>
-              )}
-              {verificationError ? (
-                <KioskCenteredAlert
-                  title={verificationError.title}
-                  message={verificationError.message}
-                  onAction={() => setVerificationError(null)}
-                />
-              ) : (
-                <>
-                  <KioskVerificationStep
-                    isInternational={!!form.isInternationalPatient}
-                    onInternationalChange={handleInternationalToggle}
-                    pesel={form.pesel}
-                    onPeselChange={(value) => {
-                      setVerificationError(null);
-                      setForm((prev) => ({ ...prev, pesel: value }));
-                    }}
-                    documentCountry={form.documentCountry}
-                    documentType={form.documentType}
-                    documentNumber={form.documentNumber}
-                    dateOfBirth={form.dateOfBirth}
-                    onDocumentChange={(field, value) => {
-                      setVerificationError(null);
-                      setForm((prev) => ({ ...prev, [field]: value }));
-                    }}
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleVerification}
-                    disabled={loading}
-                    className="w-full mt-6 bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl"
-                  >
-                    {loading ? "Sprawdzanie..." : "Dalej"}
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-
-          {showWizard && (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
-              <KioskStepLayout
-                currentStep={step}
-                stepIndex={stepIndex}
-                totalSteps={flowSteps.length}
-                onBack={goBack}
-                footer={
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    disabled={loading}
-                    className="px-6 py-3 rounded-xl bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold"
-                  >
-                    {step === KIOSK_STEPS.SIGNATURE ? "Zakończ rejestrację" : "Dalej"}
-                  </button>
-                }
+          {step === STEPS.PESEL && (
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+              <button
+                type="button"
+                onClick={resetToPin}
+                className="text-sm text-teal-700 mb-4 hover:underline"
               >
-                {step === KIOSK_STEPS.PERSONAL && (
-                  <KioskPersonalStep form={form} onChange={setForm} readOnly={false} />
-                )}
-                {step === KIOSK_STEPS.ADDRESS && <KioskAddressStep form={form} onChange={setForm} />}
-                {step === KIOSK_STEPS.CONTACT && <KioskContactStep form={form} onChange={setForm} />}
-                {step === KIOSK_STEPS.CONSENTS && (
-                  <KioskConsentsStep form={form} onChange={setForm} errors={consentErrors} />
-                )}
-                {step === KIOSK_STEPS.SIGNATURE && <KioskSignatureStep form={form} onChange={setForm} />}
-              </KioskStepLayout>
+                ← Wróć do PIN
+              </button>
+              <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Weryfikacja tożsamości</h2>
+              <p className="text-center text-gray-500 mb-8">Wprowadź numer PESEL lub wybierz pacjent zagraniczny</p>
+              
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={11}
+                value={pesel}
+                onChange={(e) => setPesel(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                className="w-full text-center text-3xl tracking-widest font-mono border-2 border-teal-200 rounded-xl py-5 mb-6 focus:border-teal-600 focus:outline-none"
+                placeholder="00000000000"
+                autoFocus
+              />
+              
+              <button
+                type="button"
+                onClick={handlePeselCheck}
+                disabled={loading || pesel.length !== 11}
+                className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl mb-4"
+              >
+                {loading ? "Sprawdzanie..." : "Weryfikuj PESEL"}
+              </button>
+              
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setStep(STEPS.INTERNATIONAL)}
+                  className="text-teal-700 hover:text-teal-900 font-medium text-sm underline"
+                >
+                  Pacjent zagraniczny (bez PESEL)
+                </button>
+              </div>
             </div>
           )}
 
-          {step === KIOSK_STEPS.DONE && (
+          {step === STEPS.INTERNATIONAL && (
+            <InternationalPatientStep
+              onVerified={(data) => {
+                setFormData(data.formData);
+                setPatientType(data.patientType);
+                setMode(data.mode);
+                setSessionInfo(data.sessionInfo);
+                setStep(STEPS.FORM);
+              }}
+              onBack={() => setStep(STEPS.PESEL)}
+              loading={loading}
+            />
+          )}
+
+          {step === STEPS.FORM && (
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
+              <button
+                type="button"
+                onClick={() => {
+                  if (patientType === PATIENT_TYPES.INTERNATIONAL) {
+                    setStep(STEPS.INTERNATIONAL);
+                  } else {
+                    setStep(STEPS.PESEL);
+                  }
+                }}
+                className="text-sm text-teal-700 mb-4 hover:underline"
+              >
+                ← Wróć do weryfikacji
+              </button>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                {mode === "sign_only" ? "Podpis dokumentów" : getFormTitle(patientType)}
+              </h2>
+              {renderForm()}
+            </div>
+          )}
+
+          {step === STEPS.DONE && (
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                {isCorrectionMode ? "Aktualizacja zakończona" : "Rejestracja zakończona"}
-              </h2>
-              <p className="text-gray-600 mb-8">
-                {isCorrectionMode
-                  ? "Dane zostały zaktualizowane, a nowa wersja dokumentów została zapisana. Oddaj urządzenie pracownikowi."
-                  : "Dziękujemy. Proszę oddać urządzenie pracownikowi rejestracji."}
-              </p>
-              <button type="button" onClick={resetToPin} className="text-teal-700 font-medium hover:underline">
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Rejestracja zakończona</h2>
+              <p className="text-gray-600 mb-8">Dziękujemy. Proszę oddać urządzenie pracownikowi rejestracji.</p>
+              <button
+                type="button"
+                onClick={resetToPin}
+                className="text-teal-700 font-medium hover:underline"
+              >
                 Zamknij
               </button>
             </div>
@@ -488,4 +330,3 @@ export default function KioskApp() {
     </div>
   );
 }
-

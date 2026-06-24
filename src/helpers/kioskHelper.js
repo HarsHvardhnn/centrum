@@ -50,7 +50,7 @@ export async function createCorrectionSession(patientId) {
   return res.data;
 }
 
-export async function getSessionByPatient(patientId) {
+export async function getSessionsByPatient(patientId) {
   const res = await kioskApi.get(`/api/kiosk/sessions/by-patient/${patientId}`, {
     headers: staffHeaders(),
   });
@@ -78,9 +78,7 @@ export async function downloadPackage(packageId) {
 }
 
 export async function getPdfJobBySession(sessionId) {
-  const res = await kioskApi.get(`/api/kiosk/pdf-jobs/by-session/${sessionId}`, {
-    headers: staffHeaders(),
-  });
+  const res = await kioskApi.get(`/api/kiosk/pdf-jobs/by-session/${sessionId}`, { headers: staffHeaders() });
   return res.data;
 }
 
@@ -110,8 +108,8 @@ export async function checkKioskPesel(pesel) {
   return res.data;
 }
 
-export async function checkKioskDocument(payload) {
-  const res = await kioskApi.post("/api/kiosk/check-document", payload, { headers: kioskHeaders() });
+export async function checkKioskDocument(documentData) {
+  const res = await kioskApi.post("/api/kiosk/check-document", documentData, { headers: kioskHeaders() });
   return res.data;
 }
 
