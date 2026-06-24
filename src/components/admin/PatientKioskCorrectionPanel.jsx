@@ -4,7 +4,7 @@ import QRCode from "react-qr-code";
 import { Copy, ExternalLink } from "lucide-react";
 import {
   createCorrectionSession,
-  getSessionByPatient,
+  getSessionsByPatient,
   getSessionStatus,
   cancelSession,
   downloadPackage,
@@ -53,7 +53,7 @@ export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) 
     if (!patientId) return;
     let cancelled = false;
     setInitialLoading(true);
-    getSessionByPatient(patientId)
+    getSessionsByPatient(patientId)
       .then((res) => {
         if (cancelled) return;
         if (res.session) {
