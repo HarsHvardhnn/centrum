@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import SignaturePad from "./SignaturePad";
 import { detectPatientType, PATIENT_TYPES } from "./PatientTypeDetector";
+import { formatPolishPostalCode } from "../../utils/postalCodeUtils";
+import { formatPhoneNumber, getRequiredPhoneLength } from "../../utils/phoneUtils";
 
 const VOIVODESHIPS = [
   "dolnośląskie", "kujawsko-pomorskie", "lubelskie", "lubuskie", "łódzkie",
@@ -41,12 +43,17 @@ export default function MinorRegistrationForm({
     guardianPhoneCode: initialData.guardianPhoneCode || "+48",
     guardianPhone: initialData.guardianPhone || "",
     guardianEmail: initialData.guardianEmail || "",
-    guardianRelation: initialData.guardianRelation || "rodzic",
+    guardianRelation: initialData.guardianRelation || "matka",
     
     // Consents
     consentHealthcare: initialData.consentHealthcare !== false,
     consentHealthCampaigns: !!initialData.consentHealthCampaigns,
     consentMarketing: !!initialData.consentMarketing,
+    
+    // Guardian consents (for 16-17 year olds with dual consent)
+    consentHealthcareGuardian: !!initialData.consentHealthcareGuardian,
+    consentHealthCampaignsGuardian: !!initialData.consentHealthCampaignsGuardian,
+    consentMarketingGuardian: !!initialData.consentMarketingGuardian,
     
     // Signatures
     signature: "", // Patient signature (only for 16-17 year olds)
@@ -208,7 +215,12 @@ export default function MinorRegistrationForm({
             <input
               type="text"
               value={form.zipCode}
-              onChange={(e) => update("zipCode", e.target.value)}
+              onChange={(e) => {
+                const formatted = formatPolishPostalCode(e.target.value);
+                update("zipCode", formatted);
+              }}
+              placeholder="00-000"
+              maxLength="6"
               readOnly={readOnlyFields}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
               required
@@ -269,7 +281,13 @@ export default function MinorRegistrationForm({
             <input
               type="tel"
               value={form.phone}
-              onChange={(e) => update("phone", e.target.value.replace(/\D/g, "").slice(0, 9))}
+              onChange={(e) => {
+                const formatted = formatPhoneNumber(e.target.value);
+                const maxLength = getRequiredPhoneLength(form.phoneCode);
+                update("phone", formatted.slice(0, maxLength));
+              }}
+              placeholder={form.phoneCode === "+48" ? "123456789" : ""}
+              maxLength={getRequiredPhoneLength(form.phoneCode)}
               readOnly={readOnlyFields}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
               required
@@ -339,10 +357,10 @@ export default function MinorRegistrationForm({
               disabled={readOnlyFields}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white"
             >
-              <option value="rodzic">Rodzic</option>
-              <option value="opiekun prawny">Opiekun prawny</option>
-              <option value="dziadek/babcia">Dziadek/Babcia</option>
-              <option value="inny">Inny</option>
+              <option value="matka">Matka</option>
+              <option value="ojciec">Ojciec</option>
+              <option value="opiekun_prawny">Opiekun prawny</option>
+              <option value="opiekun_faktyczny">Opiekun faktyczny</option>
             </select>
           </div>
         </div>
@@ -368,7 +386,13 @@ export default function MinorRegistrationForm({
             <input
               type="tel"
               value={form.guardianPhone}
-              onChange={(e) => update("guardianPhone", e.target.value.replace(/\D/g, "").slice(0, 9))}
+              onChange={(e) => {
+                const formatted = formatPhoneNumber(e.target.value);
+                const maxLength = getRequiredPhoneLength(form.guardianPhoneCode);
+                update("guardianPhone", formatted.slice(0, maxLength));
+              }}
+              placeholder={form.guardianPhoneCode === "+48" ? "123456789" : ""}
+              maxLength={getRequiredPhoneLength(form.guardianPhoneCode)}
               readOnly={readOnlyFields}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
               required
@@ -392,43 +416,149 @@ export default function MinorRegistrationForm({
       <div className="bg-teal-50 rounded-xl p-4 space-y-4">
         <h3 className="text-lg font-semibold text-gray-900">Zgody</h3>
         
-        <div className="space-y-3">
-          <label className="flex items-start gap-3 p-3 rounded-lg border border-teal-200 bg-white cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.consentHealthcare}
-              onChange={(e) => update("consentHealthcare", e.target.checked)}
-              className="mt-1 w-5 h-5 rounded border-gray-300 text-teal-700 focus:ring-teal-500"
-            />
-            <span className="text-sm text-gray-700">
-              <strong>Zgoda na przetwarzanie danych osobowych (wymagana) *</strong><br />
-              z organizacją udzielanych świadczeń opieki zdrowotnej (w tym przypomnienie o wizycie)
-            </span>
-          </label>
+        {/* Patient Consent Block (only for 16-17 year olds) */}
+        {patientType === PATIENT_TYPES.MINOR_16_17 && (
+          <div className="bg-blue-50 rounded-lg p-4 space-y-3 border border-blue-200">
+            <h4 className="font-semibold text-blue-900">Blok A - Zgoda pacjenta (16-17 lat)</h4>
+            <div className="text-sm text-blue-800 mb-3">
+              „Ja niżej podpisana(-ny) oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO 
+              i wyrażam zgodę na przetwarzanie moich danych osobowych przez CM7 SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ..."
+            </div>
+            
+            <label className="flex items-start gap-3 p-3 rounded-lg border border-blue-300 bg-white cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.consentHealthcare}
+                onChange={(e) => update("consentHealthcare", e.target.checked)}
+                className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-700 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">
+                <strong>Zgoda pacjenta na przetwarzanie danych osobowych (wymagana) *</strong><br />
+                z organizacją udzielanych świadczeń opieki zdrowotnej
+              </span>
+            </label>
 
-          <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.consentHealthCampaigns}
-              onChange={(e) => update("consentHealthCampaigns", e.target.checked)}
-              className="mt-1 w-5 h-5 rounded border-gray-300 text-teal-700 focus:ring-teal-500"
-            />
-            <span className="text-sm text-gray-700">
-              z przesyłaniem informacji o kampaniach i akcjach prozdrowotnych
-            </span>
-          </label>
+            <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.consentHealthCampaigns}
+                onChange={(e) => update("consentHealthCampaigns", e.target.checked)}
+                className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-700 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">
+                z przesyłaniem informacji o kampaniach i akcjach prozdrowotnych
+              </span>
+            </label>
 
-          <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.consentMarketing}
-              onChange={(e) => update("consentMarketing", e.target.checked)}
-              className="mt-1 w-5 h-5 rounded border-gray-300 text-teal-700 focus:ring-teal-500"
-            />
-            <span className="text-sm text-gray-700">
-              z otrzymywaniem newslettera z informacjami marketingowymi
-            </span>
-          </label>
+            <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.consentMarketing}
+                onChange={(e) => update("consentMarketing", e.target.checked)}
+                className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-700 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">
+                z otrzymywaniem newslettera z informacjami marketingowymi
+              </span>
+            </label>
+          </div>
+        )}
+
+        {/* Guardian Consent Block */}
+        <div className="bg-yellow-50 rounded-lg p-4 space-y-3 border border-yellow-200">
+          <h4 className="font-semibold text-yellow-900">
+            {patientType === PATIENT_TYPES.MINOR_16_17 ? "Blok B - Zgoda opiekuna prawnego" : "Zgoda opiekuna prawnego"}
+          </h4>
+          <div className="text-sm text-yellow-800 mb-3">
+            „Ja niżej podpisana(-ny), działając jako przedstawiciel ustawowy małoletniego pacjenta{" "}
+            <strong>{form.firstName} {form.lastName}</strong> (PESEL: <strong>{form.pesel}</strong>), 
+            oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie 
+            danych osobowych małoletniego przez CM7 SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ..."
+          </div>
+          
+          {/* Guardian consent checkboxes for minors under 16 OR dual consent for 16-17 */}
+          {patientType === PATIENT_TYPES.MINOR_UNDER_16 && (
+            <>
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-yellow-300 bg-white cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.consentHealthcare}
+                  onChange={(e) => update("consentHealthcare", e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded border-gray-300 text-yellow-700 focus:ring-yellow-500"
+                />
+                <span className="text-sm text-gray-700">
+                  <strong>Zgoda opiekuna na przetwarzanie danych osobowych małoletniego (wymagana) *</strong><br />
+                  z organizacją udzielanych świadczeń opieki zdrowotnej
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.consentHealthCampaigns}
+                  onChange={(e) => update("consentHealthCampaigns", e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded border-gray-300 text-yellow-700 focus:ring-yellow-500"
+                />
+                <span className="text-sm text-gray-700">
+                  z przesyłaniem informacji o kampaniach i akcjach prozdrowotnych
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.consentMarketing}
+                  onChange={(e) => update("consentMarketing", e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded border-gray-300 text-yellow-700 focus:ring-yellow-500"
+                />
+                <span className="text-sm text-gray-700">
+                  z otrzymywaniem newslettera z informacjami marketingowymi
+                </span>
+              </label>
+            </>
+          )}
+
+          {/* Separate guardian consent fields for 16-17 year olds */}
+          {patientType === PATIENT_TYPES.MINOR_16_17 && (
+            <>
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-yellow-300 bg-white cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.consentHealthcareGuardian}
+                  onChange={(e) => update("consentHealthcareGuardian", e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded border-gray-300 text-yellow-700 focus:ring-yellow-500"
+                />
+                <span className="text-sm text-gray-700">
+                  <strong>Zgoda opiekuna na przetwarzanie danych osobowych małoletniego (wymagana) *</strong><br />
+                  z organizacją udzielanych świadczeń opieki zdrowotnej
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.consentHealthCampaignsGuardian}
+                  onChange={(e) => update("consentHealthCampaignsGuardian", e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded border-gray-300 text-yellow-700 focus:ring-yellow-500"
+                />
+                <span className="text-sm text-gray-700">
+                  z przesyłaniem informacji o kampaniach i akcjach prozdrowotnych
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.consentMarketingGuardian}
+                  onChange={(e) => update("consentMarketingGuardian", e.target.checked)}
+                  className="mt-1 w-5 h-5 rounded border-gray-300 text-yellow-700 focus:ring-yellow-500"
+                />
+                <span className="text-sm text-gray-700">
+                  z otrzymywaniem newslettera z informacjami marketingowymi
+                </span>
+              </label>
+            </>
+          )}
         </div>
       </div>
 
@@ -462,8 +592,11 @@ export default function MinorRegistrationForm({
         disabled={
           loading || 
           !form.guardianSignature || 
-          !form.consentHealthcare ||
-          (requiresPatientSignature && !form.signature)
+          (requiresPatientSignature && !form.signature) ||
+          // For minors under 16: guardian consent required
+          (patientType === PATIENT_TYPES.MINOR_UNDER_16 && !form.consentHealthcare) ||
+          // For 16-17 year olds: both patient AND guardian consent required
+          (patientType === PATIENT_TYPES.MINOR_16_17 && (!form.consentHealthcare || !form.consentHealthcareGuardian))
         }
         className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl"
       >

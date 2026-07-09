@@ -1,0 +1,34 @@
+User-agent: *
+Allow: /
+Allow: /o-nas
+Allow: /lekarze
+Allow: /uslugi
+Allow: /aktualnosci
+Allow: /poradnik
+Allow: /kontakt
+
+# Disallow private routes
+Disallow: /user/*
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /admin/*
+Disallow: /doctors/*
+Disallow: /appointments
+Disallow: /details
+Disallow: /profile
+
+# Disallow external protocol URLs that shouldn't be crawled
+Disallow: /tel:*
+Disallow: /mailto:*
+Disallow: /*tel:*
+Disallow: /*mailto:*
+
+# Disallow undefined or invalid URLs
+Disallow: /*/undefined
+Disallow: /aktualnosci/undefined
+Disallow: /poradnik/undefined
+Disallow: /uslugi/undefined
+
+# Sitemap
+Sitemap: https://centrummedyczne7.pl/sitemap.xml 

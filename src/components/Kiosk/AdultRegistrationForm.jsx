@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import SignaturePad from "./SignaturePad";
+import { formatPolishPostalCode } from "../../utils/postalCodeUtils";
+import { formatPhoneNumber, getRequiredPhoneLength } from "../../utils/phoneUtils";
 
 const VOIVODESHIPS = [
   "dolnośląskie", "kujawsko-pomorskie", "lubelskie", "lubuskie", "łódzkie",
@@ -152,7 +154,12 @@ export default function AdultRegistrationForm({
               <input
                 type="text"
                 value={form.zipCode}
-                onChange={(e) => update("zipCode", e.target.value)}
+                onChange={(e) => {
+                  const formatted = formatPolishPostalCode(e.target.value);
+                  update("zipCode", formatted);
+                }}
+                placeholder="00-000"
+                maxLength="6"
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
                 required
               />
@@ -200,7 +207,13 @@ export default function AdultRegistrationForm({
               <input
                 type="tel"
                 value={form.phone}
-                onChange={(e) => update("phone", e.target.value.replace(/\D/g, "").slice(0, 9))}
+                onChange={(e) => {
+                  const formatted = formatPhoneNumber(e.target.value);
+                  const maxLength = getRequiredPhoneLength(form.phoneCode);
+                  update("phone", formatted.slice(0, maxLength));
+                }}
+                placeholder={form.phoneCode === "+48" ? "123456789" : ""}
+                maxLength={getRequiredPhoneLength(form.phoneCode)}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
                 required
               />
@@ -218,38 +231,52 @@ export default function AdultRegistrationForm({
         </>
       )}
 
-      <div className="space-y-3 bg-gray-50 rounded-xl p-4 border border-gray-200">
-        <p className="text-sm font-semibold text-gray-800">Zgody RODO</p>
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={form.consentHealthcare}
-            onChange={(e) => update("consentHealthcare", e.target.checked)}
-            className="mt-1 w-5 h-5"
-            required
-          />
-          <span className="text-sm text-gray-700">
-            Zgoda na organizację świadczeń opieki zdrowotnej, w tym prowadzenie dokumentacji medycznej <span className="text-red-600">*</span>
-          </span>
-        </label>
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={form.consentHealthCampaigns}
-            onChange={(e) => update("consentHealthCampaigns", e.target.checked)}
-            className="mt-1 w-5 h-5"
-          />
-          <span className="text-sm text-gray-700">Kampanie i akcje prozdrowotne (opcjonalnie)</span>
-        </label>
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={form.consentMarketing}
-            onChange={(e) => update("consentMarketing", e.target.checked)}
-            className="mt-1 w-5 h-5"
-          />
-          <span className="text-sm text-gray-700">Newsletter marketingowy (opcjonalnie)</span>
-        </label>
+      <div className="bg-teal-50 rounded-xl p-4 space-y-4 border border-teal-200">
+        <h3 className="text-lg font-semibold text-gray-900">Zgody RODO</h3>
+        <div className="text-sm text-gray-700 mb-4">
+          „Ja niżej podpisana(-ny) oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO 
+          i wyrażam zgodę na przetwarzanie moich danych osobowych przez CM7 SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ..."
+        </div>
+        
+        <div className="space-y-3">
+          <label className="flex items-start gap-3 p-3 rounded-lg border border-teal-200 bg-white cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.consentHealthcare}
+              onChange={(e) => update("consentHealthcare", e.target.checked)}
+              className="mt-1 w-5 h-5 rounded border-gray-300 text-teal-700 focus:ring-teal-500"
+              required
+            />
+            <span className="text-sm text-gray-700">
+              <strong>Zgoda na przetwarzanie danych osobowych (wymagana) *</strong><br />
+              z organizacją udzielanych świadczeń opieki zdrowotnej (w tym przypomnienie o wizycie)
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.consentHealthCampaigns}
+              onChange={(e) => update("consentHealthCampaigns", e.target.checked)}
+              className="mt-1 w-5 h-5 rounded border-gray-300 text-teal-700 focus:ring-teal-500"
+            />
+            <span className="text-sm text-gray-700">
+              z przesyłaniem informacji o kampaniach i akcjach prozdrowotnych
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 bg-white cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.consentMarketing}
+              onChange={(e) => update("consentMarketing", e.target.checked)}
+              className="mt-1 w-5 h-5 rounded border-gray-300 text-teal-700 focus:ring-teal-500"
+            />
+            <span className="text-sm text-gray-700">
+              z otrzymywaniem newslettera z informacjami marketingowymi
+            </span>
+          </label>
+        </div>
       </div>
 
       <SignaturePad
@@ -259,7 +286,7 @@ export default function AdultRegistrationForm({
 
       <button
         type="submit"
-        disabled={loading || !form.signature}
+        disabled={loading || !form.signature || !form.consentHealthcare}
         className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl transition-colors"
       >
         {loading ? "Zapisywanie..." : "Zakończ rejestrację"}

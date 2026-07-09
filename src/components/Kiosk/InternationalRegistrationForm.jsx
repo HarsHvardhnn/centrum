@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import SignaturePad from "./SignaturePad";
+import { formatPolishPostalCode } from "../../utils/postalCodeUtils";
+import { formatPhoneNumber, getRequiredPhoneLength } from "../../utils/phoneUtils";
 
 const VOIVODESHIPS = [
   "dolnośląskie", "kujawsko-pomorskie", "lubelskie", "lubuskie", "łódzkie",
@@ -261,7 +263,12 @@ export default function InternationalRegistrationForm({
             <input
               type="text"
               value={form.zipCode}
-              onChange={(e) => update("zipCode", e.target.value)}
+              onChange={(e) => {
+                const formatted = formatPolishPostalCode(e.target.value);
+                update("zipCode", formatted);
+              }}
+              placeholder="00-000"
+              maxLength="6"
               readOnly={readOnlyFields}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
               required
@@ -322,7 +329,13 @@ export default function InternationalRegistrationForm({
             <input
               type="tel"
               value={form.phone}
-              onChange={(e) => update("phone", e.target.value.replace(/\D/g, "").slice(0, 15))}
+              onChange={(e) => {
+                const formatted = formatPhoneNumber(e.target.value);
+                const maxLength = getRequiredPhoneLength(form.phoneCode);
+                update("phone", formatted.slice(0, maxLength));
+              }}
+              placeholder={form.phoneCode === "+48" ? "123456789" : ""}
+              maxLength={getRequiredPhoneLength(form.phoneCode)}
               readOnly={readOnlyFields}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
               required

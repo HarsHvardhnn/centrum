@@ -173,7 +173,10 @@ export default function KioskApp() {
     }
   };
 
-  const stepIndicator = step === STEPS.PESEL ? 1 : step === STEPS.FORM ? 2 : step === STEPS.DONE ? 3 : 0;
+  // Calculate total steps based on patient type
+  const isMinorPatient = patientType === PATIENT_TYPES.MINOR_UNDER_16 || patientType === PATIENT_TYPES.MINOR_16_17;
+  const totalSteps = isMinorPatient ? 6 : 5; // Minors have 6 steps, adults have 5
+  const stepIndicator = step === STEPS.PESEL ? 1 : step === STEPS.FORM ? 2 : step === STEPS.DONE ? totalSteps + 1 : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex flex-col">
@@ -190,13 +193,22 @@ export default function KioskApp() {
           />
         </div>
         {stepIndicator > 0 && step !== STEPS.DONE && (
-          <div className="max-w-3xl mx-auto mt-4 flex gap-2">
-            {[1, 2].map((n) => (
-              <div
-                key={n}
-                className={`h-1.5 flex-1 rounded-full ${stepIndicator >= n ? "bg-teal-600" : "bg-gray-200"}`}
-              />
-            ))}
+          <div className="max-w-3xl mx-auto mt-4">
+            <div className="flex justify-between items-center mb-2">
+              <div className="text-sm text-gray-500">
+                Krok {stepIndicator} z {totalSteps}
+                {step === STEPS.PESEL && " · Weryfikacja tożsamości"}
+                {step === STEPS.FORM && ` · ${getFormTitle(patientType)}`}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {Array.from({ length: totalSteps }, (_, i) => i + 1).map((n) => (
+                <div
+                  key={n}
+                  className={`h-1.5 flex-1 rounded-full ${stepIndicator >= n ? "bg-teal-600" : "bg-gray-200"}`}
+                />
+              ))}
+            </div>
           </div>
         )}
       </header>

@@ -3,6 +3,8 @@ import { formatKioskDocumentLabel } from "./kioskConstants";
 import { VOIVODESHIPS } from "./kioskShared";
 import SignaturePad from "./SignaturePad";
 import KioskNumericEntry from "./KioskNumericEntry";
+import { formatPolishPostalCode } from "../../utils/postalCodeUtils";
+import { getRequiredPhoneLength } from "../../utils/phoneUtils";
 
 const inputClass = "w-full border border-gray-300 rounded-lg px-4 py-3 text-lg";
 
@@ -118,7 +120,12 @@ export function KioskAddressStep({ form, onChange }) {
           <input
             type="text"
             value={form.zipCode}
-            onChange={(e) => update("zipCode", e.target.value)}
+            onChange={(e) => {
+              const formatted = formatPolishPostalCode(e.target.value);
+              update("zipCode", formatted);
+            }}
+            placeholder="00-000"
+            maxLength="6"
             className={inputClass}
             required
           />
@@ -178,10 +185,11 @@ export function KioskContactStep({ form, onChange }) {
           <label className="block text-sm font-medium text-gray-700 mb-3">Telefon *</label>
           <KioskNumericEntry
             value={form.phone}
-            onChange={(value) =>
-              update("phone", value.slice(0, form.isInternationalPatient ? 15 : 9))
-            }
-            maxLength={form.isInternationalPatient ? 15 : 9}
+            onChange={(value) => {
+              const maxLength = getRequiredPhoneLength(form.phoneCode || "+48");
+              update("phone", value.slice(0, maxLength));
+            }}
+            maxLength={getRequiredPhoneLength(form.phoneCode || "+48")}
             size="sm"
             compactKeypad
           />

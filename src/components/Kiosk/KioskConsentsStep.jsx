@@ -5,6 +5,8 @@ import KioskPatientSummaryCard from "./KioskPatientSummaryCard";
 import KioskEditPatientModal from "./KioskEditPatientModal";
 import KioskDocumentUploadSection from "./KioskDocumentUploadSection";
 import KioskNumericEntry from "./KioskNumericEntry";
+import { formatPolishPostalCode } from "../../utils/postalCodeUtils";
+import { getRequiredPhoneLength } from "../../utils/phoneUtils";
 import {
   CONSENT_TEXT,
   EMPTY_AUTHORIZED_PERSON,
@@ -91,8 +93,11 @@ function AuthorizedPersonCard({ person, index, onChange, onRemove, canRemove }) 
           </div>
           <KioskNumericEntry
             value={person.phone}
-            onChange={(value) => update("phone", value)}
-            maxLength={9}
+            onChange={(value) => {
+              const maxLength = getRequiredPhoneLength(person.phoneCode || "+48");
+              update("phone", value.slice(0, maxLength));
+            }}
+            maxLength={getRequiredPhoneLength(person.phoneCode || "+48")}
             size="sm"
             compactKeypad
           />
@@ -103,14 +108,20 @@ function AuthorizedPersonCard({ person, index, onChange, onRemove, canRemove }) 
           onChange={(v) => update("street", v)}
           className="sm:col-span-2"
         />
-        <Input label="Kod pocztowy *" value={person.zipCode} onChange={(v) => update("zipCode", v)} />
+        <Input 
+          label="Kod pocztowy *" 
+          value={person.zipCode} 
+          onChange={(v) => update("zipCode", formatPolishPostalCode(v))}
+          placeholder="00-000"
+          maxLength="6"
+        />
         <Input label="Miasto *" value={person.city} onChange={(v) => update("city", v)} />
       </div>
     </div>
   );
 }
 
-function Input({ label, value, onChange, className = "" }) {
+function Input({ label, value, onChange, className = "", placeholder, maxLength }) {
   return (
     <div className={className}>
       <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
@@ -118,6 +129,8 @@ function Input({ label, value, onChange, className = "" }) {
         type="text"
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        maxLength={maxLength}
         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"
       />
     </div>
