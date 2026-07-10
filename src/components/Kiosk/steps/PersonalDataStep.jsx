@@ -1,0 +1,192 @@
+import { useEffect } from "react";
+
+const VOIVODESHIPS = [
+  "dolnośląskie", "kujawsko-pomorskie", "lubelskie", "lubuskie", "łódzkie",
+  "małopolskie", "mazowieckie", "opolskie", "podkarpackie", "podlaskie", 
+  "pomorskie", "śląskie", "świętokrzyskie", "warmińsko-mazurskie",
+  "wielkopolskie", "zachodniopomorskie",
+];
+
+export default function PersonalDataStep({
+  formData = {},
+  updateFormData,
+  patientType,
+  mode = "full_registration",
+  validation = {},
+  onValidationChange,
+}) {
+  const isSignOnly = mode === "sign_only";
+  const readOnlyFields = isSignOnly;
+
+  const update = (field, value) => {
+    updateFormData({ [field]: value });
+  };
+
+  // Validation logic
+  useEffect(() => {
+    const errors = [];
+    
+    if (!formData.firstName?.trim()) errors.push("Imię jest wymagane.");
+    if (!formData.lastName?.trim()) errors.push("Nazwisko jest wymagane.");
+    if (!formData.sex?.trim()) errors.push("Płeć jest wymagana.");
+    
+    if (patientType !== 'international') {
+      if (!formData.pesel || String(formData.pesel).replace(/\D/g, "").length !== 11) {
+        errors.push("PESEL musi mieć 11 cyfr.");
+      }
+    } else {
+      if (!formData.documentCountry?.trim()) errors.push("Kraj wydania dokumentu jest wymagany.");
+      if (!formData.documentType?.trim()) errors.push("Typ dokumentu jest wymagany.");
+      if (!formData.documentNumber?.trim()) errors.push("Numer dokumentu jest wymagany.");
+      if (!formData.dateOfBirth) errors.push("Data urodzenia jest wymagana.");
+    }
+
+    const isValid = errors.length === 0;
+    onValidationChange?.({ isValid, errors });
+  }, [formData, patientType, onValidationChange]);
+
+  return (
+    <div className="space-y-6">
+      {isSignOnly && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-900 text-sm">
+          <p className="font-medium">Pacjent jest już w systemie.</p>
+          <p>Sprawdź dane poniżej i przejdź do dalszych kroków.</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Imię *</label>
+          <input
+            type="text"
+            value={formData.firstName || ""}
+            onChange={(e) => update("firstName", e.target.value)}
+            readOnly={readOnlyFields}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Nazwisko *</label>
+          <input
+            type="text"
+            value={formData.lastName || ""}
+            onChange={(e) => update("lastName", e.target.value)}
+            readOnly={readOnlyFields}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            required
+          />
+        </div>
+      </div>
+
+      {patientType !== 'international' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">PESEL *</label>
+            <input
+              type="text"
+              value={formData.pesel || ""}
+              readOnly
+              className="w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-lg font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Data urodzenia</label>
+            <input
+              type="text"
+              value={formData.dateOfBirth || ""}
+              readOnly
+              className="w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-lg"
+            />
+          </div>
+        </div>
+      ) : (
+        // International patient fields
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Kraj wydania dokumentu *</label>
+              <input
+                type="text"
+                value={formData.documentCountry || ""}
+                onChange={(e) => update("documentCountry", e.target.value)}
+                readOnly={readOnlyFields}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Typ dokumentu *</label>
+              <select
+                value={formData.documentType || ""}
+                onChange={(e) => update("documentType", e.target.value)}
+                disabled={readOnlyFields}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                required
+              >
+                <option value="">Wybierz typ dokumentu</option>
+                <option value="Passport">Paszport</option>
+                <option value="ID Card">Dowód osobisty</option>
+                <option value="Residence Card">Karta pobytu</option>
+                <option value="Other">Inny</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Numer dokumentu *</label>
+              <input
+                type="text"
+                value={formData.documentNumber || ""}
+                onChange={(e) => update("documentNumber", e.target.value)}
+                readOnly={readOnlyFields}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Data urodzenia *</label>
+              <input
+                type="date"
+                value={formData.dateOfBirth ? String(formData.dateOfBirth).slice(0, 10) : ""}
+                onChange={(e) => update("dateOfBirth", e.target.value)}
+                readOnly={readOnlyFields}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                required
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Płeć *</label>
+        <select
+          value={formData.sex || ""}
+          onChange={(e) => update("sex", e.target.value)}
+          disabled={readOnlyFields}
+          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+          required
+        >
+          <option value="">Wybierz płeć</option>
+          <option value="Male">Mężczyzna</option>
+          <option value="Female">Kobieta</option>
+          <option value="Others">Inna</option>
+        </select>
+      </div>
+
+      {/* Show validation errors */}
+      {validation?.errors?.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h4 className="text-red-800 font-medium mb-2">Popraw następujące błędy:</h4>
+          <ul className="list-disc list-inside text-red-700 text-sm space-y-1">
+            {validation.errors.map((error, index) => (
+              <li key={index}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
