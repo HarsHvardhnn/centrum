@@ -46,6 +46,7 @@ export default function InternationalRegistrationForm({
     consentHealthcare: initialData.consentHealthcare !== false,
     consentHealthCampaigns: !!initialData.consentHealthCampaigns,
     consentMarketing: !!initialData.consentMarketing,
+    consentExamination: initialData.consentExamination !== false,
     signature: "",
     // ID document photos
     idPhotoFront: "",
@@ -392,12 +393,25 @@ export default function InternationalRegistrationForm({
               onChange={(e) => update("consentMarketing", e.target.checked)}
               className="mt-1 w-5 h-5 rounded border-gray-300 text-teal-700 focus:ring-teal-500"
             />
-            <span className="text-sm text-gray-700">
-              z otrzymywaniem newslettera z informacjami marketingowymi
-            </span>
-          </label>
-        </div>
+          <span className="text-sm text-gray-700">
+            z otrzymywaniem newslettera z informacjami marketingowymi
+          </span>
+        </label>
+
+        <label className="flex items-start gap-3 p-3 rounded-lg border border-teal-200 bg-white cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.consentExamination}
+            onChange={(e) => update("consentExamination", e.target.checked)}
+            className="mt-1 w-5 h-5 rounded border-gray-300 text-teal-700 focus:ring-teal-500"
+          />
+          <span className="text-sm text-gray-700">
+            <strong>Zgoda na przeprowadzenie badania lub udzielenie świadczenia zdrowotnego (wymagana) *</strong><br />
+            Wyrażam zgodę na przeprowadzenie badania lub udzielenie świadczenia zdrowotnego
+          </span>
+        </label>
       </div>
+    </div>
 
       {/* Signature */}
       <div className="bg-gray-50 rounded-xl p-4">
@@ -409,7 +423,7 @@ export default function InternationalRegistrationForm({
 
       <button
         type="submit"
-        disabled={loading || !form.signature || !form.consentHealthcare || !form.idPhotoFront}
+        disabled={loading || !form.signature || !form.consentHealthcare || !form.consentExamination || !form.idPhotoFront}
         className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl"
       >
         {loading ? "Zapisywanie..." : "Zakończ rejestrację"}

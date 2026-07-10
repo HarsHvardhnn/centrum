@@ -49,6 +49,7 @@ export default function MinorRegistrationForm({
     consentHealthcare: initialData.consentHealthcare !== false,
     consentHealthCampaigns: !!initialData.consentHealthCampaigns,
     consentMarketing: !!initialData.consentMarketing,
+    consentExamination: initialData.consentExamination !== false,
     
     // Guardian consents (for 16-17 year olds with dual consent)
     consentHealthcareGuardian: !!initialData.consentHealthcareGuardian,
@@ -457,12 +458,25 @@ export default function MinorRegistrationForm({
                 onChange={(e) => update("consentMarketing", e.target.checked)}
                 className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-700 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">
-                z otrzymywaniem newslettera z informacjami marketingowymi
-              </span>
-            </label>
-          </div>
-        )}
+            <span className="text-sm text-gray-700">
+              z otrzymywaniem newslettera z informacjami marketingowymi
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 p-3 rounded-lg border border-blue-200 bg-white cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.consentExamination}
+              onChange={(e) => update("consentExamination", e.target.checked)}
+              className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-700 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-700">
+              <strong>Zgoda na przeprowadzenie badania lub udzielenie świadczenia zdrowotnego (wymagana) *</strong><br />
+              Wyrażam zgodę na przeprowadzenie badania lub udzielenie świadczenia zdrowotnego
+            </span>
+          </label>
+        </div>
+      )}
 
         {/* Guardian Consent Block */}
         <div className="bg-yellow-50 rounded-lg p-4 space-y-3 border border-yellow-200">
@@ -511,12 +525,25 @@ export default function MinorRegistrationForm({
                   onChange={(e) => update("consentMarketing", e.target.checked)}
                   className="mt-1 w-5 h-5 rounded border-gray-300 text-yellow-700 focus:ring-yellow-500"
                 />
-                <span className="text-sm text-gray-700">
-                  z otrzymywaniem newslettera z informacjami marketingowymi
-                </span>
-              </label>
-            </>
-          )}
+              <span className="text-sm text-gray-700">
+                z otrzymywaniem newslettera z informacjami marketingowymi
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 p-3 rounded-lg border border-yellow-200 bg-white cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.consentExamination}
+                onChange={(e) => update("consentExamination", e.target.checked)}
+                className="mt-1 w-5 h-5 rounded border-gray-300 text-yellow-700 focus:ring-yellow-500"
+              />
+              <span className="text-sm text-gray-700">
+                <strong>Zgoda na przeprowadzenie badania lub udzielenie świadczenia zdrowotnego (wymagana) *</strong><br />
+                Wyrażam zgodę na przeprowadzenie badania lub udzielenie świadczenia zdrowotnego
+              </span>
+            </label>
+          </>
+        )}
 
           {/* Separate guardian consent fields for 16-17 year olds */}
           {patientType === PATIENT_TYPES.MINOR_16_17 && (
@@ -553,14 +580,27 @@ export default function MinorRegistrationForm({
                   onChange={(e) => update("consentMarketingGuardian", e.target.checked)}
                   className="mt-1 w-5 h-5 rounded border-gray-300 text-yellow-700 focus:ring-yellow-500"
                 />
-                <span className="text-sm text-gray-700">
-                  z otrzymywaniem newslettera z informacjami marketingowymi
-                </span>
-              </label>
-            </>
-          )}
-        </div>
+              <span className="text-sm text-gray-700">
+                z otrzymywaniem newslettera z informacjami marketingowymi
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 p-3 rounded-lg border border-yellow-200 bg-white cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.consentExamination}
+                onChange={(e) => update("consentExamination", e.target.checked)}
+                className="mt-1 w-5 h-5 rounded border-gray-300 text-yellow-700 focus:ring-yellow-500"
+              />
+              <span className="text-sm text-gray-700">
+                <strong>Zgoda na przeprowadzenie badania lub udzielenie świadczenia zdrowotnego (wymagana) *</strong><br />
+                Wyrażam zgodę na przeprowadzenie badania lub udzielenie świadczenia zdrowotnego
+              </span>
+            </label>
+          </>
+        )}
       </div>
+    </div>
 
       {/* Signatures */}
       <div className="space-y-6">
@@ -593,6 +633,7 @@ export default function MinorRegistrationForm({
           loading || 
           !form.guardianSignature || 
           (requiresPatientSignature && !form.signature) ||
+          !form.consentExamination ||  // Always required for all minors
           // For minors under 16: guardian consent required
           (patientType === PATIENT_TYPES.MINOR_UNDER_16 && !form.consentHealthcare) ||
           // For 16-17 year olds: both patient AND guardian consent required
