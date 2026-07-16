@@ -17,6 +17,7 @@ export default function GuardianDataStep({
     updateFormData({ [field]: value });
   };
 
+  
   // Validation logic
   useEffect(() => {
     const errors = [];

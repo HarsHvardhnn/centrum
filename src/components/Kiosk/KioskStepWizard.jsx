@@ -7,6 +7,7 @@ const STEP_DEFINITIONS = {
     { id: "address", title: "Adres zamieszkania", component: "AddressStep" },
     { id: "contact", title: "Dane kontaktowe", component: "ContactStep" },
     { id: "consents", title: "Zgody", component: "ConsentsStep" },
+    { id: "documents", title: "Dokumenty", component: "DocumentUploadStep" },
     { id: "signature", title: "Podpis", component: "SignatureStep" },
   ],
   [PATIENT_TYPES.INTERNATIONAL]: [
@@ -14,6 +15,7 @@ const STEP_DEFINITIONS = {
     { id: "address", title: "Adres zamieszkania", component: "AddressStep" },
     { id: "contact", title: "Dane kontaktowe", component: "ContactStep" },
     { id: "consents", title: "Zgody", component: "ConsentsStep" },
+    { id: "documents", title: "Dokumenty", component: "DocumentUploadStep" },
     { id: "signature", title: "Podpis", component: "SignatureStep" },
   ],
   [PATIENT_TYPES.MINOR_UNDER_16]: [
@@ -22,6 +24,7 @@ const STEP_DEFINITIONS = {
     { id: "contact", title: "Dane kontaktowe", component: "ContactStep" },
     { id: "guardian", title: "Dane opiekuna", component: "GuardianDataStep" },
     { id: "consents", title: "Zgody", component: "MinorConsentsStep" },
+    { id: "documents", title: "Dokumenty", component: "DocumentUploadStep" },
     { id: "signature", title: "Podpis", component: "MinorSignatureStep" },
   ],
   [PATIENT_TYPES.MINOR_16_17]: [
@@ -30,6 +33,7 @@ const STEP_DEFINITIONS = {
     { id: "contact", title: "Dane kontaktowe", component: "ContactStep" },
     { id: "guardian", title: "Dane opiekuna", component: "GuardianDataStep" },
     { id: "consents", title: "Zgody", component: "MinorConsentsStep" },
+    { id: "documents", title: "Dokumenty", component: "DocumentUploadStep" },
     { id: "signature", title: "Podpis", component: "MinorSignatureStep" },
   ],
 };
@@ -139,6 +143,7 @@ export default function KioskStepWizard({
           onValidationChange={(validation) => 
             setStepValidation(prev => ({ ...prev, [currentStep.id]: validation }))
           }
+          onGoToStep={goToStep}
         />
       </div>
 
