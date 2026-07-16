@@ -35,6 +35,8 @@ export default function KioskApp() {
   const [mode, setMode] = useState("full_registration");
   const [patientType, setPatientType] = useState(PATIENT_TYPES.ADULT);
   const idleTimerRef = useRef(null);
+  const saveTimeoutRef = useRef(null);
+  const lastSaveRef = useRef(0);
 
   const resetToPin = useCallback(() => {
     clearKioskToken();
@@ -56,6 +58,36 @@ export default function KioskApp() {
     }, IDLE_TIMEOUT_MS);
   }, [step, resetToPin]);
 
+  // Throttled save function to prevent infinite API calls
+  const throttledSaveKioskForm = useCallback((formData) => {
+    const now = Date.now();
+    const timeSinceLastSave = now - lastSaveRef.current;
+    
+    // Prevent saves more frequent than every 3 seconds
+    if (timeSinceLastSave < 3000) {
+      // Clear existing timeout and set a new one
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      
+      saveTimeoutRef.current = setTimeout(() => {
+        lastSaveRef.current = Date.now();
+        saveKioskForm(formData).catch(err => {
+          console.error('Auto-save failed:', err);
+        });
+        saveTimeoutRef.current = null;
+      }, 3000 - timeSinceLastSave);
+      
+      return;
+    }
+    
+    // Save immediately if enough time has passed
+    lastSaveRef.current = now;
+    saveKioskForm(formData).catch(err => {
+      console.error('Auto-save failed:', err);
+    });
+  }, []);
+
   const getFormTitle = (type) => {
     switch (type) {
       case PATIENT_TYPES.INTERNATIONAL:
@@ -74,7 +106,7 @@ export default function KioskApp() {
       initialData: formData,
       mode,
       onSubmit: handleComplete,
-      onAutoSave: saveKioskForm,
+      onAutoSave: throttledSaveKioskForm,
       loading,
     };
 
@@ -97,6 +129,7 @@ export default function KioskApp() {
     return () => {
       events.forEach((e) => window.removeEventListener(e, handler));
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
   }, [resetIdleTimer]);
 

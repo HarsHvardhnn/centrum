@@ -18,11 +18,21 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
     };
   };
 
+  const changeTimeoutRef = useRef(null);
+
   const emitChange = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const dataUrl = isEmpty ? "" : canvas.toDataURL("image/png");
-    onChange?.(dataUrl);
+    // Clear any existing timeout to debounce rapid calls
+    if (changeTimeoutRef.current) {
+      clearTimeout(changeTimeoutRef.current);
+    }
+    
+    changeTimeoutRef.current = setTimeout(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const dataUrl = isEmpty ? "" : canvas.toDataURL("image/png");
+      onChange?.(dataUrl);
+      changeTimeoutRef.current = null;
+    }, 300); // 300ms debounce for signature changes
   }, [isEmpty, onChange]);
 
   useEffect(() => {
@@ -77,6 +87,15 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
   useEffect(() => {
     if (!isEmpty) emitChange();
   }, [isEmpty, emitChange]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (changeTimeoutRef.current) {
+        clearTimeout(changeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="w-full">

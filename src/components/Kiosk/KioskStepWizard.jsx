@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { PATIENT_TYPES } from "./PatientTypeDetector";
 
 const STEP_DEFINITIONS = {
@@ -57,16 +57,45 @@ export default function KioskStepWizard({
   const isLastStep = currentStepIndex === steps.length - 1;
   const totalSteps = steps.length;
 
+  const autoSaveTimeoutRef = useRef(null);
+  const lastAutoSaveRef = useRef(Date.now());
+
   const updateFormData = useCallback((updates) => {
     setFormData(prev => {
       const newData = { ...prev, ...updates };
-      // Auto-save after a delay
+      
+      // Debounced auto-save to prevent infinite calls
       if (onAutoSave) {
-        setTimeout(() => onAutoSave(newData), 800);
+        // Clear any existing timeout
+        if (autoSaveTimeoutRef.current) {
+          clearTimeout(autoSaveTimeoutRef.current);
+        }
+        
+        // Only auto-save if enough time has passed since last save
+        const now = Date.now();
+        const timeSinceLastSave = now - lastAutoSaveRef.current;
+        
+        if (timeSinceLastSave > 2000) { // Minimum 2 seconds between saves
+          autoSaveTimeoutRef.current = setTimeout(() => {
+            lastAutoSaveRef.current = Date.now();
+            onAutoSave(newData);
+            autoSaveTimeoutRef.current = null;
+          }, 1500); // Debounce delay
+        }
       }
+      
       return newData;
     });
   }, [onAutoSave]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const validateCurrentStep = useCallback((data) => {
     // This will be implemented by each step component
