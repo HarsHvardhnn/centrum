@@ -551,6 +551,7 @@ export default function ConsentsStep({
           </div>
         )}
       </div>
+      </div>
 
       {/* Show validation errors */}
       {validation?.errors?.length > 0 && (
