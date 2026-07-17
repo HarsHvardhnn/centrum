@@ -21,18 +21,23 @@ export default function MinorSignatureStep({
     const errors = [];
     
     // Guardian signature is always required for minors
-    if (!formData.guardianSignature) {
+    if (!formData.guardianSignature || 
+        formData.guardianSignature.trim() === "" || 
+        formData.guardianSignature === "data:image/png;base64,") {
       errors.push("Podpis opiekuna prawnego jest wymagany.");
     }
     
     // Patient signature required only for 16-17 year olds
-    if (requiresPatientSignature && !formData.signature) {
+    if (requiresPatientSignature && 
+        (!formData.signature || 
+         formData.signature.trim() === "" || 
+         formData.signature === "data:image/png;base64,")) {
       errors.push("Podpis pacjenta jest wymagany.");
     }
 
     const isValid = errors.length === 0;
     onValidationChange?.({ isValid, errors });
-  }, [formData, requiresPatientSignature, onValidationChange]);
+  }, [formData.signature, formData.guardianSignature, requiresPatientSignature, onValidationChange]);
 
   return (
     <div className="space-y-6">

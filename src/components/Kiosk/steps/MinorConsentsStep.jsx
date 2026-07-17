@@ -1,5 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PATIENT_TYPES } from "../PatientTypeDetector";
+import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from "../../../utils/phoneUtils";
+import { formatPolishPostalCode, validatePolishPostalCode } from "../../../utils/postalCodeUtils";
+import PatientDataEditModal from "../PatientDataEditModal";
 
 export default function MinorConsentsStep({
   formData = {},
@@ -11,9 +14,19 @@ export default function MinorConsentsStep({
   onGoToStep,
 }) {
   const requiresPatientConsent = patientType === PATIENT_TYPES.MINOR_16_17;
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const update = (field, value) => {
     updateFormData({ [field]: value });
+  };
+
+  const handleSavePatientData = (editedData) => {
+    // Update form data with edited values
+    Object.keys(editedData).forEach(key => {
+      if (editedData[key] !== formData[key]) {
+        updateFormData({ [key]: editedData[key] });
+      }
+    });
   };
 
   // Validation logic
@@ -90,12 +103,7 @@ export default function MinorConsentsStep({
           <h4 className="font-semibold text-gray-900">Sprawdź dane pacjenta i opiekuna</h4>
           <button
             type="button"
-            onClick={() => {
-              // Navigate back to the first step (Personal Data) to allow editing
-              if (onGoToStep) {
-                onGoToStep(0); // Go to first step (PersonalDataStep)
-              }
-            }}
+            onClick={() => setShowEditModal(true)}
             className="text-sm text-teal-700 hover:text-teal-900 font-medium underline flex items-center gap-1"
           >
             ✏️ Edytuj dane
@@ -641,16 +649,29 @@ export default function MinorConsentsStep({
                       </select>
                       <input
                         type="tel"
-                        value={person.phone || ""}
+                        value={formatPhoneForDisplay(person.phone || "", person.phoneCode || "+48")}
                         onChange={(e) => {
+                          const phoneCode = person.phoneCode || "+48";
+                          const cleaned = formatPhoneNumber(e.target.value);
+                          const validation = validatePhoneNumber(cleaned, phoneCode);
+                          
                           const newPersons = [...formData.authorizedPersons];
-                          newPersons[index] = { ...person, phone: e.target.value };
+                          newPersons[index] = { ...person, phone: cleaned };
                           update("authorizedPersons", newPersons);
                         }}
-                        className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={`flex-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          person.phone && !validatePhoneNumber(formatPhoneNumber(person.phone), person.phoneCode || "+48").valid 
+                            ? 'border-red-300' : 'border-gray-300'
+                        }`}
                         placeholder="123 456 789"
+                        maxLength={validatePhoneNumber("", person.phoneCode || "+48").maxLength + 2} // +2 for spaces
                       />
                     </div>
+                    {person.phone && !validatePhoneNumber(formatPhoneNumber(person.phone), person.phoneCode || "+48").valid && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {validatePhoneNumber(formatPhoneNumber(person.phone), person.phoneCode || "+48").message}
+                      </p>
+                    )}
                   </div>
                   
                   <div className="sm:col-span-2">
@@ -678,17 +699,26 @@ export default function MinorConsentsStep({
                       type="text"
                       value={person.zipCode || ""}
                       onChange={(e) => {
+                        const formatted = formatPolishPostalCode(e.target.value);
                         const newPersons = [...formData.authorizedPersons];
-                        newPersons[index] = { ...person, zipCode: e.target.value };
+                        newPersons[index] = { ...person, zipCode: formatted };
                         update("authorizedPersons", newPersons);
                       }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        person.zipCode && !validatePolishPostalCode(person.zipCode) 
+                          ? 'border-red-300' : 'border-gray-300'
+                      }`}
                       placeholder="00-000"
                       maxLength="6"
                     />
+                    {person.zipCode && !validatePolishPostalCode(person.zipCode) && (
+                      <p className="text-xs text-red-600 mt-1">
+                        Kod pocztowy powinien mieć format XX-XXX (np. 00-001)
+                      </p>
+                    )}
                   </div>
                   
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Miasto *
                     </label>
@@ -701,8 +731,9 @@ export default function MinorConsentsStep({
                         update("authorizedPersons", newPersons);
                       }}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Wprowadź miasto"
+                      placeholder="Wprowadź miasto (np. Warszawa, Kraków)"
                     />
+                    <p className="text-xs text-gray-600 mt-1">Pole zostało rozszerzone dla lepszej widoczności długich nazw miast</p>
                   </div>
                 </div>
               </div>
@@ -754,6 +785,16 @@ export default function MinorConsentsStep({
           </ul>
         </div>
       )}
+
+      {/* Patient Data Edit Modal */}
+      <PatientDataEditModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        formData={formData}
+        onSave={handleSavePatientData}
+        patientType={patientType}
+        mode={mode}
+      />
     </div>
   );
 }

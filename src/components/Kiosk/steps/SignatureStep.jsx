@@ -17,13 +17,14 @@ export default function SignatureStep({
   useEffect(() => {
     const errors = [];
     
-    if (!formData.signature) {
+    // Check if signature exists and is not empty
+    if (!formData.signature || formData.signature.trim() === "" || formData.signature === "data:image/png;base64,") {
       errors.push("Podpis pacjenta jest wymagany.");
     }
 
     const isValid = errors.length === 0;
     onValidationChange?.({ isValid, errors });
-  }, [formData, onValidationChange]);
+  }, [formData.signature, onValidationChange]); // More specific dependency
 
   return (
     <div className="space-y-6">
