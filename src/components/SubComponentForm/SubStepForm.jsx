@@ -118,7 +118,7 @@ const SubStepForm = ({
                   : "bg-primary text-white hover:bg-primary-dark"
               }`}
             >
-              {currentSubStep === subSteps.length - 1 ? "Zakończ rejestrację" : "Następna"}
+              {currentSubStep === subSteps.length - 1 ? "Zapisz dane pacjenta" : "Następna"}
             </button>
           </div>
         )}

@@ -88,6 +88,19 @@ function deriveDateOfBirthFromPesel(pesel) {
 }
 
 /**
+ * Extract gender from PESEL number
+ * @param {string} pesel - PESEL number (11 digits)
+ * @returns {string|null} - "Mężczyzna" or "Kobieta" or null if invalid
+ */
+export function getGenderFromPesel(pesel) {
+  const digits = String(pesel).replace(/\D/g, "");
+  if (digits.length !== PESEL_LENGTH) return null;
+  
+  const genderDigit = parseInt(digits[9], 10);
+  return genderDigit % 2 === 0 ? "Kobieta" : "Mężczyzna";
+}
+
+/**
  * Kiosk PESEL validation with explicit error codes for user-facing messages.
  */
 export function analyzePeselForKiosk(rawPesel) {
@@ -122,7 +135,11 @@ export function analyzePeselForKiosk(rawPesel) {
     };
   }
 
-  return { valid: true, pesel, dateOfBirth };
+  // Extract gender from PESEL (10th digit - position 9)
+  const genderDigit = parseInt(pesel[9], 10);
+  const gender = genderDigit % 2 === 0 ? "Kobieta" : "Mężczyzna";
+
+  return { valid: true, pesel, dateOfBirth, gender };
 }
 
 const PESEL_ERROR_TITLES = {

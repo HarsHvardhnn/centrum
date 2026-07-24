@@ -34,6 +34,9 @@ export default function KioskApp() {
   const [formData, setFormData] = useState({});
   const [mode, setMode] = useState("full_registration");
   const [patientType, setPatientType] = useState(PATIENT_TYPES.ADULT);
+  const [peselAttempts, setPeselAttempts] = useState(0);
+  const [showPeselFallback, setShowPeselFallback] = useState(false);
+  const [lastErrorMessage, setLastErrorMessage] = useState("");
   const idleTimerRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const lastSaveRef = useRef(0);
@@ -47,6 +50,9 @@ export default function KioskApp() {
     setFormData({});
     setMode("full_registration");
     setPatientType(PATIENT_TYPES.ADULT);
+    setPeselAttempts(0);
+    setShowPeselFallback(false);
+    setLastErrorMessage("");
   }, []);
 
   const resetIdleTimer = useCallback(() => {
@@ -175,6 +181,11 @@ export default function KioskApp() {
       setSessionInfo(res.sessionInfo || null);
       setStep(STEPS.FORM);
       
+      // Reset attempts on success
+      setPeselAttempts(0);
+      setShowPeselFallback(false);
+      setLastErrorMessage("");
+      
       // Show appropriate message based on patient type
       let message = res.message || "PESEL zweryfikowany.";
       if (detectedType === PATIENT_TYPES.MINOR_UNDER_16) {
@@ -185,10 +196,65 @@ export default function KioskApp() {
       
       toast.success(message);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Nie można zweryfikować PESEL.");
+      const errorMessage = err.response?.data?.message || "Nie można zweryfikować PESEL.";
+      const newAttempts = peselAttempts + 1;
+      
+      setPeselAttempts(newAttempts);
+      setLastErrorMessage(errorMessage);
+      
+      // Show fallback option after 2 failed attempts
+      if (newAttempts >= 2) {
+        setShowPeselFallback(true);
+        toast.error(`${errorMessage} Po ${newAttempts} nieudanych próbach możesz wybrać opcję kontynuowania.`);
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePeselFallback = async () => {
+    const normalized = normalizePesel(pesel);
+    
+    // Create form data with basic PESEL info for fallback
+    const fallbackFormData = {
+      pesel: normalized,
+    };
+    
+    // Try to extract basic info from PESEL if possible, but don't fail if it doesn't work
+    try {
+      // Import at runtime to avoid circular dependencies
+      const peselUtils = await import("../../utils/peselUtils");
+      const analysis = peselUtils.analyzePeselForKiosk(normalized);
+      
+      if (analysis.valid && analysis.dateOfBirth) {
+        fallbackFormData.dateOfBirth = analysis.dateOfBirth;
+      }
+      
+      if (analysis.valid && analysis.gender) {
+        fallbackFormData.sex = analysis.gender === "Mężczyzna" ? "Male" : "Female";
+      }
+    } catch (error) {
+      console.warn("Could not analyze PESEL in fallback mode:", error);
+      // Continue without PESEL-derived data
+    }
+    
+    // Detect patient type based on available data (will default to adult if no age info)
+    const detectedType = detectPatientType(fallbackFormData);
+    
+    setFormData(fallbackFormData);
+    setMode("full_registration");
+    setPatientType(detectedType);
+    setSessionInfo(null); // No session info for fallback
+    setStep(STEPS.FORM);
+    
+    // Reset fallback state
+    setPeselAttempts(0);
+    setShowPeselFallback(false);
+    setLastErrorMessage("");
+    
+    toast.success("Kontynuowanie z wprowadzonym numerem PESEL. Dane zostaną zweryfikowane przez personel.");
   };
 
   const handleComplete = async (form) => {
@@ -285,7 +351,15 @@ export default function KioskApp() {
               
               <KioskNumericEntry
                 value={pesel}
-                onChange={setPesel}
+                onChange={(value) => {
+                  setPesel(value);
+                  // Reset fallback state when PESEL changes
+                  if (value !== pesel) {
+                    setPeselAttempts(0);
+                    setShowPeselFallback(false);
+                    setLastErrorMessage("");
+                  }
+                }}
                 maxLength={11}
                 size="pesel"
                 showActiveCursor
@@ -301,6 +375,37 @@ export default function KioskApp() {
               >
                 {loading ? "Sprawdzanie..." : "Weryfikuj PESEL"}
               </button>
+
+              {showPeselFallback && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-amber-800">System nie może zweryfikować tego numeru PESEL</h3>
+                      <div className="mt-2 text-sm text-amber-700">
+                        <p>Ostatni błąd: {lastErrorMessage}</p>
+                        <p className="mt-2">
+                          Jeśli jesteś pewien, że numer PESEL jest poprawny, możesz kontynuować rejestrację. 
+                          Dane będą wymagały dodatkowej weryfikacji przez personel.
+                        </p>
+                      </div>
+                      <div className="mt-4">
+                        <button
+                          type="button"
+                          onClick={handlePeselFallback}
+                          className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm py-3 px-4 rounded-lg transition-colors"
+                        >
+                          Kontynuuj mimo błędu walidacji
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="text-center">
                 <button

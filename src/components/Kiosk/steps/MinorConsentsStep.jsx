@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { PATIENT_TYPES } from "../PatientTypeDetector";
 import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from "../../../utils/phoneUtils";
 import { formatPolishPostalCode, validatePolishPostalCode } from "../../../utils/postalCodeUtils";
+import { formatPolishDate } from "../../../utils/dateUtils";
 import PatientDataEditModal from "../PatientDataEditModal";
 
 export default function MinorConsentsStep({
@@ -172,28 +173,6 @@ export default function MinorConsentsStep({
           </div>
         </div>
 
-        {/* Patient Data Section */}
-        <div className="bg-blue-50 rounded-lg p-4 mb-4">
-          <p className="font-semibold text-blue-900 mb-3">DANE PACJENTA NIEPEŁNOLETNIEGO</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <strong className="text-blue-700">IMIĘ I NAZWISKO</strong>
-              <p className="font-semibold">{formData.firstName} {formData.lastName}</p>
-            </div>
-            <div>
-              <strong className="text-blue-700">NR PESEL</strong>
-              <p className="font-semibold">{formData.pesel}</p>
-            </div>
-            <div>
-              <strong className="text-blue-700">DATA URODZENIA</strong>
-              <p className="font-semibold">{formData.dateOfBirth}</p>
-            </div>
-            <div>
-              <strong className="text-blue-700">ADRES ZAMIESZKANIA</strong>
-              <p className="font-semibold">{formData.street}, {formData.zipCode} {formData.city}, woj. {formData.province}</p>
-            </div>
-          </div>
-        </div>
 
         {/* Guardian Data Section */}
         <div className="bg-yellow-50 rounded-lg p-4 mb-6">

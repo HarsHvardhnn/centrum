@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from "../../../utils/phoneUtils";
 import { formatPolishPostalCode, validatePolishPostalCode } from "../../../utils/postalCodeUtils";
+import { formatPolishDate } from "../../../utils/dateUtils";
 import PatientDataEditModal from "../PatientDataEditModal";
 
 export default function ConsentsStep({
@@ -109,7 +110,7 @@ export default function ConsentsStep({
               </div>
               <div>
                 <span className="text-gray-600">Data urodzenia:</span>
-                <p className="font-medium text-gray-900">{formData.dateOfBirth}</p>
+                <p className="font-medium text-gray-900">{formatPolishDate(formData.dateOfBirth)}</p>
               </div>
             </>
           ) : (
@@ -120,7 +121,7 @@ export default function ConsentsStep({
               </div>
               <div>
                 <span className="text-gray-600">Data urodzenia:</span>
-                <p className="font-medium text-gray-900">{formData.dateOfBirth}</p>
+                <p className="font-medium text-gray-900">{formatPolishDate(formData.dateOfBirth)}</p>
               </div>
             </>
           )}
@@ -151,52 +152,6 @@ export default function ConsentsStep({
           </div>
         </div>
 
-        {/* Patient Data Section */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <strong className="text-teal-700">IMIĘ I NAZWISKO</strong>
-              <p className="font-semibold">{formData.firstName} {formData.lastName}</p>
-            </div>
-            {patientType !== 'international' ? (
-              <>
-                <div>
-                  <strong className="text-teal-700">NR PESEL</strong>
-                  <p className="font-semibold">{formData.pesel}</p>
-                </div>
-                <div>
-                  <strong className="text-teal-700">DATA URODZENIA</strong>
-                  <p className="font-semibold">{formData.dateOfBirth}</p>
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <strong className="text-teal-700">DOKUMENT</strong>
-                  <p className="font-semibold">{formData.documentType}: {formData.documentNumber}</p>
-                </div>
-                <div>
-                  <strong className="text-teal-700">DATA URODZENIA</strong>
-                  <p className="font-semibold">{formData.dateOfBirth}</p>
-                </div>
-              </>
-            )}
-            <div>
-              <strong className="text-teal-700">ADRES ZAMIESZKANIA</strong>
-              <p className="font-semibold">{formData.street}, {formData.zipCode} {formData.city}, woj. {formData.province}</p>
-            </div>
-            <div>
-              <strong className="text-teal-700">NUMER TELEFONU</strong>
-              <p className="font-semibold">{formData.phoneCode} {formData.phone}</p>
-            </div>
-            {formData.email && (
-              <div>
-                <strong className="text-teal-700">ADRES E-MAIL</strong>
-                <p className="font-semibold">{formData.email}</p>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* Full Legal Consent Text */}
         <div className="mb-6 text-sm text-gray-800 leading-relaxed">

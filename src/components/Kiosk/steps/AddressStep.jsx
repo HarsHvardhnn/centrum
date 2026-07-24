@@ -59,35 +59,41 @@ export default function AddressStep({
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Kod pocztowy *</label>
-            <input
-              type="text"
-              value={formData.zipCode || ""}
-              onChange={(e) => {
-                const formatted = formatPolishPostalCode(e.target.value);
-                update("zipCode", formatted);
-              }}
-              placeholder="00-000"
-              maxLength="6"
-              readOnly={readOnlyFields}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              required
-            />
+        {/* Reorganized layout for better UX with longer Polish names */}
+        <div className="space-y-4">
+          {/* First row: Postal code (smaller) and City (larger) */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Kod pocztowy *</label>
+              <input
+                type="text"
+                value={formData.zipCode || ""}
+                onChange={(e) => {
+                  const formatted = formatPolishPostalCode(e.target.value);
+                  update("zipCode", formatted);
+                }}
+                placeholder="00-000"
+                maxLength="6"
+                readOnly={readOnlyFields}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                required
+              />
+            </div>
+            <div className="sm:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Miejscowość *</label>
+              <input
+                type="text"
+                value={formData.city || ""}
+                onChange={(e) => update("city", e.target.value)}
+                readOnly={readOnlyFields}
+                placeholder="np. Skarżysko-Kamienna, Bielsko-Biała"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                required
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Miejscowość *</label>
-            <input
-              type="text"
-              value={formData.city || ""}
-              onChange={(e) => update("city", e.target.value)}
-              readOnly={readOnlyFields}
-              placeholder="np. Skarżysko-Kamienna"
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              required
-            />
-          </div>
+          
+          {/* Second row: Province gets full width for better visibility */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Województwo *</label>
             <select
@@ -104,6 +110,7 @@ export default function AddressStep({
                 </option>
               ))}
             </select>
+            <p className="text-xs text-gray-600 mt-1">Wszystkie nazwy województw są teraz w pełni widoczne</p>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { formatPolishPostalCode, validatePolishPostalCode } from "../../utils/postalCodeUtils";
 import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from "../../utils/phoneUtils";
+import { getGenderFromPesel } from "../../utils/peselUtils";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes.jsx";
 
 const VOIVODESHIPS = [
@@ -50,6 +51,8 @@ export default function PatientDataEditModal({
         documentType: formData.documentType || "",
         documentNumber: formData.documentNumber || "",
         documentCountry: formData.documentCountry || "",
+        documentIssueDate: formData.documentIssueDate || "",
+        documentExpiryDate: formData.documentExpiryDate || "",
         // Guardian data (if required)
         guardianFirstName: formData.guardianFirstName || "",
         guardianLastName: formData.guardianLastName || "",
@@ -63,6 +66,20 @@ export default function PatientDataEditModal({
       setGuardianErrors([]);
     }
   }, [isOpen, formData]);
+
+  // Auto-detect gender from PESEL for Polish patients
+  useEffect(() => {
+    if (!isInternational && editData.pesel && editData.pesel.length === 11) {
+      const detectedGender = getGenderFromPesel(editData.pesel);
+      if (detectedGender) {
+        // Map to the values used in the select options
+        const genderValue = detectedGender === "Mężczyzna" ? "Male" : "Female";
+        if (editData.sex !== genderValue) {
+          setEditData(prev => ({ ...prev, sex: genderValue }));
+        }
+      }
+    }
+  }, [editData.pesel, isInternational]);
 
   const update = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }));
@@ -86,6 +103,25 @@ export default function PatientDataEditModal({
       if (!editData.documentType?.trim()) newErrors.push("Typ dokumentu jest wymagany.");
       if (!editData.documentNumber?.trim()) newErrors.push("Numer dokumentu jest wymagany.");
       if (!editData.documentCountry?.trim()) newErrors.push("Kraj wydania dokumentu jest wymagany.");
+      if (!editData.documentIssueDate) newErrors.push("Data wydania dokumentu jest wymagana.");
+      if (!editData.documentExpiryDate) newErrors.push("Data wygaśnięcia dokumentu jest wymagana.");
+      
+      // Additional validation for document dates
+      if (editData.documentIssueDate && editData.documentExpiryDate) {
+        const issueDate = new Date(editData.documentIssueDate);
+        const expiryDate = new Date(editData.documentExpiryDate);
+        const today = new Date();
+        
+        if (issueDate > today) {
+          newErrors.push("Data wydania dokumentu nie może być w przyszłości.");
+        }
+        if (expiryDate < today) {
+          newErrors.push("Dokument jest już wygasły.");
+        }
+        if (issueDate >= expiryDate) {
+          newErrors.push("Data wydania musi być wcześniejsza niż data wygaśnięcia.");
+        }
+      }
     }
 
     // Address validation
@@ -274,22 +310,54 @@ export default function PatientDataEditModal({
                       placeholder="np. Poland, Germany"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Data wydania dokumentu *</label>
+                    <input
+                      type="date"
+                      value={editData.documentIssueDate || ""}
+                      onChange={(e) => update("documentIssueDate", e.target.value)}
+                      readOnly={readOnlyFields}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Data wygaśnięcia dokumentu *</label>
+                    <input
+                      type="date"
+                      value={editData.documentExpiryDate || ""}
+                      onChange={(e) => update("documentExpiryDate", e.target.value)}
+                      readOnly={readOnlyFields}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
                 </>
               )}
 
               {/* Sex */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Płeć *</label>
-                <select
-                  value={editData.sex || ""}
-                  onChange={(e) => update("sex", e.target.value)}
-                  readOnly={readOnlyFields}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Wybierz płeć</option>
-                  <option value="M">Mężczyzna</option>
-                  <option value="K">Kobieta</option>
-                </select>
+                {!isInternational ? (
+                  // For Polish patients, gender is auto-detected from PESEL (read-only)
+                  <input
+                    type="text"
+                    value={editData.sex === "Male" ? "Mężczyzna" : editData.sex === "Female" ? "Kobieta" : ""}
+                    readOnly
+                    className="w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-lg"
+                  />
+                ) : (
+                  // For international patients, allow manual selection
+                  <select
+                    value={editData.sex || ""}
+                    onChange={(e) => update("sex", e.target.value)}
+                    disabled={readOnlyFields}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Wybierz płeć</option>
+                    <option value="Male">Mężczyzna</option>
+                    <option value="Female">Kobieta</option>
+                    <option value="Others">Inna</option>
+                  </select>
+                )}
               </div>
             </div>
           </div>

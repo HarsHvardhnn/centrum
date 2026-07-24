@@ -63,24 +63,31 @@ export default function ContactStep({
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Improved phone number layout - better proportions */}
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Kod kraju</label>
             <select
               value={formData.phoneCode || "+48"}
               onChange={(e) => update("phoneCode", e.target.value)}
               disabled={readOnlyFields}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-3 text-lg bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              title={PHONE_COUNTRY_CODES.find(c => c.code === (formData.phoneCode || "+48"))?.country || ""}
             >
               {PHONE_COUNTRY_CODES.map((country) => (
-                <option key={country.code} value={country.code}>
+                <option key={country.code} value={country.code} title={country.country}>
                   {country.code} {country.country}
                 </option>
               ))}
             </select>
           </div>
-          <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Telefon *</label>
+          <div className="sm:col-span-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Telefon * 
+              <span className="text-xs text-gray-500 ml-2">
+                ({getRequiredPhoneLength(formData.phoneCode || "+48")} cyfr)
+              </span>
+            </label>
             <input
               type="tel"
               value={formData.phone || ""}
@@ -89,7 +96,7 @@ export default function ContactStep({
                 const maxLength = getRequiredPhoneLength(formData.phoneCode || "+48");
                 update("phone", formatted.slice(0, maxLength));
               }}
-              placeholder={(formData.phoneCode || "+48") === "+48" ? "123456789" : ""}
+              placeholder={(formData.phoneCode || "+48") === "+48" ? "123 456 789" : `${getRequiredPhoneLength(formData.phoneCode || "+48")} cyfr`}
               maxLength={getRequiredPhoneLength(formData.phoneCode || "+48")}
               readOnly={readOnlyFields}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"

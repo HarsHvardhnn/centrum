@@ -5,8 +5,6 @@ import { normalizePesel, getPeselChecksumWarning } from "../../utils/peselUtils"
 import patientService from "../../helpers/patientHelper";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
-import { Trash2, FileText, ExternalLink } from "lucide-react";
-import { resolveDocumentOpenUrl } from "../../utils/documentUrl";
 import { PHONE_COUNTRY_CODES, FlagIcon } from "../../constants/phoneCountryCodes";
 
 const DOCUMENT_TYPES = [
@@ -163,92 +161,6 @@ const DemographicsForm = ({
 
 
 
-  // Document upload (same as documents step – stored in formData.documents)
-  const handleDocumentFileChange = (e) => {
-    if (e.target.files?.[0]) {
-      const file = e.target.files[0];
-      const newDocuments = [...(formData.documents || [])];
-      newDocuments.push({
-        id: Date.now(),
-        file,
-        name: file.name,
-        type: file.type,
-        preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
-        isPdf: file.type === "application/pdf",
-      });
-      updateFormData("documents", newDocuments);
-    }
-    e.target.value = "";
-  };
-  const handleDocumentDrop = (e) => {
-    e.preventDefault();
-    if (e.dataTransfer.files?.[0]) {
-      const file = e.dataTransfer.files[0];
-      const newDocuments = [...(formData.documents || [])];
-      newDocuments.push({
-        id: Date.now(),
-        file,
-        name: file.name || file.fileName,
-        type: file.type,
-        preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : null,
-        isPdf: file.type === "application/pdf",
-      });
-      updateFormData("documents", newDocuments);
-    }
-  };
-  const isPdfDocument = (doc) =>
-    doc?.isPdf === true ||
-    doc?.type === "application/pdf" ||
-    doc?.mimeType === "application/pdf" ||
-    /\.pdf$/i.test(doc?.fileName || doc?.name || "");
-
-  const isImageDocument = (doc) => {
-    const imageTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
-    return (
-      imageTypes.includes(doc?.type) ||
-      imageTypes.includes(doc?.mimeType) ||
-      imageTypes.includes(doc?.fileType) ||
-      /\.(jpe?g|png|gif|webp)$/i.test(doc?.fileName || doc?.name || "")
-    );
-  };
-
-  const getDocumentPreviewUrl = (doc) => {
-    if (doc?.preview) return doc.preview;
-    if (doc?.file instanceof File && doc.file.type.startsWith("image/")) {
-      return URL.createObjectURL(doc.file);
-    }
-    return resolveDocumentOpenUrl(doc);
-  };
-
-  const openDocument = (doc) => {
-    if (doc?.file instanceof File) {
-      const url = URL.createObjectURL(doc.file);
-      window.open(url, "_blank", "noopener,noreferrer");
-      return;
-    }
-    const url = resolveDocumentOpenUrl(doc);
-    if (url) {
-      window.open(url, "_blank", "noopener,noreferrer");
-      return;
-    }
-    toast.error("Nie można otworzyć tego dokumentu.");
-  };
-
-  const removeDocumentFromList = async (doc) => {
-    if (doc._id && currentPatientId) {
-      try {
-        await apiCaller("DELETE", `/patients/${currentPatientId}/documents/${doc._id}`);
-        toast.success("Dokument usunięty");
-      } catch (err) {
-        toast.error("Nie udało się usunąć dokumentu.");
-        return;
-      }
-    }
-    const next = (formData.documents || []).filter((d) =>
-      doc._id ? d._id !== doc._id : d.id !== doc.id
-    );
-    updateFormData("documents", next);
-  };
 
   // Monitor form data changes for debugging
   useEffect(() => {
@@ -739,79 +651,6 @@ const DemographicsForm = ({
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-6 mt-4">
-            <h3 className="text-lg font-medium text-gray-800 mb-3">Dokumenty</h3>
-            <p className="text-gray-600 text-sm mb-3">
-              Możesz dodać dokumenty tutaj lub w kroku „Zgody”. Wysyłane są w ten sam sposób.
-            </p>
-            <div
-              className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDocumentDrop}
-              onClick={() => document.getElementById("document-upload-basic-details")?.click()}
-            >
-              <p className="text-primary font-medium">Kliknij lub przeciągnij plik</p>
-              <p className="text-gray-500 text-sm mt-1">PDF lub obraz (JPG, PNG, GIF)</p>
-            </div>
-            <input
-              type="file"
-              id="document-upload-basic-details"
-              className="hidden"
-              accept="application/pdf,image/*"
-              onChange={handleDocumentFileChange}
-            />
-            {formData?.documents?.length > 0 && (
-              <div className="mt-4">
-                <p className="text-sm font-medium text-gray-700 mb-2">Przesłane dokumenty</p>
-                <ul className="space-y-2">
-                  {formData.documents.map((doc) => (
-                    <li
-                      key={doc.id ?? doc._id}
-                      className="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-md border border-gray-200"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => openDocument(doc)}
-                        className="flex items-center gap-3 flex-1 min-w-0 text-left hover:bg-white rounded-md px-1 py-1 transition-colors"
-                        title="Otwórz dokument"
-                      >
-                        {isImageDocument(doc) ? (
-                          <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-200 shrink-0 border border-gray-200">
-                            <img
-                              src={getDocumentPreviewUrl(doc)}
-                              alt={doc.fileName || doc.name || "Dokument"}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-12 h-12 rounded-md bg-red-50 shrink-0 border border-red-100 flex items-center justify-center">
-                            <FileText className="w-6 h-6 text-red-500" />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">
-                            {doc.fileName || doc.name || "Dokument"}
-                          </p>
-                          <p className="text-xs text-teal-700 inline-flex items-center gap-1">
-                            <ExternalLink className="w-3 h-3" />
-                            {isPdfDocument(doc) ? "Otwórz PDF" : "Otwórz podgląd"}
-                          </p>
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeDocumentFromList(doc)}
-                        className="p-1.5 text-red-600 hover:bg-red-50 rounded shrink-0"
-                        title="Usuń"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
         </>
       )}
 

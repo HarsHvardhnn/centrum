@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { getGenderFromPesel } from "../../../utils/peselUtils";
+import { formatPolishDate } from "../../../utils/dateUtils";
 
 const VOIVODESHIPS = [
   "dolnośląskie", "kujawsko-pomorskie", "lubelskie", "lubuskie", "łódzkie",
@@ -22,6 +24,20 @@ export default function PersonalDataStep({
     updateFormData({ [field]: value });
   };
 
+  // Auto-detect gender from PESEL for Polish patients
+  useEffect(() => {
+    if (patientType !== 'international' && formData.pesel && formData.pesel.length === 11) {
+      const detectedGender = getGenderFromPesel(formData.pesel);
+      if (detectedGender) {
+        // Map to the values used in the select options
+        const genderValue = detectedGender === "Mężczyzna" ? "Male" : "Female";
+        if (formData.sex !== genderValue) {
+          update("sex", genderValue);
+        }
+      }
+    }
+  }, [formData.pesel, patientType, formData.sex]);
+
   // Validation logic
   useEffect(() => {
     const errors = [];
@@ -38,7 +54,26 @@ export default function PersonalDataStep({
       if (!formData.documentCountry?.trim()) errors.push("Kraj wydania dokumentu jest wymagany.");
       if (!formData.documentType?.trim()) errors.push("Typ dokumentu jest wymagany.");
       if (!formData.documentNumber?.trim()) errors.push("Numer dokumentu jest wymagany.");
+      if (!formData.documentIssueDate) errors.push("Data wydania dokumentu jest wymagana.");
+      if (!formData.documentExpiryDate) errors.push("Data wygaśnięcia dokumentu jest wymagana.");
       if (!formData.dateOfBirth) errors.push("Data urodzenia jest wymagana.");
+      
+      // Additional validation for document dates
+      if (formData.documentIssueDate && formData.documentExpiryDate) {
+        const issueDate = new Date(formData.documentIssueDate);
+        const expiryDate = new Date(formData.documentExpiryDate);
+        const today = new Date();
+        
+        if (issueDate > today) {
+          errors.push("Data wydania dokumentu nie może być w przyszłości.");
+        }
+        if (expiryDate < today) {
+          errors.push("Dokument jest już wygasły.");
+        }
+        if (issueDate >= expiryDate) {
+          errors.push("Data wydania musi być wcześniejsza niż data wygaśnięcia.");
+        }
+      }
     }
 
     const isValid = errors.length === 0;
@@ -94,7 +129,7 @@ export default function PersonalDataStep({
             <label className="block text-sm font-medium text-gray-700 mb-2">Data urodzenia</label>
             <input
               type="text"
-              value={formData.dateOfBirth || ""}
+              value={formatPolishDate(formData.dateOfBirth) || ""}
               readOnly
               className="w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-lg"
             />
@@ -157,23 +192,60 @@ export default function PersonalDataStep({
               />
             </div>
           </div>
+
+          {/* Document dates row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Data wydania dokumentu *</label>
+              <input
+                type="date"
+                value={formData.documentIssueDate || ""}
+                onChange={(e) => update("documentIssueDate", e.target.value)}
+                readOnly={readOnlyFields}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Data wygaśnięcia dokumentu *</label>
+              <input
+                type="date"
+                value={formData.documentExpiryDate || ""}
+                onChange={(e) => update("documentExpiryDate", e.target.value)}
+                readOnly={readOnlyFields}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                required
+              />
+            </div>
+          </div>
         </div>
       )}
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Płeć *</label>
-        <select
-          value={formData.sex || ""}
-          onChange={(e) => update("sex", e.target.value)}
-          disabled={readOnlyFields}
-          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-          required
-        >
-          <option value="">Wybierz płeć</option>
-          <option value="Male">Mężczyzna</option>
-          <option value="Female">Kobieta</option>
-          <option value="Others">Inna</option>
-        </select>
+        {patientType !== 'international' ? (
+          // For Polish patients, gender is auto-detected from PESEL
+          <input
+            type="text"
+            value={formData.sex === "Male" ? "Mężczyzna" : formData.sex === "Female" ? "Kobieta" : ""}
+            readOnly
+            className="w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-lg"
+          />
+        ) : (
+          // For international patients, allow manual selection
+          <select
+            value={formData.sex || ""}
+            onChange={(e) => update("sex", e.target.value)}
+            disabled={readOnlyFields}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            required
+          >
+            <option value="">Wybierz płeć</option>
+            <option value="Male">Mężczyzna</option>
+            <option value="Female">Kobieta</option>
+            <option value="Others">Inna</option>
+          </select>
+        )}
       </div>
 
       {/* Show validation errors */}

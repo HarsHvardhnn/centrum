@@ -1522,7 +1522,7 @@ export default function UserManagement() {
             <div className="flex justify-between items-center border-b p-4">
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-bold">
-                  {isEditMode ? "Edytuj Pacjenta" : "Dodaj Pacjenta"}
+                  {isEditMode ? "Dane szczegółowe pacjenta" : "Dodaj Pacjenta"}
                 </h2>
                 {!isEditMode && (
                   <AutoSaveIndicator 
