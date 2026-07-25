@@ -31,6 +31,7 @@ export default function PatientDataEditModal({
   // Initialize edit data when modal opens
   useEffect(() => {
     if (isOpen) {
+      
       setEditData({
         // Personal data
         firstName: formData.firstName || "",
@@ -61,6 +62,9 @@ export default function PatientDataEditModal({
         guardianPhone: formData.guardianPhone || "",
         guardianEmail: formData.guardianEmail || "",
         guardianRelation: formData.guardianRelation || "matka",
+        // Authorized persons data
+        authorizedPersons: formData.authorizedPersons || [],
+        authorizationChoice: formData.authorizationChoice || "",
       });
       setErrors([]);
       setGuardianErrors([]);
@@ -571,6 +575,54 @@ export default function PatientDataEditModal({
                     placeholder="opiekun@email.com"
                   />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Authorized Persons Section */}
+          {editData.authorizedPersons && editData.authorizedPersons.length > 0 && (
+            <div className="bg-purple-50 rounded-xl p-6 mb-6">
+              <h3 className="text-lg font-semibold text-purple-900 mb-4">
+                Osoby upoważnione do dostępu do informacji medycznych
+              </h3>
+              
+              <div className="space-y-4">
+                {editData.authorizedPersons.map((person, index) => (
+                  <div key={index} className="bg-white p-4 rounded-lg border border-purple-200">
+                    <h4 className="font-semibold text-purple-800 mb-3">OSOBA {index + 1}</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-700">Imię i nazwisko:</span>
+                        <span className="ml-2">{person.firstName} {person.lastName}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">PESEL:</span>
+                        <span className="ml-2">{person.pesel}</span>
+                      </div>
+                      {person.relationshipToPatient && (
+                        <div>
+                          <span className="font-medium text-gray-700">Stosunek do pacjenta:</span>
+                          <span className="ml-2">{person.relationshipToPatient}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="font-medium text-gray-700">Telefon:</span>
+                        <span className="ml-2">{person.phoneCode || '+48'} {person.phone}</span>
+                      </div>
+                      <div className="md:col-span-2">
+                        <span className="font-medium text-gray-700">Adres:</span>
+                        <span className="ml-2">
+                          {person.address || person.street}, {person.zipCode} {person.city}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-4 text-sm text-purple-700 bg-purple-100 p-3 rounded-lg">
+                <p className="font-medium">ℹ️ Informacja:</p>
+                <p>Dane osób upoważnionych można edytować w kroku "Zgody" podczas wypełniania formularza kiosku.</p>
               </div>
             </div>
           )}

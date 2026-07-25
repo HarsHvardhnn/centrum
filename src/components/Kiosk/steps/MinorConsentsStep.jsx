@@ -3,6 +3,8 @@ import { PATIENT_TYPES } from "../PatientTypeDetector";
 import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from "../../../utils/phoneUtils";
 import { formatPolishPostalCode, validatePolishPostalCode } from "../../../utils/postalCodeUtils";
 import { formatPolishDate } from "../../../utils/dateUtils";
+import { generateDocumentMetadata } from "../../../utils/documentNumberUtils";
+import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils";
 import PatientDataEditModal from "../PatientDataEditModal";
 
 export default function MinorConsentsStep({
@@ -16,6 +18,19 @@ export default function MinorConsentsStep({
 }) {
   const requiresPatientConsent = patientType === PATIENT_TYPES.MINOR_16_17;
   const [showEditModal, setShowEditModal] = useState(false);
+  const [documentNumbers, setDocumentNumbers] = useState({});
+
+  // Generate document numbers when component mounts
+  useEffect(() => {
+    console.log('Generating document numbers for minor...');
+    const numbers = {
+      gdpr: generateDocumentMetadata('gdpr'),
+      examination: generateDocumentMetadata('examination'),
+      authorization: generateDocumentMetadata('authorization')
+    };
+    console.log('Generated document numbers for minor:', numbers);
+    setDocumentNumbers(numbers);
+  }, []);
 
   const update = (field, value) => {
     updateFormData({ [field]: value });
@@ -28,6 +43,28 @@ export default function MinorConsentsStep({
         updateFormData({ [key]: editedData[key] });
       }
     });
+    setShowEditModal(false);
+  };
+
+  // Helper function to validate PESEL for authorized persons
+  const validateAuthorizedPersonPesel = (pesel) => {
+    if (!pesel || pesel.trim() === "") {
+      return { valid: false, message: "PESEL jest wymagany", type: "error" };
+    }
+
+    const normalized = normalizePesel(pesel);
+    
+    if (normalized.length !== 11) {
+      return { valid: false, message: "PESEL musi mieć dokładnie 11 cyfr", type: "error" };
+    }
+
+    const analysis = analyzePeselForKiosk(normalized);
+    
+    if (!analysis.valid) {
+      return { valid: false, message: analysis.message, type: "error" };
+    }
+
+    return { valid: true, message: "PESEL jest prawidłowy", type: "success" };
   };
 
   // Validation logic
@@ -72,6 +109,9 @@ export default function MinorConsentsStep({
           errors.push(`PESEL osoby ${index + 1} jest wymagany.`);
         } else if (person.pesel.length !== 11) {
           errors.push(`PESEL osoby ${index + 1} musi mieć 11 cyfr.`);
+        }
+        if (!person.relationshipToPatient) {
+          errors.push(`Stosunek do pacjenta osoby ${index + 1} jest wymagany.`);
         }
         if (!person.phone) {
           errors.push(`Numer telefonu osoby ${index + 1} jest wymagany.`);
@@ -168,8 +208,22 @@ export default function MinorConsentsStep({
             {patientType === PATIENT_TYPES.MINOR_16_17 ? "PACJENT NIEPEŁNOLETNI 16-17 LAT" : "PACJENT NIEPEŁNOLETNI PONIŻEJ 16 LAT"}
           </p>
           <div className="text-right text-sm text-gray-600 mt-2">
-            <p>Nr: {"{{DOC_NUMBER}}"}</p>
-            <p>Data: {"{{DOC_DATE}}"}</p>
+            <p>Nr: {(() => {
+              try {
+                return documentNumbers.gdpr?.number || generateDocumentMetadata('gdpr').number;
+              } catch (e) {
+                console.error('Error generating GDPR document number:', e);
+                return `RODO/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900000) + 100000)}`;
+              }
+            })()}</p>
+            <p>Data: {(() => {
+              try {
+                return documentNumbers.gdpr?.date || generateDocumentMetadata('gdpr').date;
+              } catch (e) {
+                const now = new Date();
+                return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+              }
+            })()}</p>
           </div>
         </div>
 
@@ -215,11 +269,6 @@ export default function MinorConsentsStep({
           </p>
         </div>
 
-        {/* Error Notice */}
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
-          <p><strong>Popraw następujące błędy:</strong></p>
-          <p className="text-xs mt-1">Jeśli powyższe dane są nieprawidłowe, użyj przycisku "Wstecz" lub "Edytuj dane" aby je poprawić przed kontynuowaniem.</p>
-        </div>
       </div>
 
       {/* Age Notice */}
@@ -428,7 +477,23 @@ export default function MinorConsentsStep({
             OŚWIADCZENIE {patientType === PATIENT_TYPES.MINOR_16_17 ? "PACJENTA I OPIEKUNA" : "OPIEKUNA PRAWNEGO"} o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego
           </h2>
           <div className="text-right text-sm text-gray-600">
-            <p className="text-green-800 font-medium">WYMAGANE</p>
+            <p>Nr: {(() => {
+              try {
+                return documentNumbers.examination?.number || generateDocumentMetadata('examination').number;
+              } catch (e) {
+                console.error('Error generating examination document number:', e);
+                return `BAD/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900000) + 100000)}`;
+              }
+            })()}</p>
+            <p>Data: {(() => {
+              try {
+                return documentNumbers.examination?.date || generateDocumentMetadata('examination').date;
+              } catch (e) {
+                const now = new Date();
+                return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+              }
+            })()}</p>
+            <p className="text-green-800 font-medium mt-1">WYMAGANE</p>
           </div>
         </div>
 
@@ -483,6 +548,24 @@ export default function MinorConsentsStep({
           <h2 className="text-lg font-bold text-purple-900 mb-2">
             UPOWAŻNIENIE {patientType === PATIENT_TYPES.MINOR_16_17 ? "(PACJENT I OPIEKUN)" : "(OPIEKUN PRAWNY)"} do uzyskiwania informacji o stanie zdrowia przez osobę bliską
           </h2>
+          <div className="text-right text-sm text-gray-600 mb-2">
+            <p>Nr: {(() => {
+              try {
+                return documentNumbers.authorization?.number || generateDocumentMetadata('authorization').number;
+              } catch (e) {
+                console.error('Error generating authorization document number:', e);
+                return `UPO/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900000) + 100000)}`;
+              }
+            })()}</p>
+            <p>Data: {(() => {
+              try {
+                return documentNumbers.authorization?.date || generateDocumentMetadata('authorization').date;
+              } catch (e) {
+                const now = new Date();
+                return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+              }
+            })()}</p>
+          </div>
           <div className="flex items-center justify-center gap-2 text-sm">
             <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-medium">OPCJONALNE</span>
             <span className="text-gray-600">Możesz pominąć ten dokument</span>
@@ -603,18 +686,71 @@ export default function MinorConsentsStep({
                         newPersons[index] = { ...person, pesel: e.target.value };
                         update("authorizedPersons", newPersons);
                       }}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        (() => {
+                          const validation = validateAuthorizedPersonPesel(person.pesel);
+                          if (!person.pesel) return 'border-gray-300';
+                          return validation.valid ? 'border-green-300' : 'border-red-300';
+                        })()
+                      }`}
                       placeholder="Wprowadź numer PESEL"
                       maxLength="11"
                     />
-                    <p className="text-xs text-gray-600 mt-1">* Wymagane 11 cyfr (walidacja poprawności)</p>
+                    {(() => {
+                      const validation = validateAuthorizedPersonPesel(person.pesel);
+                      if (!person.pesel) {
+                        return <p className="text-xs text-gray-600 mt-1">* Wymagane 11 cyfr</p>;
+                      }
+                      return (
+                        <p className={`text-xs mt-1 ${validation.valid ? 'text-green-600' : 'text-red-600'}`}>
+                          {validation.message}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Stosunek do pacjenta *
+                    </label>
+                    <select
+                      value={person.relationshipToPatient || ""}
+                      onChange={(e) => {
+                        const newPersons = [...formData.authorizedPersons];
+                        newPersons[index] = { ...person, relationshipToPatient: e.target.value };
+                        update("authorizedPersons", newPersons);
+                      }}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Wybierz stosunek</option>
+                      <option value="Matka">Matka</option>
+                      <option value="Ojciec">Ojciec</option>
+                      <option value="Żona">Żona</option>
+                      <option value="Mąż">Mąż</option>
+                      <option value="Córka">Córka</option>
+                      <option value="Syn">Syn</option>
+                      <option value="Siostra">Siostra</option>
+                      <option value="Brat">Brat</option>
+                      <option value="Babcia">Babcia</option>
+                      <option value="Dziadek">Dziadek</option>
+                      <option value="Partner">Partner</option>
+                      <option value="Partnerka">Partnerka</option>
+                      <option value="Przyjaciel">Przyjaciel</option>
+                      <option value="Przyjaciółka">Przyjaciółka</option>
+                      <option value="Kolega">Kolega</option>
+                      <option value="Koleżanka">Koleżanka</option>
+                      <option value="Współpracownik">Współpracownik</option>
+                      <option value="Współpracowniczka">Współpracowniczka</option>
+                      <option value="Opiekun">Opiekun</option>
+                      <option value="Inne">Inne</option>
+                    </select>
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Numer telefonu *
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full max-w-full">
                       <select
                         value={person.phoneCode || "+48"}
                         onChange={(e) => {
@@ -622,7 +758,7 @@ export default function MinorConsentsStep({
                           newPersons[index] = { ...person, phoneCode: e.target.value };
                           update("authorizedPersons", newPersons);
                         }}
-                        className="w-20 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-20 flex-shrink-0 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="+48">+48</option>
                       </select>
@@ -638,7 +774,7 @@ export default function MinorConsentsStep({
                           newPersons[index] = { ...person, phone: cleaned };
                           update("authorizedPersons", newPersons);
                         }}
-                        className={`flex-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        className={`flex-1 min-w-0 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           person.phone && !validatePhoneNumber(formatPhoneNumber(person.phone), person.phoneCode || "+48").valid 
                             ? 'border-red-300' : 'border-gray-300'
                         }`}
@@ -712,7 +848,6 @@ export default function MinorConsentsStep({
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Wprowadź miasto (np. Warszawa, Kraków)"
                     />
-                    <p className="text-xs text-gray-600 mt-1">Pole zostało rozszerzone dla lepszej widoczności długich nazw miast</p>
                   </div>
                 </div>
               </div>
