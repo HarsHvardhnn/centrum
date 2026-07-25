@@ -24,9 +24,9 @@ export default function PersonalDataStep({
     updateFormData({ [field]: value });
   };
 
-  // Auto-detect gender from PESEL for Polish patients
+  // Auto-detect gender from PESEL for Polish patients (unless in fallback mode)
   useEffect(() => {
-    if (patientType !== 'international' && formData.pesel && formData.pesel.length === 11) {
+    if (patientType !== 'international' && !formData.peselFallbackMode && formData.pesel && formData.pesel.length === 11) {
       const detectedGender = getGenderFromPesel(formData.pesel);
       if (detectedGender) {
         // Map to the values used in the select options
@@ -36,7 +36,7 @@ export default function PersonalDataStep({
         }
       }
     }
-  }, [formData.pesel, patientType, formData.sex]);
+  }, [formData.pesel, patientType, formData.sex, formData.peselFallbackMode]);
 
   // Validation logic
   useEffect(() => {
@@ -49,6 +49,11 @@ export default function PersonalDataStep({
     if (patientType !== 'international') {
       if (!formData.pesel || String(formData.pesel).replace(/\D/g, "").length !== 11) {
         errors.push("PESEL musi mieć 11 cyfr.");
+      }
+      
+      // For PESEL fallback mode, require manual DOB if not auto-extracted
+      if (formData.peselFallbackMode && !formData.dateOfBirth) {
+        errors.push("Data urodzenia jest wymagana.");
       }
     } else {
       if (!formData.documentCountry?.trim()) errors.push("Kraj wydania dokumentu jest wymagany.");
@@ -126,13 +131,28 @@ export default function PersonalDataStep({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Data urodzenia</label>
-            <input
-              type="text"
-              value={formatPolishDate(formData.dateOfBirth) || ""}
-              readOnly
-              className="w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-lg"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Data urodzenia {formData.peselFallbackMode ? "*" : ""}
+            </label>
+            {formData.peselFallbackMode ? (
+              // Fallback: manually entered DOB takes priority
+              <input
+                type="date"
+                value={formData.dateOfBirth ? String(formData.dateOfBirth).slice(0, 10) : ""}
+                onChange={(e) => update("dateOfBirth", e.target.value)}
+                readOnly={readOnlyFields}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            ) : (
+              // Valid PESEL: DOB extracted from PESEL (read-only)
+              <input
+                type="text"
+                value={formatPolishDate(formData.dateOfBirth) || ""}
+                readOnly
+                className="w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-lg"
+              />
+            )}
           </div>
         </div>
       ) : (
@@ -221,16 +241,43 @@ export default function PersonalDataStep({
         </div>
       )}
 
+      {/* Fallback mode notification for Polish patients */}
+      {formData.peselFallbackMode && patientType !== 'international' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-blue-900 text-sm">
+          <p className="font-medium">Tryb wprowadzania ręcznego</p>
+          <p>
+            PESEL nie przeszedł walidacji — wprowadź datę urodzenia i płeć ręcznie.
+            Te dane mają pierwszeństwo i zostaną sprawdzone przez personel.
+          </p>
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Płeć *</label>
         {patientType !== 'international' ? (
-          // For Polish patients, gender is auto-detected from PESEL
-          <input
-            type="text"
-            value={formData.sex === "Male" ? "Mężczyzna" : formData.sex === "Female" ? "Kobieta" : ""}
-            readOnly
-            className="w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-lg"
-          />
+          formData.peselFallbackMode ? (
+            // Fallback: manually entered gender takes priority
+            <select
+              value={formData.sex || ""}
+              onChange={(e) => update("sex", e.target.value)}
+              disabled={readOnlyFields}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="">Wybierz płeć</option>
+              <option value="Male">Mężczyzna</option>
+              <option value="Female">Kobieta</option>
+              <option value="Others">Inna</option>
+            </select>
+          ) : (
+            // Valid PESEL: gender extracted from PESEL (read-only)
+            <input
+              type="text"
+              value={formData.sex === "Male" ? "Mężczyzna" : formData.sex === "Female" ? "Kobieta" : ""}
+              readOnly
+              className="w-full border border-gray-200 bg-gray-50 rounded-lg px-4 py-3 text-lg"
+            />
+          )
         ) : (
           // For international patients, allow manual selection
           <select

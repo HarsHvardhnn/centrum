@@ -7,6 +7,7 @@ export default function InternationalRegistrationForm({
   mode = "full_registration",
   onSubmit,
   onAutoSave,
+  onFormDataChange,
   loading = false,
 }) {
   // Ensure we have the required international patient fields
@@ -30,6 +31,7 @@ export default function InternationalRegistrationForm({
       mode={mode}
       onSubmit={onSubmit}
       onAutoSave={onAutoSave}
+      onFormDataChange={onFormDataChange}
       loading={loading}
       stepComponents={StepComponents}
     />

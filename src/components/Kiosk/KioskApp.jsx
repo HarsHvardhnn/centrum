@@ -65,6 +65,29 @@ export default function KioskApp() {
   }, [step, resetToPin]);
 
   // Throttled save function to prevent infinite API calls
+  const handleFormDataChange = useCallback((updatedFormData) => {
+    setFormData(updatedFormData);
+
+    // Valid PESEL → type from PESEL age; fallback → type from manually entered DOB
+    const detectedType = detectPatientType(updatedFormData);
+    setPatientType((prev) => {
+      if (prev === detectedType) return prev;
+
+      if (
+        detectedType === PATIENT_TYPES.MINOR_UNDER_16 ||
+        detectedType === PATIENT_TYPES.MINOR_16_17
+      ) {
+        toast.info(
+          detectedType === PATIENT_TYPES.MINOR_UNDER_16
+            ? "Wykryto pacjenta poniżej 16 lat — wymagane dane i podpis opiekuna."
+            : "Wykryto pacjenta 16–17 lat — wymagane dane opiekuna oraz podpisy pacjenta i opiekuna."
+        );
+      }
+
+      return detectedType;
+    });
+  }, []);
+
   const throttledSaveKioskForm = useCallback((formData) => {
     const now = Date.now();
     const timeSinceLastSave = now - lastSaveRef.current;
@@ -113,17 +136,21 @@ export default function KioskApp() {
       mode,
       onSubmit: handleComplete,
       onAutoSave: throttledSaveKioskForm,
+      onFormDataChange: handleFormDataChange,
       loading,
     };
 
+    // Remount when patient type changes (e.g. fallback DOB switches adult → minor)
+    const formKey = `${patientType}-${formData.peselFallbackMode ? "fallback" : "valid"}`;
+
     switch (patientType) {
       case PATIENT_TYPES.INTERNATIONAL:
-        return <InternationalRegistrationForm {...commonProps} />;
+        return <InternationalRegistrationForm key={formKey} {...commonProps} />;
       case PATIENT_TYPES.MINOR_UNDER_16:
       case PATIENT_TYPES.MINOR_16_17:
-        return <MinorRegistrationForm {...commonProps} />;
+        return <MinorRegistrationForm key={formKey} {...commonProps} />;
       default:
-        return <AdultRegistrationForm {...commonProps} />;
+        return <AdultRegistrationForm key={formKey} {...commonProps} />;
     }
   };
 
@@ -169,7 +196,8 @@ export default function KioskApp() {
       const res = await checkKioskPesel(normalized);
       const updatedFormData = { 
         ...res.formData, 
-        pesel: normalized 
+        pesel: normalized,
+        peselFallbackMode: false, // Valid PESEL → DOB/gender from PESEL take priority
       };
       
       // Detect patient type based on PESEL/age
@@ -216,45 +244,28 @@ export default function KioskApp() {
 
   const handlePeselFallback = async () => {
     const normalized = normalizePesel(pesel);
-    
-    // Create form data with basic PESEL info for fallback
+
+    // Fallback: do NOT trust PESEL-extracted DOB/gender — user must enter them
     const fallbackFormData = {
       pesel: normalized,
+      peselFallbackMode: true,
+      dateOfBirth: "",
+      sex: "",
     };
-    
-    // Try to extract basic info from PESEL if possible, but don't fail if it doesn't work
-    try {
-      // Import at runtime to avoid circular dependencies
-      const peselUtils = await import("../../utils/peselUtils");
-      const analysis = peselUtils.analyzePeselForKiosk(normalized);
-      
-      if (analysis.valid && analysis.dateOfBirth) {
-        fallbackFormData.dateOfBirth = analysis.dateOfBirth;
-      }
-      
-      if (analysis.valid && analysis.gender) {
-        fallbackFormData.sex = analysis.gender === "Mężczyzna" ? "Male" : "Female";
-      }
-    } catch (error) {
-      console.warn("Could not analyze PESEL in fallback mode:", error);
-      // Continue without PESEL-derived data
-    }
-    
-    // Detect patient type based on available data (will default to adult if no age info)
-    const detectedType = detectPatientType(fallbackFormData);
-    
+
     setFormData(fallbackFormData);
     setMode("full_registration");
-    setPatientType(detectedType);
-    setSessionInfo(null); // No session info for fallback
+    setPatientType(PATIENT_TYPES.ADULT); // updated after manual DOB is entered
+    setSessionInfo(null);
     setStep(STEPS.FORM);
-    
-    // Reset fallback state
+
     setPeselAttempts(0);
     setShowPeselFallback(false);
     setLastErrorMessage("");
-    
-    toast.success("Kontynuowanie z wprowadzonym numerem PESEL. Dane zostaną zweryfikowane przez personel.");
+
+    toast.success(
+      "Kontynuowanie mimo błędu PESEL. Wprowadź datę urodzenia i płeć ręcznie — dane zweryfikuje personel."
+    );
   };
 
   const handleComplete = async (form) => {

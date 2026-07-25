@@ -12,15 +12,26 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
 
   const getPoint = (e) => {
     const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY,
-    };
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Get the correct client coordinates
+    let clientX, clientY;
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    
+    // Calculate coordinates relative to canvas, accounting for DPI scaling
+    const x = (clientX - rect.left) * dpr;
+    const y = (clientY - rect.top) * dpr;
+    
+    return { x, y };
   };
 
   const changeTimeoutRef = useRef(null);
@@ -54,56 +65,88 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    const ctx = canvas.getContext("2d");
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
+    const setupCanvas = () => {
+      const ctx = canvas.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      
+      // Force a reflow to get accurate dimensions
+      canvas.style.width = '';
+      canvas.style.height = '';
+      const rect = canvas.getBoundingClientRect();
+      
+      // Set canvas logical size (CSS pixels)
+      const logicalWidth = Math.floor(rect.width);
+      const logicalHeight = Math.floor(rect.height);
+      
+      // Set canvas actual size (device pixels)
+      canvas.width = logicalWidth * dpr;
+      canvas.height = logicalHeight * dpr;
+      
+      // Set canvas display size back to logical size
+      canvas.style.width = logicalWidth + 'px';
+      canvas.style.height = logicalHeight + 'px';
+      
+      // Scale the drawing context so everything draws at the correct size
+      ctx.scale(dpr, dpr);
+      
+      // Enhanced drawing settings for smooth signatures
+      ctx.strokeStyle = "#1f2937"; // Darker for better visibility
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
+      // Anti-aliasing for smoother lines
+      ctx.globalCompositeOperation = 'source-over';
+    };
     
-    // High-DPI canvas setup
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
-    ctx.scale(dpr, dpr);
+    // Setup canvas immediately and also after a brief delay to ensure proper sizing
+    setupCanvas();
+    const timeoutId = setTimeout(setupCanvas, 100);
     
-    // Enhanced drawing settings for smooth signatures
-    ctx.strokeStyle = "#1f2937"; // Darker for better visibility
-    ctx.lineWidth = 2.5;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    // Handle resize events
+    const handleResize = () => {
+      setTimeout(setupCanvas, 50);
+    };
     
-    // Anti-aliasing for smoother lines
-    ctx.globalCompositeOperation = 'source-over';
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   // Smooth line drawing using quadratic curves
   const drawSmoothLine = (ctx, points) => {
     if (points.length < 2) return;
     
+    const dpr = window.devicePixelRatio || 1;
+    
     if (points.length === 2) {
       // Draw straight line for first segment
       ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      ctx.lineTo(points[1].x, points[1].y);
+      ctx.moveTo(points[0].x / dpr, points[0].y / dpr);
+      ctx.lineTo(points[1].x / dpr, points[1].y / dpr);
       ctx.stroke();
       return;
     }
     
     // Draw smooth curve through points
     ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
+    ctx.moveTo(points[0].x / dpr, points[0].y / dpr);
     
     for (let i = 1; i < points.length - 1; i++) {
-      const xc = (points[i].x + points[i + 1].x) / 2;
-      const yc = (points[i].y + points[i + 1].y) / 2;
-      ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+      const xc = (points[i].x + points[i + 1].x) / 2 / dpr;
+      const yc = (points[i].y + points[i + 1].y) / 2 / dpr;
+      ctx.quadraticCurveTo(points[i].x / dpr, points[i].y / dpr, xc, yc);
     }
     
     // Draw final segment
     const lastPoint = points[points.length - 1];
     const secondLastPoint = points[points.length - 2];
-    ctx.quadraticCurveTo(secondLastPoint.x, secondLastPoint.y, lastPoint.x, lastPoint.y);
+    ctx.quadraticCurveTo(secondLastPoint.x / dpr, secondLastPoint.y / dpr, lastPoint.x / dpr, lastPoint.y / dpr);
     ctx.stroke();
   };
 
@@ -111,22 +154,39 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
     e.preventDefault();
     e.stopPropagation();
     
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
     drawing.current = true;
     const point = getPoint(e);
     lastPoint.current = point;
     currentStroke.current = [point];
     
     // Draw initial dot
-    const ctx = canvasRef.current.getContext("2d");
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    
+    ctx.save();
+    ctx.fillStyle = ctx.strokeStyle;
     ctx.beginPath();
-    ctx.arc(point.x, point.y, 1.25, 0, 2 * Math.PI);
+    ctx.arc(point.x / dpr, point.y / dpr, 1.25, 0, 2 * Math.PI);
     ctx.fill();
+    ctx.restore();
+    
+    // Immediate feedback
+    if (isEmpty) {
+      setIsEmpty(false);
+      setHasContent(true);
+    }
   };
 
   const draw = (e) => {
     if (!drawing.current) return;
     e.preventDefault();
     e.stopPropagation();
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     
     const point = getPoint(e);
     const lastPt = lastPoint.current;
@@ -136,20 +196,23 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
       const distance = Math.sqrt(
         Math.pow(point.x - lastPt.x, 2) + Math.pow(point.y - lastPt.y, 2)
       );
-      if (distance < 2) return; // Minimum distance threshold
+      if (distance < 3) return; // Slightly higher threshold for better performance
     }
     
     currentStroke.current.push(point);
-    lastPoint.current = point;
     
-    // Draw smooth line with last few points for better curves
-    const ctx = canvasRef.current.getContext("2d");
-    const strokePoints = currentStroke.current;
-    const pointsToUse = strokePoints.slice(-4); // Use last 4 points for smoothing
+    // Draw simple line segment for immediate feedback
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
     
-    if (pointsToUse.length >= 2) {
-      drawSmoothLine(ctx, pointsToUse);
+    if (lastPt) {
+      ctx.beginPath();
+      ctx.moveTo(lastPt.x / dpr, lastPt.y / dpr);
+      ctx.lineTo(point.x / dpr, point.y / dpr);
+      ctx.stroke();
     }
+    
+    lastPoint.current = point;
     
     // Update empty state immediately for responsiveness
     if (isEmpty) {
@@ -164,12 +227,6 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
     e.stopPropagation();
     
     drawing.current = false;
-    
-    // Final smooth drawing of the complete stroke
-    if (currentStroke.current.length > 1) {
-      const ctx = canvasRef.current.getContext("2d");
-      drawSmoothLine(ctx, currentStroke.current);
-    }
     
     // Reset stroke data
     currentStroke.current = [];
@@ -248,16 +305,32 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
       }`}>
         <canvas
           ref={canvasRef}
-          className="w-full h-40 cursor-crosshair touch-none"
-          style={{ touchAction: 'none' }}
+          className="w-full h-40 cursor-crosshair touch-none select-none"
+          style={{ 
+            touchAction: 'none',
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
+            position: 'relative'
+          }}
           onMouseDown={startDraw}
           onMouseMove={draw}
           onMouseUp={endDraw}
           onMouseLeave={endDraw}
-          onTouchStart={startDraw}
-          onTouchMove={draw}
-          onTouchEnd={endDraw}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            startDraw(e);
+          }}
+          onTouchMove={(e) => {
+            e.preventDefault();
+            draw(e);
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            endDraw(e);
+          }}
           onContextMenu={(e) => e.preventDefault()}
+          onDragStart={(e) => e.preventDefault()}
         />
       </div>
       

@@ -7,10 +7,13 @@ export default function AdultRegistrationForm({
   mode = "full_registration",
   onSubmit,
   onAutoSave,
+  onFormDataChange,
   loading = false,
 }) {
-  // Determine if this is an international patient
-  const patientType = initialData.isInternationalPatient ? PATIENT_TYPES.INTERNATIONAL : PATIENT_TYPES.ADULT;
+  // Prefer detected type (fallback DOB can mark minor; parent switches form when that happens)
+  const patientType = initialData.isInternationalPatient
+    ? PATIENT_TYPES.INTERNATIONAL
+    : PATIENT_TYPES.ADULT;
 
   return (
     <KioskStepWizard
@@ -19,6 +22,7 @@ export default function AdultRegistrationForm({
       mode={mode}
       onSubmit={onSubmit}
       onAutoSave={onAutoSave}
+      onFormDataChange={onFormDataChange}
       loading={loading}
       stepComponents={StepComponents}
     />

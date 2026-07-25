@@ -1,46 +1,74 @@
 /**
- * Calculate age from PESEL or date of birth
+ * Age from a Date / ISO date string
  */
-function calculateAge(pesel, dateOfBirth) {
-  let birthDate;
-  
-  if (pesel && pesel.length === 11) {
-    // Extract date from PESEL
-    const year = parseInt(pesel.substring(0, 2), 10);
-    const month = parseInt(pesel.substring(2, 4), 10);
-    const day = parseInt(pesel.substring(4, 6), 10);
-    
-    // Determine century based on month
-    let fullYear;
-    if (month > 80) {
-      fullYear = 1800 + year;
-    } else if (month > 60) {
-      fullYear = 2200 + year;
-    } else if (month > 40) {
-      fullYear = 2100 + year;
-    } else if (month > 20) {
-      fullYear = 2000 + year;
-    } else {
-      fullYear = 1900 + year;
-    }
-    
-    const adjustedMonth = ((month - 1) % 20) + 1;
-    birthDate = new Date(fullYear, adjustedMonth - 1, day);
-  } else if (dateOfBirth) {
-    birthDate = new Date(dateOfBirth);
-  } else {
-    return null;
-  }
-  
+function ageFromDate(dateOfBirth) {
+  if (!dateOfBirth) return null;
+  const birthDate = new Date(dateOfBirth);
+  if (Number.isNaN(birthDate.getTime())) return null;
+
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
-  
+
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
     age--;
   }
-  
+
   return age;
+}
+
+/**
+ * Age from PESEL (century from month encoding)
+ */
+function ageFromPesel(pesel) {
+  if (!pesel || String(pesel).replace(/\D/g, "").length !== 11) return null;
+
+  const digits = String(pesel).replace(/\D/g, "");
+  const year = parseInt(digits.substring(0, 2), 10);
+  const month = parseInt(digits.substring(2, 4), 10);
+  const day = parseInt(digits.substring(4, 6), 10);
+
+  let fullYear;
+  if (month > 80) {
+    fullYear = 1800 + year;
+  } else if (month > 60) {
+    fullYear = 2200 + year;
+  } else if (month > 40) {
+    fullYear = 2100 + year;
+  } else if (month > 20) {
+    fullYear = 2000 + year;
+  } else {
+    fullYear = 1900 + year;
+  }
+
+  const adjustedMonth = ((month - 1) % 20) + 1;
+  const birthDate = new Date(fullYear, adjustedMonth - 1, day);
+  if (
+    birthDate.getFullYear() !== fullYear ||
+    birthDate.getMonth() !== adjustedMonth - 1 ||
+    birthDate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return ageFromDate(birthDate);
+}
+
+/**
+ * Calculate age from PESEL and/or date of birth.
+ * - Valid PESEL path: prefer age extracted from PESEL
+ * - Fallback path (peselFallbackMode): prefer manually entered dateOfBirth
+ */
+function calculateAge(pesel, dateOfBirth, { preferManualDob = false } = {}) {
+  if (preferManualDob) {
+    const manualAge = ageFromDate(dateOfBirth);
+    if (manualAge !== null) return manualAge;
+    return ageFromPesel(pesel);
+  }
+
+  const peselAge = ageFromPesel(pesel);
+  if (peselAge !== null) return peselAge;
+  return ageFromDate(dateOfBirth);
 }
 
 export const PATIENT_TYPES = {
@@ -65,37 +93,20 @@ export function detectPatientType(formData) {
     return PATIENT_TYPES.INTERNATIONAL;
   }
 
-  // Polish patient with PESEL
-  if (formData.pesel) {
-    const age = calculateAge(formData.pesel, formData.dateOfBirth);
-    
-    if (age < 16) {
-      return PATIENT_TYPES.MINOR_UNDER_16;
-    } else if (age >= 16 && age < 18) {
-      return PATIENT_TYPES.MINOR_16_17;
-    } else {
-      return PATIENT_TYPES.ADULT;
-    }
+  // Valid PESEL → DOB/gender/age from PESEL; fallback mode → prefer manually entered DOB
+  const preferManualDob = !!formData.peselFallbackMode;
+  const age = calculateAge(formData.pesel, formData.dateOfBirth, { preferManualDob });
+
+  if (age === null) {
+    return PATIENT_TYPES.ADULT;
   }
 
-  // Fallback: check explicit age from date of birth
-  if (formData.dateOfBirth) {
-    const birthDate = new Date(formData.dateOfBirth);
-    const today = new Date();
-    const age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) 
-      ? age - 1 
-      : age;
-
-    if (actualAge < 16) {
-      return PATIENT_TYPES.MINOR_UNDER_16;
-    } else if (actualAge >= 16 && actualAge < 18) {
-      return PATIENT_TYPES.MINOR_16_17;
-    }
+  if (age < 16) {
+    return PATIENT_TYPES.MINOR_UNDER_16;
   }
-
+  if (age >= 16 && age < 18) {
+    return PATIENT_TYPES.MINOR_16_17;
+  }
   return PATIENT_TYPES.ADULT;
 }
 

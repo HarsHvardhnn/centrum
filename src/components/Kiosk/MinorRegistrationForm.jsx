@@ -7,9 +7,10 @@ export default function MinorRegistrationForm({
   mode = "full_registration",
   onSubmit,
   onAutoSave,
+  onFormDataChange,
   loading = false,
 }) {
-  // Detect the specific minor patient type
+  // Detect the specific minor patient type (fallback prefers manual DOB)
   const patientType = detectPatientType(initialData);
 
   // Ensure we have the required guardian fields with defaults
@@ -35,6 +36,7 @@ export default function MinorRegistrationForm({
       mode={mode}
       onSubmit={onSubmit}
       onAutoSave={onAutoSave}
+      onFormDataChange={onFormDataChange}
       loading={loading}
       stepComponents={StepComponents}
     />
