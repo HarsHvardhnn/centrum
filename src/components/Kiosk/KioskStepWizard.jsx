@@ -52,11 +52,14 @@ export default function KioskStepWizard({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [formData, setFormData] = useState(initialData);
   const [stepValidation, setStepValidation] = useState({});
+  // Only show validation messages after the user tries to continue
+  const [showErrors, setShowErrors] = useState(false);
 
   const currentStep = steps[currentStepIndex];
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === steps.length - 1;
   const totalSteps = steps.length;
+  const currentValidation = stepValidation[currentStep.id];
 
   const autoSaveTimeoutRef = useRef(null);
   const lastAutoSaveRef = useRef(Date.now());
@@ -103,39 +106,44 @@ export default function KioskStepWizard({
     };
   }, []);
 
-  const validateCurrentStep = useCallback((data) => {
-    // Get the current step's validation state
-    const currentValidation = stepValidation[currentStep.id];
+  const handleValidationChange = useCallback((validation) => {
+    setStepValidation(prev => ({ ...prev, [currentStep.id]: validation }));
+  }, [currentStep.id]);
+
+  const validateCurrentStep = useCallback(() => {
     if (currentValidation) {
       return currentValidation;
     }
-    
+
     // Default to invalid if no validation state is available
     return { isValid: false, errors: ["Sprawdź wszystkie pola w tym kroku."] };
-  }, [stepValidation, currentStep.id]);
+  }, [currentValidation]);
 
   const goToNextStep = useCallback(() => {
-    const validation = validateCurrentStep(formData);
+    const validation = validateCurrentStep();
     setStepValidation(prev => ({ ...prev, [currentStep.id]: validation }));
-    
+
     if (validation.isValid && !isLastStep) {
+      setShowErrors(false);
       setCurrentStepIndex(prev => prev + 1);
     } else if (validation.isValid && isLastStep) {
+      setShowErrors(false);
       onSubmit?.(formData);
-    } else if (!validation.isValid) {
-      // Don't proceed if validation fails - button should be disabled anyway
-      console.warn("Cannot proceed to next step due to validation errors:", validation.errors);
+    } else {
+      setShowErrors(true);
     }
   }, [currentStep.id, formData, isLastStep, onSubmit, validateCurrentStep]);
 
   const goToPreviousStep = useCallback(() => {
     if (!isFirstStep) {
+      setShowErrors(false);
       setCurrentStepIndex(prev => prev - 1);
     }
   }, [isFirstStep]);
 
   const goToStep = useCallback((stepIndex) => {
     if (stepIndex >= 0 && stepIndex < totalSteps) {
+      setShowErrors(false);
       setCurrentStepIndex(stepIndex);
     }
   }, [totalSteps]);
@@ -182,16 +190,14 @@ export default function KioskStepWizard({
           updateFormData={updateFormData}
           patientType={patientType}
           mode={mode}
-          validation={stepValidation[currentStep.id]}
-          onValidationChange={(validation) => 
-            setStepValidation(prev => ({ ...prev, [currentStep.id]: validation }))
-          }
+          validation={currentValidation}
+          onValidationChange={handleValidationChange}
           onGoToStep={goToStep}
         />
       </div>
 
-      {/* Validation Error Summary */}
-      {stepValidation[currentStep.id] && !stepValidation[currentStep.id].isValid && (
+      {/* Validation Error Summary — only after user attempts to continue */}
+      {showErrors && currentValidation && !currentValidation.isValid && (
         <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl">
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
@@ -205,7 +211,7 @@ export default function KioskStepWizard({
               </h3>
               <div className="mt-2 text-sm text-red-700">
                 <ul className="space-y-1">
-                  {stepValidation[currentStep.id].errors.map((error, index) => (
+                  {currentValidation.errors.map((error, index) => (
                     <li key={index}>• {error}</li>
                   ))}
                 </ul>
@@ -229,7 +235,7 @@ export default function KioskStepWizard({
         <button
           type="button"
           onClick={goToNextStep}
-          disabled={loading || (stepValidation[currentStep.id] && !stepValidation[currentStep.id].isValid)}
+          disabled={loading}
           className="px-8 py-3 rounded-xl bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold transition-colors"
         >
           {loading ? "Zapisywanie..." : isLastStep ? "Zakończ rejestrację" : "Dalej"}

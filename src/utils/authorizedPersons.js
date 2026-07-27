@@ -44,7 +44,12 @@ export function mapPatientAuthorizationFields(patient = {}) {
   if (patient.authorizedPersons?.length) {
     return {
       authorizationChoice: patient.authorizationChoice || "authorize",
-      authorizedPersons: patient.authorizedPersons,
+      authorizedPersons: patient.authorizedPersons.map((person) => ({
+        ...EMPTY_AUTHORIZED_PERSON(),
+        ...person,
+        street: person.street || person.address || "",
+        phoneCode: person.phoneCode || "+48",
+      })),
     };
   }
   const persons = contactFieldsToAuthorizedPersons(patient);

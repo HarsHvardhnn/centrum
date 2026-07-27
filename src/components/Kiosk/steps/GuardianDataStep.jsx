@@ -127,24 +127,31 @@ export default function GuardianDataStep({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
+        {/* Country code + phone: same control height, bottom-aligned */}
+        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+          <div className="w-full sm:w-40 shrink-0">
             <label className="block text-sm font-medium text-gray-700 mb-2">Kod kraju</label>
             <select
               value={formData.guardianPhoneCode || "+48"}
               onChange={(e) => update("guardianPhoneCode", e.target.value)}
               disabled={readOnlyFields}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              className="w-full h-14 border border-gray-300 rounded-lg px-3 text-lg text-center bg-white focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              title={PHONE_COUNTRY_CODES.find(c => c.code === (formData.guardianPhoneCode || "+48"))?.country || ""}
             >
               {PHONE_COUNTRY_CODES.map((country) => (
-                <option key={country.code} value={country.code}>
+                <option key={country.code} value={country.code} title={country.country}>
                   {country.code} {country.country}
                 </option>
               ))}
             </select>
           </div>
-          <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Telefon opiekuna *</label>
+          <div className="flex-1 min-w-0">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Telefon opiekuna *
+              <span className="text-xs text-gray-500 ml-2">
+                ({getRequiredPhoneLength(formData.guardianPhoneCode || "+48")} cyfr)
+              </span>
+            </label>
             <input
               type="tel"
               value={formData.guardianPhone || ""}
@@ -153,10 +160,10 @@ export default function GuardianDataStep({
                 const maxLength = getRequiredPhoneLength(formData.guardianPhoneCode || "+48");
                 update("guardianPhone", formatted.slice(0, maxLength));
               }}
-              placeholder={(formData.guardianPhoneCode || "+48") === "+48" ? "123456789" : ""}
+              placeholder={(formData.guardianPhoneCode || "+48") === "+48" ? "123 456 789" : `${getRequiredPhoneLength(formData.guardianPhoneCode || "+48")} cyfr`}
               maxLength={getRequiredPhoneLength(formData.guardianPhoneCode || "+48")}
               readOnly={readOnlyFields}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              className="w-full h-14 border border-gray-300 rounded-lg px-4 text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
               required
             />
           </div>
@@ -174,18 +181,6 @@ export default function GuardianDataStep({
           />
         </div>
       </div>
-
-      {/* Show validation errors */}
-      {validation?.errors?.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h4 className="text-red-800 font-medium mb-2">Popraw następujące błędy:</h4>
-          <ul className="list-disc list-inside text-red-700 text-sm space-y-1">
-            {validation.errors.map((error, index) => (
-              <li key={index}>{error}</li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }

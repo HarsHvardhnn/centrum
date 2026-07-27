@@ -294,18 +294,6 @@ export default function PersonalDataStep({
           </select>
         )}
       </div>
-
-      {/* Show validation errors */}
-      {validation?.errors?.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h4 className="text-red-800 font-medium mb-2">Popraw następujące błędy:</h4>
-          <ul className="list-disc list-inside text-red-700 text-sm space-y-1">
-            {validation.errors.map((error, index) => (
-              <li key={index}>{error}</li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }

@@ -432,14 +432,14 @@ export default function PatientDataEditModal({
           <div className="bg-green-50 rounded-xl p-6 mb-6">
             <h3 className="text-lg font-semibold text-green-900 mb-4">Dane kontaktowe</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-4">
+              <div className="w-full sm:w-40 shrink-0">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Kod kraju</label>
                 <select
                   value={editData.phoneCode || "+48"}
                   onChange={(e) => update("phoneCode", e.target.value)}
                   readOnly={readOnlyFields}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full h-14 border border-gray-300 rounded-lg px-3 text-lg text-center bg-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 >
                   {PHONE_COUNTRY_CODES.map((country) => (
                     <option key={country.code} value={country.code}>
@@ -448,7 +448,7 @@ export default function PatientDataEditModal({
                   ))}
                 </select>
               </div>
-              <div className="md:col-span-2">
+              <div className="flex-1 min-w-0">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Telefon *</label>
                 <input
                   type="tel"
@@ -458,7 +458,7 @@ export default function PatientDataEditModal({
                     update("phone", cleaned);
                   }}
                   readOnly={readOnlyFields}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full h-14 border border-gray-300 rounded-lg px-4 text-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   placeholder={(editData.phoneCode || "+48") === "+48" ? "123 456 789" : ""}
                 />
               </div>
@@ -536,31 +536,36 @@ export default function PatientDataEditModal({
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Telefon opiekuna *</label>
-                  <div className="grid grid-cols-3 gap-4">
-                    <select
-                      value={editData.guardianPhoneCode || "+48"}
-                      onChange={(e) => update("guardianPhoneCode", e.target.value)}
-                      readOnly={readOnlyFields}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                    >
-                      {PHONE_COUNTRY_CODES.map((country) => (
-                        <option key={country.code} value={country.code}>
-                          {country.code}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="tel"
-                      value={formatPhoneForDisplay(editData.guardianPhone || "", editData.guardianPhoneCode || "+48")}
-                      onChange={(e) => {
-                        const cleaned = formatPhoneNumber(e.target.value);
-                        update("guardianPhone", cleaned);
-                      }}
-                      readOnly={readOnlyFields}
-                      className="col-span-2 w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                      placeholder={(editData.guardianPhoneCode || "+48") === "+48" ? "123 456 789" : ""}
-                    />
+                  <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                    <div className="w-full sm:w-40 shrink-0">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Kod kraju</label>
+                      <select
+                        value={editData.guardianPhoneCode || "+48"}
+                        onChange={(e) => update("guardianPhoneCode", e.target.value)}
+                        readOnly={readOnlyFields}
+                        className="w-full h-14 border border-gray-300 rounded-lg px-3 text-lg text-center bg-white focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                      >
+                        {PHONE_COUNTRY_CODES.map((country) => (
+                          <option key={country.code} value={country.code}>
+                            {country.code} {country.country}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Telefon opiekuna *</label>
+                      <input
+                        type="tel"
+                        value={formatPhoneForDisplay(editData.guardianPhone || "", editData.guardianPhoneCode || "+48")}
+                        onChange={(e) => {
+                          const cleaned = formatPhoneNumber(e.target.value);
+                          update("guardianPhone", cleaned);
+                        }}
+                        readOnly={readOnlyFields}
+                        className="w-full h-14 border border-gray-300 rounded-lg px-4 text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                        placeholder={(editData.guardianPhoneCode || "+48") === "+48" ? "123 456 789" : ""}
+                      />
+                    </div>
                   </div>
                 </div>
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { PATIENT_TYPES } from "../PatientTypeDetector";
+import { PHONE_COUNTRY_CODES } from "../../../constants/phoneCountryCodes";
 import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from "../../../utils/phoneUtils";
 import { formatPolishPostalCode, validatePolishPostalCode } from "../../../utils/postalCodeUtils";
 import { formatPolishDate } from "../../../utils/dateUtils";
@@ -587,16 +588,18 @@ export default function MinorConsentsStep({
                 type="checkbox"
                 checked={!!formData.grantsAuthorization}
                 onChange={(e) => {
-                  update("grantsAuthorization", e.target.checked);
-                  if (e.target.checked) {
-                    update("deniesAuthorization", false);
-                    // Initialize first person if not exists
-                    if (!formData.authorizedPersons || formData.authorizedPersons.length === 0) {
-                      update("authorizedPersons", [{}]);
-                    }
-                  } else {
-                    update("authorizedPersons", []);
-                  }
+                  const checked = e.target.checked;
+                  updateFormData({
+                    grantsAuthorization: checked,
+                    deniesAuthorization: checked ? false : formData.deniesAuthorization,
+                    authorizationChoice: checked ? "authorize" : "",
+                    authorizedPersons:
+                      checked && (!formData.authorizedPersons || formData.authorizedPersons.length === 0)
+                        ? [{}]
+                        : checked
+                          ? formData.authorizedPersons
+                          : [],
+                  });
                 }}
                 className="mt-1 w-6 h-6 rounded border-gray-400 text-blue-700 focus:ring-blue-500"
               />
@@ -615,11 +618,13 @@ export default function MinorConsentsStep({
                 type="checkbox"
                 checked={!!formData.deniesAuthorization}
                 onChange={(e) => {
-                  update("deniesAuthorization", e.target.checked);
-                  if (e.target.checked) {
-                    update("grantsAuthorization", false);
-                    update("authorizedPersons", []);
-                  }
+                  const checked = e.target.checked;
+                  updateFormData({
+                    deniesAuthorization: checked,
+                    grantsAuthorization: checked ? false : formData.grantsAuthorization,
+                    authorizationChoice: checked ? "none" : "",
+                    authorizedPersons: checked ? [] : formData.authorizedPersons,
+                  });
                 }}
                 className="mt-1 w-6 h-6 rounded border-gray-400 text-gray-700 focus:ring-gray-500"
               />
@@ -750,17 +755,22 @@ export default function MinorConsentsStep({
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Numer telefonu *
                     </label>
-                    <div className="flex gap-2 w-full max-w-full">
+                    <div className="flex flex-col sm:flex-row sm:items-end gap-2 w-full max-w-full">
                       <select
                         value={person.phoneCode || "+48"}
                         onChange={(e) => {
                           const newPersons = [...formData.authorizedPersons];
-                          newPersons[index] = { ...person, phoneCode: e.target.value };
+                          newPersons[index] = { ...person, phoneCode: e.target.value, phone: "" };
                           update("authorizedPersons", newPersons);
                         }}
-                        className="w-20 flex-shrink-0 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full sm:w-40 shrink-0 h-12 px-3 border border-gray-300 rounded-lg text-center bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        title={PHONE_COUNTRY_CODES.find(c => c.code === (person.phoneCode || "+48"))?.country || ""}
                       >
-                        <option value="+48">+48</option>
+                        {PHONE_COUNTRY_CODES.map((country) => (
+                          <option key={country.code} value={country.code} title={country.country}>
+                            {country.code} {country.country}
+                          </option>
+                        ))}
                       </select>
                       <input
                         type="tel"
@@ -768,18 +778,17 @@ export default function MinorConsentsStep({
                         onChange={(e) => {
                           const phoneCode = person.phoneCode || "+48";
                           const cleaned = formatPhoneNumber(e.target.value);
-                          const validation = validatePhoneNumber(cleaned, phoneCode);
-                          
+                          const maxLength = validatePhoneNumber("", phoneCode).maxLength;
                           const newPersons = [...formData.authorizedPersons];
-                          newPersons[index] = { ...person, phone: cleaned };
+                          newPersons[index] = { ...person, phone: cleaned.slice(0, maxLength) };
                           update("authorizedPersons", newPersons);
                         }}
-                        className={`flex-1 min-w-0 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        className={`flex-1 min-w-0 h-12 px-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           person.phone && !validatePhoneNumber(formatPhoneNumber(person.phone), person.phoneCode || "+48").valid 
                             ? 'border-red-300' : 'border-gray-300'
                         }`}
-                        placeholder="123 456 789"
-                        maxLength={validatePhoneNumber("", person.phoneCode || "+48").maxLength + 2} // +2 for spaces
+                        placeholder={(person.phoneCode || "+48") === "+48" ? "123 456 789" : `${validatePhoneNumber("", person.phoneCode || "+48").maxLength} cyfr`}
+                        maxLength={validatePhoneNumber("", person.phoneCode || "+48").maxLength + 2}
                       />
                     </div>
                     {person.phone && !validatePhoneNumber(formatPhoneNumber(person.phone), person.phoneCode || "+48").valid && (
@@ -887,18 +896,6 @@ export default function MinorConsentsStep({
           </div>
         )}
       </div>
-
-      {/* Show validation errors */}
-      {validation?.errors?.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h4 className="text-red-800 font-medium mb-2">Popraw następujące błędy:</h4>
-          <ul className="list-disc list-inside text-red-700 text-sm space-y-1">
-            {validation.errors.map((error, index) => (
-              <li key={index}>{error}</li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {/* Patient Data Edit Modal */}
       <PatientDataEditModal

@@ -22,6 +22,7 @@ import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import PatientKioskCorrectionPanel from "./PatientKioskCorrectionPanel";
 import { mapPatientAuthorizationFields } from "../../utils/authorizedPersons";
+import { normalizeVoivodeship } from "../../utils/voivodeshipUtils";
 
 /** Default when API omits phoneCode or number is national digits only. */
 const DEFAULT_PATIENT_PHONE_CODE = "+48";
@@ -625,7 +626,7 @@ export default function UserManagement() {
         address: patientDetails.address,
         city: patientDetails.city,
         pinCode: patientDetails.pinCode,
-        state: patientDetails.state,
+        state: normalizeVoivodeship(patientDetails.state || patientDetails.province || ""),
         country: patientDetails.country,
         district: patientDetails.district,
         isInternationalPatient: patientDetails.isInternationalPatient || false,

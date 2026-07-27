@@ -63,15 +63,15 @@ export default function ContactStep({
           </div>
         )}
 
-        {/* Improved phone number layout - better proportions */}
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-          <div>
+        {/* Country code + phone: same control height, bottom-aligned */}
+        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+          <div className="w-full sm:w-40 shrink-0">
             <label className="block text-sm font-medium text-gray-700 mb-2">Kod kraju</label>
             <select
               value={formData.phoneCode || "+48"}
               onChange={(e) => update("phoneCode", e.target.value)}
               disabled={readOnlyFields}
-              className="w-full border border-gray-300 rounded-lg px-3 py-3 text-lg bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className="w-full h-14 border border-gray-300 rounded-lg px-3 text-lg text-center bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               title={PHONE_COUNTRY_CODES.find(c => c.code === (formData.phoneCode || "+48"))?.country || ""}
             >
               {PHONE_COUNTRY_CODES.map((country) => (
@@ -81,9 +81,9 @@ export default function ContactStep({
               ))}
             </select>
           </div>
-          <div className="sm:col-span-4">
+          <div className="flex-1 min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Telefon * 
+              Telefon *
               <span className="text-xs text-gray-500 ml-2">
                 ({getRequiredPhoneLength(formData.phoneCode || "+48")} cyfr)
               </span>
@@ -99,7 +99,7 @@ export default function ContactStep({
               placeholder={(formData.phoneCode || "+48") === "+48" ? "123 456 789" : `${getRequiredPhoneLength(formData.phoneCode || "+48")} cyfr`}
               maxLength={getRequiredPhoneLength(formData.phoneCode || "+48")}
               readOnly={readOnlyFields}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className="w-full h-14 border border-gray-300 rounded-lg px-4 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               required
             />
           </div>
@@ -117,18 +117,6 @@ export default function ContactStep({
           />
         </div>
       </div>
-
-      {/* Show validation errors */}
-      {validation?.errors?.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h4 className="text-red-800 font-medium mb-2">Popraw następujące błędy:</h4>
-          <ul className="list-disc list-inside text-red-700 text-sm space-y-1">
-            {validation.errors.map((error, index) => (
-              <li key={index}>{error}</li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }

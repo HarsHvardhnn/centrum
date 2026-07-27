@@ -1,6 +1,7 @@
 // AddressForm.jsx
 
 import { useFormContext } from "../../context/SubStepFormContext";
+import { VOIVODESHIPS, normalizeVoivodeship, formatVoivodeshipLabel } from "../../utils/voivodeshipUtils";
 
 const AddressForm = () => {
   const { formData, updateFormData } = useFormContext();
@@ -9,6 +10,8 @@ const AddressForm = () => {
     const { name, value, type, checked } = e.target;
     updateFormData(name, type === 'checkbox' ? checked : value);
   };
+
+  const stateValue = normalizeVoivodeship(formData.state || formData.province || "");
 
   return (
     <div className="space-y-4">
@@ -53,27 +56,16 @@ const AddressForm = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">Województwo</label>
           <select 
             name="state"
-            value={formData.state}
-            onChange={handleChange}
+            value={stateValue}
+            onChange={(e) => updateFormData("state", normalizeVoivodeship(e.target.value))}
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           >
-            <option value="" disabled>Wybierz województwo</option>
-            <option value="dolnoslaskie">Dolnośląskie</option>
-            <option value="kujawsko-pomorskie">Kujawsko-Pomorskie</option>
-            <option value="lubelskie">Lubelskie</option>
-            <option value="lubuskie">Lubuskie</option>
-            <option value="lodzkie">Łódzkie</option>
-            <option value="malopolskie">Małopolskie</option>
-            <option value="mazowieckie">Mazowieckie</option>
-            <option value="opolskie">Opolskie</option>
-            <option value="podkarpackie">Podkarpackie</option>
-            <option value="podlaskie">Podlaskie</option>
-            <option value="pomorskie">Pomorskie</option>
-            <option value="slaskie">Śląskie</option>
-            <option value="swietokrzyskie">Świętokrzyskie</option>
-            <option value="warminsko-mazurskie">Warmińsko-Mazurskie</option>
-            <option value="wielkopolskie">Wielkopolskie</option>
-            <option value="zachodniopomorskie">Zachodniopomorskie</option>
+            <option value="">Wybierz województwo</option>
+            {VOIVODESHIPS.map((voivodeship) => (
+              <option key={voivodeship} value={voivodeship}>
+                {formatVoivodeshipLabel(voivodeship)}
+              </option>
+            ))}
           </select>
         </div>
         <div>
