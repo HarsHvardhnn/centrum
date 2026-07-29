@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { formatPolishPostalCode, validatePolishPostalCode } from "../../utils/postalCodeUtils";
 import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from "../../utils/phoneUtils";
 import { getGenderFromPesel } from "../../utils/peselUtils";
-import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes.jsx";
+import PhoneCountrySelect from "./PhoneCountrySelect";
 
 const VOIVODESHIPS = [
   "dolnośląskie", "kujawsko-pomorskie", "lubelskie", "lubuskie", "łódzkie",
@@ -433,20 +433,13 @@ export default function PatientDataEditModal({
             <h3 className="text-lg font-semibold text-green-900 mb-4">Dane kontaktowe</h3>
             
             <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-4">
-              <div className="w-full sm:w-40 shrink-0">
+              <div className="w-full sm:w-44 shrink-0">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Kod kraju</label>
-                <select
+                <PhoneCountrySelect
                   value={editData.phoneCode || "+48"}
-                  onChange={(e) => update("phoneCode", e.target.value)}
-                  readOnly={readOnlyFields}
-                  className="w-full h-14 border border-gray-300 rounded-lg px-3 text-lg text-center bg-white focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                >
-                  {PHONE_COUNTRY_CODES.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {country.code} {country.country}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(code) => update("phoneCode", code)}
+                  disabled={readOnlyFields}
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Telefon *</label>
@@ -480,11 +473,11 @@ export default function PatientDataEditModal({
           {/* Guardian Section (if required) */}
           {requiresGuardian && (
             <div className="bg-yellow-50 rounded-xl p-6 mb-6">
-              <h3 className="text-lg font-semibold text-yellow-900 mb-4">Dane opiekuna prawnego</h3>
+              <h3 className="text-lg font-semibold text-yellow-900 mb-4">Dane osoby reprezentującej pacjenta</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Imię opiekuna *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Imię *</label>
                   <input
                     type="text"
                     value={editData.guardianFirstName || ""}
@@ -495,7 +488,7 @@ export default function PatientDataEditModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Nazwisko opiekuna *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nazwisko *</label>
                   <input
                     type="text"
                     value={editData.guardianLastName || ""}
@@ -506,7 +499,7 @@ export default function PatientDataEditModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">PESEL opiekuna *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">PESEL *</label>
                   <input
                     type="text"
                     value={editData.guardianPesel || ""}
@@ -521,7 +514,7 @@ export default function PatientDataEditModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Pokrewieństwo *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Kim jesteś względem pacjenta *</label>
                   <select
                     value={editData.guardianRelation || "matka"}
                     onChange={(e) => update("guardianRelation", e.target.value)}
@@ -530,30 +523,25 @@ export default function PatientDataEditModal({
                   >
                     <option value="matka">Matka</option>
                     <option value="ojciec">Ojciec</option>
+                    <option value="przedstawiciel_ustawowy">Przedstawiciel ustawowy</option>
                     <option value="opiekun_prawny">Opiekun prawny</option>
+                    <option value="kurator">Kurator</option>
                     <option value="opiekun_faktyczny">Opiekun faktyczny</option>
                   </select>
                 </div>
 
                 <div className="md:col-span-2">
                   <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-                    <div className="w-full sm:w-40 shrink-0">
+                    <div className="w-full sm:w-44 shrink-0">
                       <label className="block text-sm font-medium text-gray-700 mb-2">Kod kraju</label>
-                      <select
+                      <PhoneCountrySelect
                         value={editData.guardianPhoneCode || "+48"}
-                        onChange={(e) => update("guardianPhoneCode", e.target.value)}
-                        readOnly={readOnlyFields}
-                        className="w-full h-14 border border-gray-300 rounded-lg px-3 text-lg text-center bg-white focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                      >
-                        {PHONE_COUNTRY_CODES.map((country) => (
-                          <option key={country.code} value={country.code}>
-                            {country.code} {country.country}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(code) => update("guardianPhoneCode", code)}
+                        disabled={readOnlyFields}
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Telefon opiekuna *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Telefon *</label>
                       <input
                         type="tel"
                         value={formatPhoneForDisplay(editData.guardianPhone || "", editData.guardianPhoneCode || "+48")}

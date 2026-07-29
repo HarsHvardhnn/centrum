@@ -21,9 +21,26 @@ export function buildCloudinaryPdfUrl(publicIdOrPath) {
 }
 
 /**
+ * Turn a Cloudinary public_id into an image HTTPS URL.
+ */
+export function buildCloudinaryImageUrl(publicIdOrPath) {
+  if (!publicIdOrPath) return null;
+  const publicId = String(publicIdOrPath).trim().replace(/\.(jpe?g|png|gif|webp)$/i, "");
+  return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${publicId}`;
+}
+
+/**
  * Resolve document url/path fields to an absolute URL safe for window.open / href.
  */
 export function resolveDocumentOpenUrl(docOrUrl) {
+  const isPdf =
+    typeof docOrUrl === "object" &&
+    docOrUrl &&
+    (docOrUrl.isPdf === true ||
+      docOrUrl.type === "application/pdf" ||
+      docOrUrl.mimeType === "application/pdf" ||
+      /\.pdf$/i.test(String(docOrUrl.fileName || docOrUrl.name || "")));
+
   const candidates =
     typeof docOrUrl === "string"
       ? [docOrUrl]
@@ -40,7 +57,9 @@ export function resolveDocumentOpenUrl(docOrUrl) {
     const value = String(candidate).trim();
     if (!value) continue;
     if (isAbsoluteUrl(value)) return value;
-    if (isCloudinaryPath(value)) return buildCloudinaryPdfUrl(value);
+    if (isCloudinaryPath(value)) {
+      return isPdf ? buildCloudinaryPdfUrl(value) : buildCloudinaryImageUrl(value);
+    }
   }
 
   return null;

@@ -2,6 +2,29 @@ import { useEffect } from "react";
 import SignaturePad from "../SignaturePad";
 import { PATIENT_TYPES } from "../PatientTypeDetector";
 
+function getGuardianRoleLabel(relation) {
+  const r = String(relation || "").toLowerCase().trim();
+  switch (r) {
+    case "matka":
+      return "matka";
+    case "ojciec":
+      return "ojciec";
+    case "przedstawiciel_ustawowy":
+    case "przedstawiciel ustawowy":
+      return "przedstawiciel ustawowy";
+    case "opiekun_prawny":
+    case "opiekun prawny":
+      return "opiekun prawny";
+    case "kurator":
+      return "kurator";
+    case "opiekun_faktyczny":
+    case "opiekun faktyczny":
+      return "opiekun faktyczny";
+    default:
+      return relation || "przedstawiciel ustawowy / opiekun faktyczny";
+  }
+}
+
 export default function MinorSignatureStep({
   formData = {},
   updateFormData,
@@ -11,7 +34,8 @@ export default function MinorSignatureStep({
   onValidationChange,
 }) {
   const requiresPatientSignature = patientType === PATIENT_TYPES.MINOR_16_17;
-  
+  const guardianLabel = getGuardianRoleLabel(formData.guardianRelation);
+
   const update = (field, value) => {
     updateFormData({ [field]: value });
   };
@@ -19,75 +43,45 @@ export default function MinorSignatureStep({
   // Validation logic
   useEffect(() => {
     const errors = [];
-    
+
     // Guardian signature is always required for minors
-    if (!formData.guardianSignature || 
-        formData.guardianSignature.trim() === "" || 
-        formData.guardianSignature === "data:image/png;base64,") {
-      errors.push("Podpis opiekuna prawnego jest wymagany.");
+    if (
+      !formData.guardianSignature ||
+      formData.guardianSignature.trim() === "" ||
+      formData.guardianSignature === "data:image/png;base64,"
+    ) {
+      errors.push(`Podpis (${guardianLabel}) jest wymagany.`);
     }
-    
+
     // Patient signature required only for 16-17 year olds
-    if (requiresPatientSignature && 
-        (!formData.signature || 
-         formData.signature.trim() === "" || 
-         formData.signature === "data:image/png;base64,")) {
-      errors.push("Podpis pacjenta jest wymagany.");
+    if (requiresPatientSignature) {
+      if (
+        !formData.signature ||
+        formData.signature.trim() === "" ||
+        formData.signature === "data:image/png;base64,"
+      ) {
+        errors.push("Podpis pacjenta jest wymagany.");
+      }
     }
 
     const isValid = errors.length === 0;
     onValidationChange?.({ isValid, errors });
-  }, [formData.signature, formData.guardianSignature, requiresPatientSignature, onValidationChange]);
+  }, [
+    formData.guardianSignature,
+    formData.signature,
+    requiresPatientSignature,
+    guardianLabel,
+    onValidationChange,
+  ]);
 
   return (
     <div className="space-y-6">
-      {/* Patient Summary */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">Podsumowanie danych</h4>
-        <div className="text-blue-800 text-sm space-y-2">
-          <div>
-            <strong>Pacjent:</strong> {formData.firstName} {formData.lastName} (PESEL: {formData.pesel})
-          </div>
-          <div>
-            <strong>Opiekun:</strong> {formData.guardianFirstName} {formData.guardianLastName} • {formData.guardianRelation}
-          </div>
-          <div>
-            <strong>Adres:</strong> {formData.street}, {formData.zipCode} {formData.city}
-          </div>
-          <div>
-            <strong>Telefon opiekuna:</strong> {formData.guardianPhoneCode} {formData.guardianPhone}
-          </div>
-        </div>
-      </div>
-
-      {/* Age-specific instructions */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-yellow-900 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-yellow-600 text-lg">📝</span>
-          <div>
-            {patientType === PATIENT_TYPES.MINOR_UNDER_16 ? (
-              <div>
-                <p className="font-medium">Pacjent poniżej 16 roku życia</p>
-                <p>Wymagany jest tylko podpis opiekuna prawnego. Pacjent nie podpisuje dokumentów.</p>
-              </div>
-            ) : (
-              <div>
-                <p className="font-medium">Pacjent 16-17 lat</p>
-                <p>Wymagane są podpisy zarówno pacjenta jak i opiekuna prawnego.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Patient Signature (only for 16-17 year olds) */}
+      {/* Patient Signature - only for 16-17 */}
       {requiresPatientSignature && (
         <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-          <h4 className="text-lg font-semibold text-blue-900 mb-4">
-            Blok A - Podpis pacjenta (16-17 lat)
-          </h4>
+          <h4 className="text-lg font-semibold text-blue-900 mb-4">Blok A - Podpis pacjenta</h4>
           <div className="text-sm text-blue-800 mb-4">
-            Jako pacjent w wieku 16-17 lat masz prawo podpisać dokumenty rejestracyjne razem ze swoim opiekunem.
+            <p>Jako pacjent w wieku 16–17 lat współwyrażasz zgodę na rejestrację i leczenie.</p>
           </div>
           <SignaturePad
             label="Podpis pacjenta *"
@@ -97,20 +91,26 @@ export default function MinorSignatureStep({
         </div>
       )}
 
-      {/* Guardian Signature */}
+      {/* Guardian / representative Signature */}
       <div className="bg-yellow-50 rounded-xl p-6 border border-yellow-200">
         <h4 className="text-lg font-semibold text-yellow-900 mb-4">
-          {requiresPatientSignature ? "Blok B - Podpis opiekuna prawnego" : "Podpis opiekuna prawnego"}
+          {requiresPatientSignature ? `Blok B - Podpis: ${guardianLabel}` : `Podpis: ${guardianLabel}`}
         </h4>
         <div className="text-sm text-yellow-800 mb-4">
           {patientType === PATIENT_TYPES.MINOR_UNDER_16 ? (
-            <p>Jako opiekun prawny wyrażasz zgodę na rejestrację i leczenie małoletniego pacjenta.</p>
+            <p>
+              Jako <strong>{guardianLabel}</strong> wyrażasz zgodę na rejestrację i leczenie małoletniego
+              pacjenta.
+            </p>
           ) : (
-            <p>Jako opiekun prawny współwyrażasz zgodę razem z pacjentem na rejestrację i leczenie.</p>
+            <p>
+              Jako <strong>{guardianLabel}</strong> współwyrażasz zgodę razem z pacjentem na rejestrację i
+              leczenie.
+            </p>
           )}
         </div>
         <SignaturePad
-          label="Podpis opiekuna prawnego *"
+          label={`Podpis (${guardianLabel}) *`}
           onChange={(sig) => update("guardianSignature", sig)}
           value={formData.guardianSignature}
         />
@@ -118,8 +118,11 @@ export default function MinorSignatureStep({
 
       {/* Final Notice */}
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-900 text-sm">
-        <p><strong>Uwaga:</strong> Po kliknięciu "Zakończ rejestrację" dane pacjenta i opiekuna zostaną zapisane w systemie 
-        i rozpocznie się proces generowania dokumentów rejestracyjnych dla pacjenta małoletniego.</p>
+        <p>
+          <strong>Uwaga:</strong> Po kliknięciu &quot;Zakończ rejestrację&quot; dane pacjenta i osoby
+          reprezentującej zostaną zapisane w systemie i rozpocznie się proces generowania dokumentów
+          rejestracyjnych dla pacjenta małoletniego.
+        </p>
       </div>
     </div>
   );

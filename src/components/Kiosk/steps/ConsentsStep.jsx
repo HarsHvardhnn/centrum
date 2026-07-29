@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { PHONE_COUNTRY_CODES } from "../../../constants/phoneCountryCodes";
+import PhoneCountrySelect from "../PhoneCountrySelect";
 import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from "../../../utils/phoneUtils";
 import { formatPolishPostalCode, validatePolishPostalCode } from "../../../utils/postalCodeUtils";
 import { formatPolishDate } from "../../../utils/dateUtils";
@@ -535,27 +535,21 @@ export default function ConsentsStep({
                     </select>
                   </div>
                   
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Numer telefonu *
                     </label>
-                    <div className="flex flex-col sm:flex-row sm:items-end gap-2 w-full max-w-full">
-                      <select
+                    <div className="flex items-stretch gap-2 w-full">
+                      <PhoneCountrySelect
                         value={person.phoneCode || "+48"}
-                        onChange={(e) => {
+                        onChange={(code) => {
                           const newPersons = [...formData.authorizedPersons];
-                          newPersons[index] = { ...person, phoneCode: e.target.value, phone: "" };
+                          newPersons[index] = { ...person, phoneCode: code, phone: "" };
                           update("authorizedPersons", newPersons);
                         }}
-                        className="w-full sm:w-40 shrink-0 h-12 px-3 border border-gray-300 rounded-lg text-center bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        title={PHONE_COUNTRY_CODES.find(c => c.code === (person.phoneCode || "+48"))?.country || ""}
-                      >
-                        {PHONE_COUNTRY_CODES.map((country) => (
-                          <option key={country.code} value={country.code} title={country.country}>
-                            {country.code} {country.country}
-                          </option>
-                        ))}
-                      </select>
+                        className="w-[7.5rem] sm:w-36 shrink-0"
+                        buttonClassName="w-full h-12 border border-gray-300 rounded-lg px-2 sm:px-3 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
+                      />
                       <input
                         type="tel"
                         value={formatPhoneForDisplay(person.phone || "", person.phoneCode || "+48")}
@@ -567,7 +561,7 @@ export default function ConsentsStep({
                           newPersons[index] = { ...person, phone: cleaned.slice(0, maxLength) };
                           update("authorizedPersons", newPersons);
                         }}
-                        className={`flex-1 min-w-0 h-12 px-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        className={`flex-1 min-w-0 h-12 px-4 text-lg border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           person.phone && !validatePhoneNumber(formatPhoneNumber(person.phone), person.phoneCode || "+48").valid 
                             ? 'border-red-300' : 'border-gray-300'
                         }`}

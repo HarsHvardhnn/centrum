@@ -20,6 +20,8 @@ export default function InternationalPatientStep({
     documentType: "",
     documentNumber: "",
     documentCountry: "",
+    documentIssueDate: "",
+    documentExpiryDate: "",
     dateOfBirth: "",
   });
   const [loading, setLoading] = useState(false);
@@ -32,7 +34,17 @@ export default function InternationalPatientStep({
     if (!form.documentType) errors.push("Wybierz typ dokumentu");
     if (!form.documentNumber) errors.push("Wprowadź numer dokumentu");
     if (!form.documentCountry) errors.push("Wprowadź kraj wydania");
+    if (!form.documentIssueDate) errors.push("Wybierz datę wydania dokumentu");
+    if (!form.documentExpiryDate) errors.push("Wybierz datę wygaśnięcia dokumentu");
     if (!form.dateOfBirth) errors.push("Wybierz datę urodzenia");
+
+    if (form.documentIssueDate && form.documentExpiryDate) {
+      const issueDate = new Date(form.documentIssueDate);
+      const expiryDate = new Date(form.documentExpiryDate);
+      if (expiryDate <= issueDate) {
+        errors.push("Data wygaśnięcia musi być późniejsza niż data wydania.");
+      }
+    }
 
     if (errors.length > 0) {
       toast.error(errors[0]);
@@ -45,6 +57,8 @@ export default function InternationalPatientStep({
         documentType: form.documentType,
         documentNumber: form.documentNumber.toUpperCase(),
         documentCountry: form.documentCountry,
+        documentIssueDate: form.documentIssueDate,
+        documentExpiryDate: form.documentExpiryDate,
         dateOfBirth: form.dateOfBirth,
       });
 
@@ -136,6 +150,33 @@ export default function InternationalPatientStep({
             placeholder="np. Niemcy, Francja, USA"
             required
           />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Data wydania dokumentu *
+            </label>
+            <input
+              type="date"
+              value={form.documentIssueDate}
+              onChange={(e) => update("documentIssueDate", e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Data wygaśnięcia dokumentu *
+            </label>
+            <input
+              type="date"
+              value={form.documentExpiryDate}
+              onChange={(e) => update("documentExpiryDate", e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
+              required
+            />
+          </div>
         </div>
 
         <div>

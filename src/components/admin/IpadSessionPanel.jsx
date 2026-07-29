@@ -139,71 +139,84 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
 
   if (initialLoading) {
     return (
-      <div className="border border-teal-200 bg-teal-50/50 rounded-xl p-5 text-sm text-gray-600">
+      <div className="border border-teal-200 bg-teal-50/50 rounded-xl p-3 text-sm text-gray-600">
         Sprawdzam sesję iPad...
       </div>
     );
   }
 
   const isActive = session && !["completed", "cancelled", "expired", "locked"].includes(session.status);
+  const showPin = pin && session?.status === "pending";
 
   return (
-    <div className="border border-teal-200 bg-teal-50/50 rounded-xl p-5 space-y-4">
-      <div className="flex items-start justify-between gap-6 flex-wrap">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900">Rejestracja przez iPad</h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Zeskanuj kod QR lub otwórz <button type="button" onClick={copyKioskUrl} className="text-teal-700 underline font-medium">{KIOSK_URL}</button> na tablecie
+    <div className="border border-teal-200 bg-teal-50/50 rounded-xl p-3 space-y-2">
+      {/* Compact header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-semibold text-gray-900 text-sm">Rejestracja przez iPad</h3>
+          <p className="text-xs text-gray-600 truncate">
+            Zeskanuj QR lub otwórz{" "}
+            <button type="button" onClick={copyKioskUrl} className="text-teal-700 underline font-medium">
+              {KIOSK_URL}
+            </button>
           </p>
-          
-          {/* QR Code Section */}
-          <div className="bg-white rounded-lg p-4 border border-teal-300 inline-block">
-            <div className="text-center mb-3">
-              <h4 className="text-sm font-medium text-gray-900 mb-1">📱 Zeskanuj kodem QR</h4>
-              <p className="text-xs text-gray-600">Otwórz aparat iPad i zeskanuj</p>
-            </div>
-            <div className="flex justify-center">
-              <QRCode
-                value={KIOSK_URL}
-                size={120}
-                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                viewBox="0 0 256 256"
-                bgColor="white"
-                fgColor="#0f766e"
-                level="M"
-              />
-            </div>
-            <div className="mt-3 text-center">
-              <p className="text-xs text-gray-500">Kod prowadzi do:</p>
-              <p className="text-xs font-mono text-teal-700 break-all">{KIOSK_URL}</p>
-              <button
-                type="button"
-                onClick={() => setShowLargeQR(true)}
-                className="mt-2 text-xs text-teal-700 hover:text-teal-900 underline"
-              >
-                🔍 Powiększ kod QR
-              </button>
-            </div>
-          </div>
         </div>
-        
         {!isActive && session?.status !== "completed" && (
           <button
             type="button"
             onClick={handleStart}
             disabled={loading}
-            className="bg-teal-700 hover:bg-teal-800 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 flex-shrink-0"
+            className="bg-teal-700 hover:bg-teal-800 text-white px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50 shrink-0"
           >
-            {loading ? "..." : "Uruchom sesję iPad"}
+            {loading ? "..." : "Uruchom sesję"}
           </button>
         )}
       </div>
 
+      {/* QR + PIN side by side — fits one viewport */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="bg-white rounded-lg p-2.5 border border-teal-300 flex flex-col items-center justify-center">
+          <p className="text-xs font-medium text-gray-800 mb-1.5">Zeskanuj kod QR</p>
+          <QRCode
+            value={KIOSK_URL}
+            size={96}
+            style={{ height: "auto", maxWidth: "96px", width: "96px" }}
+            viewBox="0 0 256 256"
+            bgColor="white"
+            fgColor="#0f766e"
+            level="M"
+          />
+          <button
+            type="button"
+            onClick={() => setShowLargeQR(true)}
+            className="mt-1.5 text-[11px] text-teal-700 hover:text-teal-900 underline"
+          >
+            Powiększ QR
+          </button>
+        </div>
+
+        <div className="bg-white rounded-lg border-2 border-teal-300 p-2.5 flex flex-col items-center justify-center text-center min-h-[140px]">
+          {showPin ? (
+            <>
+              <p className="text-xs text-gray-600 mb-1">Kod PIN dla pacjenta</p>
+              <p className="text-3xl font-mono font-bold tracking-[0.2em] text-teal-800 leading-none">{pin}</p>
+              <p className="text-[11px] text-gray-500 mt-1.5">Ważny przez 2 godziny</p>
+            </>
+          ) : (
+            <p className="text-xs text-gray-500 px-2">
+              {session
+                ? "PIN widoczny tylko przy statusie „Oczekuje na PIN”."
+                : "Uruchom sesję, aby wygenerować PIN."}
+            </p>
+          )}
+        </div>
+      </div>
+
       {session && (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-3 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="font-medium text-gray-700">Status:</span>
-            <span className="px-2 py-1 rounded-full bg-white border border-gray-200 text-gray-800">
+            <span className="px-2 py-0.5 rounded-full bg-white border border-gray-200 text-gray-800">
               {STATUS_LABELS[session.status] || session.status}
             </span>
             {session.mode && (
@@ -213,21 +226,13 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
             )}
           </div>
 
-          {pin && session.status === "pending" && (
-            <div className="bg-white border-2 border-teal-300 rounded-xl p-6 text-center">
-              <p className="text-sm text-gray-600 mb-2">Kod PIN dla pacjenta</p>
-              <p className="text-5xl font-mono font-bold tracking-[0.3em] text-teal-800">{pin}</p>
-              <p className="text-xs text-gray-500 mt-3">Ważny przez 2 godziny</p>
-            </div>
-          )}
-
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {isActive && (
               <button
                 type="button"
                 onClick={handleCancel}
                 disabled={loading}
-                className="text-sm border border-gray-300 bg-white px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                className="text-xs border border-gray-300 bg-white px-2.5 py-1 rounded-lg hover:bg-gray-50"
               >
                 Anuluj sesję
               </button>
@@ -237,16 +242,16 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
                 type="button"
                 onClick={handleDownload}
                 disabled={loading}
-                className="text-sm bg-teal-700 text-white px-3 py-1.5 rounded-lg hover:bg-teal-800"
+                className="text-xs bg-teal-700 text-white px-2.5 py-1 rounded-lg hover:bg-teal-800"
               >
-                Pobierz dokumenty pacjenta
+                Pobierz dokumenty
               </button>
             )}
             {["completed", "cancelled", "expired", "locked"].includes(session.status) && (
               <button
                 type="button"
                 onClick={() => { setSession(null); setPin(null); }}
-                className="text-sm text-teal-700 hover:underline"
+                className="text-xs text-teal-700 hover:underline"
               >
                 Nowa sesja
               </button>
@@ -257,53 +262,44 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
 
       {/* Large QR Code Modal */}
       {showLargeQR && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full text-center">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Kod QR do kiosku</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl p-5 max-w-sm w-full text-center">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-base font-semibold text-gray-900">Kod QR do kiosku</h3>
               <button
                 type="button"
                 onClick={() => setShowLargeQR(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
+                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
               >
                 ×
               </button>
             </div>
-            
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-4">
-                Zeskanuj tym kodem aby otworzyć kiosk rejestracyjny na iPadzie
-              </p>
-              
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <QRCode
-                  value={KIOSK_URL}
-                  size={256}
-                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                  viewBox="0 0 256 256"
-                  bgColor="white"
-                  fgColor="#0f766e"
-                  level="H"
-                />
-              </div>
-              
-              <div className="mt-4 p-3 bg-teal-50 rounded-lg">
-                <p className="text-xs text-gray-600 mb-1">Link bezpośredni:</p>
-                <p className="text-sm font-mono text-teal-700 break-all">{KIOSK_URL}</p>
-                <button
-                  type="button"
-                  onClick={copyKioskUrl}
-                  className="mt-2 text-xs text-teal-700 hover:text-teal-900 underline"
-                >
-                  📋 Kopiuj link
-                </button>
-              </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg mb-3">
+              <QRCode
+                value={KIOSK_URL}
+                size={220}
+                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                viewBox="0 0 256 256"
+                bgColor="white"
+                fgColor="#0f766e"
+                level="H"
+              />
             </div>
-            
+
+            <p className="text-xs font-mono text-teal-700 break-all mb-2">{KIOSK_URL}</p>
+            <button
+              type="button"
+              onClick={copyKioskUrl}
+              className="text-xs text-teal-700 underline mb-3"
+            >
+              Kopiuj link
+            </button>
+
             <button
               type="button"
               onClick={() => setShowLargeQR(false)}
-              className="w-full bg-teal-700 text-white py-2 px-4 rounded-lg hover:bg-teal-800"
+              className="w-full bg-teal-700 text-white py-2 px-4 rounded-lg hover:bg-teal-800 text-sm"
             >
               Zamknij
             </button>

@@ -49,6 +49,17 @@ export function generateAuthorizationDocumentNumber() {
 }
 
 /**
+ * Generate a unique document number for guardian representation statement
+ * Format: OSW/YYYY/NNNNNN
+ */
+export function generateGuardianStatementDocumentNumber() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const randomNumber = Math.floor(Math.random() * 900000) + 100000;
+  return `OSW/${year}/${randomNumber.toString().padStart(6, "0")}`;
+}
+
+/**
  * Get current date in Polish format (DD.MM.YYYY)
  * @returns {string} - Formatted date
  */
@@ -63,7 +74,7 @@ export function getCurrentDocumentDate() {
 
 /**
  * Generate document metadata for a consent form
- * @param {string} documentType - Type of document ('gdpr', 'examination', 'authorization')
+ * @param {string} documentType - Type of document ('gdpr', 'examination', 'authorization', 'guardian_statement')
  * @returns {object} - Document metadata with number and date
  */
 export function generateDocumentMetadata(documentType = 'gdpr') {
@@ -75,6 +86,9 @@ export function generateDocumentMetadata(documentType = 'gdpr') {
       break;
     case 'authorization':
       docNumber = generateAuthorizationDocumentNumber();
+      break;
+    case 'guardian_statement':
+      docNumber = generateGuardianStatementDocumentNumber();
       break;
     case 'gdpr':
     default:

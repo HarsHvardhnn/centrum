@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { PHONE_COUNTRY_CODES } from "../../../constants/phoneCountryCodes";
 import { formatPhoneNumber, getRequiredPhoneLength } from "../../../utils/phoneUtils";
+import PhoneCountrySelect from "../PhoneCountrySelect";
 
 export default function ContactStep({
   formData = {},
@@ -65,21 +65,13 @@ export default function ContactStep({
 
         {/* Country code + phone: same control height, bottom-aligned */}
         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-          <div className="w-full sm:w-40 shrink-0">
+          <div className="w-full sm:w-44 shrink-0">
             <label className="block text-sm font-medium text-gray-700 mb-2">Kod kraju</label>
-            <select
+            <PhoneCountrySelect
               value={formData.phoneCode || "+48"}
-              onChange={(e) => update("phoneCode", e.target.value)}
+              onChange={(code) => update("phoneCode", code)}
               disabled={readOnlyFields}
-              className="w-full h-14 border border-gray-300 rounded-lg px-3 text-lg text-center bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              title={PHONE_COUNTRY_CODES.find(c => c.code === (formData.phoneCode || "+48"))?.country || ""}
-            >
-              {PHONE_COUNTRY_CODES.map((country) => (
-                <option key={country.code} value={country.code} title={country.country}>
-                  {country.code} {country.country}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div className="flex-1 min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-2">

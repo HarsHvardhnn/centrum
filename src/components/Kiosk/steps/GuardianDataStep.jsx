@@ -1,6 +1,15 @@
 import { useEffect } from "react";
-import { PHONE_COUNTRY_CODES } from "../../../constants/phoneCountryCodes";
 import { formatPhoneNumber, getRequiredPhoneLength } from "../../../utils/phoneUtils";
+import PhoneCountrySelect from "../PhoneCountrySelect";
+
+const RELATION_OPTIONS = [
+  { value: "matka", label: "Matka" },
+  { value: "ojciec", label: "Ojciec" },
+  { value: "przedstawiciel_ustawowy", label: "Przedstawiciel ustawowy" },
+  { value: "opiekun_prawny", label: "Opiekun prawny" },
+  { value: "kurator", label: "Kurator" },
+  { value: "opiekun_faktyczny", label: "Opiekun faktyczny" },
+];
 
 export default function GuardianDataStep({
   formData = {},
@@ -17,41 +26,41 @@ export default function GuardianDataStep({
     updateFormData({ [field]: value });
   };
 
-  
   // Validation logic
   useEffect(() => {
     const errors = [];
-    
-    if (!formData.guardianFirstName?.trim()) errors.push("Imię opiekuna jest wymagane.");
-    if (!formData.guardianLastName?.trim()) errors.push("Nazwisko opiekuna jest wymagane.");
-    
+
+    if (!formData.guardianFirstName?.trim()) errors.push("Imię jest wymagane.");
+    if (!formData.guardianLastName?.trim()) errors.push("Nazwisko jest wymagane.");
+
     if (!formData.guardianPesel?.trim() || String(formData.guardianPesel).replace(/\D/g, "").length !== 11) {
-      errors.push("PESEL opiekuna musi mieć 11 cyfr.");
+      errors.push("PESEL musi mieć 11 cyfr.");
     }
-    
+
     if (!formData.guardianPhone?.trim()) {
-      errors.push("Telefon opiekuna jest wymagany.");
+      errors.push("Telefon jest wymagany.");
     } else {
       const phoneCode = formData.guardianPhoneCode || "+48";
       const requiredLength = getRequiredPhoneLength(phoneCode);
       const phoneDigits = formData.guardianPhone.replace(/\D/g, "");
-      
+
       if (phoneDigits.length !== requiredLength) {
         if (phoneCode === "+48") {
-          errors.push("Numer telefonu opiekuna musi mieć dokładnie 9 cyfr dla Polski.");
+          errors.push("Numer telefonu musi mieć dokładnie 9 cyfr dla Polski.");
         } else {
-          errors.push(`Numer telefonu opiekuna musi mieć ${requiredLength} cyfr dla wybranego kraju.`);
+          errors.push(`Numer telefonu musi mieć ${requiredLength} cyfr dla wybranego kraju.`);
         }
       }
     }
-    
-    if (!formData.guardianRelation?.trim()) errors.push("Stosunek do pacjenta jest wymagany.");
 
-    // Validate guardian email format if provided
+    if (!formData.guardianRelation?.trim()) {
+      errors.push("Wybierz, kim jesteś względem pacjenta (podstawa reprezentacji).");
+    }
+
     if (formData.guardianEmail && formData.guardianEmail.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.guardianEmail)) {
-        errors.push("Podaj poprawny adres e-mail opiekuna.");
+        errors.push("Podaj poprawny adres e-mail.");
       }
     }
 
@@ -65,17 +74,26 @@ export default function GuardianDataStep({
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
         <h4 className="font-semibold text-blue-900 mb-2">Pacjent</h4>
         <div className="text-blue-800 text-sm">
-          <p><strong>{formData.firstName} {formData.lastName}</strong></p>
+          <p>
+            <strong>
+              {formData.firstName} {formData.lastName}
+            </strong>
+          </p>
           <p>PESEL: {formData.pesel}</p>
         </div>
       </div>
 
       <div className="bg-yellow-50 rounded-xl p-6 space-y-4 border border-yellow-200">
-        <h3 className="text-lg font-semibold text-yellow-900 mb-4">Dane przedstawiciela ustawowego</h3>
-        
+        <h3 className="text-lg font-semibold text-yellow-900 mb-1">
+          Dane osoby reprezentującej pacjenta
+        </h3>
+        <p className="text-sm text-yellow-800 mb-4">
+          Wybierz poniżej, kim jesteś — od tego zależy treść zgód i dokumentów.
+        </p>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Imię opiekuna *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Imię *</label>
             <input
               type="text"
               value={formData.guardianFirstName || ""}
@@ -86,7 +104,7 @@ export default function GuardianDataStep({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Nazwisko opiekuna *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nazwisko *</label>
             <input
               type="text"
               value={formData.guardianLastName || ""}
@@ -100,7 +118,7 @@ export default function GuardianDataStep({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">PESEL opiekuna *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">PESEL *</label>
             <input
               type="text"
               value={formData.guardianPesel || ""}
@@ -112,42 +130,37 @@ export default function GuardianDataStep({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Pokrewieństwo *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Kim jesteś względem pacjenta *
+            </label>
             <select
               value={formData.guardianRelation || "matka"}
               onChange={(e) => update("guardianRelation", e.target.value)}
               disabled={readOnlyFields}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
             >
-              <option value="matka">Matka</option>
-              <option value="ojciec">Ojciec</option>
-              <option value="opiekun_prawny">Opiekun prawny</option>
-              <option value="opiekun_faktyczny">Opiekun faktyczny</option>
+              {RELATION_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
 
         {/* Country code + phone: same control height, bottom-aligned */}
         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-          <div className="w-full sm:w-40 shrink-0">
+          <div className="w-full sm:w-44 shrink-0">
             <label className="block text-sm font-medium text-gray-700 mb-2">Kod kraju</label>
-            <select
+            <PhoneCountrySelect
               value={formData.guardianPhoneCode || "+48"}
-              onChange={(e) => update("guardianPhoneCode", e.target.value)}
+              onChange={(code) => update("guardianPhoneCode", code)}
               disabled={readOnlyFields}
-              className="w-full h-14 border border-gray-300 rounded-lg px-3 text-lg text-center bg-white focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-              title={PHONE_COUNTRY_CODES.find(c => c.code === (formData.guardianPhoneCode || "+48"))?.country || ""}
-            >
-              {PHONE_COUNTRY_CODES.map((country) => (
-                <option key={country.code} value={country.code} title={country.country}>
-                  {country.code} {country.country}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div className="flex-1 min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Telefon opiekuna *
+              Telefon *
               <span className="text-xs text-gray-500 ml-2">
                 ({getRequiredPhoneLength(formData.guardianPhoneCode || "+48")} cyfr)
               </span>
@@ -160,7 +173,11 @@ export default function GuardianDataStep({
                 const maxLength = getRequiredPhoneLength(formData.guardianPhoneCode || "+48");
                 update("guardianPhone", formatted.slice(0, maxLength));
               }}
-              placeholder={(formData.guardianPhoneCode || "+48") === "+48" ? "123 456 789" : `${getRequiredPhoneLength(formData.guardianPhoneCode || "+48")} cyfr`}
+              placeholder={
+                (formData.guardianPhoneCode || "+48") === "+48"
+                  ? "123 456 789"
+                  : `${getRequiredPhoneLength(formData.guardianPhoneCode || "+48")} cyfr`
+              }
               maxLength={getRequiredPhoneLength(formData.guardianPhoneCode || "+48")}
               readOnly={readOnlyFields}
               className="w-full h-14 border border-gray-300 rounded-lg px-4 text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
@@ -170,7 +187,7 @@ export default function GuardianDataStep({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">E-mail opiekuna (opcjonalnie)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">E-mail (opcjonalnie)</label>
           <input
             type="email"
             value={formData.guardianEmail || ""}

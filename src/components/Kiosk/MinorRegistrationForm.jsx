@@ -26,7 +26,8 @@ export default function MinorRegistrationForm({
     consentHealthcareGuardian: !!initialData.consentHealthcareGuardian,
     consentHealthCampaignsGuardian: !!initialData.consentHealthCampaignsGuardian,
     consentMarketingGuardian: !!initialData.consentMarketingGuardian,
-    consentExamination: initialData.consentExamination !== false,
+    consentExamination: !!initialData.consentExamination,
+    consentExaminationGuardian: !!initialData.consentExaminationGuardian,
   };
 
   return (

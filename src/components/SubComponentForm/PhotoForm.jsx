@@ -157,11 +157,9 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
     setDocumentToDelete(null);
   };
 
-  // Handle PDF click to open in new tab or show image preview
+  // Handle PDF / image open in new tab
   const openPdfInNewTab = (document) => {
-    //("document", document);
-    
-    if (document.isPdf || document.type === "application/pdf") {
+    if (document.isPdf || document.type === "application/pdf" || document.mimeType === "application/pdf") {
       if (document.file) {
         const pdfUrl = URL.createObjectURL(document.file);
         window.open(pdfUrl, "_blank");
@@ -170,28 +168,41 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
         if (url) window.open(url, "_blank");
       }
     } else if (isImageFile(document)) {
-      // For images, open the preview or path URL in new tab
-      const imageUrl = document.preview || document.path || (document.file ? URL.createObjectURL(document.file) : null);
+      const imageUrl =
+        document.preview ||
+        document.url ||
+        document.downloadUrl ||
+        (document.file ? URL.createObjectURL(document.file) : null) ||
+        resolveDocumentOpenUrl(document);
       if (imageUrl) {
         window.open(imageUrl, "_blank");
       }
+    } else {
+      const url = resolveDocumentOpenUrl(document);
+      if (url) window.open(url, "_blank");
     }
   };
 
   // Helper function to check if document is an image
   const isImageFile = (document) => {
-    const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    return imageTypes.includes(document.type) || 
-           imageTypes.includes(document.mimeType) || 
-           imageTypes.includes(document.fileType);
+    if (document?.isPdf === true) return false;
+    const imageTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+    const mime = document?.type || document?.mimeType || document?.fileType || "";
+    if (imageTypes.includes(mime) || mime.startsWith("image/")) return true;
+    if (document?.fileType === "image") return true;
+    const name = String(document?.fileName || document?.name || document?.originalName || "");
+    return /\.(jpe?g|png|gif|webp)$/i.test(name);
   };
 
   // Get the appropriate image source URL
   const getImageSrc = (document) => {
-    if (document.preview) return document.preview;
-    if (document.path) return document.path;
+    if (document.preview && (document.preview.startsWith("blob:") || document.preview.startsWith("data:") || document.preview.startsWith("http"))) {
+      return document.preview;
+    }
+    if (document.url && /^https?:\/\//i.test(document.url)) return document.url;
+    if (document.downloadUrl && /^https?:\/\//i.test(document.downloadUrl)) return document.downloadUrl;
     if (document.file && document.file instanceof File) return URL.createObjectURL(document.file);
-    return document; // Fallback for direct URL strings
+    return resolveDocumentOpenUrl(document) || document.preview || "";
   };
 
   // Common consent options
@@ -396,12 +407,12 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
             <div className="mt-6">
               <h3 className="text-md font-medium mb-3">Przesłane dokumenty</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {formData?.documents.map((document) => (
+                {formData?.documents.map((document, index) => (
                   <div
-                    key={document?.id}
+                    key={document?._id || document?.id || `doc-${index}`}
                     className="relative border border-gray-200 rounded-lg p-3 bg-white"
                   >
-                    {(document?.isPdf || document?.type === "application/pdf") ? (
+                    {(document?.isPdf || document?.type === "application/pdf" || document?.mimeType === "application/pdf") ? (
                       <div
                         onClick={() => openPdfInNewTab(document)}
                         className="flex items-center p-2 cursor-pointer hover:bg-gray-50 rounded transition-colors"
