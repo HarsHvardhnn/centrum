@@ -7,18 +7,12 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
   const activePointerId = useRef(null);
   const hasDrawn = useRef(false);
   const changeTimeoutRef = useRef(null);
+  const onChangeRef = useRef(onChange);
   const [hasContent, setHasContent] = useState(false);
 
-  // CSS-pixel coords only — ctx is already scaled by DPR in setupCanvas
-  const getPoint = (e) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
-  };
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   const applyStrokeStyle = (ctx) => {
     ctx.strokeStyle = "#1f2937";
@@ -27,7 +21,6 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
     ctx.lineJoin = "round";
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    ctx.globalCompositeOperation = "source-over";
   };
 
   const emitChange = useCallback(() => {
@@ -40,32 +33,39 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
 
     changeTimeoutRef.current = setTimeout(() => {
       const dataUrl = hasDrawn.current ? canvas.toDataURL("image/png") : "";
-      onChange?.(dataUrl);
+      onChangeRef.current?.(dataUrl);
       changeTimeoutRef.current = null;
     }, 150);
-  }, [onChange]);
+  }, []);
 
   const setupCanvas = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || drawing.current) return;
 
     const ctx = canvas.getContext("2d");
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     const width = Math.max(1, Math.floor(rect.width));
     const height = Math.max(1, Math.floor(rect.height));
+    const nextW = width * dpr;
+    const nextH = height * dpr;
+
+    if (canvas.width === nextW && canvas.height === nextH) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      applyStrokeStyle(ctx);
+      return;
+    }
 
     let snapshot = null;
     if (hasDrawn.current && canvas.width > 0 && canvas.height > 0) {
       snapshot = canvas.toDataURL("image/png");
     }
 
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
+    canvas.width = nextW;
+    canvas.height = nextH;
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
 
-    // Scale once so drawing uses CSS pixels (avoids double-DPR bug)
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     applyStrokeStyle(ctx);
 
@@ -92,24 +92,135 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
     };
   }, [setupCanvas]);
 
-  // Native non-passive touch listeners — React's synthetic handlers are often
-  // passive, so preventDefault there cannot stop page scroll on touch devices.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const blockScroll = (e) => {
-      e.preventDefault();
+    const getPoint = (clientX, clientY) => {
+      const rect = canvas.getBoundingClientRect();
+      return { x: clientX - rect.left, y: clientY - rect.top };
     };
 
-    canvas.addEventListener("touchstart", blockScroll, { passive: false });
-    canvas.addEventListener("touchmove", blockScroll, { passive: false });
+    const markDrawn = () => {
+      if (!hasDrawn.current) {
+        hasDrawn.current = true;
+        setHasContent(true);
+      }
+    };
+
+    const detachWindowListeners = () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("blur", onBlur);
+      // Stop page scroll while drawing on touch devices
+      window.removeEventListener("touchmove", onBlockTouchScroll);
+    };
+
+    const finishStroke = () => {
+      if (!drawing.current) return;
+      drawing.current = false;
+      lastPoint.current = null;
+      activePointerId.current = null;
+      detachWindowListeners();
+      emitChange();
+    };
+
+    const onBlockTouchScroll = (e) => {
+      if (drawing.current) e.preventDefault();
+    };
+
+    const onPointerMove = (e) => {
+      if (!drawing.current) return;
+      if (
+        activePointerId.current != null &&
+        e.pointerId !== activePointerId.current
+      ) {
+        return;
+      }
+
+      // Only draw while the pointer is down (buttons === 0 can happen on some devices)
+      if (e.pointerType === "mouse" && e.buttons === 0) {
+        finishStroke();
+        return;
+      }
+
+      e.preventDefault();
+      const point = getPoint(e.clientX, e.clientY);
+      const last = lastPoint.current;
+      if (last) {
+        const dx = point.x - last.x;
+        const dy = point.y - last.y;
+        if (dx * dx + dy * dy < 0.5) return;
+
+        const ctx = canvas.getContext("2d");
+        applyStrokeStyle(ctx);
+        ctx.beginPath();
+        ctx.moveTo(last.x, last.y);
+        ctx.lineTo(point.x, point.y);
+        ctx.stroke();
+      }
+      lastPoint.current = point;
+      markDrawn();
+    };
+
+    const onPointerUp = (e) => {
+      if (!drawing.current) return;
+      if (
+        activePointerId.current != null &&
+        e.pointerId !== activePointerId.current
+      ) {
+        return;
+      }
+      finishStroke();
+    };
+
+    const onBlur = () => {
+      finishStroke();
+    };
+
+    const onPointerDown = (e) => {
+      if (e.isPrimary === false) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+
+      // Recover if a previous stroke never received pointerup
+      if (drawing.current) {
+        finishStroke();
+      }
+
+      e.preventDefault();
+      drawing.current = true;
+      activePointerId.current = e.pointerId;
+
+      const point = getPoint(e.clientX, e.clientY);
+      lastPoint.current = point;
+
+      const ctx = canvas.getContext("2d");
+      applyStrokeStyle(ctx);
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 1.25, 0, Math.PI * 2);
+      ctx.fillStyle = "#1f2937";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(point.x, point.y);
+      markDrawn();
+
+      // Listen on window so move/up still arrive if the finger leaves the canvas
+      window.addEventListener("pointermove", onPointerMove, { passive: false });
+      window.addEventListener("pointerup", onPointerUp, { passive: false });
+      window.addEventListener("pointercancel", onPointerUp, { passive: false });
+      window.addEventListener("blur", onBlur);
+      window.addEventListener("touchmove", onBlockTouchScroll, { passive: false });
+    };
+
+    canvas.addEventListener("pointerdown", onPointerDown, { passive: false });
 
     return () => {
-      canvas.removeEventListener("touchstart", blockScroll);
-      canvas.removeEventListener("touchmove", blockScroll);
+      finishStroke();
+      canvas.removeEventListener("pointerdown", onPointerDown);
+      detachWindowListeners();
     };
-  }, []);
+  }, [emitChange]);
 
   useEffect(() => {
     return () => {
@@ -119,126 +230,28 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
     };
   }, []);
 
-  const markDrawn = () => {
-    if (!hasDrawn.current) {
-      hasDrawn.current = true;
-      setHasContent(true);
-    }
-  };
-
-  const startDraw = (e) => {
-    if (e.button != null && e.button !== 0) return;
-    if (drawing.current) return;
-
-    e.preventDefault();
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    drawing.current = true;
-    activePointerId.current = e.pointerId ?? null;
-    try {
-      canvas.setPointerCapture?.(e.pointerId);
-    } catch {
-      // ignore — capture not available
-    }
-
-    const point = getPoint(e);
-    lastPoint.current = point;
-
-    const ctx = canvas.getContext("2d");
-    applyStrokeStyle(ctx);
-    ctx.beginPath();
-    ctx.arc(point.x, point.y, 1.25, 0, Math.PI * 2);
-    ctx.fillStyle = ctx.strokeStyle;
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(point.x, point.y);
-
-    markDrawn();
-  };
-
-  const draw = (e) => {
-    if (!drawing.current) return;
-    if (
-      activePointerId.current != null &&
-      e.pointerId != null &&
-      e.pointerId !== activePointerId.current
-    ) {
-      return;
-    }
-
-    e.preventDefault();
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const point = getPoint(e);
-    const last = lastPoint.current;
-    if (last) {
-      const dx = point.x - last.x;
-      const dy = point.y - last.y;
-      if (dx * dx + dy * dy < 1) return;
-    }
-
-    const ctx = canvas.getContext("2d");
-    ctx.lineTo(point.x, point.y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(point.x, point.y);
-    lastPoint.current = point;
-
-    markDrawn();
-  };
-
-  const endDraw = (e) => {
-    if (!drawing.current) return;
-    if (
-      activePointerId.current != null &&
-      e.pointerId != null &&
-      e.pointerId !== activePointerId.current
-    ) {
-      return;
-    }
-
-    e.preventDefault?.();
-    const canvas = canvasRef.current;
-    drawing.current = false;
-    lastPoint.current = null;
-
-    if (canvas && e.pointerId != null) {
-      try {
-        canvas.releasePointerCapture?.(e.pointerId);
-      } catch {
-        // ignore
-      }
-    }
-    activePointerId.current = null;
-    emitChange();
-  };
-
   const clear = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     const dpr = window.devicePixelRatio || 1;
-    const width = canvas.width / dpr;
-    const height = canvas.height / dpr;
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, width, height);
-    applyStrokeStyle(ctx);
-
-    hasDrawn.current = false;
     drawing.current = false;
     lastPoint.current = null;
     activePointerId.current = null;
+    hasDrawn.current = false;
     setHasContent(false);
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+    applyStrokeStyle(ctx);
 
     if (changeTimeoutRef.current) {
       clearTimeout(changeTimeoutRef.current);
       changeTimeoutRef.current = null;
     }
 
-    onChange?.("");
+    onChangeRef.current?.("");
   };
 
   return (
@@ -266,10 +279,6 @@ export default function SignaturePad({ onChange, label = "Podpis pacjenta" }) {
             WebkitUserSelect: "none",
             userSelect: "none",
           }}
-          onPointerDown={startDraw}
-          onPointerMove={draw}
-          onPointerUp={endDraw}
-          onPointerCancel={endDraw}
           onContextMenu={(e) => e.preventDefault()}
         />
       </div>
