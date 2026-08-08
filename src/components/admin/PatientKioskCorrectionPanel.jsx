@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import QRCode from "react-qr-code";
 import { Copy, ExternalLink } from "lucide-react";
@@ -23,17 +23,36 @@ const STATUS_LABELS = {
   locked: "Zablokowana",
 };
 
+const TERMINAL_STATUSES = ["completed", "cancelled", "expired", "locked"];
+
+const STATUS_PILL_CLASS = {
+  pending: "bg-amber-50 border-amber-200 text-amber-900",
+  active: "bg-sky-50 border-sky-200 text-sky-900",
+  in_progress: "bg-blue-50 border-blue-200 text-blue-900",
+  ready_for_signature: "bg-indigo-50 border-indigo-200 text-indigo-900",
+  completed: "bg-green-50 border-green-200 text-green-900",
+  cancelled: "bg-red-50 border-red-200 text-red-900",
+  expired: "bg-orange-50 border-orange-200 text-orange-900",
+  locked: "bg-gray-100 border-gray-300 text-gray-800",
+};
+
 function getKioskUrl() {
   return `${window.location.origin}/kiosk`;
 }
 
-export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) {
+export default function PatientKioskCorrectionPanel({
+  patientId,
+  onCompleted,
+  /** Compact layout for footer placement between action buttons */
+  compact = false,
+}) {
   const kioskUrl = getKioskUrl();
   const [session, setSession] = useState(null);
   const [pin, setPin] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [pdfJob, setPdfJob] = useState(null);
+  const prevStatusRef = useRef(null);
 
   const refreshStatus = useCallback(async () => {
     if (!session?.id) return;
@@ -44,6 +63,12 @@ export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) 
         if (res.session.status === "completed") {
           setPin(null);
           onCompleted?.(res.session);
+        }
+        if (
+          TERMINAL_STATUSES.includes(res.session.status) &&
+          res.session.status !== "completed"
+        ) {
+          setPin(null);
         }
       }
     } catch (_) {}
@@ -58,6 +83,7 @@ export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) 
         if (cancelled) return;
         if (res.session) {
           setSession(res.session);
+          prevStatusRef.current = res.session.status;
           if (res.session.status === "completed") {
             onCompleted?.(res.session);
           }
@@ -73,10 +99,26 @@ export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) 
   }, [patientId, onCompleted]);
 
   useEffect(() => {
-    if (!session?.id || session.status === "completed" || session.status === "cancelled") return;
-    const interval = setInterval(refreshStatus, 4000);
+    if (!session?.id || TERMINAL_STATUSES.includes(session.status)) return;
+    const interval = setInterval(refreshStatus, 3000);
     return () => clearInterval(interval);
   }, [session?.id, session?.status, refreshStatus]);
+
+  useEffect(() => {
+    if (!session?.status) return;
+    const prev = prevStatusRef.current;
+    const next = session.status;
+    if (prev && prev !== next) {
+      if (next === "expired") {
+        toast.warning("Sesja wygasła. Możesz wygenerować nowy PIN aktualizacji.");
+        setPin(null);
+      } else if (next === "cancelled") {
+        toast.info("Sesja została anulowana.");
+        setPin(null);
+      }
+    }
+    prevStatusRef.current = next;
+  }, [session?.status]);
 
   useEffect(() => {
     if (!session?.id || session.status !== "completed") return;
@@ -157,15 +199,114 @@ export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) 
 
   if (initialLoading) {
     return (
-      <div className="mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-gray-500">
-        Sprawdzanie sesji aktualizacji danych…
+      <div
+        className={
+          compact
+            ? "px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-gray-500"
+            : "mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-gray-500"
+        }
+      >
+        Sprawdzanie sesji aktualizacji…
       </div>
     );
   }
 
-  const isActive =
-    session &&
-    !["completed", "cancelled", "expired"].includes(session.status);
+  const isActive = session && !TERMINAL_STATUSES.includes(session.status);
+  const statusClass =
+    STATUS_PILL_CLASS[session?.status] || "bg-white border-gray-200 text-gray-800";
+
+  const startLabel = loading
+    ? "Tworzenie…"
+    : session?.status === "completed"
+      ? "Kolejny PIN"
+      : ["cancelled", "expired", "locked"].includes(session?.status)
+        ? "Uruchom ponownie"
+        : "Wygeneruj PIN aktualizacji";
+
+  if (compact) {
+    return (
+      <div className="flex-1 min-w-0 mx-2 sm:mx-4 px-3 py-2 bg-teal-50/80 border border-teal-200 rounded-lg">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+          <div className="text-center sm:text-left min-w-0">
+            <p className="text-xs font-semibold text-teal-900">Aktualizacja na tablecie</p>
+            {session ? (
+              <p className="text-[11px] text-teal-800/80 flex flex-wrap items-center justify-center sm:justify-start gap-1.5 mt-0.5">
+                <span
+                  className={`px-1.5 py-0.5 rounded-full border font-medium ${statusClass}`}
+                >
+                  {STATUS_LABELS[session.status] || session.status}
+                </span>
+                {pin && (
+                  <span className="font-mono font-bold tracking-wider text-teal-900">
+                    PIN {pin}
+                  </span>
+                )}
+              </p>
+            ) : (
+              <p className="text-[11px] text-teal-800/70 mt-0.5">
+                Generuj PIN do aktualizacji na iPadzie
+              </p>
+            )}
+          </div>
+
+          {!isActive && (
+            <button
+              type="button"
+              onClick={handleStart}
+              disabled={loading}
+              className="shrink-0 px-3 py-1.5 rounded-md bg-teal-700 hover:bg-teal-800 text-white text-xs font-medium disabled:opacity-50"
+            >
+              {startLabel}
+            </button>
+          )}
+
+          {pin && (
+            <button
+              type="button"
+              onClick={copyPin}
+              className="shrink-0 inline-flex items-center gap-1 px-2 py-1.5 text-xs border border-gray-300 bg-white rounded-md hover:bg-gray-50"
+            >
+              <Copy size={12} />
+              Kopiuj
+            </button>
+          )}
+
+          {isActive && (
+            <>
+              <a
+                href={kioskUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 inline-flex items-center gap-1 text-xs text-teal-700 hover:underline"
+              >
+                <ExternalLink size={12} />
+                Kiosk
+              </a>
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={loading}
+                className="shrink-0 text-xs text-red-600 hover:underline disabled:opacity-50"
+              >
+                Anuluj
+              </button>
+            </>
+          )}
+
+          {session?.status === "completed" && session.packageId && (
+            <button
+              type="button"
+              onClick={handleDownload}
+              disabled={pdfJob && pdfJob.status !== "completed"}
+              className="shrink-0 text-xs text-teal-700 font-medium hover:underline disabled:opacity-50"
+            >
+              Pobierz dokumenty
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-6 p-4 bg-teal-50/60 border border-teal-200 rounded-xl">
@@ -189,17 +330,29 @@ export default function PatientKioskCorrectionPanel({ patientId, onCompleted }) 
               ? "Tworzenie…"
               : session?.status === "completed"
                 ? "Wygeneruj kolejny PIN aktualizacji"
-                : "Wygeneruj PIN aktualizacji"}
+                : ["cancelled", "expired", "locked"].includes(session?.status)
+                  ? "Uruchom ponownie"
+                  : "Wygeneruj PIN aktualizacji"}
           </button>
         )}
       </div>
 
       {session && (
         <div className="text-sm space-y-3">
-          <p>
-            <span className="text-gray-600">Status: </span>
-            <span className="font-medium">{STATUS_LABELS[session.status] || session.status}</span>
+          <p className="flex flex-wrap items-center gap-2">
+            <span className="text-gray-600">Status:</span>
+            <span className={`px-2 py-0.5 rounded-full border text-xs font-medium ${statusClass}`}>
+              {STATUS_LABELS[session.status] || session.status}
+            </span>
+            {isActive && <span className="text-xs text-gray-400">aktualizacja na żywo</span>}
           </p>
+          {["cancelled", "expired"].includes(session.status) && (
+            <p className="text-xs text-orange-800">
+              {session.status === "expired"
+                ? "Sesja wygasła (brak aktywności lub upłynął czas PIN). Kliknij „Uruchom ponownie”, aby wygenerować nowy PIN."
+                : "Sesja anulowana. Kliknij „Uruchom ponownie”, aby wygenerować nowy PIN."}
+            </p>
+          )}
 
           {pin && (
             <div className="flex flex-wrap items-center gap-3 p-3 bg-white rounded-lg border border-teal-100">

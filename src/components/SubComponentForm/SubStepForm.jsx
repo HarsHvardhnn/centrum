@@ -18,7 +18,9 @@ const SubStepForm = ({
   onComplete,
   hideButtons = false, // Prop to optionally hide navigation buttons
   subStepTitles = [], // Array of sub-step titles for back button text
-  isEditMode = false
+  isEditMode = false,
+  /** Optional content rendered between Back and Next/Save in the footer */
+  footerCenter = null,
 }) => {
   const { formData } = useFormContext();
   const [hasValidationErrors, setHasValidationErrors] = useState(false);
@@ -91,11 +93,11 @@ const SubStepForm = ({
 
         {/* Show navigation buttons only if hideButtons is false */}
         {!hideButtons && (
-          <div className="flex justify-between mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-6 pt-4 border-t border-gray-100">
             <button 
               onClick={() => currentSubStep > 0 && goToSubStep(currentSubStep - 1)} 
               disabled={currentSubStep === 0}
-              className={`px-4 py-2 rounded ${
+              className={`shrink-0 px-4 py-2 rounded ${
                 currentSubStep === 0
                   ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -103,6 +105,9 @@ const SubStepForm = ({
             >
               {getPreviousButtonText()}
             </button>
+
+            {footerCenter}
+
             <button 
               onClick={() => {
                 if (currentSubStep < subSteps.length - 1) {
@@ -112,7 +117,7 @@ const SubStepForm = ({
                 }
               }}
               disabled={hasValidationErrors}
-              className={`px-4 py-2 rounded ${
+              className={`shrink-0 px-4 py-2 rounded ${
                 hasValidationErrors
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-primary text-white hover:bg-primary-dark"

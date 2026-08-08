@@ -10,7 +10,69 @@ import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import AddDoctorForm from "../Doctor/CreateDoctor";
 import doctorService from "../../helpers/doctorHelper";
 import patientService from "../../helpers/patientHelper";
+import appointmentHelper from "../../helpers/appointmentHelper";
 import { normalizePesel } from "../../utils/peselUtils";
+
+/** Normalize ObjectId / populated ref / string to a plain id string for form selects. */
+function toEntityId(value) {
+  if (value == null || value === "") return "";
+  if (typeof value === "object") {
+    return String(value._id || value.id || "");
+  }
+  return String(value);
+}
+
+/**
+ * Resolve attending (consulting) doctor from a specific appointment or the patient's
+ * earliest visit, including a matching specialization id for the Skierowanie selects.
+ */
+async function resolveAttendingDoctorFromVisits(patientId, preferredAppointmentId) {
+  let doctorId = "";
+
+  if (preferredAppointmentId) {
+    try {
+      const aptRes = await appointmentHelper.getAppointmentById(preferredAppointmentId);
+      const apt = aptRes?.appointment || aptRes?.data || aptRes;
+      doctorId = toEntityId(apt?.doctor);
+    } catch (err) {
+      console.warn("Could not load appointment for attending doctor prefill:", err);
+    }
+  }
+
+  if (!doctorId && patientId) {
+    try {
+      const visitsRes = await patientService.getPatientVisits(patientId);
+      const visits = Array.isArray(visitsRes?.data) ? visitsRes.data : [];
+      // API returns newest-first; initial appointment = oldest with a doctor
+      const withDoctor = visits.filter(
+        (v) => v?.doctor?.id && String(v.status || "").toLowerCase() !== "cancelled"
+      );
+      const initial = withDoctor.length ? withDoctor[withDoctor.length - 1] : null;
+      doctorId = toEntityId(initial?.doctor?.id);
+    } catch (err) {
+      console.warn("Could not load visits for attending doctor prefill:", err);
+    }
+  }
+
+  if (!doctorId) {
+    return { consultingDoctor: "", consultingSpecialization: "" };
+  }
+
+  let consultingSpecialization = "";
+  try {
+    const docRes = await doctorService.getDoctorById(doctorId);
+    const doctor = docRes?.doctor || docRes?.data || docRes;
+    const specs = doctor?.specialization || doctor?.specializations || [];
+    const first = Array.isArray(specs) ? specs[0] : null;
+    consultingSpecialization = toEntityId(
+      first && typeof first === "object" ? first._id || first.id : first
+    );
+  } catch (err) {
+    console.warn("Could not load doctor specialization for prefill:", err);
+  }
+
+  return { consultingDoctor: doctorId, consultingSpecialization };
+}
 import SpecializationModal from "./SpecializationModal";
 import { toast } from "sonner";
 import PermanentDeleteDialog from "./PermanentDeleteDialog";
@@ -22,6 +84,7 @@ import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import PatientKioskCorrectionPanel from "./PatientKioskCorrectionPanel";
 import { mapPatientAuthorizationFields } from "../../utils/authorizedPersons";
+import { mapPatientGuardianFields } from "../../utils/guardian";
 import { normalizeVoivodeship } from "../../utils/voivodeshipUtils";
 
 /** Default when API omits phoneCode or number is national digits only. */
@@ -143,7 +206,9 @@ export default function UserManagement() {
     "Skierowanie",
     "Adres",
     "Zgody",
+    "Przedstawiciel / Opiekun",
     "Osoby Upoważnione",
+    "Inne",
     "Notatki",
   ];
 
@@ -264,14 +329,12 @@ export default function UserManagement() {
 
   // Handle URL parameter for editing patient
   useEffect(() => {
-    const editPatientId = searchParams.get('edytujPacjenta');
-    const returnUrlParam = searchParams.get('returnUrl');
-    console.log("editPatientId", editPatientId);
-    console.log("returnUrl", returnUrlParam);
-    
+    const editPatientId = searchParams.get("edytujPacjenta");
+    const returnUrlParam = searchParams.get("returnUrl");
+    const appointmentIdParam = searchParams.get("appointmentId");
+
     if (editPatientId) {
-      handleEditPatient(editPatientId);
-      // Store the return URL if provided
+      handleEditPatient(editPatientId, appointmentIdParam);
       if (returnUrlParam) {
         setReturnUrl(decodeURIComponent(returnUrlParam));
       }
@@ -585,7 +648,7 @@ export default function UserManagement() {
   };
 
   // Add this function to handle edit click
-  const handleEditPatient = async (userId) => {
+  const handleEditPatient = async (userId, preferredAppointmentId = null) => {
     try {
       showLoader();
       const patientData = await patientService.getPatientById(userId);
@@ -593,6 +656,34 @@ export default function UserManagement() {
       const rawPhone = patientDetails.phone;
       const hasRealPhone = rawPhone != null && String(rawPhone).trim() !== "" && !/^_no_phone_/i.test(String(rawPhone).trim());
       //(patientData, "patient data")
+      let consultingDoctor = toEntityId(patientDetails.consultingDoctor);
+      let consultingSpecialization = toEntityId(patientDetails.consultingSpecialization);
+
+      // First open / empty attending physician → use booked appointment doctor
+      if (!consultingDoctor) {
+        const resolved = await resolveAttendingDoctorFromVisits(
+          userId,
+          preferredAppointmentId
+        );
+        consultingDoctor = resolved.consultingDoctor;
+        if (!consultingSpecialization && resolved.consultingSpecialization) {
+          consultingSpecialization = resolved.consultingSpecialization;
+        }
+      } else if (!consultingSpecialization) {
+        // Doctor saved but specialization missing — derive from doctor profile
+        try {
+          const docRes = await doctorService.getDoctorById(consultingDoctor);
+          const doctor = docRes?.doctor || docRes?.data || docRes;
+          const specs = doctor?.specialization || doctor?.specializations || [];
+          const first = Array.isArray(specs) ? specs[0] : null;
+          consultingSpecialization = toEntityId(
+            first && typeof first === "object" ? first._id || first.id : first
+          );
+        } catch (_) {
+          /* keep empty; user can pick */
+        }
+      }
+
       const mappedFormData = {
         // Demographics
         fullName:
@@ -613,14 +704,14 @@ export default function UserManagement() {
         documents: patientDetails.documents || [],
 
         // Referrer
-        referrerType: patientDetails.referrerType,
+        referrerType: patientDetails.referrerType || "bez-skierowania",
         mainComplaint: patientDetails.mainComplaint,
         referrerName: patientDetails.referrerName,
         referrerNumber: patientDetails.referrerNumber,
         referrerEmail: patientDetails.referrerEmail,
         consultingDepartment: patientDetails.consultingDepartment,
-        consultingSpecialization: patientDetails.consultingSpecialization,
-        consultingDoctor: patientDetails.consultingDoctor,
+        consultingSpecialization,
+        consultingDoctor,
 
         // Address
         address: patientDetails.address,
@@ -643,6 +734,8 @@ export default function UserManagement() {
 
         // Authorized persons
         ...mapPatientAuthorizationFields(patientDetails),
+        // Guardian / legal representative (minors)
+        ...mapPatientGuardianFields(patientDetails),
         allergies: patientDetails.allergies,
         preferredLanguage: patientDetails.preferredLanguage,
 
@@ -1567,14 +1660,6 @@ export default function UserManagement() {
             </div>
 
             <div className="p-6">
-              {isEditMode && currentPatientId && (
-                <PatientKioskCorrectionPanel
-                  patientId={currentPatientId}
-                  onCompleted={() => {
-                    toast.success("Pacjent zaktualizował dane na tablecie. Odśwież formularz, aby zobaczyć zmiany.");
-                  }}
-                />
-              )}
               <FormProvider 
                 key={`patient-form-${isEditMode ? 'edit' : 'new'}`} 
                 initialData={patientFormData}
@@ -1597,6 +1682,19 @@ export default function UserManagement() {
                   onFormDataChange={setCurrentFormContextData}
                   recoveredDraftDataRef={recoveredDraftDataRef}
                   isRecoveringDraftRef={isRecoveringDraftRef}
+                  footerCenter={
+                    isEditMode && currentPatientId ? (
+                      <PatientKioskCorrectionPanel
+                        compact
+                        patientId={currentPatientId}
+                        onCompleted={() => {
+                          toast.success(
+                            "Pacjent zaktualizował dane na tablecie. Odśwież formularz, aby zobaczyć zmiany."
+                          );
+                        }}
+                      />
+                    ) : null
+                  }
                 />
               </FormProvider>
             </div>
@@ -1737,7 +1835,8 @@ function PatientStepFormWrapper({
   onRemoveEmail,
   onFormDataChange, // Callback to notify parent of form data changes
   recoveredDraftDataRef, // Ref from parent to track recovered draft
-  isRecoveringDraftRef // Ref from parent to track if recovering draft
+  isRecoveringDraftRef, // Ref from parent to track if recovering draft
+  footerCenter = null,
 }) {
   const [completedSteps, setCompletedSteps] = useState([]);
   const { formData, updateFormData, updateMultipleFields } = useFormContext();
@@ -1887,6 +1986,7 @@ function PatientStepFormWrapper({
       phoneValidationError={phoneValidationError}
       phoneCountryCodes={phoneCountryCodes}
       onRemoveEmail={onRemoveEmail}
+      footerCenter={footerCenter}
     />
   );
 }

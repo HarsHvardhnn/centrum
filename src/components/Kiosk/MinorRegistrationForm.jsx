@@ -14,20 +14,28 @@ export default function MinorRegistrationForm({
   const patientType = detectPatientType(initialData);
 
   // Ensure we have the required guardian fields with defaults
+  // Contact-step values (phone/email) seed guardian contact when empty
+  const is1617 = patientType === PATIENT_TYPES.MINOR_16_17;
   const formDataWithDefaults = {
     ...initialData,
+    patientType,
     guardianFirstName: initialData.guardianFirstName || "",
     guardianLastName: initialData.guardianLastName || "",
     guardianPesel: initialData.guardianPesel || "",
-    guardianPhoneCode: initialData.guardianPhoneCode || "+48",
-    guardianPhone: initialData.guardianPhone || "",
-    guardianEmail: initialData.guardianEmail || "",
+    guardianPhoneCode: initialData.guardianPhoneCode || initialData.phoneCode || "+48",
+    guardianPhone: initialData.guardianPhone || initialData.phone || "",
+    guardianEmail: initialData.guardianEmail || initialData.email || "",
     guardianRelation: initialData.guardianRelation || "matka",
-    consentHealthcareGuardian: !!initialData.consentHealthcareGuardian,
-    consentHealthCampaignsGuardian: !!initialData.consentHealthCampaignsGuardian,
-    consentMarketingGuardian: !!initialData.consentMarketingGuardian,
+    // Separate guardian consent fields only for 16–17 (PDF Number 6 dual-consent)
+    ...(is1617
+      ? {
+          consentHealthcareGuardian: !!initialData.consentHealthcareGuardian,
+          consentHealthCampaignsGuardian: !!initialData.consentHealthCampaignsGuardian,
+          consentMarketingGuardian: !!initialData.consentMarketingGuardian,
+          consentExaminationGuardian: !!initialData.consentExaminationGuardian,
+        }
+      : {}),
     consentExamination: !!initialData.consentExamination,
-    consentExaminationGuardian: !!initialData.consentExaminationGuardian,
   };
 
   return (

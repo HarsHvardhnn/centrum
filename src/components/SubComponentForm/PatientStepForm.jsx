@@ -5,6 +5,8 @@ import ReferrerForm from "./ReferrerForm";
 import AddressForm from "./AddressForm";
 import PhotoUpload from "./PhotoForm";
 import DetailsForm from "./DetailsForm";
+import GuardianForm from "./GuardianForm";
+import OtherForm from "./OtherForm";
 import NotesForm from "./NotesForm";
 import ConsentDocumentUpload from "./PhotoForm";
 
@@ -21,7 +23,8 @@ const PatientStepForm = ({
   phoneValidationError,
   phoneCountryCodes,
   onRemoveEmail,
-  isEditMode = false
+  isEditMode = false,
+  footerCenter = null,
 }) => {
   return (
     <div>
@@ -32,6 +35,7 @@ const PatientStepForm = ({
         hideButtons={hideButtons}
         subStepTitles={subStepTitles}
         isEditMode={isEditMode}
+        footerCenter={footerCenter}
       >
         <SubStep title="Dane Podstawowe">
           <DemographicsForm 
@@ -54,8 +58,14 @@ const PatientStepForm = ({
         <SubStep title="Zgody">
           <ConsentDocumentUpload currentPatientId={currentPatientId} />
         </SubStep>
+        <SubStep title="Przedstawiciel / Opiekun">
+          <GuardianForm />
+        </SubStep>
         <SubStep title="Osoby Upoważnione">
           <DetailsForm />
+        </SubStep>
+        <SubStep title="Inne">
+          <OtherForm />
         </SubStep>
         <SubStep title="Notatki">
           <NotesForm />

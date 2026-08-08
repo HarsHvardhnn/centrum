@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import QRCode from "react-qr-code";
 import {
@@ -20,6 +20,19 @@ const STATUS_LABELS = {
   locked: "Zablokowana",
 };
 
+const TERMINAL_STATUSES = ["completed", "cancelled", "expired", "locked"];
+
+const STATUS_PILL_CLASS = {
+  pending: "bg-amber-50 border-amber-200 text-amber-900",
+  active: "bg-sky-50 border-sky-200 text-sky-900",
+  in_progress: "bg-blue-50 border-blue-200 text-blue-900",
+  ready_for_signature: "bg-indigo-50 border-indigo-200 text-indigo-900",
+  completed: "bg-green-50 border-green-200 text-green-900",
+  cancelled: "bg-red-50 border-red-200 text-red-900",
+  expired: "bg-orange-50 border-orange-200 text-orange-900",
+  locked: "bg-gray-100 border-gray-300 text-gray-800",
+};
+
 const KIOSK_URL = `${window.location.origin}/kiosk`;
 
 export default function IpadSessionPanel({ visitId, onSessionComplete }) {
@@ -28,6 +41,7 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [showLargeQR, setShowLargeQR] = useState(false);
+  const prevStatusRef = useRef(null);
 
   const refreshStatus = useCallback(async () => {
     if (!session?.id) return;
@@ -36,7 +50,11 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
       if (res.session) {
         setSession((prev) => ({ ...prev, ...res.session }));
         if (res.session.status === "completed") {
+          setPin(null);
           onSessionComplete?.(res.session);
+        }
+        if (TERMINAL_STATUSES.includes(res.session.status) && res.session.status !== "completed") {
+          setPin(null);
         }
       }
     } catch (_) {}
@@ -51,6 +69,7 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
         if (cancelled) return;
         if (res.session) {
           setSession(res.session);
+          prevStatusRef.current = res.session.status;
           if (res.session.status === "completed") {
             onSessionComplete?.(res.session);
           }
@@ -60,14 +79,36 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
       .finally(() => {
         if (!cancelled) setInitialLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [visitId, onSessionComplete]);
 
+  // Live-poll while session is in-flight (including until it becomes expired)
   useEffect(() => {
-    if (!session?.id || session.status === "completed" || session.status === "cancelled") return;
-    const interval = setInterval(refreshStatus, 4000);
+    if (!session?.id || TERMINAL_STATUSES.includes(session.status)) return;
+    const interval = setInterval(refreshStatus, 3000);
     return () => clearInterval(interval);
   }, [session?.id, session?.status, refreshStatus]);
+
+  // Notify reception when status flips to cancelled / expired
+  useEffect(() => {
+    if (!session?.status) return;
+    const prev = prevStatusRef.current;
+    const next = session.status;
+    if (prev && prev !== next) {
+      if (next === "expired") {
+        toast.warning("Sesja iPad wygasła. Możesz uruchomić rejestrację ponownie.");
+        setPin(null);
+      } else if (next === "cancelled") {
+        toast.info("Sesja iPad została anulowana.");
+        setPin(null);
+      } else if (next === "completed") {
+        toast.success("Rejestracja na iPadzie zakończona.");
+      }
+    }
+    prevStatusRef.current = next;
+  }, [session?.status]);
 
   const handleStart = async () => {
     if (!visitId) {
@@ -79,11 +120,13 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
       const res = await createSession(visitId);
       setSession(res.session);
       setPin(res.pin);
+      prevStatusRef.current = res.session?.status || "pending";
       toast.success("Sesja iPad utworzona. Podaj PIN pacjentowi.");
     } catch (err) {
       const existing = err.response?.data?.session;
       if (existing) {
         setSession(existing);
+        prevStatusRef.current = existing.status;
         toast.info(err.response?.data?.message || "Aktywna sesja już istnieje.");
       } else {
         toast.error(err.response?.data?.message || "Nie udało się utworzyć sesji.");
@@ -91,6 +134,11 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRestart = async () => {
+    // Create a fresh session + PIN after cancelled/expired/locked
+    await handleStart();
   };
 
   const handleCancel = async () => {
@@ -145,12 +193,17 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
     );
   }
 
-  const isActive = session && !["completed", "cancelled", "expired", "locked"].includes(session.status);
+  const isActive = session && !TERMINAL_STATUSES.includes(session.status);
+  const canRestart =
+    !session ||
+    ["cancelled", "expired", "locked"].includes(session.status) ||
+    (session.status === "completed" && !isActive);
   const showPin = pin && session?.status === "pending";
+  const statusClass =
+    STATUS_PILL_CLASS[session?.status] || "bg-white border-gray-200 text-gray-800";
 
   return (
     <div className="border border-teal-200 bg-teal-50/50 rounded-xl p-3 space-y-2">
-      {/* Compact header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-gray-900 text-sm">Rejestracja przez iPad</h3>
@@ -161,19 +214,24 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
             </button>
           </p>
         </div>
-        {!isActive && session?.status !== "completed" && (
+        {canRestart && (
           <button
             type="button"
-            onClick={handleStart}
+            onClick={session && TERMINAL_STATUSES.includes(session.status) ? handleRestart : handleStart}
             disabled={loading}
             className="bg-teal-700 hover:bg-teal-800 text-white px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50 shrink-0"
           >
-            {loading ? "..." : "Uruchom sesję"}
+            {loading
+              ? "..."
+              : session && ["cancelled", "expired", "locked"].includes(session.status)
+                ? "Uruchom ponownie"
+                : session?.status === "completed"
+                  ? "Nowa sesja"
+                  : "Uruchom sesję"}
           </button>
         )}
       </div>
 
-      {/* QR + PIN side by side — fits one viewport */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div className="bg-white rounded-lg p-2.5 border border-teal-300 flex flex-col items-center justify-center">
           <p className="text-xs font-medium text-gray-800 mb-1.5">Zeskanuj kod QR</p>
@@ -199,14 +257,20 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
           {showPin ? (
             <>
               <p className="text-xs text-gray-600 mb-1">Kod PIN dla pacjenta</p>
-              <p className="text-3xl font-mono font-bold tracking-[0.2em] text-teal-800 leading-none">{pin}</p>
+              <p className="text-3xl font-mono font-bold tracking-[0.2em] text-teal-800 leading-none">
+                {pin}
+              </p>
               <p className="text-[11px] text-gray-500 mt-1.5">Ważny przez 2 godziny</p>
             </>
           ) : (
             <p className="text-xs text-gray-500 px-2">
-              {session
-                ? "PIN widoczny tylko przy statusie „Oczekuje na PIN”."
-                : "Uruchom sesję, aby wygenerować PIN."}
+              {session?.status === "expired"
+                ? "Sesja wygasła. Kliknij „Uruchom ponownie”, aby wygenerować nowy PIN."
+                : session?.status === "cancelled"
+                  ? "Sesja anulowana. Kliknij „Uruchom ponownie”, aby wygenerować nowy PIN."
+                  : session
+                    ? "PIN widoczny tylko przy statusie „Oczekuje na PIN”."
+                    : "Uruchom sesję, aby wygenerować PIN."}
             </p>
           )}
         </div>
@@ -216,9 +280,12 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="font-medium text-gray-700">Status:</span>
-            <span className="px-2 py-0.5 rounded-full bg-white border border-gray-200 text-gray-800">
+            <span className={`px-2 py-0.5 rounded-full border font-medium ${statusClass}`}>
               {STATUS_LABELS[session.status] || session.status}
             </span>
+            {isActive && (
+              <span className="text-gray-400">aktualizacja na żywo</span>
+            )}
             {session.mode && (
               <span className="text-gray-500">
                 Tryb: {session.mode === "sign_only" ? "tylko podpis" : "pełna rejestracja"}
@@ -232,7 +299,7 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
                 type="button"
                 onClick={handleCancel}
                 disabled={loading}
-                className="text-xs border border-gray-300 bg-white px-2.5 py-1 rounded-lg hover:bg-gray-50"
+                className="text-xs border border-red-200 bg-white text-red-700 px-2.5 py-1 rounded-lg hover:bg-red-50"
               >
                 Anuluj sesję
               </button>
@@ -247,20 +314,10 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
                 Pobierz dokumenty
               </button>
             )}
-            {["completed", "cancelled", "expired", "locked"].includes(session.status) && (
-              <button
-                type="button"
-                onClick={() => { setSession(null); setPin(null); }}
-                className="text-xs text-teal-700 hover:underline"
-              >
-                Nowa sesja
-              </button>
-            )}
           </div>
         </div>
       )}
 
-      {/* Large QR Code Modal */}
       {showLargeQR && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-xl p-5 max-w-sm w-full text-center">

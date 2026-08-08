@@ -235,13 +235,19 @@ export default function KioskConsentsStep({ form, onChange, errors = [] }) {
         title="Oświadczenie pacjenta o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"
         required
       >
-        <p className="text-sm text-gray-700 leading-relaxed mb-3">
-          Wyrażam zgodę na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego, na
-          zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i
-          Rzeczniku Praw Pacjenta. Zostałem(-am) poinformowany(-a) o celu, przebiegu oraz możliwych
-          następstwach planowanego świadczenia zdrowotnego i potwierdzam, że moja zgoda ma charakter
-          świadomy i dobrowolny.
-        </p>
+        <div className="text-sm text-gray-700 leading-relaxed mb-3 space-y-3">
+          <p>
+            Wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia
+            zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego),
+            niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z
+            dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.
+          </p>
+          <p>
+            Przyjmuję do wiadomości, że jeżeli planowane świadczenie wiąże się z podwyższonym
+            ryzykiem lub wymaga zgody w formie pisemnej na zasadach szczególnych, personel medyczny
+            przedstawi mi odrębny dokument zgody bezpośrednio przed jego udzieleniem.
+          </p>
+        </div>
         <CheckboxRow
           checked={form.consentExamination}
           required

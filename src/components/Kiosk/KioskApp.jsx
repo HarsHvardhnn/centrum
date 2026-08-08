@@ -5,6 +5,7 @@ import {
   checkKioskPesel,
   clearKioskToken,
   completeKioskRegistration,
+  releaseKioskSession,
   saveKioskForm,
 } from "../../helpers/kioskHelper";
 import { normalizePesel } from "../../utils/peselUtils";
@@ -55,14 +56,23 @@ export default function KioskApp() {
     setLastErrorMessage("");
   }, []);
 
+  /** Expire session on server so reception listing updates, then return to PIN. */
+  const endSessionAndReset = useCallback(
+    async (reason = "interrupted") => {
+      await releaseKioskSession(reason);
+      resetToPin();
+    },
+    [resetToPin]
+  );
+
   const resetIdleTimer = useCallback(() => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     if (step === STEPS.PIN || step === STEPS.DONE) return;
     idleTimerRef.current = setTimeout(() => {
       toast.info("Sesja wygasła z powodu braku aktywności.");
-      resetToPin();
+      endSessionAndReset("idle");
     }, IDLE_TIMEOUT_MS);
-  }, [step, resetToPin]);
+  }, [step, endSessionAndReset]);
 
   // Throttled save function to prevent infinite API calls
   const handleFormDataChange = useCallback((updatedFormData) => {
@@ -89,6 +99,13 @@ export default function KioskApp() {
   }, []);
 
   const throttledSaveKioskForm = useCallback((formData) => {
+    // Keep heavy scan payloads out of autosave (sent on complete). Avoids 413 / iPad freezes.
+    const {
+      documentScans: _scans,
+      uploadedDocuments: _uploaded,
+      ...lightweightForm
+    } = formData || {};
+
     const now = Date.now();
     const timeSinceLastSave = now - lastSaveRef.current;
     
@@ -101,7 +118,7 @@ export default function KioskApp() {
       
       saveTimeoutRef.current = setTimeout(() => {
         lastSaveRef.current = Date.now();
-        saveKioskForm(formData).catch(err => {
+        saveKioskForm(lightweightForm).catch(err => {
           console.error('Auto-save failed:', err);
         });
         saveTimeoutRef.current = null;
@@ -112,7 +129,7 @@ export default function KioskApp() {
     
     // Save immediately if enough time has passed
     lastSaveRef.current = now;
-    saveKioskForm(formData).catch(err => {
+    saveKioskForm(lightweightForm).catch(err => {
       console.error('Auto-save failed:', err);
     });
   }, []);
@@ -352,7 +369,7 @@ export default function KioskApp() {
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
               <button
                 type="button"
-                onClick={resetToPin}
+                onClick={() => endSessionAndReset("interrupted")}
                 className="text-sm text-teal-700 mb-4 hover:underline"
               >
                 ← Wróć do PIN

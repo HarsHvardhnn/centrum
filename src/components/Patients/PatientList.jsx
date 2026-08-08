@@ -198,7 +198,9 @@ function LabAppointmentsContent({ clinic }) {
     "Skierowanie",
     "Adres",
     "Zgody",
+    "Przedstawiciel / Opiekun",
     "Osoby Upoważnione",
+    "Inne",
     "Notatki",
   ];
 
@@ -215,7 +217,12 @@ function LabAppointmentsContent({ clinic }) {
   /** Receptionist goes to edit patient (Settings); admin/doctor go to appointment card. */
   const getPatientViewUrl = (patientId, appointmentId) => {
     if (user?.role === "receptionist") {
-      return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname)}`;
+      const params = new URLSearchParams({
+        edytujPacjenta: patientId,
+        returnUrl: window.location.pathname,
+      });
+      if (appointmentId) params.set("appointmentId", appointmentId);
+      return `/administracja/konta?${params.toString()}`;
     }
     return `/szczegoly-pacjenta/${patientId}${appointmentId ? `?appointmentId=${appointmentId}` : ""}`;
   };
@@ -1354,7 +1361,7 @@ function LabAppointmentsContent({ clinic }) {
                                   onClick={() => {
                                     const patientId = appointment.patient.id || appointment.patient._id;
                                     if (user?.role === "receptionist") {
-                                      navigate(`/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent("/klinika")}`);
+                                      navigate(getPatientViewUrl(patientId, appointment.id || appointment._id));
                                     } else {
                                       navigate(getPatientViewUrl(patientId, appointment.id));
                                     }
@@ -1397,7 +1404,7 @@ function LabAppointmentsContent({ clinic }) {
                                 <FileText size={16} className="mr-2" /> Zobacz szczegóły rezerwacji
                               </DropdownMenu.Item>
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${encodeURIComponent("/klinika")}`); }}>
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&appointmentId=${appointment.id || appointment._id}&returnUrl=${encodeURIComponent("/klinika")}`); }}>
                                   <Eye size={16} className="mr-2" /> Zobacz dane pacjenta
                                 </DropdownMenu.Item>
                               )}
@@ -1497,7 +1504,7 @@ function LabAppointmentsContent({ clinic }) {
                                   onClick={() => {
                                     const patientId = appointment.patient.id || appointment.patient._id;
                                     if (user?.role === "receptionist") {
-                                      navigate(`/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent("/pacjenci")}`);
+                                      navigate(getPatientViewUrl(patientId, appointment.id || appointment._id));
                                     } else {
                                       navigate(getPatientViewUrl(patientId, appointment.id));
                                     }
@@ -1540,7 +1547,7 @@ function LabAppointmentsContent({ clinic }) {
                                 <FileText size={16} className="mr-2" /> Zobacz szczegóły rezerwacji
                               </DropdownMenu.Item>
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&returnUrl=${encodeURIComponent("/pacjenci")}`); }}>
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id || appointment._id)); }}>
                                   <Pen size={16} className="mr-2" /> Zobacz dane pacjenta
                                 </DropdownMenu.Item>
                               )}

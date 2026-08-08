@@ -8,6 +8,9 @@ import { generateDocumentMetadata } from "../../../utils/documentNumberUtils";
 import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils";
 import PatientDataEditModal from "../PatientDataEditModal";
 
+const HEALTHCARE_CONSENT_LABEL =
+  "z organizacją udzielanych świadczeń opieki zdrowotnej, w tym prowadzeniem dokumentacji medycznej oraz przypomnieniami o terminie wizyty";
+
 /** Role labels based on selected guardian / representative status */
 function getGuardianRoleInfo(relation) {
   const r = String(relation || "").toLowerCase().trim();
@@ -65,6 +68,246 @@ function getGuardianRoleInfo(relation) {
         sectionTitle: "DANE PRZEDSTAWICIELA USTAWOWEGO / OPIEKUNA FAKTYCZNEGO",
       };
   }
+}
+
+/** PDF Number 6 — Block A (patient 16–17), no age in the legal wording */
+const PATIENT_RODO_BLOCK_A_TEXT =
+  "Ja niżej podpisana(-ny) oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie moich danych osobowych przez CM7 SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ z siedzibą w Skarżysku-Kamiennej przy ul. Powstańców Warszawy 7/1.5, 26-110 Skarżysko-Kamienna, do celów związanych z:";
+
+/** PDF Number 6 — Block B declaration per representation type (copy 1:1) */
+function getGuardianRodoBlockBText(formData) {
+  const repName = [formData.guardianFirstName, formData.guardianLastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim() || "—";
+  const patientName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim() || "—";
+  const patientPesel = formData.pesel || "—";
+  const courtName = formData.courtName?.trim() || "—";
+  const courtNumber = formData.courtNumber?.trim() || "—";
+  const courtDate = formData.courtDate ? formatPolishDate(formData.courtDate) || "—" : "—";
+  const freeText =
+    formData.guardianRelationDetail?.trim() ||
+    formData.guardianRelationFreeText?.trim() ||
+    "";
+  const relation = String(formData.guardianRelation || "").toLowerCase().trim();
+  const company =
+    "CM7 SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ z siedzibą w Skarżysku-Kamiennej przy ul. Powstańców Warszawy 7/1.5, 26-110 Skarżysko-Kamienna";
+
+  switch (relation) {
+    case "matka":
+      return `Ja niżej podpisana ${repName}, działając jako matka i przedstawiciel ustawowy małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, oświadczam, że zapoznałam się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie danych osobowych mojego dziecka oraz moich danych kontaktowych przez ${company}, do celów związanych z:`;
+    case "ojciec":
+      return `Ja niżej podpisany ${repName}, działając jako ojciec i przedstawiciel ustawowy małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, oświadczam, że zapoznałem się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie danych osobowych mojego dziecka oraz moich danych kontaktowych przez ${company}, do celów związanych z:`;
+    case "opiekun_prawny":
+    case "opiekun prawny":
+      return `Ja niżej podpisana(-ny) ${repName}, działając jako opiekun prawny (przedstawiciel ustawowy ustanowiony postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}) małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie danych osobowych podopiecznego oraz moich danych kontaktowych przez ${company}, do celów związanych z:`;
+    case "kurator":
+      return `Ja niżej podpisana(-ny) ${repName}, działając jako kurator (ustanowiony postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}) małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie danych osobowych podopiecznego oraz moich danych kontaktowych przez ${company}, do celów związanych z:`;
+    case "opiekun_faktyczny":
+    case "opiekun faktyczny":
+      return freeText
+        ? `Ja niżej podpisana(-ny) ${repName}, działając jako opiekun faktyczny (${freeText}) małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie danych osobowych podopiecznego oraz moich danych kontaktowych przez ${company}, do celów związanych z:`
+        : `Ja niżej podpisana(-ny) ${repName}, działając jako opiekun faktyczny małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie danych osobowych podopiecznego oraz moich danych kontaktowych przez ${company}, do celów związanych z:`;
+    default: {
+      const role = getGuardianRoleInfo(relation).actingAs;
+      return `Ja niżej podpisana(-ny) ${repName}, działając jako ${role} małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie danych osobowych podopiecznego oraz moich danych kontaktowych przez ${company}, do celów związanych z:`;
+    }
+  }
+}
+
+const EXAM_RISK_NOTICE =
+  "Przyjmuję do wiadomości, że jeżeli planowane świadczenie wiąże się z podwyższonym ryzykiem lub wymaga zgody w formie pisemnej na zasadach szczególnych, personel medyczny przedstawi mi odrębny dokument zgody bezpośrednio przed jego udzieleniem.";
+
+/** PDF Number 7 — Block A patient examination statement (16–17) */
+function getPatientExaminationTexts(formData) {
+  const patientName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim() || "—";
+  const patientPesel = formData.pesel || "—";
+  return {
+    p1: `Ja, ${patientName} (PESEL ${patientPesel}), jako pacjent, oświadczam, że zostałem(-am) poinformowany(-a) o celu, przebiegu oraz możliwych następstwach planowanego badania lub innego świadczenia zdrowotnego i wyrażam zgodę na jego przeprowadzenie, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`,
+    p2: EXAM_RISK_NOTICE,
+  };
+}
+
+/** PDF Number 8 / PDF-NUMBER-4 — representative statement variants (same for <16 and 16–17) */
+function getGuardianStatementTexts(formData) {
+  const repName = [formData.guardianFirstName, formData.guardianLastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim() || "—";
+  const repPesel = formData.guardianPesel || "—";
+  const patientName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim() || "—";
+  const patientPesel = formData.pesel || "—";
+  const courtName = formData.courtName?.trim() || "—";
+  const courtNumber = formData.courtNumber?.trim() || "—";
+  const courtDate = formData.courtDate ? formatPolishDate(formData.courtDate) || "—" : "—";
+  const freeText =
+    formData.guardianRelationDetail?.trim() ||
+    formData.guardianRelationFreeText?.trim() ||
+    "";
+  const relation = String(formData.guardianRelation || "").toLowerCase().trim();
+
+  const p2Court =
+    "Oświadczam, że podane przeze mnie informacje są zgodne z prawdą, a dokumenty potwierdzające moją tożsamość oraz podstawę reprezentacji (postanowienie sądu) są autentyczne i aktualne.";
+  const p2Default =
+    "Oświadczam, że podane przeze mnie informacje są zgodne z prawdą, a dokumenty potwierdzające moją tożsamość oraz podstawę reprezentacji są autentyczne i aktualne.";
+
+  switch (relation) {
+    case "matka":
+      return {
+        p1: `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem matką małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniona do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
+        p2: p2Default,
+      };
+    case "ojciec":
+      return {
+        p1: `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem ojcem małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniony do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
+        p2: p2Default,
+      };
+    case "opiekun_prawny":
+    case "opiekun prawny":
+      return {
+        p1: `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem opiekunem prawnym małoletniego ${patientName}, PESEL ${patientPesel}, ustanowionym postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}, i jestem uprawniony(-a) do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
+        p2: p2Court,
+      };
+    case "kurator":
+      return {
+        p1: `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem kuratorem małoletniego ${patientName}, PESEL ${patientPesel}, ustanowionym postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}, i jestem uprawniony(-a) do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
+        p2: p2Court,
+      };
+    case "opiekun_faktyczny":
+    case "opiekun faktyczny":
+      return {
+        p1: freeText
+          ? `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem opiekunem faktycznym (${freeText}) małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniony(-a) wyłącznie do wyrażenia zgody na przeprowadzenie badania w Centrum Medycznym 7 (art. 32 ust. 5 u.z.l.).`
+          : `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem opiekunem faktycznym małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniony(-a) wyłącznie do wyrażenia zgody na przeprowadzenie badania w Centrum Medycznym 7 (art. 32 ust. 5 u.z.l.).`,
+        p2: p2Default,
+      };
+    default: {
+      const role = getGuardianRoleInfo(relation).label;
+      return {
+        p1: `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem ${role} małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniony(-a) do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
+        p2: p2Default,
+      };
+    }
+  }
+}
+
+/** PDF Number 7 — Block B guardian examination statement per role */
+function getGuardianExaminationTexts(formData) {
+  const repName = [formData.guardianFirstName, formData.guardianLastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim() || "—";
+  const repPesel = formData.guardianPesel || "—";
+  const patientName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim() || "—";
+  const patientPesel = formData.pesel || "—";
+  const courtName = formData.courtName?.trim() || "—";
+  const courtNumber = formData.courtNumber?.trim() || "—";
+  const courtDate = formData.courtDate ? formatPolishDate(formData.courtDate) || "—" : "—";
+  const freeText =
+    formData.guardianRelationDetail?.trim() ||
+    formData.guardianRelationFreeText?.trim() ||
+    "";
+  const relation = String(formData.guardianRelation || "").toLowerCase().trim();
+  const isFactual = relation === "opiekun_faktyczny" || relation === "opiekun faktyczny";
+
+  let p1;
+  switch (relation) {
+    case "matka":
+      p1 = `Ja, ${repName} (matka, PESEL ${repPesel}), działając jako matka i przedstawiciel ustawowy małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
+      break;
+    case "ojciec":
+      p1 = `Ja, ${repName} (ojciec, PESEL ${repPesel}), działając jako ojciec i przedstawiciel ustawowy małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
+      break;
+    case "opiekun_prawny":
+    case "opiekun prawny":
+      p1 = `Ja, ${repName} (opiekun prawny, PESEL ${repPesel}), działając jako opiekun prawny (przedstawiciel ustawowy ustanowiony postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}) małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
+      break;
+    case "kurator":
+      p1 = `Ja, ${repName} (kurator, PESEL ${repPesel}), działając jako kurator (ustanowiony postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}) małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
+      break;
+    case "opiekun_faktyczny":
+    case "opiekun faktyczny":
+      p1 = freeText
+        ? `Ja, ${repName} (opiekun faktyczny — ${freeText}, PESEL ${repPesel}), działając jako opiekun faktyczny małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę wyłącznie na przeprowadzenie badania (w tym wywiadu i badania przedmiotowego), na zasadach określonych w art. 32 ust. 5 ustawy o zawodach lekarza i lekarza dentysty oraz rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`
+        : `Ja, ${repName} (opiekun faktyczny, PESEL ${repPesel}), działając jako opiekun faktyczny małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę wyłącznie na przeprowadzenie badania (w tym wywiadu i badania przedmiotowego), na zasadach określonych w art. 32 ust. 5 ustawy o zawodach lekarza i lekarza dentysty oraz rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
+      break;
+    default: {
+      const role = getGuardianRoleInfo(relation).label;
+      p1 = `Ja, ${repName} (${role}, PESEL ${repPesel}), działając jako ${getGuardianRoleInfo(relation).actingAs} małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
+    }
+  }
+
+  const p2 = isFactual
+    ? "Przyjmuję do wiadomości, że udzielenie innego świadczenia zdrowotnego niż badanie (np. zabiegu, procedury o podwyższonym ryzyku) wymaga zgody przedstawiciela ustawowego (matki, ojca, opiekuna prawnego lub kuratora) i nie może zostać udzielone na podstawie niniejszego oświadczenia."
+    : EXAM_RISK_NOTICE;
+
+  return {
+    p1,
+    p2,
+    radioLabel: isFactual
+      ? "Zgoda opiekuna na przeprowadzenie badania"
+      : "Zgoda opiekuna na świadczenie zdrowotne",
+  };
+}
+
+const DEFAULT_EXAM_REFUSE_NOTICE =
+  "Bez wyrażenia zgody nie jest możliwe przeprowadzenie badania. Rejestracja zostanie zapisana jako niepotwierdzona — prosimy o kontakt z recepcją w celu wyjaśnienia.";
+
+/** PDF Number 9 — patient Block A refusal (16–17) */
+const PATIENT_16_17_EXAM_REFUSE_MESSAGE = `Nie wyraziłeś(-aś) zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego. Ze względu na to, że jako pacjent w wieku 16-17 lat masz ograniczoną zdolność do czynności prawnych, obowiązujące przepisy wymagają zgody wyrażonej łącznie przez Ciebie i Twojego przedstawiciela ustawowego (opiekuna) — zgoda samego przedstawiciela nie jest wystarczająca do przeprowadzenia świadczenia w naszej placówce.
+
+Bez Twojej zgody nie jest możliwe przeprowadzenie badania. Rejestracja zostanie zapisana jako niepotwierdzona — prosimy o kontakt z recepcją w celu wyjaśnienia.`;
+
+/** PDF Number 9 — guardian Block B refusal (16–17) */
+const GUARDIAN_16_17_EXAM_REFUSE_MESSAGE = `Nie wyraziłeś(-aś) zgody jako przedstawiciel ustawowy pacjenta. Ze względu na to, że pacjent w wieku 16-17 lat ma ograniczoną zdolność do czynności prawnych, jego własna zgoda — mimo że prawnie wymagana — nie jest samodzielnie wystarczająca do przeprowadzenia świadczenia. Twoja zgoda jako przedstawiciela ustawowego musi zostać wyrażona łącznie ze zgodą pacjenta.
+
+Bez wyrażenia zgody nie jest możliwe przeprowadzenie badania. Rejestracja zostanie zapisana jako niepotwierdzona — prosimy o kontakt z recepcją w celu wyjaśnienia.`;
+
+function AgreeRefuseRadios({
+  name,
+  value,
+  onChange,
+  label,
+  accent = "green",
+  refuseMessage = DEFAULT_EXAM_REFUSE_NOTICE,
+}) {
+  const border =
+    accent === "blue" ? "border-blue-400 bg-blue-50" : "border-green-400 bg-green-50";
+  const text = accent === "blue" ? "text-blue-900" : "text-green-900";
+  return (
+    <div className={`p-4 rounded-lg border-2 ${border} space-y-3`}>
+      <p className={`text-sm font-semibold ${text}`}>
+        {label} <span className="text-red-600">*</span>
+      </p>
+      <div className="space-y-2">
+        <label className="flex items-center gap-3 cursor-pointer text-sm text-gray-800">
+          <input
+            type="radio"
+            name={name}
+            checked={value === "agree"}
+            onChange={() => onChange("agree")}
+            className="w-5 h-5 text-teal-700"
+          />
+          Wyrażam zgodę
+        </label>
+        <label className="flex items-center gap-3 cursor-pointer text-sm text-gray-800">
+          <input
+            type="radio"
+            name={name}
+            checked={value === "refuse"}
+            onChange={() => onChange("refuse")}
+            className="w-5 h-5 text-teal-700"
+          />
+          Nie wyrażam zgody
+        </label>
+      </div>
+      {value === "refuse" && refuseMessage && (
+        <div className="text-xs text-amber-900 bg-amber-100 border border-amber-300 rounded-md p-3 space-y-2 whitespace-pre-line">
+          {refuseMessage}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function MinorConsentsStep({
@@ -146,15 +389,26 @@ export default function MinorConsentsStep({
       }
     }
     
+    // PDF Number 7: radio choice required (agree OR refuse) — no default / silent skip
     if (patientType === PATIENT_TYPES.MINOR_16_17) {
-      if (!formData.consentExamination) {
-        errors.push("Zgoda pacjenta (16–17 lat) na przeprowadzenie badania jest wymagana.");
+      if (
+        formData.examinationConsentPatient !== "agree" &&
+        formData.examinationConsentPatient !== "refuse"
+      ) {
+        errors.push("Zaznacz decyzję pacjenta dotyczącą badania: Wyrażam zgodę lub Nie wyrażam zgody.");
       }
-      if (!formData.consentExaminationGuardian) {
-        errors.push("Zgoda opiekuna na przeprowadzenie badania jest wymagana.");
+      if (
+        formData.examinationConsentGuardian !== "agree" &&
+        formData.examinationConsentGuardian !== "refuse"
+      ) {
+        errors.push("Zaznacz decyzję opiekuna dotyczącą badania: Wyrażam zgodę lub Nie wyrażam zgody.");
       }
-    } else if (!formData.consentExamination) {
-      errors.push("Zgoda opiekuna na przeprowadzenie badania lub udzielenie świadczenia zdrowotnego jest wymagana.");
+    } else if (
+      formData.examinationConsentGuardian !== "agree" &&
+      formData.examinationConsentGuardian !== "refuse" &&
+      !formData.consentExamination
+    ) {
+      errors.push("Zaznacz decyzję opiekuna dotyczącą badania: Wyrażam zgodę lub Nie wyrażam zgody.");
     }
 
     if (!formData.consentGuardianStatement) {
@@ -338,26 +592,12 @@ export default function MinorConsentsStep({
           </div>
         </div>
 
-        {/* Full Legal Consent Text for Minors — role from selected status */}
-        <div className="mb-6 text-sm text-gray-800 leading-relaxed">
-          <p className="mb-4">
-            {patientType === PATIENT_TYPES.MINOR_16_17 ? (
-              <>
-                Ja niżej podpisana(-ny) jako pacjent w wieku 16-17 lat oraz niżej podpisany(-na) jako{" "}
-                <strong>{guardianRole.rolePhrase}</strong> oświadczamy, że zapoznaliśmy się z Klauzulą Informacyjną RODO
-                i wyrażamy zgodę na przetwarzanie danych osobowych przez{" "}
-              </>
-            ) : (
-              <>
-                Ja niżej podpisany(-na) jako <strong>{guardianRole.rolePhrase}</strong> pacjenta niepełnoletniego poniżej
-                16. roku życia oświadczam, że zapoznałem(-am) się z Klauzulą Informacyjną RODO i wyrażam zgodę na
-                przetwarzanie danych osobowych mojego dziecka / podopiecznego przez{" "}
-              </>
-            )}
-            <strong>CM7 SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ</strong> z siedzibą w Skarżysku-Kamiennej przy ul. Powstańców Warszawy 7/1.5, do celów związanych z:
-          </p>
-        </div>
-
+        {/* Under-16: single representative declaration intro. 16–17: texts live in Block A / Block B (PDF Number 6). */}
+        {patientType !== PATIENT_TYPES.MINOR_16_17 && (
+          <div className="mb-6 text-sm text-gray-800 leading-relaxed">
+            <p className="mb-4">{getGuardianRodoBlockBText(formData)}</p>
+          </div>
+        )}
       </div>
 
       {/* Age Notice */}
@@ -381,15 +621,14 @@ export default function MinorConsentsStep({
         </div>
       </div>
 
-      {/* Patient Consent Block (only for 16-17 year olds) */}
+      {/* Patient Consent Block (only for 16-17 year olds) — PDF Number 6 Block A */}
       {requiresPatientConsent && (
         <div className="bg-blue-50 rounded-lg p-6 space-y-3 border border-blue-200">
-          <h4 className="font-semibold text-blue-900">Blok A - Zgoda pacjenta (16-17 lat)</h4>
-          <div className="text-sm text-blue-800 mb-3 p-3 bg-white rounded-lg border border-blue-100">
-            „Ja niżej podpisana(-ny) oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO 
-            i wyrażam zgodę na przetwarzanie moich danych osobowych przez CM7 SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ..."
+          <h4 className="font-semibold text-blue-900">Blok A — Zgoda pacjenta</h4>
+          <div className="text-sm text-blue-800 mb-3 p-3 bg-white rounded-lg border border-blue-100 leading-relaxed">
+            {PATIENT_RODO_BLOCK_A_TEXT}
           </div>
-          
+
           <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-blue-300 bg-blue-50">
             <input
               type="checkbox"
@@ -398,12 +637,7 @@ export default function MinorConsentsStep({
               className="mt-1 w-6 h-6 rounded border-gray-400 text-blue-700 focus:ring-blue-500"
             />
             <div className="text-sm">
-              <p className="font-semibold text-blue-900 mb-1">
-                Zgoda pacjenta na przetwarzanie danych osobowych (wymagana) *
-              </p>
-              <p className="text-gray-700">
-                z organizacją udzielanych świadczeń opieki zdrowotnej
-              </p>
+              <p className="text-gray-700">{HEALTHCARE_CONSENT_LABEL}</p>
               <p className="text-xs text-blue-800 mt-2 font-medium">WYMAGANE</p>
             </div>
           </div>
@@ -440,23 +674,18 @@ export default function MinorConsentsStep({
         </div>
       )}
 
-      {/* Guardian Consent Block */}
+      {/* Guardian Consent Block — PDF Number 6 Block B (or sole block under 16) */}
       <div className="bg-yellow-50 rounded-lg p-6 space-y-3 border border-yellow-200">
         <h4 className="font-semibold text-yellow-900">
           {requiresPatientConsent
-            ? `Blok B - Zgoda: ${guardianRole.label}`
+            ? `Blok B — Zgoda: ${guardianRole.label}`
             : `Zgoda: ${guardianRole.label}`}
         </h4>
-        <div className="text-sm text-yellow-800 mb-3 p-3 bg-white rounded-lg border border-yellow-100">
-          „Ja niżej podpisana(-ny), działając jako <strong>{guardianRole.actingAs}</strong> małoletniego pacjenta{" "}
-          <strong>{formData.firstName} {formData.lastName}</strong> (PESEL: <strong>{formData.pesel}</strong>),
-          oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie
-          danych osobowych małoletniego przez CM7 SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ..."
+        <div className="text-sm text-yellow-800 mb-3 p-3 bg-white rounded-lg border border-yellow-100 leading-relaxed">
+          {getGuardianRodoBlockBText(formData)}
         </div>
-        
-        {/* Guardian consent checkboxes */}
+
         {patientType === PATIENT_TYPES.MINOR_UNDER_16 ? (
-          // For under 16, use main consent fields
           <>
             <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-yellow-300 bg-yellow-50">
               <input
@@ -466,12 +695,7 @@ export default function MinorConsentsStep({
                 className="mt-1 w-6 h-6 rounded border-gray-400 text-yellow-700 focus:ring-yellow-500"
               />
               <div className="text-sm">
-                <p className="font-semibold text-yellow-900 mb-1">
-                  Zgoda opiekuna na przetwarzanie danych osobowych małoletniego (wymagana) *
-                </p>
-                <p className="text-gray-700">
-                  z organizacją udzielanych świadczeń opieki zdrowotnej
-                </p>
+                <p className="text-gray-700">{HEALTHCARE_CONSENT_LABEL}</p>
                 <p className="text-xs text-yellow-800 mt-2 font-medium">WYMAGANE</p>
               </div>
             </div>
@@ -507,7 +731,6 @@ export default function MinorConsentsStep({
             </div>
           </>
         ) : (
-          // For 16-17, use separate guardian consent fields
           <>
             <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-yellow-300 bg-yellow-50">
               <input
@@ -517,12 +740,7 @@ export default function MinorConsentsStep({
                 className="mt-1 w-6 h-6 rounded border-gray-400 text-yellow-700 focus:ring-yellow-500"
               />
               <div className="text-sm">
-                <p className="font-semibold text-yellow-900 mb-1">
-                  Zgoda opiekuna na przetwarzanie danych osobowych małoletniego (wymagana) *
-                </p>
-                <p className="text-gray-700">
-                  z organizacją udzielanych świadczeń opieki zdrowotnej
-                </p>
+                <p className="text-gray-700">{HEALTHCARE_CONSENT_LABEL}</p>
                 <p className="text-xs text-yellow-800 mt-2 font-medium">WYMAGANE</p>
               </div>
             </div>
@@ -596,90 +814,94 @@ export default function MinorConsentsStep({
           )}
         </div>
 
-        {/* Examination Consent Text */}
-        <div className="mb-6 text-sm text-gray-800 leading-relaxed bg-green-50 p-4 rounded-lg">
-          <p className="mb-4">
-            Ja, <strong>{formData.guardianFirstName} {formData.guardianLastName}</strong> (
-            {guardianRole.label}, PESEL <strong>{formData.guardianPesel || "—"}</strong>), działając jako{" "}
-            <strong>{guardianRole.actingAs}</strong> małoletniego pacjenta{" "}
-            <strong>{formData.firstName} {formData.lastName}</strong>, PESEL{" "}
-            <strong>{formData.pesel || "—"}</strong>, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego
-            świadczenia zdrowotnego, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach
-            pacjenta i Rzeczniku Praw Pacjenta.
-          </p>
-          <p className="mb-4">
-            Zostałem(-am) poinformowany(-a) o celu, przebiegu oraz możliwych następstwach planowanego świadczenia
-            zdrowotnego i potwierdzam, że niniejsza zgoda ma charakter świadomy i dobrowolny.
-          </p>
-          <p className="text-xs text-gray-600 italic">
-            art. 17 ust. 1 i 3 UPP (t.j. Dz. U. z 2024 r. poz. 581) · art. 32 ust. 2 i 5 ustawy o zawodach lekarza i
-            lekarza dentysty (t.j. Dz. U. z 2023 r. poz. 1516)
-          </p>
-        </div>
+        {(() => {
+          const guardianExam = getGuardianExaminationTexts(formData);
+          const patientExam = getPatientExaminationTexts(formData);
+          const setPatientChoice = (choice) => {
+            updateFormData({
+              examinationConsentPatient: choice,
+              consentExamination: choice === "agree",
+            });
+          };
+          const setGuardianChoice = (choice) => {
+            updateFormData({
+              examinationConsentGuardian: choice,
+              consentExaminationGuardian: choice === "agree",
+              // under-16 historically used consentExamination for the sole guardian decision
+              ...(patientType !== PATIENT_TYPES.MINOR_16_17
+                ? { consentExamination: choice === "agree" }
+                : {}),
+            });
+          };
 
-        {/* Examination consent checkboxes */}
-        {patientType === PATIENT_TYPES.MINOR_16_17 ? (
-          <div className="space-y-3">
-            <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-blue-400 bg-blue-50">
-              <input
-                type="checkbox"
-                checked={!!formData.consentExamination}
-                onChange={(e) => update("consentExamination", e.target.checked)}
-                className="mt-1 w-6 h-6 rounded border-gray-400 text-blue-700 focus:ring-blue-500"
-              />
-              <div className="text-sm">
-                <p className="font-semibold text-blue-900 mb-1">
-                  Zgoda pacjenta (16–17 lat) — zapoznałem(-am) się z treścią oświadczenia i wyrażam zgodę *
-                </p>
-                <p className="text-xs text-blue-800 mt-1">
-                  Pacjent: {formData.firstName} {formData.lastName}
-                </p>
-                <p className="text-xs text-blue-800 mt-1 font-medium">WYMAGANE</p>
+          return (
+            <div className="space-y-5">
+              {/* PDF Number 7 — Block A (16–17 only) */}
+              {patientType === PATIENT_TYPES.MINOR_16_17 && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-blue-900">Blok A — Oświadczenie pacjenta</h4>
+                  <div className="text-sm text-gray-800 leading-relaxed bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-3">
+                    <p>{patientExam.p1}</p>
+                    <p>{patientExam.p2}</p>
+                  </div>
+                  <AgreeRefuseRadios
+                    name="examinationConsentPatient"
+                    value={formData.examinationConsentPatient || ""}
+                    onChange={setPatientChoice}
+                    label="Zgoda pacjenta na świadczenie zdrowotne"
+                    accent="blue"
+                    refuseMessage={PATIENT_16_17_EXAM_REFUSE_MESSAGE}
+                  />
+                </div>
+              )}
+
+              {/* PDF Number 7 — Block B (guardian; sole block under 16) */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-green-900">
+                  {patientType === PATIENT_TYPES.MINOR_16_17
+                    ? `Blok B — Oświadczenie: ${guardianRole.label}`
+                    : `Oświadczenie: ${guardianRole.label}`}
+                </h4>
+                <div className="text-sm text-gray-800 leading-relaxed bg-green-50 p-4 rounded-lg border border-green-100 space-y-3">
+                  <p>{guardianExam.p1}</p>
+                  <p>{guardianExam.p2}</p>
+                  <p className="text-xs text-gray-600 italic">
+                    art. 17 ust. 1 i 3 UPP (t.j. Dz. U. z 2024 r. poz. 581) · art. 32 ust. 2 i 5 ustawy o
+                    zawodach lekarza i lekarza dentysty (t.j. Dz. U. z 2023 r. poz. 1516)
+                  </p>
+                </div>
+                <AgreeRefuseRadios
+                  name="examinationConsentGuardian"
+                  value={
+                    formData.examinationConsentGuardian ||
+                    (formData.consentExaminationGuardian === true ||
+                    (patientType !== PATIENT_TYPES.MINOR_16_17 && formData.consentExamination === true)
+                      ? "agree"
+                      : "")
+                  }
+                  onChange={setGuardianChoice}
+                  label={guardianExam.radioLabel}
+                  accent="green"
+                  refuseMessage={
+                    patientType === PATIENT_TYPES.MINOR_16_17
+                      ? GUARDIAN_16_17_EXAM_REFUSE_MESSAGE
+                      : DEFAULT_EXAM_REFUSE_NOTICE
+                  }
+                />
               </div>
             </div>
+          );
+        })()}
 
-            <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-green-400 bg-green-50">
-              <input
-                type="checkbox"
-                checked={!!formData.consentExaminationGuardian}
-                onChange={(e) => update("consentExaminationGuardian", e.target.checked)}
-                className="mt-1 w-6 h-6 rounded border-gray-400 text-green-700 focus:ring-green-500"
-              />
-              <div className="text-sm">
-                <p className="font-semibold text-green-900 mb-1">
-                  Zgoda opiekuna — zapoznałem(-am) się z treścią oświadczenia i wyrażam zgodę *
-                </p>
-                <p className="text-xs text-green-800 mt-1">
-                  Opiekun: {formData.guardianFirstName} {formData.guardianLastName}
-                </p>
-                <p className="text-xs text-green-800 mt-1 font-medium">WYMAGANE</p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-green-400 bg-green-50">
-            <input
-              type="checkbox"
-              checked={!!formData.consentExamination}
-              onChange={(e) => update("consentExamination", e.target.checked)}
-              className="mt-1 w-6 h-6 rounded border-gray-400 text-green-700 focus:ring-green-500"
-            />
-            <div className="text-sm">
-              <p className="font-semibold text-green-900 mb-1">
-                Zgoda opiekuna — zapoznałem(-am) się z treścią oświadczenia i wyrażam zgodę *
-              </p>
-              <p className="text-xs text-green-800 mt-2 font-medium">WYMAGANE</p>
-            </div>
-          </div>
-        )}
-
-        {/* Information Note */}
         <div className="mt-4 text-xs text-gray-600 italic">
-          <p>Informuję, że podczas wizyty lekarz może poprosić o wyrażenie dodatkowych zgód, w zależności od rodzaju udzielanego świadczenia zdrowotnego.</p>
+          <p>
+            Informuję, że podczas wizyty lekarz może poprosić o wyrażenie dodatkowych zgód, w zależności od
+            rodzaju udzielanego świadczenia zdrowotnego.
+          </p>
         </div>
       </div>
 
-      {/* Guardian representation statement — required for all minors */}
+      {/* Document 3 — guardian statement (identical for <16 and 16–17; PDF Number 8) */}
       <div className="bg-white border-2 border-amber-400 rounded-xl p-6">
         <div className="text-center mb-6">
           <h2 className="text-lg font-bold text-amber-900 mb-2">
@@ -716,82 +938,17 @@ export default function MinorConsentsStep({
                 }
               })()}
             </p>
-            <p className="text-amber-800 font-medium mt-1">WYMAGANE</p>
+            <p className="text-red-700 font-medium mt-1">WYMAGANE</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm">
-            <p className="font-semibold text-amber-900 mb-2">Dane osoby składającej oświadczenie</p>
-            <p><span className="text-amber-700">Imię i nazwisko:</span> {formData.guardianFirstName} {formData.guardianLastName}</p>
-            <p><span className="text-amber-700">PESEL:</span> {formData.guardianPesel}</p>
-            <p><span className="text-amber-700">Telefon:</span> {formData.guardianPhoneCode || "+48"} {formData.guardianPhone}</p>
-            <p><span className="text-amber-700">Adres:</span> {[formData.street, formData.zipCode, formData.city].filter(Boolean).join(", ")}</p>
-            {formData.guardianEmail && (
-              <p><span className="text-amber-700">E-mail:</span> {formData.guardianEmail}</p>
-            )}
-          </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
-            <p className="font-semibold text-blue-900 mb-2">Dane reprezentowanego pacjenta</p>
-            <p><span className="text-blue-700">Imię i nazwisko:</span> {formData.firstName} {formData.lastName}</p>
-            <p><span className="text-blue-700">PESEL:</span> {formData.pesel}</p>
-            <p><span className="text-blue-700">Data urodzenia:</span> {formatPolishDate(formData.dateOfBirth) || "—"}</p>
-          </div>
-        </div>
-
-        <div className="mb-4 bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm">
-          <p className="font-semibold text-slate-800 mb-2">Typ pacjenta</p>
-          <div className="flex flex-wrap gap-3">
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-teal-100 text-teal-900 border border-teal-300">
-              <span className="font-bold">✓</span> małoletni
-            </span>
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white text-gray-500 border border-gray-200">
-              <span className="w-4 h-4 border border-gray-300 rounded-sm inline-block" /> ubezwłasnowolniony całkowicie
-            </span>
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white text-gray-500 border border-gray-200">
-              <span className="w-4 h-4 border border-gray-300 rounded-sm inline-block" /> ubezwłasnowolniony częściowo
-            </span>
-          </div>
-        </div>
-
-        <div className="mb-4 bg-violet-50 border border-violet-200 rounded-lg p-4 text-sm">
-          <p className="font-semibold text-violet-900 mb-2">Podstawa reprezentacji</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {[
-              { key: "matka", label: "matka" },
-              { key: "ojciec", label: "ojciec" },
-              { key: "przedstawiciel_ustawowy", label: "przedstawiciel ustawowy" },
-              { key: "opiekun_prawny", label: "opiekun prawny", note: "wymaga podania nr orzeczenia sądu" },
-              { key: "kurator", label: "kurator", note: "wymaga podania nr orzeczenia sądu" },
-              { key: "opiekun_faktyczny", label: "opiekun faktyczny", note: "uprawniony wyłącznie do zgody na badanie — nie na inne świadczenia (art. 32 ust. 5 u.z.l.)" },
-            ].map((item) => {
-              const selected = String(formData.guardianRelation || "").toLowerCase() === item.key;
-              return (
-                <div
-                  key={item.key}
-                  className={`rounded-lg border px-3 py-2 ${selected ? "bg-violet-100 border-violet-400" : "bg-white border-violet-100"}`}
-                >
-                  <div className="flex items-start gap-2">
-                    <span className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center text-xs ${selected ? "bg-violet-600 text-white border-violet-600" : "border-gray-300"}`}>
-                      {selected ? "✓" : ""}
-                    </span>
-                    <div>
-                      <p className="font-medium text-violet-900">{item.label}</p>
-                      {item.note && <p className="text-xs text-violet-700 mt-0.5">{item.note}</p>}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <p className="text-xs text-violet-700 mt-2">
-            Podstawa jest ustawiana na podstawie wyboru „Kim jesteś względem pacjenta” z poprzedniego kroku.
-          </p>
-        </div>
-
-        {["opiekun_prawny", "kurator"].includes(String(formData.guardianRelation || "").toLowerCase()) && (
+        {["opiekun_prawny", "kurator", "opiekun prawny"].includes(
+          String(formData.guardianRelation || "").toLowerCase()
+        ) && (
           <div className="mb-4 bg-rose-50 border border-rose-200 rounded-lg p-4">
-            <p className="font-semibold text-rose-900 mb-3 text-sm">Dane orzeczenia / postanowienia sądu</p>
+            <p className="font-semibold text-rose-900 mb-3 text-sm">
+              Dane orzeczenia / postanowienia sądu
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Nazwa sądu *</label>
@@ -803,7 +960,9 @@ export default function MinorConsentsStep({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Numer orzeczenia *</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Numer orzeczenia *
+                </label>
                 <input
                   type="text"
                   value={formData.courtNumber || ""}
@@ -825,51 +984,47 @@ export default function MinorConsentsStep({
         )}
 
         <div className="mb-4 text-sm text-gray-800 leading-relaxed bg-amber-50 p-4 rounded-lg border border-amber-100">
-          <p className="mb-3">
-            Oświadczam, że jestem <strong>{guardianRole.label}</strong> małoletniego / osoby ubezwłasnowolnionej*{" "}
-            <strong>{formData.firstName} {formData.lastName}</strong>, PESEL <strong>{formData.pesel}</strong>, i jestem uprawniony(-a)
-            do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.
-          </p>
-          <p className="mb-3">
-            Oświadczam, że podane przeze mnie informacje są zgodne z prawdą, a dokumenty potwierdzające moją tożsamość oraz podstawę reprezentacji są autentyczne i aktualne.
-          </p>
-          <p className="text-xs text-gray-600 italic">
-            * właściwe zakreślić · art. 17 UPP · art. 32 ust. 2 i 5 ustawy o zawodach lekarza i lekarza dentysty
+          {(() => {
+            const stmt = getGuardianStatementTexts(formData);
+            return (
+              <>
+                <p className="mb-3">{stmt.p1}</p>
+                <p className="mb-1">{stmt.p2}</p>
+              </>
+            );
+          })()}
+          <p className="text-xs text-gray-600 italic mt-2">
+            art. 17 UPP · art. 32 ust. 2 i 5 ustawy o zawodach lekarza i lekarza dentysty
           </p>
         </div>
-
-        {String(formData.guardianRelation || "").toLowerCase() === "opiekun_faktyczny" && (
-          <div className="mb-4 text-xs text-amber-900 bg-amber-100 border border-amber-300 rounded-lg p-3">
-            <strong>Uwaga — opiekun faktyczny:</strong> zgodnie z art. 32 ust. 5 u.z.l., uprawniony wyłącznie do zgody na
-            przeprowadzenie badania. Dla innych świadczeń wymagana jest zgoda przedstawiciela ustawowego lub orzeczenie sądu.
-          </div>
-        )}
 
         <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-amber-400 bg-amber-50">
           <input
             type="checkbox"
             checked={!!formData.consentGuardianStatement}
-            onChange={(e) => update("consentGuardianStatement", e.target.checked)}
+            onChange={(e) =>
+              updateFormData({
+                consentGuardianStatement: e.target.checked,
+                guardianStatementConsent: e.target.checked ? "agree" : "",
+              })
+            }
             className="mt-1 w-6 h-6 rounded border-gray-400 text-amber-700 focus:ring-amber-500"
           />
           <div className="text-sm">
             <p className="font-semibold text-amber-900 mb-1">
               Potwierdzam treść oświadczenia i posiadanie uprawnień do reprezentowania pacjenta *
             </p>
-            <p className="text-xs text-amber-800 mt-1 font-medium">WYMAGANE</p>
+            <p className="text-xs text-red-700 mt-1 font-medium">WYMAGANE</p>
           </div>
         </div>
       </div>
 
-      {/* Optional Third Document: Authorization for Close Person Access (Minor Version) */}
+      {/* Document 4 — authorization (same UI for <16 and 16–17) */}
       <div className="bg-white border-2 border-purple-300 rounded-xl p-6">
         <div className="text-center mb-6">
           <h2 className="text-lg font-bold text-purple-900 mb-2">
-            UPOWAŻNIENIE{" "}
-            {patientType === PATIENT_TYPES.MINOR_16_17
-              ? `(PACJENT I ${guardianRole.label.toUpperCase()})`
-              : `(${guardianRole.label.toUpperCase()})`}{" "}
-            do uzyskiwania informacji o stanie zdrowia przez osobę bliską
+            UPOWAŻNIENIE (PACJENT I {guardianRole.label.toUpperCase()}) do uzyskiwania informacji o
+            stanie zdrowia przez osobę bliską
           </h2>
           <div className="text-right text-sm text-gray-600 mb-2">
             <p>Nr: {(() => {
@@ -895,11 +1050,15 @@ export default function MinorConsentsStep({
           </div>
         </div>
 
-        {/* Patient Reference */}
-        <div className="mb-4 bg-blue-50 p-3 rounded-lg text-sm">
-          <p><strong>Pacjent niepełnoletni:</strong> {formData.firstName} {formData.lastName} (PESEL: {formData.pesel})</p>
+        <div className="mb-4 bg-blue-50 p-3 rounded-lg text-sm space-y-1">
           <p>
-            <strong>{guardianRole.label.charAt(0).toUpperCase() + guardianRole.label.slice(1)}:</strong>{" "}
+            <strong>Pacjent niepełnoletni:</strong> {formData.firstName} {formData.lastName}{" "}
+            (PESEL: {formData.pesel || "—"})
+          </p>
+          <p>
+            <strong>
+              {guardianRole.label.charAt(0).toUpperCase() + guardianRole.label.slice(1)}:
+            </strong>{" "}
             {formData.guardianFirstName} {formData.guardianLastName}
           </p>
         </div>
@@ -930,7 +1089,10 @@ export default function MinorConsentsStep({
               />
               <div className="text-sm">
                 <p className="font-semibold text-blue-900 mb-1">
-                  <strong>UPOWAŻNIAM*</strong> następujące osoby do uzyskiwania informacji o stanie zdrowia {patientType === PATIENT_TYPES.MINOR_16_17 ? "pacjenta" : "dziecka"} i udzielonych świadczeniach zdrowotnych oraz uzyskania dokumentacji medycznej przewidzianej zgodnie z prawem:
+                  <strong>UPOWAŻNIAM*</strong> następujące osoby do uzyskiwania informacji o stanie
+                  zdrowia dziecka, udzielonych świadczeniach zdrowotnych oraz dostępu do
+                  dokumentacji medycznej, zgodnie z art. 26 ust. 1 ustawy o prawach pacjenta i
+                  Rzeczniku Praw Pacjenta.
                 </p>
               </div>
             </div>
@@ -955,7 +1117,9 @@ export default function MinorConsentsStep({
               />
               <div className="text-sm">
                 <p className="font-semibold text-gray-900 mb-1">
-                  <strong>NIE UPOWAŻNIAM*</strong> żadnych osób do uzyskiwania informacji o stanie zdrowia {patientType === PATIENT_TYPES.MINOR_16_17 ? "pacjenta" : "dziecka"} i udzielonych świadczeniach zdrowotnych
+                  <strong>NIE UPOWAŻNIAM*</strong> żadnych osób do uzyskiwania informacji o stanie
+                  zdrowia dziecka, udzielonych świadczeniach zdrowotnych oraz dostępu do
+                  dokumentacji medycznej
                 </p>
               </div>
             </div>

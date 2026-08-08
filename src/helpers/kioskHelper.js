@@ -117,3 +117,19 @@ export async function completeKioskRegistration(payload) {
   const res = await kioskApi.post("/api/kiosk/complete", payload, { headers: kioskHeaders() });
   return res.data;
 }
+
+/** Mark current kiosk session expired (idle timeout / interrupt). Best-effort. */
+export async function releaseKioskSession(reason = "idle") {
+  const token = sessionStorage.getItem(KIOSK_TOKEN_KEY);
+  if (!token) return null;
+  try {
+    const res = await kioskApi.post(
+      "/api/kiosk/session/release",
+      { reason },
+      { headers: kioskHeaders() }
+    );
+    return res.data;
+  } catch {
+    return null;
+  }
+}

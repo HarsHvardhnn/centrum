@@ -225,6 +225,35 @@ const patientService = {
     if (patientData.authorizedPersons !== undefined) {
       formData.append("authorizedPersons", JSON.stringify(patientData.authorizedPersons || []));
     }
+    if (
+      patientData.guardianFirstName !== undefined ||
+      patientData.guardianLastName !== undefined ||
+      patientData.guardianPesel !== undefined ||
+      patientData.guardianRelation !== undefined ||
+      patientData.courtName !== undefined ||
+      patientData.courtNumber !== undefined ||
+      patientData.courtDate !== undefined ||
+      patientData.guardian !== undefined
+    ) {
+      const guardianPayload =
+        patientData.guardian ||
+        {
+          firstName: patientData.guardianFirstName,
+          lastName: patientData.guardianLastName,
+          pesel: patientData.guardianPesel,
+          relation: patientData.guardianRelation,
+          phone: patientData.guardianPhone,
+          phoneCode: patientData.guardianPhoneCode,
+          email: patientData.guardianEmail,
+          street: patientData.guardianStreet,
+          zipCode: patientData.guardianZipCode,
+          city: patientData.guardianCity,
+          courtName: patientData.courtName,
+          courtNumber: patientData.courtNumber,
+          courtDate: patientData.courtDate,
+        };
+      formData.append("guardian", JSON.stringify(guardianPayload));
+    }
     if (patientData.allergies !== undefined) formData.append("allergies", patientData.allergies);
     if (patientData.preferredLanguage !== undefined) formData.append("preferredLanguage", patientData.preferredLanguage);
 

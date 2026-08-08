@@ -29,7 +29,7 @@ export const STEP_LABELS = {
 
 export const CONSENT_TEXT = {
   healthcare:
-    "z organizacją udzielanych świadczeń opieki zdrowotnej (w tym przypomnienie o wizycie)",
+    "z organizacją udzielanych świadczeń opieki zdrowotnej, w tym prowadzeniem dokumentacji medycznej oraz przypomnieniami o terminie wizyty",
   healthCampaigns: "z przesyłaniem informacji o kampaniach i akcjach prozdrowotnych",
   marketing: "z otrzymywaniem newslettera z informacjami marketingowymi",
   sms: "Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).",
@@ -110,9 +110,16 @@ export function formatKioskDate(value) {
 
 export function syncSmsConsentFromHealthcare(form) {
   const key = form.isInternationalPatient ? buildInternationalDocumentKey(form) : "";
+  // PDF Number 6: for 16–17 both patient + representative healthcare consents are required
+  const is1617 =
+    form.patientType === "minor_16_17" ||
+    (!!form.signature && !!form.guardianSignature);
+  const smsConsentAgreed = is1617
+    ? form.consentHealthcare === true && form.consentHealthcareGuardian === true
+    : form.consentHealthcare === true;
   return {
     ...form,
-    smsConsentAgreed: form.consentHealthcare === true,
+    smsConsentAgreed,
     ...(form.isInternationalPatient && key ? { internationalPatientDocumentKey: key } : {}),
   };
 }

@@ -312,13 +312,13 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
               <ul className="space-y-3">
                 {formData.consents.map((consent) => (
                   <li
-                    key={consent.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    key={consent.id || `${consent.type}-${consent.signatoryRole || "x"}-${consent.text}`}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg gap-3"
                   >
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-start space-x-3 min-w-0">
                       <button
                         onClick={() => toggleConsent(consent.id)}
-                        className={`w-5 h-5 flex-shrink-0 rounded ${
+                        className={`w-5 h-5 flex-shrink-0 rounded mt-0.5 ${
                           consent.agreed
                             ? "bg-green-500"
                             : "border border-gray-400"
@@ -328,17 +328,40 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
                           <Check size={14} className="text-white" />
                         )}
                       </button>
-                      <span
-                        className={
-                          consent.agreed ? "text-gray-800" : "text-gray-600"
-                        }
-                      >
-                        {consent.text}
-                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                          {consent.signatoryLabel && (
+                            <span
+                              className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide ${
+                                consent.signatoryLabel === "PACJENT"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-amber-100 text-amber-900"
+                              }`}
+                            >
+                              {consent.signatoryLabel}
+                            </span>
+                          )}
+                          {consent.signatoryName && (
+                            <span className="text-xs text-gray-500 truncate">
+                              {consent.signatoryName}
+                              {consent.signatoryRelation
+                                ? ` (${consent.signatoryRelation})`
+                                : ""}
+                            </span>
+                          )}
+                        </div>
+                        <span
+                          className={
+                            consent.agreed ? "text-gray-800 text-sm" : "text-gray-600 text-sm"
+                          }
+                        >
+                          {consent.text}
+                        </span>
+                      </div>
                     </div>
                     <button
                       onClick={() => removeConsent(consent.id)}
-                      className="text-gray-500 hover:text-red-500"
+                      className="text-gray-500 hover:text-red-500 shrink-0"
                     >
                       <X size={18} />
                     </button>

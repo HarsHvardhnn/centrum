@@ -1,18 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { Camera, Upload, X, FileImage } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { Camera, Upload, X, FileImage, Plus } from "lucide-react";
+import { compressImageFile, readFileAsDataUrl } from "../utils/compressImage";
 
-const MAX_FILES = 3;
-const MAX_BYTES = 10 * 1024 * 1024;
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+const MAX_FILES = 15;
+const MAX_BYTES = 12 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf"];
 
 /** Normalize legacy uploadedDocuments or documentScans into backend-ready scans */
 function normalizeInitialScans(formData) {
@@ -43,23 +35,25 @@ function normalizeInitialScans(formData) {
     }));
 }
 
+function formatFileSize(bytes) {
+  if (!bytes && bytes !== 0) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function DocumentUploadStep({
   formData = {},
   updateFormData,
-  patientType,
-  mode = "full_registration",
-  validation = {},
   onValidationChange,
-  onGoToStep,
 }) {
   const [uploadedFiles, setUploadedFiles] = useState(() => normalizeInitialScans(formData));
-  const [showCamera, setShowCamera] = useState(false);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const streamRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const [busy, setBusy] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const cameraInputId = useId();
+  const fileInputId = useId();
 
-  // Persist as documentScans (dataUrl) — what the backend uploadKioskDocumentScans expects
+  // Persist as documentScans (dataUrl) — backend merges them into the package PDF
   useEffect(() => {
     const documentScans = uploadedFiles.map(({ id, name, type, dataUrl, size }) => ({
       id,
@@ -75,96 +69,81 @@ export default function DocumentUploadStep({
     onValidationChange?.({ isValid: true, errors: [] });
   }, [onValidationChange]);
 
-  const startCamera = async () => {
+  const addFiles = async (fileList, { fromCamera = false } = {}) => {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+
+    setBusy(true);
+    setStatusMessage(fromCamera ? "Zapisywanie zdjęcia…" : "Przetwarzanie plików…");
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+      const additions = [];
+      let skippedFormat = false;
+      let skippedSize = false;
+
+      for (const file of files) {
+        if (additions.length >= MAX_FILES) break;
+
+        const typeOk =
+          ALLOWED_TYPES.includes(file.type) ||
+          (file.type || "").startsWith("image/") ||
+          /\.(jpe?g|png|webp|pdf|heic|heif)$/i.test(file.name || "");
+
+        if (!typeOk) {
+          skippedFormat = true;
+          continue;
+        }
+
+        if (file.size > MAX_BYTES) {
+          skippedSize = true;
+          continue;
+        }
+
+        let processed;
+        if (file.type === "application/pdf" || /\.pdf$/i.test(file.name || "")) {
+          const dataUrl = await readFileAsDataUrl(file);
+          processed = {
+            dataUrl,
+            type: "application/pdf",
+            size: file.size,
+            name: file.name || `dokument-${Date.now()}.pdf`,
+          };
+        } else {
+          processed = await compressImageFile(file);
+        }
+
+        additions.push({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          name: processed.name,
+          size: processed.size,
+          type: processed.type,
+          dataUrl: processed.dataUrl,
+          preview: processed.type.startsWith("image/") ? processed.dataUrl : null,
+          uploadedAt: new Date().toISOString(),
+        });
       }
-      setShowCamera(true);
-    } catch (error) {
-      console.error("Error accessing camera:", error);
-      alert("Nie można uzyskać dostępu do kamery. Sprawdź uprawnienia przeglądarki.");
-    }
-  };
 
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-    }
-    setShowCamera(false);
-  };
-
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const video = videoRef.current;
-
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0);
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const file = new File([blob], `photo_${Date.now()}.jpg`, { type: "image/jpeg" });
-            addFile(file);
-            stopCamera();
-          }
-        },
-        "image/jpeg",
-        0.8
-      );
-    }
-  };
-
-  const handleFileUpload = (event) => {
-    const files = Array.from(event.target.files || []);
-    files.forEach(addFile);
-    event.target.value = "";
-  };
-
-  const addFile = async (file) => {
-    if (file.size > MAX_BYTES) {
-      alert("Plik jest za duży. Maksymalny rozmiar to 10MB.");
-      return;
-    }
-
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      alert("Nieobsługiwany format pliku. Dozwolone: JPG, PNG, WEBP, PDF.");
-      return;
-    }
-
-    if (uploadedFiles.length >= MAX_FILES) {
-      alert("Możesz przesłać maksymalnie 3 pliki.");
-      return;
-    }
-
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      const newFile = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        dataUrl,
-        preview: file.type.startsWith("image/") ? dataUrl : null,
-        uploadedAt: new Date().toISOString(),
-      };
-      setUploadedFiles((prev) => [...prev, newFile]);
+      if (additions.length) {
+        setUploadedFiles((prev) => {
+          const room = Math.max(0, MAX_FILES - prev.length);
+          if (room === 0) return prev;
+          return [...prev, ...additions.slice(0, room)];
+        });
+        setStatusMessage(
+          fromCamera
+            ? "Zdjęcie dodane. Kliknij „Kolejne zdjęcie”, aby dodać następną stronę."
+            : `Dodano ${additions.length} plik(ów).`
+        );
+      } else if (skippedSize) {
+        setStatusMessage("Pominięto zbyt duży plik (max 12 MB przed kompresją).");
+      } else if (skippedFormat) {
+        setStatusMessage("Pominięto nieobsługiwany format. Dozwolone: JPG, PNG, WEBP, PDF.");
+      }
     } catch (err) {
-      console.error("Failed to read file:", err);
-      alert("Nie udało się odczytać pliku.");
+      console.error("Failed to process document files:", err);
+      setStatusMessage("Nie udało się przetworzyć pliku. Spróbuj ponownie.");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -172,12 +151,7 @@ export default function DocumentUploadStep({
     setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
   };
 
-  const formatFileSize = (bytes) => {
-    if (!bytes && bytes !== 0) return "";
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " KB";
-    return Math.round(bytes / (1024 * 1024)) + " MB";
-  };
+  const totalSize = uploadedFiles.reduce((sum, f) => sum + (f.size || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -186,154 +160,158 @@ export default function DocumentUploadStep({
           Wgraj skan dokumentu / Zrób zdjęcie
         </h3>
         <p className="text-gray-600">
-          <strong>Opcjonalnie:</strong> Dodaj skany lub zdjęcia dokumentów tożsamości, upoważnień lub
-          innej dokumentacji medycznej.
+          <strong>Opcjonalnie:</strong> zrób zdjęcia stron dokumentów — po każdym zdjęciu dodaj kolejne
+          jednym kliknięciem. System skompresuje je i dołączy do pakietu PDF.
         </p>
       </div>
 
-      {showCamera && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-4 max-w-2xl w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="text-lg font-semibold">Zrób zdjęcie dokumentu</h4>
-              <button type="button" onClick={stopCamera} className="text-gray-500 hover:text-gray-700">
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="relative">
-              <video ref={videoRef} className="w-full rounded-lg" autoPlay playsInline />
-              <canvas ref={canvasRef} className="hidden" />
-            </div>
-
-            <div className="flex justify-center mt-4 gap-4">
-              <button
-                type="button"
-                onClick={stopCamera}
-                className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                Anuluj
-              </button>
-              <button
-                type="button"
-                onClick={capturePhoto}
-                className="px-6 py-2 rounded-lg bg-teal-700 text-white hover:bg-teal-800"
-              >
-                📷 Zrób zdjęcie
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Native inputs — labels (not programmatic .click) so iPad Safari accepts the gesture */}
+      <input
+        id={cameraInputId}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
+        disabled={busy || uploadedFiles.length >= MAX_FILES}
+        onChange={async (e) => {
+          const files = e.target.files;
+          await addFiles(files, { fromCamera: true });
+          e.target.value = "";
+        }}
+      />
+      <input
+        id={fileInputId}
+        type="file"
+        multiple
+        accept="image/*,.jpg,.jpeg,.png,.webp,.pdf,application/pdf"
+        className="sr-only"
+        disabled={busy || uploadedFiles.length >= MAX_FILES}
+        onChange={async (e) => {
+          await addFiles(e.target.files, { fromCamera: false });
+          e.target.value = "";
+        }}
+      />
 
       <div className="bg-blue-50 border-2 border-dashed border-blue-300 rounded-xl p-6">
-        <div className="text-center space-y-4">
-          <div className="flex justify-center gap-4">
-            <button
-              type="button"
-              onClick={startCamera}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-teal-700 text-white rounded-lg hover:bg-teal-800 transition-colors"
-            >
-              <Camera size={20} />
-              Otwórz aparat
-            </button>
+        <div className="flex flex-col sm:flex-row justify-center gap-3">
+          <label
+            htmlFor={cameraInputId}
+            className={`inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white text-base font-semibold select-none touch-manipulation ${
+              busy || uploadedFiles.length >= MAX_FILES
+                ? "bg-teal-400 cursor-not-allowed pointer-events-none"
+                : "bg-teal-700 active:bg-teal-900 cursor-pointer"
+            }`}
+          >
+            <Camera size={22} />
+            {uploadedFiles.length === 0 ? "Zrób zdjęcie" : "Kolejne zdjęcie"}
+          </label>
 
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              <Upload size={20} />
-              Przeglądaj pliki
-            </button>
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept=".jpg,.jpeg,.png,.webp,.pdf,image/*"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
+          <label
+            htmlFor={fileInputId}
+            className={`inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-white text-base font-semibold select-none touch-manipulation ${
+              busy || uploadedFiles.length >= MAX_FILES
+                ? "bg-gray-400 cursor-not-allowed pointer-events-none"
+                : "bg-gray-700 active:bg-gray-900 cursor-pointer"
+            }`}
+          >
+            <Upload size={22} />
+            Wybierz pliki
+          </label>
         </div>
+
+        {uploadedFiles.length > 0 && uploadedFiles.length < MAX_FILES && (
+          <p className="text-center text-sm text-teal-900 mt-4 font-medium">
+            Gotowe? Kliknij <strong>Kolejne zdjęcie</strong>, aby od razu dodać następną stronę.
+          </p>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[1, 2, 3].map((slot) => {
-          const file = uploadedFiles[slot - 1];
-          return (
-            <div
-              key={slot}
-              className="border-2 border-dashed border-gray-300 rounded-lg p-4 h-40 flex flex-col items-center justify-center relative"
-            >
-              {file ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => removeFile(file.id)}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                  >
-                    <X size={16} />
-                  </button>
-
-                  {file.preview || (file.type || "").startsWith("image/") ? (
-                    <img
-                      src={file.preview || file.dataUrl}
-                      alt={file.name}
-                      className="w-full h-24 object-cover rounded mb-2"
-                    />
-                  ) : (
-                    <div className="w-full h-24 bg-gray-200 rounded mb-2 flex items-center justify-center">
-                      <FileImage size={32} className="text-gray-400" />
-                    </div>
-                  )}
-
-                  <p className="text-xs text-gray-600 text-center truncate w-full">{file.name}</p>
-                  <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-                </>
-              ) : (
-                <>
-                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
-                    <Camera size={24} className="text-gray-400" />
-                  </div>
-                  <p className="text-sm text-gray-500">SLOT {slot}</p>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      {statusMessage && (
+        <p className="text-sm text-center text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+          {busy ? "…" : ""} {statusMessage}
+        </p>
+      )}
 
       <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <div className="flex items-center justify-between mb-2">
-          <p className="font-medium text-gray-900">Liczba zdjęć: {uploadedFiles.length}</p>
+        <div className="flex items-center justify-between mb-3 gap-3">
+          <div>
+            <p className="font-medium text-gray-900">
+              Liczba stron: {uploadedFiles.length}
+              {uploadedFiles.length > 0 && (
+                <span className="text-gray-500 font-normal"> · ~{formatFileSize(totalSize)}</span>
+              )}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Zdjęcia są kompresowane i dołączane do końcowego PDF rejestracji.
+            </p>
+          </div>
           {uploadedFiles.length > 0 && (
             <button
               type="button"
-              onClick={() => setUploadedFiles([])}
-              className="text-red-600 hover:text-red-700 text-sm"
+              onClick={() => {
+                setUploadedFiles([]);
+                setStatusMessage("Usunięto wszystkie zdjęcia.");
+              }}
+              className="text-red-600 hover:text-red-700 text-sm shrink-0 touch-manipulation"
             >
               Usuń wszystkie
             </button>
           )}
         </div>
 
-        <div className="text-sm text-gray-600 space-y-1">
-          <p>
-            💡 <strong>Wskazówka:</strong> Możesz zrobić wiele zdjęć swoich dokumentów (np. obie
-            strony dowodu osobistego)
-          </p>
-          <p className="text-xs">
-            <strong>OBSŁUGIWANE FORMATY:</strong> JPG, PNG, WEBP, PDF (MAX. 10MB)
-          </p>
-        </div>
+        {uploadedFiles.length === 0 ? (
+          <div className="border-2 border-dashed border-gray-200 rounded-xl py-10 flex flex-col items-center text-gray-400">
+            <Camera size={36} className="mb-2" />
+            <p className="text-sm">Brak zdjęć — ten krok możesz pominąć</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {uploadedFiles.map((file, index) => (
+              <div
+                key={file.id}
+                className="relative border border-gray-200 rounded-lg p-2 bg-gray-50"
+              >
+                <button
+                  type="button"
+                  onClick={() => removeFile(file.id)}
+                  className="absolute top-1 right-1 z-10 bg-red-500 text-white rounded-full p-1.5 touch-manipulation"
+                  aria-label="Usuń"
+                >
+                  <X size={14} />
+                </button>
+                <p className="text-[11px] font-medium text-gray-500 mb-1">Strona {index + 1}</p>
+                {file.preview || (file.type || "").startsWith("image/") ? (
+                  <img
+                    src={file.preview || file.dataUrl}
+                    alt={file.name}
+                    className="w-full h-28 object-cover rounded"
+                  />
+                ) : (
+                  <div className="w-full h-28 bg-gray-200 rounded flex items-center justify-center">
+                    <FileImage size={28} className="text-gray-400" />
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-1 truncate">{formatFileSize(file.size)}</p>
+              </div>
+            ))}
+
+            {uploadedFiles.length < MAX_FILES && (
+              <label
+                htmlFor={cameraInputId}
+                className="border-2 border-dashed border-teal-300 rounded-lg min-h-[8.5rem] flex flex-col items-center justify-center text-teal-800 bg-teal-50/50 cursor-pointer touch-manipulation active:bg-teal-100"
+              >
+                <Plus size={28} className="mb-1" />
+                <span className="text-sm font-semibold">Kolejne zdjęcie</span>
+              </label>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
         <p className="text-sm text-yellow-800">
-          📋 <strong>Ten krok jest opcjonalny.</strong> Możesz pominąć przesyłanie dokumentów i
-          przejść dalej, lub dodać je później podczas wizyty w placówce.
+          Ten krok jest opcjonalny. Możesz pominąć przesyłanie dokumentów i przejść dalej, lub dodać
+          je później podczas wizyty w placówce.
         </p>
       </div>
     </div>

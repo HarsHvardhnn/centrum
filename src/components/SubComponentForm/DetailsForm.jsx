@@ -284,39 +284,6 @@ const DetailsForm = () => {
           )}
         </div>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 pt-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Alergie</label>
-          <input
-            type="text"
-            name="allergies"
-            value={formData.allergies || ""}
-            onChange={handleChange}
-            placeholder="Wprowadź alergie"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Preferowany język</label>
-          <select
-            name="preferredLanguage"
-            value={formData.preferredLanguage || ""}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          >
-            <option value="" disabled>
-              Wybierz język
-            </option>
-            <option value="Polski">Polski</option>
-            <option value="Angielski">Angielski</option>
-            <option value="Hiszpański">Hiszpański</option>
-            <option value="Rosyjski">Rosyjski</option>
-            <option value="Niemiecki">Niemiecki</option>
-            <option value="Ukraiński">Ukraiński</option>
-          </select>
-        </div>
-      </div>
     </div>
   );
 };

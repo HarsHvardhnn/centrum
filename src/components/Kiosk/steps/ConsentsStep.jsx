@@ -228,11 +228,9 @@ export default function ConsentsStep({
               className="mt-1 w-6 h-6 rounded border-gray-400 text-teal-700 focus:ring-teal-500"
             />
             <div className="text-sm">
-              <p className="font-semibold text-teal-900 mb-1">
-                Zgoda na przetwarzanie danych osobowych (wymagana) *
-              </p>
               <p className="text-gray-700">
-                z organizacją udzielanych świadczeń opieki zdrowotnej (w tym przypomnienie o wizycie)
+                z organizacją udzielanych świadczeń opieki zdrowotnej, w tym prowadzeniem
+                dokumentacji medycznej oraz przypomnieniami o terminie wizyty
               </p>
               <p className="text-xs text-teal-800 mt-2 font-medium">WYMAGANE</p>
             </div>
@@ -302,12 +300,15 @@ export default function ConsentsStep({
         {/* Examination Consent Text */}
         <div className="mb-6 text-sm text-gray-800 leading-relaxed bg-green-50 p-4 rounded-lg">
           <p className="mb-4">
-            Wyrażam zgodę na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego, na zasadach 
-            określonych w rozdziale 5 ustawy z dnia 6 listopada 2008r. o prawach pacjenta i Rzeczniku Praw Pacjenta.
+            Wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia
+            zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego),
+            niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z
+            dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.
           </p>
           <p className="mb-4">
-            Zostałem(-am) poinformowany(-a) o celu, przebiegu oraz możliwych następstwach planowanego świadczenia 
-            zdrowotnego i potwierdzam, że moja zgoda ma charakter świadomy i dobrowolny.
+            Przyjmuję do wiadomości, że jeżeli planowane świadczenie wiąże się z podwyższonym
+            ryzykiem lub wymaga zgody w formie pisemnej na zasadach szczególnych, personel medyczny
+            przedstawi mi odrębny dokument zgody bezpośrednio przed jego udzieleniem.
           </p>
         </div>
 
