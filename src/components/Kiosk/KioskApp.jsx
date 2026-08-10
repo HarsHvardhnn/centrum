@@ -314,9 +314,9 @@ export default function KioskApp() {
             <p className="text-sm text-gray-500">Rejestracja pacjenta</p>
           </div>
           <img
-            src="https://res.cloudinary.com/dca740eqo/image/upload/v1760432824/hospital_app/logos/centrum_logo_email.png.png"
-            alt="CM7"
-            className="h-10"
+            src="/images/cm7-logo.png"
+            alt="Centrum Medyczne 7"
+            className="h-12 w-auto object-contain"
           />
         </div>
         {stepIndicator > 0 && step !== STEPS.DONE && (
