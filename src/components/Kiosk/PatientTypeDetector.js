@@ -173,8 +173,14 @@ export function validateFormData(formData, patientType) {
   const requirements = getFormRequirements(patientType);
   const errors = [];
 
-  // Check required fields
+  // Check required fields (guardian PESEL may be skipped via guardianNoPesel)
   for (const field of requirements.requiredFields) {
+    if (field === "guardianPesel" && formData.guardianNoPesel) {
+      if (!formData.guardianDocumentNumber || String(formData.guardianDocumentNumber).trim() === "") {
+        errors.push("guardianDocumentNumber jest wymagane");
+      }
+      continue;
+    }
     if (!formData[field] || String(formData[field]).trim() === "") {
       errors.push(`${field} jest wymagane`);
     }

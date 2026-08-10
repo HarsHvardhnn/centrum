@@ -49,6 +49,8 @@ export const EMPTY_AUTHORIZED_PERSON = () => ({
   firstName: "",
   lastName: "",
   pesel: "",
+  noPesel: false,
+  documentNumber: "",
   phoneCode: "+48",
   phone: "",
   street: "",

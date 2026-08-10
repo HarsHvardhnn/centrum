@@ -70,8 +70,42 @@ function AuthorizedPersonFields({ person, index, onChange, onRemove, canRemove }
             onChange={(e) => update("pesel", normalizePesel(e.target.value))}
             placeholder="11 cyfr"
             maxLength={11}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            disabled={!!person.noPesel}
+            className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
+              person.noPesel ? "bg-gray-100 text-gray-400" : ""
+            }`}
           />
+          <label className="mt-2 flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!person.noPesel}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                update("noPesel", checked);
+                if (checked) {
+                  update("pesel", "");
+                } else {
+                  update("documentNumber", "");
+                }
+              }}
+              className="mt-0.5 w-4 h-4 rounded border-gray-400"
+            />
+            <span className="text-sm text-gray-700">Nie posiadam numeru PESEL</span>
+          </label>
+          {person.noPesel && (
+            <div className="mt-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Numer dokumentu tożsamości
+              </label>
+              <input
+                type="text"
+                value={person.documentNumber || ""}
+                onChange={(e) => update("documentNumber", e.target.value)}
+                placeholder="np. paszport / dowód"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+            </div>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Numer telefonu</label>

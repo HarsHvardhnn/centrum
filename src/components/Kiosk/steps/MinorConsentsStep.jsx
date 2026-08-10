@@ -6,6 +6,7 @@ import { formatPolishPostalCode, validatePolishPostalCode } from "../../../utils
 import { formatPolishDate } from "../../../utils/dateUtils";
 import { generateDocumentMetadata } from "../../../utils/documentNumberUtils";
 import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils";
+import { formatGuardianIdentity } from "../../../utils/guardian";
 import PatientDataEditModal from "../PatientDataEditModal";
 
 const HEALTHCARE_CONSENT_LABEL =
@@ -134,7 +135,7 @@ function getGuardianStatementTexts(formData) {
     .filter(Boolean)
     .join(" ")
     .trim() || "—";
-  const repPesel = formData.guardianPesel || "—";
+  const repIdentity = formatGuardianIdentity(formData);
   const patientName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim() || "—";
   const patientPesel = formData.pesel || "—";
   const courtName = formData.courtName?.trim() || "—";
@@ -154,37 +155,37 @@ function getGuardianStatementTexts(formData) {
   switch (relation) {
     case "matka":
       return {
-        p1: `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem matką małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniona do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
+        p1: `Ja, ${repName}, ${repIdentity}, oświadczam, że jestem matką małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniona do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
         p2: p2Default,
       };
     case "ojciec":
       return {
-        p1: `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem ojcem małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniony do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
+        p1: `Ja, ${repName}, ${repIdentity}, oświadczam, że jestem ojcem małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniony do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
         p2: p2Default,
       };
     case "opiekun_prawny":
     case "opiekun prawny":
       return {
-        p1: `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem opiekunem prawnym małoletniego ${patientName}, PESEL ${patientPesel}, ustanowionym postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}, i jestem uprawniony(-a) do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
+        p1: `Ja, ${repName}, ${repIdentity}, oświadczam, że jestem opiekunem prawnym małoletniego ${patientName}, PESEL ${patientPesel}, ustanowionym postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}, i jestem uprawniony(-a) do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
         p2: p2Court,
       };
     case "kurator":
       return {
-        p1: `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem kuratorem małoletniego ${patientName}, PESEL ${patientPesel}, ustanowionym postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}, i jestem uprawniony(-a) do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
+        p1: `Ja, ${repName}, ${repIdentity}, oświadczam, że jestem kuratorem małoletniego ${patientName}, PESEL ${patientPesel}, ustanowionym postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}, i jestem uprawniony(-a) do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
         p2: p2Court,
       };
     case "opiekun_faktyczny":
     case "opiekun faktyczny":
       return {
         p1: freeText
-          ? `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem opiekunem faktycznym (${freeText}) małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniony(-a) wyłącznie do wyrażenia zgody na przeprowadzenie badania w Centrum Medycznym 7 (art. 32 ust. 5 u.z.l.).`
-          : `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem opiekunem faktycznym małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniony(-a) wyłącznie do wyrażenia zgody na przeprowadzenie badania w Centrum Medycznym 7 (art. 32 ust. 5 u.z.l.).`,
+          ? `Ja, ${repName}, ${repIdentity}, oświadczam, że jestem opiekunem faktycznym (${freeText}) małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniony(-a) wyłącznie do wyrażenia zgody na przeprowadzenie badania w Centrum Medycznym 7 (art. 32 ust. 5 u.z.l.).`
+          : `Ja, ${repName}, ${repIdentity}, oświadczam, że jestem opiekunem faktycznym małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniony(-a) wyłącznie do wyrażenia zgody na przeprowadzenie badania w Centrum Medycznym 7 (art. 32 ust. 5 u.z.l.).`,
         p2: p2Default,
       };
     default: {
       const role = getGuardianRoleInfo(relation).label;
       return {
-        p1: `Ja, ${repName}, PESEL ${repPesel}, oświadczam, że jestem ${role} małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniony(-a) do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
+        p1: `Ja, ${repName}, ${repIdentity}, oświadczam, że jestem ${role} małoletniego ${patientName}, PESEL ${patientPesel}, i jestem uprawniony(-a) do reprezentowania tej osoby w zakresie wyrażania zgody na udzielanie świadczeń zdrowotnych w Centrum Medycznym 7.`,
         p2: p2Default,
       };
     }
@@ -197,7 +198,7 @@ function getGuardianExaminationTexts(formData) {
     .filter(Boolean)
     .join(" ")
     .trim() || "—";
-  const repPesel = formData.guardianPesel || "—";
+  const repIdentity = formatGuardianIdentity(formData);
   const patientName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim() || "—";
   const patientPesel = formData.pesel || "—";
   const courtName = formData.courtName?.trim() || "—";
@@ -213,27 +214,27 @@ function getGuardianExaminationTexts(formData) {
   let p1;
   switch (relation) {
     case "matka":
-      p1 = `Ja, ${repName} (matka, PESEL ${repPesel}), działając jako matka i przedstawiciel ustawowy małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
+      p1 = `Ja, ${repName} (matka, ${repIdentity}), działając jako matka i przedstawiciel ustawowy małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
       break;
     case "ojciec":
-      p1 = `Ja, ${repName} (ojciec, PESEL ${repPesel}), działając jako ojciec i przedstawiciel ustawowy małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
+      p1 = `Ja, ${repName} (ojciec, ${repIdentity}), działając jako ojciec i przedstawiciel ustawowy małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
       break;
     case "opiekun_prawny":
     case "opiekun prawny":
-      p1 = `Ja, ${repName} (opiekun prawny, PESEL ${repPesel}), działając jako opiekun prawny (przedstawiciel ustawowy ustanowiony postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}) małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
+      p1 = `Ja, ${repName} (opiekun prawny, ${repIdentity}), działając jako opiekun prawny (przedstawiciel ustawowy ustanowiony postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}) małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
       break;
     case "kurator":
-      p1 = `Ja, ${repName} (kurator, PESEL ${repPesel}), działając jako kurator (ustanowiony postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}) małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
+      p1 = `Ja, ${repName} (kurator, ${repIdentity}), działając jako kurator (ustanowiony postanowieniem ${courtName} nr ${courtNumber} z dnia ${courtDate}) małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
       break;
     case "opiekun_faktyczny":
     case "opiekun faktyczny":
       p1 = freeText
-        ? `Ja, ${repName} (opiekun faktyczny — ${freeText}, PESEL ${repPesel}), działając jako opiekun faktyczny małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę wyłącznie na przeprowadzenie badania (w tym wywiadu i badania przedmiotowego), na zasadach określonych w art. 32 ust. 5 ustawy o zawodach lekarza i lekarza dentysty oraz rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`
-        : `Ja, ${repName} (opiekun faktyczny, PESEL ${repPesel}), działając jako opiekun faktyczny małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę wyłącznie na przeprowadzenie badania (w tym wywiadu i badania przedmiotowego), na zasadach określonych w art. 32 ust. 5 ustawy o zawodach lekarza i lekarza dentysty oraz rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
+        ? `Ja, ${repName} (opiekun faktyczny — ${freeText}, ${repIdentity}), działając jako opiekun faktyczny małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę wyłącznie na przeprowadzenie badania (w tym wywiadu i badania przedmiotowego), na zasadach określonych w art. 32 ust. 5 ustawy o zawodach lekarza i lekarza dentysty oraz rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`
+        : `Ja, ${repName} (opiekun faktyczny, ${repIdentity}), działając jako opiekun faktyczny małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę wyłącznie na przeprowadzenie badania (w tym wywiadu i badania przedmiotowego), na zasadach określonych w art. 32 ust. 5 ustawy o zawodach lekarza i lekarza dentysty oraz rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
       break;
     default: {
       const role = getGuardianRoleInfo(relation).label;
-      p1 = `Ja, ${repName} (${role}, PESEL ${repPesel}), działając jako ${getGuardianRoleInfo(relation).actingAs} małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
+      p1 = `Ja, ${repName} (${role}, ${repIdentity}), działając jako ${getGuardianRoleInfo(relation).actingAs} małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`;
     }
   }
 
@@ -244,9 +245,10 @@ function getGuardianExaminationTexts(formData) {
   return {
     p1,
     p2,
+    // PDF Number 3 labels
     radioLabel: isFactual
-      ? "Zgoda opiekuna na przeprowadzenie badania"
-      : "Zgoda opiekuna na świadczenie zdrowotne",
+      ? "Zgoda na przeprowadzenie badania"
+      : "Zgoda na świadczenie zdrowotne",
   };
 }
 
@@ -318,11 +320,14 @@ export default function MinorConsentsStep({
   validation = {},
   onValidationChange,
   onGoToStep,
+  /** One document per wizard step: rodo | examination | guardian_statement | authorization | all */
+  documentSection = "all",
 }) {
   const requiresPatientConsent = patientType === PATIENT_TYPES.MINOR_16_17;
   const guardianRole = getGuardianRoleInfo(formData.guardianRelation);
   const [showEditModal, setShowEditModal] = useState(false);
   const [documentNumbers, setDocumentNumbers] = useState({});
+  const show = (section) => documentSection === "all" || documentSection === section;
 
   // Generate document numbers when component mounts
   useEffect(() => {
@@ -349,7 +354,11 @@ export default function MinorConsentsStep({
   };
 
   // Helper function to validate PESEL for authorized persons
-  const validateAuthorizedPersonPesel = (pesel) => {
+  const validateAuthorizedPersonPesel = (pesel, noPesel = false) => {
+    if (noPesel) {
+      return { valid: true, message: "", type: "success" };
+    }
+
     if (!pesel || pesel.trim() === "") {
       return { valid: false, message: "PESEL jest wymagany", type: "error" };
     }
@@ -369,421 +378,322 @@ export default function MinorConsentsStep({
     return { valid: true, message: "PESEL jest prawidłowy", type: "success" };
   };
 
-  // Validation logic
+  // Validation — scoped to the active document window
   useEffect(() => {
     const errors = [];
-    
-    // Check required consents based on patient type
-    if (patientType === PATIENT_TYPES.MINOR_UNDER_16) {
-      // Only guardian consent required for under 16
-      if (!formData.consentHealthcare) {
-        errors.push("Zgoda opiekuna na przetwarzanie danych osobowych jest wymagana.");
-      }
-    } else if (patientType === PATIENT_TYPES.MINOR_16_17) {
-      // Both patient AND guardian consent required for 16-17
-      if (!formData.consentHealthcare) {
-        errors.push("Zgoda pacjenta na przetwarzanie danych osobowych jest wymagana.");
-      }
-      if (!formData.consentHealthcareGuardian) {
-        errors.push("Zgoda opiekuna na przetwarzanie danych osobowych jest wymagana.");
+    const check = (section) => documentSection === "all" || documentSection === section;
+
+    if (check("rodo")) {
+      if (patientType === PATIENT_TYPES.MINOR_UNDER_16) {
+        if (!formData.consentHealthcare) {
+          errors.push("Zgoda opiekuna na przetwarzanie danych osobowych jest wymagana.");
+        }
+      } else if (patientType === PATIENT_TYPES.MINOR_16_17) {
+        if (!formData.consentHealthcare) {
+          errors.push("Zgoda pacjenta na przetwarzanie danych osobowych jest wymagana.");
+        }
+        if (!formData.consentHealthcareGuardian) {
+          errors.push("Zgoda opiekuna na przetwarzanie danych osobowych jest wymagana.");
+        }
       }
     }
-    
-    // PDF Number 7: radio choice required (agree OR refuse) — no default / silent skip
-    if (patientType === PATIENT_TYPES.MINOR_16_17) {
-      if (
-        formData.examinationConsentPatient !== "agree" &&
-        formData.examinationConsentPatient !== "refuse"
-      ) {
-        errors.push("Zaznacz decyzję pacjenta dotyczącą badania: Wyrażam zgodę lub Nie wyrażam zgody.");
-      }
-      if (
+
+    if (check("examination")) {
+      if (patientType === PATIENT_TYPES.MINOR_16_17) {
+        if (
+          formData.examinationConsentPatient !== "agree" &&
+          formData.examinationConsentPatient !== "refuse"
+        ) {
+          errors.push("Zaznacz decyzję pacjenta dotyczącą badania: Wyrażam zgodę lub Nie wyrażam zgody.");
+        }
+        if (
+          formData.examinationConsentGuardian !== "agree" &&
+          formData.examinationConsentGuardian !== "refuse"
+        ) {
+          errors.push("Zaznacz decyzję opiekuna dotyczącą badania: Wyrażam zgodę lub Nie wyrażam zgody.");
+        }
+      } else if (
         formData.examinationConsentGuardian !== "agree" &&
-        formData.examinationConsentGuardian !== "refuse"
+        formData.examinationConsentGuardian !== "refuse" &&
+        !formData.consentExamination
       ) {
         errors.push("Zaznacz decyzję opiekuna dotyczącą badania: Wyrażam zgodę lub Nie wyrażam zgody.");
       }
-    } else if (
-      formData.examinationConsentGuardian !== "agree" &&
-      formData.examinationConsentGuardian !== "refuse" &&
-      !formData.consentExamination
-    ) {
-      errors.push("Zaznacz decyzję opiekuna dotyczącą badania: Wyrażam zgodę lub Nie wyrażam zgody.");
     }
 
-    if (!formData.consentGuardianStatement) {
-      errors.push("Oświadczenie przedstawiciela ustawowego / opiekuna faktycznego jest wymagane.");
+    if (check("guardian_statement")) {
+      if (!formData.consentGuardianStatement) {
+        errors.push("Oświadczenie przedstawiciela ustawowego / opiekuna faktycznego jest wymagane.");
+      }
+      const relation = String(formData.guardianRelation || "").toLowerCase();
+      const needsCourt =
+        relation === "opiekun_prawny" ||
+        relation === "kurator" ||
+        relation === "opiekun prawny";
+      if (needsCourt) {
+        if (!formData.courtName?.trim()) {
+          errors.push("Nazwa sądu jest wymagana dla wybranej podstawy reprezentacji.");
+        }
+        if (!formData.courtNumber?.trim()) {
+          errors.push("Numer orzeczenia sądu jest wymagany.");
+        }
+        if (!formData.courtDate) {
+          errors.push("Data wydania orzeczenia jest wymagana.");
+        }
+      }
     }
 
-    const relation = String(formData.guardianRelation || "").toLowerCase();
-    const needsCourt =
-      relation === "opiekun_prawny" ||
-      relation === "kurator" ||
-      relation === "opiekun prawny";
-    if (needsCourt) {
-      if (!formData.courtName?.trim()) errors.push("Nazwa sądu jest wymagana dla wybranej podstawy reprezentacji.");
-      if (!formData.courtNumber?.trim()) errors.push("Numer orzeczenia sądu jest wymagany.");
-      if (!formData.courtDate) errors.push("Data wydania orzeczenia jest wymagana.");
-    }
-
-    // Validate authorization choice
-    if (!formData.grantsAuthorization && !formData.deniesAuthorization) {
-      errors.push("Musisz wybrać czy upoważniasz osoby do dostępu do informacji medycznych czy nie.");
-    }
-
-    // Validate authorized persons (only if user chose to grant authorization)
-    if (formData.grantsAuthorization && formData.authorizedPersons) {
-      formData.authorizedPersons.forEach((person, index) => {
-        if (!person.firstName) {
-          errors.push(`Imię osoby ${index + 1} jest wymagane.`);
+    if (check("authorization")) {
+      if (!formData.grantsAuthorization && !formData.deniesAuthorization) {
+        errors.push("Musisz wybrać czy upoważniasz osoby do dostępu do informacji medycznych czy nie.");
+      }
+      if (formData.grantsAuthorization && formData.authorizedPersons) {
+        formData.authorizedPersons.forEach((person, index) => {
+          if (!person.firstName) errors.push(`Imię osoby ${index + 1} jest wymagane.`);
+          if (!person.lastName) errors.push(`Nazwisko osoby ${index + 1} jest wymagane.`);
+          if (person.noPesel) {
+            if (!String(person.documentNumber || "").trim()) {
+              errors.push(
+                `Numer dokumentu tożsamości osoby ${index + 1} jest wymagany (brak PESEL).`
+              );
+            }
+          } else if (!person.pesel) {
+            errors.push(`PESEL osoby ${index + 1} jest wymagany.`);
+          } else if (String(person.pesel).replace(/\D/g, "").length !== 11) {
+            errors.push(`PESEL osoby ${index + 1} musi mieć 11 cyfr.`);
+          }
+          if (!person.relationshipToPatient) {
+            errors.push(`Stosunek do pacjenta osoby ${index + 1} jest wymagany.`);
+          }
+          if (!person.phone) errors.push(`Numer telefonu osoby ${index + 1} jest wymagany.`);
+          if (!person.street && !person.address) {
+            errors.push(`Adres osoby ${index + 1} jest wymagany.`);
+          }
+          if (!person.zipCode) errors.push(`Kod pocztowy osoby ${index + 1} jest wymagany.`);
+          if (!person.city) errors.push(`Miasto osoby ${index + 1} jest wymagane.`);
+        });
+        if (!formData.authorizedPersons.length) {
+          errors.push("Musisz dodać przynajmniej jedną osobę upoważnioną lub wybrać 'NIE UPOWAŻNIAM'.");
         }
-        if (!person.lastName) {
-          errors.push(`Nazwisko osoby ${index + 1} jest wymagane.`);
-        }
-        if (!person.pesel) {
-          errors.push(`PESEL osoby ${index + 1} jest wymagany.`);
-        } else if (person.pesel.length !== 11) {
-          errors.push(`PESEL osoby ${index + 1} musi mieć 11 cyfr.`);
-        }
-        if (!person.relationshipToPatient) {
-          errors.push(`Stosunek do pacjenta osoby ${index + 1} jest wymagany.`);
-        }
-        if (!person.phone) {
-          errors.push(`Numer telefonu osoby ${index + 1} jest wymagany.`);
-        }
-        if (!person.address) {
-          errors.push(`Adres osoby ${index + 1} jest wymagany.`);
-        }
-        if (!person.zipCode) {
-          errors.push(`Kod pocztowy osoby ${index + 1} jest wymagany.`);
-        }
-        if (!person.city) {
-          errors.push(`Miasto osoby ${index + 1} jest wymagane.`);
-        }
-      });
-
-      if (formData.authorizedPersons.length === 0) {
-        errors.push("Musisz dodać przynajmniej jedną osobę upoważnioną lub wybrać 'NIE UPOWAŻNIAM'.");
       }
     }
 
     const isValid = errors.length === 0;
     onValidationChange?.({ isValid, errors });
-  }, [formData, patientType, onValidationChange]);
+  }, [formData, patientType, documentSection, onValidationChange]);
+
+  const purposeCheckboxes = (requiredField, campaignsField, marketingField, accent) => {
+    const borderReq =
+      accent === "blue" ? "border-2 border-blue-300 bg-blue-50" : "border-2 border-yellow-300 bg-yellow-50";
+    const ring =
+      accent === "blue" ? "text-blue-700 focus:ring-blue-500" : "text-yellow-700 focus:ring-yellow-500";
+    const reqLabel =
+      accent === "blue" ? "text-blue-800" : "text-yellow-800";
+    return (
+      <div className="space-y-3">
+        <div className={`flex items-start gap-3 p-4 rounded-lg ${borderReq}`}>
+          <input
+            type="checkbox"
+            checked={!!formData[requiredField]}
+            onChange={(e) => update(requiredField, e.target.checked)}
+            className={`mt-1 w-6 h-6 rounded border-gray-400 ${ring}`}
+          />
+          <div className="text-sm">
+            <p className="text-gray-700">{HEALTHCARE_CONSENT_LABEL}</p>
+            <p className={`text-xs mt-2 font-medium ${reqLabel}`}>WYMAGANE</p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-300 bg-gray-50">
+          <input
+            type="checkbox"
+            checked={!!formData[campaignsField]}
+            onChange={(e) => update(campaignsField, e.target.checked)}
+            className={`mt-1 w-6 h-6 rounded border-gray-400 ${ring}`}
+          />
+          <div className="text-sm">
+            <p className="text-gray-700">
+              z przesyłaniem informacji o kampaniach i akcjach prozdrowotnych
+            </p>
+            <p className="text-xs text-gray-600 mt-1">OPCJONALNE</p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-300 bg-gray-50">
+          <input
+            type="checkbox"
+            checked={!!formData[marketingField]}
+            onChange={(e) => update(marketingField, e.target.checked)}
+            className={`mt-1 w-6 h-6 rounded border-gray-400 ${ring}`}
+          />
+          <div className="text-sm">
+            <p className="text-gray-700">
+              z otrzymywaniem newslettera z informacjami marketingowymi
+            </p>
+            <p className="text-xs text-gray-600 mt-1">OPCJONALNE</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
-      {/* Complete Patient & Guardian Data Summary Card - For Review/Correction */}
-      <div className="bg-gray-50 border border-gray-300 rounded-xl p-4">
-        <div className="flex justify-between items-start mb-3">
-          <h4 className="font-semibold text-gray-900">Sprawdź dane pacjenta i przedstawiciela</h4>
-          <button
-            type="button"
-            onClick={() => setShowEditModal(true)}
-            className="text-sm text-teal-700 hover:text-teal-900 font-medium underline flex items-center gap-1"
-          >
-            ✏️ Edytuj dane
-          </button>
-        </div>
-        
-        {/* Patient Data */}
-        <div className="mb-4">
-          <h5 className="font-medium text-blue-900 mb-2">Dane pacjenta:</h5>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-blue-50 p-3 rounded-lg">
-            <div>
-              <span className="text-blue-700">Pacjent:</span>
-              <p className="font-medium">{formData.firstName} {formData.lastName}</p>
+      {show("rodo") && (
+        <>
+          {/* Review card only on first consent document */}
+          <div className="bg-gray-50 border border-gray-300 rounded-xl p-4">
+            <div className="flex justify-between items-start mb-3">
+              <h4 className="font-semibold text-gray-900">Sprawdź dane pacjenta i przedstawiciela</h4>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(true)}
+                className="text-sm text-teal-700 hover:text-teal-900 font-medium underline flex items-center gap-1"
+              >
+                ✏️ Edytuj dane
+              </button>
+            </div>
+            <div className="mb-4">
+              <h5 className="font-medium text-blue-900 mb-2">Dane pacjenta:</h5>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-blue-50 p-3 rounded-lg">
+                <div>
+                  <span className="text-blue-700">Pacjent:</span>
+                  <p className="font-medium">
+                    {formData.firstName} {formData.lastName}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-blue-700">PESEL:</span>
+                  <p className="font-medium">{formData.pesel}</p>
+                </div>
+                <div>
+                  <span className="text-blue-700">Adres:</span>
+                  <p className="font-medium">
+                    {formData.street}, {formData.zipCode} {formData.city}
+                  </p>
+                </div>
+              </div>
             </div>
             <div>
-              <span className="text-blue-700">PESEL:</span>
-              <p className="font-medium">{formData.pesel}</p>
-            </div>
-            <div>
-              <span className="text-blue-700">Adres:</span>
-              <p className="font-medium">{formData.street}, {formData.zipCode} {formData.city}</p>
+              <h5 className="font-medium text-yellow-900 mb-2">{guardianRole.sectionTitle}:</h5>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-yellow-50 p-3 rounded-lg">
+                <div>
+                  <span className="text-yellow-700">Imię i nazwisko:</span>
+                  <p className="font-medium">
+                    {formData.guardianFirstName} {formData.guardianLastName}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-yellow-700">Podstawa reprezentacji:</span>
+                  <p className="font-medium">{guardianRole.label}</p>
+                </div>
+                <div>
+                  <span className="text-yellow-700">
+                    {formData.guardianNoPesel ? "Dokument tożsamości:" : "PESEL:"}
+                  </span>
+                  <p className="font-medium">
+                    {formData.guardianNoPesel
+                      ? formData.guardianDocumentNumber || "—"
+                      : formData.guardianPesel}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-yellow-700">Telefon:</span>
+                  <p className="font-medium">
+                    {formData.guardianPhoneCode} {formData.guardianPhone}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Guardian Data */}
-        <div>
-          <h5 className="font-medium text-yellow-900 mb-2">{guardianRole.sectionTitle}:</h5>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-yellow-50 p-3 rounded-lg">
-            <div>
-              <span className="text-yellow-700">Imię i nazwisko:</span>
-              <p className="font-medium">{formData.guardianFirstName} {formData.guardianLastName}</p>
+          {/* Document 1 — RODO (PDF Number 2 for under-16: one block, no yellow data box) */}
+          <div className="bg-white border-2 border-blue-300 rounded-xl p-6">
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                ZGODA NA PRZETWARZANIE DANYCH OSOBOWYCH
+              </h2>
+              <p className="text-sm text-blue-800 font-medium">
+                {patientType === PATIENT_TYPES.MINOR_16_17
+                  ? "PACJENT NIEPEŁNOLETNI 16-17 LAT"
+                  : "PACJENT NIEPEŁNOLETNI PONIŻEJ 16 LAT"}
+              </p>
+              <div className="text-right text-sm text-gray-600 mt-2">
+                <p>
+                  Nr:{" "}
+                  {(() => {
+                    try {
+                      return documentNumbers.gdpr?.number || generateDocumentMetadata("gdpr").number;
+                    } catch (e) {
+                      return `RODO/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900000) + 100000)}`;
+                    }
+                  })()}
+                </p>
+                <p>
+                  Data:{" "}
+                  {(() => {
+                    try {
+                      return documentNumbers.gdpr?.date || generateDocumentMetadata("gdpr").date;
+                    } catch (e) {
+                      const now = new Date();
+                      return `${String(now.getDate()).padStart(2, "0")}.${String(now.getMonth() + 1).padStart(2, "0")}.${now.getFullYear()}`;
+                    }
+                  })()}
+                </p>
+              </div>
             </div>
-            <div>
-              <span className="text-yellow-700">Podstawa reprezentacji:</span>
-              <p className="font-medium">{guardianRole.label}</p>
-            </div>
-            <div>
-              <span className="text-yellow-700">PESEL:</span>
-              <p className="font-medium">{formData.guardianPesel}</p>
-            </div>
-            <div>
-              <span className="text-yellow-700">Telefon:</span>
-              <p className="font-medium">{formData.guardianPhoneCode} {formData.guardianPhone}</p>
-            </div>
-            {formData.guardianEmail && (
-              <div>
-                <span className="text-yellow-700">E-mail:</span>
-                <p className="font-medium">{formData.guardianEmail}</p>
+
+            {patientType === PATIENT_TYPES.MINOR_UNDER_16 ? (
+              <div className="space-y-4">
+                <div className="text-sm text-gray-800 leading-relaxed">
+                  <p>{getGuardianRodoBlockBText(formData)}</p>
+                </div>
+                {purposeCheckboxes(
+                  "consentHealthcare",
+                  "consentHealthCampaigns",
+                  "consentMarketing",
+                  "yellow"
+                )}
+              </div>
+            ) : (
+              <div className="space-y-5">
+                <div className="bg-blue-50 rounded-lg p-5 space-y-3 border border-blue-200">
+                  <h4 className="font-semibold text-blue-900">Blok A — Zgoda pacjenta</h4>
+                  <div className="text-sm text-blue-800 p-3 bg-white rounded-lg border border-blue-100 leading-relaxed">
+                    {PATIENT_RODO_BLOCK_A_TEXT}
+                  </div>
+                  {purposeCheckboxes(
+                    "consentHealthcare",
+                    "consentHealthCampaigns",
+                    "consentMarketing",
+                    "blue"
+                  )}
+                </div>
+                <div className="bg-yellow-50 rounded-lg p-5 space-y-3 border border-yellow-200">
+                  <h4 className="font-semibold text-yellow-900">
+                    Blok B — Zgoda: {guardianRole.label}
+                  </h4>
+                  <div className="text-sm text-yellow-800 p-3 bg-white rounded-lg border border-yellow-100 leading-relaxed">
+                    {getGuardianRodoBlockBText(formData)}
+                  </div>
+                  {purposeCheckboxes(
+                    "consentHealthcareGuardian",
+                    "consentHealthCampaignsGuardian",
+                    "consentMarketingGuardian",
+                    "yellow"
+                  )}
+                </div>
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Full Consent Document for Minor */}
-      <div className="bg-white border-2 border-blue-300 rounded-xl p-6">
-        <div className="text-center mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">ZGODA NA PRZETWARZANIE DANYCH OSOBOWYCH</h2>
-          <p className="text-sm text-blue-800 font-medium">
-            {patientType === PATIENT_TYPES.MINOR_16_17 ? "PACJENT NIEPEŁNOLETNI 16-17 LAT" : "PACJENT NIEPEŁNOLETNI PONIŻEJ 16 LAT"}
-          </p>
-          <div className="text-right text-sm text-gray-600 mt-2">
-            <p>Nr: {(() => {
-              try {
-                return documentNumbers.gdpr?.number || generateDocumentMetadata('gdpr').number;
-              } catch (e) {
-                console.error('Error generating GDPR document number:', e);
-                return `RODO/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900000) + 100000)}`;
-              }
-            })()}</p>
-            <p>Data: {(() => {
-              try {
-                return documentNumbers.gdpr?.date || generateDocumentMetadata('gdpr').date;
-              } catch (e) {
-                const now = new Date();
-                return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
-              }
-            })()}</p>
-          </div>
-        </div>
-
-
-        {/* Guardian / representative data — title depends on selected status */}
-        <div className="bg-yellow-50 rounded-lg p-4 mb-6">
-          <p className="font-semibold text-yellow-900 mb-3">{guardianRole.sectionTitle}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <strong className="text-yellow-700">IMIĘ I NAZWISKO</strong>
-              <p className="font-semibold">{formData.guardianFirstName} {formData.guardianLastName}</p>
-            </div>
-            <div>
-              <strong className="text-yellow-700">NR PESEL</strong>
-              <p className="font-semibold">{formData.guardianPesel}</p>
-            </div>
-            <div>
-              <strong className="text-yellow-700">PODSTAWA REPREZENTACJI</strong>
-              <p className="font-semibold">{guardianRole.label}</p>
-            </div>
-            <div>
-              <strong className="text-yellow-700">NUMER TELEFONU</strong>
-              <p className="font-semibold">{formData.guardianPhoneCode} {formData.guardianPhone}</p>
-            </div>
-            {formData.guardianEmail && (
-              <div>
-                <strong className="text-yellow-700">ADRES E-MAIL</strong>
-                <p className="font-semibold">{formData.guardianEmail}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Under-16: single representative declaration intro. 16–17: texts live in Block A / Block B (PDF Number 6). */}
-        {patientType !== PATIENT_TYPES.MINOR_16_17 && (
-          <div className="mb-6 text-sm text-gray-800 leading-relaxed">
-            <p className="mb-4">{getGuardianRodoBlockBText(formData)}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Age Notice */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-blue-900 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-blue-600 text-lg">👶</span>
-          <div>
-            <p className="font-medium">
-              {patientType === PATIENT_TYPES.MINOR_UNDER_16 
-                ? "Pacjent poniżej 16 roku życia"
-                : "Pacjent 16-17 lat"
-              }
-            </p>
-            <p>
-              {patientType === PATIENT_TYPES.MINOR_UNDER_16
-                ? `Wymagana jest tylko zgoda: ${guardianRole.rolePhrase}.`
-                : `Wymagane są zgody pacjenta oraz: ${guardianRole.rolePhrase}.`
-              }
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Patient Consent Block (only for 16-17 year olds) — PDF Number 6 Block A */}
-      {requiresPatientConsent && (
-        <div className="bg-blue-50 rounded-lg p-6 space-y-3 border border-blue-200">
-          <h4 className="font-semibold text-blue-900">Blok A — Zgoda pacjenta</h4>
-          <div className="text-sm text-blue-800 mb-3 p-3 bg-white rounded-lg border border-blue-100 leading-relaxed">
-            {PATIENT_RODO_BLOCK_A_TEXT}
-          </div>
-
-          <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-blue-300 bg-blue-50">
-            <input
-              type="checkbox"
-              checked={!!formData.consentHealthcare}
-              onChange={(e) => update("consentHealthcare", e.target.checked)}
-              className="mt-1 w-6 h-6 rounded border-gray-400 text-blue-700 focus:ring-blue-500"
-            />
-            <div className="text-sm">
-              <p className="text-gray-700">{HEALTHCARE_CONSENT_LABEL}</p>
-              <p className="text-xs text-blue-800 mt-2 font-medium">WYMAGANE</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-300 bg-gray-50">
-            <input
-              type="checkbox"
-              checked={!!formData.consentHealthCampaigns}
-              onChange={(e) => update("consentHealthCampaigns", e.target.checked)}
-              className="mt-1 w-6 h-6 rounded border-gray-400 text-blue-700 focus:ring-blue-500"
-            />
-            <div className="text-sm">
-              <p className="text-gray-700">
-                z przesyłaniem informacji o kampaniach i akcjach prozdrowotnych
-              </p>
-              <p className="text-xs text-gray-600 mt-1">OPCJONALNE</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-300 bg-gray-50">
-            <input
-              type="checkbox"
-              checked={!!formData.consentMarketing}
-              onChange={(e) => update("consentMarketing", e.target.checked)}
-              className="mt-1 w-6 h-6 rounded border-gray-400 text-blue-700 focus:ring-blue-500"
-            />
-            <div className="text-sm">
-              <p className="text-gray-700">
-                z otrzymywaniem newslettera z informacjami marketingowymi
-              </p>
-              <p className="text-xs text-gray-600 mt-1">OPCJONALNE</p>
-            </div>
-          </div>
-        </div>
+        </>
       )}
 
-      {/* Guardian Consent Block — PDF Number 6 Block B (or sole block under 16) */}
-      <div className="bg-yellow-50 rounded-lg p-6 space-y-3 border border-yellow-200">
-        <h4 className="font-semibold text-yellow-900">
-          {requiresPatientConsent
-            ? `Blok B — Zgoda: ${guardianRole.label}`
-            : `Zgoda: ${guardianRole.label}`}
-        </h4>
-        <div className="text-sm text-yellow-800 mb-3 p-3 bg-white rounded-lg border border-yellow-100 leading-relaxed">
-          {getGuardianRodoBlockBText(formData)}
-        </div>
-
-        {patientType === PATIENT_TYPES.MINOR_UNDER_16 ? (
-          <>
-            <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-yellow-300 bg-yellow-50">
-              <input
-                type="checkbox"
-                checked={!!formData.consentHealthcare}
-                onChange={(e) => update("consentHealthcare", e.target.checked)}
-                className="mt-1 w-6 h-6 rounded border-gray-400 text-yellow-700 focus:ring-yellow-500"
-              />
-              <div className="text-sm">
-                <p className="text-gray-700">{HEALTHCARE_CONSENT_LABEL}</p>
-                <p className="text-xs text-yellow-800 mt-2 font-medium">WYMAGANE</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-300 bg-gray-50">
-              <input
-                type="checkbox"
-                checked={!!formData.consentHealthCampaigns}
-                onChange={(e) => update("consentHealthCampaigns", e.target.checked)}
-                className="mt-1 w-6 h-6 rounded border-gray-400 text-yellow-700 focus:ring-yellow-500"
-              />
-              <div className="text-sm">
-                <p className="text-gray-700">
-                  z przesyłaniem informacji o kampaniach i akcjach prozdrowotnych
-                </p>
-                <p className="text-xs text-gray-600 mt-1">OPCJONALNE</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-300 bg-gray-50">
-              <input
-                type="checkbox"
-                checked={!!formData.consentMarketing}
-                onChange={(e) => update("consentMarketing", e.target.checked)}
-                className="mt-1 w-6 h-6 rounded border-gray-400 text-yellow-700 focus:ring-yellow-500"
-              />
-              <div className="text-sm">
-                <p className="text-gray-700">
-                  z otrzymywaniem newslettera z informacjami marketingowymi
-                </p>
-                <p className="text-xs text-gray-600 mt-1">OPCJONALNE</p>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex items-start gap-3 p-4 rounded-lg border-2 border-yellow-300 bg-yellow-50">
-              <input
-                type="checkbox"
-                checked={!!formData.consentHealthcareGuardian}
-                onChange={(e) => update("consentHealthcareGuardian", e.target.checked)}
-                className="mt-1 w-6 h-6 rounded border-gray-400 text-yellow-700 focus:ring-yellow-500"
-              />
-              <div className="text-sm">
-                <p className="text-gray-700">{HEALTHCARE_CONSENT_LABEL}</p>
-                <p className="text-xs text-yellow-800 mt-2 font-medium">WYMAGANE</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-300 bg-gray-50">
-              <input
-                type="checkbox"
-                checked={!!formData.consentHealthCampaignsGuardian}
-                onChange={(e) => update("consentHealthCampaignsGuardian", e.target.checked)}
-                className="mt-1 w-6 h-6 rounded border-gray-400 text-yellow-700 focus:ring-yellow-500"
-              />
-              <div className="text-sm">
-                <p className="text-gray-700">
-                  z przesyłaniem informacji o kampaniach i akcjach prozdrowotnych
-                </p>
-                <p className="text-xs text-gray-600 mt-1">OPCJONALNE</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-4 rounded-lg border border-gray-300 bg-gray-50">
-              <input
-                type="checkbox"
-                checked={!!formData.consentMarketingGuardian}
-                onChange={(e) => update("consentMarketingGuardian", e.target.checked)}
-                className="mt-1 w-6 h-6 rounded border-gray-400 text-yellow-700 focus:ring-yellow-500"
-              />
-              <div className="text-sm">
-                <p className="text-gray-700">
-                  z otrzymywaniem newslettera z informacjami marketingowymi
-                </p>
-                <p className="text-xs text-gray-600 mt-1">OPCJONALNE</p>
-              </div>
-            </div>
-          </>
-        )}
-
-      </div>
-
-      {/* Separate Examination Consent Document for Minors */}
+      {show("examination") && (
       <div className="bg-white border-2 border-green-400 rounded-xl p-6">
         <div className="text-center mb-6">
           <h2 className="text-lg font-bold text-green-900 mb-2">
-            OŚWIADCZENIE {patientType === PATIENT_TYPES.MINOR_16_17 ? "PACJENTA I OPIEKUNA" : "OPIEKUNA PRAWNEGO"} o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego
+            {patientType === PATIENT_TYPES.MINOR_16_17
+              ? "OŚWIADCZENIE PACJENTA I OPIEKUNA o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"
+              : "OŚWIADCZENIE PRZEDSTAWICIELA USTAWOWEGO / OPIEKUNA FAKTYCZNEGO o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"}
           </h2>
           <div className="text-right text-sm text-gray-600">
             <p>Nr: {(() => {
@@ -855,13 +765,13 @@ export default function MinorConsentsStep({
                 </div>
               )}
 
-              {/* PDF Number 7 — Block B (guardian; sole block under 16) */}
+              {/* PDF Number 3 / 7 — guardian block (sole content under 16) */}
               <div className="space-y-3">
-                <h4 className="font-semibold text-green-900">
-                  {patientType === PATIENT_TYPES.MINOR_16_17
-                    ? `Blok B — Oświadczenie: ${guardianRole.label}`
-                    : `Oświadczenie: ${guardianRole.label}`}
-                </h4>
+                {patientType === PATIENT_TYPES.MINOR_16_17 && (
+                  <h4 className="font-semibold text-green-900">
+                    Blok B — Oświadczenie: {guardianRole.label}
+                  </h4>
+                )}
                 <div className="text-sm text-gray-800 leading-relaxed bg-green-50 p-4 rounded-lg border border-green-100 space-y-3">
                   <p>{guardianExam.p1}</p>
                   <p>{guardianExam.p2}</p>
@@ -900,8 +810,9 @@ export default function MinorConsentsStep({
           </p>
         </div>
       </div>
+      )}
 
-      {/* Document 3 — guardian statement (identical for <16 and 16–17; PDF Number 8) */}
+      {show("guardian_statement") && (
       <div className="bg-white border-2 border-amber-400 rounded-xl p-6">
         <div className="text-center mb-6">
           <h2 className="text-lg font-bold text-amber-900 mb-2">
@@ -1018,8 +929,9 @@ export default function MinorConsentsStep({
           </div>
         </div>
       </div>
+      )}
 
-      {/* Document 4 — authorization (same UI for <16 and 16–17) */}
+      {show("authorization") && (
       <div className="bg-white border-2 border-purple-300 rounded-xl p-6">
         <div className="text-center mb-6">
           <h2 className="text-lg font-bold text-purple-900 mb-2">
@@ -1170,37 +1082,98 @@ export default function MinorConsentsStep({
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      PESEL *
+                      {person.noPesel ? "PESEL" : "PESEL *"}
                     </label>
                     <input
                       type="text"
                       value={person.pesel || ""}
                       onChange={(e) => {
                         const newPersons = [...formData.authorizedPersons];
-                        newPersons[index] = { ...person, pesel: e.target.value };
+                        newPersons[index] = {
+                          ...person,
+                          pesel: e.target.value.replace(/\D/g, "").slice(0, 11),
+                        };
                         update("authorizedPersons", newPersons);
                       }}
+                      disabled={!!person.noPesel}
                       className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        (() => {
-                          const validation = validateAuthorizedPersonPesel(person.pesel);
-                          if (!person.pesel) return 'border-gray-300';
-                          return validation.valid ? 'border-green-300' : 'border-red-300';
-                        })()
+                        person.noPesel
+                          ? "border-gray-200 bg-gray-100 text-gray-400"
+                          : (() => {
+                              const validation = validateAuthorizedPersonPesel(
+                                person.pesel,
+                                person.noPesel
+                              );
+                              if (!person.pesel) return "border-gray-300";
+                              return validation.valid
+                                ? "border-green-300"
+                                : "border-red-300";
+                            })()
                       }`}
                       placeholder="Wprowadź numer PESEL"
                       maxLength="11"
                     />
-                    {(() => {
-                      const validation = validateAuthorizedPersonPesel(person.pesel);
-                      if (!person.pesel) {
-                        return <p className="text-xs text-gray-600 mt-1">* Wymagane 11 cyfr</p>;
-                      }
-                      return (
-                        <p className={`text-xs mt-1 ${validation.valid ? 'text-green-600' : 'text-red-600'}`}>
-                          {validation.message}
-                        </p>
-                      );
-                    })()}
+                    <label className="mt-2 flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!!person.noPesel}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          const newPersons = [...formData.authorizedPersons];
+                          newPersons[index] = {
+                            ...person,
+                            noPesel: checked,
+                            pesel: checked ? "" : person.pesel,
+                            documentNumber: checked ? person.documentNumber || "" : "",
+                          };
+                          update("authorizedPersons", newPersons);
+                        }}
+                        className="mt-0.5 w-5 h-5 rounded border-gray-400 text-blue-700 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Nie posiadam numeru PESEL</span>
+                    </label>
+                    {person.noPesel ? (
+                      <div className="mt-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Numer dokumentu tożsamości *
+                        </label>
+                        <input
+                          type="text"
+                          value={person.documentNumber || ""}
+                          onChange={(e) => {
+                            const newPersons = [...formData.authorizedPersons];
+                            newPersons[index] = {
+                              ...person,
+                              documentNumber: e.target.value,
+                            };
+                            update("authorizedPersons", newPersons);
+                          }}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="np. paszport / dowód"
+                        />
+                      </div>
+                    ) : (
+                      (() => {
+                        const validation = validateAuthorizedPersonPesel(
+                          person.pesel,
+                          person.noPesel
+                        );
+                        if (!person.pesel) {
+                          return (
+                            <p className="text-xs text-gray-600 mt-1">* Wymagane 11 cyfr</p>
+                          );
+                        }
+                        return (
+                          <p
+                            className={`text-xs mt-1 ${
+                              validation.valid ? "text-green-600" : "text-red-600"
+                            }`}
+                          >
+                            {validation.message}
+                          </p>
+                        );
+                      })()
+                    )}
                   </div>
                   
                   <div>
@@ -1379,6 +1352,7 @@ export default function MinorConsentsStep({
           </div>
         )}
       </div>
+      )}
 
       {/* Patient Data Edit Modal */}
       <PatientDataEditModal

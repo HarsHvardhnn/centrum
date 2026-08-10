@@ -2,12 +2,24 @@ export const EMPTY_AUTHORIZED_PERSON = () => ({
   firstName: "",
   lastName: "",
   pesel: "",
+  noPesel: false,
+  documentNumber: "",
   phoneCode: "+48",
   phone: "",
   street: "",
   zipCode: "",
   city: "",
 });
+
+/** Inline identity for UI/PDF copy: "PESEL …" or "nr dokumentu …" */
+export function formatAuthorizedPersonIdentity(person = {}) {
+  if (person.noPesel) {
+    const doc = String(person.documentNumber || "").trim();
+    return doc ? `nr dokumentu ${doc}` : "bez PESEL";
+  }
+  const pesel = String(person.pesel || "").replace(/\D/g, "").slice(0, 11);
+  return pesel ? `PESEL ${pesel}` : "PESEL —";
+}
 
 function splitFullName(fullName = "") {
   const parts = String(fullName).trim().split(/\s+/).filter(Boolean);
@@ -28,6 +40,8 @@ function contactFieldsToAuthorizedPersons(patient = {}) {
       firstName,
       lastName,
       pesel: String(pesel || "").replace(/\D/g, "").slice(0, 11),
+      noPesel: false,
+      documentNumber: "",
       phoneCode: patient[`${prefix}PhoneCode`] || "+48",
       phone: String(phone || "").replace(/\D/g, "").slice(0, 15),
       street: String(address || "").trim(),

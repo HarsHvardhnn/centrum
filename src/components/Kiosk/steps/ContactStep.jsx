@@ -4,7 +4,11 @@ import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils"
 import PhoneCountrySelect from "../PhoneCountrySelect";
 import { PATIENT_TYPES } from "../PatientTypeDetector";
 
-function validateContactPesel(rawPesel, patientPesel) {
+function validateContactPesel(rawPesel, patientPesel, noPesel = false) {
+  if (noPesel) {
+    return { valid: true, message: "", type: "success" };
+  }
+
   if (!rawPesel || !String(rawPesel).trim()) {
     return { valid: false, message: "PESEL jest wymagany.", type: "error" };
   }
@@ -65,9 +69,13 @@ export default function ContactStep({
   const peselValidation = useMemo(
     () =>
       isMinor
-        ? validateContactPesel(formData.guardianPesel, formData.pesel)
+        ? validateContactPesel(
+            formData.guardianPesel,
+            formData.pesel,
+            !!formData.guardianNoPesel
+          )
         : { valid: true, message: "", type: "success" },
-    [isMinor, formData.guardianPesel, formData.pesel]
+    [isMinor, formData.guardianPesel, formData.pesel, formData.guardianNoPesel]
   );
 
   // Validation logic
@@ -77,7 +85,13 @@ export default function ContactStep({
     if (isMinor) {
       if (!formData.guardianFirstName?.trim()) errors.push("Imię opiekuna jest wymagane.");
       if (!formData.guardianLastName?.trim()) errors.push("Nazwisko opiekuna jest wymagane.");
-      if (!peselValidation.valid) errors.push(peselValidation.message);
+      if (formData.guardianNoPesel) {
+        if (!formData.guardianDocumentNumber?.trim()) {
+          errors.push("Numer dokumentu tożsamości opiekuna jest wymagany (brak PESEL).");
+        }
+      } else if (!peselValidation.valid) {
+        errors.push(peselValidation.message);
+      }
 
       const phone = formData.guardianPhone || formData.phone || "";
       const phoneCode = formData.guardianPhoneCode || formData.phoneCode || "+48";
@@ -180,7 +194,9 @@ export default function ContactStep({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">PESEL *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {formData.guardianNoPesel ? "PESEL" : "PESEL *"}
+            </label>
             <input
               type="text"
               inputMode="numeric"
@@ -189,18 +205,55 @@ export default function ContactStep({
               onChange={(e) =>
                 update("guardianPesel", e.target.value.replace(/\D/g, "").slice(0, 11))
               }
-              readOnly={readOnlyFields}
+              readOnly={readOnlyFields || !!formData.guardianNoPesel}
+              disabled={!!formData.guardianNoPesel}
               maxLength={11}
               className={`w-full border rounded-lg px-4 py-3 text-lg font-mono focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
-                !formData.guardianPesel
-                  ? "border-gray-300"
-                  : peselValidation.valid
-                    ? "border-green-400"
-                    : "border-red-400"
+                formData.guardianNoPesel
+                  ? "border-gray-200 bg-gray-100 text-gray-400"
+                  : !formData.guardianPesel
+                    ? "border-gray-300"
+                    : peselValidation.valid
+                      ? "border-green-400"
+                      : "border-red-400"
               }`}
-              required
+              required={!formData.guardianNoPesel}
             />
-            {!formData.guardianPesel ? (
+            <label className="mt-2 flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!!formData.guardianNoPesel}
+                disabled={readOnlyFields}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  updateFormData({
+                    guardianNoPesel: checked,
+                    guardianPesel: checked ? "" : formData.guardianPesel,
+                    guardianDocumentNumber: checked
+                      ? formData.guardianDocumentNumber || ""
+                      : "",
+                  });
+                }}
+                className="mt-0.5 w-5 h-5 rounded border-gray-400 text-teal-700 focus:ring-teal-500"
+              />
+              <span className="text-sm text-gray-700">Nie posiadam numeru PESEL</span>
+            </label>
+            {formData.guardianNoPesel ? (
+              <div className="mt-3">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Numer dokumentu tożsamości *
+                </label>
+                <input
+                  type="text"
+                  value={formData.guardianDocumentNumber || ""}
+                  onChange={(e) => update("guardianDocumentNumber", e.target.value)}
+                  readOnly={readOnlyFields}
+                  placeholder="np. paszport / dowód"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  required
+                />
+              </div>
+            ) : !formData.guardianPesel ? (
               <p className="text-xs text-gray-500 mt-1">Wpisz dokładnie 11 cyfr numeru PESEL.</p>
             ) : (
               <p

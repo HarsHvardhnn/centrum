@@ -23,7 +23,10 @@ const STEP_DEFINITIONS = {
     { id: "address", title: "Adres zamieszkania", component: "AddressStep" },
     { id: "contact", title: "Dane kontaktowe", component: "ContactStep" },
     { id: "guardian", title: "Dane opiekuna", component: "GuardianDataStep" },
-    { id: "consents", title: "Zgody", component: "MinorConsentsStep" },
+    { id: "consent_rodo", title: "Zgoda RODO", component: "MinorConsentsStep", documentSection: "rodo" },
+    { id: "consent_examination", title: "Zgoda na badanie", component: "MinorConsentsStep", documentSection: "examination" },
+    { id: "consent_guardian_statement", title: "Oświadczenie przedstawiciela", component: "MinorConsentsStep", documentSection: "guardian_statement" },
+    { id: "consent_authorization", title: "Upoważnienie", component: "MinorConsentsStep", documentSection: "authorization" },
     { id: "documents", title: "Dokumenty", component: "DocumentUploadStep" },
     { id: "signature", title: "Podpis", component: "MinorSignatureStep" },
   ],
@@ -32,7 +35,10 @@ const STEP_DEFINITIONS = {
     { id: "address", title: "Adres zamieszkania", component: "AddressStep" },
     { id: "contact", title: "Dane kontaktowe", component: "ContactStep" },
     { id: "guardian", title: "Dane opiekuna", component: "GuardianDataStep" },
-    { id: "consents", title: "Zgody", component: "MinorConsentsStep" },
+    { id: "consent_rodo", title: "Zgoda RODO", component: "MinorConsentsStep", documentSection: "rodo" },
+    { id: "consent_examination", title: "Zgoda na badanie", component: "MinorConsentsStep", documentSection: "examination" },
+    { id: "consent_guardian_statement", title: "Oświadczenie przedstawiciela", component: "MinorConsentsStep", documentSection: "guardian_statement" },
+    { id: "consent_authorization", title: "Upoważnienie", component: "MinorConsentsStep", documentSection: "authorization" },
     { id: "documents", title: "Dokumenty", component: "DocumentUploadStep" },
     { id: "signature", title: "Podpis", component: "MinorSignatureStep" },
   ],
@@ -193,6 +199,7 @@ export default function KioskStepWizard({
           validation={currentValidation}
           onValidationChange={handleValidationChange}
           onGoToStep={goToStep}
+          documentSection={currentStep.documentSection}
         />
       </div>
 

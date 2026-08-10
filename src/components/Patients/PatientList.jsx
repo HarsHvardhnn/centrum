@@ -9,6 +9,7 @@ import {
   Plus,
   X,
   FileText,
+  FolderOpen,
   Eye,
   UserCheck,
   UserPlus,
@@ -38,6 +39,7 @@ import BulkDeleteByIdsDialog from "../admin/BulkDeleteByIdsDialog";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 import VisitReasonCascadeDropdown from "../UtilComponents/VisitReasonCascadeDropdown";
+import PatientDocumentsModal from "./PatientDocumentsModal";
 
 /** Formats appointment `created_at` / `createdAt` for "Utworzono przez: … (DD.MM.YYYY, HH:MM)" */
 function formatAppointmentCreatedAt(appointment) {
@@ -141,6 +143,8 @@ function LabAppointmentsContent({ clinic }) {
   const [visitHistoryData, setVisitHistoryData] = useState([]);
   const [visitHistoryLoading, setVisitHistoryLoading] = useState(false);
   const [visitHistoryError, setVisitHistoryError] = useState(null);
+  const [showPatientDocumentsModal, setShowPatientDocumentsModal] = useState(false);
+  const [documentsModalPatient, setDocumentsModalPatient] = useState(null);
   const [showVisitCardModal, setShowVisitCardModal] = useState(false);
   const [visitCardPatientId, setVisitCardPatientId] = useState(null);
   const [visitCardPatientName, setVisitCardPatientName] = useState("");
@@ -270,6 +274,12 @@ function LabAppointmentsContent({ clinic }) {
       setVisitHistoryError(err?.response?.data?.message || err?.message || "Nie udało się pobrać historii wizyt.");
       setVisitHistoryData([]);
     }).finally(() => setVisitHistoryLoading(false));
+  };
+
+  const openPatientDocumentsModal = (patientId, patientName) => {
+    if (!patientId) return;
+    setDocumentsModalPatient({ id: patientId, name: patientName || "Pacjent" });
+    setShowPatientDocumentsModal(true);
   };
 
   /** Display name: patient name, or registrationData, or fallback (never undefined) */
@@ -1408,6 +1418,19 @@ function LabAppointmentsContent({ clinic }) {
                                   <Eye size={16} className="mr-2" /> Zobacz dane pacjenta
                                 </DropdownMenu.Item>
                               )}
+                              {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
+                                <DropdownMenu.Item
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                  onClick={() =>
+                                    openPatientDocumentsModal(
+                                      appointment.patient.id || appointment.patient._id,
+                                      getAppointmentPatientDisplayName(appointment)
+                                    )
+                                  }
+                                >
+                                  <FolderOpen size={16} className="mr-2" /> Dokumenty pacjenta
+                                </DropdownMenu.Item>
+                              )}
                               {user?.role === "admin" && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md cursor-pointer" onClick={() => handleStatusChangeClick(appointment)}>
                                   <Settings size={16} className="mr-2" /> Zmień status
@@ -1551,6 +1574,19 @@ function LabAppointmentsContent({ clinic }) {
                                   <Pen size={16} className="mr-2" /> Zobacz dane pacjenta
                                 </DropdownMenu.Item>
                               )}
+                              {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
+                                <DropdownMenu.Item
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
+                                  onClick={() =>
+                                    openPatientDocumentsModal(
+                                      appointment.patient.id || appointment.patient._id,
+                                      getAppointmentPatientDisplayName(appointment)
+                                    )
+                                  }
+                                >
+                                  <FolderOpen size={16} className="mr-2" /> Dokumenty pacjenta
+                                </DropdownMenu.Item>
+                              )}
                               {user?.role === "admin" && (
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md cursor-pointer" onClick={() => handlePermanentDeleteClick(appointment.id)}>
                                   <Trash2 size={16} className="mr-2" /> Trwale usuń
@@ -1649,6 +1685,16 @@ function LabAppointmentsContent({ clinic }) {
           onSuccess={() => {
             fetchAppointments(pagination.page);
           }}
+        />
+
+        <PatientDocumentsModal
+          isOpen={showPatientDocumentsModal}
+          onClose={() => {
+            setShowPatientDocumentsModal(false);
+            setDocumentsModalPatient(null);
+          }}
+          patientId={documentsModalPatient?.id}
+          patientName={documentsModalPatient?.name}
         />
 
         {/* Visit history modal – GET /patients/:patientId/visits */}

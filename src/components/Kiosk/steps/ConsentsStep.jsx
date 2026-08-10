@@ -46,7 +46,11 @@ export default function ConsentsStep({
   };
 
   // Helper function to validate PESEL for authorized persons
-  const validateAuthorizedPersonPesel = (pesel) => {
+  const validateAuthorizedPersonPesel = (pesel, noPesel = false) => {
+    if (noPesel) {
+      return { valid: true, message: "", type: "success" };
+    }
+
     if (!pesel || pesel.trim() === "") {
       return { valid: false, message: "PESEL jest wymagany", type: "error" };
     }
@@ -92,9 +96,15 @@ export default function ConsentsStep({
         if (!person.lastName) {
           errors.push(`Nazwisko osoby ${index + 1} jest wymagane.`);
         }
-        if (!person.pesel) {
+        if (person.noPesel) {
+          if (!String(person.documentNumber || "").trim()) {
+            errors.push(
+              `Numer dokumentu tożsamości osoby ${index + 1} jest wymagany (brak PESEL).`
+            );
+          }
+        } else if (!person.pesel) {
           errors.push(`PESEL osoby ${index + 1} jest wymagany.`);
-        } else if (person.pesel.length !== 11) {
+        } else if (String(person.pesel).replace(/\D/g, "").length !== 11) {
           errors.push(`PESEL osoby ${index + 1} musi mieć 11 cyfr.`);
         }
         if (!person.relationshipToPatient) {
@@ -466,37 +476,98 @@ export default function ConsentsStep({
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      PESEL *
+                      {person.noPesel ? "PESEL" : "PESEL *"}
                     </label>
                     <input
                       type="text"
                       value={person.pesel || ""}
                       onChange={(e) => {
                         const newPersons = [...formData.authorizedPersons];
-                        newPersons[index] = { ...person, pesel: e.target.value };
+                        newPersons[index] = {
+                          ...person,
+                          pesel: e.target.value.replace(/\D/g, "").slice(0, 11),
+                        };
                         update("authorizedPersons", newPersons);
                       }}
+                      disabled={!!person.noPesel}
                       className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        (() => {
-                          const validation = validateAuthorizedPersonPesel(person.pesel);
-                          if (!person.pesel) return 'border-gray-300';
-                          return validation.valid ? 'border-green-300' : 'border-red-300';
-                        })()
+                        person.noPesel
+                          ? "border-gray-200 bg-gray-100 text-gray-400"
+                          : (() => {
+                              const validation = validateAuthorizedPersonPesel(
+                                person.pesel,
+                                person.noPesel
+                              );
+                              if (!person.pesel) return "border-gray-300";
+                              return validation.valid
+                                ? "border-green-300"
+                                : "border-red-300";
+                            })()
                       }`}
                       placeholder="Wprowadź numer PESEL"
                       maxLength="11"
                     />
-                    {(() => {
-                      const validation = validateAuthorizedPersonPesel(person.pesel);
-                      if (!person.pesel) {
-                        return <p className="text-xs text-gray-600 mt-1">* Wymagane 11 cyfr</p>;
-                      }
-                      return (
-                        <p className={`text-xs mt-1 ${validation.valid ? 'text-green-600' : 'text-red-600'}`}>
-                          {validation.message}
-                        </p>
-                      );
-                    })()}
+                    <label className="mt-2 flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!!person.noPesel}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          const newPersons = [...formData.authorizedPersons];
+                          newPersons[index] = {
+                            ...person,
+                            noPesel: checked,
+                            pesel: checked ? "" : person.pesel,
+                            documentNumber: checked ? person.documentNumber || "" : "",
+                          };
+                          update("authorizedPersons", newPersons);
+                        }}
+                        className="mt-0.5 w-5 h-5 rounded border-gray-400 text-blue-700 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Nie posiadam numeru PESEL</span>
+                    </label>
+                    {person.noPesel ? (
+                      <div className="mt-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Numer dokumentu tożsamości *
+                        </label>
+                        <input
+                          type="text"
+                          value={person.documentNumber || ""}
+                          onChange={(e) => {
+                            const newPersons = [...formData.authorizedPersons];
+                            newPersons[index] = {
+                              ...person,
+                              documentNumber: e.target.value,
+                            };
+                            update("authorizedPersons", newPersons);
+                          }}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="np. paszport / dowód"
+                        />
+                      </div>
+                    ) : (
+                      (() => {
+                        const validation = validateAuthorizedPersonPesel(
+                          person.pesel,
+                          person.noPesel
+                        );
+                        if (!person.pesel) {
+                          return (
+                            <p className="text-xs text-gray-600 mt-1">* Wymagane 11 cyfr</p>
+                          );
+                        }
+                        return (
+                          <p
+                            className={`text-xs mt-1 ${
+                              validation.valid ? "text-green-600" : "text-red-600"
+                            }`}
+                          >
+                            {validation.message}
+                          </p>
+                        );
+                      })()
+                    )}
                   </div>
                   
                   <div>

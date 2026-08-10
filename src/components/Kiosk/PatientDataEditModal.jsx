@@ -58,6 +58,8 @@ export default function PatientDataEditModal({
         guardianFirstName: formData.guardianFirstName || "",
         guardianLastName: formData.guardianLastName || "",
         guardianPesel: formData.guardianPesel || "",
+        guardianNoPesel: !!formData.guardianNoPesel,
+        guardianDocumentNumber: formData.guardianDocumentNumber || "",
         guardianPhoneCode: formData.guardianPhoneCode || "+48",
         guardianPhone: formData.guardianPhone || "",
         guardianEmail: formData.guardianEmail || "",
@@ -161,7 +163,13 @@ export default function PatientDataEditModal({
     if (requiresGuardian) {
       if (!editData.guardianFirstName?.trim()) newGuardianErrors.push("Imię opiekuna jest wymagane.");
       if (!editData.guardianLastName?.trim()) newGuardianErrors.push("Nazwisko opiekuna jest wymagane.");
-      if (!editData.guardianPesel?.trim() || editData.guardianPesel.length !== 11) {
+      if (editData.guardianNoPesel) {
+        if (!editData.guardianDocumentNumber?.trim()) {
+          newGuardianErrors.push(
+            "Numer dokumentu tożsamości opiekuna jest wymagany (brak PESEL)."
+          );
+        }
+      } else if (!editData.guardianPesel?.trim() || editData.guardianPesel.length !== 11) {
         newGuardianErrors.push("PESEL opiekuna musi mieć 11 cyfr.");
       }
       if (!editData.guardianPhone?.trim()) {
@@ -499,7 +507,9 @@ export default function PatientDataEditModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">PESEL *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {editData.guardianNoPesel ? "PESEL" : "PESEL *"}
+                  </label>
                   <input
                     type="text"
                     value={editData.guardianPesel || ""}
@@ -507,10 +517,50 @@ export default function PatientDataEditModal({
                       const cleaned = e.target.value.replace(/\D/g, "").slice(0, 11);
                       update("guardianPesel", cleaned);
                     }}
-                    readOnly={readOnlyFields}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    readOnly={readOnlyFields || !!editData.guardianNoPesel}
+                    disabled={!!editData.guardianNoPesel}
+                    className={`w-full border rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                      editData.guardianNoPesel
+                        ? "border-gray-200 bg-gray-100 text-gray-400"
+                        : "border-gray-300"
+                    }`}
                     maxLength="11"
                   />
+                  <label className="mt-2 flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!editData.guardianNoPesel}
+                      disabled={readOnlyFields}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setEditData((prev) => ({
+                          ...prev,
+                          guardianNoPesel: checked,
+                          guardianPesel: checked ? "" : prev.guardianPesel,
+                          guardianDocumentNumber: checked
+                            ? prev.guardianDocumentNumber || ""
+                            : "",
+                        }));
+                      }}
+                      className="mt-0.5 w-5 h-5 rounded border-gray-400 text-yellow-700 focus:ring-yellow-500"
+                    />
+                    <span className="text-sm text-gray-700">Nie posiadam numeru PESEL</span>
+                  </label>
+                  {editData.guardianNoPesel && (
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Numer dokumentu tożsamości *
+                      </label>
+                      <input
+                        type="text"
+                        value={editData.guardianDocumentNumber || ""}
+                        onChange={(e) => update("guardianDocumentNumber", e.target.value)}
+                        readOnly={readOnlyFields}
+                        placeholder="np. paszport / dowód"
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div>

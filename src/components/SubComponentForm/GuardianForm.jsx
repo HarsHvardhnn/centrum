@@ -114,8 +114,42 @@ const GuardianForm = () => {
               onChange={(e) => update("guardianPesel", normalizePesel(e.target.value))}
               placeholder="11 cyfr"
               maxLength={11}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              disabled={!!formData.guardianNoPesel}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
+                formData.guardianNoPesel ? "bg-gray-100 text-gray-400" : ""
+              }`}
             />
+            <label className="mt-2 flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!!formData.guardianNoPesel}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  updateFormData("guardianNoPesel", checked);
+                  if (checked) {
+                    updateFormData("guardianPesel", "");
+                  } else {
+                    updateFormData("guardianDocumentNumber", "");
+                  }
+                }}
+                className="mt-0.5 w-4 h-4 rounded border-gray-400"
+              />
+              <span className="text-sm text-gray-700">Nie posiadam numeru PESEL</span>
+            </label>
+            {formData.guardianNoPesel && (
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Numer dokumentu tożsamości
+                </label>
+                <input
+                  type="text"
+                  value={formData.guardianDocumentNumber || ""}
+                  onChange={(e) => update("guardianDocumentNumber", e.target.value)}
+                  placeholder="np. paszport / dowód"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -22,6 +22,8 @@ export default function MinorRegistrationForm({
     guardianFirstName: initialData.guardianFirstName || "",
     guardianLastName: initialData.guardianLastName || "",
     guardianPesel: initialData.guardianPesel || "",
+    guardianNoPesel: !!initialData.guardianNoPesel,
+    guardianDocumentNumber: initialData.guardianDocumentNumber || "",
     guardianPhoneCode: initialData.guardianPhoneCode || initialData.phoneCode || "+48",
     guardianPhone: initialData.guardianPhone || initialData.phone || "",
     guardianEmail: initialData.guardianEmail || initialData.email || "",

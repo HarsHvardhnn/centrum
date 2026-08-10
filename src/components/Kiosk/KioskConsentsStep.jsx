@@ -67,14 +67,44 @@ function AuthorizedPersonCard({ person, index, onChange, onRemove, canRemove }) 
         <Input label="Imię *" value={person.firstName} onChange={(v) => update("firstName", v)} />
         <Input label="Nazwisko *" value={person.lastName} onChange={(v) => update("lastName", v)} />
         <div className="sm:col-span-2">
-          <label className="block text-xs font-medium text-gray-600 mb-2">PESEL *</label>
-          <KioskNumericEntry
-            value={person.pesel}
-            onChange={(value) => update("pesel", value)}
-            maxLength={11}
-            size="md"
-            compactKeypad
-          />
+          <label className="block text-xs font-medium text-gray-600 mb-2">
+            {person.noPesel ? "PESEL" : "PESEL *"}
+          </label>
+          {!person.noPesel && (
+            <KioskNumericEntry
+              value={person.pesel}
+              onChange={(value) => update("pesel", value)}
+              maxLength={11}
+              size="md"
+              compactKeypad
+            />
+          )}
+          <label className="mt-2 flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!person.noPesel}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                onChange(index, {
+                  ...person,
+                  noPesel: checked,
+                  pesel: checked ? "" : person.pesel,
+                  documentNumber: checked ? person.documentNumber || "" : "",
+                });
+              }}
+              className="mt-0.5 w-4 h-4 rounded border-gray-400 text-teal-700 focus:ring-teal-500"
+            />
+            <span className="text-xs text-gray-700">Nie posiadam numeru PESEL</span>
+          </label>
+          {person.noPesel && (
+            <div className="mt-3">
+              <Input
+                label="Numer dokumentu tożsamości *"
+                value={person.documentNumber}
+                onChange={(v) => update("documentNumber", v)}
+              />
+            </div>
+          )}
         </div>
         <div className="sm:col-span-2">
           <label className="block text-xs font-medium text-gray-600 mb-2">Numer telefonu *</label>

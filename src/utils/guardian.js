@@ -7,6 +7,16 @@ export const GUARDIAN_RELATION_OPTIONS = [
   { value: "opiekun_faktyczny", label: "Opiekun faktyczny" },
 ];
 
+/** Inline identity for UI/PDF: "PESEL …" or "nr dokumentu …" */
+export function formatGuardianIdentity(formData = {}) {
+  if (formData.guardianNoPesel) {
+    const doc = String(formData.guardianDocumentNumber || "").trim();
+    return doc ? `nr dokumentu ${doc}` : "bez PESEL";
+  }
+  const pesel = String(formData.guardianPesel || "").replace(/\D/g, "").slice(0, 11);
+  return pesel ? `PESEL ${pesel}` : "PESEL —";
+}
+
 export function mapPatientGuardianFields(patient = {}) {
   const g = patient.guardian || {};
   return {
@@ -14,6 +24,8 @@ export function mapPatientGuardianFields(patient = {}) {
     guardianFirstName: g.firstName || "",
     guardianLastName: g.lastName || "",
     guardianPesel: g.pesel || "",
+    guardianNoPesel: !!g.noPesel,
+    guardianDocumentNumber: g.documentNumber || "",
     guardianRelation: g.relation || "",
     guardianPhone: g.phone || "",
     guardianPhoneCode: g.phoneCode || "+48",
@@ -30,7 +42,13 @@ export function mapPatientGuardianFields(patient = {}) {
 export function buildGuardianPayload(formData = {}) {
   const firstName = String(formData.guardianFirstName || "").trim();
   const lastName = String(formData.guardianLastName || "").trim();
-  const pesel = String(formData.guardianPesel || "").replace(/\D/g, "").slice(0, 11);
+  const noPesel = !!formData.guardianNoPesel;
+  const pesel = noPesel
+    ? ""
+    : String(formData.guardianPesel || "").replace(/\D/g, "").slice(0, 11);
+  const documentNumber = noPesel
+    ? String(formData.guardianDocumentNumber || "").trim()
+    : "";
   const relation = String(formData.guardianRelation || "").trim();
   const phone = String(formData.guardianPhone || "").replace(/\D/g, "").slice(0, 15);
   const phoneCode = formData.guardianPhoneCode || "+48";
@@ -46,6 +64,8 @@ export function buildGuardianPayload(formData = {}) {
     firstName ||
     lastName ||
     pesel ||
+    noPesel ||
+    documentNumber ||
     relation ||
     phone ||
     email ||
@@ -62,6 +82,8 @@ export function buildGuardianPayload(formData = {}) {
     firstName,
     lastName,
     pesel,
+    noPesel,
+    documentNumber,
     relation: relation || undefined,
     phone,
     phoneCode,
