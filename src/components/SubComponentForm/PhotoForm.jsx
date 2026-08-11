@@ -409,12 +409,12 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
 
             <p className="mb-1">
               <span className="text-primary font-medium">
-                Click to upload
+                Kliknij, aby przesłać
               </span>{" "}
-              or drag and drop
+              lub przeciągnij i upuść
             </p>
             <p className="text-gray-500 text-sm">
-              PDF or Image files (JPG, PNG, GIF)
+              Pliki PDF lub obrazy (JPG, PNG, GIF)
             </p>
           </div>
 

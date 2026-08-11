@@ -59,16 +59,7 @@ const MultiStepForm = ({
     return "Dalej";
   };
 
-  // Function to determine previous button text
-  const getPreviousButtonText = () => {
-    // If we're on a sub-step (not the first one), show custom back text
-    if (handleSubStepNavigation && currentSubStep > 0 && subStepTitles.length > 0) {
-      const prevSubStepName = subStepTitles[currentSubStep - 1];
-      return `← Wróć do ${prevSubStepName}`;
-    }
-    
-    return "Wstecz";
-  };
+  const getPreviousButtonText = () => "Wstecz";
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 sm:p-6 md:p-8">

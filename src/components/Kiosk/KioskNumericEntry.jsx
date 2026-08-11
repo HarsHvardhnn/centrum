@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from "react";
 import KioskNumericKeypad from "./KioskNumericKeypad";
 
 const BOX_STYLES = {
@@ -23,6 +24,19 @@ const BOX_STYLES = {
   },
 };
 
+function isEditableTarget(el) {
+  if (!el || !(el instanceof Element)) return false;
+  const tag = el.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+  if (el.isContentEditable) return true;
+  return Boolean(el.closest?.("input, textarea, select, [contenteditable='true']"));
+}
+
+/**
+ * Digit boxes + on-screen keypad.
+ * Physical keyboards (desktop / iPad Magic Keyboard) work via window keydown —
+ * there is no text <input>, so the iOS/Android soft keyboard never opens.
+ */
 export default function KioskNumericEntry({
   value = "",
   onChange,
@@ -32,28 +46,96 @@ export default function KioskNumericEntry({
   compactKeypad = false,
   showActiveCursor = false,
   disabled = false,
+  /** Capture digit/Backspace from a connected keyboard without opening soft keyboard.
+   *  Keep false for compact in-form pads (multiple can mount); enable on PIN/PESEL screens. */
+  enableHardwareKeyboard = false,
   className = "",
+  autoFocus = false,
 }) {
   const digits = String(value).replace(/\D/g, "").slice(0, maxLength);
   const boxes = Array.from({ length: maxLength }, (_, index) => digits[index] || "");
   const styles = BOX_STYLES[size] || BOX_STYLES.lg;
   const activeIndex = digits.length;
+  const rootRef = useRef(null);
+  const digitsRef = useRef(digits);
+  const onChangeRef = useRef(onChange);
+  const maxLengthRef = useRef(maxLength);
+  const disabledRef = useRef(disabled);
 
-  const appendDigit = (digit) => {
-    if (digits.length >= maxLength) return;
-    onChange?.(digits + digit);
-  };
+  useEffect(() => {
+    digitsRef.current = digits;
+  }, [digits]);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+  useEffect(() => {
+    maxLengthRef.current = maxLength;
+  }, [maxLength]);
+  useEffect(() => {
+    disabledRef.current = disabled;
+  }, [disabled]);
 
-  const backspace = () => {
-    onChange?.(digits.slice(0, -1));
-  };
+  const appendDigit = useCallback((digit) => {
+    if (disabledRef.current) return;
+    const current = digitsRef.current;
+    const max = maxLengthRef.current;
+    if (current.length >= max) return;
+    onChangeRef.current?.(current + digit);
+  }, []);
+
+  const backspace = useCallback(() => {
+    if (disabledRef.current) return;
+    const current = digitsRef.current;
+    if (!current.length) return;
+    onChangeRef.current?.(current.slice(0, -1));
+  }, []);
+
+  useEffect(() => {
+    if (!enableHardwareKeyboard) return undefined;
+
+    const onKeyDown = (e) => {
+      if (disabledRef.current) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // Don't steal typing from real form fields elsewhere on the page
+      if (isEditableTarget(e.target)) return;
+
+      if (e.key >= "0" && e.key <= "9") {
+        e.preventDefault();
+        appendDigit(e.key);
+        return;
+      }
+
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        backspace();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [appendDigit, backspace, enableHardwareKeyboard]);
+
+  useEffect(() => {
+    if (!autoFocus || disabled) return;
+    // Focus the non-input container so hardware keys are clearly "in" this control.
+    // Focusing a div never opens the mobile soft keyboard.
+    rootRef.current?.focus?.({ preventScroll: true });
+  }, [autoFocus, disabled]);
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div
+      ref={rootRef}
+      className={`space-y-6 outline-none ${className}`}
+      tabIndex={enableHardwareKeyboard ? 0 : undefined}
+      role="group"
+      aria-label="Wprowadzanie cyfr"
+      data-kiosk-numeric-entry="true"
+    >
       <div
         className={`flex justify-center flex-wrap ${styles.gap}`}
         role="group"
         aria-label="Wprowadzane cyfry"
+        aria-live="polite"
       >
         {boxes.map((digit, index) => {
           const isActive = showActiveCursor && index === activeIndex && activeIndex < maxLength;

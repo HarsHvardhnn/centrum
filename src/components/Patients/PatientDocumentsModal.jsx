@@ -156,6 +156,11 @@ export default function PatientDocumentsModal({
                 const typeLabel =
                   DOC_TYPE_LABELS[doc.documentType] ||
                   (doc.source === "registration" ? "Rejestracja" : null);
+                const docNumber =
+                  doc.docNumber ||
+                  doc.kioskDocNumber ||
+                  doc.metadata?.docNumber ||
+                  "";
 
                 return (
                   <li key={doc._id || doc.id || `doc-${index}`}>
@@ -178,6 +183,9 @@ export default function PatientDocumentsModal({
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-900 truncate">{title}</p>
+                        {docNumber ? (
+                          <p className="text-xs text-gray-700 mt-0.5 truncate">Nr: {docNumber}</p>
+                        ) : null}
                         <p className="text-xs text-gray-500 mt-0.5">
                           {[typeLabel, dateLabel, url ? "Otwórz" : "Brak pliku"]
                             .filter(Boolean)

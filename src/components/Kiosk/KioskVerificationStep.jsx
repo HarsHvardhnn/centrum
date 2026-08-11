@@ -104,6 +104,8 @@ export default function KioskVerificationStep({
         size="pesel"
         showActiveCursor
         disabled={disabled}
+        enableHardwareKeyboard
+        autoFocus
       />
 
       <div className="text-center pt-2">

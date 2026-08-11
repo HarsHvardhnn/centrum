@@ -4,7 +4,12 @@ import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils"
 import PhoneCountrySelect from "../PhoneCountrySelect";
 import { PATIENT_TYPES } from "../PatientTypeDetector";
 
-function validateContactPesel(rawPesel, patientPesel, noPesel = false) {
+function validateContactPesel(
+  rawPesel,
+  patientPesel,
+  noPesel = false,
+  allowFallback = false
+) {
   if (noPesel) {
     return { valid: true, message: "", type: "success" };
   }
@@ -22,11 +27,6 @@ function validateContactPesel(rawPesel, patientPesel, noPesel = false) {
     };
   }
 
-  const analysis = analyzePeselForKiosk(normalized);
-  if (!analysis.valid) {
-    return { valid: false, message: analysis.message, type: "error" };
-  }
-
   const patientNormalized = normalizePesel(patientPesel || "");
   if (patientNormalized.length === 11 && normalized === patientNormalized) {
     return {
@@ -34,6 +34,19 @@ function validateContactPesel(rawPesel, patientPesel, noPesel = false) {
       message: "PESEL opiekuna nie może być taki sam jak PESEL pacjenta.",
       type: "error",
     };
+  }
+
+  const analysis = analyzePeselForKiosk(normalized);
+  if (!analysis.valid) {
+    if (allowFallback) {
+      return {
+        valid: true,
+        message:
+          "PESEL przyjęty mimo błędu walidacji — dane zweryfikuje personel.",
+        type: "warning",
+      };
+    }
+    return { valid: false, message: analysis.message, type: "error" };
   }
 
   return { valid: true, message: "PESEL jest prawidłowy.", type: "success" };
@@ -72,11 +85,33 @@ export default function ContactStep({
         ? validateContactPesel(
             formData.guardianPesel,
             formData.pesel,
-            !!formData.guardianNoPesel
+            !!formData.guardianNoPesel,
+            !!formData.guardianPeselFallbackMode
           )
         : { valid: true, message: "", type: "success" },
-    [isMinor, formData.guardianPesel, formData.pesel, formData.guardianNoPesel]
+    [
+      isMinor,
+      formData.guardianPesel,
+      formData.pesel,
+      formData.guardianNoPesel,
+      formData.guardianPeselFallbackMode,
+    ]
   );
+
+  const showPeselFallback =
+    isMinor &&
+    !formData.guardianNoPesel &&
+    !formData.guardianPeselFallbackMode &&
+    (formData.guardianPeselFailAttempts || 0) >= 2 &&
+    normalizePesel(formData.guardianPesel || "").length === 11 &&
+    !peselValidation.valid;
+
+  const acceptPeselFallback = () => {
+    updateFormData({
+      guardianPeselFallbackMode: true,
+      guardianPesel: normalizePesel(formData.guardianPesel || ""),
+    });
+  };
 
   // Validation logic
   useEffect(() => {
@@ -202,9 +237,15 @@ export default function ContactStep({
               inputMode="numeric"
               autoComplete="off"
               value={formData.guardianPesel || ""}
-              onChange={(e) =>
-                update("guardianPesel", e.target.value.replace(/\D/g, "").slice(0, 11))
-              }
+              onChange={(e) => {
+                const next = e.target.value.replace(/\D/g, "").slice(0, 11);
+                updateFormData({
+                  guardianPesel: next,
+                  // Changing PESEL clears a previous exception so the new value is re-checked
+                  guardianPeselFallbackMode: false,
+                  guardianPeselFailAttempts: 0,
+                });
+              }}
               readOnly={readOnlyFields || !!formData.guardianNoPesel}
               disabled={!!formData.guardianNoPesel}
               maxLength={11}
@@ -213,9 +254,11 @@ export default function ContactStep({
                   ? "border-gray-200 bg-gray-100 text-gray-400"
                   : !formData.guardianPesel
                     ? "border-gray-300"
-                    : peselValidation.valid
-                      ? "border-green-400"
-                      : "border-red-400"
+                    : peselValidation.type === "warning"
+                      ? "border-amber-400"
+                      : peselValidation.valid
+                        ? "border-green-400"
+                        : "border-red-400"
               }`}
               required={!formData.guardianNoPesel}
             />
@@ -232,6 +275,8 @@ export default function ContactStep({
                     guardianDocumentNumber: checked
                       ? formData.guardianDocumentNumber || ""
                       : "",
+                    guardianPeselFallbackMode: false,
+                    guardianPeselFailAttempts: 0,
                   });
                 }}
                 className="mt-0.5 w-5 h-5 rounded border-gray-400 text-teal-700 focus:ring-teal-500"
@@ -258,11 +303,33 @@ export default function ContactStep({
             ) : (
               <p
                 className={`text-xs mt-1 ${
-                  peselValidation.valid ? "text-green-700" : "text-red-600"
+                  peselValidation.type === "warning"
+                    ? "text-amber-700"
+                    : peselValidation.valid
+                      ? "text-green-700"
+                      : "text-red-600"
                 }`}
               >
                 {peselValidation.message}
               </p>
+            )}
+            {showPeselFallback && (
+              <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <h4 className="text-sm font-medium text-amber-800">
+                  System nie może zweryfikować tego numeru PESEL
+                </h4>
+                <p className="mt-2 text-sm text-amber-700">
+                  Po 2 nieudanych próbach możesz kontynuować. Dane będą wymagały dodatkowej
+                  weryfikacji przez personel.
+                </p>
+                <button
+                  type="button"
+                  onClick={acceptPeselFallback}
+                  className="mt-3 w-full bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm py-3 px-4 rounded-lg transition-colors"
+                >
+                  Kontynuuj mimo błędu walidacji
+                </button>
+              </div>
             )}
           </div>
 

@@ -1,103 +1,73 @@
 /**
- * Document number generation utilities
+ * Document number helpers — formats must match backend
+ * `buildConsentDocNumber` in registrationDocumentService.js.
+ *
+ * Before a Patient ID exists (new registration), the Nr field stays blank
+ * so the kiosk never shows a number that will differ from the signed PDF.
  */
 
 /**
- * Generate a unique document number for GDPR consent
- * Format: RODO/YYYY/NNNNNN
- * @returns {string} - Generated document number
+ * @param {string} documentType - 'gdpr' | 'examination' | 'authorization' | 'guardian_statement'
+ * @param {string} [patientDisplayId] - e.g. P-1786412818393
+ * @param {number} [versionNumber=1]
+ * @returns {string} Document number, or "" when Patient ID is unknown
  */
-export function generateGdprDocumentNumber() {
-  const now = new Date();
-  const year = now.getFullYear();
-  
-  // Generate a random 6-digit number for now
-  // In a real system, this would be a sequential number from database
-  const randomNumber = Math.floor(Math.random() * 900000) + 100000;
-  
-  return `RODO/${year}/${randomNumber.toString().padStart(6, '0')}`;
-}
+export function buildConsentDocNumber(
+  documentType = "gdpr",
+  patientDisplayId = "",
+  versionNumber = 1
+) {
+  const id = String(patientDisplayId || "").trim();
+  if (!id) return "";
 
-/**
- * Generate a unique document number for medical examination consent
- * Format: BAD/YYYY/NNNNNN  
- * @returns {string} - Generated document number
- */
-export function generateExaminationDocumentNumber() {
-  const now = new Date();
-  const year = now.getFullYear();
-  
-  // Generate a random 6-digit number for now
-  const randomNumber = Math.floor(Math.random() * 900000) + 100000;
-  
-  return `BAD/${year}/${randomNumber.toString().padStart(6, '0')}`;
-}
+  const version = Number(versionNumber) > 0 ? Number(versionNumber) : 1;
 
-/**
- * Generate a unique document number for authorization consent
- * Format: UPO/YYYY/NNNNNN
- * @returns {string} - Generated document number  
- */
-export function generateAuthorizationDocumentNumber() {
-  const now = new Date();
-  const year = now.getFullYear();
-  
-  // Generate a random 6-digit number for now
-  const randomNumber = Math.floor(Math.random() * 900000) + 100000;
-  
-  return `UPO/${year}/${randomNumber.toString().padStart(6, '0')}`;
-}
-
-/**
- * Generate a unique document number for guardian representation statement
- * Format: OSW/YYYY/NNNNNN
- */
-export function generateGuardianStatementDocumentNumber() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const randomNumber = Math.floor(Math.random() * 900000) + 100000;
-  return `OSW/${year}/${randomNumber.toString().padStart(6, "0")}`;
+  switch (documentType) {
+    case "examination":
+    case "consent_examination":
+      return `OSW-ZB-${id}-v-${version}`;
+    case "authorization":
+    case "auth_health_status":
+      return `OSW-UPW-${id}-v${version}`;
+    case "guardian_statement":
+      return `OSW-OP-${id}-v${version}`;
+    case "gdpr":
+    case "consent_personal_data":
+    default:
+      return `RODO-${id} - ${version}`;
+  }
 }
 
 /**
  * Get current date in Polish format (DD.MM.YYYY)
- * @returns {string} - Formatted date
+ * @returns {string}
  */
 export function getCurrentDocumentDate() {
   const now = new Date();
-  const day = String(now.getDate()).padStart(2, '0');
-  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
   const year = now.getFullYear();
-  
   return `${day}.${month}.${year}`;
 }
 
 /**
- * Generate document metadata for a consent form
- * @param {string} documentType - Type of document ('gdpr', 'examination', 'authorization', 'guardian_statement')
- * @returns {object} - Document metadata with number and date
+ * Generate document metadata for a consent form preview.
+ * Number is blank when patientDisplayId is missing (new patient).
+ *
+ * @param {string} documentType
+ * @param {{ patientDisplayId?: string, versionNumber?: number }} [options]
+ * @returns {{ number: string, date: string }}
  */
-export function generateDocumentMetadata(documentType = 'gdpr') {
-  let docNumber;
-  
-  switch (documentType) {
-    case 'examination':
-      docNumber = generateExaminationDocumentNumber();
-      break;
-    case 'authorization':
-      docNumber = generateAuthorizationDocumentNumber();
-      break;
-    case 'guardian_statement':
-      docNumber = generateGuardianStatementDocumentNumber();
-      break;
-    case 'gdpr':
-    default:
-      docNumber = generateGdprDocumentNumber();
-      break;
-  }
-  
+export function generateDocumentMetadata(documentType = "gdpr", options = {}) {
+  const { patientDisplayId = "", versionNumber = 1 } = options || {};
   return {
-    number: docNumber,
-    date: getCurrentDocumentDate()
+    number: buildConsentDocNumber(documentType, patientDisplayId, versionNumber),
+    date: getCurrentDocumentDate(),
   };
+}
+
+/** Display helper: blank Nr becomes an em dash so layout stays stable. */
+export function formatDocumentNumberForDisplay(number) {
+  const value = String(number || "").trim();
+  return value || "—";
 }

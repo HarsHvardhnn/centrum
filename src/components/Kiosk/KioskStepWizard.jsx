@@ -137,8 +137,28 @@ export default function KioskStepWizard({
       onSubmit?.(formData);
     } else {
       setShowErrors(true);
+      // Same as first kiosk PESEL step: after 2 failed Dalej attempts on an
+      // invalid guardian PESEL, the step can offer "continue despite error".
+      const isGuardianPeselStep =
+        currentStep.component === "ContactStep" ||
+        currentStep.component === "GuardianDataStep";
+      const guardianPeselDigits = String(formData.guardianPesel || "").replace(/\D/g, "");
+      const hasGuardianPeselError = (validation.errors || []).some((e) =>
+        /PESEL|daty urodzenia|suma kontrolna/i.test(String(e || ""))
+      );
+      if (
+        isGuardianPeselStep &&
+        !formData.guardianNoPesel &&
+        !formData.guardianPeselFallbackMode &&
+        guardianPeselDigits.length === 11 &&
+        hasGuardianPeselError
+      ) {
+        updateFormData({
+          guardianPeselFailAttempts: (formData.guardianPeselFailAttempts || 0) + 1,
+        });
+      }
     }
-  }, [currentStep.id, formData, isLastStep, onSubmit, validateCurrentStep]);
+  }, [currentStep.component, currentStep.id, formData, isLastStep, onSubmit, updateFormData, validateCurrentStep]);
 
   const goToPreviousStep = useCallback(() => {
     if (!isFirstStep) {

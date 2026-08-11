@@ -54,15 +54,6 @@ const SubStepForm = ({
     }
   }, [currentSubStep, isEditMode, formData.fullName, formData.govtId, formData.sex, formData.consultingDoctor, formData.isInternationalPatient, formData.documentCountry, formData.documentType, formData.documentNumber, formData.documentDateOfBirth]);
 
-  const getPreviousButtonText = () => {
-    if (currentSubStep > 0) {
-      const prevSubStepTitle = subStepTitles[currentSubStep - 1] || 
-                              (subSteps[currentSubStep - 1]?.props.title || "Poprzedni");
-      return `Wróć do ${prevSubStepTitle}`;
-    }
-    return "Poprzedni";
-  };
-
   return (
     <SubStepFormContext.Provider value={{ currentSubStep }}>
       <div className="sub-step-form">
@@ -103,7 +94,7 @@ const SubStepForm = ({
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
-              {getPreviousButtonText()}
+              Wstecz
             </button>
 
             {footerCenter}

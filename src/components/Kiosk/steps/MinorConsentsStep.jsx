@@ -4,7 +4,10 @@ import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from ".
 import PhoneCountrySelect from "../PhoneCountrySelect";
 import { formatPolishPostalCode, validatePolishPostalCode } from "../../../utils/postalCodeUtils";
 import { formatPolishDate } from "../../../utils/dateUtils";
-import { generateDocumentMetadata } from "../../../utils/documentNumberUtils";
+import {
+  formatDocumentNumberForDisplay,
+  generateDocumentMetadata,
+} from "../../../utils/documentNumberUtils";
 import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils";
 import { formatGuardianIdentity } from "../../../utils/guardian";
 import PatientDataEditModal from "../PatientDataEditModal";
@@ -122,9 +125,14 @@ const EXAM_RISK_NOTICE =
 /** PDF Number 7 — Block A patient examination statement (16–17) */
 function getPatientExaminationTexts(formData) {
   const patientName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim() || "—";
-  const patientPesel = formData.pesel || "—";
+  const noPesel = formData.noPesel === true || formData.hasPesel === false;
+  const identityLabel = noPesel ? "dokument tożsamości" : "PESEL";
+  const identityValue =
+    (noPesel
+      ? formData.documentNumber || formData.identityDocumentNumber
+      : formData.pesel) || "—";
   return {
-    p1: `Ja, ${patientName} (PESEL ${patientPesel}), jako pacjent, oświadczam, że zostałem(-am) poinformowany(-a) o celu, przebiegu oraz możliwych następstwach planowanego badania lub innego świadczenia zdrowotnego i wyrażam zgodę na jego przeprowadzenie, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`,
+    p1: `Ja ${patientName}, ${identityLabel} ${identityValue}, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.`,
     p2: EXAM_RISK_NOTICE,
   };
 }
@@ -329,13 +337,15 @@ export default function MinorConsentsStep({
   const [documentNumbers, setDocumentNumbers] = useState({});
   const show = (section) => documentSection === "all" || documentSection === section;
 
-  // Generate document numbers when component mounts
+  // Leave Nr blank on the tablet — final number (with Patient ID) is assigned
+  // when the PDF is generated at signing, so we never show a mismatched Nr.
   useEffect(() => {
+    const opts = { patientDisplayId: "" };
     setDocumentNumbers({
-      gdpr: generateDocumentMetadata("gdpr"),
-      examination: generateDocumentMetadata("examination"),
-      guardian_statement: generateDocumentMetadata("guardian_statement"),
-      authorization: generateDocumentMetadata("authorization"),
+      gdpr: generateDocumentMetadata("gdpr", opts),
+      examination: generateDocumentMetadata("examination", opts),
+      guardian_statement: generateDocumentMetadata("guardian_statement", opts),
+      authorization: generateDocumentMetadata("authorization", opts),
     });
   }, []);
 
@@ -617,27 +627,8 @@ export default function MinorConsentsStep({
                   : "PACJENT NIEPEŁNOLETNI PONIŻEJ 16 LAT"}
               </p>
               <div className="text-right text-sm text-gray-600 mt-2">
-                <p>
-                  Nr:{" "}
-                  {(() => {
-                    try {
-                      return documentNumbers.gdpr?.number || generateDocumentMetadata("gdpr").number;
-                    } catch (e) {
-                      return `RODO/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900000) + 100000)}`;
-                    }
-                  })()}
-                </p>
-                <p>
-                  Data:{" "}
-                  {(() => {
-                    try {
-                      return documentNumbers.gdpr?.date || generateDocumentMetadata("gdpr").date;
-                    } catch (e) {
-                      const now = new Date();
-                      return `${String(now.getDate()).padStart(2, "0")}.${String(now.getMonth() + 1).padStart(2, "0")}.${now.getFullYear()}`;
-                    }
-                  })()}
-                </p>
+                <p>Nr: {formatDocumentNumberForDisplay(documentNumbers.gdpr?.number)}</p>
+                <p>Data: {documentNumbers.gdpr?.date || generateDocumentMetadata("gdpr").date}</p>
               </div>
             </div>
 
@@ -696,22 +687,8 @@ export default function MinorConsentsStep({
               : "OŚWIADCZENIE PRZEDSTAWICIELA USTAWOWEGO / OPIEKUNA FAKTYCZNEGO o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"}
           </h2>
           <div className="text-right text-sm text-gray-600">
-            <p>Nr: {(() => {
-              try {
-                return documentNumbers.examination?.number || generateDocumentMetadata('examination').number;
-              } catch (e) {
-                console.error('Error generating examination document number:', e);
-                return `BAD/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900000) + 100000)}`;
-              }
-            })()}</p>
-            <p>Data: {(() => {
-              try {
-                return documentNumbers.examination?.date || generateDocumentMetadata('examination').date;
-              } catch (e) {
-                const now = new Date();
-                return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
-              }
-            })()}</p>
+            <p>Nr: {formatDocumentNumberForDisplay(documentNumbers.examination?.number)}</p>
+            <p>Data: {documentNumbers.examination?.date || generateDocumentMetadata("examination").date}</p>
             <p className="text-green-800 font-medium mt-1">WYMAGANE</p>
           </div>
         </div>
@@ -822,32 +799,11 @@ export default function MinorConsentsStep({
             o posiadaniu uprawnień do reprezentowania pacjenta małoletniego lub ubezwłasnowolnionego
           </p>
           <div className="text-right text-sm text-gray-600 mt-2">
-            <p>
-              Nr:{" "}
-              {(() => {
-                try {
-                  return (
-                    documentNumbers.guardian_statement?.number ||
-                    generateDocumentMetadata("guardian_statement").number
-                  );
-                } catch (e) {
-                  return `OSW/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900000) + 100000)}`;
-                }
-              })()}
-            </p>
+            <p>Nr: {formatDocumentNumberForDisplay(documentNumbers.guardian_statement?.number)}</p>
             <p>
               Data:{" "}
-              {(() => {
-                try {
-                  return (
-                    documentNumbers.guardian_statement?.date ||
-                    generateDocumentMetadata("guardian_statement").date
-                  );
-                } catch (e) {
-                  const now = new Date();
-                  return `${String(now.getDate()).padStart(2, "0")}.${String(now.getMonth() + 1).padStart(2, "0")}.${now.getFullYear()}`;
-                }
-              })()}
+              {documentNumbers.guardian_statement?.date ||
+                generateDocumentMetadata("guardian_statement").date}
             </p>
             <p className="text-red-700 font-medium mt-1">WYMAGANE</p>
           </div>
@@ -935,26 +891,16 @@ export default function MinorConsentsStep({
       <div className="bg-white border-2 border-purple-300 rounded-xl p-6">
         <div className="text-center mb-6">
           <h2 className="text-lg font-bold text-purple-900 mb-2">
-            UPOWAŻNIENIE (PACJENT I {guardianRole.label.toUpperCase()}) do uzyskiwania informacji o
-            stanie zdrowia przez osobę bliską
+            {patientType === PATIENT_TYPES.MINOR_16_17
+              ? `UPOWAŻNIENIE (PACJENT I ${guardianRole.label.toUpperCase()}) do uzyskiwania informacji o stanie zdrowia przez osobę bliską`
+              : `UPOWAŻNIENIE (${guardianRole.label.toUpperCase()}) do uzyskiwania informacji o stanie zdrowia przez osobę bliską`}
           </h2>
           <div className="text-right text-sm text-gray-600 mb-2">
-            <p>Nr: {(() => {
-              try {
-                return documentNumbers.authorization?.number || generateDocumentMetadata('authorization').number;
-              } catch (e) {
-                console.error('Error generating authorization document number:', e);
-                return `UPO/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900000) + 100000)}`;
-              }
-            })()}</p>
-            <p>Data: {(() => {
-              try {
-                return documentNumbers.authorization?.date || generateDocumentMetadata('authorization').date;
-              } catch (e) {
-                const now = new Date();
-                return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
-              }
-            })()}</p>
+            <p>Nr: {formatDocumentNumberForDisplay(documentNumbers.authorization?.number)}</p>
+            <p>
+              Data:{" "}
+              {documentNumbers.authorization?.date || generateDocumentMetadata("authorization").date}
+            </p>
           </div>
           <div className="flex items-center justify-center gap-2 text-sm">
             <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-medium">OPCJONALNE</span>

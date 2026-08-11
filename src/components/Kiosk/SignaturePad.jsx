@@ -3,15 +3,13 @@ import { createPortal } from "react-dom";
 
 /**
  * Signature pad for kiosk / iPad.
- * Touch "downward drift" is usually page scroll moving getBoundingClientRect() mid-stroke.
- * We lock body scroll while drawing and offer a full-screen modal signer.
+ * Drawing is only allowed in the full-screen modal — the inline area is a preview/CTA.
  */
 export default function SignaturePad({
   onChange,
   label = "Podpis pacjenta",
   value = "",
 }) {
-  const canvasRef = useRef(null);
   const modalCanvasRef = useRef(null);
   const drawing = useRef(false);
   const lastPoint = useRef(null);
@@ -75,16 +73,6 @@ export default function SignaturePad({
     window.scrollTo(0, lockedScrollY.current || 0);
   }, []);
 
-  const emitChange = useCallback((canvas) => {
-    if (!canvas) return;
-    if (changeTimeoutRef.current) clearTimeout(changeTimeoutRef.current);
-    changeTimeoutRef.current = setTimeout(() => {
-      const dataUrl = hasDrawn.current ? canvas.toDataURL("image/png") : "";
-      onChangeRef.current?.(dataUrl);
-      changeTimeoutRef.current = null;
-    }, 100);
-  }, []);
-
   const setupCanvas = useCallback((canvas, restoreFrom) => {
     if (!canvas || drawing.current) return;
     const ctx = canvas.getContext("2d");
@@ -146,31 +134,10 @@ export default function SignaturePad({
   }, []);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    setupCanvas(canvas, value || null);
-    const t = setTimeout(() => setupCanvas(canvas, value || null), 80);
-    const onResize = () => {
-      if (drawing.current) return;
-      const snap = hasDrawn.current ? canvas.toDataURL("image/png") : value || null;
-      setupCanvas(canvas, snap);
-    };
-    window.addEventListener("resize", onResize);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [setupCanvas, value]);
-
-  useEffect(() => {
     if (!modalOpen) return undefined;
     lockBodyScroll();
     const canvas = modalCanvasRef.current;
-    const source =
-      value ||
-      (hasDrawn.current && canvasRef.current
-        ? canvasRef.current.toDataURL("image/png")
-        : "");
+    const source = value || "";
     const id = requestAnimationFrame(() => {
       if (!canvas) return;
       setupCanvas(canvas, source || null);
@@ -207,12 +174,10 @@ export default function SignaturePad({
   }, []);
 
   const bindPad = useCallback(
-    (canvas, { emitLive, lockScrollOnStroke }) => {
+    (canvas, { lockScrollOnStroke }) => {
       if (!canvas) return () => {};
 
       const getPoint = (e) => {
-        // Prefer event offsets when the event target is the canvas itself
-        // (layout coords — unaffected by page scroll).
         if (
           e.target === canvas &&
           Number.isFinite(e.offsetX) &&
@@ -222,7 +187,6 @@ export default function SignaturePad({
           return { x: e.offsetX, y: e.offsetY };
         }
 
-        // Use rect frozen at pointerdown so scroll mid-stroke can't shift Y
         const rect = strokeRect.current || canvas.getBoundingClientRect();
         const scaleX = rect.width / Math.max(1, canvas.clientWidth);
         const scaleY = rect.height / Math.max(1, canvas.clientHeight);
@@ -267,7 +231,6 @@ export default function SignaturePad({
         }
         detachWindowListeners();
         if (lockScrollOnStroke) unlockBodyScroll();
-        if (emitLive) emitChange(canvas);
       };
 
       const onPointerMove = (e) => {
@@ -319,7 +282,6 @@ export default function SignaturePad({
 
         drawing.current = true;
         activePointerId.current = e.pointerId;
-        // Freeze geometry for the whole stroke
         strokeRect.current = canvas.getBoundingClientRect();
 
         try {
@@ -356,20 +318,13 @@ export default function SignaturePad({
         detachWindowListeners();
       };
     },
-    [emitChange, lockBodyScroll, unlockBodyScroll]
-  );
-
-  useEffect(
-    () => bindPad(canvasRef.current, { emitLive: true, lockScrollOnStroke: true }),
-    [bindPad]
+    [lockBodyScroll, unlockBodyScroll]
   );
 
   useEffect(() => {
     if (!modalOpen) return undefined;
-    // Modal: don't push to form until "Zapisz podpis"
     return bindPad(modalCanvasRef.current, {
-      emitLive: false,
-      lockScrollOnStroke: false, // body already locked by modal
+      lockScrollOnStroke: false,
     });
   }, [bindPad, modalOpen, zoom]);
 
@@ -389,7 +344,6 @@ export default function SignaturePad({
   const clearAll = () => {
     hasDrawn.current = false;
     setHasContent(false);
-    wipe(canvasRef.current);
     wipe(modalCanvasRef.current);
     if (changeTimeoutRef.current) {
       clearTimeout(changeTimeoutRef.current);
@@ -400,9 +354,7 @@ export default function SignaturePad({
 
   const clearModalOnly = () => {
     wipe(modalCanvasRef.current);
-    // Keep parent signature until user confirms empty or cancels
-    hasDrawn.current = !!(value && value !== "data:image/png;base64,");
-    setHasContent(hasDrawn.current);
+    hasDrawn.current = false;
   };
 
   const openModal = () => {
@@ -416,7 +368,6 @@ export default function SignaturePad({
       setModalOpen(false);
       return;
     }
-    // Detect non-empty canvas
     const ctx = modal.getContext("2d");
     const pixels = ctx.getImageData(0, 0, modal.width, modal.height).data;
     let ink = false;
@@ -430,11 +381,12 @@ export default function SignaturePad({
       const dataUrl = modal.toDataURL("image/png");
       hasDrawn.current = true;
       setHasContent(true);
-      if (canvasRef.current) {
-        setupCanvas(canvasRef.current, dataUrl);
-        paintValueOnto(canvasRef.current, dataUrl);
-      }
       onChangeRef.current?.(dataUrl);
+    } else {
+      // Empty canvas + save clears any previous signature
+      hasDrawn.current = false;
+      setHasContent(false);
+      onChangeRef.current?.("");
     }
     setModalOpen(false);
   };
@@ -538,56 +490,72 @@ export default function SignaturePad({
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center mb-2 gap-2">
+      <div className="flex justify-between items-center mb-3 gap-2">
         <label className="block text-sm font-medium text-gray-700">{label}</label>
         {hasContent && (
-          <span className="text-xs text-green-600 font-medium shrink-0">✓ Podpisano</span>
+          <span className="text-xs text-green-700 font-semibold shrink-0 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">
+            ✓ Podpisano
+          </span>
         )}
       </div>
 
-      <div
-        className={`border-2 rounded-xl bg-white overflow-hidden touch-none transition-colors ${
-          hasContent
-            ? "border-green-400 shadow-sm"
-            : "border-dashed border-gray-300 hover:border-gray-400"
-        }`}
-      >
-        <canvas
-          ref={canvasRef}
-          className="w-full h-40 cursor-crosshair touch-none select-none"
-          style={{
-            touchAction: "none",
-            WebkitTouchCallout: "none",
-            WebkitUserSelect: "none",
-            userSelect: "none",
-          }}
-          onContextMenu={(e) => e.preventDefault()}
-        />
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={clearAll}
-            className="text-sm text-teal-700 hover:text-teal-900 font-medium transition-colors"
-          >
-            🗑️ Wyczyść podpis
-          </button>
+      {!hasContent ? (
+        <button
+          type="button"
+          onClick={openModal}
+          className="group w-full min-h-[10.5rem] rounded-2xl border-2 border-teal-600 bg-gradient-to-b from-teal-600 to-teal-800 text-white shadow-lg shadow-teal-700/25 hover:from-teal-500 hover:to-teal-700 hover:shadow-xl active:scale-[0.99] transition-all touch-manipulation px-6 py-8 text-center"
+          aria-label={`${label} — kliknij, aby otworzyć okno podpisu`}
+        >
+          <div className="flex flex-col items-center justify-center gap-3">
+            <span
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-white/15 ring-2 ring-white/40 text-3xl"
+              aria-hidden
+            >
+              ✍️
+            </span>
+            <span className="text-xl sm:text-2xl font-bold tracking-tight leading-snug">
+              Kliknij, aby podpisać dokument
+            </span>
+            <span className="text-sm sm:text-base font-medium text-teal-50/95 max-w-md leading-snug">
+              Otworzy się pełny ekran — podpiszesz palcem lub rysikiem, potem zatwierdzisz
+            </span>
+          </div>
+        </button>
+      ) : (
+        <div className="rounded-2xl border-2 border-green-400 bg-white overflow-hidden shadow-sm">
           <button
             type="button"
             onClick={openModal}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-teal-700 hover:bg-teal-800 px-3 py-2 rounded-lg transition-colors touch-manipulation"
+            className="w-full text-left hover:bg-green-50/40 transition-colors touch-manipulation"
+            aria-label={`${label} — otwórz, aby edytować podpis`}
           >
-            ⛶ Podpisz na pełnym ekranie
+            {value ? (
+              <img
+                src={value}
+                alt="Podgląd podpisu"
+                className="w-full h-36 object-contain pointer-events-none select-none bg-white"
+                draggable={false}
+              />
+            ) : null}
           </button>
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-green-100 bg-green-50/60">
+            <button
+              type="button"
+              onClick={clearAll}
+              className="text-sm text-teal-800 hover:text-teal-950 font-medium transition-colors"
+            >
+              Wyczyść podpis
+            </button>
+            <button
+              type="button"
+              onClick={openModal}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-teal-700 hover:bg-teal-800 px-4 py-2.5 rounded-xl transition-colors touch-manipulation"
+            >
+              Edytuj podpis
+            </button>
+          </div>
         </div>
-        {!hasContent && (
-          <p className="text-xs text-gray-500">
-            Na tablecie użyj pełnego ekranu — dokładniejszy podpis
-          </p>
-        )}
-      </div>
+      )}
 
       {modal}
     </div>

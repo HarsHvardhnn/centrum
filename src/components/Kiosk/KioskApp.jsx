@@ -6,6 +6,7 @@ import {
   clearKioskToken,
   completeKioskRegistration,
   releaseKioskSession,
+  releaseKioskSessionOnUnload,
   saveKioskForm,
 } from "../../helpers/kioskHelper";
 import { normalizePesel } from "../../utils/peselUtils";
@@ -183,6 +184,37 @@ export default function KioskApp() {
     };
   }, [resetIdleTimer]);
 
+  // After hard refresh: leftover token means the previous session was interrupted
+  useEffect(() => {
+    if (step !== STEPS.PIN) return undefined;
+    let cancelled = false;
+    (async () => {
+      const released = await releaseKioskSession("interrupted");
+      if (!cancelled && released) {
+        clearKioskToken();
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [step]);
+
+  // Refresh / close tab: expire session so reception status leaves "Formularz w trakcie"
+  useEffect(() => {
+    if (step === STEPS.PIN || step === STEPS.DONE) return undefined;
+
+    const onUnload = () => {
+      releaseKioskSessionOnUnload("interrupted");
+    };
+
+    window.addEventListener("pagehide", onUnload);
+    window.addEventListener("beforeunload", onUnload);
+    return () => {
+      window.removeEventListener("pagehide", onUnload);
+      window.removeEventListener("beforeunload", onUnload);
+    };
+  }, [step]);
+
   const handleActivate = async () => {
     if (pin.replace(/\D/g, "").length !== 6) {
       toast.error("Wprowadź 6-cyfrowy kod PIN.");
@@ -308,16 +340,16 @@ export default function KioskApp() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex flex-col">
       <header className="bg-white border-b border-gray-200 px-6 py-5 shadow-sm">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Centrum Medyczne 7</h1>
-            <p className="text-sm text-gray-500">Rejestracja pacjenta</p>
-          </div>
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
           <img
             src="/images/cm7-logo.png"
             alt="Centrum Medyczne 7"
-            className="h-12 w-auto object-contain"
+            className="h-12 w-auto object-contain shrink-0"
           />
+          <div className="text-right">
+            <h1 className="text-xl font-bold text-gray-900">CM7</h1>
+            <p className="text-sm text-gray-500">Rejestracja pacjenta</p>
+          </div>
         </div>
         {stepIndicator > 0 && step !== STEPS.DONE && (
           <div className="max-w-3xl mx-auto mt-4">
@@ -352,6 +384,8 @@ export default function KioskApp() {
                 maxLength={6}
                 size="lg"
                 disabled={loading}
+                enableHardwareKeyboard
+                autoFocus
                 className="mb-6"
               />
               <button
@@ -392,6 +426,8 @@ export default function KioskApp() {
                 size="pesel"
                 showActiveCursor
                 disabled={loading}
+                enableHardwareKeyboard
+                autoFocus
                 className="mb-6"
               />
               
@@ -477,7 +513,11 @@ export default function KioskApp() {
                 ← Wróć do weryfikacji
               </button>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                {mode === "sign_only" ? "Podpis dokumentów" : getFormTitle(patientType)}
+                {mode === "sign_only"
+                  ? "Podpis dokumentów"
+                  : mode === "data_correction"
+                    ? "Aktualizacja danych pacjenta"
+                    : getFormTitle(patientType)}
               </h2>
               {renderForm()}
             </div>

@@ -133,3 +133,32 @@ export async function releaseKioskSession(reason = "idle") {
     return null;
   }
 }
+
+/**
+ * Best-effort release during tab close / refresh.
+ * Uses fetch keepalive so the request can finish after the document unloads.
+ */
+export function releaseKioskSessionOnUnload(reason = "interrupted") {
+  const token = sessionStorage.getItem(KIOSK_TOKEN_KEY);
+  if (!token) return;
+
+  const base =
+    import.meta.env.VITE_REACT_APP_API_BASE_URL ||
+    "https://backend.centrummedyczne7.pl";
+  const url = `${String(base).replace(/\/$/, "")}/api/kiosk/session/release`;
+
+  try {
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Kiosk-Token": token,
+      },
+      body: JSON.stringify({ reason }),
+      keepalive: true,
+      credentials: "include",
+    }).catch(() => {});
+  } catch {
+    /* ignore unload failures */
+  }
+}

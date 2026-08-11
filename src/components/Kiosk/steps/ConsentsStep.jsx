@@ -3,7 +3,10 @@ import PhoneCountrySelect from "../PhoneCountrySelect";
 import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from "../../../utils/phoneUtils";
 import { formatPolishPostalCode, validatePolishPostalCode } from "../../../utils/postalCodeUtils";
 import { formatPolishDate } from "../../../utils/dateUtils";
-import { generateDocumentMetadata } from "../../../utils/documentNumberUtils";
+import {
+  formatDocumentNumberForDisplay,
+  generateDocumentMetadata,
+} from "../../../utils/documentNumberUtils";
 import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils";
 import PatientDataEditModal from "../PatientDataEditModal";
 
@@ -19,16 +22,15 @@ export default function ConsentsStep({
   const [showEditModal, setShowEditModal] = useState(false);
   const [documentNumbers, setDocumentNumbers] = useState({});
 
-  // Generate document numbers when component mounts
+  // Leave Nr blank on the tablet — final number (with Patient ID) is assigned
+  // when the PDF is generated at signing, so we never show a mismatched Nr.
   useEffect(() => {
-    console.log('Generating document numbers...');
-    const numbers = {
-      gdpr: generateDocumentMetadata('gdpr'),
-      examination: generateDocumentMetadata('examination'),
-      authorization: generateDocumentMetadata('authorization')
-    };
-    console.log('Generated document numbers:', numbers);
-    setDocumentNumbers(numbers);
+    const opts = { patientDisplayId: "" };
+    setDocumentNumbers({
+      gdpr: generateDocumentMetadata("gdpr", opts),
+      examination: generateDocumentMetadata("examination", opts),
+      authorization: generateDocumentMetadata("authorization", opts),
+    });
   }, []);
 
   const update = (field, value) => {
@@ -198,22 +200,8 @@ export default function ConsentsStep({
         <div className="text-center mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-2">ZGODA NA PRZETWARZANIE DANYCH OSOBOWYCH</h2>
           <div className="text-right text-sm text-gray-600">
-            <p>Nr: {(() => {
-              try {
-                return documentNumbers.gdpr?.number || generateDocumentMetadata('gdpr').number;
-              } catch (e) {
-                console.error('Error generating GDPR document number:', e);
-                return `RODO/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900000) + 100000)}`;
-              }
-            })()}</p>
-            <p>Data: {(() => {
-              try {
-                return documentNumbers.gdpr?.date || generateDocumentMetadata('gdpr').date;
-              } catch (e) {
-                const now = new Date();
-                return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
-              }
-            })()}</p>
+            <p>Nr: {formatDocumentNumberForDisplay(documentNumbers.gdpr?.number)}</p>
+            <p>Data: {documentNumbers.gdpr?.date || generateDocumentMetadata("gdpr").date}</p>
           </div>
         </div>
 
@@ -287,22 +275,8 @@ export default function ConsentsStep({
             OŚWIADCZENIE PACJENTA o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego
           </h2>
           <div className="text-right text-sm text-gray-600">
-            <p>Nr: {(() => {
-              try {
-                return documentNumbers.examination?.number || generateDocumentMetadata('examination').number;
-              } catch (e) {
-                console.error('Error generating examination document number:', e);
-                return `BAD/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900000) + 100000)}`;
-              }
-            })()}</p>
-            <p>Data: {(() => {
-              try {
-                return documentNumbers.examination?.date || generateDocumentMetadata('examination').date;
-              } catch (e) {
-                const now = new Date();
-                return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
-              }
-            })()}</p>
+            <p>Nr: {formatDocumentNumberForDisplay(documentNumbers.examination?.number)}</p>
+            <p>Data: {documentNumbers.examination?.date || generateDocumentMetadata("examination").date}</p>
             <p className="text-green-800 font-medium mt-1">WYMAGANE</p>
           </div>
         </div>
@@ -351,22 +325,8 @@ export default function ConsentsStep({
             UPOWAŻNIENIE do uzyskiwania informacji o stanie zdrowia przez osobę bliską
           </h2>
           <div className="text-right text-sm text-gray-600 mb-2">
-            <p>Nr: {(() => {
-              try {
-                return documentNumbers.authorization?.number || generateDocumentMetadata('authorization').number;
-              } catch (e) {
-                console.error('Error generating authorization document number:', e);
-                return `UPO/${new Date().getFullYear()}/${String(Math.floor(Math.random() * 900000) + 100000)}`;
-              }
-            })()}</p>
-            <p>Data: {(() => {
-              try {
-                return documentNumbers.authorization?.date || generateDocumentMetadata('authorization').date;
-              } catch (e) {
-                const now = new Date();
-                return `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
-              }
-            })()}</p>
+            <p>Nr: {formatDocumentNumberForDisplay(documentNumbers.authorization?.number)}</p>
+            <p>Data: {documentNumbers.authorization?.date || generateDocumentMetadata("authorization").date}</p>
           </div>
           <div className="flex items-center justify-center gap-2 text-sm">
             <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-medium">OPCJONALNE</span>
