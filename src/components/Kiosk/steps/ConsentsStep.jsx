@@ -18,9 +18,11 @@ export default function ConsentsStep({
   validation = {},
   onValidationChange,
   onGoToStep,
+  documentSection = "all",
 }) {
   const [showEditModal, setShowEditModal] = useState(false);
   const [documentNumbers, setDocumentNumbers] = useState({});
+  const show = (section) => documentSection === "all" || documentSection === section;
 
   // Leave Nr blank on the tablet — final number (with Patient ID) is assigned
   // when the PDF is generated at signing, so we never show a mismatched Nr.
@@ -72,72 +74,74 @@ export default function ConsentsStep({
     return { valid: true, message: "PESEL jest prawidłowy", type: "success" };
   };
 
-  // Validation logic
+  // Validation logic — only for the active document section
   useEffect(() => {
     const errors = [];
-    
-    if (!formData.consentHealthcare) {
+    const check = (section) => documentSection === "all" || documentSection === section;
+
+    if (check("rodo") && !formData.consentHealthcare) {
       errors.push("Zgoda na przetwarzanie danych osobowych jest wymagana.");
     }
-    
-    if (!formData.consentExamination) {
+
+    if (check("examination") && !formData.consentExamination) {
       errors.push("Zgoda na przeprowadzenie badania lub udzielenie świadczenia zdrowotnego jest wymagana.");
     }
 
-    // Validate authorization choice
-    if (!formData.grantsAuthorization && !formData.deniesAuthorization) {
-      errors.push("Musisz wybrać czy upoważniasz osoby do dostępu do informacji medycznych czy nie.");
-    }
+    if (check("authorization")) {
+      if (!formData.grantsAuthorization && !formData.deniesAuthorization) {
+        errors.push("Musisz wybrać czy upoważniasz osoby do dostępu do informacji medycznych czy nie.");
+      }
 
-    // Validate authorized persons (only if user chose to grant authorization)
-    if (formData.grantsAuthorization && formData.authorizedPersons) {
-      formData.authorizedPersons.forEach((person, index) => {
-        if (!person.firstName) {
-          errors.push(`Imię osoby ${index + 1} jest wymagane.`);
-        }
-        if (!person.lastName) {
-          errors.push(`Nazwisko osoby ${index + 1} jest wymagane.`);
-        }
-        if (person.noPesel) {
-          if (!String(person.documentNumber || "").trim()) {
-            errors.push(
-              `Numer dokumentu tożsamości osoby ${index + 1} jest wymagany (brak PESEL).`
-            );
+      if (formData.grantsAuthorization && formData.authorizedPersons) {
+        formData.authorizedPersons.forEach((person, index) => {
+          if (!person.firstName) {
+            errors.push(`Imię osoby ${index + 1} jest wymagane.`);
           }
-        } else if (!person.pesel) {
-          errors.push(`PESEL osoby ${index + 1} jest wymagany.`);
-        } else if (String(person.pesel).replace(/\D/g, "").length !== 11) {
-          errors.push(`PESEL osoby ${index + 1} musi mieć 11 cyfr.`);
-        }
-        if (!person.relationshipToPatient) {
-          errors.push(`Stosunek do pacjenta osoby ${index + 1} jest wymagany.`);
-        }
-        if (!person.phone) {
-          errors.push(`Numer telefonu osoby ${index + 1} jest wymagany.`);
-        }
-        if (!person.address) {
-          errors.push(`Adres osoby ${index + 1} jest wymagany.`);
-        }
-        if (!person.zipCode) {
-          errors.push(`Kod pocztowy osoby ${index + 1} jest wymagany.`);
-        }
-        if (!person.city) {
-          errors.push(`Miasto osoby ${index + 1} jest wymagane.`);
-        }
-      });
+          if (!person.lastName) {
+            errors.push(`Nazwisko osoby ${index + 1} jest wymagane.`);
+          }
+          if (person.noPesel) {
+            if (!String(person.documentNumber || "").trim()) {
+              errors.push(
+                `Numer dokumentu tożsamości osoby ${index + 1} jest wymagany (brak PESEL).`
+              );
+            }
+          } else if (!person.pesel) {
+            errors.push(`PESEL osoby ${index + 1} jest wymagany.`);
+          } else if (String(person.pesel).replace(/\D/g, "").length !== 11) {
+            errors.push(`PESEL osoby ${index + 1} musi mieć 11 cyfr.`);
+          }
+          if (!person.relationshipToPatient) {
+            errors.push(`Stosunek do pacjenta osoby ${index + 1} jest wymagany.`);
+          }
+          if (!person.phone) {
+            errors.push(`Numer telefonu osoby ${index + 1} jest wymagany.`);
+          }
+          if (!person.address) {
+            errors.push(`Adres osoby ${index + 1} jest wymagany.`);
+          }
+          if (!person.zipCode) {
+            errors.push(`Kod pocztowy osoby ${index + 1} jest wymagany.`);
+          }
+          if (!person.city) {
+            errors.push(`Miasto osoby ${index + 1} jest wymagane.`);
+          }
+        });
 
-      if (formData.authorizedPersons.length === 0) {
-        errors.push("Musisz dodać przynajmniej jedną osobę upoważnioną lub wybrać 'NIE UPOWAŻNIAM'.");
+        if (formData.authorizedPersons.length === 0) {
+          errors.push("Musisz dodać przynajmniej jedną osobę upoważnioną lub wybrać 'NIE UPOWAŻNIAM'.");
+        }
       }
     }
 
     const isValid = errors.length === 0;
     onValidationChange?.({ isValid, errors });
-  }, [formData, onValidationChange]);
+  }, [formData, documentSection, onValidationChange]);
 
   return (
     <div className="space-y-6">
-      {/* Patient Data Summary Card - For Review/Correction */}
+      {/* Patient data review — only on RODO page (first consent) */}
+      {show("rodo") && (
       <div className="bg-gray-50 border border-gray-300 rounded-xl p-4">
         <div className="flex justify-between items-start mb-3">
           <h4 className="font-semibold text-gray-900">Sprawdź swoje dane</h4>
@@ -194,8 +198,9 @@ export default function ConsentsStep({
           )}
         </div>
       </div>
+      )}
 
-      {/* Full Consent Document */}
+      {show("rodo") && (
       <div className="bg-white border-2 border-teal-300 rounded-xl p-6">
         <div className="text-center mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-2">ZGODA NA PRZETWARZANIE DANYCH OSOBOWYCH</h2>
@@ -267,8 +272,10 @@ export default function ConsentsStep({
         </div>
 
       </div>
+      </div>
+      )}
 
-      {/* Separate Examination Consent Document */}
+      {show("examination") && (
       <div className="bg-white border-2 border-green-400 rounded-xl p-6">
         <div className="text-center mb-6">
           <h2 className="text-lg font-bold text-green-900 mb-2">
@@ -317,8 +324,9 @@ export default function ConsentsStep({
           <p>Informuję, że podczas wizyty lekarz może poprosić o wyrażenie dodatkowych zgód, w zależności od rodzaju udzielanego świadczenia zdrowotnego.</p>
         </div>
       </div>
+      )}
 
-      {/* Optional Third Document: Authorization for Close Person Access */}
+      {show("authorization") && (
       <div className="bg-white border-2 border-purple-300 rounded-xl p-6">
         <div className="text-center mb-6">
           <h2 className="text-lg font-bold text-purple-900 mb-2">
@@ -706,7 +714,7 @@ export default function ConsentsStep({
           </div>
         )}
       </div>
-      </div>
+      )}
 
       {/* Patient Data Edit Modal */}
       <PatientDataEditModal

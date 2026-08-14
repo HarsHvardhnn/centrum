@@ -6,11 +6,15 @@ import { FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { resolveDocumentOpenUrl } from "../../utils/documentUrl";
 import {
-  GUARDIAN_RELATION_OPTIONS,
+  REPRESENTATION_TYPE_OPTIONS,
+  LEGAL_BASIS_OPTIONS,
+  FACTUAL_GUARDIAN_WARNING,
+  deriveRepresentationType,
+  deriveLegalBasis,
+  needsCourtData,
+  isFactualGuardian,
   isGuardianStatementDocument,
 } from "../../utils/guardian";
-
-const NEEDS_COURT = new Set(["opiekun_prawny", "kurator"]);
 
 const GuardianForm = () => {
   const { formData, updateFormData } = useFormContext();
@@ -19,9 +23,10 @@ const GuardianForm = () => {
   const phoneCode = formData.guardianPhoneCode || "+48";
   const currentCountry =
     PHONE_COUNTRY_CODES.find((c) => c.code === phoneCode) || PHONE_COUNTRY_CODES[0];
-  const relation = String(formData.guardianRelation || "");
-  const showCourt = NEEDS_COURT.has(relation);
-  const showFactualNote = relation === "opiekun_faktyczny";
+  const showCourt = needsCourtData(formData);
+  const showFactualNote = isFactualGuardian(formData);
+  const representationType = deriveRepresentationType(formData);
+  const legalBasis = deriveLegalBasis(formData);
 
   const guardianDocs = (formData.documents || []).filter(isGuardianStatementDocument);
 
@@ -153,21 +158,76 @@ const GuardianForm = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Typ przedstawicielstwa
+              Rodzaj reprezentacji
             </label>
             <select
-              value={formData.guardianRelation || ""}
-              onChange={(e) => update("guardianRelation", e.target.value)}
+              value={representationType}
+              onChange={(e) => {
+                const nextType = e.target.value;
+                if (nextType === "opiekun_faktyczny") {
+                  updateFormData("representationType", nextType);
+                  updateFormData("guardianRelation", "opiekun_faktyczny");
+                  updateFormData("courtName", "");
+                  updateFormData("courtNumber", "");
+                  updateFormData("courtDate", "");
+                } else {
+                  updateFormData("representationType", nextType);
+                  updateFormData("guardianRelation", "");
+                  updateFormData("guardianRelationDetail", "");
+                }
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white"
             >
               <option value="">Wybierz…</option>
-              {GUARDIAN_RELATION_OPTIONS.map((opt) => (
+              {REPRESENTATION_TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
             </select>
           </div>
+          {representationType === "przedstawiciel_ustawowy" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Podstawa reprezentacji
+              </label>
+              <select
+                value={legalBasis}
+                onChange={(e) => {
+                  const basis = e.target.value;
+                  updateFormData("guardianRelation", basis);
+                  updateFormData("guardianRelationDetail", "");
+                  if (!needsCourtData({ guardianRelation: basis })) {
+                    updateFormData("courtName", "");
+                    updateFormData("courtNumber", "");
+                    updateFormData("courtDate", "");
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white"
+              >
+                <option value="">Wybierz…</option>
+                {LEGAL_BASIS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {showFactualNote && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Stosunek do pacjenta
+              </label>
+              <input
+                type="text"
+                value={formData.guardianRelationDetail || ""}
+                onChange={(e) => update("guardianRelationDetail", e.target.value)}
+                placeholder="np. babcia, ciocia, opiekun"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Numer telefonu</label>
             <div className="flex">
@@ -307,10 +367,7 @@ const GuardianForm = () => {
 
       {showFactualNote && (
         <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 text-sm text-amber-900">
-          <strong>Uwaga — opiekun faktyczny:</strong> zgodnie z art. 32 ust. 5 ustawy o zawodach
-          lekarza i lekarza dentysty, opiekun faktyczny uprawniony jest wyłącznie do wyrażenia zgody
-          na przeprowadzenie badania. Dla innych świadczeń wymagana jest zgoda przedstawiciela
-          ustawowego lub orzeczenie sądu opiekuńczego.
+          {FACTUAL_GUARDIAN_WARNING}
         </div>
       )}
 

@@ -339,7 +339,7 @@ export default function KioskApp() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex flex-col">
-      <header className="bg-white border-b border-gray-200 px-6 py-5 shadow-sm">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-6 py-5 shadow-sm">
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
           <img
             src="/images/cm7-logo.png"
@@ -371,6 +371,16 @@ export default function KioskApp() {
           </div>
         )}
       </header>
+
+      {/* Spacer matches fixed header height (logo bar + optional progress) */}
+      <div
+        className={
+          stepIndicator > 0 && step !== STEPS.DONE
+            ? "h-[9.25rem] shrink-0"
+            : "h-[5.5rem] shrink-0"
+        }
+        aria-hidden
+      />
 
       <main className="flex-1 px-6 py-8">
         <div className="max-w-3xl mx-auto">

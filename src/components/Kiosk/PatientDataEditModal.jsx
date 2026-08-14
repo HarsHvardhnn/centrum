@@ -63,7 +63,18 @@ export default function PatientDataEditModal({
         guardianPhoneCode: formData.guardianPhoneCode || "+48",
         guardianPhone: formData.guardianPhone || "",
         guardianEmail: formData.guardianEmail || "",
-        guardianRelation: formData.guardianRelation || "matka",
+        guardianRelation: formData.guardianRelation || "",
+        representationType:
+          formData.representationType ||
+          (formData.guardianRelation === "opiekun_faktyczny"
+            ? "opiekun_faktyczny"
+            : formData.guardianRelation
+              ? "przedstawiciel_ustawowy"
+              : ""),
+        guardianRelationDetail: formData.guardianRelationDetail || "",
+        courtName: formData.courtName || "",
+        courtNumber: formData.courtNumber || "",
+        courtDate: formData.courtDate || "",
         // Authorized persons data
         authorizedPersons: formData.authorizedPersons || [],
         authorizationChoice: formData.authorizationChoice || "",
@@ -89,6 +100,10 @@ export default function PatientDataEditModal({
 
   const update = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const updateMany = (updates) => {
+    setEditData((prev) => ({ ...prev, ...updates }));
   };
 
   // Validation
@@ -564,21 +579,102 @@ export default function PatientDataEditModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Kim jesteś względem pacjenta *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Rodzaj reprezentacji *
+                  </label>
                   <select
-                    value={editData.guardianRelation || "matka"}
-                    onChange={(e) => update("guardianRelation", e.target.value)}
-                    readOnly={readOnlyFields}
+                    value={
+                      editData.representationType ||
+                      (editData.guardianRelation === "opiekun_faktyczny"
+                        ? "opiekun_faktyczny"
+                        : editData.guardianRelation
+                          ? "przedstawiciel_ustawowy"
+                          : "")
+                    }
+                    onChange={(e) => {
+                      const nextType = e.target.value;
+                      if (nextType === "opiekun_faktyczny") {
+                        updateMany({
+                          representationType: nextType,
+                          guardianRelation: "opiekun_faktyczny",
+                          courtName: "",
+                          courtNumber: "",
+                          courtDate: "",
+                        });
+                      } else {
+                        updateMany({
+                          representationType: nextType,
+                          guardianRelation: "",
+                          guardianRelationDetail: "",
+                        });
+                      }
+                    }}
+                    disabled={readOnlyFields}
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                   >
-                    <option value="matka">Matka</option>
-                    <option value="ojciec">Ojciec</option>
+                    <option value="">Wybierz…</option>
                     <option value="przedstawiciel_ustawowy">Przedstawiciel ustawowy</option>
-                    <option value="opiekun_prawny">Opiekun prawny</option>
-                    <option value="kurator">Kurator</option>
                     <option value="opiekun_faktyczny">Opiekun faktyczny</option>
                   </select>
                 </div>
+
+                {(editData.representationType === "przedstawiciel_ustawowy" ||
+                  (!editData.representationType &&
+                    editData.guardianRelation &&
+                    editData.guardianRelation !== "opiekun_faktyczny")) && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Podstawa reprezentacji *
+                    </label>
+                    <select
+                      value={
+                        ["matka", "ojciec", "opiekun_prawny", "kurator"].includes(
+                          editData.guardianRelation
+                        )
+                          ? editData.guardianRelation
+                          : ""
+                      }
+                      onChange={(e) =>
+                        updateMany({
+                          representationType: "przedstawiciel_ustawowy",
+                          guardianRelation: e.target.value,
+                          guardianRelationDetail: "",
+                        })
+                      }
+                      disabled={readOnlyFields}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    >
+                      <option value="">Wybierz…</option>
+                      <option value="matka">Matka</option>
+                      <option value="ojciec">Ojciec</option>
+                      <option value="opiekun_prawny">Opiekun prawny</option>
+                      <option value="kurator">Kurator</option>
+                    </select>
+                  </div>
+                )}
+
+                {(editData.representationType === "opiekun_faktyczny" ||
+                  editData.guardianRelation === "opiekun_faktyczny") && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Stosunek do pacjenta *
+                    </label>
+                    <input
+                      type="text"
+                      value={editData.guardianRelationDetail || ""}
+                      onChange={(e) => update("guardianRelationDetail", e.target.value)}
+                      readOnly={readOnlyFields}
+                      placeholder="np. babcia, ciocia, opiekun"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    />
+                    <p className="mt-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                      Jako opiekun faktyczny możesz podpisać wyłącznie zgodę na przeprowadzenie
+                      badania. Zgodę na przetwarzanie danych osobowych oraz upoważnienie do
+                      dokumentacji medycznej może wyrazić wyłącznie przedstawiciel ustawowy
+                      (matka, ojciec, opiekun prawny lub kurator).
+                    </p>
+                  </div>
+                )}
 
                 <div className="md:col-span-2">
                   <div className="flex flex-col sm:flex-row sm:items-end gap-4">

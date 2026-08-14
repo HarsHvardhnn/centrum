@@ -1,12 +1,15 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { PATIENT_TYPES } from "./PatientTypeDetector";
+import { isFactualGuardian } from "../../utils/guardian";
 
 const STEP_DEFINITIONS = {
   [PATIENT_TYPES.ADULT]: [
     { id: "personal", title: "Dane osobowe", component: "PersonalDataStep" },
     { id: "address", title: "Adres zamieszkania", component: "AddressStep" },
     { id: "contact", title: "Dane kontaktowe", component: "ContactStep" },
-    { id: "consents", title: "Zgody", component: "ConsentsStep" },
+    { id: "consent_rodo", title: "Zgoda RODO", component: "ConsentsStep", documentSection: "rodo" },
+    { id: "consent_examination", title: "Zgoda na badanie", component: "ConsentsStep", documentSection: "examination" },
+    { id: "consent_authorization", title: "Upoważnienie", component: "ConsentsStep", documentSection: "authorization" },
     { id: "documents", title: "Dokumenty", component: "DocumentUploadStep" },
     { id: "signature", title: "Podpis", component: "SignatureStep" },
   ],
@@ -14,7 +17,9 @@ const STEP_DEFINITIONS = {
     { id: "personal", title: "Dane osobowe", component: "PersonalDataStep" },
     { id: "address", title: "Adres zamieszkania", component: "AddressStep" },
     { id: "contact", title: "Dane kontaktowe", component: "ContactStep" },
-    { id: "consents", title: "Zgody", component: "ConsentsStep" },
+    { id: "consent_rodo", title: "Zgoda RODO", component: "ConsentsStep", documentSection: "rodo" },
+    { id: "consent_examination", title: "Zgoda na badanie", component: "ConsentsStep", documentSection: "examination" },
+    { id: "consent_authorization", title: "Upoważnienie", component: "ConsentsStep", documentSection: "authorization" },
     { id: "documents", title: "Dokumenty", component: "DocumentUploadStep" },
     { id: "signature", title: "Podpis", component: "SignatureStep" },
   ],
@@ -54,18 +59,37 @@ export default function KioskStepWizard({
   loading = false,
   stepComponents = {},
 }) {
-  const steps = STEP_DEFINITIONS[patientType] || STEP_DEFINITIONS[PATIENT_TYPES.ADULT];
+  const baseSteps = STEP_DEFINITIONS[patientType] || STEP_DEFINITIONS[PATIENT_TYPES.ADULT];
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [formData, setFormData] = useState(initialData);
   const [stepValidation, setStepValidation] = useState({});
   // Only show validation messages after the user tries to continue
   const [showErrors, setShowErrors] = useState(false);
 
-  const currentStep = steps[currentStepIndex];
+  // Factual caregiver may only sign examination (+ statement).
+  // Under-16: skip RODO + authorization entirely.
+  // 16–17: keep patient RODO + patient authorization; guardian RODO block is hidden in UI/PDF.
+  const steps = useMemo(() => {
+    if (!isFactualGuardian(formData)) return baseSteps;
+    return baseSteps.filter((s) => {
+      if (patientType === PATIENT_TYPES.MINOR_UNDER_16) {
+        if (s.id === "consent_rodo" || s.id === "consent_authorization") return false;
+      }
+      return true;
+    });
+  }, [baseSteps, formData, patientType]);
+
+  useEffect(() => {
+    if (currentStepIndex >= steps.length) {
+      setCurrentStepIndex(Math.max(0, steps.length - 1));
+    }
+  }, [currentStepIndex, steps.length]);
+
+  const currentStep = steps[currentStepIndex] || steps[0];
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === steps.length - 1;
   const totalSteps = steps.length;
-  const currentValidation = stepValidation[currentStep.id];
+  const currentValidation = stepValidation[currentStep?.id];
 
   const autoSaveTimeoutRef = useRef(null);
   const lastAutoSaveRef = useRef(Date.now());
@@ -113,8 +137,9 @@ export default function KioskStepWizard({
   }, []);
 
   const handleValidationChange = useCallback((validation) => {
+    if (!currentStep?.id) return;
     setStepValidation(prev => ({ ...prev, [currentStep.id]: validation }));
-  }, [currentStep.id]);
+  }, [currentStep?.id]);
 
   const validateCurrentStep = useCallback(() => {
     if (currentValidation) {
@@ -132,6 +157,7 @@ export default function KioskStepWizard({
     if (validation.isValid && !isLastStep) {
       setShowErrors(false);
       setCurrentStepIndex(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else if (validation.isValid && isLastStep) {
       setShowErrors(false);
       onSubmit?.(formData);
@@ -164,6 +190,7 @@ export default function KioskStepWizard({
     if (!isFirstStep) {
       setShowErrors(false);
       setCurrentStepIndex(prev => prev - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [isFirstStep]);
 
@@ -171,16 +198,17 @@ export default function KioskStepWizard({
     if (stepIndex >= 0 && stepIndex < totalSteps) {
       setShowErrors(false);
       setCurrentStepIndex(stepIndex);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [totalSteps]);
 
   // Get the component for current step
-  const StepComponent = stepComponents[currentStep.component];
+  const StepComponent = stepComponents[currentStep?.component];
 
   if (!StepComponent) {
     return (
       <div className="text-center p-8">
-        <p className="text-red-600">Step component '{currentStep.component}' not found</p>
+        <p className="text-red-600">Step component '{currentStep?.component}' not found</p>
       </div>
     );
   }

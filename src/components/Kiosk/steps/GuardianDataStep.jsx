@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useRef } from "react";
 import { formatPhoneNumber, getRequiredPhoneLength } from "../../../utils/phoneUtils";
 import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils";
+import {
+  REPRESENTATION_TYPE_OPTIONS,
+  LEGAL_BASIS_OPTIONS,
+  FACTUAL_GUARDIAN_WARNING,
+  deriveRepresentationType,
+  deriveLegalBasis,
+  needsCourtData,
+  isFactualGuardian,
+} from "../../../utils/guardian";
 import PhoneCountrySelect from "../PhoneCountrySelect";
-
-const RELATION_OPTIONS = [
-  { value: "matka", label: "Matka" },
-  { value: "ojciec", label: "Ojciec" },
-  { value: "przedstawiciel_ustawowy", label: "Przedstawiciel ustawowy" },
-  { value: "opiekun_prawny", label: "Opiekun prawny" },
-  { value: "kurator", label: "Kurator" },
-  { value: "opiekun_faktyczny", label: "Opiekun faktyczny" },
-];
 
 function validateGuardianPesel(
   rawPesel,
@@ -183,7 +183,17 @@ export default function GuardianDataStep({
     }
 
     if (!formData.guardianRelation?.trim()) {
-      errors.push("Wybierz, kim jesteś względem pacjenta (podstawa reprezentacji).");
+      errors.push("Wybierz rodzaj i podstawę reprezentacji.");
+    }
+
+    if (isFactualGuardian(formData) && !formData.guardianRelationDetail?.trim()) {
+      errors.push("Podaj stosunek do pacjenta (np. babcia, ciocia, opiekun).");
+    }
+
+    if (needsCourtData(formData)) {
+      if (!formData.courtName?.trim()) errors.push("Nazwa sądu jest wymagana.");
+      if (!formData.courtNumber?.trim()) errors.push("Numer orzeczenia jest wymagany.");
+      if (!formData.courtDate) errors.push("Data wydania orzeczenia jest wymagana.");
     }
 
     if (email.trim()) {
@@ -246,11 +256,10 @@ export default function GuardianDataStep({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {formData.guardianNoPesel ? "PESEL" : "PESEL *"}
-            </label>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {formData.guardianNoPesel ? "PESEL" : "PESEL *"}
+          </label>
             <input
               type="text"
               inputMode="numeric"
@@ -332,24 +341,153 @@ export default function GuardianDataStep({
               </p>
             )}
           </div>
+        </div>
+
+        {/* Section 2 — Representation type (cascading A / B / C / D) */}
+        <div className="border border-yellow-300 bg-white rounded-xl p-4 space-y-4">
+          <h4 className="font-semibold text-yellow-900">Rodzaj reprezentacji</h4>
+
+          {/* Field A */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Kim jesteś względem pacjenta *
+              Rodzaj reprezentacji *
             </label>
             <select
-              value={formData.guardianRelation || "matka"}
-              onChange={(e) => update("guardianRelation", e.target.value)}
+              value={deriveRepresentationType(formData)}
+              onChange={(e) => {
+                const nextType = e.target.value;
+                if (nextType === "opiekun_faktyczny") {
+                  updateFormData({
+                    representationType: nextType,
+                    guardianRelation: "opiekun_faktyczny",
+                    courtName: "",
+                    courtNumber: "",
+                    courtDate: "",
+                  });
+                } else {
+                  updateFormData({
+                    representationType: nextType,
+                    guardianRelation: "",
+                    guardianRelationDetail: "",
+                  });
+                }
+              }}
               disabled={readOnlyFields}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
             >
-              {RELATION_OPTIONS.map((opt) => (
+              <option value="">Wybierz…</option>
+              {REPRESENTATION_TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
             </select>
           </div>
+
+          {/* Field B — only for legal representative */}
+          {deriveRepresentationType(formData) === "przedstawiciel_ustawowy" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Podstawa reprezentacji *
+              </label>
+              <select
+                value={deriveLegalBasis(formData)}
+                onChange={(e) => {
+                  const basis = e.target.value;
+                  const clearCourt = !needsCourtData({ guardianRelation: basis });
+                  updateFormData({
+                    representationType: "przedstawiciel_ustawowy",
+                    guardianRelation: basis,
+                    guardianRelationDetail: "",
+                    ...(clearCourt
+                      ? { courtName: "", courtNumber: "", courtDate: "" }
+                      : {}),
+                  });
+                }}
+                disabled={readOnlyFields}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              >
+                <option value="">Wybierz…</option>
+                {LEGAL_BASIS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Field C — only for factual caregiver */}
+          {isFactualGuardian(formData) && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Stosunek do pacjenta *
+              </label>
+              <input
+                type="text"
+                value={formData.guardianRelationDetail || ""}
+                onChange={(e) => update("guardianRelationDetail", e.target.value)}
+                readOnly={readOnlyFields}
+                placeholder="np. babcia, ciocia, opiekun"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              />
+            </div>
+          )}
+
+          {/* Field D — court data for opiekun prawny / kurator */}
+          {needsCourtData(formData) && (
+            <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 space-y-3">
+              <p className="text-sm font-semibold text-rose-900">
+                Dane orzeczenia / postanowienia sądu *
+              </p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nazwa sądu *
+                </label>
+                <input
+                  type="text"
+                  value={formData.courtName || ""}
+                  onChange={(e) => update("courtName", e.target.value)}
+                  readOnly={readOnlyFields}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Numer orzeczenia *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.courtNumber || ""}
+                    onChange={(e) => update("courtNumber", e.target.value)}
+                    readOnly={readOnlyFields}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Data wydania *
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.courtDate ? String(formData.courtDate).slice(0, 10) : ""}
+                    onChange={(e) => update("courtDate", e.target.value)}
+                    readOnly={readOnlyFields}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Section 3 — Warning banner for factual caregiver */}
+        {isFactualGuardian(formData) && (
+          <div className="bg-yellow-100 border border-yellow-300 rounded-xl p-4 text-sm text-yellow-950 leading-relaxed">
+            {FACTUAL_GUARDIAN_WARNING}
+          </div>
+        )}
 
         {showPeselFallback && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">

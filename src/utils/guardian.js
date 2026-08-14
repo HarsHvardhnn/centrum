@@ -7,6 +7,25 @@ export const GUARDIAN_RELATION_OPTIONS = [
   { value: "opiekun_faktyczny", label: "Opiekun faktyczny" },
 ];
 
+/** Field A — Rodzaj reprezentacji */
+export const REPRESENTATION_TYPE_OPTIONS = [
+  { value: "przedstawiciel_ustawowy", label: "Przedstawiciel ustawowy" },
+  { value: "opiekun_faktyczny", label: "Opiekun faktyczny" },
+];
+
+/** Field B — Podstawa reprezentacji (only when Field A = przedstawiciel ustawowy) */
+export const LEGAL_BASIS_OPTIONS = [
+  { value: "matka", label: "Matka" },
+  { value: "ojciec", label: "Ojciec" },
+  { value: "opiekun_prawny", label: "Opiekun prawny" },
+  { value: "kurator", label: "Kurator" },
+];
+
+export const NEEDS_COURT_RELATIONS = new Set(["opiekun_prawny", "kurator"]);
+
+export const FACTUAL_GUARDIAN_WARNING =
+  "Jako opiekun faktyczny możesz podpisać wyłącznie zgodę na przeprowadzenie badania. Zgodę na przetwarzanie danych osobowych oraz upoważnienie do dokumentacji medycznej może wyrazić wyłącznie przedstawiciel ustawowy (matka, ojciec, opiekun prawny lub kurator).";
+
 /** Inline identity for UI/PDF: "PESEL …" or "nr dokumentu …" */
 export function formatGuardianIdentity(formData = {}) {
   if (formData.guardianNoPesel) {
@@ -17,8 +36,38 @@ export function formatGuardianIdentity(formData = {}) {
   return pesel ? `PESEL ${pesel}` : "PESEL —";
 }
 
+export function deriveRepresentationType(formData = {}) {
+  const explicit = String(formData.representationType || "").toLowerCase().trim();
+  if (explicit === "przedstawiciel_ustawowy" || explicit === "opiekun_faktyczny") {
+    return explicit;
+  }
+  const r = String(formData.guardianRelation || "").toLowerCase().trim();
+  if (r === "opiekun_faktyczny" || r === "opiekun faktyczny") return "opiekun_faktyczny";
+  if (r) return "przedstawiciel_ustawowy";
+  return "";
+}
+
+export function isFactualGuardian(formData = {}) {
+  return deriveRepresentationType(formData) === "opiekun_faktyczny";
+}
+
+export function needsCourtData(formData = {}) {
+  const r = String(formData.guardianRelation || "").toLowerCase().trim();
+  return NEEDS_COURT_RELATIONS.has(r);
+}
+
+/** Legal basis dropdown value when Field A is przedstawiciel ustawowy */
+export function deriveLegalBasis(formData = {}) {
+  const r = String(formData.guardianRelation || "").toLowerCase().trim();
+  if (LEGAL_BASIS_OPTIONS.some((o) => o.value === r)) return r;
+  return "";
+}
+
 export function mapPatientGuardianFields(patient = {}) {
   const g = patient.guardian || {};
+  const relation = g.relation || "";
+  const representationType =
+    relation === "opiekun_faktyczny" ? "opiekun_faktyczny" : relation ? "przedstawiciel_ustawowy" : "";
   return {
     patientType: patient.patientType || "",
     guardianFirstName: g.firstName || "",
@@ -26,7 +75,9 @@ export function mapPatientGuardianFields(patient = {}) {
     guardianPesel: g.pesel || "",
     guardianNoPesel: !!g.noPesel,
     guardianDocumentNumber: g.documentNumber || "",
-    guardianRelation: g.relation || "",
+    guardianRelation: relation,
+    representationType,
+    guardianRelationDetail: g.relationDetail || "",
     guardianPhone: g.phone || "",
     guardianPhoneCode: g.phoneCode || "+48",
     guardianEmail: g.email || "",
@@ -50,6 +101,7 @@ export function buildGuardianPayload(formData = {}) {
     ? String(formData.guardianDocumentNumber || "").trim()
     : "";
   const relation = String(formData.guardianRelation || "").trim();
+  const relationDetail = String(formData.guardianRelationDetail || "").trim();
   const phone = String(formData.guardianPhone || "").replace(/\D/g, "").slice(0, 15);
   const phoneCode = formData.guardianPhoneCode || "+48";
   const email = String(formData.guardianEmail || "").trim();
@@ -67,6 +119,7 @@ export function buildGuardianPayload(formData = {}) {
     noPesel ||
     documentNumber ||
     relation ||
+    relationDetail ||
     phone ||
     email ||
     street ||
@@ -85,6 +138,7 @@ export function buildGuardianPayload(formData = {}) {
     noPesel,
     documentNumber,
     relation: relation || undefined,
+    relationDetail: relationDetail || undefined,
     phone,
     phoneCode,
     email,

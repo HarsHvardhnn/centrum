@@ -9,7 +9,7 @@ import {
   generateDocumentMetadata,
 } from "../../../utils/documentNumberUtils";
 import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils";
-import { formatGuardianIdentity } from "../../../utils/guardian";
+import { formatGuardianIdentity, isFactualGuardian } from "../../../utils/guardian";
 import PatientDataEditModal from "../PatientDataEditModal";
 
 const HEALTHCARE_CONSENT_LABEL =
@@ -394,15 +394,16 @@ export default function MinorConsentsStep({
     const check = (section) => documentSection === "all" || documentSection === section;
 
     if (check("rodo")) {
+      const factual = isFactualGuardian(formData);
       if (patientType === PATIENT_TYPES.MINOR_UNDER_16) {
-        if (!formData.consentHealthcare) {
+        if (!factual && !formData.consentHealthcare) {
           errors.push("Zgoda opiekuna na przetwarzanie danych osobowych jest wymagana.");
         }
       } else if (patientType === PATIENT_TYPES.MINOR_16_17) {
         if (!formData.consentHealthcare) {
           errors.push("Zgoda pacjenta na przetwarzanie danych osobowych jest wymagana.");
         }
-        if (!formData.consentHealthcareGuardian) {
+        if (!factual && !formData.consentHealthcareGuardian) {
           errors.push("Zgoda opiekuna na przetwarzanie danych osobowych jest wymagana.");
         }
       }
@@ -658,6 +659,7 @@ export default function MinorConsentsStep({
                     "blue"
                   )}
                 </div>
+                {!isFactualGuardian(formData) && (
                 <div className="bg-yellow-50 rounded-lg p-5 space-y-3 border border-yellow-200">
                   <h4 className="font-semibold text-yellow-900">
                     Blok B — Zgoda: {guardianRole.label}
@@ -672,6 +674,7 @@ export default function MinorConsentsStep({
                     "yellow"
                   )}
                 </div>
+                )}
               </div>
             )}
           </div>
