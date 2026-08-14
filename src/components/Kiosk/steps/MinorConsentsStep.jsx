@@ -554,9 +554,9 @@ export default function MinorConsentsStep({
 
   return (
     <div className="space-y-6">
-      {show("rodo") && (
+      {show("guardian_statement") && (
         <>
-          {/* Review card only on first consent document */}
+          {/* Review card on first consent document (oświadczenie) */}
           <div className="bg-gray-50 border border-gray-300 rounded-xl p-4">
             <div className="flex justify-between items-start mb-3">
               <h4 className="font-semibold text-gray-900">Sprawdź dane pacjenta i przedstawiciela</h4>
@@ -619,18 +619,16 @@ export default function MinorConsentsStep({
                   </p>
                 </div>
                 {needsCourtData(formData) && (
-                  <>
-                    <div className="sm:col-span-2">
-                      <span className="text-yellow-700">Orzeczenie sądu:</span>
-                      <p className="font-medium">
-                        {formData.courtName || "—"}
-                        {formData.courtNumber ? ` · nr ${formData.courtNumber}` : ""}
-                        {formData.courtDate
-                          ? ` · z dnia ${formatPolishDate(formData.courtDate) || formData.courtDate}`
-                          : ""}
-                      </p>
-                    </div>
-                  </>
+                  <div className="sm:col-span-2">
+                    <span className="text-yellow-700">Orzeczenie sądu:</span>
+                    <p className="font-medium">
+                      {formData.courtName || "—"}
+                      {formData.courtNumber ? ` · nr ${formData.courtNumber}` : ""}
+                      {formData.courtDate
+                        ? ` · z dnia ${formatPolishDate(formData.courtDate) || formData.courtDate}`
+                        : ""}
+                    </p>
+                  </div>
                 )}
                 {isFactualGuardian(formData) && formData.guardianRelationDetail && (
                   <div className="sm:col-span-2">
@@ -641,8 +639,10 @@ export default function MinorConsentsStep({
               </div>
             </div>
           </div>
+        </>
+      )}
 
-          {/* Document 1 — RODO (PDF Number 2 for under-16: one block, no yellow data box) */}
+      {show("rodo") && (
           <div className="bg-white border-2 border-blue-300 rounded-xl p-6">
             <div className="text-center mb-6">
               <h2 className="text-xl font-bold text-gray-900 mb-2">
@@ -704,7 +704,6 @@ export default function MinorConsentsStep({
               </div>
             )}
           </div>
-        </>
       )}
 
       {show("examination") && (
