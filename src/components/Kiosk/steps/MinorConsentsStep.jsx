@@ -9,7 +9,7 @@ import {
   generateDocumentMetadata,
 } from "../../../utils/documentNumberUtils";
 import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils";
-import { formatGuardianIdentity, isFactualGuardian } from "../../../utils/guardian";
+import { formatGuardianIdentity, isFactualGuardian, needsCourtData } from "../../../utils/guardian";
 import PatientDataEditModal from "../PatientDataEditModal";
 
 const HEALTHCARE_CONSENT_LABEL =
@@ -443,13 +443,19 @@ export default function MinorConsentsStep({
         relation === "opiekun prawny";
       if (needsCourt) {
         if (!formData.courtName?.trim()) {
-          errors.push("Nazwa sądu jest wymagana dla wybranej podstawy reprezentacji.");
+          errors.push(
+            "Brak nazwy sądu — wróć do kroku „Dane opiekuna” i uzupełnij orzeczenie."
+          );
         }
         if (!formData.courtNumber?.trim()) {
-          errors.push("Numer orzeczenia sądu jest wymagany.");
+          errors.push(
+            "Brak numeru orzeczenia — wróć do kroku „Dane opiekuna” i uzupełnij orzeczenie."
+          );
         }
         if (!formData.courtDate) {
-          errors.push("Data wydania orzeczenia jest wymagana.");
+          errors.push(
+            "Brak daty orzeczenia — wróć do kroku „Dane opiekuna” i uzupełnij orzeczenie."
+          );
         }
       }
     }
@@ -612,6 +618,26 @@ export default function MinorConsentsStep({
                     {formData.guardianPhoneCode} {formData.guardianPhone}
                   </p>
                 </div>
+                {needsCourtData(formData) && (
+                  <>
+                    <div className="sm:col-span-2">
+                      <span className="text-yellow-700">Orzeczenie sądu:</span>
+                      <p className="font-medium">
+                        {formData.courtName || "—"}
+                        {formData.courtNumber ? ` · nr ${formData.courtNumber}` : ""}
+                        {formData.courtDate
+                          ? ` · z dnia ${formatPolishDate(formData.courtDate) || formData.courtDate}`
+                          : ""}
+                      </p>
+                    </div>
+                  </>
+                )}
+                {isFactualGuardian(formData) && formData.guardianRelationDetail && (
+                  <div className="sm:col-span-2">
+                    <span className="text-yellow-700">Stosunek do pacjenta:</span>
+                    <p className="font-medium">{formData.guardianRelationDetail}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -812,42 +838,30 @@ export default function MinorConsentsStep({
           </div>
         </div>
 
-        {["opiekun_prawny", "kurator", "opiekun prawny"].includes(
-          String(formData.guardianRelation || "").toLowerCase()
-        ) && (
-          <div className="mb-4 bg-rose-50 border border-rose-200 rounded-lg p-4">
-            <p className="font-semibold text-rose-900 mb-3 text-sm">
+        {needsCourtData(formData) && (
+          <div className="mb-4 bg-rose-50 border border-rose-200 rounded-lg p-4 text-sm">
+            <p className="font-semibold text-rose-900 mb-2">
               Dane orzeczenia / postanowienia sądu
+            </p>
+            <p className="text-xs text-rose-800 mb-3">
+              Wprowadzone w kroku „Dane opiekuna” — używane też w zgodzie RODO.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Nazwa sądu *</label>
-                <input
-                  type="text"
-                  value={formData.courtName || ""}
-                  onChange={(e) => update("courtName", e.target.value)}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
-                />
+                <span className="text-xs text-gray-600">Nazwa sądu</span>
+                <p className="font-medium text-gray-900">{formData.courtName || "—"}</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Numer orzeczenia *
-                </label>
-                <input
-                  type="text"
-                  value={formData.courtNumber || ""}
-                  onChange={(e) => update("courtNumber", e.target.value)}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
-                />
+                <span className="text-xs text-gray-600">Numer orzeczenia</span>
+                <p className="font-medium text-gray-900">{formData.courtNumber || "—"}</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Data wydania *</label>
-                <input
-                  type="date"
-                  value={formData.courtDate ? String(formData.courtDate).slice(0, 10) : ""}
-                  onChange={(e) => update("courtDate", e.target.value)}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
-                />
+                <span className="text-xs text-gray-600">Data wydania</span>
+                <p className="font-medium text-gray-900">
+                  {formData.courtDate
+                    ? formatPolishDate(formData.courtDate) || String(formData.courtDate).slice(0, 10)
+                    : "—"}
+                </p>
               </div>
             </div>
           </div>

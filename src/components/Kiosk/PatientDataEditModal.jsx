@@ -196,6 +196,14 @@ export default function PatientDataEditModal({
         }
       }
       if (!editData.guardianRelation?.trim()) newGuardianErrors.push("Stosunek do pacjenta jest wymagany.");
+      if (editData.guardianRelation === "opiekun_faktyczny" && !editData.guardianRelationDetail?.trim()) {
+        newGuardianErrors.push("Podaj stosunek do pacjenta (opiekun faktyczny).");
+      }
+      if (["opiekun_prawny", "kurator"].includes(String(editData.guardianRelation || ""))) {
+        if (!editData.courtName?.trim()) newGuardianErrors.push("Nazwa sądu jest wymagana.");
+        if (!editData.courtNumber?.trim()) newGuardianErrors.push("Numer orzeczenia jest wymagany.");
+        if (!editData.courtDate) newGuardianErrors.push("Data wydania orzeczenia jest wymagana.");
+      }
 
       // Guardian email validation
       if (editData.guardianEmail && editData.guardianEmail.trim()) {
@@ -673,6 +681,56 @@ export default function PatientDataEditModal({
                       dokumentacji medycznej może wyrazić wyłącznie przedstawiciel ustawowy
                       (matka, ojciec, opiekun prawny lub kurator).
                     </p>
+                  </div>
+                )}
+
+                {["opiekun_prawny", "kurator"].includes(
+                  String(editData.guardianRelation || "").toLowerCase()
+                ) && (
+                  <div className="md:col-span-2 bg-rose-50 border border-rose-200 rounded-xl p-4 space-y-3">
+                    <p className="text-sm font-semibold text-rose-900">
+                      Dane orzeczenia / postanowienia sądu *
+                    </p>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nazwa sądu *
+                      </label>
+                      <input
+                        type="text"
+                        value={editData.courtName || ""}
+                        onChange={(e) => update("courtName", e.target.value)}
+                        readOnly={readOnlyFields}
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Numer orzeczenia *
+                        </label>
+                        <input
+                          type="text"
+                          value={editData.courtNumber || ""}
+                          onChange={(e) => update("courtNumber", e.target.value)}
+                          readOnly={readOnlyFields}
+                          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Data wydania *
+                        </label>
+                        <input
+                          type="date"
+                          value={
+                            editData.courtDate ? String(editData.courtDate).slice(0, 10) : ""
+                          }
+                          onChange={(e) => update("courtDate", e.target.value)}
+                          readOnly={readOnlyFields}
+                          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
 
