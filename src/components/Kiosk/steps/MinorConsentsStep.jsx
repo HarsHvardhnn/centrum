@@ -842,9 +842,6 @@ export default function MinorConsentsStep({
             <p className="font-semibold text-rose-900 mb-2">
               Dane orzeczenia / postanowienia sądu
             </p>
-            <p className="text-xs text-rose-800 mb-3">
-              Wprowadzone w kroku „Dane opiekuna” — używane też w zgodzie RODO.
-            </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <span className="text-xs text-gray-600">Nazwa sądu</span>

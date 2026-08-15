@@ -379,28 +379,29 @@ export default function KioskApp() {
       >
         <div
           className={`w-full max-w-3xl mx-auto flex flex-col min-h-0 ${
-            step === STEPS.FORM ? "flex-1 h-full px-3 sm:px-4 pb-0 pt-2" : "px-4 sm:px-6 py-6"
+            step === STEPS.FORM ? "flex-1 h-full px-3 sm:px-4 pb-0 pt-2" : "px-4 sm:px-6 py-3"
           }`}
         >
           {step === STEPS.PIN && (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-              <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Wprowadź kod PIN</h2>
-              <p className="text-center text-gray-500 mb-8">Kod otrzymasz od pracownika rejestracji</p>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-5">
+              <h2 className="text-xl font-bold text-center text-gray-900 mb-1">Wprowadź kod PIN</h2>
+              <p className="text-center text-gray-500 mb-3 text-sm">Kod otrzymasz od pracownika rejestracji</p>
               <KioskNumericEntry
                 value={pin}
                 onChange={setPin}
                 maxLength={6}
                 size="lg"
+                compactKeypad
                 disabled={loading}
                 enableHardwareKeyboard
                 autoFocus
-                className="mb-6"
+                className="mb-3"
               />
               <button
                 type="button"
                 onClick={handleActivate}
                 disabled={loading}
-                className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl"
+                className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-3 rounded-xl"
               >
                 {loading ? "Łączenie..." : "Dalej"}
               </button>
@@ -408,16 +409,16 @@ export default function KioskApp() {
           )}
 
           {step === STEPS.PESEL && (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-5">
               <button
                 type="button"
                 onClick={() => endSessionAndReset("interrupted")}
-                className="text-sm text-teal-700 mb-4 hover:underline"
+                className="text-sm text-teal-700 mb-2 hover:underline"
               >
                 ← Wróć do PIN
               </button>
-              <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Weryfikacja tożsamości</h2>
-              <p className="text-center text-gray-500 mb-8">Wprowadź numer PESEL lub wybierz pacjent zagraniczny</p>
+              <h2 className="text-xl font-bold text-center text-gray-900 mb-1">Weryfikacja tożsamości</h2>
+              <p className="text-center text-gray-500 mb-3 text-sm">Wprowadź numer PESEL lub wybierz pacjent zagraniczny</p>
               
               <KioskNumericEntry
                 value={pesel}
@@ -432,18 +433,19 @@ export default function KioskApp() {
                 }}
                 maxLength={11}
                 size="pesel"
+                compactKeypad
                 showActiveCursor
                 disabled={loading}
                 enableHardwareKeyboard
                 autoFocus
-                className="mb-6"
+                className="mb-3"
               />
               
               <button
                 type="button"
                 onClick={handlePeselCheck}
                 disabled={loading || pesel.length !== 11}
-                className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-4 rounded-xl mb-4"
+                className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold text-lg py-3 rounded-xl mb-3"
               >
                 {loading ? "Sprawdzanie..." : "Weryfikuj PESEL"}
               </button>

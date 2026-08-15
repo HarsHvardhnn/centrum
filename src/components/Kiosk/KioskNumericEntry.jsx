@@ -3,14 +3,14 @@ import KioskNumericKeypad from "./KioskNumericKeypad";
 
 const BOX_STYLES = {
   lg: {
-    box: "w-12 h-14 sm:w-14 sm:h-16 text-2xl sm:text-3xl",
-    gap: "gap-2",
-    fullKeypad: true,
+    box: "w-11 h-12 text-2xl",
+    gap: "gap-1.5",
+    fullKeypad: false,
   },
   pesel: {
-    box: "w-10 h-12 sm:w-11 sm:h-14 text-2xl",
-    gap: "gap-1.5 sm:gap-2",
-    fullKeypad: true,
+    box: "w-8 h-10 text-xl",
+    gap: "gap-1",
+    fullKeypad: false,
   },
   md: {
     box: "w-8 h-11 sm:w-9 sm:h-12 text-xl",
@@ -125,7 +125,7 @@ export default function KioskNumericEntry({
   return (
     <div
       ref={rootRef}
-      className={`space-y-6 outline-none ${className}`}
+      className={`space-y-3 outline-none ${className}`}
       tabIndex={enableHardwareKeyboard ? 0 : undefined}
       role="group"
       aria-label="Wprowadzanie cyfr"
@@ -144,7 +144,7 @@ export default function KioskNumericEntry({
           return (
             <div
               key={index}
-              className={`${styles.box} rounded-xl border-2 flex items-center justify-center font-mono font-semibold transition-colors ${
+              className={`${styles.box} rounded-lg border-2 flex items-center justify-center font-mono font-semibold transition-colors ${
                 isFilled || isActive ? "border-teal-600 text-gray-900" : "border-gray-200"
               }`}
               aria-hidden

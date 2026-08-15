@@ -15,13 +15,13 @@ export default function KioskNumericKeypad({ onDigit, onBackspace, disabled = fa
   };
 
   const buttonClass = compact
-    ? "h-12 rounded-xl border border-gray-200 text-lg font-semibold flex items-center justify-center active:bg-gray-50 disabled:opacity-40 touch-manipulation"
-    : "h-16 rounded-2xl border border-gray-200 text-2xl font-semibold flex items-center justify-center active:bg-gray-50 disabled:opacity-40 touch-manipulation";
+    ? "h-11 rounded-xl border border-gray-200 text-lg font-semibold flex items-center justify-center active:bg-gray-50 disabled:opacity-40 touch-manipulation"
+    : "h-12 rounded-2xl border border-gray-200 text-xl font-semibold flex items-center justify-center active:bg-gray-50 disabled:opacity-40 touch-manipulation";
 
   return (
-    <div className="mx-auto max-w-xs w-full select-none" role="group" aria-label="Klawiatura numeryczna">
+    <div className="mx-auto max-w-[260px] w-full select-none" role="group" aria-label="Klawiatura numeryczna">
       {ROWS.map((row, rowIndex) => (
-        <div key={rowIndex} className={`grid grid-cols-3 gap-3 ${rowIndex < ROWS.length - 1 ? "mb-3" : ""}`}>
+        <div key={rowIndex} className={`grid grid-cols-3 gap-2 ${rowIndex < ROWS.length - 1 ? "mb-2" : ""}`}>
           {row.map((key, keyIndex) => {
             if (key === null) {
               return <div key={keyIndex} aria-hidden />;

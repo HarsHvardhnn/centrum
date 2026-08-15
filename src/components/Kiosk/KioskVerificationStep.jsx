@@ -91,10 +91,10 @@ export default function KioskVerificationStep({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <div className="text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Podaj numer PESEL</h2>
-        <p className="text-gray-500">Wpisz PESEL, aby kontynuować rejestrację</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Podaj numer PESEL</h2>
+        <p className="text-gray-500 text-sm">Wpisz PESEL, aby kontynuować rejestrację</p>
       </div>
 
       <KioskNumericEntry
@@ -102,6 +102,7 @@ export default function KioskVerificationStep({
         onChange={onPeselChange}
         maxLength={11}
         size="pesel"
+        compactKeypad
         showActiveCursor
         disabled={disabled}
         enableHardwareKeyboard

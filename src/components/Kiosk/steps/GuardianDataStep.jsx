@@ -435,11 +435,11 @@ export default function GuardianDataStep({
 
           {/* Field D — court data for opiekun prawny / kurator */}
           {needsCourtData(formData) && (
-            <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 space-y-3">
+            <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 space-y-3 min-w-0 overflow-hidden">
               <p className="text-sm font-semibold text-rose-900">
                 Dane orzeczenia / postanowienia sądu *
               </p>
-              <div>
+              <div className="min-w-0">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Nazwa sądu *
                 </label>
@@ -448,34 +448,32 @@ export default function GuardianDataStep({
                   value={formData.courtName || ""}
                   onChange={(e) => update("courtName", e.target.value)}
                   readOnly={readOnlyFields}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                  className="w-full max-w-full min-w-0 box-border border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Numer orzeczenia *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.courtNumber || ""}
-                    onChange={(e) => update("courtNumber", e.target.value)}
-                    readOnly={readOnlyFields}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Data wydania *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.courtDate ? String(formData.courtDate).slice(0, 10) : ""}
-                    onChange={(e) => update("courtDate", e.target.value)}
-                    readOnly={readOnlyFields}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
-                  />
-                </div>
+              <div className="min-w-0">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Numer orzeczenia *
+                </label>
+                <input
+                  type="text"
+                  value={formData.courtNumber || ""}
+                  onChange={(e) => update("courtNumber", e.target.value)}
+                  readOnly={readOnlyFields}
+                  className="w-full max-w-full min-w-0 box-border border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                />
+              </div>
+              <div className="min-w-0">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Data wydania *
+                </label>
+                <input
+                  type="date"
+                  value={formData.courtDate ? String(formData.courtDate).slice(0, 10) : ""}
+                  onChange={(e) => update("courtDate", e.target.value)}
+                  readOnly={readOnlyFields}
+                  className="block w-full max-w-full min-w-0 box-border appearance-none border border-gray-300 rounded-lg px-4 py-3 text-base sm:text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                />
               </div>
             </div>
           )}
