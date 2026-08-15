@@ -340,7 +340,6 @@ export default function GuardianDataStep({
                 {peselValidation.message}
               </p>
             )}
-          </div>
         </div>
 
         {/* Section 2 — Representation type (cascading A / B / C / D) */}

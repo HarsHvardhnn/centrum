@@ -1612,7 +1612,7 @@ export default function UserManagement() {
       {/* Add Patient Modal */}
       {showAddPatientModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-3/4 max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg w-[95vw] max-w-7xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b p-4">
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-bold">

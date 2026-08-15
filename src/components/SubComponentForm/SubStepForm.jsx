@@ -57,13 +57,13 @@ const SubStepForm = ({
   return (
     <SubStepFormContext.Provider value={{ currentSubStep }}>
       <div className="sub-step-form">
-        <div className="sub-step-indicator bg-primary-lighter rounded-lg p-2 mb-6 inline-block">
-          <div className="flex items-center gap-4">
+        <div className="sub-step-indicator bg-primary-lighter rounded-lg p-2 mb-6 w-full overflow-x-auto">
+          <div className="flex flex-nowrap items-center gap-1.5 min-w-max">
             {subSteps.map((_, index) => (
               <button
                 key={index}
                 onClick={() => !hasValidationErrors && goToSubStep(index)}
-                className={`p-2 text-center rounded-md transition-all font-medium ${
+                className={`shrink-0 whitespace-nowrap px-2.5 py-2 text-sm text-center rounded-md transition-all font-medium ${
                   currentSubStep === index
                     ? "bg-primary-light text-white font-medium"
                     : hasValidationErrors
