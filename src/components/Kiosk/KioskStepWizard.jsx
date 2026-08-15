@@ -63,12 +63,10 @@ export default function KioskStepWizard({
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [formData, setFormData] = useState(initialData);
   const [stepValidation, setStepValidation] = useState({});
-  // Only show validation messages after the user tries to continue
   const [showErrors, setShowErrors] = useState(false);
+  const contentRef = useRef(null);
 
   // Factual caregiver may only sign examination (+ statement).
-  // Under-16: skip RODO + authorization entirely.
-  // 16–17: keep patient RODO + patient authorization; guardian RODO block is hidden in UI/PDF.
   const steps = useMemo(() => {
     if (!isFactualGuardian(formData)) return baseSteps;
     return baseSteps.filter((s) => {
@@ -94,32 +92,34 @@ export default function KioskStepWizard({
   const autoSaveTimeoutRef = useRef(null);
   const lastAutoSaveRef = useRef(Date.now());
 
+  const scrollContentToTop = useCallback(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, []);
+
   const updateFormData = useCallback((updates) => {
     setFormData(prev => {
       const newData = { ...prev, ...updates };
 
-      // Notify parent immediately (e.g. re-detect minor/adult after fallback DOB)
       if (onFormDataChange) {
         queueMicrotask(() => onFormDataChange(newData));
       }
       
-      // Debounced auto-save to prevent infinite calls
       if (onAutoSave) {
-        // Clear any existing timeout
         if (autoSaveTimeoutRef.current) {
           clearTimeout(autoSaveTimeoutRef.current);
         }
         
-        // Only auto-save if enough time has passed since last save
         const now = Date.now();
         const timeSinceLastSave = now - lastAutoSaveRef.current;
         
-        if (timeSinceLastSave > 2000) { // Minimum 2 seconds between saves
+        if (timeSinceLastSave > 2000) {
           autoSaveTimeoutRef.current = setTimeout(() => {
             lastAutoSaveRef.current = Date.now();
             onAutoSave(newData);
             autoSaveTimeoutRef.current = null;
-          }, 1500); // Debounce delay
+          }, 1500);
         }
       }
       
@@ -127,7 +127,6 @@ export default function KioskStepWizard({
     });
   }, [onAutoSave, onFormDataChange]);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (autoSaveTimeoutRef.current) {
@@ -145,8 +144,6 @@ export default function KioskStepWizard({
     if (currentValidation) {
       return currentValidation;
     }
-
-    // Default to invalid if no validation state is available
     return { isValid: false, errors: ["Sprawdź wszystkie pola w tym kroku."] };
   }, [currentValidation]);
 
@@ -157,14 +154,12 @@ export default function KioskStepWizard({
     if (validation.isValid && !isLastStep) {
       setShowErrors(false);
       setCurrentStepIndex(prev => prev + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollContentToTop();
     } else if (validation.isValid && isLastStep) {
       setShowErrors(false);
       onSubmit?.(formData);
     } else {
       setShowErrors(true);
-      // Same as first kiosk PESEL step: after 2 failed Dalej attempts on an
-      // invalid guardian PESEL, the step can offer "continue despite error".
       const isGuardianPeselStep =
         currentStep.component === "ContactStep" ||
         currentStep.component === "GuardianDataStep";
@@ -183,26 +178,26 @@ export default function KioskStepWizard({
           guardianPeselFailAttempts: (formData.guardianPeselFailAttempts || 0) + 1,
         });
       }
+      scrollContentToTop();
     }
-  }, [currentStep.component, currentStep.id, formData, isLastStep, onSubmit, updateFormData, validateCurrentStep]);
+  }, [currentStep?.component, currentStep?.id, formData, isLastStep, onSubmit, updateFormData, validateCurrentStep, scrollContentToTop]);
 
   const goToPreviousStep = useCallback(() => {
     if (!isFirstStep) {
       setShowErrors(false);
       setCurrentStepIndex(prev => prev - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollContentToTop();
     }
-  }, [isFirstStep]);
+  }, [isFirstStep, scrollContentToTop]);
 
   const goToStep = useCallback((stepIndex) => {
     if (stepIndex >= 0 && stepIndex < totalSteps) {
       setShowErrors(false);
       setCurrentStepIndex(stepIndex);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollContentToTop();
     }
-  }, [totalSteps]);
+  }, [totalSteps, scrollContentToTop]);
 
-  // Get the component for current step
   const StepComponent = stepComponents[currentStep?.component];
 
   if (!StepComponent) {
@@ -214,17 +209,17 @@ export default function KioskStepWizard({
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Progress Header */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-bold text-gray-900">{currentStep.title}</h2>
-          <span className="text-sm text-gray-500">
+    <div className="h-full min-h-0 flex flex-col w-full">
+      {/* Sticky step header */}
+      <div className="shrink-0 sticky top-0 z-30 bg-white px-4 sm:px-6 pt-3 pb-3 border-b border-gray-100">
+        <div className="flex justify-between items-center gap-3 mb-2">
+          <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate">
+            {currentStep.title}
+          </h3>
+          <span className="text-xs sm:text-sm text-gray-500 shrink-0">
             Krok {currentStepIndex + 1} z {totalSteps}
           </span>
         </div>
-        
-        {/* Progress Bar */}
         <div className="flex gap-1">
           {steps.map((_, index) => (
             <div
@@ -237,52 +232,56 @@ export default function KioskStepWizard({
         </div>
       </div>
 
-      {/* Step Content */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8 min-h-[400px]">
-        <StepComponent
-          formData={formData}
-          updateFormData={updateFormData}
-          patientType={patientType}
-          mode={mode}
-          validation={currentValidation}
-          onValidationChange={handleValidationChange}
-          onGoToStep={goToStep}
-          documentSection={currentStep.documentSection}
-        />
-      </div>
+      {/* Scrollable content — only this region scrolls on iPad */}
+      <div
+        ref={contentRef}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4"
+      >
+        <div className="pb-2">
+          <StepComponent
+            formData={formData}
+            updateFormData={updateFormData}
+            patientType={patientType}
+            mode={mode}
+            validation={currentValidation}
+            onValidationChange={handleValidationChange}
+            onGoToStep={goToStep}
+            documentSection={currentStep.documentSection}
+          />
+        </div>
 
-      {/* Validation Error Summary — only after user attempts to continue */}
-      {showErrors && currentValidation && !currentValidation.isValid && (
-        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-          <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-medium text-red-800">
-                Popraw następujące błędy, aby przejść do kolejnego kroku:
-              </h3>
-              <div className="mt-2 text-sm text-red-700">
-                <ul className="space-y-1">
-                  {currentValidation.errors.map((error, index) => (
-                    <li key={index}>• {error}</li>
-                  ))}
-                </ul>
+        {showErrors && currentValidation && !currentValidation.isValid && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-red-800">
+                  Popraw następujące błędy, aby przejść do kolejnego kroku:
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <ul className="space-y-1">
+                    {currentValidation.errors.map((error, index) => (
+                      <li key={index}>• {error}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Navigation Footer */}
-      <div className="flex justify-between items-center mt-6 p-4 bg-white rounded-lg shadow-sm border">
+      {/* Sticky footer — always visible on iPad */}
+      <div className="shrink-0 sticky bottom-0 z-30 border-t border-gray-200 bg-white px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-3 shadow-[0_-6px_16px_rgba(0,0,0,0.06)] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <button
           type="button"
           onClick={goToPreviousStep}
           disabled={isFirstStep}
-          className="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+          className="min-w-[7rem] px-5 py-3.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors touch-manipulation text-base"
         >
           Wstecz
         </button>
@@ -291,9 +290,9 @@ export default function KioskStepWizard({
           type="button"
           onClick={goToNextStep}
           disabled={loading}
-          className="px-8 py-3 rounded-xl bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold transition-colors"
+          className="min-w-[9rem] px-6 py-3.5 rounded-xl bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold transition-colors touch-manipulation text-base"
         >
-          {loading ? "Zapisywanie..." : isLastStep ? "Zakończ rejestrację" : "Dalej"}
+          {loading ? "Zapisywanie..." : isLastStep ? "Zakończ" : "Dalej"}
         </button>
       </div>
     </div>

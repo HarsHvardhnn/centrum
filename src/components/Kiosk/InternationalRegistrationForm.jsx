@@ -25,15 +25,17 @@ export default function InternationalRegistrationForm({
   };
 
   return (
-    <KioskStepWizard
-      patientType={PATIENT_TYPES.INTERNATIONAL}
-      initialData={formDataWithDefaults}
-      mode={mode}
-      onSubmit={onSubmit}
-      onAutoSave={onAutoSave}
-      onFormDataChange={onFormDataChange}
-      loading={loading}
-      stepComponents={StepComponents}
-    />
+    <div className="h-full min-h-0">
+      <KioskStepWizard
+        patientType={PATIENT_TYPES.INTERNATIONAL}
+        initialData={formDataWithDefaults}
+        mode={mode}
+        onSubmit={onSubmit}
+        onAutoSave={onAutoSave}
+        onFormDataChange={onFormDataChange}
+        loading={loading}
+        stepComponents={StepComponents}
+      />
+    </div>
   );
 }

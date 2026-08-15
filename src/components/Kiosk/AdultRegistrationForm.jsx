@@ -16,15 +16,17 @@ export default function AdultRegistrationForm({
     : PATIENT_TYPES.ADULT;
 
   return (
-    <KioskStepWizard
-      patientType={patientType}
-      initialData={initialData}
-      mode={mode}
-      onSubmit={onSubmit}
-      onAutoSave={onAutoSave}
-      onFormDataChange={onFormDataChange}
-      loading={loading}
-      stepComponents={StepComponents}
-    />
+    <div className="h-full min-h-0">
+      <KioskStepWizard
+        patientType={patientType}
+        initialData={initialData}
+        mode={mode}
+        onSubmit={onSubmit}
+        onAutoSave={onAutoSave}
+        onFormDataChange={onFormDataChange}
+        loading={loading}
+        stepComponents={StepComponents}
+      />
+    </div>
   );
 }

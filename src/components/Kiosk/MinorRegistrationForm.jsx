@@ -41,15 +41,17 @@ export default function MinorRegistrationForm({
   };
 
   return (
-    <KioskStepWizard
-      patientType={patientType}
-      initialData={formDataWithDefaults}
-      mode={mode}
-      onSubmit={onSubmit}
-      onAutoSave={onAutoSave}
-      onFormDataChange={onFormDataChange}
-      loading={loading}
-      stepComponents={StepComponents}
-    />
+    <div className="h-full min-h-0">
+      <KioskStepWizard
+        patientType={patientType}
+        initialData={formDataWithDefaults}
+        mode={mode}
+        onSubmit={onSubmit}
+        onAutoSave={onAutoSave}
+        onFormDataChange={onFormDataChange}
+        loading={loading}
+        stepComponents={StepComponents}
+      />
+    </div>
   );
 }

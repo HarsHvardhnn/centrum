@@ -338,23 +338,23 @@ export default function KioskApp() {
   const stepIndicator = step === STEPS.PESEL ? 1 : step === STEPS.FORM ? 2 : step === STEPS.DONE ? totalSteps + 1 : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex flex-col">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-6 py-5 shadow-sm">
+    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-gradient-to-b from-teal-50 to-white flex flex-col">
+      <header className="shrink-0 sticky top-0 z-50 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 shadow-sm">
         <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
           <img
             src="/images/cm7-logo.png"
             alt="Centrum Medyczne 7"
-            className="h-12 w-auto object-contain shrink-0"
+            className="h-10 sm:h-12 w-auto object-contain shrink-0"
           />
           <div className="text-right">
-            <h1 className="text-xl font-bold text-gray-900">CM7</h1>
-            <p className="text-sm text-gray-500">Rejestracja pacjenta</p>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">CM7</h1>
+            <p className="text-xs sm:text-sm text-gray-500">Rejestracja pacjenta</p>
           </div>
         </div>
         {stepIndicator > 0 && step !== STEPS.DONE && (
-          <div className="max-w-3xl mx-auto mt-4">
-            <div className="flex justify-between items-center mb-2">
-              <div className="text-sm text-gray-500">
+          <div className="max-w-3xl mx-auto mt-3">
+            <div className="flex justify-between items-center mb-1.5">
+              <div className="text-xs sm:text-sm text-gray-500">
                 Krok {stepIndicator} z {totalSteps}
                 {step === STEPS.PESEL && " · Weryfikacja tożsamości"}
                 {step === STEPS.FORM && ` · ${getFormTitle(patientType)}`}
@@ -372,18 +372,16 @@ export default function KioskApp() {
         )}
       </header>
 
-      {/* Spacer matches fixed header height (logo bar + optional progress) */}
-      <div
-        className={
-          stepIndicator > 0 && step !== STEPS.DONE
-            ? "h-[9.25rem] shrink-0"
-            : "h-[5.5rem] shrink-0"
-        }
-        aria-hidden
-      />
-
-      <main className="flex-1 px-6 py-8">
-        <div className="max-w-3xl mx-auto">
+      <main
+        className={`flex-1 min-h-0 flex flex-col ${
+          step === STEPS.FORM ? "overflow-hidden" : "overflow-y-auto overscroll-contain"
+        }`}
+      >
+        <div
+          className={`w-full max-w-3xl mx-auto flex flex-col min-h-0 ${
+            step === STEPS.FORM ? "flex-1 h-full px-3 sm:px-4 pb-0 pt-2" : "px-4 sm:px-6 py-6"
+          }`}
+        >
           {step === STEPS.PIN && (
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
               <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">Wprowadź kod PIN</h2>
@@ -508,28 +506,30 @@ export default function KioskApp() {
           )}
 
           {step === STEPS.FORM && (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
-              <button
-                type="button"
-                onClick={() => {
-                  if (patientType === PATIENT_TYPES.INTERNATIONAL) {
-                    setStep(STEPS.INTERNATIONAL);
-                  } else {
-                    setStep(STEPS.PESEL);
-                  }
-                }}
-                className="text-sm text-teal-700 mb-4 hover:underline"
-              >
-                ← Wróć do weryfikacji
-              </button>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                {mode === "sign_only"
-                  ? "Podpis dokumentów"
-                  : mode === "data_correction"
-                    ? "Aktualizacja danych pacjenta"
-                    : getFormTitle(patientType)}
-              </h2>
-              {renderForm()}
+            <div className="flex-1 min-h-0 flex flex-col bg-white rounded-t-2xl sm:rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+              <div className="shrink-0 px-4 sm:px-6 pt-3 pb-2 border-b border-gray-100 bg-white">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (patientType === PATIENT_TYPES.INTERNATIONAL) {
+                      setStep(STEPS.INTERNATIONAL);
+                    } else {
+                      setStep(STEPS.PESEL);
+                    }
+                  }}
+                  className="text-sm text-teal-700 mb-1 hover:underline touch-manipulation"
+                >
+                  ← Wróć do weryfikacji
+                </button>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+                  {mode === "sign_only"
+                    ? "Podpis dokumentów"
+                    : mode === "data_correction"
+                      ? "Aktualizacja danych pacjenta"
+                      : getFormTitle(patientType)}
+                </h2>
+              </div>
+              <div className="flex-1 min-h-0 flex flex-col">{renderForm()}</div>
             </div>
           )}
 
