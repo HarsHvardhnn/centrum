@@ -159,19 +159,45 @@ export const getVisitTypeDisplayLabel = (appointment) => {
     return RADIOLOGIST_VISIT_TYPE_LABEL;
   }
 
+  const genericDefaults = new Set([
+    "konsultacja lekarska",
+    "konsultacja online",
+    "consultation",
+    "re-visit",
+    "first-time",
+    "first-visit",
+  ]);
+
+  const specific =
+    appointment?.consultation?.visitReason ||
+    appointment?.consultation?.visitType ||
+    appointment?.visitReason ||
+    appointment?.consultationType ||
+    appointment?.metadata?.visitType ||
+    "";
+  const specificText = typeof specific === "string" ? specific.trim() : String(specific ?? "").trim();
+  const specificIsGeneric =
+    !specificText ||
+    genericDefaults.has(specificText.toLowerCase()) ||
+    /^(first[-_]?visit|re[-_]?visit|follow[-_]?up)$/i.test(specificText);
+
   const apiVisitType = appointment?.visitType;
   if (apiVisitType != null && String(apiVisitType).trim() !== "") {
-    return String(apiVisitType).trim();
+    const apiText = String(apiVisitType).trim();
+    const apiIsGeneric = genericDefaults.has(apiText.toLowerCase());
+    if (!apiIsGeneric || specificIsGeneric) return apiText;
+    return specificText;
   }
-  const raw = appointment?.visitReason ?? appointment?.consultationType ?? appointment?.metadata?.visitType ?? "";
-  const s = typeof raw === "string" ? raw.trim() : String(raw ?? "").trim();
+
+  const raw = specificText;
+  const s = raw;
   const lower = s.toLowerCase();
   const role = (appointment?.role ?? appointment?.createdByRole ?? "").toString().trim().toLowerCase();
 
   if (lower === "re-visit") return "Konsultacja lekarska";
   if (lower === "first-time") return "Konsultacja pierwszorazowa";
   if (lower === "consultation") return "Konsultacja lekarska";
-  if (role === "patient") return getVisitMode(appointment) === "online" ? "Konsultacja online" : "Konsultacja lekarska";
+  if (role === "patient") return "Konsultacja lekarska";
   if (!s) return "Konsultacja lekarska";
   return s;
 };
