@@ -43,11 +43,12 @@ export function buildConsentDocNumber(
  * @returns {string}
  */
 export function getCurrentDocumentDate() {
-  const now = new Date();
-  const day = String(now.getDate()).padStart(2, "0");
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const year = now.getFullYear();
-  return `${day}.${month}.${year}`;
+  return new Date().toLocaleDateString("pl-PL", {
+    timeZone: "Europe/Warsaw",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 /**
