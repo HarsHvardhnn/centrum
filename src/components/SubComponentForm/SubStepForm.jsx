@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "../../context/SubStepFormContext";
+import { isIdentityDocumentExpired } from "../../utils/identityDocument";
 
 export const SubStepFormContext = createContext(null);
 
@@ -43,7 +44,8 @@ const SubStepForm = ({
         !formData.documentCountry?.trim() ||
         !formData.documentType?.trim() ||
         !formData.documentNumber?.trim() ||
-        !formData.documentDateOfBirth
+        !formData.documentDateOfBirth ||
+        isIdentityDocumentExpired(formData.documentExpiryDate)
       );
       setHasValidationErrors(fullNameError || govtIdError || sexError || identityDocError);
     } else if (currentSubStep === 1) { // Referrer form
@@ -52,7 +54,7 @@ const SubStepForm = ({
     } else {
       setHasValidationErrors(false);
     }
-  }, [currentSubStep, isEditMode, formData.fullName, formData.govtId, formData.sex, formData.consultingDoctor, formData.isInternationalPatient, formData.documentCountry, formData.documentType, formData.documentNumber, formData.documentDateOfBirth]);
+  }, [currentSubStep, isEditMode, formData.fullName, formData.govtId, formData.sex, formData.consultingDoctor, formData.isInternationalPatient, formData.documentCountry, formData.documentType, formData.documentNumber, formData.documentDateOfBirth, formData.documentExpiryDate]);
 
   return (
     <SubStepFormContext.Provider value={{ currentSubStep }}>

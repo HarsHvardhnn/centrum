@@ -1,3 +1,8 @@
+import {
+  EMPTY_IDENTITY_DOCUMENT,
+  IDENTITY_DOCUMENT_TYPES,
+} from "../../utils/identityDocument";
+
 export const KIOSK_STEPS = {
   PIN: "pin",
   PESEL: "pesel",
@@ -37,20 +42,15 @@ export const CONSENT_TEXT = {
     "Zapoznałem(-am) się z treścią oświadczenia i wyrażam zgodę",
 };
 
-export const DOCUMENT_TYPES = [
-  { value: "", label: "Wybierz" },
-  { value: "Passport", label: "Paszport" },
-  { value: "ID Card", label: "Dowód osobisty" },
-  { value: "Residence Card", label: "Karta pobytu" },
-  { value: "Other", label: "Inny" },
-];
+export const DOCUMENT_TYPES = IDENTITY_DOCUMENT_TYPES;
 
 export const EMPTY_AUTHORIZED_PERSON = () => ({
   firstName: "",
   lastName: "",
   pesel: "",
   noPesel: false,
-  documentNumber: "",
+  ...EMPTY_IDENTITY_DOCUMENT,
+  relationshipToPatient: "",
   phoneCode: "+48",
   phone: "",
   street: "",
@@ -72,6 +72,8 @@ export function createDefaultKioskForm(initial = {}) {
     documentCountry: "",
     documentType: "",
     documentNumber: "",
+    documentIssueDate: "",
+    documentExpiryDate: "",
     internationalPatientDocumentKey: "",
     npesei: "",
     pesel: "",

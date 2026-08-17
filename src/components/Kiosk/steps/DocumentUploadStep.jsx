@@ -9,30 +9,38 @@ const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "i
 /** Normalize legacy uploadedDocuments or documentScans into backend-ready scans */
 function normalizeInitialScans(formData) {
   const fromScans = Array.isArray(formData.documentScans) ? formData.documentScans : [];
-  if (fromScans.length) {
-    return fromScans
-      .filter((s) => s?.dataUrl)
-      .map((s) => ({
-        id: s.id || `${Date.now()}-${s.name || "scan"}`,
+  const legacy = Array.isArray(formData.uploadedDocuments) ? formData.uploadedDocuments : [];
+  const source = fromScans.length ? fromScans : legacy;
+
+  return source
+    .map((s) => {
+      const type = s?.type || "image/jpeg";
+      const dataUrl =
+        s?.dataUrl && String(s.dataUrl).startsWith("data:") ? s.dataUrl : undefined;
+      const url = s?.url || (!dataUrl ? s?.preview : undefined);
+      const isPdf = type === "application/pdf" || /\.pdf$/i.test(s?.name || url || "");
+      const preview = isPdf ? null : s?.preview || dataUrl || url || null;
+      if (!dataUrl && !url && !preview) return null;
+      return {
+        id: s.id || s.existingDocumentId || `${Date.now()}-${s.name || "scan"}`,
+        existingDocumentId: s.existingDocumentId || null,
         name: s.name || "skan",
         size: s.size,
-        type: s.type || "image/jpeg",
-        dataUrl: s.dataUrl,
-        preview: s.type?.startsWith("image/") ? s.dataUrl : null,
-      }));
-  }
+        type: type === "image" ? "image/jpeg" : type,
+        dataUrl,
+        url,
+        preview,
+      };
+    })
+    .filter(Boolean);
+}
 
-  const legacy = Array.isArray(formData.uploadedDocuments) ? formData.uploadedDocuments : [];
-  return legacy
-    .filter((s) => s?.preview || s?.dataUrl)
-    .map((s) => ({
-      id: s.id || `${Date.now()}-${s.name || "scan"}`,
-      name: s.name || "skan",
-      size: s.size,
-      type: s.type || "image/jpeg",
-      dataUrl: s.dataUrl || s.preview,
-      preview: (s.type || "").startsWith("image/") ? s.dataUrl || s.preview : null,
-    }));
+function toPersistedScan({ id, name, type, dataUrl, size, existingDocumentId, url }) {
+  const persisted = { id, name, type, size };
+  if (existingDocumentId) persisted.existingDocumentId = existingDocumentId;
+  if (url) persisted.url = url;
+  if (dataUrl) persisted.dataUrl = dataUrl;
+  return persisted;
 }
 
 function formatFileSize(bytes) {
@@ -55,13 +63,7 @@ export default function DocumentUploadStep({
 
   // Persist as documentScans (dataUrl) — backend merges them into the package PDF
   useEffect(() => {
-    const documentScans = uploadedFiles.map(({ id, name, type, dataUrl, size }) => ({
-      id,
-      name,
-      type,
-      dataUrl,
-      size,
-    }));
+    const documentScans = uploadedFiles.map(toPersistedScan);
     updateFormData({ documentScans, uploadedDocuments: documentScans });
   }, [uploadedFiles]);
 
@@ -241,9 +243,11 @@ export default function DocumentUploadStep({
                 <span className="text-gray-500 font-normal"> · ~{formatFileSize(totalSize)}</span>
               )}
             </p>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Zdjęcia są kompresowane i dołączane do końcowego PDF rejestracji.
-            </p>
+            {uploadedFiles.some((f) => f.existingDocumentId) && (
+              <p className="text-xs text-teal-800 mt-1">
+                Zdjęcia wgrane wcześniej. Możesz je usunąć lub dodać nowe.
+              </p>
+            )}
           </div>
           {uploadedFiles.length > 0 && (
             <button
@@ -282,8 +286,9 @@ export default function DocumentUploadStep({
                 <p className="text-[11px] font-medium text-gray-500 mb-1">Strona {index + 1}</p>
                 {file.preview || (file.type || "").startsWith("image/") ? (
                   <img
-                    src={file.preview || file.dataUrl}
+                    src={file.preview || file.dataUrl || file.url}
                     alt={file.name}
+                    referrerPolicy="no-referrer"
                     className="w-full h-28 object-cover rounded"
                   />
                 ) : (

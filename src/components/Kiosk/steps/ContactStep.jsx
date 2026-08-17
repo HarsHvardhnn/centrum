@@ -3,6 +3,13 @@ import { formatPhoneNumber, getRequiredPhoneLength } from "../../../utils/phoneU
 import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils";
 import PhoneCountrySelect from "../PhoneCountrySelect";
 import { PATIENT_TYPES } from "../PatientTypeDetector";
+import IdentityDocumentFields from "../../shared/IdentityDocumentFields";
+import {
+  clearedGuardianIdentity,
+  guardianIdentityFromPatch,
+  guardianIdentityValues,
+  validateIdentityDocument,
+} from "../../../utils/identityDocument";
 
 function validateContactPesel(
   rawPesel,
@@ -121,9 +128,11 @@ export default function ContactStep({
       if (!formData.guardianFirstName?.trim()) errors.push("Imię opiekuna jest wymagane.");
       if (!formData.guardianLastName?.trim()) errors.push("Nazwisko opiekuna jest wymagane.");
       if (formData.guardianNoPesel) {
-        if (!formData.guardianDocumentNumber?.trim()) {
-          errors.push("Numer dokumentu tożsamości opiekuna jest wymagany (brak PESEL).");
-        }
+        errors.push(
+          ...validateIdentityDocument(guardianIdentityValues(formData), {
+            subject: "Opiekun",
+          })
+        );
       } else if (!peselValidation.valid) {
         errors.push(peselValidation.message);
       }
@@ -272,9 +281,7 @@ export default function ContactStep({
                   updateFormData({
                     guardianNoPesel: checked,
                     guardianPesel: checked ? "" : formData.guardianPesel,
-                    guardianDocumentNumber: checked
-                      ? formData.guardianDocumentNumber || ""
-                      : "",
+                    ...(checked ? {} : clearedGuardianIdentity()),
                     guardianPeselFallbackMode: false,
                     guardianPeselFailAttempts: 0,
                   });
@@ -284,20 +291,14 @@ export default function ContactStep({
               <span className="text-sm text-gray-700">Nie posiadam numeru PESEL</span>
             </label>
             {formData.guardianNoPesel ? (
-              <div className="mt-3">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Numer dokumentu tożsamości *
-                </label>
-                <input
-                  type="text"
-                  value={formData.guardianDocumentNumber || ""}
-                  onChange={(e) => update("guardianDocumentNumber", e.target.value)}
-                  readOnly={readOnlyFields}
-                  placeholder="np. paszport / dowód"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                  required
-                />
-              </div>
+              <IdentityDocumentFields
+                className="mt-3"
+                values={guardianIdentityValues(formData)}
+                onChange={(field, value) =>
+                  updateFormData(guardianIdentityFromPatch(field, value))
+                }
+                readOnly={readOnlyFields}
+              />
             ) : !formData.guardianPesel ? (
               <p className="text-xs text-gray-500 mt-1">Wpisz dokładnie 11 cyfr numeru PESEL.</p>
             ) : (

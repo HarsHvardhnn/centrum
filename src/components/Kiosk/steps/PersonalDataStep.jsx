@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { getGenderFromPesel } from "../../../utils/peselUtils";
 import { formatPolishDate } from "../../../utils/dateUtils";
+import { isIdentityDocumentExpired, todayYmd } from "../../../utils/identityDocument";
 
 const VOIVODESHIPS = [
   "dolnośląskie", "kujawsko-pomorskie", "lubelskie", "lubuskie", "łódzkie",
@@ -72,7 +73,7 @@ export default function PersonalDataStep({
         if (issueDate > today) {
           errors.push("Data wydania dokumentu nie może być w przyszłości.");
         }
-        if (expiryDate < today) {
+        if (isIdentityDocumentExpired(formData.documentExpiryDate)) {
           errors.push("Dokument jest już wygasły.");
         }
         if (issueDate >= expiryDate) {
@@ -233,6 +234,7 @@ export default function PersonalDataStep({
                 value={formData.documentExpiryDate || ""}
                 onChange={(e) => update("documentExpiryDate", e.target.value)}
                 readOnly={readOnlyFields}
+                min={todayYmd()}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 required
               />

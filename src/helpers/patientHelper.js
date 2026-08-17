@@ -229,6 +229,8 @@ const patientService = {
       patientData.guardianFirstName !== undefined ||
       patientData.guardianLastName !== undefined ||
       patientData.guardianPesel !== undefined ||
+      patientData.guardianNoPesel !== undefined ||
+      patientData.guardianDocumentNumber !== undefined ||
       patientData.guardianRelation !== undefined ||
       patientData.courtName !== undefined ||
       patientData.courtNumber !== undefined ||
@@ -241,6 +243,12 @@ const patientService = {
           firstName: patientData.guardianFirstName,
           lastName: patientData.guardianLastName,
           pesel: patientData.guardianPesel,
+          noPesel: patientData.guardianNoPesel,
+          documentNumber: patientData.guardianDocumentNumber,
+          documentType: patientData.guardianDocumentType,
+          documentCountry: patientData.guardianDocumentCountry,
+          documentIssueDate: patientData.guardianDocumentIssueDate,
+          documentExpiryDate: patientData.guardianDocumentExpiryDate,
           relation: patientData.guardianRelation,
           phone: patientData.guardianPhone,
           phoneCode: patientData.guardianPhoneCode,

@@ -1,3 +1,8 @@
+import {
+  guardianIdentityValues,
+  validateIdentityDocument,
+} from "../../utils/identityDocument";
+
 /**
  * Age from a Date / ISO date string
  */
@@ -176,9 +181,11 @@ export function validateFormData(formData, patientType) {
   // Check required fields (guardian PESEL may be skipped via guardianNoPesel)
   for (const field of requirements.requiredFields) {
     if (field === "guardianPesel" && formData.guardianNoPesel) {
-      if (!formData.guardianDocumentNumber || String(formData.guardianDocumentNumber).trim() === "") {
-        errors.push("guardianDocumentNumber jest wymagane");
-      }
+      errors.push(
+        ...validateIdentityDocument(guardianIdentityValues(formData), {
+          subject: "Opiekun",
+        })
+      );
       continue;
     }
     if (!formData[field] || String(formData[field]).trim() === "") {

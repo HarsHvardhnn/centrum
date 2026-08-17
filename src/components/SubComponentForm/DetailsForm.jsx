@@ -6,6 +6,11 @@ import { FileText, ExternalLink, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { resolveDocumentOpenUrl } from "../../utils/documentUrl";
 import { EMPTY_AUTHORIZED_PERSON, isAuthorizationDocument } from "../../utils/authorizedPersons";
+import IdentityDocumentFields from "../shared/IdentityDocumentFields";
+import {
+  EMPTY_IDENTITY_DOCUMENT,
+  pickIdentityDocument,
+} from "../../utils/identityDocument";
 
 function AuthorizedPersonFields({ person, index, onChange, onRemove, canRemove }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -61,7 +66,7 @@ function AuthorizedPersonFields({ person, index, onChange, onRemove, canRemove }
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
         </div>
-        <div>
+        <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">PESEL</label>
           <input
             type="text"
@@ -81,32 +86,29 @@ function AuthorizedPersonFields({ person, index, onChange, onRemove, canRemove }
               checked={!!person.noPesel}
               onChange={(e) => {
                 const checked = e.target.checked;
-                update("noPesel", checked);
-                if (checked) {
-                  update("pesel", "");
-                } else {
-                  update("documentNumber", "");
-                }
+                onChange(index, {
+                  ...person,
+                  noPesel: checked,
+                  pesel: checked ? "" : person.pesel,
+                  ...(checked ? {} : EMPTY_IDENTITY_DOCUMENT),
+                });
               }}
               className="mt-0.5 w-4 h-4 rounded border-gray-400"
             />
             <span className="text-sm text-gray-700">Nie posiadam numeru PESEL</span>
           </label>
-          {person.noPesel && (
-            <div className="mt-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Numer dokumentu tożsamości
-              </label>
-              <input
-                type="text"
-                value={person.documentNumber || ""}
-                onChange={(e) => update("documentNumber", e.target.value)}
-                placeholder="np. paszport / dowód"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              />
-            </div>
-          )}
         </div>
+        {person.noPesel && (
+          <div className="md:col-span-2">
+            <IdentityDocumentFields
+              size="md"
+              values={pickIdentityDocument(person)}
+              onChange={(field, value) =>
+                onChange(index, { ...person, [field]: value })
+              }
+            />
+          </div>
+        )}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Numer telefonu</label>
           <div className="flex">

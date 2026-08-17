@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import QRCode from "react-qr-code";
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy, ExternalLink, Tablet, X } from "lucide-react";
 import {
   createCorrectionSession,
   getSessionsByPatient,
@@ -43,7 +44,7 @@ function getKioskUrl() {
 export default function PatientKioskCorrectionPanel({
   patientId,
   onCompleted,
-  /** Compact layout for footer placement between action buttons */
+  /** Compact trigger in the patient-form footer; details open in a modal */
   compact = false,
 }) {
   const kioskUrl = getKioskUrl();
@@ -52,6 +53,7 @@ export default function PatientKioskCorrectionPanel({
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [pdfJob, setPdfJob] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const prevStatusRef = useRef(null);
 
   const refreshStatus = useCallback(async () => {
@@ -78,6 +80,9 @@ export default function PatientKioskCorrectionPanel({
     if (!patientId) return;
     let cancelled = false;
     setInitialLoading(true);
+    setSession(null);
+    setPin(null);
+    setPdfJob(null);
     getSessionsByPatient(patientId)
       .then((res) => {
         if (cancelled) return;
@@ -197,20 +202,6 @@ export default function PatientKioskCorrectionPanel({
     toast.success("PIN skopiowany.");
   };
 
-  if (initialLoading) {
-    return (
-      <div
-        className={
-          compact
-            ? "px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-gray-500"
-            : "mb-4 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-gray-500"
-        }
-      >
-        Sprawdzanie sesji aktualizacji…
-      </div>
-    );
-  }
-
   const isActive = session && !TERMINAL_STATUSES.includes(session.status);
   const statusClass =
     STATUS_PILL_CLASS[session?.status] || "bg-white border-gray-200 text-gray-800";
@@ -218,136 +209,44 @@ export default function PatientKioskCorrectionPanel({
   const startLabel = loading
     ? "Tworzenie…"
     : session?.status === "completed"
-      ? "Kolejny PIN"
+      ? "Wygeneruj kolejny PIN aktualizacji"
       : ["cancelled", "expired", "locked"].includes(session?.status)
         ? "Uruchom ponownie"
         : "Wygeneruj PIN aktualizacji";
 
-  if (compact) {
-    return (
-      <div className="flex-1 min-w-0 mx-2 sm:mx-4 px-3 py-2 bg-teal-50/80 border border-teal-200 rounded-lg">
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-          <div className="text-center sm:text-left min-w-0">
-            <p className="text-xs font-semibold text-teal-900">Aktualizacja na tablecie</p>
-            {session ? (
-              <p className="text-[11px] text-teal-800/80 flex flex-wrap items-center justify-center sm:justify-start gap-1.5 mt-0.5">
-                <span
-                  className={`px-1.5 py-0.5 rounded-full border font-medium ${statusClass}`}
-                >
-                  {STATUS_LABELS[session.status] || session.status}
-                </span>
-                {pin && (
-                  <span className="font-mono font-bold tracking-wider text-teal-900">
-                    PIN {pin}
-                  </span>
-                )}
-              </p>
-            ) : (
-              <p className="text-[11px] text-teal-800/70 mt-0.5">
-                Generuj PIN do aktualizacji na iPadzie
-              </p>
-            )}
-          </div>
-
-          {!isActive && (
-            <button
-              type="button"
-              onClick={handleStart}
-              disabled={loading}
-              className="shrink-0 px-3 py-1.5 rounded-md bg-teal-700 hover:bg-teal-800 text-white text-xs font-medium disabled:opacity-50"
-            >
-              {startLabel}
-            </button>
-          )}
-
-          {pin && (
-            <button
-              type="button"
-              onClick={copyPin}
-              className="shrink-0 inline-flex items-center gap-1 px-2 py-1.5 text-xs border border-gray-300 bg-white rounded-md hover:bg-gray-50"
-            >
-              <Copy size={12} />
-              Kopiuj
-            </button>
-          )}
-
-          {isActive && (
-            <>
-              <a
-                href={kioskUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="shrink-0 inline-flex items-center gap-1 text-xs text-teal-700 hover:underline"
-              >
-                <ExternalLink size={12} />
-                Kiosk
-              </a>
-              <button
-                type="button"
-                onClick={handleCancel}
-                disabled={loading}
-                className="shrink-0 text-xs text-red-600 hover:underline disabled:opacity-50"
-              >
-                Anuluj
-              </button>
-            </>
-          )}
-
-          {session?.status === "completed" && session.packageId && (
-            <button
-              type="button"
-              onClick={handleDownload}
-              disabled={pdfJob && pdfJob.status !== "completed"}
-              className="shrink-0 text-xs text-teal-700 font-medium hover:underline disabled:opacity-50"
-            >
-              Pobierz dokumenty
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mb-6 p-4 bg-teal-50/60 border border-teal-200 rounded-xl">
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-        <div>
-          <h3 className="text-sm font-bold text-teal-900">Aktualizacja danych na tablecie</h3>
-          <p className="text-xs text-teal-800/80 mt-1 max-w-2xl">
-            Pacjent może ponownie przejść formularz na iPadzie, zaktualizować dane i podpisać
-            dokumenty. System zapisze nową wersję dokumentów (V2, V3…), a poprzednia wersja
-            pozostanie w historii.
-          </p>
-        </div>
+  const details = initialLoading ? (
+    <p className="text-sm text-gray-500">Sprawdzanie sesji aktualizacji…</p>
+  ) : (
+    <>
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <p className="text-sm text-gray-600 max-w-xl">
+          Pacjent może ponownie przejść formularz na iPadzie, zaktualizować dane i podpisać
+          dokumenty. System zapisze nową wersję dokumentów (V2, V3…), a poprzednia wersja
+          pozostanie w historii.
+        </p>
         {!isActive && (
           <button
             type="button"
             onClick={handleStart}
             disabled={loading}
-            className="shrink-0 px-4 py-2 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium disabled:opacity-50"
+            className="shrink-0 px-4 py-2.5 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium disabled:opacity-50"
           >
-            {loading
-              ? "Tworzenie…"
-              : session?.status === "completed"
-                ? "Wygeneruj kolejny PIN aktualizacji"
-                : ["cancelled", "expired", "locked"].includes(session?.status)
-                  ? "Uruchom ponownie"
-                  : "Wygeneruj PIN aktualizacji"}
+            {startLabel}
           </button>
         )}
       </div>
 
       {session && (
-        <div className="text-sm space-y-3">
+        <div className="text-sm space-y-4">
           <p className="flex flex-wrap items-center gap-2">
             <span className="text-gray-600">Status:</span>
-            <span className={`px-2 py-0.5 rounded-full border text-xs font-medium ${statusClass}`}>
+            <span className={`px-2.5 py-1 rounded-full border text-sm font-medium ${statusClass}`}>
               {STATUS_LABELS[session.status] || session.status}
             </span>
             {isActive && <span className="text-xs text-gray-400">aktualizacja na żywo</span>}
           </p>
           {["cancelled", "expired"].includes(session.status) && (
-            <p className="text-xs text-orange-800">
+            <p className="text-sm text-orange-800">
               {session.status === "expired"
                 ? "Sesja wygasła (brak aktywności lub upłynął czas PIN). Kliknij „Uruchom ponownie”, aby wygenerować nowy PIN."
                 : "Sesja anulowana. Kliknij „Uruchom ponownie”, aby wygenerować nowy PIN."}
@@ -355,43 +254,45 @@ export default function PatientKioskCorrectionPanel({
           )}
 
           {pin && (
-            <div className="flex flex-wrap items-center gap-3 p-3 bg-white rounded-lg border border-teal-100">
+            <div className="flex flex-wrap items-center gap-4 p-4 bg-teal-50 rounded-xl border border-teal-200">
               <div>
-                <p className="text-xs text-gray-500 mb-1">Kod PIN dla pacjenta</p>
-                <p className="text-2xl font-mono font-bold tracking-widest text-teal-900">{pin}</p>
+                <p className="text-sm text-gray-600 mb-1">Kod PIN dla pacjenta</p>
+                <p className="text-4xl sm:text-5xl font-mono font-bold tracking-[0.25em] text-teal-900">
+                  {pin}
+                </p>
               </div>
               <button
                 type="button"
                 onClick={copyPin}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm border border-gray-300 bg-white rounded-lg hover:bg-gray-50"
               >
-                <Copy size={14} />
+                <Copy size={16} />
                 Kopiuj PIN
               </button>
             </div>
           )}
 
           {isActive && (
-            <div className="flex flex-wrap gap-3 items-start">
-              <div className="p-3 bg-white rounded-lg border border-gray-200">
-                <QRCode value={kioskUrl} size={96} />
-                <p className="text-[10px] text-gray-500 mt-2 text-center max-w-[96px]">Kiosk</p>
+            <div className="flex flex-wrap gap-4 items-start">
+              <div className="p-4 bg-white rounded-xl border border-gray-200">
+                <QRCode value={kioskUrl} size={128} />
+                <p className="text-xs text-gray-500 mt-2 text-center">Kiosk</p>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 <a
                   href={kioskUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-teal-700 hover:underline"
                 >
-                  <ExternalLink size={14} />
+                  <ExternalLink size={16} />
                   Otwórz kiosk
                 </a>
                 <button
                   type="button"
                   onClick={handleCancel}
                   disabled={loading}
-                  className="text-sm text-red-600 hover:underline disabled:opacity-50"
+                  className="text-sm text-red-600 hover:underline disabled:opacity-50 text-left"
                 >
                   Anuluj sesję
                 </button>
@@ -402,10 +303,10 @@ export default function PatientKioskCorrectionPanel({
           {session.status === "completed" && session.packageId && (
             <div className="space-y-2">
               {pdfJob && ["pending", "processing"].includes(pdfJob.status) && (
-                <p className="text-xs text-amber-800">Generowanie dokumentów PDF…</p>
+                <p className="text-sm text-amber-800">Generowanie dokumentów PDF…</p>
               )}
               {pdfJob?.status === "failed" && (
-                <p className="text-xs text-red-700">
+                <p className="text-sm text-red-700">
                   Błąd PDF: {pdfJob.errorMessage || "nieznany błąd"}
                 </p>
               )}
@@ -424,6 +325,70 @@ export default function PatientKioskCorrectionPanel({
           )}
         </div>
       )}
+    </>
+  );
+
+  const modal = showModal
+    ? createPortal(
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="kiosk-correction-title"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
+              <div>
+                <h2 id="kiosk-correction-title" className="text-lg font-bold text-gray-900">
+                  Aktualizacja danych pacjenta
+                </h2>
+                <p className="text-sm text-gray-500 mt-0.5">Sesja na tablecie / iPadzie</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
+                aria-label="Zamknij"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-5">{details}</div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  if (compact) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setShowModal(true)}
+          className="shrink-0 mx-2 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-teal-700 hover:bg-teal-800 text-white text-sm font-medium"
+        >
+          <Tablet size={16} />
+          Aktualizacja danych pacjenta
+          {isActive && (
+            <span className="hidden sm:inline px-1.5 py-0.5 rounded-full bg-white/20 text-[11px] font-medium">
+              {STATUS_LABELS[session.status] || session.status}
+            </span>
+          )}
+        </button>
+        {modal}
+      </>
+    );
+  }
+
+  return (
+    <div className="mb-6 p-4 bg-teal-50/60 border border-teal-200 rounded-xl">
+      <h3 className="text-sm font-bold text-teal-900 mb-3">Aktualizacja danych na tablecie</h3>
+      {details}
     </div>
   );
 }

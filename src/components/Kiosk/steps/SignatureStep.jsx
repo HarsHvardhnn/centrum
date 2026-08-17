@@ -4,8 +4,6 @@ import SignaturePad from "../SignaturePad";
 export default function SignatureStep({
   formData = {},
   updateFormData,
-  patientType,
-  mode = "full_registration",
   validation = {},
   onValidationChange,
 }) {
@@ -28,23 +26,6 @@ export default function SignatureStep({
 
   return (
     <div className="space-y-6">
-      {/* Patient Summary */}
-      <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
-        <h4 className="font-semibold text-teal-900 mb-2">Podsumowanie danych pacjenta</h4>
-        <div className="text-teal-800 text-sm space-y-1">
-          <p><strong>{formData.firstName} {formData.lastName}</strong></p>
-          {patientType !== 'international' ? (
-            <p>PESEL: {formData.pesel}</p>
-          ) : (
-            <p>{formData.documentType}: {formData.documentNumber} ({formData.documentCountry})</p>
-          )}
-          <p>Adres: {formData.street}, {formData.zipCode} {formData.city}</p>
-          <p>Telefon: {formData.phoneCode} {formData.phone}</p>
-          {formData.email && <p>E-mail: {formData.email}</p>}
-        </div>
-      </div>
-
-      {/* Signature Section */}
       <div className="bg-gray-50 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Podpis pacjenta</h3>
         <div className="text-sm text-gray-600 mb-4">

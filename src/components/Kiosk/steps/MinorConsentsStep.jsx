@@ -11,6 +11,13 @@ import {
 import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils";
 import { formatGuardianIdentity, isFactualGuardian, needsCourtData } from "../../../utils/guardian";
 import PatientDataEditModal from "../PatientDataEditModal";
+import IdentityDocumentFields from "../../shared/IdentityDocumentFields";
+import {
+  EMPTY_IDENTITY_DOCUMENT,
+  pickIdentityDocument,
+  validateIdentityDocument,
+} from "../../../utils/identityDocument";
+import { EMPTY_AUTHORIZED_PERSON } from "../../../utils/authorizedPersons";
 
 const HEALTHCARE_CONSENT_LABEL =
   "z organizacją udzielanych świadczeń opieki zdrowotnej, w tym prowadzeniem dokumentacji medycznej oraz przypomnieniami o terminie wizyty";
@@ -469,11 +476,9 @@ export default function MinorConsentsStep({
           if (!person.firstName) errors.push(`Imię osoby ${index + 1} jest wymagane.`);
           if (!person.lastName) errors.push(`Nazwisko osoby ${index + 1} jest wymagane.`);
           if (person.noPesel) {
-            if (!String(person.documentNumber || "").trim()) {
-              errors.push(
-                `Numer dokumentu tożsamości osoby ${index + 1} jest wymagany (brak PESEL).`
-              );
-            }
+            errors.push(
+              ...validateIdentityDocument(person, { subject: `Osoba ${index + 1}` })
+            );
           } else if (!person.pesel) {
             errors.push(`PESEL osoby ${index + 1} jest wymagany.`);
           } else if (String(person.pesel).replace(/\D/g, "").length !== 11) {
@@ -950,7 +955,7 @@ export default function MinorConsentsStep({
                     authorizationChoice: checked ? "authorize" : "",
                     authorizedPersons:
                       checked && (!formData.authorizedPersons || formData.authorizedPersons.length === 0)
-                        ? [{}]
+                        ? [EMPTY_AUTHORIZED_PERSON()]
                         : checked
                           ? formData.authorizedPersons
                           : [],
@@ -1039,7 +1044,7 @@ export default function MinorConsentsStep({
                     />
                   </div>
                   
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       {person.noPesel ? "PESEL" : "PESEL *"}
                     </label>
@@ -1083,7 +1088,7 @@ export default function MinorConsentsStep({
                             ...person,
                             noPesel: checked,
                             pesel: checked ? "" : person.pesel,
-                            documentNumber: checked ? person.documentNumber || "" : "",
+                            ...(checked ? {} : EMPTY_IDENTITY_DOCUMENT),
                           };
                           update("authorizedPersons", newPersons);
                         }}
@@ -1092,25 +1097,18 @@ export default function MinorConsentsStep({
                       <span className="text-sm text-gray-700">Nie posiadam numeru PESEL</span>
                     </label>
                     {person.noPesel ? (
-                      <div className="mt-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Numer dokumentu tożsamości *
-                        </label>
-                        <input
-                          type="text"
-                          value={person.documentNumber || ""}
-                          onChange={(e) => {
-                            const newPersons = [...formData.authorizedPersons];
-                            newPersons[index] = {
-                              ...person,
-                              documentNumber: e.target.value,
-                            };
-                            update("authorizedPersons", newPersons);
-                          }}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="np. paszport / dowód"
-                        />
-                      </div>
+                      <IdentityDocumentFields
+                        className="mt-3"
+                        values={pickIdentityDocument(person)}
+                        onChange={(field, value) => {
+                          const newPersons = [...formData.authorizedPersons];
+                          newPersons[index] = {
+                            ...person,
+                            [field]: value,
+                          };
+                          update("authorizedPersons", newPersons);
+                        }}
+                      />
                     ) : (
                       (() => {
                         const validation = validateAuthorizedPersonPesel(
@@ -1282,7 +1280,7 @@ export default function MinorConsentsStep({
               <button
                 type="button"
                 onClick={() => {
-                  const newPersons = [...(formData.authorizedPersons || []), {}];
+                  const newPersons = [...(formData.authorizedPersons || []), EMPTY_AUTHORIZED_PERSON()];
                   update("authorizedPersons", newPersons);
                 }}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-blue-300 text-blue-700 hover:bg-blue-50 transition-colors"

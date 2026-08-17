@@ -106,7 +106,7 @@ export default function KioskStepWizard({
         queueMicrotask(() => onFormDataChange(newData));
       }
       
-      if (onAutoSave) {
+      if (onAutoSave && !loading) {
         if (autoSaveTimeoutRef.current) {
           clearTimeout(autoSaveTimeoutRef.current);
         }
@@ -125,7 +125,7 @@ export default function KioskStepWizard({
       
       return newData;
     });
-  }, [onAutoSave, onFormDataChange]);
+  }, [loading, onAutoSave, onFormDataChange]);
 
   useEffect(() => {
     return () => {
@@ -148,6 +148,7 @@ export default function KioskStepWizard({
   }, [currentValidation]);
 
   const goToNextStep = useCallback(() => {
+    if (loading) return;
     const validation = validateCurrentStep();
     setStepValidation(prev => ({ ...prev, [currentStep.id]: validation }));
 
@@ -180,23 +181,23 @@ export default function KioskStepWizard({
       }
       scrollContentToTop();
     }
-  }, [currentStep?.component, currentStep?.id, formData, isLastStep, onSubmit, updateFormData, validateCurrentStep, scrollContentToTop]);
+  }, [currentStep?.component, currentStep?.id, formData, isLastStep, loading, onSubmit, updateFormData, validateCurrentStep, scrollContentToTop]);
 
   const goToPreviousStep = useCallback(() => {
-    if (!isFirstStep) {
-      setShowErrors(false);
-      setCurrentStepIndex(prev => prev - 1);
-      scrollContentToTop();
-    }
-  }, [isFirstStep, scrollContentToTop]);
+    if (loading || isFirstStep) return;
+    setShowErrors(false);
+    setCurrentStepIndex(prev => prev - 1);
+    scrollContentToTop();
+  }, [isFirstStep, loading, scrollContentToTop]);
 
   const goToStep = useCallback((stepIndex) => {
+    if (loading) return;
     if (stepIndex >= 0 && stepIndex < totalSteps) {
       setShowErrors(false);
       setCurrentStepIndex(stepIndex);
       scrollContentToTop();
     }
-  }, [totalSteps, scrollContentToTop]);
+  }, [loading, totalSteps, scrollContentToTop]);
 
   const StepComponent = stepComponents[currentStep?.component];
 
@@ -211,7 +212,7 @@ export default function KioskStepWizard({
   return (
     <div className="h-full min-h-0 flex flex-col w-full">
       {/* Sticky step header */}
-      <div className="shrink-0 sticky top-0 z-30 bg-white px-4 sm:px-6 pt-3 pb-3 border-b border-gray-100">
+      <div className="shrink-0 sticky top-0 z-30 bg-white px-5 sm:px-8 pt-3 pb-3 border-b border-gray-100">
         <div className="flex justify-between items-center gap-3 mb-2">
           <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate">
             {currentStep.title}
@@ -235,7 +236,7 @@ export default function KioskStepWizard({
       {/* Scrollable content — only this region scrolls on iPad */}
       <div
         ref={contentRef}
-        className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4"
+        className={`flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 sm:px-8 py-5 ${loading ? "pointer-events-none select-none" : ""}`}
       >
         <div className="pb-2">
           <StepComponent
@@ -276,11 +277,11 @@ export default function KioskStepWizard({
       </div>
 
       {/* Sticky footer — always visible on iPad */}
-      <div className="shrink-0 sticky bottom-0 z-30 border-t border-gray-200 bg-white px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-3 shadow-[0_-6px_16px_rgba(0,0,0,0.06)] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="shrink-0 sticky bottom-0 z-30 border-t border-gray-200 bg-white px-5 sm:px-8 py-3 sm:py-4 flex justify-between items-center gap-3 shadow-[0_-6px_16px_rgba(0,0,0,0.06)] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <button
           type="button"
           onClick={goToPreviousStep}
-          disabled={isFirstStep}
+          disabled={isFirstStep || loading}
           className="min-w-[7rem] px-5 py-3.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors touch-manipulation text-base"
         >
           Wstecz

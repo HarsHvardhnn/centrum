@@ -1,3 +1,9 @@
+import {
+  formatIdentityDocumentLabel,
+  guardianIdentityValues,
+  toDateInputValue,
+} from "./identityDocument";
+
 export const GUARDIAN_RELATION_OPTIONS = [
   { value: "matka", label: "Matka" },
   { value: "ojciec", label: "Ojciec" },
@@ -29,7 +35,7 @@ export const FACTUAL_GUARDIAN_WARNING =
 /** Inline identity for UI/PDF: "PESEL …" or "nr dokumentu …" */
 export function formatGuardianIdentity(formData = {}) {
   if (formData.guardianNoPesel) {
-    const doc = String(formData.guardianDocumentNumber || "").trim();
+    const doc = formatIdentityDocumentLabel(guardianIdentityValues(formData));
     return doc ? `nr dokumentu ${doc}` : "bez PESEL";
   }
   const pesel = String(formData.guardianPesel || "").replace(/\D/g, "").slice(0, 11);
@@ -75,6 +81,10 @@ export function mapPatientGuardianFields(patient = {}) {
     guardianPesel: g.pesel || "",
     guardianNoPesel: !!g.noPesel,
     guardianDocumentNumber: g.documentNumber || "",
+    guardianDocumentType: g.documentType || "",
+    guardianDocumentCountry: g.documentCountry || "",
+    guardianDocumentIssueDate: toDateInputValue(g.documentIssueDate),
+    guardianDocumentExpiryDate: toDateInputValue(g.documentExpiryDate),
     guardianRelation: relation,
     representationType,
     guardianRelationDetail: g.relationDetail || "",
@@ -97,8 +107,15 @@ export function buildGuardianPayload(formData = {}) {
   const pesel = noPesel
     ? ""
     : String(formData.guardianPesel || "").replace(/\D/g, "").slice(0, 11);
-  const documentNumber = noPesel
-    ? String(formData.guardianDocumentNumber || "").trim()
+  const identity = noPesel ? guardianIdentityValues(formData) : {};
+  const documentNumber = noPesel ? String(identity.documentNumber || "").trim() : "";
+  const documentType = noPesel ? String(identity.documentType || "").trim() : "";
+  const documentCountry = noPesel ? String(identity.documentCountry || "").trim() : "";
+  const documentIssueDate = noPesel && identity.documentIssueDate
+    ? String(identity.documentIssueDate).slice(0, 10)
+    : "";
+  const documentExpiryDate = noPesel && identity.documentExpiryDate
+    ? String(identity.documentExpiryDate).slice(0, 10)
     : "";
   const relation = String(formData.guardianRelation || "").trim();
   const relationDetail = String(formData.guardianRelationDetail || "").trim();
@@ -137,6 +154,10 @@ export function buildGuardianPayload(formData = {}) {
     pesel,
     noPesel,
     documentNumber,
+    documentType,
+    documentCountry,
+    documentIssueDate: documentIssueDate || undefined,
+    documentExpiryDate: documentExpiryDate || undefined,
     relation: relation || undefined,
     relationDetail: relationDetail || undefined,
     phone,

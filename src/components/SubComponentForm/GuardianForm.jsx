@@ -15,9 +15,15 @@ import {
   isFactualGuardian,
   isGuardianStatementDocument,
 } from "../../utils/guardian";
+import IdentityDocumentFields from "../shared/IdentityDocumentFields";
+import {
+  clearedGuardianIdentity,
+  guardianIdentityFromPatch,
+  guardianIdentityValues,
+} from "../../utils/identityDocument";
 
 const GuardianForm = () => {
-  const { formData, updateFormData } = useFormContext();
+  const { formData, updateFormData, updateMultipleFields } = useFormContext();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const phoneCode = formData.guardianPhoneCode || "+48";
@@ -110,7 +116,7 @@ const GuardianForm = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             />
           </div>
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">PESEL</label>
             <input
               type="text"
@@ -130,12 +136,11 @@ const GuardianForm = () => {
                 checked={!!formData.guardianNoPesel}
                 onChange={(e) => {
                   const checked = e.target.checked;
-                  updateFormData("guardianNoPesel", checked);
-                  if (checked) {
-                    updateFormData("guardianPesel", "");
-                  } else {
-                    updateFormData("guardianDocumentNumber", "");
-                  }
+                  updateMultipleFields({
+                    guardianNoPesel: checked,
+                    guardianPesel: checked ? "" : formData.guardianPesel,
+                    ...(checked ? {} : clearedGuardianIdentity()),
+                  });
                 }}
                 className="mt-0.5 w-4 h-4 rounded border-gray-400"
               />
@@ -143,15 +148,12 @@ const GuardianForm = () => {
             </label>
             {formData.guardianNoPesel && (
               <div className="mt-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Numer dokumentu tożsamości
-                </label>
-                <input
-                  type="text"
-                  value={formData.guardianDocumentNumber || ""}
-                  onChange={(e) => update("guardianDocumentNumber", e.target.value)}
-                  placeholder="np. paszport / dowód"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                <IdentityDocumentFields
+                  size="md"
+                  values={guardianIdentityValues(formData)}
+                  onChange={(field, value) =>
+                    updateMultipleFields(guardianIdentityFromPatch(field, value))
+                  }
                 />
               </div>
             )}

@@ -3,6 +3,15 @@ import { formatPolishPostalCode, validatePolishPostalCode } from "../../utils/po
 import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from "../../utils/phoneUtils";
 import { getGenderFromPesel } from "../../utils/peselUtils";
 import PhoneCountrySelect from "./PhoneCountrySelect";
+import IdentityDocumentFields from "../shared/IdentityDocumentFields";
+import {
+  clearedGuardianIdentity,
+  guardianIdentityFromPatch,
+  guardianIdentityValues,
+  validateIdentityDocument,
+  isIdentityDocumentExpired,
+  todayYmd,
+} from "../../utils/identityDocument";
 
 const VOIVODESHIPS = [
   "dolnośląskie", "kujawsko-pomorskie", "lubelskie", "lubuskie", "łódzkie",
@@ -60,6 +69,10 @@ export default function PatientDataEditModal({
         guardianPesel: formData.guardianPesel || "",
         guardianNoPesel: !!formData.guardianNoPesel,
         guardianDocumentNumber: formData.guardianDocumentNumber || "",
+        guardianDocumentType: formData.guardianDocumentType || "",
+        guardianDocumentCountry: formData.guardianDocumentCountry || "",
+        guardianDocumentIssueDate: formData.guardianDocumentIssueDate || "",
+        guardianDocumentExpiryDate: formData.guardianDocumentExpiryDate || "",
         guardianPhoneCode: formData.guardianPhoneCode || "+48",
         guardianPhone: formData.guardianPhone || "",
         guardianEmail: formData.guardianEmail || "",
@@ -136,7 +149,7 @@ export default function PatientDataEditModal({
         if (issueDate > today) {
           newErrors.push("Data wydania dokumentu nie może być w przyszłości.");
         }
-        if (expiryDate < today) {
+        if (isIdentityDocumentExpired(editData.documentExpiryDate)) {
           newErrors.push("Dokument jest już wygasły.");
         }
         if (issueDate >= expiryDate) {
@@ -179,11 +192,11 @@ export default function PatientDataEditModal({
       if (!editData.guardianFirstName?.trim()) newGuardianErrors.push("Imię opiekuna jest wymagane.");
       if (!editData.guardianLastName?.trim()) newGuardianErrors.push("Nazwisko opiekuna jest wymagane.");
       if (editData.guardianNoPesel) {
-        if (!editData.guardianDocumentNumber?.trim()) {
-          newGuardianErrors.push(
-            "Numer dokumentu tożsamości opiekuna jest wymagany (brak PESEL)."
-          );
-        }
+        newGuardianErrors.push(
+          ...validateIdentityDocument(guardianIdentityValues(editData), {
+            subject: "Opiekun",
+          })
+        );
       } else if (!editData.guardianPesel?.trim() || editData.guardianPesel.length !== 11) {
         newGuardianErrors.push("PESEL opiekuna musi mieć 11 cyfr.");
       }
@@ -362,6 +375,7 @@ export default function PatientDataEditModal({
                       value={editData.documentExpiryDate || ""}
                       onChange={(e) => update("documentExpiryDate", e.target.value)}
                       readOnly={readOnlyFields}
+                      min={todayYmd()}
                       className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -560,9 +574,7 @@ export default function PatientDataEditModal({
                           ...prev,
                           guardianNoPesel: checked,
                           guardianPesel: checked ? "" : prev.guardianPesel,
-                          guardianDocumentNumber: checked
-                            ? prev.guardianDocumentNumber || ""
-                            : "",
+                          ...(checked ? {} : clearedGuardianIdentity()),
                         }));
                       }}
                       className="mt-0.5 w-5 h-5 rounded border-gray-400 text-yellow-700 focus:ring-yellow-500"
@@ -570,19 +582,17 @@ export default function PatientDataEditModal({
                     <span className="text-sm text-gray-700">Nie posiadam numeru PESEL</span>
                   </label>
                   {editData.guardianNoPesel && (
-                    <div className="mt-3">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Numer dokumentu tożsamości *
-                      </label>
-                      <input
-                        type="text"
-                        value={editData.guardianDocumentNumber || ""}
-                        onChange={(e) => update("guardianDocumentNumber", e.target.value)}
-                        readOnly={readOnlyFields}
-                        placeholder="np. paszport / dowód"
-                        className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                      />
-                    </div>
+                    <IdentityDocumentFields
+                      className="mt-3"
+                      values={guardianIdentityValues(editData)}
+                      onChange={(field, value) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          ...guardianIdentityFromPatch(field, value),
+                        }))
+                      }
+                      readOnly={readOnlyFields}
+                    />
                   )}
                 </div>
 

@@ -352,7 +352,9 @@ const ConsentDocumentUpload = ({currentPatientId}) => {
                         </div>
                         <span
                           className={
-                            consent.agreed ? "text-gray-800 text-sm" : "text-gray-600 text-sm"
+                            consent.agreed
+                              ? "text-gray-800 text-sm leading-relaxed break-words"
+                              : "text-gray-600 text-sm leading-relaxed break-words"
                           }
                         >
                           {consent.text}

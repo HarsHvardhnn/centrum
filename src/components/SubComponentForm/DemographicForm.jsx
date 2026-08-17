@@ -6,6 +6,7 @@ import patientService from "../../helpers/patientHelper";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { PHONE_COUNTRY_CODES, FlagIcon } from "../../constants/phoneCountryCodes";
+import { isIdentityDocumentExpired, todayYmd } from "../../utils/identityDocument";
 
 const DOCUMENT_TYPES = [
   { value: "", label: "Wybierz typ" },
@@ -600,8 +601,16 @@ const DemographicsForm = ({
                   name="documentExpiryDate"
                   value={formatDateForInput(formData.documentExpiryDate) || ""}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  min={todayYmd()}
+                  className={`w-full px-3 py-2 border rounded-md ${
+                    isIdentityDocumentExpired(formData.documentExpiryDate)
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
                 />
+                {isIdentityDocumentExpired(formData.documentExpiryDate) && (
+                  <p className="text-red-500 text-xs mt-1">Dokument jest już wygasły.</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

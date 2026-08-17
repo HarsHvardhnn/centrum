@@ -16,6 +16,7 @@ import MinorRegistrationForm from "./MinorRegistrationForm";
 import InternationalPatientStep from "./InternationalPatientStep";
 import { detectPatientType, PATIENT_TYPES } from "./PatientTypeDetector";
 import KioskNumericEntry from "./KioskNumericEntry";
+import KioskLoadingOverlay from "./KioskLoadingOverlay";
 
 const STEPS = {
   PIN: "pin",
@@ -42,8 +43,10 @@ export default function KioskApp() {
   const idleTimerRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const lastSaveRef = useRef(0);
+  const submittingRef = useRef(false);
 
   const resetToPin = useCallback(() => {
+    submittingRef.current = false;
     clearKioskToken();
     setStep(STEPS.PIN);
     setPin("");
@@ -68,8 +71,9 @@ export default function KioskApp() {
 
   const resetIdleTimer = useCallback(() => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-    if (step === STEPS.PIN || step === STEPS.DONE) return;
+    if (step === STEPS.PIN || step === STEPS.DONE || submittingRef.current) return;
     idleTimerRef.current = setTimeout(() => {
+      if (submittingRef.current) return;
       toast.info("Sesja wygasła z powodu braku aktywności.");
       endSessionAndReset("idle");
     }, IDLE_TIMEOUT_MS);
@@ -100,12 +104,28 @@ export default function KioskApp() {
   }, []);
 
   const throttledSaveKioskForm = useCallback((formData) => {
+    if (submittingRef.current) return;
     // Keep heavy scan payloads out of autosave (sent on complete). Avoids 413 / iPad freezes.
+    const lightweightScans = (formData.documentScans || [])
+      .filter((s) => s?.existingDocumentId && !s?.dataUrl)
+      .map((s) => ({
+        id: s.id,
+        existingDocumentId: s.existingDocumentId,
+        name: s.name,
+        type: s.type,
+        size: s.size,
+        url: s.url,
+      }));
     const {
       documentScans: _scans,
       uploadedDocuments: _uploaded,
-      ...lightweightForm
+      ...restForm
     } = formData || {};
+    const lightweightForm = {
+      ...restForm,
+      documentScans: lightweightScans,
+      existingDocumentScansLoaded: formData.existingDocumentScansLoaded,
+    };
 
     const now = Date.now();
     const timeSinceLastSave = now - lastSaveRef.current;
@@ -318,7 +338,14 @@ export default function KioskApp() {
   };
 
   const handleComplete = async (form) => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setLoading(true);
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
     try {
       await saveKioskForm(form);
       const res = await completeKioskRegistration(form);
@@ -326,6 +353,7 @@ export default function KioskApp() {
       toast.success(res.message || "Rejestracja zakończona.");
       setTimeout(resetToPin, 12000);
     } catch (err) {
+      submittingRef.current = false;
       toast.error(err.response?.data?.message || "Nie udało się zakończyć rejestracji.");
     } finally {
       setLoading(false);
@@ -337,22 +365,30 @@ export default function KioskApp() {
   const totalSteps = isMinorPatient ? 6 : 5; // Minors have 6 steps, adults have 5
   const stepIndicator = step === STEPS.PESEL ? 1 : step === STEPS.FORM ? 2 : step === STEPS.DONE ? totalSteps + 1 : 0;
 
+  const isSubmittingForm = loading && step === STEPS.FORM;
+
   return (
-    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-gradient-to-b from-teal-50 to-white flex flex-col">
-      <header className="shrink-0 sticky top-0 z-50 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 shadow-sm">
-        <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
+    <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-gradient-to-b from-teal-50 to-white flex flex-col pt-[max(0.75rem,env(safe-area-inset-top))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
+      {isSubmittingForm && (
+        <KioskLoadingOverlay
+          title="Zapisywanie rejestracji"
+          message="Proszę czekać. Nie zamykaj tej strony i nie klikaj przycisków — trwa zapis danych."
+        />
+      )}
+      <header className="shrink-0 sticky top-0 z-50 bg-white border-b border-gray-200 px-5 sm:px-8 py-3 sm:py-4 shadow-sm">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
           <img
             src="/images/cm7-logo.png"
             alt="Centrum Medyczne 7"
             className="h-10 sm:h-12 w-auto object-contain shrink-0"
           />
-          <div className="text-right">
-            <h1 className="text-lg sm:text-xl font-bold text-gray-900">CM7</h1>
-            <p className="text-xs sm:text-sm text-gray-500">Rejestracja pacjenta</p>
+          <div className="text-right min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">CM7</h1>
+            <p className="text-xs sm:text-sm text-gray-500 truncate">Rejestracja pacjenta</p>
           </div>
         </div>
         {stepIndicator > 0 && step !== STEPS.DONE && (
-          <div className="max-w-3xl mx-auto mt-3">
+          <div className="max-w-5xl mx-auto mt-3">
             <div className="flex justify-between items-center mb-1.5">
               <div className="text-xs sm:text-sm text-gray-500">
                 Krok {stepIndicator} z {totalSteps}
@@ -378,8 +414,8 @@ export default function KioskApp() {
         }`}
       >
         <div
-          className={`w-full max-w-3xl mx-auto flex flex-col min-h-0 ${
-            step === STEPS.FORM ? "flex-1 h-full px-3 sm:px-4 pb-0 pt-2" : "px-4 sm:px-6 py-3"
+          className={`w-full max-w-5xl mx-auto flex flex-col min-h-0 ${
+            step === STEPS.FORM ? "flex-1 h-full px-5 sm:px-8 pb-0 pt-2" : "px-5 sm:px-8 py-3"
           }`}
         >
           {step === STEPS.PIN && (
@@ -509,17 +545,19 @@ export default function KioskApp() {
 
           {step === STEPS.FORM && (
             <div className="flex-1 min-h-0 flex flex-col bg-white rounded-t-2xl sm:rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="shrink-0 px-4 sm:px-6 pt-3 pb-2 border-b border-gray-100 bg-white">
+              <div className="shrink-0 px-5 sm:px-8 pt-3 pb-2 border-b border-gray-100 bg-white">
                 <button
                   type="button"
                   onClick={() => {
+                    if (loading) return;
                     if (patientType === PATIENT_TYPES.INTERNATIONAL) {
                       setStep(STEPS.INTERNATIONAL);
                     } else {
                       setStep(STEPS.PESEL);
                     }
                   }}
-                  className="text-sm text-teal-700 mb-1 hover:underline touch-manipulation"
+                  disabled={loading}
+                  className="text-sm text-teal-700 mb-1 hover:underline touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
                 >
                   ← Wróć do weryfikacji
                 </button>
@@ -531,7 +569,12 @@ export default function KioskApp() {
                       : getFormTitle(patientType)}
                 </h2>
               </div>
-              <div className="flex-1 min-h-0 flex flex-col">{renderForm()}</div>
+              <div
+                className={`flex-1 min-h-0 flex flex-col ${loading ? "pointer-events-none select-none" : ""}`}
+                aria-hidden={loading}
+              >
+                {renderForm()}
+              </div>
             </div>
           )}
 

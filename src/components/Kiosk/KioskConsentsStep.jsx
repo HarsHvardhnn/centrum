@@ -12,6 +12,11 @@ import {
   EMPTY_AUTHORIZED_PERSON,
   syncSmsConsentFromHealthcare,
 } from "./kioskConstants";
+import IdentityDocumentFields from "../shared/IdentityDocumentFields";
+import {
+  EMPTY_IDENTITY_DOCUMENT,
+  pickIdentityDocument,
+} from "../../utils/identityDocument";
 
 function ConsentCard({ title, required, children }) {
   return (
@@ -89,7 +94,7 @@ function AuthorizedPersonCard({ person, index, onChange, onRemove, canRemove }) 
                   ...person,
                   noPesel: checked,
                   pesel: checked ? "" : person.pesel,
-                  documentNumber: checked ? person.documentNumber || "" : "",
+                  ...(checked ? {} : EMPTY_IDENTITY_DOCUMENT),
                 });
               }}
               className="mt-0.5 w-4 h-4 rounded border-gray-400 text-teal-700 focus:ring-teal-500"
@@ -97,13 +102,12 @@ function AuthorizedPersonCard({ person, index, onChange, onRemove, canRemove }) 
             <span className="text-xs text-gray-700">Nie posiadam numeru PESEL</span>
           </label>
           {person.noPesel && (
-            <div className="mt-3">
-              <Input
-                label="Numer dokumentu tożsamości *"
-                value={person.documentNumber}
-                onChange={(v) => update("documentNumber", v)}
-              />
-            </div>
+            <IdentityDocumentFields
+              className="mt-3"
+              size="sm"
+              values={pickIdentityDocument(person)}
+              onChange={(field, value) => update(field, value)}
+            />
           )}
         </div>
         <div className="sm:col-span-2">

@@ -1,9 +1,12 @@
+import { EMPTY_IDENTITY_DOCUMENT, formatIdentityDocumentLabel, toDateInputValue } from "./identityDocument";
+
 export const EMPTY_AUTHORIZED_PERSON = () => ({
   firstName: "",
   lastName: "",
   pesel: "",
   noPesel: false,
-  documentNumber: "",
+  ...EMPTY_IDENTITY_DOCUMENT,
+  relationshipToPatient: "",
   phoneCode: "+48",
   phone: "",
   street: "",
@@ -14,7 +17,7 @@ export const EMPTY_AUTHORIZED_PERSON = () => ({
 /** Inline identity for UI/PDF copy: "PESEL …" or "nr dokumentu …" */
 export function formatAuthorizedPersonIdentity(person = {}) {
   if (person.noPesel) {
-    const doc = String(person.documentNumber || "").trim();
+    const doc = formatIdentityDocumentLabel(person);
     return doc ? `nr dokumentu ${doc}` : "bez PESEL";
   }
   const pesel = String(person.pesel || "").replace(/\D/g, "").slice(0, 11);
@@ -41,7 +44,7 @@ function contactFieldsToAuthorizedPersons(patient = {}) {
       lastName,
       pesel: String(pesel || "").replace(/\D/g, "").slice(0, 11),
       noPesel: false,
-      documentNumber: "",
+      ...EMPTY_IDENTITY_DOCUMENT,
       phoneCode: patient[`${prefix}PhoneCode`] || "+48",
       phone: String(phone || "").replace(/\D/g, "").slice(0, 15),
       street: String(address || "").trim(),
@@ -63,6 +66,8 @@ export function mapPatientAuthorizationFields(patient = {}) {
         ...person,
         street: person.street || person.address || "",
         phoneCode: person.phoneCode || "+48",
+        documentIssueDate: toDateInputValue(person.documentIssueDate),
+        documentExpiryDate: toDateInputValue(person.documentExpiryDate),
       })),
     };
   }

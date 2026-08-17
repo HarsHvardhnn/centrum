@@ -1,15 +1,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { checkKioskDocument } from "../../helpers/kioskHelper";
-import { detectPatientType, PATIENT_TYPES } from "./PatientTypeDetector";
-
-const DOCUMENT_TYPES = [
-  { value: "", label: "Wybierz typ dokumentu" },
-  { value: "Passport", label: "Paszport" },
-  { value: "ID Card", label: "Dowód osobisty" },
-  { value: "Residence Card", label: "Karta pobytu" },
-  { value: "Other", label: "Inny dokument" },
-];
+import { detectPatientType } from "./PatientTypeDetector";
+import IdentityDocumentFields from "../shared/IdentityDocumentFields";
+import { validateIdentityDocument } from "../../utils/identityDocument";
 
 export default function InternationalPatientStep({ 
   onVerified, 
@@ -29,22 +23,8 @@ export default function InternationalPatientStep({
   const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleVerify = async () => {
-    // Validate form
-    const errors = [];
-    if (!form.documentType) errors.push("Wybierz typ dokumentu");
-    if (!form.documentNumber) errors.push("Wprowadź numer dokumentu");
-    if (!form.documentCountry) errors.push("Wprowadź kraj wydania");
-    if (!form.documentIssueDate) errors.push("Wybierz datę wydania dokumentu");
-    if (!form.documentExpiryDate) errors.push("Wybierz datę wygaśnięcia dokumentu");
+    const errors = validateIdentityDocument(form);
     if (!form.dateOfBirth) errors.push("Wybierz datę urodzenia");
-
-    if (form.documentIssueDate && form.documentExpiryDate) {
-      const issueDate = new Date(form.documentIssueDate);
-      const expiryDate = new Date(form.documentExpiryDate);
-      if (expiryDate <= issueDate) {
-        errors.push("Data wygaśnięcia musi być późniejsza niż data wydania.");
-      }
-    }
 
     if (errors.length > 0) {
       toast.error(errors[0]);
@@ -89,7 +69,7 @@ export default function InternationalPatientStep({
   const isLoading = loading || externalLoading;
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8 max-w-lg mx-auto">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8 max-w-2xl mx-auto">
       <button
         type="button"
         onClick={onBack}
@@ -106,78 +86,7 @@ export default function InternationalPatientStep({
       </p>
 
       <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Typ dokumentu *
-          </label>
-          <select
-            value={form.documentType}
-            onChange={(e) => update("documentType", e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg bg-white"
-            required
-          >
-            {DOCUMENT_TYPES.map((doc) => (
-              <option key={doc.value} value={doc.value}>
-                {doc.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Numer dokumentu *
-          </label>
-          <input
-            type="text"
-            value={form.documentNumber}
-            onChange={(e) => update("documentNumber", e.target.value.toUpperCase())}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg font-mono"
-            placeholder="np. AB123456"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Kraj wydania dokumentu *
-          </label>
-          <input
-            type="text"
-            value={form.documentCountry}
-            onChange={(e) => update("documentCountry", e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
-            placeholder="np. Niemcy, Francja, USA"
-            required
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Data wydania dokumentu *
-            </label>
-            <input
-              type="date"
-              value={form.documentIssueDate}
-              onChange={(e) => update("documentIssueDate", e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Data wygaśnięcia dokumentu *
-            </label>
-            <input
-              type="date"
-              value={form.documentExpiryDate}
-              onChange={(e) => update("documentExpiryDate", e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
-              required
-            />
-          </div>
-        </div>
+        <IdentityDocumentFields values={form} onChange={update} />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
