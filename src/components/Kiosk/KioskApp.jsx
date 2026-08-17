@@ -5,8 +5,10 @@ import {
   checkKioskPesel,
   clearKioskToken,
   completeKioskRegistration,
+  getKioskForm,
+  getKioskToken,
+  pingKioskSession,
   releaseKioskSession,
-  releaseKioskSessionOnUnload,
   saveKioskForm,
 } from "../../helpers/kioskHelper";
 import { normalizePesel } from "../../utils/peselUtils";
@@ -40,6 +42,7 @@ export default function KioskApp() {
   const [peselAttempts, setPeselAttempts] = useState(0);
   const [showPeselFallback, setShowPeselFallback] = useState(false);
   const [lastErrorMessage, setLastErrorMessage] = useState("");
+  const [restoring, setRestoring] = useState(() => !!getKioskToken());
   const idleTimerRef = useRef(null);
   const saveTimeoutRef = useRef(null);
   const lastSaveRef = useRef(0);
@@ -204,36 +207,86 @@ export default function KioskApp() {
     };
   }, [resetIdleTimer]);
 
-  // After hard refresh: leftover token means the previous session was interrupted
+  // Restore an in-flight tablet session after refresh instead of showing PIN
+  // while reception still sees "Formularz w trakcie".
   useEffect(() => {
-    if (step !== STEPS.PIN) return undefined;
     let cancelled = false;
     (async () => {
-      const released = await releaseKioskSession("interrupted");
-      if (!cancelled && released) {
+      if (!getKioskToken()) {
+        setRestoring(false);
+        return;
+      }
+      try {
+        const res = await getKioskForm();
+        if (cancelled) return;
+        const session = res.session;
+        const fd = res.formData || {};
+        const status = session?.status;
+        if (!session || ["expired", "cancelled", "locked", "completed"].includes(status)) {
+          clearKioskToken();
+          return;
+        }
+
+        const detectedType = detectPatientType(fd);
+        const peselDigits = String(fd.pesel || "").replace(/\D/g, "");
+        const hasIdentity =
+          peselDigits.length === 11 ||
+          (!!fd.isInternationalPatient && !!String(fd.documentNumber || "").trim());
+        const hasFormProgress = hasIdentity || !!String(fd.firstName || "").trim();
+
+        setSessionInfo(session);
+        setFormData(fd);
+        setMode(session.mode || "full_registration");
+        setPatientType(detectedType);
+        if (peselDigits) setPesel(peselDigits.slice(0, 11));
+
+        if (hasFormProgress) {
+          setStep(STEPS.FORM);
+        } else if (fd.isInternationalPatient) {
+          setStep(STEPS.INTERNATIONAL);
+        } else {
+          setStep(STEPS.PESEL);
+        }
+      } catch {
         clearKioskToken();
+      } finally {
+        if (!cancelled) setRestoring(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [step]);
+  }, []);
 
-  // Refresh / close tab: expire session so reception status leaves "Formularz w trakcie"
+  // Keep server status aligned with a live kiosk screen.
   useEffect(() => {
-    if (step === STEPS.PIN || step === STEPS.DONE) return undefined;
+    if (restoring || step === STEPS.PIN || step === STEPS.DONE) return undefined;
+    let cancelled = false;
 
-    const onUnload = () => {
-      releaseKioskSessionOnUnload("interrupted");
+    const ping = async () => {
+      try {
+        const res = await pingKioskSession();
+        if (cancelled) return;
+        if (res?.status && ["expired", "cancelled", "locked"].includes(res.status)) {
+          toast.info("Sesja rejestracji została zakończona.");
+          resetToPin();
+        }
+      } catch (err) {
+        const status = err.response?.data?.status;
+        if (err.response?.status === 401 || ["expired", "cancelled", "locked"].includes(status)) {
+          clearKioskToken();
+          resetToPin();
+        }
+      }
     };
 
-    window.addEventListener("pagehide", onUnload);
-    window.addEventListener("beforeunload", onUnload);
+    ping();
+    const interval = setInterval(ping, 25000);
     return () => {
-      window.removeEventListener("pagehide", onUnload);
-      window.removeEventListener("beforeunload", onUnload);
+      cancelled = true;
+      clearInterval(interval);
     };
-  }, [step]);
+  }, [restoring, step, resetToPin]);
 
   const handleActivate = async () => {
     if (pin.replace(/\D/g, "").length !== 6) {
@@ -369,6 +422,12 @@ export default function KioskApp() {
 
   return (
     <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-gradient-to-b from-teal-50 to-white flex flex-col pt-[max(0.75rem,env(safe-area-inset-top))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
+      {restoring && (
+        <KioskLoadingOverlay
+          title="Przywracanie sesji"
+          message="Proszę czekać — odtwarzamy formularz po odświeżeniu strony."
+        />
+      )}
       {isSubmittingForm && (
         <KioskLoadingOverlay
           title="Zapisywanie rejestracji"

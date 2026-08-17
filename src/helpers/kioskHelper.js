@@ -23,17 +23,38 @@ function staffHeaders() {
 }
 
 function kioskHeaders() {
-  const token = sessionStorage.getItem(KIOSK_TOKEN_KEY);
+  const token = getKioskToken();
   return token ? { "X-Kiosk-Token": token } : {};
 }
 
+export function getKioskToken() {
+  try {
+    return sessionStorage.getItem(KIOSK_TOKEN_KEY) || localStorage.getItem(KIOSK_TOKEN_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
 export function setKioskToken(token) {
-  if (token) sessionStorage.setItem(KIOSK_TOKEN_KEY, token);
-  else sessionStorage.removeItem(KIOSK_TOKEN_KEY);
+  if (token) {
+    sessionStorage.setItem(KIOSK_TOKEN_KEY, token);
+    try {
+      localStorage.setItem(KIOSK_TOKEN_KEY, token);
+    } catch {
+      /* private mode / quota */
+    }
+  } else {
+    clearKioskToken();
+  }
 }
 
 export function clearKioskToken() {
   sessionStorage.removeItem(KIOSK_TOKEN_KEY);
+  try {
+    localStorage.removeItem(KIOSK_TOKEN_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
 export async function createSession(visitId) {
@@ -120,7 +141,7 @@ export async function completeKioskRegistration(payload) {
 
 /** Mark current kiosk session expired (idle timeout / interrupt). Best-effort. */
 export async function releaseKioskSession(reason = "idle") {
-  const token = sessionStorage.getItem(KIOSK_TOKEN_KEY);
+  const token = getKioskToken();
   if (!token) return null;
   try {
     const res = await kioskApi.post(
@@ -134,12 +155,17 @@ export async function releaseKioskSession(reason = "idle") {
   }
 }
 
+export async function pingKioskSession() {
+  const res = await kioskApi.post("/api/kiosk/session/heartbeat", {}, { headers: kioskHeaders() });
+  return res.data;
+}
+
 /**
- * Best-effort release during tab close / refresh.
- * Uses fetch keepalive so the request can finish after the document unloads.
+ * Best-effort release during tab close.
+ * Refresh should restore the form instead of expiring the session.
  */
 export function releaseKioskSessionOnUnload(reason = "interrupted") {
-  const token = sessionStorage.getItem(KIOSK_TOKEN_KEY);
+  const token = getKioskToken();
   if (!token) return;
 
   const base =

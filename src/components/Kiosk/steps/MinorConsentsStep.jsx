@@ -920,10 +920,6 @@ export default function MinorConsentsStep({
               {documentNumbers.authorization?.date || generateDocumentMetadata("authorization").date}
             </p>
           </div>
-          <div className="flex items-center justify-center gap-2 text-sm">
-            <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-medium">OPCJONALNE</span>
-            <span className="text-gray-600">Możesz pominąć ten dokument</span>
-          </div>
         </div>
 
         <div className="mb-4 bg-blue-50 p-3 rounded-lg text-sm space-y-1">

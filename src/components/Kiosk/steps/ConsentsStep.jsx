@@ -341,10 +341,6 @@ export default function ConsentsStep({
             <p>Nr: {formatDocumentNumberForDisplay(documentNumbers.authorization?.number)}</p>
             <p>Data: {documentNumbers.authorization?.date || generateDocumentMetadata("authorization").date}</p>
           </div>
-          <div className="flex items-center justify-center gap-2 text-sm">
-            <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-medium">OPCJONALNE</span>
-            <span className="text-gray-600">Możesz pominąć ten dokument</span>
-          </div>
         </div>
 
         {/* Authorization Choice */}
