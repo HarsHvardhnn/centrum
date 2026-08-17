@@ -190,13 +190,11 @@ function LabAppointmentsContent({ clinic }) {
   const [patientLessOnly, setPatientLessOnly] = useState(false);
   /** Doctor filter for Historia wizyt (clinic) */
   const [doctorFilterId, setDoctorFilterId] = useState("");
-  const [doctorsList, setDoctorsList] = useState([]);
   /** Forma konsultacji: all | offline (Stacjonarna) | online */
   const [consultationMode, setConsultationMode] = useState("all");
   /** Typ wizyty (visit type) filter – value is visit reason displayName sent to backend */
   const [visitTypeFilter, setVisitTypeFilter] = useState("");
   /** Visit reasons from API (categories + types) for filter dropdown */
-  const [visitReasonsCategories, setVisitReasonsCategories] = useState([]);
 
   // Ref for filter dropdown
   const filterRef = useRef(null);
@@ -454,35 +452,25 @@ function LabAppointmentsContent({ clinic }) {
 
   // List fetching is handled by useQuery + debouncedFilters (single request on mount).
 
-  // Fetch doctors list for clinic (Historia wizyt) filter
-  useEffect(() => {
-    if (!clinic) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const response = await doctorStatsHelper.getDoctorsList();
-        if (response?.success && response?.data && !cancelled) {
-          setDoctorsList(Array.isArray(response.data) ? response.data : []);
-        }
-      } catch (e) {
-        if (!cancelled) setDoctorsList([]);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [clinic]);
+  const { data: doctorsList = [] } = useQuery({
+    queryKey: queryKeys.doctorsList,
+    queryFn: async () => {
+      const response = await doctorStatsHelper.getDoctorsList();
+      return response?.success && Array.isArray(response.data) ? response.data : [];
+    },
+    enabled: !!clinic,
+  });
 
-  // Fetch visit reasons (categories + types) for clinic visit-type filter
-  useEffect(() => {
-    if (!clinic) return;
-    let cancelled = false;
-    appointmentHelper.getVisitReasons().then((res) => {
-      if (cancelled) return;
+  const { data: visitReasonsCategories = [] } = useQuery({
+    queryKey: queryKeys.visitReasons,
+    queryFn: async () => {
+      const res = await appointmentHelper.getVisitReasons();
       const data = res?.data ?? res;
       const categories = data?.categories ?? [];
-      setVisitReasonsCategories(Array.isArray(categories) ? categories : []);
-    }).catch(() => { if (!cancelled) setVisitReasonsCategories([]); });
-    return () => { cancelled = true; };
-  }, [clinic]);
+      return Array.isArray(categories) ? categories : [];
+    },
+    enabled: !!clinic,
+  });
 
   // Doctor role on clinic: show only own visits; set and lock doctor filter to current user
   useEffect(() => {

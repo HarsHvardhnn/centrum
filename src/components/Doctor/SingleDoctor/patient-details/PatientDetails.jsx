@@ -615,12 +615,11 @@ const PatientDetailsPage = () => {
       try {
         setIsLoading(true);
         showLoader();
-        
-        // Fetch patient basic data
-        const patientResponse = await patientService.getPatientDetails(id);
-        console.log("Patient Response:", patientResponse);
-        console.log("Patient Data Fields:", Object.keys(patientResponse.patientData || {}));
-        //("patientResponse", patientResponse);
+
+        const [patientResponse, appointmentsResponse] = await Promise.all([
+          patientService.getPatientDetails(id),
+          appointmentHelper.getPatientAppointments(id),
+        ]);
 
         setPatientData(prevData => ({
           ...prevData,
@@ -636,11 +635,6 @@ const PatientDetailsPage = () => {
           oxygenSaturation: patientResponse.patientData?.oxygenSaturation ?? null
         }));
 
-        // Fetch patient services
-        await fetchPatientServices();
-
-        // Always fetch all patient's appointments
-        const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
         setAppointments(appointmentsResponse.data || []);
 
         // If we have a specific appointment ID from URL, select that one
