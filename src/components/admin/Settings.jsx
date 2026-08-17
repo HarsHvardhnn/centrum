@@ -651,7 +651,9 @@ export default function UserManagement() {
   const handleEditPatient = async (userId, preferredAppointmentId = null) => {
     try {
       showLoader();
-      const patientData = await patientService.getPatientById(userId);
+      const patientData = await patientService.getPatientById(userId, {
+        include: "documents,consents",
+      });
       let patientDetails=patientData;
       const rawPhone = patientDetails.phone;
       const hasRealPhone = rawPhone != null && String(rawPhone).trim() !== "" && !/^_no_phone_/i.test(String(rawPhone).trim());

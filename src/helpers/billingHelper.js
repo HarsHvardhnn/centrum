@@ -166,11 +166,12 @@ const billingHelper = {
    */
   getBillingStatistics: async (options = {}) => {
     try {
-      const { startDate, endDate } = options;
+      const { startDate, endDate, appointmentId } = options;
       let queryParams = new URLSearchParams();
       
       if (startDate) queryParams.append("startDate", startDate);
       if (endDate) queryParams.append("endDate", endDate);
+      if (appointmentId) queryParams.append("appointmentId", appointmentId);
 
       const response = await apiCaller(
         "GET",

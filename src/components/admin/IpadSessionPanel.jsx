@@ -87,8 +87,18 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
   // Live-poll while session is in-flight (including until it becomes expired)
   useEffect(() => {
     if (!session?.id || TERMINAL_STATUSES.includes(session.status)) return;
-    const interval = setInterval(refreshStatus, 3000);
-    return () => clearInterval(interval);
+    const tick = () => {
+      if (!document.hidden) refreshStatus();
+    };
+    const interval = setInterval(tick, 8000);
+    const onVisible = () => {
+      if (!document.hidden) refreshStatus();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [session?.id, session?.status, refreshStatus]);
 
   // Notify reception when status flips to cancelled / expired

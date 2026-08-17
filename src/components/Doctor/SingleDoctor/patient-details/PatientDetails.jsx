@@ -1211,7 +1211,9 @@ const PatientDetailsPage = () => {
   const handleShowDetails = async () => {
     try {
       showLoader();
-      const response = await patientService.getPatientById(id);
+      const response = await patientService.getPatientById(id, {
+        include: "documents,consents",
+      });
       //(response, "response deails");
       setDetailedPatientData(response);
       setShowDetailsModal(true);

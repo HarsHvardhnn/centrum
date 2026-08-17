@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Search,
@@ -35,6 +36,8 @@ import userServiceHelper, {
   mapDoctorServicesResponseToCatalog,
   mapServicesResponseToCatalog,
 } from "../../helpers/userServiceHelper";
+import { queryKeys } from "../../lib/queryKeys";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 
 /** Id for GET /user-services/:userId/doctor — from embedded appointment on bill or visit object. */
 function resolveVisitDoctorUserId(appointment, bill) {
@@ -60,6 +63,7 @@ const BillingManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   
   // Extract appointmentId and step from query parameters if present
@@ -964,39 +968,91 @@ const BillingManagement = () => {
   };
   
   // Load bills on initial render and when filters/pagination change
-  const fetchBills = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      console.log("here s",appointmentId)
-      const response = await billingHelper.getAllBills({
-        page: pagination.currentPage,
-        limit: pagination.limit,
-        sortBy: sortConfig.key,
-        sortOrder: sortConfig.direction === "desc" ? -1 : 1,
-        ...(searchQuery && { search: searchQuery }),
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 400);
+
+  const billingListParams = {
+    page: pagination.currentPage,
+    limit: pagination.limit,
+    sortBy: sortConfig.key,
+    sortOrder: sortConfig.direction === "desc" ? -1 : 1,
+    search: debouncedSearchQuery || undefined,
+    startDate: dateRange.startDate || undefined,
+    endDate: dateRange.endDate || undefined,
+    paymentStatus: paymentStatusFilter || undefined,
+    appointmentId: appointmentId || undefined,
+  };
+
+  const {
+    data: billsQueryData,
+    isLoading: billsQueryLoading,
+    isFetching: billsQueryFetching,
+    error: billsQueryError,
+  } = useQuery({
+    queryKey: queryKeys.billingList(billingListParams),
+    queryFn: () => billingHelper.getAllBills(billingListParams),
+    placeholderData: keepPreviousData,
+  });
+
+  const {
+    data: statsQueryData,
+  } = useQuery({
+    queryKey: queryKeys.billingSummary({
+      startDate: dateRange.startDate || undefined,
+      endDate: dateRange.endDate || undefined,
+      appointmentId: appointmentId || undefined,
+      statsRefreshKey,
+    }),
+    queryFn: () =>
+      billingHelper.getBillingStatistics({
         ...(dateRange.startDate && { startDate: dateRange.startDate }),
         ...(dateRange.endDate && { endDate: dateRange.endDate }),
-        ...(paymentStatusFilter && { paymentStatus: paymentStatusFilter }),
-        ...(appointmentId && { appointmentId: appointmentId }),
-      });
-      
-      if (response.success) {
-        setBills(response.data);
-        setPagination(response.pagination);
-      } else {
-        toast.error("Nie udało się pobrać faktur");
-      }
-    } catch (error) {
-      console.error("Błąd podczas pobierania faktur:", error);
-      toast.error("Nie udało się załadować danych rozliczeniowych");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [pagination.currentPage, pagination.limit, sortConfig, searchQuery, dateRange, paymentStatusFilter, appointmentId]);
+        ...(appointmentId && { appointmentId }),
+      }),
+  });
 
   useEffect(() => {
-    fetchBills();
-  }, [fetchBills]);
+    if (!billsQueryData) return;
+    if (billsQueryData.success) {
+      setBills(billsQueryData.data);
+      setPagination((prev) => ({
+        ...prev,
+        ...billsQueryData.pagination,
+        currentPage: billsQueryData.pagination?.currentPage ?? prev.currentPage,
+        limit: billsQueryData.pagination?.limit ?? prev.limit,
+      }));
+    } else {
+      toast.error("Nie udało się pobrać faktur");
+    }
+  }, [billsQueryData]);
+
+  useEffect(() => {
+    if (billsQueryError) {
+      console.error("Błąd podczas pobierania faktur:", billsQueryError);
+      toast.error("Nie udało się załadować danych rozliczeniowych");
+    }
+  }, [billsQueryError]);
+
+  useEffect(() => {
+    const data = statsQueryData?.data;
+    if (!data) return;
+    setStats({
+      totalBilled: Number(data.totalBilled ?? data.totalRevenue ?? 0) || 0,
+      totalPaid: Number(data.totalPaid ?? 0) || 0,
+      totalPending: Number(data.totalPending ?? 0) || 0,
+      totalOverdue: Number(data.totalOverdue ?? 0) || 0,
+    });
+  }, [statsQueryData]);
+
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+  }, [debouncedSearchQuery, dateRange.startDate, dateRange.endDate, paymentStatusFilter]);
+
+  const tableLoading = billsQueryLoading || (billsQueryFetching && bills.length === 0);
+
+  const fetchBills = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["billing-list"] });
+    queryClient.invalidateQueries({ queryKey: ["billing-summary"] });
+  }, [queryClient]);
 
   // Handle automatic edit modal opening when redirected from appointment
   useEffect(() => {
@@ -1032,73 +1088,6 @@ const BillingManagement = () => {
       }
     }
   }, [step, appointmentId, bills]);
-  
-  // Separate useEffect for billing stats
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        // Get all bills for calculation (without pagination)
-        const response = await billingHelper.getAllBills({
-          limit: 1000, // Get a large number of bills to ensure we get all
-          ...(dateRange.startDate && { startDate: dateRange.startDate }),
-          ...(dateRange.endDate && { endDate: dateRange.endDate }),
-          ...(appointmentId && { appointmentId: appointmentId })
-        });
-        
-        if (response.success && response.data) {
-          let totalBilled = 0;
-          let totalPaid = 0;
-          let totalPending = 0;
-          let totalOverdue = 0;
-
-          response.data.forEach(bill => {
-            const amount = parseFloat(bill.totalAmount);
-            
-            // Add to total billed
-            totalBilled += amount;
-            
-            // Add to appropriate category based on payment status
-            switch(bill.paymentStatus.toLowerCase()) {
-              case 'paid':
-                totalPaid += amount;
-                break;
-              case 'pending':
-                totalPending += amount;
-                break;
-              case 'overdue':
-                totalOverdue += amount;
-                break;
-              case 'partial':
-                // For partially paid bills, you might need more data from the API
-                // This is a simplified approach
-                totalPaid += amount * 0.5; // Assuming 50% paid
-                totalPending += amount * 0.5; // Assuming 50% pending
-                break;
-              default:
-                break;
-            }
-          });
-          
-          setStats({
-            totalBilled,
-            totalPaid,
-            totalPending,
-            totalOverdue
-          });
-        }
-      } catch (error) {
-        console.error("Error calculating billing stats:", error);
-        setStats({
-          totalBilled: 0,
-          totalPaid: 0,
-          totalPending: 0,
-          totalOverdue: 0
-        });
-      }
-    };
-
-    fetchStats();
-  }, [dateRange.startDate, dateRange.endDate, appointmentId, statsRefreshKey]); // Depend on date range, appointmentId, and invoice mutations for stats
   
   const handleSort = (key) => {
     setSortConfig(prev => ({
@@ -1312,8 +1301,7 @@ const BillingManagement = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {isLoading && <LoaderOverlay />}
-      
+      {isLoading && <LoaderOverlay />} 
       {/* Add ConfirmationModal */}
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
@@ -1587,7 +1575,15 @@ const BillingManagement = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {bills.length > 0 ? (
+                {tableLoading ? (
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <tr key={`skel-${i}`} className="animate-pulse">
+                      <td colSpan={user?.role === "admin" ? 7 : 6} className="px-6 py-4">
+                        <div className="h-4 bg-gray-200 rounded w-full" />
+                      </td>
+                    </tr>
+                  ))
+                ) : bills.length > 0 ? (
                   bills.map((bill) => (
                     <tr key={bill._id} className={`hover:bg-gray-50 ${selectedInvoiceIds.includes(bill._id) ? 'bg-red-50' : ''}`}>
                       {user?.role === "admin" && (

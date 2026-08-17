@@ -521,11 +521,14 @@ const patientService = {
    * @param {string} id - Patient ID
    * @returns {Promise} - Patient details
    */
-  getPatientById: async (id) => {
+  getPatientById: async (id, options = {}) => {
     try {
       if (!id) throw new Error("Patient ID is required");
-
-      const response = await apiCaller("GET", `/patients/${id}`);
+      const include = options.include;
+      const qs = include
+        ? `?include=${encodeURIComponent(Array.isArray(include) ? include.join(",") : include)}`
+        : "";
+      const response = await apiCaller("GET", `/patients/${id}${qs}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching patient with ID ${id}:`, error);
