@@ -11,6 +11,7 @@ import {
   isFactualGuardian,
 } from "../../../utils/guardian";
 import PhoneCountrySelect from "../PhoneCountrySelect";
+import KioskDateInput from "../KioskDateInput";
 import IdentityDocumentFields from "../../shared/IdentityDocumentFields";
 import {
   clearedGuardianIdentity,
@@ -468,12 +469,11 @@ export default function GuardianDataStep({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Data wydania *
                 </label>
-                <input
-                  type="date"
+                <KioskDateInput
                   value={formData.courtDate ? String(formData.courtDate).slice(0, 10) : ""}
                   onChange={(e) => update("courtDate", e.target.value)}
                   readOnly={readOnlyFields}
-                  className="block w-full max-w-full min-w-0 box-border appearance-none border border-gray-300 rounded-lg px-4 py-3 text-base sm:text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                  className="focus:ring-rose-400 focus:border-rose-400"
                 />
               </div>
             </div>

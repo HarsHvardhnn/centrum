@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import { DOCUMENT_TYPES } from "./kioskConstants";
 import { VOIVODESHIPS } from "./kioskShared";
+import KioskDateInput from "./KioskDateInput";
 
 export default function KioskEditPatientModal({ form, onChange, onClose, onSave, readOnlyPesel = true }) {
   const update = (field, value) => onChange({ ...form, [field]: value });
@@ -48,13 +49,14 @@ export default function KioskEditPatientModal({ form, onChange, onClose, onSave,
               readOnly={readOnlyPesel}
             />
           )}
-          <Field
-            label="Data urodzenia"
-            value={form.dateOfBirth ? String(form.dateOfBirth).slice(0, 10) : ""}
-            onChange={(v) => update("dateOfBirth", v)}
-            type="date"
-            readOnly={!form.isInternationalPatient}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Data urodzenia</label>
+            <KioskDateInput
+              value={form.dateOfBirth ? String(form.dateOfBirth).slice(0, 10) : ""}
+              onChange={(e) => update("dateOfBirth", e.target.value)}
+              readOnly={!form.isInternationalPatient}
+            />
+          </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">Kod kraju</label>

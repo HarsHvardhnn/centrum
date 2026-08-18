@@ -1,4 +1,5 @@
 import { IDENTITY_DOCUMENT_TYPES, isIdentityDocumentExpired, todayYmd } from "../../utils/identityDocument";
+import KioskDateInput from "../Kiosk/KioskDateInput";
 
 const SIZE_CLASSES = {
   lg: {
@@ -76,32 +77,25 @@ export default function IdentityDocumentFields({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="min-w-0">
           <label className={classes.label}>Data wydania dokumentu *</label>
-          <input
-            type="date"
+          <KioskDateInput
             value={documentIssueDate}
             onChange={(e) => onChange?.("documentIssueDate", e.target.value)}
             readOnly={readOnly}
-            className={classes.input}
             required
           />
         </div>
-        <div>
+        <div className="min-w-0">
           <label className={classes.label}>Data wygaśnięcia dokumentu *</label>
-          <input
-            type="date"
+          <KioskDateInput
             value={documentExpiryDate}
             onChange={(e) => onChange?.("documentExpiryDate", e.target.value)}
             readOnly={readOnly}
             min={todayYmd()}
-            className={`${classes.input}${
-              isIdentityDocumentExpired(documentExpiryDate)
-                ? " border-red-500"
-                : ""
-            }`}
             required
+            className={isIdentityDocumentExpired(documentExpiryDate) ? "border-red-500" : ""}
           />
           {isIdentityDocumentExpired(documentExpiryDate) && (
             <p className="text-red-600 text-xs mt-1">

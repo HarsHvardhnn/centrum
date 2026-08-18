@@ -3,6 +3,7 @@ import { formatPolishPostalCode, validatePolishPostalCode } from "../../utils/po
 import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from "../../utils/phoneUtils";
 import { getGenderFromPesel } from "../../utils/peselUtils";
 import PhoneCountrySelect from "./PhoneCountrySelect";
+import KioskDateInput from "./KioskDateInput";
 import IdentityDocumentFields from "../shared/IdentityDocumentFields";
 import {
   clearedGuardianIdentity,
@@ -358,25 +359,21 @@ export default function PatientDataEditModal({
                       placeholder="np. Poland, Germany"
                     />
                   </div>
-                  <div>
+                  <div className="min-w-0 md:col-span-2 xl:col-span-1">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Data wydania dokumentu *</label>
-                    <input
-                      type="date"
+                    <KioskDateInput
                       value={editData.documentIssueDate || ""}
                       onChange={(e) => update("documentIssueDate", e.target.value)}
                       readOnly={readOnlyFields}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
-                  <div>
+                  <div className="min-w-0 md:col-span-2 xl:col-span-1">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Data wygaśnięcia dokumentu *</label>
-                    <input
-                      type="date"
+                    <KioskDateInput
                       value={editData.documentExpiryDate || ""}
                       onChange={(e) => update("documentExpiryDate", e.target.value)}
                       readOnly={readOnlyFields}
                       min={todayYmd()}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                 </>
@@ -729,14 +726,13 @@ export default function PatientDataEditModal({
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Data wydania *
                       </label>
-                      <input
-                        type="date"
+                      <KioskDateInput
                         value={
                           editData.courtDate ? String(editData.courtDate).slice(0, 10) : ""
                         }
                         onChange={(e) => update("courtDate", e.target.value)}
                         readOnly={readOnlyFields}
-                        className="block w-full max-w-full min-w-0 box-border appearance-none border border-gray-300 rounded-lg px-4 py-3 text-base sm:text-lg focus:ring-2 focus:ring-rose-400 focus:border-rose-400"
+                        className="focus:ring-rose-400 focus:border-rose-400"
                       />
                     </div>
                   </div>

@@ -4,13 +4,9 @@ import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from ".
 import PhoneCountrySelect from "../PhoneCountrySelect";
 import { formatPolishPostalCode, validatePolishPostalCode } from "../../../utils/postalCodeUtils";
 import { formatPolishDate } from "../../../utils/dateUtils";
-import {
-  formatDocumentNumberForDisplay,
-  generateDocumentMetadata,
-} from "../../../utils/documentNumberUtils";
+import { generateDocumentMetadata } from "../../../utils/documentNumberUtils";
 import { analyzePeselForKiosk, normalizePesel } from "../../../utils/peselUtils";
 import { formatGuardianIdentity, isFactualGuardian, needsCourtData } from "../../../utils/guardian";
-import PatientDataEditModal from "../PatientDataEditModal";
 import IdentityDocumentFields from "../../shared/IdentityDocumentFields";
 import {
   EMPTY_IDENTITY_DOCUMENT,
@@ -340,12 +336,10 @@ export default function MinorConsentsStep({
 }) {
   const requiresPatientConsent = patientType === PATIENT_TYPES.MINOR_16_17;
   const guardianRole = getGuardianRoleInfo(formData.guardianRelation);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [documentNumbers, setDocumentNumbers] = useState({});
   const show = (section) => documentSection === "all" || documentSection === section;
 
-  // Leave Nr blank on the tablet — final number (with Patient ID) is assigned
-  // when the PDF is generated at signing, so we never show a mismatched Nr.
+  // Date only on the tablet — document number is assigned when the PDF is generated.
   useEffect(() => {
     const opts = { patientDisplayId: "" };
     setDocumentNumbers({
@@ -358,16 +352,6 @@ export default function MinorConsentsStep({
 
   const update = (field, value) => {
     updateFormData({ [field]: value });
-  };
-
-  const handleSavePatientData = (editedData) => {
-    // Update form data with edited values
-    Object.keys(editedData).forEach(key => {
-      if (editedData[key] !== formData[key]) {
-        updateFormData({ [key]: editedData[key] });
-      }
-    });
-    setShowEditModal(false);
   };
 
   // Helper function to validate PESEL for authorized persons
@@ -559,94 +543,6 @@ export default function MinorConsentsStep({
 
   return (
     <div className="space-y-6">
-      {show("guardian_statement") && (
-        <>
-          {/* Review card on first consent document (oświadczenie) */}
-          <div className="bg-gray-50 border border-gray-300 rounded-xl p-4">
-            <div className="flex justify-between items-start mb-3">
-              <h4 className="font-semibold text-gray-900">Sprawdź dane pacjenta i przedstawiciela</h4>
-              <button
-                type="button"
-                onClick={() => setShowEditModal(true)}
-                className="text-sm text-teal-700 hover:text-teal-900 font-medium underline flex items-center gap-1"
-              >
-                ✏️ Edytuj dane
-              </button>
-            </div>
-            <div className="mb-4">
-              <h5 className="font-medium text-blue-900 mb-2">Dane pacjenta:</h5>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-blue-50 p-3 rounded-lg">
-                <div>
-                  <span className="text-blue-700">Pacjent:</span>
-                  <p className="font-medium">
-                    {formData.firstName} {formData.lastName}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-blue-700">PESEL:</span>
-                  <p className="font-medium">{formData.pesel}</p>
-                </div>
-                <div>
-                  <span className="text-blue-700">Adres:</span>
-                  <p className="font-medium">
-                    {formData.street}, {formData.zipCode} {formData.city}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h5 className="font-medium text-yellow-900 mb-2">{guardianRole.sectionTitle}:</h5>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-yellow-50 p-3 rounded-lg">
-                <div>
-                  <span className="text-yellow-700">Imię i nazwisko:</span>
-                  <p className="font-medium">
-                    {formData.guardianFirstName} {formData.guardianLastName}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-yellow-700">Podstawa reprezentacji:</span>
-                  <p className="font-medium">{guardianRole.label}</p>
-                </div>
-                <div>
-                  <span className="text-yellow-700">
-                    {formData.guardianNoPesel ? "Dokument tożsamości:" : "PESEL:"}
-                  </span>
-                  <p className="font-medium">
-                    {formData.guardianNoPesel
-                      ? formData.guardianDocumentNumber || "—"
-                      : formData.guardianPesel}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-yellow-700">Telefon:</span>
-                  <p className="font-medium">
-                    {formData.guardianPhoneCode} {formData.guardianPhone}
-                  </p>
-                </div>
-                {needsCourtData(formData) && (
-                  <div className="sm:col-span-2">
-                    <span className="text-yellow-700">Orzeczenie sądu:</span>
-                    <p className="font-medium">
-                      {formData.courtName || "—"}
-                      {formData.courtNumber ? ` · nr ${formData.courtNumber}` : ""}
-                      {formData.courtDate
-                        ? ` · z dnia ${formatPolishDate(formData.courtDate) || formData.courtDate}`
-                        : ""}
-                    </p>
-                  </div>
-                )}
-                {isFactualGuardian(formData) && formData.guardianRelationDetail && (
-                  <div className="sm:col-span-2">
-                    <span className="text-yellow-700">Stosunek do pacjenta:</span>
-                    <p className="font-medium">{formData.guardianRelationDetail}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
       {show("rodo") && (
           <div className="bg-white border-2 border-blue-300 rounded-xl p-6">
             <div className="text-center mb-6">
@@ -659,7 +555,6 @@ export default function MinorConsentsStep({
                   : "PACJENT NIEPEŁNOLETNI PONIŻEJ 16 LAT"}
               </p>
               <div className="text-right text-sm text-gray-600 mt-2">
-                <p>Nr: {formatDocumentNumberForDisplay(documentNumbers.gdpr?.number)}</p>
                 <p>Data: {documentNumbers.gdpr?.date || generateDocumentMetadata("gdpr").date}</p>
               </div>
             </div>
@@ -720,7 +615,6 @@ export default function MinorConsentsStep({
               : "OŚWIADCZENIE PRZEDSTAWICIELA USTAWOWEGO / OPIEKUNA FAKTYCZNEGO o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"}
           </h2>
           <div className="text-right text-sm text-gray-600">
-            <p>Nr: {formatDocumentNumberForDisplay(documentNumbers.examination?.number)}</p>
             <p>Data: {documentNumbers.examination?.date || generateDocumentMetadata("examination").date}</p>
             <p className="text-green-800 font-medium mt-1">WYMAGANE</p>
           </div>
@@ -832,7 +726,6 @@ export default function MinorConsentsStep({
             o posiadaniu uprawnień do reprezentowania pacjenta małoletniego lub ubezwłasnowolnionego
           </p>
           <div className="text-right text-sm text-gray-600 mt-2">
-            <p>Nr: {formatDocumentNumberForDisplay(documentNumbers.guardian_statement?.number)}</p>
             <p>
               Data:{" "}
               {documentNumbers.guardian_statement?.date ||
@@ -914,7 +807,6 @@ export default function MinorConsentsStep({
               : `UPOWAŻNIENIE (${guardianRole.label.toUpperCase()}) do uzyskiwania informacji o stanie zdrowia przez osobę bliską`}
           </h2>
           <div className="text-right text-sm text-gray-600 mb-2">
-            <p>Nr: {formatDocumentNumberForDisplay(documentNumbers.authorization?.number)}</p>
             <p>
               Data:{" "}
               {documentNumbers.authorization?.date || generateDocumentMetadata("authorization").date}
@@ -1003,7 +895,24 @@ export default function MinorConsentsStep({
           <div className="space-y-6">
             {formData.authorizedPersons.map((person, index) => (
               <div key={index} className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 className="font-semibold text-blue-900 mb-3">OSOBA {index + 1}</h4>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <h4 className="font-semibold text-blue-900">OSOBA {index + 1}</h4>
+                  {formData.authorizedPersons.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        update(
+                          "authorizedPersons",
+                          formData.authorizedPersons.filter((_, i) => i !== index)
+                        );
+                      }}
+                      className="shrink-0 min-w-[2.75rem] min-h-[2.75rem] inline-flex items-center justify-center rounded-xl border border-red-200 bg-white text-red-700 hover:bg-red-50 text-2xl leading-none font-bold touch-manipulation"
+                      aria-label={`Usuń osobę ${index + 1}`}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -1306,16 +1215,6 @@ export default function MinorConsentsStep({
         )}
       </div>
       )}
-
-      {/* Patient Data Edit Modal */}
-      <PatientDataEditModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        formData={formData}
-        onSave={handleSavePatientData}
-        patientType={patientType}
-        mode={mode}
-      />
     </div>
   );
 }

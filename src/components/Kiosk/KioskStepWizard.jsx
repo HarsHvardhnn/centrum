@@ -7,6 +7,7 @@ const STEP_DEFINITIONS = {
     { id: "personal", title: "Dane osobowe", component: "PersonalDataStep" },
     { id: "address", title: "Adres zamieszkania", component: "AddressStep" },
     { id: "contact", title: "Dane kontaktowe", component: "ContactStep" },
+    { id: "data_preview", title: "Sprawdź dane", component: "DataPreviewStep" },
     { id: "consent_rodo", title: "Zgoda RODO", component: "ConsentsStep", documentSection: "rodo" },
     { id: "consent_examination", title: "Zgoda na badanie", component: "ConsentsStep", documentSection: "examination" },
     { id: "consent_authorization", title: "Upoważnienie", component: "ConsentsStep", documentSection: "authorization" },
@@ -17,6 +18,7 @@ const STEP_DEFINITIONS = {
     { id: "personal", title: "Dane osobowe", component: "PersonalDataStep" },
     { id: "address", title: "Adres zamieszkania", component: "AddressStep" },
     { id: "contact", title: "Dane kontaktowe", component: "ContactStep" },
+    { id: "data_preview", title: "Sprawdź dane", component: "DataPreviewStep" },
     { id: "consent_rodo", title: "Zgoda RODO", component: "ConsentsStep", documentSection: "rodo" },
     { id: "consent_examination", title: "Zgoda na badanie", component: "ConsentsStep", documentSection: "examination" },
     { id: "consent_authorization", title: "Upoważnienie", component: "ConsentsStep", documentSection: "authorization" },
@@ -28,6 +30,7 @@ const STEP_DEFINITIONS = {
     { id: "address", title: "Adres zamieszkania", component: "AddressStep" },
     { id: "contact", title: "Dane kontaktowe", component: "ContactStep" },
     { id: "guardian", title: "Dane opiekuna", component: "GuardianDataStep" },
+    { id: "data_preview", title: "Sprawdź dane", component: "DataPreviewStep" },
     { id: "consent_guardian_statement", title: "Oświadczenie przedstawiciela", component: "MinorConsentsStep", documentSection: "guardian_statement" },
     { id: "consent_examination", title: "Zgoda na badanie", component: "MinorConsentsStep", documentSection: "examination" },
     { id: "consent_rodo", title: "Zgoda RODO", component: "MinorConsentsStep", documentSection: "rodo" },
@@ -40,6 +43,7 @@ const STEP_DEFINITIONS = {
     { id: "address", title: "Adres zamieszkania", component: "AddressStep" },
     { id: "contact", title: "Dane kontaktowe", component: "ContactStep" },
     { id: "guardian", title: "Dane opiekuna", component: "GuardianDataStep" },
+    { id: "data_preview", title: "Sprawdź dane", component: "DataPreviewStep" },
     { id: "consent_guardian_statement", title: "Oświadczenie przedstawiciela", component: "MinorConsentsStep", documentSection: "guardian_statement" },
     { id: "consent_examination", title: "Zgoda na badanie", component: "MinorConsentsStep", documentSection: "examination" },
     { id: "consent_rodo", title: "Zgoda RODO", component: "MinorConsentsStep", documentSection: "rodo" },
@@ -293,7 +297,13 @@ export default function KioskStepWizard({
           disabled={loading}
           className="min-w-[9rem] px-6 py-3.5 rounded-xl bg-teal-700 hover:bg-teal-800 disabled:bg-gray-400 text-white font-semibold transition-colors touch-manipulation text-base"
         >
-          {loading ? "Zapisywanie..." : isLastStep ? "Zakończ" : "Dalej"}
+          {loading
+            ? "Zapisywanie..."
+            : isLastStep
+              ? "Zakończ"
+              : currentStep?.id === "data_preview"
+                ? "Dalej do dokumentów"
+                : "Dalej"}
         </button>
       </div>
     </div>

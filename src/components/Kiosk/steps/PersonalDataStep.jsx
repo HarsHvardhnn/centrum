@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { getGenderFromPesel } from "../../../utils/peselUtils";
 import { formatPolishDate } from "../../../utils/dateUtils";
 import { isIdentityDocumentExpired, todayYmd } from "../../../utils/identityDocument";
+import KioskDateInput from "../KioskDateInput";
 
 const VOIVODESHIPS = [
   "dolnośląskie", "kujawsko-pomorskie", "lubelskie", "lubuskie", "łódzkie",
@@ -137,12 +138,10 @@ export default function PersonalDataStep({
             </label>
             {formData.peselFallbackMode ? (
               // Fallback: manually entered DOB takes priority
-              <input
-                type="date"
+              <KioskDateInput
                 value={formData.dateOfBirth ? String(formData.dateOfBirth).slice(0, 10) : ""}
                 onChange={(e) => update("dateOfBirth", e.target.value)}
                 readOnly={readOnlyFields}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             ) : (
@@ -203,39 +202,33 @@ export default function PersonalDataStep({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Data urodzenia *</label>
-              <input
-                type="date"
+              <KioskDateInput
                 value={formData.dateOfBirth ? String(formData.dateOfBirth).slice(0, 10) : ""}
                 onChange={(e) => update("dateOfBirth", e.target.value)}
                 readOnly={readOnlyFields}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 required
               />
             </div>
           </div>
 
           {/* Document dates row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Data wydania dokumentu *</label>
-              <input
-                type="date"
+              <KioskDateInput
                 value={formData.documentIssueDate || ""}
                 onChange={(e) => update("documentIssueDate", e.target.value)}
                 readOnly={readOnlyFields}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Data wygaśnięcia dokumentu *</label>
-              <input
-                type="date"
+              <KioskDateInput
                 value={formData.documentExpiryDate || ""}
                 onChange={(e) => update("documentExpiryDate", e.target.value)}
                 readOnly={readOnlyFields}
                 min={todayYmd()}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 required
               />
             </div>

@@ -725,7 +725,9 @@ export default function UserManagement() {
         documentCountry: patientDetails.documentCountry || "",
         documentType: patientDetails.documentType || "",
         documentNumber: patientDetails.documentNumber || "",
-        documentDateOfBirth: patientDetails.documentDateOfBirth || "",
+        documentDateOfBirth:
+          patientDetails.documentDateOfBirth || patientDetails.dateOfBirth || "",
+        documentIssueDate: patientDetails.documentIssueDate || "",
         documentExpiryDate: patientDetails.documentExpiryDate || "",
         citizenship: patientDetails.citizenship || "",
 

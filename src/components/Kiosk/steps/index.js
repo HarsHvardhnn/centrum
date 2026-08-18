@@ -3,6 +3,7 @@ export { default as MinorPersonalDataStep } from './PersonalDataStep'; // Same c
 export { default as AddressStep } from './AddressStep';
 export { default as ContactStep } from './ContactStep';
 export { default as GuardianDataStep } from './GuardianDataStep';
+export { default as DataPreviewStep } from './DataPreviewStep';
 export { default as ConsentsStep } from './ConsentsStep';
 export { default as MinorConsentsStep } from './MinorConsentsStep';
 export { default as DocumentUploadStep } from './DocumentUploadStep';

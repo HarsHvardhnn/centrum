@@ -1,5 +1,6 @@
 import { DOCUMENT_TYPES } from "./kioskConstants";
 import KioskNumericEntry from "./KioskNumericEntry";
+import KioskDateInput from "./KioskDateInput";
 
 const inputClass = "w-full border border-gray-300 rounded-lg px-4 py-3 text-lg";
 
@@ -63,11 +64,10 @@ export default function KioskVerificationStep({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Data urodzenia *</label>
-              <input
-                type="date"
+              <KioskDateInput
                 value={dateOfBirth ? String(dateOfBirth).slice(0, 10) : ""}
                 onChange={(e) => onDocumentChange("dateOfBirth", e.target.value)}
-                className={inputClass}
+                required
               />
             </div>
           </div>

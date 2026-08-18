@@ -587,7 +587,7 @@ const DemographicsForm = ({
                 <input
                   type="date"
                   name="documentDateOfBirth"
-                  value={formatDateForInput(formData.documentDateOfBirth) || ""}
+                  value={formatDateForInput(formData.documentDateOfBirth || formData.dateOfBirth) || ""}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />

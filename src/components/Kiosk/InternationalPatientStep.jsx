@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { checkKioskDocument } from "../../helpers/kioskHelper";
 import { detectPatientType } from "./PatientTypeDetector";
 import IdentityDocumentFields from "../shared/IdentityDocumentFields";
+import KioskDateInput from "./KioskDateInput";
 import { validateIdentityDocument } from "../../utils/identityDocument";
 
 export default function InternationalPatientStep({ 
@@ -69,7 +70,7 @@ export default function InternationalPatientStep({
   const isLoading = loading || externalLoading;
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8 max-w-2xl mx-auto">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8 w-full max-w-4xl mx-auto">
       <button
         type="button"
         onClick={onBack}
@@ -92,11 +93,9 @@ export default function InternationalPatientStep({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Data urodzenia *
           </label>
-          <input
-            type="date"
+          <KioskDateInput
             value={form.dateOfBirth}
             onChange={(e) => update("dateOfBirth", e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
             required
           />
         </div>
