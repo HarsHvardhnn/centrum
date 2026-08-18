@@ -12,6 +12,66 @@ const DOC_TYPE_LABELS = {
   registration_bundle: "Pakiet rejestracyjny",
 };
 
+const MINOR_FILE_KINDS = {
+  guardian_statement: "oswiadczenie-opiekun",
+  consent_examination: "zgoda-swiadczenie-minor",
+  consent_personal_data: "zgoda-rodo-minor",
+  auth_health_status: "upowaznienie-minor",
+};
+
+const ADULT_FILE_KINDS = {
+  consent_examination: "zgoda-swiadczenie",
+  consent_personal_data: "zgoda-rodo",
+  auth_health_status: "upowaznienie",
+};
+
+const ENGLISH_FILE_STEM =
+  /^(registration_bundle|auth_health_status|consent_personal_data|consent_examination|guardian_statement)(?:-v\d+)?$/i;
+
+function inferPatientFileSlug(documents = []) {
+  for (const d of documents) {
+    const candidates = [d.fileName, d.name, d.kioskDocNumber, d.docNumber];
+    for (const raw of candidates) {
+      const value = String(raw || "");
+      const bundle = value.match(/^(\d{11})-dokumenty-rejestracyjne/i);
+      if (bundle) return bundle[1];
+      const polish = value.match(
+        /(?:oswiadczenie-opiekun|zgoda-swiadczenie(?:-minor)?|zgoda-rodo(?:-minor)?|upowaznienie(?:-minor)?)-(\d{11})(?:-v\d+)?/i
+      );
+      if (polish) return polish[1];
+    }
+  }
+  return "";
+}
+
+function polishEnglishDocTitle(doc, { fileSlug, isMinor } = {}) {
+  const stem = String(doc?.fileName || doc?.name || "").replace(/\.pdf$/i, "");
+  if (!ENGLISH_FILE_STEM.test(stem)) return null;
+  const type = String(doc?.documentType || stem.replace(/-v\d+$/i, ""));
+  const versionMatch = String(doc?.kioskDocNumber || doc?.docNumber || stem).match(
+    /(?:-v-?| v| - )(\d+)\s*$/i
+  );
+  const versionFromMeta = Number(doc?.metadata?.versionNumber);
+  const version =
+    Number.isFinite(versionFromMeta) && versionFromMeta > 0
+      ? versionFromMeta
+      : versionMatch
+        ? Number(versionMatch[1])
+        : 1;
+  const slug = fileSlug || "patient";
+  if (type === "registration_bundle") {
+    const fromNr = String(doc?.kioskDocNumber || doc?.docNumber || "")
+      .trim()
+      .replace(/\s+/g, "-");
+    if (fromNr) return fromNr.replace(/\.pdf$/i, "");
+    return `${slug}-dokumenty-rejestracyjne-v${version}`;
+  }
+  const kinds = isMinor ? MINOR_FILE_KINDS : ADULT_FILE_KINDS;
+  const kind = kinds[type];
+  if (!kind) return null;
+  return `${kind}-${slug}-v${version}`;
+}
+
 function formatDocDate(value) {
   if (!value) return "";
   const d = new Date(value);
@@ -26,14 +86,37 @@ function formatDocDate(value) {
   });
 }
 
-function getDocTitle(doc) {
-  if (doc?.fileName) return String(doc.fileName).replace(/\.[^.]+$/, "") || doc.fileName;
-  if (doc?.name) return doc.name;
-  if (doc?.documentType && DOC_TYPE_LABELS[doc.documentType]) {
-    return DOC_TYPE_LABELS[doc.documentType];
+function getDocTitle(doc, { fileSlug, isMinor } = {}) {
+  const polished = polishEnglishDocTitle(doc, { fileSlug, isMinor });
+  if (polished) return polished;
+
+  const raw = doc?.fileName || doc?.name || "";
+  let title = String(raw).replace(/\.[^.]+$/, "") || String(raw);
+  if (!title) {
+    if (doc?.documentType && DOC_TYPE_LABELS[doc.documentType]) {
+      title = DOC_TYPE_LABELS[doc.documentType];
+    } else if (doc?.documentType) {
+      title = doc.documentType;
+    } else {
+      title = "Dokument";
+    }
   }
-  if (doc?.documentType) return doc.documentType;
-  return "Dokument";
+
+  const versionFromMeta = Number(doc?.metadata?.versionNumber);
+  const versionFromNr = String(doc?.kioskDocNumber || doc?.docNumber || "").match(
+    /(?:-v-?| v| - )(\d+)\s*$/i
+  );
+  const version = Number.isFinite(versionFromMeta) && versionFromMeta > 0
+    ? versionFromMeta
+    : versionFromNr
+      ? Number(versionFromNr[1])
+      : NaN;
+  const alreadyVersioned =
+    /(?:-v-?|_v)\d+$/i.test(title) || /dokumenty-rejestracyjne-v\d+/i.test(title);
+  if (Number.isFinite(version) && version > 0 && !alreadyVersioned) {
+    title = `${title}-v${version}`;
+  }
+  return title;
 }
 
 function isPdfDoc(doc) {
@@ -101,6 +184,15 @@ export default function PatientDocumentsModal({
     };
   }, [isOpen, patientId, patientName]);
 
+  const fileSlug = inferPatientFileSlug(documents);
+  const isMinor = documents.some(
+    (d) =>
+      d.documentType === "guardian_statement" ||
+      /oswiadczenie-opiekun|zgoda-swiadczenie-minor|zgoda-rodo-minor|upowaznienie-minor/i.test(
+        String(d.fileName || d.name || "")
+      )
+  );
+
   if (!isOpen) return null;
 
   const openDoc = (doc) => {
@@ -151,7 +243,7 @@ export default function PatientDocumentsModal({
               {documents.map((doc, index) => {
                 const url = resolveDocumentOpenUrl(doc);
                 const pdf = isPdfDoc(doc);
-                const title = getDocTitle(doc);
+                const title = getDocTitle(doc, { fileSlug, isMinor });
                 const dateLabel = formatDocDate(doc.uploadDate || doc.signedAt || doc.createdAt);
                 const typeLabel =
                   DOC_TYPE_LABELS[doc.documentType] ||
