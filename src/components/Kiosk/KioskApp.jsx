@@ -9,6 +9,7 @@ import {
   getKioskToken,
   pingKioskSession,
   releaseKioskSession,
+  releaseKioskSessionOnUnload,
   saveKioskForm,
 } from "../../helpers/kioskHelper";
 import { normalizePesel } from "../../utils/peselUtils";
@@ -47,6 +48,8 @@ export default function KioskApp() {
   const saveTimeoutRef = useRef(null);
   const lastSaveRef = useRef(0);
   const submittingRef = useRef(false);
+  const stepRef = useRef(step);
+  stepRef.current = step;
 
   const resetToPin = useCallback(() => {
     submittingRef.current = false;
@@ -257,6 +260,48 @@ export default function KioskApp() {
       cancelled = true;
     };
   }, []);
+
+  // Closing the tab, leaving /kiosk, or iPad Back must expire the session
+  // so reception no longer shows it as in progress.
+  useEffect(() => {
+    const shouldReleaseOnLeave = () => {
+      if (submittingRef.current) return false;
+      const current = stepRef.current;
+      if (current === STEPS.PIN || current === STEPS.DONE) return false;
+      return !!getKioskToken();
+    };
+
+    const onLeave = () => {
+      if (shouldReleaseOnLeave()) {
+        releaseKioskSessionOnUnload("interrupted");
+      }
+    };
+
+    window.addEventListener("pagehide", onLeave);
+    window.addEventListener("beforeunload", onLeave);
+    return () => {
+      window.removeEventListener("pagehide", onLeave);
+      window.removeEventListener("beforeunload", onLeave);
+    };
+  }, []);
+
+  // Intercept iPad/browser Back after PIN so the session ends instead of
+  // leaving a live "Formularz w trakcie" / "Aktywna" status in reception.
+  useEffect(() => {
+    if (step === STEPS.PIN || step === STEPS.DONE) return undefined;
+
+    if (window.history.state?.kioskSession !== true) {
+      window.history.pushState({ kioskSession: true }, "");
+    }
+
+    const onPopState = () => {
+      if (submittingRef.current) return;
+      endSessionAndReset("interrupted");
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [step, endSessionAndReset]);
 
   // Keep server status aligned with a live kiosk screen.
   useEffect(() => {

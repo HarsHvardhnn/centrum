@@ -2,7 +2,7 @@
 import { useFormContext } from "../../context/SubStepFormContext";
 import { useState, useEffect } from "react";
 import { normalizePesel, getPeselChecksumWarning } from "../../utils/peselUtils";
-import patientService from "../../helpers/patientHelper";
+import patientService, { isSamePatientAsDocumentMatch } from "../../helpers/patientHelper";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { PHONE_COUNTRY_CODES, FlagIcon } from "../../constants/phoneCountryCodes";
@@ -74,9 +74,16 @@ const DemographicsForm = ({
         )
         .then((res) => {
           if (cancelled) return;
-          const existingId = res.patientId ?? res.patient?._id ?? res.patient?.id;
-          const isOtherPatient =
-            res?.exists && (!isEditMode || (existingId && existingId !== currentPatientId));
+          const isCurrentPatient =
+            isEditMode &&
+            isSamePatientAsDocumentMatch(
+              res,
+              currentPatientId,
+              formData.patient_id,
+              formData.patientId,
+              formData._id
+            );
+          const isOtherPatient = !!(res?.exists && !isCurrentPatient);
           setDocumentNumberExists(!!isOtherPatient);
           setErrors((prev) => ({
             ...prev,

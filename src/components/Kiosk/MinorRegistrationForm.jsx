@@ -31,7 +31,8 @@ export default function MinorRegistrationForm({
     guardianPhoneCode: initialData.guardianPhoneCode || initialData.phoneCode || "+48",
     guardianPhone: initialData.guardianPhone || initialData.phone || "",
     guardianEmail: initialData.guardianEmail || initialData.email || "",
-    guardianRelation: initialData.guardianRelation || "matka",
+    guardianRelation: initialData.guardianRelation || "",
+    representationType: initialData.representationType || "",
     // Separate guardian consent fields only for 16–17 (PDF Number 6 dual-consent)
     ...(is1617
       ? {

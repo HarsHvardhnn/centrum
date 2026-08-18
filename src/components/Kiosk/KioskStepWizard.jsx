@@ -97,10 +97,28 @@ export default function KioskStepWizard({
   const lastAutoSaveRef = useRef(Date.now());
 
   const scrollContentToTop = useCallback(() => {
-    if (contentRef.current) {
-      contentRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    const el = contentRef.current;
+    if (!el) return;
+    // Instant jump — smooth scroll runs against the *previous* document on iPad
+    // and leaves the next consent stuck at the bottom.
+    el.scrollTop = 0;
+    el.scrollTo(0, 0);
   }, []);
+
+  // Reset after the new document has painted. Checking the box at the bottom
+  // then tapping Dalej used to keep the same scroll offset on the next screen.
+  useEffect(() => {
+    scrollContentToTop();
+    const raf = requestAnimationFrame(() => {
+      scrollContentToTop();
+      requestAnimationFrame(scrollContentToTop);
+    });
+    const timeoutId = window.setTimeout(scrollContentToTop, 50);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(timeoutId);
+    };
+  }, [currentStepIndex, currentStep?.id, scrollContentToTop]);
 
   const updateFormData = useCallback((updates) => {
     setFormData(prev => {
@@ -242,7 +260,7 @@ export default function KioskStepWizard({
         ref={contentRef}
         className={`flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 sm:px-8 py-5 ${loading ? "pointer-events-none select-none" : ""}`}
       >
-        <div className="pb-2">
+        <div className="pb-2" key={currentStep?.id}>
           <StepComponent
             formData={formData}
             updateFormData={updateFormData}

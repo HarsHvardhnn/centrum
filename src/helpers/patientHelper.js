@@ -3,6 +3,28 @@
 import { apiCaller } from "../utils/axiosInstance";
 
 /**
+ * True when a /patients/by-document hit is the patient currently being edited.
+ * The API prefers display patientId (P-…) while the form stores Mongo _id, so
+ * a single-field compare falsely reports "document already exists" after kiosk registration.
+ */
+export function isSamePatientAsDocumentMatch(checkResult, ...currentIds) {
+  if (!checkResult) return false;
+  const found = [
+    checkResult.patientId,
+    checkResult.patient?._id,
+    checkResult.patient?.id,
+    checkResult.patient?.patientId,
+  ]
+    .filter((v) => v != null && String(v).trim() !== "")
+    .map((v) => String(v));
+  const mine = currentIds
+    .flat()
+    .filter((v) => v != null && String(v).trim() !== "")
+    .map((v) => String(v));
+  return found.some((id) => mine.includes(id));
+}
+
+/**
  * Service for patient-related API calls
  *
  * Backend contract – International patient identification (when isInternationalPatient = true):

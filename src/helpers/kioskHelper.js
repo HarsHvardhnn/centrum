@@ -161,8 +161,9 @@ export async function pingKioskSession() {
 }
 
 /**
- * Best-effort release during tab close.
- * Refresh should restore the form instead of expiring the session.
+ * Best-effort release during tab close / browser back.
+ * Uses a simple POST (no custom headers) so iOS Safari can send it during unload
+ * without a CORS preflight. Token travels in the body for sendBeacon.
  */
 export function releaseKioskSessionOnUnload(reason = "interrupted") {
   const token = getKioskToken();
@@ -172,19 +173,32 @@ export function releaseKioskSessionOnUnload(reason = "interrupted") {
     import.meta.env.VITE_REACT_APP_API_BASE_URL ||
     "https://backend.centrummedyczne7.pl";
   const url = `${String(base).replace(/\/$/, "")}/api/kiosk/session/release`;
+  const payload = new URLSearchParams({ token, reason });
+
+  try {
+    if (typeof navigator.sendBeacon === "function") {
+      const blob = new Blob([payload.toString()], {
+        type: "application/x-www-form-urlencoded",
+      });
+      if (navigator.sendBeacon(url, blob)) {
+        clearKioskToken();
+        return;
+      }
+    }
+  } catch {
+    /* fall through to fetch keepalive */
+  }
 
   try {
     fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Kiosk-Token": token,
-      },
-      body: JSON.stringify({ reason }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: payload.toString(),
       keepalive: true,
-      credentials: "include",
+      credentials: "omit",
     }).catch(() => {});
   } catch {
     /* ignore unload failures */
   }
+  clearKioskToken();
 }

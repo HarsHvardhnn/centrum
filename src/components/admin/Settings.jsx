@@ -9,7 +9,7 @@ import PatientStepForm from "../SubComponentForm/PatientStepForm";
 import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import AddDoctorForm from "../Doctor/CreateDoctor";
 import doctorService from "../../helpers/doctorHelper";
-import patientService from "../../helpers/patientHelper";
+import patientService, { isSamePatientAsDocumentMatch } from "../../helpers/patientHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { normalizePesel } from "../../utils/peselUtils";
 
@@ -802,12 +802,18 @@ export default function UserManagement() {
             formData.documentCountry.trim(),
             formData.documentType.trim()
           );
-          if (res?.exists) {
-            const existingId = res.patientId ?? res.patient?._id ?? res.patient?.id;
-            if (!isEditMode || (existingId && existingId !== currentPatientId)) {
-              toast.error("Pacjent z podanym numerem dokumentu już istnieje w systemie.");
-              return;
-            }
+          if (
+            res?.exists &&
+            !isSamePatientAsDocumentMatch(
+              res,
+              currentPatientId,
+              formData.patient_id,
+              formData.patientId,
+              formData._id
+            )
+          ) {
+            toast.error("Pacjent z podanym numerem dokumentu już istnieje w systemie.");
+            return;
           }
         } catch (e) {
           console.warn("Document number check failed:", e);
