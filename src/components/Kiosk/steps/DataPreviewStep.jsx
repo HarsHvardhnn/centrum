@@ -107,10 +107,20 @@ export default function DataPreviewStep({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-base">
           <Field label="Imię i nazwisko:" value={fullName} />
           {isInternational ? (
-            <Field
-              label="Dokument:"
-              value={formatKioskDocumentLabel(formData) || [formData.documentType, formData.documentNumber].filter(Boolean).join(": ")}
-            />
+            <>
+              <Field
+                label="Dokument:"
+                value={formatKioskDocumentLabel(formData) || [formData.documentType, formData.documentNumber].filter(Boolean).join(": ")}
+              />
+              <Field
+                label="Data wydania dokumentu:"
+                value={formatPolishDate(formData.documentIssueDate)}
+              />
+              <Field
+                label="Data ważności dokumentu:"
+                value={formatPolishDate(formData.documentExpiryDate)}
+              />
+            </>
           ) : (
             <Field label="PESEL:" value={formData.pesel} />
           )}
