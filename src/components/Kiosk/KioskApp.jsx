@@ -49,6 +49,9 @@ export default function KioskApp() {
   const saveTimeoutRef = useRef(null);
   const lastSaveRef = useRef(0);
   const submittingRef = useRef(false);
+  const capturingFileRef = useRef(false);
+  const lockTimerRef = useRef(null);
+  const heartbeatFailRef = useRef(0);
   const stepRef = useRef(step);
   stepRef.current = step;
 
@@ -65,6 +68,7 @@ export default function KioskApp() {
     setPeselAttempts(0);
     setShowPeselFallback(false);
     setLastErrorMessage("");
+    setShowMinorBlocked(false);
   }, []);
 
   /** Expire session on server so reception listing updates, then return to PIN. */
@@ -182,6 +186,7 @@ export default function KioskApp() {
       onSubmit: handleComplete,
       onAutoSave: throttledSaveKioskForm,
       onFormDataChange: handleFormDataChange,
+      onEndRegistration: () => endSessionAndReset("interrupted"),
       loading,
     };
 
@@ -234,8 +239,8 @@ export default function KioskApp() {
     };
   }, [resetToPin]);
 
-  // Closing the tab, leaving /kiosk, or iPad Back must expire the session
-  // so reception no longer shows it as in progress.
+  // Closing the tab, leaving /kiosk, locking the iPad, or going offline
+  // must mark the session Interrupted so reception is not left “in progress”.
   useEffect(() => {
     const shouldReleaseOnLeave = () => {
       if (submittingRef.current) return false;
@@ -244,17 +249,59 @@ export default function KioskApp() {
       return !!getKioskToken();
     };
 
-    const onLeave = () => {
+    const onLeave = (reason = "interrupted") => {
       if (shouldReleaseOnLeave()) {
-        releaseKioskSessionOnUnload("interrupted");
+        releaseKioskSessionOnUnload(reason);
       }
     };
 
-    window.addEventListener("pagehide", onLeave);
-    window.addEventListener("beforeunload", onLeave);
+    const onFilePointerDown = (event) => {
+      const target = event.target;
+      if (target?.matches?.('input[type="file"]')) {
+        capturingFileRef.current = true;
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        capturingFileRef.current = false;
+        if (lockTimerRef.current) {
+          clearTimeout(lockTimerRef.current);
+          lockTimerRef.current = null;
+        }
+        return;
+      }
+      if (document.visibilityState !== "hidden") return;
+      if (capturingFileRef.current) return;
+      if (!shouldReleaseOnLeave()) return;
+
+      // Ignore Control Center flashes; camera capture is skipped via capturingFileRef.
+      lockTimerRef.current = setTimeout(() => {
+        lockTimerRef.current = null;
+        if (document.visibilityState !== "hidden") return;
+        if (capturingFileRef.current) return;
+        onLeave("device_lock");
+      }, 2500);
+    };
+
+    const onLeaveInterrupted = () => onLeave("interrupted");
+    const onFreeze = () => onLeave("device_lock");
+    const onOffline = () => onLeave("connection_lost");
+
+    document.addEventListener("pointerdown", onFilePointerDown, true);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onLeaveInterrupted);
+    window.addEventListener("beforeunload", onLeaveInterrupted);
+    window.addEventListener("freeze", onFreeze);
+    window.addEventListener("offline", onOffline);
     return () => {
-      window.removeEventListener("pagehide", onLeave);
-      window.removeEventListener("beforeunload", onLeave);
+      document.removeEventListener("pointerdown", onFilePointerDown, true);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onLeaveInterrupted);
+      window.removeEventListener("beforeunload", onLeaveInterrupted);
+      window.removeEventListener("freeze", onFreeze);
+      window.removeEventListener("offline", onOffline);
+      if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
     };
   }, []);
 
@@ -285,6 +332,7 @@ export default function KioskApp() {
       try {
         const res = await pingKioskSession();
         if (cancelled) return;
+        heartbeatFailRef.current = 0;
         if (res?.status && ["expired", "cancelled", "locked", "abandoned"].includes(res.status)) {
           toast.info("Sesja rejestracji została zakończona.");
           resetToPin();
@@ -294,6 +342,15 @@ export default function KioskApp() {
         if (err.response?.status === 401 || ["expired", "cancelled", "locked", "abandoned"].includes(status)) {
           clearKioskToken();
           resetToPin();
+          return;
+        }
+        heartbeatFailRef.current += 1;
+        if (heartbeatFailRef.current >= 3 && getKioskToken()) {
+          const released = await releaseKioskSessionReliable("connection_lost");
+          if (released && !cancelled) {
+            toast.info("Sesja została przerwana z powodu utraty połączenia.");
+            resetToPin();
+          }
         }
       }
     };
@@ -631,6 +688,7 @@ export default function KioskApp() {
                 setStep(STEPS.FORM);
               }}
               onBack={() => setStep(STEPS.PESEL)}
+              onEndRegistration={() => endSessionAndReset("interrupted")}
               loading={loading}
             />
           )}
@@ -693,6 +751,7 @@ export default function KioskApp() {
       <KioskInternationalMinorBlockedModal
         open={showMinorBlocked}
         onClose={() => setShowMinorBlocked(false)}
+        onEndRegistration={() => endSessionAndReset("interrupted")}
       />
     </div>
   );

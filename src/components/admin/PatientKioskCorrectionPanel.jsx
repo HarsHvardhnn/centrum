@@ -16,6 +16,8 @@ import {
   KIOSK_TERMINAL_STATUSES as TERMINAL_STATUSES,
   KIOSK_RESTARTABLE_STATUSES as RESTARTABLE_STATUSES,
   KIOSK_STATUS_PILL_CLASS as STATUS_PILL_CLASS,
+  interruptReasonLabel,
+  formatInterruptTime,
   kioskSessionRestartMessage,
 } from "../../helpers/kioskSessionStatus";
 import { resolveDocumentOpenUrl } from "../../utils/documentUrl";
@@ -230,6 +232,16 @@ export default function PatientKioskCorrectionPanel({
               {STATUS_LABELS[session.status] || session.status}
             </span>
             {isActive && <span className="text-xs text-gray-400">aktualizacja na żywo</span>}
+            {session.status === "abandoned" && (session.interruptedAt || session.interruptReason) && (
+              <span className="text-rose-800 text-xs">
+                {[
+                  formatInterruptTime(session.interruptedAt),
+                  interruptReasonLabel(session.interruptReason),
+                ]
+                  .filter(Boolean)
+                  .join(" — ")}
+              </span>
+            )}
           </p>
           {["cancelled", "expired", "abandoned"].includes(session.status) && (
             <p className="text-sm text-orange-800">

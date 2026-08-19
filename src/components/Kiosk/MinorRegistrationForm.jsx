@@ -8,6 +8,7 @@ export default function MinorRegistrationForm({
   onSubmit,
   onAutoSave,
   onFormDataChange,
+  onEndRegistration,
   loading = false,
 }) {
   // Detect the specific minor patient type (fallback prefers manual DOB)
@@ -54,6 +55,7 @@ export default function MinorRegistrationForm({
         onSubmit={onSubmit}
         onAutoSave={onAutoSave}
         onFormDataChange={onFormDataChange}
+        onEndRegistration={onEndRegistration}
         loading={loading}
         stepComponents={StepComponents}
       />

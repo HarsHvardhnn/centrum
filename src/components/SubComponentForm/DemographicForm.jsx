@@ -6,7 +6,7 @@ import patientService, { isSamePatientAsDocumentMatch } from "../../helpers/pati
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { PHONE_COUNTRY_CODES, FlagIcon } from "../../constants/phoneCountryCodes";
-import { isIdentityDocumentExpired, todayYmd } from "../../utils/identityDocument";
+import { isIdentityDocumentExpired, todayYmd, toDateInputValue } from "../../utils/identityDocument";
 
 const DOCUMENT_TYPES = [
   { value: "", label: "Wybierz typ" },
@@ -609,8 +609,27 @@ const DemographicsForm = ({
                   value={formatDateForInput(formData.documentIssueDate) || ""}
                   onChange={handleChange}
                   max={todayYmd()}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  required
+                  className={`w-full px-3 py-2 border rounded-md ${
+                    !formData.documentIssueDate ||
+                    (formData.documentIssueDate &&
+                      toDateInputValue(formData.documentIssueDate) > todayYmd()) ||
+                    (formData.documentIssueDate &&
+                      formData.documentExpiryDate &&
+                      new Date(formData.documentExpiryDate) <= new Date(formData.documentIssueDate))
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
                 />
+                {!formData.documentIssueDate && (
+                  <p className="text-red-500 text-xs mt-1">Data wydania dokumentu jest wymagana.</p>
+                )}
+                {formData.documentIssueDate &&
+                  toDateInputValue(formData.documentIssueDate) > todayYmd() && (
+                  <p className="text-red-500 text-xs mt-1">
+                    Data wydania dokumentu nie może być w przyszłości.
+                  </p>
+                )}
                 {formData.documentIssueDate &&
                   formData.documentExpiryDate &&
                   new Date(formData.documentExpiryDate) <= new Date(formData.documentIssueDate) && (

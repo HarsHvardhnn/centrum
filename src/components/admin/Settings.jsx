@@ -12,6 +12,7 @@ import doctorService from "../../helpers/doctorHelper";
 import patientService, { isSamePatientAsDocumentMatch } from "../../helpers/patientHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { normalizePesel } from "../../utils/peselUtils";
+import { validateIdentityDocument } from "../../utils/identityDocument";
 
 /** Normalize ObjectId / populated ref / string to a plain id string for form selects. */
 function toEntityId(value) {
@@ -63,10 +64,16 @@ async function resolveAttendingDoctorFromVisits(patientId, preferredAppointmentI
     const docRes = await doctorService.getDoctorById(doctorId);
     const doctor = docRes?.doctor || docRes?.data || docRes;
     const specs = doctor?.specialization || doctor?.specializations || [];
-    const first = Array.isArray(specs) ? specs[0] : null;
-    consultingSpecialization = toEntityId(
-      first && typeof first === "object" ? first._id || first.id : first
-    );
+    const items = Array.isArray(specs) ? specs : specs ? [specs] : [];
+    for (const spec of items) {
+      if (spec && typeof spec === "object") {
+        consultingSpecialization = toEntityId(spec._id || spec.id || spec);
+        if (consultingSpecialization) break;
+      } else if (typeof spec === "string" && /^[a-fA-F0-9]{24}$/.test(spec)) {
+        consultingSpecialization = spec;
+        break;
+      }
+    }
   } catch (err) {
     console.warn("Could not load doctor specialization for prefill:", err);
   }
@@ -675,10 +682,16 @@ export default function UserManagement() {
           const docRes = await doctorService.getDoctorById(consultingDoctor);
           const doctor = docRes?.doctor || docRes?.data || docRes;
           const specs = doctor?.specialization || doctor?.specializations || [];
-          const first = Array.isArray(specs) ? specs[0] : null;
-          consultingSpecialization = toEntityId(
-            first && typeof first === "object" ? first._id || first.id : first
-          );
+          const items = Array.isArray(specs) ? specs : specs ? [specs] : [];
+          for (const spec of items) {
+            if (spec && typeof spec === "object") {
+              consultingSpecialization = toEntityId(spec._id || spec.id || spec);
+              if (consultingSpecialization) break;
+            } else if (typeof spec === "string" && /^[a-fA-F0-9]{24}$/.test(spec)) {
+              consultingSpecialization = spec;
+              break;
+            }
+          }
         } catch (_) {
           /* keep empty; user can pick */
         }
@@ -777,6 +790,23 @@ export default function UserManagement() {
   const handleAddPatient = async (formData) => {
     try {
       console.log("Settings - handleAddPatient received:", formData);
+
+      if (formData.isInternationalPatient) {
+        const identityErrors = validateIdentityDocument(
+          {
+            documentType: formData.documentType,
+            documentNumber: formData.documentNumber,
+            documentCountry: formData.documentCountry,
+            documentIssueDate: formData.documentIssueDate,
+            documentExpiryDate: formData.documentExpiryDate,
+          },
+          { requireExpiry: false }
+        );
+        if (identityErrors.length) {
+          toast.error(identityErrors[0]);
+          return;
+        }
+      }
 
       // When adding (not editing), validate that PESEL does not already exist
       if (!isEditMode && formData.govtId) {

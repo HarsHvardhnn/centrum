@@ -8,6 +8,7 @@ export default function AdultRegistrationForm({
   onSubmit,
   onAutoSave,
   onFormDataChange,
+  onEndRegistration,
   loading = false,
 }) {
   // Prefer detected type (fallback DOB can mark minor; parent switches form when that happens)
@@ -24,6 +25,7 @@ export default function AdultRegistrationForm({
         onSubmit={onSubmit}
         onAutoSave={onAutoSave}
         onFormDataChange={onFormDataChange}
+        onEndRegistration={onEndRegistration}
         loading={loading}
         stepComponents={StepComponents}
       />

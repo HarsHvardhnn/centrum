@@ -194,10 +194,8 @@ export function releaseKioskSessionOnUnload(reason = "interrupted") {
 
   try {
     if (typeof navigator.sendBeacon === "function") {
-      const blob = new Blob([payload.toString()], {
-        type: "application/x-www-form-urlencoded",
-      });
-      if (navigator.sendBeacon(beaconUrl, blob)) {
+      // URLSearchParams (not Blob) — iOS Safari often drops Blob beacons on lock.
+      if (navigator.sendBeacon(beaconUrl, payload)) {
         return;
       }
     }

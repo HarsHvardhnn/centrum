@@ -13,7 +13,8 @@ import { validateIdentityDocument } from "../../utils/identityDocument";
 
 export default function InternationalPatientStep({ 
   onVerified, 
-  onBack, 
+  onBack,
+  onEndRegistration,
   loading: externalLoading = false 
 }) {
   const [form, setForm] = useState({
@@ -128,6 +129,7 @@ export default function InternationalPatientStep({
       <KioskInternationalMinorBlockedModal
         open={showMinorBlocked}
         onClose={() => setShowMinorBlocked(false)}
+        onEndRegistration={onEndRegistration}
       />
     </div>
   );

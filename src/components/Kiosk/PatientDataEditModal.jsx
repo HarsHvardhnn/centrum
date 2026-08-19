@@ -29,6 +29,7 @@ export default function PatientDataEditModal({
   onClose,
   formData = {},
   onSave,
+  onEndRegistration,
   patientType,
   mode = "full_registration"
 }) {
@@ -856,6 +857,7 @@ export default function PatientDataEditModal({
       <KioskInternationalMinorBlockedModal
         open={showMinorBlocked}
         onClose={() => setShowMinorBlocked(false)}
+        onEndRegistration={onEndRegistration}
       />
     </div>
   );

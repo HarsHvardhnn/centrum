@@ -14,6 +14,45 @@ function toEntityId(value) {
   return String(value);
 }
 
+function formatDoctorName(doctor) {
+  if (!doctor) return "";
+  if (typeof doctor.name === "string") return stripDoctorTitle(doctor.name);
+  const nested = [doctor.name?.first, doctor.name?.last].filter(Boolean).join(" ");
+  if (nested) return stripDoctorTitle(nested);
+  if (typeof doctor.fullName === "string") return stripDoctorTitle(doctor.fullName);
+  return "";
+}
+
+function unwrapDoctorPayload(payload) {
+  return payload?.doctor || payload?.data || payload || null;
+}
+
+/** Map a doctor's specialization (id, populated object, or name) onto catalog ObjectIds. */
+function resolveSpecializationId(doctor, catalog = []) {
+  const specs = doctor?.specialization || doctor?.specializations || [];
+  const items = Array.isArray(specs) ? specs : specs ? [specs] : [];
+  const list = Array.isArray(catalog) ? catalog : [];
+
+  for (const spec of items) {
+    if (spec && typeof spec === "object") {
+      const id = spec._id || spec.id;
+      if (id) return String(id);
+      const name = spec.name;
+      const match = list.find(
+        (s) => String(s.name || "").toLowerCase() === String(name || "").toLowerCase()
+      );
+      if (match?._id) return String(match._id);
+    } else if (typeof spec === "string" && spec.trim()) {
+      if (/^[a-fA-F0-9]{24}$/.test(spec)) return spec;
+      const match = list.find(
+        (s) => String(s.name || "").toLowerCase() === spec.trim().toLowerCase()
+      );
+      if (match?._id) return String(match._id);
+    }
+  }
+  return "";
+}
+
 const ReferrerForm = () => {
   const { formData, updateFormData, updateMultipleFields } = useFormContext();
   const { specializations } = useSpecializations();
@@ -21,6 +60,7 @@ const ReferrerForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [validationError, setValidationError] = useState("");
+  const [selectedDoctorLabel, setSelectedDoctorLabel] = useState("");
   const [touched, setTouched] = useState({
     consultingDoctor: false,
     consultingSpecialization: false,
@@ -59,33 +99,41 @@ const ReferrerForm = () => {
     updateMultipleFields,
   ]);
 
-  // If doctor is set but specialization is missing, derive it from the doctor profile
+  // Load the selected doctor's name + specialization so both dropdowns show real values
   useEffect(() => {
-    if (!consultingDoctorId || consultingSpecializationId) return;
+    if (!consultingDoctorId) {
+      setSelectedDoctorLabel("");
+      return;
+    }
+
     let cancelled = false;
 
     (async () => {
       try {
         const docRes = await doctorService.getDoctorById(consultingDoctorId);
         if (cancelled) return;
-        const doctor = docRes?.doctor || docRes?.data || docRes;
-        const specs = doctor?.specialization || doctor?.specializations || [];
-        const first = Array.isArray(specs) ? specs[0] : null;
-        const specId = toEntityId(
-          first && typeof first === "object" ? first._id || first.id : first
-        );
-        if (specId) {
-          updateFormData("consultingSpecialization", specId);
+        const doctor = unwrapDoctorPayload(docRes);
+        const name = formatDoctorName(doctor);
+        if (name) setSelectedDoctorLabel(name);
+
+        if (!consultingSpecializationId) {
+          const specId = resolveSpecializationId(doctor, specializations);
+          if (specId) updateFormData("consultingSpecialization", specId);
         }
       } catch (err) {
-        console.warn("ReferrerForm: could not derive specialization from doctor", err);
+        console.warn("ReferrerForm: could not load attending doctor details", err);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [consultingDoctorId, consultingSpecializationId, updateFormData]);
+  }, [
+    consultingDoctorId,
+    consultingSpecializationId,
+    specializations,
+    updateFormData,
+  ]);
 
   // First-time empty attending physician → prefill from patient's initial booked visit
   useEffect(() => {
@@ -103,19 +151,24 @@ const ReferrerForm = () => {
         const withDoctor = visits.filter(
           (v) => v?.doctor?.id && String(v.status || "").toLowerCase() !== "cancelled"
         );
-        // Newest-first from API → initial appointment is last
         const initial = withDoctor.length ? withDoctor[withDoctor.length - 1] : null;
         const doctorId = toEntityId(initial?.doctor?.id);
         if (!doctorId) return;
 
-        const docRes = await doctorService.getDoctorById(doctorId);
-        if (cancelled) return;
-        const doctor = docRes?.doctor || docRes?.data || docRes;
-        const specs = doctor?.specialization || doctor?.specializations || [];
-        const first = Array.isArray(specs) ? specs[0] : null;
-        const specId = toEntityId(
-          first && typeof first === "object" ? first._id || first.id : first
-        );
+        const visitName = stripDoctorTitle(initial?.doctor?.name || "");
+        if (visitName) setSelectedDoctorLabel(visitName);
+
+        let specId = "";
+        try {
+          const docRes = await doctorService.getDoctorById(doctorId);
+          if (cancelled) return;
+          const doctor = unwrapDoctorPayload(docRes);
+          const profileName = formatDoctorName(doctor);
+          if (profileName) setSelectedDoctorLabel(profileName);
+          specId = resolveSpecializationId(doctor, specializations);
+        } catch (err) {
+          console.warn("ReferrerForm: could not load specialization for visit doctor", err);
+        }
 
         updateMultipleFields({
           consultingDoctor: doctorId,
@@ -130,7 +183,7 @@ const ReferrerForm = () => {
     return () => {
       cancelled = true;
     };
-  }, [consultingDoctorId, patientId, updateMultipleFields]);
+  }, [consultingDoctorId, patientId, specializations, updateMultipleFields]);
 
   // Fetch doctors when specialization changes
   useEffect(() => {
@@ -143,8 +196,10 @@ const ReferrerForm = () => {
       try {
         setLoading(true);
         setError(null);
-        const filters = { specialization: consultingSpecializationId };
-        const response = await doctorService.getAllDoctors(filters);
+        const response = await doctorService.getAllDoctors({
+          specialization: consultingSpecializationId,
+          limit: 500,
+        });
         const fetchedDoctors = response.doctors || [];
         setDoctors(fetchedDoctors);
 
@@ -153,22 +208,7 @@ const ReferrerForm = () => {
           return;
         }
 
-        if (consultingDoctorId) {
-          const selectedDoctorExists = fetchedDoctors.some(
-            (doctor) => String(doctor._id) === String(consultingDoctorId)
-          );
-          if (!selectedDoctorExists) {
-            // Keep the preferred appointment doctor visible even if filter mismatch
-            console.warn(
-              "Selected attending doctor not in filtered list for specialization; keeping selection"
-            );
-            setValidationError("");
-          } else {
-            setValidationError("");
-          }
-        } else {
-          setValidationError("");
-        }
+        setValidationError("");
       } catch (err) {
         console.error("Failed to fetch doctors:", err);
         setError("Nie udało się załadować listy lekarzy. Spróbuj ponownie.");
@@ -178,7 +218,7 @@ const ReferrerForm = () => {
     };
 
     fetchDoctors();
-  }, [consultingSpecializationId, consultingDoctorId]);
+  }, [consultingSpecializationId]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -192,9 +232,12 @@ const ReferrerForm = () => {
     // Changing specialization clears doctor so user picks within the new specialty
     if (name === "consultingSpecialization") {
       updateFormData("consultingDoctor", "");
+      setSelectedDoctorLabel("");
     }
 
     if (name === "consultingDoctor" && value) {
+      const picked = doctors.find((d) => String(d._id) === String(value));
+      setSelectedDoctorLabel(formatDoctorName(picked) || "");
       setValidationError("");
     }
   };
@@ -213,6 +256,10 @@ const ReferrerForm = () => {
   const doctorInList = doctors.some(
     (d) => String(d._id) === String(consultingDoctorId)
   );
+  const selectedDoctorOptionLabel =
+    selectedDoctorLabel ||
+    formatDoctorName(doctors.find((d) => String(d._id) === String(consultingDoctorId))) ||
+    "Wybrany lekarz";
 
   return (
     <div className="space-y-6">
@@ -393,7 +440,7 @@ const ReferrerForm = () => {
                   ))}
                   {consultingDoctorId && !doctorInList && !loading && (
                     <option value={consultingDoctorId}>
-                      Lekarz z wizyty (załadowany)
+                      {selectedDoctorOptionLabel}
                     </option>
                   )}
                 </select>

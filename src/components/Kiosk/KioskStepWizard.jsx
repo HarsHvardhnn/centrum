@@ -62,6 +62,7 @@ export default function KioskStepWizard({
   onSubmit,
   onAutoSave,
   onFormDataChange,
+  onEndRegistration,
   loading = false,
   stepComponents = {},
 }) {
@@ -276,6 +277,7 @@ export default function KioskStepWizard({
             validation={currentValidation}
             onValidationChange={handleValidationChange}
             onGoToStep={goToStep}
+            onEndRegistration={onEndRegistration}
             documentSection={currentStep.documentSection}
           />
         </div>
@@ -334,7 +336,13 @@ export default function KioskStepWizard({
 
       <KioskInternationalMinorBlockedModal
         open={showMinorBlocked}
-        onClose={() => setShowMinorBlocked(false)}
+        onClose={() => {
+          setShowMinorBlocked(false);
+          const personalIndex = steps.findIndex((s) => s.id === "personal");
+          setCurrentStepIndex(personalIndex >= 0 ? personalIndex : 0);
+          setShowErrors(false);
+        }}
+        onEndRegistration={onEndRegistration}
       />
     </div>
   );

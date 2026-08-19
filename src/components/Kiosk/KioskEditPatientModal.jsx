@@ -7,7 +7,14 @@ import KioskDateInput from "./KioskDateInput";
 import { isInternationalMinor } from "./PatientTypeDetector";
 import KioskInternationalMinorBlockedModal from "./KioskInternationalMinorBlockedModal";
 
-export default function KioskEditPatientModal({ form, onChange, onClose, onSave, readOnlyPesel = true }) {
+export default function KioskEditPatientModal({
+  form,
+  onChange,
+  onClose,
+  onSave,
+  onEndRegistration,
+  readOnlyPesel = true,
+}) {
   const [showMinorBlocked, setShowMinorBlocked] = useState(false);
   const update = (field, value) => onChange({ ...form, [field]: value });
 
@@ -137,6 +144,7 @@ export default function KioskEditPatientModal({ form, onChange, onClose, onSave,
       <KioskInternationalMinorBlockedModal
         open={showMinorBlocked}
         onClose={() => setShowMinorBlocked(false)}
+        onEndRegistration={onEndRegistration}
       />
     </div>
   );

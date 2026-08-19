@@ -86,7 +86,7 @@ export function clearedGuardianIdentity() {
   };
 }
 
-export function validateIdentityDocument(doc = {}, { subject = "" } = {}) {
+export function validateIdentityDocument(doc = {}, { subject = "", requireExpiry = true } = {}) {
   const prefix = subject ? `${subject}: ` : "";
   const errors = [];
   if (!String(doc.documentType || "").trim()) {
@@ -100,8 +100,13 @@ export function validateIdentityDocument(doc = {}, { subject = "" } = {}) {
   }
   if (!doc.documentIssueDate) {
     errors.push(`${prefix}Data wydania dokumentu jest wymagana.`);
+  } else {
+    const issueYmd = toDateInputValue(doc.documentIssueDate);
+    if (issueYmd && issueYmd > todayYmd()) {
+      errors.push(`${prefix}Data wydania dokumentu nie może być w przyszłości.`);
+    }
   }
-  if (!doc.documentExpiryDate) {
+  if (requireExpiry && !doc.documentExpiryDate) {
     errors.push(`${prefix}Data wygaśnięcia dokumentu jest wymagana.`);
   }
   if (doc.documentExpiryDate && isIdentityDocumentExpired(doc.documentExpiryDate)) {

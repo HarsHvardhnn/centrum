@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "../../context/SubStepFormContext";
-import { isIdentityDocumentExpired } from "../../utils/identityDocument";
+import { isIdentityDocumentExpired, todayYmd, toDateInputValue } from "../../utils/identityDocument";
 
 export const SubStepFormContext = createContext(null);
 
@@ -33,20 +33,24 @@ const SubStepForm = ({
     }
   }, [subSteps, subStepTitles]);
 
-  // Validate current step (in edit mode, document fields are hidden so we don't require them)
+  // Validate current step; international identity fields (including issue date) are required on create and edit
   useEffect(() => {
     if (currentSubStep === 0) { // Demographics form
       const fullNameError = !formData.fullName || formData.fullName.trim() === "";
       const isInternational = !!formData.isInternationalPatient;
       const govtIdError = !isInternational && (!formData.govtId || formData.govtId.trim() === "");
       const sexError = !formData.sex;
-      const identityDocError = !isEditMode && isInternational && (
+      const issueYmd = toDateInputValue(formData.documentIssueDate);
+      const expiryYmd = toDateInputValue(formData.documentExpiryDate);
+      const identityDocError = isInternational && (
         !formData.documentCountry?.trim() ||
         !formData.documentType?.trim() ||
         !formData.documentNumber?.trim() ||
         !formData.documentDateOfBirth ||
-        !formData.documentIssueDate ||
-        isIdentityDocumentExpired(formData.documentExpiryDate)
+        !issueYmd ||
+        issueYmd > todayYmd() ||
+        isIdentityDocumentExpired(formData.documentExpiryDate) ||
+        (issueYmd && expiryYmd && expiryYmd <= issueYmd)
       );
       setHasValidationErrors(fullNameError || govtIdError || sexError || identityDocError);
     } else if (currentSubStep === 1) { // Referrer form

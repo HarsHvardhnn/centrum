@@ -51,6 +51,7 @@ export default function DataPreviewStep({
   patientType,
   mode = "full_registration",
   onValidationChange,
+  onEndRegistration,
 }) {
   const [showEditModal, setShowEditModal] = useState(false);
   const isInternational = patientType === PATIENT_TYPES.INTERNATIONAL;
@@ -192,6 +193,7 @@ export default function DataPreviewStep({
         onClose={() => setShowEditModal(false)}
         formData={formData}
         onSave={handleSave}
+        onEndRegistration={onEndRegistration}
         patientType={patientType}
         mode={mode}
       />

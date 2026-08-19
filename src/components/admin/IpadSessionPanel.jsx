@@ -318,7 +318,8 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
           {isActive && (
             <p className="text-[11px] text-gray-500">
               Timeout: 5 min bez dotyku na iPadzie → Przerwana. PIN ważny 2 godziny.
-              Zamknięcie, odświeżenie lub blokada iPada przerywa sesję od razu — zgody nie są zapisywane.
+              Zamknięcie, odświeżenie, blokada iPada lub utrata połączenia przerywa sesję
+              — zgody i dokumenty nie są zapisywane jako finalne.
             </p>
           )}
         </div>
