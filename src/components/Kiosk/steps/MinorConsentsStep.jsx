@@ -611,8 +611,7 @@ export default function MinorConsentsStep({
                 </div>
                 <div className="bg-yellow-50 rounded-lg p-5 space-y-3 border border-yellow-200">
                   <h4 className="font-semibold text-yellow-900">
-                    Blok B — Zgoda: {guardianRole.label}
-                    {isFactualGuardian(formData) ? " (dane opiekuna)" : ""}
+                    Blok B — Oświadczenie przedstawiciela ustawowego
                   </h4>
                   <div className="text-sm text-yellow-800 p-3 bg-white rounded-lg border border-yellow-100 leading-relaxed">
                     {getGuardianRodoBlockBText(formData)}
@@ -642,7 +641,9 @@ export default function MinorConsentsStep({
             {patientType === PATIENT_TYPES.MINOR_16_17
               ? showExamGuardian && !showExamPatient
                 ? "OŚWIADCZENIE OPIEKUNA o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"
-                : "OŚWIADCZENIE PACJENTA I OPIEKUNA o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"
+                : showExamPatient && !showExamGuardian
+                  ? "OŚWIADCZENIE PACJENTA o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"
+                  : "OŚWIADCZENIE PACJENTA I OPIEKUNA o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"
               : "OŚWIADCZENIE PRZEDSTAWICIELA USTAWOWEGO / OPIEKUNA FAKTYCZNEGO o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"}
           </h2>
           <div className="text-right text-sm text-gray-600">
@@ -708,7 +709,7 @@ export default function MinorConsentsStep({
               <div className="space-y-3">
                 {patientType === PATIENT_TYPES.MINOR_16_17 && (
                   <h4 className="font-semibold text-green-900">
-                    Blok B — Oświadczenie: {guardianRole.label}
+                    Blok B — Oświadczenie przedstawiciela ustawowego
                   </h4>
                 )}
                 <div className="text-sm text-gray-800 leading-relaxed bg-green-50 p-4 rounded-lg border border-green-100 space-y-3">
