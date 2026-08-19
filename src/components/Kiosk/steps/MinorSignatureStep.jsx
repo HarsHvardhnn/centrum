@@ -78,8 +78,8 @@ function getGuardianSignatureCopyUnder16(formData) {
       return {
         roleLabel,
         body: freeText
-          ? `Jako opiekun faktyczny (${freeText}) potwierdzasz podpisem złożone wcześniej oświadczenia i zgodę wyłącznie na przeprowadzenie badania małoletniego pacjenta ${patientName}, w zakresie określonym w art. 32 ust. 5 ustawy o zawodach lekarza i lekarza dentysty. Udzielenie innego świadczenia zdrowotnego wymaga zgody przedstawiciela ustawowego.`
-          : `Jako opiekun faktyczny potwierdzasz podpisem złożone wcześniej oświadczenia i zgodę wyłącznie na przeprowadzenie badania małoletniego pacjenta ${patientName}, w zakresie określonym w art. 32 ust. 5 ustawy o zawodach lekarza i lekarza dentysty. Udzielenie innego świadczenia zdrowotnego wymaga zgody przedstawiciela ustawowego.`,
+          ? `Jako opiekun faktyczny (${freeText}) potwierdzasz podpisem zgodę na przeprowadzenie badania małoletniego pacjenta ${patientName} oraz zgodę RODO na przetwarzanie Twoich danych osobowych (imię, dokument, telefon, e-mail). Udzielenie innego świadczenia zdrowotnego oraz upoważnienie do dokumentacji medycznej wymaga zgody przedstawiciela ustawowego.`
+          : `Jako opiekun faktyczny potwierdzasz podpisem zgodę na przeprowadzenie badania małoletniego pacjenta ${patientName} oraz zgodę RODO na przetwarzanie Twoich danych osobowych (imię, dokument, telefon, e-mail). Udzielenie innego świadczenia zdrowotnego oraz upoważnienie do dokumentacji medycznej wymaga zgody przedstawiciela ustawowego.`,
         fieldLabel: "Podpis (opiekun faktyczny) *",
       };
     default:
@@ -126,7 +126,7 @@ function getGuardianSignatureCopy16_17(formData) {
     case "opiekun faktyczny":
       return {
         roleLabel,
-        body: "Jako opiekun faktyczny współwyrażasz zgodę razem z pacjentem wyłącznie na przeprowadzenie badania — zgodnie z art. 32 ust. 5 ustawy o zawodach lekarza i lekarza dentysty, opiekun faktyczny nie jest uprawniony do wyrażania zgody na inne świadczenia zdrowotne.",
+        body: "Jako opiekun faktyczny współwyrażasz zgodę razem z pacjentem na przeprowadzenie badania oraz podpisujesz zgodę RODO na przetwarzanie Twoich danych osobowych. Nie jesteś uprawniony do wyrażania zgody na inne świadczenia zdrowotne ani do upoważnienia do dokumentacji medycznej w imieniu dziecka.",
         fieldLabel: "Podpis (opiekun faktyczny) *",
       };
     default:

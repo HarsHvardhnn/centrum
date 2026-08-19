@@ -30,7 +30,7 @@ export const LEGAL_BASIS_OPTIONS = [
 export const NEEDS_COURT_RELATIONS = new Set(["opiekun_prawny", "kurator"]);
 
 export const FACTUAL_GUARDIAN_WARNING =
-  "Jako opiekun faktyczny możesz podpisać wyłącznie zgodę na przeprowadzenie badania. Zgodę na przetwarzanie danych osobowych oraz upoważnienie do dokumentacji medycznej może wyrazić wyłącznie przedstawiciel ustawowy (matka, ojciec, opiekun prawny lub kurator).";
+  "Jako opiekun faktyczny podpisujesz zgodę na badanie oraz zgodę RODO na przetwarzanie Twoich danych (imię, dokument, telefon, e-mail). Zgody na przetwarzanie danych dziecka w pełnym zakresie oraz upoważnienie do dokumentacji medycznej może wyrazić wyłącznie przedstawiciel ustawowy (matka, ojciec, opiekun prawny lub kurator).";
 
 /** Inline identity for UI/PDF: "PESEL …" or "nr dokumentu …" */
 export function formatGuardianIdentity(formData = {}) {

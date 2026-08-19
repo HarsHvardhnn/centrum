@@ -5,6 +5,7 @@ import { getGenderFromPesel } from "../../utils/peselUtils";
 import PhoneCountrySelect from "./PhoneCountrySelect";
 import KioskDateInput from "./KioskDateInput";
 import IdentityDocumentFields from "../shared/IdentityDocumentFields";
+import { FACTUAL_GUARDIAN_WARNING } from "../../utils/guardian";
 import {
   clearedGuardianIdentity,
   guardianIdentityFromPatch,
@@ -683,10 +684,7 @@ export default function PatientDataEditModal({
                       className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                     />
                     <p className="mt-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                      Jako opiekun faktyczny możesz podpisać wyłącznie zgodę na przeprowadzenie
-                      badania. Zgodę na przetwarzanie danych osobowych oraz upoważnienie do
-                      dokumentacji medycznej może wyrazić wyłącznie przedstawiciel ustawowy
-                      (matka, ojciec, opiekun prawny lub kurator).
+                      {FACTUAL_GUARDIAN_WARNING}
                     </p>
                   </div>
                 )}

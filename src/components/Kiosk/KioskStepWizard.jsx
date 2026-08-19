@@ -45,7 +45,8 @@ const STEP_DEFINITIONS = {
     { id: "guardian", title: "Dane opiekuna", component: "GuardianDataStep" },
     { id: "data_preview", title: "Sprawdź dane", component: "DataPreviewStep" },
     { id: "consent_guardian_statement", title: "Oświadczenie przedstawiciela", component: "MinorConsentsStep", documentSection: "guardian_statement" },
-    { id: "consent_examination", title: "Zgoda na badanie", component: "MinorConsentsStep", documentSection: "examination" },
+    { id: "consent_examination_patient", title: "Zgoda na badanie — pacjent", component: "MinorConsentsStep", documentSection: "examination_patient" },
+    { id: "consent_examination_guardian", title: "Zgoda na badanie — opiekun", component: "MinorConsentsStep", documentSection: "examination_guardian" },
     { id: "consent_rodo", title: "Zgoda RODO", component: "MinorConsentsStep", documentSection: "rodo" },
     { id: "consent_authorization", title: "Upoważnienie", component: "MinorConsentsStep", documentSection: "authorization" },
     { id: "documents", title: "Dokumenty", component: "DocumentUploadStep" },
@@ -70,12 +71,12 @@ export default function KioskStepWizard({
   const [showErrors, setShowErrors] = useState(false);
   const contentRef = useRef(null);
 
-  // Factual caregiver may only sign examination (+ statement).
+  // Factual caregiver: still signs RODO for their own data; cannot authorize medical records.
   const steps = useMemo(() => {
     if (!isFactualGuardian(formData)) return baseSteps;
     return baseSteps.filter((s) => {
-      if (patientType === PATIENT_TYPES.MINOR_UNDER_16) {
-        if (s.id === "consent_rodo" || s.id === "consent_authorization") return false;
+      if (patientType === PATIENT_TYPES.MINOR_UNDER_16 && s.id === "consent_authorization") {
+        return false;
       }
       return true;
     });

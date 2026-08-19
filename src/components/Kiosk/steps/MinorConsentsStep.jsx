@@ -113,8 +113,8 @@ function getGuardianRodoBlockBText(formData) {
     case "opiekun_faktyczny":
     case "opiekun faktyczny":
       return freeText
-        ? `Ja niżej podpisana(-ny) ${repName}, działając jako opiekun faktyczny (${freeText}) małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie danych osobowych podopiecznego oraz moich danych kontaktowych przez ${company}, do celów związanych z:`
-        : `Ja niżej podpisana(-ny) ${repName}, działając jako opiekun faktyczny małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie danych osobowych podopiecznego oraz moich danych kontaktowych przez ${company}, do celów związanych z:`;
+        ? `Ja niżej podpisana(-ny) ${repName}, działając jako opiekun faktyczny (${freeText}) małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie MOICH danych osobowych (imię i nazwisko, PESEL lub dokument tożsamości, numer telefonu, adres e-mail) przez ${company}, w celu kontaktu w sprawie opieki nad pacjentem oraz do celów związanych z:`
+        : `Ja niżej podpisana(-ny) ${repName}, działając jako opiekun faktyczny małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie MOICH danych osobowych (imię i nazwisko, PESEL lub dokument tożsamości, numer telefonu, adres e-mail) przez ${company}, w celu kontaktu w sprawie opieki nad pacjentem oraz do celów związanych z:`;
     default: {
       const role = getGuardianRoleInfo(relation).actingAs;
       return `Ja niżej podpisana(-ny) ${repName}, działając jako ${role} małoletniego pacjenta ${patientName}, PESEL ${patientPesel}, oświadczam, że zapoznałam(-em) się z Klauzulą Informacyjną RODO i wyrażam zgodę na przetwarzanie danych osobowych podopiecznego oraz moich danych kontaktowych przez ${company}, do celów związanych z:`;
@@ -338,6 +338,11 @@ export default function MinorConsentsStep({
   const guardianRole = getGuardianRoleInfo(formData.guardianRelation);
   const [documentNumbers, setDocumentNumbers] = useState({});
   const show = (section) => documentSection === "all" || documentSection === section;
+  const showExamPatient =
+    show("examination") || show("examination_patient");
+  const showExamGuardian =
+    show("examination") || show("examination_guardian");
+  const showExamCard = showExamPatient || showExamGuardian;
 
   // Date only on the tablet — document number is assigned when the PDF is generated.
   useEffect(() => {
@@ -387,20 +392,28 @@ export default function MinorConsentsStep({
     if (check("rodo")) {
       const factual = isFactualGuardian(formData);
       if (patientType === PATIENT_TYPES.MINOR_UNDER_16) {
-        if (!factual && !formData.consentHealthcare) {
-          errors.push("Zgoda opiekuna na przetwarzanie danych osobowych jest wymagana.");
+        if (!formData.consentHealthcare) {
+          errors.push(
+            factual
+              ? "Zgoda opiekuna faktycznego na przetwarzanie jego danych osobowych jest wymagana."
+              : "Zgoda opiekuna na przetwarzanie danych osobowych jest wymagana."
+          );
         }
       } else if (patientType === PATIENT_TYPES.MINOR_16_17) {
         if (!formData.consentHealthcare) {
           errors.push("Zgoda pacjenta na przetwarzanie danych osobowych jest wymagana.");
         }
-        if (!factual && !formData.consentHealthcareGuardian) {
-          errors.push("Zgoda opiekuna na przetwarzanie danych osobowych jest wymagana.");
+        if (!formData.consentHealthcareGuardian) {
+          errors.push(
+            factual
+              ? "Zgoda opiekuna faktycznego na przetwarzanie jego danych osobowych jest wymagana."
+              : "Zgoda opiekuna na przetwarzanie danych osobowych jest wymagana."
+          );
         }
       }
     }
 
-    if (check("examination")) {
+    if (check("examination") || check("examination_patient")) {
       if (patientType === PATIENT_TYPES.MINOR_16_17) {
         if (
           formData.examinationConsentPatient !== "agree" &&
@@ -408,6 +421,10 @@ export default function MinorConsentsStep({
         ) {
           errors.push("Zaznacz decyzję pacjenta dotyczącą badania: Wyrażam zgodę lub Nie wyrażam zgody.");
         }
+      }
+    }
+    if (check("examination") || check("examination_guardian")) {
+      if (patientType === PATIENT_TYPES.MINOR_16_17) {
         if (
           formData.examinationConsentGuardian !== "agree" &&
           formData.examinationConsentGuardian !== "refuse"
@@ -564,6 +581,13 @@ export default function MinorConsentsStep({
                 <div className="text-sm text-gray-800 leading-relaxed">
                   <p>{getGuardianRodoBlockBText(formData)}</p>
                 </div>
+                {isFactualGuardian(formData) && (
+                  <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    Ta zgoda dotyczy danych osobowych opiekuna faktycznego. Zgody na przetwarzanie
+                    danych dziecka w pełnym zakresie oraz upoważnienie do dokumentacji medycznej
+                    może wyrazić wyłącznie przedstawiciel ustawowy.
+                  </p>
+                )}
                 {purposeCheckboxes(
                   "consentHealthcare",
                   "consentHealthCampaigns",
@@ -585,14 +609,20 @@ export default function MinorConsentsStep({
                     "blue"
                   )}
                 </div>
-                {!isFactualGuardian(formData) && (
                 <div className="bg-yellow-50 rounded-lg p-5 space-y-3 border border-yellow-200">
                   <h4 className="font-semibold text-yellow-900">
                     Blok B — Zgoda: {guardianRole.label}
+                    {isFactualGuardian(formData) ? " (dane opiekuna)" : ""}
                   </h4>
                   <div className="text-sm text-yellow-800 p-3 bg-white rounded-lg border border-yellow-100 leading-relaxed">
                     {getGuardianRodoBlockBText(formData)}
                   </div>
+                  {isFactualGuardian(formData) && (
+                    <p className="text-xs text-amber-800">
+                      Ta zgoda dotyczy danych osobowych opiekuna faktycznego, nie zastępuje zgody
+                      przedstawiciela ustawowego w imieniu dziecka.
+                    </p>
+                  )}
                   {purposeCheckboxes(
                     "consentHealthcareGuardian",
                     "consentHealthCampaignsGuardian",
@@ -600,18 +630,19 @@ export default function MinorConsentsStep({
                     "yellow"
                   )}
                 </div>
-                )}
               </div>
             )}
           </div>
       )}
 
-      {show("examination") && (
+      {showExamCard && (
       <div className="bg-white border-2 border-green-400 rounded-xl p-6">
         <div className="text-center mb-6">
           <h2 className="text-lg font-bold text-green-900 mb-2">
             {patientType === PATIENT_TYPES.MINOR_16_17
-              ? "OŚWIADCZENIE PACJENTA I OPIEKUNA o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"
+              ? showExamGuardian && !showExamPatient
+                ? "OŚWIADCZENIE OPIEKUNA o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"
+                : "OŚWIADCZENIE PACJENTA I OPIEKUNA o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"
               : "OŚWIADCZENIE PRZEDSTAWICIELA USTAWOWEGO / OPIEKUNA FAKTYCZNEGO o wyrażeniu zgody na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego"}
           </h2>
           <div className="text-right text-sm text-gray-600">
@@ -650,8 +681,7 @@ export default function MinorConsentsStep({
 
           return (
             <div className="space-y-5">
-              {/* PDF Number 7 — Block A (16–17 only) */}
-              {patientType === PATIENT_TYPES.MINOR_16_17 && (
+              {patientType === PATIENT_TYPES.MINOR_16_17 && showExamPatient && (
                 <div className="space-y-3">
                   <h4 className="font-semibold text-blue-900">Blok A — Oświadczenie pacjenta</h4>
                   <div className="text-sm text-gray-800 leading-relaxed bg-blue-50 p-4 rounded-lg border border-blue-100 space-y-3">
@@ -666,10 +696,15 @@ export default function MinorConsentsStep({
                     accent="blue"
                     refuseMessage={PATIENT_16_17_EXAM_REFUSE_MESSAGE}
                   />
+                  {documentSection === "examination_patient" && (
+                    <p className="text-sm text-green-800 bg-green-50 border border-green-200 rounded-lg p-3">
+                      Następny krok: <strong>Blok B — zgoda opiekuna ({guardianRole.label})</strong>
+                    </p>
+                  )}
                 </div>
               )}
 
-              {/* PDF Number 3 / 7 — guardian block (sole content under 16) */}
+              {showExamGuardian && (
               <div className="space-y-3">
                 {patientType === PATIENT_TYPES.MINOR_16_17 && (
                   <h4 className="font-semibold text-green-900">
@@ -703,6 +738,7 @@ export default function MinorConsentsStep({
                   }
                 />
               </div>
+              )}
             </div>
           );
         })()}
