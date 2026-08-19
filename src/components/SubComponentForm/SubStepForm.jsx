@@ -45,6 +45,7 @@ const SubStepForm = ({
         !formData.documentType?.trim() ||
         !formData.documentNumber?.trim() ||
         !formData.documentDateOfBirth ||
+        !formData.documentIssueDate ||
         isIdentityDocumentExpired(formData.documentExpiryDate)
       );
       setHasValidationErrors(fullNameError || govtIdError || sexError || identityDocError);
@@ -54,7 +55,7 @@ const SubStepForm = ({
     } else {
       setHasValidationErrors(false);
     }
-  }, [currentSubStep, isEditMode, formData.fullName, formData.govtId, formData.sex, formData.consultingDoctor, formData.isInternationalPatient, formData.documentCountry, formData.documentType, formData.documentNumber, formData.documentDateOfBirth, formData.documentExpiryDate]);
+  }, [currentSubStep, isEditMode, formData.fullName, formData.govtId, formData.sex, formData.consultingDoctor, formData.isInternationalPatient, formData.documentCountry, formData.documentType, formData.documentNumber, formData.documentDateOfBirth, formData.documentIssueDate, formData.documentExpiryDate]);
 
   return (
     <SubStepFormContext.Provider value={{ currentSubStep }}>

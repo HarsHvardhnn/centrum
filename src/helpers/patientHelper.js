@@ -84,6 +84,7 @@ const patientService = {
       appendIfExists("documentType", patientData.documentType);
       appendIfExists("documentNumber", patientData.documentNumber);
       appendIfExists("documentDateOfBirth", patientData.documentDateOfBirth);
+      appendIfExists("documentIssueDate", patientData.documentIssueDate);
       appendIfExists("documentExpiryDate", patientData.documentExpiryDate);
       appendIfExists("citizenship", patientData.citizenship);
       // Email and phone are sent only as email / mobileNumber+phoneCode (not documentEmail/documentPhone)
@@ -199,6 +200,7 @@ const patientService = {
     if (patientData.documentType !== undefined) formData.append("documentType", patientData.documentType);
     if (patientData.documentNumber !== undefined) formData.append("documentNumber", patientData.documentNumber);
     if (patientData.documentDateOfBirth !== undefined) formData.append("documentDateOfBirth", patientData.documentDateOfBirth);
+    if (patientData.documentIssueDate !== undefined) formData.append("documentIssueDate", patientData.documentIssueDate);
     if (patientData.documentExpiryDate !== undefined) formData.append("documentExpiryDate", patientData.documentExpiryDate);
     if (patientData.citizenship !== undefined) formData.append("citizenship", patientData.citizenship);
     if (patientData.internationalPatientDocumentKey !== undefined) formData.append("internationalPatientDocumentKey", patientData.internationalPatientDocumentKey);

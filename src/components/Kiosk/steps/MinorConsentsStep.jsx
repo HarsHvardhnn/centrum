@@ -838,9 +838,7 @@ export default function MinorConsentsStep({
       <div className="bg-white border-2 border-purple-300 rounded-xl p-6">
         <div className="text-center mb-6">
           <h2 className="text-lg font-bold text-purple-900 mb-2">
-            {patientType === PATIENT_TYPES.MINOR_16_17
-              ? `UPOWAŻNIENIE (PACJENT I ${guardianRole.label.toUpperCase()}) do uzyskiwania informacji o stanie zdrowia przez osobę bliską`
-              : `UPOWAŻNIENIE (${guardianRole.label.toUpperCase()}) do uzyskiwania informacji o stanie zdrowia przez osobę bliską`}
+            UPOWAŻNIENIE DO UZYSKIWANIA INFORMACJI O STANIE ZDROWIA ORAZ DOSTĘPU DO DOKUMENTACJI MEDYCZNEJ MAŁOLETNIEGO PACJENTA
           </h2>
           <div className="text-right text-sm text-gray-600 mb-2">
             <p>
@@ -1234,9 +1232,25 @@ export default function MinorConsentsStep({
 
         {/* Legal Notice */}
         {(formData.grantsAuthorization || formData.deniesAuthorization) && (
-          <div className="text-xs text-gray-600 bg-gray-50 p-4 rounded-lg leading-relaxed">
-            <p className="mb-2">
-              <strong>Pouczenie oświadczam,</strong> iż zostałem(-am) poinformowany(-a) o możliwości cofnięcia udzielonego upoważnienia w każdym czasie oraz o tym, że dane osobowe osób upoważnionych są przetwarzane wyłącznie w celu realizacji uprawnień wynikających z niniejszego oświadczenia.
+          <div className="text-xs text-gray-600 bg-gray-50 p-4 rounded-lg leading-relaxed space-y-2">
+            <p>
+              Oświadczam, że zostałem(-am) poinformowany(-a), iż niniejsze upoważnienie może zostać
+              w każdym czasie zmienione albo odwołane.
+            </p>
+            <p>
+              Osoba wskazana w upoważnieniu może uzyskiwać informacje o stanie zdrowia małoletniego
+              pacjenta, udzielonych świadczeniach zdrowotnych oraz — w zakresie wskazanym powyżej —
+              uzyskać dostęp do jego dokumentacji medycznej.
+            </p>
+            <p>
+              W przypadku niewskazania osoby upoważnionej placówka nie udostępni informacji o stanie
+              zdrowia ani dokumentacji medycznej osobom trzecim, z zastrzeżeniem osób uprawnionych
+              na podstawie obowiązujących przepisów prawa.
+            </p>
+            <p>
+              Udostępnienie informacji lub dokumentacji medycznej następuje po potwierdzeniu
+              tożsamości osoby zgłaszającej żądanie oraz zgodnie z obowiązującymi przepisami prawa
+              i procedurą placówki.
             </p>
           </div>
         )}

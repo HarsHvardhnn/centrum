@@ -601,6 +601,26 @@ const DemographicsForm = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data wydania dokumentu <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  name="documentIssueDate"
+                  value={formatDateForInput(formData.documentIssueDate) || ""}
+                  onChange={handleChange}
+                  max={todayYmd()}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+                {formData.documentIssueDate &&
+                  formData.documentExpiryDate &&
+                  new Date(formData.documentExpiryDate) <= new Date(formData.documentIssueDate) && (
+                  <p className="text-red-500 text-xs mt-1">
+                    Data wydania musi być wcześniejsza niż data ważności.
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Data ważności dokumentu
                 </label>
                 <input

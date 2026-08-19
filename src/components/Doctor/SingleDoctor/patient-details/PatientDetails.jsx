@@ -228,6 +228,7 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
       "Typ dokumentu": patientData.documentType,
       "Numer dokumentu": patientData.documentNumber,
       "Data urodzenia (z dokumentu)": patientData.documentDateOfBirth ? formatDate(patientData.documentDateOfBirth) : null,
+      "Data wydania dokumentu": patientData.documentIssueDate ? formatDate(patientData.documentIssueDate) : null,
       "Data ważności dokumentu": patientData.documentExpiryDate ? formatDate(patientData.documentExpiryDate) : null,
       "Obywatelstwo": patientData.citizenship,
       "Klucz dokumentu": patientData.internationalPatientDocumentKey,

@@ -48,6 +48,7 @@ export const FormProvider = ({ children, initialData }) => {
     documentType: "",
     documentNumber: "",
     documentDateOfBirth: "",
+    documentIssueDate: "",
     documentExpiryDate: "",
     citizenship: "",
     documentEmail: "",
