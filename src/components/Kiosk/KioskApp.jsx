@@ -17,9 +17,10 @@ import AdultRegistrationForm from "./AdultRegistrationForm";
 import InternationalRegistrationForm from "./InternationalRegistrationForm";
 import MinorRegistrationForm from "./MinorRegistrationForm";
 import InternationalPatientStep from "./InternationalPatientStep";
-import { detectPatientType, PATIENT_TYPES } from "./PatientTypeDetector";
+import { detectPatientType, PATIENT_TYPES, isInternationalMinor, INTERNATIONAL_MINOR_BLOCKED_CODE } from "./PatientTypeDetector";
 import KioskNumericEntry from "./KioskNumericEntry";
 import KioskLoadingOverlay from "./KioskLoadingOverlay";
+import KioskInternationalMinorBlockedModal from "./KioskInternationalMinorBlockedModal";
 
 const STEPS = {
   PIN: "pin",
@@ -43,6 +44,7 @@ export default function KioskApp() {
   const [peselAttempts, setPeselAttempts] = useState(0);
   const [showPeselFallback, setShowPeselFallback] = useState(false);
   const [lastErrorMessage, setLastErrorMessage] = useState("");
+  const [showMinorBlocked, setShowMinorBlocked] = useState(false);
   const [restoring, setRestoring] = useState(() => !!getKioskToken());
   const idleTimerRef = useRef(null);
   const saveTimeoutRef = useRef(null);
@@ -437,6 +439,17 @@ export default function KioskApp() {
 
   const handleComplete = async (form) => {
     if (submittingRef.current) return;
+    if (
+      isInternationalMinor({
+        ...form,
+        patientType,
+        isInternationalPatient:
+          form.isInternationalPatient || patientType === PATIENT_TYPES.INTERNATIONAL,
+      })
+    ) {
+      setShowMinorBlocked(true);
+      return;
+    }
     submittingRef.current = true;
     setLoading(true);
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
@@ -452,7 +465,11 @@ export default function KioskApp() {
       setTimeout(resetToPin, 12000);
     } catch (err) {
       submittingRef.current = false;
-      toast.error(err.response?.data?.message || "Nie udało się zakończyć rejestracji.");
+      if (err.response?.data?.errorCode === INTERNATIONAL_MINOR_BLOCKED_CODE) {
+        setShowMinorBlocked(true);
+      } else {
+        toast.error(err.response?.data?.message || "Nie udało się zakończyć rejestracji.");
+      }
     } finally {
       setLoading(false);
     }
@@ -702,6 +719,10 @@ export default function KioskApp() {
           )}
         </div>
       </main>
+      <KioskInternationalMinorBlockedModal
+        open={showMinorBlocked}
+        onClose={() => setShowMinorBlocked(false)}
+      />
     </div>
   );
 }

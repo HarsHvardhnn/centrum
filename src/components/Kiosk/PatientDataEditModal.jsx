@@ -14,6 +14,8 @@ import {
   isIdentityDocumentExpired,
   todayYmd,
 } from "../../utils/identityDocument";
+import { isInternationalMinor } from "./PatientTypeDetector";
+import KioskInternationalMinorBlockedModal from "./KioskInternationalMinorBlockedModal";
 
 const VOIVODESHIPS = [
   "dolnośląskie", "kujawsko-pomorskie", "lubelskie", "lubuskie", "łódzkie",
@@ -33,6 +35,7 @@ export default function PatientDataEditModal({
   const [editData, setEditData] = useState({});
   const [errors, setErrors] = useState([]);
   const [guardianErrors, setGuardianErrors] = useState([]);
+  const [showMinorBlocked, setShowMinorBlocked] = useState(false);
 
   const isSignOnly = mode === "sign_only";
   const readOnlyFields = isSignOnly;
@@ -236,6 +239,13 @@ export default function PatientDataEditModal({
   };
 
   const handleSave = () => {
+    if (
+      isInternational &&
+      isInternationalMinor({ ...editData, isInternationalPatient: true, patientType })
+    ) {
+      setShowMinorBlocked(true);
+      return;
+    }
     if (validateData()) {
       onSave(editData);
       onClose();
@@ -843,6 +853,10 @@ export default function PatientDataEditModal({
           </div>
         </div>
       </div>
+      <KioskInternationalMinorBlockedModal
+        open={showMinorBlocked}
+        onClose={() => setShowMinorBlocked(false)}
+      />
     </div>
   );
 }

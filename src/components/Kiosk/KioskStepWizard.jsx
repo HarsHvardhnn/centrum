@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { PATIENT_TYPES } from "./PatientTypeDetector";
+import { PATIENT_TYPES, isInternationalMinor } from "./PatientTypeDetector";
 import { isFactualGuardian } from "../../utils/guardian";
+import KioskInternationalMinorBlockedModal from "./KioskInternationalMinorBlockedModal";
 
 const STEP_DEFINITIONS = {
   [PATIENT_TYPES.ADULT]: [
@@ -69,6 +70,7 @@ export default function KioskStepWizard({
   const [formData, setFormData] = useState(initialData);
   const [stepValidation, setStepValidation] = useState({});
   const [showErrors, setShowErrors] = useState(false);
+  const [showMinorBlocked, setShowMinorBlocked] = useState(false);
   const contentRef = useRef(null);
 
   // Factual caregiver: still signs RODO for their own data; cannot authorize medical records.
@@ -172,6 +174,10 @@ export default function KioskStepWizard({
 
   const goToNextStep = useCallback(() => {
     if (loading) return;
+    if (isInternationalMinor({ ...formData, patientType })) {
+      setShowMinorBlocked(true);
+      return;
+    }
     const validation = validateCurrentStep();
     setStepValidation(prev => ({ ...prev, [currentStep.id]: validation }));
 
@@ -204,7 +210,7 @@ export default function KioskStepWizard({
       }
       scrollContentToTop();
     }
-  }, [currentStep?.component, currentStep?.id, formData, isLastStep, loading, onSubmit, updateFormData, validateCurrentStep, scrollContentToTop]);
+  }, [currentStep?.component, currentStep?.id, formData, isLastStep, loading, onSubmit, patientType, updateFormData, validateCurrentStep, scrollContentToTop]);
 
   const goToPreviousStep = useCallback(() => {
     if (loading || isFirstStep) return;
@@ -325,6 +331,11 @@ export default function KioskStepWizard({
                 : "Dalej"}
         </button>
       </div>
+
+      <KioskInternationalMinorBlockedModal
+        open={showMinorBlocked}
+        onClose={() => setShowMinorBlocked(false)}
+      />
     </div>
   );
 }

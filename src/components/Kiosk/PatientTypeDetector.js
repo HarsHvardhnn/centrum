@@ -83,6 +83,24 @@ export const PATIENT_TYPES = {
   MINOR_16_17: "minor_16_17"
 };
 
+export const INTERNATIONAL_MINOR_BLOCKED_TITLE = "Rejestracja na iPadzie niedostępna";
+export const INTERNATIONAL_MINOR_BLOCKED_MESSAGE =
+  "Rejestracja pacjenta międzynarodowego poniżej 18. roku życia nie jest obecnie dostępna przez iPad. Prosimy o kontakt z rejestracją.";
+export const INTERNATIONAL_MINOR_BLOCKED_CODE = "international_minor_blocked";
+
+export function isInternationalPatientForm(formData = {}) {
+  return !!(formData.isInternationalPatient || (!formData.pesel && formData.documentType));
+}
+
+/** True when the kiosk international (no PESEL) path has a date of birth under 18. */
+export function isInternationalMinor(formData = {}) {
+  if (!isInternationalPatientForm(formData) && formData.patientType !== PATIENT_TYPES.INTERNATIONAL) {
+    return false;
+  }
+  const age = ageFromDate(formData.dateOfBirth);
+  return age !== null && age < 18;
+}
+
 export const FORM_MODES = {
   FULL_REGISTRATION: "full_registration",
   SIGN_ONLY: "sign_only", 

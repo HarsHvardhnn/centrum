@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { checkKioskDocument } from "../../helpers/kioskHelper";
-import { detectPatientType } from "./PatientTypeDetector";
+import {
+  detectPatientType,
+  INTERNATIONAL_MINOR_BLOCKED_CODE,
+  isInternationalMinor,
+} from "./PatientTypeDetector";
 import IdentityDocumentFields from "../shared/IdentityDocumentFields";
 import KioskDateInput from "./KioskDateInput";
+import KioskInternationalMinorBlockedModal from "./KioskInternationalMinorBlockedModal";
 import { validateIdentityDocument } from "../../utils/identityDocument";
 
 export default function InternationalPatientStep({ 
@@ -20,6 +25,7 @@ export default function InternationalPatientStep({
     dateOfBirth: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showMinorBlocked, setShowMinorBlocked] = useState(false);
 
   const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -29,6 +35,11 @@ export default function InternationalPatientStep({
 
     if (errors.length > 0) {
       toast.error(errors[0]);
+      return;
+    }
+
+    if (isInternationalMinor({ ...form, isInternationalPatient: true })) {
+      setShowMinorBlocked(true);
       return;
     }
 
@@ -61,7 +72,11 @@ export default function InternationalPatientStep({
 
       toast.success(res.message || "Dokument zweryfikowany.");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Nie można zweryfikować dokumentu.");
+      if (err.response?.data?.errorCode === INTERNATIONAL_MINOR_BLOCKED_CODE) {
+        setShowMinorBlocked(true);
+      } else {
+        toast.error(err.response?.data?.message || "Nie można zweryfikować dokumentu.");
+      }
     } finally {
       setLoading(false);
     }
@@ -109,6 +124,11 @@ export default function InternationalPatientStep({
       >
         {isLoading ? "Weryfikowanie..." : "Weryfikuj dokument"}
       </button>
+
+      <KioskInternationalMinorBlockedModal
+        open={showMinorBlocked}
+        onClose={() => setShowMinorBlocked(false)}
+      />
     </div>
   );
 }

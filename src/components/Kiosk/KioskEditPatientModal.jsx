@@ -1,11 +1,23 @@
 import { X } from "lucide-react";
+import { useState } from "react";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import { DOCUMENT_TYPES } from "./kioskConstants";
 import { VOIVODESHIPS } from "./kioskShared";
 import KioskDateInput from "./KioskDateInput";
+import { isInternationalMinor } from "./PatientTypeDetector";
+import KioskInternationalMinorBlockedModal from "./KioskInternationalMinorBlockedModal";
 
 export default function KioskEditPatientModal({ form, onChange, onClose, onSave, readOnlyPesel = true }) {
+  const [showMinorBlocked, setShowMinorBlocked] = useState(false);
   const update = (field, value) => onChange({ ...form, [field]: value });
+
+  const handleSave = () => {
+    if (form.isInternationalPatient && isInternationalMinor({ ...form, isInternationalPatient: true })) {
+      setShowMinorBlocked(true);
+      return;
+    }
+    onSave?.();
+  };
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4">
@@ -115,13 +127,17 @@ export default function KioskEditPatientModal({ form, onChange, onClose, onSave,
           </button>
           <button
             type="button"
-            onClick={onSave}
+            onClick={handleSave}
             className="px-4 py-2 rounded-lg bg-teal-700 text-white hover:bg-teal-800 font-medium"
           >
             Zapisz zmiany
           </button>
         </div>
       </div>
+      <KioskInternationalMinorBlockedModal
+        open={showMinorBlocked}
+        onClose={() => setShowMinorBlocked(false)}
+      />
     </div>
   );
 }
