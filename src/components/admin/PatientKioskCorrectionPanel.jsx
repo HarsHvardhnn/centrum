@@ -11,31 +11,14 @@ import {
   downloadPackage,
   getPdfJobBySession,
 } from "../../helpers/kioskHelper";
+import {
+  KIOSK_STATUS_LABELS as STATUS_LABELS,
+  KIOSK_TERMINAL_STATUSES as TERMINAL_STATUSES,
+  KIOSK_RESTARTABLE_STATUSES as RESTARTABLE_STATUSES,
+  KIOSK_STATUS_PILL_CLASS as STATUS_PILL_CLASS,
+  kioskSessionRestartMessage,
+} from "../../helpers/kioskSessionStatus";
 import { resolveDocumentOpenUrl } from "../../utils/documentUrl";
-
-const STATUS_LABELS = {
-  pending: "Oczekuje na PIN",
-  active: "Aktywna",
-  in_progress: "Formularz w trakcie",
-  ready_for_signature: "Gotowe do podpisu",
-  completed: "Zakończona",
-  cancelled: "Anulowana",
-  expired: "Wygasła",
-  locked: "Zablokowana",
-};
-
-const TERMINAL_STATUSES = ["completed", "cancelled", "expired", "locked"];
-
-const STATUS_PILL_CLASS = {
-  pending: "bg-amber-50 border-amber-200 text-amber-900",
-  active: "bg-sky-50 border-sky-200 text-sky-900",
-  in_progress: "bg-blue-50 border-blue-200 text-blue-900",
-  ready_for_signature: "bg-indigo-50 border-indigo-200 text-indigo-900",
-  completed: "bg-green-50 border-green-200 text-green-900",
-  cancelled: "bg-red-50 border-red-200 text-red-900",
-  expired: "bg-orange-50 border-orange-200 text-orange-900",
-  locked: "bg-gray-100 border-gray-300 text-gray-800",
-};
 
 function getKioskUrl() {
   return `${window.location.origin}/kiosk`;
@@ -114,7 +97,10 @@ export default function PatientKioskCorrectionPanel({
     const prev = prevStatusRef.current;
     const next = session.status;
     if (prev && prev !== next) {
-      if (next === "expired") {
+      if (next === "abandoned") {
+        toast.warning("Sesja została przerwana. Możesz wygenerować nowy PIN aktualizacji.");
+        setPin(null);
+      } else if (next === "expired") {
         toast.warning("Sesja wygasła. Możesz wygenerować nowy PIN aktualizacji.");
         setPin(null);
       } else if (next === "cancelled") {
@@ -210,7 +196,7 @@ export default function PatientKioskCorrectionPanel({
     ? "Tworzenie…"
     : session?.status === "completed"
       ? "Wygeneruj kolejny PIN aktualizacji"
-      : ["cancelled", "expired", "locked"].includes(session?.status)
+      : RESTARTABLE_STATUSES.includes(session?.status)
         ? "Uruchom ponownie"
         : "Wygeneruj PIN aktualizacji";
 
@@ -245,11 +231,9 @@ export default function PatientKioskCorrectionPanel({
             </span>
             {isActive && <span className="text-xs text-gray-400">aktualizacja na żywo</span>}
           </p>
-          {["cancelled", "expired"].includes(session.status) && (
+          {["cancelled", "expired", "abandoned"].includes(session.status) && (
             <p className="text-sm text-orange-800">
-              {session.status === "expired"
-                ? "Sesja wygasła (brak aktywności lub upłynął czas PIN). Kliknij „Uruchom ponownie”, aby wygenerować nowy PIN."
-                : "Sesja anulowana. Kliknij „Uruchom ponownie”, aby wygenerować nowy PIN."}
+              {kioskSessionRestartMessage(session)}
             </p>
           )}
 

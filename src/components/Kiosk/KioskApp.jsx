@@ -5,10 +5,9 @@ import {
   checkKioskPesel,
   clearKioskToken,
   completeKioskRegistration,
-  getKioskForm,
   getKioskToken,
   pingKioskSession,
-  releaseKioskSession,
+  releaseKioskSessionReliable,
   releaseKioskSessionOnUnload,
   saveKioskForm,
 } from "../../helpers/kioskHelper";
@@ -71,7 +70,7 @@ export default function KioskApp() {
   /** Expire session on server so reception listing updates, then return to PIN. */
   const endSessionAndReset = useCallback(
     async (reason = "interrupted") => {
-      await releaseKioskSession(reason);
+      await releaseKioskSessionReliable(reason);
       resetToPin();
     },
     [resetToPin]
@@ -82,7 +81,7 @@ export default function KioskApp() {
     if (step === STEPS.PIN || step === STEPS.DONE || submittingRef.current) return;
     idleTimerRef.current = setTimeout(() => {
       if (submittingRef.current) return;
-      toast.info("Sesja wygasła z powodu braku aktywności.");
+      toast.info("Sesja została przerwana z powodu braku aktywności.");
       endSessionAndReset("idle");
     }, IDLE_TIMEOUT_MS);
   }, [step, endSessionAndReset]);
@@ -212,8 +211,7 @@ export default function KioskApp() {
     };
   }, [resetIdleTimer]);
 
-  // Restore an in-flight tablet session after refresh instead of showing PIN
-  // while reception still sees "Formularz w trakcie".
+  // Refresh / leftover token = interrupt. Never resume an in-flight form.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -222,46 +220,19 @@ export default function KioskApp() {
         return;
       }
       try {
-        const res = await getKioskForm();
-        if (cancelled) return;
-        const session = res.session;
-        const fd = res.formData || {};
-        const status = session?.status;
-        if (!session || ["expired", "cancelled", "locked", "completed"].includes(status)) {
-          clearKioskToken();
-          return;
-        }
-
-        const detectedType = detectPatientType(fd);
-        const peselDigits = String(fd.pesel || "").replace(/\D/g, "");
-        const hasIdentity =
-          peselDigits.length === 11 ||
-          (!!fd.isInternationalPatient && !!String(fd.documentNumber || "").trim());
-        const hasFormProgress = hasIdentity || !!String(fd.firstName || "").trim();
-
-        setSessionInfo(session);
-        setFormData(fd);
-        setMode(session.mode || "full_registration");
-        setPatientType(detectedType);
-        if (peselDigits) setPesel(peselDigits.slice(0, 11));
-
-        if (hasFormProgress) {
-          setStep(STEPS.FORM);
-        } else if (fd.isInternationalPatient) {
-          setStep(STEPS.INTERNATIONAL);
-        } else {
-          setStep(STEPS.PESEL);
-        }
+        await releaseKioskSessionReliable("interrupted");
       } catch {
-        clearKioskToken();
-      } finally {
-        if (!cancelled) setRestoring(false);
+        /* best-effort; reception poll / inactivity expire still catch it */
+      }
+      if (!cancelled) {
+        resetToPin();
+        setRestoring(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [resetToPin]);
 
   // Closing the tab, leaving /kiosk, or iPad Back must expire the session
   // so reception no longer shows it as in progress.
@@ -314,13 +285,13 @@ export default function KioskApp() {
       try {
         const res = await pingKioskSession();
         if (cancelled) return;
-        if (res?.status && ["expired", "cancelled", "locked"].includes(res.status)) {
+        if (res?.status && ["expired", "cancelled", "locked", "abandoned"].includes(res.status)) {
           toast.info("Sesja rejestracji została zakończona.");
           resetToPin();
         }
       } catch (err) {
         const status = err.response?.data?.status;
-        if (err.response?.status === 401 || ["expired", "cancelled", "locked"].includes(status)) {
+        if (err.response?.status === 401 || ["expired", "cancelled", "locked", "abandoned"].includes(status)) {
           clearKioskToken();
           resetToPin();
         }
@@ -486,8 +457,8 @@ export default function KioskApp() {
     <div className="h-[100dvh] max-h-[100dvh] overflow-hidden bg-gradient-to-b from-teal-50 to-white flex flex-col pt-[max(0.75rem,env(safe-area-inset-top))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
       {restoring && (
         <KioskLoadingOverlay
-          title="Przywracanie sesji"
-          message="Proszę czekać — odtwarzamy formularz po odświeżeniu strony."
+          title="Zamykanie poprzedniej sesji"
+          message="Poprzednia sesja została przerwana. Wprowadź nowy kod PIN od recepcji."
         />
       )}
       {isSubmittingForm && (

@@ -8,30 +8,15 @@ import {
   cancelSession,
   downloadPackage,
 } from "../../helpers/kioskHelper";
-
-const STATUS_LABELS = {
-  pending: "Oczekuje na PIN",
-  active: "Aktywna",
-  in_progress: "Formularz w trakcie",
-  ready_for_signature: "Gotowe do podpisu",
-  completed: "Zakończona",
-  cancelled: "Anulowana",
-  expired: "Wygasła",
-  locked: "Zablokowana",
-};
-
-const TERMINAL_STATUSES = ["completed", "cancelled", "expired", "locked"];
-
-const STATUS_PILL_CLASS = {
-  pending: "bg-amber-50 border-amber-200 text-amber-900",
-  active: "bg-sky-50 border-sky-200 text-sky-900",
-  in_progress: "bg-blue-50 border-blue-200 text-blue-900",
-  ready_for_signature: "bg-indigo-50 border-indigo-200 text-indigo-900",
-  completed: "bg-green-50 border-green-200 text-green-900",
-  cancelled: "bg-red-50 border-red-200 text-red-900",
-  expired: "bg-orange-50 border-orange-200 text-orange-900",
-  locked: "bg-gray-100 border-gray-300 text-gray-800",
-};
+import {
+  KIOSK_STATUS_LABELS as STATUS_LABELS,
+  KIOSK_TERMINAL_STATUSES as TERMINAL_STATUSES,
+  KIOSK_RESTARTABLE_STATUSES as RESTARTABLE_STATUSES,
+  KIOSK_STATUS_PILL_CLASS as STATUS_PILL_CLASS,
+  interruptReasonLabel,
+  formatInterruptTime,
+  kioskSessionRestartMessage,
+} from "../../helpers/kioskSessionStatus";
 
 const KIOSK_URL = `${window.location.origin}/kiosk`;
 
@@ -97,7 +82,10 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
     const prev = prevStatusRef.current;
     const next = session.status;
     if (prev && prev !== next) {
-      if (next === "expired") {
+      if (next === "abandoned") {
+        toast.warning("Sesja iPad została przerwana. Możesz uruchomić rejestrację ponownie.");
+        setPin(null);
+      } else if (next === "expired") {
         toast.warning("Sesja iPad wygasła. Możesz uruchomić rejestrację ponownie.");
         setPin(null);
       } else if (next === "cancelled") {
@@ -137,7 +125,7 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
   };
 
   const handleRestart = async () => {
-    // Create a fresh session + PIN after cancelled/expired/locked
+    // Create a fresh session + PIN after cancelled/expired/abandoned/locked
     await handleStart();
   };
 
@@ -196,7 +184,7 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
   const isActive = session && !TERMINAL_STATUSES.includes(session.status);
   const canRestart =
     !session ||
-    ["cancelled", "expired", "locked"].includes(session.status) ||
+    RESTARTABLE_STATUSES.includes(session.status) ||
     (session.status === "completed" && !isActive);
   const showPin = pin && session?.status === "pending";
   const statusClass =
@@ -223,7 +211,7 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
           >
             {loading
               ? "..."
-              : session && ["cancelled", "expired", "locked"].includes(session.status)
+              : session && RESTARTABLE_STATUSES.includes(session.status)
                 ? "Uruchom ponownie"
                 : session?.status === "completed"
                   ? "Nowa sesja"
@@ -260,61 +248,79 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
               <p className="text-3xl font-mono font-bold tracking-[0.2em] text-teal-800 leading-none">
                 {pin}
               </p>
-              <p className="text-[11px] text-gray-500 mt-1.5">Ważny przez 2 godziny</p>
+              <p className="text-[11px] text-gray-500 mt-1.5">PIN ważny 2 godziny</p>
+              <p className="text-[11px] text-gray-400 mt-1">
+                Brak aktywności na iPadzie: 5 min → sesja przerwana
+              </p>
             </>
           ) : (
             <p className="text-xs text-gray-500 px-2">
-              {session?.status === "expired"
-                ? "Sesja wygasła. Kliknij „Uruchom ponownie”, aby wygenerować nowy PIN."
-                : session?.status === "cancelled"
-                  ? "Sesja anulowana. Kliknij „Uruchom ponownie”, aby wygenerować nowy PIN."
-                  : session
-                    ? "PIN widoczny tylko przy statusie „Oczekuje na PIN”."
-                    : "Uruchom sesję, aby wygenerować PIN."}
+              {kioskSessionRestartMessage(session) ||
+                (session
+                  ? "PIN widoczny tylko przy statusie „Oczekuje na PIN”."
+                  : "Uruchom sesję, aby wygenerować PIN.")}
             </p>
           )}
         </div>
       </div>
 
       {session && (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="font-medium text-gray-700">Status:</span>
-            <span className={`px-2 py-0.5 rounded-full border font-medium ${statusClass}`}>
-              {STATUS_LABELS[session.status] || session.status}
-            </span>
-            {isActive && (
-              <span className="text-gray-400">aktualizacja na żywo</span>
-            )}
-            {session.mode && (
-              <span className="text-gray-500">
-                Tryb: {session.mode === "sign_only" ? "tylko podpis" : "pełna rejestracja"}
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="font-medium text-gray-700">Status:</span>
+              <span className={`px-2 py-0.5 rounded-full border font-medium ${statusClass}`}>
+                {STATUS_LABELS[session.status] || session.status}
               </span>
-            )}
-          </div>
+              {isActive && (
+                <span className="text-gray-400">aktualizacja na żywo</span>
+              )}
+              {session.mode && (
+                <span className="text-gray-500">
+                  Tryb: {session.mode === "sign_only" ? "tylko podpis" : "pełna rejestracja"}
+                </span>
+              )}
+              {session.status === "abandoned" && (session.interruptedAt || session.interruptReason) && (
+                <span className="text-rose-800">
+                  {[
+                    formatInterruptTime(session.interruptedAt),
+                    interruptReasonLabel(session.interruptReason),
+                  ]
+                    .filter(Boolean)
+                    .join(" — ")}
+                </span>
+              )}
+            </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {isActive && (
-              <button
-                type="button"
-                onClick={handleCancel}
-                disabled={loading}
-                className="text-xs border border-red-200 bg-white text-red-700 px-2.5 py-1 rounded-lg hover:bg-red-50"
-              >
-                Anuluj sesję
-              </button>
-            )}
-            {session.status === "completed" && session.packageId && (
-              <button
-                type="button"
-                onClick={handleDownload}
-                disabled={loading}
-                className="text-xs bg-teal-700 text-white px-2.5 py-1 rounded-lg hover:bg-teal-800"
-              >
-                Pobierz dokumenty
-              </button>
-            )}
+            <div className="flex flex-wrap gap-1.5">
+              {isActive && (
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={loading}
+                  className="text-xs border border-red-200 bg-white text-red-700 px-2.5 py-1 rounded-lg hover:bg-red-50"
+                >
+                  Anuluj sesję
+                </button>
+              )}
+              {session.status === "completed" && session.packageId && (
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  disabled={loading}
+                  className="text-xs bg-teal-700 text-white px-2.5 py-1 rounded-lg hover:bg-teal-800"
+                >
+                  Pobierz dokumenty
+                </button>
+              )}
+            </div>
           </div>
+          {isActive && (
+            <p className="text-[11px] text-gray-500">
+              Timeout: 5 min bez dotyku na iPadzie → Przerwana. PIN ważny 2 godziny.
+              Zamknięcie, odświeżenie lub blokada iPada przerywa sesję od razu — zgody nie są zapisywane.
+            </p>
+          )}
         </div>
       )}
 

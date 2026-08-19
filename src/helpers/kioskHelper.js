@@ -139,7 +139,7 @@ export async function completeKioskRegistration(payload) {
   return res.data;
 }
 
-/** Mark current kiosk session expired (idle timeout / interrupt). Best-effort. */
+/** Mark current kiosk session abandoned (idle timeout / interrupt). Best-effort. */
 export async function releaseKioskSession(reason = "idle") {
   const token = getKioskToken();
   if (!token) return null;
@@ -155,15 +155,31 @@ export async function releaseKioskSession(reason = "idle") {
   }
 }
 
+async function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Retry a few times so reception sees Przerwana even on a flaky iPad network. */
+export async function releaseKioskSessionReliable(reason = "interrupted", attempts = 3) {
+  for (let i = 0; i < attempts; i += 1) {
+    const result = await releaseKioskSession(reason);
+    if (result) return result;
+    if (i < attempts - 1) await wait(400 * (i + 1));
+  }
+  return null;
+}
+
 export async function pingKioskSession() {
   const res = await kioskApi.post("/api/kiosk/session/heartbeat", {}, { headers: kioskHeaders() });
   return res.data;
 }
 
 /**
- * Best-effort release during tab close / browser back.
+ * Best-effort release during tab close / browser back / iPad lock.
  * Uses a simple POST (no custom headers) so iOS Safari can send it during unload
- * without a CORS preflight. Token travels in the body for sendBeacon.
+ * without a CORS preflight. Token travels in the query + body for sendBeacon.
+ * The token is intentionally left in storage so a refresh can finish the
+ * abandon call if this beacon is dropped.
  */
 export function releaseKioskSessionOnUnload(reason = "interrupted") {
   const token = getKioskToken();
@@ -174,14 +190,14 @@ export function releaseKioskSessionOnUnload(reason = "interrupted") {
     "https://backend.centrummedyczne7.pl";
   const url = `${String(base).replace(/\/$/, "")}/api/kiosk/session/release`;
   const payload = new URLSearchParams({ token, reason });
+  const beaconUrl = `${url}?token=${encodeURIComponent(token)}&reason=${encodeURIComponent(reason)}`;
 
   try {
     if (typeof navigator.sendBeacon === "function") {
       const blob = new Blob([payload.toString()], {
         type: "application/x-www-form-urlencoded",
       });
-      if (navigator.sendBeacon(url, blob)) {
-        clearKioskToken();
+      if (navigator.sendBeacon(beaconUrl, blob)) {
         return;
       }
     }
@@ -190,7 +206,7 @@ export function releaseKioskSessionOnUnload(reason = "interrupted") {
   }
 
   try {
-    fetch(url, {
+    fetch(beaconUrl, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: payload.toString(),
@@ -200,5 +216,4 @@ export function releaseKioskSessionOnUnload(reason = "interrupted") {
   } catch {
     /* ignore unload failures */
   }
-  clearKioskToken();
 }
