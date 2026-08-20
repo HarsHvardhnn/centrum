@@ -14,6 +14,7 @@ import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDa
 import { PHONE_COUNTRY_CODES } from '../../../constants/phoneCountryCodes';
 import { cm7PostalAddressLd } from '../../../data/cm7PostalAddressLd';
 import PhoneCodeSelect from '../../UtilComponents/PhoneCodeSelect';
+import OnlineBookingUnavailable from '../OnlineBookingUnavailable';
 
 function BookingPatientFormSection({
   bookingForm,
@@ -514,6 +515,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [weekLoading, setWeekLoading] = useState(false);
+  const [onlineBookingUnavailable, setOnlineBookingUnavailable] = useState(false);
   const [bookingForm, setBookingForm] = useState({
     name: "",
     email: "",
@@ -732,6 +734,8 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
 
     setShowBookingModal(true);
     setWeekLoading(true);
+    setOnlineBookingUnavailable(false);
+    setAvailableSlots([]);
 
     // Get the correct doctor ID (could be _id or id)
     const doctorId = doctor._id || doctor.id;
@@ -752,7 +756,8 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
         doctorId
       );
 
-      if (nextAvailableResponse.success && nextAvailableResponse.data) {
+      if (nextAvailableResponse.success && nextAvailableResponse.data?.nextAvailableDate) {
+        setOnlineBookingUnavailable(false);
         const nextAvailableDate = nextAvailableResponse.data.nextAvailableDate;
         
         // Calculate which week this date falls into (using Poland timezone)
@@ -792,13 +797,16 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
         
         // Fetch slot availability for all days in the week
         fetchWeekSlotAvailability(doctorId, days);
+      } else if (nextAvailableResponse.data?.onlineBookingUnavailable) {
+        setOnlineBookingUnavailable(true);
+        setAvailableSlots([]);
+        setSelectedSlot(null);
+        setDaysWithSlots(new Set());
       } else {
-        // If no available date found, use current date (Poland timezone)
-        const currentDatePoland = getCurrentDateInPoland();
-        setSelectedDate(currentDatePoland);
-        setWeekOffset(0); // Reset to current week
-        // Fetch slots for current date
-        await fetchAvailableSlots(doctorId, currentDatePoland);
+        setOnlineBookingUnavailable(false);
+        setAvailableSlots([]);
+        setSelectedSlot(null);
+        setDaysWithSlots(new Set());
       }
     } catch (error) {
       console.error("Error fetching doctor availability:", error);
@@ -1105,16 +1113,18 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
     
     // Clear cache when week changes
     setWeekAvailabilityCache(null);
-    
-    // Fetch slot availability for all days in the week when week changes
-    if (doctor && days.length > 0) {
+
+    // Fetch the visible week only after the booking modal is open and the
+    // doctor has a schedule. Opening the modal itself is handled by
+    // handleBookAppointmentModal after next-available returns.
+    if (showBookingModal && !onlineBookingUnavailable && doctor && days.length > 0) {
       const doctorId = doctor._id || doctor.id;
       if (doctorId) {
         fetchWeekSlotAvailability(doctorId, days);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weekOffset, doctor?._id, doctor?.id]);
+  }, [weekOffset]);
 
   // Initialize nextDays on component mount (using Poland timezone)
   useEffect(() => {
@@ -1668,6 +1678,10 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                       Wybierz termin wizyty
                     </h4>
 
+                    {onlineBookingUnavailable ? (
+                      <OnlineBookingUnavailable />
+                    ) : (
+                      <>
                     {/* Date Selection */}
                     <div className="mb-6">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1825,6 +1839,8 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                         </div>
                       )}
                     </div>
+                      </>
+                    )}
 
                     {/* Patient Information Form */}
                     {selectedSlot ? (

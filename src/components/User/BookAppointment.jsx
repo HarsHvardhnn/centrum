@@ -13,6 +13,7 @@ import { sortDoctorsWithPinnedFirst } from "../../utils/doctorSort";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import PhoneCodeSelect from "../UtilComponents/PhoneCodeSelect";
 import { filterPublicDoctorList } from "../../utils/publicDoctorFilters";
+import OnlineBookingUnavailable from "./OnlineBookingUnavailable";
 
 export default function BookAppointment({
   page,
@@ -33,6 +34,7 @@ export default function BookAppointment({
   const [lastBookedVisit, setLastBookedVisit] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [onlineBookingUnavailable, setOnlineBookingUnavailable] = useState(false);
 
   // reCAPTCHA state
   const [showV2Captcha, setShowV2Captcha] = useState(false);
@@ -286,6 +288,7 @@ export default function BookAppointment({
     setFieldValue("doctor", ""); // Reset doctor when specialization changes
     setFieldValue("time", ""); // Reset time when specialization changes
     setAvailableSlots([]); // Reset available slots
+    setOnlineBookingUnavailable(false);
 
     updateUrlWithSelections("", newSpecialization, values.date, "");
 
@@ -312,31 +315,38 @@ export default function BookAppointment({
     const newDoctorId = e.target.value;
     setFieldValue("doctor", newDoctorId);
     setFieldValue("time", ""); // Reset time when doctor changes
+    setOnlineBookingUnavailable(false);
+    setAvailableSlots([]);
 
     updateUrlWithSelections(newDoctorId, values.specialization, date, "");
 
     if (newDoctorId) {
       try {
-        // Fetch next available date
+        setSlotsLoading(true);
         const nextAvailableResponse = await doctorService.getNextAvailableDate(newDoctorId);
-        
-        if (nextAvailableResponse.success && nextAvailableResponse.data) {
-          // Set the next available date
+
+        if (nextAvailableResponse.success && nextAvailableResponse.data?.nextAvailableDate) {
+          setOnlineBookingUnavailable(false);
           setFieldValue("date", nextAvailableResponse.data.nextAvailableDate);
-          // Set available slots
-          setAvailableSlots(nextAvailableResponse.data.availableSlots);
+          setAvailableSlots(nextAvailableResponse.data.availableSlots || []);
           updateUrlWithSelections(newDoctorId, values.specialization, nextAvailableResponse.data.nextAvailableDate, "");
+        } else if (nextAvailableResponse.data?.onlineBookingUnavailable) {
+          setOnlineBookingUnavailable(true);
+          setAvailableSlots([]);
+          setFieldValue("date", "");
+          updateUrlWithSelections(newDoctorId, values.specialization, "", "");
         } else {
-          // If no available date found, use current date (Poland timezone)
+          setOnlineBookingUnavailable(false);
+          setAvailableSlots([]);
           const currentDate = getCurrentDateInPoland();
           setFieldValue("date", currentDate);
-          // Fetch slots for current date
-          await fetchAvailableSlots(newDoctorId, currentDate);
           updateUrlWithSelections(newDoctorId, values.specialization, currentDate, "");
         }
       } catch (error) {
         console.error("Error fetching next available date:", error);
         toast.error("Nie udało się pobrać dostępnych terminów. Spróbuj ponownie później.");
+      } finally {
+        setSlotsLoading(false);
       }
     } else {
       setAvailableSlots([]);
@@ -973,6 +983,7 @@ export default function BookAppointment({
                   />
                 </div>
 
+                {!onlineBookingUnavailable && (
                 <div className="col-span-1">
                   <label htmlFor="date" className="sr-only">Data</label>
                   <Field
@@ -991,9 +1002,14 @@ export default function BookAppointment({
                     className="text-red-600 text-xs sm:text-sm mt-1"
                   />
                 </div>
+                )}
 
                 {/* Available Time Slots */}
                 <div className="col-span-1 sm:col-span-2">
+                  {onlineBookingUnavailable ? (
+                    <OnlineBookingUnavailable />
+                  ) : (
+                    <>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Dostępne godziny
                   </label>
@@ -1039,6 +1055,8 @@ export default function BookAppointment({
                           : "Wybierz datę, aby zobaczyć dostępne terminy"}
                       </p>
                     </div>
+                  )}
+                    </>
                   )}
                   
                   <ErrorMessage

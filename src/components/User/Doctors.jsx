@@ -19,6 +19,7 @@ import { filterPublicDoctorList } from "../../utils/publicDoctorFilters";
 import { sortDoctorsWithPinnedFirst } from "../../utils/doctorSort";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import PhoneCodeSelect from "../UtilComponents/PhoneCodeSelect";
+import OnlineBookingUnavailable from "./OnlineBookingUnavailable";
 
 export default function Doctors({
   selectedDoctorId,
@@ -63,6 +64,7 @@ export default function Doctors({
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [weekLoading, setWeekLoading] = useState(false);
+  const [onlineBookingUnavailable, setOnlineBookingUnavailable] = useState(false);
   const [daysWithSlots, setDaysWithSlots] = useState(new Set());
   const [checkingSlots, setCheckingSlots] = useState(false);
   const [weekAvailabilityCache, setWeekAvailabilityCache] = useState(null);
@@ -478,6 +480,8 @@ export default function Doctors({
     setDaysWithSlots(new Set());
     setWeekAvailabilityCache(null);
     setWeekLoading(true);
+    setOnlineBookingUnavailable(false);
+    setAvailableSlots([]);
 
     try {
       // Fetch doctor profile
@@ -488,7 +492,8 @@ export default function Doctors({
         doctor.id
       );
 
-        if (nextAvailableResponse.success && nextAvailableResponse.data) {
+        if (nextAvailableResponse.success && nextAvailableResponse.data?.nextAvailableDate) {
+          setOnlineBookingUnavailable(false);
           const nextAvailableDate = nextAvailableResponse.data.nextAvailableDate;
           
           // Calculate which week this date falls into (using Poland timezone)
@@ -519,19 +524,16 @@ export default function Doctors({
           });
           setNextDays(days);
           await fetchWeekSlotAvailability(doctor.id, days);
+        } else if (nextAvailableResponse.data?.onlineBookingUnavailable) {
+          setOnlineBookingUnavailable(true);
+          setAvailableSlots([]);
+          setSelectedSlot(null);
+          setDaysWithSlots(new Set());
         } else {
-          const currentDatePoland = getCurrentDateInPoland();
-          setSelectedDate(currentDatePoland);
-          setWeekOffset(0);
-          const days = Array.from({ length: 7 }, (_, i) => {
-            const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
-            const date = new Date(todayPoland);
-            date.setDate(date.getDate() + i);
-            return formatDateToPolandTimezone(date);
-          });
-          setNextDays(days);
-          await fetchWeekSlotAvailability(doctor.id, days);
-          await fetchAvailableSlots(doctor.id, currentDatePoland);
+          setOnlineBookingUnavailable(false);
+          setAvailableSlots([]);
+          setSelectedSlot(null);
+          setDaysWithSlots(new Set());
         }
     } catch (error) {
       console.error("Error fetching doctor availability:", error);
@@ -804,11 +806,13 @@ export default function Doctors({
     setNextDays(days);
     setWeekAvailabilityCache(null);
 
-    if (selectedDoctor && showModal && days.length > 0) {
+    // Do not fetch on modal open — handleBookAppointment loads the week after
+    // next-available returns. Skip entirely when the doctor has no schedule.
+    if (selectedDoctor && showModal && days.length > 0 && !onlineBookingUnavailable) {
       fetchWeekSlotAvailability(selectedDoctor.id, days);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weekOffset, selectedDoctor?.id, showModal]);
+  }, [weekOffset]);
 
   // Initialize nextDays on component mount (using Poland timezone)
   useEffect(() => {
@@ -1016,6 +1020,10 @@ export default function Doctors({
                     Wybierz termin wizyty
                   </h4>
 
+                  {onlineBookingUnavailable ? (
+                    <OnlineBookingUnavailable />
+                  ) : (
+                    <>
                   {/* Date Selection */}
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1174,6 +1182,8 @@ export default function Doctors({
                       </div>
                     )}
                   </div>
+                    </>
+                  )}
 
                   {/* Patient Information Form */}
                   {selectedSlot && (
