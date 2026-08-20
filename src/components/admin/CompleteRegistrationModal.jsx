@@ -5,6 +5,11 @@ import patientService from "../../helpers/patientHelper";
 import { normalizePesel, getPeselChecksumWarning } from "../../utils/peselUtils";
 import { PHONE_COUNTRY_CODES, FlagIcon } from "../../constants/phoneCountryCodes";
 import IpadSessionPanel from "./IpadSessionPanel";
+import {
+  isIdentityDocumentExpired,
+  todayYmd,
+  validateIdentityDocument,
+} from "../../utils/identityDocument";
 
 /**
  * Admin: Complete registration for a visit that has no patient yet.
@@ -42,7 +47,9 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
     isInternationalPatient: !!regInitial?.isInternationalPatient,
     documentCountry: regInitial?.documentCountry ?? "",
     documentType: regInitial?.documentType ?? "",
-    documentNumber: regInitial?.documentNumber ?? ""
+    documentNumber: regInitial?.documentNumber ?? "",
+    documentIssueDate: regInitial?.documentIssueDate ? String(regInitial.documentIssueDate).slice(0, 10) : "",
+    documentExpiryDate: regInitial?.documentExpiryDate ? String(regInitial.documentExpiryDate).slice(0, 10) : "",
   });
 
   useEffect(() => {
@@ -74,7 +81,9 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
       isInternationalPatient: !!reg.isInternationalPatient,
       documentCountry: reg.documentCountry ?? "",
       documentType: reg.documentType ?? "",
-      documentNumber: reg.documentNumber ?? ""
+      documentNumber: reg.documentNumber ?? "",
+      documentIssueDate: reg.documentIssueDate ? String(reg.documentIssueDate).slice(0, 10) : "",
+      documentExpiryDate: reg.documentExpiryDate ? String(reg.documentExpiryDate).slice(0, 10) : "",
     });
     const peselFromReg = (reg.pendingPesel ?? reg.govtId ?? reg.pesel ?? reg.npesei ?? "").toString().trim();
     setCompleteRegPesel(peselFromReg ? normalizePesel(peselFromReg) : "");
@@ -231,6 +240,17 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
         toast.error("Wypełnij wszystkie pola dokumentu (kraj wydania, typ dokumentu, numer).");
         return;
       }
+      const identityErrors = validateIdentityDocument({
+        documentType: formData.documentType,
+        documentNumber: formData.documentNumber,
+        documentCountry: formData.documentCountry,
+        documentIssueDate: formData.documentIssueDate,
+        documentExpiryDate: formData.documentExpiryDate,
+      });
+      if (identityErrors.length) {
+        toast.error(identityErrors[0]);
+        return;
+      }
       // Check if document number already exists (another patient) before submitting
       try {
         const res = await patientService.getPatientByDocumentNumber(
@@ -273,6 +293,8 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
           payload.documentCountry = formData.documentCountry?.trim() ?? "";
           payload.documentType = formData.documentType?.trim() ?? "";
           payload.documentNumber = formData.documentNumber?.trim() ?? "";
+          payload.documentIssueDate = formData.documentIssueDate || undefined;
+          payload.documentExpiryDate = formData.documentExpiryDate || undefined;
           payload.internationalPatientDocumentKey = [payload.documentCountry, payload.documentType, payload.documentNumber].join("|");
         } else {
           payload.pesel = normalizePesel(completeRegPesel);
@@ -289,6 +311,8 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
           documentCountry,
           documentType,
           documentNumber,
+          documentIssueDate: formData.documentIssueDate || undefined,
+          documentExpiryDate: formData.documentExpiryDate || undefined,
           internationalPatientDocumentKey: [documentCountry, documentType, documentNumber].join("|"),
           phone: fullPhone,
           phoneCode: formData.phone ? formData.phoneCode : undefined,
@@ -340,7 +364,15 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
   const isInternational = !!formData.isInternationalPatient;
   const canSubmit = isInternational
     ? (formData.firstName?.trim() && formData.lastName?.trim() &&
-       formData.documentCountry?.trim() && formData.documentType?.trim() && formData.documentNumber?.trim())
+       formData.documentCountry?.trim() && formData.documentType?.trim() && formData.documentNumber?.trim() &&
+       formData.documentIssueDate &&
+       !validateIdentityDocument({
+         documentType: formData.documentType,
+         documentNumber: formData.documentNumber,
+         documentCountry: formData.documentCountry,
+         documentIssueDate: formData.documentIssueDate,
+         documentExpiryDate: formData.documentExpiryDate,
+       }).length)
     : (normalizePesel(completeRegPesel).length === 11 &&
        formData.firstName?.trim() && formData.lastName?.trim() && formData.sex?.trim());
 
@@ -491,6 +523,51 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
                     placeholder="Numer dokumentu"
                     className="w-full p-2 border border-gray-300 rounded-lg"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Data wydania dokumentu <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.documentIssueDate || ""}
+                    max={todayYmd()}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, documentIssueDate: e.target.value }))}
+                    className={`w-full p-2 border rounded-lg ${
+                      !formData.documentIssueDate ||
+                      formData.documentIssueDate > todayYmd()
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    }`}
+                  />
+                  {!formData.documentIssueDate && (
+                    <p className="mt-1 text-xs text-red-500">Data wydania dokumentu jest wymagana.</p>
+                  )}
+                  {formData.documentIssueDate && formData.documentIssueDate > todayYmd() && (
+                    <p className="mt-1 text-xs text-red-500">Data wydania dokumentu nie może być w przyszłości.</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Data ważności dokumentu <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.documentExpiryDate || ""}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, documentExpiryDate: e.target.value }))}
+                    className={`w-full p-2 border rounded-lg ${
+                      !formData.documentExpiryDate ||
+                      isIdentityDocumentExpired(formData.documentExpiryDate)
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    }`}
+                  />
+                  {!formData.documentExpiryDate && (
+                    <p className="mt-1 text-xs text-red-500">Data ważności dokumentu jest wymagana.</p>
+                  )}
+                  {isIdentityDocumentExpired(formData.documentExpiryDate) && (
+                    <p className="mt-1 text-xs text-red-500">Dokument jest już wygasły.</p>
+                  )}
                 </div>
               </div>
             </div>

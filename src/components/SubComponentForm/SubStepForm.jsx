@@ -49,6 +49,7 @@ const SubStepForm = ({
         !formData.documentDateOfBirth ||
         !issueYmd ||
         issueYmd > todayYmd() ||
+        !expiryYmd ||
         isIdentityDocumentExpired(formData.documentExpiryDate) ||
         (issueYmd && expiryYmd && expiryYmd <= issueYmd)
       );

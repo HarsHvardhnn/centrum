@@ -800,7 +800,7 @@ export default function UserManagement() {
             documentIssueDate: formData.documentIssueDate,
             documentExpiryDate: formData.documentExpiryDate,
           },
-          { requireExpiry: false }
+          { requireExpiry: true }
         );
         if (identityErrors.length) {
           toast.error(identityErrors[0]);

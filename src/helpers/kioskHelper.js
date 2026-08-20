@@ -139,6 +139,11 @@ export async function completeKioskRegistration(payload) {
   return res.data;
 }
 
+export async function getKioskSessionDocuments() {
+  const res = await kioskApi.get("/api/kiosk/session/documents", { headers: kioskHeaders() });
+  return res.data;
+}
+
 /** Mark current kiosk session abandoned (idle timeout / interrupt). Best-effort. */
 export async function releaseKioskSession(reason = "idle") {
   const token = getKioskToken();

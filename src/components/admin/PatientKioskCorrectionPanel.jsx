@@ -90,7 +90,7 @@ export default function PatientKioskCorrectionPanel({
 
   useEffect(() => {
     if (!session?.id || TERMINAL_STATUSES.includes(session.status)) return;
-    const interval = setInterval(refreshStatus, 3000);
+    const interval = setInterval(refreshStatus, 2000);
     return () => clearInterval(interval);
   }, [session?.id, session?.status, refreshStatus]);
 
@@ -373,6 +373,11 @@ export default function PatientKioskCorrectionPanel({
           {isActive && (
             <span className="hidden sm:inline px-1.5 py-0.5 rounded-full bg-white/20 text-[11px] font-medium">
               {STATUS_LABELS[session.status] || session.status}
+            </span>
+          )}
+          {session && ["abandoned", "expired", "cancelled"].includes(session.status) && (
+            <span className="hidden sm:inline px-1.5 py-0.5 rounded-full bg-white/20 text-[11px] font-medium">
+              {STATUS_LABELS[session.status]}
             </span>
           )}
         </button>

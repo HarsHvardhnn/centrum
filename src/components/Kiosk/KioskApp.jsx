@@ -20,6 +20,7 @@ import { detectPatientType, PATIENT_TYPES, isInternationalMinor, INTERNATIONAL_M
 import KioskNumericEntry from "./KioskNumericEntry";
 import KioskLoadingOverlay from "./KioskLoadingOverlay";
 import KioskInternationalMinorBlockedModal from "./KioskInternationalMinorBlockedModal";
+import KioskSignedDocumentsPreview from "./KioskSignedDocumentsPreview";
 
 const STEPS = {
   PIN: "pin",
@@ -252,6 +253,7 @@ export default function KioskApp() {
     const onLeave = (reason = "interrupted") => {
       if (shouldReleaseOnLeave()) {
         releaseKioskSessionOnUnload(reason);
+        releaseKioskSessionReliable(reason);
       }
     };
 
@@ -275,13 +277,9 @@ export default function KioskApp() {
       if (capturingFileRef.current) return;
       if (!shouldReleaseOnLeave()) return;
 
-      // Ignore Control Center flashes; camera capture is skipped via capturingFileRef.
-      lockTimerRef.current = setTimeout(() => {
-        lockTimerRef.current = null;
-        if (document.visibilityState !== "hidden") return;
-        if (capturingFileRef.current) return;
-        onLeave("device_lock");
-      }, 2500);
+      // iOS freezes JS almost immediately on lock, so do not wait 2.5s.
+      // File-picker capture is skipped above so the camera sheet is not treated as a lock.
+      onLeave("device_lock");
     };
 
     const onLeaveInterrupted = () => onLeave("interrupted");
@@ -329,6 +327,9 @@ export default function KioskApp() {
     let cancelled = false;
 
     const ping = async () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return;
+      }
       try {
         const res = await pingKioskSession();
         if (cancelled) return;
@@ -502,7 +503,6 @@ export default function KioskApp() {
       const res = await completeKioskRegistration(form);
       setStep(STEPS.DONE);
       toast.success(res.message || "Rejestracja zakończona.");
-      setTimeout(resetToPin, 12000);
     } catch (err) {
       submittingRef.current = false;
       if (err.response?.data?.errorCode === INTERNATIONAL_MINOR_BLOCKED_CODE) {
@@ -741,22 +741,7 @@ export default function KioskApp() {
           )}
 
           {step === STEPS.DONE && (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">Rejestracja zakończona</h2>
-              <p className="text-gray-600 mb-8">Dziękujemy. Proszę oddać urządzenie pracownikowi rejestracji.</p>
-              <button
-                type="button"
-                onClick={resetToPin}
-                className="text-teal-700 font-medium hover:underline"
-              >
-                Zamknij
-              </button>
-            </div>
+            <KioskSignedDocumentsPreview onClose={resetToPin} />
           )}
         </div>
       </main>

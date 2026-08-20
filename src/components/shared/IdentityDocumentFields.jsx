@@ -85,6 +85,7 @@ export default function IdentityDocumentFields({
             onChange={(e) => onChange?.("documentIssueDate", e.target.value)}
             readOnly={readOnly}
             required
+            max={todayYmd()}
           />
         </div>
         <div className="min-w-0">
@@ -93,13 +94,12 @@ export default function IdentityDocumentFields({
             value={documentExpiryDate}
             onChange={(e) => onChange?.("documentExpiryDate", e.target.value)}
             readOnly={readOnly}
-            min={todayYmd()}
             required
             className={isIdentityDocumentExpired(documentExpiryDate) ? "border-red-500" : ""}
           />
           {isIdentityDocumentExpired(documentExpiryDate) && (
             <p className="text-red-600 text-xs mt-1">
-              Dokument jest już wygasły. Wybierz datę dzisiejszą lub późniejszą.
+              Dokument jest już wygasły. Nie można kontynuować rejestracji.
             </p>
           )}
         </div>

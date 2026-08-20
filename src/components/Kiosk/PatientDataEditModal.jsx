@@ -388,6 +388,8 @@ export default function PatientDataEditModal({
                       value={editData.documentIssueDate || ""}
                       onChange={(e) => update("documentIssueDate", e.target.value)}
                       readOnly={readOnlyFields}
+                      required
+                      max={todayYmd()}
                     />
                   </div>
                   <div className="min-w-0 md:col-span-2 xl:col-span-1">
@@ -396,8 +398,13 @@ export default function PatientDataEditModal({
                       value={editData.documentExpiryDate || ""}
                       onChange={(e) => update("documentExpiryDate", e.target.value)}
                       readOnly={readOnlyFields}
-                      min={todayYmd()}
+                      className={isIdentityDocumentExpired(editData.documentExpiryDate) ? "border-red-500" : ""}
                     />
+                    {isIdentityDocumentExpired(editData.documentExpiryDate) && (
+                      <p className="text-red-600 text-xs mt-1">
+                        Dokument jest już wygasły. Nie można kontynuować.
+                      </p>
+                    )}
                   </div>
                 </>
               )}

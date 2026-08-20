@@ -228,6 +228,7 @@ export default function PersonalDataStep({
                 onChange={(e) => update("documentIssueDate", e.target.value)}
                 readOnly={readOnlyFields}
                 required
+                max={todayYmd()}
               />
             </div>
             <div>
@@ -236,9 +237,14 @@ export default function PersonalDataStep({
                 value={formData.documentExpiryDate || ""}
                 onChange={(e) => update("documentExpiryDate", e.target.value)}
                 readOnly={readOnlyFields}
-                min={todayYmd()}
                 required
+                className={isIdentityDocumentExpired(formData.documentExpiryDate) ? "border-red-500" : ""}
               />
+              {isIdentityDocumentExpired(formData.documentExpiryDate) && (
+                <p className="text-red-600 text-xs mt-1">
+                  Dokument jest już wygasły. Nie można kontynuować rejestracji.
+                </p>
+              )}
             </div>
           </div>
         </div>

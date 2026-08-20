@@ -666,22 +666,28 @@ const DemographicsForm = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Data ważności dokumentu
+                  Data ważności dokumentu <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
                   name="documentExpiryDate"
                   value={formatDateForInput(formData.documentExpiryDate) || ""}
                   onChange={handleChange}
-                  min={todayYmd()}
+                  required
                   className={`w-full px-3 py-2 border rounded-md ${
+                    !formData.documentExpiryDate ||
                     isIdentityDocumentExpired(formData.documentExpiryDate)
                       ? "border-red-500"
                       : "border-gray-300"
                   }`}
                 />
+                {!formData.documentExpiryDate && (
+                  <p className="text-red-500 text-xs mt-1">Data ważności dokumentu jest wymagana.</p>
+                )}
                 {isIdentityDocumentExpired(formData.documentExpiryDate) && (
-                  <p className="text-red-500 text-xs mt-1">Dokument jest już wygasły.</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    Dokument jest już wygasły. Nie można zapisać pacjenta z nieważnym dokumentem.
+                  </p>
                 )}
               </div>
               <div>

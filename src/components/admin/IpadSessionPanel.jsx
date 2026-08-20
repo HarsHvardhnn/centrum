@@ -72,7 +72,7 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
   // Live-poll while session is in-flight (including until it becomes expired)
   useEffect(() => {
     if (!session?.id || TERMINAL_STATUSES.includes(session.status)) return;
-    const interval = setInterval(refreshStatus, 3000);
+    const interval = setInterval(refreshStatus, 2000);
     return () => clearInterval(interval);
   }, [session?.id, session?.status, refreshStatus]);
 
@@ -318,8 +318,8 @@ export default function IpadSessionPanel({ visitId, onSessionComplete }) {
           {isActive && (
             <p className="text-[11px] text-gray-500">
               Timeout: 5 min bez dotyku na iPadzie → Przerwana. PIN ważny 2 godziny.
-              Zamknięcie, odświeżenie, blokada iPada lub utrata połączenia przerywa sesję
-              — zgody i dokumenty nie są zapisywane jako finalne.
+              Zamknięcie, odświeżenie lub blokada iPada przerywa sesję od razu
+              (status zmienia się na „Przerwana”, zgody nie są zapisywane).
             </p>
           )}
         </div>
