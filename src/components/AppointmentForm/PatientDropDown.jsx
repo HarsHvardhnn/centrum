@@ -9,6 +9,7 @@ const PatientDropdown = ({
   loading,
   pagination,
   onLoadMore,
+  emptyMessage = "Nie znaleziono pacjentów",
 }) => {
   if (!isOpen) return null;
 
@@ -74,7 +75,7 @@ const PatientDropdown = ({
 
       {!loading && patients.length === 0 && (
         <div className="px-4 py-8 text-center text-gray-500">
-          Nie znaleziono pacjentów
+          {emptyMessage}
         </div>
       )}
 

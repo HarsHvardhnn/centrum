@@ -64,21 +64,34 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Token refresh state management
-let isRefreshing = false;
-let failedQueue = [];
+// Single-flight refresh so a click, a 401 retry, and the idle timer never
+// rotate the refresh cookie twice (that was logging people out mid-click).
+let refreshPromise = null;
 
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  
-  failedQueue = [];
-};
+export function refreshAccessToken() {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const refreshAxios = axios.create({
+        baseURL: axiosInstance.defaults.baseURL,
+        withCredentials: true,
+      });
+      const refreshResponse = await refreshAxios.post("/auth/refresh-token");
+      if (!refreshResponse.data?.token) {
+        throw new Error("No token in refresh response");
+      }
+      const newToken = refreshResponse.data.token;
+      localStorage.setItem("authToken", newToken);
+      setCookie("authToken", newToken, 7);
+      if (refreshResponse.data.user) {
+        localStorage.setItem("user", JSON.stringify(refreshResponse.data.user));
+      }
+      return newToken;
+    })().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
 
 /** Pathname only — works whether config.url is relative or absolute. */
 const getRequestUrlPath = (config) => {
@@ -151,74 +164,21 @@ axiosInstance.interceptors.response.use(
           return Promise.reject(error);
         }
 
-        // Already retried after refresh (or queued for retry) — stop; do not refresh again
         if (originalRequest._retry) {
-          processQueue(error, null);
           redirectToLoginAndClearSession();
           return Promise.reject(error);
         }
 
-        // If we're already refreshing, queue this request (mark so a 401 after retry won't re-enter refresh)
-        if (isRefreshing) {
-          originalRequest._retry = true;
-          return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject });
-          })
-            .then(token => {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              return axiosInstance(originalRequest);
-            })
-            .catch(err => {
-              return Promise.reject(err);
-            });
-        }
-
-        // Try to refresh the token
         originalRequest._retry = true;
-        isRefreshing = true;
 
         try {
-          // Create a new axios instance for refresh to avoid interceptors
-          // Refresh token endpoint uses HTTP-only cookies, no Authorization header, no body
-          const refreshAxios = axios.create({
-            baseURL: axiosInstance.defaults.baseURL,
-            withCredentials: true
-            // No headers - refresh token uses cookies only, no body needed
-          });
-          
-          // Don't send any body - refresh token uses HTTP-only cookies only
-          const refreshResponse = await refreshAxios.post('/auth/refresh-token');
-
-          if (refreshResponse.data && refreshResponse.data.token) {
-            const newToken = refreshResponse.data.token;
-            
-            // Update token in storage
-            localStorage.setItem("authToken", newToken);
-            setCookie('authToken', newToken, 7);
-            
-            // Update user data if provided
-            if (refreshResponse.data.user) {
-              localStorage.setItem("user", JSON.stringify(refreshResponse.data.user));
-            }
-
-            // Update the original request with new token
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            
-            // Process queued requests
-            processQueue(null, newToken);
-            
-            // Retry the original request
-            return axiosInstance(originalRequest);
-          } else {
-            throw new Error("No token in refresh response");
-          }
+          const newToken = await refreshAccessToken();
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return axiosInstance(originalRequest);
         } catch (refreshError) {
           console.error("Token refresh failed:", refreshError);
-          processQueue(refreshError, null);
           redirectToLoginAndClearSession();
           return Promise.reject(refreshError);
-        } finally {
-          isRefreshing = false;
         }
       } else {
         // Other status codes handling (e.g., 500 server error)
