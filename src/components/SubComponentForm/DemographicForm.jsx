@@ -1,7 +1,12 @@
 // components/AppointmentForm/DemographicForm.jsx
 import { useFormContext } from "../../context/SubStepFormContext";
 import { useState, useEffect } from "react";
-import { normalizePesel, getPeselChecksumWarning } from "../../utils/peselUtils";
+import {
+  normalizePesel,
+  getPeselChecksumWarning,
+  analyzePeselForKiosk,
+  isDateOfBirthInFuture,
+} from "../../utils/peselUtils";
 import patientService, { isSamePatientAsDocumentMatch } from "../../helpers/patientHelper";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
@@ -236,6 +241,13 @@ const DemographicsForm = ({
     if (!pesel || pesel.trim() === "") return "Numer PESEL jest wymagany";
     const normalized = normalizePesel(pesel);
     if (normalized.length !== 11) return "Numer PESEL musi mieć dokładnie 11 cyfr";
+    const analysis = analyzePeselForKiosk(normalized);
+    if (!analysis.valid && analysis.errorCode === "future_date_of_birth") {
+      return analysis.message;
+    }
+    if (!analysis.valid && analysis.errorCode === "invalid_date_of_birth") {
+      return analysis.message;
+    }
     return "";
   };
 
@@ -266,7 +278,7 @@ const DemographicsForm = ({
     } else if (name === "govtId") {
       const digitsOnly = normalizePesel(value);
       updateFormData(name, digitsOnly);
-      if (touched[name]) {
+      if (touched[name] || digitsOnly.length === 11) {
         setErrors(prev => ({
           ...prev,
           govtId: validatePesel(digitsOnly, formData.isInternationalPatient)
@@ -312,6 +324,14 @@ const DemographicsForm = ({
       updateFormData(name, value);
     } else if (name === "dateOfBirth") {
       updateFormData(name, value);
+      if (isDateOfBirthInFuture(value)) {
+        setErrors((prev) => ({
+          ...prev,
+          dateOfBirth: "Data urodzenia nie może być datą przyszłą.",
+        }));
+      } else {
+        setErrors((prev) => ({ ...prev, dateOfBirth: "" }));
+      }
     } else {
       updateFormData(name, type === "checkbox" ? e.target.checked : value);
     }
@@ -461,8 +481,14 @@ const DemographicsForm = ({
             name="dateOfBirth"
             value={formatDateForInput(formData.dateOfBirth) || ""}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            max={todayYmd()}
+            className={`w-full px-3 py-2 border ${
+              errors.dateOfBirth ? "border-red-500" : "border-gray-300"
+            } rounded-md`}
           />
+          {errors.dateOfBirth ? (
+            <p className="mt-1 text-sm text-red-500">{errors.dateOfBirth}</p>
+          ) : null}
         </div>
       </div>
 
@@ -499,7 +525,7 @@ const DemographicsForm = ({
             className={`w-full px-3 py-2 border rounded-md ${formData.isInternationalPatient ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-300" : touched.govtId && errors.govtId ? "border-red-500" : "border-gray-300"}`}
             required={!formData.isInternationalPatient}
           />
-          {touched.govtId && errors.govtId && (
+          {errors.govtId && (
             <p className="mt-1 text-sm text-red-500">{errors.govtId}</p>
           )}
           {peselCheckLoading && <p className="mt-1 text-xs text-gray-500">Sprawdzam PESEL...</p>}

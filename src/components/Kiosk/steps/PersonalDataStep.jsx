@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { getGenderFromPesel } from "../../../utils/peselUtils";
+import { getGenderFromPesel, isDateOfBirthInFuture } from "../../../utils/peselUtils";
 import { formatPolishDate } from "../../../utils/dateUtils";
 import { isIdentityDocumentExpired, todayYmd } from "../../../utils/identityDocument";
 import KioskDateInput from "../KioskDateInput";
@@ -57,6 +57,9 @@ export default function PersonalDataStep({
       if (formData.peselFallbackMode && !formData.dateOfBirth) {
         errors.push("Data urodzenia jest wymagana.");
       }
+      if (formData.peselFallbackMode && isDateOfBirthInFuture(formData.dateOfBirth)) {
+        errors.push("Data urodzenia nie może być datą przyszłą.");
+      }
     } else {
       if (!formData.documentCountry?.trim()) errors.push("Kraj wydania dokumentu jest wymagany.");
       if (!formData.documentType?.trim()) errors.push("Typ dokumentu jest wymagany.");
@@ -64,6 +67,9 @@ export default function PersonalDataStep({
       if (!formData.documentIssueDate) errors.push("Data wydania dokumentu jest wymagana.");
       if (!formData.documentExpiryDate) errors.push("Data wygaśnięcia dokumentu jest wymagana.");
       if (!formData.dateOfBirth) errors.push("Data urodzenia jest wymagana.");
+      if (isDateOfBirthInFuture(formData.dateOfBirth)) {
+        errors.push("Data urodzenia nie może być datą przyszłą.");
+      }
       
       // Additional validation for document dates
       if (formData.documentIssueDate && formData.documentExpiryDate) {
@@ -143,6 +149,7 @@ export default function PersonalDataStep({
                 onChange={(e) => update("dateOfBirth", e.target.value)}
                 readOnly={readOnlyFields}
                 required
+                max={todayYmd()}
               />
             ) : (
               // Valid PESEL: DOB extracted from PESEL (read-only)
@@ -207,6 +214,7 @@ export default function PersonalDataStep({
                 onChange={(e) => update("dateOfBirth", e.target.value)}
                 readOnly={readOnlyFields}
                 required
+                max={todayYmd()}
               />
             </div>
           </div>

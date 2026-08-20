@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { formatPolishPostalCode, validatePolishPostalCode } from "../../utils/postalCodeUtils";
 import { validatePhoneNumber, formatPhoneNumber, formatPhoneForDisplay } from "../../utils/phoneUtils";
-import { getGenderFromPesel } from "../../utils/peselUtils";
+import { getGenderFromPesel, analyzePeselForKiosk, isDateOfBirthInFuture } from "../../utils/peselUtils";
 import PhoneCountrySelect from "./PhoneCountrySelect";
 import KioskDateInput from "./KioskDateInput";
 import IdentityDocumentFields from "../shared/IdentityDocumentFields";
@@ -138,6 +138,14 @@ export default function PatientDataEditModal({
     if (!isInternational) {
       if (!editData.pesel?.trim() || editData.pesel.length !== 11) {
         newErrors.push("PESEL musi mieć 11 cyfr.");
+      } else {
+        const peselCheck = analyzePeselForKiosk(editData.pesel);
+        if (!peselCheck.valid && peselCheck.errorCode === "future_date_of_birth") {
+          newErrors.push(peselCheck.message);
+        }
+      }
+      if (isDateOfBirthInFuture(editData.dateOfBirth)) {
+        newErrors.push("Data urodzenia nie może być datą przyszłą.");
       }
     } else {
       if (!editData.documentType?.trim()) newErrors.push("Typ dokumentu jest wymagany.");
@@ -161,6 +169,9 @@ export default function PatientDataEditModal({
         if (issueDate >= expiryDate) {
           newErrors.push("Data wydania musi być wcześniejsza niż data wygaśnięcia.");
         }
+      }
+      if (isDateOfBirthInFuture(editData.dateOfBirth)) {
+        newErrors.push("Data urodzenia nie może być datą przyszłą.");
       }
     }
 

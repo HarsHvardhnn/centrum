@@ -6,10 +6,11 @@ import {
   INTERNATIONAL_MINOR_BLOCKED_CODE,
   isInternationalMinor,
 } from "./PatientTypeDetector";
+import { isDateOfBirthInFuture } from "../../utils/peselUtils";
 import IdentityDocumentFields from "../shared/IdentityDocumentFields";
 import KioskDateInput from "./KioskDateInput";
 import KioskInternationalMinorBlockedModal from "./KioskInternationalMinorBlockedModal";
-import { validateIdentityDocument } from "../../utils/identityDocument";
+import { todayYmd, validateIdentityDocument } from "../../utils/identityDocument";
 
 export default function InternationalPatientStep({ 
   onVerified, 
@@ -33,6 +34,9 @@ export default function InternationalPatientStep({
   const handleVerify = async () => {
     const errors = validateIdentityDocument(form);
     if (!form.dateOfBirth) errors.push("Wybierz datę urodzenia");
+    if (isDateOfBirthInFuture(form.dateOfBirth)) {
+      errors.push("Data urodzenia nie może być datą przyszłą.");
+    }
 
     if (errors.length > 0) {
       toast.error(errors[0]);
@@ -113,6 +117,7 @@ export default function InternationalPatientStep({
             value={form.dateOfBirth}
             onChange={(e) => update("dateOfBirth", e.target.value)}
             required
+            max={todayYmd()}
           />
         </div>
       </div>

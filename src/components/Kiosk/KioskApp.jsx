@@ -11,7 +11,7 @@ import {
   releaseKioskSessionOnUnload,
   saveKioskForm,
 } from "../../helpers/kioskHelper";
-import { normalizePesel } from "../../utils/peselUtils";
+import { analyzePeselForKiosk, normalizePesel } from "../../utils/peselUtils";
 import AdultRegistrationForm from "./AdultRegistrationForm";
 import InternationalRegistrationForm from "./InternationalRegistrationForm";
 import MinorRegistrationForm from "./MinorRegistrationForm";
@@ -388,6 +388,18 @@ export default function KioskApp() {
     }
 
     const normalized = normalizePesel(pesel);
+    const localCheck = analyzePeselForKiosk(normalized);
+    if (!localCheck.valid) {
+      toast.error(localCheck.message || "Nie można zweryfikować PESEL.");
+      const newAttempts = peselAttempts + 1;
+      setPeselAttempts(newAttempts);
+      setLastErrorMessage(localCheck.message || "");
+      if (localCheck.errorCode !== "future_date_of_birth" && newAttempts >= 2) {
+        setShowPeselFallback(true);
+      }
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await checkKioskPesel(normalized);
@@ -422,13 +434,13 @@ export default function KioskApp() {
       toast.success(message);
     } catch (err) {
       const errorMessage = err.response?.data?.message || "Nie można zweryfikować PESEL.";
+      const errorCode = err.response?.data?.errorCode;
       const newAttempts = peselAttempts + 1;
       
       setPeselAttempts(newAttempts);
       setLastErrorMessage(errorMessage);
       
-      // Show fallback option after 2 failed attempts
-      if (newAttempts >= 2) {
+      if (errorCode !== "future_date_of_birth" && newAttempts >= 2) {
         setShowPeselFallback(true);
         toast.error(`${errorMessage} Po ${newAttempts} nieudanych próbach możesz wybrać opcję kontynuowania.`);
       } else {

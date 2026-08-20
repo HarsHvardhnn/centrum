@@ -3,6 +3,8 @@
  * Does not block registration; checksum is used for warning only.
  */
 
+import { todayYmd } from "./identityDocument";
+
 /** Max length of PESEL */
 export const PESEL_LENGTH = 11;
 
@@ -87,6 +89,54 @@ function deriveDateOfBirthFromPesel(pesel) {
   return dob;
 }
 
+function toLocalYmd(date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function toCalendarYmd(value) {
+  if (value == null || value === "") return "";
+  if (typeof value === "string") {
+    const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (match) return match[1];
+  }
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const iso = date.toISOString();
+  if (iso.endsWith("T00:00:00.000Z")) return iso.slice(0, 10);
+  return toLocalYmd(date);
+}
+
+/** Calendar age in full years (Europe/Warsaw today). Not 365.25-day approximation. */
+export function calculateCalendarAge(dateOfBirth, asOf) {
+  const dobYmd = toCalendarYmd(dateOfBirth);
+  if (!dobYmd) return null;
+  const asOfYmd =
+    asOf != null && asOf !== ""
+      ? toCalendarYmd(asOf) || todayYmd()
+      : todayYmd();
+  const [y1, m1, d1] = dobYmd.split("-").map(Number);
+  const [y2, m2, d2] = asOfYmd.split("-").map(Number);
+  let age = y2 - y1;
+  if (m2 < m1 || (m2 === m1 && d2 < d1)) age -= 1;
+  return age;
+}
+
+/** True when a date of birth is after today (Europe/Warsaw). Today itself is allowed. */
+export function isDateOfBirthInFuture(value) {
+  if (value == null || value === "") return false;
+  if (typeof value === "string") {
+    const ymd = value.match(/^(\d{4}-\d{2}-\d{2})/)?.[1];
+    if (ymd) return ymd > todayYmd();
+  }
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+  return toLocalYmd(date) > todayYmd();
+}
+
 /**
  * Extract gender from PESEL number
  * @param {string} pesel - PESEL number (11 digits)
@@ -125,6 +175,17 @@ export function analyzePeselForKiosk(rawPesel) {
     };
   }
 
+  if (isDateOfBirthInFuture(dateOfBirth)) {
+    return {
+      valid: false,
+      pesel,
+      dateOfBirth,
+      errorCode: "future_date_of_birth",
+      message:
+        "Data urodzenia odczytana z numeru PESEL nie może być datą przyszłą.",
+    };
+  }
+
   if (!validatePeselChecksum(pesel)) {
     return {
       valid: false,
@@ -146,6 +207,7 @@ const PESEL_ERROR_TITLES = {
   invalid_length: "Nieprawidłowy numer PESEL",
   invalid_format: "Nieprawidłowy numer PESEL",
   invalid_date_of_birth: "Nie można odczytać daty urodzenia",
+  future_date_of_birth: "Data urodzenia jest w przyszłości",
   invalid_checksum: "Nieprawidłowa suma kontrolna PESEL",
   invalid_pesel: "Nieprawidłowy numer PESEL",
   minor_patient: "Rejestracja niedostępna na tablecie",
@@ -157,6 +219,8 @@ export function getPeselErrorDisplay(errorCode, fallbackMessage = "") {
     invalid_length: "Wpisz dokładnie 11 cyfr numeru PESEL.",
     invalid_date_of_birth:
       "Data urodzenia zapisana w numerze PESEL jest nieprawidłowa lub nie można jej odczytać. Upewnij się, że numer został przepisany bez pomyłki.",
+    future_date_of_birth:
+      "Numer PESEL wskazuje datę urodzenia w przyszłości. Dziecko jeszcze się nie urodziło — sprawdź, czy numer został wpisany poprawnie.",
     invalid_checksum:
       "Ostatnia cyfra PESEL (suma kontrolna) nie zgadza się z pozostałymi cyframi. Sprawdź numer jeszcze raz.",
     minor_patient: "Przekaż urządzenie pracownikowi rejestracji.",
