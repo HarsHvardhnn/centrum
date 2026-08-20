@@ -665,8 +665,9 @@ const DemographicsForm = ({
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Data ważności dokumentu <span className="text-red-500">*</span>
+                <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
+                  <span>Data ważności dokumentu</span>
+                  <span className="text-red-600 font-bold" aria-hidden="true">*</span>
                 </label>
                 <input
                   type="date"
