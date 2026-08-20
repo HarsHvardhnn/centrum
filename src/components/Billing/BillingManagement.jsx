@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -38,6 +38,20 @@ import userServiceHelper, {
 } from "../../helpers/userServiceHelper";
 import { queryKeys } from "../../lib/queryKeys";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
+
+function toDateInputValue(value) {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function isUnpaidBill(bill) {
+  return bill?.paymentStatus && bill.paymentStatus !== "paid";
+}
 
 /** Id for GET /user-services/:userId/doctor — from embedded appointment on bill or visit object. */
 function resolveVisitDoctorUserId(appointment, bill) {
@@ -85,6 +99,7 @@ const BillingManagement = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [billToUpdate, setBillToUpdate] = useState(null);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState([]);
+  const [bulkPayMode, setBulkPayMode] = useState(null);
   const [bulkDeleteDialog, setBulkDeleteDialog] = useState({
     open: false,
     ids: []
@@ -95,26 +110,28 @@ const BillingManagement = () => {
   });
   
   // State for bills data and pagination
+  const savedBilling = readListState("admin-billing") || {};
   const [bills, setBills] = useState([]);
   const [pagination, setPagination] = useState({
     totalBills: 0,
     totalPages: 0,
-    currentPage: 1,
-    limit: 10
+    currentPage: Number(savedBilling.currentPage) > 0 ? Number(savedBilling.currentPage) : 1,
+    limit: Number(savedBilling.limit) > 0 ? Number(savedBilling.limit) : 10
   });
   
   // State for filters and sorting
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(savedBilling.searchQuery || "");
   const [dateRange, setDateRange] = useState({
-    startDate: "",
-    endDate: ""
+    startDate: savedBilling.dateRange?.startDate || "",
+    endDate: savedBilling.dateRange?.endDate || ""
   });
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState("");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState(savedBilling.paymentStatusFilter || "");
   const [sortConfig, setSortConfig] = useState({
-    key: "billedAt",
-    direction: "desc"
+    key: savedBilling.sortConfig?.key || "billedAt",
+    direction: savedBilling.sortConfig?.direction || "desc"
   });
   const [showFilters, setShowFilters] = useState(false);
+  const skipBillingPageReset = useSkipFirstEffect();
   
   // Stats for the dashboard
   const [stats, setStats] = useState({
@@ -139,6 +156,8 @@ const BillingManagement = () => {
     const [additionalCharges, setAdditionalCharges] = useState(0);
     const [additionalChargeNote, setAdditionalChargeNote] = useState("");
     const [taxPercentage, setTaxPercentage] = useState(0);
+    const [invoiceNumber, setInvoiceNumber] = useState("");
+    const [invoiceDate, setInvoiceDate] = useState("");
 
     // Fetch bill details only once when modal opens
     useEffect(() => {
@@ -169,6 +188,8 @@ const BillingManagement = () => {
             setAdditionalCharges(response.data.additionalCharges || 0);
             setAdditionalChargeNote(response.data.additionalChargeNote || "");
             setTaxPercentage(response.data.taxPercentage ?? 0);
+            setInvoiceNumber(response.data.invoiceId || "");
+            setInvoiceDate(toDateInputValue(response.data.billedAt));
           } else {
             toast.error("Nie udało się pobrać szczegółów faktury");
           }
@@ -282,7 +303,9 @@ const BillingManagement = () => {
           totalAmount: calculateTotal().toString(),
           paymentMethod: billData.paymentMethod,
           paymentStatus: billData.paymentStatus,
-          notes: billData.notes
+          notes: billData.notes,
+          invoiceId: invoiceNumber.trim(),
+          billedAt: invoiceDate || undefined,
         };
 
         const response = await billingHelper.updateBill(billId, updateData);
@@ -304,7 +327,7 @@ const BillingManagement = () => {
       } finally {
         setModalLoading(false);
       }
-    }, [billId, selectedServices, consultationCharges, taxPercentage, discount, additionalCharges, additionalChargeNote, billData]);
+    }, [billId, selectedServices, consultationCharges, taxPercentage, discount, additionalCharges, additionalChargeNote, billData, invoiceNumber, invoiceDate]);
 
     if (!isOpen || !billData) return null;
 
@@ -456,6 +479,31 @@ const BillingManagement = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Numer faktury
+                  </label>
+                  <input
+                    type="text"
+                    value={invoiceNumber}
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    placeholder="np. CM7/08/2026/001"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Data wystawienia
+                  </label>
+                  <input
+                    type="date"
+                    value={invoiceDate}
+                    onChange={(e) => setInvoiceDate(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Podatek VAT (%)
                   </label>
                   <div className="relative">
@@ -585,6 +633,9 @@ const BillingManagement = () => {
     const [services, setServices] = useState([]);
     const [appointment, setAppointment] = useState(null);
     const [patient, setPatient] = useState(null);
+    const [invoiceDate, setInvoiceDate] = useState(() => toDateInputValue());
+    const [invoiceNumber, setInvoiceNumber] = useState("");
+    const suggestedInvoiceNumberRef = useRef("");
 
     // Fetch appointment and patient data
     useEffect(() => {
@@ -592,6 +643,24 @@ const BillingManagement = () => {
         fetchAppointmentData();
       }
     }, [isOpen, appointmentId]);
+
+    useEffect(() => {
+      if (!isOpen || !invoiceDate) return;
+      const [year, month] = invoiceDate.split("-").map(Number);
+      if (!year || !month) return;
+      let cancelled = false;
+      (async () => {
+        const suggested = await billingHelper.suggestInvoiceId(month, year);
+        if (cancelled || !suggested) return;
+        setInvoiceNumber((current) =>
+          !current || current === suggestedInvoiceNumberRef.current ? suggested : current
+        );
+        suggestedInvoiceNumberRef.current = suggested;
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [isOpen, invoiceDate]);
 
     const fetchAppointmentData = async () => {
       try {
@@ -710,6 +779,8 @@ const BillingManagement = () => {
           additionalChargeNote: additionalChargeNote || "",
           totalAmount: totalAmount,
           paymentMethod: paymentMethod,
+          billedAt: invoiceDate,
+          invoiceId: invoiceNumber.trim(),
         };
 
         // Call the API to generate the bill
@@ -726,7 +797,10 @@ const BillingManagement = () => {
         }
       } catch (error) {
         console.error("Failed to generate bill:", error);
-        toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
+        toast.error(
+          error?.response?.data?.message ||
+            "Nie udało się wygenerować rachunku. Spróbuj ponownie."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -862,6 +936,34 @@ const BillingManagement = () => {
                       }
                       className="block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Data wystawienia
+                    </label>
+                    <input
+                      type="date"
+                      value={invoiceDate}
+                      onChange={(e) => setInvoiceDate(e.target.value)}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Numer faktury
+                    </label>
+                    <input
+                      type="text"
+                      value={invoiceNumber}
+                      onChange={(e) => setInvoiceNumber(e.target.value)}
+                      placeholder="np. CM7/08/2026/001"
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Możesz nadać numer ręcznie. Puste pole nada kolejny numer dla wybranej daty.
+                    </p>
                   </div>
 
                   <div>
@@ -1044,8 +1146,29 @@ const BillingManagement = () => {
   }, [statsQueryData]);
 
   useEffect(() => {
+    if (skipBillingPageReset()) return;
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
   }, [debouncedSearchQuery, dateRange.startDate, dateRange.endDate, paymentStatusFilter]);
+
+  useEffect(() => {
+    writeListState("admin-billing", {
+      searchQuery,
+      dateRange,
+      paymentStatusFilter,
+      sortConfig,
+      currentPage: pagination.currentPage,
+      limit: pagination.limit,
+    });
+  }, [
+    searchQuery,
+    dateRange,
+    paymentStatusFilter,
+    sortConfig,
+    pagination.currentPage,
+    pagination.limit,
+  ]);
+
+  useListScrollRestore("admin-billing", !billsQueryLoading);
 
   const tableLoading = billsQueryLoading || (billsQueryFetching && bills.length === 0);
 
@@ -1104,7 +1227,7 @@ const BillingManagement = () => {
   };
   
   // Add ConfirmationModal component
-  const ConfirmationModal = ({ isOpen, onClose, onConfirm, bill }) => {
+  const ConfirmationModal = ({ isOpen, onClose, onConfirm, bill, message }) => {
     if (!isOpen) return null;
 
     return (
@@ -1115,7 +1238,7 @@ const BillingManagement = () => {
               Potwierdź zmianę statusu płatności
             </h3>
             <p className="text-gray-600 mb-6">
-              Czy na pewno chcesz oznaczyć fakturę nr {bill?._id} jako opłaconą?
+              {message || `Czy na pewno chcesz oznaczyć fakturę ${bill?.invoiceId || bill?._id} jako opłaconą?`}
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -1137,11 +1260,22 @@ const BillingManagement = () => {
     );
   };
 
+  const canSelectBills = ["admin", "receptionist", "doctor"].includes(user?.role);
+  const pendingBillsOnPage = bills.filter(isUnpaidBill);
+  const pendingIdsOnPage = pendingBillsOnPage.map((bill) => bill._id);
+  const allPendingOnPageSelected =
+    pendingIdsOnPage.length > 0 &&
+    pendingIdsOnPage.every((id) => selectedInvoiceIds.includes(id));
+  const selectedUnpaidCount = selectedInvoiceIds.filter((id) =>
+    bills.some((bill) => bill._id === id && isUnpaidBill(bill))
+  ).length;
+
   // Update handleUpdatePaymentStatus to use confirmation modal
   const handleUpdatePaymentStatus = async (billId, newStatus) => {
     if (newStatus === "paid") {
       const bill = bills.find(b => b._id === billId);
       setBillToUpdate(bill);
+      setBulkPayMode(null);
       setIsConfirmModalOpen(true);
       return;
     }
@@ -1180,7 +1314,7 @@ const BillingManagement = () => {
 
   // Multi-select handlers for invoices
   const handleSelectInvoice = (invoiceId) => {
-    if (user?.role !== "admin") return; // Only admin can select
+    if (!canSelectBills) return;
     setSelectedInvoiceIds(prev => 
       prev.includes(invoiceId) 
         ? prev.filter(id => id !== invoiceId)
@@ -1188,12 +1322,67 @@ const BillingManagement = () => {
     );
   };
 
-  const handleSelectAllInvoices = () => {
-    if (user?.role !== "admin") return;
-    if (selectedInvoiceIds.length === bills.length) {
-      setSelectedInvoiceIds([]);
+  const handleSelectAllPendingOnPage = () => {
+    if (!canSelectBills) return;
+    if (allPendingOnPageSelected) {
+      setSelectedInvoiceIds((prev) => prev.filter((id) => !pendingIdsOnPage.includes(id)));
     } else {
-      setSelectedInvoiceIds(bills.map(bill => bill._id));
+      setSelectedInvoiceIds((prev) => Array.from(new Set([...prev, ...pendingIdsOnPage])));
+    }
+  };
+
+  const handleBulkMarkPaidClick = (mode) => {
+    if (mode === "selected") {
+      if (selectedUnpaidCount === 0) {
+        toast.error("Wybierz oczekujące faktury");
+        return;
+      }
+      setBillToUpdate(null);
+      setBulkPayMode("selected");
+      setIsConfirmModalOpen(true);
+      return;
+    }
+    setBillToUpdate(null);
+    setBulkPayMode("allPending");
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleBulkMarkPaid = async () => {
+    try {
+      setIsLoading(true);
+      const payload =
+        bulkPayMode === "allPending"
+          ? {
+              allPending: true,
+              startDate: dateRange.startDate || undefined,
+              endDate: dateRange.endDate || undefined,
+              search: debouncedSearchQuery || undefined,
+              filterPaymentStatus:
+                paymentStatusFilter && paymentStatusFilter !== "paid"
+                  ? paymentStatusFilter
+                  : undefined,
+            }
+          : {
+              billIds: selectedInvoiceIds.filter((id) =>
+                bills.some((bill) => bill._id === id && isUnpaidBill(bill))
+              ),
+            };
+      const response = await billingHelper.bulkUpdatePaymentStatus(payload);
+      if (response.success) {
+        const updated = response.data?.modifiedCount ?? 0;
+        toast.success(`Oznaczono jako opłacone: ${updated}`);
+        setSelectedInvoiceIds([]);
+        fetchBills();
+        setStatsRefreshKey((prev) => prev + 1);
+      } else {
+        toast.error("Nie udało się zaktualizować statusu płatności");
+      }
+    } catch (error) {
+      console.error("Błąd podczas zbiorczej aktualizacji płatności:", error);
+      toast.error("Nie udało się zaktualizować statusu płatności");
+    } finally {
+      setIsLoading(false);
+      setBulkPayMode(null);
     }
   };
 
@@ -1224,32 +1413,6 @@ const BillingManagement = () => {
   const handlePermanentDeleteSuccess = () => {
     fetchBills();
     setStatsRefreshKey((prev) => prev + 1);
-  };
-  
-  const handlePrintBill = (billId) => {
-    // Open in new tab for printing
-    window.open(`/billing/print/${billId}`, '_blank');
-  };
-  
-  const handleGenerateInvoice = async (billId) => {
-    try {
-      setIsLoading(true);
-      
-      const response = await billingHelper.generateInvoice(billId);
-      
-      if (response.success) {
-        // Open the invoice in a new tab
-        window.open(response.data.invoiceUrl, '_blank');
-        toast.success("Pomyślnie wygenerowano fakturę");
-      } else {
-        toast.error("Nie udało się wygenerować faktury");
-      }
-    } catch (error) {
-      console.error("Błąd podczas generowania faktury:", error);
-      toast.error("Nie udało się wygenerować faktury");
-    } finally {
-      setIsLoading(false);
-    }
   };
   
   // Format currency
@@ -1308,13 +1471,25 @@ const BillingManagement = () => {
         onClose={() => {
           setIsConfirmModalOpen(false);
           setBillToUpdate(null);
+          setBulkPayMode(null);
         }}
         onConfirm={() => {
-          updatePaymentStatus(billToUpdate._id, "paid");
+          if (bulkPayMode) {
+            handleBulkMarkPaid();
+          } else if (billToUpdate?._id) {
+            updatePaymentStatus(billToUpdate._id, "paid");
+          }
           setIsConfirmModalOpen(false);
           setBillToUpdate(null);
         }}
         bill={billToUpdate}
+        message={
+          bulkPayMode === "allPending"
+            ? "Czy na pewno chcesz oznaczyć wszystkie oczekujące faktury (zgodnie z aktualnymi filtrami) jako opłacone?"
+            : bulkPayMode === "selected"
+            ? `Czy na pewno chcesz oznaczyć ${selectedUnpaidCount} wybranych faktur jako opłacone?`
+            : undefined
+        }
       />
 
       <div className="max-w-7xl mx-auto">
@@ -1462,19 +1637,47 @@ const BillingManagement = () => {
           )}
         </div>
         
-        {/* Bulk Delete Button for Invoices */}
-        {user?.role === "admin" && selectedInvoiceIds.length > 0 && (
-          <div className="mb-4 flex items-center justify-between bg-red-50 border border-red-200 rounded-lg p-4">
-            <span className="text-red-800 font-medium">
-              Wybrano {selectedInvoiceIds.length} faktur(y)
+        {/* Bulk actions */}
+        {canSelectBills && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 bg-teal-50 border border-teal-200 rounded-lg p-4">
+            <span className="text-teal-900 font-medium">
+              {selectedInvoiceIds.length > 0
+                ? `Wybrano ${selectedInvoiceIds.length} faktur(y)`
+                : "Zaznacz oczekujące faktury, aby oznaczyć je jako opłacone"}
             </span>
-            <button
-              onClick={handleBulkDeleteInvoices}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-            >
-              <Trash2 size={18} />
-              Trwale usuń wybrane ({selectedInvoiceIds.length})
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleSelectAllPendingOnPage}
+                disabled={pendingIdsOnPage.length === 0}
+                className="px-4 py-2 border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-100 disabled:opacity-50"
+              >
+                {allPendingOnPageSelected ? "Odznacz oczekujące na stronie" : "Zaznacz oczekujące na stronie"}
+              </button>
+              <button
+                onClick={() => handleBulkMarkPaidClick("selected")}
+                disabled={selectedUnpaidCount === 0}
+                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
+              >
+                <DollarSign size={18} />
+                Oznacz wybrane jako opłacone
+              </button>
+              <button
+                onClick={() => handleBulkMarkPaidClick("allPending")}
+                disabled={paymentStatusFilter === "paid"}
+                className="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800 disabled:opacity-50"
+              >
+                Oznacz wszystkie oczekujące
+              </button>
+              {user?.role === "admin" && selectedInvoiceIds.length > 0 && (
+                <button
+                  onClick={handleBulkDeleteInvoices}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  <Trash2 size={18} />
+                  Trwale usuń wybrane ({selectedInvoiceIds.length})
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -1484,13 +1687,14 @@ const BillingManagement = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  {user?.role === "admin" && (
+                  {canSelectBills && (
                     <th scope="col" className="px-6 py-3 text-left">
                       <input
                         type="checkbox"
-                        checked={bills.length > 0 && selectedInvoiceIds.length === bills.length}
-                        onChange={handleSelectAllInvoices}
-                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                        checked={allPendingOnPageSelected}
+                        onChange={handleSelectAllPendingOnPage}
+                        className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                        title="Zaznacz wszystkie oczekujące na tej stronie"
                       />
                     </th>
                   )}
@@ -1585,14 +1789,14 @@ const BillingManagement = () => {
                   ))
                 ) : bills.length > 0 ? (
                   bills.map((bill) => (
-                    <tr key={bill._id} className={`hover:bg-gray-50 ${selectedInvoiceIds.includes(bill._id) ? 'bg-red-50' : ''}`}>
-                      {user?.role === "admin" && (
+                    <tr key={bill._id} className={`hover:bg-gray-50 ${selectedInvoiceIds.includes(bill._id) ? 'bg-teal-50' : ''}`}>
+                      {canSelectBills && (
                         <td className="px-6 py-4 whitespace-nowrap">
                           <input
                             type="checkbox"
                             checked={selectedInvoiceIds.includes(bill._id)}
                             onChange={() => handleSelectInvoice(bill._id)}
-                            className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                            className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                           />
                         </td>
                       )}
@@ -1637,16 +1841,6 @@ const BillingManagement = () => {
                           >
                             <Eye size={18} />
                           </button>
-                          {
-                            bill.paymentStatus == "paid" && (
-                              <button
-                            onClick={() => handleGenerateInvoice(bill._id)}
-                            className="text-gray-600 hover:text-gray-900"
-                            title="Generuj fakturę"
-                          >
-                            <FileText size={18} />
-                          </button>)
-                          }
                           {bill.paymentStatus !== "paid" && (
                             <>
                               <button
@@ -1680,7 +1874,7 @@ const BillingManagement = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={user?.role === "admin" ? "7" : "6"} className="px-6 py-12 text-center">
+                    <td colSpan={canSelectBills ? "7" : "6"} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center">
                         <FileText size={48} className="text-gray-300 mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-1">Nie znaleziono faktur</h3>

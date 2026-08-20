@@ -30,6 +30,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { toast } from 'sonner';
 import { apiCaller } from '../../utils/axiosInstance';
 import { useLoader } from '../../context/LoaderContext';
+import { readListState, writeListState, useListScrollRestore } from '../../hooks/usePersistedListState';
 
 const IPConfigPage = () => {
   const { showLoader, hideLoader } = useLoader();
@@ -39,14 +40,15 @@ const IPConfigPage = () => {
   const [statistics, setStatistics] = useState({});
   const [currentIp, setCurrentIp] = useState(null);
   const [selectedIps, setSelectedIps] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const savedIp = readListState("admin-ip-config") || {};
+  const [searchTerm, setSearchTerm] = useState(savedIp.searchTerm || '');
+  const [filterStatus, setFilterStatus] = useState(savedIp.filterStatus || 'all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [editingIp, setEditingIp] = useState(null);
   const [pagination, setPagination] = useState({
-    currentPage: 1,
+    currentPage: Number(savedIp.currentPage) > 0 ? Number(savedIp.currentPage) : 1,
     totalPages: 1,
     totalItems: 0,
     itemsPerPage: 10
@@ -89,6 +91,16 @@ const IPConfigPage = () => {
     checkCurrentIP();
     loadRestrictionSettings();
   }, [pagination.currentPage, searchTerm, filterStatus]);
+
+  useEffect(() => {
+    writeListState("admin-ip-config", {
+      searchTerm,
+      filterStatus,
+      currentPage: pagination.currentPage,
+    });
+  }, [searchTerm, filterStatus, pagination.currentPage]);
+
+  useListScrollRestore("admin-ip-config", ipList.length > 0);
 
   // API calls
   const loadIPList = async () => {

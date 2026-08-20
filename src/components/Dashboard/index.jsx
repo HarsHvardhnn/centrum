@@ -45,6 +45,7 @@ import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import RescheduleModal from "./RescheduleModal";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 import { queryKeys } from "../../lib/queryKeys";
+import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
 
 const MedicalDashboard = () => {
   const { user } = useUser();
@@ -66,8 +67,9 @@ const MedicalDashboard = () => {
 // Doctor Appointment Chart Component (Wizyty lekarskie – tiles + date range only)
 const DoctorAppointmentChart = () => {
   const { user } = useUser();
-  const [selectedDoctor, setSelectedDoctor] = useState("");
-  const [timeframe, setTimeframe] = useState("month");
+  const savedChart = readListState("admin-dashboard-chart") || {};
+  const [selectedDoctor, setSelectedDoctor] = useState(savedChart.selectedDoctor || "");
+  const [timeframe, setTimeframe] = useState(savedChart.timeframe || "month");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const {
@@ -89,6 +91,10 @@ const DoctorAppointmentChart = () => {
       setSelectedDoctor(doctors[0]._id);
     }
   }, [doctors, user, selectedDoctor]);
+
+  useEffect(() => {
+    writeListState("admin-dashboard-chart", { selectedDoctor, timeframe });
+  }, [selectedDoctor, timeframe]);
 
   const {
     data: statsResponse,
@@ -382,19 +388,23 @@ const PatientList = () => {
 
   const [sendSMSNotification, setSendSMSNotification] = useState(false);
   const [sendEmailNotification, setSendEmailNotification] = useState(false);
+  const savedDashList = readListState("admin-dashboard-visits") || {};
   const [pagination, setPagination] = useState({
-    currentPage: 1,
+    currentPage: Number(savedDashList.currentPage) > 0 ? Number(savedDashList.currentPage) : 1,
     total: 0,
     pages: 1,
   });
   const [refreshCounter, setRefreshCounter] = useState(0);
   /** Status filter for today's list: 'all' | 'reserved' | 'completed' | 'cancelled' (sent to API). */
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(savedDashList.statusFilter || "all");
   /** Date for the list (YYYY-MM-DD); default today. */
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(
+    savedDashList.selectedDate || new Date().toISOString().split("T")[0]
+  );
   /** When true, show only patient-less (visit-only) appointments. */
-  const [patientLessOnly, setPatientLessOnly] = useState(false);
+  const [patientLessOnly, setPatientLessOnly] = useState(!!savedDashList.patientLessOnly);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
+  const skipDashPageReset = useSkipFirstEffect();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -408,7 +418,7 @@ const PatientList = () => {
   /** Receptionist goes to edit patient (Settings); admin/doctor go to appointment card. */
   const getPatientViewUrl = (patientId, appointmentId) => {
     if (user?.role === "receptionist") {
-      return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname)}`;
+      return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`;
     }
     return `/szczegoly-pacjenta/${patientId}${appointmentId ? `?appointmentId=${appointmentId}` : ""}`;
   };
@@ -436,6 +446,15 @@ const PatientList = () => {
       })
       .finally(() => setVisitHistoryLoading(false));
   };
+
+  const restoredVisitHistoryRef = useRef(false);
+  useEffect(() => {
+    if (restoredVisitHistoryRef.current) return;
+    const savedHistory = savedDashList.visitHistory;
+    if (!savedHistory?.id) return;
+    restoredVisitHistoryRef.current = true;
+    openVisitHistoryModal(savedHistory.id, savedHistory.name);
+  }, []);
 
   const formatPolishDate = (dateValue) => {
     if (!dateValue) return "—";
@@ -543,6 +562,8 @@ const PatientList = () => {
         additionalChargeNote: billingData.additionalChargeNote || "",
         totalAmount: billingData.totalAmount,
         paymentMethod: billingData.paymentMethod,
+        billedAt: billingData.billedAt,
+        invoiceId: billingData.invoiceId,
       };
 
       // Call the API to generate the bill
@@ -571,7 +592,10 @@ const PatientList = () => {
       navigate(`/administracja/rozliczenia/szczegoly/${response.data._id}`);
     } catch (error) {
       console.error("Failed to generate bill:", error);
-      toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
+      toast.error(
+        error?.response?.data?.message ||
+          "Nie udało się wygenerować rachunku. Spróbuj ponownie."
+      );
       setLoading(false);
     }
   };
@@ -651,8 +675,24 @@ const PatientList = () => {
 
   // Reset to first page when status, date or patientLessOnly changes
   useEffect(() => {
+    if (skipDashPageReset()) return;
     setPagination((prev) => (prev.currentPage === 1 ? prev : { ...prev, currentPage: 1 }));
   }, [statusFilter, selectedDate, patientLessOnly]);
+
+  useEffect(() => {
+    writeListState("admin-dashboard-visits", {
+      statusFilter,
+      selectedDate,
+      patientLessOnly,
+      currentPage: pagination.currentPage,
+      visitHistory:
+        showVisitHistoryModal && visitHistoryPatient?.id
+          ? { id: visitHistoryPatient.id, name: visitHistoryPatient.name || "" }
+          : null,
+    });
+  }, [statusFilter, selectedDate, patientLessOnly, pagination.currentPage, showVisitHistoryModal, visitHistoryPatient]);
+
+  useListScrollRestore("admin-dashboard-visits", !dashListLoading);
 
 
   const translateSexToPolish = (sex) => {
@@ -1528,7 +1568,7 @@ const UpcomingAppointments = () => {
 
   const getPatientViewUrl = (patientId, appointmentId) => {
     if (user?.role === "receptionist") {
-      return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname)}`;
+      return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`;
     }
     return `/szczegoly-pacjenta/${patientId}${appointmentId ? `?appointmentId=${appointmentId}` : ""}`;
   };

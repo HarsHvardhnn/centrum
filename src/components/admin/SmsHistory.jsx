@@ -4,6 +4,7 @@ import { useUser } from "../../context/userContext";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import { readListState, writeListState, useListScrollRestore } from "../../hooks/usePersistedListState";
 
 const SmsHistory = () => {
   const { user } = useUser();
@@ -19,9 +20,10 @@ const SmsHistory = () => {
   const [bulkDeleteHistorySubmitting, setBulkDeleteHistorySubmitting] = useState(false);
   
   // Pagination state
+  const savedSms = readListState("admin-sms-history") || {};
   const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
+    page: Number(savedSms.page) > 0 ? Number(savedSms.page) : 1,
+    limit: Number(savedSms.limit) > 0 ? Number(savedSms.limit) : 10,
     totalPages: 1,
     total: 0,
   });
@@ -38,6 +40,7 @@ const SmsHistory = () => {
     errorCode: "",
     sortBy: "createdAt",
     sortOrder: "desc",
+    ...(savedSms.filters || {}),
   });
   
   // Selected SMS for detailed view
@@ -92,6 +95,16 @@ const SmsHistory = () => {
   useEffect(() => {
     fetchSmsData();
   }, [pagination.page, pagination.limit]);
+
+  useEffect(() => {
+    writeListState("admin-sms-history", {
+      filters,
+      page: pagination.page,
+      limit: pagination.limit,
+    });
+  }, [filters, pagination.page, pagination.limit]);
+
+  useListScrollRestore("admin-sms-history", !loading);
   
   // Apply filters
   const handleApplyFilters = () => {

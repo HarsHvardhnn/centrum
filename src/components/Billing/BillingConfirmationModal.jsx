@@ -1,9 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DollarSign, Plus, Trash2 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
+import billingHelper from "../../helpers/billingHelper";
 import { toast } from "sonner";
 import ServiceSelectionModal from "../Doctor/SingleDoctor/patient-details/ServiceSelectionModal";
+
+function toDateInputValue(value) {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 const BillingConfirmationModal = ({
   isOpen,
@@ -27,6 +37,9 @@ const BillingConfirmationModal = ({
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [services, setServices] = useState([]);
+  const [invoiceDate, setInvoiceDate] = useState(() => toDateInputValue());
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const suggestedInvoiceNumberRef = useRef("");
 
   useEffect(() => {
     if (isOpen && patientId && appointmentId) {
@@ -34,6 +47,24 @@ const BillingConfirmationModal = ({
       fetchPatientServices();
     }
   }, [isOpen, patientId, appointmentId]);
+
+  useEffect(() => {
+    if (!isOpen || !invoiceDate) return;
+    const [year, month] = invoiceDate.split("-").map(Number);
+    if (!year || !month) return;
+    let cancelled = false;
+    (async () => {
+      const suggested = await billingHelper.suggestInvoiceId(month, year);
+      if (cancelled || !suggested) return;
+      setInvoiceNumber((current) =>
+        !current || current === suggestedInvoiceNumberRef.current ? suggested : current
+      );
+      suggestedInvoiceNumberRef.current = suggested;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, invoiceDate]);
 
   const fetchPatientServices = async () => {
     try {
@@ -250,6 +281,34 @@ const BillingConfirmationModal = ({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Data wystawienia
+                  </label>
+                  <input
+                    type="date"
+                    value={invoiceDate}
+                    onChange={(e) => setInvoiceDate(e.target.value)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Numer faktury
+                  </label>
+                  <input
+                    type="text"
+                    value={invoiceNumber}
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                    placeholder="np. CM7/08/2026/001"
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Możesz nadać numer ręcznie. Puste pole nada kolejny numer dla wybranej daty.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Metoda płatności
                   </label>
                   <select
@@ -299,6 +358,8 @@ const BillingConfirmationModal = ({
                     discount,
                     totalAmount,
                     paymentMethod,
+                    billedAt: invoiceDate,
+                    invoiceId: invoiceNumber.trim(),
                   });
 
                   onClose?.();

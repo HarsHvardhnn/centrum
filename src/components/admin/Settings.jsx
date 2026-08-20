@@ -12,6 +12,8 @@ import doctorService from "../../helpers/doctorHelper";
 import patientService from "../../helpers/patientHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { normalizePesel } from "../../utils/peselUtils";
+import { readListState, writeListState, useListScrollRestore } from "../../hooks/usePersistedListState";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 
 /** Normalize ObjectId / populated ref / string to a plain id string for form selects. */
 function toEntityId(value) {
@@ -149,11 +151,14 @@ export default function UserManagement() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  const savedAccounts = readListState("admin-accounts") || {};
+  const [currentPage, setCurrentPage] = useState(
+    Number(savedAccounts.currentPage) > 0 ? Number(savedAccounts.currentPage) : 1
+  );
   const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState("createdAt");
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [searchTerm, setSearchTerm] = useState(savedAccounts.searchTerm || "");
+  const [sortField, setSortField] = useState(savedAccounts.sortField || "createdAt");
+  const [sortOrder, setSortOrder] = useState(savedAccounts.sortOrder || "desc");
   const [showSpecsModal,setShowSpecsModal]=useState(false)
   const [patientFormData, setPatientFormData] = useState({});
   const [selectedPhoneCode, setSelectedPhoneCode] = useState("+48");
@@ -187,7 +192,10 @@ export default function UserManagement() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [usersPerPage, setUsersPerPage] = useState(5);
+  const [usersPerPage, setUsersPerPage] = useState(
+    Number(savedAccounts.usersPerPage) > 0 ? Number(savedAccounts.usersPerPage) : 5
+  );
+  const debouncedSearchTerm = useDebouncedValue(searchTerm, 400);
 
   // State for doctor schedule modal
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -325,7 +333,19 @@ export default function UserManagement() {
 
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, usersPerPage, sortField, sortOrder]);
+  }, [currentPage, usersPerPage, sortField, sortOrder, debouncedSearchTerm]);
+
+  useEffect(() => {
+    writeListState("admin-accounts", {
+      searchTerm,
+      currentPage,
+      usersPerPage,
+      sortField,
+      sortOrder,
+    });
+  }, [searchTerm, currentPage, usersPerPage, sortField, sortOrder]);
+
+  useListScrollRestore("admin-accounts", !isLoading);
 
   // Handle URL parameter for editing patient
   useEffect(() => {
@@ -364,14 +384,12 @@ export default function UserManagement() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setCurrentPage(1); // Reset to first page when searching
-    fetchUsers();
+    setCurrentPage(1);
   };
 
   const handleClearSearch = () => {
     setSearchTerm("");
     setCurrentPage(1);
-    fetchUsers();
   };
 
   const handlePageChange = (page) => {

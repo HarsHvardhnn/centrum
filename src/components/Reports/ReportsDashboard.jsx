@@ -16,6 +16,7 @@ import {
   validateFilters,
   getUserPermissions
 } from '../../helpers/reportsHelper';
+import { readListState, writeListState } from '../../hooks/usePersistedListState';
 
 const ReportsDashboard = () => {
   const { user } = useUser();
@@ -29,14 +30,18 @@ const ReportsDashboard = () => {
   const [doctors, setDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   
-  const [filters, setFilters] = useState({
-    startDate: '',
-    endDate: '',
-    doctorId: '',
-    patientId: '',
-    status: 'all',
-    serviceType: 'all',
-    patientLessVisitsOnly: false
+  const [filters, setFilters] = useState(() => {
+    const saved = readListState("admin-reports") || {};
+    return {
+      startDate: '',
+      endDate: '',
+      doctorId: '',
+      patientId: '',
+      status: 'all',
+      serviceType: 'all',
+      patientLessVisitsOnly: false,
+      ...(saved.filters || {}),
+    };
   });
 
   // Get user permissions
@@ -65,8 +70,10 @@ const ReportsDashboard = () => {
     fetchDoctors();
   }, [user]);
 
-  // Auto-set default date range (last 30 days)
+  // Auto-set default date range (last 30 days) unless restored from a previous visit
   useEffect(() => {
+    const saved = readListState("admin-reports");
+    if (saved?.filters?.startDate || saved?.filters?.endDate) return;
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
@@ -77,6 +84,10 @@ const ReportsDashboard = () => {
       endDate: endDate.toISOString().split('T')[0]
     }));
   }, []);
+
+  useEffect(() => {
+    writeListState("admin-reports", { filters });
+  }, [filters]);
 
   const showMessage = (message, type = 'info') => {
     if (type === 'error') {

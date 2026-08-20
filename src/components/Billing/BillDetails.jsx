@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
-  Printer,
-  Download,
   DollarSign,
   Calendar,
   User,
@@ -27,7 +25,6 @@ const BillDetails = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [paymentNotes, setPaymentNotes] = useState("");
-  const [generatingInvoice, setGeneratingInvoice] = useState(false);
   
   useEffect(() => {
     fetchBillDetails();
@@ -80,35 +77,6 @@ const BillDetails = () => {
     } finally {
       hideLoader();
     }
-  };
-  
-  const handleGenerateInvoice = async () => {
-    try {
-      setGeneratingInvoice(true);
-      showLoader();
-      
-      const response = await billingHelper.generateInvoice(billId);
-      
-      //("response", response);
-      if (response.success) {
-        window.open(response.data.invoiceUrl, '_blank');
-        // Open the invoice in a new tab
-        toast.success("Pomyślnie wygenerowano fakturę");
-      } else {
-        toast.error("Nie udało się wygenerować faktury");
-      }
-      navigate(`/patients?date=${new Date().toISOString().split('T')[0]}`)
-    } catch (error) {
-      console.error("Błąd podczas generowania faktury:", error);
-      toast.error("Nie udało się wygenerować faktury");
-    } finally {
-      setGeneratingInvoice(false);
-      hideLoader();
-    }
-  };
-  
-  const handlePrintBill = () => {
-    window.print();
   };
   
   // Format currency
@@ -228,14 +196,6 @@ const BillDetails = () => {
           </div>
           
           <div className="flex flex-wrap gap-3">
-            <button
-              onClick={handleGenerateInvoice}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <Download size={16} className="mr-2" />
-              Generuj Fakturę
-            </button>
-            
             {billData.paymentStatus === "pending" && (
               <button
                 onClick={() => setShowPaymentModal(true)}
