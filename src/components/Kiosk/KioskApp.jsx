@@ -357,7 +357,7 @@ export default function KioskApp() {
     };
 
     ping();
-    const interval = setInterval(ping, 25000);
+    const interval = setInterval(ping, 10000);
     return () => {
       cancelled = true;
       clearInterval(interval);
