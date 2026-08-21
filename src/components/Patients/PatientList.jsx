@@ -571,14 +571,16 @@ function LabAppointmentsContent({ clinic }) {
 
   // List fetching is handled by useQuery + debouncedFilters (single request on mount).
 
-  const { data: doctorsList = [] } = useQuery({
+  const { data: doctorsListRaw } = useQuery({
     queryKey: queryKeys.doctorsList,
     queryFn: async () => {
       const response = await doctorStatsHelper.getDoctorsList();
-      return response?.success && Array.isArray(response.data) ? response.data : [];
+      const list = response?.data ?? response?.doctors ?? response;
+      return Array.isArray(list) ? list : [];
     },
     enabled: !!clinic,
   });
+  const doctorsList = Array.isArray(doctorsListRaw) ? doctorsListRaw : [];
 
   const { data: visitReasonsCategories = [] } = useQuery({
     queryKey: queryKeys.visitReasons,
@@ -1223,7 +1225,11 @@ function LabAppointmentsContent({ clinic }) {
                           <>
                             <option value="">Wybierz lekarza...</option>
                             {doctorsList.map((d) => (
-                              <option key={d._id || d.id} value={d._id || d.id}>{d.name || "Lekarz"}</option>
+                              <option key={d._id || d.id} value={d._id || d.id}>
+                                {typeof d.name === "string"
+                                  ? d.name
+                                  : `${d.name?.first || ""} ${d.name?.last || ""}`.trim() || "Lekarz"}
+                              </option>
                             ))}
                           </>
                         )}

@@ -73,15 +73,19 @@ const DoctorAppointmentChart = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const {
-    data: doctorsResponse,
+    data: doctorsRaw,
     isLoading: doctorsLoading,
     error: doctorsError,
   } = useQuery({
     queryKey: queryKeys.doctorsList,
-    queryFn: () => doctorStatsHelper.getDoctorsList(),
+    queryFn: async () => {
+      const response = await doctorStatsHelper.getDoctorsList();
+      const list = response?.data ?? response?.doctors ?? response;
+      return Array.isArray(list) ? list : [];
+    },
   });
 
-  const doctors = doctorsResponse?.success ? (doctorsResponse.data || []) : [];
+  const doctors = Array.isArray(doctorsRaw) ? doctorsRaw : [];
 
   useEffect(() => {
     if (!doctors.length) return;
@@ -115,9 +119,7 @@ const DoctorAppointmentChart = () => {
       ? "Błąd podczas pobierania listy lekarzy"
       : statsError
         ? (statsError.response?.data?.message || "Błąd podczas pobierania statystyk")
-        : (!doctorsResponse || doctorsResponse.success
-            ? null
-            : "Nie udało się pobrać listy lekarzy");
+        : null;
 
   const fetchStatistics = () => {
     refetchStatistics();
