@@ -343,7 +343,7 @@ function LabAppointmentsContent({ clinic }) {
     userId: user?.id,
     userRole: user?.role,
   });
-  const debouncedFiltersSignature = useDebouncedValue(filtersSignature, 300);
+  const debouncedFiltersSignature = useDebouncedValue(filtersSignature, 450);
   const debouncedFilters = useMemo(
     () => JSON.parse(debouncedFiltersSignature),
     [debouncedFiltersSignature]
@@ -356,8 +356,17 @@ function LabAppointmentsContent({ clinic }) {
 
   const listQueryParams = {
     ...debouncedFilters,
+    // Avoid 1-char searches hitting the API (same as PatientSearchField)
+    searchQuery:
+      !clinic && (debouncedFilters.searchQuery || "").trim().length === 1
+        ? ""
+        : debouncedFilters.searchQuery,
     page: listPage,
   };
+
+  const patientSearchReady =
+    clinic ||
+    (debouncedFilters.searchQuery || "").trim().length !== 1;
 
   /** Map GET /patients/data/simple row → shape expected by Lista pacjentów cards */
   const mapPatientApiRowToListItem = (p) => {
@@ -446,7 +455,7 @@ function LabAppointmentsContent({ clinic }) {
       );
     },
     placeholderData: keepPreviousData,
-    enabled: !!(user?.role || clinic === true || clinic === false),
+    enabled: !!(user?.role || clinic === true || clinic === false) && patientSearchReady,
   });
 
   useEffect(() => {

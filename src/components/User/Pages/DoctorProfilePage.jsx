@@ -275,7 +275,7 @@ const DoctorProfilePage = () => {
       );
 
       // Handle success
-      toast.success("Wizyta została pomyślnie zarezerwowana!");
+        toast.success("Wizyta została pomyślnie zarezerwowana!");
 
       // Close modal and reset form
       setShowBookingModal(false);
@@ -312,14 +312,14 @@ const DoctorProfilePage = () => {
   // Calculate dates for the next 7 days based on weekOffset
   const nextDays = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
-    date.setDate(date.getDate() + i + weekOffset * 7);
+      date.setDate(date.getDate() + i + weekOffset * 7);
     return date.toISOString().split("T")[0];
   });
 
   const handleWeekChange = (direction) => {
     setWeekOffset((prev) => prev + direction);
     setSelectedDate(nextDays[0]); // Reset to first day of new week
-    if (doctor) {
+      if (doctor) {
       fetchAvailableSlots(doctor._id, nextDays[0]);
     }
   };
@@ -537,11 +537,11 @@ const DoctorProfilePage = () => {
               {/* Quick Info Card */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Informacje</h3>
-                
+
                 {doctor.experience && (
                   <div className="flex items-center gap-3 mb-4">
                     <FaClock className="text-teal-600 flex-shrink-0" />
-                    <div>
+                  <div>
                       <div className="font-medium text-gray-800">Doświadczenie</div>
                       <div className="text-gray-600">{doctor.experience} lat</div>
                     </div>
@@ -871,7 +871,7 @@ const DoctorProfilePage = () => {
                                 {formErrors.name}
                               </p>
                             )}
-                          </div>
+                  </div>
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -894,8 +894,8 @@ const DoctorProfilePage = () => {
                                 {formErrors.email}
                               </p>
                             )}
-                          </div>
-                        </div>
+                </div>
+              </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                           <div>
@@ -924,7 +924,7 @@ const DoctorProfilePage = () => {
                                 Format: 9 cyfr bez spacji i znaków specjalnych
                               </p>
                             )}
-                          </div>
+                </div>
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
