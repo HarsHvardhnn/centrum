@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { apiCaller } from "../../utils/axiosInstance";
 import { useServices } from "../../context/serviceContext";
+import { readListState, writeListState } from "../../hooks/usePersistedListState";
 
 const ServicesManagement = () => {
  const{fetchServices:fetchServicesFromContext}= useServices()
@@ -20,7 +21,9 @@ const ServicesManagement = () => {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentService, setCurrentService] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(
+    (readListState("admin-services") || {}).searchTerm || ""
+  );
   const [formData, setFormData] = useState({
     title: "",
     price: "",
@@ -42,6 +45,10 @@ const ServicesManagement = () => {
   useEffect(() => {
     fetchServices();
   }, []);
+
+  useEffect(() => {
+    writeListState("admin-services", { searchTerm });
+  }, [searchTerm]);
 
   const fetchServices = async () => {
     setLoading(true);

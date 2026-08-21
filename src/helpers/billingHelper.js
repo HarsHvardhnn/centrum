@@ -160,17 +160,51 @@ const billingHelper = {
   },
 
   /**
+   * Suggest next invoice number for a month/year
+   */
+  suggestInvoiceId: async (month, year) => {
+    try {
+      const response = await apiCaller("POST", "/api/invoice/generate-for-date", {
+        month,
+        year,
+      });
+      return response.data?.invoiceId || "";
+    } catch (error) {
+      console.error("Error suggesting invoice ID:", error);
+      return "";
+    }
+  },
+
+  /**
+   * Bulk-mark bills as paid
+   */
+  bulkUpdatePaymentStatus: async (payload) => {
+    try {
+      const response = await apiCaller(
+        "PATCH",
+        "/patient-bills/bulk-payment-status",
+        payload
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error bulk updating payment status:", error);
+      throw error;
+    }
+  },
+
+  /**
    * Get billing statistics
    * @param {Object} options - Filter options (startDate, endDate)
    * @returns {Promise} - API response with statistics
    */
   getBillingStatistics: async (options = {}) => {
     try {
-      const { startDate, endDate } = options;
+      const { startDate, endDate, appointmentId } = options;
       let queryParams = new URLSearchParams();
       
       if (startDate) queryParams.append("startDate", startDate);
       if (endDate) queryParams.append("endDate", endDate);
+      if (appointmentId) queryParams.append("appointmentId", appointmentId);
 
       const response = await apiCaller(
         "GET",

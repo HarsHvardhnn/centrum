@@ -42,8 +42,14 @@ const InactivityPopup = ({ inactivityTimeout, onStayActive, onLogout }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 relative">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={handleStayActive}
+    >
+      <div
+        className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 relative"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-start mb-4">
           <div className="rounded-full p-3 mr-4 bg-orange-100">
             <Clock className="text-orange-600" size={24} />

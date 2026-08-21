@@ -11,23 +11,34 @@ import { toast } from "sonner";
 import appointmentHelper from "../../../helpers/appointmentHelper";
 import { formatDateToYYYYMMDD } from "../../../utils/formatDate";
 import { useUser } from "../../../context/userContext";
+import { readListState, writeListState, useListScrollRestore } from "../../../hooks/usePersistedListState";
 
 function DoctorsPage() {
   const router = useParams();
   const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
+  const doctorListKey = `doctor-day-${router.id || "unknown"}`;
+  const savedDoctorDay = readListState(doctorListKey) || {};
   const [error, setError] = useState(null);
   const [doctorInfo, setDoctorInfo] = useState({});
   const [patients, setPatients] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    if (savedDoctorDay.selectedDate) {
+      const parsed = new Date(savedDoctorDay.selectedDate);
+      if (!Number.isNaN(parsed.getTime())) return parsed;
+    }
+    return new Date();
+  });
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [appointmentData, setAppointmentData] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientDetails, setPatientDetails] = useState(null);
   const [appointmentId, setAppointmentId] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    Number(savedDoctorDay.currentPage) > 0 ? Number(savedDoctorDay.currentPage) : 1
+  );
   const [totalPatients, setTotalPatients] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(savedDoctorDay.searchQuery || "");
   const [dailySummary, setDailySummary] = useState({ liczbaWizyt: 0, pozostaloWizyt: 0 });
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [checkInAppointment, setCheckInAppointment] = useState(null);
@@ -36,6 +47,16 @@ function DoctorsPage() {
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
   const itemsPerPage = 10;
   const { user } = useUser();
+
+  useEffect(() => {
+    writeListState(doctorListKey, {
+      selectedDate: formatDateToYYYYMMDD(selectedDate),
+      currentPage,
+      searchQuery,
+    });
+  }, [doctorListKey, selectedDate, currentPage, searchQuery]);
+
+  useListScrollRestore(doctorListKey, patients.length > 0 || !!doctorInfo?.id);
 
   /** Count appointments by status. Excludes cancelled. Liczba wizyt = Zarezerwowana + Zameldowana + Zakończona; Pozostało = Zarezerwowana + Zameldowana. Backend may return liczbaWizyt/pozostaloWizyt for full-day accuracy (when list is paginated). */
   const computeDailySummary = (list, fromBackend) => {

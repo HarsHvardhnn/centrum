@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
@@ -40,6 +41,9 @@ import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 import VisitReasonCascadeDropdown from "../UtilComponents/VisitReasonCascadeDropdown";
 import PatientDocumentsModal from "./PatientDocumentsModal";
+import { queryKeys } from "../../lib/queryKeys";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
 
 /** Formats appointment `created_at` / `createdAt` for "Utworzono przez: … (DD.MM.YYYY, HH:MM)" */
 function formatAppointmentCreatedAt(appointment) {
@@ -112,6 +116,7 @@ const billingHelper = {
 function LabAppointmentsContent({ clinic }) {
   const { showLoader, hideLoader } = useLoader();
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const [showCheckin, setShowCheckin] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showBillingModal, setShowBillingModal] = useState(false);
@@ -156,9 +161,17 @@ function LabAppointmentsContent({ clinic }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const listStateKey = clinic ? "klinika-visits" : "pacjenci-visits";
+  const savedList = readListState(listStateKey) || {};
+  const urlDate = searchParams.get("startDate") || searchParams.get("date");
   // Appointments data
+  const [listPage, setListPage] = useState(
+    Number(savedList.listPage) > 0 ? Number(savedList.listPage) : 1
+  );
   const [appointments, setAppointments] = useState([]);
-  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [itemsPerPage, setItemsPerPage] = useState(
+    Number(savedList.itemsPerPage) > 0 ? Number(savedList.itemsPerPage) : 50
+  );
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -168,24 +181,32 @@ function LabAppointmentsContent({ clinic }) {
   const [totalPatientsCount, setTotalPatientsCount] = useState(0);
 
   // Search and filter states
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState(clinic ? "booked" : "All");
+  const [searchQuery, setSearchQuery] = useState(savedList.searchQuery || "");
+  const [statusFilter, setStatusFilter] = useState(
+    savedList.statusFilter || (clinic ? "booked" : "All")
+  );
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [dateRange, setDateRange] = useState({
-    startDate: null,
-    endDate: null,
+  const [dateRange, setDateRange] = useState(() => {
+    if (urlDate) return { startDate: urlDate, endDate: savedList.dateRange?.endDate ?? null };
+    if (savedList.dateRange && (savedList.dateRange.startDate || savedList.dateRange.endDate)) {
+      return savedList.dateRange;
+    }
+    if (clinic) {
+      return { startDate: new Date().toISOString().split("T")[0], endDate: null };
+    }
+    return { startDate: null, endDate: null };
   });
   /** Only on /klinika: when true, show only patient-less (visit-only) appointments. */
-  const [patientLessOnly, setPatientLessOnly] = useState(false);
+  const [patientLessOnly, setPatientLessOnly] = useState(!!savedList.patientLessOnly);
   /** Doctor filter for Historia wizyt (clinic) */
-  const [doctorFilterId, setDoctorFilterId] = useState("");
-  const [doctorsList, setDoctorsList] = useState([]);
+  const [doctorFilterId, setDoctorFilterId] = useState(savedList.doctorFilterId || "");
   /** Forma konsultacji: all | offline (Stacjonarna) | online */
-  const [consultationMode, setConsultationMode] = useState("all");
+  const [consultationMode, setConsultationMode] = useState(savedList.consultationMode || "all");
   /** Typ wizyty (visit type) filter – value is visit reason displayName sent to backend */
-  const [visitTypeFilter, setVisitTypeFilter] = useState("");
+  const [visitTypeFilter, setVisitTypeFilter] = useState(savedList.visitTypeFilter || "");
   /** Visit reasons from API (categories + types) for filter dropdown */
-  const [visitReasonsCategories, setVisitReasonsCategories] = useState([]);
+  const skipFilterPageReset = useSkipFirstEffect();
+  const skipItemsPerPageReset = useSkipFirstEffect();
 
   // Ref for filter dropdown
   const filterRef = useRef(null);
@@ -223,7 +244,7 @@ function LabAppointmentsContent({ clinic }) {
     if (user?.role === "receptionist") {
       const params = new URLSearchParams({
         edytujPacjenta: patientId,
-        returnUrl: window.location.pathname,
+        returnUrl: window.location.pathname + window.location.search,
       });
       if (appointmentId) params.set("appointmentId", appointmentId);
       return `/administracja/konta?${params.toString()}`;
@@ -276,6 +297,15 @@ function LabAppointmentsContent({ clinic }) {
     }).finally(() => setVisitHistoryLoading(false));
   };
 
+  const restoredVisitHistoryRef = useRef(false);
+  useEffect(() => {
+    if (restoredVisitHistoryRef.current) return;
+    const savedHistory = savedList.visitHistory;
+    if (!savedHistory?.id) return;
+    restoredVisitHistoryRef.current = true;
+    openVisitHistoryModal(savedHistory.id, savedHistory.name);
+  }, []);
+
   const openPatientDocumentsModal = (patientId, patientName) => {
     if (!patientId) return;
     setDocumentsModalPatient({ id: patientId, name: patientName || "Pacjent" });
@@ -295,64 +325,145 @@ function LabAppointmentsContent({ clinic }) {
     return name;
   };
 
-  const fetchIdRef = useRef(0);
-  const fetchAppointments = async (page = 1) => {
-    const thisFetchId = fetchIdRef.current + 1;
-    fetchIdRef.current = thisFetchId;
-    try {
-      showLoader();
-      const appointmentIdFromUrl = searchParams.get('appointmentId');
-      const dateFromUrl = searchParams.get('date');
-      
-      const filters = {
-        ...(statusFilter !== "All" && statusFilter !== "patientLess" && { status: statusFilter }),
-        ...(dateRange.startDate && { startDate: dateRange.startDate }),
-        ...(dateRange.endDate && { endDate: dateRange.endDate }),
-        ...(dateFromUrl && { date: dateFromUrl }),
-        ...(searchQuery && { search: searchQuery }),
-        ...(user?.role === "doctor" && { doctorId: user?.id }),
-        ...(clinic && doctorFilterId && { doctorId: doctorFilterId }),
-        ...(clinic && { isClinicIp: clinic }),
-        ...(clinic && (patientLessOnly || statusFilter === "patientLess") && { patientLessOnly: true }),
-        ...(appointmentIdFromUrl && { appointmentId: appointmentIdFromUrl }),
-        ...(visitTypeFilter && { visitReason: visitTypeFilter }),
-        ...(clinic && consultationMode && consultationMode !== "all" && { mode: consultationMode }),
-      };
+  const appointmentIdFromUrl = searchParams.get("appointmentId");
+  const dateFromUrl = searchParams.get("date");
+  const filtersSignature = JSON.stringify({
+    searchQuery,
+    statusFilter,
+    dateRange,
+    clinic,
+    patientLessOnly,
+    doctorFilterId,
+    visitTypeFilter,
+    consultationMode,
+    appointmentIdFromUrl,
+    dateFromUrl,
+    itemsPerPage,
+    userId: user?.id,
+    userRole: user?.role,
+  });
+  const debouncedFiltersSignature = useDebouncedValue(filtersSignature, 300);
+  const debouncedFilters = useMemo(
+    () => JSON.parse(debouncedFiltersSignature),
+    [debouncedFiltersSignature]
+  );
 
-      const response = await appointmentHelper.getAllAppointments(
-        page,
-        itemsPerPage,
-        searchQuery,
+  useEffect(() => {
+    if (skipFilterPageReset()) return;
+    setListPage(1);
+  }, [debouncedFiltersSignature]);
+
+  const listQueryParams = {
+    ...debouncedFilters,
+    page: listPage,
+  };
+
+  const {
+    data: listQueryData,
+    isLoading: listQueryLoading,
+    isFetching: listQueryFetching,
+    error: listQueryError,
+  } = useQuery({
+    queryKey: queryKeys.appointmentsList(listQueryParams),
+    queryFn: async () => {
+      const f = listQueryParams;
+      const filters = {
+        ...(f.statusFilter !== "All" && f.statusFilter !== "patientLess" && { status: f.statusFilter }),
+        ...(f.dateRange?.startDate && { startDate: f.dateRange.startDate }),
+        ...(f.dateRange?.endDate && { endDate: f.dateRange.endDate }),
+        ...(f.dateFromUrl && { date: f.dateFromUrl }),
+        ...(f.searchQuery && { search: f.searchQuery }),
+        ...(f.userRole === "doctor" && { doctorId: f.userId }),
+        ...(f.clinic && f.doctorFilterId && { doctorId: f.doctorFilterId }),
+        ...(f.clinic && { isClinicIp: f.clinic }),
+        ...(f.clinic && (f.patientLessOnly || f.statusFilter === "patientLess") && { patientLessOnly: true }),
+        ...(f.appointmentIdFromUrl && { appointmentId: f.appointmentIdFromUrl }),
+        ...(f.visitTypeFilter && { visitReason: f.visitTypeFilter }),
+        ...(f.clinic && f.consultationMode && f.consultationMode !== "all" && { mode: f.consultationMode }),
+      };
+      return appointmentHelper.getAllAppointments(
+        f.page,
+        f.itemsPerPage,
+        f.searchQuery,
         filters,
         "date",
         "desc"
       );
+    },
+    placeholderData: keepPreviousData,
+    enabled: !!(user?.role || clinic === true || clinic === false),
+  });
 
-      if (thisFetchId !== fetchIdRef.current) return;
-
-      const list = Array.isArray(response?.data) ? response.data : (response?.data?.data ?? []);
-      const pag = response?.pagination ?? response?.data?.pagination ?? { total: 0, page: 1, pages: 1, limit: itemsPerPage };
-
-      if (response?.success !== false) {
-        setAppointments(list);
-        setPagination(pag);
-        // Backend now returns totalPatients at root; fallback to pagination.total (or current page length).
-        const rootTotalPatients =
-          response?.totalPatients ??
-          response?.data?.totalPatients ??
-          pag?.totalPatients;
-        const fallbackTotal = pag?.total ?? list?.length ?? 0;
-        setTotalPatientsCount(Number(rootTotalPatients ?? fallbackTotal) || 0);
-      } else {
-        toast.error("Nie udało się pobrać wizyt");
-      }
-    } catch (error) {
-      if (thisFetchId !== fetchIdRef.current) return;
-      console.error("Failed to fetch appointments:", error);
-      toast.error("Nie udało się pobrać wizyt");
-    } finally {
-      if (thisFetchId === fetchIdRef.current) hideLoader();
+  useEffect(() => {
+    if (!listQueryData) return;
+    const list = Array.isArray(listQueryData?.data)
+      ? listQueryData.data
+      : (listQueryData?.data?.data ?? []);
+    const pag = listQueryData?.pagination ?? listQueryData?.data?.pagination ?? {
+      total: 0,
+      page: 1,
+      pages: 1,
+      limit: itemsPerPage,
+    };
+    if (listQueryData?.success !== false) {
+      setAppointments(list);
+      setPagination(pag);
+      const rootTotalPatients =
+        listQueryData?.totalPatients ??
+        listQueryData?.data?.totalPatients ??
+        pag?.totalPatients;
+      const fallbackTotal = pag?.total ?? list?.length ?? 0;
+      setTotalPatientsCount(Number(rootTotalPatients ?? fallbackTotal) || 0);
     }
+  }, [listQueryData, itemsPerPage]);
+
+  useEffect(() => {
+    if (listQueryError) {
+      console.error("Failed to fetch appointments:", listQueryError);
+      toast.error("Nie udało się pobrać wizyt");
+    }
+  }, [listQueryError]);
+
+  const listLoading = listQueryLoading || (listQueryFetching && appointments.length === 0);
+
+  useEffect(() => {
+    writeListState(listStateKey, {
+      searchQuery,
+      statusFilter,
+      dateRange,
+      patientLessOnly,
+      doctorFilterId,
+      consultationMode,
+      visitTypeFilter,
+      listPage,
+      itemsPerPage,
+      visitHistory:
+        showVisitHistoryModal && visitHistoryPatient?.id
+          ? { id: visitHistoryPatient.id, name: visitHistoryPatient.name || "" }
+          : null,
+    });
+  }, [
+    listStateKey,
+    searchQuery,
+    statusFilter,
+    dateRange,
+    patientLessOnly,
+    doctorFilterId,
+    consultationMode,
+    visitTypeFilter,
+    listPage,
+    itemsPerPage,
+    showVisitHistoryModal,
+    visitHistoryPatient,
+  ]);
+
+  useListScrollRestore(listStateKey, !listLoading);
+
+  const fetchAppointments = (page) => {
+    if (typeof page === "number") {
+      setListPage(page);
+    }
+    queryClient.invalidateQueries({ queryKey: ["appointments-list"] });
   };
 
   // Sync filters from URL when URL has date params. Do not reset to default when URL has no date,
@@ -394,43 +505,27 @@ function LabAppointmentsContent({ clinic }) {
     };
   }, [isFilterOpen]);
 
-  useEffect(() => {
-    const debounceTimeout = setTimeout(() => {
-      fetchAppointments(1); // Reset to first page when filters change
-    }, 300);
+  // List fetching is handled by useQuery + debouncedFilters (single request on mount).
 
-    return () => clearTimeout(debounceTimeout);
-  }, [searchQuery, statusFilter, dateRange, user?.id, clinic, searchParams, patientLessOnly, doctorFilterId, visitTypeFilter, consultationMode]);
+  const { data: doctorsList = [] } = useQuery({
+    queryKey: queryKeys.doctorsList,
+    queryFn: async () => {
+      const response = await doctorStatsHelper.getDoctorsList();
+      return response?.success && Array.isArray(response.data) ? response.data : [];
+    },
+    enabled: !!clinic,
+  });
 
-  // Fetch doctors list for clinic (Historia wizyt) filter
-  useEffect(() => {
-    if (!clinic) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const response = await doctorStatsHelper.getDoctorsList();
-        if (response?.success && response?.data && !cancelled) {
-          setDoctorsList(Array.isArray(response.data) ? response.data : []);
-        }
-      } catch (e) {
-        if (!cancelled) setDoctorsList([]);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [clinic]);
-
-  // Fetch visit reasons (categories + types) for clinic visit-type filter
-  useEffect(() => {
-    if (!clinic) return;
-    let cancelled = false;
-    appointmentHelper.getVisitReasons().then((res) => {
-      if (cancelled) return;
+  const { data: visitReasonsCategories = [] } = useQuery({
+    queryKey: queryKeys.visitReasons,
+    queryFn: async () => {
+      const res = await appointmentHelper.getVisitReasons();
       const data = res?.data ?? res;
       const categories = data?.categories ?? [];
-      setVisitReasonsCategories(Array.isArray(categories) ? categories : []);
-    }).catch(() => { if (!cancelled) setVisitReasonsCategories([]); });
-    return () => { cancelled = true; };
-  }, [clinic]);
+      return Array.isArray(categories) ? categories : [];
+    },
+    enabled: !!clinic,
+  });
 
   // Doctor role on clinic: show only own visits; set and lock doctor filter to current user
   useEffect(() => {
@@ -447,9 +542,11 @@ function LabAppointmentsContent({ clinic }) {
     clinicRef.current = clinic;
     const isFirstRun = prevClinic === null;
     const clinicToggled = !isFirstRun && prevClinic !== clinic;
-    if (!isFirstRun && !clinicToggled) return; // Skip when only searchParams or other deps changed
+    if (isFirstRun) return; // initial list fetch comes from useQuery only
+    if (!clinicToggled) return; // Skip when only searchParams or other deps changed
 
-    // Clear appointments and pagination when clinic prop changes to prevent cache issues
+    queryClient.removeQueries({ queryKey: ["appointments-list"] });
+    setListPage(1);
     setAppointments([]);
     setPagination({
       total: 0,
@@ -490,14 +587,12 @@ function LabAppointmentsContent({ clinic }) {
         });
       }
     }
-    
-    // Refetch with fresh data
-    fetchAppointments(1);
   }, [clinic, searchParams]);
 
   useEffect(() => {
+    if (skipItemsPerPageReset()) return;
+    setListPage(1);
     setPagination((prev) => ({ ...prev, page: 1, limit: itemsPerPage }));
-    fetchAppointments(1);
   }, [itemsPerPage]);
 
   // Remove the frontend filtering logic and use the appointments directly from backend
@@ -575,6 +670,8 @@ function LabAppointmentsContent({ clinic }) {
         additionalChargeNote: billingData.additionalChargeNote || "",
         totalAmount: billingData.totalAmount,
         paymentMethod: billingData.paymentMethod,
+        billedAt: billingData.billedAt,
+        invoiceId: billingData.invoiceId,
       };
 
       // Call the API to generate the bill
@@ -603,7 +700,10 @@ function LabAppointmentsContent({ clinic }) {
       navigate(`/administracja/rozliczenia/szczegoly/${response.data._id}`);
     } catch (error) {
       console.error("Failed to generate bill:", error);
-      toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
+      toast.error(
+        error?.response?.data?.message ||
+          "Nie udało się wygenerować rachunku. Spróbuj ponownie."
+      );
       setIsLoading(false);
     }
   };
@@ -1223,7 +1323,16 @@ function LabAppointmentsContent({ clinic }) {
                 </label>
               </div>
             )}
-            {appointments.length === 0 ? (
+            {listLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="bg-white border border-gray-200 rounded-lg px-6 py-5 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
+                    <div className="h-3 bg-gray-100 rounded w-2/3" />
+                  </div>
+                ))}
+              </div>
+            ) : appointments.length === 0 ? (
               <div className="bg-white border border-gray-200 rounded-lg py-12 text-center text-gray-500">
                 Brak wizyt w wybranym okresie.
               </div>
@@ -1465,7 +1574,17 @@ function LabAppointmentsContent({ clinic }) {
               <div>Pierwsza wizyta</div>
               <div className="text-right">Akcje</div>
             </div>
-            {appointments.length === 0 ? (
+            {listLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="bg-white border border-gray-200 rounded-lg px-4 py-3 animate-pulse grid grid-cols-8 gap-4">
+                    {Array.from({ length: 8 }).map((__, j) => (
+                      <div key={j} className="h-4 bg-gray-200 rounded" />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ) : appointments.length === 0 ? (
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm py-12 text-center text-gray-500">
                 Brak pacjentów.
               </div>
@@ -1754,7 +1873,6 @@ function LabAppointmentsContent({ clinic }) {
                           <button
                             type="button"
                             onClick={() => {
-                              setShowVisitHistoryModal(false);
                               navigate(getPatientViewUrl(visitHistoryPatient?.id, visit.visitId));
                             }}
                             className="text-sm text-teal-600 hover:text-teal-800 font-medium"

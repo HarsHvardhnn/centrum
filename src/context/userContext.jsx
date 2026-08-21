@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { apiCaller, setCookie, getCookie, removeCookie } from "../utils/axiosInstance";
+import { clearAllListState } from "../hooks/usePersistedListState";
 
 // Create the context
 const UserContext = createContext(null);
@@ -160,6 +161,7 @@ export const UserProvider = ({ children }) => {
     localStorage.removeItem('user');
     // Clear session countdown marker so next login starts clean
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    clearAllListState();
   };
 
   const hasRole = (allowedRoles) => {

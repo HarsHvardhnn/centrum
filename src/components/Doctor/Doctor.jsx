@@ -7,6 +7,7 @@ import appointmentHelper from "../../helpers/appointmentHelper";
 import { useSpecializations } from "../../context/SpecializationContext";
 import { toast } from "sonner";
 import { useLoader } from "../../context/LoaderContext";
+import { readListState, writeListState, useListScrollRestore } from "../../hooks/usePersistedListState";
 import { format } from "date-fns";
 
 const formatDoctorName = (name) =>
@@ -33,9 +34,10 @@ const transformDoctorsResponse = (doctorsList) =>
 const SEARCH_DEBOUNCE_MS = 400;
 
 const BillingPage = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [activeFilters, setActiveFilters] = useState({});
+  const savedDoctors = readListState("admin-doctors") || {};
+  const [searchTerm, setSearchTerm] = useState(savedDoctors.searchTerm || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(savedDoctors.searchTerm || "");
+  const [activeFilters, setActiveFilters] = useState(savedDoctors.activeFilters || {});
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
   const [allDoctors, setAllDoctors] = useState([]);
   const [visitTypesFromApi, setVisitTypesFromApi] = useState([]);
@@ -48,6 +50,12 @@ const BillingPage = () => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(t);
   }, [searchTerm]);
+
+  useEffect(() => {
+    writeListState("admin-doctors", { searchTerm, activeFilters });
+  }, [searchTerm, activeFilters]);
+
+  useListScrollRestore("admin-doctors", allDoctors.length > 0);
 
   // Fetch doctors from API with filters and search (Lista lekarzy)
   useEffect(() => {

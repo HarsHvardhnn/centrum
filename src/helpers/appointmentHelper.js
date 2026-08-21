@@ -51,9 +51,13 @@ class AppointmentService {
   }
 
   // NEW CONSOLIDATED API: Get all patient details data for patient details page
-  async getPatientDetailsConsolidated(appointmentId) {
+  async getPatientDetailsConsolidated(appointmentId, options = {}) {
     try {
-      const response = await apiCaller("GET", `/appointments/${appointmentId}/patient-details`);
+      const include = options.include;
+      const qs = include
+        ? `?include=${encodeURIComponent(Array.isArray(include) ? include.join(",") : include)}`
+        : "";
+      const response = await apiCaller("GET", `/appointments/${appointmentId}/patient-details${qs}`);
       return response.data;
     } catch (error) {
       console.error("Error fetching consolidated patient details:", error);

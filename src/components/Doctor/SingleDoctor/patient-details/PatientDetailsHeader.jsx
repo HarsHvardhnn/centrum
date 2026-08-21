@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, MoreHorizontal, User, Settings, LogOut, Clock, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { useUser } from "../../../../context/userContext";
-import appointmentHelper from "../../../../helpers/appointmentHelper";
 import appointmentConfigService from "../../../../helpers/appointmentConfigHelper";
+import patientService from "../../../../helpers/patientHelper";
 import { stripDoctorTitle } from "../../../../utils/statusHelper";
 import { getAccessToken, getTokenExpiry, formatTimeRemaining } from "../../../../utils/jwtUtils";
-import { apiCaller, setCookie } from "../../../../utils/axiosInstance";
 
 // Header colors: deep teal bar, white text
 const HEADER_BG = "#1a7f73";
 const SEARCH_DEBOUNCE_MS = 300;
+const MIN_SEARCH_CHARS = 2;
 const TEXT_PRIMARY = "#ffffff";
 const TEXT_SECONDARY = "rgba(255,255,255,0.9)";
 const SEARCH_PLACEHOLDER = "#9ca3af";
@@ -34,7 +33,7 @@ function getInitials(name) {
 
 const PatientDetailsHeader = () => {
   const navigate = useNavigate();
-  const { user, setUser, refreshUserProfile } = useUser();
+  const { user, setUser } = useUser();
   const [searchValue, setSearchValue] = useState("");
   const [currentTime, setCurrentTime] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -55,9 +54,10 @@ const PatientDetailsHeader = () => {
     return () => clearInterval(t);
   }, []);
 
-  // Debounced search: fetch appointments (search by name, PESEL, phone, email)
+  // Debounced patient search (name, PESEL, phone, ID) — not appointments
   useEffect(() => {
-    if (!searchValue.trim()) {
+    const term = searchValue.trim();
+    if (term.length < MIN_SEARCH_CHARS) {
       setSearchResults([]);
       setShowDropdown(false);
       return;
@@ -66,15 +66,14 @@ const PatientDetailsHeader = () => {
       setSearchLoading(true);
       setShowDropdown(true);
       try {
-        const response = await appointmentHelper.getAllAppointments(
-          1,
-          15,
-          searchValue.trim(),
-          {},
-          "date",
-          "desc"
-        );
-        const list = response?.data ?? [];
+        const response = await patientService.getSimpliefiedPatientsList({
+          search: term,
+          page: 1,
+          limit: 15,
+          sortBy: "name.last",
+          sortOrder: "asc",
+        });
+        const list = response?.patients ?? [];
         setSearchResults(Array.isArray(list) ? list : []);
       } catch (e) {
         setSearchResults([]);
@@ -95,8 +94,8 @@ const PatientDetailsHeader = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelectAppointment = (appointment) => {
-    const patientId = appointment.patient_id || appointment.patient?._id || appointment.patient?.id;
+  const handleSelectPatient = (patient) => {
+    const patientId = patient._id || patient.id;
     if (!patientId) return;
     setSearchValue("");
     setSearchResults([]);
@@ -104,14 +103,14 @@ const PatientDetailsHeader = () => {
     if (user?.role === "receptionist") {
       navigate(`/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname)}`);
     } else {
-      navigate(`/szczegoly-pacjenta/${patientId}?appointmentId=${appointment._id || appointment.id}`);
+      navigate(`/szczegoly-pacjenta/${patientId}`);
     }
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchResults.length > 0) {
-      handleSelectAppointment(searchResults[0]);
+      handleSelectPatient(searchResults[0]);
     }
   };
 
@@ -149,8 +148,6 @@ const PatientDetailsHeader = () => {
   // JWT access token: time until `exp` claim (server TTL from JWT settings, e.g. JWT_EXPIRY_TIME)
   const [jwtRemainingMs, setJwtRemainingMs] = useState(null);
   const [jwtExpiryConfig, setJwtExpiryConfig] = useState(null);
-  const [showJwtExpiryModal, setShowJwtExpiryModal] = useState(false);
-  const [jwtRefreshLoading, setJwtRefreshLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -172,7 +169,6 @@ const PatientDetailsHeader = () => {
       const token = getAccessToken();
       if (!token) {
         setJwtRemainingMs(null);
-        setShowJwtExpiryModal(false);
         return;
       }
       const expMs = getTokenExpiry(token);
@@ -186,37 +182,6 @@ const PatientDetailsHeader = () => {
     const t = setInterval(tick, 1000);
     return () => clearInterval(t);
   }, []);
-
-  useEffect(() => {
-    if (jwtRemainingMs === null) return;
-    if (jwtRemainingMs > 0) {
-      setShowJwtExpiryModal(false);
-    } else if (getAccessToken()) {
-      setShowJwtExpiryModal(true);
-    }
-  }, [jwtRemainingMs]);
-
-  const handleRefreshJwt = async () => {
-    try {
-      setJwtRefreshLoading(true);
-      const response = await apiCaller("POST", "/auth/refresh-token", undefined);
-      if (response.data && response.data.token) {
-        const newToken = response.data.token;
-        localStorage.setItem("authToken", newToken);
-        setCookie("authToken", newToken, 7);
-        await refreshUserProfile();
-        toast.success("Sesja została odświeżona");
-        setShowJwtExpiryModal(false);
-      } else {
-        toast.error("Nie udało się przedłużyć sesji");
-      }
-    } catch (err) {
-      console.error("JWT refresh failed:", err);
-      toast.error("Nie udało się przedłużyć sesji. Zaloguj się ponownie.");
-    } finally {
-      setJwtRefreshLoading(false);
-    }
-  };
 
   const sessionTooltipParts = [];
   if (jwtExpiryConfig) {
@@ -270,11 +235,11 @@ const PatientDetailsHeader = () => {
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             onFocus={() => searchValue.trim() && setShowDropdown(true)}
-            placeholder="Szukaj pacjenta (PESEL / Nazwisko)"
+            placeholder="Szukaj pacjenta (nazwisko, imię lub PESEL)"
             className="w-full pl-10 pr-4 py-2 rounded-lg bg-white text-gray-800 border border-gray-200 focus:ring-2 focus:ring-offset-0 focus:ring-white/50 outline-none text-sm"
             style={{ color: "#1f2937" }}
           />
-          {showDropdown && searchValue.trim() && (
+          {showDropdown && searchValue.trim().length >= MIN_SEARCH_CHARS && (
             <div
               className="absolute left-0 right-0 top-full mt-1 rounded-lg bg-white border border-gray-200 shadow-lg max-h-[320px] overflow-y-auto z-20"
               role="listbox"
@@ -284,22 +249,16 @@ const PatientDetailsHeader = () => {
               ) : searchResults.length === 0 ? (
                 <div className="px-4 py-3 text-gray-500 text-sm">Brak wyników</div>
               ) : (
-                searchResults.map((item) => {
-                  const p = item.patient;
-                  const name = p?.name ?? "—";
-                  const idDisplay = p?.patientId ?? item.patient_id ?? "—";
-                  const peselDisplay =
-                    p?.govtId ??
-                    p?.pesel ??
-                    p?.PESEL ??
-                    item?.registrationData?.pendingPesel ??
-                    "—";
+                searchResults.map((patient) => {
+                  const name = patient.name ?? "—";
+                  const idDisplay = patient.id ?? "—";
+                  const peselDisplay = patient.pesel || patient.documentId || "—";
                   return (
                     <button
-                      key={item._id || item.id}
+                      key={patient._id || patient.id}
                       type="button"
                       role="option"
-                      onClick={() => handleSelectAppointment(item)}
+                      onClick={() => handleSelectPatient(patient)}
                       className="w-full text-left px-4 py-2.5 hover:bg-gray-100 border-b border-gray-100 last:border-b-0 first:rounded-t-lg last:rounded-b-lg"
                     >
                       <span className="font-medium text-gray-800 block truncate">{name}</span>
@@ -422,41 +381,6 @@ const PatientDetailsHeader = () => {
           )}
         </div>
       </div>
-
-      {/* Session expired: refresh or logout */}
-      {showJwtExpiryModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" aria-labelledby="session-expiry-title">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h2 id="session-expiry-title" className="text-lg font-semibold text-gray-900 mb-2">
-              Sesja wygasła
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Twój czas sesji dobiegł końca. Możesz przedłużyć sesję (jeśli to możliwe) albo wylogować się i zalogować ponownie.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowJwtExpiryModal(false);
-                  handleLogout();
-                }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
-              >
-                Wyloguj
-              </button>
-              <button
-                type="button"
-                onClick={handleRefreshJwt}
-                disabled={jwtRefreshLoading}
-                className="px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50"
-                style={{ backgroundColor: HEADER_BG }}
-              >
-                {jwtRefreshLoading ? "Odświeżanie…" : "Przedłuż sesję"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 };

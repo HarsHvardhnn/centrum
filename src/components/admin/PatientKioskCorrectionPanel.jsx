@@ -127,12 +127,20 @@ export default function PatientKioskCorrectionPanel({
     };
     pollPdfJob();
     const interval = setInterval(async () => {
+      if (document.hidden) return;
       const status = await pollPdfJob();
       if (status === "completed" || status === "failed") clearInterval(interval);
-    }, 3000);
+    }, 8000);
+    const onVisible = async () => {
+      if (document.hidden) return;
+      const status = await pollPdfJob();
+      if (status === "completed" || status === "failed") clearInterval(interval);
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
       clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [session?.id, session?.status]);
 

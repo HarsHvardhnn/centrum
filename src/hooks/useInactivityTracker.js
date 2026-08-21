@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import appointmentConfigService from "../helpers/appointmentConfigHelper";
 import { useUser } from "../context/userContext";
 import { getCookie } from "../utils/axiosInstance";
+import { maybeRefreshSession } from "../utils/sessionRefresh";
 
 /**
  * Custom hook to track user inactivity
@@ -190,19 +191,31 @@ export const useInactivityTracker = () => {
     ];
 
     // Add event listeners
-    const handleActivity = () => {
-      // Don't reset timer if popup is showing - user must click button to stay active
+    const handleActivity = (event) => {
+      // While the idle warning is open, only a real click/key extends the session
+      // (mousemove would dismiss it immediately).
       if (showPopupRef.current) {
-        console.log("[InactivityTracker] Activity detected but popup is showing, ignoring activity");
-        return;
+        const extendsSession =
+          event.type === "click" ||
+          event.type === "keydown" ||
+          event.type === "keypress" ||
+          event.type === "touchstart";
+        if (!extendsSession) return;
       }
-      console.log("[InactivityTracker] Activity detected, resetting timer");
       resetInactivityTimer();
+      maybeRefreshSession();
     };
 
     events.forEach((event) => {
       document.addEventListener(event, handleActivity, true);
     });
+
+    const handleVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      resetInactivityTimer();
+      maybeRefreshSession();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
 
     console.log("[InactivityTracker] Event listeners attached for:", events);
 
@@ -216,6 +229,7 @@ export const useInactivityTracker = () => {
       events.forEach((event) => {
         document.removeEventListener(event, handleActivity, true);
       });
+      document.removeEventListener("visibilitychange", handleVisibility);
       if (inactivityTimerRef.current) {
         clearTimeout(inactivityTimerRef.current);
         inactivityTimerRef.current = null;
@@ -227,8 +241,29 @@ export const useInactivityTracker = () => {
     };
   }, [inactivityTimeout, resetInactivityTimer]);
 
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+
+    const events = ["click", "keydown", "touchstart"];
+    const handle = () => {
+      maybeRefreshSession();
+    };
+    events.forEach((event) => document.addEventListener(event, handle, true));
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") maybeRefreshSession();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      events.forEach((event) => document.removeEventListener(event, handle, true));
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [isAuthenticated]);
+
   const handleStayActive = useCallback(() => {
     resetInactivityTimer();
+    maybeRefreshSession();
   }, [resetInactivityTimer]);
 
   // Store logout callback in ref so it can be accessed in timer
