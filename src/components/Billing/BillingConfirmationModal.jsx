@@ -5,6 +5,7 @@ import patientServicesHelper from "../../helpers/patientServicesHelper";
 import billingHelper from "../../helpers/billingHelper";
 import { toast } from "sonner";
 import ServiceSelectionModal from "../Doctor/SingleDoctor/patient-details/ServiceSelectionModal";
+import { useUser } from "../../context/userContext";
 
 function toDateInputValue(value) {
   const date = value ? new Date(value) : new Date();
@@ -13,6 +14,11 @@ function toDateInputValue(value) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+/** Invoice number / tax / date / payment — reception & admin only (not doctor). */
+function canManageInvoiceAdminFields(role) {
+  return role === "admin" || role === "receptionist";
 }
 
 const BillingConfirmationModal = ({
@@ -29,6 +35,8 @@ const BillingConfirmationModal = ({
   //(appointmentId,patientId, "patientServicesData");
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useUser();
+  const showAdminInvoiceFields = canManageInvoiceAdminFields(user?.role);
   const [isLoading, setIsLoading] = useState(false);
   const [taxPercentage, setTaxPercentage] = useState(0);
   const [additionalCharges, setAdditionalCharges] = useState(0);
@@ -49,7 +57,7 @@ const BillingConfirmationModal = ({
   }, [isOpen, patientId, appointmentId]);
 
   useEffect(() => {
-    if (!isOpen || !invoiceDate) return;
+    if (!isOpen || !invoiceDate || !showAdminInvoiceFields) return;
     const [year, month] = invoiceDate.split("-").map(Number);
     if (!year || !month) return;
     let cancelled = false;
@@ -64,7 +72,7 @@ const BillingConfirmationModal = ({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, invoiceDate]);
+  }, [isOpen, invoiceDate, showAdminInvoiceFields]);
 
   const fetchPatientServices = async () => {
     try {
@@ -217,28 +225,30 @@ const BillingConfirmationModal = ({
                 )}
               </div>
 
-              {/* Tax, Additional Charges, and Discount Fields */}
+              {/* Doctor: services + fees + discount only. Tax / date / invoice # / payment = admin & reception. */}
               <div className="space-y-3 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Podatek (%)
-                  </label>
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={taxPercentage}
-                      onChange={(e) =>
-                        setTaxPercentage(parseFloat(e.target.value) || 0)
-                      }
-                      className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                    />
-                    <span className="ml-2 text-sm text-gray-500">
-                      ({taxPercentage === 0 ? "ZW" : `zł${taxAmount.toFixed(2)}`})
-                    </span>
+                {showAdminInvoiceFields && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Podatek (%)
+                    </label>
+                    <div className="flex items-center">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={taxPercentage}
+                        onChange={(e) =>
+                          setTaxPercentage(parseFloat(e.target.value) || 0)
+                        }
+                        className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                      />
+                      <span className="ml-2 text-sm text-gray-500">
+                        ({taxPercentage === 0 ? "ZW" : `zł${taxAmount.toFixed(2)}`})
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -279,50 +289,54 @@ const BillingConfirmationModal = ({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Data wystawienia
-                  </label>
-                  <input
-                    type="date"
-                    value={invoiceDate}
-                    onChange={(e) => setInvoiceDate(e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                  />
-                </div>
+                {showAdminInvoiceFields && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Data wystawienia
+                      </label>
+                      <input
+                        type="date"
+                        value={invoiceDate}
+                        onChange={(e) => setInvoiceDate(e.target.value)}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Numer faktury
-                  </label>
-                  <input
-                    type="text"
-                    value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    placeholder="np. CM7/08/2026/001"
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Możesz nadać numer ręcznie. Puste pole nada kolejny numer dla wybranej daty.
-                  </p>
-                </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Numer faktury
+                      </label>
+                      <input
+                        type="text"
+                        value={invoiceNumber}
+                        onChange={(e) => setInvoiceNumber(e.target.value)}
+                        placeholder="np. CM7/08/2026/001"
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Możesz nadać numer ręcznie. Puste pole nada kolejny numer dla wybranej daty.
+                      </p>
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Metoda płatności
-                  </label>
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                  >
-                    <option value="cash">Gotówka</option>
-                    <option value="card">Karta kredytowa/debetowa</option>
-                    <option value="insurance">Ubezpieczenie</option>
-                    <option value="bank_transfer">Przelew bankowy</option>
-                    <option value="mobile_payment">Płatność mobilna</option>
-                  </select>
-                </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Metoda płatności
+                      </label>
+                      <select
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                      >
+                        <option value="cash">Gotówka</option>
+                        <option value="card">Karta kredytowa/debetowa</option>
+                        <option value="insurance">Ubezpieczenie</option>
+                        <option value="bank_transfer">Przelew bankowy</option>
+                        <option value="mobile_payment">Płatność mobilna</option>
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Total */}
@@ -348,19 +362,23 @@ const BillingConfirmationModal = ({
               className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center"
               onClick={async () => {
                 try {
-                  await onConfirm({
+                  // Doctors cannot set invoice # / date / tax / payment — backend defaults + reception edits later
+                  const payload = {
                     services,
                     subtotal,
-                    taxPercentage,
-                    taxAmount,
+                    taxPercentage: showAdminInvoiceFields ? taxPercentage : 0,
+                    taxAmount: showAdminInvoiceFields ? taxAmount : 0,
                     additionalCharges,
                     additionalChargeNote,
                     discount,
                     totalAmount,
-                    paymentMethod,
-                    billedAt: invoiceDate,
-                    invoiceId: invoiceNumber.trim(),
-                  });
+                    paymentMethod: showAdminInvoiceFields ? paymentMethod : "cash",
+                  };
+                  if (showAdminInvoiceFields) {
+                    payload.billedAt = invoiceDate;
+                    payload.invoiceId = invoiceNumber.trim();
+                  }
+                  await onConfirm(payload);
 
                   onClose?.();
                   // Return to the view we started from (main panel, visit history, or doctor panel)

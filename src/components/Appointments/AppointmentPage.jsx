@@ -102,7 +102,7 @@ function AppointmentPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-teal-700 mb-2">Dodaj Nową Wizytę</h1>
         <p className="text-gray-600">
-          Nowy proces: Najpierw wybierz specjalizację, lekarza i termin, a następnie wprowadź dane pacjenta.
+          Nowy proces: Wyszukaj lekarza po nazwisku lub wybierz specjalizację i termin, a następnie wprowadź dane pacjenta.
         </p>
       </div>
       

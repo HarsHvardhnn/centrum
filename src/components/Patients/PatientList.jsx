@@ -241,6 +241,7 @@ function LabAppointmentsContent({ clinic }) {
 
   /** Receptionist goes to edit patient (Settings); admin/doctor go to appointment card. */
   const getPatientViewUrl = (patientId, appointmentId) => {
+    if (!patientId) return "/pacjenci";
     if (user?.role === "receptionist") {
       const params = new URLSearchParams({
         edytujPacjenta: patientId,
@@ -358,15 +359,69 @@ function LabAppointmentsContent({ clinic }) {
     page: listPage,
   };
 
+  /** Map GET /patients/data/simple row → shape expected by Lista pacjentów cards */
+  const mapPatientApiRowToListItem = (p) => {
+    const mongoId = p._id || p.id;
+    return {
+      id: `patient-${mongoId}`,
+      _id: mongoId,
+      // Keep menu/actions enabled (`isAppointment !== false`); flag marks patient-master rows
+      isPatientListRow: true,
+      firstVisitAppointmentId: p.firstVisitAppointmentId || null,
+      date: p.firstVisitDate || null,
+      startTime: p.firstVisitStartTime || null,
+      registrationType: p.registrationType || null,
+      patient: {
+        id: mongoId,
+        _id: mongoId,
+        patientId: p.id || p.patientId,
+        name: p.name,
+        sex: p.sex,
+        age: p.age,
+        phoneNumber: p.phone,
+        pesel: p.pesel,
+        govtId: p.pesel,
+      },
+    };
+  };
+
   const {
     data: listQueryData,
     isLoading: listQueryLoading,
     isFetching: listQueryFetching,
     error: listQueryError,
   } = useQuery({
-    queryKey: queryKeys.appointmentsList(listQueryParams),
+    queryKey: clinic
+      ? queryKeys.appointmentsList(listQueryParams)
+      : queryKeys.patientsList(listQueryParams),
     queryFn: async () => {
       const f = listQueryParams;
+
+      // Lista pacjentów: use patients API (fast indexed search) — not the heavy appointments aggregation
+      if (!f.clinic) {
+        const response = await patientService.getSimpliefiedPatientsList({
+          search: f.searchQuery || "",
+          page: f.page,
+          limit: f.itemsPerPage,
+          sortBy: f.searchQuery ? "name.last" : "createdAt",
+          sortOrder: f.searchQuery ? "asc" : "desc",
+          ...(f.userRole === "doctor" && f.userId ? { doctor: f.userId } : {}),
+        });
+        const patients = response?.patients ?? [];
+        return {
+          success: response?.success !== false,
+          data: patients.map(mapPatientApiRowToListItem),
+          pagination: {
+            total: response?.total ?? patients.length,
+            page: response?.currentPage ?? f.page,
+            pages: response?.pages ?? 1,
+            limit: f.itemsPerPage,
+            totalPatients: response?.totalPatients ?? response?.total,
+          },
+          totalPatients: response?.totalPatients ?? response?.total,
+        };
+      }
+
       const filters = {
         ...(f.statusFilter !== "All" && f.statusFilter !== "patientLess" && { status: f.statusFilter }),
         ...(f.dateRange?.startDate && { startDate: f.dateRange.startDate }),
@@ -419,10 +474,10 @@ function LabAppointmentsContent({ clinic }) {
 
   useEffect(() => {
     if (listQueryError) {
-      console.error("Failed to fetch appointments:", listQueryError);
-      toast.error("Nie udało się pobrać wizyt");
+      console.error("Failed to fetch list:", listQueryError);
+      toast.error(clinic ? "Nie udało się pobrać wizyt" : "Nie udało się pobrać pacjentów");
     }
-  }, [listQueryError]);
+  }, [listQueryError, clinic]);
 
   const listLoading = listQueryLoading || (listQueryFetching && appointments.length === 0);
 
@@ -463,7 +518,7 @@ function LabAppointmentsContent({ clinic }) {
     if (typeof page === "number") {
       setListPage(page);
     }
-    queryClient.invalidateQueries({ queryKey: ["appointments-list"] });
+    queryClient.invalidateQueries({ queryKey: clinic ? ["appointments-list"] : ["patients-list"] });
   };
 
   // Sync filters from URL when URL has date params. Do not reset to default when URL has no date,
@@ -1607,10 +1662,13 @@ function LabAppointmentsContent({ clinic }) {
                             setShowCompleteRegModal(true);
                           } else if (!isVisitOnlyAppointment(appointment)) {
                             const patientId = appointment.patient.id || appointment.patient._id;
+                            const visitId = appointment.isPatientListRow
+                              ? appointment.firstVisitAppointmentId
+                              : appointment.id;
                             if (user?.role === "receptionist") {
                               openVisitHistoryModal(patientId, getAppointmentPatientDisplayName(appointment));
                             } else {
-                              navigate(getPatientViewUrl(patientId, appointment.id));
+                              navigate(getPatientViewUrl(patientId, visitId || undefined));
                             }
                           }
                         }
@@ -1645,11 +1703,10 @@ function LabAppointmentsContent({ clinic }) {
                                   className="flex items-center px-4 py-2 text-sm text-teal-800 hover:bg-teal-50 rounded-md cursor-pointer"
                                   onClick={() => {
                                     const patientId = appointment.patient.id || appointment.patient._id;
-                                    if (user?.role === "receptionist") {
-                                      navigate(getPatientViewUrl(patientId, appointment.id || appointment._id));
-                                    } else {
-                                      navigate(getPatientViewUrl(patientId, appointment.id));
-                                    }
+                                    const visitId = appointment.isPatientListRow
+                                      ? appointment.firstVisitAppointmentId
+                                      : (appointment.id || appointment._id);
+                                    navigate(getPatientViewUrl(patientId, visitId || undefined));
                                   }}
                                 >
                                   <Eye size={16} className="mr-2" /> Zobacz szczegóły
@@ -1685,11 +1742,19 @@ function LabAppointmentsContent({ clinic }) {
                                   <X size={16} className="mr-2" /> Anuluj wizytę
                                 </DropdownMenu.Item>
                               )}
+                              {clinic && (
                               <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => fetchVisitConsents(appointment.id)}>
                                 <FileText size={16} className="mr-2" /> Zobacz szczegóły rezerwacji
                               </DropdownMenu.Item>
+                              )}
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id || appointment._id)); }}>
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => {
+                                  const patientId = appointment.patient.id || appointment.patient._id;
+                                  const visitId = appointment.isPatientListRow
+                                    ? appointment.firstVisitAppointmentId
+                                    : (appointment.id || appointment._id);
+                                  navigate(getPatientViewUrl(patientId, visitId || undefined));
+                                }}>
                                   <Pen size={16} className="mr-2" /> Zobacz dane pacjenta
                                 </DropdownMenu.Item>
                               )}

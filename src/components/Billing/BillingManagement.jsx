@@ -291,12 +291,15 @@ const BillingManagement = () => {
     const handleSave = useCallback(async () => {
       try {
         setModalLoading(true);
+        const canEditInvoiceMeta = user?.role === "admin" || user?.role === "receptionist";
         const updateData = {
           services: selectedServices,
           consultationCharges: parseFloat(consultationCharges),
           subtotal: calculateSubtotal(),
-          taxPercentage,
-          taxAmount: (calculateSubtotal() * taxPercentage) / 100,
+          taxPercentage: canEditInvoiceMeta ? taxPercentage : (billData.taxPercentage ?? 0),
+          taxAmount: canEditInvoiceMeta
+            ? (calculateSubtotal() * taxPercentage) / 100
+            : billData.taxAmount ?? 0,
           discount: parseFloat(discount),
           additionalCharges: parseFloat(additionalCharges),
           additionalChargeNote,
@@ -304,9 +307,11 @@ const BillingManagement = () => {
           paymentMethod: billData.paymentMethod,
           paymentStatus: billData.paymentStatus,
           notes: billData.notes,
-          invoiceId: invoiceNumber.trim(),
-          billedAt: invoiceDate || undefined,
         };
+        if (canEditInvoiceMeta) {
+          updateData.invoiceId = invoiceNumber.trim();
+          updateData.billedAt = invoiceDate || undefined;
+        }
 
         const response = await billingHelper.updateBill(billId, updateData);
         if (response.success) {
@@ -327,22 +332,59 @@ const BillingManagement = () => {
       } finally {
         setModalLoading(false);
       }
-    }, [billId, selectedServices, consultationCharges, taxPercentage, discount, additionalCharges, additionalChargeNote, billData, invoiceNumber, invoiceDate]);
+    }, [billId, selectedServices, consultationCharges, taxPercentage, discount, additionalCharges, additionalChargeNote, billData, invoiceNumber, invoiceDate, user?.role]);
 
     if (!isOpen || !billData) return null;
+
+    const showAdminInvoiceFields = user?.role === "admin" || user?.role === "receptionist";
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         {modalLoading && <LoaderOverlay />}
         <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
           <div className="flex justify-between items-center border-b p-4">
-            <h3 className="text-lg font-medium">Edytuj fakturę</h3>
+            <div>
+              <h3 className="text-lg font-medium">Edytuj fakturę</h3>
+              {showAdminInvoiceFields ? (
+                <p className="text-sm text-gray-500">Możesz zmienić numer faktury i datę wystawienia także dla opłaconych faktur.</p>
+              ) : (
+                <p className="text-sm text-gray-500">Możesz edytować usługi, dodatkowe opłaty i rabat.</p>
+              )}
+            </div>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
               <X size={20} />
             </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
+            {showAdminInvoiceFields && (
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4 bg-teal-50 border border-teal-100 rounded-lg p-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Numer faktury
+                </label>
+                <input
+                  type="text"
+                  value={invoiceNumber}
+                  onChange={(e) => setInvoiceNumber(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                  placeholder="np. CM7/08/2026/001"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Data wystawienia
+                </label>
+                <input
+                  type="date"
+                  value={invoiceDate}
+                  onChange={(e) => setInvoiceDate(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
+                />
+              </div>
+            </div>
+            )}
+
             {/* Selected Services Section */}
             <div className="mb-6">
               <h4 className="font-medium mb-2">Wybrane usługi</h4>
@@ -477,31 +519,7 @@ const BillingManagement = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Numer faktury
-                  </label>
-                  <input
-                    type="text"
-                    value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                    placeholder="np. CM7/08/2026/001"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Data wystawienia
-                  </label>
-                  <input
-                    type="date"
-                    value={invoiceDate}
-                    onChange={(e) => setInvoiceDate(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                  />
-                </div>
-
+                {showAdminInvoiceFields && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Podatek VAT (%)
@@ -523,6 +541,7 @@ const BillingManagement = () => {
                     )}
                   </div>
                 </div>
+                )}
               </div>
             </div>
 
@@ -623,6 +642,7 @@ const BillingManagement = () => {
 
   // Add GenerateBillModal component
   const GenerateBillModal = ({ isOpen, onClose, appointmentId, onBillGenerated, isRedirectedFromAppointment }) => {
+    const showAdminInvoiceFields = user?.role === "admin" || user?.role === "receptionist";
     const [isLoading, setIsLoading] = useState(false);
     const [taxPercentage, setTaxPercentage] = useState(0);
     const [additionalCharges, setAdditionalCharges] = useState(0);
@@ -645,7 +665,7 @@ const BillingManagement = () => {
     }, [isOpen, appointmentId]);
 
     useEffect(() => {
-      if (!isOpen || !invoiceDate) return;
+      if (!isOpen || !invoiceDate || !showAdminInvoiceFields) return;
       const [year, month] = invoiceDate.split("-").map(Number);
       if (!year || !month) return;
       let cancelled = false;
@@ -660,7 +680,7 @@ const BillingManagement = () => {
       return () => {
         cancelled = true;
       };
-    }, [isOpen, invoiceDate]);
+    }, [isOpen, invoiceDate, showAdminInvoiceFields]);
 
     const fetchAppointmentData = async () => {
       try {
@@ -768,20 +788,22 @@ const BillingManagement = () => {
           status: service.status,
         }));
 
-        // Prepare billing payload
+        // Prepare billing payload — doctors cannot set invoice # / date / tax / payment
         const billingPayload = {
           services: formattedServices,
           subtotal: subtotal,
-          taxPercentage: taxPercentage,
-          taxAmount: taxAmount,
+          taxPercentage: showAdminInvoiceFields ? taxPercentage : 0,
+          taxAmount: showAdminInvoiceFields ? taxAmount : 0,
           discount: parseFloat(discount) || 0,
           additionalCharges: parseFloat(additionalCharges) || 0,
           additionalChargeNote: additionalChargeNote || "",
           totalAmount: totalAmount,
-          paymentMethod: paymentMethod,
-          billedAt: invoiceDate,
-          invoiceId: invoiceNumber.trim(),
+          paymentMethod: showAdminInvoiceFields ? paymentMethod : "cash",
         };
+        if (showAdminInvoiceFields) {
+          billingPayload.billedAt = invoiceDate;
+          billingPayload.invoiceId = invoiceNumber.trim();
+        }
 
         // Call the API to generate the bill
         const response = await billingHelper.generateBill(appointmentId, billingPayload);
@@ -876,28 +898,30 @@ const BillingManagement = () => {
                   )}
                 </div>
 
-                {/* Tax, Additional Charges, and Discount Fields */}
+                {/* Doctor: services + fees + discount only. Tax / date / invoice # / payment = admin & reception. */}
                 <div className="space-y-3 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Podatek (%)
-                    </label>
-                    <div className="flex items-center">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={taxPercentage}
-                        onChange={(e) =>
-                          setTaxPercentage(parseFloat(e.target.value) || 0)
-                        }
-                        className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                      />
-                      <span className="ml-2 text-sm text-gray-500">
-                        ({taxPercentage === 0 ? "ZW" : `zł${taxAmount.toFixed(2)}`})
-                      </span>
+                  {showAdminInvoiceFields && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Podatek (%)
+                      </label>
+                      <div className="flex items-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={taxPercentage}
+                          onChange={(e) =>
+                            setTaxPercentage(parseFloat(e.target.value) || 0)
+                          }
+                          className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                        />
+                        <span className="ml-2 text-sm text-gray-500">
+                          ({taxPercentage === 0 ? "ZW" : `zł${taxAmount.toFixed(2)}`})
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -938,50 +962,54 @@ const BillingManagement = () => {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Data wystawienia
-                    </label>
-                    <input
-                      type="date"
-                      value={invoiceDate}
-                      onChange={(e) => setInvoiceDate(e.target.value)}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                    />
-                  </div>
+                  {showAdminInvoiceFields && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Data wystawienia
+                        </label>
+                        <input
+                          type="date"
+                          value={invoiceDate}
+                          onChange={(e) => setInvoiceDate(e.target.value)}
+                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                        />
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Numer faktury
-                    </label>
-                    <input
-                      type="text"
-                      value={invoiceNumber}
-                      onChange={(e) => setInvoiceNumber(e.target.value)}
-                      placeholder="np. CM7/08/2026/001"
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Możesz nadać numer ręcznie. Puste pole nada kolejny numer dla wybranej daty.
-                    </p>
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Numer faktury
+                        </label>
+                        <input
+                          type="text"
+                          value={invoiceNumber}
+                          onChange={(e) => setInvoiceNumber(e.target.value)}
+                          placeholder="np. CM7/08/2026/001"
+                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">
+                          Możesz nadać numer ręcznie. Puste pole nada kolejny numer dla wybranej daty.
+                        </p>
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Metoda płatności
-                    </label>
-                    <select
-                      value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                    >
-                      <option value="cash">Gotówka</option>
-                      <option value="card">Karta kredytowa/debetowa</option>
-                      <option value="insurance">Ubezpieczenie</option>
-                      <option value="bank_transfer">Przelew bankowy</option>
-                      <option value="mobile_payment">Płatność mobilna</option>
-                    </select>
-                  </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Metoda płatności
+                        </label>
+                        <select
+                          value={paymentMethod}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                        >
+                          <option value="cash">Gotówka</option>
+                          <option value="card">Karta kredytowa/debetowa</option>
+                          <option value="insurance">Ubezpieczenie</option>
+                          <option value="bank_transfer">Przelew bankowy</option>
+                          <option value="mobile_payment">Płatność mobilna</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Total */}
@@ -1485,9 +1513,9 @@ const BillingManagement = () => {
         bill={billToUpdate}
         message={
           bulkPayMode === "allPending"
-            ? "Czy na pewno chcesz oznaczyć wszystkie oczekujące faktury (zgodnie z aktualnymi filtrami) jako opłacone?"
+            ? "Czy na pewno chcesz oznaczyć WSZYSTKIE nieopłacone faktury pasujące do aktualnych filtrów (wszystkie strony listy) jako opłacone? Tej operacji nie da się cofnąć jednym kliknięciem."
             : bulkPayMode === "selected"
-            ? `Czy na pewno chcesz oznaczyć ${selectedUnpaidCount} wybranych faktur jako opłacone?`
+            ? `Czy na pewno chcesz oznaczyć ${selectedUnpaidCount} zaznaczonych faktur jako opłacone?`
             : undefined
         }
       />
@@ -1525,29 +1553,49 @@ const BillingManagement = () => {
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <button
+            type="button"
+            onClick={() => setPaymentStatusFilter(paymentStatusFilter === "pending" ? "" : "pending")}
+            className={`bg-white rounded-lg shadow-sm p-6 text-left w-full transition ring-offset-2 hover:ring-2 hover:ring-yellow-300 ${
+              paymentStatusFilter === "pending" ? "ring-2 ring-yellow-500" : ""
+            }`}
+            title="Pokaż tylko oczekujące faktury"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500">Oczekujące</p>
                 <h3 className="text-2xl font-semibold mt-1">{formatCurrency(stats.totalPending)}</h3>
+                <p className="text-xs text-yellow-700 mt-1">
+                  {paymentStatusFilter === "pending" ? "Filtr aktywny — kliknij, aby wyłączyć" : "Kliknij, aby pokazać tylko oczekujące"}
+                </p>
               </div>
               <div className="p-3 bg-yellow-100 rounded-full">
                 <DollarSign className="h-6 w-6 text-yellow-600" />
               </div>
             </div>
-          </div>
+          </button>
           
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <button
+            type="button"
+            onClick={() => setPaymentStatusFilter(paymentStatusFilter === "overdue" ? "" : "overdue")}
+            className={`bg-white rounded-lg shadow-sm p-6 text-left w-full transition ring-offset-2 hover:ring-2 hover:ring-red-300 ${
+              paymentStatusFilter === "overdue" ? "ring-2 ring-red-500" : ""
+            }`}
+            title="Pokaż tylko zaległe faktury"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500">Zaległe</p>
                 <h3 className="text-2xl font-semibold mt-1">{formatCurrency(stats.totalOverdue)}</h3>
+                <p className="text-xs text-red-700 mt-1">
+                  {paymentStatusFilter === "overdue" ? "Filtr aktywny — kliknij, aby wyłączyć" : "Kliknij, aby pokazać tylko zaległe"}
+                </p>
               </div>
               <div className="p-3 bg-red-100 rounded-full">
                 <DollarSign className="h-6 w-6 text-red-600" />
               </div>
             </div>
-          </div>
+          </button>
         </div>
         
         {/* Search and Filters */}
@@ -1637,39 +1685,69 @@ const BillingManagement = () => {
           )}
         </div>
         
-        {/* Bulk actions */}
-        {canSelectBills && (
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 bg-teal-50 border border-teal-200 rounded-lg p-4">
-            <span className="text-teal-900 font-medium">
-              {selectedInvoiceIds.length > 0
-                ? `Wybrano ${selectedInvoiceIds.length} faktur(y)`
-                : "Zaznacz oczekujące faktury, aby oznaczyć je jako opłacone"}
-            </span>
+        {/* Bulk actions — only when there is something unpaid to act on, or a selection */}
+        {canSelectBills &&
+          (pendingIdsOnPage.length > 0 ||
+            selectedUnpaidCount > 0 ||
+            selectedInvoiceIds.length > 0 ||
+            (stats.totalPending > 0 && paymentStatusFilter !== "paid")) && (
+          <div className="mb-4 bg-teal-50 border border-teal-200 rounded-lg p-4 space-y-3">
+            <div>
+              <p className="text-teal-900 font-medium">Oznaczanie jako opłacone</p>
+              <p className="text-sm text-teal-800 mt-1">
+                {selectedUnpaidCount > 0
+                  ? `Wybrano ${selectedUnpaidCount} nieopłaconych faktur na tej stronie.`
+                  : pendingIdsOnPage.length > 0
+                  ? `Na tej stronie jest ${pendingIdsOnPage.length} nieopłaconych faktur — zaznacz je checkboxami, albo oznacz wszystkie oczekujące według filtrów.`
+                  : paymentStatusFilter === "pending" || paymentStatusFilter === "overdue"
+                  ? "Brak nieopłaconych faktur na tej stronie. Możesz oznaczyć wszystkie oczekujące według aktualnych filtrów (wszystkie strony)."
+                  : "Najpierw kliknij kartę „Oczekujące” powyżej albo ustaw filtr statusu, potem zaznacz faktury."}
+              </p>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
+              {paymentStatusFilter !== "pending" && stats.totalPending > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setPaymentStatusFilter("pending")}
+                  className="px-4 py-2 border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-100"
+                >
+                  Pokaż tylko oczekujące
+                </button>
+              )}
+              {pendingIdsOnPage.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleSelectAllPendingOnPage}
+                  className="px-4 py-2 border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-100"
+                >
+                  {allPendingOnPageSelected
+                    ? "Odznacz zaznaczone na stronie"
+                    : `Zaznacz nieopłacone na stronie (${pendingIdsOnPage.length})`}
+                </button>
+              )}
               <button
-                onClick={handleSelectAllPendingOnPage}
-                disabled={pendingIdsOnPage.length === 0}
-                className="px-4 py-2 border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-100 disabled:opacity-50"
-              >
-                {allPendingOnPageSelected ? "Odznacz oczekujące na stronie" : "Zaznacz oczekujące na stronie"}
-              </button>
-              <button
+                type="button"
                 onClick={() => handleBulkMarkPaidClick("selected")}
                 disabled={selectedUnpaidCount === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <DollarSign size={18} />
-                Oznacz wybrane jako opłacone
+                {selectedUnpaidCount > 0
+                  ? `Oznacz zaznaczone jako opłacone (${selectedUnpaidCount})`
+                  : "Oznacz zaznaczone jako opłacone"}
               </button>
               <button
+                type="button"
                 onClick={() => handleBulkMarkPaidClick("allPending")}
                 disabled={paymentStatusFilter === "paid"}
-                className="px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800 disabled:opacity-50"
+                className="px-4 py-2 bg-teal-800 text-white rounded-lg hover:bg-teal-900 disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Oznacza wszystkie nieopłacone faktury pasujące do aktualnych filtrów (nie tylko ta strona)"
               >
-                Oznacz wszystkie oczekujące
+                Oznacz wszystkie oczekujące (wg filtrów)
               </button>
               {user?.role === "admin" && selectedInvoiceIds.length > 0 && (
                 <button
+                  type="button"
                   onClick={handleBulkDeleteInvoices}
                   className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
@@ -1804,7 +1882,14 @@ const BillingManagement = () => {
                         {bill?._id}
                       </td> */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {bill?.invoiceId ? bill?.invoiceId : "N/A"}
+                        <button
+                          type="button"
+                          onClick={() => handleEditBill(bill._id)}
+                          className="text-left text-teal-700 hover:text-teal-900 hover:underline"
+                          title="Edytuj numer faktury i szczegóły"
+                        >
+                          {bill?.invoiceId ? bill.invoiceId : "Brak numeru — kliknij, aby ustawić"}
+                        </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -1841,23 +1926,21 @@ const BillingManagement = () => {
                           >
                             <Eye size={18} />
                           </button>
+                          <button
+                            onClick={() => handleEditBill(bill._id)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Edytuj numer faktury, datę i szczegóły"
+                          >
+                            <Edit size={18} />
+                          </button>
                           {bill.paymentStatus !== "paid" && (
-                            <>
-                              <button
-                                onClick={() => handleEditBill(bill._id)}
-                                className="text-blue-600 hover:text-blue-900"
-                                title="Edytuj fakturę"
-                              >
-                                <Edit size={18} />
-                              </button>
-                              <button
-                                onClick={() => handleUpdatePaymentStatus(bill._id, "paid")}
-                                className="text-green-600 hover:text-green-900"
-                                title="Oznacz jako opłacone"
-                              >
-                                <DollarSign size={18} />
-                              </button>
-                            </>
+                            <button
+                              onClick={() => handleUpdatePaymentStatus(bill._id, "paid")}
+                              className="text-green-600 hover:text-green-900"
+                              title="Oznacz jako opłacone"
+                            >
+                              <DollarSign size={18} />
+                            </button>
                           )}
                           {user?.role === "admin" && (
                             <button

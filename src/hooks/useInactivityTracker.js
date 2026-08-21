@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import appointmentConfigService from "../helpers/appointmentConfigHelper";
 import { useUser } from "../context/userContext";
 import { getCookie } from "../utils/axiosInstance";
-import { maybeRefreshSession } from "../utils/sessionRefresh";
+import { maybeRefreshSession, setSessionWarningActive } from "../utils/sessionRefresh";
+import { refreshAccessToken } from "../utils/axiosInstance";
 
 /**
  * Custom hook to track user inactivity
@@ -263,7 +264,11 @@ export const useInactivityTracker = () => {
 
   const handleStayActive = useCallback(() => {
     resetInactivityTimer();
-    maybeRefreshSession();
+    // Force extend even if the JWT warning modal would block silent refresh
+    setSessionWarningActive(false);
+    refreshAccessToken().catch(() => {
+      maybeRefreshSession();
+    });
   }, [resetInactivityTimer]);
 
   // Store logout callback in ref so it can be accessed in timer

@@ -121,6 +121,12 @@ const doctorService = {
       if (filters.department) {
         queryParams.append("department", filters.department);
       }
+      if (filters.page) {
+        queryParams.append("page", String(filters.page));
+      }
+      if (filters.limit) {
+        queryParams.append("limit", String(filters.limit));
+      }
 
       const queryString = queryParams.toString();
       const url = queryString ? `/docs?${queryString}` : "/docs";

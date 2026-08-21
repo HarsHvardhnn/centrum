@@ -59,6 +59,7 @@ import SystemSettingsPage from "./components/admin/SystemSettingsPage";
 import VisitTemplatesPage from "./components/admin/VisitTemplatesPage";
 import DocumentTemplatesPlaceholder from "./components/admin/DocumentTemplatesPlaceholder";
 import DocumentRepositoryPlaceholder from "./components/admin/DocumentRepositoryPlaceholder";
+import TokenExpiryPopup from "./components/UtilComponents/TokenExpiryPopup";
 import InactivityPopup from "./components/UtilComponents/InactivityPopup";
 import { useInactivityTracker } from "./hooks/useInactivityTracker";
 import KioskApp from "./components/Kiosk/KioskApp";
@@ -152,6 +153,9 @@ function MainLayout() {
         </div>
       </div>
       
+      {/* Session expiry — banking-style: extend or log out */}
+      <TokenExpiryPopup />
+
       {/* Inactivity Popup - shown when user is inactive */}
       {showPopup && inactivityTimeout && (
         <InactivityPopup
