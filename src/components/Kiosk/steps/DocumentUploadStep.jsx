@@ -61,10 +61,11 @@ export default function DocumentUploadStep({
   const cameraInputId = useId();
   const fileInputId = useId();
 
-  // Persist as documentScans (dataUrl) — backend merges them into the package PDF
+  // Persist as documentScans only — never mirror into uploadedDocuments
+  // (duplicate base64 payloads caused 413 Content Too Large on proxies).
   useEffect(() => {
     const documentScans = uploadedFiles.map(toPersistedScan);
-    updateFormData({ documentScans, uploadedDocuments: documentScans });
+    updateFormData({ documentScans, uploadedDocuments: [] });
   }, [uploadedFiles]);
 
   useEffect(() => {

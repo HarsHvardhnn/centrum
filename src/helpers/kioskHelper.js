@@ -1,4 +1,5 @@
 import axios from "axios";
+import { sanitizeKioskFormPayload } from "./kioskFormPayload";
 
 const KIOSK_TOKEN_KEY = "kioskSessionToken";
 
@@ -119,8 +120,11 @@ export async function getKioskForm() {
   return res.data;
 }
 
-export async function saveKioskForm(formData) {
-  const res = await kioskApi.put("/api/kiosk/form", formData, { headers: kioskHeaders() });
+export async function saveKioskForm(formData, options = {}) {
+  const payload = sanitizeKioskFormPayload(formData, {
+    includeDocumentScans: options.includeDocumentScans === true,
+  });
+  const res = await kioskApi.put("/api/kiosk/form", payload, { headers: kioskHeaders() });
   return res.data;
 }
 
@@ -134,7 +138,8 @@ export async function checkKioskDocument(documentData) {
   return res.data;
 }
 
-export async function completeKioskRegistration(payload) {
+export async function completeKioskRegistration(formData) {
+  const payload = sanitizeKioskFormPayload(formData, { includeDocumentScans: true });
   const res = await kioskApi.post("/api/kiosk/complete", payload, { headers: kioskHeaders() });
   return res.data;
 }

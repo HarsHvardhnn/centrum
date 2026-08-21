@@ -116,27 +116,7 @@ export default function KioskApp() {
 
   const throttledSaveKioskForm = useCallback((formData) => {
     if (submittingRef.current) return;
-    // Keep heavy scan payloads out of autosave (sent on complete). Avoids 413 / iPad freezes.
-    const lightweightScans = (formData.documentScans || [])
-      .filter((s) => s?.existingDocumentId && !s?.dataUrl)
-      .map((s) => ({
-        id: s.id,
-        existingDocumentId: s.existingDocumentId,
-        name: s.name,
-        type: s.type,
-        size: s.size,
-        url: s.url,
-      }));
-    const {
-      documentScans: _scans,
-      uploadedDocuments: _uploaded,
-      ...restForm
-    } = formData || {};
-    const lightweightForm = {
-      ...restForm,
-      documentScans: lightweightScans,
-      existingDocumentScansLoaded: formData.existingDocumentScansLoaded,
-    };
+    // Autosave omits photo dataUrls (sent only on complete) to avoid 413 / iPad freezes.
 
     const now = Date.now();
     const timeSinceLastSave = now - lastSaveRef.current;
@@ -150,7 +130,7 @@ export default function KioskApp() {
       
       saveTimeoutRef.current = setTimeout(() => {
         lastSaveRef.current = Date.now();
-        saveKioskForm(lightweightForm).catch(err => {
+        saveKioskForm(formData, { includeDocumentScans: false }).catch(err => {
           console.error('Auto-save failed:', err);
         });
         saveTimeoutRef.current = null;
@@ -161,7 +141,7 @@ export default function KioskApp() {
     
     // Save immediately if enough time has passed
     lastSaveRef.current = now;
-    saveKioskForm(lightweightForm).catch(err => {
+    saveKioskForm(formData, { includeDocumentScans: false }).catch(err => {
       console.error('Auto-save failed:', err);
     });
   }, []);
@@ -498,7 +478,8 @@ export default function KioskApp() {
       saveTimeoutRef.current = null;
     }
     try {
-      await saveKioskForm(form);
+      // Draft save stays light; photos go only on /complete (once, not duplicated).
+      await saveKioskForm(form, { includeDocumentScans: false });
       const res = await completeKioskRegistration(form);
       setStep(STEPS.DONE);
       toast.success(res.message || "Rejestracja zakończona.");

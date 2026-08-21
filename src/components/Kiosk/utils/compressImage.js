@@ -1,5 +1,6 @@
-const MAX_DIMENSION = 1600;
-const JPEG_QUALITY = 0.72;
+// Keep compressed scans well under common 1MB proxy body limits (with signatures).
+const MAX_DIMENSION = 1280;
+const JPEG_QUALITY = 0.65;
 
 function loadImageElement(file) {
   return new Promise((resolve, reject) => {
