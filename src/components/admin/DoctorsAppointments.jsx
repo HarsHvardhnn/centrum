@@ -46,6 +46,11 @@ const DoctorSelectionWithSlots = ({
   hideSlotList = false, // when true, receptionist uses "set own date" – no slot list, no auto-fetch
   /** If set, filter fetched doctors to this id only (create-visit flow for logged-in doctor). */
   allowedDoctorId = null,
+  /**
+   * Force name search for reception/admin (Dodaj wizytę).
+   * When omitted: on whenever doctor list is shown and not locked to one doctor.
+   */
+  enableDoctorNameSearch,
 }) => {
   const { specializations } = useSpecializations();
   const [selectedSpecialization, setSelectedSpecialization] = useState("");
@@ -55,12 +60,15 @@ const DoctorSelectionWithSlots = ({
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Name search (admin / reception) — skip specialization path
+  // Name search (admin / reception) — primary path; specialization stays optional
   const [doctorSearch, setDoctorSearch] = useState("");
   const debouncedDoctorSearch = useDebouncedValue(doctorSearch, 300);
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const allowDoctorNameSearch = !hideDoctorSelection && !allowedDoctorId;
+  const allowDoctorNameSearch =
+    !hideDoctorSelection &&
+    (enableDoctorNameSearch === true ||
+      (enableDoctorNameSearch !== false && !allowedDoctorId));
   const searchActive = allowDoctorNameSearch && debouncedDoctorSearch.trim().length >= 2;
 
   // Handle pre-selected doctor
@@ -336,7 +344,7 @@ const DoctorSelectionWithSlots = ({
     </div>
   );
 
-  const step1Done = !!(selectedSpecialization || selectedDoctor);
+  const step1Done = !!(selectedSpecialization || selectedDoctor || searchActive);
   const doctorsToShow = searchActive ? searchResults : doctors;
   const showDoctorList =
     !hideDoctorSelection && (searchActive || !!selectedSpecialization);
@@ -356,7 +364,9 @@ const DoctorSelectionWithSlots = ({
             >
               1
             </div>
-            <span className="ml-2 text-sm font-medium">Specjalizacja</span>
+            <span className="ml-2 text-sm font-medium">
+              {allowDoctorNameSearch ? "Szukaj / Specjalizacja" : "Specjalizacja"}
+            </span>
           </div>
           <div className="h-px w-12 bg-gray-200"></div>
           <div className="flex items-center">
@@ -390,19 +400,23 @@ const DoctorSelectionWithSlots = ({
       <div className="p-6">
         {!hideDoctorSelection && (
           <>
-            {/* Doctor name search — reception / admin */}
+            {/* Primary: doctor name search for reception / admin */}
             {allowDoctorNameSearch && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="mb-6 rounded-lg border border-teal-200 bg-teal-50/60 p-4">
+                <label
+                  htmlFor="doctor-name-search"
+                  className="block text-sm font-semibold text-teal-900 mb-2"
+                >
                   Szukaj lekarza po nazwisku
                 </label>
                 <div className="relative">
                   <Search
                     size={18}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-teal-600 pointer-events-none"
                   />
                   <input
-                    type="text"
+                    id="doctor-name-search"
+                    type="search"
                     value={doctorSearch}
                     onChange={(e) => {
                       setDoctorSearch(e.target.value);
@@ -411,13 +425,14 @@ const DoctorSelectionWithSlots = ({
                         setDoctors([]);
                       }
                     }}
-                    placeholder="np. Kowalski, Nowak…"
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    placeholder="Wpisz nazwisko lub imię (min. 2 znaki)…"
+                    className="w-full pl-10 pr-4 py-3 bg-white border border-teal-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     autoComplete="off"
+                    autoFocus
                   />
                 </div>
-                <p className="mt-1.5 text-xs text-gray-500">
-                  Wpisz co najmniej 2 znaki, aby wyszukać. Możesz też wybrać specjalizację poniżej.
+                <p className="mt-2 text-xs text-teal-800/80">
+                  Recepcja: wyszukaj lekarza bezpośrednio — bez wyboru specjalizacji.
                 </p>
               </div>
             )}
@@ -426,16 +441,18 @@ const DoctorSelectionWithSlots = ({
               <div className="relative mb-6 flex items-center">
                 <div className="flex-1 border-t border-gray-200" />
                 <span className="px-3 text-xs font-medium text-gray-400 uppercase tracking-wide">
-                  lub
+                  lub wybierz specjalizację
                 </span>
                 <div className="flex-1 border-t border-gray-200" />
               </div>
             )}
 
-            {/* Specialization Selection */}
+            {/* Optional: specialization filter */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Wybierz Specjalizację
+                {allowDoctorNameSearch
+                  ? "Wybierz specjalizację (opcjonalnie)"
+                  : "Wybierz Specjalizację"}
               </label>
               <div className="relative">
                 <select

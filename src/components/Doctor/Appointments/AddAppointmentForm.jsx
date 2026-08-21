@@ -979,6 +979,7 @@ function AppointmentFormModal({
             hideDoctorSelection={true}
             hideSlotList={useCustomDateOnly}
             allowedDoctorId={allowedDoctorId}
+            enableDoctorNameSearch={false}
           />
         </div>
 
@@ -1132,6 +1133,7 @@ function AppointmentFormModal({
             loadingNextAvailableDate={loadingNextAvailableDate}
             hideSlotList={useCustomDateOnly}
             allowedDoctorId={allowedDoctorId}
+            enableDoctorNameSearch={isReceptionistMode || !allowedDoctorId}
           />
         </div>
 

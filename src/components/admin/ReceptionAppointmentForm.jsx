@@ -580,6 +580,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                 onDateChange={handleDateChange}
                 onSlotSelect={handleSlotSelect}
                 initialDoctorId={doctorId}
+                enableDoctorNameSearch={true}
               />
             </div>
 
