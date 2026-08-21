@@ -143,7 +143,6 @@ const PatientSelectionStep = () => {
           onDoctorSelect={handleDoctorSelect}
           onSlotSelect={handleSlotSelect}
           selectedDate={appointmentData.selectedDate}
-          enableDoctorNameSearch={true}
         />
 
         {/* Time section */}

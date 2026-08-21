@@ -46,11 +46,6 @@ const DoctorSelectionWithSlots = ({
   hideSlotList = false, // when true, receptionist uses "set own date" – no slot list, no auto-fetch
   /** If set, filter fetched doctors to this id only (create-visit flow for logged-in doctor). */
   allowedDoctorId = null,
-  /**
-   * Force name search for reception/admin (Dodaj wizytę).
-   * When omitted: on whenever doctor list is shown and not locked to one doctor.
-   */
-  enableDoctorNameSearch,
 }) => {
   const { specializations } = useSpecializations();
   const [selectedSpecialization, setSelectedSpecialization] = useState("");
@@ -60,15 +55,12 @@ const DoctorSelectionWithSlots = ({
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Name search (admin / reception) — primary path; specialization stays optional
+  // Name search — always available when the doctor picker is shown (reception/admin)
   const [doctorSearch, setDoctorSearch] = useState("");
   const debouncedDoctorSearch = useDebouncedValue(doctorSearch, 300);
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const allowDoctorNameSearch =
-    !hideDoctorSelection &&
-    (enableDoctorNameSearch === true ||
-      (enableDoctorNameSearch !== false && !allowedDoctorId));
+  const allowDoctorNameSearch = !hideDoctorSelection;
   const searchActive = allowDoctorNameSearch && debouncedDoctorSearch.trim().length >= 2;
 
   // Handle pre-selected doctor
@@ -122,7 +114,10 @@ const DoctorSelectionWithSlots = ({
         });
         if (cancelled) return;
         const raw = response.doctors || [];
-        setSearchResults(raw);
+        const filtered = allowedDoctorId
+          ? raw.filter((d) => doctorMatchesAllowedId(d, allowedDoctorId))
+          : raw;
+        setSearchResults(filtered);
       } catch (error) {
         console.error("Błąd podczas wyszukiwania lekarzy:", error);
         if (!cancelled) setSearchResults([]);
@@ -134,7 +129,7 @@ const DoctorSelectionWithSlots = ({
     return () => {
       cancelled = true;
     };
-  }, [debouncedDoctorSearch, allowDoctorNameSearch]);
+  }, [debouncedDoctorSearch, allowDoctorNameSearch, allowedDoctorId]);
 
   // Fetch available slots when doctor or date changes (skip when hideSlotList – "set own date" mode)
   useEffect(() => {

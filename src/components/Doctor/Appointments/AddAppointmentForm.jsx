@@ -979,7 +979,6 @@ function AppointmentFormModal({
             hideDoctorSelection={true}
             hideSlotList={useCustomDateOnly}
             allowedDoctorId={allowedDoctorId}
-            enableDoctorNameSearch={false}
           />
         </div>
 
@@ -1093,35 +1092,92 @@ function AppointmentFormModal({
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-medium mb-4">Wybór Lekarza i Terminu</h3>
-        
-        {/* Doctor Selection */}
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Wybierz lekarza
-          </label>
-          {useCustomDateOnly ? (
-            <p className="text-sm text-teal-700 mb-2">
-              Tryb własnej daty i godziny – ustaw datę i czas poniżej.{" "}
+
+        {useCustomDateOnly ? (
+          <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+            <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+              <div>
+                <h4 className="text-md font-semibold text-teal-900">
+                  Własna data i godzina
+                </h4>
+                <p className="text-sm text-teal-800 mt-1">
+                  {appointmentData.selectedDoctor
+                    ? "Ustaw datę oraz godzinę rozpoczęcia i zakończenia wizyty."
+                    : "Najpierw wyszukaj i wybierz lekarza poniżej, potem ustawisz tutaj datę i godzinę."}
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setUseCustomDateOnly(false)}
-                className="text-teal-600 hover:text-teal-800 underline font-medium"
+                className="text-sm text-teal-700 hover:text-teal-900 underline font-medium whitespace-nowrap"
               >
                 Wybierz z listy terminów
               </button>
-            </p>
-          ) : (
-            <p className="text-sm text-gray-600 mb-2">
-              <button
-                type="button"
-                onClick={switchToCustomDateOnly}
-                className="text-teal-600 hover:text-teal-800 underline font-medium"
-              >
-                Ustaw własną datę i godzinę
-              </button>
-              {" "}– bez przeglądania listy terminów
-            </p>
-          )}
+            </div>
+
+            {appointmentData.selectedDoctor && (
+              <div className="space-y-4 mt-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Data wizyty
+                  </label>
+                  <input
+                    type="date"
+                    name="selectedDate"
+                    value={appointmentData.selectedDate}
+                    onChange={handleDateChange}
+                    className="w-full md:w-1/2 p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Czas rozpoczęcia
+                    </label>
+                    <input
+                      type="time"
+                      name="customStartTime"
+                      value={appointmentData.customStartTime || ""}
+                      onChange={handleCustomTimeChange}
+                      className="w-full p-2 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Czas zakończenia
+                    </label>
+                    <input
+                      type="time"
+                      name="customEndTime"
+                      value={appointmentData.customEndTime || ""}
+                      onChange={handleCustomTimeChange}
+                      className="w-full p-2 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                {appointmentData.customStartTime &&
+                  appointmentData.customEndTime &&
+                  validateForm().customTime && (
+                    <p className="text-sm text-red-600">{validateForm().customTime}</p>
+                  )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-600">
+            <button
+              type="button"
+              onClick={switchToCustomDateOnly}
+              className="text-teal-600 hover:text-teal-800 underline font-medium"
+            >
+              Ustaw własną datę i godzinę
+            </button>{" "}
+            – bez przeglądania listy terminów
+          </p>
+        )}
+
+        {/* Doctor Selection */}
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
           <DoctorSelectionWithSlots
             selectedDoctor={appointmentData.selectedDoctor}
             selectedDate={appointmentData.selectedDate}
@@ -1133,12 +1189,11 @@ function AppointmentFormModal({
             loadingNextAvailableDate={loadingNextAvailableDate}
             hideSlotList={useCustomDateOnly}
             allowedDoctorId={allowedDoctorId}
-            enableDoctorNameSearch={isReceptionistMode || !allowedDoctorId}
           />
         </div>
 
-        {/* Date Selection */}
-        {appointmentData.selectedDoctor && (
+        {/* Date Selection (slot list mode only — custom mode has its own panel above) */}
+        {!useCustomDateOnly && appointmentData.selectedDoctor && (
           <div className="bg-teal-50 p-4 rounded-lg">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Wybierz datę wizyty
@@ -1161,8 +1216,8 @@ function AppointmentFormModal({
           </div>
         )}
 
-        {/* Custom Time Slot Input - Receptionist Override */}
-        {appointmentData.selectedDoctor && appointmentData.selectedDate && (
+        {/* Custom Time Slot Input - Receptionist Override (slot list mode) */}
+        {!useCustomDateOnly && appointmentData.selectedDoctor && appointmentData.selectedDate && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <h4 className="text-md font-medium text-blue-800 mb-3">Ustaw Termin Wizyty</h4>
             
