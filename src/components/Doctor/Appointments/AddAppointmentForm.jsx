@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import PatientSearchField from "../../AppointmentForm/PatientSearchField"
-import DoctorSelectionWithSlots from "../../admin/DoctorsAppointments";
+import DoctorSelectionWithSlots, {
+  doctorDisplayName,
+  doctorSpecializationLabel,
+} from "../../admin/DoctorsAppointments";
 import userServiceHelper from "../../../helpers/userServiceHelper";
 import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react";
 import VisitReasonCascadeDropdown from "../../UtilComponents/VisitReasonCascadeDropdown";
@@ -927,13 +930,13 @@ function AppointmentFormModal({
               {appointmentData.selectedDoctor.profilePicture && (
                 <img
                   src={appointmentData.selectedDoctor.profilePicture}
-                  alt={appointmentData.selectedDoctor.name}
+                  alt={doctorDisplayName(appointmentData.selectedDoctor)}
                   className="w-12 h-12 rounded-full object-cover"
                 />
               )}
               <div>
-                <p className="font-medium text-teal-900">{appointmentData.selectedDoctor.name}</p>
-                <p className="text-sm text-teal-700">{appointmentData.selectedDoctor.specialty}</p>
+                <p className="font-medium text-teal-900">{doctorDisplayName(appointmentData.selectedDoctor)}</p>
+                <p className="text-sm text-teal-700">{doctorSpecializationLabel(appointmentData.selectedDoctor)}</p>
               </div>
             </div>
           </div>
@@ -1311,13 +1314,13 @@ function AppointmentFormModal({
               {appointmentData.selectedDoctor.profilePicture && (
                 <img
                   src={appointmentData.selectedDoctor.profilePicture}
-                  alt={appointmentData.selectedDoctor.name}
+                  alt={doctorDisplayName(appointmentData.selectedDoctor)}
                   className="w-12 h-12 rounded-full object-cover"
                 />
               )}
               <div>
-                <p className="font-medium text-teal-900">{appointmentData.selectedDoctor.name}</p>
-                <p className="text-sm text-teal-700">{appointmentData.selectedDoctor.specialty}</p>
+                <p className="font-medium text-teal-900">{doctorDisplayName(appointmentData.selectedDoctor)}</p>
+                <p className="text-sm text-teal-700">{doctorSpecializationLabel(appointmentData.selectedDoctor)}</p>
               </div>
             </div>
           </div>

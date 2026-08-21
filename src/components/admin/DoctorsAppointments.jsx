@@ -12,7 +12,7 @@ function doctorMatchesAllowedId(doctor, allowedDoctorId) {
   return ids.some((id) => id === want);
 }
 
-function doctorDisplayName(doctor) {
+export function doctorDisplayName(doctor) {
   if (!doctor) return "Lekarz";
   if (typeof doctor.name === "string" && doctor.name.trim()) return doctor.name;
   const first = doctor.name?.first || "";
@@ -21,16 +21,24 @@ function doctorDisplayName(doctor) {
   return full || "Lekarz";
 }
 
-function doctorSpecializationLabel(doctor) {
+function specializationToLabel(value) {
+  if (value == null || value === "") return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object") {
+    if (typeof value.name === "string") return value.name;
+    return "";
+  }
+  return String(value);
+}
+
+export function doctorSpecializationLabel(doctor) {
   const specs = doctor?.specialization;
   if (Array.isArray(specs)) {
-    return specs
-      .map((s) => (typeof s === "string" ? s : s?.name))
-      .filter(Boolean)
-      .join(", ");
+    return specs.map(specializationToLabel).filter(Boolean).join(", ");
   }
-  if (typeof specs === "string") return specs;
-  return doctor?.specialty || "";
+  const fromSpec = specializationToLabel(specs);
+  if (fromSpec) return fromSpec;
+  return specializationToLabel(doctor?.specialty);
 }
 
 const DoctorSelectionWithSlots = ({
