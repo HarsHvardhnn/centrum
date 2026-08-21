@@ -50,6 +50,7 @@ body{font-family:'Inter',Arial,sans-serif;font-size:9.5pt;color:#1c1c1c;backgrou
 .consent-box{background:#f9f9f7;border-radius:10px;border:1px solid #ebebeb;padding:20px 22px;margin-bottom:18px}
 .consent-box p{font-size:9.5pt;line-height:1.85;color:#222}
 .consent-box p+p{margin-top:12px}
+.inline-field{display:inline-block;border-bottom:1px dashed #999;vertical-align:baseline;line-height:1.15;padding:0 2px;margin:0;font-weight:400;font-size:inherit;color:#111}
 .info-note{display:flex;align-items:flex-start;gap:9px;font-size:8pt;color:#aaa;font-style:italic;line-height:1.65;padding:8px 12px;border-radius:6px;background:#fdfdfd;border:1px solid #f2f2f2}
 .legal-box{background:#f9f9f7;border-left:3px solid #01696f;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px}
 .legal-box p{font-size:7.5pt;color:#555;line-height:1.7;font-style:italic}
@@ -93,9 +94,13 @@ body{font-family:'Inter',Arial,sans-serif;font-size:9.5pt;color:#1c1c1c;backgrou
 @media print{
   body{background:#fff;padding:0}
   .print-bar{display:none!important}
-  .page{box-shadow:none;width:100%;min-height:0;margin:0;padding:14mm 16mm 12mm;border-radius:0;page-break-after:always}
-  .page:last-of-type{page-break-after:auto}
-  @page{size:A4 portrait;margin:0}
+  .page{display:block;box-shadow:none;width:100%;min-height:0;margin:0;padding:18mm;border-radius:0;page-break-after:always;break-after:page}
+  .page:last-of-type{page-break-after:auto;break-after:auto}
+  .footer-spacer{display:none}
+  .patient-grid,.consent-box,.chk-list,.chk-row,.auth-list,.auth-row,.person-card,.persons-wrap,.sig-section,.info-note,.legal-box,.rodo-full{page-break-inside:avoid;break-inside:avoid}
+  .doc-title,h1,h3{page-break-after:avoid;break-after:avoid}
+  p,.lead{orphans:3;widows:3}
+  @page{size:A4 portrait;margin:18mm}
 }
 </style>
 </head>
@@ -114,7 +119,7 @@ body{font-family:'Inter',Arial,sans-serif;font-size:9.5pt;color:#1c1c1c;backgrou
      ═══════════════════════════════════════════════════ -->
 <div class="page">
   <div class="doc-header">
-    <img class="logo-img" src="https://res.cloudinary.com/dca740eqo/image/upload/v1760432824/hospital_app/logos/centrum_logo_email.png.png" alt="Centrum Medyczne 7">
+    <img class="logo-img" src="/images/cm7-logo.png" alt="Centrum Medyczne 7">
     <div class="doc-meta"><strong>Nr:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br><strong>Data:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
   </div>
 
@@ -195,7 +200,7 @@ body{font-family:'Inter',Arial,sans-serif;font-size:9.5pt;color:#1c1c1c;backgrou
      ═══════════════════════════════════════════════════ -->
 <div class="page">
   <div class="doc-header">
-    <img class="logo-img" src="https://res.cloudinary.com/dca740eqo/image/upload/v1760432824/hospital_app/logos/centrum_logo_email.png.png" alt="Centrum Medyczne 7">
+    <img class="logo-img" src="/images/cm7-logo.png" alt="Centrum Medyczne 7">
     <div class="doc-meta"><strong>Nr:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br><strong>Data:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
   </div>
 
@@ -206,8 +211,8 @@ body{font-family:'Inter',Arial,sans-serif;font-size:9.5pt;color:#1c1c1c;backgrou
   </div>
 
   <div class="consent-box">
-    <p>Ja (imię i nazwisko) <span style="display:inline-block;width:240px;border-bottom:1px dashed #bbb;vertical-align:bottom">&nbsp;</span>, PESEL <span style="display:inline-block;width:140px;border-bottom:1px dashed #bbb;vertical-align:bottom">&nbsp;</span>, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego świadczenia zdrowotnego, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta <em>(t.j. Dz. U. z 2024 r. poz. 581)</em>.</p>
-    <p>Zostałem(-am) poinformowany(-a) o celu, przebiegu oraz możliwych następstwach planowanego świadczenia zdrowotnego i potwierdzam, że moja zgoda ma charakter świadomy i dobrowolny.</p>
+    <p>Ja <span class="inline-field" style="display:inline-block;min-width:240px;border-bottom:1px dashed #999;vertical-align:baseline;line-height:1.15;padding:0 2px;font-weight:400">&nbsp;</span>, PESEL <span class="inline-field" style="display:inline-block;min-width:140px;border-bottom:1px dashed #999;vertical-align:baseline;line-height:1.15;padding:0 2px;font-weight:400">&nbsp;</span>, wyrażam zgodę na przeprowadzenie badania lub udzielenie innego standardowego świadczenia zdrowotnego (w tym wywiadu, konsultacji, porady lekarskiej oraz badania przedmiotowego), niewymagającego odrębnej pisemnej zgody, na zasadach określonych w rozdziale 5 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta.</p>
+    <p>Przyjmuję do wiadomości, że jeżeli planowane świadczenie wiąże się z podwyższonym ryzykiem lub wymaga zgody w formie pisemnej na zasadach szczególnych, personel medyczny przedstawi mi odrębny dokument zgody bezpośrednio przed jego udzieleniem.</p>
   </div>
 
   <div class="info-note">
@@ -253,7 +258,7 @@ body{font-family:'Inter',Arial,sans-serif;font-size:9.5pt;color:#1c1c1c;backgrou
      ═══════════════════════════════════════════════════ -->
 <div class="page">
   <div class="doc-header">
-    <img class="logo-img" src="https://res.cloudinary.com/dca740eqo/image/upload/v1760432824/hospital_app/logos/centrum_logo_email.png.png" alt="Centrum Medyczne 7">
+    <img class="logo-img" src="/images/cm7-logo.png" alt="Centrum Medyczne 7">
     <div class="doc-meta"><strong>Nr:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br><strong>Data:</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
   </div>
 
@@ -268,7 +273,7 @@ body{font-family:'Inter',Arial,sans-serif;font-size:9.5pt;color:#1c1c1c;backgrou
     <p><strong>Rozporządzenie Ministra Zdrowia z dnia 6 kwietnia 2020 r.</strong> w sprawie rodzajów, zakresu i wzorów dokumentacji medycznej oraz sposobu jej przetwarzania <em>(t.j. Dz. U. z 2024 r. poz. 798)</em> — Dokumentacja jest udostępniana bez zbędnej zwłoki, w sposób zapewniający zachowanie poufności i ochrony danych osobowych.</p>
   </div>
 
-  <p class="lead">Ja, <span style="display:inline-block;width:220px;border-bottom:1px dashed #bbb;vertical-align:bottom">&nbsp;</span>, PESEL <span style="display:inline-block;width:130px;border-bottom:1px dashed #bbb;vertical-align:bottom">&nbsp;</span>, na zasadach określonych w Art. 26 ust. 1 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta oraz Rozporządzeniu Ministra Zdrowia z dnia 6 kwietnia 2020 r. w sprawie rodzajów, zakresu i wzorów dokumentacji medycznej oraz sposobu jej przetwarzania, oświadczam, że:</p>
+  <p class="lead">Ja, <span class="inline-field" style="display:inline-block;min-width:220px;border-bottom:1px dashed #999;vertical-align:baseline;line-height:1.15;padding:0 2px;font-weight:400">&nbsp;</span>, PESEL <span class="inline-field" style="display:inline-block;min-width:130px;border-bottom:1px dashed #999;vertical-align:baseline;line-height:1.15;padding:0 2px;font-weight:400">&nbsp;</span>, na zasadach określonych w Art. 26 ust. 1 ustawy z dnia 6 listopada 2008 r. o prawach pacjenta i Rzeczniku Praw Pacjenta oraz Rozporządzeniu Ministra Zdrowia z dnia 6 kwietnia 2020 r. w sprawie rodzajów, zakresu i wzorów dokumentacji medycznej oraz sposobu jej przetwarzania, oświadczam, że:</p>
 
   <div class="auth-list">
 
