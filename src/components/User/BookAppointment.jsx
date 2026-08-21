@@ -325,22 +325,21 @@ export default function BookAppointment({
         setSlotsLoading(true);
         const nextAvailableResponse = await doctorService.getNextAvailableDate(newDoctorId);
 
-        if (nextAvailableResponse.success && nextAvailableResponse.data?.nextAvailableDate) {
-          setOnlineBookingUnavailable(false);
-          setFieldValue("date", nextAvailableResponse.data.nextAvailableDate);
-          setAvailableSlots(nextAvailableResponse.data.availableSlots || []);
-          updateUrlWithSelections(newDoctorId, values.specialization, nextAvailableResponse.data.nextAvailableDate, "");
-        } else if (nextAvailableResponse.data?.onlineBookingUnavailable) {
+        if (nextAvailableResponse.onlineBookingUnavailable) {
           setOnlineBookingUnavailable(true);
           setAvailableSlots([]);
           setFieldValue("date", "");
           updateUrlWithSelections(newDoctorId, values.specialization, "", "");
+        } else if (nextAvailableResponse.success && nextAvailableResponse.nextAvailableDate) {
+          setOnlineBookingUnavailable(false);
+          setFieldValue("date", nextAvailableResponse.nextAvailableDate);
+          setAvailableSlots(nextAvailableResponse.availableSlots || []);
+          updateUrlWithSelections(newDoctorId, values.specialization, nextAvailableResponse.nextAvailableDate, "");
         } else {
           setOnlineBookingUnavailable(false);
           setAvailableSlots([]);
-          const currentDate = getCurrentDateInPoland();
-          setFieldValue("date", currentDate);
-          updateUrlWithSelections(newDoctorId, values.specialization, currentDate, "");
+          setFieldValue("date", "");
+          updateUrlWithSelections(newDoctorId, values.specialization, "", "");
         }
       } catch (error) {
         console.error("Error fetching next available date:", error);

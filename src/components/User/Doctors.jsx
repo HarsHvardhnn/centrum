@@ -21,6 +21,31 @@ import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import PhoneCodeSelect from "../UtilComponents/PhoneCodeSelect";
 import OnlineBookingUnavailable from "./OnlineBookingUnavailable";
 
+/** Safe week offset from YYYY-MM-DD; returns 0 if date is missing/invalid (avoids NaN UI). */
+function weekOffsetFromDateString(dateStr) {
+  if (!dateStr || typeof dateStr !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return 0;
+  }
+  const targetDate = new Date(`${dateStr}T00:00:00`);
+  const today = getDateAtMidnightPoland(getCurrentDateInPoland());
+  if (Number.isNaN(targetDate.getTime()) || Number.isNaN(today.getTime())) {
+    return 0;
+  }
+  const daysDiff = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
+  const offset = Math.max(0, Math.floor(daysDiff / 7));
+  return Number.isFinite(offset) ? offset : 0;
+}
+
+function buildWeekDays(weekOffsetValue) {
+  const offset = Number.isFinite(weekOffsetValue) ? weekOffsetValue : 0;
+  return Array.from({ length: 7 }, (_, i) => {
+    const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
+    const date = new Date(todayPoland);
+    date.setDate(date.getDate() + i + offset * 7);
+    return formatDateToPolandTimezone(date);
+  });
+}
+
 export default function Doctors({
   selectedDoctorId,
   setSelectedDoctorId,
@@ -175,25 +200,17 @@ export default function Doctors({
         
         if (dateFromUrl) {
           setWeekLoading(true);
-          // Calculate which week this date falls into and set the week offset (using Poland timezone)
-          const targetDate = new Date(dateFromUrl + 'T00:00:00');
-          const today = getDateAtMidnightPoland(getCurrentDateInPoland());
-          const daysDiff = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
-          const weekOffsetForDate = Math.max(0, Math.floor(daysDiff / 7)); // Ensure weekOffset is not negative
+          const weekOffsetForDate = weekOffsetFromDateString(dateFromUrl);
           
           setWeekOffset(weekOffsetForDate);
           setSelectedDate(dateFromUrl);
           
-          // Force update the nextDays array to show the correct week immediately (using Poland timezone)
-          const days = Array.from({ length: 7 }, (_, i) => {
-            const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
-            const date = new Date(todayPoland);
-            date.setDate(date.getDate() + i + weekOffsetForDate * 7);
-            return formatDateToPolandTimezone(date);
-          });
+          const days = buildWeekDays(weekOffsetForDate);
           setNextDays(days);
           setWeekLoading(false);
-          fetchWeekSlotAvailability(doctor.id, days);
+          if (!onlineBookingUnavailable) {
+            fetchWeekSlotAvailability(doctor.id, days);
+          }
         }
         
         if (timeFromUrl && dateFromUrl) {
@@ -492,21 +509,23 @@ export default function Doctors({
         doctor.id
       );
 
-        if (nextAvailableResponse.success && nextAvailableResponse.data?.nextAvailableDate) {
+        if (nextAvailableResponse.onlineBookingUnavailable) {
+          setOnlineBookingUnavailable(true);
+          setAvailableSlots([]);
+          setSelectedSlot(null);
+          setSelectedDate("");
+          setWeekOffset(0);
+          setNextDays(buildWeekDays(0));
+          setDaysWithSlots(new Set());
+        } else if (nextAvailableResponse.success && nextAvailableResponse.nextAvailableDate) {
           setOnlineBookingUnavailable(false);
-          const nextAvailableDate = nextAvailableResponse.data.nextAvailableDate;
+          const nextAvailableDate = nextAvailableResponse.nextAvailableDate;
           
-          // Calculate which week this date falls into (using Poland timezone)
-          const targetDate = new Date(nextAvailableDate + 'T00:00:00');
-          const today = getDateAtMidnightPoland(getCurrentDateInPoland());
-          const daysDiff = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
-          const weekOffset = Math.max(0, Math.floor(daysDiff / 7)); // Ensure weekOffset is not negative
-          
-          // Set the week offset to show the correct week
-          setWeekOffset(weekOffset);
+          const weekOffsetVal = weekOffsetFromDateString(nextAvailableDate);
+          setWeekOffset(weekOffsetVal);
           
           setSelectedDate(nextAvailableDate);
-          setAvailableSlots(nextAvailableResponse.data.availableSlots || []);
+          setAvailableSlots(nextAvailableResponse.availableSlots || []);
           setDaysWithSlots((prev) => {
             const next = new Set(prev);
             next.add(nextAvailableDate);
@@ -515,20 +534,9 @@ export default function Doctors({
 
           updateUrlWithSelections(doctor.id, nextAvailableDate, "");
           
-          // Force update the nextDays array to show the correct week immediately (using Poland timezone)
-          const days = Array.from({ length: 7 }, (_, i) => {
-            const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
-            const date = new Date(todayPoland);
-            date.setDate(date.getDate() + i + weekOffset * 7);
-            return formatDateToPolandTimezone(date);
-          });
+          const days = buildWeekDays(weekOffsetVal);
           setNextDays(days);
           await fetchWeekSlotAvailability(doctor.id, days);
-        } else if (nextAvailableResponse.data?.onlineBookingUnavailable) {
-          setOnlineBookingUnavailable(true);
-          setAvailableSlots([]);
-          setSelectedSlot(null);
-          setDaysWithSlots(new Set());
         } else {
           setOnlineBookingUnavailable(false);
           setAvailableSlots([]);
@@ -797,12 +805,12 @@ export default function Doctors({
   const [nextDays, setNextDays] = useState([]);
 
   useEffect(() => {
-    const days = Array.from({ length: 7 }, (_, i) => {
-      const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
-      const date = new Date(todayPoland);
-      date.setDate(date.getDate() + i + weekOffset * 7);
-      return formatDateToPolandTimezone(date);
-    });
+    const safeOffset = Number.isFinite(weekOffset) ? weekOffset : 0;
+    if (!Number.isFinite(weekOffset) && weekOffset !== 0) {
+      setWeekOffset(0);
+      return;
+    }
+    const days = buildWeekDays(safeOffset);
     setNextDays(days);
     setWeekAvailabilityCache(null);
 
@@ -1051,7 +1059,7 @@ export default function Doctors({
                           </div>
                         ) : (
                           <>
-                            {weekOffset === 0 
+                            {(!Number.isFinite(weekOffset) || weekOffset === 0)
                               ? "Ten tydzień" 
                               : (() => {
                                   let weekText;
@@ -1064,12 +1072,12 @@ export default function Doctors({
                                   }
                                   return `Za ${weekOffset} ${weekText}`;
                                 })()}
-                            {selectedDate && weekOffset > 0 && (
+                            {selectedDate && Number.isFinite(weekOffset) && weekOffset > 0 && (
                               <span className="block text-xs text-main">
                                 Następny termin: {new Date(`${selectedDate}T12:00:00`).toLocaleDateString('pl-PL')}
                               </span>
                             )}
-                            {nextDays.length > 0 && (
+                            {nextDays.length > 0 && nextDays[0] && !String(nextDays[0]).includes("NaN") && (
                               <span className="block text-xs text-gray-500">
                                 {new Date(`${nextDays[0]}T12:00:00`).toLocaleDateString('pl-PL')} - {new Date(`${nextDays[6]}T12:00:00`).toLocaleDateString('pl-PL')}
                               </span>

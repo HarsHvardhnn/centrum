@@ -339,9 +339,9 @@ const doctorService = {
   },
 
   /**
-   * Get next available date and slots for a doctor
-   * @param {string} doctorId - Doctor ID
-   * @returns {Promise} - API response with next available date and slots
+   * Get next available date and slots for a doctor.
+   * Normalizes shapes so callers get a flat, reliable payload:
+   * { success, message, onlineBookingUnavailable, nextAvailableDate, availableSlots }
    */
   getNextAvailableDate: async (doctorId) => {
     try {
@@ -353,7 +353,39 @@ const doctorService = {
         "GET",
         `/docs/schedule/next-available/${doctorId}`
       );
-      return response.data;
+      const body = response?.data ?? {};
+      // Support both { success, data: {...} } and already-unwrapped data
+      const payload =
+        body && typeof body === "object" && body.data && typeof body.data === "object"
+          ? body.data
+          : body;
+
+      const nextAvailableDate = payload?.nextAvailableDate || null;
+      const availableSlots = Array.isArray(payload?.availableSlots)
+        ? payload.availableSlots
+        : [];
+      const onlineBookingUnavailable = Boolean(
+        payload?.onlineBookingUnavailable ||
+          (!nextAvailableDate &&
+            availableSlots.length === 0 &&
+            /nie ma skonfigurowanych terminów|rezerwacji online/i.test(
+              String(body?.message || "")
+            ))
+      );
+
+      return {
+        success: body.success !== false,
+        message: body.message || "",
+        onlineBookingUnavailable,
+        nextAvailableDate,
+        availableSlots,
+        // Keep nested data for any legacy readers
+        data: {
+          onlineBookingUnavailable,
+          nextAvailableDate,
+          availableSlots,
+        },
+      };
     } catch (error) {
       console.error("Error fetching next available date:", error);
       throw error;

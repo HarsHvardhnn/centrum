@@ -756,27 +756,30 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
         doctorId
       );
 
-      if (nextAvailableResponse.success && nextAvailableResponse.data?.nextAvailableDate) {
+      if (nextAvailableResponse.onlineBookingUnavailable) {
+        setOnlineBookingUnavailable(true);
+        setAvailableSlots([]);
+        setSelectedSlot(null);
+        setSelectedDate("");
+        setWeekOffset(0);
+        setDaysWithSlots(new Set());
+      } else if (nextAvailableResponse.success && nextAvailableResponse.nextAvailableDate) {
         setOnlineBookingUnavailable(false);
-        const nextAvailableDate = nextAvailableResponse.data.nextAvailableDate;
+        const nextAvailableDate = nextAvailableResponse.nextAvailableDate;
         
-        // Calculate which week this date falls into (using Poland timezone)
         const targetDate = new Date(nextAvailableDate + 'T00:00:00');
         const today = getDateAtMidnightPoland(getCurrentDateInPoland());
         const daysDiff = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
-        const weekOffset = Math.max(0, Math.floor(daysDiff / 7)); // Ensure weekOffset is not negative
+        let weekOffsetVal = Math.max(0, Math.floor(daysDiff / 7));
+        if (!Number.isFinite(weekOffsetVal)) weekOffsetVal = 0;
         
-        // Set the week offset to show the correct week
-        setWeekOffset(weekOffset);
+        setWeekOffset(weekOffsetVal);
         
-        // Set the next available date
         setSelectedDate(nextAvailableDate);
-        // Set available slots
-        setAvailableSlots(nextAvailableResponse.data.availableSlots);
+        setAvailableSlots(nextAvailableResponse.availableSlots || []);
         
-        // Update daysWithSlots for the next available date
-        if (nextAvailableResponse.data.availableSlots && nextAvailableResponse.data.availableSlots.length > 0) {
-          const hasAvailableSlots = nextAvailableResponse.data.availableSlots.some(slot => slot.available);
+        if (nextAvailableResponse.availableSlots && nextAvailableResponse.availableSlots.length > 0) {
+          const hasAvailableSlots = nextAvailableResponse.availableSlots.some(slot => slot.available);
           setDaysWithSlots(prev => {
             const newSet = new Set(prev);
             if (hasAvailableSlots) {
@@ -786,22 +789,15 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
           });
         }
         
-        // Force update the nextDays array to show the correct week immediately (using Poland timezone)
         const days = Array.from({ length: 7 }, (_, i) => {
           const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
           const date = new Date(todayPoland);
-          date.setDate(date.getDate() + i + weekOffset * 7);
+          date.setDate(date.getDate() + i + weekOffsetVal * 7);
           return formatDateToPolandTimezone(date);
         });
         setNextDays(days);
         
-        // Fetch slot availability for all days in the week
         fetchWeekSlotAvailability(doctorId, days);
-      } else if (nextAvailableResponse.data?.onlineBookingUnavailable) {
-        setOnlineBookingUnavailable(true);
-        setAvailableSlots([]);
-        setSelectedSlot(null);
-        setDaysWithSlots(new Set());
       } else {
         setOnlineBookingUnavailable(false);
         setAvailableSlots([]);
@@ -1103,10 +1099,15 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
   const [nextDays, setNextDays] = useState([]);
 
   useEffect(() => {
+    const safeOffset = Number.isFinite(weekOffset) ? weekOffset : 0;
+    if (!Number.isFinite(weekOffset) && weekOffset !== 0) {
+      setWeekOffset(0);
+      return;
+    }
     const days = Array.from({ length: 7 }, (_, i) => {
       const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
       const date = new Date(todayPoland);
-      date.setDate(date.getDate() + i + weekOffset * 7);
+      date.setDate(date.getDate() + i + safeOffset * 7);
       return formatDateToPolandTimezone(date);
     });
     setNextDays(days);
