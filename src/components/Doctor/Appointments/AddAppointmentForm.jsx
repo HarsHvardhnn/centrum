@@ -709,7 +709,7 @@ function AppointmentFormModal({
         }
       }
       switch (step) {
-        case 1: return "Lekarz i Termin";
+        case 1: return "Wybierz lekarza i termin";
         case 2: return "Dane Pacjenta";
         case 3: return "Usługi";
         case 4: return "Szczegóły";
@@ -979,12 +979,12 @@ function AppointmentFormModal({
   const renderDateSlotSelectionStep = () => {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-medium mb-4">Wybór Terminu Wizyty</h3>
+        <h3 className="text-lg font-medium mb-4">Wybierz lekarza i termin</h3>
         
         {/* Show selected doctor info */}
         {appointmentData.selectedDoctor && (
           <div className="bg-teal-50 p-4 rounded-lg border border-teal-200 mb-4">
-            <h4 className="text-md font-medium text-teal-800 mb-2">Wybrany Lekarz</h4>
+            <h4 className="text-md font-medium text-teal-800 mb-2">Wybór lekarza</h4>
             <div className="flex items-center space-x-3">
               {appointmentData.selectedDoctor.profilePicture && (
                 <img
@@ -1024,9 +1024,9 @@ function AppointmentFormModal({
                 onClick={switchToCustomDateOnly}
                 className="text-teal-600 hover:text-teal-800 underline font-medium"
               >
-                Ustaw własną datę i godzinę
+                Dodaj termin ręcznie
               </button>
-              {" "}– bez przeglądania listy terminów
+              {" "}bez sprawdzania dostępności
             </p>
           )}
           <DoctorSelectionWithSlots
@@ -1072,7 +1072,7 @@ function AppointmentFormModal({
         {/* Custom Time Slot Input - Receptionist Override */}
         {appointmentData.selectedDoctor && appointmentData.selectedDate && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 className="text-md font-medium text-blue-800 mb-3">Ustaw Termin Wizyty</h4>
+            <h4 className="text-md font-medium text-blue-800 mb-3">Dodaj termin ręcznie</h4>
             
             {/* Show current selection status */}
             {appointmentData.selectedSlot && (
@@ -1154,7 +1154,7 @@ function AppointmentFormModal({
   const renderDoctorSelectionStep = () => {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-medium mb-4">Wybór Lekarza i Terminu</h3>
+        <h3 className="text-lg font-medium mb-4">Wybierz lekarza i termin</h3>
 
         {useCustomDateOnly ? (
           <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
@@ -1233,9 +1233,9 @@ function AppointmentFormModal({
               onClick={switchToCustomDateOnly}
               className="text-teal-600 hover:text-teal-800 underline font-medium"
             >
-              Ustaw własną datę i godzinę
+              Dodaj termin ręcznie
             </button>{" "}
-            – bez przeglądania listy terminów
+            bez sprawdzania dostępności
           </p>
         )}
 
@@ -1283,7 +1283,7 @@ function AppointmentFormModal({
         {/* Custom Time Slot Input - Receptionist Override (slot list mode) */}
         {!useCustomDateOnly && appointmentData.selectedDoctor && appointmentData.selectedDate && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 className="text-md font-medium text-blue-800 mb-3">Ustaw Termin Wizyty</h4>
+            <h4 className="text-md font-medium text-blue-800 mb-3">Dodaj termin ręcznie</h4>
             
             {/* Show current selection status */}
             {appointmentData.selectedSlot && (
@@ -1370,7 +1370,7 @@ function AppointmentFormModal({
         {/* Show selected doctor info when skipDoctorSelection is true */}
         {skipDoctorSelection && appointmentData.selectedDoctor && (
           <div className="bg-teal-50 p-4 rounded-lg border border-teal-200 mb-4">
-            <h4 className="text-md font-medium text-teal-800 mb-2">Wybrany Lekarz</h4>
+            <h4 className="text-md font-medium text-teal-800 mb-2">Wybór lekarza</h4>
             <div className="flex items-center space-x-3">
               {appointmentData.selectedDoctor.profilePicture && (
                 <img

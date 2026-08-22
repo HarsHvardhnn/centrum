@@ -575,7 +575,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
       case 2:
         return (
           <div className="space-y-4">
-            <h3 className="text-lg font-medium mb-4">Wybór Lekarza i Terminu</h3>
+            <h3 className="text-lg font-medium mb-4">Wybierz lekarza i termin</h3>
             
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <label className="block text-sm font-medium text-gray-700 mb-2">

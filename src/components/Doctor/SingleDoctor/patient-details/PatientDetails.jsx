@@ -1,6 +1,6 @@
 // PatientDetailsPage.jsx - Redesigned layout: visit header, two columns, footer
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, useBlocker } from "react-router-dom";
 import PatientProfile from "./PatientProfile";
 import ConsultationForm from "./ConsultationForm";
 import ActionButtons from "./ActionButtons";
@@ -19,9 +19,11 @@ import MedicalDocumentsCard from "./MedicalDocumentsCard";
 import SectionTemplatePickerModal from "./SectionTemplatePickerModal";
 import GlobalTemplatePickerModal from "./GlobalTemplatePickerModal";
 import PatientDetailsFooter from "./PatientDetailsFooter";
+import BillingConfirmationModal from "../../../Billing/BillingConfirmationModal";
 import patientService from "../../../../helpers/patientHelper";
 import patientServicesHelper from "../../../../helpers/patientServicesHelper";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
+import billingHelper from "../../../../helpers/billingHelper";
 import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
@@ -484,6 +486,27 @@ const PatientDetailsPage = () => {
   // Visit documentation template pickers (section = one field, global = full visit)
   const [sectionTemplatePickerKey, setSectionTemplatePickerKey] = useState(null);
   const [globalTemplatePickerOpen, setGlobalTemplatePickerOpen] = useState(false);
+  const [showSettlementModal, setShowSettlementModal] = useState(false);
+  const settlementNavigationBlocker = useBlocker(showSettlementModal);
+
+  useEffect(() => {
+    if (settlementNavigationBlocker.state !== "blocked") return;
+    const leave = window.confirm(
+      "Wizyta nie została rozliczona. Aby ją zakończyć, wybierz usługę i utwórz rozliczenie."
+    );
+    if (leave) settlementNavigationBlocker.proceed();
+    else settlementNavigationBlocker.reset();
+  }, [settlementNavigationBlocker]);
+
+  useEffect(() => {
+    if (!showSettlementModal) return undefined;
+    const warnBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [showSettlementModal]);
 
   const resolveVisitDoctorUserId = (appointment) => {
     if (!appointment) return null;
@@ -947,7 +970,37 @@ const PatientDetailsPage = () => {
     }
   };
 
-  // Handle save functionality; endVisit = true navigates to rozliczenia after save
+  const handleSettleAndEndVisit = async (billingData) => {
+    if (!currentAppointmentId) return;
+
+    try {
+      setIsSaving(true);
+      await billingHelper.generateBill(currentAppointmentId, billingData);
+      setShowSettlementModal(false);
+      setSelectedAppointment((previous) =>
+        previous ? { ...previous, status: "completed" } : previous
+      );
+      setAppointments((previous) =>
+        previous.map((appointment) =>
+          String(appointment._id || appointment.id) === String(currentAppointmentId)
+            ? { ...appointment, status: "completed" }
+            : appointment
+        )
+      );
+      toast.success("Rozliczenie utworzone. Wizyta została zakończona.");
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Nie udało się utworzyć rozliczenia. Wizyta pozostaje otwarta.";
+      toast.error(message);
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // End Visit saves clinical data first, then requires settlement before completion.
   const handleSave = async (endVisit = false) => {
     if (!currentAppointmentId) {
       toast.error("Nie wybrano spotkania");
@@ -996,21 +1049,7 @@ const PatientDetailsPage = () => {
         );
         await fetchAppointmentDetails(currentAppointmentId);
         if (endVisit) {
-          try {
-            const statusResponse = await appointmentHelper.updateAppointmentStatus(currentAppointmentId, { status: "completed" });
-            if (statusResponse?.success !== false) {
-              navigate(`/administracja/rozliczenia?appointment=${currentAppointmentId}&step=edit`);
-            }
-          } catch (statusErr) {
-            const data = statusErr?.response?.data ?? statusErr?.data;
-            const code = data?.code;
-            const message = data?.message || statusErr?.message || "Nie udało się zakończyć wizyty.";
-            if (code === "VISIT_TYPE_NOT_VERIFIED") {
-              toast.error(message || "Nie można zamknąć wizyty bez weryfikacji rodzaju wizyty. Potwierdź lub zmień rodzaj wizyty w sekcji „Rodzaj wizyty”.");
-            } else {
-              toast.error(message);
-            }
-          }
+          setShowSettlementModal(true);
         }
       } else {
         throw new Error(response.message || "Nie udało się zaktualizować szczegółów spotkania");
@@ -1704,6 +1743,18 @@ const PatientDetailsPage = () => {
           isVisitReasonVerifyLoading={visitReasonVerifyLoading}
         />
       )}
+
+      <BillingConfirmationModal
+        isOpen={showSettlementModal}
+        onClose={() => {}}
+        onConfirm={handleSettleAndEndVisit}
+        patientServicesData={patientServices}
+        patientName={patientData.name}
+        appointmentId={currentAppointmentId}
+        patientId={id}
+        mandatory
+        doctorUserId={resolveVisitDoctorUserId(selectedAppointment) || user?._id || user?.id}
+      />
 
       {/* Existing modals */}
       <ServiceSelectionModal

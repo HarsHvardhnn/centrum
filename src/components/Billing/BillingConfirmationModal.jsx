@@ -31,12 +31,17 @@ const BillingConfirmationModal = ({
   patientId,
   /** When set, after generating a bill navigate here (e.g. /administracja, /pacjenci, /klinika, /lekarze/wizyty/:id) instead of billing page */
   returnPath,
+  /** Mandatory doctor settlement used by the End Visit flow. */
+  mandatory = false,
+  doctorUserId = null,
 }) => {
   //(appointmentId,patientId, "patientServicesData");
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
-  const showAdminInvoiceFields = canManageInvoiceAdminFields(user?.role);
+  const isDoctorSettlement = user?.role === "doctor";
+  const showAdminInvoiceFields =
+    !isDoctorSettlement && canManageInvoiceAdminFields(user?.role);
   const [isLoading, setIsLoading] = useState(false);
   const [taxPercentage, setTaxPercentage] = useState(0);
   const [additionalCharges, setAdditionalCharges] = useState(0);
@@ -160,10 +165,12 @@ const BillingConfirmationModal = ({
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Generuj rachunek dla {patientName}
+            {isDoctorSettlement ? "Rozliczenie wizyty" : `Generuj rachunek dla ${patientName}`}
           </h3>
           <p className="text-sm text-gray-500 mb-4">
-            Utworzy to rachunek dla pacjenta na podstawie wybranych usług.
+            {isDoctorSettlement
+              ? "Wybierz wykonane usługi, aby utworzyć rozliczenie oczekujące na płatność."
+              : "Utworzy to rachunek dla pacjenta na podstawie wybranych usług."}
           </p>
 
           {isLoading ? (
@@ -180,7 +187,7 @@ const BillingConfirmationModal = ({
                     className="text-sm text-teal-600 hover:text-teal-800 flex items-center"
                   >
                     <Plus size={16} className="mr-1" />
-                    Dodaj usługę
+                    Wybierz usługi
                   </button>
                 </div>
 
@@ -266,7 +273,11 @@ const BillingConfirmationModal = ({
                     />
                     <input
                       type="text"
-                      placeholder="Notatka (opcjonalna)"
+                      placeholder={
+                        Number(additionalCharges) > 0
+                          ? "Opis dodatkowej opłaty (wymagany)"
+                          : "Opis dodatkowej opłaty"
+                      }
                       value={additionalChargeNote}
                       onChange={(e) => setAdditionalChargeNote(e.target.value)}
                       className="block flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
@@ -352,16 +363,23 @@ const BillingConfirmationModal = ({
           )}
 
           <div className="flex justify-end gap-2 mt-4">
-            <button
-              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-              onClick={onClose}
-            >
-              Anuluj
-            </button>
+            {!mandatory && (
+              <button
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+                onClick={onClose}
+              >
+                Anuluj
+              </button>
+            )}
             <button
               className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center"
               onClick={async () => {
+                if (Number(additionalCharges) > 0 && !additionalChargeNote.trim()) {
+                  toast.error("Opis dodatkowej opłaty jest wymagany.");
+                  return;
+                }
                 try {
+                  setIsLoading(true);
                   // Doctors cannot set invoice # / date / tax / payment — backend defaults + reception edits later
                   const payload = {
                     services,
@@ -380,6 +398,7 @@ const BillingConfirmationModal = ({
                   }
                   await onConfirm(payload);
 
+                  if (mandatory) return;
                   onClose?.();
                   // Return to the view we started from (main panel, visit history, or doctor panel)
                   if (returnPath) {
@@ -392,12 +411,14 @@ const BillingConfirmationModal = ({
                   }
                 } catch (error) {
                   console.error("Error generating bill:", error);
+                } finally {
+                  setIsLoading(false);
                 }
               }}
               disabled={isLoading || services.length === 0}
             >
               <DollarSign size={16} className="mr-1" />
-              Generuj rachunek
+              {isDoctorSettlement ? "Rozlicz i zakończ wizytę" : "Generuj rachunek"}
             </button>
           </div>
         </div>
@@ -411,6 +432,7 @@ const BillingConfirmationModal = ({
         patientId={patientId}
         appointmentId={appointmentId}
         existingServices={services}
+        doctorUserId={isDoctorSettlement ? doctorUserId || user?._id || user?.id : null}
       />
     </div>
   );
