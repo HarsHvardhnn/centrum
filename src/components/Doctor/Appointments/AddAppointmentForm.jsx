@@ -487,16 +487,24 @@ function AppointmentFormModal({
   // Modify the handleDoctorSelect function
   const handleDoctorSelect = (doctor) => {
     const radiologistFields = doctor && isRadiologistDoctor(doctor) ? getRadiologistVisitTypeFields() : {};
-    setAppointmentData({
-      ...appointmentData,
-      selectedDoctor: doctor,
-      selectedServices: [],
-      ...radiologistFields,
+    setAppointmentData((prev) => {
+      const doctorChanged =
+        !doctor || !prev.selectedDoctor || prev.selectedDoctor._id !== doctor._id;
+      return {
+        ...prev,
+        selectedDoctor: doctor,
+        selectedServices: doctorChanged ? [] : prev.selectedServices,
+        // Always drop previous doctor's slot / custom time when doctor changes or is cleared
+        selectedSlot: doctorChanged ? null : prev.selectedSlot,
+        customStartTime: doctorChanged ? "" : prev.customStartTime,
+        customEndTime: doctorChanged ? "" : prev.customEndTime,
+        ...radiologistFields,
+      };
     });
 
     if (doctor && doctor._id) {
       fetchDoctorServices(doctor._id);
-      fetchNextAvailableDate(doctor._id); // Add this line to fetch next available date
+      fetchNextAvailableDate(doctor._id);
     } else {
       setDoctorServices([]);
       setAvailableSlots([]);
@@ -533,22 +541,22 @@ function AppointmentFormModal({
     });
   };
 
-  // Handle slot selection
+  // Handle slot selection (null clears)
   const handleSlotSelect = (slot) => {
-    setAppointmentData(prev => ({
+    setAppointmentData((prev) => ({
       ...prev,
-      selectedSlot: slot,
-      // Clear custom time when slot is selected
-      customStartTime: "",
-      customEndTime: ""
+      selectedSlot: slot || null,
+      // Clear custom time when a list slot is selected
+      customStartTime: slot ? "" : prev.customStartTime,
+      customEndTime: slot ? "" : prev.customEndTime,
     }));
   };
 
   // Clear slot selection
   const clearSlotSelection = () => {
-    setAppointmentData(prev => ({
+    setAppointmentData((prev) => ({
       ...prev,
-      selectedSlot: null
+      selectedSlot: null,
     }));
   };
 
@@ -595,6 +603,8 @@ function AppointmentFormModal({
     setAppointmentData(prev => ({
       ...prev,
       selectedDate: selectedDate,
+      // Slot belonged to the previous date — drop it
+      selectedSlot: null,
       // Update isBackdated based on the selected date
       isBackdated: isSelectedDateInPast,
       // Always set SMS consent to false for past dates, but allow user to manually check it

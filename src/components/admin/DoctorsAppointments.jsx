@@ -71,10 +71,15 @@ const DoctorSelectionWithSlots = ({
   const allowDoctorNameSearch = !hideDoctorSelection;
   const searchActive = allowDoctorNameSearch && debouncedDoctorSearch.trim().length >= 2;
 
-  // Handle pre-selected doctor
+  // Keep local selection in sync with parent (including clear → null)
   useEffect(() => {
-    if (propSelectedDoctor && !hideDoctorSelection) {
+    if (hideDoctorSelection) return;
+    if (propSelectedDoctor) {
       setSelectedDoctor(propSelectedDoctor);
+    } else {
+      setSelectedDoctor(null);
+      setSelectedSlot(null);
+      setAvailableSlots([]);
     }
   }, [propSelectedDoctor, hideDoctorSelection]);
 
@@ -162,19 +167,33 @@ const DoctorSelectionWithSlots = ({
     fetchAvailableSlots();
   }, [selectedDoctor, selectedDate, hideSlotList]);
 
+  const clearDoctorSelection = () => {
+    setSelectedDoctor(null);
+    setAvailableSlots([]);
+    setSelectedSlot(null);
+    onDoctorSelect?.(null);
+    onSlotSelect?.(null);
+  };
+
   const handleSpecializationChange = (e) => {
     setSelectedSpecialization(e.target.value);
     setDoctorSearch("");
     setSearchResults([]);
-    setSelectedDoctor(null);
-    setAvailableSlots([]);
-    setSelectedSlot(null);
+    // Changing specialty always drops doctor + slot (parent state included)
+    clearDoctorSelection();
   };
 
   const handleDoctorSelect = (doctor) => {
+    const prevId = selectedDoctor?._id;
+    const nextId = doctor?._id;
     setSelectedDoctor(doctor);
-    onDoctorSelect(doctor);
-    setSelectedSlot(null);
+    onDoctorSelect?.(doctor);
+    // New / changed doctor → drop previous slot in child and parent
+    if (!nextId || prevId !== nextId) {
+      setSelectedSlot(null);
+      onSlotSelect?.(null);
+      setAvailableSlots([]);
+    }
   };
 
   const handleDoctorSelectFromSearch = (doctor) => {
@@ -196,7 +215,7 @@ const DoctorSelectionWithSlots = ({
 
   const handleSlotSelect = (slot) => {
     setSelectedSlot(slot);
-    onSlotSelect(slot);
+    onSlotSelect?.(slot);
   };
 
   // Group slots by morning, afternoon, evening
@@ -491,12 +510,42 @@ const DoctorSelectionWithSlots = ({
           </>
         )}
 
+        {/* Always keep selected doctor visible (even while searching another specialty) */}
+        {!hideDoctorSelection && selectedDoctor && (
+          <div className="mb-6 rounded-lg border-2 border-teal-500 bg-teal-50 p-4">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
+                  Aktualnie wybrany lekarz
+                </p>
+                <p className="text-sm text-teal-800/80 mt-0.5">
+                  Terminy poniżej dotyczą tego lekarza. Zmiana lekarza wyczyści wybrany slot.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={clearDoctorSelection}
+                className="shrink-0 text-sm font-medium text-red-600 hover:text-red-800 underline"
+              >
+                Wyczyść wybór
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {renderDoctorCard(selectedDoctor)}
+            </div>
+          </div>
+        )}
+
         {/* Doctor Selection */}
         {showDoctorList && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                {searchActive ? "Wyniki wyszukiwania" : "Wybierz Lekarza"}
+                {searchActive
+                  ? selectedDoctor
+                    ? "Wyniki wyszukiwania (wybierz innego lekarza, aby zmienić)"
+                    : "Wyniki wyszukiwania"
+                  : "Wybierz Lekarza"}
               </label>
 
               {!searchLoading && !isLoading && doctorsToShow.length > 0 && (
@@ -521,18 +570,6 @@ const DoctorSelectionWithSlots = ({
                 {doctorsToShow.map((doctor) => renderDoctorCard(doctor))}
               </div>
             )}
-          </div>
-        )}
-
-        {/* Selected doctor chip when chosen via search and list collapsed */}
-        {!hideDoctorSelection && selectedDoctor && !showDoctorList && (
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Wybrany lekarz
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {renderDoctorCard(selectedDoctor)}
-            </div>
           </div>
         )}
 
