@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Header from "./DoctorHeader";
 import DoctorListing from "./DoctorList";
 import AddDoctorForm from "./CreateDoctor";
+import DoctorScheduleManager from "../admin/DoctorScheduleEditor";
 import doctorService from "../../helpers/doctorHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { useSpecializations } from "../../context/SpecializationContext";
@@ -18,6 +19,7 @@ const formatDoctorName = (name) =>
 const transformDoctorsResponse = (doctorsList) =>
   (doctorsList || []).map((doc) => ({
     id: doc.id || doc._id,
+    _id: doc._id || doc.id,
     name: formatDoctorName(doc.name) || "",
     specialty: doc.specialty || doc.specializations?.[0] || "Ogólny",
     timing: "9:30 - 13:00",
@@ -39,6 +41,8 @@ const BillingPage = () => {
   const [debouncedSearch, setDebouncedSearch] = useState(savedDoctors.searchTerm || "");
   const [activeFilters, setActiveFilters] = useState(savedDoctors.activeFilters || {});
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleDoctorId, setScheduleDoctorId] = useState(null);
   const [allDoctors, setAllDoctors] = useState([]);
   const [visitTypesFromApi, setVisitTypesFromApi] = useState([]);
 
@@ -120,6 +124,7 @@ const BillingPage = () => {
 
       const newDoctor = {
         id: createdDoctor.id || createdDoctor.d_id || `lek-${Date.now()}`,
+        _id: createdDoctor._id || createdDoctor.id,
         name:
           (createdDoctor.name && typeof createdDoctor.name === "object"
             ? [createdDoctor.name.first, createdDoctor.name.last].filter(Boolean).join(" ")
@@ -188,8 +193,27 @@ const BillingPage = () => {
         />
 
         {/* Doctor Listing - card table */}
-        <DoctorListing doctors={allDoctors} />
+        <DoctorListing
+          doctors={allDoctors}
+          onManageSchedule={(doctor) => {
+            const mongoId = doctor._id || doctor.id;
+            if (!mongoId) return;
+            setScheduleDoctorId(mongoId);
+            setShowScheduleModal(true);
+          }}
+        />
       </div>
+
+      {showScheduleModal && scheduleDoctorId && (
+        <DoctorScheduleManager
+          isModal
+          doctorId={scheduleDoctorId}
+          onClose={() => {
+            setShowScheduleModal(false);
+            setScheduleDoctorId(null);
+          }}
+        />
+      )}
 
       {/* Add Doctor Modal Form */}
       <AddDoctorForm

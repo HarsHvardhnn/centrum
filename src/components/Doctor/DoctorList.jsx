@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, ChevronRight, Eye } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, ChevronRight, Eye } from "lucide-react";
+import RoleAccess from "../UtilComponents/RoleAccess";
 
-const DoctorListing = ({ doctors = [] }) => {
+const DoctorListing = ({ doctors = [], onManageSchedule }) => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const doctorsPerPage = 10;
@@ -32,7 +33,7 @@ const DoctorListing = ({ doctors = [] }) => {
   return (
     <div className="space-y-3">
       {/* Column headers */}
-      <div className="grid grid-cols-[1fr_10rem_8rem_7rem_1fr] gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
+      <div className="grid grid-cols-[minmax(0,1.1fr)_9rem_7.5rem_6.5rem_minmax(18rem,1.4fr)] gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
         <div>Lekarz i ID</div>
         <div>Specjalizacja</div>
         <div>Status</div>
@@ -48,7 +49,7 @@ const DoctorListing = ({ doctors = [] }) => {
         currentDoctors.map((doctor) => (
           <div
             key={doctor.id}
-            className="bg-white border border-gray-200 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-shadow grid grid-cols-[1fr_10rem_8rem_7rem_1fr] gap-4 px-4 py-3 items-center"
+            className="bg-white border border-gray-200 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:shadow-md transition-shadow grid grid-cols-[minmax(0,1.1fr)_9rem_7.5rem_6.5rem_minmax(18rem,1.4fr)] gap-4 px-4 py-3 items-center"
           >
             <div className="min-w-0 flex items-center gap-3">
               <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
@@ -75,6 +76,16 @@ const DoctorListing = ({ doctors = [] }) => {
             </div>
             <div className="text-gray-800 truncate text-sm">{doctor.date || "—"}</div>
             <div className="flex items-center justify-end gap-2 flex-wrap">
+              <RoleAccess allowedRoles={["admin", "receptionist"]}>
+                <button
+                  type="button"
+                  onClick={() => onManageSchedule?.(doctor)}
+                  className="inline-flex items-center gap-1.5 border border-teal-600 text-teal-700 hover:bg-teal-50 text-sm font-medium py-2 px-3 rounded-lg transition-colors"
+                >
+                  <Calendar size={16} />
+                  Grafik
+                </button>
+              </RoleAccess>
               <button
                 type="button"
                 onClick={() => navigate(`/lekarze/wizyty/${doctor.id}`)}
