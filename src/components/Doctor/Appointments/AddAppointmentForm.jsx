@@ -487,8 +487,9 @@ function AppointmentFormModal({
   // Modify the handleDoctorSelect function
   const handleDoctorSelect = (doctor) => {
     const radiologistFields = doctor && isRadiologistDoctor(doctor) ? getRadiologistVisitTypeFields() : {};
+    let doctorChanged = true;
     setAppointmentData((prev) => {
-      const doctorChanged =
+      doctorChanged =
         !doctor || !prev.selectedDoctor || prev.selectedDoctor._id !== doctor._id;
       return {
         ...prev,
@@ -504,7 +505,11 @@ function AppointmentFormModal({
 
     if (doctor && doctor._id) {
       fetchDoctorServices(doctor._id);
-      fetchNextAvailableDate(doctor._id);
+      // Only auto-jump to next available date on a *new* doctor — not when
+      // remounting / re-selecting the same doctor after Wstecz
+      if (doctorChanged) {
+        fetchNextAvailableDate(doctor._id);
+      }
     } else {
       setDoctorServices([]);
       setAvailableSlots([]);
@@ -855,76 +860,120 @@ function AppointmentFormModal({
     );
   };
 
-  const renderStepContent = () => {
+  const doctorTimeStepNumber = workflowOrder === "appointmentFirst" ? 1 : 2;
+  const [doctorTimeStepMounted, setDoctorTimeStepMounted] = useState(
+    () => currentStep === doctorTimeStepNumber
+  );
+
+  useEffect(() => {
+    if (currentStep === doctorTimeStepNumber) {
+      setDoctorTimeStepMounted(true);
+    }
+  }, [currentStep, doctorTimeStepNumber]);
+
+  const renderDoctorTimeStep = () => {
     if (workflowOrder === "appointmentFirst") {
-      // New workflow: Appointment first, then patient
-      if (skipDoctorSelection) {
-        // When doctor is pre-selected, still show date/slot selection
+      return skipDoctorSelection
+        ? renderDateSlotSelectionStep()
+        : renderDoctorSelectionStep();
+    }
+    return skipDoctorSelection
+      ? renderDateSlotSelectionStep()
+      : renderDoctorSelectionStep();
+  };
+
+  const renderStepContent = () => {
+    const onDoctorTimeStep = currentStep === doctorTimeStepNumber;
+
+    let other = null;
+    if (!onDoctorTimeStep) {
+      if (workflowOrder === "appointmentFirst") {
+        if (skipDoctorSelection) {
+          switch (currentStep) {
+            case 2:
+              other = renderPatientInfoStep();
+              break;
+            case 3:
+              other = renderServicesStep();
+              break;
+            case 4:
+              other = renderAdditionalDetailsStep();
+              break;
+            case 5:
+              other = renderReceptionistOverridesStep();
+              break;
+            default:
+              other = null;
+          }
+        } else {
+          switch (currentStep) {
+            case 2:
+              other = renderPatientInfoStep();
+              break;
+            case 3:
+              other = renderServicesStep();
+              break;
+            case 4:
+              other = renderAdditionalDetailsStep();
+              break;
+            case 5:
+              other = renderReceptionistOverridesStep();
+              break;
+            default:
+              other = null;
+          }
+        }
+      } else if (skipDoctorSelection) {
         switch (currentStep) {
           case 1:
-            return renderDateSlotSelectionStep();
-          case 2:
-            return renderPatientInfoStep();
+            other = renderPatientInfoStep();
+            break;
           case 3:
-            return renderServicesStep();
+            other = renderServicesStep();
+            break;
           case 4:
-            return renderAdditionalDetailsStep();
+            other = renderAdditionalDetailsStep();
+            break;
           case 5:
-            return renderReceptionistOverridesStep();
+            other = renderReceptionistOverridesStep();
+            break;
           default:
-            return null;
+            other = null;
         }
       } else {
         switch (currentStep) {
           case 1:
-            return renderDoctorSelectionStep();
-          case 2:
-            return renderPatientInfoStep();
+            other = renderPatientInfoStep();
+            break;
           case 3:
-            return renderServicesStep();
+            other = renderServicesStep();
+            break;
           case 4:
-            return renderAdditionalDetailsStep();
+            other = renderAdditionalDetailsStep();
+            break;
           case 5:
-            return renderReceptionistOverridesStep();
+            other = renderReceptionistOverridesStep();
+            break;
           default:
-            return null;
-        }
-      }
-    } else {
-      // Original workflow: Patient first, then appointment
-      if (skipDoctorSelection) {
-        // When doctor is pre-selected, still show date/slot selection
-        switch (currentStep) {
-          case 1:
-            return renderPatientInfoStep();
-          case 2:
-            return renderDateSlotSelectionStep();
-          case 3:
-            return renderServicesStep();
-          case 4:
-            return renderAdditionalDetailsStep();
-          case 5:
-            return renderReceptionistOverridesStep();
-          default:
-            return null;
-        }
-      } else {
-        switch (currentStep) {
-          case 1:
-            return renderPatientInfoStep();
-          case 2:
-            return renderDoctorSelectionStep();
-          case 3:
-            return renderServicesStep();
-          case 4:
-            return renderAdditionalDetailsStep();
-          case 5:
-            return renderReceptionistOverridesStep();
-          default:
-            return null;
+            other = null;
         }
       }
     }
+
+    return (
+      <>
+        {/* Keep doctor/date/slot step mounted after first visit so Wstecz does not re-fetch next date */}
+        {doctorTimeStepMounted && (
+          <div
+            className={onDoctorTimeStep ? undefined : "hidden"}
+            aria-hidden={!onDoctorTimeStep}
+          >
+            {renderDoctorTimeStep()}
+          </div>
+        )}
+        {other}
+      </>
+    );
   };
 
   const renderDateSlotSelectionStep = () => {
@@ -982,6 +1031,7 @@ function AppointmentFormModal({
           )}
           <DoctorSelectionWithSlots
             selectedDoctor={appointmentData.selectedDoctor}
+            selectedSlot={appointmentData.selectedSlot}
             selectedDate={appointmentData.selectedDate}
             onDoctorSelect={handleDoctorSelect}
             onDateChange={handleDateChange}
@@ -1193,6 +1243,7 @@ function AppointmentFormModal({
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <DoctorSelectionWithSlots
             selectedDoctor={appointmentData.selectedDoctor}
+            selectedSlot={appointmentData.selectedSlot}
             selectedDate={appointmentData.selectedDate}
             onDoctorSelect={handleDoctorSelect}
             onDateChange={handleDateChange}

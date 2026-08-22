@@ -222,17 +222,26 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
 
   const handleDoctorSelect = (doctor) => {
     const radiologistFields = doctor && isRadiologistDoctor(doctor) ? getRadiologistVisitTypeFields() : {};
+    const doctorChanged =
+      !doctor ||
+      !appointmentData.selectedDoctor ||
+      appointmentData.selectedDoctor._id !== doctor._id;
+
     setAppointmentData({
       ...appointmentData,
       selectedDoctor: doctor,
-      selectedServices: [],
-      selectedSlot: null,
+      selectedServices: doctorChanged ? [] : appointmentData.selectedServices,
+      selectedSlot: doctorChanged ? null : appointmentData.selectedSlot,
+      customStartTime: doctorChanged ? "" : appointmentData.customStartTime,
+      customEndTime: doctorChanged ? "" : appointmentData.customEndTime,
       ...radiologistFields,
     });
     
     if (doctor && doctor._id) {
       fetchDoctorServices(doctor._id);
-      fetchNextAvailableDate(doctor._id);
+      if (doctorChanged) {
+        fetchNextAvailableDate(doctor._id);
+      }
     } else {
       setDoctorServices([]);
       setAvailableSlots([]);

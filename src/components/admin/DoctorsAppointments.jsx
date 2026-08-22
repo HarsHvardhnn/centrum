@@ -51,6 +51,7 @@ const DoctorSelectionWithSlots = ({
   loadingNextAvailableDate = false,
   hideDoctorSelection = false,
   selectedDoctor: propSelectedDoctor = null,
+  selectedSlot: propSelectedSlot = null,
   hideSlotList = false, // when true, receptionist uses "set own date" – no slot list, no auto-fetch
   /** If set, filter fetched doctors to this id only (create-visit flow for logged-in doctor). */
   allowedDoctorId = null,
@@ -60,7 +61,7 @@ const DoctorSelectionWithSlots = ({
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(propSelectedDoctor);
   const [availableSlots, setAvailableSlots] = useState([]);
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(propSelectedSlot);
   const [isLoading, setIsLoading] = useState(false);
 
   // Name search — always available when the doctor picker is shown (reception/admin)
@@ -82,6 +83,11 @@ const DoctorSelectionWithSlots = ({
       setAvailableSlots([]);
     }
   }, [propSelectedDoctor, hideDoctorSelection]);
+
+  // Restore slot highlight after Wstecz / remount from parent form state
+  useEffect(() => {
+    setSelectedSlot(propSelectedSlot || null);
+  }, [propSelectedSlot]);
 
   // Fetch doctors when specialization changes (classic path)
   useEffect(() => {
