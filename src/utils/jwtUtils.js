@@ -41,6 +41,42 @@ export const getMsUntilExpiry = (token) => {
   return expiryTime - Date.now();
 };
 
+const DEFAULT_JWT_WARNING_MS = 5 * 60 * 1000;
+
+/**
+ * How long before access-token expiry the “session ending” modal should appear.
+ * Must be shorter than the JWT lifetime — otherwise a 5m token reopens the modal
+ * immediately after “Przedłuż sesję”.
+ */
+export const getJwtWarningThresholdMs = (token) => {
+  const decoded = decodeToken(token);
+  if (!decoded?.exp) return DEFAULT_JWT_WARNING_MS;
+
+  const lifetimeMs =
+    typeof decoded.iat === "number"
+      ? Math.max(0, (decoded.exp - decoded.iat) * 1000)
+      : 0;
+
+  // No iat claim: infer short TTL when remaining ≤ default warning window
+  if (lifetimeMs <= 0) {
+    const remainingMs = decoded.exp * 1000 - Date.now();
+    if (remainingMs > 0 && remainingMs <= DEFAULT_JWT_WARNING_MS) {
+      return Math.max(30_000, Math.min(60_000, Math.floor(DEFAULT_JWT_WARNING_MS * 0.2)));
+    }
+    return DEFAULT_JWT_WARNING_MS;
+  }
+
+  // Short-lived JWT (≤10m): warn in last 20% (clamped 30s–60s) → 5m token → last 1m
+  if (lifetimeMs <= DEFAULT_JWT_WARNING_MS * 2) {
+    return Math.max(30_000, Math.min(60_000, Math.floor(lifetimeMs * 0.2)));
+  }
+
+  // Longer JWT: classic last-5-minutes window, never more than 25% of lifetime
+  return Math.min(DEFAULT_JWT_WARNING_MS, Math.floor(lifetimeMs * 0.25));
+};
+
+export { DEFAULT_JWT_WARNING_MS };
+
 /**
  * Get time until token expires in milliseconds
  * @param {string} token - JWT token string

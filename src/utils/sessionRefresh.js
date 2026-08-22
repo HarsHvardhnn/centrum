@@ -1,8 +1,11 @@
 import { refreshAccessToken } from "./axiosInstance";
-import { getAccessToken, getMsUntilExpiry } from "./jwtUtils";
+import {
+  getAccessToken,
+  getMsUntilExpiry,
+  getJwtWarningThresholdMs,
+} from "./jwtUtils";
 import { isSessionEnding } from "./sessionEvents";
 
-const NEAR_EXPIRY_MS = 5 * 60 * 1000;
 const CHECK_THROTTLE_MS = 4000;
 
 let lastCheckAt = 0;
@@ -38,11 +41,13 @@ export async function maybeRefreshSession() {
   const remaining = getMsUntilExpiry(token);
   if (remaining === null) return null;
 
-  // Leave the last 5 minutes for the JWT popup — SessionProvider owns extend there
-  if (remaining > 0 && remaining <= NEAR_EXPIRY_MS) {
+  const warningMs = getJwtWarningThresholdMs(token);
+
+  // Leave the warning window for the JWT popup — SessionProvider owns extend there
+  if (remaining > 0 && remaining <= warningMs) {
     return null;
   }
-  if (remaining > NEAR_EXPIRY_MS) {
+  if (remaining > warningMs) {
     return token;
   }
 

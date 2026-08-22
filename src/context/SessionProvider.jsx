@@ -11,7 +11,7 @@ import { useIdleTimer } from "react-idle-timer";
 import { useUser } from "./userContext";
 import appointmentConfigService from "../helpers/appointmentConfigHelper";
 import { refreshAccessToken } from "../utils/axiosInstance";
-import { getAccessToken, getMsUntilExpiry } from "../utils/jwtUtils";
+import { getAccessToken, getMsUntilExpiry, getJwtWarningThresholdMs } from "../utils/jwtUtils";
 import { endSession } from "../utils/sessionLifecycle";
 import {
   onAccessTokenRefreshed,
@@ -26,7 +26,6 @@ const SessionContext = createContext(null);
 
 export const useSession = () => useContext(SessionContext);
 
-const JWT_WARNING_MS = 5 * 60 * 1000;
 const IDLE_PROMPT_MS = 30 * 1000;
 const DEFAULT_IDLE_MS = 30 * 60 * 1000;
 
@@ -72,6 +71,8 @@ export function SessionProvider({ children }) {
 
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
+  /** After a successful extend, ignore warning until this timestamp (avoids 5m-TTL reopen race). */
+  const warnSuppressUntilRef = useRef(0);
 
   const handleEndSession = useCallback(async (reason = "manual") => {
     if (isSessionEnding() || phaseRef.current === "loggingOut") return;
@@ -174,7 +175,17 @@ export function SessionProvider({ children }) {
 
       if (remaining === null) return;
 
-      if (remaining <= JWT_WARNING_MS) {
+      if (Date.now() < warnSuppressUntilRef.current) {
+        if (phaseRef.current === "jwtWarning") {
+          setPhase("active");
+          setSessionWarningActive(false);
+        }
+        return;
+      }
+
+      const warningMs = getJwtWarningThresholdMs(token);
+
+      if (remaining <= warningMs) {
         // JWT warning wins over idle prompt
         if (phaseRef.current !== "jwtWarning") {
           setPhase("jwtWarning");
@@ -209,6 +220,7 @@ export function SessionProvider({ children }) {
   // When another tab / axios refreshes the access token, leave JWT warning
   useEffect(() => {
     return onAccessTokenRefreshed(() => {
+      warnSuppressUntilRef.current = Date.now() + 2000;
       if (phaseRef.current === "jwtWarning") {
         setPhase("active");
         setSessionWarningActive(false);
@@ -226,6 +238,7 @@ export function SessionProvider({ children }) {
     try {
       await refreshAccessToken();
       toast.success("Sesja została przedłużona");
+      warnSuppressUntilRef.current = Date.now() + 2000;
       setSessionWarningActive(false);
       setPhase("active");
       reset();
@@ -247,6 +260,7 @@ export function SessionProvider({ children }) {
     if (isExtending || isSessionEnding()) return;
     setIsExtending(true);
     try {
+      warnSuppressUntilRef.current = Date.now() + 2000;
       setSessionWarningActive(false);
       setPhase("active");
       activate();
