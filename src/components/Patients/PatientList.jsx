@@ -2605,20 +2605,32 @@ function PatientStepFormWrapper({
   patientFormData
 }) {
   const [completedSteps, setCompletedSteps] = useState([]);
-  const { formData, updateFormData } = useFormContext();
+  const { formData, updateMultipleFields } = useFormContext();
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (isEditMode && patientFormData && !isInitialized) {
-      updateFormData(patientFormData);
+    if (
+      isEditMode &&
+      patientFormData &&
+      Object.keys(patientFormData).length > 0 &&
+      !isInitialized
+    ) {
+      // Must merge fields — updateFormData(name, value) is not an object merge API
+      updateMultipleFields(patientFormData);
       setCompletedSteps(Array.from({ length: subStepTitles.length }, (_, i) => i));
       setIsInitialized(true);
     }
-    
+
     if (!isEditMode) {
       setIsInitialized(false);
     }
-  }, [isEditMode, patientFormData, isInitialized, subStepTitles.length]);
+  }, [
+    isEditMode,
+    patientFormData,
+    isInitialized,
+    subStepTitles.length,
+    updateMultipleFields,
+  ]);
 
   const handleStepCompleted = () => {
     if (!completedSteps.includes(currentSubStep)) {

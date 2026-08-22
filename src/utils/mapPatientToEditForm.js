@@ -18,6 +18,51 @@ export function toEntityId(value) {
 }
 
 /**
+ * Prefer Mongo ObjectId from a specialization entry; fall back to name string
+ * (ReferrerForm resolves names against the specialization catalog).
+ */
+export function extractSpecializationRef(specs) {
+  if (!Array.isArray(specs) || specs.length === 0) return "";
+  const first = specs[0];
+  if (first && typeof first === "object") {
+    return String(first._id || first.id || first.name || "");
+  }
+  return String(first || "");
+}
+
+/**
+ * Resolve specialization name → catalog _id when the value is not already an ObjectId-shaped id.
+ */
+export function resolveSpecializationAgainstCatalog(value, specializations = []) {
+  const raw = toEntityId(value);
+  if (!raw) return "";
+  if (!specializations?.length) return raw;
+
+  const byId = specializations.find((s) => String(s._id) === raw);
+  if (byId) return String(byId._id);
+
+  const lower = raw.toLowerCase();
+  const byName = specializations.find(
+    (s) => String(s.name || "").toLowerCase() === lower
+  );
+  if (byName) return String(byName._id);
+
+  return raw;
+}
+
+async function specializationFromDoctorId(doctorId) {
+  if (!doctorId) return "";
+  try {
+    const docRes = await doctorService.getDoctorById(doctorId);
+    const doctor = docRes?.doctor || docRes?.data || docRes;
+    const specs = doctor?.specialization || doctor?.specializations || [];
+    return extractSpecializationRef(specs);
+  } catch {
+    return "";
+  }
+}
+
+/**
  * Maps `patient.phone` (+ optional `patient.phoneCode`) to form `phoneCode` + `mobileNumber`.
  */
 export function mapPatientPhoneToFormFields(
@@ -69,14 +114,23 @@ export async function resolveAttendingDoctorFromVisits(
   preferredAppointmentId
 ) {
   let doctorId = "";
+  let doctorName = "";
 
   if (preferredAppointmentId) {
     try {
       const aptRes = await appointmentHelper.getAppointmentById(
         preferredAppointmentId
       );
+      // API: { success, data: appointment } — doctor may be populated {_id, name}
       const apt = aptRes?.appointment || aptRes?.data || aptRes;
       doctorId = toEntityId(apt?.doctor);
+      if (apt?.doctor?.name) {
+        const n = apt.doctor.name;
+        doctorName =
+          typeof n === "object"
+            ? `${n.first || ""} ${n.last || ""}`.trim()
+            : String(n);
+      }
     } catch (err) {
       console.warn("Could not load appointment for attending doctor prefill:", err);
     }
@@ -88,36 +142,27 @@ export async function resolveAttendingDoctorFromVisits(
       const visits = Array.isArray(visitsRes?.data) ? visitsRes.data : [];
       const withDoctor = visits.filter(
         (v) =>
-          v?.doctor?.id &&
+          (v?.doctor?.id || v?.doctor?._id) &&
           String(v.status || "").toLowerCase() !== "cancelled"
       );
       const oldest = withDoctor.length
         ? withDoctor[withDoctor.length - 1]
         : null;
-      doctorId = toEntityId(oldest?.doctor?.id || oldest?.doctor);
+      doctorId = toEntityId(oldest?.doctor?.id || oldest?.doctor?._id || oldest?.doctor);
+      if (oldest?.doctor?.name) doctorName = String(oldest.doctor.name);
     } catch (err) {
       console.warn("Could not load visits for attending doctor prefill:", err);
     }
   }
 
-  let consultingSpecialization = "";
-  if (doctorId) {
-    try {
-      const docRes = await doctorService.getDoctorById(doctorId);
-      const doctor = docRes?.doctor || docRes?.data || docRes;
-      const specs = doctor?.specialization || doctor?.specializations || [];
-      const first = Array.isArray(specs) ? specs[0] : null;
-      consultingSpecialization = toEntityId(
-        first && typeof first === "object" ? first._id || first.id : first
-      );
-    } catch (_) {
-      /* optional */
-    }
-  }
+  const consultingSpecialization = doctorId
+    ? await specializationFromDoctorId(doctorId)
+    : "";
 
   return {
     consultingDoctor: doctorId,
     consultingSpecialization,
+    consultingDoctorName: doctorName,
   };
 }
 
@@ -149,31 +194,28 @@ export async function loadPatientEditFormData(
     !/^_no_phone_/i.test(String(rawPhone).trim());
 
   let consultingDoctor = toEntityId(details.consultingDoctor);
-  let consultingSpecialization = toEntityId(
-    details.consultingSpecialization
-  );
+  let consultingSpecialization = toEntityId(details.consultingSpecialization);
+  let consultingDoctorName = "";
 
-  if (!consultingDoctor) {
+  // Prefer visit/appointment doctor when opening from a list row (or when patient has none).
+  // Always fill missing specialization from the doctor profile.
+  const needsVisitPrefill = !consultingDoctor || !!preferredAppointmentId;
+  if (needsVisitPrefill) {
     const resolved = await resolveAttendingDoctorFromVisits(
       patientId,
       preferredAppointmentId
     );
-    consultingDoctor = resolved.consultingDoctor;
+    if (!consultingDoctor && resolved.consultingDoctor) {
+      consultingDoctor = resolved.consultingDoctor;
+      consultingDoctorName = resolved.consultingDoctorName || "";
+    }
     if (!consultingSpecialization && resolved.consultingSpecialization) {
       consultingSpecialization = resolved.consultingSpecialization;
     }
-  } else if (!consultingSpecialization) {
-    try {
-      const docRes = await doctorService.getDoctorById(consultingDoctor);
-      const doctor = docRes?.doctor || docRes?.data || docRes;
-      const specs = doctor?.specialization || doctor?.specializations || [];
-      const first = Array.isArray(specs) ? specs[0] : null;
-      consultingSpecialization = toEntityId(
-        first && typeof first === "object" ? first._id || first.id : first
-      );
-    } catch (_) {
-      /* keep empty */
-    }
+  }
+
+  if (consultingDoctor && !consultingSpecialization) {
+    consultingSpecialization = await specializationFromDoctorId(consultingDoctor);
   }
 
   const mappedFormData = {
@@ -200,6 +242,7 @@ export async function loadPatientEditFormData(
     consultingDepartment: details.consultingDepartment,
     consultingSpecialization,
     consultingDoctor,
+    consultingDoctorName,
     address: details.address,
     city: details.city,
     pinCode: details.pinCode,
