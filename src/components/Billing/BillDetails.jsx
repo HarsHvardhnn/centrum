@@ -14,11 +14,15 @@ import {
 import billingHelper from "../../helpers/billingHelper";
 import { toast } from "sonner";
 import { queryKeys } from "../../lib/queryKeys";
+import { useUser } from "../../context/userContext";
 
 const BillDetails = () => {
   const { billId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useUser();
+  const isBillingStaff =
+    user?.role === "admin" || user?.role === "receptionist";
 
   const {
     data: billResponse,
@@ -201,7 +205,7 @@ const BillDetails = () => {
           </div>
           
           <div className="flex flex-wrap gap-3">
-            {billData.paymentStatus === "pending" && (
+            {isBillingStaff && billData.paymentStatus === "pending" && (
               <button
                 onClick={() => setShowPaymentModal(true)}
                 className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700"
@@ -213,6 +217,13 @@ const BillDetails = () => {
           </div>
         </div>
         
+        {user?.role === "doctor" && (
+          <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+            Podgląd tylko do odczytu. Rozliczenie pacjenta i faktury wykonuje recepcja.
+            Szacowane przychody — w sekcji Raporty.
+          </div>
+        )}
+
         {/* Bill Card */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
           <div className="p-6 sm:p-8">

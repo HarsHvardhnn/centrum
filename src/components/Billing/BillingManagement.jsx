@@ -79,6 +79,9 @@ const BillingManagement = () => {
   const location = useLocation();
   const { user } = useUser();
   const queryClient = useQueryClient();
+  const isBillingStaff =
+    user?.role === "admin" || user?.role === "receptionist";
+  const isDoctorViewOnly = user?.role === "doctor";
   const [isLoading, setIsLoading] = useState(false);
   
   // Extract appointmentId and step from query parameters if present
@@ -1070,6 +1073,10 @@ const BillingManagement = () => {
   );
 
   const handleEditBill = (billId) => {
+    if (!isBillingStaff) {
+      navigate(`/administracja/rozliczenia/szczegoly/${billId}`);
+      return;
+    }
     prefetchSettlementBill(billId);
     setSelectedBillId(billId);
     setIsEditModalOpen(true);
@@ -1235,6 +1242,10 @@ const BillingManagement = () => {
       console.log("Found bill for appointment:", billForAppointment);
       
       if (billForAppointment) {
+        if (isDoctorViewOnly) {
+          navigate(`/administracja/rozliczenia/szczegoly/${billForAppointment._id}`);
+          return;
+        }
         // Bill exists for this appointment - show edit modal
         console.log("Showing edit modal for bill:", billForAppointment._id);
         setSelectedBillId(billForAppointment._id);
@@ -1243,6 +1254,10 @@ const BillingManagement = () => {
         // Ensure generate modal is closed
         setIsGenerateBillModalOpen(false);
       } else {
+        if (isDoctorViewOnly) {
+          navigate(getReturnPathAfterAppointmentRedirect());
+          return;
+        }
         // No bill found for this appointment - show generate bill modal
         console.log("No bill found, showing generate modal");
         setIsGenerateBillModalOpen(true);
@@ -1252,7 +1267,7 @@ const BillingManagement = () => {
         setSelectedBillId(null);
       }
     }
-  }, [step, appointmentId, bills]);
+  }, [step, appointmentId, bills, isDoctorViewOnly, navigate]);
   
   const handleSort = (key) => {
     setSortConfig(prev => ({
@@ -1302,7 +1317,7 @@ const BillingManagement = () => {
     );
   };
 
-  const canSelectBills = ["admin", "receptionist", "doctor"].includes(user?.role);
+  const canSelectBills = isBillingStaff;
   const pendingBillsOnPage = bills.filter(isUnpaidBill);
   const pendingIdsOnPage = pendingBillsOnPage.map((bill) => bill._id);
   const allPendingOnPageSelected =
@@ -1508,21 +1523,38 @@ const BillingManagement = () => {
   };
 
   const formatBillDocumentRef = (bill) => {
-    if (bill?.documentType === "invoice" && bill?.invoiceId) {
-      return bill.invoiceId;
+    const issuedInvoiceNumber =
+      bill?.invoiceSnapshot?.number ||
+      (bill?.documentType === "invoice" ? bill?.invoiceId : "");
+
+    const invoiceIssued =
+      bill?.documentType === "invoice" &&
+      issuedInvoiceNumber &&
+      bill?.invoiceSnapshot?.status &&
+      bill.invoiceSnapshot.status !== "draft";
+
+    if (bill?.documentType === "fiscal_receipt" && bill?.internalTxnId) {
+      return bill.internalTxnId;
     }
-    if (bill?.invoiceSnapshot?.number) {
-      return bill.invoiceSnapshot.number;
+
+    if (invoiceIssued) {
+      return issuedInvoiceNumber;
     }
+
+    // TRX internal reference (doctor visit closed or paragon settled)
     if (bill?.internalTxnId) {
       return bill.internalTxnId;
     }
-    if (bill?.invoiceId) {
-      return bill.invoiceId;
-    }
+
+    // Awaiting reception: no formal invoice number yet
     if (bill?.paymentStatus === "pending" || !bill?.documentType) {
       return "Do rozliczenia";
     }
+
+    if (issuedInvoiceNumber) {
+      return issuedInvoiceNumber;
+    }
+
     return "Paragon";
   };
 
@@ -1559,8 +1591,14 @@ const BillingManagement = () => {
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Zarządzanie Fakturami</h1>
-          <p className="text-gray-600">Przeglądaj i zarządzaj fakturami pacjentów</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isDoctorViewOnly ? "Moje rozliczenia" : "Zarządzanie Fakturami"}
+          </h1>
+          <p className="text-gray-600">
+            {isDoctorViewOnly
+              ? "Podgląd rozliczeń z wizyt. Edycja, faktury i oznaczanie płatności — tylko recepcja. Szacowane przychody: Raporty."
+              : "Przeglądaj i zarządzaj fakturami pacjentów"}
+          </p>
         </div>
         
         {/* Stats Cards */}
@@ -1924,9 +1962,17 @@ const BillingManagement = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         <button
                           type="button"
-                          onClick={() => handleEditBill(bill._id)}
+                          onClick={() =>
+                            isBillingStaff
+                              ? handleEditBill(bill._id)
+                              : handleViewBillDetails(bill._id)
+                          }
                           className="text-left text-teal-700 hover:text-teal-900 hover:underline"
-                          title="Rozliczenie pacjenta"
+                          title={
+                            isBillingStaff
+                              ? "Rozliczenie pacjenta"
+                              : "Podgląd rozliczenia"
+                          }
                         >
                           {formatBillDocumentRef(bill)}
                         </button>
@@ -1972,14 +2018,16 @@ const BillingManagement = () => {
                           >
                             <Eye size={18} />
                           </button>
-                          <button
-                            onClick={() => handleEditBill(bill._id)}
-                            className="text-blue-600 hover:text-blue-900"
-                            title="Rozliczenie pacjenta"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          {bill.paymentStatus !== "paid" && (
+                          {isBillingStaff && (
+                            <button
+                              onClick={() => handleEditBill(bill._id)}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="Rozliczenie pacjenta"
+                            >
+                              <Edit size={18} />
+                            </button>
+                          )}
+                          {isBillingStaff && bill.paymentStatus !== "paid" && (
                             <button
                               onClick={() => handleUpdatePaymentStatus(bill._id, "paid")}
                               className="text-green-600 hover:text-green-900"
@@ -2049,24 +2097,13 @@ const BillingManagement = () => {
         </div>
       </div>
 
-      {/* Patient Settlement modal (replaces invoice-centric edit for reception/admin) */}
-      {isEditModalOpen && (user?.role === "admin" || user?.role === "receptionist") && (
+      {/* Patient Settlement modal (reception/admin only) */}
+      {isEditModalOpen && isBillingStaff && (
         <PatientSettlementModal
           isOpen={isEditModalOpen}
           onClose={handleEditModalClose}
           billId={selectedBillId}
           onUpdate={fetchBills}
-        />
-      )}
-
-      {/* Doctors keep legacy edit modal for service adjustments */}
-      {isEditModalOpen && user?.role === "doctor" && (
-        <EditBillModal
-          isOpen={isEditModalOpen}
-          onClose={handleEditModalClose}
-          billId={selectedBillId}
-          onUpdate={fetchBills}
-          isRedirectedFromAppointment={isRedirectedFromAppointment}
         />
       )}
 

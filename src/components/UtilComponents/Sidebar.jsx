@@ -136,7 +136,7 @@ const Sidebar = () => {
       
             <NavItem
               icon={<LuFileChartColumn className="text-xl text-teal-400" />}
-              label="Rozliczenia"
+              label={user?.role === "doctor" ? "Podgląd rozliczeń" : "Rozliczenia"}
               to="/administracja/rozliczenia"
               isActive={currentPath === "/administracja/rozliczenia"}
               isEnabled={true}

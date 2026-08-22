@@ -4,6 +4,15 @@ import { Loader, Plus, Trash2, X, Eye, Printer, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import billingHelper from "../../helpers/billingHelper";
 import { queryKeys } from "../../lib/queryKeys";
+import { translateStatus } from "../../utils/statusHelper";
+import {
+  DEFAULT_VAT_EXEMPTION_TEXT,
+  isZwTax,
+  lineItemToInvoicePosition,
+  normalizeTaxRate,
+  taxSelectValue,
+  VAT_RATE_PRESETS,
+} from "../../utils/invoiceVat";
 
 const PAYMENT_METHODS = [
   { value: "cash", label: "Gotówka" },
@@ -70,6 +79,7 @@ function buildLineItemsFromBill(bill) {
       quantity: i.quantity || 1,
       unit: i.unit || "szt.",
       status: i.status || "active",
+      tax: normalizeTaxRate(i.tax),
     }));
   }
   const items = (bill?.services || []).map((s) => {
@@ -86,6 +96,7 @@ function buildLineItemsFromBill(bill) {
       quantity: 1,
       unit: "szt.",
       status: s.status || "active",
+      tax: "zw",
     };
   });
   if (toMoney(bill?.consultationCharges) > 0) {
@@ -101,6 +112,7 @@ function buildLineItemsFromBill(bill) {
       quantity: 1,
       unit: "szt.",
       status: "active",
+      tax: "zw",
     });
   }
   if (toMoney(bill?.additionalCharges) > 0) {
@@ -116,6 +128,7 @@ function buildLineItemsFromBill(bill) {
       quantity: 1,
       unit: "szt.",
       status: "active",
+      tax: "zw",
     });
   }
   const disc = toMoney(bill?.discount);
@@ -183,7 +196,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   const [recipientName, setRecipientName] = useState("");
   const [issuerName, setIssuerName] = useState("");
   const [vatExemptionText, setVatExemptionText] = useState(
-    "Zwolnienie ze względu na rodzaj prowadzonej działalności (art. 43 ust. 1 ustawy o VAT)."
+    DEFAULT_VAT_EXEMPTION_TEXT
   );
   const [issuedPdfUrl, setIssuedPdfUrl] = useState(null);
   const [issuedNumber, setIssuedNumber] = useState("");
@@ -271,6 +284,16 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     [lineItems]
   );
 
+  const showVatExemptionField = useMemo(
+    () => documentType === "invoice" && lineItems.some((i) => isZwTax(i.tax)),
+    [documentType, lineItems]
+  );
+
+  const invoicePositions = useMemo(
+    () => lineItems.map((line) => lineItemToInvoicePosition(line)),
+    [lineItems]
+  );
+
   const changeDue = useMemo(() => {
     if (paymentMethod !== "cash" || amountReceived === "") return null;
     return toMoney(Math.max(0, toMoney(amountReceived) - total));
@@ -306,8 +329,19 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
         quantity: 1,
         unit: "szt.",
         status: "active",
+        tax: "zw",
       },
     ]);
+  };
+
+  const applyTaxToAllLines = (preset) => {
+    if (!preset) return;
+    setLineItems((prev) =>
+      prev.map((row) => ({
+        ...row,
+        tax: preset === "custom" ? row.tax || "zw" : preset,
+      }))
+    );
   };
 
   const removeLine = (key) => {
@@ -395,9 +429,9 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
           paymentDueDate: paymentDueKind === "other" ? paymentDueDate : undefined,
           paymentType: paymentMethod,
           buyer,
-          recipientName,
-          issuerName,
-          vatExemptionText,
+          recipientName: String(recipientName || "").trim(),
+          issuerName: String(issuerName || "").trim(),
+          vatExemptionText: showVatExemptionField ? vatExemptionText : "",
           paidAmount: paymentDueKind === "immediate" ? total : 0,
         },
       });
@@ -411,23 +445,12 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
         paymentDueDate: paymentDueKind === "other" ? paymentDueDate : undefined,
         paymentType: paymentMethod,
         buyer,
-        recipientName,
-        issuerName,
-        vatExemptionText,
+        recipientName: String(recipientName || "").trim(),
+        issuerName: String(issuerName || "").trim(),
+        vatExemptionText: showVatExemptionField ? vatExemptionText : "",
         paidAmount: paymentDueKind === "immediate" ? total : 0,
         lineItems: payloadLineItems(),
-        positions: lineItems.map((i) => ({
-          name: i.name,
-          quantity: i.quantity || 1,
-          quantityUnit: i.unit || "szt",
-          priceNet: i.finalPrice,
-          priceGross: i.finalPrice,
-          tax: "zw",
-          priceTax: 0,
-          totalPriceNet: i.finalPrice,
-          totalPriceTax: 0,
-          totalPriceGross: i.finalPrice,
-        })),
+        positions: invoicePositions,
       });
 
       if (res?.success) {
@@ -528,7 +551,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                   : "—"}
                 {apt?.startTime ? ` · ${apt.startTime}` : ""}
                 {` · ${doctorName(apt)}`}
-                {apt?.status ? ` · ${apt.status}` : ""}
+                {apt?.status ? ` · ${translateStatus(apt.status)}` : ""}
                 {bill.internalTxnId ? ` · ${bill.internalTxnId}` : ""}
               </p>
             )}
@@ -544,20 +567,79 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {/* Document type */}
+          <section className="border border-gray-200 rounded-lg p-4">
+            <h4 className="font-medium mb-3">Typ dokumentu</h4>
+            <div className="flex flex-wrap gap-4">
+              <label className="inline-flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="documentType"
+                  disabled={locked}
+                  checked={documentType === "fiscal_receipt"}
+                  onChange={() => setDocumentType("fiscal_receipt")}
+                />
+                <span>Paragon fiskalny (domyślny)</span>
+              </label>
+              <label className="inline-flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="documentType"
+                  disabled={locked}
+                  checked={documentType === "invoice"}
+                  onChange={() => setDocumentType("invoice")}
+                />
+                <span>Faktura</span>
+              </label>
+            </div>
+            {documentType === "fiscal_receipt" && (
+              <p className="text-xs text-gray-500 mt-2">
+                Zapisze płatność i wewnętrzne ID TRX. Paragon drukujesz na kasie fiskalnej — bez PDF i numeru faktury.
+              </p>
+            )}
+            {documentType === "invoice" && (
+              <p className="text-xs text-gray-500 mt-2">
+                Ustaw stawkę VAT przy każdej pozycji poniżej. Domyślnie ZW — tekst zwolnienia pojawi się tylko dla pozycji ze stawką ZW.
+              </p>
+            )}
+          </section>
+
           {/* Line items */}
           <section>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <h4 className="font-medium text-gray-800">Pozycje</h4>
-              {!locked && (
-                <button
-                  type="button"
-                  onClick={addAdditionalCharge}
-                  className="inline-flex items-center gap-1 text-sm text-teal-700 hover:text-teal-900"
-                >
-                  <Plus size={16} />
-                  Dodaj opłatę dodatkową
-                </button>
-              )}
+              <div className="flex flex-wrap items-center gap-2">
+                {documentType === "invoice" && !locked && (
+                  <label className="inline-flex items-center gap-2 text-sm text-gray-600">
+                    <span className="text-xs text-gray-500">Stawka VAT (wszystkie):</span>
+                    <select
+                      className="px-2 py-1 border rounded-md text-sm bg-white"
+                      defaultValue=""
+                      onChange={(e) => applyTaxToAllLines(e.target.value)}
+                    >
+                      <option value="" disabled>
+                        Wybierz…
+                      </option>
+                      {VAT_RATE_PRESETS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                      <option value="custom">Inna…</option>
+                    </select>
+                  </label>
+                )}
+                {!locked && (
+                  <button
+                    type="button"
+                    onClick={addAdditionalCharge}
+                    className="inline-flex items-center gap-1 text-sm text-teal-700 hover:text-teal-900"
+                  >
+                    <Plus size={16} />
+                    Dodaj opłatę dodatkową
+                  </button>
+                )}
+              </div>
             </div>
             <div className="space-y-3">
               {lineItems.map((item) => (
@@ -565,7 +647,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                   key={item.key}
                   className="border border-gray-200 rounded-lg p-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-end"
                 >
-                  <div className="md:col-span-4">
+                  <div className={documentType === "invoice" ? "md:col-span-3" : "md:col-span-4"}>
                     <label className="text-xs text-gray-500">Nazwa</label>
                     <input
                       type="text"
@@ -606,7 +688,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                       className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm disabled:bg-gray-50"
                     />
                   </div>
-                  <div className="md:col-span-3">
+                  <div className={documentType === "invoice" ? "md:col-span-2" : "md:col-span-3"}>
                     <label className="text-xs text-gray-500">Powód rabatu</label>
                     <input
                       type="text"
@@ -618,9 +700,63 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                       className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm disabled:bg-gray-50"
                     />
                   </div>
-                  <div className="md:col-span-1 flex items-center justify-between gap-2">
+                  {documentType === "invoice" && (
+                  <div className="md:col-span-2">
+                    <label className="text-xs text-gray-500">Stawka VAT</label>
+                    <div className="flex gap-1 mt-0.5">
+                      <select
+                        disabled={locked}
+                        value={taxSelectValue(item.tax)}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v === "custom") {
+                            const current = taxSelectValue(item.tax);
+                            updateLine(item.key, {
+                              tax:
+                                current === "custom"
+                                  ? normalizeTaxRate(item.tax)
+                                  : "5",
+                            });
+                          } else {
+                            updateLine(item.key, { tax: v });
+                          }
+                        }}
+                        className="w-full px-2 py-1.5 border rounded-md text-sm disabled:bg-gray-50"
+                      >
+                        {VAT_RATE_PRESETS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                        <option value="custom">Inna…</option>
+                      </select>
+                    </div>
+                    {taxSelectValue(item.tax) === "custom" && (
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        disabled={locked}
+                        value={normalizeTaxRate(item.tax) === "zw" ? "" : item.tax}
+                        onChange={(e) =>
+                          updateLine(item.key, { tax: e.target.value })
+                        }
+                        placeholder="%"
+                        className="w-full mt-1 px-2 py-1 border rounded-md text-sm disabled:bg-gray-50"
+                      />
+                    )}
+                  </div>
+                  )}
+                  <div
+                    className={
+                      documentType === "invoice"
+                        ? "md:col-span-2 flex items-center justify-between gap-2"
+                        : "md:col-span-1 flex items-center justify-between gap-2"
+                    }
+                  >
                     <div>
-                      <div className="text-xs text-gray-500">Final</div>
+                      <div className="text-xs text-gray-500">Suma</div>
                       <div className="font-semibold text-sm">{toMoney(item.finalPrice).toFixed(2)}</div>
                     </div>
                     {!locked && item.kind === "additional" && (
@@ -643,38 +779,6 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
             <div className="mt-3 flex justify-end text-base font-semibold">
               Razem: {total.toFixed(2)} zł
             </div>
-          </section>
-
-          {/* Document type */}
-          <section className="border border-gray-200 rounded-lg p-4">
-            <h4 className="font-medium mb-3">Typ dokumentu</h4>
-            <div className="flex flex-wrap gap-4">
-              <label className="inline-flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="documentType"
-                  disabled={locked}
-                  checked={documentType === "fiscal_receipt"}
-                  onChange={() => setDocumentType("fiscal_receipt")}
-                />
-                <span>Paragon fiskalny (domyślny)</span>
-              </label>
-              <label className="inline-flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="documentType"
-                  disabled={locked}
-                  checked={documentType === "invoice"}
-                  onChange={() => setDocumentType("invoice")}
-                />
-                <span>Faktura</span>
-              </label>
-            </div>
-            {documentType === "fiscal_receipt" && (
-              <p className="text-xs text-gray-500 mt-2">
-                Zapisze płatność i wewnętrzne ID TRX. Paragon drukujesz na kasie fiskalnej — bez PDF i numeru faktury.
-              </p>
-            )}
           </section>
 
           {/* Payment */}
@@ -760,16 +864,6 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500">Wystawca (opcjonalnie)</label>
-                  <input
-                    type="text"
-                    disabled={locked}
-                    value={issuerName}
-                    onChange={(e) => setIssuerName(e.target.value)}
-                    className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
-                  />
-                </div>
-                <div>
                   <label className="text-xs text-gray-500">Data wystawienia</label>
                   <input
                     type="date"
@@ -817,7 +911,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white border rounded-md p-3">
                   <div className="text-xs font-semibold uppercase text-gray-500 mb-2">
                     Sprzedawca (stały)
@@ -859,19 +953,28 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                       />
                     </div>
                   ))}
+                </div>
+                <div className="bg-white border rounded-md p-3 space-y-2">
+                  <div className="text-xs font-semibold uppercase text-gray-500">
+                    Odbiorca (opcjonalnie)
+                  </div>
                   <div>
-                    <label className="text-xs text-gray-500">Odbiorca (opcjonalnie)</label>
+                    <label className="text-xs text-gray-500">
+                      Imię i nazwisko odbiorcy
+                    </label>
                     <input
                       type="text"
                       disabled={locked}
                       value={recipientName}
                       onChange={(e) => setRecipientName(e.target.value)}
+                      placeholder="Pozostaw puste, jeśli odbiorca = nabywca"
                       className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm disabled:bg-gray-50"
                     />
                   </div>
                 </div>
               </div>
 
+              {showVatExemptionField && (
               <div>
                 <label className="text-xs text-gray-500">Tekst zwolnienia VAT (ZW)</label>
                 <textarea
@@ -879,6 +982,23 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                   value={vatExemptionText}
                   onChange={(e) => setVatExemptionText(e.target.value)}
                   rows={2}
+                  className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Pole widoczne tylko gdy co najmniej jedna pozycja ma stawkę ZW.
+                </p>
+              </div>
+              )}
+
+              <div>
+                <label className="text-xs text-gray-500">
+                  Imię i nazwisko wystawcy (opcjonalnie)
+                </label>
+                <input
+                  type="text"
+                  disabled={locked}
+                  value={issuerName}
+                  onChange={(e) => setIssuerName(e.target.value)}
                   className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
                 />
               </div>
