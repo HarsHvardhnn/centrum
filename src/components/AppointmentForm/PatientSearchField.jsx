@@ -22,7 +22,7 @@ const PatientSearchField = ({ onPatientSelect }) => {
 
     searchTimeout.current = setTimeout(() => {
       fetchPatients(searchTerm);
-    }, 300); // Debounce search to avoid too many requests
+    }, 180); // Typeahead: start suggesting quickly after keystrokes
 
     return () => {
       if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -45,7 +45,7 @@ const PatientSearchField = ({ onPatientSelect }) => {
 
   const fetchPatients = async (search = "", page = 1) => {
     const term = (search || "").trim();
-    if (term.length < 2) {
+    if (term.length < 1) {
       setPatients([]);
       setPagination({ currentPage: 1, totalPages: 1, totalPatients: 0 });
       setLoading(false);

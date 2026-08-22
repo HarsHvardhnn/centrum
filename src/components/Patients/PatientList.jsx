@@ -19,7 +19,8 @@ import {
   Pen,
   Clock,
   History,
-  Settings
+  Settings,
+  Loader2,
 } from "lucide-react";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
@@ -328,8 +329,9 @@ function LabAppointmentsContent({ clinic }) {
 
   const appointmentIdFromUrl = searchParams.get("appointmentId");
   const dateFromUrl = searchParams.get("date");
-  const filtersSignature = JSON.stringify({
-    searchQuery,
+  // Typeahead on /pacjenci: fire quickly after 1–2 letters; other filters stay slower
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, clinic ? 400 : 180);
+  const otherFiltersSignature = JSON.stringify({
     statusFilter,
     dateRange,
     clinic,
@@ -343,11 +345,15 @@ function LabAppointmentsContent({ clinic }) {
     userId: user?.id,
     userRole: user?.role,
   });
-  const debouncedFiltersSignature = useDebouncedValue(filtersSignature, 450);
+  const debouncedOtherFiltersSignature = useDebouncedValue(otherFiltersSignature, 450);
   const debouncedFilters = useMemo(
-    () => JSON.parse(debouncedFiltersSignature),
-    [debouncedFiltersSignature]
+    () => ({
+      ...JSON.parse(debouncedOtherFiltersSignature),
+      searchQuery: debouncedSearchQuery,
+    }),
+    [debouncedOtherFiltersSignature, debouncedSearchQuery]
   );
+  const debouncedFiltersSignature = `${debouncedOtherFiltersSignature}|${debouncedSearchQuery}`;
 
   useEffect(() => {
     if (skipFilterPageReset()) return;
@@ -356,17 +362,8 @@ function LabAppointmentsContent({ clinic }) {
 
   const listQueryParams = {
     ...debouncedFilters,
-    // Avoid 1-char searches hitting the API (same as PatientSearchField)
-    searchQuery:
-      !clinic && (debouncedFilters.searchQuery || "").trim().length === 1
-        ? ""
-        : debouncedFilters.searchQuery,
     page: listPage,
   };
-
-  const patientSearchReady =
-    clinic ||
-    (debouncedFilters.searchQuery || "").trim().length !== 1;
 
   /** Map GET /patients/data/simple row → shape expected by Lista pacjentów cards */
   const mapPatientApiRowToListItem = (p) => {
@@ -455,7 +452,7 @@ function LabAppointmentsContent({ clinic }) {
       );
     },
     placeholderData: keepPreviousData,
-    enabled: !!(user?.role || clinic === true || clinic === false) && patientSearchReady,
+    enabled: !!(user?.role || clinic === true || clinic === false),
   });
 
   useEffect(() => {
@@ -1341,11 +1338,20 @@ function LabAppointmentsContent({ clinic }) {
               <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Szukaj pacjenta..."
-                className="w-full py-2.5 pl-10 pr-4 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                placeholder="Nazwisko, imię lub PESEL (od 1 litery)…"
+                className="w-full py-2.5 pl-10 pr-10 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                autoComplete="off"
+                spellCheck={false}
               />
+              {listQueryFetching && searchQuery.trim() && (
+                <Loader2
+                  size={18}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-600 animate-spin pointer-events-none"
+                  aria-label="Szukanie"
+                />
+              )}
             </div>
             {user?.role !== "doctor" && (
               <button
@@ -1632,7 +1638,11 @@ function LabAppointmentsContent({ clinic }) {
           </div>
         ) : (
           /* Lista pacjentów – card layout */
-          <div className="space-y-3">
+          <div
+            className={`space-y-3 transition-opacity duration-150 ${
+              listQueryFetching && !listLoading ? "opacity-60" : "opacity-100"
+            }`}
+          >
             {/* Column headers */}
             <div className="grid grid-cols-8 gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
               <div>Pacjent i ID</div>
