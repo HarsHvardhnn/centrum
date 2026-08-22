@@ -288,7 +288,20 @@ export function SessionProvider({ children }) {
       return true;
     } catch (error) {
       console.error("Error refreshing token:", error);
-      toast.error("Nie udało się przedłużyć sesji. Zostaniesz wylogowany.");
+      const code =
+        error?.refreshErrorCode ||
+        error?.response?.data?.code;
+      if (code === "REFRESH_TOKEN_MISSING") {
+        toast.error(
+          "Nie można przedłużyć sesji — przeglądarka nie wysłała tokenu odświeżania. Zaloguj się ponownie."
+        );
+      } else if (code === "REFRESH_TOKEN_INVALID") {
+        toast.error(
+          "Sesja wygasła (token odświeżania jest nieaktualny — np. druga karta lub nowe logowanie). Zaloguj się ponownie."
+        );
+      } else {
+        toast.error("Nie udało się przedłużyć sesji. Zostaniesz wylogowany.");
+      }
       await handleEndSession("extend-failed");
       return false;
     } finally {

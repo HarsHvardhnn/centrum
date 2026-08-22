@@ -126,7 +126,8 @@ async function performHttpRefresh() {
     baseURL: axiosInstance.defaults.baseURL,
     withCredentials: true,
   });
-  try {
+
+  const attemptRefresh = async () => {
     const refreshResponse = await refreshAxios.post("/auth/refresh-token");
     if (!refreshResponse.data?.token) {
       throw new Error("No token in refresh response");
@@ -134,18 +135,38 @@ async function performHttpRefresh() {
     const newToken = refreshResponse.data.token;
     storeAccessToken(newToken, refreshResponse.data.user);
     return newToken;
+  };
+
+  try {
+    return await attemptRefresh();
   } catch (err) {
-    // Concurrent refresh (another tab/request) may have already rotated the
-    // cookie. If we already hold a still-valid access token, keep the session.
-    if (err?.response?.status === 401) {
-      await new Promise((r) => setTimeout(r, 400));
-      const existing =
-        getCookie("authToken") || localStorage.getItem("authToken");
-      if (existing && accessTokenHasLifeLeft(existing, 15_000)) {
-        return existing;
-      }
+    if (err?.response?.status !== 401) {
+      throw err;
     }
-    throw err;
+
+    // Another tab/request may have just rotated the refresh cookie — wait briefly.
+    await new Promise((r) => setTimeout(r, 500));
+
+    const channel = getAuthChannel();
+    const crossTabToken = await waitForCrossTabToken(channel, 4_000);
+    channel?.close();
+    if (crossTabToken) return crossTabToken;
+
+    const existing =
+      getCookie("authToken") || localStorage.getItem("authToken");
+    if (existing && accessTokenHasLifeLeft(existing, 15_000)) {
+      return existing;
+    }
+
+    // Retry once — cookie may have updated from a concurrent rotation in another tab.
+    try {
+      return await attemptRefresh();
+    } catch (retryErr) {
+      const code = retryErr?.response?.data?.code;
+      const enriched = retryErr;
+      enriched.refreshErrorCode = code;
+      throw enriched;
+    }
   }
 }
 
@@ -181,7 +202,7 @@ async function coordinatedRefresh() {
         channel?.close();
         if (tokenFromOther) return tokenFromOther;
         const latest = getCookie("authToken") || localStorage.getItem("authToken");
-        if (latest) return latest;
+        if (latest && accessTokenHasLifeLeft(latest, 15_000)) return latest;
       }
     } catch {
       /* stale lock */
@@ -200,7 +221,7 @@ async function coordinatedRefresh() {
       channel?.close();
       if (tokenFromOther) return tokenFromOther;
       const latest = getCookie("authToken") || localStorage.getItem("authToken");
-      if (latest) return latest;
+      if (latest && accessTokenHasLifeLeft(latest, 15_000)) return latest;
     }
   } catch {
     /* proceed as leader */
@@ -209,7 +230,17 @@ async function coordinatedRefresh() {
   try {
     channel?.postMessage({ type: "refresh-start" });
     const newToken = await performHttpRefresh();
-    channel?.postMessage({ type: "token", token: newToken });
+    let broadcastUser = null;
+    try {
+      broadcastUser = JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      broadcastUser = null;
+    }
+    channel?.postMessage({
+      type: "token",
+      token: newToken,
+      user: broadcastUser,
+    });
     return newToken;
   } catch (err) {
     channel?.postMessage({ type: "refresh-failed" });
