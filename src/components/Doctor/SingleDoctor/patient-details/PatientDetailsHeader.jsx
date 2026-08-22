@@ -33,7 +33,7 @@ function getInitials(name) {
 
 const PatientDetailsHeader = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useUser();
+  const { user, logout } = useUser();
   const [searchValue, setSearchValue] = useState("");
   const [currentTime, setCurrentTime] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -126,9 +126,7 @@ const PatientDetailsHeader = () => {
 
   const handleLogout = () => {
     setMenuOpen(false);
-    localStorage.clear();
-    setUser(null);
-    window.location.href = "/logowanie";
+    logout();
   };
 
   useEffect(() => {

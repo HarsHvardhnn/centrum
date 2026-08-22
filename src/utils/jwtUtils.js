@@ -31,18 +31,25 @@ export const getTokenExpiry = (token) => {
 };
 
 /**
+ * Get signed time until token expires in milliseconds (negative if already expired).
+ * @param {string} token - JWT token string
+ * @returns {number|null} - ms until expiry, or null if token invalid / missing exp
+ */
+export const getMsUntilExpiry = (token) => {
+  const expiryTime = getTokenExpiry(token);
+  if (!expiryTime) return null;
+  return expiryTime - Date.now();
+};
+
+/**
  * Get time until token expires in milliseconds
  * @param {string} token - JWT token string
  * @returns {number|null} - Time until expiry in milliseconds or null if invalid/expired
  */
 export const getTimeUntilExpiry = (token) => {
-  const expiryTime = getTokenExpiry(token);
-  if (!expiryTime) return null;
-  
-  const currentTime = Date.now();
-  const timeUntilExpiry = expiryTime - currentTime;
-  
-  // Return null if already expired
+  const timeUntilExpiry = getMsUntilExpiry(token);
+  if (timeUntilExpiry === null) return null;
+  // Return null if already expired (legacy callers)
   return timeUntilExpiry > 0 ? timeUntilExpiry : null;
 };
 

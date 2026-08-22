@@ -8,6 +8,7 @@ import routes from "./routes";
 import "./index.css";
 import "./i18n";
 import { UserProvider } from "./context/userContext";
+import { SessionProvider } from "./context/SessionProvider";
 import { LoaderProvider } from "./context/LoaderContext";
 import { Toaster } from "sonner"; // 👈 import sonner's Toaster
 import { ServicesProvider } from "./context/serviceContext";
@@ -20,16 +21,18 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <QueryClientProvider client={queryClient}>
         <LoaderProvider>
           <UserProvider>
-            <ServicesProvider>
-              <GoogleOAuthProvider
-                clientId={import.meta.env.VITE_REACT_APP_GOOGLE_CLIENT_ID}
-              >
-                <SpecializationProvider>
-                  <RouterProvider router={routes} />
-                  <Toaster richColors position="top-right" />
-                </SpecializationProvider>
-              </GoogleOAuthProvider>
-            </ServicesProvider>
+            <SessionProvider>
+              <ServicesProvider>
+                <GoogleOAuthProvider
+                  clientId={import.meta.env.VITE_REACT_APP_GOOGLE_CLIENT_ID}
+                >
+                  <SpecializationProvider>
+                    <RouterProvider router={routes} />
+                    <Toaster richColors position="top-right" />
+                  </SpecializationProvider>
+                </GoogleOAuthProvider>
+              </ServicesProvider>
+            </SessionProvider>
           </UserProvider>
         </LoaderProvider>
       </QueryClientProvider>

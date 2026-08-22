@@ -1,4 +1,6 @@
 import axios from "axios";
+import { isSessionEnding, notifyAccessTokenRefreshed } from "./sessionEvents";
+import { endSession, AUTH_CHANNEL } from "./sessionLifecycle";
 
 // Cookie utility functions
 const setCookie = (name, value, days) => {
@@ -64,33 +66,167 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Single-flight refresh so a click, a 401 retry, and the idle timer never
-// rotate the refresh cookie twice (that was logging people out mid-click).
+// Single-flight + cross-tab lock so concurrent refreshes never double-rotate
+// the httpOnly refresh cookie (that was logging people out mid-click / multi-tab).
 let refreshPromise = null;
+const REFRESH_LOCK_KEY = "cm7_refresh_lock";
+const REFRESH_LOCK_TTL_MS = 12_000;
+
+function storeAccessToken(newToken, user) {
+  localStorage.setItem("authToken", newToken);
+  setCookie("authToken", newToken, 7);
+  if (user) {
+    localStorage.setItem("user", JSON.stringify(user));
+  }
+  notifyAccessTokenRefreshed(newToken);
+}
+
+function getAuthChannel() {
+  if (typeof BroadcastChannel === "undefined") return null;
+  try {
+    return new BroadcastChannel(AUTH_CHANNEL);
+  } catch {
+    return null;
+  }
+}
+
+function waitForCrossTabToken(channel, timeoutMs) {
+  return new Promise((resolve) => {
+    if (!channel) {
+      resolve(null);
+      return;
+    }
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      channel.removeEventListener("message", onMessage);
+      resolve(value);
+    };
+    const timer = setTimeout(() => finish(null), timeoutMs);
+    const onMessage = (event) => {
+      const data = event?.data;
+      if (!data || typeof data !== "object") return;
+      if (data.type === "token" && data.token) {
+        storeAccessToken(data.token, data.user);
+        finish(data.token);
+      } else if (data.type === "refresh-failed") {
+        finish(null);
+      } else if (data.type === "logout") {
+        finish(null);
+      }
+    };
+    channel.addEventListener("message", onMessage);
+  });
+}
+
+async function performHttpRefresh() {
+  const refreshAxios = axios.create({
+    baseURL: axiosInstance.defaults.baseURL,
+    withCredentials: true,
+  });
+  const refreshResponse = await refreshAxios.post("/auth/refresh-token");
+  if (!refreshResponse.data?.token) {
+    throw new Error("No token in refresh response");
+  }
+  const newToken = refreshResponse.data.token;
+  storeAccessToken(newToken, refreshResponse.data.user);
+  return newToken;
+}
+
+async function coordinatedRefresh() {
+  if (isSessionEnding()) {
+    throw new Error("Session is ending");
+  }
+
+  const channel = getAuthChannel();
+  const lockId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const existingLock = localStorage.getItem(REFRESH_LOCK_KEY);
+
+  if (existingLock) {
+    try {
+      const parsed = JSON.parse(existingLock);
+      if (parsed?.at && Date.now() - parsed.at < REFRESH_LOCK_TTL_MS) {
+        const tokenFromOther = await waitForCrossTabToken(channel, 8_000);
+        channel?.close();
+        if (tokenFromOther) return tokenFromOther;
+        const latest = getCookie("authToken") || localStorage.getItem("authToken");
+        if (latest) return latest;
+      }
+    } catch {
+      /* stale lock */
+    }
+  }
+
+  localStorage.setItem(
+    REFRESH_LOCK_KEY,
+    JSON.stringify({ id: lockId, at: Date.now() })
+  );
+  await new Promise((r) => setTimeout(r, 40));
+  try {
+    const confirm = JSON.parse(localStorage.getItem(REFRESH_LOCK_KEY) || "{}");
+    if (confirm.id && confirm.id !== lockId) {
+      const tokenFromOther = await waitForCrossTabToken(channel, 8_000);
+      channel?.close();
+      if (tokenFromOther) return tokenFromOther;
+      const latest = getCookie("authToken") || localStorage.getItem("authToken");
+      if (latest) return latest;
+    }
+  } catch {
+    /* proceed as leader */
+  }
+
+  try {
+    channel?.postMessage({ type: "refresh-start" });
+    const newToken = await performHttpRefresh();
+    channel?.postMessage({ type: "token", token: newToken });
+    return newToken;
+  } catch (err) {
+    channel?.postMessage({ type: "refresh-failed" });
+    throw err;
+  } finally {
+    try {
+      const cur = JSON.parse(localStorage.getItem(REFRESH_LOCK_KEY) || "{}");
+      if (cur.id === lockId) localStorage.removeItem(REFRESH_LOCK_KEY);
+    } catch {
+      localStorage.removeItem(REFRESH_LOCK_KEY);
+    }
+    channel?.close();
+  }
+}
 
 export function refreshAccessToken() {
+  if (isSessionEnding()) {
+    return Promise.reject(new Error("Session is ending"));
+  }
   if (!refreshPromise) {
-    refreshPromise = (async () => {
-      const refreshAxios = axios.create({
-        baseURL: axiosInstance.defaults.baseURL,
-        withCredentials: true,
-      });
-      const refreshResponse = await refreshAxios.post("/auth/refresh-token");
-      if (!refreshResponse.data?.token) {
-        throw new Error("No token in refresh response");
-      }
-      const newToken = refreshResponse.data.token;
-      localStorage.setItem("authToken", newToken);
-      setCookie("authToken", newToken, 7);
-      if (refreshResponse.data.user) {
-        localStorage.setItem("user", JSON.stringify(refreshResponse.data.user));
-      }
-      return newToken;
-    })().finally(() => {
+    refreshPromise = coordinatedRefresh().finally(() => {
       refreshPromise = null;
     });
   }
   return refreshPromise;
+}
+
+// Cross-tab logout / token sync listener (one channel for the app lifetime)
+if (typeof window !== "undefined" && typeof BroadcastChannel !== "undefined") {
+  try {
+    const lifetimeChannel = new BroadcastChannel(AUTH_CHANNEL);
+    lifetimeChannel.onmessage = (event) => {
+      const data = event?.data;
+      if (!data || typeof data !== "object") return;
+      if (data.type === "logout") {
+        if (!isSessionEnding()) {
+          // Other tab already cleared the refresh cookie — don't re-broadcast
+          endSession("cross-tab-logout", { callApi: false, broadcast: false });
+        }
+      } else if (data.type === "token" && data.token) {
+        storeAccessToken(data.token, data.user);
+      }
+    };
+  } catch {
+    /* BroadcastChannel unavailable */
+  }
 }
 
 /** Pathname only — works whether config.url is relative or absolute. */
@@ -129,12 +265,8 @@ const isPublicAuthFailurePath = (urlPath) => {
 };
 
 const redirectToLoginAndClearSession = () => {
-  removeCookie("authToken");
-  removeCookie("user");
-  localStorage.clear();
-  if (window.location.pathname !== "/logowanie") {
-    window.location.href = "/logowanie";
-  }
+  if (isSessionEnding()) return;
+  endSession("axios-401");
 };
 
 // Response interceptor for handling responses
@@ -150,6 +282,10 @@ axiosInstance.interceptors.response.use(
     if (error.response) {
       // Server responded with a status other than 2xx
       if (error.response.status === 401) {
+        if (isSessionEnding()) {
+          return Promise.reject(error);
+        }
+
         const urlPath = getRequestUrlPath(originalRequest);
 
         // If this is a refresh token request that failed, redirect to login

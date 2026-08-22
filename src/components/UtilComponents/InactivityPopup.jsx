@@ -1,50 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Clock, LogOut } from "lucide-react";
 import { formatTimeRemaining } from "../../utils/jwtUtils";
+import { useSession } from "../../context/SessionProvider";
 
-const InactivityPopup = ({ inactivityTimeout, onStayActive, onLogout }) => {
-  // Use a shorter countdown time for the popup (30 seconds) instead of the full inactivity timeout
-  const POPUP_COUNTDOWN_MS = 30 * 1000; // 30 seconds
-  const [countdown, setCountdown] = useState(POPUP_COUNTDOWN_MS);
-  const [isStaying, setIsStaying] = useState(false);
+/**
+ * Idle warning — countdown owned by SessionProvider / react-idle-timer only.
+ */
+const InactivityPopup = () => {
+  const session = useSession();
+  if (!session || session.phase !== "idlePrompt") return null;
 
-  // Countdown timer - give user time to respond
-  useEffect(() => {
-    if (!inactivityTimeout || inactivityTimeout <= 0) {
-      return;
-    }
-
-    setCountdown(POPUP_COUNTDOWN_MS);
-
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        const newCountdown = prev - 1000;
-        if (newCountdown <= 0) {
-          // Time's up, auto logout
-          clearInterval(interval);
-          onLogout();
-          return 0;
-        }
-        return newCountdown;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [onLogout]);
-
-  const handleStayActive = () => {
-    setIsStaying(true);
-    onStayActive();
-  };
-
-  const handleLogout = () => {
-    onLogout();
-  };
+  const { idlePromptRemainingMs, isExtending, stayActive, endSession } = session;
 
   return (
     <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={handleStayActive}
+      onClick={() => {
+        if (!isExtending) stayActive();
+      }}
     >
       <div
         className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 relative"
@@ -59,24 +32,31 @@ const InactivityPopup = ({ inactivityTimeout, onStayActive, onLogout }) => {
               Brak aktywności wykryty
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Nie wykryto żadnej aktywności przez określony czas. Zostaniesz automatycznie wylogowany za{" "}
-              <strong>{formatTimeRemaining(countdown)}</strong>. Aby pozostać w systemie, kliknij "Pozostań aktywny".
+              Nie wykryto żadnej aktywności przez określony czas. Zostaniesz
+              automatycznie wylogowany za{" "}
+              <strong>
+                {formatTimeRemaining(Math.max(0, idlePromptRemainingMs || 0))}
+              </strong>
+              . Aby pozostać w systemie, kliknij &quot;Pozostań aktywny&quot;.
             </p>
           </div>
         </div>
 
         <div className="flex gap-3">
           <button
-            onClick={handleStayActive}
-            disabled={isStaying}
+            type="button"
+            onClick={() => stayActive()}
+            disabled={isExtending}
             className="flex-1 flex items-center justify-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Clock className="mr-2" size={18} />
-            {isStaying ? "Przedłużanie..." : "Pozostań aktywny"}
+            {isExtending ? "Przedłużanie..." : "Pozostań aktywny"}
           </button>
           <button
-            onClick={handleLogout}
-            className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            type="button"
+            onClick={() => endSession("idle-manual")}
+            disabled={isExtending}
+            className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50"
           >
             <LogOut className="mr-2" size={18} />
             Wyloguj się

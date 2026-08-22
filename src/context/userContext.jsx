@@ -1,6 +1,11 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useState, useEffect, useContext, useCallback } from "react";
 import { apiCaller, setCookie, getCookie, removeCookie } from "../utils/axiosInstance";
 import { clearAllListState } from "../hooks/usePersistedListState";
+import {
+  registerAuthClearer,
+  resetSessionEnding,
+} from "../utils/sessionEvents";
+import { endSession } from "../utils/sessionLifecycle";
 
 // Create the context
 const UserContext = createContext(null);
@@ -15,16 +20,31 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  const clearAuthState = useCallback(() => {
+    setUser(null);
+    setIsAuthenticated(false);
+    removeCookie("authToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("authToken");
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    clearAllListState();
+  }, []);
+
+  useEffect(() => {
+    registerAuthClearer(clearAuthState);
+    return () => registerAuthClearer(() => {});
+  }, [clearAuthState]);
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
         // Get token from cookie for API calls
-        let token = getCookie('authToken');
-        if(!token){
-          token = localStorage.getItem('authToken');
+        let token = getCookie("authToken");
+        if (!token) {
+          token = localStorage.getItem("authToken");
         }
         // Get user data from localStorage
-        const storedUser = localStorage.getItem('user');
+        const storedUser = localStorage.getItem("user");
 
         if (token && storedUser) {
           try {
@@ -36,20 +56,16 @@ export const UserProvider = ({ children }) => {
               name: `${name.first} ${name.last}`,
               role,
               profilePicture,
-              email
+              email,
             };
-            
+
             // Update localStorage with fresh data
-            localStorage.setItem('user', JSON.stringify(freshUserData));
+            localStorage.setItem("user", JSON.stringify(freshUserData));
             setUser(freshUserData);
             setIsAuthenticated(true);
           } catch (error) {
             console.error("Error verifying token:", error);
-            // If token is invalid, clear everything
-            removeCookie('authToken');
-            localStorage.removeItem('user');
-            setUser(null);
-            setIsAuthenticated(false);
+            clearAuthState();
           }
         } else {
           setUser(null);
@@ -65,14 +81,14 @@ export const UserProvider = ({ children }) => {
     };
 
     checkAuth();
-  }, []);
+  }, [clearAuthState]);
 
   const refreshUserProfile = async () => {
     if (!isAuthenticated) return;
 
     try {
       setLoading(true);
-      const token = getCookie('authToken');
+      const token = getCookie("authToken");
 
       if (!token) {
         setLoading(false);
@@ -86,11 +102,11 @@ export const UserProvider = ({ children }) => {
         name: `${name.first} ${name.last}`,
         role,
         profilePicture,
-        email
+        email,
       };
 
       setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      localStorage.setItem("user", JSON.stringify(updatedUser));
     } catch (error) {
       console.error("Failed to refresh user profile:", error);
       if (error.response?.status === 401) {
@@ -109,7 +125,7 @@ export const UserProvider = ({ children }) => {
     };
 
     setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    localStorage.setItem("user", JSON.stringify(updatedUser));
   };
 
   const updateProfilePicture = async (imageFile) => {
@@ -143,25 +159,21 @@ export const UserProvider = ({ children }) => {
   };
 
   const login = (userData, token) => {
+    resetSessionEnding();
     setUser(userData);
     setIsAuthenticated(true);
     // Store token in cookie for API calls
-    setCookie('authToken', token, 7);
+    setCookie("authToken", token, 7);
+    localStorage.setItem("authToken", token);
     // Store user data in localStorage
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem("user", JSON.stringify(userData));
     // Reset session countdown start on every fresh login
     sessionStorage.setItem(SESSION_STORAGE_KEY, String(Date.now()));
   };
 
+  /** Prefer endSession so refresh cookie is cleared via POST /auth/logout. */
   const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    // Clear both cookie and localStorage
-    removeCookie('authToken');
-    localStorage.removeItem('user');
-    // Clear session countdown marker so next login starts clean
-    sessionStorage.removeItem(SESSION_STORAGE_KEY);
-    clearAllListState();
+    endSession("manual");
   };
 
   const hasRole = (allowedRoles) => {

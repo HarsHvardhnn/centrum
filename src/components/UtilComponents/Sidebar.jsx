@@ -21,14 +21,13 @@ import { useUser } from "../../context/userContext";
 import { Calendar1, Shield, BarChart3, Settings, Trash2 } from "lucide-react";
 
 const Sidebar = () => {
-  const { user } = useUser();
+  const { user, logout } = useUser();
   //("user", user);
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
   const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = "/logowanie";
+    logout();
   };
   //("user", user);
 

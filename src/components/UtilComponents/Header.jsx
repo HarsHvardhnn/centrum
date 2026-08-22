@@ -14,7 +14,7 @@ import { stripDoctorTitle } from "../../utils/statusHelper";
 
 const Header = () => {
   // Use the useUser hook to access user context data
-  const { user, setUser } = useUser();
+  const { user, logout } = useUser();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -36,14 +36,7 @@ const Header = () => {
   }, []);
 
   const handleLogout = () => {
-    // Clear local storage
-    localStorage.clear();
-
-    // Reset user state to null
-    setUser(null);
-
-    // Redirect to login page
-    window.location.href = "/logowanie";
+    logout();
   };
 
   const handleViewProfile = () => {

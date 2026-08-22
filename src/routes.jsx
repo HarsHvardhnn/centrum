@@ -59,9 +59,6 @@ import SystemSettingsPage from "./components/admin/SystemSettingsPage";
 import VisitTemplatesPage from "./components/admin/VisitTemplatesPage";
 import DocumentTemplatesPlaceholder from "./components/admin/DocumentTemplatesPlaceholder";
 import DocumentRepositoryPlaceholder from "./components/admin/DocumentRepositoryPlaceholder";
-import TokenExpiryPopup from "./components/UtilComponents/TokenExpiryPopup";
-import InactivityPopup from "./components/UtilComponents/InactivityPopup";
-import { useInactivityTracker } from "./hooks/useInactivityTracker";
 import KioskApp from "./components/Kiosk/KioskApp";
 
 // Protected image route component
@@ -98,8 +95,7 @@ const RootRoute = () => {
 function MainLayout() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { user, logout } = useUser();
-  const { showPopup, inactivityTimeout, handleStayActive, setOnLogout } = useInactivityTracker();
+  const { user } = useUser();
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -108,16 +104,6 @@ function MainLayout() {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
-
-  const handleInactivityLogout = () => {
-    logout();
-    window.location.href = "/logowanie";
-  };
-
-  // Set the logout callback in the hook
-  useEffect(() => {
-    setOnLogout(handleInactivityLogout);
-  }, [setOnLogout]);
 
   return (
     <div className={isDarkMode ? "dark" : ""}>
@@ -152,18 +138,6 @@ function MainLayout() {
           <Outlet />
         </div>
       </div>
-      
-      {/* Session expiry — banking-style: extend or log out */}
-      <TokenExpiryPopup />
-
-      {/* Inactivity Popup - shown when user is inactive */}
-      {showPopup && inactivityTimeout && (
-        <InactivityPopup
-          inactivityTimeout={inactivityTimeout}
-          onStayActive={handleStayActive}
-          onLogout={handleInactivityLogout}
-        />
-      )}
     </div>
   );
 }

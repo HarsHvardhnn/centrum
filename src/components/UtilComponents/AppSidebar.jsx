@@ -115,7 +115,7 @@ const SidebarSection = ({ title, children, dividerAbove, collapsed }) => (
  */
 const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) => {
   const location = useLocation();
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const currentPath = location.pathname;
   const [comingSoonModal, setComingSoonModal] = useState({ open: false, featureName: "" });
 
@@ -123,8 +123,7 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
   const closeComingSoon = () => setComingSoonModal((prev) => ({ ...prev, open: false }));
 
   const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = "/logowanie";
+    logout();
   };
 
   const wizytyPath =
