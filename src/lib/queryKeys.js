@@ -7,4 +7,5 @@ export const queryKeys = {
   visitReasons: ["visit-reasons"],
   billingList: (params) => ["billing-list", params],
   billingSummary: (params) => ["billing-summary", params],
+  billDetail: (billId, scope = "full") => ["bill-detail", billId, scope],
 };

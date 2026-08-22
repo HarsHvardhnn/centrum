@@ -94,11 +94,16 @@ const billingHelper = {
   /**
    * Get details of a specific bill
    * @param {string} billId - Bill ID
+   * @param {{ scope?: 'full' | 'settlement' }} [options]
    * @returns {Promise} - API response with bill details
    */
-  getBillDetails: async (billId) => {
+  getBillDetails: async (billId, options = {}) => {
     try {
-      const response = await apiCaller("GET", `/patient-bills/${billId}`);
+      const scope = options.scope || "full";
+      const response = await apiCaller(
+        "GET",
+        `/patient-bills/${billId}?scope=${encodeURIComponent(scope)}`
+      );
       return response.data;
     } catch (error) {
       console.error("Error fetching bill details:", error);
@@ -235,7 +240,41 @@ const billingHelper = {
       console.error("Error updating bill:", error);
       throw error;
     }
-  }
+  },
+
+  /**
+   * Settle patient (paragon or prepare invoice draft)
+   */
+  settlePatient: async (billId, payload) => {
+    try {
+      const response = await apiCaller(
+        "POST",
+        `/patient-bills/${billId}/settle`,
+        payload
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error settling patient:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Issue formal Faktura + PDF
+   */
+  issueInvoice: async (billId, payload) => {
+    try {
+      const response = await apiCaller(
+        "POST",
+        `/patient-bills/${billId}/issue-invoice`,
+        payload
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error issuing invoice:", error);
+      throw error;
+    }
+  },
 };
 
 export default billingHelper; 

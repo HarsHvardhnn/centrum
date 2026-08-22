@@ -32,6 +32,7 @@ import { useServices } from "../../context/serviceContext";
 import ServiceSelectionModal from "../Doctor/SingleDoctor/patient-details/ServiceSelectionModal";
 import BulkDeleteByIdsDialog from "../admin/BulkDeleteByIdsDialog";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
+import PatientSettlementModal from "./PatientSettlementModal";
 import userServiceHelper, {
   mapDoctorServicesResponseToCatalog,
   mapServicesResponseToCatalog,
@@ -1055,8 +1056,21 @@ const BillingManagement = () => {
     );
   };
 
-  // Add handleEditBill function
+  const prefetchSettlementBill = useCallback(
+    (id) => {
+      if (!id) return;
+      if (user?.role !== "admin" && user?.role !== "receptionist") return;
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.billDetail(id, "settlement"),
+        queryFn: () => billingHelper.getBillDetails(id, { scope: "settlement" }),
+        staleTime: 60_000,
+      });
+    },
+    [queryClient, user?.role]
+  );
+
   const handleEditBill = (billId) => {
+    prefetchSettlementBill(billId);
     setSelectedBillId(billId);
     setIsEditModalOpen(true);
   };
@@ -1460,10 +1474,11 @@ const BillingManagement = () => {
   
   // Get color for payment status
   const getStatusColor = (status) => {
-    switch(status.toLowerCase()) {
+    switch(String(status || "").toLowerCase()) {
       case 'paid':
         return 'bg-green-100 text-green-800';
       case 'pending':
+      case 'awaiting_payment':
         return 'bg-yellow-100 text-yellow-800';
       case 'overdue':
         return 'bg-red-100 text-red-800';
@@ -1476,11 +1491,13 @@ const BillingManagement = () => {
 
   // Polish translation for payment status
   const translatePaymentStatus = (status) => {
-    switch(status.toLowerCase()) {
+    switch(String(status || "").toLowerCase()) {
       case 'paid':
         return 'Opłacone';
       case 'pending':
         return 'Oczekujące';
+      case 'awaiting_payment':
+        return 'Oczekuje na płatność';
       case 'overdue':
         return 'Zaległe';
       case 'partial':
@@ -1488,6 +1505,25 @@ const BillingManagement = () => {
       default:
         return status;
     }
+  };
+
+  const formatBillDocumentRef = (bill) => {
+    if (bill?.documentType === "invoice" && bill?.invoiceId) {
+      return bill.invoiceId;
+    }
+    if (bill?.invoiceSnapshot?.number) {
+      return bill.invoiceSnapshot.number;
+    }
+    if (bill?.internalTxnId) {
+      return bill.internalTxnId;
+    }
+    if (bill?.invoiceId) {
+      return bill.invoiceId;
+    }
+    if (bill?.paymentStatus === "pending" || !bill?.documentType) {
+      return "Do rozliczenia";
+    }
+    return "Paragon";
   };
 
   return (
@@ -1794,7 +1830,7 @@ const BillingManagement = () => {
                     onClick={() => handleSort("billNumber")}
                   >
                     <div className="flex items-center">
-                    numer faktury
+                    Dokument / TRX
                       {sortConfig.key === "billNumber" && (
                         <ArrowUpDown size={16} className="ml-1" />
                       )}
@@ -1867,7 +1903,11 @@ const BillingManagement = () => {
                   ))
                 ) : bills.length > 0 ? (
                   bills.map((bill) => (
-                    <tr key={bill._id} className={`hover:bg-gray-50 ${selectedInvoiceIds.includes(bill._id) ? 'bg-teal-50' : ''}`}>
+                    <tr
+                      key={bill._id}
+                      className={`hover:bg-gray-50 ${selectedInvoiceIds.includes(bill._id) ? 'bg-teal-50' : ''}`}
+                      onMouseEnter={() => prefetchSettlementBill(bill._id)}
+                    >
                       {canSelectBills && (
                         <td className="px-6 py-4 whitespace-nowrap">
                           <input
@@ -1886,10 +1926,16 @@ const BillingManagement = () => {
                           type="button"
                           onClick={() => handleEditBill(bill._id)}
                           className="text-left text-teal-700 hover:text-teal-900 hover:underline"
-                          title="Edytuj numer faktury i szczegóły"
+                          title="Rozliczenie pacjenta"
                         >
-                          {bill?.invoiceId ? bill.invoiceId : "Brak numeru — kliknij, aby ustawić"}
+                          {formatBillDocumentRef(bill)}
                         </button>
+                        {bill.documentType === "fiscal_receipt" && (
+                          <div className="text-xs text-gray-400 font-normal">Paragon fiskalny</div>
+                        )}
+                        {bill.documentType === "invoice" && (
+                          <div className="text-xs text-gray-400 font-normal">Faktura</div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -1929,7 +1975,7 @@ const BillingManagement = () => {
                           <button
                             onClick={() => handleEditBill(bill._id)}
                             className="text-blue-600 hover:text-blue-900"
-                            title="Edytuj numer faktury, datę i szczegóły"
+                            title="Rozliczenie pacjenta"
                           >
                             <Edit size={18} />
                           </button>
@@ -2003,8 +2049,18 @@ const BillingManagement = () => {
         </div>
       </div>
 
-      {/* EditBillModal */}
-      {isEditModalOpen && (
+      {/* Patient Settlement modal (replaces invoice-centric edit for reception/admin) */}
+      {isEditModalOpen && (user?.role === "admin" || user?.role === "receptionist") && (
+        <PatientSettlementModal
+          isOpen={isEditModalOpen}
+          onClose={handleEditModalClose}
+          billId={selectedBillId}
+          onUpdate={fetchBills}
+        />
+      )}
+
+      {/* Doctors keep legacy edit modal for service adjustments */}
+      {isEditModalOpen && user?.role === "doctor" && (
         <EditBillModal
           isOpen={isEditModalOpen}
           onClose={handleEditModalClose}
