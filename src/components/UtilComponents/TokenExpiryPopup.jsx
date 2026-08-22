@@ -1,20 +1,34 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { AlertCircle, RefreshCw, LogOut } from "lucide-react";
 import { formatTimeRemaining } from "../../utils/jwtUtils";
-import { useSession } from "../../context/SessionProvider";
+
+const overlayStyle = {
+  position: "fixed",
+  inset: 0,
+  backgroundColor: "rgba(0,0,0,0.5)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 2147483000,
+};
 
 /**
- * Banking-style JWT warning — driven by SessionProvider (no local auto-logout).
+ * Banking-style JWT warning — controlled by SessionProvider props (no context).
  */
-const TokenExpiryPopup = () => {
-  const session = useSession();
-  if (!session || session.phase !== "jwtWarning") return null;
+const TokenExpiryPopup = ({
+  open,
+  jwtRemainingMs,
+  isExtending,
+  onExtend,
+  onLogout,
+}) => {
+  if (!open) return null;
 
-  const { jwtRemainingMs, isExtending, extendSession, endSession } = session;
   const isExpired = jwtRemainingMs !== null && jwtRemainingMs <= 0;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
+  return createPortal(
+    <div style={overlayStyle} data-testid="token-expiry-popup">
       <div
         className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6"
         role="dialog"
@@ -58,7 +72,7 @@ const TokenExpiryPopup = () => {
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => extendSession()}
+            onClick={() => onExtend?.()}
             disabled={isExtending}
             className="flex-1 flex items-center justify-center px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -76,7 +90,7 @@ const TokenExpiryPopup = () => {
           </button>
           <button
             type="button"
-            onClick={() => endSession("manual")}
+            onClick={() => onLogout?.()}
             disabled={isExtending}
             className="flex-1 flex items-center justify-center px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50"
           >
@@ -85,7 +99,8 @@ const TokenExpiryPopup = () => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

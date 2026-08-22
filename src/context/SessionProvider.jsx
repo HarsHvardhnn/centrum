@@ -1,7 +1,5 @@
 import React, {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -9,9 +7,14 @@ import React, {
 } from "react";
 import { useIdleTimer } from "react-idle-timer";
 import { useUser } from "./userContext";
+import { SessionContext } from "./sessionContext";
 import appointmentConfigService from "../helpers/appointmentConfigHelper";
-import { refreshAccessToken } from "../utils/axiosInstance";
-import { getAccessToken, getMsUntilExpiry, getJwtWarningThresholdMs } from "../utils/jwtUtils";
+import { refreshAccessToken, getCookie } from "../utils/axiosInstance";
+import {
+  getAccessToken,
+  getMsUntilExpiry,
+  getJwtWarningThresholdMs,
+} from "../utils/jwtUtils";
 import { endSession } from "../utils/sessionLifecycle";
 import {
   onAccessTokenRefreshed,
@@ -21,10 +24,6 @@ import { setSessionWarningActive } from "../utils/sessionRefresh";
 import TokenExpiryPopup from "../components/UtilComponents/TokenExpiryPopup";
 import InactivityPopup from "../components/UtilComponents/InactivityPopup";
 import { toast } from "sonner";
-
-const SessionContext = createContext(null);
-
-export const useSession = () => useContext(SessionContext);
 
 const IDLE_PROMPT_MS = 30 * 1000;
 const DEFAULT_IDLE_MS = 30 * 60 * 1000;
@@ -57,13 +56,21 @@ function parseTimeoutToMs(timeoutValue) {
   }
 }
 
+function hasClientSession() {
+  return !!(getCookie("authToken") || localStorage.getItem("authToken"));
+}
+
 /**
  * Single coordinator for JWT expiry warning + inactivity prompt.
  * phase: active | jwtWarning | idlePrompt | loggingOut
  */
 export function SessionProvider({ children }) {
   const { isAuthenticated } = useUser();
-  const [idleTimeoutMs, setIdleTimeoutMs] = useState(null);
+  // Token presence — header countdown works from token alone; match that here.
+  const sessionLive = isAuthenticated || hasClientSession();
+
+  // Start enabled immediately; config fetch may refine the value.
+  const [idleTimeoutMs, setIdleTimeoutMs] = useState(DEFAULT_IDLE_MS);
   const [phase, setPhase] = useState("active");
   const [jwtRemainingMs, setJwtRemainingMs] = useState(null);
   const [idlePromptRemainingMs, setIdlePromptRemainingMs] = useState(IDLE_PROMPT_MS);
@@ -71,7 +78,6 @@ export function SessionProvider({ children }) {
 
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
-  /** After a successful extend, ignore warning until this timestamp (avoids 5m-TTL reopen race). */
   const warnSuppressUntilRef = useRef(0);
 
   const handleEndSession = useCallback(async (reason = "manual") => {
@@ -81,32 +87,35 @@ export function SessionProvider({ children }) {
     await endSession(reason);
   }, []);
 
-  // Load inactivity timeout once when authenticated
   useEffect(() => {
-    if (!isAuthenticated) {
-      setIdleTimeoutMs(null);
+    if (!sessionLive) {
       setPhase("active");
       setSessionWarningActive(false);
+      setJwtRemainingMs(null);
       return undefined;
     }
 
     let cancelled = false;
     (async () => {
       try {
-        const response = await appointmentConfigService.getConfig("INACTIVITY_TIMEOUT");
-        const ms = parseTimeoutToMs(response?.data?.value);
-        if (!cancelled) {
-          setIdleTimeoutMs(ms > 0 ? ms : DEFAULT_IDLE_MS);
+        const response = await appointmentConfigService.getConfig(
+          "INACTIVITY_TIMEOUT"
+        );
+        const raw =
+          response?.data?.value ?? response?.value ?? response?.data?.data?.value;
+        const ms = parseTimeoutToMs(raw);
+        if (!cancelled && ms > 0) {
+          setIdleTimeoutMs(ms);
         }
       } catch {
-        if (!cancelled) setIdleTimeoutMs(DEFAULT_IDLE_MS);
+        /* keep DEFAULT_IDLE_MS */
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated]);
+  }, [sessionLive]);
 
   const onPrompt = useCallback(() => {
     if (
@@ -124,37 +133,47 @@ export function SessionProvider({ children }) {
     handleEndSession("idle");
   }, [handleEndSession]);
 
+  const idleTimeout = Math.max(idleTimeoutMs || DEFAULT_IDLE_MS, IDLE_PROMPT_MS + 5_000);
+  const promptBeforeIdleMs = Math.min(
+    IDLE_PROMPT_MS,
+    Math.max(5_000, Math.floor(idleTimeout / 2) - 1_000)
+  );
+
   const idleEnabled =
-    !!isAuthenticated &&
-    !!idleTimeoutMs &&
+    sessionLive &&
     phase !== "loggingOut" &&
+    phase !== "jwtWarning" &&
     !isSessionEnding();
 
-  const { getRemainingTime, activate, reset, pause, resume } = useIdleTimer({
-    timeout: idleTimeoutMs || DEFAULT_IDLE_MS,
-    promptBeforeIdle: IDLE_PROMPT_MS,
-    onPrompt,
-    onIdle,
-    crossTab: true,
-    syncTimers: 200,
-    disabled: !idleEnabled,
-    stopOnIdle: true,
-  });
+  const { getRemainingTime, activate, reset, pause, resume, start } =
+    useIdleTimer({
+      timeout: idleTimeout,
+      promptBeforeIdle: promptBeforeIdleMs,
+      onPrompt,
+      onIdle,
+      crossTab: true,
+      syncTimers: 200,
+      disabled: !idleEnabled,
+      stopOnIdle: true,
+    });
 
-  // Pause idle while JWT warning is open (mutual exclusion)
+  // When idle becomes enabled (login / leave JWT modal) or timeout changes, restart cleanly.
+  // Deliberately omit start/reset/pause from deps — idle-timer may recreate those each render.
   useEffect(() => {
-    if (!idleEnabled) return undefined;
-    if (phase === "jwtWarning") {
+    if (!idleEnabled) {
       pause();
-    } else if (phase === "active") {
-      resume();
+      return undefined;
     }
+    start();
+    resume();
+    reset();
     return undefined;
-  }, [phase, idleEnabled, pause, resume]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable on idleEnabled/timeout only
+  }, [idleEnabled, idleTimeout]);
 
-  // JWT remaining poll (1s)
+  // JWT remaining poll (1s) — always when a client token exists
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!sessionLive) {
       setJwtRemainingMs(null);
       setSessionWarningActive(false);
       if (phaseRef.current !== "loggingOut") setPhase("active");
@@ -175,18 +194,24 @@ export function SessionProvider({ children }) {
 
       if (remaining === null) return;
 
-      if (Date.now() < warnSuppressUntilRef.current) {
-        if (phaseRef.current === "jwtWarning") {
-          setPhase("active");
-          setSessionWarningActive(false);
+      const warningMs = getJwtWarningThresholdMs(token);
+      const expired = remaining <= 0;
+      const inWarning = remaining <= warningMs;
+
+      if (expired) {
+        if (phaseRef.current !== "jwtWarning") {
+          setPhase("jwtWarning");
         }
+        setSessionWarningActive(true);
         return;
       }
 
-      const warningMs = getJwtWarningThresholdMs(token);
+      // Suppress only blocks re-opening after a successful extend — never when expired.
+      if (Date.now() < warnSuppressUntilRef.current) {
+        return;
+      }
 
-      if (remaining <= warningMs) {
-        // JWT warning wins over idle prompt
+      if (inWarning) {
         if (phaseRef.current !== "jwtWarning") {
           setPhase("jwtWarning");
         }
@@ -200,9 +225,8 @@ export function SessionProvider({ children }) {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [isAuthenticated]);
+  }, [sessionLive]);
 
-  // Idle prompt countdown from library remaining time
   useEffect(() => {
     if (phase !== "idlePrompt") return undefined;
 
@@ -217,7 +241,6 @@ export function SessionProvider({ children }) {
     return () => clearInterval(interval);
   }, [phase, getRemainingTime, handleEndSession]);
 
-  // When another tab / axios refreshes the access token, leave JWT warning
   useEffect(() => {
     return onAccessTokenRefreshed(() => {
       warnSuppressUntilRef.current = Date.now() + 2000;
@@ -299,10 +322,24 @@ export function SessionProvider({ children }) {
   return (
     <SessionContext.Provider value={value}>
       {children}
-      <TokenExpiryPopup />
-      <InactivityPopup />
+      <TokenExpiryPopup
+        open={phase === "jwtWarning"}
+        jwtRemainingMs={jwtRemainingMs}
+        isExtending={isExtending}
+        onExtend={extendSession}
+        onLogout={() => handleEndSession("manual")}
+      />
+      <InactivityPopup
+        open={phase === "idlePrompt"}
+        idlePromptRemainingMs={idlePromptRemainingMs}
+        isExtending={isExtending}
+        onStayActive={stayActive}
+        onLogout={() => handleEndSession("idle-manual")}
+      />
     </SessionContext.Provider>
   );
 }
 
 export default SessionProvider;
+
+export { useSession } from "./sessionContext";

@@ -1,9 +1,4 @@
-import { refreshAccessToken } from "./axiosInstance";
-import {
-  getAccessToken,
-  getMsUntilExpiry,
-  getJwtWarningThresholdMs,
-} from "./jwtUtils";
+import { getAccessToken, getMsUntilExpiry, getJwtWarningThresholdMs } from "./jwtUtils";
 import { isSessionEnding } from "./sessionEvents";
 
 const CHECK_THROTTLE_MS = 4000;
@@ -21,8 +16,8 @@ export function isSessionWarningActive() {
 }
 
 /**
- * Soft-extend the access token on activity when it is expired or close to expiry.
- * No-ops while the JWT warning modal owns extend, or while the session is ending.
+ * Soft-extend check on activity. Near-expiry / expired is owned by the JWT modal —
+ * do not silent-refresh there (that was dismissing or preventing the popup).
  */
 export async function maybeRefreshSession() {
   if (sessionWarningActive || isSessionEnding()) {
@@ -43,18 +38,10 @@ export async function maybeRefreshSession() {
 
   const warningMs = getJwtWarningThresholdMs(token);
 
-  // Leave the warning window for the JWT popup — SessionProvider owns extend there
-  if (remaining > 0 && remaining <= warningMs) {
+  // Modal territory: near expiry OR already expired
+  if (remaining <= warningMs) {
     return null;
-  }
-  if (remaining > warningMs) {
-    return token;
   }
 
-  // Access JWT already expired but refresh cookie may still be valid
-  try {
-    return await refreshAccessToken();
-  } catch {
-    return null;
-  }
+  return token;
 }
