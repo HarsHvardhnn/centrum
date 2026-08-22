@@ -42,37 +42,34 @@ export const getMsUntilExpiry = (token) => {
 };
 
 const DEFAULT_JWT_WARNING_MS = 5 * 60 * 1000;
+const SHORT_JWT_WARNING_MS = 2 * 60 * 1000; // ≤30m / under 1h access tokens
+const LONG_JWT_THRESHOLD_MS = 60 * 60 * 1000; // 1h+
 
 /**
  * How long before access-token expiry the “session ending” modal should appear.
- * Must be shorter than the JWT lifetime — otherwise a 5m token reopens the modal
- * immediately after “Przedłuż sesję”.
+ * - JWT under 1 hour (e.g. 5m, 30m): warn at last 2 minutes
+ * - JWT 1 hour or longer: warn at last 5 minutes
+ * Always capped below token lifetime so “Przedłuż sesję” can clear the modal.
  */
 export const getJwtWarningThresholdMs = (token) => {
   const decoded = decodeToken(token);
-  if (!decoded?.exp) return DEFAULT_JWT_WARNING_MS;
+  if (!decoded?.exp) return SHORT_JWT_WARNING_MS;
 
   const lifetimeMs =
     typeof decoded.iat === "number"
       ? Math.max(0, (decoded.exp - decoded.iat) * 1000)
-      : 0;
+      : Math.max(0, decoded.exp * 1000 - Date.now());
 
-  // No iat claim: infer short TTL when remaining ≤ default warning window
-  if (lifetimeMs <= 0) {
-    const remainingMs = decoded.exp * 1000 - Date.now();
-    if (remainingMs > 0 && remainingMs <= DEFAULT_JWT_WARNING_MS) {
-      return Math.max(30_000, Math.min(60_000, Math.floor(DEFAULT_JWT_WARNING_MS * 0.2)));
-    }
-    return DEFAULT_JWT_WARNING_MS;
-  }
+  if (lifetimeMs <= 0) return SHORT_JWT_WARNING_MS;
 
-  // Short-lived JWT (≤10m): warn in last 20% (clamped 30s–60s) → 5m token → last 1m
-  if (lifetimeMs <= DEFAULT_JWT_WARNING_MS * 2) {
-    return Math.max(30_000, Math.min(60_000, Math.floor(lifetimeMs * 0.2)));
-  }
+  const preferred =
+    lifetimeMs >= LONG_JWT_THRESHOLD_MS
+      ? DEFAULT_JWT_WARNING_MS
+      : SHORT_JWT_WARNING_MS;
 
-  // Longer JWT: classic last-5-minutes window, never more than 25% of lifetime
-  return Math.min(DEFAULT_JWT_WARNING_MS, Math.floor(lifetimeMs * 0.25));
+  // Never warn for the whole lifetime (extend must buy quiet time)
+  const maxWarn = Math.max(30_000, lifetimeMs - 30_000);
+  return Math.min(preferred, maxWarn);
 };
 
 export { DEFAULT_JWT_WARNING_MS };
