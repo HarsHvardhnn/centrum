@@ -66,11 +66,11 @@ const DoctorSelectionWithSlots = ({
 
   // Name search — always available when the doctor picker is shown (reception/admin)
   const [doctorSearch, setDoctorSearch] = useState("");
-  const debouncedDoctorSearch = useDebouncedValue(doctorSearch, 300);
+  const debouncedDoctorSearch = useDebouncedValue(doctorSearch, 180);
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const allowDoctorNameSearch = !hideDoctorSelection;
-  const searchActive = allowDoctorNameSearch && debouncedDoctorSearch.trim().length >= 2;
+  const searchActive = allowDoctorNameSearch && debouncedDoctorSearch.trim().length >= 1;
 
   // Keep local selection in sync with parent (including clear → null)
   useEffect(() => {
@@ -117,7 +117,7 @@ const DoctorSelectionWithSlots = ({
   useEffect(() => {
     if (!allowDoctorNameSearch) return;
     const term = debouncedDoctorSearch.trim();
-    if (term.length < 2) {
+    if (term.length < 1) {
       setSearchResults([]);
       setSearchLoading(false);
       return;
@@ -453,7 +453,7 @@ const DoctorSelectionWithSlots = ({
                         setDoctors([]);
                       }
                     }}
-                    placeholder="Wpisz nazwisko lub imię (min. 2 znaki)…"
+                    placeholder="Wpisz nazwisko lub imię…"
                     className="w-full pl-10 pr-4 py-3 bg-white border border-teal-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     autoComplete="off"
                     autoFocus
