@@ -1,4 +1,4 @@
-import { apiCaller } from "../utils/axiosInstance";
+import { apiCaller, axiosInstance } from "../utils/axiosInstance";
 
 /**
  * Billing helper functions for API interactions
@@ -162,6 +162,43 @@ const billingHelper = {
       console.error("Error generating invoice:", error);
       throw error;
     }
+  },
+
+  /**
+   * Fetch invoice PDF blob (for auth-protected download URLs).
+   */
+  fetchInvoicePdfBlob: async (billId, invoiceUrl) => {
+    const needsAuth =
+      !invoiceUrl ||
+      invoiceUrl.includes("/invoice/download") ||
+      (invoiceUrl.includes("/patient-bills/") && !invoiceUrl.includes("cloudinary"));
+    if (!needsAuth && invoiceUrl) {
+      const ext = await fetch(invoiceUrl);
+      return ext.blob();
+    }
+    const response = await axiosInstance.get(
+      `/patient-bills/${billId}/invoice/download`,
+      { responseType: "blob" }
+    );
+    return response.data;
+  },
+
+  /**
+   * Open invoice PDF in new tab (handles auth for local API download URLs).
+   */
+  openInvoicePdf: async (billId, invoiceUrl) => {
+    if (!invoiceUrl) return;
+    const needsAuth =
+      invoiceUrl.includes("/invoice/download") ||
+      (invoiceUrl.includes("/patient-bills/") && !invoiceUrl.includes("cloudinary"));
+    if (!needsAuth) {
+      window.open(invoiceUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+    const blob = await billingHelper.fetchInvoicePdfBlob(billId, invoiceUrl);
+    const objectUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+    window.open(objectUrl, "_blank", "noopener,noreferrer");
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
   },
 
   /**

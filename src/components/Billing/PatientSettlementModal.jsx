@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader, Plus, Trash2, X, Eye, Printer } from "lucide-react";
+import { Loader, Plus, Trash2, X, Eye, Printer, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import billingHelper from "../../helpers/billingHelper";
 import { queryKeys } from "../../lib/queryKeys";
@@ -188,6 +188,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   const [issuedPdfUrl, setIssuedPdfUrl] = useState(null);
   const [issuedNumber, setIssuedNumber] = useState("");
   const [locked, setLocked] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
 
   // Hydrate form once per bill open (avoid resetting while user edits)
   useEffect(() => {
@@ -430,7 +431,14 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       });
 
       if (res?.success) {
-        toast.success(`Faktura ${res.data?.number} wystawiona`);
+        const pdfReady = Boolean(res.data?.invoiceUrl);
+        if (pdfReady) {
+          toast.success(`Faktura ${res.data?.number} wystawiona`);
+        } else {
+          toast.warning(
+            `Faktura ${res.data?.number} wystawiona, ale PDF nie został wygenerowany. Kliknij „Generuj PDF”.`
+          );
+        }
         setLocked(true);
         setIssuedNumber(res.data?.number || "");
         setIssuedPdfUrl(res.data?.invoiceUrl || null);
@@ -447,19 +455,54 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     }
   };
 
-  const openPdf = () => {
-    if (issuedPdfUrl) window.open(issuedPdfUrl, "_blank", "noopener,noreferrer");
+  const handleGeneratePdf = async () => {
+    if (!billId) return;
+    setPdfGenerating(true);
+    try {
+      const res = await billingHelper.generateInvoice(billId);
+      if (res?.success && res.data?.invoiceUrl) {
+        setIssuedPdfUrl(res.data.invoiceUrl);
+        toast.success("PDF faktury wygenerowany");
+        queryClient.invalidateQueries({ queryKey: queryKeys.billDetail(billId, "settlement") });
+      } else {
+        toast.error(res?.message || "Nie udało się wygenerować PDF");
+      }
+    } catch (e) {
+      toast.error(
+        e?.response?.data?.message ||
+          e?.response?.data?.error ||
+          "Nie udało się wygenerować PDF (sprawdź Chrome na serwerze)"
+      );
+    } finally {
+      setPdfGenerating(false);
+    }
   };
 
-  const printPdf = () => {
-    if (!issuedPdfUrl) return;
-    const w = window.open(issuedPdfUrl, "_blank", "noopener,noreferrer");
-    if (w) {
-      setTimeout(() => {
-        try {
-          w.print();
-        } catch (_) {}
-      }, 800);
+  const openPdf = async () => {
+    if (!issuedPdfUrl || !billId) return;
+    try {
+      await billingHelper.openInvoicePdf(billId, issuedPdfUrl);
+    } catch (e) {
+      toast.error("Nie udało się otworzyć PDF");
+    }
+  };
+
+  const printPdf = async () => {
+    if (!issuedPdfUrl || !billId) return;
+    try {
+      const blob = await billingHelper.fetchInvoicePdfBlob(billId, issuedPdfUrl);
+      const objectUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+      const w = window.open(objectUrl, "_blank", "noopener,noreferrer");
+      if (w) {
+        setTimeout(() => {
+          try {
+            w.print();
+          } catch (_) {}
+        }, 800);
+      }
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    } catch (_) {
+      toast.error("Nie udało się wydrukować PDF");
     }
   };
 
@@ -841,7 +884,27 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
               </div>
 
               {locked && (
-                <div className="flex flex-wrap gap-2 pt-2">
+                <div className="flex flex-wrap gap-2 pt-2 items-center">
+                  {!issuedPdfUrl && (
+                    <>
+                      <p className="text-sm text-amber-700 w-full">
+                        PDF nie został wygenerowany przy wystawieniu (Chrome/Cloudinary). Kliknij poniżej, aby wygenerować ponownie.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleGeneratePdf}
+                        disabled={pdfGenerating}
+                        className="inline-flex items-center gap-2 px-3 py-2 bg-teal-600 text-white rounded-md text-sm hover:bg-teal-700 disabled:opacity-60"
+                      >
+                        {pdfGenerating ? (
+                          <Loader className="animate-spin" size={16} />
+                        ) : (
+                          <FileDown size={16} />
+                        )}
+                        Generuj PDF
+                      </button>
+                    </>
+                  )}
                   <button
                     type="button"
                     onClick={openPdf}
