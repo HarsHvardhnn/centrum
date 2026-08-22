@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 
-const DEBOUNCE_MS = 300;
+const DEBOUNCE_MS = 200;
 
 const ProceduresCard = ({
   procedures = [],
@@ -69,7 +69,7 @@ const ProceduresCard = ({
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
-          placeholder="Wyszukaj wg kodu ICD-9 lub nazwy procedury..."
+          placeholder="Kod ICD-9 lub nazwa (od 2 znaków)…"
           disabled={disabled}
           className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none disabled:bg-gray-50"
         />
