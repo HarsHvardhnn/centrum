@@ -126,13 +126,42 @@ async function performHttpRefresh() {
     baseURL: axiosInstance.defaults.baseURL,
     withCredentials: true,
   });
-  const refreshResponse = await refreshAxios.post("/auth/refresh-token");
-  if (!refreshResponse.data?.token) {
-    throw new Error("No token in refresh response");
+  try {
+    const refreshResponse = await refreshAxios.post("/auth/refresh-token");
+    if (!refreshResponse.data?.token) {
+      throw new Error("No token in refresh response");
+    }
+    const newToken = refreshResponse.data.token;
+    storeAccessToken(newToken, refreshResponse.data.user);
+    return newToken;
+  } catch (err) {
+    // Concurrent refresh (another tab/request) may have already rotated the
+    // cookie. If we already hold a still-valid access token, keep the session.
+    if (err?.response?.status === 401) {
+      await new Promise((r) => setTimeout(r, 400));
+      const existing =
+        getCookie("authToken") || localStorage.getItem("authToken");
+      if (existing && accessTokenHasLifeLeft(existing, 15_000)) {
+        return existing;
+      }
+    }
+    throw err;
   }
-  const newToken = refreshResponse.data.token;
-  storeAccessToken(newToken, refreshResponse.data.user);
-  return newToken;
+}
+
+/** Lightweight exp check — avoid importing jwtUtils (circular with getCookie). */
+function accessTokenHasLifeLeft(token, minMs) {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return false;
+    const json = JSON.parse(
+      atob(payload.replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    if (!json?.exp) return false;
+    return json.exp * 1000 - Date.now() > minMs;
+  } catch {
+    return false;
+  }
 }
 
 async function coordinatedRefresh() {
