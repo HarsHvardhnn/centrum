@@ -63,6 +63,7 @@ export const UserProvider = ({ children }) => {
             localStorage.setItem("user", JSON.stringify(freshUserData));
             setUser(freshUserData);
             setIsAuthenticated(true);
+            resetSessionEnding();
           } catch (error) {
             console.error("Error verifying token:", error);
             clearAuthState();

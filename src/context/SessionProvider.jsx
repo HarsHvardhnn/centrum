@@ -19,6 +19,7 @@ import { endSession } from "../utils/sessionLifecycle";
 import {
   onAccessTokenRefreshed,
   isSessionEnding,
+  resetSessionEnding,
 } from "../utils/sessionEvents";
 import { setSessionWarningActive } from "../utils/sessionRefresh";
 import TokenExpiryPopup from "../components/UtilComponents/TokenExpiryPopup";
@@ -66,10 +67,8 @@ function hasClientSession() {
  */
 export function SessionProvider({ children }) {
   const { isAuthenticated } = useUser();
-  // Token presence — header countdown works from token alone; match that here.
   const sessionLive = isAuthenticated || hasClientSession();
 
-  // Start enabled immediately; config fetch may refine the value.
   const [idleTimeoutMs, setIdleTimeoutMs] = useState(DEFAULT_IDLE_MS);
   const [phase, setPhase] = useState("active");
   const [jwtRemainingMs, setJwtRemainingMs] = useState(null);
@@ -79,6 +78,8 @@ export function SessionProvider({ children }) {
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   const warnSuppressUntilRef = useRef(0);
+  const sessionLiveRef = useRef(sessionLive);
+  sessionLiveRef.current = sessionLive;
 
   const handleEndSession = useCallback(async (reason = "manual") => {
     if (isSessionEnding() || phaseRef.current === "loggingOut") return;
@@ -86,6 +87,13 @@ export function SessionProvider({ children }) {
     setSessionWarningActive(false);
     await endSession(reason);
   }, []);
+
+  // Fresh login / restored session — clear stale "session ending" flag from partial logout.
+  useEffect(() => {
+    if (sessionLive) {
+      resetSessionEnding();
+    }
+  }, [sessionLive, isAuthenticated]);
 
   useEffect(() => {
     if (!sessionLive) {
@@ -139,39 +147,48 @@ export function SessionProvider({ children }) {
     Math.max(5_000, Math.floor(idleTimeout / 2) - 1_000)
   );
 
-  const idleEnabled =
-    sessionLive &&
-    phase !== "loggingOut" &&
-    phase !== "jwtWarning" &&
-    !isSessionEnding();
+  const idlePaused =
+    !sessionLive ||
+    phase === "loggingOut" ||
+    phase === "jwtWarning" ||
+    isSessionEnding();
 
-  const { getRemainingTime, activate, reset, pause, resume, start } =
-    useIdleTimer({
-      timeout: idleTimeout,
-      promptBeforeIdle: promptBeforeIdleMs,
-      onPrompt,
-      onIdle,
-      crossTab: true,
-      syncTimers: 200,
-      disabled: !idleEnabled,
-      stopOnIdle: true,
-    });
+  const { getRemainingTime, activate, reset, pause, start } = useIdleTimer({
+    timeout: idleTimeout,
+    promptBeforeIdle: promptBeforeIdleMs,
+    onPrompt,
+    onIdle,
+    crossTab: true,
+    syncTimers: 200,
+    startOnMount: false,
+    stopOnIdle: true,
+    events: [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "touchstart",
+      "scroll",
+      "click",
+      "visibilitychange",
+    ],
+  });
 
-  // When idle becomes enabled (login / leave JWT modal) or timeout changes, restart cleanly.
-  // Deliberately omit start/reset/pause from deps — idle-timer may recreate those each render.
+  const getRemainingTimeRef = useRef(getRemainingTime);
+  getRemainingTimeRef.current = getRemainingTime;
+
+  // Start / pause idle tracking when session or phase changes.
   useEffect(() => {
-    if (!idleEnabled) {
+    if (idlePaused) {
       pause();
       return undefined;
     }
     start();
-    resume();
     reset();
     return undefined;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable on idleEnabled/timeout only
-  }, [idleEnabled, idleTimeout]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable idle timer controls
+  }, [idlePaused, idleTimeout, isAuthenticated]);
 
-  // JWT remaining poll (1s) — always when a client token exists
+  // JWT remaining poll (1s) — runs whenever a client session exists.
   useEffect(() => {
     if (!sessionLive) {
       setJwtRemainingMs(null);
@@ -181,6 +198,7 @@ export function SessionProvider({ children }) {
     }
 
     const tick = () => {
+      if (!sessionLiveRef.current) return;
       if (isSessionEnding() || phaseRef.current === "loggingOut") return;
 
       const token = getAccessToken();
@@ -206,7 +224,6 @@ export function SessionProvider({ children }) {
         return;
       }
 
-      // Suppress only blocks re-opening after a successful extend — never when expired.
       if (Date.now() < warnSuppressUntilRef.current) {
         return;
       }
@@ -225,13 +242,13 @@ export function SessionProvider({ children }) {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [sessionLive]);
+  }, [sessionLive, isAuthenticated]);
 
   useEffect(() => {
     if (phase !== "idlePrompt") return undefined;
 
     const interval = setInterval(() => {
-      const remaining = Math.max(0, getRemainingTime());
+      const remaining = Math.max(0, getRemainingTimeRef.current());
       setIdlePromptRemainingMs(remaining);
       if (remaining <= 0) {
         handleEndSession("idle-prompt");
@@ -239,7 +256,7 @@ export function SessionProvider({ children }) {
     }, 250);
 
     return () => clearInterval(interval);
-  }, [phase, getRemainingTime, handleEndSession]);
+  }, [phase, handleEndSession]);
 
   useEffect(() => {
     return onAccessTokenRefreshed(() => {
