@@ -45,7 +45,7 @@ import PatientDocumentsModal from "./PatientDocumentsModal";
 import { queryKeys } from "../../lib/queryKeys";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
-import { loadPatientEditFormData } from "../../utils/mapPatientToEditForm";
+import { loadPatientEditFormData, mapListPatientToEditStub } from "../../utils/mapPatientToEditForm";
 
 /** Formats appointment `created_at` / `createdAt` for "Utworzono przez: … (DD.MM.YYYY, HH:MM)" */
 function formatAppointmentCreatedAt(appointment) {
@@ -260,23 +260,53 @@ function LabAppointmentsContent({ clinic }) {
     setCompletedSteps([]);
   };
 
+  const prefetchPatientEdit = (patientId, preferredAppointmentId = null) => {
+    if (!patientId) return;
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.patientEditForm(patientId, preferredAppointmentId),
+      queryFn: () =>
+        loadPatientEditFormData(patientId, preferredAppointmentId || null),
+      staleTime: 2 * 60 * 1000,
+    });
+  };
+
+  const getPatientEditContext = (appointment) => {
+    if (!appointment?.patient) return null;
+    const patientId = appointment.patient.id || appointment.patient._id;
+    if (!patientId) return null;
+    const visitId = appointment.isPatientListRow
+      ? appointment.firstVisitAppointmentId
+      : appointment.id || appointment._id;
+    return { patientId, visitId, patient: appointment.patient };
+  };
+
   /** Open edit modal immediately on this page, then load patient data into it. */
-  const handleEditPatient = async (patientId, preferredAppointmentId = null) => {
+  const handleEditPatient = async (
+    patientId,
+    preferredAppointmentId = null,
+    listPatient = null
+  ) => {
     if (!patientId) return;
     const requestId = ++patientEditRequestRef.current;
     setIsEditMode(true);
     setCurrentPatientId(patientId);
-    setPatientFormData({});
+    setPatientFormData(
+      listPatient ? mapListPatientToEditStub(listPatient) : {}
+    );
     setCurrentSubStep(0);
     setCompletedSteps([]);
     setPatientEditLoading(true);
     setShowAddPatientModal(true);
 
+    prefetchPatientEdit(patientId, preferredAppointmentId);
+
     try {
-      const mapped = await loadPatientEditFormData(
-        patientId,
-        preferredAppointmentId
-      );
+      const mapped = await queryClient.fetchQuery({
+        queryKey: queryKeys.patientEditForm(patientId, preferredAppointmentId),
+        queryFn: () =>
+          loadPatientEditFormData(patientId, preferredAppointmentId),
+        staleTime: 2 * 60 * 1000,
+      });
       if (requestId !== patientEditRequestRef.current) return;
       setPatientFormData(mapped);
     } catch (error) {
@@ -1572,7 +1602,13 @@ function LabAppointmentsContent({ clinic }) {
                         {translateStatus(appointment.status)}
                       </span>
                       {appointment.isAppointment !== false && (
-                        <DropdownMenu.Root>
+                        <DropdownMenu.Root
+                          onOpenChange={(open) => {
+                            if (!open) return;
+                            const ctx = getPatientEditContext(appointment);
+                            if (ctx) prefetchPatientEdit(ctx.patientId, ctx.visitId);
+                          }}
+                        >
                           <DropdownMenu.Trigger asChild>
                             <button type="button" className="p-1.5 text-gray-500 hover:text-gray-700 rounded focus:outline-none">
                               <MoreVertical size={20} />
@@ -1637,7 +1673,8 @@ function LabAppointmentsContent({ clinic }) {
                                 <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => {
                                   handleEditPatient(
                                     appointment.patient.id || appointment.patient._id,
-                                    appointment.id || appointment._id
+                                    appointment.id || appointment._id,
+                                    appointment.patient
                                   );
                                 }}>
                                   <Eye size={16} className="mr-2" /> Zobacz dane pacjenta
@@ -1750,7 +1787,13 @@ function LabAppointmentsContent({ clinic }) {
                     <div className="text-gray-800 truncate text-sm">{formatFirstVisit(appointment)}</div>
                     <div className="flex justify-end">
                       {appointment.isAppointment !== false && (
-                        <DropdownMenu.Root>
+                        <DropdownMenu.Root
+                          onOpenChange={(open) => {
+                            if (!open) return;
+                            const ctx = getPatientEditContext(appointment);
+                            if (ctx) prefetchPatientEdit(ctx.patientId, ctx.visitId);
+                          }}
+                        >
                           <DropdownMenu.Trigger asChild>
                             <button type="button" className="text-gray-500 hover:text-gray-700 focus:outline-none p-1">
                               <MoreVertical size={18} />
@@ -1772,7 +1815,11 @@ function LabAppointmentsContent({ clinic }) {
                                       ? appointment.firstVisitAppointmentId
                                       : (appointment.id || appointment._id);
                                     if (user?.role === "receptionist") {
-                                      handleEditPatient(patientId, visitId || undefined);
+                                      handleEditPatient(
+                                        patientId,
+                                        visitId || undefined,
+                                        appointment.patient
+                                      );
                                     } else {
                                       navigate(getPatientViewUrl(patientId, visitId || undefined));
                                     }
@@ -1822,7 +1869,11 @@ function LabAppointmentsContent({ clinic }) {
                                   const visitId = appointment.isPatientListRow
                                     ? appointment.firstVisitAppointmentId
                                     : (appointment.id || appointment._id);
-                                  handleEditPatient(patientId, visitId || undefined);
+                                  handleEditPatient(
+                                    patientId,
+                                    visitId || undefined,
+                                    appointment.patient
+                                  );
                                 }}>
                                   <Pen size={16} className="mr-2" /> Zobacz dane pacjenta
                                 </DropdownMenu.Item>
@@ -2390,31 +2441,42 @@ function LabAppointmentsContent({ clinic }) {
               </div>
 
               <div className="p-6">
-                {isEditMode && patientEditLoading ? (
+                {isEditMode && patientEditLoading && !patientFormData?.patient_id ? (
                   <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-600">
                     <Loader2 className="animate-spin text-teal-600" size={36} />
                     <p className="text-sm font-medium">Ładowanie danych pacjenta…</p>
                   </div>
                 ) : (
-                  <FormProvider
-                    key={
-                      isEditMode
-                        ? `edit-${currentPatientId}-${patientFormData?.patient_id || "ready"}`
-                        : "create"
-                    }
-                    initialData={patientFormData}
-                  >
-                    <PatientStepFormWrapper
-                      currentSubStep={currentSubStep}
-                      goToSubStep={goToSubStep}
-                      currentPatientId={currentPatientId}
-                      markStepAsCompleted={markStepAsCompleted}
-                      subStepTitles={subStepTitles}
-                      isEditMode={isEditMode}
-                      handleAddPatient={handleAddPatient}
-                      patientFormData={patientFormData}
-                    />
-                  </FormProvider>
+                  <div className="relative">
+                    {isEditMode && patientEditLoading && (
+                      <div
+                        className="mb-4 flex items-center justify-center gap-2 rounded-lg border border-teal-100 bg-teal-50 px-3 py-2 text-sm text-teal-800"
+                        role="status"
+                      >
+                        <Loader2 className="animate-spin shrink-0" size={16} />
+                        Ładowanie pełnych danych pacjenta…
+                      </div>
+                    )}
+                    <FormProvider
+                      key={
+                        isEditMode
+                          ? `edit-${currentPatientId}-${patientFormData?.patient_id || "ready"}`
+                          : "create"
+                      }
+                      initialData={patientFormData}
+                    >
+                      <PatientStepFormWrapper
+                        currentSubStep={currentSubStep}
+                        goToSubStep={goToSubStep}
+                        currentPatientId={currentPatientId}
+                        markStepAsCompleted={markStepAsCompleted}
+                        subStepTitles={subStepTitles}
+                        isEditMode={isEditMode}
+                        handleAddPatient={handleAddPatient}
+                        patientFormData={patientFormData}
+                      />
+                    </FormProvider>
+                  </div>
                 )}
               </div>
             </div>

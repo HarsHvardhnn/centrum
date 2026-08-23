@@ -18,9 +18,15 @@ import {
 import { endSession } from "../utils/sessionLifecycle";
 import {
   onAccessTokenRefreshed,
+  onInactivityTimeoutUpdated,
   isSessionEnding,
   resetSessionEnding,
 } from "../utils/sessionEvents";
+import {
+  extractAppointmentConfigValue,
+  inactivityMinutesToMs,
+  parseInactivityTimeoutMinutes,
+} from "../utils/inactivityConfig";
 import { setSessionWarningActive } from "../utils/sessionRefresh";
 import {
   canUseDocumentCookies,
@@ -35,34 +41,6 @@ import { toast } from "sonner";
 
 const IDLE_PROMPT_MS = 30 * 1000;
 const DEFAULT_IDLE_MS = 30 * 60 * 1000;
-
-function parseTimeoutToMs(timeoutValue) {
-  if (timeoutValue === null || timeoutValue === undefined || timeoutValue === "") {
-    return 0;
-  }
-  if (typeof timeoutValue === "number") {
-    return timeoutValue > 0 ? timeoutValue * 60 * 1000 : 0;
-  }
-  if (typeof timeoutValue !== "string") return 0;
-  const match = timeoutValue.match(/^(\d+)([mhdw])$/);
-  if (!match) {
-    const asNum = parseInt(timeoutValue, 10);
-    return Number.isFinite(asNum) && asNum > 0 ? asNum * 60 * 1000 : 0;
-  }
-  const value = parseInt(match[1], 10);
-  switch (match[2]) {
-    case "m":
-      return value * 60 * 1000;
-    case "h":
-      return value * 60 * 60 * 1000;
-    case "d":
-      return value * 24 * 60 * 60 * 1000;
-    case "w":
-      return value * 7 * 24 * 60 * 60 * 1000;
-    default:
-      return 0;
-  }
-}
 
 function hasClientSession() {
   return !!(getCookie("authToken") || localStorage.getItem("authToken"));
@@ -86,6 +64,7 @@ export function SessionProvider({ children }) {
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   const warnSuppressUntilRef = useRef(0);
+  const idlePromptDeadlineRef = useRef(0);
   const sessionLiveRef = useRef(sessionLive);
   sessionLiveRef.current = sessionLive;
   const cookieProbeDoneRef = useRef(false);
@@ -118,6 +97,14 @@ export function SessionProvider({ children }) {
     }
   }, [sessionLive, isAuthenticated]);
 
+  const applyInactivityTimeoutMs = useCallback((ms) => {
+    if (Number.isFinite(ms) && ms > 0) {
+      setIdleTimeoutMs(ms);
+    }
+  }, []);
+
+  // Load inactivity timeout from API; re-fetch on tab focus and periodically so
+  // admin changes apply without a full page reload.
   useEffect(() => {
     if (!sessionLive) {
       setPhase("active");
@@ -127,26 +114,42 @@ export function SessionProvider({ children }) {
     }
 
     let cancelled = false;
-    (async () => {
+
+    const loadInactivityTimeout = async () => {
       try {
         const response = await appointmentConfigService.getConfig(
           "INACTIVITY_TIMEOUT"
         );
-        const raw =
-          response?.data?.value ?? response?.value ?? response?.data?.data?.value;
-        const ms = parseTimeoutToMs(raw);
+        const raw = extractAppointmentConfigValue(response);
+        const minutes = parseInactivityTimeoutMinutes(raw, 0);
+        const ms = inactivityMinutesToMs(minutes);
         if (!cancelled && ms > 0) {
-          setIdleTimeoutMs(ms);
+          applyInactivityTimeoutMs(ms);
         }
       } catch {
-        /* keep DEFAULT_IDLE_MS */
+        /* keep current idleTimeoutMs */
       }
-    })();
+    };
+
+    loadInactivityTimeout();
+    const intervalId = setInterval(loadInactivityTimeout, 5 * 60 * 1000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") loadInactivityTimeout();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       cancelled = true;
+      clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [sessionLive]);
+  }, [sessionLive, applyInactivityTimeoutMs]);
+
+  useEffect(() => {
+    return onInactivityTimeoutUpdated((ms) => {
+      applyInactivityTimeoutMs(ms);
+    });
+  }, [applyInactivityTimeoutMs]);
 
   useEffect(() => {
     if (!sessionLive) {
@@ -178,13 +181,16 @@ export function SessionProvider({ children }) {
       phaseRef.current === "jwtWarning" ||
       phaseRef.current === "cookieRequired" ||
       phaseRef.current === "loggingOut" ||
+      phaseRef.current === "idlePrompt" ||
       isSessionEnding()
     ) {
       return;
     }
+    idlePromptDeadlineRef.current = Date.now() + promptBeforeIdleMs;
+    setIdlePromptRemainingMs(promptBeforeIdleMs);
+    setSessionWarningActive(true);
     setPhase("idlePrompt");
-    setIdlePromptRemainingMs(IDLE_PROMPT_MS);
-  }, []);
+  }, [promptBeforeIdleMs]);
 
   const onIdle = useCallback(() => {
     handleEndSession("idle");
@@ -201,9 +207,10 @@ export function SessionProvider({ children }) {
     phase === "loggingOut" ||
     phase === "jwtWarning" ||
     phase === "cookieRequired" ||
+    phase === "idlePrompt" ||
     isSessionEnding();
 
-  const { getRemainingTime, activate, reset, pause, start } = useIdleTimer({
+  const { activate, reset, pause, start } = useIdleTimer({
     timeout: idleTimeout,
     promptBeforeIdle: promptBeforeIdleMs,
     onPrompt,
@@ -222,9 +229,6 @@ export function SessionProvider({ children }) {
       "visibilitychange",
     ],
   });
-
-  const getRemainingTimeRef = useRef(getRemainingTime);
-  getRemainingTimeRef.current = getRemainingTime;
 
   // Start / pause idle tracking when session or phase changes.
   useEffect(() => {
@@ -251,6 +255,7 @@ export function SessionProvider({ children }) {
       if (!sessionLiveRef.current) return;
       if (isSessionEnding() || phaseRef.current === "loggingOut") return;
       if (phaseRef.current === "cookieRequired") return;
+      if (phaseRef.current === "idlePrompt") return;
 
       const token = getAccessToken();
       if (!token) {
@@ -263,23 +268,20 @@ export function SessionProvider({ children }) {
 
       if (remaining === null) return;
 
+      // After extend / stay-active, ignore stale expiry reads briefly
+      if (Date.now() < warnSuppressUntilRef.current) {
+        if (phaseRef.current === "jwtWarning") {
+          setPhase("active");
+          setSessionWarningActive(false);
+        }
+        return;
+      }
+
       const warningMs = getJwtWarningThresholdMs(token);
       const expired = remaining <= 0;
       const inWarning = remaining <= warningMs;
 
-      if (expired) {
-        if (phaseRef.current !== "jwtWarning") {
-          setPhase("jwtWarning");
-        }
-        setSessionWarningActive(true);
-        return;
-      }
-
-      if (Date.now() < warnSuppressUntilRef.current) {
-        return;
-      }
-
-      if (inWarning) {
+      if (expired || inWarning) {
         if (phaseRef.current !== "jwtWarning") {
           setPhase("jwtWarning");
         }
@@ -299,8 +301,8 @@ export function SessionProvider({ children }) {
     if (phase !== "idlePrompt") return undefined;
 
     const interval = setInterval(() => {
-      const remaining = Math.max(0, getRemainingTimeRef.current());
-      setIdlePromptRemainingMs(remaining);
+      const remaining = idlePromptDeadlineRef.current - Date.now();
+      setIdlePromptRemainingMs(Math.max(0, remaining));
       if (remaining <= 0) {
         handleEndSession("idle-prompt");
       }
@@ -311,7 +313,7 @@ export function SessionProvider({ children }) {
 
   useEffect(() => {
     return onAccessTokenRefreshed(() => {
-      warnSuppressUntilRef.current = Date.now() + 2000;
+      warnSuppressUntilRef.current = Date.now() + 5000;
       if (phaseRef.current === "jwtWarning") {
         setPhase("active");
         setSessionWarningActive(false);
@@ -338,7 +340,7 @@ export function SessionProvider({ children }) {
     try {
       await refreshAccessToken();
       clearCookiePrompt();
-      warnSuppressUntilRef.current = Date.now() + 2000;
+      warnSuppressUntilRef.current = Date.now() + 5000;
       reset();
       activate();
       const token = getAccessToken();
@@ -389,7 +391,7 @@ export function SessionProvider({ children }) {
       await refreshAccessToken();
       clearCookiePrompt();
       toast.success("Sesja została przedłużona");
-      warnSuppressUntilRef.current = Date.now() + 2000;
+      warnSuppressUntilRef.current = Date.now() + 5000;
       setSessionWarningActive(false);
       setPhase("active");
       reset();
@@ -421,18 +423,36 @@ export function SessionProvider({ children }) {
     if (isExtending || isSessionEnding()) return;
     setIsExtending(true);
     try {
-      warnSuppressUntilRef.current = Date.now() + 2000;
+      warnSuppressUntilRef.current = Date.now() + 5000;
       setSessionWarningActive(false);
       setPhase("active");
-      activate();
+      idlePromptDeadlineRef.current = 0;
       reset();
-      await refreshAccessToken().catch(() => null);
+      activate();
+
+      try {
+        await refreshAccessToken();
+      } catch (error) {
+        console.warn("Idle stay-active refresh failed:", error);
+        if (isRefreshTokenMissingError(error)) {
+          openCookiePrompt("refresh_missing");
+          return;
+        }
+        if (isRefreshTokenInvalidError(error)) {
+          toast.error(
+            "Sesja wygasła — zaloguj się ponownie."
+          );
+          await handleEndSession("extend-failed");
+          return;
+        }
+      }
+
       const token = getAccessToken();
       setJwtRemainingMs(token ? getMsUntilExpiry(token) : null);
     } finally {
       setIsExtending(false);
     }
-  }, [isExtending, activate, reset]);
+  }, [isExtending, activate, reset, openCookiePrompt, handleEndSession]);
 
   const value = useMemo(
     () => ({

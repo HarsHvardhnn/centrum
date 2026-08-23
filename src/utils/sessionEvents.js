@@ -45,3 +45,24 @@ export function notifyAccessTokenRefreshed(token) {
     }
   });
 }
+
+const inactivityTimeoutListeners = new Set();
+
+/** Subscribe when admin updates INACTIVITY_TIMEOUT (ms). */
+export function onInactivityTimeoutUpdated(listener) {
+  inactivityTimeoutListeners.add(listener);
+  return () => inactivityTimeoutListeners.delete(listener);
+}
+
+/** Notify all sessions that the idle timeout changed (milliseconds). */
+export function notifyInactivityTimeoutUpdated(timeoutMs) {
+  const ms = Number(timeoutMs);
+  if (!Number.isFinite(ms) || ms <= 0) return;
+  inactivityTimeoutListeners.forEach((fn) => {
+    try {
+      fn(ms);
+    } catch {
+      /* ignore */
+    }
+  });
+}

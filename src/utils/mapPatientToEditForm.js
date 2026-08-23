@@ -167,17 +167,73 @@ export async function resolveAttendingDoctorFromVisits(
 }
 
 /**
+ * Minimal form stub from list-row patient — instant modal prefill while full fetch runs.
+ */
+export function mapListPatientToEditStub(patient) {
+  if (!patient) return { phoneCode: DEFAULT_PATIENT_PHONE_CODE };
+  const name = patient.name;
+  let fullName = "";
+  if (name && typeof name === "object") {
+    fullName = `${name.first || ""} ${name.last || ""}`.trim();
+  } else if (patient.fullName) {
+    fullName = String(patient.fullName);
+  } else if (typeof name === "string") {
+    fullName = name;
+  }
+  const stub = {
+    fullName,
+    patient_id: patient.id || patient._id,
+    patientId: patient.patientId || "",
+    govtId: patient.govtId || patient.pesel || "",
+    sex: patient.sex || patient.gender || "",
+    phoneCode: DEFAULT_PATIENT_PHONE_CODE,
+    mobileNumber: "",
+  };
+  const rawPhone = patient.phoneNumber ?? patient.phone;
+  if (rawPhone != null && String(rawPhone).trim() !== "") {
+    const { phoneCode, mobileNumber } = mapPatientPhoneToFormFields(
+      rawPhone,
+      patient.phoneCode
+    );
+    stub.phoneCode = phoneCode;
+    stub.mobileNumber = mobileNumber;
+  }
+  return stub;
+}
+
+/**
  * Fetch patient + map into the multi-step edit form shape.
+ * Patient, appointment (if any), and visits (if needed) load in parallel.
  */
 export async function loadPatientEditFormData(
   patientId,
   preferredAppointmentId = null,
   countryCodes = PHONE_COUNTRY_CODES
 ) {
-  const patientDetails = await patientService.getPatientById(patientId, {
+  const patientPromise = patientService.getPatientById(patientId, {
     include: "documents,consents",
   });
-  // Support both flat patient payload and wrapped { patient } / { data }
+
+  const appointmentPromise = preferredAppointmentId
+    ? appointmentHelper.getAppointmentById(preferredAppointmentId).catch((err) => {
+        console.warn("Could not load appointment for attending doctor prefill:", err);
+        return null;
+      })
+    : Promise.resolve(null);
+
+  const visitsPromise = preferredAppointmentId
+    ? Promise.resolve(null)
+    : patientService.getPatientVisits(patientId).catch((err) => {
+        console.warn("Could not load visits for attending doctor prefill:", err);
+        return { data: [] };
+      });
+
+  const [patientDetails, aptRes, visitsRes] = await Promise.all([
+    patientPromise,
+    appointmentPromise,
+    visitsPromise,
+  ]);
+
   const details =
     patientDetails?.name || patientDetails?._id
       ? patientDetails
@@ -197,20 +253,38 @@ export async function loadPatientEditFormData(
   let consultingSpecialization = toEntityId(details.consultingSpecialization);
   let consultingDoctorName = "";
 
-  // Prefer visit/appointment doctor when opening from a list row (or when patient has none).
-  // Always fill missing specialization from the doctor profile.
   const needsVisitPrefill = !consultingDoctor || !!preferredAppointmentId;
+
   if (needsVisitPrefill) {
-    const resolved = await resolveAttendingDoctorFromVisits(
-      patientId,
-      preferredAppointmentId
-    );
-    if (!consultingDoctor && resolved.consultingDoctor) {
-      consultingDoctor = resolved.consultingDoctor;
-      consultingDoctorName = resolved.consultingDoctorName || "";
+    if (aptRes) {
+      const apt = aptRes?.appointment || aptRes?.data || aptRes;
+      const docId = toEntityId(apt?.doctor);
+      if (docId) {
+        if (!consultingDoctor || preferredAppointmentId) {
+          consultingDoctor = docId;
+          if (apt?.doctor?.name) {
+            const n = apt.doctor.name;
+            consultingDoctorName =
+              typeof n === "object"
+                ? `${n.first || ""} ${n.last || ""}`.trim()
+                : String(n);
+          }
+        }
+      }
     }
-    if (!consultingSpecialization && resolved.consultingSpecialization) {
-      consultingSpecialization = resolved.consultingSpecialization;
+
+    if (!consultingDoctor && visitsRes) {
+      const visits = Array.isArray(visitsRes?.data) ? visitsRes.data : [];
+      const withDoctor = visits.filter(
+        (v) =>
+          (v?.doctor?.id || v?.doctor?._id) &&
+          String(v.status || "").toLowerCase() !== "cancelled"
+      );
+      const oldest = withDoctor.length ? withDoctor[withDoctor.length - 1] : null;
+      consultingDoctor = toEntityId(
+        oldest?.doctor?.id || oldest?.doctor?._id || oldest?.doctor
+      );
+      if (oldest?.doctor?.name) consultingDoctorName = String(oldest.doctor.name);
     }
   }
 

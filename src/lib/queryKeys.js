@@ -8,4 +8,6 @@ export const queryKeys = {
   billingList: (params) => ["billing-list", params],
   billingSummary: (params) => ["billing-summary", params],
   billDetail: (billId, scope = "full") => ["bill-detail", billId, scope],
+  patientEditForm: (patientId, appointmentId = "") =>
+    ["patient-edit-form", patientId, appointmentId || ""],
 };

@@ -759,12 +759,12 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                       <div className="text-xs text-gray-500">Suma</div>
                       <div className="font-semibold text-sm">{toMoney(item.finalPrice).toFixed(2)}</div>
                     </div>
-                    {!locked && item.kind === "additional" && (
+                    {!locked && (
                       <button
                         type="button"
                         onClick={() => removeLine(item.key)}
                         className="text-red-500 hover:text-red-700"
-                        title="Usuń"
+                        title="Usuń pozycję"
                       >
                         <Trash2 size={16} />
                       </button>

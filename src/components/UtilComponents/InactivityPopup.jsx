@@ -26,16 +26,11 @@ const InactivityPopup = ({
   if (!open) return null;
 
   return createPortal(
-    <div
-      style={overlayStyle}
-      data-testid="inactivity-popup"
-      onClick={() => {
-        if (!isExtending) onStayActive?.();
-      }}
-    >
+    <div style={overlayStyle} data-testid="inactivity-popup">
       <div
         className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6 relative"
-        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
       >
         <div className="flex items-start mb-4">
           <div className="rounded-full p-3 mr-4 bg-orange-100">

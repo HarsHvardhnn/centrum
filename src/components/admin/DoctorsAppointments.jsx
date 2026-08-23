@@ -45,6 +45,14 @@ const DoctorSelectionWithSlots = ({
   onDoctorSelect,
   onSlotSelect,
   selectedDate,
+  onDateChange = null,
+  customStartTime = "",
+  customEndTime = "",
+  onCustomTimeChange = null,
+  onClearSlotSelection = null,
+  customTimeError = null,
+  timeSelectionError = null,
+  isBackdated = false,
   selectedPatient = null,
   smsConsentAgreed = true,
   onSmsConsentChange = null,
@@ -181,6 +189,7 @@ const DoctorSelectionWithSlots = ({
     setSelectedSlot(null);
     onDoctorSelect?.(null);
     onSlotSelect?.(null);
+    // Keep specialization, search text, and result lists so user can pick another doctor.
   };
 
   const handleSpecializationChange = (e) => {
@@ -216,8 +225,7 @@ const DoctorSelectionWithSlots = ({
         : "") ||
       "";
     if (specId) setSelectedSpecialization(String(specId));
-    setDoctorSearch("");
-    setSearchResults([]);
+    // Keep search query + results so "Zmień lekarza" returns to the same list
     handleDoctorSelect(doctor);
   };
 
@@ -374,10 +382,90 @@ const DoctorSelectionWithSlots = ({
     </div>
   );
 
+  const renderManualTimeEntry = () => {
+    if (!onCustomTimeChange || !selectedDate) return null;
+
+    return (
+      <div className="mt-4 pt-4 border-t border-gray-200">
+        <h4 className="text-sm font-medium text-blue-800 mb-2">
+          Dodaj termin ręcznie
+        </h4>
+
+        {selectedSlot && (
+          <div className="mb-3 p-3 bg-green-100 border border-green-300 rounded-lg">
+            <div className="flex justify-between items-start gap-2">
+              <div>
+                <p className="text-sm text-green-800">
+                  <strong>✓ Wybrano termin:</strong> {selectedSlot.startTime} -{" "}
+                  {selectedSlot.endTime}
+                </p>
+                <p className="text-xs text-green-700 mt-1">
+                  Możesz zmienić na własny termin poniżej — wybrany slot zostanie
+                  odznaczony.
+                </p>
+              </div>
+              {onClearSlotSelection && (
+                <button
+                  type="button"
+                  onClick={onClearSlotSelection}
+                  className="text-xs text-red-600 hover:text-red-800 underline shrink-0"
+                >
+                  Wyczyść wybór
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <p className="text-xs text-gray-600 mb-3">
+          Wybierz termin z listy powyżej <strong>lub</strong> ustaw własny czas
+          poniżej (nie obie opcje naraz).
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Czas rozpoczęcia
+            </label>
+            <input
+              type="time"
+              name="customStartTime"
+              value={customStartTime || ""}
+              onChange={onCustomTimeChange}
+              className="w-full p-2 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              disabled={selectedSlot != null}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Czas zakończenia (opcjonalny)
+            </label>
+            <input
+              type="time"
+              name="customEndTime"
+              value={customEndTime || ""}
+              onChange={onCustomTimeChange}
+              className="w-full p-2 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              disabled={selectedSlot != null}
+            />
+          </div>
+        </div>
+        {customTimeError && (
+          <p className="text-red-500 text-xs mt-2">{customTimeError}</p>
+        )}
+        {timeSelectionError && (
+          <p className="text-red-500 text-xs mt-2">{timeSelectionError}</p>
+        )}
+      </div>
+    );
+  };
+
   const step1Done = !!(selectedSpecialization || selectedDoctor || searchActive);
   const doctorsToShow = searchActive ? searchResults : doctors;
   const showDoctorList =
-    !hideDoctorSelection && (searchActive || !!selectedSpecialization);
+    !hideDoctorSelection &&
+    (searchActive ||
+      !!selectedSpecialization ||
+      doctorsToShow.length > 0);
 
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -527,7 +615,7 @@ const DoctorSelectionWithSlots = ({
                   Aktualnie wybrany lekarz
                 </p>
                 <p className="text-sm text-teal-800/80 mt-0.5">
-                  Terminy poniżej dotyczą tego lekarza. Zmiana lekarza wyczyści wybrany slot.
+                  Terminy poniżej dotyczą tego lekarza. Użyj „Zmień lekarza”, aby wybrać innego — wyszukiwanie i filtry pozostaną.
                 </p>
               </div>
               <button
@@ -535,7 +623,7 @@ const DoctorSelectionWithSlots = ({
                 onClick={clearDoctorSelection}
                 className="shrink-0 text-sm font-medium text-red-600 hover:text-red-800 underline"
               >
-                Wyczyść wybór
+                Zmień lekarza
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -584,13 +672,13 @@ const DoctorSelectionWithSlots = ({
         {/* Time Slots - show if doctor is selected (either from selection or pre-selected) */}
         {selectedDoctor && !hideSlotList && (
           <div className="mb-3">
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Dostępne Terminy
-              </label>
-              <span className="text-xs text-gray-500">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Dostępne Terminy
+                </label>
                 {selectedDate && (
-                  <>
+                  <span className="text-xs text-gray-500 mt-0.5 block">
                     Na dzień{" "}
                     {new Date(selectedDate).toLocaleDateString("pl-PL", {
                       weekday: "long",
@@ -598,9 +686,30 @@ const DoctorSelectionWithSlots = ({
                       month: "long",
                       day: "numeric",
                     })}
-                  </>
+                  </span>
                 )}
-              </span>
+              </div>
+              {onDateChange && (
+                <div className="sm:text-right">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Wybierz datę wizyty
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="date"
+                      name="selectedDate"
+                      value={selectedDate || ""}
+                      onChange={onDateChange}
+                      className="p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm"
+                    />
+                    {isBackdated && (
+                      <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                        Data w przeszłości dozwolona
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
@@ -630,6 +739,8 @@ const DoctorSelectionWithSlots = ({
                   />
                 </div>
               )}
+
+              {renderManualTimeEntry()}
 
               {onUseCustomDateOnly &&
                 !isLoading &&
