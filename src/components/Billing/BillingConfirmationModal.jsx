@@ -40,9 +40,10 @@ const BillingConfirmationModal = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
-  const isDoctorSettlement = user?.role === "doctor" || mandatory;
+  const isDoctorUser = String(user?.role || "").toLowerCase() === "doctor";
+  const isDoctorSettlement = isDoctorUser;
   const showAdminInvoiceFields =
-    !isDoctorSettlement && canManageInvoiceAdminFields(user?.role);
+    !isDoctorUser && canManageInvoiceAdminFields(user?.role);
   const displayPatientName = formatPersonName(patientName);
   const [isLoading, setIsLoading] = useState(false);
   const [taxPercentage, setTaxPercentage] = useState(0);
@@ -246,7 +247,7 @@ const BillingConfirmationModal = ({
                 )}
               </div>
 
-              {/* Doctor: services + fees + discount only. Tax / date / invoice # / payment = admin & reception. */}
+              {/* Doctor: services only (same as visit-record picker). Admin/reception: full billing form. */}
               <div className="space-y-3 mb-4">
                 {showAdminInvoiceFields && (
                   <div>
@@ -271,6 +272,7 @@ const BillingConfirmationModal = ({
                   </div>
                 )}
 
+                {showAdminInvoiceFields && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Dodatkowe opłaty (zł)
@@ -298,7 +300,9 @@ const BillingConfirmationModal = ({
                     />
                   </div>
                 </div>
+                )}
 
+                {showAdminInvoiceFields && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Rabat (zł)
@@ -313,6 +317,7 @@ const BillingConfirmationModal = ({
                     className="block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                   />
                 </div>
+                )}
 
                 {showAdminInvoiceFields && (
                   <>
@@ -393,17 +398,19 @@ const BillingConfirmationModal = ({
                 }
                 try {
                   setIsLoading(true);
-                  // Doctors cannot set invoice # / date / tax / payment — backend defaults + reception edits later
+                  // Doctors only pick services; reception/admin set tax, extras, invoice and payment later
                   const payload = {
                     services,
                     subtotal,
                     taxPercentage: showAdminInvoiceFields ? taxPercentage : 0,
                     taxAmount: showAdminInvoiceFields ? taxAmount : 0,
-                    additionalCharges,
-                    additionalChargeNote,
-                    discount,
-                    totalAmount,
-                    paymentMethod: showAdminInvoiceFields ? paymentMethod : "cash",
+                    additionalCharges: showAdminInvoiceFields ? additionalCharges : 0,
+                    additionalChargeNote: showAdminInvoiceFields ? additionalChargeNote : "",
+                    discount: showAdminInvoiceFields ? discount : 0,
+                    totalAmount: showAdminInvoiceFields
+                      ? totalAmount
+                      : subtotal.toFixed(2),
+                    paymentMethod: showAdminInvoiceFields ? paymentMethod : undefined,
                   };
                   if (showAdminInvoiceFields) {
                     payload.billedAt = invoiceDate;
@@ -411,8 +418,11 @@ const BillingConfirmationModal = ({
                   }
                   await onConfirm(payload);
 
-                  if (mandatory) return;
                   onClose?.();
+                  if (mandatory) {
+                    if (returnPath) navigate(returnPath);
+                    return;
+                  }
                   // Return to the view we started from (main panel, visit history, or doctor panel)
                   if (returnPath) {
                     navigate(returnPath);

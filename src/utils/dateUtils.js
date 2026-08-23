@@ -23,6 +23,33 @@ export function formatPolishDate(date) {
 }
 
 /**
+ * Calendar day for a clinic appointment.
+ * Booking stores `date` as a naive `YYYY-MM-DDTHH:mm:00` instant (UTC on the server).
+ * Formatting in the browser timezone (e.g. IST) flips late slots like 23:15 to the next day.
+ * Use UTC date parts so doctor/reception screens match the booked civil date.
+ */
+export function formatClinicDate(value) {
+  if (value == null || value === "") return "";
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    const dotted = trimmed.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    if (dotted) return trimmed;
+    const isoDay = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoDay && !trimmed.includes("T")) {
+      return `${isoDay[3]}.${isoDay[2]}.${isoDay[1]}`;
+    }
+  }
+  const dateObj = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(dateObj.getTime())) return "";
+  return dateObj.toLocaleDateString("pl-PL", {
+    timeZone: "UTC",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+/**
  * Format a date to Polish long format with month name
  * @param {Date|string} date - Date object or ISO string
  * @returns {string} - Formatted date string (e.g., "17 listopada 1960")

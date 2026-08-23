@@ -4,7 +4,10 @@ import { Loader, Plus, Trash2, X, Eye, Printer, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import billingHelper from "../../helpers/billingHelper";
 import { queryKeys } from "../../lib/queryKeys";
+import { useUser } from "../../context/userContext";
+import { formatPersonName } from "../../utils/formatPersonName";
 import { translateStatus } from "../../utils/statusHelper";
+import ServiceSelectionModal from "../Doctor/SingleDoctor/patient-details/ServiceSelectionModal";
 import {
   DEFAULT_VAT_EXEMPTION_TEXT,
   isZwTax,
@@ -155,6 +158,8 @@ const LoaderOverlay = () => (
  */
 const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   const queryClient = useQueryClient();
+  const { user } = useUser() || {};
+  const defaultIssuerName = formatPersonName(user, "");
   const [saving, setSaving] = useState(false);
   const [lineItems, setLineItems] = useState([]);
   const [documentType, setDocumentType] = useState("fiscal_receipt");
@@ -202,6 +207,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   const [issuedNumber, setIssuedNumber] = useState("");
   const [locked, setLocked] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [showServicePicker, setShowServicePicker] = useState(false);
   const suggestedInvoiceNumberRef = useRef("");
 
   // Hydrate form once per bill open (avoid resetting while user edits)
@@ -231,7 +237,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       phone: snap?.buyer?.phone || prefill.phone || bill.patient?.phoneNumber || "",
     });
     setRecipientName(snap?.recipientName || "");
-    setIssuerName(snap?.issuerName || "");
+    setIssuerName(snap?.issuerName || defaultIssuerName);
     setPlace(snap?.place || "Skarżysko-Kamienna");
     setIssueDate(toDateInput(snap?.issueDate || new Date()));
     setSellDate(toDateInput(snap?.sellDate || new Date()));
@@ -251,9 +257,15 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   }, [isOpen, bill, hydratedBillId]);
 
   useEffect(() => {
+    if (!isOpen || locked) return;
+    if (!issuerName && defaultIssuerName) setIssuerName(defaultIssuerName);
+  }, [isOpen, locked, issuerName, defaultIssuerName]);
+
+  useEffect(() => {
     if (!isOpen) {
       setHydratedBillId(null);
       suggestedInvoiceNumberRef.current = "";
+      setShowServicePicker(false);
     }
   }, [isOpen]);
 
@@ -351,6 +363,38 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
         tax: "zw",
       },
     ]);
+  };
+
+  const addServicesFromCatalog = async (payload) => {
+    const picked = payload?.services || [];
+    if (!picked.length) {
+      setShowServicePicker(false);
+      return;
+    }
+    setLineItems((prev) => {
+      const next = [...prev];
+      picked.forEach((svc) => {
+        const qty = Number(svc.quantity) > 0 ? Number(svc.quantity) : 1;
+        const unit = toMoney(svc.price);
+        const lineTotal = toMoney(unit * qty);
+        next.push({
+          key: `svc-${svc.serviceId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          serviceId: svc.serviceId,
+          name: svc.title || "Usługa",
+          kind: "service",
+          basePrice: lineTotal,
+          discount: 0,
+          discountReason: "",
+          finalPrice: lineTotal,
+          quantity: qty,
+          unit: "szt.",
+          status: "active",
+          tax: "zw",
+        });
+      });
+      return next;
+    });
+    setShowServicePicker(false);
   };
 
   const applyTaxToAllLines = (preset) => {
@@ -535,19 +579,9 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   const printPdf = async () => {
     if (!issuedPdfUrl || !billId) return;
     try {
-      const blob = await billingHelper.fetchInvoicePdfBlob(billId, issuedPdfUrl);
-      const objectUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
-      const w = window.open(objectUrl, "_blank", "noopener,noreferrer");
-      if (w) {
-        setTimeout(() => {
-          try {
-            w.print();
-          } catch (_) {}
-        }, 800);
-      }
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+      await billingHelper.printInvoicePdf(billId, issuedPdfUrl);
     } catch (_) {
-      toast.error("Nie udało się wydrukować PDF");
+      toast.error("Nie udało się otworzyć okna drukowania");
     }
   };
 
@@ -557,6 +591,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   const name = patientName(bill?.patient);
 
   return (
+    <>
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-5xl max-h-[92vh] flex flex-col relative">
         {(isLoading || (isFetching && !bill) || saving) && <LoaderOverlay />}
@@ -654,6 +689,15 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                   </label>
                 )}
                 {!locked && (
+                  <>
+                  <button
+                    type="button"
+                    onClick={() => setShowServicePicker(true)}
+                    className="inline-flex items-center gap-1 text-sm text-teal-700 hover:text-teal-900"
+                  >
+                    <Plus size={16} />
+                    Dodaj usługi z listy
+                  </button>
                   <button
                     type="button"
                     onClick={addAdditionalCharge}
@@ -662,6 +706,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                     <Plus size={16} />
                     Dodaj opłatę dodatkową
                   </button>
+                  </>
                 )}
               </div>
             </div>
@@ -1150,6 +1195,14 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
         </div>
       </div>
     </div>
+    <ServiceSelectionModal
+      isOpen={showServicePicker}
+      onClose={() => setShowServicePicker(false)}
+      onSave={addServicesFromCatalog}
+      patientId={bill?.patient?._id || bill?.patient}
+      doctorUserId={null}
+    />
+    </>
   );
 };
 

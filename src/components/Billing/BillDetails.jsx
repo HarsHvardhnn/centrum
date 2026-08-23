@@ -145,9 +145,16 @@ const BillDetails = () => {
       case 'other':
         return 'Inne';
       default:
-        return method || '—';
+        return method || 'Nie wybrano';
     }
   };
+
+  const isUnsettledBill =
+    billData?.paymentStatus === "pending" ||
+    billData?.paymentStatus === "awaiting_payment";
+  const paymentMethodLabel = isUnsettledBill
+    ? "Nie wybrano"
+    : translatePaymentMethod(billData?.paymentMethod);
   
   if (loading) {
     return (
@@ -282,7 +289,7 @@ const BillDetails = () => {
                   <div className="text-gray-600 text-sm">Metoda Płatności</div>
                   <div className="flex items-center justify-end mt-1">
                     <CreditCard size={16} className="mr-2 text-gray-400" />
-                    <span className="font-medium">{translatePaymentMethod(billData.paymentMethod)}</span>
+                    <span className="font-medium">{paymentMethodLabel}</span>
                   </div>
                 </div>
               </div>

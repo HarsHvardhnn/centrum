@@ -202,6 +202,46 @@ const billingHelper = {
   },
 
   /**
+   * Open the system print dialog for the invoice PDF (does not only preview).
+   */
+  printInvoicePdf: async (billId, invoiceUrl) => {
+    const blob = await billingHelper.fetchInvoicePdfBlob(billId, invoiceUrl);
+    const objectUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("title", "Druk faktury");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.src = objectUrl;
+    document.body.appendChild(iframe);
+
+    const cleanup = () => {
+      iframe.remove();
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    const triggerPrint = () => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (_) {
+        const fallback = window.open(objectUrl, "_blank");
+        fallback?.print?.();
+      }
+    };
+
+    iframe.addEventListener("load", () => {
+      setTimeout(triggerPrint, 300);
+    });
+    // Chrome's PDF viewer often skips iframe load; still try print.
+    setTimeout(triggerPrint, 1200);
+    setTimeout(cleanup, 120_000);
+  },
+
+  /**
    * Suggest next invoice number for a month/year
    */
   suggestInvoiceId: async (month, year) => {

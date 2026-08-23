@@ -38,7 +38,7 @@ const GenerateBillModal = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useUser();
-  const isDoctorViewOnly = user?.role === "doctor";
+  const isDoctorViewOnly = String(user?.role || "").toLowerCase() === "doctor";
   const showAdminInvoiceFields =
     user?.role === "admin" || user?.role === "receptionist";
 
@@ -211,11 +211,15 @@ const GenerateBillModal = ({
         subtotal,
         taxPercentage: showAdminInvoiceFields ? taxPercentage : 0,
         taxAmount: showAdminInvoiceFields ? taxAmount : 0,
-        discount: parseFloat(discount) || 0,
-        additionalCharges: parseFloat(additionalCharges) || 0,
-        additionalChargeNote: additionalChargeNote || "",
-        totalAmount,
-        paymentMethod: showAdminInvoiceFields ? paymentMethod : "cash",
+        discount: showAdminInvoiceFields ? parseFloat(discount) || 0 : 0,
+        additionalCharges: showAdminInvoiceFields
+          ? parseFloat(additionalCharges) || 0
+          : 0,
+        additionalChargeNote: showAdminInvoiceFields
+          ? additionalChargeNote || ""
+          : "",
+        totalAmount: showAdminInvoiceFields ? totalAmount : subtotal.toFixed(2),
+        paymentMethod: showAdminInvoiceFields ? paymentMethod : undefined,
       };
       if (showAdminInvoiceFields) {
         billingPayload.billedAt = invoiceDate;
@@ -347,6 +351,7 @@ const GenerateBillModal = ({
                   </div>
                 )}
 
+                {showAdminInvoiceFields && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Dodatkowe opłaty (zł)
@@ -370,7 +375,9 @@ const GenerateBillModal = ({
                     />
                   </div>
                 </div>
+                )}
 
+                {showAdminInvoiceFields && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Rabat (zł)
@@ -385,6 +392,7 @@ const GenerateBillModal = ({
                     className="block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                   />
                 </div>
+                )}
 
                 {showAdminInvoiceFields && (
                   <>

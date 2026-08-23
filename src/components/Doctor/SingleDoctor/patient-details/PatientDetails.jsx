@@ -45,6 +45,7 @@ import {
 } from "../../../../helpers/userServiceHelper";
 import { queryKeys } from "../../../../lib/queryKeys";
 import { fetchVisitDetails, unwrapVisitConsolidated } from "../../../../utils/visitNavigation";
+import { doctorVisitsPath } from "../../../../utils/useNavigate";
 
 /**
  * Build consultation payload for PUT /appointments/:id/details.
@@ -1081,6 +1082,7 @@ const PatientDetailsPage = () => {
         )
       );
       toast.success("Rozliczenie utworzone. Wizyta została zakończona.");
+      navigate(doctorVisitsPath(user), { replace: true });
     } catch (error) {
       const message =
         error?.response?.data?.message ||
@@ -1846,6 +1848,7 @@ const PatientDetailsPage = () => {
         appointmentId={currentAppointmentId}
         patientId={id}
         mandatory
+        returnPath={doctorVisitsPath(user)}
         doctorUserId={resolveVisitDoctorUserId(selectedAppointment) || user?._id || user?.id}
       />
 

@@ -47,6 +47,8 @@ import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 import { queryKeys } from "../../lib/queryKeys";
 import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
 import { formatPersonName } from "../../utils/formatPersonName";
+import { formatClinicDate } from "../../utils/dateUtils";
+import { doctorVisitsPath } from "../../utils/useNavigate";
 
 const MedicalDashboard = () => {
   const { user } = useUser();
@@ -461,25 +463,7 @@ const PatientList = () => {
 
   const formatPolishDate = (dateValue) => {
     if (!dateValue) return "—";
-    const s = String(dateValue).trim();
-    if (!s) return "—";
-
-    // Backend sends: DD.MM.YYYY (e.g. 20.03.2026)
-    const m = s.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-    if (m) {
-      const day = Number(m[1]);
-      const monthIndex = Number(m[2]) - 1;
-      const year = Number(m[3]);
-      const d = new Date(year, monthIndex, day);
-      if (!Number.isNaN(d.getTime())) {
-        return d.toLocaleDateString("pl-PL");
-      }
-    }
-
-    // Fallback: try native parsing (ISO, etc.)
-    const d = new Date(s);
-    if (!Number.isNaN(d.getTime())) return d.toLocaleDateString("pl-PL");
-    return s; // last resort: show raw string
+    return formatClinicDate(dateValue) || "—";
   };
 
   /** Map UI status filter to API status param (omit for 'all'). */
@@ -1257,10 +1241,7 @@ const PatientList = () => {
         )}
         appointmentId={selectedAppointment?.id}
         patientId={selectedAppointment?.patient_id}
-        returnPath={(() => {
-          const doctorId = user?.d_id || user?.id || "";
-          return user?.role === "doctor" && doctorId ? `/lekarze/wizyty/${doctorId}` : "/lekarze";
-        })()}
+        returnPath={user?.role === "doctor" ? doctorVisitsPath(user) : "/lekarze"}
       />
 
       {/* Visit history modal */}

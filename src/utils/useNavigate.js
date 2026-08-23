@@ -71,7 +71,7 @@ export function doctorVisitsPath(user) {
   if (!user || user.role === "admin" || user.role === "receptionist") {
     return ROUTES.DOCTORS;
   }
-  const id = user.id || user._id || user.d_id;
+  const id = user.d_id || user.id || user._id;
   if (!id) return ROUTES.DOCTORS;
   return `${ROUTES.DOCTOR_APPOINTMENTS}/${id}`;
 }

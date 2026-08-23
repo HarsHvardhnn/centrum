@@ -40,6 +40,7 @@ import userServiceHelper, {
 import { queryKeys } from "../../lib/queryKeys";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
+import { doctorVisitsPath } from "../../utils/useNavigate";
 
 function toDateInputValue(value) {
   const date = value ? new Date(value) : new Date();
@@ -92,9 +93,8 @@ const BillingManagement = () => {
   console.log("appointment id ", appointmentId, "step", step)
 
   const getReturnPathAfterAppointmentRedirect = () => {
-    const doctorId = user?.d_id || user?.id || "";
-    if (user?.role === "doctor" && doctorId) {
-      return `/lekarze/wizyty/${doctorId}`;
+    if (user?.role === "doctor") {
+      return doctorVisitsPath(user);
     }
     return "/lekarze";
   };

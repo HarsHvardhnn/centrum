@@ -47,6 +47,8 @@ import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
 import { loadPatientEditFormData, mapListPatientToEditStub } from "../../utils/mapPatientToEditForm";
 import { formatPersonName } from "../../utils/formatPersonName";
+import { formatClinicDate } from "../../utils/dateUtils";
+import { doctorVisitsPath } from "../../utils/useNavigate";
 
 /** Formats appointment `created_at` / `createdAt` for "Utworzono przez: … (DD.MM.YYYY, HH:MM)" */
 function formatAppointmentCreatedAt(appointment) {
@@ -1486,7 +1488,7 @@ function LabAppointmentsContent({ clinic }) {
                 const isVisitOnly = isVisitOnlyAppointment(appointment);
                 const statusPillClass = getStatusStyle(appointment.status);
                 const visitDateStr = appointment.date
-                  ? new Date(appointment.date).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })
+                  ? formatClinicDate(appointment.date) || "—"
                   : "—";
                 const patientIdStr = isVisitOnly
                   ? "—"
@@ -1966,10 +1968,7 @@ function LabAppointmentsContent({ clinic }) {
           patientName={selectedAppointment ? getAppointmentPatientDisplayName(selectedAppointment) : ""}
           appointmentId={selectedAppointment?.id}
           patientId={selectedAppointment?.patient?.id}
-          returnPath={(() => {
-            const doctorId = user?.d_id || user?.id || "";
-            return user?.role === "doctor" && doctorId ? `/lekarze/wizyty/${doctorId}` : "/lekarze";
-          })()}
+          returnPath={user?.role === "doctor" ? doctorVisitsPath(user) : "/lekarze"}
         />
 
         {/* Reschedule Modal */}
@@ -2114,7 +2113,7 @@ function LabAppointmentsContent({ clinic }) {
                 ) : (
                   <ul className="space-y-3">
                     {visitCardsList.map((item) => {
-                      const dateStr = item.date ? new Date(item.date).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+                      const dateStr = item.date ? formatClinicDate(item.date) || "—" : "—";
                       const doctorName = item.doctor?.name ?? "—";
                       const hasCard = item.visitCard?.url;
                       return (
