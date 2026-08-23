@@ -1327,12 +1327,8 @@ const BillingManagement = () => {
           )}
         </div>
         
-        {/* Bulk actions — only when there is something unpaid to act on, or a selection */}
-        {canSelectBills &&
-          (pendingIdsOnPage.length > 0 ||
-            selectedUnpaidCount > 0 ||
-            selectedInvoiceIds.length > 0 ||
-            (stats.totalPending > 0 && paymentStatusFilter !== "paid")) && (
+        {/* Bulk actions for admin / reception */}
+        {canSelectBills && (
           <div className="mb-4 bg-teal-50 border border-teal-200 rounded-lg p-4 space-y-3">
             <div>
               <p className="text-teal-900 font-medium">Oznaczanie jako opłacone</p>
@@ -1340,31 +1336,29 @@ const BillingManagement = () => {
                 {selectedUnpaidCount > 0
                   ? `Wybrano ${selectedUnpaidCount} nieopłaconych faktur na tej stronie.`
                   : pendingIdsOnPage.length > 0
-                  ? `Na tej stronie jest ${pendingIdsOnPage.length} nieopłaconych faktur — zaznacz je checkboxami, albo oznacz wszystkie oczekujące według filtrów.`
-                  : paymentStatusFilter === "pending" || paymentStatusFilter === "overdue"
-                  ? "Brak nieopłaconych faktur na tej stronie. Możesz oznaczyć wszystkie oczekujące według aktualnych filtrów (wszystkie strony)."
-                  : "Najpierw kliknij kartę „Oczekujące” powyżej albo ustaw filtr statusu, potem zaznacz faktury."}
+                  ? `Na tej stronie jest ${pendingIdsOnPage.length} nieopłaconych faktur — zaznacz je albo oznacz wszystkie oczekujące według filtrów.`
+                  : "Zaznacz faktury checkboxem albo oznacz wszystkie oczekujące według aktualnych filtrów (wszystkie strony)."}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              {paymentStatusFilter !== "pending" && stats.totalPending > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setPaymentStatusFilter("pending")}
-                  className="px-4 py-2 border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-100"
-                >
-                  Pokaż tylko oczekujące
-                </button>
-              )}
               {pendingIdsOnPage.length > 0 && (
                 <button
                   type="button"
                   onClick={handleSelectAllPendingOnPage}
-                  className="px-4 py-2 border border-teal-600 text-teal-700 rounded-lg hover:bg-teal-100"
+                  className="px-4 py-2 border border-teal-600 text-teal-700 bg-white rounded-lg hover:bg-teal-100"
                 >
                   {allPendingOnPageSelected
                     ? "Odznacz zaznaczone na stronie"
                     : `Zaznacz nieopłacone na stronie (${pendingIdsOnPage.length})`}
+                </button>
+              )}
+              {selectedInvoiceIds.length > 0 && !allPendingOnPageSelected && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedInvoiceIds([])}
+                  className="px-4 py-2 border border-teal-600 text-teal-700 bg-white rounded-lg hover:bg-teal-100"
+                >
+                  Odznacz zaznaczone na stronie
                 </button>
               )}
               <button
@@ -1381,7 +1375,7 @@ const BillingManagement = () => {
               <button
                 type="button"
                 onClick={() => handleBulkMarkPaidClick("allPending")}
-                disabled={paymentStatusFilter === "paid"}
+                disabled={stats.totalPending <= 0}
                 className="px-4 py-2 bg-teal-800 text-white rounded-lg hover:bg-teal-900 disabled:opacity-40 disabled:cursor-not-allowed"
                 title="Oznacza wszystkie nieopłacone faktury pasujące do aktualnych filtrów (nie tylko ta strona)"
               >

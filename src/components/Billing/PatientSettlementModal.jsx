@@ -296,6 +296,18 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     [documentType, lineItems]
   );
 
+  const documentVatSelect = useMemo(() => {
+    if (!lineItems.length) return "zw";
+    const values = [...new Set(lineItems.map((i) => taxSelectValue(i.tax)))];
+    return values.length === 1 ? values[0] : "mixed";
+  }, [lineItems]);
+
+  const documentCustomVat = useMemo(() => {
+    if (documentVatSelect !== "custom" || !lineItems.length) return "";
+    const rates = [...new Set(lineItems.map((i) => String(normalizeTaxRate(i.tax))))];
+    return rates.length === 1 && rates[0] !== "zw" ? rates[0] : "";
+  }, [documentVatSelect, lineItems]);
+
   const invoicePositions = useMemo(
     () => lineItems.map((line) => lineItemToInvoicePosition(line)),
     [lineItems]
@@ -342,12 +354,15 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   };
 
   const applyTaxToAllLines = (preset) => {
-    if (!preset) return;
+    if (!preset || preset === "mixed") return;
     setLineItems((prev) =>
-      prev.map((row) => ({
-        ...row,
-        tax: preset === "custom" ? row.tax || "zw" : preset,
-      }))
+      prev.map((row) => {
+        if (preset === "custom") {
+          const keep = taxSelectValue(row.tax) === "custom" ? row.tax : "5";
+          return { ...row, tax: keep };
+        }
+        return { ...row, tax: preset };
+      })
     );
   };
 
@@ -606,7 +621,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
             )}
             {documentType === "invoice" && (
               <p className="text-xs text-gray-500 mt-2">
-                Ustaw stawkę VAT przy każdej pozycji poniżej. Domyślnie ZW — tekst zwolnienia pojawi się tylko dla pozycji ze stawką ZW.
+                Domyślna stawka to ZW. Możesz zmienić ją na 8%, 23% lub inną — podstawa zwolnienia jest wtedy ukrywana.
               </p>
             )}
           </section>
@@ -621,12 +636,14 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                     <span className="text-xs text-gray-500">Stawka VAT (wszystkie):</span>
                     <select
                       className="px-2 py-1 border rounded-md text-sm bg-white"
-                      defaultValue=""
+                      value={documentVatSelect === "mixed" ? "" : documentVatSelect}
                       onChange={(e) => applyTaxToAllLines(e.target.value)}
                     >
-                      <option value="" disabled>
-                        Wybierz…
-                      </option>
+                      {documentVatSelect === "mixed" && (
+                        <option value="" disabled>
+                          Różne…
+                        </option>
+                      )}
                       {VAT_RATE_PRESETS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
                           {opt.label}
@@ -916,9 +933,50 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                     />
                   </div>
                 )}
+                <div>
+                  <label className="text-xs text-gray-500">Stawka VAT</label>
+                  <select
+                    disabled={locked}
+                    value={documentVatSelect}
+                    onChange={(e) => applyTaxToAllLines(e.target.value)}
+                    className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
+                  >
+                    {documentVatSelect === "mixed" && (
+                      <option value="mixed" disabled>
+                        Różne stawki
+                      </option>
+                    )}
+                    {VAT_RATE_PRESETS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                    <option value="custom">Inna…</option>
+                  </select>
+                  {documentVatSelect === "custom" && (
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      disabled={locked}
+                      value={documentCustomVat}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (raw === "") return;
+                        applyTaxToAllLines(raw);
+                      }}
+                      placeholder="np. 5"
+                      className="w-full mt-1 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
+                    />
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Domyślnie ZW. 8% / 23% / inna stawka — bez podstawy zwolnienia.
+                  </p>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-white border rounded-md p-3">
                   <div className="text-xs font-semibold uppercase text-gray-500 mb-2">
                     Sprzedawca (stały)
@@ -961,24 +1019,6 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                     </div>
                   ))}
                 </div>
-                <div className="bg-white border rounded-md p-3 space-y-2">
-                  <div className="text-xs font-semibold uppercase text-gray-500">
-                    Odbiorca (opcjonalnie)
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500">
-                      Imię i nazwisko odbiorcy
-                    </label>
-                    <input
-                      type="text"
-                      disabled={locked}
-                      value={recipientName}
-                      onChange={(e) => setRecipientName(e.target.value)}
-                      placeholder="Pozostaw puste, jeśli odbiorca = nabywca"
-                      className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm disabled:bg-gray-50"
-                    />
-                  </div>
-                </div>
               </div>
 
               {showVatExemptionField && (
@@ -992,22 +1032,37 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                   className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Pole widoczne tylko gdy co najmniej jedna pozycja ma stawkę ZW.
+                  Wymagane tylko przy stawce ZW. Przy 8% lub 23% pole jest ukrywane.
                 </p>
               </div>
               )}
 
-              <div>
-                <label className="text-xs text-gray-500">
-                  Imię i nazwisko wystawcy (opcjonalnie)
-                </label>
-                <input
-                  type="text"
-                  disabled={locked}
-                  value={issuerName}
-                  onChange={(e) => setIssuerName(e.target.value)}
-                  className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500">
+                    Imię i nazwisko odbiorcy (opcjonalnie)
+                  </label>
+                  <input
+                    type="text"
+                    disabled={locked}
+                    value={recipientName}
+                    onChange={(e) => setRecipientName(e.target.value)}
+                    placeholder="Puste, jeśli odbiorca = nabywca"
+                    className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">
+                    Imię i nazwisko wystawcy (opcjonalnie)
+                  </label>
+                  <input
+                    type="text"
+                    disabled={locked}
+                    value={issuerName}
+                    onChange={(e) => setIssuerName(e.target.value)}
+                    className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
+                  />
+                </div>
               </div>
 
               {locked && (
