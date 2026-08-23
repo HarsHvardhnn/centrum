@@ -5,7 +5,7 @@ import doctorService from "../../helpers/doctorHelper";
 import { apiCaller } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { useSpecializations } from "../../context/SpecializationContext";
-import { FaCalendarAlt, FaShare } from "react-icons/fa";
+import { FaShare } from "react-icons/fa";
 import { useUser } from "../../context/userContext";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from "../../utils/polandTimezone";
@@ -14,6 +14,7 @@ import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import PhoneCodeSelect from "../UtilComponents/PhoneCodeSelect";
 import { filterPublicDoctorList } from "../../utils/publicDoctorFilters";
 import OnlineBookingUnavailable from "./OnlineBookingUnavailable";
+import NoSlotsOnSelectedDay from "./NoSlotsOnSelectedDay";
 
 export default function BookAppointment({
   page,
@@ -197,7 +198,7 @@ export default function BookAppointment({
         .transform((curr, orig) => orig === '' ? null : curr),
       otherwise: (schema) => schema
     }),
-    smsConsentAgreed: Yup.boolean(),
+    smsConsentAgreed: Yup.boolean().oneOf([true], "Zgoda na powiadomienia SMS i e-mail jest wymagana"),
     privacyPolicyAgreed: Yup.boolean().oneOf([true], "Akceptacja regulaminu i polityki prywatności jest wymagana"),
     medicalDataProcessingAgreed: Yup.boolean().when('consultationType', {
       is: 'online',
@@ -1039,12 +1040,7 @@ export default function BookAppointment({
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-4 sm:py-6 bg-gray-50 rounded-lg">
-                        <FaCalendarAlt className="mx-auto text-gray-400 mb-2" size={20} />
-                        <p className="text-gray-700 text-sm sm:text-base">
-                          Brak dostępnych terminów w wybranym dniu
-                        </p>
-                      </div>
+                      <NoSlotsOnSelectedDay />
                     )
                   ) : (
                     <div className="text-center py-4 sm:py-6 bg-gray-50 rounded-lg">
@@ -1186,7 +1182,7 @@ export default function BookAppointment({
                     </>
                   )}
 
-                  {/* Voluntary SMS Consent */}
+                  {/* Mandatory SMS / e-mail visit notifications */}
                   <div>
                     <label className="flex items-start space-x-2 cursor-pointer">
                       <Field
@@ -1196,9 +1192,14 @@ export default function BookAppointment({
                         className="mt-1 h-4 w-4 rounded border-gray-300 text-main focus:ring-main"
                       />
                       <span className="text-sm text-gray-700">
-                        Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).
+                        Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu). <span className="text-red-500">*</span>
                       </span>
                     </label>
+                    <ErrorMessage
+                      name="smsConsentAgreed"
+                      component="div"
+                      className="text-red-600 text-xs sm:text-sm mt-1 ml-6"
+                    />
                   </div>
                 </div>
 

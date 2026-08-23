@@ -101,3 +101,70 @@ export function compareDatesPoland(date1, date2) {
   
   return date1Str.localeCompare(date2Str);
 }
+
+/**
+ * First calendar day in `dates` that still has bookable slots.
+ * Used so the booking picker does not stay on "today" when today is empty.
+ */
+export function firstDateWithSlots(dates, daysWithSlots) {
+  if (!Array.isArray(dates) || !daysWithSlots?.size) return "";
+  return dates.find((date) => daysWithSlots.has(date)) || "";
+}
+
+/** YYYY-MM-DD from API values that may be ISO timestamps. */
+export function normalizeYmd(value) {
+  if (!value) return "";
+  const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : "";
+}
+
+export function daysBetweenYmd(fromYmd, toYmd) {
+  const from = normalizeYmd(fromYmd);
+  const to = normalizeYmd(toYmd);
+  if (!from || !to) return NaN;
+  const [fy, fm, fd] = from.split("-").map(Number);
+  const [ty, tm, td] = to.split("-").map(Number);
+  return Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86400000);
+}
+
+/** Week index from today (Poland calendar), 0 = current 7-day window starting today. */
+export function weekOffsetFromYmd(dateStr) {
+  const days = daysBetweenYmd(getCurrentDateInPoland(), dateStr);
+  if (!Number.isFinite(days)) return 0;
+  return Math.max(0, Math.floor(days / 7));
+}
+
+/** Seven calendar days starting today + weekOffset*7, as YYYY-MM-DD (Poland today). */
+export function buildWeekDays(weekOffsetValue) {
+  const offset = Number.isFinite(weekOffsetValue) ? weekOffsetValue : 0;
+  const today = getCurrentDateInPoland();
+  const [year, month, day] = today.split("-").map(Number);
+  return Array.from({ length: 7 }, (_, i) =>
+    new Date(Date.UTC(year, month - 1, day + i + offset * 7)).toISOString().slice(0, 10)
+  );
+}
+
+export function collectDaysWithSlots(availability) {
+  const daysWithSlots = new Set();
+  (availability || []).forEach((dayAvailability) => {
+    const ymd = normalizeYmd(dayAvailability?.date);
+    if (ymd && dayAvailability.hasSlots) {
+      daysWithSlots.add(ymd);
+    }
+  });
+  return daysWithSlots;
+}
+
+export function pickBookableDate(days, daysWithSlots, preferredDate) {
+  const preferred = normalizeYmd(preferredDate);
+  if (preferred && daysWithSlots?.has(preferred)) return preferred;
+  return firstDateWithSlots(days, daysWithSlots);
+}
+
+/** Format YYYY-MM-DD as DD.MM.YYYY without shifting the calendar day. */
+export function formatYmdToPolish(ymd) {
+  const normalized = normalizeYmd(ymd);
+  if (!normalized) return "";
+  const [year, month, day] = normalized.split("-");
+  return `${day}.${month}.${year}`;
+}

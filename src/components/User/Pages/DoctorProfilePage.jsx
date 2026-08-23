@@ -10,11 +10,13 @@ import doctorService from '../../../helpers/doctorHelper';
 import { useUser } from '../../../context/userContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { getCurrentDateInPoland, formatDateToPolandTimezone, isDateInPast, getDateAtMidnightPoland } from '../../../utils/polandTimezone';
+import { getCurrentDateInPoland, isDateInPast, formatYmdToPolish, buildWeekDays, weekOffsetFromYmd, pickBookableDate, collectDaysWithSlots, normalizeYmd } from '../../../utils/polandTimezone';
+import { findConfirmedOpening, loadWeekAvailability, slotsForDate } from '../../../utils/bookingNextOpening';
 import { PHONE_COUNTRY_CODES } from '../../../constants/phoneCountryCodes';
 import { cm7PostalAddressLd } from '../../../data/cm7PostalAddressLd';
 import PhoneCodeSelect from '../../UtilComponents/PhoneCodeSelect';
 import OnlineBookingUnavailable from '../OnlineBookingUnavailable';
+import NoSlotsOnSelectedDay from '../NoSlotsOnSelectedDay';
 
 function BookingPatientFormSection({
   bookingForm,
@@ -378,7 +380,7 @@ function BookingPatientFormSection({
             )}
           </div>
 
-          {/* Voluntary SMS Consent */}
+          {/* Mandatory SMS / e-mail visit notifications */}
           <div>
             <label className="flex items-start space-x-2 cursor-pointer">
               <input
@@ -394,9 +396,14 @@ function BookingPatientFormSection({
                 className="mt-1 h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
               />
               <span className="text-sm text-gray-700">
-                Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu).
+                Wyrażam zgodę na otrzymywanie powiadomień SMS i e-mail dotyczących mojej wizyty (np. przypomnienia, zmiany terminu). <span className="text-red-500">*</span>
               </span>
             </label>
+            {formErrors.smsConsentAgreed && (
+              <p className="text-red-500 text-xs mt-1 ml-6">
+                {formErrors.smsConsentAgreed}
+              </p>
+            )}
           </div>
 
           {/* Online consultation specific consents */}
@@ -507,9 +514,8 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
 
   // Booking modal states
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(
-    getCurrentDateInPoland()
-  );
+  const [selectedDate, setSelectedDate] = useState("");
+  const [nextOpeningDate, setNextOpeningDate] = useState("");
   const [weekOffset, setWeekOffset] = useState(0);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -656,45 +662,35 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
   };
 
   // Fetch slot availability for all days in the current week using new optimized endpoint
-  const fetchWeekSlotAvailability = async (doctorId, days) => {
-    if (!doctorId || !days || days.length === 0) return;
-    
+  const fetchWeekSlotAvailability = async (doctorId, days, preferredDate) => {
+    if (!doctorId || !days?.length) return;
+
     try {
       setCheckingSlots(true);
-      
-      // Get start and end dates from the days array
-      const startDate = days[0];
-      const endDate = days[days.length - 1];
-      
-      // Use the new week availability endpoint
-      const response = await doctorService.getWeekAvailability(doctorId, startDate, endDate);
-      
-      if (response.success && response.data && response.data.availability) {
-        // Process the availability data from the new endpoint
-        const newDaysWithSlots = new Set();
-        response.data.availability.forEach((dayAvailability) => {
-          if (dayAvailability.hasSlots) {
-            newDaysWithSlots.add(dayAvailability.date);
-          }
-        });
-        setDaysWithSlots(newDaysWithSlots);
-        
-        // Cache the week availability data for potential reuse
-        setWeekAvailabilityCache(response.data);
+      const loaded = await loadWeekAvailability(doctorId, days);
+      setDaysWithSlots(loaded.daysWithSlots);
+      setWeekAvailabilityCache(loaded.data);
+      const preferred =
+        preferredDate ||
+        (days.includes(selectedDate) ? selectedDate : "");
+      const bookableDate = pickBookableDate(
+        days,
+        loaded.daysWithSlots,
+        preferred
+      );
+      if (bookableDate) {
+        setSelectedDate(bookableDate);
+        setAvailableSlots(slotsForDate(loaded.availability, bookableDate));
       } else {
-        // Fallback: if response structure is unexpected, mark all days as having no slots
-        console.warn("Unexpected response structure from week availability endpoint");
-        setDaysWithSlots(new Set());
-        setWeekAvailabilityCache(null);
+        setSelectedDate("");
+        setAvailableSlots([]);
       }
     } catch (error) {
       console.error("Error fetching week slot availability:", error);
-      // On error, fall back to checking individual dates (old method)
-      console.log("Falling back to individual date checks...");
       try {
         const today = getCurrentDateInPoland();
         const slotChecks = days
-          .filter(date => date >= today)
+          .filter((date) => date >= today)
           .map(async (date) => {
             try {
               const response = await apiCaller(
@@ -702,27 +698,34 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                 `docs/schedule/available-slots/${doctorId}?date=${date}`
               );
               if (response.data.success && response.data.data) {
-                const hasAvailableSlots = response.data.data.some(slot => slot.available);
+                const hasAvailableSlots = response.data.data.some((slot) => slot.available);
                 return { date, hasSlots: hasAvailableSlots };
               }
               return { date, hasSlots: false };
-            } catch (error) {
-              console.error(`Error checking slots for ${date}:`, error);
+            } catch {
               return { date, hasSlots: false };
             }
           });
 
         const results = await Promise.all(slotChecks);
-        const newDaysWithSlots = new Set();
-        results.forEach(({ date, hasSlots }) => {
-          if (hasSlots) {
-            newDaysWithSlots.add(date);
-          }
-        });
+        const newDaysWithSlots = collectDaysWithSlots(
+          results.map(({ date, hasSlots }) => ({ date, hasSlots }))
+        );
         setDaysWithSlots(newDaysWithSlots);
-      } catch (fallbackError) {
-        console.error("Fallback method also failed:", fallbackError);
+        const preferred =
+          preferredDate ||
+          (days.includes(selectedDate) ? selectedDate : "");
+        const bookableDate = pickBookableDate(days, newDaysWithSlots, preferred);
+        if (bookableDate) {
+          setSelectedDate(bookableDate);
+        } else {
+          setSelectedDate("");
+          setAvailableSlots([]);
+        }
+      } catch {
         setDaysWithSlots(new Set());
+        setSelectedDate("");
+        setAvailableSlots([]);
       }
     } finally {
       setCheckingSlots(false);
@@ -761,43 +764,20 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
         setAvailableSlots([]);
         setSelectedSlot(null);
         setSelectedDate("");
+        setNextOpeningDate("");
         setWeekOffset(0);
         setDaysWithSlots(new Set());
       } else if (nextAvailableResponse.success && nextAvailableResponse.nextAvailableDate) {
         setOnlineBookingUnavailable(false);
-        const nextAvailableDate = nextAvailableResponse.nextAvailableDate;
-        
-        const targetDate = new Date(nextAvailableDate + 'T00:00:00');
-        const today = getDateAtMidnightPoland(getCurrentDateInPoland());
-        const daysDiff = Math.floor((targetDate - today) / (1000 * 60 * 60 * 24));
-        let weekOffsetVal = Math.max(0, Math.floor(daysDiff / 7));
-        if (!Number.isFinite(weekOffsetVal)) weekOffsetVal = 0;
-        
-        setWeekOffset(weekOffsetVal);
-        
-        setSelectedDate(nextAvailableDate);
-        setAvailableSlots(nextAvailableResponse.availableSlots || []);
-        
-        if (nextAvailableResponse.availableSlots && nextAvailableResponse.availableSlots.length > 0) {
-          const hasAvailableSlots = nextAvailableResponse.availableSlots.some(slot => slot.available);
-          setDaysWithSlots(prev => {
-            const newSet = new Set(prev);
-            if (hasAvailableSlots) {
-              newSet.add(nextAvailableDate);
-            }
-            return newSet;
-          });
-        }
-        
-        const days = Array.from({ length: 7 }, (_, i) => {
-          const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
-          const date = new Date(todayPoland);
-          date.setDate(date.getDate() + i + weekOffsetVal * 7);
-          return formatDateToPolandTimezone(date);
-        });
-        setNextDays(days);
-        
-        fetchWeekSlotAvailability(doctorId, days);
+        const hintedDate = normalizeYmd(nextAvailableResponse.nextAvailableDate);
+        const confirmed = await findConfirmedOpening(doctorId, hintedDate);
+        setNextOpeningDate(confirmed.bookableDate);
+        setWeekOffset(confirmed.offset);
+        setNextDays(confirmed.days);
+        setDaysWithSlots(confirmed.daysWithSlots);
+        setWeekAvailabilityCache(confirmed.weekData);
+        setSelectedDate(confirmed.bookableDate);
+        setAvailableSlots(confirmed.availableSlots);
       } else {
         setOnlineBookingUnavailable(false);
         setAvailableSlots([]);
@@ -899,6 +879,10 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
     // Privacy policy is always mandatory
     if (!bookingForm.privacyPolicyAgreed) {
       errors.privacyPolicyAgreed = "Akceptacja regulaminu i polityki prywatności jest wymagana";
+    }
+
+    if (!bookingForm.smsConsentAgreed) {
+      errors.smsConsentAgreed = "Zgoda na powiadomienia SMS i e-mail jest wymagana";
     }
 
     // Additional mandatory consents for online consultation
@@ -1104,12 +1088,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
       setWeekOffset(0);
       return;
     }
-    const days = Array.from({ length: 7 }, (_, i) => {
-      const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
-      const date = new Date(todayPoland);
-      date.setDate(date.getDate() + i + safeOffset * 7);
-      return formatDateToPolandTimezone(date);
-    });
+    const days = buildWeekDays(safeOffset);
     setNextDays(days);
     
     // Clear cache when week changes
@@ -1129,44 +1108,19 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
 
   // Initialize nextDays on component mount (using Poland timezone)
   useEffect(() => {
-    const initialDays = Array.from({ length: 7 }, (_, i) => {
-      const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
-      const date = new Date(todayPoland);
-      date.setDate(date.getDate() + i);
-      return formatDateToPolandTimezone(date);
-    });
-    setNextDays(initialDays);
+    setNextDays(buildWeekDays(0));
   }, []);
 
   const handleWeekChange = (direction) => {
-    const newWeekOffset = Math.max(0, weekOffset + direction); // Ensure we don't go below 0
+    const newWeekOffset = Math.max(0, weekOffset + direction);
     setWeekOffset(newWeekOffset);
-    
-    // Calculate the first day of the new week (using Poland timezone)
-    const todayPoland = getDateAtMidnightPoland(getCurrentDateInPoland());
-    const firstDayOfNewWeek = new Date(todayPoland);
-    firstDayOfNewWeek.setDate(firstDayOfNewWeek.getDate() + newWeekOffset * 7);
-    const firstDayDate = formatDateToPolandTimezone(firstDayOfNewWeek);
-    
-    // Check if the currently selected date is still in the new week
-    const currentSelectedDate = new Date(selectedDate);
-    const firstDayOfNewWeekDate = new Date(firstDayOfNewWeek);
-    const lastDayOfNewWeek = new Date(firstDayOfNewWeek);
-    lastDayOfNewWeek.setDate(lastDayOfNewWeek.getDate() + 6);
-    
-    // If current selected date is not in the new week, reset to first day
-    if (currentSelectedDate < firstDayOfNewWeekDate || currentSelectedDate > lastDayOfNewWeek) {
-      setSelectedDate(firstDayDate);
-      if (doctor) {
-        const doctorId = doctor._id || doctor.id;
-        fetchAvailableSlots(doctorId, firstDayDate);
-      }
-    } else {
-      // Keep the current selected date and fetch slots for it
-      if (doctor) {
-        const doctorId = doctor._id || doctor.id;
-        fetchAvailableSlots(doctorId, selectedDate);
-      }
+    const newDays = buildWeekDays(newWeekOffset);
+    if (!selectedDate || !newDays.includes(selectedDate)) {
+      setSelectedDate("");
+      setAvailableSlots([]);
+    } else if (doctor) {
+      const doctorId = doctor._id || doctor.id;
+      fetchAvailableSlots(doctorId, selectedDate);
     }
   };
 
@@ -1723,10 +1677,18 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                                     }
                                     return `Za ${weekOffset} ${weekText}`;
                                   })()}
-                              {selectedDate && weekOffset > 0 && (
-                                <span className="block text-xs text-teal-600">
-                                  Następny termin: {new Date(selectedDate).toLocaleDateString('pl-PL')}
-                                </span>
+                              {nextOpeningDate && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const offset = weekOffsetFromYmd(nextOpeningDate);
+                                    setWeekOffset(offset);
+                                    setSelectedDate(nextOpeningDate);
+                                  }}
+                                  className="block text-xs text-teal-600 hover:underline"
+                                >
+                                  Następny termin: {formatYmdToPolish(nextOpeningDate)}
+                                </button>
                               )}
                               {nextDays.length > 0 && (
                                 <span className="block text-xs text-gray-500">
@@ -1829,15 +1791,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center py-6 bg-gray-50 rounded-lg">
-                          <FaCalendarAlt
-                            className="mx-auto text-gray-400 mb-2"
-                            size={24}
-                          />
-                          <p className="text-gray-700">
-                            Brak dostępnych terminów w wybranym dniu
-                          </p>
-                        </div>
+                        <NoSlotsOnSelectedDay />
                       )}
                     </div>
                       </>
