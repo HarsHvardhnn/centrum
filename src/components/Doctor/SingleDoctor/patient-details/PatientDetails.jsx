@@ -39,6 +39,10 @@ import {
 } from "../../../../utils/radiologistVisitHelper";
 import { useAutoSave } from "../../../../hooks/useAutoSave";
 import { useUser } from "../../../../context/userContext";
+import {
+  collectDoctorCatalogIds,
+  loadDoctorAssignedCatalog,
+} from "../../../../helpers/userServiceHelper";
 import { queryKeys } from "../../../../lib/queryKeys";
 import { fetchVisitDetails, unwrapVisitConsolidated } from "../../../../utils/visitNavigation";
 
@@ -950,6 +954,29 @@ const PatientDetailsPage = () => {
 
   const canVerifyVisitReason = user?.role === "doctor" || user?.role === "admin";
   const visitDoctorUserId = resolveVisitDoctorUserId(selectedAppointment);
+
+  useEffect(() => {
+    if (user?.role === "admin") return;
+    const ids = collectDoctorCatalogIds(
+      visitDoctorUserId,
+      user?.id,
+      user?._id,
+      user?.d_id
+    );
+    if (!ids.length) return;
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.doctorServicesCatalog(ids),
+      queryFn: () => loadDoctorAssignedCatalog(ids),
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [
+    visitDoctorUserId,
+    user?.role,
+    user?.id,
+    user?._id,
+    user?.d_id,
+    queryClient,
+  ]);
 
   const handleVerifyVisitReason = async () => {
     if (!currentAppointmentId) return;

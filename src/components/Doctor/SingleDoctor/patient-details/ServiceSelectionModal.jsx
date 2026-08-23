@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { X, Plus, Minus, CheckCircle, AlertCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useServices } from "../../../../context/serviceContext";
 import { useUser } from "../../../../context/userContext";
 import {
   collectDoctorCatalogIds,
   loadDoctorAssignedCatalog,
 } from "../../../../helpers/userServiceHelper";
+import { queryKeys } from "../../../../lib/queryKeys";
 
 const ServiceSelectionModal = ({
   isOpen,
@@ -22,10 +24,6 @@ const ServiceSelectionModal = ({
     error: globalError,
   } = useServices();
 
-  const [doctorServices, setDoctorServices] = useState([]);
-  const [doctorLoading, setDoctorLoading] = useState(false);
-  const [doctorError, setDoctorError] = useState(null);
-
   const catalogDoctorIds = useMemo(() => {
     const ids = collectDoctorCatalogIds(doctorUserId);
     if (user?.role === "doctor") {
@@ -39,36 +37,23 @@ const ServiceSelectionModal = ({
   const useDoctorCatalog =
     Boolean(doctorUserId) && user?.role !== "admin";
 
-  useEffect(() => {
-    if (!isOpen || !useDoctorCatalog || catalogDoctorIds.length === 0) {
-      setDoctorServices([]);
-      setDoctorError(null);
-      return;
-    }
+  const {
+    data: doctorServices = [],
+    isLoading: doctorQueryLoading,
+    error: doctorQueryError,
+  } = useQuery({
+    queryKey: queryKeys.doctorServicesCatalog(catalogDoctorIds),
+    queryFn: () => loadDoctorAssignedCatalog(catalogDoctorIds),
+    enabled: Boolean(isOpen && useDoctorCatalog && catalogDoctorIds.length > 0),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 
-    let cancelled = false;
-    (async () => {
-      setDoctorLoading(true);
-      setDoctorError(null);
-      try {
-        const rows = await loadDoctorAssignedCatalog(catalogDoctorIds);
-        if (cancelled) return;
-        setDoctorServices(rows);
-      } catch (e) {
-        console.error("ServiceSelectionModal loadDoctorAssignedCatalog:", e);
-        if (!cancelled) {
-          setDoctorError("Nie udało się załadować usług lekarza");
-          setDoctorServices([]);
-        }
-      } finally {
-        if (!cancelled) setDoctorLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isOpen, useDoctorCatalog, catalogDoctorIds.join("|")]);
+  const doctorLoading =
+    useDoctorCatalog && doctorQueryLoading && doctorServices.length === 0;
+  const doctorError = doctorQueryError
+    ? "Nie udało się załadować usług lekarza"
+    : null;
 
   const services =
     useDoctorCatalog && (doctorLoading || doctorServices.length > 0)

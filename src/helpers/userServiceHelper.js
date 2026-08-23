@@ -84,22 +84,53 @@ export function mapServicesResponseToCatalog(response) {
   );
 }
 
+const assignedCatalogCache = new Map();
+const ASSIGNED_CATALOG_TTL_MS = 5 * 60 * 1000;
+
+function assignedCatalogCacheKey(ids) {
+  return [...ids].sort().join("|");
+}
+
+async function fetchCatalogForDoctorId(id) {
+  try {
+    const rows = mapServicesResponseToCatalog(
+      await userServiceHelper.getServicesCatalog(id, { compact: true })
+    );
+    if (rows.length) return rows;
+  } catch {
+    /* fall through to user-services */
+  }
+  try {
+    return mapDoctorServicesResponseToCatalog(
+      await userServiceHelper.getDoctorServices(id)
+    );
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Assigned services for a doctor. One compact /services?doctorId request (parallel
+ * fallbacks only if empty). Cached so the picker opens instantly on repeat.
+ */
 export async function loadDoctorAssignedCatalog(doctorIds) {
   const ids = collectDoctorCatalogIds(...(doctorIds || []));
-  const catalogs = [];
-  for (const id of ids) {
-    try {
-      catalogs.push(mapDoctorServicesResponseToCatalog(await userServiceHelper.getDoctorServices(id)));
-    } catch {
-      /* try catalog endpoint */
-    }
-    try {
-      catalogs.push(mapServicesResponseToCatalog(await userServiceHelper.getServicesCatalog(id)));
-    } catch {
-      /* next id */
-    }
+  if (ids.length === 0) return [];
+
+  const cacheKey = assignedCatalogCacheKey(ids);
+  const cached = assignedCatalogCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < ASSIGNED_CATALOG_TTL_MS) {
+    return cached.rows;
   }
-  return uniqueCatalogRows(catalogs.flat());
+
+  let rows = await fetchCatalogForDoctorId(ids[0]);
+  if (!rows.length && ids.length > 1) {
+    const rest = await Promise.all(ids.slice(1).map(fetchCatalogForDoctorId));
+    rows = uniqueCatalogRows(rest.flat());
+  }
+
+  assignedCatalogCache.set(cacheKey, { at: Date.now(), rows });
+  return rows;
 }
 
 // User services helper
@@ -174,9 +205,12 @@ const userServiceHelper = {
   },
 
   // Get active services catalog; optional doctorId limits result to doctor's assigned services
-  getServicesCatalog: async (doctorId) => {
+  getServicesCatalog: async (doctorId, { compact = false } = {}) => {
     try {
-      const query = doctorId ? `?doctorId=${encodeURIComponent(doctorId)}` : "";
+      const params = new URLSearchParams();
+      if (doctorId) params.set("doctorId", doctorId);
+      if (compact) params.set("compact", "1");
+      const query = params.toString() ? `?${params.toString()}` : "";
       const response = await apiCaller("GET", `/services${query}`);
       return response;
     } catch (error) {

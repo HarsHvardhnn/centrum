@@ -11,4 +11,8 @@ export const queryKeys = {
   patientEditForm: (patientId, appointmentId = "") =>
     ["patient-edit-form", patientId, appointmentId || ""],
   visitConsolidated: (appointmentId) => ["visit-consolidated", appointmentId],
+  doctorServicesCatalog: (doctorIds) => [
+    "doctor-services-catalog",
+    [...(doctorIds || [])].map(String).sort().join("|"),
+  ],
 };
