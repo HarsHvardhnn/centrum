@@ -44,6 +44,27 @@ function toMoney(n) {
   return Math.round(v * 100) / 100;
 }
 
+function isFormalInvoiceNumber(value) {
+  return /^\d+\/\d{2}\/\d{4}$/.test(String(value || "").trim());
+}
+
+/** Header document ref: invoice N/MM/YYYY, paragon TRX, awaiting nothing. */
+function headerDocumentLabel(bill, issuedNumber) {
+  const invoiceNumber = String(
+    issuedNumber || bill?.invoiceSnapshot?.number || bill?.invoiceId || ""
+  ).trim();
+  if (
+    bill?.documentType === "invoice" ||
+    isFormalInvoiceNumber(invoiceNumber)
+  ) {
+    return invoiceNumber ? `Faktura ${invoiceNumber}` : "";
+  }
+  if (bill?.documentType === "fiscal_receipt" && bill?.internalTxnId) {
+    return bill.internalTxnId;
+  }
+  return "";
+}
+
 function toDateInput(value) {
   const d = value ? new Date(value) : new Date();
   if (Number.isNaN(d.getTime())) return "";
@@ -224,11 +245,16 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     setLineItems(buildLineItemsFromBill(bill));
     setDocumentType(bill.documentType === "invoice" ? "invoice" : "fiscal_receipt");
     setPaymentMethod(bill.paymentMethod || "cash");
-    setAmountReceived(
-      bill.amountReceived != null && bill.amountReceived !== ""
-        ? String(bill.amountReceived)
-        : ""
-    );
+    const receivedCash = Number(bill.amountReceived);
+    const showReceived =
+      bill.paymentMethod === "cash" &&
+      (bill.paymentStatus === "paid") &&
+      !(receivedCash > 0)
+        ? String(toMoney(bill.totalAmount))
+        : bill.amountReceived != null && bill.amountReceived !== ""
+          ? String(bill.amountReceived)
+          : "";
+    setAmountReceived(showReceived);
     setNotes(bill.notes || "");
 
     const snap = bill.invoiceSnapshot;
@@ -480,14 +506,23 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     setSaving(true);
     try {
       // Save settlement draft first
+    const collectedNow = ["cash", "card", "blik", "online", "package", "insurance"].includes(
+      paymentMethod
+    );
+    const paidNow = paymentDueKind === "immediate" || collectedNow;
+    const cashReceived =
+      paymentMethod === "cash"
+        ? toMoney(amountReceived === "" ? total : amountReceived)
+        : undefined;
+
       await billingHelper.settlePatient(billId, {
         documentType: "invoice",
         paymentMethod,
-        amountReceived:
-          paymentMethod === "cash" && amountReceived !== ""
-            ? toMoney(amountReceived)
+        amountReceived: cashReceived,
+        changeDue:
+          paymentMethod === "cash"
+            ? toMoney(Math.max(0, cashReceived - total))
             : undefined,
-        changeDue: changeDue != null ? changeDue : undefined,
         notes,
         lineItems: payloadLineItems(),
         invoiceDraft: {
@@ -501,7 +536,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
           recipientName: String(recipientName || "").trim(),
           issuerName: String(issuerName || "").trim(),
           vatExemptionText: showVatExemptionField ? vatExemptionText : "",
-          paidAmount: paymentDueKind === "immediate" ? total : 0,
+          paidAmount: paidNow ? total : 0,
         },
       });
 
@@ -517,7 +552,8 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
         recipientName: String(recipientName || "").trim(),
         issuerName: String(issuerName || "").trim(),
         vatExemptionText: showVatExemptionField ? vatExemptionText : "",
-        paidAmount: paymentDueKind === "immediate" ? total : 0,
+        paidAmount: paidNow ? total : 0,
+        amountReceived: cashReceived,
         lineItems: payloadLineItems(),
         positions: invoicePositions,
       });
@@ -612,7 +648,9 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                 {apt?.startTime ? ` · ${apt.startTime}` : ""}
                 {` · ${doctorName(apt)}`}
                 {apt?.status ? ` · ${translateStatus(apt.status)}` : ""}
-                {bill.internalTxnId ? ` · ${bill.internalTxnId}` : ""}
+                {headerDocumentLabel(bill, issuedNumber)
+                  ? ` · ${headerDocumentLabel(bill, issuedNumber)}`
+                  : ""}
               </p>
             )}
           </div>

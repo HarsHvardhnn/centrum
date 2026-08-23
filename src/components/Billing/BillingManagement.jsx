@@ -1116,17 +1116,18 @@ const BillingManagement = () => {
     const invoiceNumber = String(
       bill?.invoiceSnapshot?.number || bill?.invoiceId || ""
     ).trim();
-    const receiptNumber = String(bill?.receiptNumber || "").trim();
+    const trx = String(bill?.internalTxnId || "").trim();
+    const isInvoiceNumber = /^\d+\/\d{2}\/\d{4}$/.test(invoiceNumber);
 
-    if (bill?.documentType === "invoice") {
+    if (bill?.documentType === "invoice" || isInvoiceNumber) {
       return invoiceNumber || "—";
     }
     if (bill?.documentType === "fiscal_receipt") {
-      return receiptNumber || "—";
+      return trx || "—";
     }
     if (invoiceNumber) return invoiceNumber;
-    if (receiptNumber) return receiptNumber;
     if (bill?.paymentStatus === "pending") return "Do rozliczenia";
+    if (trx) return trx;
     return "—";
   };
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import doctorService from "../../helpers/doctorHelper";
 import { useSpecializations } from "../../context/SpecializationContext";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
@@ -73,6 +74,7 @@ const DoctorSelectionWithSlots = ({
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(propSelectedSlot);
   const [isLoading, setIsLoading] = useState(false);
+  const [navigatingDate, setNavigatingDate] = useState(false);
 
   // Name search — always available when the doctor picker is shown (reception/admin)
   const [doctorSearch, setDoctorSearch] = useState("");
@@ -232,6 +234,43 @@ const DoctorSelectionWithSlots = ({
   const handleSlotSelect = (slot) => {
     setSelectedSlot(slot);
     onSlotSelect?.(slot);
+  };
+
+  const todayKey = new Date().toISOString().split("T")[0];
+  const canGoPreviousDay =
+    Boolean(onDateChange && selectedDate) &&
+    (isBackdated || selectedDate > todayKey);
+
+  const goToAdjacentAvailableDay = async (direction) => {
+    if (!selectedDoctor?._id || !selectedDate || !onDateChange || navigatingDate) {
+      return;
+    }
+    setNavigatingDate(true);
+    try {
+      const options =
+        direction === 1
+          ? { after: selectedDate }
+          : { before: selectedDate, allowPast: isBackdated };
+      const response = await doctorService.getNextAvailableDate(
+        selectedDoctor._id,
+        options
+      );
+      const nextDate = response?.data?.nextAvailableDate;
+      if (!nextDate) {
+        toast.info(
+          direction === 1
+            ? "Brak kolejnych wolnych terminów"
+            : "Brak wcześniejszych wolnych terminów"
+        );
+        return;
+      }
+      onDateChange({ target: { name: "selectedDate", value: nextDate } });
+    } catch (error) {
+      console.error("Błąd podczas wyszukiwania wolnego terminu:", error);
+      toast.error("Nie udało się znaleźć wolnego terminu");
+    } finally {
+      setNavigatingDate(false);
+    }
   };
 
   // Group slots by morning, afternoon, evening
@@ -672,25 +711,51 @@ const DoctorSelectionWithSlots = ({
         {/* Time Slots - show if doctor is selected (either from selection or pre-selected) */}
         {selectedDoctor && !hideSlotList && (
           <div className="mb-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Dostępne Terminy
-                </label>
-                {selectedDate && (
-                  <span className="text-xs text-gray-500 mt-0.5 block">
-                    Na dzień{" "}
-                    {new Date(selectedDate).toLocaleDateString("pl-PL", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
+            <div className="mb-2">
+              <div className="flex items-center gap-2">
+                {onDateChange && (
+                  <button
+                    type="button"
+                    aria-label="Poprzedni wolny termin"
+                    title="Poprzedni dzień z wolnym terminem"
+                    disabled={!canGoPreviousDay || navigatingDate || isLoading}
+                    onClick={() => goToAdjacentAvailableDay(-1)}
+                    className="shrink-0 p-2 rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                )}
+                <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Dostępne Terminy
+                  </label>
+                  {selectedDate && (
+                    <span className="text-xs text-gray-500">
+                      Na dzień{" "}
+                      {new Date(selectedDate).toLocaleDateString("pl-PL", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                  )}
+                </div>
+                {onDateChange && (
+                  <button
+                    type="button"
+                    aria-label="Następny wolny termin"
+                    title="Następny dzień z wolnym terminem"
+                    disabled={navigatingDate || isLoading}
+                    onClick={() => goToAdjacentAvailableDay(1)}
+                    className="shrink-0 p-2 rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
                 )}
               </div>
               {onDateChange && (
-                <div className="sm:text-right">
+                <div className="mt-3">
                   <label className="block text-xs font-medium text-gray-600 mb-1">
                     Wybierz datę wizyty
                   </label>

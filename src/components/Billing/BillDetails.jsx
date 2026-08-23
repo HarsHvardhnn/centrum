@@ -212,7 +212,9 @@ const BillDetails = () => {
           </div>
           
           <div className="flex flex-wrap gap-3">
-            {isBillingStaff && billData.paymentStatus === "pending" && (
+            {isBillingStaff &&
+              (billData.paymentStatus === "pending" ||
+                billData.paymentStatus === "awaiting_payment") && (
               <button
                 onClick={() => setShowPaymentModal(true)}
                 className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700"
@@ -248,11 +250,11 @@ const BillDetails = () => {
                   {billData.documentType === "invoice" &&
                   (billData.invoiceId || billData.invoiceSnapshot?.number)
                     ? `Nr ${(billData.invoiceId || billData.invoiceSnapshot?.number)}`
+                    : billData.documentType === "fiscal_receipt" && billData.internalTxnId
+                      ? billData.internalTxnId
                     : billData.documentType === "fiscal_receipt" && billData.receiptNumber
                       ? `Nr paragonu ${billData.receiptNumber}`
-                    : billData.internalTxnId
-                      ? `TRX: ${billData.internalTxnId}`
-                      : `ID: ${billData._id}`}
+                    : `ID: ${billData._id}`}
                 </p>
                 
                 <div className="flex items-center text-sm text-gray-600 mb-1">
