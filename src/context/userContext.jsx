@@ -50,13 +50,14 @@ export const UserProvider = ({ children }) => {
           try {
             // Verify token validity with backend
             const response = await apiCaller("GET", "/auth/profile/user");
-            const { name, role, profilePicture, _id, email } = response.data.data;
+            const { name, role, profilePicture, _id, email, d_id } = response.data.data;
             const freshUserData = {
               id: _id,
               name: `${name.first} ${name.last}`,
               role,
               profilePicture,
               email,
+              d_id: d_id || "",
             };
 
             // Update localStorage with fresh data
@@ -97,13 +98,14 @@ export const UserProvider = ({ children }) => {
       }
 
       const response = await apiCaller("GET", "/auth/profile/user");
-      const { name, role, profilePicture, _id, email } = response.data.data;
+      const { name, role, profilePicture, _id, email, d_id } = response.data.data;
       const updatedUser = {
         id: _id,
         name: `${name.first} ${name.last}`,
         role,
         profilePicture,
         email,
+        d_id: d_id || "",
       };
 
       setUser(updatedUser);

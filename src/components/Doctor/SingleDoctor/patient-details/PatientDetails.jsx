@@ -520,8 +520,15 @@ const PatientDetailsPage = () => {
     if (!appointment) return null;
     const doc = appointment.doctor ?? appointment.doctorId;
     if (!doc) return null;
-    if (typeof doc === "string") return doc;
-    return doc._id || doc.id || doc.userId || doc.user_id || null;
+    if (typeof doc === "string" || typeof doc === "number") return String(doc);
+    return (
+      doc._id ||
+      doc.id ||
+      doc.d_id ||
+      doc.userId ||
+      doc.user_id ||
+      null
+    );
   };
 
   const SECTION_LABELS = {
@@ -1800,7 +1807,11 @@ const PatientDetailsPage = () => {
         onClose={() => setShowServiceModal(false)}
         onSave={handleSaveServices}
         patientId={id}
-        doctorUserId={visitDoctorUserId}
+        doctorUserId={
+          user?.role === "admin"
+            ? null
+            : visitDoctorUserId || user?.id || user?._id || user?.d_id || null
+        }
       />
       
       <ConfirmationModal

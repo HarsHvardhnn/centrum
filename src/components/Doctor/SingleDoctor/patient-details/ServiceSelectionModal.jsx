@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X, Plus, Minus, CheckCircle, AlertCircle } from "lucide-react";
 import { useServices } from "../../../../context/serviceContext";
-import userServiceHelper, {
-  mapServicesResponseToCatalog,
+import { useUser } from "../../../../context/userContext";
+import {
+  collectDoctorCatalogIds,
+  loadDoctorAssignedCatalog,
 } from "../../../../helpers/userServiceHelper";
 
 const ServiceSelectionModal = ({
@@ -13,6 +15,7 @@ const ServiceSelectionModal = ({
   /** When set, loads catalog via GET /services?doctorId=:id instead of global GET /services */
   doctorUserId = null,
 }) => {
+  const { user } = useUser();
   const {
     services: globalServices,
     loading: globalLoading,
@@ -23,10 +26,21 @@ const ServiceSelectionModal = ({
   const [doctorLoading, setDoctorLoading] = useState(false);
   const [doctorError, setDoctorError] = useState(null);
 
-  const useDoctorCatalog = Boolean(doctorUserId);
+  const catalogDoctorIds = useMemo(() => {
+    const ids = collectDoctorCatalogIds(doctorUserId);
+    if (user?.role === "doctor") {
+      collectDoctorCatalogIds(user.id, user._id, user.d_id).forEach((id) => {
+        if (!ids.includes(id)) ids.push(id);
+      });
+    }
+    return ids;
+  }, [doctorUserId, user?.role, user?.id, user?._id, user?.d_id]);
+
+  const useDoctorCatalog =
+    Boolean(doctorUserId) && user?.role !== "admin";
 
   useEffect(() => {
-    if (!isOpen || !doctorUserId) {
+    if (!isOpen || !useDoctorCatalog || catalogDoctorIds.length === 0) {
       setDoctorServices([]);
       setDoctorError(null);
       return;
@@ -37,11 +51,11 @@ const ServiceSelectionModal = ({
       setDoctorLoading(true);
       setDoctorError(null);
       try {
-        const res = await userServiceHelper.getServicesCatalog(doctorUserId);
+        const rows = await loadDoctorAssignedCatalog(catalogDoctorIds);
         if (cancelled) return;
-        setDoctorServices(mapServicesResponseToCatalog(res));
+        setDoctorServices(rows);
       } catch (e) {
-        console.error("ServiceSelectionModal getServicesCatalog:", e);
+        console.error("ServiceSelectionModal loadDoctorAssignedCatalog:", e);
         if (!cancelled) {
           setDoctorError("Nie udało się załadować usług lekarza");
           setDoctorServices([]);
@@ -54,9 +68,12 @@ const ServiceSelectionModal = ({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, doctorUserId]);
+  }, [isOpen, useDoctorCatalog, catalogDoctorIds.join("|")]);
 
-  const services = useDoctorCatalog ? doctorServices : globalServices;
+  const services =
+    useDoctorCatalog && (doctorLoading || doctorServices.length > 0)
+      ? doctorServices
+      : globalServices;
   const loading = useDoctorCatalog ? doctorLoading : globalLoading;
   const error = useDoctorCatalog ? doctorError : globalError;
 
@@ -150,7 +167,7 @@ const ServiceSelectionModal = ({
         <div className="flex justify-between items-center border-b p-4">
           <h3 className="text-lg font-medium text-gray-900">
             Wybierz usługi dla pacjenta
-            {useDoctorCatalog && (
+            {useDoctorCatalog && doctorServices.length > 0 && (
               <span className="block text-xs font-normal text-gray-500 mt-1">
                 Tylko usługi przypisane do lekarza z wizyty
               </span>

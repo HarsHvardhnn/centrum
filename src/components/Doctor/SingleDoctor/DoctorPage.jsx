@@ -12,6 +12,7 @@ import appointmentHelper from "../../../helpers/appointmentHelper";
 import { formatDateToYYYYMMDD } from "../../../utils/formatDate";
 import { useUser } from "../../../context/userContext";
 import { readListState, writeListState, useListScrollRestore } from "../../../hooks/usePersistedListState";
+import { doctorVisitsPath, isUsableRouteId } from "../../../utils/useNavigate";
 
 function DoctorsPage() {
   const router = useParams();
@@ -51,6 +52,15 @@ function DoctorsPage() {
   const doctorInfoRef = useRef(doctorInfo);
   doctorInfoRef.current = doctorInfo;
   const [listLoading, setListLoading] = useState(false);
+
+  useEffect(() => {
+    if (user?.role !== "doctor") return;
+    const ownPath = doctorVisitsPath(user);
+    const param = router.id;
+    if (!isUsableRouteId(param) && ownPath.startsWith("/lekarze/wizyty/")) {
+      navigate(ownPath, { replace: true });
+    }
+  }, [user, router.id, navigate]);
 
   useEffect(() => {
     writeListState(doctorListKey, {
@@ -116,7 +126,9 @@ function DoctorsPage() {
 
   const loadDoctorDay = useCallback(
     async ({ fullScreen = false } = {}) => {
-      const doctorId = router.id;
+      const doctorId = isUsableRouteId(router.id)
+        ? router.id
+        : user?.d_id || user?.id || user?._id;
       if (!doctorId) return;
 
       const generation = ++loadGenerationRef.current;
@@ -167,6 +179,9 @@ function DoctorsPage() {
     },
     [
       router.id,
+      user?.d_id,
+      user?.id,
+      user?._id,
       selectedDate,
       currentPage,
       searchQuery,
@@ -181,7 +196,7 @@ function DoctorsPage() {
   }, [loadDoctorDay]);
 
   const fetchPatientsByDoctor = async (doctorId) => {
-    const id = doctorId || router.id;
+    const id = doctorId || (isUsableRouteId(router.id) ? router.id : user?.d_id || user?.id);
     if (!id) return;
     const generation = ++loadGenerationRef.current;
     setListLoading(true);

@@ -19,6 +19,7 @@ import {
 import { BsCalendarPlusFill } from "react-icons/bs";
 import { useUser } from "../../context/userContext";
 import { Calendar1, Shield, BarChart3, Settings, Trash2 } from "lucide-react";
+import { doctorVisitsPath } from "../../utils/useNavigate";
 
 const Sidebar = () => {
   const { user, logout } = useUser();
@@ -58,11 +59,7 @@ const Sidebar = () => {
           <NavItem
             icon={<LuCalendarPlus2 className="text-xl text-teal-400" />}
             label="Wizyty lekarskie"
-            to={
-              user?.role == "admin" || user?.role == "receptionist"
-                ? "/lekarze"
-                : `/lekarze/wizyty/${user?.d_id}`
-            }
+            to={doctorVisitsPath(user)}
             isActive={currentPath === "/lekarze"}
             isEnabled={true}
           />

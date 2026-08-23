@@ -66,6 +66,22 @@ export const ROUTES = {
   NOT_FOUND: "/404",
 };
 
+/** Doctor day calendar. Admins/reception go to the doctor list. */
+export function doctorVisitsPath(user) {
+  if (!user || user.role === "admin" || user.role === "receptionist") {
+    return ROUTES.DOCTORS;
+  }
+  const id = user.d_id || user.id || user._id;
+  if (!id) return ROUTES.DOCTORS;
+  return `${ROUTES.DOCTOR_APPOINTMENTS}/${id}`;
+}
+
+export function isUsableRouteId(value) {
+  if (value == null) return false;
+  const str = String(value).trim();
+  return str.length > 0 && str !== "undefined" && str !== "null";
+}
+
 // Optional: Create a router context provider if you want to access these functions without hooks
 // This is useful for non-functional components or utility functions
 export const createNavigationUtils = (navigate) => ({

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useUser } from "../../context/userContext";
+import { doctorVisitsPath } from "../../utils/useNavigate";
 import {
   Home,
   Stethoscope,
@@ -126,10 +127,7 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
     logout();
   };
 
-  const wizytyPath =
-    user?.role === "admin" || user?.role === "receptionist"
-      ? "/lekarze"
-      : `/lekarze/wizyty/${user?.d_id || ""}`;
+  const wizytyPath = doctorVisitsPath(user);
   const isWizytyActive =
     currentPath === "/lekarze" || currentPath.startsWith("/lekarze/wizyty");
 
