@@ -419,7 +419,11 @@ const BillingConfirmationModal = ({
                   setIsLoading(false);
                 }
               }}
-              disabled={isLoading || services.length === 0}
+              disabled={
+                isLoading ||
+                (services.length === 0 &&
+                  !(Number(additionalCharges) > 0 && additionalChargeNote.trim()))
+              }
             >
               <DollarSign size={16} className="mr-1" />
               {isDoctorSettlement ? "Rozlicz i zakończ wizytę" : "Generuj rachunek"}

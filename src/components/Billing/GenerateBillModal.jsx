@@ -187,6 +187,17 @@ const GenerateBillModal = ({
   ).toFixed(2);
 
   const handleGenerateBill = async () => {
+    if (Number(additionalCharges) > 0 && !String(additionalChargeNote || "").trim()) {
+      toast.error("Opis dodatkowej opłaty jest wymagany.");
+      return;
+    }
+    if (
+      services.length === 0 &&
+      !(Number(additionalCharges) > 0 && String(additionalChargeNote || "").trim())
+    ) {
+      toast.error("Wybierz usługę lub dodaj opłatę dodatkową z opisem.");
+      return;
+    }
     try {
       setIsLoading(true);
       const formattedServices = services.map((service) => ({
@@ -447,7 +458,11 @@ const GenerateBillModal = ({
             <button
               className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center"
               onClick={handleGenerateBill}
-              disabled={isLoading || services.length === 0}
+              disabled={
+                isLoading ||
+                (services.length === 0 &&
+                  !(Number(additionalCharges) > 0 && additionalChargeNote.trim()))
+              }
             >
               <DollarSign size={16} className="mr-1" />
               {isDoctorViewOnly ? "Rozlicz i zakończ wizytę" : "Generuj rachunek"}
