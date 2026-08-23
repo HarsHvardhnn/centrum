@@ -1,6 +1,7 @@
 // PatientDetailsPage.jsx - Redesigned layout: visit header, two columns, footer
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import { useParams, useNavigate, useSearchParams, useBlocker } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import PatientProfile from "./PatientProfile";
 import ConsultationForm from "./ConsultationForm";
 import ActionButtons from "./ActionButtons";
@@ -38,6 +39,8 @@ import {
 } from "../../../../utils/radiologistVisitHelper";
 import { useAutoSave } from "../../../../hooks/useAutoSave";
 import { useUser } from "../../../../context/userContext";
+import { queryKeys } from "../../../../lib/queryKeys";
+import { fetchVisitDetails, unwrapVisitConsolidated } from "../../../../utils/visitNavigation";
 
 /**
  * Build consultation payload for PUT /appointments/:id/details.
@@ -384,9 +387,13 @@ const PatientDetailsPage = () => {
   const [searchParams] = useSearchParams();
   const appointmentIdFromUrl = searchParams.get('appointmentId');
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
   const { user } = useUser();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => {
+    if (!appointmentIdFromUrl) return true;
+    return !queryClient.getQueryData(queryKeys.visitConsolidated(appointmentIdFromUrl));
+  });
   const [error, setError] = useState(null);
 
   // Add saving-related states
@@ -719,15 +726,34 @@ const PatientDetailsPage = () => {
     setIsServicesLoading(false);
   };
 
+  useLayoutEffect(() => {
+    if (!appointmentIdFromUrl) return;
+    const cached = unwrapVisitConsolidated(
+      queryClient.getQueryData(queryKeys.visitConsolidated(appointmentIdFromUrl))
+    );
+    if (!cached) return;
+    applyConsolidatedPayload(cached, appointmentIdFromUrl);
+    setIsLoading(false);
+    setVisitReasonVerifyLoading(false);
+  }, [appointmentIdFromUrl, queryClient]);
+
   // Single-request (or 2-request) load for patient details page
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
       try {
-        setIsLoading(true);
-        showLoader();
-        setVisitReasonVerifyLoading(true);
-
         let targetAppointmentId = appointmentIdFromUrl || null;
+        const cachedPayload = targetAppointmentId
+          ? unwrapVisitConsolidated(
+              queryClient.getQueryData(queryKeys.visitConsolidated(targetAppointmentId))
+            )
+          : null;
+
+        if (!cachedPayload) {
+          setIsLoading(true);
+          showLoader();
+          setVisitReasonVerifyLoading(true);
+        }
 
         if (!targetAppointmentId) {
           const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
@@ -738,8 +764,8 @@ const PatientDetailsPage = () => {
         }
 
         if (!targetAppointmentId) {
-          // No visits yet — fall back to patient profile only
           const patientResponse = await patientService.getPatientDetails(id);
+          if (cancelled) return;
           setPatientData((prevData) => ({
             ...prevData,
             ...patientResponse.patientData,
@@ -748,32 +774,43 @@ const PatientDetailsPage = () => {
           return;
         }
 
-        const consolidated = await appointmentHelper.getPatientDetailsConsolidated(
-          targetAppointmentId
-        );
-        applyConsolidatedPayload(consolidated?.data || consolidated, targetAppointmentId);
+        const consolidated = await fetchVisitDetails(queryClient, targetAppointmentId);
+        if (cancelled) return;
+        applyConsolidatedPayload(unwrapVisitConsolidated(consolidated), targetAppointmentId);
       } catch (err) {
+        if (cancelled) return;
         console.error("Error fetching data:", err);
         setError("błąd serwera");
       } finally {
-        setIsLoading(false);
-        setVisitReasonVerifyLoading(false);
-        hideLoader();
+        if (!cancelled) {
+          setIsLoading(false);
+          setVisitReasonVerifyLoading(false);
+          hideLoader();
+        }
       }
     };
 
     if (id) {
       fetchData();
     }
-  }, [id, appointmentIdFromUrl]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id, appointmentIdFromUrl, queryClient]);
 
-  // Fetch appointment details via consolidated endpoint (1 request instead of 4+)
   const fetchAppointmentDetails = async (appointmentId) => {
     try {
-      showLoader();
+      const cached = unwrapVisitConsolidated(
+        queryClient.getQueryData(queryKeys.visitConsolidated(appointmentId))
+      );
+      if (cached) {
+        applyConsolidatedPayload(cached, appointmentId);
+      } else {
+        showLoader();
+      }
       setVisitReasonVerifyLoading(true);
-      const response = await appointmentHelper.getPatientDetailsConsolidated(appointmentId);
-      applyConsolidatedPayload(response?.data || response, appointmentId);
+      const response = await fetchVisitDetails(queryClient, appointmentId);
+      applyConsolidatedPayload(unwrapVisitConsolidated(response), appointmentId);
     } catch (error) {
       console.error("Error fetching appointment details:", error);
       toast.error("Wystąpił błąd");

@@ -10,4 +10,5 @@ export const queryKeys = {
   billDetail: (billId, scope = "full") => ["bill-detail", billId, scope],
   patientEditForm: (patientId, appointmentId = "") =>
     ["patient-edit-form", patientId, appointmentId || ""],
+  visitConsolidated: (appointmentId) => ["visit-consolidated", appointmentId],
 };

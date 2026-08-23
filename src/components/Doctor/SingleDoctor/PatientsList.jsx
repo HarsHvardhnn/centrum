@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import appointmentHelper from "../../../helpers/appointmentHelper";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { prefetchVisitDetails, visitPagePath } from "../../../utils/visitNavigation";
 
 const HIGHLIGHT_COLOR = "#008C8C";
 
@@ -33,6 +35,7 @@ const PatientsList = ({
   onPermanentDelete,
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useUser();
   const [showCancelModal, setShowCancelModal] = React.useState(false);
   const [sendSMSNotification, setSendSMSNotification] = React.useState(false);
@@ -46,19 +49,20 @@ const PatientsList = ({
       if (onPatientSelect) onPatientSelect(null);
       if (setAppointmentId) setAppointmentId(null);
     } else {
+      prefetchVisitDetails(queryClient, appointmentId);
       if (onPatientSelect) onPatientSelect(patientId);
       if (setAppointmentId) setAppointmentId(appointmentId);
     }
   };
 
   const handleStartVisit = (patient) => {
-    if (patient.patient_id) {
-      if (user?.role === "receptionist") {
-        navigate(`/administracja/konta?edytujPacjenta=${patient.patient_id}&returnUrl=${encodeURIComponent(window.location.pathname)}`);
-      } else {
-        navigate(`/szczegoly-pacjenta/${patient.patient_id}`);
-      }
+    if (!patient.patient_id) return;
+    if (user?.role === "receptionist") {
+      navigate(`/administracja/konta?edytujPacjenta=${patient.patient_id}&returnUrl=${encodeURIComponent(window.location.pathname)}`);
+      return;
     }
+    prefetchVisitDetails(queryClient, patient.id);
+    navigate(visitPagePath(patient.patient_id, patient.id));
   };
 
   // Only show Zarezerwowana (booked) and Zameldowana (checkedIn) with a linked patient (patientLessVisit !== true). Sort ascending by start time.
@@ -227,6 +231,7 @@ const PatientsList = ({
                     <button
                       type="button"
                       onClick={() => handlePatientSelect(patient.patient_id, patient.id)}
+                      onMouseEnter={() => prefetchVisitDetails(queryClient, patient.id)}
                       className="text-left w-full rounded focus:outline-none focus:ring-2 focus:ring-teal-500/30"
                       style={{
                         color: selectedPatient === patient.id ? HIGHLIGHT_COLOR : undefined,
