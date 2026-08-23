@@ -182,6 +182,12 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
 
   const bill = billRes?.success ? billRes.data : null;
 
+  const displayPhone = (value) => {
+    const phone = String(value || "").trim();
+    if (!phone || /_no_phone_/i.test(phone)) return "";
+    return phone;
+  };
+
   // Invoice draft (independent snapshot fields)
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [place, setPlace] = useState("Skarżysko-Kamienna");
@@ -234,10 +240,14 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       city: snap?.buyer?.city || prefill.city || "",
       taxNo: snap?.buyer?.taxNo || "",
       email: snap?.buyer?.email || prefill.email || bill.patient?.email || "",
-      phone: snap?.buyer?.phone || prefill.phone || bill.patient?.phoneNumber || "",
+      phone: displayPhone(
+        snap?.buyer?.phone || prefill.phone || bill.patient?.phoneNumber || bill.patient?.phone
+      ),
     });
     setRecipientName(snap?.recipientName || "");
-    setIssuerName(snap?.issuerName || defaultIssuerName);
+    const alreadyIssued =
+      Boolean(snap?.number) && snap?.status && snap.status !== "draft";
+    setIssuerName(alreadyIssued ? snap?.issuerName || "" : "");
     setPlace(snap?.place || "Skarżysko-Kamienna");
     setIssueDate(toDateInput(snap?.issueDate || new Date()));
     setSellDate(toDateInput(snap?.sellDate || new Date()));
@@ -249,17 +259,10 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     suggestedInvoiceNumberRef.current = validNumber ? rawNumber : "";
     if (snap?.vatExemptionText) setVatExemptionText(snap.vatExemptionText);
 
-    const isIssued =
-      Boolean(snap?.number) && snap?.status && snap.status !== "draft";
-    setLocked(isIssued);
+    setLocked(alreadyIssued);
     setIssuedPdfUrl(bill.invoiceUrl || snap?.pdfUrl || null);
     setIssuedNumber(snap?.number || bill.invoiceId || "");
   }, [isOpen, bill, hydratedBillId]);
-
-  useEffect(() => {
-    if (!isOpen || locked) return;
-    if (!issuerName && defaultIssuerName) setIssuerName(defaultIssuerName);
-  }, [isOpen, locked, issuerName, defaultIssuerName]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -845,7 +848,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                 <p className="text-sm text-gray-500 text-center py-4">Brak pozycji</p>
               )}
             </div>
-            <div className="mt-3 flex justify-end text-base font-semibold">
+            <div className="mt-3 flex justify-end pr-10 md:pr-20 text-base font-semibold">
               Razem: {total.toFixed(2)} zł
             </div>
           </section>
@@ -1092,7 +1095,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                     disabled={locked}
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
-                    placeholder="Puste, jeśli odbiorca = nabywca"
+                    placeholder="Wprowadź imię i nazwisko"
                     className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
                   />
                 </div>
@@ -1100,13 +1103,25 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                   <label className="text-xs text-gray-500">
                     Imię i nazwisko wystawcy (opcjonalnie)
                   </label>
-                  <input
-                    type="text"
-                    disabled={locked}
-                    value={issuerName}
-                    onChange={(e) => setIssuerName(e.target.value)}
-                    className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
-                  />
+                  <div className="mt-0.5 flex gap-2">
+                    <input
+                      type="text"
+                      disabled={locked}
+                      value={issuerName}
+                      onChange={(e) => setIssuerName(e.target.value)}
+                      placeholder="Puste — wpisz ręcznie lub wstaw z konta"
+                      className="w-full px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
+                    />
+                    <button
+                      type="button"
+                      disabled={locked || !defaultIssuerName}
+                      onClick={() => setIssuerName(defaultIssuerName)}
+                      title="Wstaw imię i nazwisko z konta wystawiającego fakturę"
+                      className="shrink-0 px-2 py-1.5 border rounded-md text-xs text-teal-700 border-teal-200 hover:bg-teal-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Wstaw z konta
+                    </button>
+                  </div>
                 </div>
               </div>
 

@@ -25,6 +25,10 @@ function resolveVisitDoctorUserId(appointment) {
   return doc._id || doc.id || doc.userId || doc.user_id || null;
 }
 
+function canManageInvoiceAdminFields(role) {
+  return role === "admin" || role === "receptionist";
+}
+
 /**
  * Generate-bill modal. Kept at module scope so production minify cannot
  * close over parent consts (TDZ: "Cannot access 'O' before initialization").
@@ -39,8 +43,7 @@ const GenerateBillModal = ({
   const navigate = useNavigate();
   const { user } = useUser();
   const isDoctorViewOnly = String(user?.role || "").toLowerCase() === "doctor";
-  const showAdminInvoiceFields =
-    user?.role === "admin" || user?.role === "receptionist";
+  const showAdminInvoiceFields = canManageInvoiceAdminFields(user?.role);
 
   const [isLoading, setIsLoading] = useState(false);
   const [taxPercentage, setTaxPercentage] = useState(0);
@@ -211,17 +214,19 @@ const GenerateBillModal = ({
         subtotal,
         taxPercentage: showAdminInvoiceFields ? taxPercentage : 0,
         taxAmount: showAdminInvoiceFields ? taxAmount : 0,
-        discount: showAdminInvoiceFields ? parseFloat(discount) || 0 : 0,
-        additionalCharges: showAdminInvoiceFields
-          ? parseFloat(additionalCharges) || 0
-          : 0,
-        additionalChargeNote: showAdminInvoiceFields
-          ? additionalChargeNote || ""
-          : "",
-        totalAmount: showAdminInvoiceFields ? totalAmount : subtotal.toFixed(2),
-        paymentMethod: showAdminInvoiceFields ? paymentMethod : undefined,
+        discount: parseFloat(discount) || 0,
+        additionalCharges: parseFloat(additionalCharges) || 0,
+        additionalChargeNote: additionalChargeNote || "",
+        totalAmount: showAdminInvoiceFields
+          ? totalAmount
+          : (
+              subtotal +
+              parseFloat(additionalCharges || 0) -
+              parseFloat(discount || 0)
+            ).toFixed(2),
       };
       if (showAdminInvoiceFields) {
+        billingPayload.paymentMethod = paymentMethod;
         billingPayload.billedAt = invoiceDate;
         billingPayload.invoiceId = invoiceNumber.trim();
       }
@@ -351,7 +356,6 @@ const GenerateBillModal = ({
                   </div>
                 )}
 
-                {showAdminInvoiceFields && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Dodatkowe opłaty (zł)
@@ -368,16 +372,18 @@ const GenerateBillModal = ({
                     />
                     <input
                       type="text"
-                      placeholder="Notatka (opcjonalna)"
+                      placeholder={
+                        Number(additionalCharges) > 0
+                          ? "Opis dodatkowej opłaty (wymagany)"
+                          : "Opis dodatkowej opłaty"
+                      }
                       value={additionalChargeNote}
                       onChange={(e) => setAdditionalChargeNote(e.target.value)}
                       className="block flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                     />
                   </div>
                 </div>
-                )}
 
-                {showAdminInvoiceFields && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Rabat (zł)
@@ -392,7 +398,6 @@ const GenerateBillModal = ({
                     className="block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                   />
                 </div>
-                )}
 
                 {showAdminInvoiceFields && (
                   <>

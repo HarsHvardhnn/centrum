@@ -295,7 +295,10 @@ const BillingManagement = () => {
     const handleSave = useCallback(async () => {
       try {
         setModalLoading(true);
-        const canEditInvoiceMeta = user?.role === "admin" || user?.role === "receptionist";
+        const canEditInvoiceMeta =
+          user?.role === "admin" ||
+          user?.role === "receptionist" ||
+          user?.role === "doctor";
         const updateData = {
           services: selectedServices,
           consultationCharges: parseFloat(consultationCharges),
@@ -340,7 +343,8 @@ const BillingManagement = () => {
 
     if (!isOpen || !billData) return null;
 
-    const showAdminInvoiceFields = user?.role === "admin" || user?.role === "receptionist";
+    const showAdminInvoiceFields =
+      user?.role === "admin" || user?.role === "receptionist";
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
