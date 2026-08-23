@@ -535,6 +535,20 @@ const PatientDetailsPage = () => {
     );
   };
 
+  const visitBelongsToLoggedInDoctor = (appointment) => {
+    if (user?.role !== "doctor") return true;
+    const visitDoctorUserId = resolveVisitDoctorUserId(appointment);
+    if (!visitDoctorUserId) return false;
+    const mine = [user.id, user._id, user.d_id].filter(Boolean).map(String);
+    return mine.includes(String(visitDoctorUserId));
+  };
+
+  const filterVisitHistoryForRole = (list) => {
+    const rows = Array.isArray(list) ? list : [];
+    if (user?.role !== "doctor") return rows;
+    return rows.filter((apt) => visitBelongsToLoggedInDoctor(apt));
+  };
+
   const SECTION_LABELS = {
     interview: "Wywiad z pacjentem",
     physicalExamination: "Badanie przedmiotowe",
@@ -682,7 +696,9 @@ const PatientDetailsPage = () => {
       }));
     }
 
-    const history = Array.isArray(appointmentHistory) ? appointmentHistory : [];
+    const history = filterVisitHistoryForRole(
+      Array.isArray(appointmentHistory) ? appointmentHistory : []
+    );
     if (history.length > 0) {
       setAppointments(history);
     }
@@ -698,6 +714,11 @@ const PatientDetailsPage = () => {
         : null);
 
     if (selected) {
+      if (user?.role === "doctor" && !visitBelongsToLoggedInDoctor(selected)) {
+        setError("Brak dostępu do wizyty innego lekarza");
+        setSelectedAppointment(null);
+        return;
+      }
       setSelectedAppointment(selected);
       setCurrentAppointmentId(selected._id || selected.id || appointmentId);
     }
@@ -768,7 +789,7 @@ const PatientDetailsPage = () => {
 
         if (!targetAppointmentId) {
           const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
-          const list = appointmentsResponse.data || [];
+          const list = filterVisitHistoryForRole(appointmentsResponse.data || []);
           setAppointments(list);
           targetAppointmentId = list[0]?._id || null;
           if (list[0]) setSelectedAppointment(list[0]);
