@@ -1839,7 +1839,7 @@ const PatientDetailsPage = () => {
 
       <BillingConfirmationModal
         isOpen={showSettlementModal}
-        onClose={() => {}}
+        onClose={() => setShowSettlementModal(false)}
         onConfirm={handleSettleAndEndVisit}
         patientServicesData={patientServices}
         patientName={formatPersonName(patientData?.name)}

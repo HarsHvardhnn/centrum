@@ -102,7 +102,7 @@ function AppointmentPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-teal-700 mb-2">Dodaj Nową Wizytę</h1>
         <p className="text-gray-600">
-          Wyszukaj lekarza po nazwisku (bez specjalizacji) albo wybierz specjalizację i termin, a następnie wprowadź dane pacjenta.
+          Wyszukaj lekarza bezpośrednio po imieniu lub nazwisku albo wybierz specjalizację, aby wyświetlić dostępnych lekarzy. Następnie wybierz termin wizyty i uzupełnij dane pacjenta.
         </p>
       </div>
       

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { DollarSign, Plus, Trash2 } from "lucide-react";
+import { DollarSign, Plus, Trash2, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
 import billingHelper from "../../helpers/billingHelper";
@@ -166,11 +166,21 @@ const BillingConfirmationModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {isDoctorSettlement
-              ? "Rozliczenie wizyty"
-              : `Generuj rachunek dla ${displayPatientName}`}
-          </h3>
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <h3 className="text-lg font-medium text-gray-900">
+              {isDoctorSettlement
+                ? "Rozliczenie wizyty"
+                : `Generuj rachunek dla ${displayPatientName}`}
+            </h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+              aria-label="Zamknij"
+            >
+              <X size={20} />
+            </button>
+          </div>
           <p className="text-sm text-gray-500 mb-4">
             {isDoctorSettlement
               ? "Wybierz wykonane usługi, aby utworzyć rozliczenie oczekujące na płatność."
@@ -367,14 +377,13 @@ const BillingConfirmationModal = ({
           )}
 
           <div className="flex justify-end gap-2 mt-4">
-            {!mandatory && (
-              <button
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-                onClick={onClose}
-              >
-                Anuluj
-              </button>
-            )}
+            <button
+              type="button"
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+              onClick={onClose}
+            >
+              {mandatory ? "Wstecz" : "Anuluj"}
+            </button>
             <button
               className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center"
               onClick={async () => {
