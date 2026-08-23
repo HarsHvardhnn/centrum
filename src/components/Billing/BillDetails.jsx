@@ -238,11 +238,14 @@ const BillDetails = () => {
                       : "Rozliczenie pacjenta"}
                 </h2>
                 <p className="text-sm text-gray-600 mb-3">
-                  {billData.documentType === "invoice" && (billData.invoiceId || billData.invoiceSnapshot?.number)
+                  {billData.documentType === "invoice" &&
+                  (billData.invoiceId || billData.invoiceSnapshot?.number)
                     ? `Nr ${(billData.invoiceId || billData.invoiceSnapshot?.number)}`
+                    : billData.documentType === "fiscal_receipt" && billData.receiptNumber
+                      ? `Nr paragonu ${billData.receiptNumber}`
                     : billData.internalTxnId
                       ? `TRX: ${billData.internalTxnId}`
-                      : "Oczekuje na rozliczenie"}
+                      : `ID: ${billData._id}`}
                 </p>
                 
                 <div className="flex items-center text-sm text-gray-600 mb-1">

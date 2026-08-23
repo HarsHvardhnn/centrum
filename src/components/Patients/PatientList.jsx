@@ -413,7 +413,7 @@ function LabAppointmentsContent({ clinic }) {
     appointmentIdFromUrl,
     dateFromUrl,
     itemsPerPage,
-    userId: user?.id,
+    userId: user?.id || user?._id || user?.d_id || "",
     userRole: user?.role,
   });
   const debouncedOtherFiltersSignature = useDebouncedValue(otherFiltersSignature, 450);

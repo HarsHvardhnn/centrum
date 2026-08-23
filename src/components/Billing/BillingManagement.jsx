@@ -1109,39 +1109,21 @@ const BillingManagement = () => {
   };
 
   const formatBillDocumentRef = (bill) => {
-    const issuedInvoiceNumber =
-      bill?.invoiceSnapshot?.number ||
-      (bill?.documentType === "invoice" ? bill?.invoiceId : "");
+    const invoiceNumber = String(
+      bill?.invoiceSnapshot?.number || bill?.invoiceId || ""
+    ).trim();
+    const receiptNumber = String(bill?.receiptNumber || "").trim();
 
-    const invoiceIssued =
-      bill?.documentType === "invoice" &&
-      issuedInvoiceNumber &&
-      bill?.invoiceSnapshot?.status &&
-      bill.invoiceSnapshot.status !== "draft";
-
-    if (bill?.documentType === "fiscal_receipt" && bill?.internalTxnId) {
-      return bill.internalTxnId;
+    if (bill?.documentType === "invoice") {
+      return invoiceNumber || "—";
     }
-
-    if (invoiceIssued) {
-      return issuedInvoiceNumber;
+    if (bill?.documentType === "fiscal_receipt") {
+      return receiptNumber || "—";
     }
-
-    // TRX internal reference (doctor visit closed or paragon settled)
-    if (bill?.internalTxnId) {
-      return bill.internalTxnId;
-    }
-
-    // Awaiting reception: no formal invoice number yet
-    if (bill?.paymentStatus === "pending" || !bill?.documentType) {
-      return "Do rozliczenia";
-    }
-
-    if (issuedInvoiceNumber) {
-      return issuedInvoiceNumber;
-    }
-
-    return "Paragon";
+    if (invoiceNumber) return invoiceNumber;
+    if (receiptNumber) return receiptNumber;
+    if (bill?.paymentStatus === "pending") return "Do rozliczenia";
+    return "—";
   };
 
   return (
@@ -1454,7 +1436,7 @@ const BillingManagement = () => {
                     onClick={() => handleSort("billNumber")}
                   >
                     <div className="flex items-center">
-                    Dokument / TRX
+                    Nr dokumentu
                       {sortConfig.key === "billNumber" && (
                         <ArrowUpDown size={16} className="ml-1" />
                       )}

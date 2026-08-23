@@ -386,7 +386,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       });
       if (res?.success) {
         toast.success(
-          `Rozliczono (paragon). TRX: ${res.data?.internalTxnId || "—"}`
+          `Rozliczono (paragon). Nr: ${res.data?.receiptNumber || res.data?.internalTxnId || "—"}`
         );
         queryClient.invalidateQueries({ queryKey: queryKeys.billDetail(billId, "settlement") });
         queryClient.invalidateQueries({ queryKey: ["billing-list"] });
