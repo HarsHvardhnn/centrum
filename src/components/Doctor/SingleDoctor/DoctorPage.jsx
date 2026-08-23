@@ -128,7 +128,7 @@ function DoctorsPage() {
     async ({ fullScreen = false } = {}) => {
       const doctorId = isUsableRouteId(router.id)
         ? router.id
-        : user?.d_id || user?.id || user?._id;
+        : user?.id || user?._id || user?.d_id;
       if (!doctorId) return;
 
       const generation = ++loadGenerationRef.current;
@@ -196,7 +196,7 @@ function DoctorsPage() {
   }, [loadDoctorDay]);
 
   const fetchPatientsByDoctor = async (doctorId) => {
-    const id = doctorId || (isUsableRouteId(router.id) ? router.id : user?.d_id || user?.id);
+    const id = doctorId || (isUsableRouteId(router.id) ? router.id : user?.id || user?._id || user?.d_id);
     if (!id) return;
     const generation = ++loadGenerationRef.current;
     setListLoading(true);
