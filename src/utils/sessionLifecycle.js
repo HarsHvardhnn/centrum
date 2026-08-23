@@ -23,6 +23,7 @@ export function clearClientSession() {
   localStorage.removeItem("authToken");
   localStorage.removeItem("user");
   localStorage.removeItem("cm7_refresh_lock");
+  localStorage.removeItem("cm7_refresh_token");
   sessionStorage.removeItem("cm7_session_start");
   clearAllListState();
 }

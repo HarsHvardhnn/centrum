@@ -20,6 +20,38 @@ const removeCookie = (name) => {
   document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;secure;samesite=strict`;
 };
 
+const REFRESH_TOKEN_STORAGE_KEY = "cm7_refresh_token";
+
+export function persistRefreshToken(token) {
+  if (!token || typeof token !== "string") return;
+  try {
+    localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
+  } catch {
+    /* private mode / quota */
+  }
+}
+
+export function getStoredRefreshToken() {
+  try {
+    return localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function clearStoredRefreshToken() {
+  try {
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function persistRefreshTokenFromPayload(payload) {
+  const token = payload?.refreshToken;
+  if (token) persistRefreshToken(token);
+}
+
 // Set up base URL and other configurations
 const axiosInstance = axios.create({
   baseURL:
@@ -72,12 +104,13 @@ let refreshPromise = null;
 const REFRESH_LOCK_KEY = "cm7_refresh_lock";
 const REFRESH_LOCK_TTL_MS = 12_000;
 
-function storeAccessToken(newToken, user) {
+function storeAccessToken(newToken, user, refreshToken) {
   localStorage.setItem("authToken", newToken);
   setCookie("authToken", newToken, 7);
   if (user) {
     localStorage.setItem("user", JSON.stringify(user));
   }
+  if (refreshToken) persistRefreshToken(refreshToken);
   notifyAccessTokenRefreshed(newToken);
 }
 
@@ -109,7 +142,7 @@ function waitForCrossTabToken(channel, timeoutMs) {
       const data = event?.data;
       if (!data || typeof data !== "object") return;
       if (data.type === "token" && data.token) {
-        storeAccessToken(data.token, data.user);
+        storeAccessToken(data.token, data.user, data.refreshToken);
         finish(data.token);
       } else if (data.type === "refresh-failed") {
         finish(null);
@@ -128,12 +161,17 @@ async function performHttpRefresh() {
   });
 
   const attemptRefresh = async () => {
-    const refreshResponse = await refreshAxios.post("/auth/refresh-token");
+    const storedRefreshToken = getStoredRefreshToken();
+    const refreshResponse = await refreshAxios.post(
+      "/auth/refresh-token",
+      storedRefreshToken ? { refreshToken: storedRefreshToken } : {}
+    );
     if (!refreshResponse.data?.token) {
       throw new Error("No token in refresh response");
     }
+    persistRefreshTokenFromPayload(refreshResponse.data);
     const newToken = refreshResponse.data.token;
-    storeAccessToken(newToken, refreshResponse.data.user);
+    storeAccessToken(newToken, refreshResponse.data.user, refreshResponse.data.refreshToken);
     return newToken;
   };
 
@@ -240,6 +278,7 @@ async function coordinatedRefresh() {
       type: "token",
       token: newToken,
       user: broadcastUser,
+      refreshToken: getStoredRefreshToken(),
     });
     return newToken;
   } catch (err) {
@@ -278,11 +317,16 @@ export async function probeRefreshCookieHealth() {
     withCredentials: true,
   });
   try {
-    const res = await refreshAxios.post("/auth/refresh-token");
+    const storedRefreshToken = getStoredRefreshToken();
+    const res = await refreshAxios.post(
+      "/auth/refresh-token",
+      storedRefreshToken ? { refreshToken: storedRefreshToken } : {}
+    );
     if (!res.data?.token) {
       return { ok: false, reason: "no_token" };
     }
-    storeAccessToken(res.data.token, res.data.user);
+    persistRefreshTokenFromPayload(res.data);
+    storeAccessToken(res.data.token, res.data.user, res.data.refreshToken);
     return { ok: true };
   } catch (err) {
     const code = err?.response?.data?.code;
@@ -309,7 +353,7 @@ if (typeof window !== "undefined" && typeof BroadcastChannel !== "undefined") {
           endSession("cross-tab-logout", { callApi: false, broadcast: false });
         }
       } else if (data.type === "token" && data.token) {
-        storeAccessToken(data.token, data.user);
+        storeAccessToken(data.token, data.user, data.refreshToken);
       }
     };
   } catch {
@@ -360,7 +404,7 @@ const redirectToLoginAndClearSession = () => {
 // Response interceptor for handling responses
 axiosInstance.interceptors.response.use(
   (response) => {
-    // You can check the response status or manipulate the data here
+    persistRefreshTokenFromPayload(response?.data);
     return response;
   },
   async (error) => {

@@ -26,6 +26,7 @@ export const UserProvider = ({ children }) => {
     removeCookie("authToken");
     localStorage.removeItem("user");
     localStorage.removeItem("authToken");
+    localStorage.removeItem("cm7_refresh_token");
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
     clearAllListState();
   }, []);
