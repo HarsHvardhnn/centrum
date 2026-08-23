@@ -12,7 +12,7 @@ import appointmentHelper from "../../../helpers/appointmentHelper";
 import { formatDateToYYYYMMDD } from "../../../utils/formatDate";
 import { useUser } from "../../../context/userContext";
 import { readListState, writeListState, useListScrollRestore } from "../../../hooks/usePersistedListState";
-import { doctorVisitsPath, isUsableRouteId } from "../../../utils/useNavigate";
+import { doctorVisitsPath, isUsableRouteId, pickMongoDoctorId } from "../../../utils/useNavigate";
 
 function DoctorsPage() {
   const router = useParams();
@@ -126,9 +126,12 @@ function DoctorsPage() {
 
   const loadDoctorDay = useCallback(
     async ({ fullScreen = false } = {}) => {
-      const doctorId = isUsableRouteId(router.id)
-        ? router.id
-        : user?.id || user?._id || user?.d_id;
+      const doctorId = pickMongoDoctorId(
+        user?.role === "doctor" ? user?.id : null,
+        user?.role === "doctor" ? user?._id : null,
+        isUsableRouteId(router.id) ? router.id : null,
+        user?.role === "doctor" ? user?.d_id : null
+      );
       if (!doctorId) return;
 
       const generation = ++loadGenerationRef.current;
@@ -196,7 +199,13 @@ function DoctorsPage() {
   }, [loadDoctorDay]);
 
   const fetchPatientsByDoctor = async (doctorId) => {
-    const id = doctorId || (isUsableRouteId(router.id) ? router.id : user?.id || user?._id || user?.d_id);
+    const id = pickMongoDoctorId(
+      doctorId,
+      user?.role === "doctor" ? user?.id : null,
+      user?.role === "doctor" ? user?._id : null,
+      isUsableRouteId(router.id) ? router.id : null,
+      user?.role === "doctor" ? user?.d_id : null
+    );
     if (!id) return;
     const generation = ++loadGenerationRef.current;
     setListLoading(true);
