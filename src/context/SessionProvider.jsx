@@ -176,6 +176,12 @@ export function SessionProvider({ children }) {
     return undefined;
   }, [sessionLive, isAuthenticated, openCookiePrompt]);
 
+  const idleTimeout = Math.max(idleTimeoutMs || DEFAULT_IDLE_MS, IDLE_PROMPT_MS + 5_000);
+  const promptBeforeIdleMs = Math.min(
+    IDLE_PROMPT_MS,
+    Math.max(5_000, Math.floor(idleTimeout / 2) - 1_000)
+  );
+
   const onPrompt = useCallback(() => {
     if (
       phaseRef.current === "jwtWarning" ||
@@ -195,12 +201,6 @@ export function SessionProvider({ children }) {
   const onIdle = useCallback(() => {
     handleEndSession("idle");
   }, [handleEndSession]);
-
-  const idleTimeout = Math.max(idleTimeoutMs || DEFAULT_IDLE_MS, IDLE_PROMPT_MS + 5_000);
-  const promptBeforeIdleMs = Math.min(
-    IDLE_PROMPT_MS,
-    Math.max(5_000, Math.floor(idleTimeout / 2) - 1_000)
-  );
 
   const idlePaused =
     !sessionLive ||
