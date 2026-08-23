@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader, Plus, Trash2, X, Eye, Printer, FileDown } from "lucide-react";
 import { toast } from "sonner";
@@ -202,6 +202,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   const [issuedNumber, setIssuedNumber] = useState("");
   const [locked, setLocked] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
+  const suggestedInvoiceNumberRef = useRef("");
 
   // Hydrate form once per bill open (avoid resetting while user edits)
   useEffect(() => {
@@ -236,7 +237,10 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     setSellDate(toDateInput(snap?.sellDate || new Date()));
     setPaymentDueKind(snap?.paymentDueKind || "immediate");
     setPaymentDueDate(toDateInput(snap?.paymentDueDate || new Date()));
-    setInvoiceNumber(snap?.number || bill.invoiceId || "");
+    const rawNumber = snap?.number || bill.invoiceId || "";
+    const validNumber = /^\d+\/\d{2}\/\d{4}$/.test(String(rawNumber).trim());
+    setInvoiceNumber(validNumber ? rawNumber : "");
+    suggestedInvoiceNumberRef.current = validNumber ? rawNumber : "";
     if (snap?.vatExemptionText) setVatExemptionText(snap.vatExemptionText);
 
     const isIssued =
@@ -249,29 +253,32 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   useEffect(() => {
     if (!isOpen) {
       setHydratedBillId(null);
+      suggestedInvoiceNumberRef.current = "";
     }
   }, [isOpen]);
 
-  // Suggest next invoice number only when user picks Faktura (not on every modal open)
+  // Suggest next invoice number from issue date month/year (N/MM/RRRR)
   useEffect(() => {
-    if (!isOpen || documentType !== "invoice" || locked || invoiceNumber) return;
+    if (!isOpen || documentType !== "invoice" || locked || !issueDate) return;
+    const [year, month] = issueDate.split("-").map(Number);
+    if (!year || !month) return;
 
     let cancelled = false;
     (async () => {
       try {
-        const d = new Date();
-        const suggested = await billingHelper.suggestInvoiceId(
-          d.getMonth() + 1,
-          d.getFullYear()
+        const suggested = await billingHelper.suggestInvoiceId(month, year);
+        if (cancelled || !suggested) return;
+        setInvoiceNumber((current) =>
+          !current || current === suggestedInvoiceNumberRef.current ? suggested : current
         );
-        if (!cancelled && suggested) setInvoiceNumber(suggested);
+        suggestedInvoiceNumberRef.current = suggested;
       } catch (_) {}
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [isOpen, documentType, locked, invoiceNumber]);
+  }, [isOpen, documentType, locked, issueDate]);
 
   useEffect(() => {
     if (billRes && !billRes.success && isOpen && billId && !isLoading) {
@@ -850,7 +857,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                     value={invoiceNumber}
                     onChange={(e) => setInvoiceNumber(e.target.value)}
                     className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
-                    placeholder="np. 16/08/2026"
+                    placeholder="np. 17/08/2026"
                   />
                 </div>
                 <div>

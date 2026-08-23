@@ -20,6 +20,7 @@ import SectionTemplatePickerModal from "./SectionTemplatePickerModal";
 import GlobalTemplatePickerModal from "./GlobalTemplatePickerModal";
 import PatientDetailsFooter from "./PatientDetailsFooter";
 import BillingConfirmationModal from "../../../Billing/BillingConfirmationModal";
+import { formatPersonName } from "../../../utils/formatPersonName";
 import patientService from "../../../../helpers/patientHelper";
 import patientServicesHelper from "../../../../helpers/patientServicesHelper";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
@@ -1749,7 +1750,7 @@ const PatientDetailsPage = () => {
         onClose={() => {}}
         onConfirm={handleSettleAndEndVisit}
         patientServicesData={patientServices}
-        patientName={patientData.name}
+        patientName={formatPersonName(patientData?.name)}
         appointmentId={currentAppointmentId}
         patientId={id}
         mandatory

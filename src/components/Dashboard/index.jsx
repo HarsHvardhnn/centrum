@@ -46,6 +46,7 @@ import RescheduleModal from "./RescheduleModal";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 import { queryKeys } from "../../lib/queryKeys";
 import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
+import { formatPersonName } from "../../utils/formatPersonName";
 
 const MedicalDashboard = () => {
   const { user } = useUser();
@@ -1248,7 +1249,12 @@ const PatientList = () => {
         onClose={() => setShowBillingModal(false)}
         onConfirm={confirmBilling}
         patientServicesData={billingServices}
-        patientName={selectedAppointment?.name || selectedAppointment?.registrationData?.name || selectedAppointment?.patient?.name || "Nieznany pacjent"}
+        patientName={formatPersonName(
+          selectedAppointment?.name ||
+            selectedAppointment?.registrationData?.name ||
+            selectedAppointment?.patient?.name,
+          "Nieznany pacjent"
+        )}
         appointmentId={selectedAppointment?.id}
         patientId={selectedAppointment?.patient_id}
         returnPath={(() => {

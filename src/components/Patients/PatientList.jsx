@@ -46,6 +46,7 @@ import { queryKeys } from "../../lib/queryKeys";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
 import { loadPatientEditFormData, mapListPatientToEditStub } from "../../utils/mapPatientToEditForm";
+import { formatPersonName } from "../../utils/formatPersonName";
 
 /** Formats appointment `created_at` / `createdAt` for "Utworzono przez: … (DD.MM.YYYY, HH:MM)" */
 function formatAppointmentCreatedAt(appointment) {
@@ -385,15 +386,16 @@ function LabAppointmentsContent({ clinic }) {
 
   /** Display name: patient name, or registrationData, or fallback (never undefined) */
   const getAppointmentPatientDisplayName = (apt) => {
-    const name =
+    const raw =
       apt?.patient?.name ??
       apt?.registrationData?.name ??
       (apt?.registrationData?.firstName && apt?.registrationData?.lastName
-        ? `${apt.registrationData.firstName} ${apt.registrationData.lastName}`.trim()
+        ? {
+            first: apt.registrationData.firstName,
+            last: apt.registrationData.lastName,
+          }
         : null);
-    const fallback = "Nieznany pacjent";
-    if (name == null || name === "" || String(name) === "undefined") return fallback;
-    return name;
+    return formatPersonName(raw, "Nieznany pacjent");
   };
 
   const appointmentIdFromUrl = searchParams.get("appointmentId");

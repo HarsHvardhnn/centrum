@@ -6,6 +6,7 @@ import billingHelper from "../../helpers/billingHelper";
 import { toast } from "sonner";
 import ServiceSelectionModal from "../Doctor/SingleDoctor/patient-details/ServiceSelectionModal";
 import { useUser } from "../../context/userContext";
+import { formatPersonName } from "../../utils/formatPersonName";
 
 function toDateInputValue(value) {
   const date = value ? new Date(value) : new Date();
@@ -39,9 +40,10 @@ const BillingConfirmationModal = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
-  const isDoctorSettlement = user?.role === "doctor";
+  const isDoctorSettlement = user?.role === "doctor" || mandatory;
   const showAdminInvoiceFields =
     !isDoctorSettlement && canManageInvoiceAdminFields(user?.role);
+  const displayPatientName = formatPersonName(patientName);
   const [isLoading, setIsLoading] = useState(false);
   const [taxPercentage, setTaxPercentage] = useState(0);
   const [additionalCharges, setAdditionalCharges] = useState(0);
@@ -165,7 +167,9 @@ const BillingConfirmationModal = ({
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {isDoctorSettlement ? "Rozliczenie wizyty" : `Generuj rachunek dla ${patientName}`}
+            {isDoctorSettlement
+              ? "Rozliczenie wizyty"
+              : `Generuj rachunek dla ${displayPatientName}`}
           </h3>
           <p className="text-sm text-gray-500 mb-4">
             {isDoctorSettlement
@@ -322,7 +326,7 @@ const BillingConfirmationModal = ({
                         type="text"
                         value={invoiceNumber}
                         onChange={(e) => setInvoiceNumber(e.target.value)}
-                        placeholder="np. CM7/08/2026/001"
+                        placeholder="np. 17/08/2026"
                         className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                       />
                       <p className="mt-1 text-xs text-gray-500">

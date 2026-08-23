@@ -40,6 +40,7 @@ import userServiceHelper, {
 import { queryKeys } from "../../lib/queryKeys";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
+import { formatPersonName } from "../../utils/formatPersonName";
 
 function toDateInputValue(value) {
   const date = value ? new Date(value) : new Date();
@@ -372,7 +373,7 @@ const BillingManagement = () => {
                   value={invoiceNumber}
                   onChange={(e) => setInvoiceNumber(e.target.value)}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white"
-                  placeholder="np. CM7/08/2026/001"
+                  placeholder="np. 17/08/2026"
                 />
               </div>
               <div>
@@ -646,7 +647,8 @@ const BillingManagement = () => {
 
   // Add GenerateBillModal component
   const GenerateBillModal = ({ isOpen, onClose, appointmentId, onBillGenerated, isRedirectedFromAppointment }) => {
-    const showAdminInvoiceFields = user?.role === "admin" || user?.role === "receptionist";
+    const showAdminInvoiceFields =
+      !isDoctorViewOnly && (user?.role === "admin" || user?.role === "receptionist");
     const [isLoading, setIsLoading] = useState(false);
     const [taxPercentage, setTaxPercentage] = useState(0);
     const [additionalCharges, setAdditionalCharges] = useState(0);
@@ -837,10 +839,14 @@ const BillingManagement = () => {
         <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
           <div className="p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Generuj rachunek dla {patient?.name?.first} {patient?.name?.last}
+              {isDoctorViewOnly
+                ? "Rozliczenie wizyty"
+                : `Generuj rachunek dla ${formatPersonName(patient)}`}
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Utworzy to rachunek dla pacjenta na podstawie wybranych usług.
+              {isDoctorViewOnly
+                ? "Wybierz wykonane usługi, aby utworzyć rozliczenie oczekujące na płatność."
+                : "Utworzy to rachunek dla pacjenta na podstawie wybranych usług."}
             </p>
 
             {isLoading ? (
@@ -988,7 +994,7 @@ const BillingManagement = () => {
                           type="text"
                           value={invoiceNumber}
                           onChange={(e) => setInvoiceNumber(e.target.value)}
-                          placeholder="np. CM7/08/2026/001"
+                          placeholder="np. 17/08/2026"
                           className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
                         />
                         <p className="mt-1 text-xs text-gray-500">
@@ -1041,7 +1047,7 @@ const BillingManagement = () => {
                 disabled={isLoading || services.length === 0}
               >
                 <DollarSign size={16} className="mr-1" />
-                Generuj rachunek
+                {isDoctorViewOnly ? "Rozlicz i zakończ wizytę" : "Generuj rachunek"}
               </button>
             </div>
           </div>
