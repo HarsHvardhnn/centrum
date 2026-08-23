@@ -268,6 +268,34 @@ export function refreshAccessToken() {
   return refreshPromise;
 }
 
+/**
+ * Probe whether the httpOnly refresh cookie reaches the API (used for recovery UI).
+ * On success, stores the new access token like a normal refresh.
+ */
+export async function probeRefreshCookieHealth() {
+  const refreshAxios = axios.create({
+    baseURL: axiosInstance.defaults.baseURL,
+    withCredentials: true,
+  });
+  try {
+    const res = await refreshAxios.post("/auth/refresh-token");
+    if (!res.data?.token) {
+      return { ok: false, reason: "no_token" };
+    }
+    storeAccessToken(res.data.token, res.data.user);
+    return { ok: true };
+  } catch (err) {
+    const code = err?.response?.data?.code;
+    if (code === "REFRESH_TOKEN_MISSING") {
+      return { ok: false, reason: "refresh_missing" };
+    }
+    if (code === "REFRESH_TOKEN_INVALID") {
+      return { ok: false, reason: "refresh_invalid" };
+    }
+    return { ok: false, reason: "unknown", code };
+  }
+}
+
 // Cross-tab logout / token sync listener (one channel for the app lifetime)
 if (typeof window !== "undefined" && typeof BroadcastChannel !== "undefined") {
   try {

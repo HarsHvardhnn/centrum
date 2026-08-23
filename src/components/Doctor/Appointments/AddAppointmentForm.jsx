@@ -1017,18 +1017,7 @@ function AppointmentFormModal({
                 Wybierz z listy terminów
               </button>
             </p>
-          ) : (
-            <p className="text-sm text-gray-600 mb-2">
-              <button
-                type="button"
-                onClick={switchToCustomDateOnly}
-                className="text-teal-600 hover:text-teal-800 underline font-medium"
-              >
-                Dodaj termin ręcznie
-              </button>
-              {" "}bez sprawdzania dostępności
-            </p>
-          )}
+          ) : null}
           <DoctorSelectionWithSlots
             selectedDoctor={appointmentData.selectedDoctor}
             selectedSlot={appointmentData.selectedSlot}
@@ -1041,6 +1030,7 @@ function AppointmentFormModal({
             loadingNextAvailableDate={loadingNextAvailableDate}
             hideDoctorSelection={true}
             hideSlotList={useCustomDateOnly}
+            onUseCustomDateOnly={useCustomDateOnly ? null : switchToCustomDateOnly}
             allowedDoctorId={allowedDoctorId}
           />
         </div>
@@ -1227,16 +1217,7 @@ function AppointmentFormModal({
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-600">
-            <button
-              type="button"
-              onClick={switchToCustomDateOnly}
-              className="text-teal-600 hover:text-teal-800 underline font-medium"
-            >
-              Dodaj termin ręcznie
-            </button>{" "}
-            bez sprawdzania dostępności
-          </p>
+          null
         )}
 
         {/* Doctor Selection */}
@@ -1252,6 +1233,7 @@ function AppointmentFormModal({
             selectedPatient={selectedPatient}
             loadingNextAvailableDate={loadingNextAvailableDate}
             hideSlotList={useCustomDateOnly}
+            onUseCustomDateOnly={useCustomDateOnly ? null : switchToCustomDateOnly}
             allowedDoctorId={allowedDoctorId}
           />
         </div>

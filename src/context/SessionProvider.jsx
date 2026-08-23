@@ -22,8 +22,15 @@ import {
   resetSessionEnding,
 } from "../utils/sessionEvents";
 import { setSessionWarningActive } from "../utils/sessionRefresh";
+import {
+  canUseDocumentCookies,
+  isRefreshTokenInvalidError,
+  isRefreshTokenMissingError,
+  isSecureContext,
+} from "../utils/cookieHealth";
 import TokenExpiryPopup from "../components/UtilComponents/TokenExpiryPopup";
 import InactivityPopup from "../components/UtilComponents/InactivityPopup";
+import CookieRequiredModal from "../components/UtilComponents/CookieRequiredModal";
 import { toast } from "sonner";
 
 const IDLE_PROMPT_MS = 30 * 1000;
@@ -74,12 +81,28 @@ export function SessionProvider({ children }) {
   const [jwtRemainingMs, setJwtRemainingMs] = useState(null);
   const [idlePromptRemainingMs, setIdlePromptRemainingMs] = useState(IDLE_PROMPT_MS);
   const [isExtending, setIsExtending] = useState(false);
+  const [cookieIssue, setCookieIssue] = useState(null);
 
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   const warnSuppressUntilRef = useRef(0);
   const sessionLiveRef = useRef(sessionLive);
   sessionLiveRef.current = sessionLive;
+  const cookieProbeDoneRef = useRef(false);
+
+  const openCookiePrompt = useCallback((issue) => {
+    setCookieIssue(issue);
+    setSessionWarningActive(true);
+    setPhase("cookieRequired");
+  }, []);
+
+  const clearCookiePrompt = useCallback(() => {
+    setCookieIssue(null);
+    setSessionWarningActive(false);
+    if (phaseRef.current === "cookieRequired") {
+      setPhase("active");
+    }
+  }, []);
 
   const handleEndSession = useCallback(async (reason = "manual") => {
     if (isSessionEnding() || phaseRef.current === "loggingOut") return;
@@ -125,9 +148,35 @@ export function SessionProvider({ children }) {
     };
   }, [sessionLive]);
 
+  useEffect(() => {
+    if (!sessionLive) {
+      cookieProbeDoneRef.current = false;
+      setCookieIssue(null);
+    }
+  }, [sessionLive]);
+
+  // Early warning when cookies are disabled or page is not on HTTPS.
+  useEffect(() => {
+    if (!sessionLive || !isAuthenticated) return undefined;
+    if (cookieProbeDoneRef.current) return undefined;
+    cookieProbeDoneRef.current = true;
+
+    if (!canUseDocumentCookies()) {
+      openCookiePrompt("document_blocked");
+      return undefined;
+    }
+    if (!isSecureContext()) {
+      toast.warning(
+        "Otwórz aplikację przez HTTPS — bez tego sesja może nie być przedłużana."
+      );
+    }
+    return undefined;
+  }, [sessionLive, isAuthenticated, openCookiePrompt]);
+
   const onPrompt = useCallback(() => {
     if (
       phaseRef.current === "jwtWarning" ||
+      phaseRef.current === "cookieRequired" ||
       phaseRef.current === "loggingOut" ||
       isSessionEnding()
     ) {
@@ -151,6 +200,7 @@ export function SessionProvider({ children }) {
     !sessionLive ||
     phase === "loggingOut" ||
     phase === "jwtWarning" ||
+    phase === "cookieRequired" ||
     isSessionEnding();
 
   const { getRemainingTime, activate, reset, pause, start } = useIdleTimer({
@@ -200,6 +250,7 @@ export function SessionProvider({ children }) {
     const tick = () => {
       if (!sessionLiveRef.current) return;
       if (isSessionEnding() || phaseRef.current === "loggingOut") return;
+      if (phaseRef.current === "cookieRequired") return;
 
       const token = getAccessToken();
       if (!token) {
@@ -272,11 +323,71 @@ export function SessionProvider({ children }) {
     });
   }, []);
 
-  const extendSession = useCallback(async () => {
+  const retryCookieRecovery = useCallback(async () => {
     if (isExtending || isSessionEnding()) return false;
+
+    if (!canUseDocumentCookies()) {
+      openCookiePrompt("document_blocked");
+      toast.error(
+        "Przeglądarka nadal blokuje pliki cookie. Zmień ustawienia i spróbuj ponownie."
+      );
+      return false;
+    }
+
     setIsExtending(true);
     try {
       await refreshAccessToken();
+      clearCookiePrompt();
+      warnSuppressUntilRef.current = Date.now() + 2000;
+      reset();
+      activate();
+      const token = getAccessToken();
+      setJwtRemainingMs(token ? getMsUntilExpiry(token) : null);
+      toast.success("Sesja została przywrócona — pliki cookie działają poprawnie.");
+      return true;
+    } catch (error) {
+      console.error("Cookie recovery refresh failed:", error);
+      if (isRefreshTokenMissingError(error)) {
+        openCookiePrompt("refresh_missing");
+        toast.error(
+          "Token odświeżania nadal nie dociera. Sprawdź ustawienia cookie i użyj jednej karty."
+        );
+        return false;
+      }
+      if (isRefreshTokenInvalidError(error)) {
+        toast.error(
+          "Sesja wygasła (token nieaktualny). Zaloguj się ponownie."
+        );
+        await handleEndSession("extend-failed");
+        return false;
+      }
+      toast.error("Nie udało się przywrócić sesji. Zaloguj się ponownie.");
+      await handleEndSession("extend-failed");
+      return false;
+    } finally {
+      setIsExtending(false);
+    }
+  }, [
+    isExtending,
+    openCookiePrompt,
+    clearCookiePrompt,
+    reset,
+    activate,
+    handleEndSession,
+  ]);
+
+  const extendSession = useCallback(async () => {
+    if (isExtending || isSessionEnding()) return false;
+
+    if (!canUseDocumentCookies()) {
+      openCookiePrompt("document_blocked");
+      return false;
+    }
+
+    setIsExtending(true);
+    try {
+      await refreshAccessToken();
+      clearCookiePrompt();
       toast.success("Sesja została przedłużona");
       warnSuppressUntilRef.current = Date.now() + 2000;
       setSessionWarningActive(false);
@@ -288,14 +399,11 @@ export function SessionProvider({ children }) {
       return true;
     } catch (error) {
       console.error("Error refreshing token:", error);
-      const code =
-        error?.refreshErrorCode ||
-        error?.response?.data?.code;
-      if (code === "REFRESH_TOKEN_MISSING") {
-        toast.error(
-          "Nie można przedłużyć sesji — przeglądarka nie wysłała tokenu odświeżania. Zaloguj się ponownie."
-        );
-      } else if (code === "REFRESH_TOKEN_INVALID") {
+      if (isRefreshTokenMissingError(error)) {
+        openCookiePrompt("refresh_missing");
+        return false;
+      }
+      if (isRefreshTokenInvalidError(error)) {
         toast.error(
           "Sesja wygasła (token odświeżania jest nieaktualny — np. druga karta lub nowe logowanie). Zaloguj się ponownie."
         );
@@ -357,6 +465,14 @@ export function SessionProvider({ children }) {
         jwtRemainingMs={jwtRemainingMs}
         isExtending={isExtending}
         onExtend={extendSession}
+        onLogout={() => handleEndSession("manual")}
+      />
+      <CookieRequiredModal
+        open={phase === "cookieRequired"}
+        issue={cookieIssue || "refresh_missing"}
+        isSecure={isSecureContext()}
+        isRetrying={isExtending}
+        onRetry={retryCookieRecovery}
         onLogout={() => handleEndSession("manual")}
       />
       <InactivityPopup

@@ -53,6 +53,8 @@ const DoctorSelectionWithSlots = ({
   selectedDoctor: propSelectedDoctor = null,
   selectedSlot: propSelectedSlot = null,
   hideSlotList = false, // when true, receptionist uses "set own date" – no slot list, no auto-fetch
+  /** Opens "set own date/time" mode in parent form (shown below slot list). */
+  onUseCustomDateOnly = null,
   /** If set, filter fetched doctors to this id only (create-visit flow for logged-in doctor). */
   allowedDoctorId = null,
 }) => {
@@ -626,6 +628,20 @@ const DoctorSelectionWithSlots = ({
                     title="Wieczór"
                     slots={groupedSlots.evening}
                   />
+                </div>
+              )}
+
+              {onUseCustomDateOnly &&
+                !isLoading &&
+                !loadingNextAvailableDate && (
+                <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+                  <button
+                    type="button"
+                    onClick={onUseCustomDateOnly}
+                    className="text-sm font-medium text-teal-700 hover:text-teal-900 underline underline-offset-2"
+                  >
+                    Ustaw własną datę i godzinę – bez przeglądania listy terminów
+                  </button>
                 </div>
               )}
             </div>
