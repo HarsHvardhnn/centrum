@@ -29,10 +29,10 @@ import { toast } from "sonner";
 import { formatDateToYYYYMMDD } from "../../utils/formatDate";
 import { useUser } from "../../context/userContext";
 import { useServices } from "../../context/serviceContext";
-import ServiceSelectionModal from "../Doctor/SingleDoctor/patient-details/ServiceSelectionModal";
 import BulkDeleteByIdsDialog from "../admin/BulkDeleteByIdsDialog";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 import PatientSettlementModal from "./PatientSettlementModal";
+import GenerateBillModal from "./GenerateBillModal";
 import userServiceHelper, {
   mapDoctorServicesResponseToCatalog,
   mapServicesResponseToCatalog,
@@ -40,7 +40,6 @@ import userServiceHelper, {
 import { queryKeys } from "../../lib/queryKeys";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
-import { formatPersonName } from "../../utils/formatPersonName";
 
 function toDateInputValue(value) {
   const date = value ? new Date(value) : new Date();
