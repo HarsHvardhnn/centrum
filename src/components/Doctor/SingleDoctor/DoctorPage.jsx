@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import DoctorDashboard from "./DoctorDashboard";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useLoader } from "../../../context/LoaderContext";
 import doctorService from "../../../helpers/doctorHelper";
 import AppointmentFormModal from "../Appointments/AddAppointmentForm";
@@ -47,6 +47,10 @@ function DoctorsPage() {
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
   const itemsPerPage = 10;
   const { user } = useUser();
+  const loadGenerationRef = useRef(0);
+  const doctorInfoRef = useRef(doctorInfo);
+  doctorInfoRef.current = doctorInfo;
+  const [listLoading, setListLoading] = useState(false);
 
   useEffect(() => {
     writeListState(doctorListKey, {
@@ -79,55 +83,26 @@ function DoctorsPage() {
     return { liczbaWizyt, pozostaloWizyt };
   };
 
-  useEffect(() => {
-    const fetchDoctorData = async () => {
-      try {
-        const doctorId = router.id;
-        if (!doctorId) return;
-
-        showLoader();
-        const dateStr = formatDateToYYYYMMDD(selectedDate);
-        const response = await doctorService.getDoctorById(doctorId, dateStr);
-
-        if (response.success && response.doctor) {
-          const transformedData = transformToDoctorInfo(
-            response.doctor,
-            response.shiftsForDate,
-            selectedDate
-          );
-          setDoctorInfo(transformedData);
-        } else {
-          setError("błąd serwera");
-        }
-      } catch (err) {
-        console.error("Error fetching doctor data:", err);
-        setError("Error loading doctor data");
-      } finally {
-        hideLoader();
-      }
-    };
-
-    fetchDoctorData();
-  }, [router.id, selectedDate, showLoader, hideLoader]);
-
-  useEffect(() => {
-    if (doctorInfo && doctorInfo.id) {
-      fetchPatientsByDoctor(doctorInfo.id);
+  const applyAppointmentsResponse = (response) => {
+    if (!response?.success) {
+      console.error("Failed to load patients data");
+      return;
     }
-  }, [selectedDate, doctorInfo, currentPage, searchQuery]);
-
-  // New effect to fetch patient details when a patient is selected
-  useEffect(() => {
-    if (appointmentId) {
-      // Find the selected appointment from patients array
-      const selectedAppointment = patients.find(p => p.id === appointmentId);
-      if (selectedAppointment) {
-        fetchPatientDetails(selectedAppointment.patient_id, appointmentId);
-      }
-    } else {
-      setPatientDetails(null);
-    }
-  }, [appointmentId, patients]);
+    const list = response.data || [];
+    const filtered = nonCancelledAppointments(list);
+    setPatients(filtered);
+    const total =
+      response.total != null && filtered.length === list.length
+        ? response.total
+        : filtered.length;
+    setTotalPatients(total);
+    setDailySummary(
+      computeDailySummary(filtered, {
+        liczbaWizyt: response.liczbaWizyt,
+        pozostaloWizyt: response.pozostaloWizyt,
+      })
+    );
+  };
 
   /** Exclude cancelled/canceled so list and counts do not include them. */
   const nonCancelledAppointments = (list) => {
@@ -139,50 +114,113 @@ function DoctorsPage() {
     });
   };
 
+  const loadDoctorDay = useCallback(
+    async ({ fullScreen = false } = {}) => {
+      const doctorId = router.id;
+      if (!doctorId) return;
+
+      const generation = ++loadGenerationRef.current;
+      if (fullScreen) showLoader();
+      else setListLoading(true);
+
+      const dateStr = formatDateToYYYYMMDD(selectedDate);
+      try {
+        const [doctorResponse, appointmentsResponse] = await Promise.all([
+          doctorService.getDoctorById(doctorId, dateStr),
+          appointmentHelper.getDoctorAppointments(
+            doctorId,
+            dateStr,
+            dateStr,
+            "all",
+            currentPage,
+            itemsPerPage,
+            searchQuery,
+            true
+          ),
+        ]);
+
+        if (generation !== loadGenerationRef.current) return;
+
+        if (doctorResponse.success && doctorResponse.doctor) {
+          setDoctorInfo(
+            transformToDoctorInfo(
+              doctorResponse.doctor,
+              doctorResponse.shiftsForDate,
+              selectedDate
+            )
+          );
+        } else {
+          setError("błąd serwera");
+        }
+
+        applyAppointmentsResponse(appointmentsResponse);
+      } catch (err) {
+        if (generation !== loadGenerationRef.current) return;
+        console.error("Error loading doctor day:", err);
+        setError("Error loading doctor data");
+      } finally {
+        if (generation === loadGenerationRef.current) {
+          if (fullScreen) hideLoader();
+          setListLoading(false);
+        }
+      }
+    },
+    [
+      router.id,
+      selectedDate,
+      currentPage,
+      searchQuery,
+      showLoader,
+      hideLoader,
+    ]
+  );
+
+  useEffect(() => {
+    const hasDoctor = Boolean(doctorInfoRef.current?.id);
+    loadDoctorDay({ fullScreen: !hasDoctor });
+  }, [loadDoctorDay]);
+
   const fetchPatientsByDoctor = async (doctorId) => {
+    const id = doctorId || router.id;
+    if (!id) return;
+    const generation = ++loadGenerationRef.current;
+    setListLoading(true);
     try {
-      showLoader();
       const response = await appointmentHelper.getDoctorAppointments(
-        doctorId,
+        id,
         formatDateToYYYYMMDD(selectedDate),
         formatDateToYYYYMMDD(selectedDate),
         "all",
         currentPage,
         itemsPerPage,
         searchQuery,
-        true // excludeCancelled – backend may support it; we also filter below
+        true
       );
-
-      if (response && response.success) {
-        const list = response.data || [];
-        const filtered = nonCancelledAppointments(list);
-        setPatients(filtered);
-        // Use filtered count so "X wizyta dzisiaj" and list stay in sync (backend may return total excluding cancelled when excludeCancelled is supported)
-        const total = response.total != null && filtered.length === list.length
-          ? response.total
-          : filtered.length;
-        setTotalPatients(total);
-        const summary = computeDailySummary(filtered, {
-          liczbaWizyt: response.liczbaWizyt,
-          pozostaloWizyt: response.pozostaloWizyt,
-        });
-        setDailySummary(summary);
-      } else {
-        console.error("Failed to load patients data");
-      }
+      if (generation !== loadGenerationRef.current) return;
+      applyAppointmentsResponse(response);
     } catch (err) {
+      if (generation !== loadGenerationRef.current) return;
       console.error("Error fetching patients data:", err);
       setError("Error loading patients data");
     } finally {
-      hideLoader();
+      if (generation === loadGenerationRef.current) setListLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (appointmentId) {
+      const selectedAppointment = patients.find((p) => p.id === appointmentId);
+      if (selectedAppointment) {
+        fetchPatientDetails(selectedAppointment.patient_id, appointmentId);
+      }
+    } else {
+      setPatientDetails(null);
+    }
+  }, [appointmentId, patients]);
 
   // New function to fetch patient details
   const fetchPatientDetails = async (patientId, appointmentId) => {
     try {
-      showLoader();
-      // Make API call to get patient details using the patient service
       const response = await doctorService.getPatientDetailsAndReports(
         patientId,
         appointmentId
@@ -197,8 +235,6 @@ function DoctorsPage() {
     } catch (err) {
       console.error("Error fetching patient details:", err);
       toast.error("Wystąpił błąd");
-    } finally {
-      hideLoader();
     }
   };
 
@@ -351,6 +387,21 @@ function DoctorsPage() {
     if (doctorInfo?.id) fetchPatientsByDoctor(doctorInfo.id);
   };
 
+  const handleDateSelect = (date) => {
+    setSelectedDate((prev) => {
+      if (
+        prev &&
+        date &&
+        formatDateToYYYYMMDD(prev) === formatDateToYYYYMMDD(date)
+      ) {
+        return prev;
+      }
+      return date;
+    });
+    setAppointmentId(null);
+    setCurrentPage(1);
+  };
+
   return (
     <>
       <DoctorDashboard
@@ -362,8 +413,9 @@ function DoctorsPage() {
         patientDetails={patientDetails}
         onPatientSelect={handlePatientSelect}
         setAppointmentId={setAppointmentId}
-        onDateSelect={setSelectedDate}
+        onDateSelect={handleDateSelect}
         selectedDate={selectedDate}
+        isLoading={listLoading}
         breadcrumbs={[
           { label: "Panel główny", onClick: () => navigate("/administracja") },
           { label: "Wizyty lekarskie", onClick: null },

@@ -29,6 +29,7 @@ const DoctorDashboard = ({
   onCheckIn,
   onReschedule,
   onPermanentDelete,
+  isLoading = false,
 }) => {
   const navigate = useNavigate();
   const { user } = useUser();
@@ -98,6 +99,7 @@ const DoctorDashboard = ({
             <PatientsList
               setAppointmentId={setAppointmentId}
               patientsData={patients}
+              isLoading={isLoading}
               onPatientSelect={onPatientSelect}
               selectedPatient={selectedPatient}
               currentPage={currentPage}

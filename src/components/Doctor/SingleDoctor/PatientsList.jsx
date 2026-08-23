@@ -26,6 +26,7 @@ const PatientsList = ({
   setAppointmentId,
   selectedPatient,
   patientsData = [],
+  isLoading = false,
   itemsPerPage = 10,
   onCheckIn,
   onReschedule,
@@ -187,7 +188,12 @@ const PatientsList = ({
   const displayTotal = sortedPatients.length;
 
   return (
-    <div className="bg-white border rounded-lg shadow-sm">
+    <div className="bg-white border rounded-lg shadow-sm relative">
+      {isLoading && (
+        <div className="absolute inset-0 z-10 bg-white/60 flex items-center justify-center rounded-lg">
+          <div className="h-8 w-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
       {/* Header: title + circular counter "X wizyt dzisiaj", no three-dot */}
       <div className="flex justify-between items-center p-4 border-b">
         <div className="flex items-center gap-3">
