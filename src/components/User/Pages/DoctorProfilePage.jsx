@@ -11,7 +11,7 @@ import { useUser } from '../../../context/userContext';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentDateInPoland, isDateInPast, formatYmdToPolish, buildWeekDays, weekOffsetFromYmd, pickBookableDate, collectDaysWithSlots, normalizeYmd } from '../../../utils/polandTimezone';
-import { findConfirmedOpening, loadWeekAvailability, slotsForDate } from '../../../utils/bookingNextOpening';
+import { loadInitialOpening, loadWeekAvailability, slotsForDate } from '../../../utils/bookingNextOpening';
 import { PHONE_COUNTRY_CODES } from '../../../constants/phoneCountryCodes';
 import { cm7PostalAddressLd } from '../../../data/cm7PostalAddressLd';
 import PhoneCodeSelect from '../../UtilComponents/PhoneCodeSelect';
@@ -737,6 +737,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
 
     setShowBookingModal(true);
     setWeekLoading(true);
+    setSlotsLoading(true);
     setOnlineBookingUnavailable(false);
     setAvailableSlots([]);
 
@@ -750,16 +751,14 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
       console.error('No doctor ID found in doctor object');
       toast.error("Nie udało się znaleźć ID lekarza. Spróbuj ponownie później.");
       setWeekLoading(false);
+      setSlotsLoading(false);
       return;
     }
 
     try {
-      // Fetch next available date
-      const nextAvailableResponse = await doctorService.getNextAvailableDate(
-        doctorId
-      );
+      const opening = await loadInitialOpening(doctorId);
 
-      if (nextAvailableResponse.onlineBookingUnavailable) {
+      if (opening.onlineBookingUnavailable) {
         setOnlineBookingUnavailable(true);
         setAvailableSlots([]);
         setSelectedSlot(null);
@@ -767,22 +766,15 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
         setNextOpeningDate("");
         setWeekOffset(0);
         setDaysWithSlots(new Set());
-      } else if (nextAvailableResponse.success && nextAvailableResponse.nextAvailableDate) {
-        setOnlineBookingUnavailable(false);
-        const hintedDate = normalizeYmd(nextAvailableResponse.nextAvailableDate);
-        const confirmed = await findConfirmedOpening(doctorId, hintedDate);
-        setNextOpeningDate(confirmed.bookableDate);
-        setWeekOffset(confirmed.offset);
-        setNextDays(confirmed.days);
-        setDaysWithSlots(confirmed.daysWithSlots);
-        setWeekAvailabilityCache(confirmed.weekData);
-        setSelectedDate(confirmed.bookableDate);
-        setAvailableSlots(confirmed.availableSlots);
       } else {
         setOnlineBookingUnavailable(false);
-        setAvailableSlots([]);
-        setSelectedSlot(null);
-        setDaysWithSlots(new Set());
+        setNextOpeningDate(opening.bookableDate);
+        setWeekOffset(opening.offset);
+        setNextDays(opening.days);
+        setDaysWithSlots(opening.daysWithSlots);
+        setWeekAvailabilityCache(opening.weekData);
+        setSelectedDate(opening.bookableDate);
+        setAvailableSlots(opening.availableSlots);
       }
     } catch (error) {
       console.error("Error fetching doctor availability:", error);
@@ -791,6 +783,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
       );
     } finally {
       setWeekLoading(false);
+      setSlotsLoading(false);
     }
   };
 
@@ -1601,29 +1594,6 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                         className="w-full h-48 object-cover object-top rounded-lg mb-4"
                       />
                       <h4 className="text-xl font-semibold">{doctorName}</h4>
-                      <p className="text-gray-700 font-medium">
-                        {specializations}
-                      </p>
-
-                      <div className="mt-4 text-left">
-                        {doctor.bio && (
-                          <div className="mb-4 pb-3 border-b border-gray-200">
-                            <h5 className="font-semibold text-gray-800 mb-2">
-                              O lekarzu
-                            </h5>
-                            <p className="text-sm text-gray-700 whitespace-pre-line">
-                              {doctor.bio}
-                            </p>
-                          </div>
-                        )}
-
-                        {doctor.education && (
-                          <p className="text-sm mt-2">
-                            <span className="font-semibold">Edukacja:</span>{" "}
-                            {doctor.education}
-                          </p>
-                        )}
-                      </div>
                     </div>
                   </div>
 
@@ -1677,17 +1647,18 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                                     }
                                     return `Za ${weekOffset} ${weekText}`;
                                   })()}
-                              {nextOpeningDate && (
+                              {(selectedDate || nextOpeningDate) && (
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    const offset = weekOffsetFromYmd(nextOpeningDate);
+                                    const dateToShow = selectedDate || nextOpeningDate;
+                                    const offset = weekOffsetFromYmd(dateToShow);
                                     setWeekOffset(offset);
-                                    setSelectedDate(nextOpeningDate);
+                                    setSelectedDate(dateToShow);
                                   }}
                                   className="block text-xs text-teal-600 hover:underline"
                                 >
-                                  Następny termin: {formatYmdToPolish(nextOpeningDate)}
+                                  Wybrany dzień: {formatYmdToPolish(selectedDate || nextOpeningDate)}
                                 </button>
                               )}
                               {nextDays.length > 0 && (
@@ -1719,7 +1690,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                           const isActive = date === selectedDate;
                           const isPast = isDateInPast(date);
                           const hasSlots = daysWithSlots.has(date);
-                          const isChecking = checkingSlots && !isPast;
+                          const isChecking = (checkingSlots || weekLoading) && !isPast;
                           const dayDate = new Date(date + "T12:00:00");
 
                           return (
@@ -1766,9 +1737,10 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                         Dostępne godziny
                       </label>
 
-                      {slotsLoading ? (
-                        <div className="flex justify-center py-8">
+                      {slotsLoading || weekLoading || checkingSlots ? (
+                        <div className="flex flex-col items-center justify-center py-8 gap-2">
                           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-500"></div>
+                          <p className="text-sm text-gray-500">Szukamy wolnych terminów…</p>
                         </div>
                       ) : availableSlots.length > 0 ? (
                         <div className="grid grid-cols-3 md:grid-cols-4 gap-2">

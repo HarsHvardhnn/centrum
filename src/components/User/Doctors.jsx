@@ -14,7 +14,7 @@ import { generateDoctorProfileUrl } from "../../utils/slugUtils";
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { getCurrentDateInPoland, isDateInPast, formatYmdToPolish, buildWeekDays, weekOffsetFromYmd, pickBookableDate, collectDaysWithSlots, normalizeYmd } from "../../utils/polandTimezone";
-import { findConfirmedOpening, loadWeekAvailability, slotsForDate } from "../../utils/bookingNextOpening";
+import { loadInitialOpening, loadWeekAvailability, slotsForDate } from "../../utils/bookingNextOpening";
 import { filterPublicDoctorList } from "../../utils/publicDoctorFilters";
 import { sortDoctorsWithPinnedFirst } from "../../utils/doctorSort";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
@@ -484,47 +484,38 @@ export default function Doctors({
     setDaysWithSlots(new Set());
     setWeekAvailabilityCache(null);
     setWeekLoading(true);
+    setSlotsLoading(true);
     setOnlineBookingUnavailable(false);
     setAvailableSlots([]);
 
     try {
-      // Fetch doctor profile
-      await fetchDoctorProfile(doctor.id);
+      const [, opening] = await Promise.all([
+        fetchDoctorProfile(doctor.id),
+        loadInitialOpening(doctor.id),
+      ]);
 
-      // Fetch next available date
-      const nextAvailableResponse = await doctorService.getNextAvailableDate(
-        doctor.id
-      );
-
-        if (nextAvailableResponse.onlineBookingUnavailable) {
-          setOnlineBookingUnavailable(true);
-          setAvailableSlots([]);
-          setSelectedSlot(null);
-          setSelectedDate("");
-          setNextOpeningDate("");
-          setWeekOffset(0);
-          setNextDays(buildWeekDays(0));
-          setDaysWithSlots(new Set());
-        } else if (nextAvailableResponse.success && nextAvailableResponse.nextAvailableDate) {
-          setOnlineBookingUnavailable(false);
-          const hintedDate = normalizeYmd(nextAvailableResponse.nextAvailableDate);
-          const confirmed = await findConfirmedOpening(doctor.id, hintedDate);
-          setNextOpeningDate(confirmed.bookableDate);
-          setWeekOffset(confirmed.offset);
-          setNextDays(confirmed.days);
-          setDaysWithSlots(confirmed.daysWithSlots);
-          setWeekAvailabilityCache(confirmed.weekData);
-          setSelectedDate(confirmed.bookableDate);
-          setAvailableSlots(confirmed.availableSlots);
-          if (confirmed.bookableDate) {
-            updateUrlWithSelections(doctor.id, confirmed.bookableDate, "");
-          }
-        } else {
-          setOnlineBookingUnavailable(false);
-          setAvailableSlots([]);
-          setSelectedSlot(null);
-          setDaysWithSlots(new Set());
+      if (opening.onlineBookingUnavailable) {
+        setOnlineBookingUnavailable(true);
+        setAvailableSlots([]);
+        setSelectedSlot(null);
+        setSelectedDate("");
+        setNextOpeningDate("");
+        setWeekOffset(0);
+        setNextDays(buildWeekDays(0));
+        setDaysWithSlots(new Set());
+      } else {
+        setOnlineBookingUnavailable(false);
+        setNextOpeningDate(opening.bookableDate);
+        setWeekOffset(opening.offset);
+        setNextDays(opening.days);
+        setDaysWithSlots(opening.daysWithSlots);
+        setWeekAvailabilityCache(opening.weekData);
+        setSelectedDate(opening.bookableDate);
+        setAvailableSlots(opening.availableSlots);
+        if (opening.bookableDate) {
+          updateUrlWithSelections(doctor.id, opening.bookableDate, "");
         }
+      }
     } catch (error) {
       console.error("Error fetching doctor availability:", error);
       toast.error(
@@ -532,6 +523,7 @@ export default function Doctors({
       );
     } finally {
       setWeekLoading(false);
+      setSlotsLoading(false);
     }
   };
 
@@ -951,35 +943,6 @@ export default function Doctors({
                     <h4 className="text-xl font-semibold">
                       {selectedDoctor.name}
                     </h4>
-                    <p className="text-gray-700 font-medium">
-                      {selectedDoctor.department.name}
-                    </p>
-
-                    {doctorProfile ? (
-                      <div className="mt-4 text-left">
-                        {doctorProfile.bio && (
-                          <div className="mb-4 pb-3 border-b border-gray-200">
-                            <h5 className="font-semibold text-gray-800 mb-2">
-                              O lekarzu
-                            </h5>
-                            <p className="text-sm text-gray-700 whitespace-pre-line">
-                              {doctorProfile.bio}
-                            </p>
-                          </div>
-                        )}
-
-                        {doctorProfile.education && (
-                          <p className="text-sm mt-2">
-                            <span className="font-semibold">Edukacja:</span>{" "}
-                            {doctorProfile.education}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="mt-4 flex justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500"></div>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -1033,13 +996,14 @@ export default function Doctors({
                                   }
                                   return `Za ${weekOffset} ${weekText}`;
                                 })()}
-                            {nextOpeningDate && (
+                            {(selectedDate || nextOpeningDate) && (
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const offset = weekOffsetFromYmd(nextOpeningDate);
+                                  const dateToShow = selectedDate || nextOpeningDate;
+                                  const offset = weekOffsetFromYmd(dateToShow);
                                   setWeekOffset(offset);
-                                  setSelectedDate(nextOpeningDate);
+                                  setSelectedDate(dateToShow);
                                   if (selectedDoctor) {
                                     fetchWeekSlotAvailability(
                                       selectedDoctor.id,
@@ -1049,7 +1013,7 @@ export default function Doctors({
                                 }}
                                 className="block text-xs text-main hover:underline"
                               >
-                                Następny termin: {formatYmdToPolish(nextOpeningDate)}
+                                Wybrany dzień: {formatYmdToPolish(selectedDate || nextOpeningDate)}
                               </button>
                             )}
                             {nextDays.length > 0 && nextDays[0] && !String(nextDays[0]).includes("NaN") && (
@@ -1082,7 +1046,7 @@ export default function Doctors({
                         const isActive = date === selectedDate;
                         const isPast = isDateInPast(date);
                         const hasSlots = daysWithSlots.has(date);
-                        const isChecking = checkingSlots && !isPast;
+                        const isChecking = (checkingSlots || weekLoading) && !isPast;
 
                         return (
                           <button
@@ -1129,9 +1093,10 @@ export default function Doctors({
                       Dostępne godziny
                     </label>
 
-                    {slotsLoading ? (
-                      <div className="flex justify-center py-8">
+                    {slotsLoading || weekLoading || checkingSlots ? (
+                      <div className="flex flex-col items-center justify-center py-8 gap-2">
                         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-500"></div>
+                        <p className="text-sm text-gray-500">Szukamy wolnych terminów…</p>
                       </div>
                     ) : availableSlots.length > 0 ? (
                       <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
