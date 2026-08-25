@@ -59,6 +59,7 @@ import SystemSettingsPage from "./components/admin/SystemSettingsPage";
 import VisitTemplatesPage from "./components/admin/VisitTemplatesPage";
 import DocumentTemplatesPlaceholder from "./components/admin/DocumentTemplatesPlaceholder";
 import DocumentRepositoryPlaceholder from "./components/admin/DocumentRepositoryPlaceholder";
+import EhealthIntegrationsPage from "./components/admin/EhealthIntegrationsPage";
 import KioskApp from "./components/Kiosk/KioskApp";
 
 // Protected image route component
@@ -220,6 +221,7 @@ const routes = createBrowserRouter([
           { path: "/administracja/konfiguracja-wizyt", element: <AppointmentConfigPage /> },
           { path: "/administracja/ustawienia-jwt", element: <JWTSettingsPage /> },
           { path: "/administracja/trwale-usuwanie", element: <PermanentDeletePage /> },
+          { path: "/administracja/integracje-ezdrowie", element: <EhealthIntegrationsPage /> },
           { path: "/ustawienia", element: <SystemSettingsPage /> },
           { path: "/administracja/szablony-dokumentow", element: <DocumentTemplatesPlaceholder /> },
           { path: "/administracja/repo-dokumentow", element: <DocumentRepositoryPlaceholder /> },

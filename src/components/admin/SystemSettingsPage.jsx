@@ -18,6 +18,7 @@ import {
   CalendarCheck,
   GraduationCap,
   LayoutGrid,
+  Plug,
 } from "lucide-react";
 import SpecializationManagement from "./SpecializationManagement";
 
@@ -30,6 +31,15 @@ const settingsCards = [
     icon: User,
     to: "/administracja/profil",
     roles: ["admin", "doctor", "receptionist"],
+  },
+  {
+    id: "ehealth",
+    title: "Integracje e-Zdrowie",
+    description:
+      "Poświadczenia P1/Medfile, test połączenia oraz limity unikalnych lekarzy na usługę w miesiącu",
+    icon: Plug,
+    to: "/administracja/integracje-ezdrowie",
+    roles: ["admin"],
   },
   {
     id: "user-settings",
