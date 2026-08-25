@@ -583,7 +583,7 @@ const PatientDetailsPage = () => {
     }
 
     const cd = dataToSave.consultationData || consultationData;
-    await appointmentHelper.updateAppointmentDetails(
+    await appointmentHelper.updatePatientDetailsConsolidated(
       currentAppointmentId,
       {
         patientData: dataToSave.patientData || patientData,
@@ -847,7 +847,8 @@ const PatientDetailsPage = () => {
       const cached = unwrapVisitConsolidated(
         queryClient.getQueryData(queryKeys.visitConsolidated(appointmentId))
       );
-      if (cached) {
+      // Do not replay a stale cache that can drop an already-confirmed verification.
+      if (cached && visitReasonVerified !== true) {
         applyConsolidatedPayload(cached, appointmentId);
       } else {
         showLoader();
@@ -1143,7 +1144,7 @@ const PatientDetailsPage = () => {
         return;
       }
 
-      const response = await appointmentHelper.updateAppointmentDetails(
+      const response = await appointmentHelper.updatePatientDetailsConsolidated(
         currentAppointmentId,
         {
           patientData,
@@ -1167,6 +1168,9 @@ const PatientDetailsPage = () => {
             hour12: false
           })
         );
+        queryClient.removeQueries({
+          queryKey: queryKeys.visitConsolidated(currentAppointmentId),
+        });
         await fetchAppointmentDetails(currentAppointmentId);
         if (endVisit && !isVisitCompleted) {
           allowSettlementLeaveRef.current = false;

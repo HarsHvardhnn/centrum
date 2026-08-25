@@ -1969,6 +1969,16 @@ function LabAppointmentsContent({ clinic }) {
           appointmentId={selectedAppointment?.id}
           patientId={selectedAppointment?.patient?.id}
           returnPath={user?.role === "doctor" ? doctorVisitsPath(user) : "/lekarze"}
+          doctorUserId={
+            typeof selectedAppointment?.doctor === "object"
+              ? selectedAppointment?.doctor?._id ||
+                selectedAppointment?.doctor?.id ||
+                selectedAppointment?.doctor?.d_id ||
+                null
+              : selectedAppointment?.doctor ||
+                selectedAppointment?.doctorId ||
+                null
+          }
         />
 
         {/* Reschedule Modal */}

@@ -17,11 +17,6 @@ function toDateInputValue(value) {
   return `${year}-${month}-${day}`;
 }
 
-/** Invoice number / tax / date / payment — reception & admin only (not doctor). */
-function canManageInvoiceAdminFields(role) {
-  return role === "admin" || role === "receptionist";
-}
-
 const BillingConfirmationModal = ({
   isOpen,
   onClose,
@@ -42,8 +37,9 @@ const BillingConfirmationModal = ({
   const { user } = useUser();
   const isDoctorUser = String(user?.role || "").toLowerCase() === "doctor";
   const isDoctorSettlement = isDoctorUser || mandatory;
-  const showAdminInvoiceFields =
-    canManageInvoiceAdminFields(user?.role) && !mandatory;
+  // Visit settlement (historia wizyt, patient page, dashboard): services,
+  // extras, discount only. Invoice/tax/payment belong on Patient Settlement.
+  const showAdminInvoiceFields = false;
   const displayPatientName = formatPersonName(patientName);
   const [isLoading, setIsLoading] = useState(false);
   const [taxPercentage, setTaxPercentage] = useState(0);
@@ -247,7 +243,7 @@ const BillingConfirmationModal = ({
                 )}
               </div>
 
-              {/* Doctor: services, extras, discount. Admin/reception: also tax, invoice number, date, payment. */}
+              {/* Services, extras, discount — same for doctor and admin/reception. */}
               <div className="space-y-3 mb-4">
                 {showAdminInvoiceFields && (
                   <div>

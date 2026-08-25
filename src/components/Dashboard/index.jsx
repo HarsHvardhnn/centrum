@@ -1242,6 +1242,16 @@ const PatientList = () => {
         appointmentId={selectedAppointment?.id}
         patientId={selectedAppointment?.patient_id}
         returnPath={user?.role === "doctor" ? doctorVisitsPath(user) : "/lekarze"}
+        doctorUserId={
+          typeof selectedAppointment?.doctor === "object"
+            ? selectedAppointment?.doctor?._id ||
+              selectedAppointment?.doctor?.id ||
+              selectedAppointment?.doctor?.d_id ||
+              null
+            : selectedAppointment?.doctor ||
+              selectedAppointment?.doctorId ||
+              null
+        }
       />
 
       {/* Visit history modal */}
