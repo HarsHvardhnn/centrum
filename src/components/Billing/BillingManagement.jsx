@@ -1365,15 +1365,6 @@ const BillingManagement = () => {
                 <ChevronDown size={16} />
               </button>
             </div>
-              {/*               
-              <button
-                onClick={() => navigate('/billing/new')}
-                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg"
-              >
-                <DollarSign size={18} />
-                <span>New Bill</span>
-              </button> */}
-            </div>
           </div>
           
           {/* Expanded Filters */}
