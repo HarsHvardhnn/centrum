@@ -1,5 +1,5 @@
 // PatientDetailsPage.jsx - Redesigned layout: visit header, two columns, footer
-import React, { useState, useEffect, useLayoutEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams, useBlocker } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import PatientProfile from "./PatientProfile";
@@ -500,7 +500,18 @@ const PatientDetailsPage = () => {
   const [sectionTemplatePickerKey, setSectionTemplatePickerKey] = useState(null);
   const [globalTemplatePickerOpen, setGlobalTemplatePickerOpen] = useState(false);
   const [showSettlementModal, setShowSettlementModal] = useState(false);
-  const settlementNavigationBlocker = useBlocker(showSettlementModal);
+  const allowSettlementLeaveRef = useRef(false);
+  const settlementNavigationBlocker = useBlocker(
+    ({ currentLocation, nextLocation }) => {
+      if (allowSettlementLeaveRef.current) return false;
+      if (!showSettlementModal) return false;
+      return (
+        currentLocation.pathname !== nextLocation.pathname ||
+        currentLocation.search !== nextLocation.search ||
+        currentLocation.hash !== nextLocation.hash
+      );
+    }
+  );
 
   useEffect(() => {
     if (settlementNavigationBlocker.state !== "blocked") return;
@@ -1066,10 +1077,16 @@ const PatientDetailsPage = () => {
 
   const handleSettleAndEndVisit = async (billingData) => {
     if (!currentAppointmentId) return;
+    if (isVisitCompleted) {
+      toast.error("Wizyta została już zakończona i rozliczona.");
+      setShowSettlementModal(false);
+      return;
+    }
 
     try {
       setIsSaving(true);
       await billingHelper.generateBill(currentAppointmentId, billingData);
+      allowSettlementLeaveRef.current = true;
       setShowSettlementModal(false);
       setSelectedAppointment((previous) =>
         previous ? { ...previous, status: "completed" } : previous
@@ -1082,7 +1099,9 @@ const PatientDetailsPage = () => {
         )
       );
       toast.success("Rozliczenie utworzone. Wizyta została zakończona.");
-      navigate(doctorVisitsPath(user), { replace: true });
+      if (user?.role !== "admin" && user?.role !== "receptionist") {
+        navigate(doctorVisitsPath(user), { replace: true });
+      }
     } catch (error) {
       const message =
         error?.response?.data?.message ||
@@ -1099,6 +1118,12 @@ const PatientDetailsPage = () => {
   const handleSave = async (endVisit = false) => {
     if (!currentAppointmentId) {
       toast.error("Nie wybrano spotkania");
+      return;
+    }
+
+    if (endVisit && isVisitCompleted) {
+      toast.error("Wizyta została już zakończona i rozliczona.");
+      setShowSettlementModal(false);
       return;
     }
 
@@ -1143,7 +1168,8 @@ const PatientDetailsPage = () => {
           })
         );
         await fetchAppointmentDetails(currentAppointmentId);
-        if (endVisit) {
+        if (endVisit && !isVisitCompleted) {
+          allowSettlementLeaveRef.current = false;
           setShowSettlementModal(true);
         }
       } else {
@@ -1834,6 +1860,7 @@ const PatientDetailsPage = () => {
           lastSavedTime={lastSavedTime}
           onEndVisit={() => handleSave(true)}
           isSaving={isSaving}
+          isVisitCompleted={isVisitCompleted}
           isVisitReasonVerified={visitReasonVerified}
           isVisitReasonVerifyLoading={visitReasonVerifyLoading}
         />
@@ -1848,8 +1875,16 @@ const PatientDetailsPage = () => {
         appointmentId={currentAppointmentId}
         patientId={id}
         mandatory
-        returnPath={doctorVisitsPath(user)}
-        doctorUserId={resolveVisitDoctorUserId(selectedAppointment) || user?._id || user?.id}
+        returnPath={
+          user?.role === "admin" || user?.role === "receptionist"
+            ? `/szczegoly-pacjenta/${id}${
+                currentAppointmentId
+                  ? `?appointmentId=${encodeURIComponent(currentAppointmentId)}`
+                  : ""
+              }`
+            : doctorVisitsPath(user)
+        }
+        doctorUserId={resolveVisitDoctorUserId(selectedAppointment)}
       />
 
       {/* Existing modals */}
@@ -1858,10 +1893,12 @@ const PatientDetailsPage = () => {
         onClose={() => setShowServiceModal(false)}
         onSave={handleSaveServices}
         patientId={id}
+        appointmentId={currentAppointmentId}
         doctorUserId={
-          user?.role === "admin"
+          resolveVisitDoctorUserId(selectedAppointment) ||
+          (user?.role === "admin"
             ? null
-            : visitDoctorUserId || user?.id || user?._id || user?.d_id || null
+            : user?.id || user?._id || user?.d_id || null)
         }
       />
       

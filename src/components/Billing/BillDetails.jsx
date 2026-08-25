@@ -367,7 +367,7 @@ const BillDetails = () => {
                               {formatCurrency(item.basePrice)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                              {item.quantity || 1}
+                              {item.quantity || 1} {item.unit || "szt."}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
                               {formatCurrency(item.finalPrice)}

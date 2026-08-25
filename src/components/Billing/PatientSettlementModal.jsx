@@ -16,6 +16,11 @@ import {
   taxSelectValue,
   VAT_RATE_PRESETS,
 } from "../../utils/invoiceVat";
+import {
+  DEFAULT_LINE_ITEM_UNIT,
+  LINE_ITEM_UNITS,
+  normalizeLineItemUnit,
+} from "../../utils/lineItemUnits";
 
 const PAYMENT_METHODS = [
   { value: "cash", label: "Gotówka" },
@@ -101,7 +106,7 @@ function buildLineItemsFromBill(bill) {
         i.finalPrice != null ? i.finalPrice : Math.max(0, toMoney(i.basePrice) - toMoney(i.discount))
       ),
       quantity: i.quantity || 1,
-      unit: i.unit || "szt.",
+      unit: normalizeLineItemUnit(i.unit || DEFAULT_LINE_ITEM_UNIT),
       status: i.status || "active",
       tax: normalizeTaxRate(i.tax),
     }));
@@ -118,7 +123,7 @@ function buildLineItemsFromBill(bill) {
       discountReason: "",
       finalPrice: base,
       quantity: 1,
-      unit: "szt.",
+      unit: DEFAULT_LINE_ITEM_UNIT,
       status: s.status || "active",
       tax: "zw",
     };
@@ -134,7 +139,7 @@ function buildLineItemsFromBill(bill) {
       discountReason: "",
       finalPrice: toMoney(bill.consultationCharges),
       quantity: 1,
-      unit: "szt.",
+      unit: DEFAULT_LINE_ITEM_UNIT,
       status: "active",
       tax: "zw",
     });
@@ -150,7 +155,7 @@ function buildLineItemsFromBill(bill) {
       discountReason: "",
       finalPrice: toMoney(bill.additionalCharges),
       quantity: 1,
-      unit: "szt.",
+      unit: DEFAULT_LINE_ITEM_UNIT,
       status: "active",
       tax: "zw",
     });
@@ -387,7 +392,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
         discountReason: "",
         finalPrice: 0,
         quantity: 1,
-        unit: "szt.",
+        unit: DEFAULT_LINE_ITEM_UNIT,
         status: "active",
         tax: "zw",
       },
@@ -416,7 +421,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
           discountReason: "",
           finalPrice: lineTotal,
           quantity: qty,
-          unit: "szt.",
+          unit: DEFAULT_LINE_ITEM_UNIT,
           status: "active",
           tax: "zw",
         });
@@ -506,10 +511,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     setSaving(true);
     try {
       // Save settlement draft first
-    const collectedNow = ["cash", "card", "blik", "online", "package", "insurance"].includes(
-      paymentMethod
-    );
-    const paidNow = paymentDueKind === "immediate" || collectedNow;
+    const paidNow = paymentDueKind === "immediate";
     const cashReceived =
       paymentMethod === "cash"
         ? toMoney(amountReceived === "" ? total : amountReceived)
@@ -757,7 +759,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                   key={item.key}
                   className="border border-gray-200 rounded-lg p-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-end"
                 >
-                  <div className={documentType === "invoice" ? "md:col-span-3" : "md:col-span-4"}>
+                  <div className={documentType === "invoice" ? "md:col-span-2" : "md:col-span-3"}>
                     <label className="text-xs text-gray-500">Nazwa</label>
                     <input
                       type="text"
@@ -769,6 +771,25 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                         item.kind === "additional" ? "Opis opłaty (wymagany)" : ""
                       }
                     />
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="text-xs text-gray-500">J.m.</label>
+                    <select
+                      disabled={locked}
+                      value={normalizeLineItemUnit(item.unit)}
+                      onChange={(e) => updateLine(item.key, { unit: e.target.value })}
+                      className="w-full mt-0.5 px-1 py-1.5 border rounded-md text-sm disabled:bg-gray-50"
+                      title="Jednostka miary"
+                    >
+                      {!LINE_ITEM_UNITS.includes(normalizeLineItemUnit(item.unit)) && item.unit && (
+                        <option value={item.unit}>{item.unit}</option>
+                      )}
+                      {LINE_ITEM_UNITS.map((unit) => (
+                        <option key={unit} value={unit}>
+                          {unit}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="md:col-span-2">
                     <label className="text-xs text-gray-500">Cena bazowa</label>

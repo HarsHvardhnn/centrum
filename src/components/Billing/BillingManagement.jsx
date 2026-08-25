@@ -12,6 +12,7 @@ import {
   ArrowUpDown,
   DollarSign,
   FileText,
+  Archive,
   Printer,
   Eye,
   Edit,
@@ -130,11 +131,13 @@ const BillingManagement = () => {
     endDate: savedBilling.dateRange?.endDate || ""
   });
   const [paymentStatusFilter, setPaymentStatusFilter] = useState(savedBilling.paymentStatusFilter || "");
+  const [documentTypeFilter, setDocumentTypeFilter] = useState(savedBilling.documentTypeFilter || "");
   const [sortConfig, setSortConfig] = useState({
     key: savedBilling.sortConfig?.key || "billedAt",
     direction: savedBilling.sortConfig?.direction || "desc"
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [zipDownloading, setZipDownloading] = useState(false);
   const skipBillingPageReset = useSkipFirstEffect();
   
   // Stats for the dashboard
@@ -352,7 +355,7 @@ const BillingManagement = () => {
         <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
           <div className="flex justify-between items-center border-b p-4">
             <div>
-              <h3 className="text-lg font-medium">Edytuj fakturę</h3>
+            <h3 className="text-lg font-medium">Edytuj fakturę</h3>
               {showAdminInvoiceFields ? (
                 <p className="text-sm text-gray-500">Możesz zmienić numer faktury i datę wystawienia także dla opłaconych faktur.</p>
               ) : (
@@ -712,14 +715,15 @@ const BillingManagement = () => {
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 400);
 
   const billingListParams = {
-    page: pagination.currentPage,
-    limit: pagination.limit,
-    sortBy: sortConfig.key,
-    sortOrder: sortConfig.direction === "desc" ? -1 : 1,
+        page: pagination.currentPage,
+        limit: pagination.limit,
+        sortBy: sortConfig.key,
+        sortOrder: sortConfig.direction === "desc" ? -1 : 1,
     search: debouncedSearchQuery || undefined,
     startDate: dateRange.startDate || undefined,
     endDate: dateRange.endDate || undefined,
     paymentStatus: paymentStatusFilter || undefined,
+    documentType: documentTypeFilter || undefined,
     appointmentId: appointmentId || undefined,
   };
 
@@ -761,9 +765,9 @@ const BillingManagement = () => {
         currentPage: billsQueryData.pagination?.currentPage ?? prev.currentPage,
         limit: billsQueryData.pagination?.limit ?? prev.limit,
       }));
-    } else {
-      toast.error("Nie udało się pobrać faktur");
-    }
+      } else {
+        toast.error("Nie udało się pobrać faktur");
+      }
   }, [billsQueryData]);
 
   useEffect(() => {
@@ -787,13 +791,14 @@ const BillingManagement = () => {
   useEffect(() => {
     if (skipBillingPageReset()) return;
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-  }, [debouncedSearchQuery, dateRange.startDate, dateRange.endDate, paymentStatusFilter]);
+  }, [debouncedSearchQuery, dateRange.startDate, dateRange.endDate, paymentStatusFilter, documentTypeFilter]);
 
   useEffect(() => {
     writeListState("admin-billing", {
       searchQuery,
       dateRange,
       paymentStatusFilter,
+      documentTypeFilter,
       sortConfig,
       currentPage: pagination.currentPage,
       limit: pagination.limit,
@@ -802,6 +807,7 @@ const BillingManagement = () => {
     searchQuery,
     dateRange,
     paymentStatusFilter,
+    documentTypeFilter,
     sortConfig,
     pagination.currentPage,
     pagination.limit,
@@ -815,6 +821,62 @@ const BillingManagement = () => {
     queryClient.invalidateQueries({ queryKey: ["billing-list"] });
     queryClient.invalidateQueries({ queryKey: ["billing-summary"] });
   }, [queryClient]);
+
+  const currentMonthRange = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
+    return {
+      startDate: `${year}-${month}-01`,
+      endDate: `${year}-${month}-${String(lastDay).padStart(2, "0")}`,
+    };
+  };
+
+  const handleToggleDocumentType = (type) => {
+    setDocumentTypeFilter((prev) => (prev === type ? "" : type));
+  };
+
+  const handleDownloadInvoicesZip = async () => {
+    const range =
+      dateRange.startDate || dateRange.endDate
+        ? dateRange
+        : currentMonthRange();
+    if (!dateRange.startDate && !dateRange.endDate) {
+      setDateRange(range);
+    }
+    try {
+      setZipDownloading(true);
+      const response = await billingHelper.exportInvoicesZip({
+        startDate: range.startDate,
+        endDate: range.endDate,
+        search: debouncedSearchQuery || undefined,
+      });
+      const blob = new Blob([response.data], { type: "application/zip" });
+      if (blob.size < 80 && response.data?.type === "application/json") {
+        toast.error("Brak faktur w wybranym okresie");
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `faktury_${range.startDate || "od"}_${range.endDate || "do"}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Pobrano archiwum faktur PDF");
+    } catch (error) {
+      const status = error?.response?.status;
+      if (status === 404) {
+        toast.error("Brak faktur w wybranym okresie");
+      } else {
+        toast.error("Nie udało się pobrać archiwum faktur");
+      }
+    } finally {
+      setZipDownloading(false);
+    }
+  };
 
   // Handle automatic edit modal opening when redirected from appointment
   useEffect(() => {
@@ -1018,10 +1080,10 @@ const BillingManagement = () => {
       if (response.success) {
         const updated = response.data?.modifiedCount ?? 0;
         toast.success(`Oznaczono jako opłacone: ${updated}`);
-        setSelectedInvoiceIds([]);
+      setSelectedInvoiceIds([]);
         fetchBills();
         setStatsRefreshKey((prev) => prev + 1);
-      } else {
+    } else {
         toast.error("Nie udało się zaktualizować statusu płatności");
       }
     } catch (error) {
@@ -1133,7 +1195,7 @@ const BillingManagement = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {isLoading && <LoaderOverlay />} 
+      {isLoading && <LoaderOverlay />}
       {/* Add ConfirmationModal */}
       <ConfirmationModal
         isOpen={isConfirmModalOpen}
@@ -1146,7 +1208,7 @@ const BillingManagement = () => {
           if (bulkPayMode) {
             handleBulkMarkPaid();
           } else if (billToUpdate?._id) {
-            updatePaymentStatus(billToUpdate._id, "paid");
+          updatePaymentStatus(billToUpdate._id, "paid");
           }
           setIsConfirmModalOpen(false);
           setBillToUpdate(null);
@@ -1251,7 +1313,7 @@ const BillingManagement = () => {
             <div className="relative w-full md:w-64">
               <input
                 type="text"
-                placeholder="Szukaj po nazwisku pacjenta lub nr faktury"
+                placeholder="Szukaj: nazwisko, PESEL, numer dokumentu"
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1259,7 +1321,41 @@ const BillingManagement = () => {
               <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
             </div>
             
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleToggleDocumentType("invoice")}
+                className={`px-4 py-2 rounded-lg border text-sm font-medium ${
+                  documentTypeFilter === "invoice"
+                    ? "bg-teal-600 text-white border-teal-600"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Pokaż faktury
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleDocumentType("fiscal_receipt")}
+                className={`px-4 py-2 rounded-lg border text-sm font-medium ${
+                  documentTypeFilter === "fiscal_receipt"
+                    ? "bg-teal-600 text-white border-teal-600"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Pokaż paragony
+              </button>
+              {isBillingStaff && (
+                <button
+                  type="button"
+                  onClick={handleDownloadInvoicesZip}
+                  disabled={zipDownloading}
+                  className="flex items-center gap-2 px-4 py-2 bg-teal-700 text-white rounded-lg hover:bg-teal-800 disabled:opacity-50 text-sm font-medium"
+                  title="Pobiera wszystkie faktury z wybranego zakresu dat jako ZIP (PDF). Bez dat — bieżący miesiąc."
+                >
+                  <Archive size={16} />
+                  {zipDownloading ? "Przygotowywanie ZIP…" : "Pobierz faktury (ZIP)"}
+                </button>
+              )}
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg"
@@ -1268,6 +1364,7 @@ const BillingManagement = () => {
                 <span>Filtry</span>
                 <ChevronDown size={16} />
               </button>
+            </div>
               {/*               
               <button
                 onClick={() => navigate('/billing/new')}
@@ -1321,6 +1418,7 @@ const BillingManagement = () => {
                   onClick={() => {
                     setDateRange({ startDate: "", endDate: "" });
                     setPaymentStatusFilter("");
+                    setDocumentTypeFilter("");
                     setSearchQuery("");
                   }}
                   className="px-4 py-2 border border-gray-300 text-gray-600 rounded-md hover:bg-gray-50"
@@ -1332,71 +1430,17 @@ const BillingManagement = () => {
           )}
         </div>
         
-        {/* Bulk actions for admin / reception */}
-        {canSelectBills && (
-          <div className="mb-4 bg-teal-50 border border-teal-200 rounded-lg p-4 space-y-3">
-            <div>
-              <p className="text-teal-900 font-medium">Oznaczanie jako opłacone</p>
-              <p className="text-sm text-teal-800 mt-1">
-                {selectedUnpaidCount > 0
-                  ? `Wybrano ${selectedUnpaidCount} nieopłaconych faktur na tej stronie.`
-                  : pendingIdsOnPage.length > 0
-                  ? `Na tej stronie jest ${pendingIdsOnPage.length} nieopłaconych faktur — zaznacz je albo oznacz wszystkie oczekujące według filtrów.`
-                  : "Zaznacz faktury checkboxem albo oznacz wszystkie oczekujące według aktualnych filtrów (wszystkie strony)."}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {pendingIdsOnPage.length > 0 && (
-                <button
+        {/* Admin delete selection only — payment is via settlement modal */}
+        {canSelectBills && user?.role === "admin" && selectedInvoiceIds.length > 0 && (
+          <div className="mb-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <button
                   type="button"
-                  onClick={handleSelectAllPendingOnPage}
-                  className="px-4 py-2 border border-teal-600 text-teal-700 bg-white rounded-lg hover:bg-teal-100"
-                >
-                  {allPendingOnPageSelected
-                    ? "Odznacz zaznaczone na stronie"
-                    : `Zaznacz nieopłacone na stronie (${pendingIdsOnPage.length})`}
-                </button>
-              )}
-              {selectedInvoiceIds.length > 0 && !allPendingOnPageSelected && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedInvoiceIds([])}
-                  className="px-4 py-2 border border-teal-600 text-teal-700 bg-white rounded-lg hover:bg-teal-100"
-                >
-                  Odznacz zaznaczone na stronie
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => handleBulkMarkPaidClick("selected")}
-                disabled={selectedUnpaidCount === 0}
-                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <DollarSign size={18} />
-                {selectedUnpaidCount > 0
-                  ? `Oznacz zaznaczone jako opłacone (${selectedUnpaidCount})`
-                  : "Oznacz zaznaczone jako opłacone"}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleBulkMarkPaidClick("allPending")}
-                disabled={stats.totalPending <= 0}
-                className="px-4 py-2 bg-teal-800 text-white rounded-lg hover:bg-teal-900 disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Oznacza wszystkie nieopłacone faktury pasujące do aktualnych filtrów (nie tylko ta strona)"
-              >
-                Oznacz wszystkie oczekujące (wg filtrów)
-              </button>
-              {user?.role === "admin" && selectedInvoiceIds.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleBulkDeleteInvoices}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  <Trash2 size={18} />
-                  Trwale usuń wybrane ({selectedInvoiceIds.length})
-                </button>
-              )}
-            </div>
+              onClick={handleBulkDeleteInvoices}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              <Trash2 size={18} />
+              Trwale usuń wybrane ({selectedInvoiceIds.length})
+            </button>
           </div>
         )}
 
@@ -1586,22 +1630,22 @@ const BillingManagement = () => {
                             <Eye size={18} />
                           </button>
                           {isBillingStaff && (
-                            <button
-                              onClick={() => handleEditBill(bill._id)}
-                              className="text-blue-600 hover:text-blue-900"
+                              <button
+                                onClick={() => handleEditBill(bill._id)}
+                                className="text-blue-600 hover:text-blue-900"
                               title="Rozliczenie pacjenta"
-                            >
-                              <Edit size={18} />
-                            </button>
+                              >
+                                <Edit size={18} />
+                              </button>
                           )}
                           {isBillingStaff && bill.paymentStatus !== "paid" && (
-                            <button
-                              onClick={() => handleUpdatePaymentStatus(bill._id, "paid")}
-                              className="text-green-600 hover:text-green-900"
-                              title="Oznacz jako opłacone"
-                            >
-                              <DollarSign size={18} />
-                            </button>
+                              <button
+                                onClick={() => handleEditBill(bill._id)}
+                                className="text-green-600 hover:text-green-900"
+                                title="Rozliczenie pacjenta"
+                              >
+                                <DollarSign size={18} />
+                              </button>
                           )}
                           {user?.role === "admin" && (
                             <button

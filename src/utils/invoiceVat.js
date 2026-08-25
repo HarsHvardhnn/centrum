@@ -1,3 +1,5 @@
+import { DEFAULT_LINE_ITEM_UNIT, normalizeLineItemUnit } from "./lineItemUnits";
+
 /** VAT helpers for settlement / faktura line items (prices are gross). */
 
 export const VAT_RATE_PRESETS = [
@@ -51,7 +53,7 @@ export function lineItemToInvoicePosition(line) {
   return {
     name: line.name,
     quantity: qty,
-    quantityUnit: line.unit || "szt",
+    quantityUnit: normalizeLineItemUnit(line.unit || DEFAULT_LINE_ITEM_UNIT),
     priceNet: unit.priceNet,
     priceGross: unit.priceGross,
     tax: unit.tax,

@@ -40,8 +40,8 @@ const billingHelper = {
         startDate,
         endDate,
         paymentStatus,
-        appointmentId
-
+        appointmentId,
+        documentType,
       } = options;
 
       let queryParams = new URLSearchParams({
@@ -55,7 +55,8 @@ const billingHelper = {
       if (startDate) queryParams.append("startDate", startDate);
       if (endDate) queryParams.append("endDate", endDate);
       if (paymentStatus) queryParams.append("paymentStatus", paymentStatus);
-      if(appointmentId) queryParams.append("appointmentId",appointmentId)
+      if (appointmentId) queryParams.append("appointmentId", appointmentId);
+      if (documentType) queryParams.append("documentType", documentType);
 
 
       const response = await apiCaller(
@@ -351,6 +352,21 @@ const billingHelper = {
       console.error("Error issuing invoice:", error);
       throw error;
     }
+  },
+
+  /**
+   * Download invoice PDFs for a period as a ZIP archive.
+   */
+  exportInvoicesZip: async ({ startDate, endDate, search } = {}) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+    if (search) params.append("search", search);
+    const response = await axiosInstance.get(
+      `/patient-bills/invoices/export-zip?${params.toString()}`,
+      { responseType: "blob" }
+    );
+    return response;
   },
 };
 

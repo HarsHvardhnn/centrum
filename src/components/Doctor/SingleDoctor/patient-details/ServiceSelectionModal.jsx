@@ -34,8 +34,7 @@ const ServiceSelectionModal = ({
     return ids;
   }, [doctorUserId, user?.role, user?.id, user?._id, user?.d_id]);
 
-  const useDoctorCatalog =
-    Boolean(doctorUserId) && user?.role !== "admin";
+  const useDoctorCatalog = Boolean(doctorUserId) && catalogDoctorIds.length > 0;
 
   const {
     data: doctorServices = [],

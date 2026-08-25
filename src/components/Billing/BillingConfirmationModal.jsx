@@ -41,8 +41,9 @@ const BillingConfirmationModal = ({
   const location = useLocation();
   const { user } = useUser();
   const isDoctorUser = String(user?.role || "").toLowerCase() === "doctor";
-  const isDoctorSettlement = isDoctorUser;
-  const showAdminInvoiceFields = canManageInvoiceAdminFields(user?.role);
+  const isDoctorSettlement = isDoctorUser || mandatory;
+  const showAdminInvoiceFields =
+    canManageInvoiceAdminFields(user?.role) && !mandatory;
   const displayPatientName = formatPersonName(patientName);
   const [isLoading, setIsLoading] = useState(false);
   const [taxPercentage, setTaxPercentage] = useState(0);
@@ -418,7 +419,8 @@ const BillingConfirmationModal = ({
 
                   onClose?.();
                   if (mandatory) {
-                    if (returnPath) navigate(returnPath);
+                    // Parent owns the after-settle stay/redirect. Navigating here
+                    // while the settlement blocker is still active pops a false warning.
                     return;
                   }
                   // Return to the view we started from (main panel, visit history, or doctor panel)
@@ -457,7 +459,10 @@ const BillingConfirmationModal = ({
         patientId={patientId}
         appointmentId={appointmentId}
         existingServices={services}
-        doctorUserId={isDoctorSettlement ? doctorUserId || user?._id || user?.id : null}
+        doctorUserId={
+          doctorUserId ||
+          (isDoctorUser ? user?._id || user?.id : null)
+        }
       />
     </div>
   );
