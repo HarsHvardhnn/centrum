@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { toast } from "sonner";
 import { useSpecializations } from "../../context/SpecializationContext";
+import ConfirmDialog from "../UtilComponents/ConfirmDialog";
 
 /**
  * Add / edit / delete doctor specializations (shared by modal and Ustawienia tab).
@@ -11,6 +12,7 @@ const SpecializationManagement = ({ className = "" }) => {
   const [description, setDescription] = useState("");
   const [editId, setEditId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   const {
     specializations,
@@ -71,14 +73,17 @@ const SpecializationManagement = ({ className = "" }) => {
     setEditId(specialization._id);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Czy na pewno chcesz usunąć tę specjalizację?")) {
-      const result = await deleteSpecialization(id);
-      if (result.success) {
-        toast.success("Specjalizacja została usunięta pomyślnie");
-      } else {
-        toast.error(result.message);
-      }
+  const handleDelete = (id) => {
+    setDeleteId(id);
+  };
+
+  const confirmDeleteSpecialization = async () => {
+    if (!deleteId) return;
+    const result = await deleteSpecialization(deleteId);
+    if (result.success) {
+      toast.success("Specjalizacja została usunięta pomyślnie");
+    } else {
+      toast.error(result.message);
     }
   };
 
@@ -190,6 +195,13 @@ const SpecializationManagement = ({ className = "" }) => {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={Boolean(deleteId)}
+        title="Usunąć specjalizację?"
+        message="Czy na pewno chcesz usunąć tę specjalizację?"
+        onConfirm={confirmDeleteSpecialization}
+        onClose={() => setDeleteId(null)}
+      />
     </div>
   );
 };

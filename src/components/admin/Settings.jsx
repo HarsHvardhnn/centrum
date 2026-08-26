@@ -20,6 +20,7 @@ import {
 import SpecializationModal from "./SpecializationModal";
 import { toast } from "sonner";
 import PermanentDeleteDialog from "./PermanentDeleteDialog";
+import ConfirmDialog from "../UtilComponents/ConfirmDialog";
 import BulkDeleteByIdsDialog from "./BulkDeleteByIdsDialog";
 import { useFormDraft } from "../../hooks/useFormDraft";
 import { loadFormDraft, clearFormDraft, hasFormDraft, formatDraftAge } from "../../utils/formDraftStorage";
@@ -70,6 +71,7 @@ export default function UserManagement() {
   const patientEditRequestRef = useRef(0);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmRemoveEmail, setConfirmRemoveEmail] = useState(false);
   const [permanentDeleteDialog, setPermanentDeleteDialog] = useState({
     open: false,
     id: null,
@@ -126,7 +128,12 @@ export default function UserManagement() {
       return;
     }
 
-    if (!window.confirm('Czy na pewno chcesz usunąć email pacjenta? Tej operacji nie można cofnąć.')) {
+    setConfirmRemoveEmail(true);
+  };
+
+  const confirmRemovePatientEmail = async () => {
+    if (!currentPatientId) {
+      toast.error("Brak ID pacjenta");
       return;
     }
 
@@ -1589,6 +1596,13 @@ export default function UserManagement() {
       )}
 
       {/* Permanent Delete Dialog */}
+      <ConfirmDialog
+        open={confirmRemoveEmail}
+        title="Usunąć email pacjenta?"
+        message="Czy na pewno chcesz usunąć email pacjenta? Tej operacji nie można cofnąć."
+        onConfirm={confirmRemovePatientEmail}
+        onClose={() => setConfirmRemoveEmail(false)}
+      />
       <PermanentDeleteDialog
         open={permanentDeleteDialog.open}
         onClose={() => setPermanentDeleteDialog({ open: false, id: null, userName: "" })}

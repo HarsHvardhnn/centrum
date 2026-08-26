@@ -21,6 +21,7 @@ import SectionTemplatePickerModal from "./SectionTemplatePickerModal";
 import GlobalTemplatePickerModal from "./GlobalTemplatePickerModal";
 import PatientDetailsFooter from "./PatientDetailsFooter";
 import BillingConfirmationModal from "../../../Billing/BillingConfirmationModal";
+import ConfirmDialog from "../../../UtilComponents/ConfirmDialog";
 import { formatPersonName } from "../../../../utils/formatPersonName";
 import patientService from "../../../../helpers/patientHelper";
 import patientServicesHelper from "../../../../helpers/patientServicesHelper";
@@ -500,6 +501,7 @@ const PatientDetailsPage = () => {
   const [sectionTemplatePickerKey, setSectionTemplatePickerKey] = useState(null);
   const [globalTemplatePickerOpen, setGlobalTemplatePickerOpen] = useState(false);
   const [showSettlementModal, setShowSettlementModal] = useState(false);
+  const [leaveSettlementConfirm, setLeaveSettlementConfirm] = useState(false);
   const allowSettlementLeaveRef = useRef(false);
   const settlementNavigationBlocker = useBlocker(
     ({ currentLocation, nextLocation }) => {
@@ -514,13 +516,10 @@ const PatientDetailsPage = () => {
   );
 
   useEffect(() => {
-    if (settlementNavigationBlocker.state !== "blocked") return;
-    const leave = window.confirm(
-      "Wizyta nie została rozliczona. Aby ją zakończyć, wybierz usługę i utwórz rozliczenie."
-    );
-    if (leave) settlementNavigationBlocker.proceed();
-    else settlementNavigationBlocker.reset();
-  }, [settlementNavigationBlocker]);
+    if (settlementNavigationBlocker.state === "blocked") {
+      setLeaveSettlementConfirm(true);
+    }
+  }, [settlementNavigationBlocker.state]);
 
   useEffect(() => {
     if (!showSettlementModal) return undefined;
@@ -1930,6 +1929,27 @@ const PatientDetailsPage = () => {
       />
 
       {/* Add Visit Card Confirmation Modal */}
+      <ConfirmDialog
+        open={leaveSettlementConfirm}
+        title="Wizyta nie została rozliczona"
+        message="Aby zakończyć wizytę, wybierz usługę i utwórz rozliczenie. Czy na pewno chcesz opuścić tę stronę?"
+        confirmLabel="Opuść"
+        cancelLabel="Zostań"
+        danger
+        onConfirm={() => {
+          setLeaveSettlementConfirm(false);
+          if (settlementNavigationBlocker.state === "blocked") {
+            settlementNavigationBlocker.proceed();
+          }
+        }}
+        onClose={() => {
+          setLeaveSettlementConfirm(false);
+          if (settlementNavigationBlocker.state === "blocked") {
+            settlementNavigationBlocker.reset();
+          }
+        }}
+      />
+
       <VisitCardConfirmationModal
         isOpen={showVisitCardModal}
         onClose={() => {

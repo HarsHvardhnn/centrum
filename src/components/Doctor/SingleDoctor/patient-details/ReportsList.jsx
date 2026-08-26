@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { File, FileText, Image, Trash2, ExternalLink, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiCaller } from '../../../../utils/axiosInstance';
+import ConfirmDialog from '../../../UtilComponents/ConfirmDialog';
 
 const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
-  const handleDeleteReport = async (reportId) => {
-    if (!window.confirm('Czy na pewno chcesz usunąć ten raport?')) {
-      return;
-    }
-    
+  const [reportToDelete, setReportToDelete] = useState(null);
+
+  const handleDeleteReport = async () => {
+    const reportId = reportToDelete;
+    if (!reportId) return;
     try {
       const response = await apiCaller(
         'DELETE',
@@ -106,7 +107,7 @@ const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
                 </a>
                 
                 <button
-                  onClick={() => handleDeleteReport(report._id)}
+                  onClick={() => setReportToDelete(report._id)}
                   className="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
                   title="Usuń Raport"
                 >
@@ -117,6 +118,14 @@ const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
           </div>
         ))}
       </div>
+      <ConfirmDialog
+        open={Boolean(reportToDelete)}
+        title="Usunąć raport?"
+        message="Czy na pewno chcesz usunąć ten raport? Tej operacji nie można cofnąć."
+        confirmLabel="Usuń"
+        onConfirm={handleDeleteReport}
+        onClose={() => setReportToDelete(null)}
+      />
     </div>
   );
 };
