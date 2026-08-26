@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import doctorService from "../../helpers/doctorHelper";
 import { useSpecializations } from "../../context/SpecializationContext";
@@ -711,8 +711,8 @@ const DoctorSelectionWithSlots = ({
         {/* Time Slots - show if doctor is selected (either from selection or pre-selected) */}
         {selectedDoctor && !hideSlotList && (
           <div className="mb-3">
-            <div className="mb-2">
-              <div className="flex items-center gap-2">
+            <div className="mb-3 rounded-2xl border border-teal-100 bg-gradient-to-b from-teal-50/90 to-white p-3 sm:p-4 shadow-sm">
+              <div className="flex items-center gap-2 sm:gap-3">
                 {onDateChange && (
                   <button
                     type="button"
@@ -720,25 +720,26 @@ const DoctorSelectionWithSlots = ({
                     title="Poprzedni dzień z wolnym terminem"
                     disabled={!canGoPreviousDay || navigatingDate || isLoading}
                     onClick={() => goToAdjacentAvailableDay(-1)}
-                    className="shrink-0 p-2 rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="shrink-0 h-11 w-11 rounded-full flex items-center justify-center border-2 border-teal-200 bg-white text-teal-700 shadow-sm transition-colors hover:bg-teal-600 hover:text-white hover:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-teal-700 disabled:hover:border-teal-200"
                   >
-                    <ChevronLeft size={18} />
+                    <ChevronLeft size={22} strokeWidth={2.25} />
                   </button>
                 )}
-                <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Dostępne Terminy
-                  </label>
-                  {selectedDate && (
-                    <span className="text-xs text-gray-500">
-                      Na dzień{" "}
+                <div className="flex-1 min-w-0 text-center">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-700">
+                    Dostępne terminy
+                  </p>
+                  {selectedDate ? (
+                    <p className="text-base sm:text-lg font-semibold text-gray-900 capitalize leading-tight truncate">
                       {new Date(selectedDate).toLocaleDateString("pl-PL", {
                         weekday: "long",
-                        year: "numeric",
-                        month: "long",
                         day: "numeric",
+                        month: "long",
+                        year: "numeric",
                       })}
-                    </span>
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500">Wybierz datę wizyty</p>
                   )}
                 </div>
                 {onDateChange && (
@@ -748,32 +749,40 @@ const DoctorSelectionWithSlots = ({
                     title="Następny dzień z wolnym terminem"
                     disabled={navigatingDate || isLoading}
                     onClick={() => goToAdjacentAvailableDay(1)}
-                    className="shrink-0 p-2 rounded-md border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="shrink-0 h-11 w-11 rounded-full flex items-center justify-center border-2 border-teal-200 bg-white text-teal-700 shadow-sm transition-colors hover:bg-teal-600 hover:text-white hover:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-teal-700 disabled:hover:border-teal-200"
                   >
-                    <ChevronRight size={18} />
+                    <ChevronRight size={22} strokeWidth={2.25} />
                   </button>
                 )}
               </div>
               {onDateChange && (
-                <div className="mt-3">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Wybierz datę wizyty
-                  </label>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      type="date"
-                      name="selectedDate"
-                      value={selectedDate || ""}
-                      onChange={onDateChange}
-                      className="p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm"
-                    />
-                    {isBackdated && (
-                      <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
-                        Data w przeszłości dozwolona
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <label className="relative mt-3 flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm cursor-pointer hover:border-teal-400 focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/30">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700">
+                    <Calendar size={18} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[11px] font-medium text-gray-500">
+                      Wybierz datę wizyty
+                    </span>
+                    <span className="block text-sm font-semibold text-gray-900">
+                      {selectedDate
+                        ? new Date(selectedDate).toLocaleDateString("pl-PL")
+                        : "Kliknij, aby wybrać"}
+                    </span>
+                  </span>
+                  <input
+                    type="date"
+                    name="selectedDate"
+                    value={selectedDate || ""}
+                    onChange={onDateChange}
+                    className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                  />
+                  {isBackdated && (
+                    <span className="relative z-20 pointer-events-none text-[11px] text-yellow-800 bg-yellow-100 px-2 py-1 rounded-md whitespace-nowrap">
+                      Data w przeszłości
+                    </span>
+                  )}
+                </label>
               )}
             </div>
 

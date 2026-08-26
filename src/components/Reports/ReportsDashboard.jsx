@@ -17,6 +17,7 @@ import {
   getUserPermissions
 } from '../../helpers/reportsHelper';
 import { readListState, writeListState } from '../../hooks/usePersistedListState';
+import { displayPatientPhone } from '../../utils/phoneUtils';
 
 const ReportsDashboard = () => {
   const { user } = useUser();
@@ -527,7 +528,7 @@ const ReportsDashboard = () => {
                         >
                           {appointment.patientName}
                         </button>
-                        <p className="text-sm text-gray-500">{appointment.patientPhone}</p>
+                        <p className="text-sm text-gray-500">{displayPatientPhone(appointment.patientPhone)}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -554,6 +555,12 @@ const ReportsDashboard = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{formatCurrency(appointment.totalEarnings)}</div>
                       <div className="text-sm text-gray-500">{getPaymentStatusText(appointment.paymentStatus)}</div>
+                      {appointment.receiptNumber ? (
+                        <div className="text-xs text-gray-500">Paragon {appointment.receiptNumber}</div>
+                      ) : null}
+                      {appointment.invoiceId ? (
+                        <div className="text-xs text-gray-500">Faktura {appointment.invoiceId}</div>
+                      ) : null}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
@@ -604,7 +611,7 @@ const ReportsDashboard = () => {
                   <h4 className="text-md font-semibold text-gray-900 mb-2">Informacje o pacjencie</h4>
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <p><strong>Imię i nazwisko:</strong> {appointmentDetails.patient?.name}</p>
-                    <p><strong>Telefon:</strong> {appointmentDetails.patient?.phone}</p>
+                    <p><strong>Telefon:</strong> {displayPatientPhone(appointmentDetails.patient?.phone)}</p>
                     <p><strong>Email:</strong> {appointmentDetails.patient?.email}</p>
                     {appointmentDetails.patient?.address && (
                       <p><strong>Adres:</strong> {appointmentDetails.patient.address}</p>
@@ -643,7 +650,10 @@ const ReportsDashboard = () => {
                   <div className="mb-6">
                     <h4 className="text-md font-semibold text-gray-900 mb-2">Rozliczenie</h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <p><strong>ID faktury:</strong> {appointmentDetails.billing.invoiceId}</p>
+                      {appointmentDetails.billing.receiptNumber ? (
+                        <p><strong>Nr paragonu:</strong> {appointmentDetails.billing.receiptNumber}</p>
+                      ) : null}
+                      <p><strong>ID faktury:</strong> {appointmentDetails.billing.invoiceId || "—"}</p>
                       <p><strong>Łączna kwota:</strong> {formatCurrency(appointmentDetails.billing.totalAmount)}</p>
                       <p><strong>Status płatności:</strong> {getPaymentStatusText(appointmentDetails.billing.paymentStatus)}</p>
                       <p><strong>Metoda płatności:</strong> {appointmentDetails.billing.paymentMethod}</p>

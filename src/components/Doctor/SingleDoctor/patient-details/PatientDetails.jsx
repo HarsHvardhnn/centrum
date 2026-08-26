@@ -53,6 +53,16 @@ import { doctorVisitsPath } from "../../../../utils/useNavigate";
  * Header verification only updates `visitReasonVerified` state; ConsultationForm may only set
  * `visitTypeVerified` on `consultationData`. Without merging, both flags stay false from the last fetch.
  */
+function visitIdsMatch(a, b) {
+  if (a == null || b == null) return false;
+  return String(a) === String(b);
+}
+
+function withVisitVerified(apt, appointmentId) {
+  if (!apt || !visitIdsMatch(apt._id || apt.id, appointmentId)) return apt;
+  return { ...apt, visitTypeVerified: true, visitReasonVerified: true };
+}
+
 function mergeConsultationVerificationFlags(consultationData, visitReasonVerifiedState) {
   return {
     ...consultationData,
@@ -866,8 +876,11 @@ const PatientDetailsPage = () => {
 
   // Handle appointment selection
   const handleAppointmentSelect = async (appointmentId) => {
+    if (visitIdsMatch(appointmentId, currentAppointmentId)) return;
     setCurrentAppointmentId(appointmentId);
-    const selected = appointments.find(apt => apt._id === appointmentId);
+    const selected = appointments.find(
+      (apt) => visitIdsMatch(apt._id || apt.id, appointmentId)
+    );
     setSelectedAppointment(selected);
     await fetchAppointmentDetails(appointmentId);
   };
@@ -1028,6 +1041,34 @@ const PatientDetailsPage = () => {
           visitReasonVerified: true,
           visitTypeVerified: true,
         }));
+        setSelectedAppointment((prev) =>
+          prev ? { ...prev, visitTypeVerified: true, visitReasonVerified: true } : prev
+        );
+        setAppointments((prev) =>
+          prev.map((apt) => withVisitVerified(apt, currentAppointmentId))
+        );
+        queryClient.setQueryData(
+          queryKeys.visitConsolidated(currentAppointmentId),
+          (old) => {
+            if (!old) return old;
+            const inner = old.data && typeof old.data === "object" ? old.data : old;
+            const nextInner = {
+              ...inner,
+              consultation: {
+                ...(inner.consultation || {}),
+                visitReasonVerified: true,
+                visitTypeVerified: true,
+              },
+              appointmentHistory: (inner.appointmentHistory || []).map((apt) =>
+                withVisitVerified(apt, currentAppointmentId)
+              ),
+            };
+            if (old.data && typeof old.data === "object") {
+              return { ...old, data: nextInner };
+            }
+            return nextInner;
+          }
+        );
       }
       toast.success("Rodzaj wizyty zweryfikowany");
     } catch (err) {

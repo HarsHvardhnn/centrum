@@ -64,6 +64,7 @@ async function specializationFromDoctorId(doctorId) {
 
 /**
  * Maps `patient.phone` (+ optional `patient.phoneCode`) to form `phoneCode` + `mobileNumber`.
+ * Never treat a national number (no "+") as +1/US just because it starts with 1.
  */
 export function mapPatientPhoneToFormFields(
   rawPhone,
@@ -71,20 +72,29 @@ export function mapPatientPhoneToFormFields(
   countryCodes = PHONE_COUNTRY_CODES
 ) {
   const list = countryCodes?.length ? countryCodes : PHONE_COUNTRY_CODES;
-  const sortedCodes = [...list].sort((a, b) => b.code.length - a.code.length);
+  const raw = String(rawPhone ?? "").trim();
+  if (!raw || /_no_phone_/i.test(raw)) {
+    return { phoneCode: DEFAULT_PATIENT_PHONE_CODE, mobileNumber: "" };
+  }
 
   const codeFromApi = apiPhoneCode != null ? String(apiPhoneCode).trim() : "";
   if (codeFromApi && list.some((c) => c.code === codeFromApi)) {
-    let num = String(rawPhone).trim();
+    let num = raw;
     if (num.startsWith(codeFromApi)) num = num.slice(codeFromApi.length).trim();
-    return { phoneCode: codeFromApi, mobileNumber: num.replace(/\s+/g, "") };
+    return { phoneCode: codeFromApi, mobileNumber: num.replace(/\D/g, "") };
   }
 
-  let phoneWithCode = String(rawPhone).trim();
-  if (!phoneWithCode.startsWith("+")) {
-    phoneWithCode = phoneWithCode.replace(/^0+/, "");
-    if (phoneWithCode.length > 0) phoneWithCode = "+" + phoneWithCode;
+  const hadPlus = raw.startsWith("+");
+  const digits = raw.replace(/\D/g, "").replace(/^0+/, "");
+
+  // List rows often store 9-digit PL numbers without "+48". Prefixing "+" would
+  // make "123..." match the US code +1 and flash the US flag until the API loads.
+  if (!hadPlus && digits.length <= 9) {
+    return { phoneCode: DEFAULT_PATIENT_PHONE_CODE, mobileNumber: digits };
   }
+
+  const phoneWithCode = hadPlus ? raw.replace(/\s+/g, "") : `+${digits}`;
+  const sortedCodes = [...list].sort((a, b) => b.code.length - a.code.length);
   const foundCountry = sortedCodes.find((country) =>
     phoneWithCode.startsWith(country.code)
   );
@@ -92,17 +102,15 @@ export function mapPatientPhoneToFormFields(
     return {
       phoneCode: foundCountry.code,
       mobileNumber: phoneWithCode
-        .replace(foundCountry.code, "")
-        .trim()
-        .replace(/\s+/g, ""),
+        .slice(foundCountry.code.length)
+        .replace(/\D/g, ""),
     };
   }
 
-  let digitsOnly = String(rawPhone).trim().replace(/\D/g, "");
+  let digitsOnly = digits;
   if (digitsOnly.startsWith("48") && digitsOnly.length >= 11) {
     digitsOnly = digitsOnly.slice(2);
   }
-  digitsOnly = digitsOnly.replace(/^0+/, "");
   return { phoneCode: DEFAULT_PATIENT_PHONE_CODE, mobileNumber: digitsOnly };
 }
 
@@ -247,7 +255,7 @@ export async function loadPatientEditFormData(
   const hasRealPhone =
     rawPhone != null &&
     String(rawPhone).trim() !== "" &&
-    !/^_no_phone_/i.test(String(rawPhone).trim());
+    !/_no_phone_/i.test(String(rawPhone).trim());
 
   let consultingDoctor = toEntityId(details.consultingDoctor);
   let consultingSpecialization = toEntityId(details.consultingSpecialization);

@@ -25,7 +25,7 @@ import {
 import appointmentHelper from "../../helpers/appointmentHelper";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
 import { toast } from "sonner";
-import { useLoader } from "../../context/LoaderContext";
+import { isPlaceholderPhone } from "../../utils/phoneUtils";
 import { useUser } from "../../context/userContext";
 import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
@@ -1158,10 +1158,8 @@ function LabAppointmentsContent({ clinic }) {
 
   const getPatientPesel = (p) => p?.govtId || p?.pesel || p?.PESEL || "—";
   const getPhoneDisplay = (value) => {
-    const v = value ?? "";
-    const s = typeof v === "string" ? v.trim() : String(v).trim();
-    if (!s) return "brak numeru";
-    if (/^_no_phone_/i.test(s) || s === "_no_phone" || /^brak\s*numeru$/i.test(s)) return "brak numeru";
+    const s = value == null ? "" : String(value).trim();
+    if (isPlaceholderPhone(s) || /^brak\s*numeru$/i.test(s)) return "brak numeru";
     return s;
   };
   const getPatientGenderLetter = (p) =>
@@ -1786,7 +1784,7 @@ function LabAppointmentsContent({ clinic }) {
                     <div className="text-gray-800 truncate">{appointment.patient?.age ?? "—"}</div>
                     <div className="text-gray-800 truncate">{getPatientGenderLetter(appointment.patient)}</div>
                     <div className="text-gray-800 truncate text-sm">{getPatientPesel(appointment.patient)}</div>
-                    <div className="text-gray-800 truncate text-sm">{getPhoneDisplay(appointment.patient?.phoneNumber ?? appointment.registrationData?.phone)}</div>
+                    <div className="text-gray-800 truncate text-sm">{getPhoneDisplay(appointment.patient?.phoneNumber ?? appointment.patient?.phone ?? appointment.registrationData?.phone)}</div>
                     <div className="text-gray-800 truncate text-sm">{getRegistrationTypeLabel(appointment.registrationType)}</div>
                     <div className="text-gray-800 truncate text-sm">{formatFirstVisit(appointment)}</div>
                     <div className="flex justify-end">

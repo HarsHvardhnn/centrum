@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { displayPatientPhone } from "../../../../utils/phoneUtils";
 
 const PatientModal = ({ isOpen, onClose, patientDetails }) => {
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -45,7 +46,7 @@ const PatientModal = ({ isOpen, onClose, patientDetails }) => {
               <span className="font-semibold">Email:</span> {patientDetails.email}
             </div>
             <div>
-              <span className="font-semibold">Telefon:</span> {patientDetails.phone}
+              <span className="font-semibold">Telefon:</span> {displayPatientPhone(patientDetails.phone)}
             </div>
             <div>
               <span className="font-semibold">Data urodzenia:</span>{" "}

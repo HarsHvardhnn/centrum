@@ -8,7 +8,9 @@ const VisitHistoryCard = ({ appointments, currentAppointmentId, onSelectVisit })
       <h3 className="text-base font-semibold text-gray-900 mb-4">Historia wizyt</h3>
       <div className="space-y-2">
         {(appointments || []).map((apt) => {
-          const isSelected = currentAppointmentId === apt._id;
+          const isSelected =
+            currentAppointmentId != null &&
+            String(currentAppointmentId) === String(apt._id || apt.id);
           return (
             <button
               type="button"

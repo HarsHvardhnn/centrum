@@ -148,6 +148,12 @@ const BillingManagement = () => {
     totalOverdue: 0
   });
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (isDoctorViewOnly && documentTypeFilter) {
+      setDocumentTypeFilter("");
+    }
+  }, [isDoctorViewOnly, documentTypeFilter]);
   
   // Add EditBillModal component
   const EditBillModal = ({ isOpen, onClose, billId, onUpdate, isRedirectedFromAppointment }) => {
@@ -1174,6 +1180,18 @@ const BillingManagement = () => {
     }
   };
 
+  const formatSettlementBasis = (bill) => {
+    const fromLines = (bill?.lineItems || [])
+      .map((item) => String(item?.name || "").trim())
+      .filter(Boolean);
+    if (fromLines.length) return fromLines.join(", ");
+    const fromServices = (bill?.services || [])
+      .map((s) => String(s?.title || "").trim())
+      .filter(Boolean);
+    if (fromServices.length) return fromServices.join(", ");
+    return "Wizyta";
+  };
+
   const formatBillDocumentRef = (bill) => {
     const invoiceNumber = String(
       bill?.invoiceSnapshot?.number || bill?.invoiceId || ""
@@ -1231,17 +1249,19 @@ const BillingManagement = () => {
           </h1>
           <p className="text-gray-600">
             {isDoctorViewOnly
-              ? "Podgląd rozliczeń z wizyt. Edycja, faktury i oznaczanie płatności — tylko recepcja. Szacowane przychody: Raporty."
+              ? "Kwoty i usługi z Twoich wizyt — żebyś widział, za co jest rozliczenie. Faktury, paragony i płatności obsługuje recepcja."
               : "Przeglądaj i zarządzaj fakturami pacjentów"}
           </p>
         </div>
         
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className={`grid grid-cols-1 ${isDoctorViewOnly ? "md:grid-cols-3" : "md:grid-cols-4"} gap-6 mb-8`}>
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Suma faktur</p>
+                <p className="text-sm text-gray-500">
+                  {isDoctorViewOnly ? "Suma rozliczeń" : "Suma faktur"}
+                </p>
                 <h3 className="text-2xl font-semibold mt-1">{formatCurrency(stats.totalBilled)}</h3>
               </div>
               <div className="p-3 bg-teal-100 rounded-full">
@@ -1284,6 +1304,7 @@ const BillingManagement = () => {
             </div>
           </button>
           
+          {!isDoctorViewOnly && (
           <button
             type="button"
             onClick={() => setPaymentStatusFilter(paymentStatusFilter === "overdue" ? "" : "overdue")}
@@ -1305,15 +1326,18 @@ const BillingManagement = () => {
               </div>
             </div>
           </button>
+          )}
         </div>
-        
-        {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <div className="relative w-full md:w-64">
               <input
                 type="text"
-                placeholder="Szukaj: nazwisko, PESEL, numer dokumentu"
+                placeholder={
+                  isDoctorViewOnly
+                    ? "Szukaj: nazwisko, PESEL"
+                    : "Szukaj: nazwisko, PESEL, numer dokumentu"
+                }
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1322,6 +1346,8 @@ const BillingManagement = () => {
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
+              {isBillingStaff && (
+                <>
               <button
                 type="button"
                 onClick={() => handleToggleDocumentType("invoice")}
@@ -1344,7 +1370,6 @@ const BillingManagement = () => {
               >
                 Pokaż paragony
               </button>
-              {isBillingStaff && (
                 <button
                   type="button"
                   onClick={handleDownloadInvoicesZip}
@@ -1355,6 +1380,7 @@ const BillingManagement = () => {
                   <Archive size={16} />
                   {zipDownloading ? "Przygotowywanie ZIP…" : "Pobierz faktury (ZIP)"}
                 </button>
+              </>
               )}
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -1399,8 +1425,8 @@ const BillingManagement = () => {
                   <option value="">Wszystkie statusy</option>
                   <option value="paid">Opłacone</option>
                   <option value="pending">Oczekujące</option>
-                  <option value="overdue">Zaległe</option>
-                  <option value="partial">Częściowo opłacone</option>
+                  {!isDoctorViewOnly && <option value="overdue">Zaległe</option>}
+                  {!isDoctorViewOnly && <option value="partial">Częściowo opłacone</option>}
                 </select>
               </div>
               
@@ -1466,14 +1492,10 @@ const BillingManagement = () => {
                   </th> */}
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort("billNumber")}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     <div className="flex items-center">
-                    Nr dokumentu
-                      {sortConfig.key === "billNumber" && (
-                        <ArrowUpDown size={16} className="ml-1" />
-                      )}
+                    {isDoctorViewOnly ? "Podstawa" : "Nr dokumentu"}
                     </div>
                   </th>
                   <th
@@ -1524,19 +1546,21 @@ const BillingManagement = () => {
                       )}
                     </div>
                   </th>
+                  {!isDoctorViewOnly && (
                   <th
                     scope="col"
                     className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Akcje
                   </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {tableLoading ? (
                   Array.from({ length: 8 }).map((_, i) => (
                     <tr key={`skel-${i}`} className="animate-pulse">
-                      <td colSpan={user?.role === "admin" ? 7 : 6} className="px-6 py-4">
+                      <td colSpan={user?.role === "admin" ? 7 : isDoctorViewOnly ? 5 : 6} className="px-6 py-4">
                         <div className="h-4 bg-gray-200 rounded w-full" />
                       </td>
                     </tr>
@@ -1561,7 +1585,13 @@ const BillingManagement = () => {
                       {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {bill?._id}
                       </td> */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className={`px-6 py-4 ${isDoctorViewOnly ? "" : "whitespace-nowrap"} text-sm font-medium text-gray-900`}>
+                        {isDoctorViewOnly ? (
+                          <span className="text-gray-800 font-normal leading-snug">
+                            {formatSettlementBasis(bill)}
+                          </span>
+                        ) : (
+                          <>
                         <button
                           type="button"
                           onClick={() =>
@@ -1583,6 +1613,8 @@ const BillingManagement = () => {
                         )}
                         {bill.documentType === "invoice" && (
                           <div className="text-xs text-gray-400 font-normal">Faktura</div>
+                        )}
+                          </>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -1611,6 +1643,7 @@ const BillingManagement = () => {
                           {translatePaymentStatus(bill.paymentStatus)}
                         </span>
                       </td>
+                      {!isDoctorViewOnly && (
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
                           <button
@@ -1649,14 +1682,17 @@ const BillingManagement = () => {
                           )}
                         </div>
                       </td>
+                      )}
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={canSelectBills ? "7" : "6"} className="px-6 py-12 text-center">
+                    <td colSpan={canSelectBills ? "7" : isDoctorViewOnly ? "5" : "6"} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center">
                         <FileText size={48} className="text-gray-300 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-1">Nie znaleziono faktur</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">
+                          {isDoctorViewOnly ? "Nie znaleziono rozliczeń" : "Nie znaleziono faktur"}
+                        </h3>
                         <p className="text-gray-500 max-w-sm">
                           Brak faktur spełniających kryteria wyszukiwania. Spróbuj dostosować filtry lub utwórz nową fakturę.
                         </p>
