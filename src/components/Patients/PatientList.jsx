@@ -27,6 +27,7 @@ import patientServicesHelper from "../../helpers/patientServicesHelper";
 import { toast } from "sonner";
 import { isPlaceholderPhone } from "../../utils/phoneUtils";
 import { useUser } from "../../context/userContext";
+import { useLoader } from "../../context/LoaderContext";
 import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
