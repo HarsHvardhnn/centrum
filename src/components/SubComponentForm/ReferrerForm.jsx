@@ -137,7 +137,6 @@ const ReferrerForm = () => {
             resolveSpecializationId(doctor, specializations);
           if (specId) updateFormData("consultingSpecialization", specId);
         }
-        }
       } catch (err) {
         console.warn("ReferrerForm: could not load attending doctor details", err);
       }
