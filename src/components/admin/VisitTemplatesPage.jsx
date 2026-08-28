@@ -3,6 +3,7 @@ import { FileStack, Plus, Pencil, Trash2, X, Search } from "lucide-react";
 import visitTemplatesHelper from "../../helpers/visitTemplatesHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { toast } from "sonner";
+import ConfirmDialog from "../UtilComponents/ConfirmDialog";
 
 const DEBOUNCE_MS = 300;
 
@@ -37,6 +38,7 @@ export default function VisitTemplatesPage() {
   });
   const [formDiagnoses, setFormDiagnoses] = useState([]); // { code, name, isPrimary }[]
   const [formProcedures, setFormProcedures] = useState([]); // { code, name }[]
+  const [confirmDialog, setConfirmDialog] = useState(null);
   // ICD-10 search (Rozpoznanie)
   const [icd10SearchValue, setIcd10SearchValue] = useState("");
   const [icd10SearchResults, setIcd10SearchResults] = useState([]);
@@ -131,15 +133,20 @@ export default function VisitTemplatesPage() {
     }
   };
 
-  const deleteSectionTemplate = async (id) => {
-    if (!window.confirm("Czy na pewno usunąć ten szablon?")) return;
-    try {
-      await visitTemplatesHelper.deleteSectionTemplate(id);
-      toast.success("Szablon usunięty");
-      loadSectionTemplates();
-    } catch (e) {
-      toast.error(e?.message || "Nie udało się usunąć szablonu");
-    }
+  const deleteSectionTemplate = (id) => {
+    setConfirmDialog({
+      title: "Usunąć szablon?",
+      message: "Czy na pewno usunąć ten szablon?",
+      onConfirm: async () => {
+        try {
+          await visitTemplatesHelper.deleteSectionTemplate(id);
+          toast.success("Szablon usunięty");
+          loadSectionTemplates();
+        } catch (e) {
+          toast.error(e?.message || "Nie udało się usunąć szablonu");
+        }
+      },
+    });
   };
 
   const openNewGlobalForm = () => {
@@ -294,15 +301,20 @@ export default function VisitTemplatesPage() {
     }
   };
 
-  const deleteGlobalTemplate = async (id) => {
-    if (!window.confirm("Czy na pewno usunąć ten szablon globalny?")) return;
-    try {
-      await visitTemplatesHelper.deleteGlobalTemplate(id);
-      toast.success("Szablon usunięty");
-      loadGlobalTemplates();
-    } catch (e) {
-      toast.error(e?.message || "Nie udało się usunąć szablonu");
-    }
+  const deleteGlobalTemplate = (id) => {
+    setConfirmDialog({
+      title: "Usunąć szablon globalny?",
+      message: "Czy na pewno usunąć ten szablon globalny?",
+      onConfirm: async () => {
+        try {
+          await visitTemplatesHelper.deleteGlobalTemplate(id);
+          toast.success("Szablon usunięty");
+          loadGlobalTemplates();
+        } catch (e) {
+          toast.error(e?.message || "Nie udało się usunąć szablonu");
+        }
+      },
+    });
   };
 
   return (
@@ -684,6 +696,13 @@ export default function VisitTemplatesPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={Boolean(confirmDialog)}
+        title={confirmDialog?.title}
+        message={confirmDialog?.message}
+        onConfirm={confirmDialog?.onConfirm}
+        onClose={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

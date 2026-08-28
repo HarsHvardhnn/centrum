@@ -1,8 +1,11 @@
 // BreadcrumbNav.jsx
 import React from "react";
 import { ArrowLeft } from "lucide-react";
+import { useUser } from "../../../../context/userContext";
+import { doctorVisitsPath } from "../../../../utils/useNavigate";
 
 const BreadcrumbNav = ({ patientName, navigate }) => {
+  const { user } = useUser();
   const handleGoBack = () => {
     navigate(-1);
   };
@@ -14,7 +17,7 @@ const BreadcrumbNav = ({ patientName, navigate }) => {
       </button>
       <span
         className="cursor-pointer"
-        onClick={() => navigate("/lekarze/wizyty")}
+        onClick={() => navigate(doctorVisitsPath(user))}
       >
         Wizyty lekarskie
       </span>

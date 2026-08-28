@@ -9,6 +9,7 @@ const PatientDetailsFooter = ({
   lastSavedTime,
   onEndVisit,
   isSaving,
+  isVisitCompleted = false,
   isVisitReasonVerified = null,
   isVisitReasonVerifyLoading = false,
 }) => {
@@ -73,24 +74,31 @@ const PatientDetailsFooter = ({
       <div>
         <button
           type="button"
-          onClick={onEndVisit}
+          onClick={isVisitCompleted ? undefined : onEndVisit}
           disabled={
+            isVisitCompleted ||
             isSaving ||
             isVisitReasonVerifyLoading ||
             isVisitReasonVerified !== true
           }
           title={
-            isVisitReasonVerified === false
+            isVisitCompleted
+              ? "Wizyta została już zakończona i rozliczona. Zmiany możesz zapisać przyciskiem „Zapisz wizytę”."
+              : isVisitReasonVerified === false
               ? "Najpierw zweryfikuj rodzaj wizyty"
               : isVisitReasonVerified !== true && !isVisitReasonVerifyLoading
               ? "Oczekiwanie na status weryfikacji rodzaju wizyty"
               : undefined
           }
-          className="flex items-center gap-2 px-5 py-2.5 text-white text-sm font-medium rounded-sm hover:opacity-95 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:opacity-100"
-          style={{ backgroundColor: DARK_TEAL }}
+          className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-sm transition-opacity disabled:cursor-not-allowed disabled:hover:opacity-100 ${
+            isVisitCompleted
+              ? "bg-gray-300 text-gray-600"
+              : "text-white hover:opacity-95 disabled:opacity-50"
+          }`}
+          style={isVisitCompleted ? undefined : { backgroundColor: DARK_TEAL }}
         >
           <Check size={18} />
-          Zakończ wizytę
+          {isVisitCompleted ? "Wizyta zakończona" : "Zakończ wizytę"}
         </button>
       </div>
     </footer>

@@ -121,6 +121,9 @@ const doctorService = {
       if (filters.department) {
         queryParams.append("department", filters.department);
       }
+      if (filters.page) {
+        queryParams.append("page", String(filters.page));
+      }
       if (filters.limit != null && filters.limit !== "") {
         queryParams.append("limit", String(filters.limit));
       }
@@ -372,15 +375,21 @@ const doctorService = {
    * @param {string} doctorId - Doctor ID
    * @returns {Promise} - API response with next available date and slots
    */
-  getNextAvailableDate: async (doctorId) => {
+  getNextAvailableDate: async (doctorId, options = {}) => {
     try {
       if (!doctorId) {
         throw new Error("Doctor ID is required");
       }
 
+      const params = new URLSearchParams();
+      if (options.after) params.set("after", options.after);
+      if (options.before) params.set("before", options.before);
+      if (options.allowPast) params.set("allowPast", "true");
+      const query = params.toString();
+
       const response = await apiCaller(
         "GET",
-        `/docs/schedule/next-available/${doctorId}`
+        `/docs/schedule/next-available/${doctorId}${query ? `?${query}` : ""}`
       );
       return response.data;
     } catch (error) {

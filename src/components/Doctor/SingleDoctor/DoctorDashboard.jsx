@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import DoctorInfoCard from "./DoctorInfo";
 import PatientsList from "./PatientsList";
 import Calendar from "./Calendar";
@@ -8,6 +9,7 @@ import StatsDashboard from "./StatsDashboard";
 import PatientInfo from "./PatientInfo";
 import Breadcrumb from "./BreadCrumb";
 import { useUser } from "../../../context/userContext";
+import { prefetchVisitDetails, visitPagePath } from "../../../utils/visitNavigation";
 
 const DoctorDashboard = ({
   doctor,
@@ -29,22 +31,32 @@ const DoctorDashboard = ({
   onCheckIn,
   onReschedule,
   onPermanentDelete,
+  isLoading = false,
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useUser();
-  //("patiend eta;same",patientDetails)
+
+  const selectedAppointment = selectedPatient
+    ? patients.find((p) => p.id === selectedPatient)
+    : null;
+
+  const prefetchSelectedVisit = () => {
+    if (selectedAppointment?.id) {
+      prefetchVisitDetails(queryClient, selectedAppointment.id);
+    }
+  };
 
   const handleViewDetails = () => {
-    if (selectedPatient) {
-      const selectedAppointment = patients.find(p => p.id === selectedPatient);
-      if (selectedAppointment?.patient_id) {
-        if (user?.role === "receptionist") {
-          navigate(`/administracja/konta?edytujPacjenta=${selectedAppointment.patient_id}&returnUrl=${encodeURIComponent(window.location.pathname)}`);
-        } else {
-          navigate(`/szczegoly-pacjenta/${selectedAppointment.patient_id}`);
-        }
-      }
+    if (!selectedAppointment?.patient_id) return;
+    if (user?.role === "receptionist") {
+      navigate(
+        `/administracja/konta?edytujPacjenta=${selectedAppointment.patient_id}&returnUrl=${encodeURIComponent(window.location.pathname)}`
+      );
+      return;
     }
+    prefetchVisitDetails(queryClient, selectedAppointment.id);
+    navigate(visitPagePath(selectedAppointment.patient_id, selectedAppointment.id));
   };
 
   return (
@@ -98,6 +110,7 @@ const DoctorDashboard = ({
             <PatientsList
               setAppointmentId={setAppointmentId}
               patientsData={patients}
+              isLoading={isLoading}
               onPatientSelect={onPatientSelect}
               selectedPatient={selectedPatient}
               currentPage={currentPage}
@@ -118,7 +131,10 @@ const DoctorDashboard = ({
               </div>
               {selectedPatient && (
                 <button
+                  type="button"
                   onClick={handleViewDetails}
+                  onMouseEnter={prefetchSelectedVisit}
+                  onFocus={prefetchSelectedVisit}
                   className="flex-shrink-0 text-white font-medium rounded-lg text-sm px-4 py-2.5 shadow-sm hover:shadow transition-colors"
                   style={{ backgroundColor: "#0d9488" }}
                 >

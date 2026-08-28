@@ -192,9 +192,11 @@ const DoctorCalendar = () => {
   const fetchDoctors = async () => {
     try {
       const response = await doctorStatsHelper.getDoctorsList();
-      setDoctors(response.data);
+      const list = response?.data ?? response?.doctors ?? response;
+      setDoctors(Array.isArray(list) ? list : []);
     } catch (error) {
       console.error('Error fetching doctors:', error);
+      setDoctors([]);
     }
   };
 

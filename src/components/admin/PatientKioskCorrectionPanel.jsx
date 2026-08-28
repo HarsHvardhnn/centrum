@@ -90,8 +90,18 @@ export default function PatientKioskCorrectionPanel({
 
   useEffect(() => {
     if (!session?.id || TERMINAL_STATUSES.includes(session.status)) return;
-    const interval = setInterval(refreshStatus, 3000);
-    return () => clearInterval(interval);
+    const tick = () => {
+      if (!document.hidden) refreshStatus();
+    };
+    const interval = setInterval(tick, 8000);
+    const onVisible = () => {
+      if (!document.hidden) refreshStatus();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [session?.id, session?.status, refreshStatus]);
 
   useEffect(() => {
@@ -127,12 +137,20 @@ export default function PatientKioskCorrectionPanel({
     };
     pollPdfJob();
     const interval = setInterval(async () => {
+      if (document.hidden) return;
       const status = await pollPdfJob();
       if (status === "completed" || status === "failed") clearInterval(interval);
-    }, 3000);
+    }, 8000);
+    const onVisible = async () => {
+      if (document.hidden) return;
+      const status = await pollPdfJob();
+      if (status === "completed" || status === "failed") clearInterval(interval);
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
       clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [session?.id, session?.status]);
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, X } from "lucide-react";
 
-const DEBOUNCE_MS = 300;
+const DEBOUNCE_MS = 200;
 
 const DIAGNOSIS_TYPE_LABELS = {
   primary: "Główne",
@@ -75,7 +75,7 @@ const DiagnosisCard = ({
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
-          placeholder="Wyszukaj wg kodu ICD-10 lub nazwy choroby..."
+          placeholder="Kod ICD-10 lub nazwa (od 2 znaków, np. cuk, E11)…"
           disabled={disabled}
           className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm placeholder-gray-500 focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700 outline-none disabled:bg-gray-50"
         />

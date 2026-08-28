@@ -4,6 +4,7 @@ import { useLoader } from "../../context/LoaderContext";
 import { Calendar, Clock, Plus, Trash2, Edit, X, Save, Calendar as CalendarIcon, Copy, CopyCheck } from "lucide-react";
 import { toast } from "sonner";
 import { apiCaller } from "../../utils/axiosInstance";
+import ConfirmDialog from "../UtilComponents/ConfirmDialog";
 
 const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
   const { showLoader, hideLoader } = useLoader();
@@ -18,6 +19,7 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' or 'list'
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   // Date range copy states
   const [showCopyModal, setShowCopyModal] = useState(false);
@@ -351,117 +353,121 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
   };
 
   // Delete schedule (by date – used when _id not available)
-  const handleDeleteSchedule = async (date) => {
-    if (!window.confirm("Czy na pewno chcesz usunąć harmonogram dla tego dnia?")) {
-      return;
-    }
-
-    try {
-      showLoader();
-      const response = await doctorService.deleteSchedule(doctorId, date);
-      
-      if (response.success) {
-        toast.success("Harmonogram został usunięty pomyślnie");
-        fetchDoctorSchedule();
-      }
-    } catch (err) {
-      console.error("Error deleting schedule:", err);
-      toast.error(err?.response?.data?.message || "Nie udało się usunąć harmonogramu");
-    } finally {
-      hideLoader();
-    }
+  const handleDeleteSchedule = (date) => {
+    setConfirmDialog({
+      title: "Usunąć harmonogram?",
+      message: "Czy na pewno chcesz usunąć harmonogram dla tego dnia?",
+      onConfirm: async () => {
+        try {
+          showLoader();
+          const response = await doctorService.deleteSchedule(doctorId, date);
+          if (response.success) {
+            toast.success("Harmonogram został usunięty pomyślnie");
+            fetchDoctorSchedule();
+          }
+        } catch (err) {
+          console.error("Error deleting schedule:", err);
+          toast.error(err?.response?.data?.message || "Nie udało się usunąć harmonogramu");
+        } finally {
+          hideLoader();
+        }
+      },
+    });
   };
 
   // Delete a single time block (Edit modal). On success: if scheduleDeleted close modal and refetch; else update local timeBlocks.
-  const handleDeleteScheduleTimeBlock = async (blockIndex) => {
+  const handleDeleteScheduleTimeBlock = (blockIndex) => {
     const scheduleId = editingSchedule?._id;
     if (!scheduleId) return;
-    if (!window.confirm("Czy na pewno usunąć ten blok czasowy? Operacja jest nieodwracalna.")) {
-      return;
-    }
-    try {
-      showLoader();
-      const response = await doctorService.deleteScheduleTimeBlock(scheduleId, blockIndex);
-      if (response?.success) {
-        if (response.scheduleDeleted) {
-          toast.success("Ostatni blok usunięty – harmonogram został usunięty");
-          setShowScheduleModal(false);
-          resetScheduleForm();
-        } else {
-          toast.success("Blok czasowy został usunięty");
-          const remaining = response.remainingBlocks ?? [];
-          setScheduleForm((prev) => ({ ...prev, timeBlocks: remaining }));
-          setEditingSchedule((prev) => (prev ? { ...prev, timeBlocks: remaining } : null));
-        }
+    setConfirmDialog({
+      title: "Usunąć blok czasowy?",
+      message: "Czy na pewno usunąć ten blok czasowy? Operacja jest nieodwracalna.",
+      onConfirm: async () => {
+        try {
+          showLoader();
+          const response = await doctorService.deleteScheduleTimeBlock(scheduleId, blockIndex);
+          if (response?.success) {
+            if (response.scheduleDeleted) {
+              toast.success("Ostatni blok usunięty – harmonogram został usunięty");
+              setShowScheduleModal(false);
+              resetScheduleForm();
+            } else {
+              toast.success("Blok czasowy został usunięty");
+              const remaining = response.remainingBlocks ?? [];
+              setScheduleForm((prev) => ({ ...prev, timeBlocks: remaining }));
+              setEditingSchedule((prev) => (prev ? { ...prev, timeBlocks: remaining } : null));
+            }
 
-        // In both cases, refetch schedule and force full page reload so calendar view is fully up to date
-        fetchDoctorSchedule();
-        if (typeof window !== "undefined" && window.location) {
-          window.location.reload();
+            fetchDoctorSchedule();
+            if (typeof window !== "undefined" && window.location) {
+              window.location.reload();
+            }
+          }
+        } catch (err) {
+          console.error("Error deleting schedule time block:", err);
+          toast.error(err?.response?.data?.message || "Nie udało się usunąć bloku czasowego");
+        } finally {
+          hideLoader();
         }
-      }
-    } catch (err) {
-      console.error("Error deleting schedule time block:", err);
-      toast.error(err?.response?.data?.message || "Nie udało się usunąć bloku czasowego");
-    } finally {
-      hideLoader();
-    }
+      },
+    });
   };
 
   // Permanent delete schedule (by _id when available, otherwise by doctorId + date). Use from Edit modal or calendar cell.
-  const handlePermanentDeleteSchedule = async (schedule) => {
-    if (!window.confirm("Czy na pewno usunąć ten harmonogram? Operacja jest nieodwracalna.")) {
-      return;
-    }
+  const handlePermanentDeleteSchedule = (schedule) => {
+    setConfirmDialog({
+      title: "Usunąć harmonogram?",
+      message: "Czy na pewno usunąć ten harmonogram? Operacja jest nieodwracalna.",
+      onConfirm: async () => {
+        const wasEditingThis = editingSchedule?._id === schedule._id;
+        try {
+          showLoader();
+          const response = schedule._id
+            ? await doctorService.deleteScheduleById(schedule._id)
+            : await doctorService.deleteSchedule(doctorId, schedule.date);
 
-    const wasEditingThis = editingSchedule?._id === schedule._id;
-
-    try {
-      showLoader();
-      const response = schedule._id
-        ? await doctorService.deleteScheduleById(schedule._id)
-        : await doctorService.deleteSchedule(doctorId, schedule.date);
-
-      if (response?.success) {
-        toast.success("Harmonogram został trwale usunięty");
-        fetchDoctorSchedule();
-        // Ensure calendar view and related state are fully refreshed so deleted blocks are not repeated
-        if (typeof window !== "undefined" && window.location) {
-          window.location.reload();
+          if (response?.success) {
+            toast.success("Harmonogram został trwale usunięty");
+            fetchDoctorSchedule();
+            if (typeof window !== "undefined" && window.location) {
+              window.location.reload();
+            }
+            if (wasEditingThis) {
+              setShowScheduleModal(false);
+              resetScheduleForm();
+            }
+          }
+        } catch (err) {
+          console.error("Error permanently deleting schedule:", err);
+          toast.error(err?.response?.data?.message || "Nie udało się usunąć harmonogramu");
+        } finally {
+          hideLoader();
         }
-        if (wasEditingThis) {
-          setShowScheduleModal(false);
-          resetScheduleForm();
-        }
-      }
-    } catch (err) {
-      console.error("Error permanently deleting schedule:", err);
-      toast.error(err?.response?.data?.message || "Nie udało się usunąć harmonogramu");
-    } finally {
-      hideLoader();
-    }
+      },
+    });
   };
 
   // Delete exception
-  const handleDeleteException = async (exceptionId) => {
-    if (!window.confirm("Czy na pewno chcesz usunąć ten wyjątek?")) {
-      return;
-    }
-
-    try {
-      showLoader();
-      const response = await doctorService.deleteException(exceptionId);
-      
-      if (response.success) {
-        toast.success("Wyjątek został usunięty pomyślnie");
-        fetchDoctorExceptions();
-      }
-    } catch (err) {
-      console.error("Error deleting exception:", err);
-      toast.error("Nie udało się usunąć wyjątku");
-    } finally {
-      hideLoader();
-    }
+  const handleDeleteException = (exceptionId) => {
+    setConfirmDialog({
+      title: "Usunąć wyjątek?",
+      message: "Czy na pewno chcesz usunąć ten wyjątek?",
+      onConfirm: async () => {
+        try {
+          showLoader();
+          const response = await doctorService.deleteException(exceptionId);
+          if (response.success) {
+            toast.success("Wyjątek został usunięty pomyślnie");
+            fetchDoctorExceptions();
+          }
+        } catch (err) {
+          console.error("Error deleting exception:", err);
+          toast.error("Nie udało się usunąć wyjątku");
+        } finally {
+          hideLoader();
+        }
+      },
+    });
   };
 
   // Edit schedule
@@ -2096,6 +2102,13 @@ const DoctorScheduleManager = ({ isModal = false, doctorId, onClose }) => {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={Boolean(confirmDialog)}
+        title={confirmDialog?.title}
+        message={confirmDialog?.message}
+        onConfirm={confirmDialog?.onConfirm}
+        onClose={() => setConfirmDialog(null)}
+      />
     </div>
   );
 };

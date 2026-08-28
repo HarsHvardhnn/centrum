@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import PatientSearchField from "../../AppointmentForm/PatientSearchField"
-import DoctorSelectionWithSlots from "../../admin/DoctorsAppointments";
+import DoctorSelectionWithSlots, {
+  doctorDisplayName,
+  doctorSpecializationLabel,
+} from "../../admin/DoctorsAppointments";
 import userServiceHelper from "../../../helpers/userServiceHelper";
 import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react";
 import VisitReasonCascadeDropdown from "../../UtilComponents/VisitReasonCascadeDropdown";
@@ -484,16 +487,29 @@ function AppointmentFormModal({
   // Modify the handleDoctorSelect function
   const handleDoctorSelect = (doctor) => {
     const radiologistFields = doctor && isRadiologistDoctor(doctor) ? getRadiologistVisitTypeFields() : {};
-    setAppointmentData({
-      ...appointmentData,
-      selectedDoctor: doctor,
-      selectedServices: [],
-      ...radiologistFields,
+    let doctorChanged = true;
+    setAppointmentData((prev) => {
+      doctorChanged =
+        !doctor || !prev.selectedDoctor || prev.selectedDoctor._id !== doctor._id;
+      return {
+        ...prev,
+        selectedDoctor: doctor,
+        selectedServices: doctorChanged ? [] : prev.selectedServices,
+        // Always drop previous doctor's slot / custom time when doctor changes or is cleared
+        selectedSlot: doctorChanged ? null : prev.selectedSlot,
+        customStartTime: doctorChanged ? "" : prev.customStartTime,
+        customEndTime: doctorChanged ? "" : prev.customEndTime,
+        ...radiologistFields,
+      };
     });
 
     if (doctor && doctor._id) {
       fetchDoctorServices(doctor._id);
-      fetchNextAvailableDate(doctor._id); // Add this line to fetch next available date
+      // Only auto-jump to next available date on a *new* doctor — not when
+      // remounting / re-selecting the same doctor after Wstecz
+      if (doctorChanged) {
+        fetchNextAvailableDate(doctor._id);
+      }
     } else {
       setDoctorServices([]);
       setAvailableSlots([]);
@@ -530,22 +546,22 @@ function AppointmentFormModal({
     });
   };
 
-  // Handle slot selection
+  // Handle slot selection (null clears)
   const handleSlotSelect = (slot) => {
-    setAppointmentData(prev => ({
+    setAppointmentData((prev) => ({
       ...prev,
-      selectedSlot: slot,
-      // Clear custom time when slot is selected
-      customStartTime: "",
-      customEndTime: ""
+      selectedSlot: slot || null,
+      // Clear custom time when a list slot is selected
+      customStartTime: slot ? "" : prev.customStartTime,
+      customEndTime: slot ? "" : prev.customEndTime,
     }));
   };
 
   // Clear slot selection
   const clearSlotSelection = () => {
-    setAppointmentData(prev => ({
+    setAppointmentData((prev) => ({
       ...prev,
-      selectedSlot: null
+      selectedSlot: null,
     }));
   };
 
@@ -553,6 +569,44 @@ function AppointmentFormModal({
   const switchToCustomDateOnly = () => {
     setUseCustomDateOnly(true);
     clearSlotSelection();
+  };
+
+  const getSlotPickerTimeErrors = () => {
+    const errors = validateForm();
+    const customTime =
+      appointmentData.customStartTime &&
+      appointmentData.customEndTime &&
+      errors.customTime
+        ? errors.customTime
+        : null;
+    const timeSelection = errors.timeSelection || null;
+    return { customTime, timeSelection };
+  };
+
+  const getDoctorSlotPickerProps = (overrides = {}) => {
+    const { customTime, timeSelection } = getSlotPickerTimeErrors();
+    const slotListMode = !useCustomDateOnly;
+    return {
+      selectedDoctor: appointmentData.selectedDoctor,
+      selectedSlot: appointmentData.selectedSlot,
+      selectedDate: appointmentData.selectedDate,
+      onDoctorSelect: handleDoctorSelect,
+      onDateChange: slotListMode ? handleDateChange : undefined,
+      onSlotSelect: handleSlotSelect,
+      selectedPatient,
+      loadingNextAvailableDate,
+      hideSlotList: useCustomDateOnly,
+      onUseCustomDateOnly: useCustomDateOnly ? null : switchToCustomDateOnly,
+      allowedDoctorId,
+      customStartTime: appointmentData.customStartTime,
+      customEndTime: appointmentData.customEndTime,
+      onCustomTimeChange: slotListMode ? handleCustomTimeChange : null,
+      onClearSlotSelection: clearSlotSelection,
+      isBackdated: appointmentData.isBackdated,
+      customTimeError: customTime,
+      timeSelectionError: timeSelection,
+      ...overrides,
+    };
   };
 
   // Update service quantity
@@ -592,6 +646,8 @@ function AppointmentFormModal({
     setAppointmentData(prev => ({
       ...prev,
       selectedDate: selectedDate,
+      // Slot belonged to the previous date — drop it
+      selectedSlot: null,
       // Update isBackdated based on the selected date
       isBackdated: isSelectedDateInPast,
       // Always set SMS consent to false for past dates, but allow user to manually check it
@@ -691,7 +747,7 @@ function AppointmentFormModal({
         }
       }
       switch (step) {
-        case 1: return "Lekarz i Termin";
+        case 1: return "Wybierz lekarza i termin";
         case 2: return "Dane Pacjenta";
         case 3: return "Usługi";
         case 4: return "Szczegóły";
@@ -842,98 +898,214 @@ function AppointmentFormModal({
     );
   };
 
-  const renderStepContent = () => {
+  const doctorTimeStepNumber = workflowOrder === "appointmentFirst" ? 1 : 2;
+  const [doctorTimeStepMounted, setDoctorTimeStepMounted] = useState(
+    () => currentStep === doctorTimeStepNumber
+  );
+
+  useEffect(() => {
+    if (currentStep === doctorTimeStepNumber) {
+      setDoctorTimeStepMounted(true);
+    }
+  }, [currentStep, doctorTimeStepNumber]);
+
+  const renderDoctorTimeStep = () => {
     if (workflowOrder === "appointmentFirst") {
-      // New workflow: Appointment first, then patient
-      if (skipDoctorSelection) {
-        // When doctor is pre-selected, still show date/slot selection
+      return skipDoctorSelection
+        ? renderDateSlotSelectionStep()
+        : renderDoctorSelectionStep();
+    }
+    return skipDoctorSelection
+      ? renderDateSlotSelectionStep()
+      : renderDoctorSelectionStep();
+  };
+
+  const renderStepContent = () => {
+    const onDoctorTimeStep = currentStep === doctorTimeStepNumber;
+
+    let other = null;
+    if (!onDoctorTimeStep) {
+      if (workflowOrder === "appointmentFirst") {
+        if (skipDoctorSelection) {
+          switch (currentStep) {
+            case 2:
+              other = renderPatientInfoStep();
+              break;
+            case 3:
+              other = renderServicesStep();
+              break;
+            case 4:
+              other = renderAdditionalDetailsStep();
+              break;
+            case 5:
+              other = renderReceptionistOverridesStep();
+              break;
+            default:
+              other = null;
+          }
+        } else {
+          switch (currentStep) {
+            case 2:
+              other = renderPatientInfoStep();
+              break;
+            case 3:
+              other = renderServicesStep();
+              break;
+            case 4:
+              other = renderAdditionalDetailsStep();
+              break;
+            case 5:
+              other = renderReceptionistOverridesStep();
+              break;
+            default:
+              other = null;
+          }
+        }
+      } else if (skipDoctorSelection) {
         switch (currentStep) {
           case 1:
-            return renderDateSlotSelectionStep();
-          case 2:
-            return renderPatientInfoStep();
+            other = renderPatientInfoStep();
+            break;
           case 3:
-            return renderServicesStep();
+            other = renderServicesStep();
+            break;
           case 4:
-            return renderAdditionalDetailsStep();
+            other = renderAdditionalDetailsStep();
+            break;
           case 5:
-            return renderReceptionistOverridesStep();
+            other = renderReceptionistOverridesStep();
+            break;
           default:
-            return null;
+            other = null;
         }
       } else {
         switch (currentStep) {
           case 1:
-            return renderDoctorSelectionStep();
-          case 2:
-            return renderPatientInfoStep();
+            other = renderPatientInfoStep();
+            break;
           case 3:
-            return renderServicesStep();
+            other = renderServicesStep();
+            break;
           case 4:
-            return renderAdditionalDetailsStep();
+            other = renderAdditionalDetailsStep();
+            break;
           case 5:
-            return renderReceptionistOverridesStep();
+            other = renderReceptionistOverridesStep();
+            break;
           default:
-            return null;
-        }
-      }
-    } else {
-      // Original workflow: Patient first, then appointment
-      if (skipDoctorSelection) {
-        // When doctor is pre-selected, still show date/slot selection
-        switch (currentStep) {
-          case 1:
-            return renderPatientInfoStep();
-          case 2:
-            return renderDateSlotSelectionStep();
-          case 3:
-            return renderServicesStep();
-          case 4:
-            return renderAdditionalDetailsStep();
-          case 5:
-            return renderReceptionistOverridesStep();
-          default:
-            return null;
-        }
-      } else {
-        switch (currentStep) {
-          case 1:
-            return renderPatientInfoStep();
-          case 2:
-            return renderDoctorSelectionStep();
-          case 3:
-            return renderServicesStep();
-          case 4:
-            return renderAdditionalDetailsStep();
-          case 5:
-            return renderReceptionistOverridesStep();
-          default:
-            return null;
+            other = null;
         }
       }
     }
+
+    return (
+      <>
+        {/* Keep doctor/date/slot step mounted after first visit so Wstecz does not re-fetch next date */}
+        {doctorTimeStepMounted && (
+          <div
+            className={onDoctorTimeStep ? undefined : "hidden"}
+            aria-hidden={!onDoctorTimeStep}
+          >
+            {renderDoctorTimeStep()}
+          </div>
+        )}
+        {other}
+      </>
+    );
   };
+
+  const renderCustomDateOnlyPanel = () => (
+    <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+        <div>
+          <h4 className="text-md font-semibold text-teal-900">
+            Własna data i godzina
+          </h4>
+          <p className="text-sm text-teal-800 mt-1">
+            {appointmentData.selectedDoctor
+              ? "Ustaw datę oraz godzinę rozpoczęcia i zakończenia wizyty."
+              : "Najpierw wyszukaj i wybierz lekarza powyżej, potem ustawisz tutaj datę i godzinę."}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setUseCustomDateOnly(false)}
+          className="text-sm text-teal-700 hover:text-teal-900 underline font-medium whitespace-nowrap"
+        >
+          Wybierz z listy terminów
+        </button>
+      </div>
+
+      {appointmentData.selectedDoctor && (
+        <div className="space-y-4 mt-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Data wizyty
+            </label>
+            <input
+              type="date"
+              name="selectedDate"
+              value={appointmentData.selectedDate}
+              onChange={handleDateChange}
+              className="w-full md:w-1/2 p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Czas rozpoczęcia
+              </label>
+              <input
+                type="time"
+                name="customStartTime"
+                value={appointmentData.customStartTime || ""}
+                onChange={handleCustomTimeChange}
+                className="w-full p-2 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Czas zakończenia
+              </label>
+              <input
+                type="time"
+                name="customEndTime"
+                value={appointmentData.customEndTime || ""}
+                onChange={handleCustomTimeChange}
+                className="w-full p-2 border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          {appointmentData.customStartTime &&
+            appointmentData.customEndTime &&
+            validateForm().customTime && (
+              <p className="text-sm text-red-600">{validateForm().customTime}</p>
+            )}
+        </div>
+      )}
+    </div>
+  );
 
   const renderDateSlotSelectionStep = () => {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-medium mb-4">Wybór Terminu Wizyty</h3>
+        <h3 className="text-lg font-medium mb-4">Wybierz lekarza i termin</h3>
         
         {/* Show selected doctor info */}
         {appointmentData.selectedDoctor && (
           <div className="bg-teal-50 p-4 rounded-lg border border-teal-200 mb-4">
-            <h4 className="text-md font-medium text-teal-800 mb-2">Wybrany Lekarz</h4>
+            <h4 className="text-md font-medium text-teal-800 mb-2">Wybór lekarza</h4>
             <div className="flex items-center space-x-3">
               {appointmentData.selectedDoctor.profilePicture && (
                 <img
                   src={appointmentData.selectedDoctor.profilePicture}
-                  alt={appointmentData.selectedDoctor.name}
+                  alt={doctorDisplayName(appointmentData.selectedDoctor)}
                   className="w-12 h-12 rounded-full object-cover"
                 />
               )}
               <div>
-                <p className="font-medium text-teal-900">{appointmentData.selectedDoctor.name}</p>
-                <p className="text-sm text-teal-700">{appointmentData.selectedDoctor.specialty}</p>
+                <p className="font-medium text-teal-900">{doctorDisplayName(appointmentData.selectedDoctor)}</p>
+                <p className="text-sm text-teal-700">{doctorSpecializationLabel(appointmentData.selectedDoctor)}</p>
               </div>
             </div>
           </div>
@@ -944,146 +1116,15 @@ function AppointmentFormModal({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Wybierz datę i termin
           </label>
-          {useCustomDateOnly ? (
-            <p className="text-sm text-teal-700 mb-2">
-              Tryb własnej daty i godziny – ustaw datę i czas poniżej.{" "}
-              <button
-                type="button"
-                onClick={() => setUseCustomDateOnly(false)}
-                className="text-teal-600 hover:text-teal-800 underline font-medium"
-              >
-                Wybierz z listy terminów
-              </button>
-            </p>
-          ) : (
-            <p className="text-sm text-gray-600 mb-2">
-              <button
-                type="button"
-                onClick={switchToCustomDateOnly}
-                className="text-teal-600 hover:text-teal-800 underline font-medium"
-              >
-                Ustaw własną datę i godzinę
-              </button>
-              {" "}– bez przeglądania listy terminów
-            </p>
-          )}
           <DoctorSelectionWithSlots
-            selectedDoctor={appointmentData.selectedDoctor}
-            selectedDate={appointmentData.selectedDate}
-            onDoctorSelect={handleDoctorSelect}
-            onDateChange={handleDateChange}
-            initialDoctorId={doctorId}
-            onSlotSelect={handleSlotSelect}
-            selectedPatient={selectedPatient}
-            loadingNextAvailableDate={loadingNextAvailableDate}
-            hideDoctorSelection={true}
-            hideSlotList={useCustomDateOnly}
-            allowedDoctorId={allowedDoctorId}
+            {...getDoctorSlotPickerProps({
+              hideDoctorSelection: true,
+              initialDoctorId: doctorId,
+            })}
           />
         </div>
 
-        {/* Date Selection */}
-        {appointmentData.selectedDoctor && (
-          <div className="bg-teal-50 p-4 rounded-lg">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Wybierz datę wizyty
-            </label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="date"
-                name="selectedDate"
-                value={appointmentData.selectedDate}
-                onChange={handleDateChange}
-                className="w-full md:w-1/2 p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
-                min={undefined} /* Removed min date restriction to allow selecting previous dates */
-              />
-              {appointmentData.isBackdated && (
-                <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
-                  Data w przeszłości dozwolona
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Custom Time Slot Input - Receptionist Override */}
-        {appointmentData.selectedDoctor && appointmentData.selectedDate && (
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 className="text-md font-medium text-blue-800 mb-3">Ustaw Termin Wizyty</h4>
-            
-            {/* Show current selection status */}
-            {appointmentData.selectedSlot && (
-              <div className="mb-3 p-3 bg-green-100 border border-green-300 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm text-green-800">
-                      <strong>✓ Wybrano termin:</strong> {appointmentData.selectedSlot.startTime} - {appointmentData.selectedSlot.endTime}
-                    </p>
-                    <p className="text-xs text-green-700 mt-1">
-                      Możesz zmienić na własny termin poniżej, ale wtedy wybrany termin zostanie odznaczony.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearSlotSelection}
-                    className="text-xs text-red-600 hover:text-red-800 underline"
-                  >
-                    Wyczyść wybór
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            <p className="text-xs text-blue-600 mb-3">
-              <strong>Uwaga:</strong> Możesz wybrać dostępny termin z listy powyżej LUB ustawić własny termin poniżej. 
-              Nie możesz używać obu opcji jednocześnie.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Czas rozpoczęcia
-                </label>
-                <input
-                  type="time"
-                  name="customStartTime"
-                  value={appointmentData.customStartTime || ""}
-                  onChange={handleCustomTimeChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={appointmentData.selectedSlot !== null}
-                  placeholder="HH:MM"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Czas zakończenia (opcjonalny)
-                </label>
-                <input
-                  type="time"
-                  name="customEndTime"
-                  value={appointmentData.customEndTime || ""}
-                  onChange={handleCustomTimeChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={appointmentData.selectedSlot !== null}
-                  placeholder="HH:MM"
-                />
-              </div>
-            </div>
-            <p className="text-xs text-blue-600 mt-2">
-              Ustaw dowolny termin - możesz nadpisać istniejące wizyty lub umówić w niestandardowym czasie. 
-              <strong>Uwaga:</strong> Użyj wbudowanego selektora czasu (AM/PM jest automatycznie obsługiwane).
-            </p>
-            {appointmentData.customStartTime && appointmentData.customEndTime && validateForm().customTime && (
-              <p className="text-red-500 text-xs mt-2">
-                {validateForm().customTime}
-              </p>
-            )}
-            {validateForm().timeSelection && (
-              <p className="text-red-500 text-xs mt-2">
-                {validateForm().timeSelection}
-              </p>
-            )}
-          </div>
-        )}
+        {useCustomDateOnly && renderCustomDateOnlyPanel()}
       </div>
     );
   };
@@ -1091,152 +1132,16 @@ function AppointmentFormModal({
   const renderDoctorSelectionStep = () => {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-medium mb-4">Wybór Lekarza i Terminu</h3>
-        
+        <h3 className="text-lg font-medium mb-4">Wybierz lekarza i termin</h3>
+
         {/* Doctor Selection */}
         <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Wybierz lekarza
-          </label>
-          {useCustomDateOnly ? (
-            <p className="text-sm text-teal-700 mb-2">
-              Tryb własnej daty i godziny – ustaw datę i czas poniżej.{" "}
-              <button
-                type="button"
-                onClick={() => setUseCustomDateOnly(false)}
-                className="text-teal-600 hover:text-teal-800 underline font-medium"
-              >
-                Wybierz z listy terminów
-              </button>
-            </p>
-          ) : (
-            <p className="text-sm text-gray-600 mb-2">
-              <button
-                type="button"
-                onClick={switchToCustomDateOnly}
-                className="text-teal-600 hover:text-teal-800 underline font-medium"
-              >
-                Ustaw własną datę i godzinę
-              </button>
-              {" "}– bez przeglądania listy terminów
-            </p>
-          )}
           <DoctorSelectionWithSlots
-            selectedDoctor={appointmentData.selectedDoctor}
-            selectedDate={appointmentData.selectedDate}
-            onDoctorSelect={handleDoctorSelect}
-            onDateChange={handleDateChange}
-            initialDoctorId={doctorId}
-            onSlotSelect={handleSlotSelect}
-            selectedPatient={selectedPatient}
-            loadingNextAvailableDate={loadingNextAvailableDate}
-            hideSlotList={useCustomDateOnly}
-            allowedDoctorId={allowedDoctorId}
+            {...getDoctorSlotPickerProps({ initialDoctorId: doctorId })}
           />
         </div>
 
-        {/* Date Selection */}
-        {appointmentData.selectedDoctor && (
-          <div className="bg-teal-50 p-4 rounded-lg">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Wybierz datę wizyty
-            </label>
-            <div className="flex gap-2 items-center">
-              <input
-                type="date"
-                name="selectedDate"
-                value={appointmentData.selectedDate}
-                onChange={handleDateChange}
-                className="w-full md:w-1/2 p-2 border border-gray-200 bg-white rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500"
-                min={undefined} /* Removed min date restriction to allow selecting previous dates */
-              />
-              {appointmentData.isBackdated && (
-                <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
-                  Data w przeszłości dozwolona
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Custom Time Slot Input - Receptionist Override */}
-        {appointmentData.selectedDoctor && appointmentData.selectedDate && (
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <h4 className="text-md font-medium text-blue-800 mb-3">Ustaw Termin Wizyty</h4>
-            
-            {/* Show current selection status */}
-            {appointmentData.selectedSlot && (
-              <div className="mb-3 p-3 bg-green-100 border border-green-300 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm text-green-800">
-                      <strong>✓ Wybrano termin:</strong> {appointmentData.selectedSlot.startTime} - {appointmentData.selectedSlot.endTime}
-                    </p>
-                    <p className="text-xs text-green-700 mt-1">
-                      Możesz zmienić na własny termin poniżej, ale wtedy wybrany termin zostanie odznaczony.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearSlotSelection}
-                    className="text-xs text-red-600 hover:text-red-800 underline"
-                  >
-                    Wyczyść wybór
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            <p className="text-xs text-blue-600 mb-3">
-              <strong>Uwaga:</strong> Możesz wybrać dostępny termin z listy powyżej LUB ustawić własny termin poniżej. 
-              Nie możesz używać obu opcji jednocześnie.
-            </p>
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                   Czas rozpoczęcia
-                 </label>
-                 <input
-                   type="time"
-                   name="customStartTime"
-                   value={appointmentData.customStartTime || ""}
-                   onChange={handleCustomTimeChange}
-                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                   disabled={appointmentData.selectedSlot !== null}
-                   placeholder="HH:MM"
-                 />
-               </div>
-               <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                   Czas zakończenia (opcjonalny)
-                 </label>
-                 <input
-                   type="time"
-                   name="customEndTime"
-                   value={appointmentData.customEndTime || ""}
-                   onChange={handleCustomTimeChange}
-                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                   disabled={appointmentData.selectedSlot !== null}
-                   placeholder="HH:MM"
-                 />
-               </div>
-             </div>
-                         <p className="text-xs text-blue-600 mt-2">
-               Ustaw dowolny termin - możesz nadpisać istniejące wizyty lub umówić w niestandardowym czasie. 
-               <strong>Uwaga:</strong> Użyj wbudowanego selektora czasu (AM/PM jest automatycznie obsługiwane).
-             </p>
-            {appointmentData.customStartTime && appointmentData.customEndTime && validateForm().customTime && (
-              <p className="text-red-500 text-xs mt-2">
-                {validateForm().customTime}
-              </p>
-            )}
-            {validateForm().timeSelection && (
-              <p className="text-red-500 text-xs mt-2">
-                {validateForm().timeSelection}
-              </p>
-            )}
-          </div>
-        )}
+        {useCustomDateOnly && renderCustomDateOnlyPanel()}
       </div>
     );
   };
@@ -1249,18 +1154,18 @@ function AppointmentFormModal({
         {/* Show selected doctor info when skipDoctorSelection is true */}
         {skipDoctorSelection && appointmentData.selectedDoctor && (
           <div className="bg-teal-50 p-4 rounded-lg border border-teal-200 mb-4">
-            <h4 className="text-md font-medium text-teal-800 mb-2">Wybrany Lekarz</h4>
+            <h4 className="text-md font-medium text-teal-800 mb-2">Wybór lekarza</h4>
             <div className="flex items-center space-x-3">
               {appointmentData.selectedDoctor.profilePicture && (
                 <img
                   src={appointmentData.selectedDoctor.profilePicture}
-                  alt={appointmentData.selectedDoctor.name}
+                  alt={doctorDisplayName(appointmentData.selectedDoctor)}
                   className="w-12 h-12 rounded-full object-cover"
                 />
               )}
               <div>
-                <p className="font-medium text-teal-900">{appointmentData.selectedDoctor.name}</p>
-                <p className="text-sm text-teal-700">{appointmentData.selectedDoctor.specialty}</p>
+                <p className="font-medium text-teal-900">{doctorDisplayName(appointmentData.selectedDoctor)}</p>
+                <p className="text-sm text-teal-700">{doctorSpecializationLabel(appointmentData.selectedDoctor)}</p>
               </div>
             </div>
           </div>

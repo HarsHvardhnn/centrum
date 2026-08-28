@@ -156,7 +156,11 @@ const DemographicsForm = ({
 
   // Get current phone code from form data, external props, or default to +48
   const currentPhoneCode = formData.phoneCode || selectedPhoneCode || "+48";
-  const currentCountry = phoneCountryCodes.find(c => c.code === currentPhoneCode) || phoneCountryCodes[0];
+  const defaultCountry =
+    phoneCountryCodes.find((c) => c.default || c.code === "+48") ||
+    phoneCountryCodes[0];
+  const currentCountry =
+    phoneCountryCodes.find((c) => c.code === currentPhoneCode) || defaultCountry;
 
   // Ensure phone field is always up to date with current phone code and mobile number
   useEffect(() => {
@@ -417,7 +421,7 @@ const DemographicsForm = ({
                 className="w-full h-[42px] px-3 border border-gray-300 rounded-l-md border-r-0 bg-gray-50 text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
               >
                 <span className="flex items-center">
-                  <span className="mr-1">{currentCountry.flag}</span>
+                  <span className="mr-1"><FlagIcon countryCode={currentCountry.flag} className="w-4 h-4" /></span>
                   <span className="text-xs">{currentCountry.code}</span>
                 </span>
                 <svg className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -467,7 +471,7 @@ const DemographicsForm = ({
             </p>
           ) : null}
           <p className="mt-1 text-xs text-gray-500">
-            <span className="inline-block mr-1 align-middle">{currentCountry.flag}</span>
+            <span className="inline-block mr-1 align-middle"><FlagIcon countryCode={currentCountry.flag} className="w-3 h-3 inline" /></span>
             <span className="font-medium text-gray-700">{currentCountry.country}</span> - {currentCountry.maxLength} cyfr
           </p>
         </div>

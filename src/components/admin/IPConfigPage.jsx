@@ -30,6 +30,8 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { toast } from 'sonner';
 import { apiCaller } from '../../utils/axiosInstance';
 import { useLoader } from '../../context/LoaderContext';
+import { readListState, writeListState, useListScrollRestore } from '../../hooks/usePersistedListState';
+import ConfirmDialog from '../UtilComponents/ConfirmDialog';
 
 const IPConfigPage = () => {
   const { showLoader, hideLoader } = useLoader();
@@ -39,14 +41,15 @@ const IPConfigPage = () => {
   const [statistics, setStatistics] = useState({});
   const [currentIp, setCurrentIp] = useState(null);
   const [selectedIps, setSelectedIps] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const savedIp = readListState("admin-ip-config") || {};
+  const [searchTerm, setSearchTerm] = useState(savedIp.searchTerm || '');
+  const [filterStatus, setFilterStatus] = useState(savedIp.filterStatus || 'all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [editingIp, setEditingIp] = useState(null);
   const [pagination, setPagination] = useState({
-    currentPage: 1,
+    currentPage: Number(savedIp.currentPage) > 0 ? Number(savedIp.currentPage) : 1,
     totalPages: 1,
     totalItems: 0,
     itemsPerPage: 10
@@ -64,6 +67,7 @@ const IPConfigPage = () => {
     updatedAt: null
   });
   const [toggling, setToggling] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   // Form data for add/edit
   const [formData, setFormData] = useState({
@@ -89,6 +93,16 @@ const IPConfigPage = () => {
     checkCurrentIP();
     loadRestrictionSettings();
   }, [pagination.currentPage, searchTerm, filterStatus]);
+
+  useEffect(() => {
+    writeListState("admin-ip-config", {
+      searchTerm,
+      filterStatus,
+      currentPage: pagination.currentPage,
+    });
+  }, [searchTerm, filterStatus, pagination.currentPage]);
+
+  useListScrollRestore("admin-ip-config", ipList.length > 0);
 
   // API calls
   const loadIPList = async () => {
@@ -181,19 +195,7 @@ const IPConfigPage = () => {
     }
   };
 
-  const toggleRestrictions = async () => {
-    if (!restrictionSettings.isEnabled) {
-      // Enabling restrictions - show confirmation
-      if (!confirm('Czy na pewno chcesz włączyć ograniczenia IP? To może zablokować dostęp niektórym użytkownikom.')) {
-        return;
-      }
-    } else {
-      // Disabling restrictions - show warning
-      if (!confirm('Czy na pewno chcesz wyłączyć ograniczenia IP? To pozwoli na dostęp z wszystkich adresów IP.')) {
-        return;
-      }
-    }
-
+  const applyToggleRestrictions = async () => {
     setToggling(true);
     try {
       const response = await apiCaller('POST', '/api/ip-restrictions/settings/toggle',{test:"no"});
@@ -207,6 +209,26 @@ const IPConfigPage = () => {
     } finally {
       setToggling(false);
     }
+  };
+
+  const toggleRestrictions = () => {
+    if (!restrictionSettings.isEnabled) {
+      setConfirmDialog({
+        title: "Włączyć ograniczenia IP?",
+        message: "Czy na pewno chcesz włączyć ograniczenia IP? To może zablokować dostęp niektórym użytkownikom.",
+        confirmLabel: "Włącz",
+        danger: true,
+        onConfirm: applyToggleRestrictions,
+      });
+      return;
+    }
+    setConfirmDialog({
+      title: "Wyłączyć ograniczenia IP?",
+      message: "Czy na pewno chcesz wyłączyć ograniczenia IP? To pozwoli na dostęp z wszystkich adresów IP.",
+      confirmLabel: "Wyłącz",
+      danger: true,
+      onConfirm: applyToggleRestrictions,
+    });
   };
 
   const updateRestrictionSettings = async () => {
@@ -296,24 +318,27 @@ const IPConfigPage = () => {
     }
   };
 
-  const handleDeleteIP = async (id) => {
-    if (!confirm('Czy na pewno chcesz usunąć ten adres IP?')) return;
-
-    try {
-      showLoader();
-      const response = await apiCaller('DELETE', `/api/ip-restrictions/${id}`);
-      
-      if (response.data.success) {
-        toast.success('Adres IP został usunięty pomyślnie');
-        loadIPList();
-        loadStatistics();
-      }
-    } catch (error) {
-      console.error('Error deleting IP:', error);
-      toast.error(error.response?.data?.message || 'Nie udało się usunąć adresu IP');
-    } finally {
-      hideLoader();
-    }
+  const handleDeleteIP = (id) => {
+    setConfirmDialog({
+      title: "Usunąć adres IP?",
+      message: "Czy na pewno chcesz usunąć ten adres IP?",
+      onConfirm: async () => {
+        try {
+          showLoader();
+          const response = await apiCaller('DELETE', `/api/ip-restrictions/${id}`);
+          if (response.data.success) {
+            toast.success('Adres IP został usunięty pomyślnie');
+            loadIPList();
+            loadStatistics();
+          }
+        } catch (error) {
+          console.error('Error deleting IP:', error);
+          toast.error(error.response?.data?.message || 'Nie udało się usunąć adresu IP');
+        } finally {
+          hideLoader();
+        }
+      },
+    });
   };
 
   const handleBulkAction = async (action) => {
@@ -323,28 +348,34 @@ const IPConfigPage = () => {
     }
 
     const actionText = action === 'activate' ? 'aktywować' : action === 'deactivate' ? 'dezaktywować' : 'usunąć';
-    if (!confirm(`Czy na pewno chcesz ${actionText} ${selectedIps.length} wybranych adresów IP?`)) return;
+    setConfirmDialog({
+      title: action === 'activate' ? "Aktywować adresy IP?" : action === 'deactivate' ? "Dezaktywować adresy IP?" : "Usunąć adresy IP?",
+      message: `Czy na pewno chcesz ${actionText} ${selectedIps.length} wybranych adresów IP?`,
+      confirmLabel: action === 'activate' ? "Aktywuj" : action === 'deactivate' ? "Dezaktywuj" : "Usuń",
+      danger: action === 'delete' || action === 'usunąć' || action !== 'activate',
+      onConfirm: async () => {
+        try {
+          showLoader();
+          const response = await apiCaller('POST', '/api/ip-restrictions/bulk', {
+            action,
+            ids: selectedIps
+          });
 
-    try {
-      showLoader();
-      const response = await apiCaller('POST', '/api/ip-restrictions/bulk', {
-        action,
-        ids: selectedIps
-      });
-
-      if (response.data.success) {
-        const successText = action === 'activate' ? 'aktywowano' : action === 'deactivate' ? 'dezaktywowano' : 'usunięto';
-        toast.success(`Pomyślnie ${successText} ${selectedIps.length} adresów IP`);
-        setSelectedIps([]);
-        loadIPList();
-        loadStatistics();
-      }
-    } catch (error) {
-      console.error(`Error performing bulk ${action}:`, error);
-      toast.error(error.response?.data?.message || `Nie udało się ${actionText} adresów IP`);
-    } finally {
-      hideLoader();
-    }
+          if (response.data.success) {
+            const successText = action === 'activate' ? 'aktywowano' : action === 'deactivate' ? 'dezaktywowano' : 'usunięto';
+            toast.success(`Pomyślnie ${successText} ${selectedIps.length} adresów IP`);
+            setSelectedIps([]);
+            loadIPList();
+            loadStatistics();
+          }
+        } catch (error) {
+          console.error(`Error performing bulk ${action}:`, error);
+          toast.error(error.response?.data?.message || `Nie udało się ${actionText} adresów IP`);
+        } finally {
+          hideLoader();
+        }
+      },
+    });
   };
 
   const resetForm = () => {
@@ -1161,6 +1192,15 @@ const IPConfigPage = () => {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={Boolean(confirmDialog)}
+        title={confirmDialog?.title}
+        message={confirmDialog?.message}
+        confirmLabel={confirmDialog?.confirmLabel}
+        danger={confirmDialog?.danger !== false}
+        onConfirm={confirmDialog?.onConfirm}
+        onClose={() => setConfirmDialog(null)}
+      />
     </div>
   );
 };

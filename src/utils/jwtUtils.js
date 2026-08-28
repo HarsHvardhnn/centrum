@@ -31,18 +31,58 @@ export const getTokenExpiry = (token) => {
 };
 
 /**
+ * Get signed time until token expires in milliseconds (negative if already expired).
+ * @param {string} token - JWT token string
+ * @returns {number|null} - ms until expiry, or null if token invalid / missing exp
+ */
+export const getMsUntilExpiry = (token) => {
+  const expiryTime = getTokenExpiry(token);
+  if (!expiryTime) return null;
+  return expiryTime - Date.now();
+};
+
+const DEFAULT_JWT_WARNING_MS = 5 * 60 * 1000;
+const SHORT_JWT_WARNING_MS = 2 * 60 * 1000; // ≤30m / under 1h access tokens
+const LONG_JWT_THRESHOLD_MS = 60 * 60 * 1000; // 1h+
+
+/**
+ * How long before access-token expiry the “session ending” modal should appear.
+ * - JWT under 1 hour (e.g. 5m, 30m): warn at last 2 minutes
+ * - JWT 1 hour or longer: warn at last 5 minutes
+ * Always capped below token lifetime so “Przedłuż sesję” can clear the modal.
+ */
+export const getJwtWarningThresholdMs = (token) => {
+  const decoded = decodeToken(token);
+  if (!decoded?.exp) return SHORT_JWT_WARNING_MS;
+
+  const lifetimeMs =
+    typeof decoded.iat === "number"
+      ? Math.max(0, (decoded.exp - decoded.iat) * 1000)
+      : Math.max(0, decoded.exp * 1000 - Date.now());
+
+  if (lifetimeMs <= 0) return SHORT_JWT_WARNING_MS;
+
+  const preferred =
+    lifetimeMs >= LONG_JWT_THRESHOLD_MS
+      ? DEFAULT_JWT_WARNING_MS
+      : SHORT_JWT_WARNING_MS;
+
+  // Never warn for the whole lifetime (extend must buy quiet time)
+  const maxWarn = Math.max(30_000, lifetimeMs - 30_000);
+  return Math.min(preferred, maxWarn);
+};
+
+export { DEFAULT_JWT_WARNING_MS };
+
+/**
  * Get time until token expires in milliseconds
  * @param {string} token - JWT token string
  * @returns {number|null} - Time until expiry in milliseconds or null if invalid/expired
  */
 export const getTimeUntilExpiry = (token) => {
-  const expiryTime = getTokenExpiry(token);
-  if (!expiryTime) return null;
-  
-  const currentTime = Date.now();
-  const timeUntilExpiry = expiryTime - currentTime;
-  
-  // Return null if already expired
+  const timeUntilExpiry = getMsUntilExpiry(token);
+  if (timeUntilExpiry === null) return null;
+  // Return null if already expired (legacy callers)
   return timeUntilExpiry > 0 ? timeUntilExpiry : null;
 };
 

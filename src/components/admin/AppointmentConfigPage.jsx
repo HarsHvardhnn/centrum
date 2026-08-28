@@ -3,6 +3,12 @@ import { toast } from "sonner";
 import { Save, RotateCcw, AlertCircle, Info } from "lucide-react";
 import { useLoader } from "../../context/LoaderContext";
 import appointmentConfigService from "../../helpers/appointmentConfigHelper";
+import {
+  extractAppointmentConfigValue,
+  inactivityMinutesToMs,
+  parseInactivityTimeoutMinutes,
+} from "../../utils/inactivityConfig";
+import { notifyInactivityTimeoutUpdated } from "../../utils/sessionEvents";
 
 const AppointmentConfigPage = () => {
   const { showLoader, hideLoader } = useLoader();
@@ -687,11 +693,15 @@ const AppointmentConfigPage = () => {
     fetchConfigurations();
   }, []);
 
-  // Track changes to determine if save button should be enabled
+  // Track changes: compare edited values to last loaded/saved configs
   useEffect(() => {
-    const hasAnyChanges = Object.keys(editedValues).length > 0;
+    const hasAnyChanges = configs.some(
+      (config) =>
+        editedValues[config.key] !== undefined &&
+        editedValues[config.key] !== config.value
+    );
     setHasChanges(hasAnyChanges);
-  }, [editedValues]);
+  }, [editedValues, configs]);
 
   const fetchConfigurations = async () => {
     try {
@@ -738,25 +748,44 @@ const AppointmentConfigPage = () => {
     }));
   };
 
+  const applySavedConfig = (updated) => {
+    if (!updated?.key) return;
+    const key = updated.key;
+    const value =
+      updated.value !== undefined
+        ? updated.value
+        : extractAppointmentConfigValue(updated);
+    if (value === undefined) return;
+
+    setConfigs((prev) =>
+      prev.map((config) => (config.key === key ? { ...config, value } : config))
+    );
+    setEditedValues((prev) => ({ ...prev, [key]: value }));
+
+    if (key === "INACTIVITY_TIMEOUT") {
+      const minutes = parseInactivityTimeoutMinutes(value, 0);
+      const ms = inactivityMinutesToMs(minutes);
+      if (ms > 0) notifyInactivityTimeoutUpdated(ms);
+    }
+  };
+
   // Save all changed configuration values
   const handleSaveAll = async () => {
     try {
       showLoader();
       setError(null);
       
-      const changedKeys = Object.keys(editedValues);
-      if (changedKeys.length === 0) {
-        toast.info("Brak zmian do zapisania");
-        return;
-      }
-      
-      const savePromises = changedKeys.map(key => {
-        const config = configs.find(c => c.key === key);
-        if (config && config.value !== editedValues[key]) {
-          return appointmentConfigService.updateConfig(key, { value: editedValues[key] });
-        }
-        return null;
-      }).filter(Boolean);
+      const savePromises = configs
+        .filter(
+          (config) =>
+            editedValues[config.key] !== undefined &&
+            editedValues[config.key] !== config.value
+        )
+        .map((config) =>
+          appointmentConfigService.updateConfig(config.key, {
+            value: editedValues[config.key],
+          })
+        );
       
       if (savePromises.length === 0) {
         toast.info("Brak zmian do zapisania");
@@ -767,12 +796,11 @@ const AppointmentConfigPage = () => {
       const allSuccessful = results.every(result => result.success);
       
       if (allSuccessful) {
+        results.forEach((result) => applySavedConfig(result?.data || result));
         toast.success("Wszystkie zmiany zostały zapisane");
-        fetchConfigurations(); // Refresh data
       } else {
         toast.error("Nie udało się zapisać niektórych zmian");
-        // Refresh to get current state
-        fetchConfigurations();
+        await fetchConfigurations();
       }
     } catch (err) {
       console.error("Error saving configurations:", err);
@@ -791,19 +819,7 @@ const AppointmentConfigPage = () => {
       
       if (response.success) {
         toast.success(`Konfiguracja ${key} została zresetowana do wartości domyślnej`);
-        
-        // Update local state
-        setConfigs(prev => 
-          prev.map(config => 
-            config.key === key ? { ...config, value: response.data.value } : config
-          )
-        );
-        
-        // Update edited values
-        setEditedValues(prev => ({
-          ...prev,
-          [key]: response.data.value
-        }));
+        applySavedConfig(response.data);
       } else {
         toast.error(`Nie udało się zresetować konfiguracji ${key}`);
       }

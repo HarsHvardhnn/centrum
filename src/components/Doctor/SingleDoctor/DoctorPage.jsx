@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import DoctorDashboard from "./DoctorDashboard";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useLoader } from "../../../context/LoaderContext";
 import doctorService from "../../../helpers/doctorHelper";
 import AppointmentFormModal from "../Appointments/AddAppointmentForm";
@@ -11,23 +11,35 @@ import { toast } from "sonner";
 import appointmentHelper from "../../../helpers/appointmentHelper";
 import { formatDateToYYYYMMDD } from "../../../utils/formatDate";
 import { useUser } from "../../../context/userContext";
+import { readListState, writeListState, useListScrollRestore } from "../../../hooks/usePersistedListState";
+import { doctorVisitsPath, isUsableRouteId, pickMongoDoctorId } from "../../../utils/useNavigate";
 
 function DoctorsPage() {
   const router = useParams();
   const navigate = useNavigate();
   const { showLoader, hideLoader } = useLoader();
+  const doctorListKey = `doctor-day-${router.id || "unknown"}`;
+  const savedDoctorDay = readListState(doctorListKey) || {};
   const [error, setError] = useState(null);
   const [doctorInfo, setDoctorInfo] = useState({});
   const [patients, setPatients] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    if (savedDoctorDay.selectedDate) {
+      const parsed = new Date(savedDoctorDay.selectedDate);
+      if (!Number.isNaN(parsed.getTime())) return parsed;
+    }
+    return new Date();
+  });
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [appointmentData, setAppointmentData] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientDetails, setPatientDetails] = useState(null);
   const [appointmentId, setAppointmentId] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    Number(savedDoctorDay.currentPage) > 0 ? Number(savedDoctorDay.currentPage) : 1
+  );
   const [totalPatients, setTotalPatients] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(savedDoctorDay.searchQuery || "");
   const [dailySummary, setDailySummary] = useState({ liczbaWizyt: 0, pozostaloWizyt: 0 });
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [checkInAppointment, setCheckInAppointment] = useState(null);
@@ -36,6 +48,29 @@ function DoctorsPage() {
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
   const itemsPerPage = 10;
   const { user } = useUser();
+  const loadGenerationRef = useRef(0);
+  const doctorInfoRef = useRef(doctorInfo);
+  doctorInfoRef.current = doctorInfo;
+  const [listLoading, setListLoading] = useState(false);
+
+  useEffect(() => {
+    if (user?.role !== "doctor") return;
+    const ownPath = doctorVisitsPath(user);
+    const param = router.id;
+    if (!isUsableRouteId(param) && ownPath.startsWith("/lekarze/wizyty/")) {
+      navigate(ownPath, { replace: true });
+    }
+  }, [user, router.id, navigate]);
+
+  useEffect(() => {
+    writeListState(doctorListKey, {
+      selectedDate: formatDateToYYYYMMDD(selectedDate),
+      currentPage,
+      searchQuery,
+    });
+  }, [doctorListKey, selectedDate, currentPage, searchQuery]);
+
+  useListScrollRestore(doctorListKey, patients.length > 0 || !!doctorInfo?.id);
 
   /** Count appointments by status. Excludes cancelled. Liczba wizyt = Zarezerwowana + Zameldowana + Zakończona; Pozostało = Zarezerwowana + Zameldowana. Backend may return liczbaWizyt/pozostaloWizyt for full-day accuracy (when list is paginated). */
   const computeDailySummary = (list, fromBackend) => {
@@ -58,55 +93,26 @@ function DoctorsPage() {
     return { liczbaWizyt, pozostaloWizyt };
   };
 
-  useEffect(() => {
-    const fetchDoctorData = async () => {
-      try {
-        const doctorId = router.id;
-        if (!doctorId) return;
-
-        showLoader();
-        const dateStr = formatDateToYYYYMMDD(selectedDate);
-        const response = await doctorService.getDoctorById(doctorId, dateStr);
-
-        if (response.success && response.doctor) {
-          const transformedData = transformToDoctorInfo(
-            response.doctor,
-            response.shiftsForDate,
-            selectedDate
-          );
-          setDoctorInfo(transformedData);
-        } else {
-          setError("błąd serwera");
-        }
-      } catch (err) {
-        console.error("Error fetching doctor data:", err);
-        setError("Error loading doctor data");
-      } finally {
-        hideLoader();
-      }
-    };
-
-    fetchDoctorData();
-  }, [router.id, selectedDate, showLoader, hideLoader]);
-
-  useEffect(() => {
-    if (doctorInfo && doctorInfo.id) {
-      fetchPatientsByDoctor(doctorInfo.id);
+  const applyAppointmentsResponse = (response) => {
+    if (!response?.success) {
+      console.error("Failed to load patients data");
+      return;
     }
-  }, [selectedDate, doctorInfo, currentPage, searchQuery]);
-
-  // New effect to fetch patient details when a patient is selected
-  useEffect(() => {
-    if (appointmentId) {
-      // Find the selected appointment from patients array
-      const selectedAppointment = patients.find(p => p.id === appointmentId);
-      if (selectedAppointment) {
-        fetchPatientDetails(selectedAppointment.patient_id, appointmentId);
-      }
-    } else {
-      setPatientDetails(null);
-    }
-  }, [appointmentId, patients]);
+    const list = response.data || [];
+    const filtered = nonCancelledAppointments(list);
+    setPatients(filtered);
+    const total =
+      response.total != null && filtered.length === list.length
+        ? response.total
+        : filtered.length;
+    setTotalPatients(total);
+    setDailySummary(
+      computeDailySummary(filtered, {
+        liczbaWizyt: response.liczbaWizyt,
+        pozostaloWizyt: response.pozostaloWizyt,
+      })
+    );
+  };
 
   /** Exclude cancelled/canceled so list and counts do not include them. */
   const nonCancelledAppointments = (list) => {
@@ -118,50 +124,127 @@ function DoctorsPage() {
     });
   };
 
+  const loadDoctorDay = useCallback(
+    async ({ fullScreen = false } = {}) => {
+      const doctorId = pickMongoDoctorId(
+        user?.role === "doctor" ? user?.id : null,
+        user?.role === "doctor" ? user?._id : null,
+        isUsableRouteId(router.id) ? router.id : null,
+        user?.role === "doctor" ? user?.d_id : null
+      );
+      if (!doctorId) return;
+
+      const generation = ++loadGenerationRef.current;
+      if (fullScreen) showLoader();
+      else setListLoading(true);
+
+      const dateStr = formatDateToYYYYMMDD(selectedDate);
+      try {
+        const [doctorResponse, appointmentsResponse] = await Promise.all([
+          doctorService.getDoctorById(doctorId, dateStr),
+          appointmentHelper.getDoctorAppointments(
+            doctorId,
+            dateStr,
+            dateStr,
+            "all",
+            currentPage,
+            itemsPerPage,
+            searchQuery,
+            true
+          ),
+        ]);
+
+        if (generation !== loadGenerationRef.current) return;
+
+        if (doctorResponse.success && doctorResponse.doctor) {
+          setDoctorInfo(
+            transformToDoctorInfo(
+              doctorResponse.doctor,
+              doctorResponse.shiftsForDate,
+              selectedDate
+            )
+          );
+        } else {
+          setError("błąd serwera");
+        }
+
+        applyAppointmentsResponse(appointmentsResponse);
+      } catch (err) {
+        if (generation !== loadGenerationRef.current) return;
+        console.error("Error loading doctor day:", err);
+        setError("Error loading doctor data");
+      } finally {
+        if (generation === loadGenerationRef.current) {
+          if (fullScreen) hideLoader();
+          setListLoading(false);
+        }
+      }
+    },
+    [
+      router.id,
+      user?.d_id,
+      user?.id,
+      user?._id,
+      selectedDate,
+      currentPage,
+      searchQuery,
+      showLoader,
+      hideLoader,
+    ]
+  );
+
+  useEffect(() => {
+    const hasDoctor = Boolean(doctorInfoRef.current?.id);
+    loadDoctorDay({ fullScreen: !hasDoctor });
+  }, [loadDoctorDay]);
+
   const fetchPatientsByDoctor = async (doctorId) => {
+    const id = pickMongoDoctorId(
+      doctorId,
+      user?.role === "doctor" ? user?.id : null,
+      user?.role === "doctor" ? user?._id : null,
+      isUsableRouteId(router.id) ? router.id : null,
+      user?.role === "doctor" ? user?.d_id : null
+    );
+    if (!id) return;
+    const generation = ++loadGenerationRef.current;
+    setListLoading(true);
     try {
-      showLoader();
       const response = await appointmentHelper.getDoctorAppointments(
-        doctorId,
+        id,
         formatDateToYYYYMMDD(selectedDate),
         formatDateToYYYYMMDD(selectedDate),
         "all",
         currentPage,
         itemsPerPage,
         searchQuery,
-        true // excludeCancelled – backend may support it; we also filter below
+        true
       );
-
-      if (response && response.success) {
-        const list = response.data || [];
-        const filtered = nonCancelledAppointments(list);
-        setPatients(filtered);
-        // Use filtered count so "X wizyta dzisiaj" and list stay in sync (backend may return total excluding cancelled when excludeCancelled is supported)
-        const total = response.total != null && filtered.length === list.length
-          ? response.total
-          : filtered.length;
-        setTotalPatients(total);
-        const summary = computeDailySummary(filtered, {
-          liczbaWizyt: response.liczbaWizyt,
-          pozostaloWizyt: response.pozostaloWizyt,
-        });
-        setDailySummary(summary);
-      } else {
-        console.error("Failed to load patients data");
-      }
+      if (generation !== loadGenerationRef.current) return;
+      applyAppointmentsResponse(response);
     } catch (err) {
+      if (generation !== loadGenerationRef.current) return;
       console.error("Error fetching patients data:", err);
       setError("Error loading patients data");
     } finally {
-      hideLoader();
+      if (generation === loadGenerationRef.current) setListLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (appointmentId) {
+      const selectedAppointment = patients.find((p) => p.id === appointmentId);
+      if (selectedAppointment) {
+        fetchPatientDetails(selectedAppointment.patient_id, appointmentId);
+      }
+    } else {
+      setPatientDetails(null);
+    }
+  }, [appointmentId, patients]);
 
   // New function to fetch patient details
   const fetchPatientDetails = async (patientId, appointmentId) => {
     try {
-      showLoader();
-      // Make API call to get patient details using the patient service
       const response = await doctorService.getPatientDetailsAndReports(
         patientId,
         appointmentId
@@ -176,8 +259,6 @@ function DoctorsPage() {
     } catch (err) {
       console.error("Error fetching patient details:", err);
       toast.error("Wystąpił błąd");
-    } finally {
-      hideLoader();
     }
   };
 
@@ -330,6 +411,21 @@ function DoctorsPage() {
     if (doctorInfo?.id) fetchPatientsByDoctor(doctorInfo.id);
   };
 
+  const handleDateSelect = (date) => {
+    setSelectedDate((prev) => {
+      if (
+        prev &&
+        date &&
+        formatDateToYYYYMMDD(prev) === formatDateToYYYYMMDD(date)
+      ) {
+        return prev;
+      }
+      return date;
+    });
+    setAppointmentId(null);
+    setCurrentPage(1);
+  };
+
   return (
     <>
       <DoctorDashboard
@@ -341,8 +437,9 @@ function DoctorsPage() {
         patientDetails={patientDetails}
         onPatientSelect={handlePatientSelect}
         setAppointmentId={setAppointmentId}
-        onDateSelect={setSelectedDate}
+        onDateSelect={handleDateSelect}
         selectedDate={selectedDate}
+        isLoading={listLoading}
         breadcrumbs={[
           { label: "Panel główny", onClick: () => navigate("/administracja") },
           { label: "Wizyty lekarskie", onClick: null },

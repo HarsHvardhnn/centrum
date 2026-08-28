@@ -31,11 +31,9 @@ const Header = () => {
   // Check if user is logged in and has the correct role
   useEffect(() => {
     if (user && user.role !== "patient") {
-      // Clear localStorage and redirect to login if user role is not patient
-      localStorage.clear();
-      navigate("/logowanie");
+      logout();
     }
-  }, [user, navigate]);
+  }, [user, logout]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -52,10 +50,8 @@ const Header = () => {
   }, []);
 
   const handleLogout = () => {
-    // Clear user data from context and localStorage
+    // Clear user data from context (endSession clears refresh cookie + redirects)
     logout();
-    localStorage.clear();
-    navigate("/logowanie");
   };
 
   // Helper function to check if a link is active

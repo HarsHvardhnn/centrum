@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
   Calendar,
@@ -23,7 +24,6 @@ import appointmentHelper from "../../helpers/appointmentHelper";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 import { useUser } from "../../context/userContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useLoader } from "../../context/LoaderContext";
 import { toast } from "sonner";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
 import billingHelper from "../../helpers/billingHelper";
@@ -44,6 +44,11 @@ import {
 import BillingConfirmationModal from "../Billing/BillingConfirmationModal";
 import RescheduleModal from "./RescheduleModal";
 import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
+import { queryKeys } from "../../lib/queryKeys";
+import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
+import { formatPersonName } from "../../utils/formatPersonName";
+import { formatClinicDate } from "../../utils/dateUtils";
+import { doctorVisitsPath } from "../../utils/useNavigate";
 
 const MedicalDashboard = () => {
   const { user } = useUser();
@@ -64,71 +69,63 @@ const MedicalDashboard = () => {
 
 // Doctor Appointment Chart Component (Wizyty lekarskie – tiles + date range only)
 const DoctorAppointmentChart = () => {
-  const { showLoader, hideLoader } = useLoader();
   const { user } = useUser();
-  const [doctors, setDoctors] = useState([]);
-  const [selectedDoctor, setSelectedDoctor] = useState("");
-  const [timeframe, setTimeframe] = useState("month");
-  const [statsData, setStatsData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const savedChart = readListState("admin-dashboard-chart") || {};
+  const [selectedDoctor, setSelectedDoctor] = useState(savedChart.selectedDoctor || "");
+  const [timeframe, setTimeframe] = useState(savedChart.timeframe || "month");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        setLoading(true);
-        showLoader();
-        const response = await doctorStatsHelper.getDoctorsList();
-        if (response.success) {
-          setDoctors(response.data || []);
-          if (user?.role === "doctor" && (user?._id || user?.id)) {
-            setSelectedDoctor(user._id || user.id);
-          } else if (response.data?.length > 0) {
-            setSelectedDoctor(response.data[0]._id);
-          }
-        } else {
-          setError("Nie udało się pobrać listy lekarzy");
-        }
-      } catch (err) {
-        console.error("Error fetching doctors:", err);
-        setError("Błąd podczas pobierania listy lekarzy");
-      } finally {
-        setLoading(false);
-        hideLoader();
-      }
-    };
-    fetchDoctors();
-  }, []);
+  const {
+    data: doctorsRaw,
+    isLoading: doctorsLoading,
+    error: doctorsError,
+  } = useQuery({
+    queryKey: queryKeys.doctorsList,
+    queryFn: async () => {
+      const response = await doctorStatsHelper.getDoctorsList();
+      const list = response?.data ?? response?.doctors ?? response;
+      return Array.isArray(list) ? list : [];
+    },
+  });
+
+  const doctors = Array.isArray(doctorsRaw) ? doctorsRaw : [];
 
   useEffect(() => {
-    if (selectedDoctor) {
-      fetchStatistics();
-    } else {
-      setStatsData(null);
+    if (!doctors.length) return;
+    if (user?.role === "doctor" && (user?._id || user?.id)) {
+      setSelectedDoctor(user._id || user.id);
+    } else if (!selectedDoctor) {
+      setSelectedDoctor(doctors[0]._id);
     }
+  }, [doctors, user, selectedDoctor]);
+
+  useEffect(() => {
+    writeListState("admin-dashboard-chart", { selectedDoctor, timeframe });
   }, [selectedDoctor, timeframe]);
 
-  const fetchStatistics = async () => {
-    if (!selectedDoctor) return;
-    try {
-      setLoading(true);
-      setError(null);
-      showLoader();
-      const response = await doctorStatsHelper.getAppointmentStats(selectedDoctor, timeframe);
-      if (response?.success && response?.data) {
-        setStatsData(response.data);
-      } else {
-        setError("Nie udało się pobrać statystyk");
-      }
-    } catch (err) {
-      console.error("Error fetching appointment stats:", err);
-      setError(err.response?.data?.message || "Błąd podczas pobierania statystyk");
-      setStatsData(null);
-    } finally {
-      setLoading(false);
-      hideLoader();
-    }
+  const {
+    data: statsResponse,
+    isLoading: statsLoading,
+    isFetching: statsFetching,
+    error: statsError,
+    refetch: refetchStatistics,
+  } = useQuery({
+    queryKey: queryKeys.dashboardStats(selectedDoctor, timeframe),
+    queryFn: () => doctorStatsHelper.getAppointmentStats(selectedDoctor, timeframe),
+    enabled: !!selectedDoctor,
+  });
+
+  const statsData = statsResponse?.success ? statsResponse.data : null;
+  const loading = doctorsLoading || ((statsLoading || statsFetching) && !statsData);
+  const error =
+    doctorsError
+      ? "Błąd podczas pobierania listy lekarzy"
+      : statsError
+        ? (statsError.response?.data?.message || "Błąd podczas pobierania statystyk")
+        : null;
+
+  const fetchStatistics = () => {
+    refetchStatistics();
   };
 
   const getSelectedDoctorName = () => {
@@ -369,9 +366,10 @@ const DoctorAppointmentChart = () => {
 // Patient List Component
 const PatientList = () => {
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const [selectedPatients, setSelectedPatients] = useState([]);
   const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [actionLoading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showCheckin, setShowCheckin] = useState(false);
@@ -395,19 +393,23 @@ const PatientList = () => {
 
   const [sendSMSNotification, setSendSMSNotification] = useState(false);
   const [sendEmailNotification, setSendEmailNotification] = useState(false);
+  const savedDashList = readListState("admin-dashboard-visits") || {};
   const [pagination, setPagination] = useState({
-    currentPage: 1,
+    currentPage: Number(savedDashList.currentPage) > 0 ? Number(savedDashList.currentPage) : 1,
     total: 0,
     pages: 1,
   });
   const [refreshCounter, setRefreshCounter] = useState(0);
   /** Status filter for today's list: 'all' | 'reserved' | 'completed' | 'cancelled' (sent to API). */
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(savedDashList.statusFilter || "all");
   /** Date for the list (YYYY-MM-DD); default today. */
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(
+    savedDashList.selectedDate || new Date().toISOString().split("T")[0]
+  );
   /** When true, show only patient-less (visit-only) appointments. */
-  const [patientLessOnly, setPatientLessOnly] = useState(false);
+  const [patientLessOnly, setPatientLessOnly] = useState(!!savedDashList.patientLessOnly);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
+  const skipDashPageReset = useSkipFirstEffect();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -421,7 +423,7 @@ const PatientList = () => {
   /** Receptionist goes to edit patient (Settings); admin/doctor go to appointment card. */
   const getPatientViewUrl = (patientId, appointmentId) => {
     if (user?.role === "receptionist") {
-      return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname)}`;
+      return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`;
     }
     return `/szczegoly-pacjenta/${patientId}${appointmentId ? `?appointmentId=${appointmentId}` : ""}`;
   };
@@ -450,27 +452,18 @@ const PatientList = () => {
       .finally(() => setVisitHistoryLoading(false));
   };
 
+  const restoredVisitHistoryRef = useRef(false);
+  useEffect(() => {
+    if (restoredVisitHistoryRef.current) return;
+    const savedHistory = savedDashList.visitHistory;
+    if (!savedHistory?.id) return;
+    restoredVisitHistoryRef.current = true;
+    openVisitHistoryModal(savedHistory.id, savedHistory.name);
+  }, []);
+
   const formatPolishDate = (dateValue) => {
     if (!dateValue) return "—";
-    const s = String(dateValue).trim();
-    if (!s) return "—";
-
-    // Backend sends: DD.MM.YYYY (e.g. 20.03.2026)
-    const m = s.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-    if (m) {
-      const day = Number(m[1]);
-      const monthIndex = Number(m[2]) - 1;
-      const year = Number(m[3]);
-      const d = new Date(year, monthIndex, day);
-      if (!Number.isNaN(d.getTime())) {
-        return d.toLocaleDateString("pl-PL");
-      }
-    }
-
-    // Fallback: try native parsing (ISO, etc.)
-    const d = new Date(s);
-    if (!Number.isNaN(d.getTime())) return d.toLocaleDateString("pl-PL");
-    return s; // last resort: show raw string
+    return formatClinicDate(dateValue) || "—";
   };
 
   /** Map UI status filter to API status param (omit for 'all'). */
@@ -556,6 +549,8 @@ const PatientList = () => {
         additionalChargeNote: billingData.additionalChargeNote || "",
         totalAmount: billingData.totalAmount,
         paymentMethod: billingData.paymentMethod,
+        billedAt: billingData.billedAt,
+        invoiceId: billingData.invoiceId,
       };
 
       // Call the API to generate the bill
@@ -584,7 +579,10 @@ const PatientList = () => {
       navigate(`/administracja/rozliczenia/szczegoly/${response.data._id}`);
     } catch (error) {
       console.error("Failed to generate bill:", error);
-      toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
+      toast.error(
+        error?.response?.data?.message ||
+          "Nie udało się wygenerować rachunku. Spróbuj ponownie."
+      );
       setLoading(false);
     }
   };
@@ -602,26 +600,7 @@ const PatientList = () => {
       setSelectedAppointment(null);
       setSendSMSNotification(false);
       setSendEmailNotification(false);
-      // Refresh the patient list after cancellation (same date + status filter)
-      const apiStatus = getApiStatus();
-      const refreshParams = {
-        page: pagination.currentPage,
-        limit: 10,
-        sortBy: "date",
-        sortOrder: "desc",
-        startDate: selectedDate,
-        endDate: selectedDate,
-        ...(apiStatus && { status: apiStatus }),
-        ...(patientLessOnly && { patientLessOnly: true }),
-        ...(user?.role === "doctor" && user?.id ? { doctor: user.id } : {}),
-      };
-      const response = await patientService.getSimpliefiedAppointmentsList(refreshParams);
-      setPatients(response.appointments || []);
-      setPagination((prev) => ({
-        ...prev,
-        total: response.total ?? prev.total,
-        pages: response.pages ?? prev.pages,
-      }));
+      queryClient.invalidateQueries({ queryKey: ["dashboard-today-list"] });
     } catch (err) {
       console.error("Error canceling appointment:", err);
       setError("błąd serwera");
@@ -637,47 +616,70 @@ const PatientList = () => {
   };
 
   // Fetch patients for selected date; filter by status on backend via API params
+  const apiStatus = getApiStatus();
+  const dashListParams = {
+    page: pagination.currentPage,
+    limit: 10,
+    sortBy: "date",
+    sortOrder: "desc",
+    startDate: selectedDate,
+    endDate: selectedDate,
+    ...(apiStatus && { status: apiStatus }),
+    ...(patientLessOnly && { patientLessOnly: true }),
+    ...(user?.role === "doctor" && user?.id ? { doctor: user.id } : {}),
+  };
+
+  const {
+    data: dashListData,
+    isLoading: dashListLoading,
+    isFetching: dashListFetching,
+    error: dashListError,
+  } = useQuery({
+    queryKey: ["dashboard-today-list", dashListParams, refreshCounter],
+    queryFn: () => patientService.getSimpliefiedAppointmentsList(dashListParams),
+    placeholderData: keepPreviousData,
+  });
+
+  const loading = actionLoading || dashListLoading || (dashListFetching && patients.length === 0);
+
   useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        setLoading(true);
-        const params = {
-          page: pagination.currentPage,
-          limit: 10,
-          sortBy: "date",
-          sortOrder: "desc",
-          startDate: selectedDate,
-          endDate: selectedDate,
-        };
-        const apiStatus = getApiStatus();
-        if (apiStatus) params.status = apiStatus;
-        if (patientLessOnly) params.patientLessOnly = true;
-        if (user?.role === "doctor" && user?.id) params.doctor = user.id;
+    if (!dashListData) return;
+    setPatients(dashListData.appointments || []);
+    setPagination({
+      currentPage: dashListData.currentPage ?? pagination.currentPage,
+      total: dashListData.total ?? 0,
+      pages: dashListData.pages ?? 1,
+    });
+    setError(null);
+  }, [dashListData]);
 
-        const response = await patientService.getSimpliefiedAppointmentsList(params);
-
-        setPatients(response.appointments || []);
-        setPagination({
-          currentPage: response.currentPage ?? pagination.currentPage,
-          total: response.total ?? 0,
-          pages: response.pages ?? 1,
-        });
-        setError(null);
-      } catch (err) {
-        setError("błąd serwera");
-        console.error("Error fetching patients:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPatients();
-  }, [pagination.currentPage, user, refreshCounter, statusFilter, selectedDate, patientLessOnly]);
+  useEffect(() => {
+    if (dashListError) {
+      setError("błąd serwera");
+      console.error("Error fetching patients:", dashListError);
+    }
+  }, [dashListError]);
 
   // Reset to first page when status, date or patientLessOnly changes
   useEffect(() => {
+    if (skipDashPageReset()) return;
     setPagination((prev) => (prev.currentPage === 1 ? prev : { ...prev, currentPage: 1 }));
   }, [statusFilter, selectedDate, patientLessOnly]);
+
+  useEffect(() => {
+    writeListState("admin-dashboard-visits", {
+      statusFilter,
+      selectedDate,
+      patientLessOnly,
+      currentPage: pagination.currentPage,
+      visitHistory:
+        showVisitHistoryModal && visitHistoryPatient?.id
+          ? { id: visitHistoryPatient.id, name: visitHistoryPatient.name || "" }
+          : null,
+    });
+  }, [statusFilter, selectedDate, patientLessOnly, pagination.currentPage, showVisitHistoryModal, visitHistoryPatient]);
+
+  useListScrollRestore("admin-dashboard-visits", !dashListLoading);
 
 
   const translateSexToPolish = (sex) => {
@@ -946,7 +948,11 @@ const PatientList = () => {
       )}
 
       {loading ? (
-        <div className="p-8 text-center text-gray-500">Ładowanie pacjentów...</div>
+        <div className="p-8 space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />
+          ))}
+        </div>
       ) : error ? (
         <div className="p-8 text-center text-red-500">{error}</div>
       ) : patients.length === 0 ? (
@@ -1227,13 +1233,25 @@ const PatientList = () => {
         onClose={() => setShowBillingModal(false)}
         onConfirm={confirmBilling}
         patientServicesData={billingServices}
-        patientName={selectedAppointment?.name || selectedAppointment?.registrationData?.name || selectedAppointment?.patient?.name || "Nieznany pacjent"}
+        patientName={formatPersonName(
+          selectedAppointment?.name ||
+            selectedAppointment?.registrationData?.name ||
+            selectedAppointment?.patient?.name,
+          "Nieznany pacjent"
+        )}
         appointmentId={selectedAppointment?.id}
         patientId={selectedAppointment?.patient_id}
-        returnPath={(() => {
-          const doctorId = user?.d_id || user?.id || "";
-          return user?.role === "doctor" && doctorId ? `/lekarze/wizyty/${doctorId}` : "/lekarze";
-        })()}
+        returnPath={user?.role === "doctor" ? doctorVisitsPath(user) : "/lekarze"}
+        doctorUserId={
+          typeof selectedAppointment?.doctor === "object"
+            ? selectedAppointment?.doctor?._id ||
+              selectedAppointment?.doctor?.id ||
+              selectedAppointment?.doctor?.d_id ||
+              null
+            : selectedAppointment?.doctor ||
+              selectedAppointment?.doctorId ||
+              null
+        }
       />
 
       {/* Visit history modal */}
@@ -1345,7 +1363,7 @@ const PatientList = () => {
         message="Ta operacja jest nieodwracalna. Wizyta oraz powiązane rekordy zostaną trwale usunięte."
         onSuccess={() => {
           setDeleteDialog({ open: false, id: null });
-          fetchPatients();
+          setRefreshCounter((c) => c + 1);
         }}
       />
 
@@ -1540,55 +1558,43 @@ const ChevronDown = ({ size }) => (
 // Upcoming Appointments Component
 const UpcomingAppointments = () => {
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({
-    total: 0,
-    limit: 4,
-    totalPages: 0,
-  });
   const [showCheckin, setShowCheckin] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const limit = 4;
 
   const getPatientViewUrl = (patientId, appointmentId) => {
     if (user?.role === "receptionist") {
-      return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname)}`;
+      return `/administracja/konta?edytujPacjenta=${patientId}&returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`;
     }
     return `/szczegoly-pacjenta/${patientId}${appointmentId ? `?appointmentId=${appointmentId}` : ""}`;
   };
 
-  useEffect(() => {
-    fetchAppointments();
-  }, [page, user]);
+  const {
+    data: dashboardData,
+    isLoading: loading,
+    error: dashboardError,
+  } = useQuery({
+    queryKey: queryKeys.dashboardAppointments(page, limit),
+    queryFn: () => appointmentHelper.getAppointmentsDashboard(page, limit),
+    placeholderData: keepPreviousData,
+  });
 
-  const fetchAppointments = async () => {
-    try {
-      setLoading(true);
+  const rawList = dashboardData?.data ?? [];
+  const appointments = rawList.filter(
+    (apt) =>
+      apt.patientObjectId != null ||
+      apt.patient_id != null ||
+      apt.patientId != null ||
+      (apt.patient != null && (apt.patient.id ?? apt.patient._id))
+  );
+  const pagination = dashboardData?.pagination ?? { total: 0, limit, totalPages: 0 };
+  const error = dashboardError ? "błąd serwera" : null;
 
-      const response = await appointmentHelper.getAppointmentsDashboard(
-        page,
-        pagination.limit
-      );
-
-      const rawList = response?.data ?? [];
-      const withPatient = rawList.filter(
-        (apt) =>
-          apt.patientObjectId != null ||
-          apt.patient_id != null ||
-          apt.patientId != null ||
-          (apt.patient != null && (apt.patient.id ?? apt.patient._id))
-      );
-      setAppointments(withPatient);
-      setPagination(response?.pagination ?? { total: 0, limit: 4, totalPages: 0 });
-      setLoading(false);
-    } catch (err) {
-      console.error("Failed to fetch appointments:", err);
-      setError("błąd serwera");
-      setLoading(false);
-    }
+  const fetchAppointments = () => {
+    queryClient.invalidateQueries({ queryKey: ["dashboard-appointments"] });
   };
 
   const handleNextPage = () => {
@@ -1613,7 +1619,7 @@ const UpcomingAppointments = () => {
       fetchAppointments();
     } catch (err) {
       console.error("Failed to cancel appointment:", err);
-      setError("błąd serwera");
+      toast.error("błąd serwera");
     }
   };
 
@@ -1662,7 +1668,15 @@ const UpcomingAppointments = () => {
       </div>
 
       {loading ? (
-        <div className="text-center py-8">Ładowanie wizyt...</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-lg border border-gray-100 p-6 animate-pulse">
+              <div className="h-12 w-12 bg-gray-200 rounded-full mb-4" />
+              <div className="h-4 bg-gray-200 rounded w-2/3 mb-2" />
+              <div className="h-3 bg-gray-100 rounded w-1/2" />
+            </div>
+          ))}
+        </div>
       ) : error ? (
         <div className="text-red-500 text-center py-8">{error}</div>
       ) : appointments.length === 0 ? (

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useRef } from "react";
 import FullScreenLoader from "../components/UtilComponents/ApiLoader";
 
 
@@ -11,8 +11,10 @@ export const LoaderProvider = ({ children }) => {
     message: "Ładowanie...",
     subMessage: "Proszę poczekać, gdyż ładujemy Twoje dane",
   });
+  const visibleCountRef = useRef(0);
 
   const showLoader = useCallback((props = {}) => {
+    visibleCountRef.current += 1;
     setLoaderProps({
       type: props.type || "medical",
       message: props.message || "Ładowanie...",
@@ -22,7 +24,10 @@ export const LoaderProvider = ({ children }) => {
   }, []);
 
   const hideLoader = useCallback(() => {
-    setIsVisible(false);
+    visibleCountRef.current = Math.max(0, visibleCountRef.current - 1);
+    if (visibleCountRef.current === 0) {
+      setIsVisible(false);
+    }
   }, []);
 
   return (

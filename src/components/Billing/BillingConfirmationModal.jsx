@@ -1,9 +1,21 @@
-import { useState, useEffect } from "react";
-import { DollarSign, Plus, Trash2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { DollarSign, Plus, Trash2, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
+import billingHelper from "../../helpers/billingHelper";
 import { toast } from "sonner";
 import ServiceSelectionModal from "../Doctor/SingleDoctor/patient-details/ServiceSelectionModal";
+import { useUser } from "../../context/userContext";
+import { formatPersonName } from "../../utils/formatPersonName";
+
+function toDateInputValue(value) {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 const BillingConfirmationModal = ({
   isOpen,
@@ -15,10 +27,20 @@ const BillingConfirmationModal = ({
   patientId,
   /** When set, after generating a bill navigate here (e.g. /administracja, /pacjenci, /klinika, /lekarze/wizyty/:id) instead of billing page */
   returnPath,
+  /** Mandatory doctor settlement used by the End Visit flow. */
+  mandatory = false,
+  doctorUserId = null,
 }) => {
   //(appointmentId,patientId, "patientServicesData");
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useUser();
+  const isDoctorUser = String(user?.role || "").toLowerCase() === "doctor";
+  const isDoctorSettlement = isDoctorUser || mandatory;
+  // Visit settlement (historia wizyt, patient page, dashboard): services,
+  // extras, discount only. Invoice/tax/payment belong on Patient Settlement.
+  const showAdminInvoiceFields = false;
+  const displayPatientName = formatPersonName(patientName);
   const [isLoading, setIsLoading] = useState(false);
   const [taxPercentage, setTaxPercentage] = useState(0);
   const [additionalCharges, setAdditionalCharges] = useState(0);
@@ -27,6 +49,9 @@ const BillingConfirmationModal = ({
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [services, setServices] = useState([]);
+  const [invoiceDate, setInvoiceDate] = useState(() => toDateInputValue());
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const suggestedInvoiceNumberRef = useRef("");
 
   useEffect(() => {
     if (isOpen && patientId && appointmentId) {
@@ -34,6 +59,24 @@ const BillingConfirmationModal = ({
       fetchPatientServices();
     }
   }, [isOpen, patientId, appointmentId]);
+
+  useEffect(() => {
+    if (!isOpen || !invoiceDate || !showAdminInvoiceFields) return;
+    const [year, month] = invoiceDate.split("-").map(Number);
+    if (!year || !month) return;
+    let cancelled = false;
+    (async () => {
+      const suggested = await billingHelper.suggestInvoiceId(month, year);
+      if (cancelled || !suggested) return;
+      setInvoiceNumber((current) =>
+        !current || current === suggestedInvoiceNumberRef.current ? suggested : current
+      );
+      suggestedInvoiceNumberRef.current = suggested;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, invoiceDate, showAdminInvoiceFields]);
 
   const fetchPatientServices = async () => {
     try {
@@ -120,11 +163,25 @@ const BillingConfirmationModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Generuj rachunek dla {patientName}
-          </h3>
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <h3 className="text-lg font-medium text-gray-900">
+              {isDoctorSettlement
+                ? "Rozliczenie wizyty"
+                : `Generuj rachunek dla ${displayPatientName}`}
+            </h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+              aria-label="Zamknij"
+            >
+              <X size={20} />
+            </button>
+          </div>
           <p className="text-sm text-gray-500 mb-4">
-            Utworzy to rachunek dla pacjenta na podstawie wybranych usług.
+            {isDoctorSettlement
+              ? "Wybierz wykonane usługi, aby utworzyć rozliczenie oczekujące na płatność."
+              : "Utworzy to rachunek dla pacjenta na podstawie wybranych usług."}
           </p>
 
           {isLoading ? (
@@ -141,7 +198,7 @@ const BillingConfirmationModal = ({
                     className="text-sm text-teal-600 hover:text-teal-800 flex items-center"
                   >
                     <Plus size={16} className="mr-1" />
-                    Dodaj usługę
+                    Wybierz usługi
                   </button>
                 </div>
 
@@ -186,28 +243,30 @@ const BillingConfirmationModal = ({
                 )}
               </div>
 
-              {/* Tax, Additional Charges, and Discount Fields */}
+              {/* Services, extras, discount — same for doctor and admin/reception. */}
               <div className="space-y-3 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Podatek (%)
-                  </label>
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={taxPercentage}
-                      onChange={(e) =>
-                        setTaxPercentage(parseFloat(e.target.value) || 0)
-                      }
-                      className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                    />
-                    <span className="ml-2 text-sm text-gray-500">
-                      ({taxPercentage === 0 ? "ZW" : `zł${taxAmount.toFixed(2)}`})
-                    </span>
+                {showAdminInvoiceFields && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Podatek (%)
+                    </label>
+                    <div className="flex items-center">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={taxPercentage}
+                        onChange={(e) =>
+                          setTaxPercentage(parseFloat(e.target.value) || 0)
+                        }
+                        className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                      />
+                      <span className="ml-2 text-sm text-gray-500">
+                        ({taxPercentage === 0 ? "ZW" : `zł${taxAmount.toFixed(2)}`})
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -225,7 +284,11 @@ const BillingConfirmationModal = ({
                     />
                     <input
                       type="text"
-                      placeholder="Notatka (opcjonalna)"
+                      placeholder={
+                        Number(additionalCharges) > 0
+                          ? "Opis dodatkowej opłaty (wymagany)"
+                          : "Opis dodatkowej opłaty"
+                      }
                       value={additionalChargeNote}
                       onChange={(e) => setAdditionalChargeNote(e.target.value)}
                       className="block flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
@@ -248,22 +311,54 @@ const BillingConfirmationModal = ({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Metoda płatności
-                  </label>
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
-                  >
-                    <option value="cash">Gotówka</option>
-                    <option value="card">Karta kredytowa/debetowa</option>
-                    <option value="insurance">Ubezpieczenie</option>
-                    <option value="bank_transfer">Przelew bankowy</option>
-                    <option value="mobile_payment">Płatność mobilna</option>
-                  </select>
-                </div>
+                {showAdminInvoiceFields && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Data wystawienia
+                      </label>
+                      <input
+                        type="date"
+                        value={invoiceDate}
+                        onChange={(e) => setInvoiceDate(e.target.value)}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Numer faktury
+                      </label>
+                      <input
+                        type="text"
+                        value={invoiceNumber}
+                        onChange={(e) => setInvoiceNumber(e.target.value)}
+                        placeholder="np. 17/08/2026"
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Możesz nadać numer ręcznie. Puste pole nada kolejny numer dla wybranej daty.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Metoda płatności
+                      </label>
+                      <select
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"
+                      >
+                        <option value="cash">Gotówka</option>
+                        <option value="card">Karta kredytowa/debetowa</option>
+                        <option value="insurance">Ubezpieczenie</option>
+                        <option value="bank_transfer">Przelew bankowy</option>
+                        <option value="mobile_payment">Płatność mobilna</option>
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Total */}
@@ -280,28 +375,50 @@ const BillingConfirmationModal = ({
 
           <div className="flex justify-end gap-2 mt-4">
             <button
+              type="button"
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
               onClick={onClose}
             >
-              Anuluj
+              {mandatory ? "Wstecz" : "Anuluj"}
             </button>
             <button
               className="px-4 py-2 bg-teal-500 text-white rounded-md hover:bg-teal-600 flex items-center"
               onClick={async () => {
+                if (Number(additionalCharges) > 0 && !additionalChargeNote.trim()) {
+                  toast.error("Opis dodatkowej opłaty jest wymagany.");
+                  return;
+                }
                 try {
-                  await onConfirm({
+                  setIsLoading(true);
+                  const payload = {
                     services,
                     subtotal,
-                    taxPercentage,
-                    taxAmount,
+                    taxPercentage: showAdminInvoiceFields ? taxPercentage : 0,
+                    taxAmount: showAdminInvoiceFields ? taxAmount : 0,
                     additionalCharges,
                     additionalChargeNote,
                     discount,
-                    totalAmount,
-                    paymentMethod,
-                  });
+                    totalAmount: showAdminInvoiceFields
+                      ? totalAmount
+                      : (
+                          subtotal +
+                          parseFloat(additionalCharges || 0) -
+                          parseFloat(discount || 0)
+                        ).toFixed(2),
+                    paymentMethod: showAdminInvoiceFields ? paymentMethod : undefined,
+                  };
+                  if (showAdminInvoiceFields) {
+                    payload.billedAt = invoiceDate;
+                    payload.invoiceId = invoiceNumber.trim();
+                  }
+                  await onConfirm(payload);
 
                   onClose?.();
+                  if (mandatory) {
+                    // Parent owns the after-settle stay/redirect. Navigating here
+                    // while the settlement blocker is still active pops a false warning.
+                    return;
+                  }
                   // Return to the view we started from (main panel, visit history, or doctor panel)
                   if (returnPath) {
                     navigate(returnPath);
@@ -313,12 +430,18 @@ const BillingConfirmationModal = ({
                   }
                 } catch (error) {
                   console.error("Error generating bill:", error);
+                } finally {
+                  setIsLoading(false);
                 }
               }}
-              disabled={isLoading || services.length === 0}
+              disabled={
+                isLoading ||
+                (services.length === 0 &&
+                  !(Number(additionalCharges) > 0 && additionalChargeNote.trim()))
+              }
             >
               <DollarSign size={16} className="mr-1" />
-              Generuj rachunek
+              {isDoctorSettlement ? "Rozlicz i zakończ wizytę" : "Generuj rachunek"}
             </button>
           </div>
         </div>
@@ -332,6 +455,10 @@ const BillingConfirmationModal = ({
         patientId={patientId}
         appointmentId={appointmentId}
         existingServices={services}
+        doctorUserId={
+          doctorUserId ||
+          (isDoctorUser ? user?._id || user?.id : null)
+        }
       />
     </div>
   );

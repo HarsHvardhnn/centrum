@@ -3,6 +3,12 @@ import { toast } from "sonner";
 import { Save, RotateCcw, AlertCircle, Info, Clock, Shield } from "lucide-react";
 import { useLoader } from "../../context/LoaderContext";
 import appointmentConfigService from "../../helpers/appointmentConfigHelper";
+import {
+  extractAppointmentConfigValue,
+  inactivityMinutesToMs,
+  parseInactivityTimeoutMinutes,
+} from "../../utils/inactivityConfig";
+import { notifyInactivityTimeoutUpdated } from "../../utils/sessionEvents";
 
 const JWTSettingsPage = () => {
   const { showLoader, hideLoader } = useLoader();
@@ -28,56 +34,48 @@ const JWTSettingsPage = () => {
     setHasChanges(hasJwtChange || hasRefreshChange || hasTimeoutChange);
   }, [jwtExpiry, refreshTokenExpiry, inactivityTimeout, originalJwtExpiry, originalRefreshTokenExpiry, originalInactivityTimeout]);
 
-  const fetchSettings = async () => {
+  const applyInactivityFromApi = (apiBody) => {
+    const raw = extractAppointmentConfigValue(apiBody);
+    const minutes = parseInactivityTimeoutMinutes(raw, 30);
+    setInactivityTimeout(minutes.toString());
+    setOriginalInactivityTimeout(minutes);
+    notifyInactivityTimeoutUpdated(inactivityMinutesToMs(minutes));
+    return minutes;
+  };
+
+  const fetchSettings = async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
-      setError(null);
-      showLoader();
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+        showLoader();
+      }
 
       // Fetch JWT_EXPIRY_TIME
       const jwtResponse = await appointmentConfigService.getConfig("JWT_EXPIRY_TIME");
-      const jwtValue = jwtResponse.data?.value || "1h";
-      setJwtExpiry(jwtValue);
-      setOriginalJwtExpiry(jwtValue);
+      const jwtValue = extractAppointmentConfigValue(jwtResponse) || "1h";
+      setJwtExpiry(String(jwtValue));
+      setOriginalJwtExpiry(String(jwtValue));
 
       // Fetch REFRESH_TOKEN_EXPIRY_DAYS
       const refreshResponse = await appointmentConfigService.getConfig("REFRESH_TOKEN_EXPIRY_DAYS");
-      const refreshValue = refreshResponse.data?.value?.toString() || "30";
-      setRefreshTokenExpiry(refreshValue);
-      setOriginalRefreshTokenExpiry(refreshValue);
+      const refreshValue = extractAppointmentConfigValue(refreshResponse);
+      const refreshStr = refreshValue != null ? String(refreshValue) : "30";
+      setRefreshTokenExpiry(refreshStr);
+      setOriginalRefreshTokenExpiry(refreshStr);
 
       // Fetch INACTIVITY_TIMEOUT
       const timeoutResponse = await appointmentConfigService.getConfig("INACTIVITY_TIMEOUT");
-      const timeoutValue = timeoutResponse.data?.value || 30;
-      // Convert to number (minutes) - handle both number and string formats
-      let timeoutMinutes = 30; // default
-      if (typeof timeoutValue === 'number') {
-        timeoutMinutes = timeoutValue;
-      } else if (typeof timeoutValue === 'string') {
-        // Parse string format like "30m", "1h", etc. to minutes
-        const match = timeoutValue.match(/^(\d+)(m|h|d|w)$/);
-        if (match) {
-          const value = parseInt(match[1], 10);
-          const unit = match[2];
-          if (unit === 'm') timeoutMinutes = value;
-          else if (unit === 'h') timeoutMinutes = value * 60;
-          else if (unit === 'd') timeoutMinutes = value * 60 * 24;
-          else if (unit === 'w') timeoutMinutes = value * 60 * 24 * 7;
-        } else {
-          // Try to parse as plain number
-          const parsed = parseInt(timeoutValue, 10);
-          if (!isNaN(parsed)) timeoutMinutes = parsed;
-        }
-      }
-      setInactivityTimeout(timeoutMinutes.toString());
-      setOriginalInactivityTimeout(timeoutMinutes);
+      applyInactivityFromApi(timeoutResponse);
     } catch (err) {
       console.error("Error fetching JWT settings:", err);
       setError("Wystąpił błąd podczas pobierania ustawień JWT.");
       toast.error("Nie udało się pobrać ustawień JWT");
     } finally {
-      setLoading(false);
-      hideLoader();
+      if (!silent) {
+        setLoading(false);
+        hideLoader();
+      }
     }
   };
 
@@ -125,14 +123,33 @@ const JWTSettingsPage = () => {
       }
 
       const results = await Promise.all(promises);
-      const allSuccessful = results.every(result => result.success);
+      const allSuccessful = results.every((result) => result.success);
 
       if (allSuccessful) {
+        results.forEach((result) => {
+          const key = result?.data?.key;
+          if (key === "JWT_EXPIRY_TIME") {
+            const value = extractAppointmentConfigValue(result);
+            if (value != null) {
+              setJwtExpiry(String(value));
+              setOriginalJwtExpiry(String(value));
+            }
+          } else if (key === "REFRESH_TOKEN_EXPIRY_DAYS") {
+            const value = extractAppointmentConfigValue(result);
+            if (value != null) {
+              const str = String(value);
+              setRefreshTokenExpiry(str);
+              setOriginalRefreshTokenExpiry(str);
+            }
+          } else if (key === "INACTIVITY_TIMEOUT") {
+            applyInactivityFromApi(result);
+          }
+        });
         toast.success("Ustawienia JWT zostały zapisane pomyślnie");
-        fetchSettings(); // Refresh to get updated values
+        await fetchSettings({ silent: true });
       } else {
         toast.error("Nie udało się zapisać niektórych ustawień");
-        fetchSettings();
+        await fetchSettings({ silent: true });
       }
     } catch (err) {
       console.error("Error saving JWT settings:", err);

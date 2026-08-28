@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import appointmentHelper from "../../../helpers/appointmentHelper";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { prefetchVisitDetails, visitPagePath } from "../../../utils/visitNavigation";
 
 const HIGHLIGHT_COLOR = "#008C8C";
 
@@ -26,12 +28,14 @@ const PatientsList = ({
   setAppointmentId,
   selectedPatient,
   patientsData = [],
+  isLoading = false,
   itemsPerPage = 10,
   onCheckIn,
   onReschedule,
   onPermanentDelete,
 }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useUser();
   const [showCancelModal, setShowCancelModal] = React.useState(false);
   const [sendSMSNotification, setSendSMSNotification] = React.useState(false);
@@ -45,19 +49,20 @@ const PatientsList = ({
       if (onPatientSelect) onPatientSelect(null);
       if (setAppointmentId) setAppointmentId(null);
     } else {
+      prefetchVisitDetails(queryClient, appointmentId);
       if (onPatientSelect) onPatientSelect(patientId);
       if (setAppointmentId) setAppointmentId(appointmentId);
     }
   };
 
   const handleStartVisit = (patient) => {
-    if (patient.patient_id) {
-      if (user?.role === "receptionist") {
-        navigate(`/administracja/konta?edytujPacjenta=${patient.patient_id}&returnUrl=${encodeURIComponent(window.location.pathname)}`);
-      } else {
-        navigate(`/szczegoly-pacjenta/${patient.patient_id}`);
-      }
+    if (!patient.patient_id) return;
+    if (user?.role === "receptionist") {
+      navigate(`/administracja/konta?edytujPacjenta=${patient.patient_id}&returnUrl=${encodeURIComponent(window.location.pathname)}`);
+      return;
     }
+    prefetchVisitDetails(queryClient, patient.id);
+    navigate(visitPagePath(patient.patient_id, patient.id));
   };
 
   // Only show Zarezerwowana (booked) and Zameldowana (checkedIn) with a linked patient (patientLessVisit !== true). Sort ascending by start time.
@@ -187,7 +192,12 @@ const PatientsList = ({
   const displayTotal = sortedPatients.length;
 
   return (
-    <div className="bg-white border rounded-lg shadow-sm">
+    <div className="bg-white border rounded-lg shadow-sm relative">
+      {isLoading && (
+        <div className="absolute inset-0 z-10 bg-white/60 flex items-center justify-center rounded-lg">
+          <div className="h-8 w-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
       {/* Header: title + circular counter "X wizyt dzisiaj", no three-dot */}
       <div className="flex justify-between items-center p-4 border-b">
         <div className="flex items-center gap-3">
@@ -221,6 +231,7 @@ const PatientsList = ({
                     <button
                       type="button"
                       onClick={() => handlePatientSelect(patient.patient_id, patient.id)}
+                      onMouseEnter={() => prefetchVisitDetails(queryClient, patient.id)}
                       className="text-left w-full rounded focus:outline-none focus:ring-2 focus:ring-teal-500/30"
                       style={{
                         color: selectedPatient === patient.id ? HIGHLIGHT_COLOR : undefined,

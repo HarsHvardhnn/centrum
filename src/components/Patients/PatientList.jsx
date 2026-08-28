@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
@@ -18,13 +19,15 @@ import {
   Pen,
   Clock,
   History,
-  Settings
+  Settings,
+  Loader2,
 } from "lucide-react";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
 import { toast } from "sonner";
-import { useLoader } from "../../context/LoaderContext";
+import { isPlaceholderPhone } from "../../utils/phoneUtils";
 import { useUser } from "../../context/userContext";
+import { useLoader } from "../../context/LoaderContext";
 import CheckInModal from "../admin/CheckinModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
@@ -40,6 +43,13 @@ import PermanentDeleteDialog from "../admin/PermanentDeleteDialog";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 import VisitReasonCascadeDropdown from "../UtilComponents/VisitReasonCascadeDropdown";
 import PatientDocumentsModal from "./PatientDocumentsModal";
+import { queryKeys } from "../../lib/queryKeys";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { readListState, writeListState, useSkipFirstEffect, useListScrollRestore } from "../../hooks/usePersistedListState";
+import { loadPatientEditFormData, mapListPatientToEditStub } from "../../utils/mapPatientToEditForm";
+import { formatPersonName } from "../../utils/formatPersonName";
+import { formatClinicDate } from "../../utils/dateUtils";
+import { doctorVisitsPath } from "../../utils/useNavigate";
 
 /** Formats appointment `created_at` / `createdAt` for "Utworzono przez: … (DD.MM.YYYY, HH:MM)" */
 function formatAppointmentCreatedAt(appointment) {
@@ -112,6 +122,7 @@ const billingHelper = {
 function LabAppointmentsContent({ clinic }) {
   const { showLoader, hideLoader } = useLoader();
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const [showCheckin, setShowCheckin] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showBillingModal, setShowBillingModal] = useState(false);
@@ -156,9 +167,17 @@ function LabAppointmentsContent({ clinic }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const listStateKey = clinic ? "klinika-visits" : "pacjenci-visits";
+  const savedList = readListState(listStateKey) || {};
+  const urlDate = searchParams.get("startDate") || searchParams.get("date");
   // Appointments data
+  const [listPage, setListPage] = useState(
+    Number(savedList.listPage) > 0 ? Number(savedList.listPage) : 1
+  );
   const [appointments, setAppointments] = useState([]);
-  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [itemsPerPage, setItemsPerPage] = useState(
+    Number(savedList.itemsPerPage) > 0 ? Number(savedList.itemsPerPage) : 50
+  );
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -168,24 +187,32 @@ function LabAppointmentsContent({ clinic }) {
   const [totalPatientsCount, setTotalPatientsCount] = useState(0);
 
   // Search and filter states
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState(clinic ? "booked" : "All");
+  const [searchQuery, setSearchQuery] = useState(savedList.searchQuery || "");
+  const [statusFilter, setStatusFilter] = useState(
+    savedList.statusFilter || (clinic ? "booked" : "All")
+  );
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [dateRange, setDateRange] = useState({
-    startDate: null,
-    endDate: null,
+  const [dateRange, setDateRange] = useState(() => {
+    if (urlDate) return { startDate: urlDate, endDate: savedList.dateRange?.endDate ?? null };
+    if (savedList.dateRange && (savedList.dateRange.startDate || savedList.dateRange.endDate)) {
+      return savedList.dateRange;
+    }
+    if (clinic) {
+      return { startDate: new Date().toISOString().split("T")[0], endDate: null };
+    }
+    return { startDate: null, endDate: null };
   });
   /** Only on /klinika: when true, show only patient-less (visit-only) appointments. */
-  const [patientLessOnly, setPatientLessOnly] = useState(false);
+  const [patientLessOnly, setPatientLessOnly] = useState(!!savedList.patientLessOnly);
   /** Doctor filter for Historia wizyt (clinic) */
-  const [doctorFilterId, setDoctorFilterId] = useState("");
-  const [doctorsList, setDoctorsList] = useState([]);
+  const [doctorFilterId, setDoctorFilterId] = useState(savedList.doctorFilterId || "");
   /** Forma konsultacji: all | offline (Stacjonarna) | online */
-  const [consultationMode, setConsultationMode] = useState("all");
+  const [consultationMode, setConsultationMode] = useState(savedList.consultationMode || "all");
   /** Typ wizyty (visit type) filter – value is visit reason displayName sent to backend */
-  const [visitTypeFilter, setVisitTypeFilter] = useState("");
+  const [visitTypeFilter, setVisitTypeFilter] = useState(savedList.visitTypeFilter || "");
   /** Visit reasons from API (categories + types) for filter dropdown */
-  const [visitReasonsCategories, setVisitReasonsCategories] = useState([]);
+  const skipFilterPageReset = useSkipFirstEffect();
+  const skipItemsPerPageReset = useSkipFirstEffect();
 
   // Ref for filter dropdown
   const filterRef = useRef(null);
@@ -197,6 +224,8 @@ function LabAppointmentsContent({ clinic }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentPatientId, setCurrentPatientId] = useState(null);
   const [patientFormData, setPatientFormData] = useState({});
+  const [patientEditLoading, setPatientEditLoading] = useState(false);
+  const patientEditRequestRef = useRef(0);
   const subStepTitles = [
     "Dane Podstawowe",
     "Skierowanie",
@@ -218,17 +247,84 @@ function LabAppointmentsContent({ clinic }) {
     return s === "cancelled" || s === "canceled";
   };
 
-  /** Receptionist goes to edit patient (Settings); admin/doctor go to appointment card. */
+  /** Admin/doctor → appointment card. Receptionist cannot open the card — edit opens in-place. */
   const getPatientViewUrl = (patientId, appointmentId) => {
-    if (user?.role === "receptionist") {
-      const params = new URLSearchParams({
-        edytujPacjenta: patientId,
-        returnUrl: window.location.pathname,
-      });
-      if (appointmentId) params.set("appointmentId", appointmentId);
-      return `/administracja/konta?${params.toString()}`;
-    }
+    if (!patientId) return "/pacjenci";
     return `/szczegoly-pacjenta/${patientId}${appointmentId ? `?appointmentId=${appointmentId}` : ""}`;
+  };
+
+  const closePatientModal = () => {
+    patientEditRequestRef.current += 1;
+    setShowAddPatientModal(false);
+    setIsEditMode(false);
+    setCurrentPatientId(null);
+    setPatientEditLoading(false);
+    setPatientFormData({ phoneCode: patientFormData.phoneCode || "+48" });
+    setCurrentSubStep(0);
+    setCompletedSteps([]);
+  };
+
+  const prefetchPatientEdit = (patientId, preferredAppointmentId = null) => {
+    if (!patientId) return;
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.patientEditForm(patientId, preferredAppointmentId),
+      queryFn: () =>
+        loadPatientEditFormData(patientId, preferredAppointmentId || null),
+      staleTime: 2 * 60 * 1000,
+    });
+  };
+
+  const getPatientEditContext = (appointment) => {
+    if (!appointment?.patient) return null;
+    const patientId = appointment.patient.id || appointment.patient._id;
+    if (!patientId) return null;
+    const visitId = appointment.isPatientListRow
+      ? appointment.firstVisitAppointmentId
+      : appointment.id || appointment._id;
+    return { patientId, visitId, patient: appointment.patient };
+  };
+
+  /** Open edit modal immediately on this page, then load patient data into it. */
+  const handleEditPatient = async (
+    patientId,
+    preferredAppointmentId = null,
+    listPatient = null
+  ) => {
+    if (!patientId) return;
+    const requestId = ++patientEditRequestRef.current;
+    setIsEditMode(true);
+    setCurrentPatientId(patientId);
+    setPatientFormData(
+      listPatient ? mapListPatientToEditStub(listPatient) : {}
+    );
+    setCurrentSubStep(0);
+    setCompletedSteps([]);
+    setPatientEditLoading(true);
+    setShowAddPatientModal(true);
+
+    prefetchPatientEdit(patientId, preferredAppointmentId);
+
+    try {
+      const mapped = await queryClient.fetchQuery({
+        queryKey: queryKeys.patientEditForm(patientId, preferredAppointmentId),
+        queryFn: () =>
+          loadPatientEditFormData(patientId, preferredAppointmentId),
+        staleTime: 2 * 60 * 1000,
+      });
+      if (requestId !== patientEditRequestRef.current) return;
+      setPatientFormData(mapped);
+    } catch (error) {
+      if (requestId !== patientEditRequestRef.current) return;
+      toast.error(
+        "Nie udało się pobrać danych pacjenta: " +
+          (error?.response?.data?.message || error.message || "Nieznany błąd")
+      );
+      closePatientModal();
+    } finally {
+      if (requestId === patientEditRequestRef.current) {
+        setPatientEditLoading(false);
+      }
+    }
   };
 
   const fetchVisitConsents = async (visitId) => {
@@ -276,6 +372,15 @@ function LabAppointmentsContent({ clinic }) {
     }).finally(() => setVisitHistoryLoading(false));
   };
 
+  const restoredVisitHistoryRef = useRef(false);
+  useEffect(() => {
+    if (restoredVisitHistoryRef.current) return;
+    const savedHistory = savedList.visitHistory;
+    if (!savedHistory?.id) return;
+    restoredVisitHistoryRef.current = true;
+    openVisitHistoryModal(savedHistory.id, savedHistory.name);
+  }, []);
+
   const openPatientDocumentsModal = (patientId, patientName) => {
     if (!patientId) return;
     setDocumentsModalPatient({ id: patientId, name: patientName || "Pacjent" });
@@ -284,75 +389,216 @@ function LabAppointmentsContent({ clinic }) {
 
   /** Display name: patient name, or registrationData, or fallback (never undefined) */
   const getAppointmentPatientDisplayName = (apt) => {
-    const name =
+    const raw =
       apt?.patient?.name ??
       apt?.registrationData?.name ??
       (apt?.registrationData?.firstName && apt?.registrationData?.lastName
-        ? `${apt.registrationData.firstName} ${apt.registrationData.lastName}`.trim()
+        ? {
+            first: apt.registrationData.firstName,
+            last: apt.registrationData.lastName,
+          }
         : null);
-    const fallback = "Nieznany pacjent";
-    if (name == null || name === "" || String(name) === "undefined") return fallback;
-    return name;
+    return formatPersonName(raw, "Nieznany pacjent");
   };
 
-  const fetchIdRef = useRef(0);
-  const fetchAppointments = async (page = 1) => {
-    const thisFetchId = fetchIdRef.current + 1;
-    fetchIdRef.current = thisFetchId;
-    try {
-      showLoader();
-      const appointmentIdFromUrl = searchParams.get('appointmentId');
-      const dateFromUrl = searchParams.get('date');
-      
-      const filters = {
-        ...(statusFilter !== "All" && statusFilter !== "patientLess" && { status: statusFilter }),
-        ...(dateRange.startDate && { startDate: dateRange.startDate }),
-        ...(dateRange.endDate && { endDate: dateRange.endDate }),
-        ...(dateFromUrl && { date: dateFromUrl }),
-        ...(searchQuery && { search: searchQuery }),
-        ...(user?.role === "doctor" && { doctorId: user?.id }),
-        ...(clinic && doctorFilterId && { doctorId: doctorFilterId }),
-        ...(clinic && { isClinicIp: clinic }),
-        ...(clinic && (patientLessOnly || statusFilter === "patientLess") && { patientLessOnly: true }),
-        ...(appointmentIdFromUrl && { appointmentId: appointmentIdFromUrl }),
-        ...(visitTypeFilter && { visitReason: visitTypeFilter }),
-        ...(clinic && consultationMode && consultationMode !== "all" && { mode: consultationMode }),
-      };
+  const appointmentIdFromUrl = searchParams.get("appointmentId");
+  const dateFromUrl = searchParams.get("date");
+  // Typeahead on /pacjenci: fire quickly after 1–2 letters; other filters stay slower
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, clinic ? 400 : 180);
+  const otherFiltersSignature = JSON.stringify({
+    statusFilter,
+    dateRange,
+    clinic,
+    patientLessOnly,
+    doctorFilterId,
+    visitTypeFilter,
+    consultationMode,
+    appointmentIdFromUrl,
+    dateFromUrl,
+    itemsPerPage,
+    userId: user?.id || user?._id || user?.d_id || "",
+    userRole: user?.role,
+  });
+  const debouncedOtherFiltersSignature = useDebouncedValue(otherFiltersSignature, 450);
+  const debouncedFilters = useMemo(
+    () => ({
+      ...JSON.parse(debouncedOtherFiltersSignature),
+      searchQuery: debouncedSearchQuery,
+    }),
+    [debouncedOtherFiltersSignature, debouncedSearchQuery]
+  );
+  const debouncedFiltersSignature = `${debouncedOtherFiltersSignature}|${debouncedSearchQuery}`;
 
-      const response = await appointmentHelper.getAllAppointments(
-        page,
-        itemsPerPage,
-        searchQuery,
+  useEffect(() => {
+    if (skipFilterPageReset()) return;
+    setListPage(1);
+  }, [debouncedFiltersSignature]);
+
+  const listQueryParams = {
+    ...debouncedFilters,
+    page: listPage,
+  };
+
+  /** Map GET /patients/data/simple row → shape expected by Lista pacjentów cards */
+  const mapPatientApiRowToListItem = (p) => {
+    const mongoId = p._id || p.id;
+    return {
+      id: `patient-${mongoId}`,
+      _id: mongoId,
+      // Keep menu/actions enabled (`isAppointment !== false`); flag marks patient-master rows
+      isPatientListRow: true,
+      firstVisitAppointmentId: p.firstVisitAppointmentId || null,
+      date: p.firstVisitDate || null,
+      startTime: p.firstVisitStartTime || null,
+      registrationType: p.registrationType || null,
+      patient: {
+        id: mongoId,
+        _id: mongoId,
+        patientId: p.id || p.patientId,
+        name: p.name,
+        sex: p.sex,
+        age: p.age,
+        phoneNumber: p.phone,
+        pesel: p.pesel,
+        govtId: p.pesel,
+      },
+    };
+  };
+
+  const {
+    data: listQueryData,
+    isLoading: listQueryLoading,
+    isFetching: listQueryFetching,
+    error: listQueryError,
+  } = useQuery({
+    queryKey: clinic
+      ? queryKeys.appointmentsList(listQueryParams)
+      : queryKeys.patientsList(listQueryParams),
+    queryFn: async () => {
+      const f = listQueryParams;
+
+      // Lista pacjentów: use patients API (fast indexed search) — not the heavy appointments aggregation
+      if (!f.clinic) {
+        const response = await patientService.getSimpliefiedPatientsList({
+          search: f.searchQuery || "",
+          page: f.page,
+          limit: f.itemsPerPage,
+          sortBy: f.searchQuery ? "name.last" : "createdAt",
+          sortOrder: f.searchQuery ? "asc" : "desc",
+          ...(f.userRole === "doctor" && f.userId ? { doctor: f.userId } : {}),
+        });
+        const patients = response?.patients ?? [];
+        return {
+          success: response?.success !== false,
+          data: patients.map(mapPatientApiRowToListItem),
+          pagination: {
+            total: response?.total ?? patients.length,
+            page: response?.currentPage ?? f.page,
+            pages: response?.pages ?? 1,
+            limit: f.itemsPerPage,
+            totalPatients: response?.totalPatients ?? response?.total,
+          },
+          totalPatients: response?.totalPatients ?? response?.total,
+        };
+      }
+
+      const filters = {
+        ...(f.statusFilter !== "All" && f.statusFilter !== "patientLess" && { status: f.statusFilter }),
+        ...(f.dateRange?.startDate && { startDate: f.dateRange.startDate }),
+        ...(f.dateRange?.endDate && { endDate: f.dateRange.endDate }),
+        ...(f.dateFromUrl && { date: f.dateFromUrl }),
+        ...(f.searchQuery && { search: f.searchQuery }),
+        ...(f.userRole === "doctor" && { doctorId: f.userId }),
+        ...(f.clinic && f.doctorFilterId && { doctorId: f.doctorFilterId }),
+        ...(f.clinic && { isClinicIp: f.clinic }),
+        ...(f.clinic && (f.patientLessOnly || f.statusFilter === "patientLess") && { patientLessOnly: true }),
+        ...(f.appointmentIdFromUrl && { appointmentId: f.appointmentIdFromUrl }),
+        ...(f.visitTypeFilter && { visitReason: f.visitTypeFilter }),
+        ...(f.clinic && f.consultationMode && f.consultationMode !== "all" && { mode: f.consultationMode }),
+      };
+      return appointmentHelper.getAllAppointments(
+        f.page,
+        f.itemsPerPage,
+        f.searchQuery,
         filters,
         "date",
         "desc"
       );
+    },
+    placeholderData: keepPreviousData,
+    enabled: !!(user?.role || clinic === true || clinic === false),
+  });
 
-      if (thisFetchId !== fetchIdRef.current) return;
-
-      const list = Array.isArray(response?.data) ? response.data : (response?.data?.data ?? []);
-      const pag = response?.pagination ?? response?.data?.pagination ?? { total: 0, page: 1, pages: 1, limit: itemsPerPage };
-
-      if (response?.success !== false) {
-        setAppointments(list);
-        setPagination(pag);
-        // Backend now returns totalPatients at root; fallback to pagination.total (or current page length).
-        const rootTotalPatients =
-          response?.totalPatients ??
-          response?.data?.totalPatients ??
-          pag?.totalPatients;
-        const fallbackTotal = pag?.total ?? list?.length ?? 0;
-        setTotalPatientsCount(Number(rootTotalPatients ?? fallbackTotal) || 0);
-      } else {
-        toast.error("Nie udało się pobrać wizyt");
-      }
-    } catch (error) {
-      if (thisFetchId !== fetchIdRef.current) return;
-      console.error("Failed to fetch appointments:", error);
-      toast.error("Nie udało się pobrać wizyt");
-    } finally {
-      if (thisFetchId === fetchIdRef.current) hideLoader();
+  useEffect(() => {
+    if (!listQueryData) return;
+    const list = Array.isArray(listQueryData?.data)
+      ? listQueryData.data
+      : (listQueryData?.data?.data ?? []);
+    const pag = listQueryData?.pagination ?? listQueryData?.data?.pagination ?? {
+      total: 0,
+      page: 1,
+      pages: 1,
+      limit: itemsPerPage,
+    };
+    if (listQueryData?.success !== false) {
+      setAppointments(list);
+      setPagination(pag);
+      const rootTotalPatients =
+        listQueryData?.totalPatients ??
+        listQueryData?.data?.totalPatients ??
+        pag?.totalPatients;
+      const fallbackTotal = pag?.total ?? list?.length ?? 0;
+      setTotalPatientsCount(Number(rootTotalPatients ?? fallbackTotal) || 0);
     }
+  }, [listQueryData, itemsPerPage]);
+
+  useEffect(() => {
+    if (listQueryError) {
+      console.error("Failed to fetch list:", listQueryError);
+      toast.error(clinic ? "Nie udało się pobrać wizyt" : "Nie udało się pobrać pacjentów");
+    }
+  }, [listQueryError, clinic]);
+
+  const listLoading = listQueryLoading || (listQueryFetching && appointments.length === 0);
+
+  useEffect(() => {
+    writeListState(listStateKey, {
+      searchQuery,
+      statusFilter,
+      dateRange,
+      patientLessOnly,
+      doctorFilterId,
+      consultationMode,
+      visitTypeFilter,
+      listPage,
+      itemsPerPage,
+      visitHistory:
+        showVisitHistoryModal && visitHistoryPatient?.id
+          ? { id: visitHistoryPatient.id, name: visitHistoryPatient.name || "" }
+          : null,
+    });
+  }, [
+    listStateKey,
+    searchQuery,
+    statusFilter,
+    dateRange,
+    patientLessOnly,
+    doctorFilterId,
+    consultationMode,
+    visitTypeFilter,
+    listPage,
+    itemsPerPage,
+    showVisitHistoryModal,
+    visitHistoryPatient,
+  ]);
+
+  useListScrollRestore(listStateKey, !listLoading);
+
+  const fetchAppointments = (page) => {
+    if (typeof page === "number") {
+      setListPage(page);
+    }
+    queryClient.invalidateQueries({ queryKey: clinic ? ["appointments-list"] : ["patients-list"] });
   };
 
   // Sync filters from URL when URL has date params. Do not reset to default when URL has no date,
@@ -394,43 +640,29 @@ function LabAppointmentsContent({ clinic }) {
     };
   }, [isFilterOpen]);
 
-  useEffect(() => {
-    const debounceTimeout = setTimeout(() => {
-      fetchAppointments(1); // Reset to first page when filters change
-    }, 300);
+  // List fetching is handled by useQuery + debouncedFilters (single request on mount).
 
-    return () => clearTimeout(debounceTimeout);
-  }, [searchQuery, statusFilter, dateRange, user?.id, clinic, searchParams, patientLessOnly, doctorFilterId, visitTypeFilter, consultationMode]);
+  const { data: doctorsListRaw } = useQuery({
+    queryKey: queryKeys.doctorsList,
+    queryFn: async () => {
+      const response = await doctorStatsHelper.getDoctorsList();
+      const list = response?.data ?? response?.doctors ?? response;
+      return Array.isArray(list) ? list : [];
+    },
+    enabled: !!clinic,
+  });
+  const doctorsList = Array.isArray(doctorsListRaw) ? doctorsListRaw : [];
 
-  // Fetch doctors list for clinic (Historia wizyt) filter
-  useEffect(() => {
-    if (!clinic) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const response = await doctorStatsHelper.getDoctorsList();
-        if (response?.success && response?.data && !cancelled) {
-          setDoctorsList(Array.isArray(response.data) ? response.data : []);
-        }
-      } catch (e) {
-        if (!cancelled) setDoctorsList([]);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [clinic]);
-
-  // Fetch visit reasons (categories + types) for clinic visit-type filter
-  useEffect(() => {
-    if (!clinic) return;
-    let cancelled = false;
-    appointmentHelper.getVisitReasons().then((res) => {
-      if (cancelled) return;
+  const { data: visitReasonsCategories = [] } = useQuery({
+    queryKey: queryKeys.visitReasons,
+    queryFn: async () => {
+      const res = await appointmentHelper.getVisitReasons();
       const data = res?.data ?? res;
       const categories = data?.categories ?? [];
-      setVisitReasonsCategories(Array.isArray(categories) ? categories : []);
-    }).catch(() => { if (!cancelled) setVisitReasonsCategories([]); });
-    return () => { cancelled = true; };
-  }, [clinic]);
+      return Array.isArray(categories) ? categories : [];
+    },
+    enabled: !!clinic,
+  });
 
   // Doctor role on clinic: show only own visits; set and lock doctor filter to current user
   useEffect(() => {
@@ -447,9 +679,11 @@ function LabAppointmentsContent({ clinic }) {
     clinicRef.current = clinic;
     const isFirstRun = prevClinic === null;
     const clinicToggled = !isFirstRun && prevClinic !== clinic;
-    if (!isFirstRun && !clinicToggled) return; // Skip when only searchParams or other deps changed
+    if (isFirstRun) return; // initial list fetch comes from useQuery only
+    if (!clinicToggled) return; // Skip when only searchParams or other deps changed
 
-    // Clear appointments and pagination when clinic prop changes to prevent cache issues
+    queryClient.removeQueries({ queryKey: ["appointments-list"] });
+    setListPage(1);
     setAppointments([]);
     setPagination({
       total: 0,
@@ -490,14 +724,12 @@ function LabAppointmentsContent({ clinic }) {
         });
       }
     }
-    
-    // Refetch with fresh data
-    fetchAppointments(1);
   }, [clinic, searchParams]);
 
   useEffect(() => {
+    if (skipItemsPerPageReset()) return;
+    setListPage(1);
     setPagination((prev) => ({ ...prev, page: 1, limit: itemsPerPage }));
-    fetchAppointments(1);
   }, [itemsPerPage]);
 
   // Remove the frontend filtering logic and use the appointments directly from backend
@@ -575,6 +807,8 @@ function LabAppointmentsContent({ clinic }) {
         additionalChargeNote: billingData.additionalChargeNote || "",
         totalAmount: billingData.totalAmount,
         paymentMethod: billingData.paymentMethod,
+        billedAt: billingData.billedAt,
+        invoiceId: billingData.invoiceId,
       };
 
       // Call the API to generate the bill
@@ -603,7 +837,10 @@ function LabAppointmentsContent({ clinic }) {
       navigate(`/administracja/rozliczenia/szczegoly/${response.data._id}`);
     } catch (error) {
       console.error("Failed to generate bill:", error);
-      toast.error("Nie udało się wygenerować rachunku. Spróbuj ponownie.");
+      toast.error(
+        error?.response?.data?.message ||
+          "Nie udało się wygenerować rachunku. Spróbuj ponownie."
+      );
       setIsLoading(false);
     }
   };
@@ -762,11 +999,7 @@ function LabAppointmentsContent({ clinic }) {
       }
       
       hideLoader();
-      setShowAddPatientModal(false);
-      setIsEditMode(false);
-      setCurrentPatientId(null);
-      // Preserve the phone code preference when resetting form
-      setPatientFormData({ phoneCode: formData.phoneCode || "+48" });
+      closePatientModal();
       fetchAppointments(); // Refresh the appointments list
 
     } catch (err) {
@@ -926,10 +1159,8 @@ function LabAppointmentsContent({ clinic }) {
 
   const getPatientPesel = (p) => p?.govtId || p?.pesel || p?.PESEL || "—";
   const getPhoneDisplay = (value) => {
-    const v = value ?? "";
-    const s = typeof v === "string" ? v.trim() : String(v).trim();
-    if (!s) return "brak numeru";
-    if (/^_no_phone_/i.test(s) || s === "_no_phone" || /^brak\s*numeru$/i.test(s)) return "brak numeru";
+    const s = value == null ? "" : String(value).trim();
+    if (isPlaceholderPhone(s) || /^brak\s*numeru$/i.test(s)) return "brak numeru";
     return s;
   };
   const getPatientGenderLetter = (p) =>
@@ -1059,7 +1290,11 @@ function LabAppointmentsContent({ clinic }) {
                           <>
                             <option value="">Wybierz lekarza...</option>
                             {doctorsList.map((d) => (
-                              <option key={d._id || d.id} value={d._id || d.id}>{d.name || "Lekarz"}</option>
+                              <option key={d._id || d.id} value={d._id || d.id}>
+                                {typeof d.name === "string"
+                                  ? d.name
+                                  : `${d.name?.first || ""} ${d.name?.last || ""}`.trim() || "Lekarz"}
+                              </option>
                             ))}
                           </>
                         )}
@@ -1171,11 +1406,20 @@ function LabAppointmentsContent({ clinic }) {
               <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Szukaj pacjenta..."
-                className="w-full py-2.5 pl-10 pr-4 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                placeholder="Nazwisko, imię lub PESEL (od 1 litery)…"
+                className="w-full py-2.5 pl-10 pr-10 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                autoComplete="off"
+                spellCheck={false}
               />
+              {listQueryFetching && searchQuery.trim() && (
+                <Loader2
+                  size={18}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-600 animate-spin pointer-events-none"
+                  aria-label="Szukanie"
+                />
+              )}
             </div>
             {user?.role !== "doctor" && (
               <button
@@ -1223,7 +1467,16 @@ function LabAppointmentsContent({ clinic }) {
                 </label>
               </div>
             )}
-            {appointments.length === 0 ? (
+            {listLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="bg-white border border-gray-200 rounded-lg px-6 py-5 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
+                    <div className="h-3 bg-gray-100 rounded w-2/3" />
+                  </div>
+                ))}
+              </div>
+            ) : appointments.length === 0 ? (
               <div className="bg-white border border-gray-200 rounded-lg py-12 text-center text-gray-500">
                 Brak wizyt w wybranym okresie.
               </div>
@@ -1234,7 +1487,7 @@ function LabAppointmentsContent({ clinic }) {
                 const isVisitOnly = isVisitOnlyAppointment(appointment);
                 const statusPillClass = getStatusStyle(appointment.status);
                 const visitDateStr = appointment.date
-                  ? new Date(appointment.date).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" })
+                  ? formatClinicDate(appointment.date) || "—"
                   : "—";
                 const patientIdStr = isVisitOnly
                   ? "—"
@@ -1352,7 +1605,13 @@ function LabAppointmentsContent({ clinic }) {
                         {translateStatus(appointment.status)}
                       </span>
                       {appointment.isAppointment !== false && (
-                        <DropdownMenu.Root>
+                        <DropdownMenu.Root
+                          onOpenChange={(open) => {
+                            if (!open) return;
+                            const ctx = getPatientEditContext(appointment);
+                            if (ctx) prefetchPatientEdit(ctx.patientId, ctx.visitId);
+                          }}
+                        >
                           <DropdownMenu.Trigger asChild>
                             <button type="button" className="p-1.5 text-gray-500 hover:text-gray-700 rounded focus:outline-none">
                               <MoreVertical size={20} />
@@ -1414,7 +1673,13 @@ function LabAppointmentsContent({ clinic }) {
                                 <FileText size={16} className="mr-2" /> Zobacz szczegóły rezerwacji
                               </DropdownMenu.Item>
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(`/administracja/konta?edytujPacjenta=${appointment.patient.id || appointment.patient._id}&appointmentId=${appointment.id || appointment._id}&returnUrl=${encodeURIComponent("/klinika")}`); }}>
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => {
+                                  handleEditPatient(
+                                    appointment.patient.id || appointment.patient._id,
+                                    appointment.id || appointment._id,
+                                    appointment.patient
+                                  );
+                                }}>
                                   <Eye size={16} className="mr-2" /> Zobacz dane pacjenta
                                 </DropdownMenu.Item>
                               )}
@@ -1453,7 +1718,11 @@ function LabAppointmentsContent({ clinic }) {
           </div>
         ) : (
           /* Lista pacjentów – card layout */
-          <div className="space-y-3">
+          <div
+            className={`space-y-3 transition-opacity duration-150 ${
+              listQueryFetching && !listLoading ? "opacity-60" : "opacity-100"
+            }`}
+          >
             {/* Column headers */}
             <div className="grid grid-cols-8 gap-4 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 border-b border-gray-200">
               <div>Pacjent i ID</div>
@@ -1465,7 +1734,17 @@ function LabAppointmentsContent({ clinic }) {
               <div>Pierwsza wizyta</div>
               <div className="text-right">Akcje</div>
             </div>
-            {appointments.length === 0 ? (
+            {listLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="bg-white border border-gray-200 rounded-lg px-4 py-3 animate-pulse grid grid-cols-8 gap-4">
+                    {Array.from({ length: 8 }).map((__, j) => (
+                      <div key={j} className="h-4 bg-gray-200 rounded" />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ) : appointments.length === 0 ? (
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm py-12 text-center text-gray-500">
                 Brak pacjentów.
               </div>
@@ -1488,10 +1767,13 @@ function LabAppointmentsContent({ clinic }) {
                             setShowCompleteRegModal(true);
                           } else if (!isVisitOnlyAppointment(appointment)) {
                             const patientId = appointment.patient.id || appointment.patient._id;
+                            const visitId = appointment.isPatientListRow
+                              ? appointment.firstVisitAppointmentId
+                              : appointment.id;
                             if (user?.role === "receptionist") {
                               openVisitHistoryModal(patientId, getAppointmentPatientDisplayName(appointment));
                             } else {
-                              navigate(getPatientViewUrl(patientId, appointment.id));
+                              navigate(getPatientViewUrl(patientId, visitId || undefined));
                             }
                           }
                         }
@@ -1503,12 +1785,18 @@ function LabAppointmentsContent({ clinic }) {
                     <div className="text-gray-800 truncate">{appointment.patient?.age ?? "—"}</div>
                     <div className="text-gray-800 truncate">{getPatientGenderLetter(appointment.patient)}</div>
                     <div className="text-gray-800 truncate text-sm">{getPatientPesel(appointment.patient)}</div>
-                    <div className="text-gray-800 truncate text-sm">{getPhoneDisplay(appointment.patient?.phoneNumber ?? appointment.registrationData?.phone)}</div>
+                    <div className="text-gray-800 truncate text-sm">{getPhoneDisplay(appointment.patient?.phoneNumber ?? appointment.patient?.phone ?? appointment.registrationData?.phone)}</div>
                     <div className="text-gray-800 truncate text-sm">{getRegistrationTypeLabel(appointment.registrationType)}</div>
                     <div className="text-gray-800 truncate text-sm">{formatFirstVisit(appointment)}</div>
                     <div className="flex justify-end">
                       {appointment.isAppointment !== false && (
-                        <DropdownMenu.Root>
+                        <DropdownMenu.Root
+                          onOpenChange={(open) => {
+                            if (!open) return;
+                            const ctx = getPatientEditContext(appointment);
+                            if (ctx) prefetchPatientEdit(ctx.patientId, ctx.visitId);
+                          }}
+                        >
                           <DropdownMenu.Trigger asChild>
                             <button type="button" className="text-gray-500 hover:text-gray-700 focus:outline-none p-1">
                               <MoreVertical size={18} />
@@ -1526,10 +1814,17 @@ function LabAppointmentsContent({ clinic }) {
                                   className="flex items-center px-4 py-2 text-sm text-teal-800 hover:bg-teal-50 rounded-md cursor-pointer"
                                   onClick={() => {
                                     const patientId = appointment.patient.id || appointment.patient._id;
+                                    const visitId = appointment.isPatientListRow
+                                      ? appointment.firstVisitAppointmentId
+                                      : (appointment.id || appointment._id);
                                     if (user?.role === "receptionist") {
-                                      navigate(getPatientViewUrl(patientId, appointment.id || appointment._id));
+                                      handleEditPatient(
+                                        patientId,
+                                        visitId || undefined,
+                                        appointment.patient
+                                      );
                                     } else {
-                                      navigate(getPatientViewUrl(patientId, appointment.id));
+                                      navigate(getPatientViewUrl(patientId, visitId || undefined));
                                     }
                                   }}
                                 >
@@ -1566,11 +1861,23 @@ function LabAppointmentsContent({ clinic }) {
                                   <X size={16} className="mr-2" /> Anuluj wizytę
                                 </DropdownMenu.Item>
                               )}
+                              {clinic && (
                               <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => fetchVisitConsents(appointment.id)}>
                                 <FileText size={16} className="mr-2" /> Zobacz szczegóły rezerwacji
                               </DropdownMenu.Item>
+                              )}
                               {appointment.patient && (appointment.patient.id || appointment.patient._id) && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { navigate(getPatientViewUrl(appointment.patient.id || appointment.patient._id, appointment.id || appointment._id)); }}>
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => {
+                                  const patientId = appointment.patient.id || appointment.patient._id;
+                                  const visitId = appointment.isPatientListRow
+                                    ? appointment.firstVisitAppointmentId
+                                    : (appointment.id || appointment._id);
+                                  handleEditPatient(
+                                    patientId,
+                                    visitId || undefined,
+                                    appointment.patient
+                                  );
+                                }}>
                                   <Pen size={16} className="mr-2" /> Zobacz dane pacjenta
                                 </DropdownMenu.Item>
                               )}
@@ -1660,10 +1967,17 @@ function LabAppointmentsContent({ clinic }) {
           patientName={selectedAppointment ? getAppointmentPatientDisplayName(selectedAppointment) : ""}
           appointmentId={selectedAppointment?.id}
           patientId={selectedAppointment?.patient?.id}
-          returnPath={(() => {
-            const doctorId = user?.d_id || user?.id || "";
-            return user?.role === "doctor" && doctorId ? `/lekarze/wizyty/${doctorId}` : "/lekarze";
-          })()}
+          returnPath={user?.role === "doctor" ? doctorVisitsPath(user) : "/lekarze"}
+          doctorUserId={
+            typeof selectedAppointment?.doctor === "object"
+              ? selectedAppointment?.doctor?._id ||
+                selectedAppointment?.doctor?.id ||
+                selectedAppointment?.doctor?.d_id ||
+                null
+              : selectedAppointment?.doctor ||
+                selectedAppointment?.doctorId ||
+                null
+          }
         />
 
         {/* Reschedule Modal */}
@@ -1754,7 +2068,6 @@ function LabAppointmentsContent({ clinic }) {
                           <button
                             type="button"
                             onClick={() => {
-                              setShowVisitHistoryModal(false);
                               navigate(getPatientViewUrl(visitHistoryPatient?.id, visit.visitId));
                             }}
                             className="text-sm text-teal-600 hover:text-teal-800 font-medium"
@@ -1809,7 +2122,7 @@ function LabAppointmentsContent({ clinic }) {
                 ) : (
                   <ul className="space-y-3">
                     {visitCardsList.map((item) => {
-                      const dateStr = item.date ? new Date(item.date).toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+                      const dateStr = item.date ? formatClinicDate(item.date) || "—" : "—";
                       const doctorName = item.doctor?.name ?? "—";
                       const hasCard = item.visitCard?.url;
                       return (
@@ -2108,7 +2421,7 @@ function LabAppointmentsContent({ clinic }) {
           </div>
         )}
 
-        {/* Add Patient Modal */}
+        {/* Add / Edit Patient Modal — opens immediately; edit loads data inside */}
         {showAddPatientModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg w-[95vw] max-w-7xl max-h-[90vh] overflow-y-auto">
@@ -2118,13 +2431,8 @@ function LabAppointmentsContent({ clinic }) {
                 </h2>
                 <button
                   className="text-gray-500 hover:text-gray-700"
-                  onClick={() => {
-                    setShowAddPatientModal(false);
-                    setIsEditMode(false);
-                    setCurrentPatientId(null);
-                    // Preserve the phone code preference when closing form
-                    setPatientFormData({ phoneCode: patientFormData.phoneCode || "+48" });
-                  }}
+                  onClick={closePatientModal}
+                  type="button"
                 >
                   <svg
                     className="w-6 h-6"
@@ -2143,18 +2451,43 @@ function LabAppointmentsContent({ clinic }) {
               </div>
 
               <div className="p-6">
-                <FormProvider initialData={patientFormData}>
-                  <PatientStepFormWrapper
-                    currentSubStep={currentSubStep}
-                    goToSubStep={goToSubStep}
-                    currentPatientId={currentPatientId}
-                    markStepAsCompleted={markStepAsCompleted}
-                    subStepTitles={subStepTitles}
-                    isEditMode={isEditMode}
-                    handleAddPatient={handleAddPatient}
-                    patientFormData={patientFormData}
-                  />
-                </FormProvider>
+                {isEditMode && patientEditLoading && !patientFormData?.patient_id ? (
+                  <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-600">
+                    <Loader2 className="animate-spin text-teal-600" size={36} />
+                    <p className="text-sm font-medium">Ładowanie danych pacjenta…</p>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    {isEditMode && patientEditLoading && (
+                      <div
+                        className="mb-4 flex items-center justify-center gap-2 rounded-lg border border-teal-100 bg-teal-50 px-3 py-2 text-sm text-teal-800"
+                        role="status"
+                      >
+                        <Loader2 className="animate-spin shrink-0" size={16} />
+                        Ładowanie pełnych danych pacjenta…
+                      </div>
+                    )}
+                    <FormProvider
+                      key={
+                        isEditMode
+                          ? `edit-${currentPatientId}-${patientFormData?.patient_id || "ready"}`
+                          : "create"
+                      }
+                      initialData={patientFormData}
+                    >
+                      <PatientStepFormWrapper
+                        currentSubStep={currentSubStep}
+                        goToSubStep={goToSubStep}
+                        currentPatientId={currentPatientId}
+                        markStepAsCompleted={markStepAsCompleted}
+                        subStepTitles={subStepTitles}
+                        isEditMode={isEditMode}
+                        handleAddPatient={handleAddPatient}
+                        patientFormData={patientFormData}
+                      />
+                    </FormProvider>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -2344,20 +2677,32 @@ function PatientStepFormWrapper({
   patientFormData
 }) {
   const [completedSteps, setCompletedSteps] = useState([]);
-  const { formData, updateFormData } = useFormContext();
+  const { formData, updateMultipleFields } = useFormContext();
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (isEditMode && patientFormData && !isInitialized) {
-      updateFormData(patientFormData);
+    if (
+      isEditMode &&
+      patientFormData &&
+      Object.keys(patientFormData).length > 0 &&
+      !isInitialized
+    ) {
+      // Must merge fields — updateFormData(name, value) is not an object merge API
+      updateMultipleFields(patientFormData);
       setCompletedSteps(Array.from({ length: subStepTitles.length }, (_, i) => i));
       setIsInitialized(true);
     }
-    
+
     if (!isEditMode) {
       setIsInitialized(false);
     }
-  }, [isEditMode, patientFormData, isInitialized, subStepTitles.length]);
+  }, [
+    isEditMode,
+    patientFormData,
+    isInitialized,
+    subStepTitles.length,
+    updateMultipleFields,
+  ]);
 
   const handleStepCompleted = () => {
     if (!completedSteps.includes(currentSubStep)) {

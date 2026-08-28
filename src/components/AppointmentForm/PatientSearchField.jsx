@@ -22,7 +22,7 @@ const PatientSearchField = ({ onPatientSelect }) => {
 
     searchTimeout.current = setTimeout(() => {
       fetchPatients(searchTerm);
-    }, 300); // Debounce search to avoid too many requests
+    }, 180); // Typeahead: start suggesting quickly after keystrokes
 
     return () => {
       if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -44,20 +44,30 @@ const PatientSearchField = ({ onPatientSelect }) => {
   }, []);
 
   const fetchPatients = async (search = "", page = 1) => {
+    const term = (search || "").trim();
+    if (term.length < 1) {
+      setPatients([]);
+      setPagination({ currentPage: 1, totalPages: 1, totalPatients: 0 });
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const options = {
-        search,
+        search: term,
         page,
-        limit: 5, // Show 5 patients in dropdown
-        sortBy: "name.first", // Sort by first name
+        limit: 10,
+        sortBy: "name.last",
         sortOrder: "asc",
       };
 
       const response = await patientService.getSimpliefiedPatientsList(options);
 
       if (response.success) {
-        setPatients(response.patients);
+        setPatients((prev) =>
+          page > 1 ? [...prev, ...(response.patients || [])] : response.patients || []
+        );
         setPagination({
           currentPage: response.currentPage,
           totalPages: response.pages,
@@ -73,10 +83,6 @@ const PatientSearchField = ({ onPatientSelect }) => {
 
   const handleInputFocus = () => {
     setIsDropdownOpen(true);
-    // If no search term, fetch initial patients
-    if (!searchTerm) {
-      fetchPatients();
-    }
   };
 
   const getDisplayId = (patient) => {
@@ -109,7 +115,7 @@ const PatientSearchField = ({ onPatientSelect }) => {
         <input
           id="search"
           type="text"
-          placeholder="Wprowadź imię i numer pacjenta"
+          placeholder="Nazwisko, imię lub PESEL"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onFocus={handleInputFocus}
@@ -153,6 +159,11 @@ const PatientSearchField = ({ onPatientSelect }) => {
           loading={loading}
           pagination={pagination}
           onLoadMore={handleLoadMore}
+          emptyMessage={
+            searchTerm.trim().length < 2
+              ? "Wpisz co najmniej 2 znaki (nazwisko, imię lub PESEL)"
+              : "Nie znaleziono pacjentów"
+          }
         />
       </div>
     </div>

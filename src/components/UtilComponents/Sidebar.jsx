@@ -19,16 +19,16 @@ import {
 import { BsCalendarPlusFill } from "react-icons/bs";
 import { useUser } from "../../context/userContext";
 import { Calendar1, Shield, BarChart3, Settings, Trash2 } from "lucide-react";
+import { doctorVisitsPath } from "../../utils/useNavigate";
 
 const Sidebar = () => {
-  const { user } = useUser();
+  const { user, logout } = useUser();
   //("user", user);
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
   const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = "/logowanie";
+    logout();
   };
   //("user", user);
 
@@ -59,11 +59,7 @@ const Sidebar = () => {
           <NavItem
             icon={<LuCalendarPlus2 className="text-xl text-teal-400" />}
             label="Wizyty lekarskie"
-            to={
-              user?.role == "admin" || user?.role == "receptionist"
-                ? "/lekarze"
-                : `/lekarze/wizyty/${user?.d_id}`
-            }
+            to={doctorVisitsPath(user)}
             isActive={currentPath === "/lekarze"}
             isEnabled={true}
           />
@@ -137,7 +133,7 @@ const Sidebar = () => {
       
             <NavItem
               icon={<LuFileChartColumn className="text-xl text-teal-400" />}
-              label="Rozliczenia"
+              label={user?.role === "doctor" ? "Podgląd rozliczeń" : "Rozliczenia"}
               to="/administracja/rozliczenia"
               isActive={currentPath === "/administracja/rozliczenia"}
               isEnabled={true}

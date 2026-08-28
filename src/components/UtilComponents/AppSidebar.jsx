@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useUser } from "../../context/userContext";
+import { doctorVisitsPath } from "../../utils/useNavigate";
 import {
   Home,
   Stethoscope,
@@ -115,7 +116,7 @@ const SidebarSection = ({ title, children, dividerAbove, collapsed }) => (
  */
 const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) => {
   const location = useLocation();
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const currentPath = location.pathname;
   const [comingSoonModal, setComingSoonModal] = useState({ open: false, featureName: "" });
 
@@ -123,14 +124,10 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
   const closeComingSoon = () => setComingSoonModal((prev) => ({ ...prev, open: false }));
 
   const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = "/logowanie";
+    logout();
   };
 
-  const wizytyPath =
-    user?.role === "admin" || user?.role === "receptionist"
-      ? "/lekarze"
-      : `/lekarze/wizyty/${user?.d_id || ""}`;
+  const wizytyPath = doctorVisitsPath(user);
   const isWizytyActive =
     currentPath === "/lekarze" || currentPath.startsWith("/lekarze/wizyty");
 
@@ -236,7 +233,7 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
           />
           <NavItem
             icon={<TrendingUp size={ICON_SIZE} strokeWidth={2} />}
-            label="Rozliczenia"
+            label={user?.role === "doctor" ? "Podgląd rozliczeń" : "Rozliczenia"}
             to="/administracja/rozliczenia"
             isActive={currentPath === "/administracja/rozliczenia"}
             collapsed={collapsed}

@@ -4,136 +4,30 @@ import adminHelper from "../../helpers/adminHelper";
 import { useLoader } from "../../context/LoaderContext";
 import { useUser } from "../../context/userContext";
 import DoctorScheduleManager from "./DoctorScheduleEditor";
-import { ChevronDown, Save } from "lucide-react"; // For dropdown icon
+import { ChevronDown, Save, Trash2, Loader2 } from "lucide-react";
 import PatientStepForm from "../SubComponentForm/PatientStepForm";
 import { FormProvider, useFormContext } from "../../context/SubStepFormContext";
 import AddDoctorForm from "../Doctor/CreateDoctor";
 import doctorService from "../../helpers/doctorHelper";
 import patientService, { isSamePatientAsDocumentMatch } from "../../helpers/patientHelper";
-import appointmentHelper from "../../helpers/appointmentHelper";
 import { normalizePesel } from "../../utils/peselUtils";
 import { validateIdentityDocument } from "../../utils/identityDocument";
-
-/** Normalize ObjectId / populated ref / string to a plain id string for form selects. */
-function toEntityId(value) {
-  if (value == null || value === "") return "";
-  if (typeof value === "object") {
-    return String(value._id || value.id || "");
-  }
-  return String(value);
-}
-
-/**
- * Resolve attending (consulting) doctor from a specific appointment or the patient's
- * earliest visit, including a matching specialization id for the Skierowanie selects.
- */
-async function resolveAttendingDoctorFromVisits(patientId, preferredAppointmentId) {
-  let doctorId = "";
-
-  if (preferredAppointmentId) {
-    try {
-      const aptRes = await appointmentHelper.getAppointmentById(preferredAppointmentId);
-      const apt = aptRes?.appointment || aptRes?.data || aptRes;
-      doctorId = toEntityId(apt?.doctor);
-    } catch (err) {
-      console.warn("Could not load appointment for attending doctor prefill:", err);
-    }
-  }
-
-  if (!doctorId && patientId) {
-    try {
-      const visitsRes = await patientService.getPatientVisits(patientId);
-      const visits = Array.isArray(visitsRes?.data) ? visitsRes.data : [];
-      // API returns newest-first; initial appointment = oldest with a doctor
-      const withDoctor = visits.filter(
-        (v) => v?.doctor?.id && String(v.status || "").toLowerCase() !== "cancelled"
-      );
-      const initial = withDoctor.length ? withDoctor[withDoctor.length - 1] : null;
-      doctorId = toEntityId(initial?.doctor?.id);
-    } catch (err) {
-      console.warn("Could not load visits for attending doctor prefill:", err);
-    }
-  }
-
-  if (!doctorId) {
-    return { consultingDoctor: "", consultingSpecialization: "" };
-  }
-
-  let consultingSpecialization = "";
-  try {
-    const docRes = await doctorService.getDoctorById(doctorId);
-    const doctor = docRes?.doctor || docRes?.data || docRes;
-    const specs = doctor?.specialization || doctor?.specializations || [];
-    const items = Array.isArray(specs) ? specs : specs ? [specs] : [];
-    for (const spec of items) {
-      if (spec && typeof spec === "object") {
-        consultingSpecialization = toEntityId(spec._id || spec.id || spec);
-        if (consultingSpecialization) break;
-      } else if (typeof spec === "string" && /^[a-fA-F0-9]{24}$/.test(spec)) {
-        consultingSpecialization = spec;
-        break;
-      }
-    }
-  } catch (err) {
-    console.warn("Could not load doctor specialization for prefill:", err);
-  }
-
-  return { consultingDoctor: doctorId, consultingSpecialization };
-}
+import { readListState, writeListState, useListScrollRestore } from "../../hooks/usePersistedListState";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import {
+  loadPatientEditFormData,
+  DEFAULT_PATIENT_PHONE_CODE,
+} from "../../utils/mapPatientToEditForm";
 import SpecializationModal from "./SpecializationModal";
 import { toast } from "sonner";
 import PermanentDeleteDialog from "./PermanentDeleteDialog";
+import ConfirmDialog from "../UtilComponents/ConfirmDialog";
 import BulkDeleteByIdsDialog from "./BulkDeleteByIdsDialog";
-import { Trash2 } from "lucide-react";
 import { useFormDraft } from "../../hooks/useFormDraft";
 import { loadFormDraft, clearFormDraft, hasFormDraft, formatDraftAge } from "../../utils/formDraftStorage";
 import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
 import { PHONE_COUNTRY_CODES } from "../../constants/phoneCountryCodes";
 import PatientKioskCorrectionPanel from "./PatientKioskCorrectionPanel";
-import { mapPatientAuthorizationFields } from "../../utils/authorizedPersons";
-import { mapPatientGuardianFields } from "../../utils/guardian";
-import { normalizeVoivodeship } from "../../utils/voivodeshipUtils";
-
-/** Default when API omits phoneCode or number is national digits only. */
-const DEFAULT_PATIENT_PHONE_CODE = "+48";
-
-/**
- * Maps `patient.phone` (+ optional `patient.phoneCode`) to form `phoneCode` + `mobileNumber`.
- * - Valid `phoneCode` from API → use it and strip prefix from `phone`.
- * - Else if value looks like +CC… and matches a known dial code → use that code.
- * - Else assume Poland (+48): national digits, optional leading 48 for 48XXXXXXXXX.
- */
-function mapPatientPhoneToFormFields(rawPhone, apiPhoneCode, countryCodes) {
-  const list = countryCodes?.length ? countryCodes : PHONE_COUNTRY_CODES;
-  const sortedCodes = [...list].sort((a, b) => b.code.length - a.code.length);
-
-  const codeFromApi = apiPhoneCode != null ? String(apiPhoneCode).trim() : "";
-  if (codeFromApi && list.some((c) => c.code === codeFromApi)) {
-    let num = String(rawPhone).trim();
-    if (num.startsWith(codeFromApi)) num = num.slice(codeFromApi.length).trim();
-    return { phoneCode: codeFromApi, mobileNumber: num.replace(/\s+/g, "") };
-  }
-
-  let phoneWithCode = String(rawPhone).trim();
-  if (!phoneWithCode.startsWith("+")) {
-    phoneWithCode = phoneWithCode.replace(/^0+/, "");
-    if (phoneWithCode.length > 0) phoneWithCode = "+" + phoneWithCode;
-  }
-  const foundCountry = sortedCodes.find((country) => phoneWithCode.startsWith(country.code));
-  if (foundCountry) {
-    return {
-      phoneCode: foundCountry.code,
-      mobileNumber: phoneWithCode.replace(foundCountry.code, "").trim().replace(/\s+/g, ""),
-    };
-  }
-
-  let digitsOnly = String(rawPhone).trim().replace(/\D/g, "");
-  if (digitsOnly.startsWith("48") && digitsOnly.length >= 11) {
-    digitsOnly = digitsOnly.slice(2);
-  }
-  digitsOnly = digitsOnly.replace(/^0+/, "");
-  return { phoneCode: DEFAULT_PATIENT_PHONE_CODE, mobileNumber: digitsOnly };
-}
 
 export default function UserManagement() {
   // Add these translation mappings at the top of the component
@@ -156,11 +50,14 @@ export default function UserManagement() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  const savedAccounts = readListState("admin-accounts") || {};
+  const [currentPage, setCurrentPage] = useState(
+    Number(savedAccounts.currentPage) > 0 ? Number(savedAccounts.currentPage) : 1
+  );
   const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState("createdAt");
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [searchTerm, setSearchTerm] = useState(savedAccounts.searchTerm || "");
+  const [sortField, setSortField] = useState(savedAccounts.sortField || "createdAt");
+  const [sortOrder, setSortOrder] = useState(savedAccounts.sortOrder || "desc");
   const [showSpecsModal,setShowSpecsModal]=useState(false)
   const [patientFormData, setPatientFormData] = useState({});
   const [selectedPhoneCode, setSelectedPhoneCode] = useState("+48");
@@ -171,8 +68,11 @@ export default function UserManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
+  const [patientEditLoading, setPatientEditLoading] = useState(false);
+  const patientEditRequestRef = useRef(0);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmRemoveEmail, setConfirmRemoveEmail] = useState(false);
   const [permanentDeleteDialog, setPermanentDeleteDialog] = useState({
     open: false,
     id: null,
@@ -194,7 +94,10 @@ export default function UserManagement() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [usersPerPage, setUsersPerPage] = useState(5);
+  const [usersPerPage, setUsersPerPage] = useState(
+    Number(savedAccounts.usersPerPage) > 0 ? Number(savedAccounts.usersPerPage) : 5
+  );
+  const debouncedSearchTerm = useDebouncedValue(searchTerm, 400);
 
   // State for doctor schedule modal
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -226,7 +129,12 @@ export default function UserManagement() {
       return;
     }
 
-    if (!window.confirm('Czy na pewno chcesz usunąć email pacjenta? Tej operacji nie można cofnąć.')) {
+    setConfirmRemoveEmail(true);
+  };
+
+  const confirmRemovePatientEmail = async () => {
+    if (!currentPatientId) {
+      toast.error("Brak ID pacjenta");
       return;
     }
 
@@ -332,7 +240,19 @@ export default function UserManagement() {
 
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, usersPerPage, sortField, sortOrder]);
+  }, [currentPage, usersPerPage, sortField, sortOrder, debouncedSearchTerm]);
+
+  useEffect(() => {
+    writeListState("admin-accounts", {
+      searchTerm,
+      currentPage,
+      usersPerPage,
+      sortField,
+      sortOrder,
+    });
+  }, [searchTerm, currentPage, usersPerPage, sortField, sortOrder]);
+
+  useListScrollRestore("admin-accounts", !isLoading);
 
   // Handle URL parameter for editing patient
   useEffect(() => {
@@ -371,14 +291,12 @@ export default function UserManagement() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setCurrentPage(1); // Reset to first page when searching
-    fetchUsers();
+    setCurrentPage(1);
   };
 
   const handleClearSearch = () => {
     setSearchTerm("");
     setCurrentPage(1);
-    fetchUsers();
   };
 
   const handlePageChange = (page) => {
@@ -654,135 +572,45 @@ export default function UserManagement() {
     setShowDraftRecoveryModal({ show: false, formType: null, draft: null });
   };
 
-  // Add this function to handle edit click
+  // Open edit modal immediately, then load patient data (no blank wait on konta).
   const handleEditPatient = async (userId, preferredAppointmentId = null) => {
+    if (!userId) return;
+    const requestId = ++patientEditRequestRef.current;
+    setIsEditMode(true);
+    setCurrentPatientId(userId);
+    setPatientFormData({});
+    setCurrentSubStep(0);
+    setCompletedSteps([]);
+    setPatientEditLoading(true);
+    setShowAddPatientModal(true);
+
     try {
-      showLoader();
-      const patientData = await patientService.getPatientById(userId);
-      let patientDetails=patientData;
-      const rawPhone = patientDetails.phone;
-      const hasRealPhone = rawPhone != null && String(rawPhone).trim() !== "" && !/^_no_phone_/i.test(String(rawPhone).trim());
-      //(patientData, "patient data")
-      let consultingDoctor = toEntityId(patientDetails.consultingDoctor);
-      let consultingSpecialization = toEntityId(patientDetails.consultingSpecialization);
-
-      // First open / empty attending physician → use booked appointment doctor
-      if (!consultingDoctor) {
-        const resolved = await resolveAttendingDoctorFromVisits(
-          userId,
-          preferredAppointmentId
-        );
-        consultingDoctor = resolved.consultingDoctor;
-        if (!consultingSpecialization && resolved.consultingSpecialization) {
-          consultingSpecialization = resolved.consultingSpecialization;
-        }
-      } else if (!consultingSpecialization) {
-        // Doctor saved but specialization missing — derive from doctor profile
-        try {
-          const docRes = await doctorService.getDoctorById(consultingDoctor);
-          const doctor = docRes?.doctor || docRes?.data || docRes;
-          const specs = doctor?.specialization || doctor?.specializations || [];
-          const items = Array.isArray(specs) ? specs : specs ? [specs] : [];
-          for (const spec of items) {
-            if (spec && typeof spec === "object") {
-              consultingSpecialization = toEntityId(spec._id || spec.id || spec);
-              if (consultingSpecialization) break;
-            } else if (typeof spec === "string" && /^[a-fA-F0-9]{24}$/.test(spec)) {
-              consultingSpecialization = spec;
-              break;
-            }
-          }
-        } catch (_) {
-          /* keep empty; user can pick */
-        }
-      }
-
-      const mappedFormData = {
-        // Demographics
-        fullName:
-          patientDetails.name?.first + " " + (patientDetails.name?.last || ""),
-        email: patientDetails.email,
-        mobileNumber: "",
-        patient_id: patientDetails._id,
-        dateOfBirth: patientDetails.dateOfBirth,
-        motherTongue: patientDetails.motherTongue,
-        govtId: patientDetails.govtId,
-        sex: patientDetails.sex,
-        maritalStatus: patientDetails.maritalStatus,
-        ethnicity: patientDetails.ethnicity,
-        otherHospitalIds: patientDetails.otherHospitalIds,
-        patientId: patientDetails.patientId || "",
-
-        consents: patientDetails.consents || [],
-        documents: patientDetails.documents || [],
-
-        // Referrer
-        referrerType: patientDetails.referrerType || "bez-skierowania",
-        mainComplaint: patientDetails.mainComplaint,
-        referrerName: patientDetails.referrerName,
-        referrerNumber: patientDetails.referrerNumber,
-        referrerEmail: patientDetails.referrerEmail,
-        consultingDepartment: patientDetails.consultingDepartment,
-        consultingSpecialization,
-        consultingDoctor,
-
-        // Address
-        address: patientDetails.address,
-        city: patientDetails.city,
-        pinCode: patientDetails.pinCode,
-        state: normalizeVoivodeship(patientDetails.state || patientDetails.province || ""),
-        country: patientDetails.country,
-        district: patientDetails.district,
-        isInternationalPatient: patientDetails.isInternationalPatient || false,
-
-        documentCountry: patientDetails.documentCountry || "",
-        documentType: patientDetails.documentType || "",
-        documentNumber: patientDetails.documentNumber || "",
-        documentDateOfBirth:
-          patientDetails.documentDateOfBirth || patientDetails.dateOfBirth || "",
-        documentIssueDate: patientDetails.documentIssueDate || "",
-        documentExpiryDate: patientDetails.documentExpiryDate || "",
-        citizenship: patientDetails.citizenship || "",
-
-        // Photo
-        photo: patientDetails.photo || null,
-
-        // Authorized persons
-        ...mapPatientAuthorizationFields(patientDetails),
-        // Guardian / legal representative (minors)
-        ...mapPatientGuardianFields(patientDetails),
-        allergies: patientDetails.allergies,
-        preferredLanguage: patientDetails.preferredLanguage,
-
-        // Notes
-        reviewNotes: patientDetails.reviewNotes,
-      };
-
-      // Phone: use API phoneCode when valid; else match +prefix; else assume +48 (national / unknown format).
-      if (hasRealPhone) {
-        const { phoneCode, mobileNumber } = mapPatientPhoneToFormFields(
-          rawPhone,
-          patientDetails.phoneCode,
-          phoneCountryCodes
-        );
-        mappedFormData.phoneCode = phoneCode;
-        mappedFormData.mobileNumber = mobileNumber;
-        setSelectedPhoneCode(phoneCode);
-      } else {
-        mappedFormData.phoneCode = DEFAULT_PATIENT_PHONE_CODE;
-        mappedFormData.mobileNumber = "";
-        setSelectedPhoneCode(DEFAULT_PATIENT_PHONE_CODE);
-      }
-      //(mappedFormData, "mapped form data")
+      const mappedFormData = await loadPatientEditFormData(
+        userId,
+        preferredAppointmentId,
+        phoneCountryCodes
+      );
+      if (requestId !== patientEditRequestRef.current) return;
+      setSelectedPhoneCode(mappedFormData.phoneCode || DEFAULT_PATIENT_PHONE_CODE);
       setPatientFormData(mappedFormData);
-      setCurrentPatientId(userId);
-      setIsEditMode(true);
-      setShowAddPatientModal(true);
-      hideLoader();
     } catch (error) {
-      toast.error("Nie udało się pobrać danych pacjenta: " + error.message)
-      setError("Nie udało się pobrać danych pacjenta: " + error.message);
-      hideLoader();
+      if (requestId !== patientEditRequestRef.current) return;
+      const msg =
+        error?.response?.data?.message || error.message || "Nieznany błąd";
+      toast.error("Nie udało się pobrać danych pacjenta: " + msg);
+      setError("Nie udało się pobrać danych pacjenta: " + msg);
+      setShowAddPatientModal(false);
+      setIsEditMode(false);
+      setCurrentPatientId(null);
+      setPatientEditLoading(false);
+      if (returnUrl) {
+        navigate(returnUrl);
+        setReturnUrl(null);
+      }
+    } finally {
+      if (requestId === patientEditRequestRef.current) {
+        setPatientEditLoading(false);
+      }
     }
   };
 
@@ -1698,8 +1526,14 @@ export default function UserManagement() {
             </div>
 
             <div className="p-6">
+              {isEditMode && patientEditLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-600">
+                  <Loader2 className="animate-spin text-teal-600" size={36} />
+                  <p className="text-sm font-medium">Ładowanie danych pacjenta…</p>
+                </div>
+              ) : (
               <FormProvider 
-                key={`patient-form-${isEditMode ? 'edit' : 'new'}`} 
+                key={`patient-form-${isEditMode ? `edit-${currentPatientId}-${patientFormData?.patient_id || "ready"}` : "new"}`} 
                 initialData={patientFormData}
               >
                 <PatientStepFormWrapper
@@ -1735,6 +1569,7 @@ export default function UserManagement() {
                   }
                 />
               </FormProvider>
+              )}
             </div>
           </div>
         </div>
@@ -1785,6 +1620,13 @@ export default function UserManagement() {
       )}
 
       {/* Permanent Delete Dialog */}
+      <ConfirmDialog
+        open={confirmRemoveEmail}
+        title="Usunąć email pacjenta?"
+        message="Czy na pewno chcesz usunąć email pacjenta? Tej operacji nie można cofnąć."
+        onConfirm={confirmRemovePatientEmail}
+        onClose={() => setConfirmRemoveEmail(false)}
+      />
       <PermanentDeleteDialog
         open={permanentDeleteDialog.open}
         onClose={() => setPermanentDeleteDialog({ open: false, id: null, userName: "" })}

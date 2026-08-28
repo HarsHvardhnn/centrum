@@ -1,6 +1,7 @@
 // PatientDetailsPage.jsx - Redesigned layout: visit header, two columns, footer
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useParams, useNavigate, useSearchParams, useBlocker } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import PatientProfile from "./PatientProfile";
 import ConsultationForm from "./ConsultationForm";
 import ActionButtons from "./ActionButtons";
@@ -19,9 +20,13 @@ import MedicalDocumentsCard from "./MedicalDocumentsCard";
 import SectionTemplatePickerModal from "./SectionTemplatePickerModal";
 import GlobalTemplatePickerModal from "./GlobalTemplatePickerModal";
 import PatientDetailsFooter from "./PatientDetailsFooter";
+import BillingConfirmationModal from "../../../Billing/BillingConfirmationModal";
+import ConfirmDialog from "../../../UtilComponents/ConfirmDialog";
+import { formatPersonName } from "../../../../utils/formatPersonName";
 import patientService from "../../../../helpers/patientHelper";
 import patientServicesHelper from "../../../../helpers/patientServicesHelper";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
+import billingHelper from "../../../../helpers/billingHelper";
 import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
@@ -35,12 +40,29 @@ import {
 } from "../../../../utils/radiologistVisitHelper";
 import { useAutoSave } from "../../../../hooks/useAutoSave";
 import { useUser } from "../../../../context/userContext";
+import {
+  collectDoctorCatalogIds,
+  loadDoctorAssignedCatalog,
+} from "../../../../helpers/userServiceHelper";
+import { queryKeys } from "../../../../lib/queryKeys";
+import { fetchVisitDetails, unwrapVisitConsolidated } from "../../../../utils/visitNavigation";
+import { doctorVisitsPath } from "../../../../utils/useNavigate";
 
 /**
  * Build consultation payload for PUT /appointments/:id/details.
  * Header verification only updates `visitReasonVerified` state; ConsultationForm may only set
  * `visitTypeVerified` on `consultationData`. Without merging, both flags stay false from the last fetch.
  */
+function visitIdsMatch(a, b) {
+  if (a == null || b == null) return false;
+  return String(a) === String(b);
+}
+
+function withVisitVerified(apt, appointmentId) {
+  if (!apt || !visitIdsMatch(apt._id || apt.id, appointmentId)) return apt;
+  return { ...apt, visitTypeVerified: true, visitReasonVerified: true };
+}
+
 function mergeConsultationVerificationFlags(consultationData, visitReasonVerifiedState) {
   return {
     ...consultationData,
@@ -382,9 +404,13 @@ const PatientDetailsPage = () => {
   const [searchParams] = useSearchParams();
   const appointmentIdFromUrl = searchParams.get('appointmentId');
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
   const { user } = useUser();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => {
+    if (!appointmentIdFromUrl) return true;
+    return !queryClient.getQueryData(queryKeys.visitConsolidated(appointmentIdFromUrl));
+  });
   const [error, setError] = useState(null);
 
   // Add saving-related states
@@ -485,13 +511,64 @@ const PatientDetailsPage = () => {
   // Visit documentation template pickers (section = one field, global = full visit)
   const [sectionTemplatePickerKey, setSectionTemplatePickerKey] = useState(null);
   const [globalTemplatePickerOpen, setGlobalTemplatePickerOpen] = useState(false);
+  const [showSettlementModal, setShowSettlementModal] = useState(false);
+  const [leaveSettlementConfirm, setLeaveSettlementConfirm] = useState(false);
+  const allowSettlementLeaveRef = useRef(false);
+  const settlementNavigationBlocker = useBlocker(
+    ({ currentLocation, nextLocation }) => {
+      if (allowSettlementLeaveRef.current) return false;
+      if (!showSettlementModal) return false;
+      return (
+        currentLocation.pathname !== nextLocation.pathname ||
+        currentLocation.search !== nextLocation.search ||
+        currentLocation.hash !== nextLocation.hash
+      );
+    }
+  );
+
+  useEffect(() => {
+    if (settlementNavigationBlocker.state === "blocked") {
+      setLeaveSettlementConfirm(true);
+    }
+  }, [settlementNavigationBlocker.state]);
+
+  useEffect(() => {
+    if (!showSettlementModal) return undefined;
+    const warnBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [showSettlementModal]);
 
   const resolveVisitDoctorUserId = (appointment) => {
     if (!appointment) return null;
     const doc = appointment.doctor ?? appointment.doctorId;
     if (!doc) return null;
-    if (typeof doc === "string") return doc;
-    return doc._id || doc.id || doc.userId || doc.user_id || null;
+    if (typeof doc === "string" || typeof doc === "number") return String(doc);
+    return (
+      doc._id ||
+      doc.id ||
+      doc.d_id ||
+      doc.userId ||
+      doc.user_id ||
+      null
+    );
+  };
+
+  const visitBelongsToLoggedInDoctor = (appointment) => {
+    if (user?.role !== "doctor") return true;
+    const visitDoctorUserId = resolveVisitDoctorUserId(appointment);
+    if (!visitDoctorUserId) return false;
+    const mine = [user.id, user._id, user.d_id].filter(Boolean).map(String);
+    return mine.includes(String(visitDoctorUserId));
+  };
+
+  const filterVisitHistoryForRole = (list) => {
+    const rows = Array.isArray(list) ? list : [];
+    if (user?.role !== "doctor") return rows;
+    return rows.filter((apt) => visitBelongsToLoggedInDoctor(apt));
   };
 
   const SECTION_LABELS = {
@@ -516,7 +593,7 @@ const PatientDetailsPage = () => {
     }
 
     const cd = dataToSave.consultationData || consultationData;
-    await appointmentHelper.updateAppointmentDetails(
+    await appointmentHelper.updatePatientDetailsConsolidated(
       currentAppointmentId,
       {
         patientData: dataToSave.patientData || patientData,
@@ -565,195 +642,246 @@ const PatientDetailsPage = () => {
     }
   });
 
-  // Add a specific useEffect to fetch patient services when appointment ID changes
-  useEffect(() => {
-    if (currentAppointmentId && id) {
-      fetchPatientServices();
-    }
-  }, [currentAppointmentId]);
-
-  // Fetch visit reason verification status (API 2) whenever appointment changes.
+  // Visit reason verification comes from consolidated payload / verify action.
+  // Keep a lightweight refresh only when we somehow still have unknown status.
   useEffect(() => {
     if (!currentAppointmentId) return;
+    if (visitReasonVerified !== null) return;
 
     let cancelled = false;
     setVisitReasonVerifyLoading(true);
-
-    // Best-effort initial value (before the API call resolves)
-    const initial =
-      selectedAppointment?.visitReasonVerified ??
-      selectedAppointment?.visitTypeVerified ??
-      null;
-    setVisitReasonVerified(initial);
-
     appointmentHelper
       .getVisitReasonVerifyStatus(currentAppointmentId)
       .then((res) => {
         if (cancelled) return;
         const v = res?.visitReasonVerified;
-        // API contract: boolean
         if (typeof v === "boolean") setVisitReasonVerified(v);
         else setVisitReasonVerified(false);
       })
-      .catch((err) => {
-        if (cancelled) return;
-        console.warn("visitReasonVerifyStatus fetch failed:", err);
-        setVisitReasonVerified(false);
+      .catch(() => {
+        if (!cancelled) setVisitReasonVerified(false);
       })
       .finally(() => {
-        if (cancelled) return;
-        setVisitReasonVerifyLoading(false);
+        if (!cancelled) setVisitReasonVerifyLoading(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [currentAppointmentId, selectedAppointment]);
+  }, [currentAppointmentId, visitReasonVerified]);
 
-  // Modify the useEffect to handle appointmentId from query params
+  const mapConsolidatedServices = (services = []) =>
+    (Array.isArray(services) ? services : []).map((serviceItem, index) => ({
+      serviceId: serviceItem.serviceId || serviceItem.service?._id || `svc-${index}`,
+      _id: serviceItem._id || serviceItem.serviceId || `svc-${index}`,
+      title: serviceItem.title || serviceItem.service?.title || "Usługa",
+      price: serviceItem.price ?? serviceItem.service?.price ?? 0,
+      quantity: serviceItem.quantity || 1,
+      totalPrice: (
+        parseFloat(serviceItem.price ?? serviceItem.service?.price ?? 0) *
+        (serviceItem.quantity || 1)
+      ).toFixed(2),
+      status: serviceItem.status || "active",
+      notes: serviceItem.notes || "",
+    }));
+
+  const applyConsolidatedPayload = (payload, appointmentId) => {
+    if (!payload) return;
+
+    const {
+      patient,
+      appointment,
+      consultation,
+      appointmentHistory,
+      diagnoses: diagnosesList,
+      procedures: proceduresList,
+      services,
+      medications: appointmentMedications,
+      tests: appointmentTests,
+      reports: appointmentReports,
+    } = payload;
+
+    if (patient) {
+      setPatientData((prevData) => ({
+        ...prevData,
+        ...patient,
+        patientId: patient.patientId ?? patient.patient_id ?? prevData.patientId,
+        patient_id: patient.patient_id ?? patient._id ?? prevData.patient_id,
+        bloodPressure: patient.bloodPressure ?? prevData.bloodPressure ?? null,
+        temperature: patient.temperature ?? prevData.temperature ?? null,
+        weight: patient.weight ?? prevData.weight ?? null,
+        height: patient.height ?? prevData.height ?? null,
+        bloodPressureSystolic: patient.bloodPressureSystolic ?? prevData.bloodPressureSystolic ?? null,
+        bloodPressureDiastolic: patient.bloodPressureDiastolic ?? prevData.bloodPressureDiastolic ?? null,
+        pulse: patient.pulse ?? prevData.pulse ?? null,
+        oxygenSaturation: patient.oxygenSaturation ?? prevData.oxygenSaturation ?? null,
+      }));
+    }
+
+    const history = filterVisitHistoryForRole(
+      Array.isArray(appointmentHistory) ? appointmentHistory : []
+    );
+    if (history.length > 0) {
+      setAppointments(history);
+    }
+
+    const selected =
+      history.find((apt) => String(apt._id || apt.id) === String(appointmentId)) ||
+      (appointment
+        ? {
+            _id: appointment.id || appointmentId,
+            ...appointment,
+            doctor: appointment.doctor,
+          }
+        : null);
+
+    if (selected) {
+      if (user?.role === "doctor" && !visitBelongsToLoggedInDoctor(selected)) {
+        setError("Brak dostępu do wizyty innego lekarza");
+        setSelectedAppointment(null);
+        return;
+      }
+      setSelectedAppointment(selected);
+      setCurrentAppointmentId(selected._id || selected.id || appointmentId);
+    }
+
+    const appointmentRecord = selected || appointment || {};
+    const radiologistVisitFields = isRadiologistAppointment(appointmentRecord)
+      ? getRadiologistVisitTypeFields()
+      : {};
+
+    setConsultationData((prevConsultation) =>
+      normalizeConsultationTypeAliases({
+        ...prevConsultation,
+        ...(consultation || {}),
+        ...radiologistVisitFields,
+        notes: consultation?.notes || "",
+        date: appointment?.date || prevConsultation.date,
+        consultationDate: appointment?.date || prevConsultation.consultationDate,
+        time: appointment?.startTime || prevConsultation.time,
+        endTime: appointment?.endTime || prevConsultation.endTime,
+      })
+    );
+
+    if (isRadiologistAppointment(appointmentRecord)) {
+      setVisitReasonVerified(true);
+    } else if (typeof consultation?.visitReasonVerified === "boolean") {
+      setVisitReasonVerified(consultation.visitReasonVerified);
+    } else if (typeof consultation?.visitTypeVerified === "boolean") {
+      setVisitReasonVerified(consultation.visitTypeVerified);
+    }
+
+    setMedications(appointmentMedications || []);
+    setTests(appointmentTests || []);
+    setReports(appointmentReports || []);
+    setDiagnoses(Array.isArray(diagnosesList) ? diagnosesList : []);
+    setProcedures(Array.isArray(proceduresList) ? proceduresList : []);
+    setPatientServices(mapConsolidatedServices(services));
+    setIsServicesLoading(false);
+  };
+
+  useLayoutEffect(() => {
+    if (!appointmentIdFromUrl) return;
+    const cached = unwrapVisitConsolidated(
+      queryClient.getQueryData(queryKeys.visitConsolidated(appointmentIdFromUrl))
+    );
+    if (!cached) return;
+    applyConsolidatedPayload(cached, appointmentIdFromUrl);
+    setIsLoading(false);
+    setVisitReasonVerifyLoading(false);
+  }, [appointmentIdFromUrl, queryClient]);
+
+  // Single-request (or 2-request) load for patient details page
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
       try {
-        setIsLoading(true);
-        showLoader();
-        
-        // Fetch patient basic data
-        const patientResponse = await patientService.getPatientDetails(id);
-        console.log("Patient Response:", patientResponse);
-        console.log("Patient Data Fields:", Object.keys(patientResponse.patientData || {}));
-        //("patientResponse", patientResponse);
+        let targetAppointmentId = appointmentIdFromUrl || null;
+        const cachedPayload = targetAppointmentId
+          ? unwrapVisitConsolidated(
+              queryClient.getQueryData(queryKeys.visitConsolidated(targetAppointmentId))
+            )
+          : null;
 
-        setPatientData(prevData => ({
-          ...prevData,
-          ...patientResponse.patientData,
-          age: patientResponse.patientData?.age || null,
-          bloodPressure: patientResponse.patientData?.bloodPressure || null,
-          temperature: patientResponse.patientData?.temperature || null,
-          weight: patientResponse.patientData?.weight || null,
-          height: patientResponse.patientData?.height || null,
-          bloodPressureSystolic: patientResponse.patientData?.bloodPressureSystolic ?? null,
-          bloodPressureDiastolic: patientResponse.patientData?.bloodPressureDiastolic ?? null,
-          pulse: patientResponse.patientData?.pulse ?? null,
-          oxygenSaturation: patientResponse.patientData?.oxygenSaturation ?? null
-        }));
-
-        // Fetch patient services
-        await fetchPatientServices();
-
-        // Always fetch all patient's appointments
-        const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
-        setAppointments(appointmentsResponse.data || []);
-
-        // If we have a specific appointment ID from URL, select that one
-        if (appointmentIdFromUrl) {
-          const appointmentFromUrl = appointmentsResponse.data?.find(apt => apt._id === appointmentIdFromUrl);
-          if (appointmentFromUrl) {
-            setCurrentAppointmentId(appointmentIdFromUrl);
-            setSelectedAppointment(appointmentFromUrl);
-            await fetchAppointmentDetails(appointmentIdFromUrl);
-          }
-        } else if (appointmentsResponse.data && appointmentsResponse.data.length > 0) {
-          // Otherwise select the most recent one
-          const mostRecentAppointment = appointmentsResponse.data[0];
-          setCurrentAppointmentId(mostRecentAppointment._id);
-          setSelectedAppointment(mostRecentAppointment);
-          await fetchAppointmentDetails(mostRecentAppointment._id);
+        if (!cachedPayload) {
+          setIsLoading(true);
+          showLoader();
+          setVisitReasonVerifyLoading(true);
         }
 
-        setIsLoading(false);
-        hideLoader();
+        if (!targetAppointmentId) {
+          const appointmentsResponse = await appointmentHelper.getPatientAppointments(id);
+          const list = filterVisitHistoryForRole(appointmentsResponse.data || []);
+          setAppointments(list);
+          targetAppointmentId = list[0]?._id || null;
+          if (list[0]) setSelectedAppointment(list[0]);
+        }
+
+        if (!targetAppointmentId) {
+          const patientResponse = await patientService.getPatientDetails(id);
+          if (cancelled) return;
+          setPatientData((prevData) => ({
+            ...prevData,
+            ...patientResponse.patientData,
+          }));
+          setVisitReasonVerified(false);
+          return;
+        }
+
+        const consolidated = await fetchVisitDetails(queryClient, targetAppointmentId);
+        if (cancelled) return;
+        applyConsolidatedPayload(unwrapVisitConsolidated(consolidated), targetAppointmentId);
       } catch (err) {
+        if (cancelled) return;
         console.error("Error fetching data:", err);
         setError("błąd serwera");
-        setIsLoading(false);
-        hideLoader();
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+          setVisitReasonVerifyLoading(false);
+          hideLoader();
+        }
       }
     };
 
     if (id) {
       fetchData();
     }
-  }, [id, appointmentIdFromUrl]);
+    return () => {
+      cancelled = true;
+    };
+  }, [id, appointmentIdFromUrl, queryClient]);
 
-  // Fetch appointment details (including ICD-10 diagnoses and ICD-9 procedures)
   const fetchAppointmentDetails = async (appointmentId) => {
     try {
-      showLoader();
-      const response = await appointmentHelper.getAppointmentById(appointmentId);
-      
-      if (response.data) {
-        const { consultation, medications: appointmentMedications, tests: appointmentTests, reports, patientData: appointmentPatientData, patient: appointmentPatient, notes, date: aptDate, startTime: aptStartTime, endTime: aptEndTime } = response.data;
-        const appointmentRecord = response.data;
-        const radiologistVisitFields = isRadiologistAppointment(appointmentRecord)
-          ? getRadiologistVisitTypeFields()
-          : {};
-
-        // Update consultation data with notes and appointment date/time
-        setConsultationData(prevConsultation => normalizeConsultationTypeAliases({
-          ...prevConsultation,
-          ...consultation,
-          ...radiologistVisitFields,
-          notes: notes || "",
-          date: aptDate || prevConsultation.date,
-          consultationDate: aptDate || prevConsultation.consultationDate,
-          time: aptStartTime || prevConsultation.time,
-          endTime: aptEndTime || prevConsultation.endTime
-        }));
-
-        if (isRadiologistAppointment(appointmentRecord)) {
-          setVisitReasonVerified(true);
-        }
-        setMedications(appointmentMedications || []);
-        setTests(appointmentTests || []);
-        setReports(reports || []);
-
-        // Update patient data from appointment: prefer patient (main API shape), then patientData
-        const fromAppointment = appointmentPatient || appointmentPatientData;
-        if (fromAppointment) {
-          setPatientData(prevData => ({
-            ...prevData,
-            ...fromAppointment,
-            // Ensure user-facing patientId from API is shown in the card (data.patient.patientId)
-            patientId: fromAppointment.patientId ?? fromAppointment.patient_id ?? prevData.patientId ?? prevData.patient_id,
-            patient_id: fromAppointment.patient_id ?? fromAppointment._id ?? prevData.patient_id,
-            bloodPressure: fromAppointment.bloodPressure ?? prevData.bloodPressure ?? null,
-            temperature: fromAppointment.temperature ?? prevData.temperature ?? null,
-            weight: fromAppointment.weight ?? prevData.weight ?? null,
-            height: fromAppointment.height ?? prevData.height ?? null,
-            bloodPressureSystolic: fromAppointment.bloodPressureSystolic ?? prevData.bloodPressureSystolic ?? null,
-            bloodPressureDiastolic: fromAppointment.bloodPressureDiastolic ?? prevData.bloodPressureDiastolic ?? null,
-            pulse: fromAppointment.pulse ?? prevData.pulse ?? null,
-            oxygenSaturation: fromAppointment.oxygenSaturation ?? prevData.oxygenSaturation ?? null
-          }));
-        }
+      const cached = unwrapVisitConsolidated(
+        queryClient.getQueryData(queryKeys.visitConsolidated(appointmentId))
+      );
+      // Do not replay a stale cache that can drop an already-confirmed verification.
+      if (cached && visitReasonVerified !== true) {
+        applyConsolidatedPayload(cached, appointmentId);
+      } else {
+        showLoader();
       }
-
-      // Fetch visit diagnoses (ICD-10) and procedures (ICD-9)
-      try {
-        const [diagnosesList, proceduresList] = await Promise.all([
-          appointmentHelper.getVisitDiagnoses(appointmentId),
-          appointmentHelper.getVisitProcedures(appointmentId),
-        ]);
-        setDiagnoses(Array.isArray(diagnosesList) ? diagnosesList : []);
-        setProcedures(Array.isArray(proceduresList) ? proceduresList : []);
-      } catch (e) {
-        console.error("Error fetching visit medical codes:", e);
-        setDiagnoses([]);
-        setProcedures([]);
-      }
+      setVisitReasonVerifyLoading(true);
+      const response = await fetchVisitDetails(queryClient, appointmentId);
+      applyConsolidatedPayload(unwrapVisitConsolidated(response), appointmentId);
     } catch (error) {
       console.error("Error fetching appointment details:", error);
       toast.error("Wystąpił błąd");
-
     } finally {
+      setVisitReasonVerifyLoading(false);
       hideLoader();
     }
   };
 
   // Handle appointment selection
   const handleAppointmentSelect = async (appointmentId) => {
+    if (visitIdsMatch(appointmentId, currentAppointmentId)) return;
     setCurrentAppointmentId(appointmentId);
-    const selected = appointments.find(apt => apt._id === appointmentId);
+    const selected = appointments.find(
+      (apt) => visitIdsMatch(apt._id || apt.id, appointmentId)
+    );
     setSelectedAppointment(selected);
     await fetchAppointmentDetails(appointmentId);
   };
@@ -874,6 +1002,29 @@ const PatientDetailsPage = () => {
   const canVerifyVisitReason = user?.role === "doctor" || user?.role === "admin";
   const visitDoctorUserId = resolveVisitDoctorUserId(selectedAppointment);
 
+  useEffect(() => {
+    if (user?.role === "admin") return;
+    const ids = collectDoctorCatalogIds(
+      visitDoctorUserId,
+      user?.id,
+      user?._id,
+      user?.d_id
+    );
+    if (!ids.length) return;
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.doctorServicesCatalog(ids),
+      queryFn: () => loadDoctorAssignedCatalog(ids),
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [
+    visitDoctorUserId,
+    user?.role,
+    user?.id,
+    user?._id,
+    user?.d_id,
+    queryClient,
+  ]);
+
   const handleVerifyVisitReason = async () => {
     if (!currentAppointmentId) return;
     if (!canVerifyVisitReason) return;
@@ -891,6 +1042,34 @@ const PatientDetailsPage = () => {
           visitReasonVerified: true,
           visitTypeVerified: true,
         }));
+        setSelectedAppointment((prev) =>
+          prev ? { ...prev, visitTypeVerified: true, visitReasonVerified: true } : prev
+        );
+        setAppointments((prev) =>
+          prev.map((apt) => withVisitVerified(apt, currentAppointmentId))
+        );
+        queryClient.setQueryData(
+          queryKeys.visitConsolidated(currentAppointmentId),
+          (old) => {
+            if (!old) return old;
+            const inner = old.data && typeof old.data === "object" ? old.data : old;
+            const nextInner = {
+              ...inner,
+              consultation: {
+                ...(inner.consultation || {}),
+                visitReasonVerified: true,
+                visitTypeVerified: true,
+              },
+              appointmentHistory: (inner.appointmentHistory || []).map((apt) =>
+                withVisitVerified(apt, currentAppointmentId)
+              ),
+            };
+            if (old.data && typeof old.data === "object") {
+              return { ...old, data: nextInner };
+            }
+            return nextInner;
+          }
+        );
       }
       toast.success("Rodzaj wizyty zweryfikowany");
     } catch (err) {
@@ -938,10 +1117,55 @@ const PatientDetailsPage = () => {
     }
   };
 
-  // Handle save functionality; endVisit = true navigates to rozliczenia after save
+  const handleSettleAndEndVisit = async (billingData) => {
+    if (!currentAppointmentId) return;
+    if (isVisitCompleted) {
+      toast.error("Wizyta została już zakończona i rozliczona.");
+      setShowSettlementModal(false);
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await billingHelper.generateBill(currentAppointmentId, billingData);
+      allowSettlementLeaveRef.current = true;
+      setShowSettlementModal(false);
+      setSelectedAppointment((previous) =>
+        previous ? { ...previous, status: "completed" } : previous
+      );
+      setAppointments((previous) =>
+        previous.map((appointment) =>
+          String(appointment._id || appointment.id) === String(currentAppointmentId)
+            ? { ...appointment, status: "completed" }
+            : appointment
+        )
+      );
+      toast.success("Rozliczenie utworzone. Wizyta została zakończona.");
+      if (user?.role !== "admin" && user?.role !== "receptionist") {
+        navigate(doctorVisitsPath(user), { replace: true });
+      }
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Nie udało się utworzyć rozliczenia. Wizyta pozostaje otwarta.";
+      toast.error(message);
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // End Visit saves clinical data first, then requires settlement before completion.
   const handleSave = async (endVisit = false) => {
     if (!currentAppointmentId) {
       toast.error("Nie wybrano spotkania");
+      return;
+    }
+
+    if (endVisit && isVisitCompleted) {
+      toast.error("Wizyta została już zakończona i rozliczona.");
+      setShowSettlementModal(false);
       return;
     }
 
@@ -961,7 +1185,7 @@ const PatientDetailsPage = () => {
         return;
       }
 
-      const response = await appointmentHelper.updateAppointmentDetails(
+      const response = await appointmentHelper.updatePatientDetailsConsolidated(
         currentAppointmentId,
         {
           patientData,
@@ -985,23 +1209,13 @@ const PatientDetailsPage = () => {
             hour12: false
           })
         );
+        queryClient.removeQueries({
+          queryKey: queryKeys.visitConsolidated(currentAppointmentId),
+        });
         await fetchAppointmentDetails(currentAppointmentId);
-        if (endVisit) {
-          try {
-            const statusResponse = await appointmentHelper.updateAppointmentStatus(currentAppointmentId, { status: "completed" });
-            if (statusResponse?.success !== false) {
-              navigate(`/administracja/rozliczenia?appointment=${currentAppointmentId}&step=edit`);
-            }
-          } catch (statusErr) {
-            const data = statusErr?.response?.data ?? statusErr?.data;
-            const code = data?.code;
-            const message = data?.message || statusErr?.message || "Nie udało się zakończyć wizyty.";
-            if (code === "VISIT_TYPE_NOT_VERIFIED") {
-              toast.error(message || "Nie można zamknąć wizyty bez weryfikacji rodzaju wizyty. Potwierdź lub zmień rodzaj wizyty w sekcji „Rodzaj wizyty”.");
-            } else {
-              toast.error(message);
-            }
-          }
+        if (endVisit && !isVisitCompleted) {
+          allowSettlementLeaveRef.current = false;
+          setShowSettlementModal(true);
         }
       } else {
         throw new Error(response.message || "Nie udało się zaktualizować szczegółów spotkania");
@@ -1212,7 +1426,9 @@ const PatientDetailsPage = () => {
   const handleShowDetails = async () => {
     try {
       showLoader();
-      const response = await patientService.getPatientById(id);
+      const response = await patientService.getPatientById(id, {
+        include: "documents,consents",
+      });
       //(response, "response deails");
       setDetailedPatientData(response);
       setShowDetailsModal(true);
@@ -1373,8 +1589,23 @@ const PatientDetailsPage = () => {
       showLoader();
       const response = await appointmentHelper.generateVisitCard(appointmentId, forceNew);
       
-      //("response", response);
       if (response.success && response.data.url) {
+        // Refresh visit reports so the card appears in documentation without a full page reload
+        if (typeof fetchAppointmentDetails === "function") {
+          await fetchAppointmentDetails(appointmentId);
+        } else if (response.data.report) {
+          setReports((prev) => {
+            const next = Array.isArray(prev) ? [...prev] : [];
+            const exists = next.some(
+              (r) =>
+                String(r._id) === String(response.data.reportId) ||
+                (r.type === "visit-card" && (r.fileUrl || r.url) === response.data.url)
+            );
+            if (!exists) next.unshift(response.data.report);
+            return next;
+          });
+        }
+
         // Check if visit card already exists
         if (response.message === "Karta wizyty już istnieje" && !forceNew) {
           // Store the data for the modal
@@ -1387,6 +1618,7 @@ const PatientDetailsPage = () => {
         } else {
           // Normal case - open the visit card
           window.open(response.data.url, '_blank');
+          toast.success("Karta wizyty wygenerowana i dodana do dokumentacji wizyty");
         }
       } else {
         toast.error("Nie udało się wygenerować karty wizyty");
@@ -1479,9 +1711,20 @@ const PatientDetailsPage = () => {
                   onAddDiagnosis={async (item) => {
                     if (!currentAppointmentId) return;
                     try {
-                      await appointmentHelper.addVisitDiagnosis(currentAppointmentId, item);
-                      const list = await appointmentHelper.getVisitDiagnoses(currentAppointmentId);
-                      setDiagnoses(list);
+                      const res = await appointmentHelper.addVisitDiagnosis(currentAppointmentId, item);
+                      const created = res?.data || res;
+                      if (created?.id || created?._id) {
+                        setDiagnoses((prev) => {
+                          const next = Array.isArray(prev) ? [...prev] : [];
+                          if (created.isPrimary) {
+                            return [
+                              { ...created, id: created.id || created._id },
+                              ...next.map((d) => ({ ...d, isPrimary: false })),
+                            ];
+                          }
+                          return [...next, { ...created, id: created.id || created._id }];
+                        });
+                      }
                       toast.success("Dodano rozpoznanie");
                     } catch (e) {
                       toast.error(e.response?.data?.message || "Nie udało się dodać rozpoznania");
@@ -1491,8 +1734,9 @@ const PatientDetailsPage = () => {
                     if (!currentAppointmentId) return;
                     try {
                       await appointmentHelper.removeVisitDiagnosis(currentAppointmentId, id);
-                      const list = await appointmentHelper.getVisitDiagnoses(currentAppointmentId);
-                      setDiagnoses(list);
+                      setDiagnoses((prev) =>
+                        (prev || []).filter((d) => String(d.id || d._id) !== String(id))
+                      );
                       toast.success("Usunięto rozpoznanie");
                     } catch (e) {
                       toast.error(e.response?.data?.message || "Nie udało się usunąć rozpoznania");
@@ -1502,8 +1746,13 @@ const PatientDetailsPage = () => {
                     if (!currentAppointmentId) return;
                     try {
                       await appointmentHelper.updateVisitDiagnosis(currentAppointmentId, diagnosisId, { isPrimary });
-                      const list = await appointmentHelper.getVisitDiagnoses(currentAppointmentId);
-                      setDiagnoses(list);
+                      setDiagnoses((prev) =>
+                        (prev || []).map((d) => ({
+                          ...d,
+                          isPrimary:
+                            String(d.id || d._id) === String(diagnosisId) ? !!isPrimary : isPrimary ? false : d.isPrimary,
+                        }))
+                      );
                       toast.success(isPrimary ? "Ustawiono jako główne rozpoznanie" : "Ustawiono jako rozpoznanie dodatkowe");
                     } catch (e) {
                       toast.error(e.response?.data?.message || "Nie udało się zmienić typu rozpoznania");
@@ -1516,9 +1765,14 @@ const PatientDetailsPage = () => {
                   onAddProcedure={async (item) => {
                     if (!currentAppointmentId) return;
                     try {
-                      await appointmentHelper.addVisitProcedure(currentAppointmentId, item);
-                      const list = await appointmentHelper.getVisitProcedures(currentAppointmentId);
-                      setProcedures(list);
+                      const res = await appointmentHelper.addVisitProcedure(currentAppointmentId, item);
+                      const created = res?.data || res;
+                      if (created?.id || created?._id) {
+                        setProcedures((prev) => [
+                          ...(Array.isArray(prev) ? prev : []),
+                          { ...created, id: created.id || created._id },
+                        ]);
+                      }
                       toast.success("Dodano procedurę");
                     } catch (e) {
                       toast.error(e.response?.data?.message || "Nie udało się dodać procedury");
@@ -1528,8 +1782,9 @@ const PatientDetailsPage = () => {
                     if (!currentAppointmentId) return;
                     try {
                       await appointmentHelper.removeVisitProcedure(currentAppointmentId, id);
-                      const list = await appointmentHelper.getVisitProcedures(currentAppointmentId);
-                      setProcedures(list);
+                      setProcedures((prev) =>
+                        (prev || []).filter((p) => String(p.id || p._id) !== String(id))
+                      );
                       toast.success("Usunięto procedurę");
                     } catch (e) {
                       toast.error(e.response?.data?.message || "Nie udało się usunąć procedury");
@@ -1650,10 +1905,32 @@ const PatientDetailsPage = () => {
           lastSavedTime={lastSavedTime}
           onEndVisit={() => handleSave(true)}
           isSaving={isSaving}
+          isVisitCompleted={isVisitCompleted}
           isVisitReasonVerified={visitReasonVerified}
           isVisitReasonVerifyLoading={visitReasonVerifyLoading}
         />
       )}
+
+      <BillingConfirmationModal
+        isOpen={showSettlementModal}
+        onClose={() => setShowSettlementModal(false)}
+        onConfirm={handleSettleAndEndVisit}
+        patientServicesData={patientServices}
+        patientName={formatPersonName(patientData?.name)}
+        appointmentId={currentAppointmentId}
+        patientId={id}
+        mandatory
+        returnPath={
+          user?.role === "admin" || user?.role === "receptionist"
+            ? `/szczegoly-pacjenta/${id}${
+                currentAppointmentId
+                  ? `?appointmentId=${encodeURIComponent(currentAppointmentId)}`
+                  : ""
+              }`
+            : doctorVisitsPath(user)
+        }
+        doctorUserId={resolveVisitDoctorUserId(selectedAppointment)}
+      />
 
       {/* Existing modals */}
       <ServiceSelectionModal
@@ -1661,7 +1938,13 @@ const PatientDetailsPage = () => {
         onClose={() => setShowServiceModal(false)}
         onSave={handleSaveServices}
         patientId={id}
-        doctorUserId={visitDoctorUserId}
+        appointmentId={currentAppointmentId}
+        doctorUserId={
+          resolveVisitDoctorUserId(selectedAppointment) ||
+          (user?.role === "admin"
+            ? null
+            : user?.id || user?._id || user?.d_id || null)
+        }
       />
       
       <ConfirmationModal
@@ -1688,6 +1971,27 @@ const PatientDetailsPage = () => {
       />
 
       {/* Add Visit Card Confirmation Modal */}
+      <ConfirmDialog
+        open={leaveSettlementConfirm}
+        title="Wizyta nie została rozliczona"
+        message="Aby zakończyć wizytę, wybierz usługę i utwórz rozliczenie. Czy na pewno chcesz opuścić tę stronę?"
+        confirmLabel="Opuść"
+        cancelLabel="Zostań"
+        danger
+        onConfirm={() => {
+          setLeaveSettlementConfirm(false);
+          if (settlementNavigationBlocker.state === "blocked") {
+            settlementNavigationBlocker.proceed();
+          }
+        }}
+        onClose={() => {
+          setLeaveSettlementConfirm(false);
+          if (settlementNavigationBlocker.state === "blocked") {
+            settlementNavigationBlocker.reset();
+          }
+        }}
+      />
+
       <VisitCardConfirmationModal
         isOpen={showVisitCardModal}
         onClose={() => {

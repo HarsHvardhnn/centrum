@@ -16,6 +16,7 @@ import {
 import { apiCaller } from "../../utils/axiosInstance";
 import RichTextEditor from "./RichTextEditor";
 import DOMPurify from "dompurify";
+import { readListState, writeListState } from "../../hooks/usePersistedListState";
 
 // Modal styles
 const modalStyles = {
@@ -35,7 +36,9 @@ const NewsManagement = () => {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentArticle, setCurrentArticle] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(
+    (readListState("admin-news") || {}).searchTerm || ""
+  );
   const [formData, setFormData] = useState({
     title: "",
     author: "",
@@ -88,6 +91,10 @@ const NewsManagement = () => {
     fetchNewsArticles();
     fetchCategories();
   }, []);
+
+  useEffect(() => {
+    writeListState("admin-news", { searchTerm });
+  }, [searchTerm]);
 
   const fetchNewsArticles = async () => {
     setLoading(true);

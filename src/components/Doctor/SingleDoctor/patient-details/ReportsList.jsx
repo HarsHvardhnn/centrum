@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { File, FileText, Image, Trash2, ExternalLink, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiCaller } from '../../../../utils/axiosInstance';
+import ConfirmDialog from '../../../UtilComponents/ConfirmDialog';
 
 const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
-  const handleDeleteReport = async (reportId) => {
-    if (!window.confirm('Czy na pewno chcesz usunąć ten raport?')) {
-      return;
-    }
-    
+  const [reportToDelete, setReportToDelete] = useState(null);
+
+  const handleDeleteReport = async () => {
+    const reportId = reportToDelete;
+    if (!reportId) return;
     try {
       const response = await apiCaller(
         'DELETE',
@@ -77,13 +78,13 @@ const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
               </div>
               
               <div className="flex-grow">
-                <h4 className="font-medium text-gray-900">{report.fileName || report.originalName || 'Raport bez nazwy'}</h4>
+                <h4 className="font-medium text-gray-900">{report.fileName || report.originalName || report.name || 'Raport bez nazwy'}</h4>
                 <div className="flex items-center mt-1">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {report.documentType || report.type || 'Inne'}
                   </span>
                   <span className="text-gray-500 text-sm ml-2">
-                    Przesłano: {formatDate(report.uploadDate || report.uploadedAt)}
+                    Przesłano: {formatDate(report.uploadDate || report.uploadedAt || report.createdAt)}
                   </span>
                 </div>
                 
@@ -96,7 +97,7 @@ const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
               
               <div className="flex-shrink-0 ml-4 flex space-x-2">
                 <a 
-                  href={report.downloadUrl || report.url || report.path} 
+                  href={report.downloadUrl || report.fileUrl || report.url || report.path} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
@@ -106,7 +107,7 @@ const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
                 </a>
                 
                 <button
-                  onClick={() => handleDeleteReport(report._id)}
+                  onClick={() => setReportToDelete(report._id)}
                   className="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
                   title="Usuń Raport"
                 >
@@ -117,6 +118,14 @@ const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
           </div>
         ))}
       </div>
+      <ConfirmDialog
+        open={Boolean(reportToDelete)}
+        title="Usunąć raport?"
+        message="Czy na pewno chcesz usunąć ten raport? Tej operacji nie można cofnąć."
+        confirmLabel="Usuń"
+        onConfirm={handleDeleteReport}
+        onClose={() => setReportToDelete(null)}
+      />
     </div>
   );
 };

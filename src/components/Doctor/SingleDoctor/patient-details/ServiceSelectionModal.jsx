@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X, Plus, Minus, CheckCircle, AlertCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useServices } from "../../../../context/serviceContext";
-import userServiceHelper, {
-  mapServicesResponseToCatalog,
+import { useUser } from "../../../../context/userContext";
+import {
+  collectDoctorCatalogIds,
+  loadDoctorAssignedCatalog,
 } from "../../../../helpers/userServiceHelper";
+import { queryKeys } from "../../../../lib/queryKeys";
 
 const ServiceSelectionModal = ({
   isOpen,
@@ -13,50 +17,47 @@ const ServiceSelectionModal = ({
   /** When set, loads catalog via GET /services?doctorId=:id instead of global GET /services */
   doctorUserId = null,
 }) => {
+  const { user } = useUser();
   const {
     services: globalServices,
     loading: globalLoading,
     error: globalError,
   } = useServices();
 
-  const [doctorServices, setDoctorServices] = useState([]);
-  const [doctorLoading, setDoctorLoading] = useState(false);
-  const [doctorError, setDoctorError] = useState(null);
-
-  const useDoctorCatalog = Boolean(doctorUserId);
-
-  useEffect(() => {
-    if (!isOpen || !doctorUserId) {
-      setDoctorServices([]);
-      setDoctorError(null);
-      return;
+  const catalogDoctorIds = useMemo(() => {
+    const ids = collectDoctorCatalogIds(doctorUserId);
+    if (user?.role === "doctor") {
+      collectDoctorCatalogIds(user.id, user._id, user.d_id).forEach((id) => {
+        if (!ids.includes(id)) ids.push(id);
+      });
     }
+    return ids;
+  }, [doctorUserId, user?.role, user?.id, user?._id, user?.d_id]);
 
-    let cancelled = false;
-    (async () => {
-      setDoctorLoading(true);
-      setDoctorError(null);
-      try {
-        const res = await userServiceHelper.getServicesCatalog(doctorUserId);
-        if (cancelled) return;
-        setDoctorServices(mapServicesResponseToCatalog(res));
-      } catch (e) {
-        console.error("ServiceSelectionModal getServicesCatalog:", e);
-        if (!cancelled) {
-          setDoctorError("Nie udało się załadować usług lekarza");
-          setDoctorServices([]);
-        }
-      } finally {
-        if (!cancelled) setDoctorLoading(false);
-      }
-    })();
+  const useDoctorCatalog = Boolean(doctorUserId) && catalogDoctorIds.length > 0;
 
-    return () => {
-      cancelled = true;
-    };
-  }, [isOpen, doctorUserId]);
+  const {
+    data: doctorServices = [],
+    isLoading: doctorQueryLoading,
+    error: doctorQueryError,
+  } = useQuery({
+    queryKey: queryKeys.doctorServicesCatalog(catalogDoctorIds),
+    queryFn: () => loadDoctorAssignedCatalog(catalogDoctorIds),
+    enabled: Boolean(isOpen && useDoctorCatalog && catalogDoctorIds.length > 0),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 
-  const services = useDoctorCatalog ? doctorServices : globalServices;
+  const doctorLoading =
+    useDoctorCatalog && doctorQueryLoading && doctorServices.length === 0;
+  const doctorError = doctorQueryError
+    ? "Nie udało się załadować usług lekarza"
+    : null;
+
+  const services =
+    useDoctorCatalog && (doctorLoading || doctorServices.length > 0)
+      ? doctorServices
+      : globalServices;
   const loading = useDoctorCatalog ? doctorLoading : globalLoading;
   const error = useDoctorCatalog ? doctorError : globalError;
 
@@ -144,13 +145,13 @@ const ServiceSelectionModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-[80] flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center border-b p-4">
           <h3 className="text-lg font-medium text-gray-900">
             Wybierz usługi dla pacjenta
-            {useDoctorCatalog && (
+            {useDoctorCatalog && doctorServices.length > 0 && (
               <span className="block text-xs font-normal text-gray-500 mt-1">
                 Tylko usługi przypisane do lekarza z wizyty
               </span>

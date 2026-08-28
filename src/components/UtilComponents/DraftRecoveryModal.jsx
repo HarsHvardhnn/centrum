@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, FileText, Clock, Trash2, CheckCircle, Edit2, Eye } from 'lucide-react';
 import formDraftHelper from '../../helpers/formDraftHelper';
 import { toast } from 'sonner';
+import ConfirmDialog from './ConfirmDialog';
 
 /**
  * Modal component for recovering saved form drafts
@@ -23,6 +24,7 @@ const DraftRecoveryModal = ({
   const [editingTitle, setEditingTitle] = useState(null);
   const [titleValue, setTitleValue] = useState('');
   const [previewDraft, setPreviewDraft] = useState(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
 
   useEffect(() => {
     if (isOpen && formType) {
@@ -194,11 +196,11 @@ const DraftRecoveryModal = ({
     }
   };
 
-  const handleDeleteAll = async () => {
-    if (!window.confirm('Czy na pewno chcesz usunąć wszystkie szkice? Tej operacji nie można cofnąć.')) {
-      return;
-    }
+  const handleDeleteAll = () => {
+    setConfirmDeleteAll(true);
+  };
 
+  const confirmDeleteAllDrafts = async () => {
     try {
       setIsDeleting(true);
       
@@ -568,6 +570,13 @@ const DraftRecoveryModal = ({
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={confirmDeleteAll}
+        title="Usunąć wszystkie szkice?"
+        message="Czy na pewno chcesz usunąć wszystkie szkice? Tej operacji nie można cofnąć."
+        onConfirm={confirmDeleteAllDrafts}
+        onClose={() => setConfirmDeleteAll(false)}
+      />
     </div>
   );
 };

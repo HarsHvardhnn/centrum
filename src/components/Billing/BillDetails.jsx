@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft,
-  Printer,
-  Download,
   DollarSign,
   Calendar,
   User,
@@ -14,51 +13,45 @@ import {
 } from "lucide-react";
 import billingHelper from "../../helpers/billingHelper";
 import { toast } from "sonner";
-import { useLoader } from "../../context/LoaderContext";
+import { queryKeys } from "../../lib/queryKeys";
+import { useUser } from "../../context/userContext";
+import { isPlaceholderPhone } from "../../utils/phoneUtils";
 
 const BillDetails = () => {
   const { billId } = useParams();
   const navigate = useNavigate();
-  const { showLoader, hideLoader } = useLoader();
-  
-  const [billData, setBillData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
+  const { user } = useUser();
+  const isBillingStaff =
+    user?.role === "admin" || user?.role === "receptionist";
+  const isDoctorViewOnly = user?.role === "doctor";
+
+  const {
+    data: billResponse,
+    isLoading: loading,
+    isError,
+    error: queryError,
+  } = useQuery({
+    queryKey: queryKeys.billDetail(billId, "full"),
+    queryFn: () => billingHelper.getBillDetails(billId, { scope: "full" }),
+    enabled: Boolean(billId),
+    staleTime: 30_000,
+  });
+
+  const billData = billResponse?.success ? billResponse.data : null;
+  const error =
+    isError || (billResponse && !billResponse.success)
+      ? "Nie udało się załadować szczegółów faktury"
+      : null;
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [paymentNotes, setPaymentNotes] = useState("");
-  const [generatingInvoice, setGeneratingInvoice] = useState(false);
-  
-  useEffect(() => {
-    fetchBillDetails();
-  }, [billId]);
-  
-  const fetchBillDetails = async () => {
-    try {
-      showLoader();
-      setLoading(true);
-      
-      const response = await billingHelper.getBillDetails(billId);
-      
-      if (response.success) {
-        setBillData(response.data);
-      } else {
-        setError("Nie udało się załadować szczegółów faktury");
-        toast.error("Nie można załadować szczegółów faktury");
-      }
-    } catch (error) {
-      console.error("Błąd podczas pobierania szczegółów faktury:", error);
-      setError("Wystąpił błąd podczas ładowania szczegółów faktury");
-      toast.error("Błąd podczas ładowania szczegółów faktury");
-    } finally {
-      setLoading(false);
-      hideLoader();
-    }
-  };
+  const [paymentSaving, setPaymentSaving] = useState(false);
   
   const handleUpdatePaymentStatus = async (newStatus) => {
     try {
-      showLoader();
+      setPaymentSaving(true);
       
       const response = await billingHelper.updatePaymentStatus(billId, {
         paymentStatus: newStatus,
@@ -69,8 +62,8 @@ const BillDetails = () => {
       if (response.success) {
         toast.success(`Status płatności zaktualizowany na ${newStatus}`);
         setShowPaymentModal(false);
-        // Refresh bill details
-        fetchBillDetails();
+        queryClient.invalidateQueries({ queryKey: queryKeys.billDetail(billId, "full") });
+        queryClient.invalidateQueries({ queryKey: ["billing-list"] });
       } else {
         toast.error("Nie udało się zaktualizować statusu płatności");
       }
@@ -78,37 +71,8 @@ const BillDetails = () => {
       console.error("Błąd podczas aktualizacji statusu płatności:", error);
       toast.error("Nie udało się zaktualizować statusu płatności");
     } finally {
-      hideLoader();
+      setPaymentSaving(false);
     }
-  };
-  
-  const handleGenerateInvoice = async () => {
-    try {
-      setGeneratingInvoice(true);
-      showLoader();
-      
-      const response = await billingHelper.generateInvoice(billId);
-      
-      //("response", response);
-      if (response.success) {
-        window.open(response.data.invoiceUrl, '_blank');
-        // Open the invoice in a new tab
-        toast.success("Pomyślnie wygenerowano fakturę");
-      } else {
-        toast.error("Nie udało się wygenerować faktury");
-      }
-      navigate(`/patients?date=${new Date().toISOString().split('T')[0]}`)
-    } catch (error) {
-      console.error("Błąd podczas generowania faktury:", error);
-      toast.error("Nie udało się wygenerować faktury");
-    } finally {
-      setGeneratingInvoice(false);
-      hideLoader();
-    }
-  };
-  
-  const handlePrintBill = () => {
-    window.print();
   };
   
   // Format currency
@@ -134,6 +98,7 @@ const BillDetails = () => {
       case 'paid':
         return 'bg-green-100 text-green-800';
       case 'pending':
+      case 'awaiting_payment':
         return 'bg-yellow-100 text-yellow-800';
       case 'overdue':
         return 'bg-red-100 text-red-800';
@@ -151,6 +116,8 @@ const BillDetails = () => {
         return 'Opłacone';
       case 'pending':
         return 'Oczekujące';
+      case 'awaiting_payment':
+        return 'Oczekuje na płatność';
       case 'overdue':
         return 'Zaległe';
       case 'partial':
@@ -167,16 +134,29 @@ const BillDetails = () => {
         return 'Gotówka';
       case 'card':
         return 'Karta kredytowa/debetowa';
+      case 'blik':
+        return 'BLIK';
       case 'bank_transfer':
         return 'Przelew bankowy';
+      case 'online':
+        return 'Płatność online';
+      case 'package':
+        return 'Pakiet / abonament';
       case 'insurance':
         return 'Ubezpieczenie';
-      case 'mobile_payment':
-        return 'Płatność mobilna';
+      case 'other':
+        return 'Inne';
       default:
-        return method || 'Nie określono';
+        return method || 'Nie wybrano';
     }
   };
+
+  const isUnsettledBill =
+    billData?.paymentStatus === "pending" ||
+    billData?.paymentStatus === "awaiting_payment";
+  const paymentMethodLabel = isUnsettledBill
+    ? "Nie wybrano"
+    : translatePaymentMethod(billData?.paymentMethod);
   
   if (loading) {
     return (
@@ -220,7 +200,15 @@ const BillDetails = () => {
               <ChevronLeft size={20} />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Faktura #{(billData?.invoiceId && billData.invoiceId !== "") ? billData.invoiceId : billData._id}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {isDoctorViewOnly
+                  ? "Podstawa rozliczenia"
+                  : billData.documentType === "fiscal_receipt"
+                  ? `Rozliczenie ${billData.internalTxnId || ""}`
+                  : billData.documentType === "invoice"
+                    ? `Faktura #${billData.invoiceId || billData.invoiceSnapshot?.number || billData._id}`
+                    : "Rozliczenie pacjenta"}
+              </h1>
               <p className="text-gray-600">
                 Wygenerowano dnia {formatDate(billData.billedAt)}
               </p>
@@ -228,15 +216,9 @@ const BillDetails = () => {
           </div>
           
           <div className="flex flex-wrap gap-3">
-            <button
-              onClick={handleGenerateInvoice}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <Download size={16} className="mr-2" />
-              Generuj Fakturę
-            </button>
-            
-            {billData.paymentStatus === "pending" && (
+            {isBillingStaff &&
+              (billData.paymentStatus === "pending" ||
+                billData.paymentStatus === "awaiting_payment") && (
               <button
                 onClick={() => setShowPaymentModal(true)}
                 className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700"
@@ -248,14 +230,39 @@ const BillDetails = () => {
           </div>
         </div>
         
+        {isDoctorViewOnly && (
+          <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+            Usługi i kwoty z Twojej wizyty. Faktury i paragony wystawia recepcja.
+          </div>
+        )}
+
         {/* Bill Card */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
           <div className="p-6 sm:p-8">
             {/* Bill Header */}
             <div className="flex flex-wrap justify-between items-start mb-8">
               <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-1">Faktura</h2>
-                <p className="text-sm text-gray-600 mb-3">Faktura #{(billData?.invoiceId && billData.invoiceId !== "") ? billData.invoiceId : billData._id}</p>
+                <h2 className="text-xl font-bold text-gray-900 mb-1">
+                  {isDoctorViewOnly
+                    ? "Rozliczenie wizyty"
+                    : billData.documentType === "fiscal_receipt"
+                    ? "Rozliczenie (paragon)"
+                    : billData.documentType === "invoice"
+                      ? "Faktura"
+                      : "Rozliczenie pacjenta"}
+                </h2>
+                {!isDoctorViewOnly && (
+                <p className="text-sm text-gray-600 mb-3">
+                  {billData.documentType === "invoice" &&
+                  (billData.invoiceId || billData.invoiceSnapshot?.number)
+                    ? `Nr ${(billData.invoiceId || billData.invoiceSnapshot?.number)}`
+                    : billData.documentType === "fiscal_receipt" && billData.internalTxnId
+                      ? billData.internalTxnId
+                    : billData.documentType === "fiscal_receipt" && billData.receiptNumber
+                      ? `Nr paragonu ${billData.receiptNumber}`
+                    : `ID: ${billData._id}`}
+                </p>
+                )}
                 
                 <div className="flex items-center text-sm text-gray-600 mb-1">
                   <Calendar size={16} className="mr-2 text-gray-400" />
@@ -271,17 +278,37 @@ const BillDetails = () => {
                     </span>
                   </span>
                 </div>
+                {!isDoctorViewOnly && (billData.invoiceUrl || billData.invoiceSnapshot?.pdfUrl) && (
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await billingHelper.openInvoicePdf(billData._id);
+                        } catch (_) {
+                          toast.error("Nie udało się otworzyć PDF");
+                        }
+                      }}
+                      className="inline-flex items-center px-3 py-1.5 text-sm border rounded-md hover:bg-gray-50"
+                    >
+                      <FileText size={14} className="mr-1" />
+                      Podgląd PDF
+                    </button>
+                  </div>
+                )}
               </div>
               
+              {!isDoctorViewOnly && (
               <div className="mt-4 sm:mt-0">
                 <div className="text-right">
                   <div className="text-gray-600 text-sm">Metoda Płatności</div>
                   <div className="flex items-center justify-end mt-1">
                     <CreditCard size={16} className="mr-2 text-gray-400" />
-                    <span className="font-medium">{translatePaymentMethod(billData.paymentMethod)}</span>
+                    <span className="font-medium">{paymentMethodLabel}</span>
                   </div>
                 </div>
               </div>
+              )}
             </div>
             
             {/* Client & Provider Info */}
@@ -293,8 +320,14 @@ const BillDetails = () => {
                     {billData.patient?.name?.first} {billData.patient?.name?.last}
                   </p>
                   <p className="text-gray-600 mt-1">ID: {billData.patient?.patientId}</p>
-                  <p className="text-gray-600 mt-1">{billData.patient?.email}</p>
-                  <p className="text-gray-600 mt-1">{billData.patient?.phone || "Brak numeru telefonu"}</p>
+                  {billData.patient?.email ? (
+                    <p className="text-gray-600 mt-1">{billData.patient.email}</p>
+                  ) : null}
+                  <p className="text-gray-600 mt-1">
+                    {isPlaceholderPhone(billData.patient?.phone)
+                      ? "Brak numeru telefonu"
+                      : billData.patient.phone}
+                  </p>
                 </div>
               </div>
               
@@ -338,7 +371,30 @@ const BillDetails = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {billData.services.map((service, index) => (
+                    {(billData.lineItems?.length
+                      ? billData.lineItems.map((item, index) => (
+                          <tr key={item._id || index}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {item.name}
+                              {item.discount > 0 && (
+                                <span className="block text-xs text-gray-400">
+                                  Rabat {item.discount}
+                                  {item.discountReason ? ` (${item.discountReason})` : ""}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                              {formatCurrency(item.basePrice)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                              {item.quantity || 1} {item.unit || "szt."}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                              {formatCurrency(item.finalPrice)}
+                            </td>
+                          </tr>
+                        ))
+                      : billData.services?.map((service, index) => (
                       <tr key={service.serviceId || index}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {service.title}
@@ -353,7 +409,7 @@ const BillDetails = () => {
                           {formatCurrency(parseFloat(service.price) * (service.quantity || 1))}
                         </td>
                       </tr>
-                    ))}
+                    )))}
                   </tbody>
                 </table>
               </div>
@@ -368,10 +424,12 @@ const BillDetails = () => {
                     <span className="font-medium">{formatCurrency(billData.subtotal)}</span>
                   </div>
                   
+                  {!isDoctorViewOnly && (
                   <div className="flex justify-between py-2 text-sm">
                     <span className="text-gray-600">Podatek ({billData.taxPercentage}%{billData.taxPercentage === 0 ? ' ZW' : ''})</span>
                     <span className="font-medium">{formatCurrency(billData.taxAmount)}</span>
                   </div>
+                  )}
                   
                   {billData.appointment?.mode === 'online' && billData.consultationCharges > 0 && (
                     <div className="flex justify-between py-2 text-sm">

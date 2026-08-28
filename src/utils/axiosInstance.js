@@ -1,4 +1,6 @@
 import axios from "axios";
+import { isSessionEnding, notifyAccessTokenRefreshed } from "./sessionEvents";
+import { endSession, AUTH_CHANNEL } from "./sessionLifecycle";
 
 // Cookie utility functions
 const setCookie = (name, value, days) => {
@@ -17,6 +19,38 @@ const getCookie = (name) => {
 const removeCookie = (name) => {
   document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;secure;samesite=strict`;
 };
+
+const REFRESH_TOKEN_STORAGE_KEY = "cm7_refresh_token";
+
+export function persistRefreshToken(token) {
+  if (!token || typeof token !== "string") return;
+  try {
+    localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
+  } catch {
+    /* private mode / quota */
+  }
+}
+
+export function getStoredRefreshToken() {
+  try {
+    return localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function clearStoredRefreshToken() {
+  try {
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function persistRefreshTokenFromPayload(payload) {
+  const token = payload?.refreshToken;
+  if (token) persistRefreshToken(token);
+}
 
 // Set up base URL and other configurations
 const axiosInstance = axios.create({
@@ -64,21 +98,268 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Token refresh state management
-let isRefreshing = false;
-let failedQueue = [];
+// Single-flight + cross-tab lock so concurrent refreshes never double-rotate
+// the httpOnly refresh cookie (that was logging people out mid-click / multi-tab).
+let refreshPromise = null;
+const REFRESH_LOCK_KEY = "cm7_refresh_lock";
+const REFRESH_LOCK_TTL_MS = 12_000;
 
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
+function storeAccessToken(newToken, user, refreshToken) {
+  localStorage.setItem("authToken", newToken);
+  setCookie("authToken", newToken, 7);
+  if (user) {
+    localStorage.setItem("user", JSON.stringify(user));
+  }
+  if (refreshToken) persistRefreshToken(refreshToken);
+  notifyAccessTokenRefreshed(newToken);
+}
+
+function getAuthChannel() {
+  if (typeof BroadcastChannel === "undefined") return null;
+  try {
+    return new BroadcastChannel(AUTH_CHANNEL);
+  } catch {
+    return null;
+  }
+}
+
+function waitForCrossTabToken(channel, timeoutMs) {
+  return new Promise((resolve) => {
+    if (!channel) {
+      resolve(null);
+      return;
     }
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      channel.removeEventListener("message", onMessage);
+      resolve(value);
+    };
+    const timer = setTimeout(() => finish(null), timeoutMs);
+    const onMessage = (event) => {
+      const data = event?.data;
+      if (!data || typeof data !== "object") return;
+      if (data.type === "token" && data.token) {
+        storeAccessToken(data.token, data.user, data.refreshToken);
+        finish(data.token);
+      } else if (data.type === "refresh-failed") {
+        finish(null);
+      } else if (data.type === "logout") {
+        finish(null);
+      }
+    };
+    channel.addEventListener("message", onMessage);
   });
-  
-  failedQueue = [];
-};
+}
+
+async function performHttpRefresh() {
+  const refreshAxios = axios.create({
+    baseURL: axiosInstance.defaults.baseURL,
+    withCredentials: true,
+  });
+
+  const attemptRefresh = async () => {
+    const storedRefreshToken = getStoredRefreshToken();
+    const refreshResponse = await refreshAxios.post(
+      "/auth/refresh-token",
+      storedRefreshToken ? { refreshToken: storedRefreshToken } : {}
+    );
+    if (!refreshResponse.data?.token) {
+      throw new Error("No token in refresh response");
+    }
+    persistRefreshTokenFromPayload(refreshResponse.data);
+    const newToken = refreshResponse.data.token;
+    storeAccessToken(newToken, refreshResponse.data.user, refreshResponse.data.refreshToken);
+    return newToken;
+  };
+
+  try {
+    return await attemptRefresh();
+  } catch (err) {
+    if (err?.response?.status !== 401) {
+      throw err;
+    }
+
+    // Another tab/request may have just rotated the refresh cookie — wait briefly.
+    await new Promise((r) => setTimeout(r, 500));
+
+    const channel = getAuthChannel();
+    const crossTabToken = await waitForCrossTabToken(channel, 4_000);
+    channel?.close();
+    if (crossTabToken) return crossTabToken;
+
+    const existing =
+      getCookie("authToken") || localStorage.getItem("authToken");
+    if (existing && accessTokenHasLifeLeft(existing, 15_000)) {
+      return existing;
+    }
+
+    // Retry once — cookie may have updated from a concurrent rotation in another tab.
+    try {
+      return await attemptRefresh();
+    } catch (retryErr) {
+      const code = retryErr?.response?.data?.code;
+      const enriched = retryErr;
+      enriched.refreshErrorCode = code;
+      throw enriched;
+    }
+  }
+}
+
+/** Lightweight exp check — avoid importing jwtUtils (circular with getCookie). */
+function accessTokenHasLifeLeft(token, minMs) {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return false;
+    const json = JSON.parse(
+      atob(payload.replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    if (!json?.exp) return false;
+    return json.exp * 1000 - Date.now() > minMs;
+  } catch {
+    return false;
+  }
+}
+
+async function coordinatedRefresh() {
+  if (isSessionEnding()) {
+    throw new Error("Session is ending");
+  }
+
+  const channel = getAuthChannel();
+  const lockId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const existingLock = localStorage.getItem(REFRESH_LOCK_KEY);
+
+  if (existingLock) {
+    try {
+      const parsed = JSON.parse(existingLock);
+      if (parsed?.at && Date.now() - parsed.at < REFRESH_LOCK_TTL_MS) {
+        const tokenFromOther = await waitForCrossTabToken(channel, 8_000);
+        channel?.close();
+        if (tokenFromOther) return tokenFromOther;
+        const latest = getCookie("authToken") || localStorage.getItem("authToken");
+        if (latest && accessTokenHasLifeLeft(latest, 15_000)) return latest;
+      }
+    } catch {
+      /* stale lock */
+    }
+  }
+
+  localStorage.setItem(
+    REFRESH_LOCK_KEY,
+    JSON.stringify({ id: lockId, at: Date.now() })
+  );
+  await new Promise((r) => setTimeout(r, 40));
+  try {
+    const confirm = JSON.parse(localStorage.getItem(REFRESH_LOCK_KEY) || "{}");
+    if (confirm.id && confirm.id !== lockId) {
+      const tokenFromOther = await waitForCrossTabToken(channel, 8_000);
+      channel?.close();
+      if (tokenFromOther) return tokenFromOther;
+      const latest = getCookie("authToken") || localStorage.getItem("authToken");
+      if (latest && accessTokenHasLifeLeft(latest, 15_000)) return latest;
+    }
+  } catch {
+    /* proceed as leader */
+  }
+
+  try {
+    channel?.postMessage({ type: "refresh-start" });
+    const newToken = await performHttpRefresh();
+    let broadcastUser = null;
+    try {
+      broadcastUser = JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      broadcastUser = null;
+    }
+    channel?.postMessage({
+      type: "token",
+      token: newToken,
+      user: broadcastUser,
+      refreshToken: getStoredRefreshToken(),
+    });
+    return newToken;
+  } catch (err) {
+    channel?.postMessage({ type: "refresh-failed" });
+    throw err;
+  } finally {
+    try {
+      const cur = JSON.parse(localStorage.getItem(REFRESH_LOCK_KEY) || "{}");
+      if (cur.id === lockId) localStorage.removeItem(REFRESH_LOCK_KEY);
+    } catch {
+      localStorage.removeItem(REFRESH_LOCK_KEY);
+    }
+    channel?.close();
+  }
+}
+
+export function refreshAccessToken() {
+  if (isSessionEnding()) {
+    return Promise.reject(new Error("Session is ending"));
+  }
+  if (!refreshPromise) {
+    refreshPromise = coordinatedRefresh().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
+/**
+ * Probe whether the httpOnly refresh cookie reaches the API (used for recovery UI).
+ * On success, stores the new access token like a normal refresh.
+ */
+export async function probeRefreshCookieHealth() {
+  const refreshAxios = axios.create({
+    baseURL: axiosInstance.defaults.baseURL,
+    withCredentials: true,
+  });
+  try {
+    const storedRefreshToken = getStoredRefreshToken();
+    const res = await refreshAxios.post(
+      "/auth/refresh-token",
+      storedRefreshToken ? { refreshToken: storedRefreshToken } : {}
+    );
+    if (!res.data?.token) {
+      return { ok: false, reason: "no_token" };
+    }
+    persistRefreshTokenFromPayload(res.data);
+    storeAccessToken(res.data.token, res.data.user, res.data.refreshToken);
+    return { ok: true };
+  } catch (err) {
+    const code = err?.response?.data?.code;
+    if (code === "REFRESH_TOKEN_MISSING") {
+      return { ok: false, reason: "refresh_missing" };
+    }
+    if (code === "REFRESH_TOKEN_INVALID") {
+      return { ok: false, reason: "refresh_invalid" };
+    }
+    return { ok: false, reason: "unknown", code };
+  }
+}
+
+// Cross-tab logout / token sync listener (one channel for the app lifetime)
+if (typeof window !== "undefined" && typeof BroadcastChannel !== "undefined") {
+  try {
+    const lifetimeChannel = new BroadcastChannel(AUTH_CHANNEL);
+    lifetimeChannel.onmessage = (event) => {
+      const data = event?.data;
+      if (!data || typeof data !== "object") return;
+      if (data.type === "logout") {
+        if (!isSessionEnding()) {
+          // Other tab already cleared the refresh cookie — don't re-broadcast
+          endSession("cross-tab-logout", { callApi: false, broadcast: false });
+        }
+      } else if (data.type === "token" && data.token) {
+        storeAccessToken(data.token, data.user, data.refreshToken);
+      }
+    };
+  } catch {
+    /* BroadcastChannel unavailable */
+  }
+}
 
 /** Pathname only — works whether config.url is relative or absolute. */
 const getRequestUrlPath = (config) => {
@@ -116,18 +397,14 @@ const isPublicAuthFailurePath = (urlPath) => {
 };
 
 const redirectToLoginAndClearSession = () => {
-  removeCookie("authToken");
-  removeCookie("user");
-  localStorage.clear();
-  if (window.location.pathname !== "/logowanie") {
-    window.location.href = "/logowanie";
-  }
+  if (isSessionEnding()) return;
+  endSession("axios-401");
 };
 
 // Response interceptor for handling responses
 axiosInstance.interceptors.response.use(
   (response) => {
-    // You can check the response status or manipulate the data here
+    persistRefreshTokenFromPayload(response?.data);
     return response;
   },
   async (error) => {
@@ -137,6 +414,10 @@ axiosInstance.interceptors.response.use(
     if (error.response) {
       // Server responded with a status other than 2xx
       if (error.response.status === 401) {
+        if (isSessionEnding()) {
+          return Promise.reject(error);
+        }
+
         const urlPath = getRequestUrlPath(originalRequest);
 
         // If this is a refresh token request that failed, redirect to login
@@ -151,74 +432,21 @@ axiosInstance.interceptors.response.use(
           return Promise.reject(error);
         }
 
-        // Already retried after refresh (or queued for retry) — stop; do not refresh again
         if (originalRequest._retry) {
-          processQueue(error, null);
           redirectToLoginAndClearSession();
           return Promise.reject(error);
         }
 
-        // If we're already refreshing, queue this request (mark so a 401 after retry won't re-enter refresh)
-        if (isRefreshing) {
-          originalRequest._retry = true;
-          return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject });
-          })
-            .then(token => {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              return axiosInstance(originalRequest);
-            })
-            .catch(err => {
-              return Promise.reject(err);
-            });
-        }
-
-        // Try to refresh the token
         originalRequest._retry = true;
-        isRefreshing = true;
 
         try {
-          // Create a new axios instance for refresh to avoid interceptors
-          // Refresh token endpoint uses HTTP-only cookies, no Authorization header, no body
-          const refreshAxios = axios.create({
-            baseURL: axiosInstance.defaults.baseURL,
-            withCredentials: true
-            // No headers - refresh token uses cookies only, no body needed
-          });
-          
-          // Don't send any body - refresh token uses HTTP-only cookies only
-          const refreshResponse = await refreshAxios.post('/auth/refresh-token');
-
-          if (refreshResponse.data && refreshResponse.data.token) {
-            const newToken = refreshResponse.data.token;
-            
-            // Update token in storage
-            localStorage.setItem("authToken", newToken);
-            setCookie('authToken', newToken, 7);
-            
-            // Update user data if provided
-            if (refreshResponse.data.user) {
-              localStorage.setItem("user", JSON.stringify(refreshResponse.data.user));
-            }
-
-            // Update the original request with new token
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
-            
-            // Process queued requests
-            processQueue(null, newToken);
-            
-            // Retry the original request
-            return axiosInstance(originalRequest);
-          } else {
-            throw new Error("No token in refresh response");
-          }
+          const newToken = await refreshAccessToken();
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          return axiosInstance(originalRequest);
         } catch (refreshError) {
           console.error("Token refresh failed:", refreshError);
-          processQueue(refreshError, null);
           redirectToLoginAndClearSession();
           return Promise.reject(refreshError);
-        } finally {
-          isRefreshing = false;
         }
       } else {
         // Other status codes handling (e.g., 500 server error)
