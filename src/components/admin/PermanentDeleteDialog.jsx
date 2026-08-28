@@ -68,6 +68,12 @@ const PermanentDeleteDialog = ({
           <div className="flex-1">
             <h2 className="text-xl font-bold text-red-600 mb-2">{title}</h2>
             <p className="text-gray-700 mb-4">{message}</p>
+            {type === "invoice" && (
+              <p className="text-sm text-gray-600 mb-4">
+                Trwałe usunięcie zwalnia numer tylko gdy był to ostatni w danym miesiącu.
+                Usunięcie do kosza nie zwalnia numeru.
+              </p>
+            )}
           </div>
         </div>
         

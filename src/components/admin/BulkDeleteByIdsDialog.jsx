@@ -90,6 +90,11 @@ const BulkDeleteByIdsDialog = ({
             <p className="text-sm text-red-600 font-medium">
               ⚠️ Ta operacja jest nieodwracalna! Wszystkie powiązane rekordy również zostaną usunięte.
             </p>
+            {type === "invoice" && (
+              <p className="text-sm text-gray-600 mt-2">
+                Numery faktur wracają do puli tylko gdy usunięty numer był ostatni w miesiącu.
+              </p>
+            )}
           </div>
         </div>
         
