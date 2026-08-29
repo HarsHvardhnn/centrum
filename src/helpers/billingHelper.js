@@ -236,7 +236,12 @@ const billingHelper = {
         month,
         year,
       });
-      return response.data?.invoiceId || "";
+      const payload = response?.data || {};
+      return (
+        payload.invoiceId ||
+        payload.data?.invoiceId ||
+        ""
+      );
     } catch (error) {
       console.error("Error suggesting invoice ID:", error);
       return "";

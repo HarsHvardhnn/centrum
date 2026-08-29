@@ -286,8 +286,13 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     setPaymentDueDate(toDateInput(snap?.paymentDueDate || new Date()));
     const rawNumber = snap?.number || bill.invoiceId || "";
     const validNumber = /^\d+\/\d{2}\/\d{4}$/.test(String(rawNumber).trim());
-    setInvoiceNumber(validNumber ? rawNumber : "");
-    suggestedInvoiceNumberRef.current = validNumber ? rawNumber : "";
+    if (validNumber) {
+      setInvoiceNumber(rawNumber);
+      suggestedInvoiceNumberRef.current = rawNumber;
+    } else {
+      setInvoiceNumber("");
+      suggestedInvoiceNumberRef.current = "";
+    }
     if (snap?.vatExemptionText) setVatExemptionText(snap.vatExemptionText);
 
     setLocked(alreadyIssued);
@@ -300,10 +305,12 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       setHydratedBillId(null);
       suggestedInvoiceNumberRef.current = "";
       setShowServicePicker(false);
+      setDocumentType("fiscal_receipt");
+      setInvoiceNumber("");
     }
   }, [isOpen]);
 
-  // Suggest next invoice number from issue date month/year (N/MM/RRRR)
+  // Preview next invoice number (does not consume the counter — issue allocates atomically)
   useEffect(() => {
     if (!isOpen || documentType !== "invoice" || locked || !issueDate) return;
     const [year, month] = issueDate.split("-").map(Number);
@@ -324,7 +331,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     return () => {
       cancelled = true;
     };
-  }, [isOpen, documentType, locked, issueDate]);
+  }, [isOpen, documentType, locked, issueDate, hydratedBillId]);
 
   useEffect(() => {
     if (billRes && !billRes.success && isOpen && billId && !isLoading) {
@@ -543,7 +550,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       });
 
       const res = await billingHelper.issueInvoice(billId, {
-        number: invoiceNumber || undefined,
+        number: undefined,
         place,
         issueDate,
         sellDate,
@@ -977,12 +984,17 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                   <label className="text-xs text-gray-500">Numer (N/MM/RRRR)</label>
                   <input
                     type="text"
+                    readOnly
                     disabled={locked}
                     value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
-                    placeholder="np. 17/08/2026"
+                    className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-gray-50 disabled:bg-gray-50"
+                    placeholder="Nadawany automatycznie"
                   />
+                  {!locked && (
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      Numer jest nadawany automatycznie przy wystawieniu (podgląd kolejnego w miesiącu).
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs text-gray-500">Miejsce</label>
