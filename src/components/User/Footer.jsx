@@ -9,7 +9,11 @@ export default function Footer() {
         {/* Logo and Description */}
         <div className="flex flex-col gap-4 w-full max-w-xs">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
-            <img src="/images/białe.png" height={140} width={140}  alt="Logo" />
+            <img
+              src="/assets/CentrumMedyczne7_logo_biel_svg.svg"
+              alt="Centrum Medyczne 7"
+              className="h-16 w-auto max-w-[240px] object-contain"
+            />
           </div>
           <p className="text-left text-base leading-relaxed">
           Centrum Medyczne 7- specjalistyczna opieka medyczna dla dorosłych i dzieci.
