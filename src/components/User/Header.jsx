@@ -139,11 +139,11 @@ const Header = () => {
         </div>
       </div>
 
-      <div className="flex justify-between items-center px-6 md:px-8 py-3 bg-[#F4F4F4]">
+      <div className="flex justify-between items-center px-4 sm:px-6 md:px-8 py-3 bg-[#F4F4F4]">
       <img
         src="/assets/CentrumMedyczne7_logo_svg.svg"
         alt="Centrum Medyczne 7"
-        className="h-12 w-auto max-w-[220px] object-contain cursor-pointer"
+        className="block h-10 sm:h-12 w-auto max-w-[min(70vw,220px)] object-contain object-left self-start mr-auto cursor-pointer"
         onClick={() => window.location.reload()}
       />
 

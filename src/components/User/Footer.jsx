@@ -5,14 +5,14 @@ import CookieSettingsLink from "./CookieSettingsLink";
 export default function Footer() {
   return (
     <footer className="bg-[#008c8c] text-white px-6 md:px-8 xl:px-20">
-      <div className="mx-auto flex flex-col md:flex-row md:flex-wrap py-10 md:py-16 text-lg gap-10 md:gap-8 lg:gap-0 md:justify-around items-start md:items-start">
+      <div className="mx-auto flex flex-col md:flex-row md:flex-wrap py-10 md:py-16 text-lg gap-10 md:gap-8 lg:gap-0 md:justify-around items-start justify-start">
         {/* Logo and Description */}
-        <div className="flex flex-col gap-4 w-full max-w-xs">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+        <div className="flex flex-col items-start gap-4 w-full max-w-xs self-start">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-start gap-3 w-full">
             <img
               src="/assets/CentrumMedyczne7_logo_biel_svg.svg"
               alt="Centrum Medyczne 7"
-              className="h-16 w-auto max-w-[240px] object-contain"
+              className="block h-14 sm:h-16 w-auto max-w-[min(85vw,240px)] object-contain object-left self-start"
             />
           </div>
           <p className="text-left text-base leading-relaxed">
