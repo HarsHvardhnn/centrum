@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useUser } from "../../context/userContext";
 import { doctorVisitsPath } from "../../utils/useNavigate";
@@ -20,7 +20,6 @@ import {
   MessageCircle,
   Mail,
 } from "lucide-react";
-import FeatureComingSoonModal from "../Doctor/SingleDoctor/patient-details/FeatureComingSoonModal";
 
 const SECTION_HEADING = "text-xs font-bold uppercase tracking-wider text-gray-500";
 const ACTIVE_BG = "#e2f6f7";
@@ -118,11 +117,6 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
   const location = useLocation();
   const { user, logout } = useUser();
   const currentPath = location.pathname;
-  const [comingSoonModal, setComingSoonModal] = useState({ open: false, featureName: "" });
-
-  const openComingSoon = (featureName) => () => setComingSoonModal({ open: true, featureName });
-  const closeComingSoon = () => setComingSoonModal((prev) => ({ ...prev, open: false }));
-
   const handleLogout = () => {
     logout();
   };
@@ -202,22 +196,29 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
           <NavItem
             icon={<Pill size={ICON_SIZE} strokeWidth={2} />}
             label="E-recepta"
-            onClick={openComingSoon("E-recepta")}
-            isActive={false}
+            to="/e-zdrowie"
+            isActive={currentPath === "/e-zdrowie"}
             collapsed={collapsed}
           />
           <NavItem
             icon={<FilePlus size={ICON_SIZE} strokeWidth={2} />}
             label="E-skierowanie"
-            onClick={openComingSoon("E-skierowanie")}
+            to="/e-zdrowie"
             isActive={false}
             collapsed={collapsed}
           />
           <NavItem
             icon={<FileCheck size={ICON_SIZE} strokeWidth={2} />}
             label="e-ZLA"
-            onClick={openComingSoon("e-ZLA")}
+            to="/e-zdrowie"
             isActive={false}
+            collapsed={collapsed}
+          />
+          <NavItem
+            icon={<History size={ICON_SIZE} strokeWidth={2} />}
+            label="e-Zdrowie"
+            to="/e-zdrowie"
+            isActive={currentPath === "/e-zdrowie"}
             collapsed={collapsed}
           />
         </SidebarSection>
@@ -274,11 +275,6 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
           />
         </div>
       </nav>
-      <FeatureComingSoonModal
-        isOpen={comingSoonModal.open}
-        onClose={closeComingSoon}
-        featureName={comingSoonModal.featureName || "Ta funkcja"}
-      />
     </aside>
   );
 };
