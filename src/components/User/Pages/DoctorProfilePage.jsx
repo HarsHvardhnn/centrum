@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaCalendarAlt, FaPhone, FaEnvelope, FaGraduationCap, FaMapMarkerAlt, FaShare, FaTimes, FaChevronLeft, FaChevronRight, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { toast } from 'sonner';
@@ -549,6 +549,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
   // Track which days have available slots
   const [daysWithSlots, setDaysWithSlots] = useState(new Set());
   const [checkingSlots, setCheckingSlots] = useState(false);
+  const skipWeekAutoSelectRef = useRef(false);
   // Cache week availability data to avoid redundant API calls
   const [weekAvailabilityCache, setWeekAvailabilityCache] = useState(null);
 
@@ -662,29 +663,47 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
   };
 
   // Fetch slot availability for all days in the current week using new optimized endpoint
-  const fetchWeekSlotAvailability = async (doctorId, days, preferredDate) => {
+  const applyWeekDaySelection = (days, daysWithSlotsSet, availability, preferredDate, autoSelect) => {
+    const preferred =
+      preferredDate ||
+      (days.includes(selectedDate) ? selectedDate : "");
+    if (preferred && daysWithSlotsSet?.has(preferred)) {
+      setSelectedDate(preferred);
+      if (availability) {
+        setAvailableSlots(slotsForDate(availability, preferred));
+      }
+      return;
+    }
+    if (autoSelect) {
+      const bookableDate = pickBookableDate(days, daysWithSlotsSet, "");
+      if (bookableDate) {
+        setSelectedDate(bookableDate);
+        if (availability) {
+          setAvailableSlots(slotsForDate(availability, bookableDate));
+        }
+        return;
+      }
+    }
+    setSelectedDate("");
+    setAvailableSlots([]);
+  };
+
+  const fetchWeekSlotAvailability = async (doctorId, days, preferredDate, options = {}) => {
     if (!doctorId || !days?.length) return;
+    const autoSelect = options.autoSelect !== false;
 
     try {
       setCheckingSlots(true);
       const loaded = await loadWeekAvailability(doctorId, days);
       setDaysWithSlots(loaded.daysWithSlots);
       setWeekAvailabilityCache(loaded.data);
-      const preferred =
-        preferredDate ||
-        (days.includes(selectedDate) ? selectedDate : "");
-      const bookableDate = pickBookableDate(
+      applyWeekDaySelection(
         days,
         loaded.daysWithSlots,
-        preferred
+        loaded.availability,
+        preferredDate,
+        autoSelect
       );
-      if (bookableDate) {
-        setSelectedDate(bookableDate);
-        setAvailableSlots(slotsForDate(loaded.availability, bookableDate));
-      } else {
-        setSelectedDate("");
-        setAvailableSlots([]);
-      }
     } catch (error) {
       console.error("Error fetching week slot availability:", error);
       try {
@@ -712,16 +731,7 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
           results.map(({ date, hasSlots }) => ({ date, hasSlots }))
         );
         setDaysWithSlots(newDaysWithSlots);
-        const preferred =
-          preferredDate ||
-          (days.includes(selectedDate) ? selectedDate : "");
-        const bookableDate = pickBookableDate(days, newDaysWithSlots, preferred);
-        if (bookableDate) {
-          setSelectedDate(bookableDate);
-        } else {
-          setSelectedDate("");
-          setAvailableSlots([]);
-        }
+        applyWeekDaySelection(days, newDaysWithSlots, null, preferredDate, autoSelect);
       } catch {
         setDaysWithSlots(new Set());
         setSelectedDate("");
@@ -1093,7 +1103,9 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
     if (showBookingModal && !onlineBookingUnavailable && doctor && days.length > 0) {
       const doctorId = doctor._id || doctor.id;
       if (doctorId) {
-        fetchWeekSlotAvailability(doctorId, days);
+        const autoSelect = !skipWeekAutoSelectRef.current;
+        skipWeekAutoSelectRef.current = false;
+        fetchWeekSlotAvailability(doctorId, days, undefined, { autoSelect });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1105,12 +1117,14 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
   }, []);
 
   const handleWeekChange = (direction) => {
+    skipWeekAutoSelectRef.current = true;
     const newWeekOffset = Math.max(0, weekOffset + direction);
     setWeekOffset(newWeekOffset);
     const newDays = buildWeekDays(newWeekOffset);
     if (!selectedDate || !newDays.includes(selectedDate)) {
       setSelectedDate("");
       setAvailableSlots([]);
+      setSelectedSlot(null);
     } else if (doctor) {
       const doctorId = doctor._id || doctor.id;
       fetchAvailableSlots(doctorId, selectedDate);
@@ -1647,19 +1661,10 @@ const DoctorProfilePage = ({ hidePrices = false }) => {
                                     }
                                     return `Za ${weekOffset} ${weekText}`;
                                   })()}
-                              {(selectedDate || nextOpeningDate) && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const dateToShow = selectedDate || nextOpeningDate;
-                                    const offset = weekOffsetFromYmd(dateToShow);
-                                    setWeekOffset(offset);
-                                    setSelectedDate(dateToShow);
-                                  }}
-                                  className="block text-xs text-teal-600 hover:underline"
-                                >
-                                  Wybrany dzień: {formatYmdToPolish(selectedDate || nextOpeningDate)}
-                                </button>
+                              {(selectedDate && nextDays.includes(selectedDate)) && (
+                                <span className="block text-xs text-gray-600">
+                                  Wybrany dzień: {formatYmdToPolish(selectedDate)}
+                                </span>
                               )}
                               {nextDays.length > 0 && (
                                 <span className="block text-xs text-gray-500">

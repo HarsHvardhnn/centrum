@@ -44,6 +44,7 @@ export default function Doctors({
   
   // Track the last processed URL parameter to avoid duplicate opens
   const lastProcessedUrlRef = useRef(null);
+  const skipWeekAutoSelectRef = useRef(false);
   
   useEffect(() => {
     if (selectedDoctorId && doctors.length > 0) {
@@ -397,29 +398,47 @@ export default function Doctors({
     }
   };
 
-  const fetchWeekSlotAvailability = async (doctorId, days, preferredDate) => {
+  const applyWeekDaySelection = (days, daysWithSlotsSet, availability, preferredDate, autoSelect) => {
+    const preferred =
+      preferredDate ||
+      (days.includes(selectedDate) ? selectedDate : "");
+    if (preferred && daysWithSlotsSet?.has(preferred)) {
+      setSelectedDate(preferred);
+      if (availability) {
+        setAvailableSlots(slotsForDate(availability, preferred));
+      }
+      return;
+    }
+    if (autoSelect) {
+      const bookableDate = pickBookableDate(days, daysWithSlotsSet, "");
+      if (bookableDate) {
+        setSelectedDate(bookableDate);
+        if (availability) {
+          setAvailableSlots(slotsForDate(availability, bookableDate));
+        }
+        return;
+      }
+    }
+    setSelectedDate("");
+    setAvailableSlots([]);
+  };
+
+  const fetchWeekSlotAvailability = async (doctorId, days, preferredDate, options = {}) => {
     if (!doctorId || !days?.length) return;
+    const autoSelect = options.autoSelect !== false;
 
     try {
       setCheckingSlots(true);
       const loaded = await loadWeekAvailability(doctorId, days);
       setDaysWithSlots(loaded.daysWithSlots);
       setWeekAvailabilityCache(loaded.data);
-      const preferred =
-        preferredDate ||
-        (days.includes(selectedDate) ? selectedDate : "");
-      const bookableDate = pickBookableDate(
+      applyWeekDaySelection(
         days,
         loaded.daysWithSlots,
-        preferred
+        loaded.availability,
+        preferredDate,
+        autoSelect
       );
-      if (bookableDate) {
-        setSelectedDate(bookableDate);
-        setAvailableSlots(slotsForDate(loaded.availability, bookableDate));
-      } else {
-        setSelectedDate("");
-        setAvailableSlots([]);
-      }
     } catch (error) {
       console.error("Error fetching week slot availability:", error);
       try {
@@ -447,16 +466,7 @@ export default function Doctors({
           results.map(({ date, hasSlots }) => ({ date, hasSlots }))
         );
         setDaysWithSlots(newDaysWithSlots);
-        const preferred =
-          preferredDate ||
-          (days.includes(selectedDate) ? selectedDate : "");
-        const bookableDate = pickBookableDate(days, newDaysWithSlots, preferred);
-        if (bookableDate) {
-          setSelectedDate(bookableDate);
-        } else {
-          setSelectedDate("");
-          setAvailableSlots([]);
-        }
+        applyWeekDaySelection(days, newDaysWithSlots, null, preferredDate, autoSelect);
       } catch {
         setDaysWithSlots(new Set());
         setSelectedDate("");
@@ -795,7 +805,9 @@ export default function Doctors({
     // Do not fetch on modal open — handleBookAppointment loads the week after
     // next-available returns. Skip entirely when the doctor has no schedule.
     if (selectedDoctor && showModal && days.length > 0 && !onlineBookingUnavailable) {
-      fetchWeekSlotAvailability(selectedDoctor.id, days);
+      const autoSelect = !skipWeekAutoSelectRef.current;
+      skipWeekAutoSelectRef.current = false;
+      fetchWeekSlotAvailability(selectedDoctor.id, days, undefined, { autoSelect });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekOffset]);
@@ -805,12 +817,14 @@ export default function Doctors({
   }, []);
 
   const handleWeekChange = (direction) => {
+    skipWeekAutoSelectRef.current = true;
     const newWeekOffset = Math.max(0, weekOffset + direction);
     setWeekOffset(newWeekOffset);
     const newDays = buildWeekDays(newWeekOffset);
     if (!selectedDate || !newDays.includes(selectedDate)) {
       setSelectedDate("");
       setAvailableSlots([]);
+      setSelectedSlot(null);
     } else if (selectedDoctor) {
       fetchAvailableSlots(selectedDoctor.id, selectedDate);
     }
@@ -996,25 +1010,10 @@ export default function Doctors({
                                   }
                                   return `Za ${weekOffset} ${weekText}`;
                                 })()}
-                            {(selectedDate || nextOpeningDate) && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const dateToShow = selectedDate || nextOpeningDate;
-                                  const offset = weekOffsetFromYmd(dateToShow);
-                                  setWeekOffset(offset);
-                                  setSelectedDate(dateToShow);
-                                  if (selectedDoctor) {
-                                    fetchWeekSlotAvailability(
-                                      selectedDoctor.id,
-                                      buildWeekDays(offset)
-                                    );
-                                  }
-                                }}
-                                className="block text-xs text-main hover:underline"
-                              >
-                                Wybrany dzień: {formatYmdToPolish(selectedDate || nextOpeningDate)}
-                              </button>
+                            {selectedDate && nextDays.includes(selectedDate) && (
+                              <span className="block text-xs text-gray-600">
+                                Wybrany dzień: {formatYmdToPolish(selectedDate)}
+                              </span>
                             )}
                             {nextDays.length > 0 && nextDays[0] && !String(nextDays[0]).includes("NaN") && (
                               <span className="block text-xs text-gray-500">
