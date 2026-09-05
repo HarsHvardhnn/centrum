@@ -143,7 +143,8 @@ const Header = () => {
       <img
         src="/assets/CentrumMedyczne7_logo_svg.svg"
         alt="Centrum Medyczne 7"
-        className="block h-10 sm:h-12 w-auto max-w-[min(70vw,220px)] object-contain object-left self-start mr-auto cursor-pointer"
+        className="block h-10 sm:h-12 w-auto max-w-[min(72vw,240px)] object-contain object-left ml-0 mr-auto cursor-pointer"
+        style={{ display: "block", marginLeft: 0 }}
         onClick={() => window.location.reload()}
       />
 

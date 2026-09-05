@@ -4,18 +4,17 @@ import CookieSettingsLink from "./CookieSettingsLink";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#008c8c] text-white px-6 md:px-8 xl:px-20">
-      <div className="mx-auto flex flex-col md:flex-row md:flex-wrap py-10 md:py-16 text-lg gap-10 md:gap-8 lg:gap-0 md:justify-around items-start justify-start">
+    <footer className="bg-[#008c8c] text-white px-4 sm:px-6 md:px-8 xl:px-20 text-left">
+      <div className="w-full flex flex-col md:flex-row md:flex-wrap py-10 md:py-16 text-lg gap-10 md:gap-8 lg:gap-0 md:justify-around items-stretch md:items-start">
         {/* Logo and Description */}
-        <div className="flex flex-col items-start gap-4 w-full max-w-xs self-start">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-start gap-3 w-full">
-            <img
-              src="/assets/CentrumMedyczne7_logo_biel_svg.svg"
-              alt="Centrum Medyczne 7"
-              className="block h-14 sm:h-16 w-auto max-w-[min(85vw,240px)] object-contain object-left self-start"
-            />
-          </div>
-          <p className="text-left text-base leading-relaxed">
+        <div className="flex flex-col items-start gap-4 w-full md:max-w-xs text-left">
+          <img
+            src="/assets/CentrumMedyczne7_logo_biel_svg.svg"
+            alt="Centrum Medyczne 7"
+            className="block h-12 sm:h-14 w-auto max-w-full object-contain object-left ml-0 mr-auto"
+            style={{ display: "block", marginLeft: 0, marginRight: "auto" }}
+          />
+          <p className="text-left text-base leading-relaxed w-full">
           Centrum Medyczne 7- specjalistyczna opieka medyczna dla dorosłych i dzieci.
           Doświadczeni lekarze, nowoczesna diagnostyka, komfortowe warunki wizyt.
           </p>
