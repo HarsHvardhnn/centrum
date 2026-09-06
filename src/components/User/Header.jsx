@@ -139,16 +139,15 @@ const Header = () => {
         </div>
       </div>
 
-      <div className="flex items-center px-4 sm:px-6 md:px-8 py-3 bg-[#F4F4F4]">
-        <div className="flex items-center gap-6 lg:gap-10 min-w-0">
+      <div className="flex items-center px-6 md:px-8 py-3 bg-[#F4F4F4]">
       <img
         src="/assets/CentrumMedyczne7_logo_svg.svg"
         alt="Centrum Medyczne 7"
-        className="block h-10 sm:h-12 w-auto max-w-[220px] object-contain object-left shrink-0 cursor-pointer"
+        className="h-10 w-auto object-contain shrink-0 cursor-pointer"
         onClick={() => window.location.reload()}
       />
 
-        <nav className="hidden lg:flex items-center gap-4 lg:gap-6 font-medium text-sm">
+        <nav className="hidden lg:flex flex-1 items-center justify-center gap-4 lg:gap-6 font-medium text-sm">
           <Link
             to="/"
             className={`py-2 ${
@@ -208,7 +207,6 @@ const Header = () => {
             Kontakt
           </Link>
         </nav>
-        </div>
 
         <button
           className="lg:hidden ml-auto text-teal-800 text-2xl"
@@ -407,7 +405,7 @@ const Header = () => {
           </div>
         </div>
 
-        <div className="hidden lg:flex items-center gap-4 ml-auto">
+        <div className="hidden lg:flex items-center gap-4">
           {user && user.role === "patient" ? (
             <div className="relative" ref={dropdownRef}>
               <button
