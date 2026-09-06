@@ -82,9 +82,19 @@ const AllServices = () => {
     return <div className="text-center py-20 text-red-500">{error}</div>;
   }
 
+  const publicServices = Array.isArray(services)
+    ? services.filter(
+        (service) =>
+          service &&
+          service.source !== "system" &&
+          typeof service.slug === "string" &&
+          service.slug.trim() !== ""
+      )
+    : [];
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-6xl mx-auto gap-6 pt-16 p-6">
-      {Array.isArray(services) && services.length > 0 ? services.map((service, index) => (
+      {publicServices.length > 0 ? publicServices.map((service, index) => (
         <ServiceCard key={service._id || `service-${index}`} service={service} />
       )) : (
         <div className="col-span-full text-center py-20 text-gray-500">
