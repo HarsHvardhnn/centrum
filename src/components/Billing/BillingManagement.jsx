@@ -1137,12 +1137,31 @@ const BillingManagement = () => {
   
   // Format date
   const formatDate = (dateString) => {
+    if (!dateString) return "—";
+    if (typeof dateString === "string" && /^\d{4}-\d{2}-\d{2}/.test(dateString)) {
+      const [year, month, day] = dateString.slice(0, 10).split("-");
+      return `${day}.${month}.${year}`;
+    }
     const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
+    if (Number.isNaN(date.getTime())) return "—";
+    return date.toLocaleDateString("pl-PL", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
     });
+  };
+
+  const calendarDayKey = (value) => {
+    if (!value) return "";
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+      return value.slice(0, 10);
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
   };
   
   // Get color for payment status
@@ -1633,7 +1652,19 @@ const BillingManagement = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(bill.billedAt)}
+                        <div>{formatDate(bill.billedAt)}</div>
+                        {calendarDayKey(bill.saleDate || bill.appointment?.date) &&
+                          calendarDayKey(bill.billedAt) !==
+                            calendarDayKey(
+                              bill.saleDate || bill.appointment?.date
+                            ) && (
+                            <div className="text-xs text-gray-400 font-normal mt-0.5">
+                              Wizyta:{" "}
+                              {formatDate(
+                                bill.saleDate || bill.appointment?.date
+                              )}
+                            </div>
+                          )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {formatCurrency(bill.totalAmount)}

@@ -168,6 +168,7 @@ export default function DoctorDetailPage() {
         serviceId: service.serviceId,
         price: parseFloat(service.price),
         notes: service.notes || "",
+        serviceModel: service.serviceModel || "Service",
       }));
 
       //("doctor data", doctorData);

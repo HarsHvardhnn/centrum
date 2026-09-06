@@ -40,6 +40,9 @@ const ServicesManagement = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSystemModalOpen, setIsSystemModalOpen] = useState(false);
+  const [systemForm, setSystemForm] = useState({ title: "", price: "", tax: "" });
+  const [systemFormErrors, setSystemFormErrors] = useState({});
 
   // Fetch all services on component mount
   useEffect(() => {
@@ -53,7 +56,7 @@ const ServicesManagement = () => {
   const fetchServices = async () => {
     setLoading(true);
     try {
-      const response = await apiCaller("GET", "/services");
+      const response = await apiCaller("GET", "/services?scope=catalog");
       setServices(response.data);
       setError(null);
     } catch (err) {
@@ -155,6 +158,9 @@ const ServicesManagement = () => {
     return Object.keys(errors).length === 0;
   };
 
+  const isSystemService = (service) =>
+    service?.source === "system" || service?.serviceModel === "SystemService";
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -219,6 +225,17 @@ const ServicesManagement = () => {
   };
 
   const openEditModal = (service) => {
+    if (isSystemService(service)) {
+      setCurrentService(service);
+      setSystemForm({
+        title: service.title || "",
+        price: service.price ?? "",
+        tax: service.tax || "",
+      });
+      setSystemFormErrors({});
+      setIsSystemModalOpen(true);
+      return;
+    }
     setCurrentService(service);
     setFormData({
       title: service.title,
@@ -252,10 +269,15 @@ const ServicesManagement = () => {
 
     setLoading(true);
     try {
-      await apiCaller("DELETE", `/services/${serviceToDelete._id}`);
+      if (isSystemService(serviceToDelete)) {
+        await apiCaller("DELETE", `/system-services/${serviceToDelete._id}`);
+      } else {
+        await apiCaller("DELETE", `/services/${serviceToDelete._id}`);
+      }
       setServices(services.filter((s) => s._id !== serviceToDelete._id));
       setIsConfirmModalOpen(false);
       setServiceToDelete(null);
+      fetchServicesFromContext();
     } catch (err) {
       setError("Nie udało się usunąć usługi. Spróbuj ponownie.");
       console.error("Error deleting service:", err);
@@ -286,11 +308,54 @@ const ServicesManagement = () => {
     setIsModalOpen(true);
   };
 
+  const openAddSystemModal = () => {
+    setCurrentService(null);
+    setSystemForm({ title: "", price: "", tax: "" });
+    setSystemFormErrors({});
+    setIsSystemModalOpen(true);
+  };
+
+  const handleSystemSubmit = async (e) => {
+    e.preventDefault();
+    const errors = {};
+    if (!systemForm.title.trim()) errors.title = "Tytuł jest wymagany";
+    if (systemForm.price === "" || isNaN(Number(systemForm.price)) || Number(systemForm.price) < 0) {
+      errors.price = "Cena musi być liczbą dodatnią";
+    }
+    setSystemFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        title: systemForm.title.trim(),
+        price: Number(systemForm.price),
+      };
+      if (systemForm.tax === "zw" || systemForm.tax === "8" || systemForm.tax === "23") {
+        payload.tax = systemForm.tax;
+      }
+      if (currentService && isSystemService(currentService)) {
+        await apiCaller("PUT", `/system-services/${currentService._id}`, payload);
+      } else {
+        await apiCaller("POST", "/system-services", payload);
+      }
+      setIsSystemModalOpen(false);
+      setCurrentService(null);
+      fetchServices();
+      fetchServicesFromContext();
+    } catch (err) {
+      setError("Nie udało się zapisać usługi systemowej. Spróbuj ponownie.");
+      console.error("Error saving system service:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const filteredServices = searchTerm
     ? services.filter(
         (service) =>
-          service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          service.shortDescription
+          (service.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (service.shortDescription || "")
             .toLowerCase()
             .includes(searchTerm.toLowerCase())
       )
@@ -315,11 +380,18 @@ const ServicesManagement = () => {
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
           <button
+            onClick={openAddSystemModal}
+            className="flex items-center gap-2 bg-white text-teal-700 border border-teal-500 px-4 py-2 rounded-lg hover:bg-teal-50 transition-colors"
+          >
+            <PlusCircle className="h-5 w-5" />
+            Dodaj do systemu
+          </button>
+          <button
             onClick={openAddModal}
             className="flex items-center gap-2 bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600 transition-colors"
           >
             <PlusCircle className="h-5 w-5" />
-            Dodaj Usługę
+            Dodaj na stronę
           </button>
         </div>
       </div>
@@ -366,12 +438,21 @@ const ServicesManagement = () => {
                 </div>
               )}
               <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
+                <div className="flex justify-between items-start mb-2 gap-2">
                   <h2 className="text-lg font-semibold text-gray-800">
                     {service.title}
                   </h2>
-                  <p className="text-teal-600 font-semibold">{service.price} zł</p>
+                  <p className="text-teal-600 font-semibold whitespace-nowrap">{service.price} zł</p>
                 </div>
+                <span
+                  className={`inline-block mb-2 text-xs font-medium px-2 py-0.5 rounded ${
+                    isSystemService(service)
+                      ? "bg-slate-100 text-slate-700"
+                      : "bg-teal-50 text-teal-700"
+                  }`}
+                >
+                  {isSystemService(service) ? "System" : "Strona"}
+                </span>
                 <p className="text-gray-600 text-sm mb-4">
                   {service.shortDescription}
                 </p>
@@ -676,6 +757,102 @@ const ServicesManagement = () => {
                 </div>
               </form>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* System catalog modal (no website page) */}
+      {isSystemModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-full max-w-md">
+            <form onSubmit={handleSystemSubmit} className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  {currentService && isSystemService(currentService)
+                    ? "Edytuj usługę systemową"
+                    : "Dodaj do systemu"}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSystemModalOpen(false);
+                    setCurrentService(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                Usługa tylko do rozliczeń i przypisania lekarzowi. Nie pojawia się na stronie.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Nazwa</label>
+                  <input
+                    type="text"
+                    value={systemForm.title}
+                    onChange={(e) =>
+                      setSystemForm({ ...systemForm, title: e.target.value })
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                  />
+                  {systemFormErrors.title && (
+                    <p className="mt-1 text-sm text-red-600">{systemFormErrors.title}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Cena bazowa (zł)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={systemForm.price}
+                    onChange={(e) =>
+                      setSystemForm({ ...systemForm, price: e.target.value })
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                  />
+                  {systemFormErrors.price && (
+                    <p className="mt-1 text-sm text-red-600">{systemFormErrors.price}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">VAT (opcjonalnie)</label>
+                  <select
+                    value={systemForm.tax}
+                    onChange={(e) =>
+                      setSystemForm({ ...systemForm, tax: e.target.value })
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                  >
+                    <option value="">—</option>
+                    <option value="zw">zw</option>
+                    <option value="8">8%</option>
+                    <option value="23">23%</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSystemModalOpen(false);
+                    setCurrentService(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md"
+                >
+                  Anuluj
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-md disabled:opacity-75"
+                >
+                  {isSubmitting ? "Zapisywanie..." : "Zapisz"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader, Plus, Trash2, X, Eye, Printer, FileDown } from "lucide-react";
+import { Loader, Plus, Trash2, X, Eye, Printer, FileDown, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import billingHelper from "../../helpers/billingHelper";
 import { queryKeys } from "../../lib/queryKeys";
@@ -77,6 +77,36 @@ function toDateInput(value) {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+/** YYYY-MM-DD without timezone shift (appointment dates are calendar days). */
+function ymdFromValue(value) {
+  if (!value) return "";
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+    return value.slice(0, 10);
+  }
+  return toDateInput(value);
+}
+
+function appointmentYmd(bill) {
+  return ymdFromValue(bill?.appointment?.date || bill?.saleDate);
+}
+
+function hasLinkedReceipt(bill) {
+  if (!bill) return false;
+  return Boolean(
+    String(bill.internalTxnId || "").trim() ||
+      String(bill.receiptNumber || "").trim()
+  );
+}
+
+function isIssuedInvoice(bill) {
+  const snap = bill?.invoiceSnapshot;
+  return Boolean(snap?.number) && snap?.status && snap.status !== "draft";
+}
+
+function isSettledReceiptView(bill) {
+  return hasLinkedReceipt(bill) && !isIssuedInvoice(bill);
 }
 
 function patientName(patient) {
@@ -238,6 +268,8 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   const [issuedPdfUrl, setIssuedPdfUrl] = useState(null);
   const [issuedNumber, setIssuedNumber] = useState("");
   const [locked, setLocked] = useState(false);
+  const [fromReceiptInvoice, setFromReceiptInvoice] = useState(false);
+  const [receiptEditing, setReceiptEditing] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [showServicePicker, setShowServicePicker] = useState(false);
   const suggestedInvoiceNumberRef = useRef("");
@@ -280,8 +312,18 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       Boolean(snap?.number) && snap?.status && snap.status !== "draft";
     setIssuerName(alreadyIssued ? snap?.issuerName || "" : "");
     setPlace(snap?.place || "Skarżysko-Kamienna");
-    setIssueDate(toDateInput(snap?.issueDate || new Date()));
-    setSellDate(toDateInput(snap?.sellDate || new Date()));
+    const aptYmd = appointmentYmd(bill);
+    const alreadySettled = Boolean(bill.settledAt) || alreadyIssued;
+    const defaultIssue =
+      ymdFromValue(
+        alreadySettled
+          ? snap?.issueDate || bill.billedAt || bill.settledAt
+          : null
+      ) || aptYmd || toDateInput(new Date());
+    setIssueDate(defaultIssue);
+    setSellDate(
+      ymdFromValue(snap?.sellDate || bill.saleDate) || aptYmd || toDateInput(new Date())
+    );
     setPaymentDueKind(snap?.paymentDueKind || "immediate");
     setPaymentDueDate(toDateInput(snap?.paymentDueDate || new Date()));
     const rawNumber = snap?.number || bill.invoiceId || "";
@@ -295,7 +337,9 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     }
     if (snap?.vatExemptionText) setVatExemptionText(snap.vatExemptionText);
 
-    setLocked(alreadyIssued);
+    setLocked(alreadyIssued || isSettledReceiptView(bill));
+    setReceiptEditing(false);
+    setFromReceiptInvoice(false);
     setIssuedPdfUrl(bill.invoiceUrl || snap?.pdfUrl || null);
     setIssuedNumber(snap?.number || bill.invoiceId || "");
   }, [isOpen, bill, hydratedBillId]);
@@ -307,6 +351,9 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       setShowServicePicker(false);
       setDocumentType("fiscal_receipt");
       setInvoiceNumber("");
+      setFromReceiptInvoice(false);
+      setReceiptEditing(false);
+      setLocked(false);
     }
   }, [isOpen]);
 
@@ -483,10 +530,14 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
         changeDue: changeDue != null ? changeDue : undefined,
         notes,
         lineItems: payloadLineItems(),
+        saleDate: sellDate || undefined,
+        settlementDate: issueDate || undefined,
       });
       if (res?.success) {
         toast.success(
-          `Rozliczono (paragon). Nr: ${res.data?.receiptNumber || res.data?.internalTxnId || "—"}`
+          hasLinkedReceipt(bill)
+            ? `Zapisano paragon (${res.data?.internalTxnId || res.data?.receiptNumber || "TRX"})`
+            : `Rozliczono (paragon). Nr: ${res.data?.receiptNumber || res.data?.internalTxnId || "—"}`
         );
         queryClient.invalidateQueries({ queryKey: queryKeys.billDetail(billId, "settlement") });
         queryClient.invalidateQueries({ queryKey: ["billing-list"] });
@@ -500,6 +551,21 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEditReceipt = () => {
+    setReceiptEditing(true);
+    setLocked(false);
+  };
+
+  const handleIssueInvoiceFromReceipt = () => {
+    setFromReceiptInvoice(true);
+    setReceiptEditing(false);
+    setLocked(false);
+    setDocumentType("invoice");
+    setIssueDate(toDateInput(new Date()));
+    const visit = appointmentYmd(bill);
+    if (visit) setSellDate(visit);
   };
 
   const handleIssueInvoice = async () => {
@@ -547,10 +613,11 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
           vatExemptionText: showVatExemptionField ? vatExemptionText : "",
           paidAmount: paidNow ? total : 0,
         },
+        fromReceipt: hasLinkedReceipt(bill) || fromReceiptInvoice,
       });
 
       const res = await billingHelper.issueInvoice(billId, {
-        number: undefined,
+        fromReceipt: hasLinkedReceipt(bill) || fromReceiptInvoice,
         place,
         issueDate,
         sellDate,
@@ -677,6 +744,27 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
           {/* Document type */}
           <section className="border border-gray-200 rounded-lg p-4">
             <h4 className="font-medium mb-3">Typ dokumentu</h4>
+            {hasLinkedReceipt(bill) || fromReceiptInvoice ? (
+              <div className="text-sm text-gray-700 space-y-1">
+                <p>
+                  {fromReceiptInvoice || documentType === "invoice"
+                    ? "Faktura do istniejącego paragonu"
+                    : "Paragon fiskalny (zapisany)"}
+                </p>
+                {bill?.internalTxnId && (
+                  <p className="text-xs text-gray-500">
+                    Nr TRX: {bill.internalTxnId}
+                    {bill.receiptNumber ? ` · ${bill.receiptNumber}` : ""}
+                  </p>
+                )}
+                {locked && isSettledReceiptView(bill) && (
+                  <p className="text-xs text-amber-700 mt-2">
+                    Dokument zamknięty. Użyj „Edytuj paragon” albo „Wystaw fakturę z paragonu”.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
             <div className="flex flex-wrap gap-4">
               <label className="inline-flex items-center gap-2 cursor-pointer">
                 <input
@@ -708,6 +796,8 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
               <p className="text-xs text-gray-500 mt-2">
                 Domyślna stawka to ZW. Możesz zmienić ją na 8%, 23% lub inną — podstawa zwolnienia jest wtedy ukrywana.
               </p>
+            )}
+              </>
             )}
           </section>
 
@@ -922,6 +1012,36 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
           {/* Payment */}
           <section className="border border-gray-200 rounded-lg p-4 space-y-3">
             <h4 className="font-medium">Płatność</h4>
+            {documentType === "fiscal_receipt" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500">Data sprzedaży / usługi</label>
+                  <input
+                    type="date"
+                    disabled={locked}
+                    value={sellDate}
+                    onChange={(e) => setSellDate(e.target.value)}
+                    className="w-full mt-0.5 px-2 py-2 border rounded-md text-sm disabled:bg-gray-50"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Domyślnie data wizyty.
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Data wystawienia dokumentu</label>
+                  <input
+                    type="date"
+                    disabled={locked}
+                    value={issueDate}
+                    onChange={(e) => setIssueDate(e.target.value)}
+                    className="w-full mt-0.5 px-2 py-2 border rounded-md text-sm disabled:bg-gray-50"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Data paragonu na kasie. Domyślnie data wizyty — zmień, jeśli wydruk był innego dnia.
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-gray-500">Metoda</label>
@@ -1265,8 +1385,29 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
               disabled={saving}
               className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm hover:bg-teal-700 disabled:opacity-60"
             >
-              Rozlicz pacjenta
+              {receiptEditing || hasLinkedReceipt(bill)
+                ? "Zapisz paragon"
+                : "Rozlicz pacjenta"}
             </button>
+          )}
+          {locked && isSettledReceiptView(bill) && (
+            <>
+              <button
+                type="button"
+                onClick={handleEditReceipt}
+                className="inline-flex items-center gap-2 px-4 py-2 border border-teal-600 text-teal-700 rounded-lg text-sm hover:bg-teal-50"
+              >
+                <Pencil size={16} />
+                Edytuj paragon
+              </button>
+              <button
+                type="button"
+                onClick={handleIssueInvoiceFromReceipt}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm hover:bg-teal-700"
+              >
+                Wystaw fakturę z paragonu
+              </button>
+            </>
           )}
           {!locked && documentType === "invoice" && (
             <button

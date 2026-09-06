@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { apiCaller } from "../utils/axiosInstance";
+import { useUser } from "./userContext";
 
 const ServicesContext = createContext();
 
 export const useServices = () => useContext(ServicesContext);
 
+const STAFF_ROLES = ["admin", "receptionist", "doctor"];
+
 export const ServicesProvider = ({ children }) => {
+  const { user } = useUser();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,8 +17,11 @@ export const ServicesProvider = ({ children }) => {
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const response = await apiCaller("GET", "/services");
-      //("response",response)
+      const useCatalog = STAFF_ROLES.includes(user?.role);
+      const response = await apiCaller(
+        "GET",
+        useCatalog ? "/services?scope=catalog" : "/services"
+      );
       setServices(response.data);
       setError(null);
     } catch (err) {
@@ -27,7 +34,8 @@ export const ServicesProvider = ({ children }) => {
 
   useEffect(() => {
     fetchServices();
-  }, []);
+    // Re-fetch after login so staff get the internal catalog
+  }, [user?.role, user?.id]);
 
   return (
     <ServicesContext.Provider

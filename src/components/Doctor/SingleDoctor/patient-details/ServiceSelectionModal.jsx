@@ -88,6 +88,9 @@ const ServiceSelectionModal = ({
           title: service.title,
           price: service.price,
           quantity: 1,
+          serviceModel:
+            service.serviceModel ||
+            (service.source === "system" ? "SystemService" : "Service"),
         },
       ]);
     }
@@ -125,6 +128,7 @@ const ServiceSelectionModal = ({
           price: s.price,
           quantity: s.quantity,
           totalPrice: (parseFloat(s.price) * s.quantity).toFixed(2),
+          serviceModel: s.serviceModel || "Service",
         })),
       };
 

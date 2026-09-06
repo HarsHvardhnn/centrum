@@ -57,6 +57,9 @@ export function mapDoctorServicesResponseToCatalog(response) {
           title: svc.title || "",
           price,
           shortDescription: svc.shortDescription,
+          source: item?.serviceModel === "SystemService" || svc.source === "system" ? "system" : "website",
+          serviceModel: item?.serviceModel || (svc.source === "system" ? "SystemService" : "Service"),
+          tax: svc.tax,
         };
       })
       .filter(Boolean)
@@ -78,6 +81,9 @@ export function mapServicesResponseToCatalog(response) {
           title: item.title || "",
           price: svc?.price != null && svc?.price !== "" ? svc.price : item.price,
           shortDescription: item.shortDescription,
+          source: item.source || "website",
+          serviceModel: item.source === "system" ? "SystemService" : "Service",
+          tax: item.tax,
         };
       })
       .filter(Boolean)
@@ -196,7 +202,7 @@ const userServiceHelper = {
   // Get all available services (for admin or general selection)
   getAllServices: async () => {
     try {
-      const response = await apiCaller("GET", "/services");
+      const response = await apiCaller("GET", "/services?scope=catalog");
       return response;
     } catch (error) {
       console.error("Error getting all services:", error);
@@ -210,6 +216,7 @@ const userServiceHelper = {
       const params = new URLSearchParams();
       if (doctorId) params.set("doctorId", doctorId);
       if (compact) params.set("compact", "1");
+      params.set("scope", "catalog");
       const query = params.toString() ? `?${params.toString()}` : "";
       const response = await apiCaller("GET", `/services${query}`);
       return response;
