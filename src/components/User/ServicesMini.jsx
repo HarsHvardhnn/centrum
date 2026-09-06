@@ -25,7 +25,14 @@ const ServicesMini = () => {
         
         // Add a random icon to each service
         const servicesArray = Array.isArray(response.data) ? response.data : [];
-        const servicesWithIcons = servicesArray.map(service => ({
+        const publicServices = servicesArray.filter(
+          (service) =>
+            service &&
+            service.source !== "system" &&
+            typeof service.slug === "string" &&
+            service.slug.trim() !== ""
+        );
+        const servicesWithIcons = publicServices.map(service => ({
           ...service,
           icon: icons[Math.floor(Math.random() * icons.length)]
         }));
