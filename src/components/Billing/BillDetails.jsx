@@ -11,7 +11,9 @@ import {
   Check,
   FileText
 } from "lucide-react";
-import billingHelper from "../../helpers/billingHelper";
+import billingHelper, {
+  invoiceGeneratedFromReceiptNote,
+} from "../../helpers/billingHelper";
 import { toast } from "sonner";
 import { queryKeys } from "../../lib/queryKeys";
 import { useUser } from "../../context/userContext";
@@ -39,6 +41,9 @@ const BillDetails = () => {
   });
 
   const billData = billResponse?.success ? billResponse.data : null;
+  const invoiceFromReceiptNote = billData
+    ? invoiceGeneratedFromReceiptNote(billData)
+    : "";
   const error =
     isError || (billResponse && !billResponse.success)
       ? "Nie udało się załadować szczegółów faktury"
@@ -262,6 +267,11 @@ const BillDetails = () => {
                       ? `Nr paragonu ${billData.receiptNumber}`
                     : `ID: ${billData._id}`}
                 </p>
+                )}
+                {!isDoctorViewOnly && invoiceFromReceiptNote && (
+                  <p className="text-sm text-teal-800 bg-teal-50 border border-teal-100 rounded-md px-3 py-2 mb-3">
+                    {invoiceFromReceiptNote}
+                  </p>
                 )}
                 
                 <div className="flex items-center text-sm text-gray-600 mb-1">

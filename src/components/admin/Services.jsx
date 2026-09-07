@@ -5,13 +5,20 @@ import {
   Trash2,
   AlertCircle,
   Search,
-  Eye,
   Image,
   FileText,
+  ArrowLeft,
+  Users,
+  Globe,
+  Wrench,
 } from "lucide-react";
 import { apiCaller } from "../../utils/axiosInstance";
 import { useServices } from "../../context/serviceContext";
 import { readListState, writeListState } from "../../hooks/usePersistedListState";
+import doctorService from "../../helpers/doctorHelper";
+import userServiceHelper, {
+  mapDoctorServicesResponseToCatalog,
+} from "../../helpers/userServiceHelper";
 
 const ServicesManagement = () => {
  const{fetchServices:fetchServicesFromContext}= useServices()
@@ -43,11 +50,31 @@ const ServicesManagement = () => {
   const [isSystemModalOpen, setIsSystemModalOpen] = useState(false);
   const [systemForm, setSystemForm] = useState({ title: "", price: "", tax: "" });
   const [systemFormErrors, setSystemFormErrors] = useState({});
+  const [section, setSection] = useState(null);
+  const [systemServices, setSystemServices] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [assignService, setAssignService] = useState(null);
+  const [assignedDoctorIds, setAssignedDoctorIds] = useState([]);
+  const [assignDraftIds, setAssignDraftIds] = useState([]);
+  const [assignLoading, setAssignLoading] = useState(false);
+  const [assignSaving, setAssignSaving] = useState(false);
 
-  // Fetch all services on component mount
+  const doctorLabel = (doc) => {
+    const n = doc?.name;
+    if (typeof n === "string" && n.trim()) return n.trim();
+    const full = `${n?.first || ""} ${n?.last || ""}`.trim();
+    return full || doc?.email || "Lekarz";
+  };
+
+  const doctorIdOf = (doc) => doc?._id || doc?.id;
+
   useEffect(() => {
-    fetchServices();
-  }, []);
+    if (section === "website") fetchServices();
+    if (section === "system") {
+      fetchSystemServices();
+      loadDoctors();
+    }
+  }, [section]);
 
   useEffect(() => {
     writeListState("admin-services", { searchTerm });
@@ -56,7 +83,7 @@ const ServicesManagement = () => {
   const fetchServices = async () => {
     setLoading(true);
     try {
-      const response = await apiCaller("GET", "/services?scope=catalog");
+      const response = await apiCaller("GET", "/services");
       setServices(response.data);
       setError(null);
     } catch (err) {
@@ -64,6 +91,34 @@ const ServicesManagement = () => {
       console.error("Error fetching services:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSystemServices = async () => {
+    setLoading(true);
+    try {
+      const response = await apiCaller("GET", "/system-services");
+      setSystemServices(
+        (Array.isArray(response.data) ? response.data : []).map((s) => ({
+          ...s,
+          source: "system",
+        }))
+      );
+      setError(null);
+    } catch (err) {
+      setError("Nie udało się pobrać usług systemowych. Spróbuj ponownie.");
+      console.error("Error fetching system services:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadDoctors = async () => {
+    try {
+      const response = await doctorService.getAllDoctors({ limit: 200 });
+      setDoctors(response?.doctors || []);
+    } catch (err) {
+      console.error("Error loading doctors:", err);
     }
   };
 
@@ -225,7 +280,7 @@ const ServicesManagement = () => {
   };
 
   const openEditModal = (service) => {
-    if (isSystemService(service)) {
+    if (section === "system" || isSystemService(service)) {
       setCurrentService(service);
       setSystemForm({
         title: service.title || "",
@@ -269,12 +324,13 @@ const ServicesManagement = () => {
 
     setLoading(true);
     try {
-      if (isSystemService(serviceToDelete)) {
+      if (section === "system" || isSystemService(serviceToDelete)) {
         await apiCaller("DELETE", `/system-services/${serviceToDelete._id}`);
       } else {
         await apiCaller("DELETE", `/services/${serviceToDelete._id}`);
       }
       setServices(services.filter((s) => s._id !== serviceToDelete._id));
+      setSystemServices(systemServices.filter((s) => s._id !== serviceToDelete._id));
       setIsConfirmModalOpen(false);
       setServiceToDelete(null);
       fetchServicesFromContext();
@@ -334,14 +390,14 @@ const ServicesManagement = () => {
       if (systemForm.tax === "zw" || systemForm.tax === "8" || systemForm.tax === "23") {
         payload.tax = systemForm.tax;
       }
-      if (currentService && isSystemService(currentService)) {
+      if (currentService && (isSystemService(currentService) || section === "system")) {
         await apiCaller("PUT", `/system-services/${currentService._id}`, payload);
       } else {
         await apiCaller("POST", "/system-services", payload);
       }
       setIsSystemModalOpen(false);
       setCurrentService(null);
-      fetchServices();
+      fetchSystemServices();
       fetchServicesFromContext();
     } catch (err) {
       setError("Nie udało się zapisać usługi systemowej. Spróbuj ponownie.");
@@ -351,7 +407,73 @@ const ServicesManagement = () => {
     }
   };
 
-  const filteredServices = searchTerm
+  const openAssignModal = async (service) => {
+    setAssignService(service);
+    setAssignLoading(true);
+    setAssignedDoctorIds([]);
+    setAssignDraftIds([]);
+    try {
+      const list = doctors.length ? doctors : (await doctorService.getAllDoctors({ limit: 200 }))?.doctors || [];
+      if (!doctors.length) setDoctors(list);
+      const checks = await Promise.all(
+        list.map(async (doc) => {
+          const id = doctorIdOf(doc);
+          try {
+            const rows = await userServiceHelper.getDoctorServices(id);
+            const catalog = mapDoctorServicesResponseToCatalog(rows).map((s) =>
+              String(s._id)
+            );
+            return catalog.includes(String(service._id)) ? id : null;
+          } catch {
+            return null;
+          }
+        })
+      );
+      const assigned = checks.filter(Boolean);
+      setAssignedDoctorIds(assigned);
+      setAssignDraftIds(assigned);
+    } catch (err) {
+      console.error("Error loading doctor assignments:", err);
+    } finally {
+      setAssignLoading(false);
+    }
+  };
+
+  const toggleAssignDoctor = (id) => {
+    setAssignDraftIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const saveDoctorAssignments = async () => {
+    if (!assignService) return;
+    setAssignSaving(true);
+    try {
+      const serviceId = assignService._id;
+      const toAdd = assignDraftIds.filter((id) => !assignedDoctorIds.includes(id));
+      const toRemove = assignedDoctorIds.filter((id) => !assignDraftIds.includes(id));
+      await Promise.all([
+        ...toAdd.map((id) =>
+          userServiceHelper.addDoctorServices(id, [
+            {
+              serviceId,
+              price: parseFloat(assignService.price) || 0,
+              serviceModel: "SystemService",
+            },
+          ])
+        ),
+        ...toRemove.map((id) => userServiceHelper.removeDoctorService(id, serviceId)),
+      ]);
+      setAssignService(null);
+    } catch (err) {
+      setError("Nie udało się zapisać przypisania do lekarzy.");
+      console.error(err);
+    } finally {
+      setAssignSaving(false);
+    }
+  };
+
+  const websiteServices = searchTerm
     ? services.filter(
         (service) =>
           (service.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -361,13 +483,75 @@ const ServicesManagement = () => {
       )
     : services;
 
+  const systemFiltered = searchTerm
+    ? systemServices.filter((service) =>
+        (service.title || "").toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : systemServices;
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800">
-          Zarządzanie Usługami
-        </h1>
+      {!section && (
+        <>
+          <h1 className="text-2xl font-semibold text-gray-800 mb-2">
+            Zarządzanie Usługami
+          </h1>
+          <p className="text-sm text-gray-500 mb-8">
+            Wybierz katalog. Usługi na stronie i usługi systemowe są osobne — nie miesza się ich w jednym widoku.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+            <button
+              type="button"
+            onClick={() => {
+              setSearchTerm("");
+              setSection("website");
+            }}
+              className="text-left border rounded-xl p-6 hover:shadow-md hover:border-teal-400 transition-all"
+            >
+              <Globe className="h-10 w-10 text-teal-600 mb-4" />
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                Usługi na stronie
+              </h2>
+              <p className="text-sm text-gray-500">
+                Oferta publiczna: zdjęcia, opisy, kafelki na stronie internetowej.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm("");
+                setSection("system");
+              }}
+              className="text-left border rounded-xl p-6 hover:shadow-md hover:border-slate-400 transition-all"
+            >
+              <Wrench className="h-10 w-10 text-slate-700 mb-4" />
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                Usługi systemowe
+              </h2>
+              <p className="text-sm text-gray-500">
+                Katalog techniczny do rozliczeń i przypisania lekarzowi. Bez strony i zdjęć.
+              </p>
+            </button>
+          </div>
+        </>
+      )}
+
+      {section === "website" && (
+        <>
+      <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setSection(null)}
+            className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Wróć
+          </button>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Usługi na stronie
+          </h1>
+        </div>
         <div className="flex items-center gap-4">
           <div className="relative">
             <input
@@ -380,23 +564,15 @@ const ServicesManagement = () => {
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
           <button
-            onClick={openAddSystemModal}
-            className="flex items-center gap-2 bg-white text-teal-700 border border-teal-500 px-4 py-2 rounded-lg hover:bg-teal-50 transition-colors"
-          >
-            <PlusCircle className="h-5 w-5" />
-            Dodaj do systemu
-          </button>
-          <button
             onClick={openAddModal}
             className="flex items-center gap-2 bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600 transition-colors"
           >
             <PlusCircle className="h-5 w-5" />
-            Dodaj na stronę
+            Dodaj usługę
           </button>
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="mb-6 flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg">
           <AlertCircle className="h-5 w-5" />
@@ -404,24 +580,23 @@ const ServicesManagement = () => {
         </div>
       )}
 
-      {/* Services Grid */}
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-teal-500 border-r-transparent"></div>
           <p className="mt-4 text-gray-600">Ładowanie usług...</p>
         </div>
-      ) : filteredServices.length === 0 ? (
+      ) : websiteServices.length === 0 ? (
         <div className="text-center py-12">
           <FileText className="mx-auto h-12 w-12 text-gray-400" />
           <p className="mt-4 text-gray-600">
             {searchTerm
               ? "Nie znaleziono usług pasujących do wyszukiwania"
-              : "Nie dodano jeszcze żadnych usług"}
+              : "Nie dodano jeszcze żadnych usług na stronie"}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredServices.map((service) => (
+          {websiteServices.map((service) => (
             <div
               key={service._id}
               className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
@@ -444,15 +619,6 @@ const ServicesManagement = () => {
                   </h2>
                   <p className="text-teal-600 font-semibold whitespace-nowrap">{service.price} zł</p>
                 </div>
-                <span
-                  className={`inline-block mb-2 text-xs font-medium px-2 py-0.5 rounded ${
-                    isSystemService(service)
-                      ? "bg-slate-100 text-slate-700"
-                      : "bg-teal-50 text-teal-700"
-                  }`}
-                >
-                  {isSystemService(service) ? "System" : "Strona"}
-                </span>
                 <p className="text-gray-600 text-sm mb-4">
                   {service.shortDescription}
                 </p>
@@ -464,20 +630,132 @@ const ServicesManagement = () => {
                     <Edit2 className="h-4 w-4" />
                     Edytuj
                   </button>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => openDeleteConfirmation(service)}
-                      className="flex items-center gap-1 text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Usuń
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => openDeleteConfirmation(service)}
+                    className="flex items-center gap-1 text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Usuń
+                  </button>
                 </div>
               </div>
             </div>
           ))}
         </div>
+      )}
+        </>
+      )}
+
+      {section === "system" && (
+        <>
+          <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setSection(null)}
+                className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Wróć
+              </button>
+              <h1 className="text-2xl font-semibold text-gray-800">
+                Usługi systemowe
+              </h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Szukaj..."
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              </div>
+              <button
+                type="button"
+                onClick={openAddSystemModal}
+                className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700"
+              >
+                <PlusCircle className="h-5 w-5" />
+                Dodaj usługę
+              </button>
+            </div>
+          </div>
+          <p className="text-sm text-gray-500 mb-4">
+            Lista techniczna: nazwa, cena, VAT. Przypisz usługę do lekarza — nie publikuje się na stronie.
+          </p>
+          {error && (
+            <div className="mb-6 flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg">
+              <AlertCircle className="h-5 w-5" />
+              <p>{error}</p>
+            </div>
+          )}
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-solid border-teal-500 border-r-transparent"></div>
+              <p className="mt-4 text-gray-600">Ładowanie usług...</p>
+            </div>
+          ) : systemFiltered.length === 0 ? (
+            <div className="text-center py-12">
+              <FileText className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="mt-4 text-gray-600">
+                {searchTerm
+                  ? "Nie znaleziono usług"
+                  : "Brak usług systemowych. Dodaj pierwszą przyciskiem powyżej."}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto border rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nazwa</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cena</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">VAT</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Akcje</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {systemFiltered.map((service) => (
+                    <tr key={service._id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{service.title}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{service.price} zł</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{service.tax || "—"}</td>
+                      <td className="px-4 py-3 text-sm text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => openAssignModal(service)}
+                          className="inline-flex items-center gap-1 text-teal-700 hover:text-teal-900 mr-3"
+                        >
+                          <Users className="h-4 w-4" />
+                          Przypisz lekarza
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(service)}
+                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 mr-3"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                          Edytuj
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openDeleteConfirmation(service)}
+                          className="inline-flex items-center gap-1 text-red-600 hover:text-red-800"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Usuń
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
 
       {/* Add/Edit Modal */}
@@ -857,7 +1135,59 @@ const ServicesManagement = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {assignService && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+              Przypisz lekarza
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {assignService.title} — zaznacz lekarzy, którzy mają tę usługę w katalogu.
+            </p>
+            {assignLoading ? (
+              <p className="text-sm text-gray-500 py-6 text-center">Ładowanie lekarzy...</p>
+            ) : doctors.length === 0 ? (
+              <p className="text-sm text-gray-500">Brak lekarzy.</p>
+            ) : (
+              <ul className="space-y-2 max-h-72 overflow-y-auto border rounded-md p-2">
+                {doctors.map((doc) => {
+                  const id = doctorIdOf(doc);
+                  return (
+                    <li key={id}>
+                      <label className="flex items-center gap-2 text-sm cursor-pointer py-1">
+                        <input
+                          type="checkbox"
+                          checked={assignDraftIds.includes(id)}
+                          onChange={() => toggleAssignDoctor(id)}
+                        />
+                        <span>{doctorLabel(doc)}</span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setAssignService(null)}
+                className="px-4 py-2 text-sm border rounded-md"
+              >
+                Anuluj
+              </button>
+              <button
+                type="button"
+                onClick={saveDoctorAssignments}
+                disabled={assignLoading || assignSaving}
+                className="px-4 py-2 text-sm text-white bg-teal-600 rounded-md disabled:opacity-75"
+              >
+                {assignSaving ? "Zapisywanie..." : "Zapisz przypisanie"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isConfirmModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full">

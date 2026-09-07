@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader, Plus, Trash2, X, Eye, Printer, FileDown, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import billingHelper from "../../helpers/billingHelper";
+import billingHelper, {
+  invoiceGeneratedFromReceiptNote,
+} from "../../helpers/billingHelper";
 import { queryKeys } from "../../lib/queryKeys";
 import { useUser } from "../../context/userContext";
 import { formatPersonName } from "../../utils/formatPersonName";
@@ -53,7 +55,14 @@ function isFormalInvoiceNumber(value) {
   return /^\d+\/\d{2}\/\d{4}$/.test(String(value || "").trim());
 }
 
-/** Header document ref: invoice N/MM/YYYY, paragon TRX, awaiting nothing. */
+function formatFvInvoiceNumber(number) {
+  const n = String(number || "").trim();
+  if (!n) return "";
+  if (/^FV\//i.test(n)) return n;
+  if (/^P\//i.test(n)) return `FV/${n.slice(2)}`;
+  return `FV/${n}`;
+}
+
 function headerDocumentLabel(bill, issuedNumber) {
   const invoiceNumber = String(
     issuedNumber || bill?.invoiceSnapshot?.number || bill?.invoiceId || ""
@@ -273,6 +282,24 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [showServicePicker, setShowServicePicker] = useState(false);
   const suggestedInvoiceNumberRef = useRef("");
+
+  const invoiceFromReceiptNote = invoiceGeneratedFromReceiptNote({
+    ...(bill || {}),
+    invoiceId: issuedNumber || bill?.invoiceId,
+    documentType:
+      fromReceiptInvoice || bill?.documentType === "invoice"
+        ? "invoice"
+        : bill?.documentType,
+  });
+  const showInvoiceOnTrxLine =
+    fromReceiptInvoice ||
+    documentType === "invoice" ||
+    isIssuedInvoice(bill);
+  const trxSecondaryNumber = showInvoiceOnTrxLine
+    ? formatFvInvoiceNumber(
+        issuedNumber || bill?.invoiceSnapshot?.number || bill?.invoiceId
+      )
+    : String(bill?.receiptNumber || "").trim();
 
   // Hydrate form once per bill open (avoid resetting while user edits)
   useEffect(() => {
@@ -754,7 +781,12 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                 {bill?.internalTxnId && (
                   <p className="text-xs text-gray-500">
                     Nr TRX: {bill.internalTxnId}
-                    {bill.receiptNumber ? ` · ${bill.receiptNumber}` : ""}
+                    {trxSecondaryNumber ? ` · ${trxSecondaryNumber}` : ""}
+                  </p>
+                )}
+                {invoiceFromReceiptNote && (
+                  <p className="text-sm text-teal-800 bg-teal-50 border border-teal-100 rounded-md px-3 py-2 mt-2">
+                    {invoiceFromReceiptNote}
                   </p>
                 )}
                 {locked && isSettledReceiptView(bill) && (

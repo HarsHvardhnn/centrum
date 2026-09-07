@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, Download, FileText, Eye, TrendingUp, Users, DollarSign, Activity } from 'lucide-react';
 import { useUser } from '../../context/userContext';
 import doctorService from '../../helpers/doctorHelper';
@@ -21,6 +22,7 @@ import { displayPatientPhone } from '../../utils/phoneUtils';
 
 const ReportsDashboard = () => {
   const { user } = useUser();
+  const navigate = useNavigate();
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState({ pdf: false, csv: false });
@@ -153,6 +155,15 @@ const ReportsDashboard = () => {
     } catch (error) {
       showMessage(handleApiError(error), 'error');
     }
+  };
+
+  const handleOpenBillingDocument = (billId) => {
+    const id = billId && String(billId).trim();
+    if (!id) {
+      showMessage('Brak dokumentu rozliczenia dla tej wizyty', 'error');
+      return;
+    }
+    navigate(`/administracja/rozliczenia/szczegoly/${id}`);
   };
 
   const handleExportPDF = async () => {
@@ -563,13 +574,30 @@ const ReportsDashboard = () => {
                       ) : null}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
                       <button
+                        type="button"
+                        onClick={() => handleOpenBillingDocument(appointment.billId)}
+                        disabled={!permissions.canViewDetails || !appointment.billId}
+                        className="text-teal-600 hover:text-teal-800 disabled:opacity-40 disabled:hover:text-teal-600"
+                        title={
+                          appointment.billId
+                            ? "Podgląd dokumentu rozliczenia"
+                            : "Brak dokumentu rozliczenia"
+                        }
+                      >
+                        <FileText className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleViewAppointmentDetails(appointment.appointmentId)}
                         disabled={!permissions.canViewDetails}
                         className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                        title="Szczegóły wizyty"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -669,6 +697,18 @@ const ReportsDashboard = () => {
                             ))}
                           </ul>
                         </div>
+                      )}
+                      {appointmentDetails.billing.id && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleOpenBillingDocument(appointmentDetails.billing.id)
+                          }
+                          className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-teal-700 hover:text-teal-900"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Podgląd dokumentu rozliczenia
+                        </button>
                       )}
                     </div>
                   </div>

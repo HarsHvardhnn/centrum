@@ -23,7 +23,9 @@ import {
   Loader,
   Trash2
 } from "lucide-react";
-import billingHelper from "../../helpers/billingHelper";
+import billingHelper, {
+  invoiceGeneratedFromReceiptNote,
+} from "../../helpers/billingHelper";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { toast } from "sonner";
@@ -1585,7 +1587,9 @@ const BillingManagement = () => {
                     </tr>
                   ))
                 ) : bills.length > 0 ? (
-                  bills.map((bill) => (
+                  bills.map((bill) => {
+                    const fromReceiptNote = invoiceGeneratedFromReceiptNote(bill);
+                    return (
                     <tr
                       key={bill._id}
                       className={`hover:bg-gray-50 ${selectedInvoiceIds.includes(bill._id) ? 'bg-teal-50' : ''}`}
@@ -1632,6 +1636,11 @@ const BillingManagement = () => {
                         )}
                         {bill.documentType === "invoice" && (
                           <div className="text-xs text-gray-400 font-normal">Faktura</div>
+                        )}
+                        {fromReceiptNote && (
+                          <div className="text-xs text-teal-700 font-normal mt-1 max-w-[16rem] whitespace-normal leading-snug">
+                            {fromReceiptNote}
+                          </div>
                         )}
                           </>
                         )}
@@ -1715,7 +1724,8 @@ const BillingManagement = () => {
                       </td>
                       )}
                     </tr>
-                  ))
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan={canSelectBills ? "7" : isDoctorViewOnly ? "5" : "6"} className="px-6 py-12 text-center">

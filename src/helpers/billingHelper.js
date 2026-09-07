@@ -1,5 +1,19 @@
 import { apiCaller, axiosInstance } from "../utils/axiosInstance";
 
+/** Note when a faktura was issued later from an existing paragon. */
+export function invoiceGeneratedFromReceiptNote(bill) {
+  const invoiceNo = String(
+    bill?.invoiceId || bill?.invoiceSnapshot?.number || ""
+  ).trim();
+  const receiptNo = String(bill?.receiptNumber || "").trim();
+  if (!invoiceNo || !receiptNo) return "";
+  const fromReceipt = Boolean(
+    bill?.invoiceSnapshot?.issuedFromReceipt || bill?.documentType === "invoice"
+  );
+  if (!fromReceipt) return "";
+  return `Numer faktury ${invoiceNo} został wygenerowany z numeru paragonu ${receiptNo}.`;
+}
+
 /**
  * Billing helper functions for API interactions
  */
