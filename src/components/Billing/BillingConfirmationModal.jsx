@@ -455,10 +455,7 @@ const BillingConfirmationModal = ({
         patientId={patientId}
         appointmentId={appointmentId}
         existingServices={services}
-        doctorUserId={
-          doctorUserId ||
-          (isDoctorUser ? user?._id || user?.id : null)
-        }
+        catalogKind="system"
       />
     </div>
   );

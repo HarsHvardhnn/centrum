@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import PatientSearchField from "../AppointmentForm/PatientSearchField";
 import DoctorSelectionWithSlots from "./DoctorsAppointments";
-import userServiceHelper from "../../helpers/userServiceHelper";
+import userServiceHelper, {
+  fetchStaffPickerServices,
+  formatCatalogTax,
+} from "../../helpers/userServiceHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import patientService from "../../helpers/patientHelper";
 import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft, Clock, Calendar, AlertTriangle } from "lucide-react";
@@ -66,16 +69,28 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   const [registrationMode, setRegistrationMode] = useState("manual"); // manual | ipad
   const [peselCheckLoading, setPeselCheckLoading] = useState(false);
 
-  // Update allServices when availableServices changes or use context services as fallback
+  // Staff catalog: website services + technical (system) services
   useEffect(() => {
-    if (availableServices && availableServices.length > 0) {
-      setAllServices(availableServices);
-    } else if (contextServices && contextServices.length > 0) {
-      setAllServices(contextServices);
-    }
-    
-    setLoadingServices(isLoadingServices || contextLoading);
-  }, [availableServices, contextServices, isLoadingServices, contextLoading]);
+    let cancelled = false;
+    (async () => {
+      setLoadingServices(true);
+      try {
+        const rows = await fetchStaffPickerServices();
+        if (cancelled) return;
+        if (rows.length) setAllServices(rows);
+        else if (availableServices?.length) setAllServices(availableServices);
+        else if (contextServices?.length) setAllServices(contextServices);
+      } catch (err) {
+        console.error("Error loading appointment services:", err);
+        if (!cancelled && contextServices?.length) setAllServices(contextServices);
+      } finally {
+        if (!cancelled) setLoadingServices(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // When 11 digits in Complete registration PESEL, check if patient exists
   useEffect(() => {
@@ -255,7 +270,12 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
       title: service.title || service.name,
       price: service.price || "0",
       description: service.description || service.shortDescription || "",
-      quantity: 1
+      quantity: 1,
+      source: service.source || (service.serviceModel === "SystemService" ? "system" : "website"),
+      serviceModel:
+        service.serviceModel ||
+        (service.source === "system" ? "SystemService" : "Service"),
+      tax: service.tax,
     };
     
     setAppointmentData(prevData => {
@@ -311,7 +331,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   // Filter services based on search term
   const filteredServices = searchTerm 
     ? allServices.filter(service => 
-        service.title.toLowerCase().includes(searchTerm.toLowerCase()))
+        (service.title || service.name || "").toLowerCase().includes(searchTerm.toLowerCase()))
     : allServices;
 
   // Initialize doctor selection
@@ -729,8 +749,20 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                                 className="h-4 w-4 text-teal-600 border-gray-300 rounded"
                               />
                               <span className="ml-2 font-medium">{service.title || service.name}</span>
+                              {(service.source === "system" || service.serviceModel === "SystemService") && (
+                                <span className="ml-2 text-xs text-slate-500 font-normal">
+                                  systemowa
+                                </span>
+                              )}
                             </div>
-                            <div className="ml-6 mt-1 text-sm text-gray-600">{service.price} zł</div>
+                            <div className="ml-6 mt-1 text-sm text-gray-600">
+                              {service.price} zł
+                              {(service.source === "system" || service.serviceModel === "SystemService") &&
+                                service.tax != null &&
+                                service.tax !== "" && (
+                                  <span className="text-gray-500"> · VAT {formatCatalogTax(service.tax)}</span>
+                                )}
+                            </div>
                           </div>
                           
                           {isSelected && (
@@ -1022,7 +1054,8 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
           appointmentSubmissionData.services = appointmentData.selectedServices.map(service => ({
             serviceId: service.id,
             quantity: service.quantity || 1,
-            price: service.price
+            price: service.price,
+            serviceModel: service.serviceModel || (service.source === "system" ? "SystemService" : "Service"),
           }));
         }
 

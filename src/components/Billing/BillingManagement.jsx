@@ -39,6 +39,8 @@ import GenerateBillModal from "./GenerateBillModal";
 import userServiceHelper, {
   mapDoctorServicesResponseToCatalog,
   mapServicesResponseToCatalog,
+  fetchStaffPickerServices,
+  uniqueCatalogRows,
 } from "../../helpers/userServiceHelper";
 import { queryKeys } from "../../lib/queryKeys";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
@@ -257,7 +259,10 @@ const BillingManagement = () => {
         try {
           const res = await userServiceHelper.getServicesCatalog(doctorUserId);
           if (!cancelled) {
-            setCatalogServices(mapServicesResponseToCatalog(res));
+            const assigned = mapServicesResponseToCatalog(res);
+            const staff = await fetchStaffPickerServices();
+            const systemOnly = staff.filter((s) => s.source === "system");
+            setCatalogServices(uniqueCatalogRows([...assigned, ...systemOnly]));
           }
         } catch (e) {
           console.error("EditBillModal getDoctorServices:", e);
@@ -469,7 +474,12 @@ const BillingManagement = () => {
                       className="p-3 rounded-lg cursor-pointer border border-gray-200 hover:border-teal-500 hover:bg-teal-50"
                     >
                       <div className="flex justify-between">
-                        <span>{service.title}</span>
+                        <span>
+                          {service.title}
+                          {service.source === "system" && (
+                            <span className="ml-2 text-xs text-slate-500">systemowa</span>
+                          )}
+                        </span>
                         <span className="font-medium">{service.price} zł</span>
                       </div>
                     </div>

@@ -1,5 +1,13 @@
 import { apiCaller } from "../utils/axiosInstance";
 
+export function formatCatalogTax(tax) {
+  if (tax == null || tax === "") return "—";
+  const value = String(tax).toLowerCase();
+  if (value === "zw") return "zw";
+  if (value === "8" || value === "23") return `${value}%`;
+  return String(tax);
+}
+
 function asId(value) {
   if (value == null || value === "") return null;
   if (typeof value === "string" || typeof value === "number") return String(value);
@@ -19,7 +27,7 @@ export function collectDoctorCatalogIds(...sources) {
   return ids;
 }
 
-function uniqueCatalogRows(rows) {
+export function uniqueCatalogRows(rows) {
   const byId = new Map();
   rows.forEach((row) => {
     const id = asId(row?._id || row?.id);
@@ -137,6 +145,42 @@ export async function loadDoctorAssignedCatalog(doctorIds) {
 
   assignedCatalogCache.set(cacheKey, { at: Date.now(), rows });
   return rows;
+}
+
+/**
+ * Staff pickers (appointments, billing): website catalog + technical SystemService rows.
+ * Does not rely on GET /services?scope=catalog succeeding for system items.
+ */
+export async function fetchStaffPickerServices() {
+  const [catalogRes, systemRes] = await Promise.allSettled([
+    apiCaller("GET", "/services?scope=catalog"),
+    apiCaller("GET", "/system-services"),
+  ]);
+
+  const catalog =
+    catalogRes.status === "fulfilled"
+      ? mapServicesResponseToCatalog(catalogRes.value)
+      : [];
+
+  const systemPayload =
+    systemRes.status === "fulfilled" ? systemRes.value : null;
+  const systemRows = extractServiceArray(systemPayload?.data ?? systemPayload)
+    .map((item) => {
+      const svc = item?.service ?? item;
+      if (!svc || (!svc._id && !svc.id)) return null;
+      return {
+        _id: svc._id || svc.id,
+        title: svc.title || "",
+        price: svc.price,
+        shortDescription: svc.shortDescription,
+        source: "system",
+        serviceModel: "SystemService",
+        tax: svc.tax,
+      };
+    })
+    .filter(Boolean);
+
+  return uniqueCatalogRows([...catalog, ...systemRows]);
 }
 
 // User services helper

@@ -6,8 +6,10 @@ import { useUser } from "../../../../context/userContext";
 import {
   collectDoctorCatalogIds,
   loadDoctorAssignedCatalog,
+  formatCatalogTax,
 } from "../../../../helpers/userServiceHelper";
 import { queryKeys } from "../../../../lib/queryKeys";
+import { apiCaller } from "../../../../utils/axiosInstance";
 
 const ServiceSelectionModal = ({
   isOpen,
@@ -16,6 +18,8 @@ const ServiceSelectionModal = ({
   patientId,
   /** When set, loads catalog via GET /services?doctorId=:id instead of global GET /services */
   doctorUserId = null,
+  /** Doctor assignment: pick only website or system catalog (not mixed). */
+  catalogKind = null,
 }) => {
   const { user } = useUser();
   const {
@@ -34,7 +38,38 @@ const ServiceSelectionModal = ({
     return ids;
   }, [doctorUserId, user?.role, user?.id, user?._id, user?.d_id]);
 
-  const useDoctorCatalog = Boolean(doctorUserId) && catalogDoctorIds.length > 0;
+  const useDoctorCatalog =
+    !catalogKind && Boolean(doctorUserId) && catalogDoctorIds.length > 0;
+
+  const {
+    data: kindCatalog = [],
+    isLoading: kindLoading,
+    error: kindQueryError,
+  } = useQuery({
+    queryKey: ["service-picker-catalog", catalogKind],
+    queryFn: async () => {
+      if (catalogKind === "system") {
+        const response = await apiCaller("GET", "/system-services");
+        const rows = Array.isArray(response.data) ? response.data : [];
+        return rows.map((s) => ({
+          ...s,
+          source: "system",
+          serviceModel: "SystemService",
+        }));
+      }
+      const response = await apiCaller("GET", "/services");
+      const rows = Array.isArray(response.data) ? response.data : [];
+      return rows
+        .filter((s) => s && s.source !== "system")
+        .map((s) => ({
+          ...s,
+          source: "website",
+          serviceModel: "Service",
+        }));
+    },
+    enabled: Boolean(isOpen && catalogKind),
+    staleTime: 60_000,
+  });
 
   const {
     data: doctorServices = [],
@@ -54,12 +89,23 @@ const ServiceSelectionModal = ({
     ? "Nie udało się załadować usług lekarza"
     : null;
 
-  const services =
-    useDoctorCatalog && (doctorLoading || doctorServices.length > 0)
+  const services = catalogKind
+    ? kindCatalog
+    : useDoctorCatalog && (doctorLoading || doctorServices.length > 0)
       ? doctorServices
       : globalServices;
-  const loading = useDoctorCatalog ? doctorLoading : globalLoading;
-  const error = useDoctorCatalog ? doctorError : globalError;
+  const loading = catalogKind
+    ? kindLoading
+    : useDoctorCatalog
+      ? doctorLoading
+      : globalLoading;
+  const error = catalogKind
+    ? kindQueryError
+      ? "Nie udało się załadować usług"
+      : null
+    : useDoctorCatalog
+      ? doctorError
+      : globalError;
 
   const [selectedServices, setSelectedServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -88,6 +134,7 @@ const ServiceSelectionModal = ({
           title: service.title,
           price: service.price,
           quantity: 1,
+          tax: service.tax,
           serviceModel:
             service.serviceModel ||
             (service.source === "system" ? "SystemService" : "Service"),
@@ -128,6 +175,7 @@ const ServiceSelectionModal = ({
           price: s.price,
           quantity: s.quantity,
           totalPrice: (parseFloat(s.price) * s.quantity).toFixed(2),
+          tax: s.tax,
           serviceModel: s.serviceModel || "Service",
         })),
       };
@@ -154,7 +202,11 @@ const ServiceSelectionModal = ({
         {/* Header */}
         <div className="flex justify-between items-center border-b p-4">
           <h3 className="text-lg font-medium text-gray-900">
-            Wybierz usługi dla pacjenta
+            {catalogKind === "system"
+              ? "Wybierz usługi systemowe"
+              : catalogKind === "website"
+                ? "Wybierz usługi ze strony"
+                : "Wybierz usługi dla pacjenta"}
             {useDoctorCatalog && doctorServices.length > 0 && (
               <span className="block text-xs font-normal text-gray-500 mt-1">
                 Tylko usługi przypisane do lekarza z wizyty
@@ -198,24 +250,84 @@ const ServiceSelectionModal = ({
               <div className="text-gray-500 text-center py-8">
                 Nie znaleziono usług
               </div>
+            ) : catalogKind === "system" ? (
+              <div className="overflow-x-auto border border-gray-100 rounded-lg">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                        Nazwa
+                      </th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                        Cena
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                        VAT
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredServices.map((service) => {
+                      const isSelected = selectedServices.some(
+                        (s) => s.serviceId === service._id
+                      );
+                      return (
+                        <tr
+                          key={service._id}
+                          className={`cursor-pointer ${
+                            isSelected ? "bg-teal-50" : "hover:bg-gray-50"
+                          }`}
+                          onClick={() => toggleService(service)}
+                        >
+                          <td className="px-3 py-2 text-sm font-medium text-gray-900">
+                            <span className="inline-flex items-center gap-2">
+                              {isSelected && (
+                                <CheckCircle
+                                  size={16}
+                                  className="text-teal-500"
+                                />
+                              )}
+                              {service.title}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-sm text-right whitespace-nowrap">
+                            {service.price} zł
+                          </td>
+                          <td className="px-3 py-2 text-sm text-gray-600">
+                            {formatCatalogTax(service.tax)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             ) : (
-              <div className="space-y-2">
+              <div className={catalogKind === "website" ? "grid grid-cols-1 gap-3" : "space-y-2"}>
                 {filteredServices.map((service) => {
                   const isSelected = selectedServices.some(
                     (s) => s.serviceId === service._id
                   );
+                  const photo = service.images && service.images[0];
                   return (
                     <div
                       key={service._id}
-                      className={`p-3 rounded-lg cursor-pointer transition-all ${
+                      className={`rounded-lg cursor-pointer transition-all overflow-hidden ${
                         isSelected
                           ? "bg-teal-50 border border-teal-200"
                           : "bg-white border border-gray-100 hover:border-teal-200"
                       }`}
                       onClick={() => toggleService(service)}
                     >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
+                      {catalogKind === "website" && photo && (
+                        <img
+                          src={photo}
+                          alt=""
+                          className="w-full h-28 object-cover"
+                        />
+                      )}
+                      <div className="p-3 flex justify-between items-start">
+                        <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-gray-900">
                             {service.title}
                           </h4>
@@ -225,7 +337,7 @@ const ServiceSelectionModal = ({
                             </p>
                           )}
                         </div>
-                        <div className="flex items-center ml-4">
+                        <div className="flex items-center ml-4 shrink-0">
                           {isSelected && (
                             <CheckCircle
                               size={18}
@@ -267,6 +379,9 @@ const ServiceSelectionModal = ({
                           </h4>
                           <p className="text-sm text-gray-500">
                             {service.price} zł / szt.
+                            {service.tax != null && service.tax !== "" && (
+                              <> · VAT {formatCatalogTax(service.tax)}</>
+                            )}
                           </p>
                         </div>
                         <button

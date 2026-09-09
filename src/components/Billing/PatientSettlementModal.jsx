@@ -395,10 +395,13 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       try {
         const suggested = await billingHelper.suggestInvoiceId(month, year);
         if (cancelled || !suggested) return;
-        setInvoiceNumber((current) =>
-          !current || current === suggestedInvoiceNumberRef.current ? suggested : current
-        );
-        suggestedInvoiceNumberRef.current = suggested;
+        setInvoiceNumber((current) => {
+          if (!current || current === suggestedInvoiceNumberRef.current) {
+            suggestedInvoiceNumberRef.current = suggested;
+            return suggested;
+          }
+          return current;
+        });
       } catch (_) {}
     })();
 
@@ -504,7 +507,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
           quantity: qty,
           unit: DEFAULT_LINE_ITEM_UNIT,
           status: "active",
-          tax: "zw",
+          tax: normalizeTaxRate(svc.tax),
         });
       });
       return next;
@@ -610,41 +613,15 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     }
     setSaving(true);
     try {
-      // Save settlement draft first
     const paidNow = paymentDueKind === "immediate";
     const cashReceived =
       paymentMethod === "cash"
         ? toMoney(amountReceived === "" ? total : amountReceived)
         : undefined;
 
-      await billingHelper.settlePatient(billId, {
-        documentType: "invoice",
-        paymentMethod,
-        amountReceived: cashReceived,
-        changeDue:
-          paymentMethod === "cash"
-            ? toMoney(Math.max(0, cashReceived - total))
-            : undefined,
-        notes,
-        lineItems: payloadLineItems(),
-        invoiceDraft: {
-          place,
-          issueDate,
-          sellDate,
-          paymentDueKind,
-          paymentDueDate: paymentDueKind === "other" ? paymentDueDate : undefined,
-          paymentType: paymentMethod,
-          buyer,
-          recipientName: String(recipientName || "").trim(),
-          issuerName: String(issuerName || "").trim(),
-          vatExemptionText: showVatExemptionField ? vatExemptionText : "",
-          paidAmount: paidNow ? total : 0,
-        },
-        fromReceipt: hasLinkedReceipt(bill) || fromReceiptInvoice,
-      });
-
       const res = await billingHelper.issueInvoice(billId, {
         fromReceipt: hasLinkedReceipt(bill) || fromReceiptInvoice,
+        number: String(invoiceNumber || "").trim(),
         place,
         issueDate,
         sellDate,
@@ -659,6 +636,8 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
         amountReceived: cashReceived,
         lineItems: payloadLineItems(),
         positions: invoicePositions,
+        notes,
+        paymentMethod,
       });
 
       if (res?.success) {
@@ -702,7 +681,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       toast.error(
         e?.response?.data?.message ||
           e?.response?.data?.error ||
-          "Nie udało się wygenerować PDF (sprawdź Chrome na serwerze)"
+          "Nie udało się wygenerować PDF"
       );
     } finally {
       setPdfGenerating(false);
@@ -838,7 +817,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <h4 className="font-medium text-gray-800">Pozycje</h4>
               <div className="flex flex-wrap items-center gap-2">
-                {documentType === "invoice" && !locked && (
+                {!locked && (
                   <label className="inline-flex items-center gap-2 text-sm text-gray-600">
                     <span className="text-xs text-gray-500">Stawka VAT (wszystkie):</span>
                     <select
@@ -888,7 +867,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                   key={item.key}
                   className="border border-gray-200 rounded-lg p-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-end"
                 >
-                  <div className={documentType === "invoice" ? "md:col-span-2" : "md:col-span-3"}>
+                  <div className="md:col-span-2">
                     <label className="text-xs text-gray-500">Nazwa</label>
                     <input
                       type="text"
@@ -948,7 +927,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                       className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm disabled:bg-gray-50"
                     />
                   </div>
-                  <div className={documentType === "invoice" ? "md:col-span-2" : "md:col-span-3"}>
+                  <div className="md:col-span-2">
                     <label className="text-xs text-gray-500">Powód rabatu</label>
                     <input
                       type="text"
@@ -960,7 +939,6 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                       className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm disabled:bg-gray-50"
                     />
                   </div>
-                  {documentType === "invoice" && (
                   <div className="md:col-span-2">
                     <label className="text-xs text-gray-500">Stawka VAT</label>
                     <div className="flex gap-1 mt-0.5">
@@ -1007,14 +985,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                       />
                     )}
                   </div>
-                  )}
-                  <div
-                    className={
-                      documentType === "invoice"
-                        ? "md:col-span-2 flex items-center justify-between gap-2"
-                        : "md:col-span-1 flex items-center justify-between gap-2"
-                    }
-                  >
+                  <div className="md:col-span-1 flex items-center justify-between gap-2">
                     <div>
                       <div className="text-xs text-gray-500">Suma</div>
                       <div className="font-semibold text-sm">{toMoney(item.finalPrice).toFixed(2)}</div>
@@ -1136,15 +1107,15 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                   <label className="text-xs text-gray-500">Numer (N/MM/RRRR)</label>
                   <input
                     type="text"
-                    readOnly
                     disabled={locked}
                     value={invoiceNumber}
-                    className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-gray-50 disabled:bg-gray-50"
-                    placeholder="Nadawany automatycznie"
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                    placeholder="np. 6/09/2026"
+                    className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
                   />
                   {!locked && (
                     <p className="text-[11px] text-gray-500 mt-1">
-                      Numer jest nadawany automatycznie przy wystawieniu (podgląd kolejnego w miesiącu).
+                      Podgląd kolejnego numeru w miesiącu. Możesz go zmienić — puste pole nada numer automatycznie przy wystawieniu.
                     </p>
                   )}
                 </div>
@@ -1441,7 +1412,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
               </button>
             </>
           )}
-          {!locked && documentType === "invoice" && (
+                {documentType === "invoice" && !locked && (
             <button
               type="button"
               onClick={handleIssueInvoice}
@@ -1459,7 +1430,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       onClose={() => setShowServicePicker(false)}
       onSave={addServicesFromCatalog}
       patientId={bill?.patient?._id || bill?.patient}
-      doctorUserId={null}
+      catalogKind="system"
     />
     </>
   );

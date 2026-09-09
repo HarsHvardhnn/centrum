@@ -4,7 +4,10 @@ import DoctorSelectionWithSlots, {
   doctorDisplayName,
   doctorSpecializationLabel,
 } from "../../admin/DoctorsAppointments";
-import userServiceHelper from "../../../helpers/userServiceHelper";
+import userServiceHelper, {
+  fetchStaffPickerServices,
+  formatCatalogTax,
+} from "../../../helpers/userServiceHelper";
 import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react";
 import VisitReasonCascadeDropdown from "../../UtilComponents/VisitReasonCascadeDropdown";
 import { useServices } from "../../../context/serviceContext.jsx";
@@ -136,17 +139,27 @@ function AppointmentFormModal({
 
   const phoneCountryCodes = PHONE_COUNTRY_CODES;
 
-  // Update allServices when availableServices changes or use context services as fallback
   useEffect(() => {
-    if (availableServices && availableServices.length > 0) {
-      setAllServices(availableServices);
-    } else if (contextServices && contextServices.length > 0) {
-      setAllServices(contextServices);
-    }
-    
-    // Update loading state based on both props and context
-    setLoadingServices(isLoadingServices || contextLoading);
-  }, [availableServices, contextServices, isLoadingServices, contextLoading]);
+    let cancelled = false;
+    (async () => {
+      setLoadingServices(true);
+      try {
+        const rows = await fetchStaffPickerServices();
+        if (cancelled) return;
+        if (rows.length) setAllServices(rows);
+        else if (availableServices?.length) setAllServices(availableServices);
+        else if (contextServices?.length) setAllServices(contextServices);
+      } catch (err) {
+        console.error("Error loading appointment services:", err);
+        if (!cancelled && contextServices?.length) setAllServices(contextServices);
+      } finally {
+        if (!cancelled) setLoadingServices(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Visit reason dictionary for registration (category → type, send displayName as visitReason)
   useEffect(() => {
@@ -524,7 +537,12 @@ function AppointmentFormModal({
       title: service.title || service.name,
       price: service.price || "0",
       description: service.description || service.shortDescription || "",
-      quantity: 1
+      quantity: 1,
+      source: service.source || (service.serviceModel === "SystemService" ? "system" : "website"),
+      serviceModel:
+        service.serviceModel ||
+        (service.source === "system" ? "SystemService" : "Service"),
+      tax: service.tax,
     };
     
     setAppointmentData(prevData => {
@@ -1508,8 +1526,20 @@ function AppointmentFormModal({
                             className="h-4 w-4 text-teal-600 border-gray-300 rounded"
                           />
                           <span className="ml-2 font-medium">{service.title || service.name}</span>
+                          {(service.source === "system" || service.serviceModel === "SystemService") && (
+                            <span className="ml-2 text-xs text-slate-500 font-normal">
+                              systemowa
+                            </span>
+                          )}
                         </div>
-                        <div className="ml-6 mt-1 text-sm text-gray-600">{service.price} zł</div>
+                        <div className="ml-6 mt-1 text-sm text-gray-600">
+                          {service.price} zł
+                          {(service.source === "system" || service.serviceModel === "SystemService") &&
+                            service.tax != null &&
+                            service.tax !== "" && (
+                              <span className="text-gray-500"> · VAT {formatCatalogTax(service.tax)}</span>
+                            )}
+                        </div>
                       </div>
                       
                       {isSelected && (
@@ -2211,7 +2241,8 @@ function AppointmentFormModal({
         appointmentSubmissionData.services = appointmentData.selectedServices.map(service => ({
           serviceId: service.id,
           quantity: service.quantity || 1,
-          price: service.price
+          price: service.price,
+          serviceModel: service.serviceModel || (service.source === "system" ? "SystemService" : "Service"),
         }));
       }
 

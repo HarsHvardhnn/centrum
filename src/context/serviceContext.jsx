@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { apiCaller } from "../utils/axiosInstance";
 import { useUser } from "./userContext";
+import { fetchStaffPickerServices } from "../helpers/userServiceHelper";
 
 const ServicesContext = createContext();
 
@@ -17,12 +18,13 @@ export const ServicesProvider = ({ children }) => {
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const useCatalog = STAFF_ROLES.includes(user?.role);
-      const response = await apiCaller(
-        "GET",
-        useCatalog ? "/services?scope=catalog" : "/services"
-      );
-      setServices(response.data);
+      if (STAFF_ROLES.includes(user?.role)) {
+        const rows = await fetchStaffPickerServices();
+        setServices(rows);
+      } else {
+        const response = await apiCaller("GET", "/services");
+        setServices(response.data);
+      }
       setError(null);
     } catch (err) {
       console.error("Error fetching services:", err);

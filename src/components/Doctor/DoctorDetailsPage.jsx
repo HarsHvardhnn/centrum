@@ -2,12 +2,15 @@ import React, { useState, useEffect } from "react";
 import Calendar from "./SingleDoctor/Calendar";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
 import { FaPlus, FaArrowLeftLong } from "react-icons/fa6";
+import { Globe, Wrench, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import doctorService from "../../helpers/doctorHelper";
 import { useLoader } from "../../context/LoaderContext";
 import ServiceSelectionModal from "./SingleDoctor/patient-details/ServiceSelectionModal";
 import { toast } from "sonner";
-import userServiceHelper from "../../helpers/userServiceHelper";
+import userServiceHelper, {
+  formatCatalogTax,
+} from "../../helpers/userServiceHelper";
 
 // Doctor services helper
 
@@ -50,6 +53,8 @@ export default function DoctorDetailPage() {
   const [doctorData, setDoctorData] = useState(null);
   const [error, setError] = useState(null);
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  const [isCatalogChooserOpen, setIsCatalogChooserOpen] = useState(false);
+  const [serviceCatalogKind, setServiceCatalogKind] = useState(null);
   const [selectedServices, setSelectedServices] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
   
@@ -88,12 +93,21 @@ export default function DoctorDetailPage() {
             //   servicesResponse.data.data.services
             // );
             setSelectedServices(
-              servicesResponse.data.data.services.map((s) => ({
-                serviceId: s.service._id,
-                title: s.service.title,
-                price: s.price,
-                notes: s.notes || "",
-              }))
+              servicesResponse.data.data.services.map((s) => {
+                const svc = s.service || {};
+                const isSystem =
+                  s.serviceModel === "SystemService" ||
+                  svc.source === "system";
+                return {
+                  serviceId: svc._id,
+                  title: svc.title,
+                  price: s.price,
+                  notes: s.notes || "",
+                  tax: svc.tax,
+                  source: isSystem ? "system" : "website",
+                  serviceModel: isSystem ? "SystemService" : "Service",
+                };
+              })
             );
           }
         } catch (servicesError) {
@@ -189,8 +203,8 @@ export default function DoctorDetailPage() {
         toast.error(response.message || "Nie udało się zapisać usług lekarza");
       }
 
-      // Close modal
       setIsServiceModalOpen(false);
+      setServiceCatalogKind(null);
     } catch (error) {
       console.error("Error saving doctor services:", error);
       toast.error("Nie udało się zapisać usług lekarza");
@@ -252,9 +266,8 @@ export default function DoctorDetailPage() {
           Wizyta Lekarska / {doctorData.name}
         </h1>
         
-        {/* Button to open services modal - moved to top right */}
         <button
-          onClick={() => setIsServiceModalOpen(true)}
+          onClick={() => setIsCatalogChooserOpen(true)}
           className="py-2.5 px-4 rounded-lg text-white bg-[#80c5c5] hover:bg-[#6ab3b3] transition-colors flex items-center justify-center gap-2 shadow-md text-sm font-medium"
         >
           <FaPlus size={14} />
@@ -270,18 +283,80 @@ export default function DoctorDetailPage() {
           <DoctorBackground 
             data={{ ...doctorData, selectedServices }} 
             onDeleteService={initiateServiceDeletion}
-            setIsServiceModalOpen={setIsServiceModalOpen}
+            onAddServices={() => setIsCatalogChooserOpen(true)}
           />
         </div>
       </div>
 
-      {/* Service Selection Modal */}
+      {isCatalogChooserOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full shadow-xl">
+            <div className="flex justify-between items-start mb-2">
+              <h2 className="text-xl font-semibold text-gray-800">
+                Wybierz katalog usług
+              </h2>
+              <button
+                type="button"
+                onClick={() => setIsCatalogChooserOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+                aria-label="Zamknij"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mb-6">
+              Usługi na stronie i usługi systemowe są osobne — nie miesza się ich w jednym widoku.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setServiceCatalogKind("website");
+                  setIsCatalogChooserOpen(false);
+                  setIsServiceModalOpen(true);
+                }}
+                className="text-left border rounded-xl p-5 hover:shadow-md hover:border-teal-400 transition-all"
+              >
+                <Globe className="h-9 w-9 text-teal-600 mb-3" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                  Usługi na stronie
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Oferta publiczna: zdjęcia, opisy, kafelki na stronie internetowej.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setServiceCatalogKind("system");
+                  setIsCatalogChooserOpen(false);
+                  setIsServiceModalOpen(true);
+                }}
+                className="text-left border rounded-xl p-5 hover:shadow-md hover:border-slate-400 transition-all"
+              >
+                <Wrench className="h-9 w-9 text-slate-700 mb-3" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                  Usługi systemowe
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Katalog techniczny do rozliczeń. Lista bez strony i zdjęć.
+                </p>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isServiceModalOpen && (
         <ServiceSelectionModal
           isOpen={isServiceModalOpen}
-          onClose={() => setIsServiceModalOpen(false)}
+          onClose={() => {
+            setIsServiceModalOpen(false);
+            setServiceCatalogKind(null);
+          }}
           onSave={handleSaveServices}
-          patientId={doctorData.id} // We're using the same component, but for doctors
+          patientId={doctorData.id}
+          catalogKind={serviceCatalogKind}
         />
       )}
       
@@ -410,63 +485,139 @@ const AvailableTime = ({ data }) => {
   );
 };
 
-const DoctorBackground = ({ data, onDeleteService, setIsServiceModalOpen }) => {
+const DoctorBackground = ({ data, onDeleteService, onAddServices }) => {
+  const [listKind, setListKind] = useState("all");
+  const allServices = data.selectedServices || [];
+  const visibleServices =
+    listKind === "website"
+      ? allServices.filter((s) => s.source !== "system")
+      : listKind === "system"
+        ? allServices.filter((s) => s.source === "system")
+        : allServices;
+  const showTaxColumn =
+    listKind === "system" ||
+    visibleServices.some((s) => s.source === "system");
+
   return (
     <div className="p-4">
       <section className="bg-white shadow rounded-lg p-5">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Usługi Lekarza</h3>
           <button
-            onClick={() => setIsServiceModalOpen(true)}
+            onClick={onAddServices}
             className="text-sm text-[#80c5c5] hover:text-[#6ab3b3] flex items-center gap-1"
           >
             <FaPlus size={12} />
             Dodaj usługi
           </button>
         </div>
-        {data.selectedServices && data.selectedServices.length > 0 ? (
-          <div className="overflow-hidden border border-gray-200 rounded-lg">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="border-b px-4 py-3 text-left text-sm font-medium text-gray-700">
-                    Nazwa usługi
-                  </th>
-                  <th className="border-b px-4 py-3 text-right text-sm font-medium text-gray-700">
-                    Cena (zł)
-                  </th>
-                  <th className="border-b px-4 py-3 text-center text-sm font-medium text-gray-700">
-                    Akcje
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.selectedServices.map((service, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50">
-                    <td className="border-b px-4 py-3 text-sm">
-                      {service.title}
-                    </td>
-                    <td className="border-b px-4 py-3 text-sm text-right font-medium">
-                      {service.price}
-                    </td>
-                    <td className="border-b px-4 py-3 text-center">
-                      <button
-                        onClick={() => onDeleteService(service.serviceId)}
-                        className="text-red-500 hover:text-red-700 font-medium text-sm"
-                      >
-                        Usuń
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {allServices.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => setListKind("all")}
+              className={`text-sm px-3 py-1.5 rounded-lg border ${
+                listKind === "all"
+                  ? "bg-[#80c5c5] text-white border-[#80c5c5]"
+                  : "border-gray-200 text-gray-600 hover:border-teal-300"
+              }`}
+            >
+              Wszystkie
+            </button>
+            <button
+              type="button"
+              onClick={() => setListKind("website")}
+              className={`text-sm px-3 py-1.5 rounded-lg border ${
+                listKind === "website"
+                  ? "bg-[#80c5c5] text-white border-[#80c5c5]"
+                  : "border-gray-200 text-gray-600 hover:border-teal-300"
+              }`}
+            >
+              Usługi na stronie
+            </button>
+            <button
+              type="button"
+              onClick={() => setListKind("system")}
+              className={`text-sm px-3 py-1.5 rounded-lg border ${
+                listKind === "system"
+                  ? "bg-slate-700 text-white border-slate-700"
+                  : "border-gray-200 text-gray-600 hover:border-slate-400"
+              }`}
+            >
+              Usługi systemowe
+            </button>
           </div>
+        )}
+        {allServices.length > 0 ? (
+          visibleServices.length === 0 ? (
+            <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200 text-gray-500">
+              {listKind === "system"
+                ? "Brak usług systemowych dla tego lekarza"
+                : "Brak usług ze strony dla tego lekarza"}
+            </div>
+          ) : (
+            <div className="overflow-hidden border border-gray-200 rounded-lg">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="border-b px-4 py-3 text-left text-sm font-medium text-gray-700">
+                      Nazwa usługi
+                    </th>
+                    <th className="border-b px-4 py-3 text-right text-sm font-medium text-gray-700">
+                      Cena (zł)
+                    </th>
+                    {showTaxColumn && (
+                      <th className="border-b px-4 py-3 text-left text-sm font-medium text-gray-700">
+                        VAT
+                      </th>
+                    )}
+                    <th className="border-b px-4 py-3 text-center text-sm font-medium text-gray-700">
+                      Akcje
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleServices.map((service) => (
+                    <tr key={service.serviceId} className="hover:bg-gray-50">
+                      <td className="border-b px-4 py-3 text-sm">
+                        <div>{service.title}</div>
+                        {listKind === "all" && (
+                          <div className="text-xs text-gray-400 mt-0.5">
+                            {service.source === "system"
+                              ? "Usługa systemowa"
+                              : "Usługa na stronie"}
+                          </div>
+                        )}
+                      </td>
+                      <td className="border-b px-4 py-3 text-sm text-right font-medium">
+                        {service.price}
+                      </td>
+                      {showTaxColumn && (
+                        <td className="border-b px-4 py-3 text-sm text-gray-600">
+                          {service.source === "system"
+                            ? formatCatalogTax(service.tax)
+                            : "—"}
+                        </td>
+                      )}
+                      <td className="border-b px-4 py-3 text-center">
+                        <button
+                          onClick={() => onDeleteService(service.serviceId)}
+                          className="text-red-500 hover:text-red-700 font-medium text-sm"
+                        >
+                          Usuń
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         ) : (
           <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200 text-gray-500">
             <p className="mb-3">Brak wybranych usług dla tego lekarza</p>
             <button
-              onClick={() => setIsServiceModalOpen(true)}
+              onClick={onAddServices}
               className="text-sm text-white bg-[#80c5c5] hover:bg-[#6ab3b3] px-3 py-1.5 rounded inline-flex items-center gap-1"
             >
               <FaPlus size={12} />
