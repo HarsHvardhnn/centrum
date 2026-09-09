@@ -11,6 +11,7 @@ import userServiceHelper, {
 import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react";
 import VisitReasonCascadeDropdown from "../../UtilComponents/VisitReasonCascadeDropdown";
 import { useServices } from "../../../context/serviceContext.jsx";
+import { useUser } from "../../../context/userContext";
 import { toast } from "sonner";
 import { apiCaller } from "../../../utils/axiosInstance";
 import { normalizePesel, getPeselChecksumWarning } from "../../../utils/peselUtils";
@@ -52,6 +53,7 @@ function AppointmentFormModal({
   allowedDoctorId = null,
 }) {
   const { services: contextServices, loading: contextLoading } = useServices();
+  const { user } = useUser();
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [doctorServices, setDoctorServices] = useState([]);
   const [allServices, setAllServices] = useState(availableServices || []);
@@ -159,7 +161,7 @@ function AppointmentFormModal({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user?.id, user?.role]);
 
   // Visit reason dictionary for registration (category → type, send displayName as visitReason)
   useEffect(() => {
@@ -438,7 +440,6 @@ function AppointmentFormModal({
   const fetchDoctorServices = async (doctorId) => {
     if (!doctorId) return;
     
-    setLoadingServices(true);
     try {
       const response = await userServiceHelper.getDoctorServices(doctorId);
       if (response.data && response.data.data && response.data.data.services) {
@@ -454,8 +455,6 @@ function AppointmentFormModal({
     } catch (error) {
       console.error("Error fetching doctor services:", error);
       setDoctorServices([]);
-    } finally {
-      setLoadingServices(false);
     }
   };
 
@@ -1467,7 +1466,93 @@ function AppointmentFormModal({
     );
   };
 
+  const renderServiceCheckboxRow = (service) => {
+    const isSelected = appointmentData.selectedServices.some(
+      (s) => s.id === (service.id || service._id)
+    );
+    const selectedService = appointmentData.selectedServices.find(
+      (s) => s.id === (service.id || service._id)
+    );
+    const quantity = selectedService ? selectedService.quantity || 1 : 1;
+    const isSystem =
+      service.source === "system" || service.serviceModel === "SystemService";
+
+    return (
+      <div
+        key={service.id || service._id}
+        className={`p-3 rounded-lg border ${
+          isSelected
+            ? "border-teal-500 bg-teal-50"
+            : "border-gray-200 hover:border-teal-200"
+        } transition-all`}
+      >
+        <div className="flex justify-between items-start">
+          <div
+            className="flex-1 cursor-pointer"
+            onClick={() => handleServiceToggle(service)}
+          >
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => {}}
+                className="h-4 w-4 text-teal-600 border-gray-300 rounded"
+              />
+              <span className="ml-2 font-medium">
+                {service.title || service.name}
+              </span>
+              {isSystem && (
+                <span className="ml-2 text-xs text-slate-500 font-normal">
+                  systemowa
+                </span>
+              )}
+            </div>
+            <div className="ml-6 mt-1 text-sm text-gray-600">
+              {service.price} zł
+              {isSystem && service.tax != null && service.tax !== "" && (
+                <span className="text-gray-500">
+                  {" "}
+                  · VAT {formatCatalogTax(service.tax)}
+                </span>
+              )}
+            </div>
+          </div>
+          {isSelected && (
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() =>
+                  updateServiceQuantity(service.id || service._id, quantity - 1)
+                }
+                className="h-6 w-6 flex items-center justify-center rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
+              >
+                <Minus size={14} />
+              </button>
+              <span className="text-sm font-medium w-6 text-center">
+                {quantity}
+              </span>
+              <button
+                onClick={() =>
+                  updateServiceQuantity(service.id || service._id, quantity + 1)
+                }
+                className="h-6 w-6 flex items-center justify-center rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderServicesStep = () => {
+    const websiteFiltered = filteredServices.filter(
+      (s) => s.source !== "system" && s.serviceModel !== "SystemService"
+    );
+    const systemFiltered = filteredServices.filter(
+      (s) => s.source === "system" || s.serviceModel === "SystemService"
+    );
+
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-medium mb-4">Wybór Usług</h3>
@@ -1486,85 +1571,42 @@ function AppointmentFormModal({
           />
         </div>
 
-        {/* Available Services */}
-        <div className="bg-gray-50 rounded-lg p-3 max-h-60 overflow-y-auto">
-          <div className="space-y-2">
-            {loadingServices ? (
-              <div className="p-4 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
-                <p>Ładowanie usług...</p>
+        <div className="bg-gray-50 rounded-lg p-3 max-h-[28rem] overflow-y-auto">
+          {loadingServices ? (
+            <div className="p-4 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
+              <p>Ładowanie usług...</p>
+            </div>
+          ) : filteredServices.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">
+              Nie znaleziono usług
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">
+                  Usługi na stronie
+                </h4>
+                {websiteFiltered.length === 0 ? (
+                  <p className="text-sm text-gray-500 px-1">Brak usług ze strony</p>
+                ) : (
+                  websiteFiltered.map(renderServiceCheckboxRow)
+                )}
               </div>
-            ) : filteredServices.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
-                Nie znaleziono usług
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">
+                  Usługi systemowe (techniczne)
+                </h4>
+                {systemFiltered.length === 0 ? (
+                  <p className="text-sm text-gray-500 px-1">
+                    Brak usług systemowych. Dodaj je w Zarządzanie usługami → Usługi systemowe.
+                  </p>
+                ) : (
+                  systemFiltered.map(renderServiceCheckboxRow)
+                )}
               </div>
-            ) : (
-              filteredServices.map((service) => {
-                const isSelected = appointmentData.selectedServices.some(s => 
-                  s.id === (service.id || service._id));
-                const selectedService = appointmentData.selectedServices.find(s => 
-                  s.id === (service.id || service._id));
-                const quantity = selectedService ? (selectedService.quantity || 1) : 1;
-                
-                return (
-                  <div 
-                    key={service.id || service._id} 
-                    className={`p-3 rounded-lg border ${
-                      isSelected ? 'border-teal-500 bg-teal-50' : 'border-gray-200 hover:border-teal-200'
-                    } transition-all`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div 
-                        className="flex-1 cursor-pointer"
-                        onClick={() => handleServiceToggle(service)}
-                      >
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => {}} // Handled by the div onClick
-                            className="h-4 w-4 text-teal-600 border-gray-300 rounded"
-                          />
-                          <span className="ml-2 font-medium">{service.title || service.name}</span>
-                          {(service.source === "system" || service.serviceModel === "SystemService") && (
-                            <span className="ml-2 text-xs text-slate-500 font-normal">
-                              systemowa
-                            </span>
-                          )}
-                        </div>
-                        <div className="ml-6 mt-1 text-sm text-gray-600">
-                          {service.price} zł
-                          {(service.source === "system" || service.serviceModel === "SystemService") &&
-                            service.tax != null &&
-                            service.tax !== "" && (
-                              <span className="text-gray-500"> · VAT {formatCatalogTax(service.tax)}</span>
-                            )}
-                        </div>
-                      </div>
-                      
-                      {isSelected && (
-                        <div className="flex items-center space-x-2">
-                          <button 
-                            onClick={() => updateServiceQuantity(service.id || service._id, quantity - 1)}
-                            className="h-6 w-6 flex items-center justify-center rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span className="text-sm font-medium w-6 text-center">{quantity}</span>
-                          <button 
-                            onClick={() => updateServiceQuantity(service.id || service._id, quantity + 1)}
-                            className="h-6 w-6 flex items-center justify-center rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Selected Services Summary */}

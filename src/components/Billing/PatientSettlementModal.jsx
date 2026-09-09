@@ -255,6 +255,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
 
   // Invoice draft (independent snapshot fields)
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [invoiceNumberEditing, setInvoiceNumberEditing] = useState(false);
   const [place, setPlace] = useState("Skarżysko-Kamienna");
   const [issueDate, setIssueDate] = useState(toDateInput(new Date()));
   const [sellDate, setSellDate] = useState(toDateInput(new Date()));
@@ -367,6 +368,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     setLocked(alreadyIssued || isSettledReceiptView(bill));
     setReceiptEditing(false);
     setFromReceiptInvoice(false);
+    setInvoiceNumberEditing(false);
     setIssuedPdfUrl(bill.invoiceUrl || snap?.pdfUrl || null);
     setIssuedNumber(snap?.number || bill.invoiceId || "");
   }, [isOpen, bill, hydratedBillId]);
@@ -378,6 +380,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       setShowServicePicker(false);
       setDocumentType("fiscal_receipt");
       setInvoiceNumber("");
+      setInvoiceNumberEditing(false);
       setFromReceiptInvoice(false);
       setReceiptEditing(false);
       setLocked(false);
@@ -387,6 +390,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   // Preview next invoice number (does not consume the counter — issue allocates atomically)
   useEffect(() => {
     if (!isOpen || documentType !== "invoice" || locked || !issueDate) return;
+    if (invoiceNumberEditing) return;
     const [year, month] = issueDate.split("-").map(Number);
     if (!year || !month) return;
 
@@ -408,7 +412,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     return () => {
       cancelled = true;
     };
-  }, [isOpen, documentType, locked, issueDate, hydratedBillId]);
+  }, [isOpen, documentType, locked, issueDate, hydratedBillId, invoiceNumberEditing]);
 
   useEffect(() => {
     if (billRes && !billRes.success && isOpen && billId && !isLoading) {
@@ -621,7 +625,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
 
       const res = await billingHelper.issueInvoice(billId, {
         fromReceipt: hasLinkedReceipt(bill) || fromReceiptInvoice,
-        number: String(invoiceNumber || "").trim(),
+        number: invoiceNumberEditing ? String(invoiceNumber || "").trim() : "",
         place,
         issueDate,
         sellDate,
@@ -1105,17 +1109,49 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs text-gray-500">Numer (N/MM/RRRR)</label>
-                  <input
-                    type="text"
-                    disabled={locked}
-                    value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    placeholder="np. 6/09/2026"
-                    className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
-                  />
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <input
+                      type="text"
+                      readOnly={!invoiceNumberEditing || locked}
+                      disabled={locked}
+                      value={invoiceNumber}
+                      onChange={(e) => setInvoiceNumber(e.target.value)}
+                      placeholder="np. 6/09/2026"
+                      className={`flex-1 px-2 py-1.5 border rounded-md text-sm disabled:bg-gray-50 ${
+                        invoiceNumberEditing && !locked
+                          ? "bg-white"
+                          : "bg-gray-50 text-gray-800"
+                      }`}
+                    />
+                    {!locked && !invoiceNumberEditing && (
+                      <button
+                        type="button"
+                        onClick={() => setInvoiceNumberEditing(true)}
+                        className="shrink-0 inline-flex items-center gap-1 px-2 py-1.5 text-xs text-teal-700 border border-teal-200 rounded-md hover:bg-teal-50"
+                        title="Edytuj numer"
+                      >
+                        <Pencil size={14} />
+                        Edytuj numer
+                      </button>
+                    )}
+                    {!locked && invoiceNumberEditing && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInvoiceNumberEditing(false);
+                          setInvoiceNumber(suggestedInvoiceNumberRef.current || "");
+                        }}
+                        className="shrink-0 px-2 py-1.5 text-xs text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50"
+                      >
+                        Kolejny
+                      </button>
+                    )}
+                  </div>
                   {!locked && (
                     <p className="text-[11px] text-gray-500 mt-1">
-                      Podgląd kolejnego numeru w miesiącu. Możesz go zmienić — puste pole nada numer automatycznie przy wystawieniu.
+                      {invoiceNumberEditing
+                        ? "Wpisz własny numer (N/MM/RRRR). „Kolejny” wraca do automatycznego podglądu."
+                        : "Kolejny numer w miesiącu. Kliknij „Edytuj numer”, jeśli ma być inny."}
                     </p>
                   )}
                 </div>

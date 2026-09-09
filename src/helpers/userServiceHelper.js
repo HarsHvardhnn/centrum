@@ -149,38 +149,47 @@ export async function loadDoctorAssignedCatalog(doctorIds) {
 
 /**
  * Staff pickers (appointments, billing): website catalog + technical SystemService rows.
- * Does not rely on GET /services?scope=catalog succeeding for system items.
+ * Website = GET /services (public CMS). Technical = GET /system-services (staff).
  */
 export async function fetchStaffPickerServices() {
-  const [catalogRes, systemRes] = await Promise.allSettled([
-    apiCaller("GET", "/services?scope=catalog"),
-    apiCaller("GET", "/system-services"),
-  ]);
+  let website = [];
+  let system = [];
 
-  const catalog =
-    catalogRes.status === "fulfilled"
-      ? mapServicesResponseToCatalog(catalogRes.value)
-      : [];
+  try {
+    const catalogRes = await apiCaller("GET", "/services", null);
+    website = mapServicesResponseToCatalog(catalogRes).filter(
+      (row) => row.source !== "system"
+    );
+  } catch (err) {
+    console.error("fetchStaffPickerServices website:", err);
+  }
 
-  const systemPayload =
-    systemRes.status === "fulfilled" ? systemRes.value : null;
-  const systemRows = extractServiceArray(systemPayload?.data ?? systemPayload)
-    .map((item) => {
-      const svc = item?.service ?? item;
-      if (!svc || (!svc._id && !svc.id)) return null;
-      return {
-        _id: svc._id || svc.id,
-        title: svc.title || "",
-        price: svc.price,
-        shortDescription: svc.shortDescription,
-        source: "system",
-        serviceModel: "SystemService",
-        tax: svc.tax,
-      };
-    })
-    .filter(Boolean);
+  try {
+    const systemRes = await apiCaller("GET", "/system-services", null);
+    const raw = Array.isArray(systemRes?.data)
+      ? systemRes.data
+      : extractServiceArray(systemRes?.data ?? systemRes);
+    system = raw
+      .map((item) => {
+        const svc = item?.service ?? item;
+        if (!svc || (!svc._id && !svc.id)) return null;
+        return {
+          _id: svc._id || svc.id,
+          id: svc._id || svc.id,
+          title: svc.title || "",
+          price: svc.price,
+          shortDescription: svc.shortDescription,
+          source: "system",
+          serviceModel: "SystemService",
+          tax: svc.tax,
+        };
+      })
+      .filter(Boolean);
+  } catch (err) {
+    console.error("fetchStaffPickerServices system:", err);
+  }
 
-  return uniqueCatalogRows([...catalog, ...systemRows]);
+  return uniqueCatalogRows([...website, ...system]);
 }
 
 // User services helper

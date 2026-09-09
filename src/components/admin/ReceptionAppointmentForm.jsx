@@ -9,6 +9,7 @@ import appointmentHelper from "../../helpers/appointmentHelper";
 import patientService from "../../helpers/patientHelper";
 import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft, Clock, Calendar, AlertTriangle } from "lucide-react";
 import { useServices } from "../../context/serviceContext.jsx";
+import { useUser } from "../../context/userContext";
 import { toast } from "sonner";
 import { apiCaller } from "../../utils/axiosInstance";
 import { normalizePesel, getPeselChecksumWarning } from "../../utils/peselUtils";
@@ -20,6 +21,7 @@ import IpadSessionPanel from "./IpadSessionPanel";
 
 function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServices = [], isLoadingServices = false }) {
   const { services: contextServices, loading: contextLoading } = useServices();
+  const { user } = useUser();
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [doctorServices, setDoctorServices] = useState([]);
   const [allServices, setAllServices] = useState(availableServices || []);
@@ -90,7 +92,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user?.id, user?.role]);
 
   // When 11 digits in Complete registration PESEL, check if patient exists
   useEffect(() => {
@@ -181,7 +183,6 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
   const fetchDoctorServices = async (doctorId) => {
     if (!doctorId) return;
     
-    setLoadingServices(true);
     try {
       const response = await userServiceHelper.getDoctorServices(doctorId);
       if (response.data && response.data.data && response.data.data.services) {
@@ -197,8 +198,6 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
     } catch (error) {
       console.error("Error fetching doctor services:", error);
       setDoctorServices([]);
-    } finally {
-      setLoadingServices(false);
     }
   };
 
@@ -710,9 +709,8 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
               />
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-3 max-h-60 overflow-y-auto">
-              <div className="space-y-2">
-                {loadingServices ? (
+            <div className="bg-gray-50 rounded-lg p-3 max-h-[28rem] overflow-y-auto">
+              {loadingServices ? (
                   <div className="p-4 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
                     <p>Ładowanie usług...</p>
@@ -722,7 +720,38 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                     Nie znaleziono usług
                   </div>
                 ) : (
-                  filteredServices.map((service) => {
+                  <div className="space-y-5">
+                    {[
+                      {
+                        title: "Usługi na stronie",
+                        rows: filteredServices.filter(
+                          (s) =>
+                            s.source !== "system" &&
+                            s.serviceModel !== "SystemService"
+                        ),
+                        empty: "Brak usług ze strony",
+                      },
+                      {
+                        title: "Usługi systemowe (techniczne)",
+                        rows: filteredServices.filter(
+                          (s) =>
+                            s.source === "system" ||
+                            s.serviceModel === "SystemService"
+                        ),
+                        empty:
+                          "Brak usług systemowych. Dodaj je w Zarządzanie usługami → Usługi systemowe.",
+                      },
+                    ].map((group) => (
+                      <div key={group.title} className="space-y-2">
+                        <h4 className="text-sm font-medium text-gray-700">
+                          {group.title}
+                        </h4>
+                        {group.rows.length === 0 ? (
+                          <p className="text-sm text-gray-500 px-1">
+                            {group.empty}
+                          </p>
+                        ) : (
+                          group.rows.map((service) => {
                     const isSelected = appointmentData.selectedServices.some(s => 
                       s.id === (service.id || service._id));
                     const selectedService = appointmentData.selectedServices.find(s => 
@@ -785,9 +814,12 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                         </div>
                       </div>
                     );
-                  })
+                          })
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </div>
             </div>
 
             {appointmentData.selectedServices.length > 0 && (
