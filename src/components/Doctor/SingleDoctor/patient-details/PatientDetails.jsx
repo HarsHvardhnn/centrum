@@ -34,6 +34,8 @@ import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Ac
 import { toast } from "sonner";
 import { translateStatus, getVisitModeLabel, getVisitModeStyle, getVisitTypeDisplayLabel, stripDoctorTitle } from "../../../../utils/statusHelper";
 import { resolveDocumentOpenUrl } from "../../../../utils/documentUrl";
+import { openPdfUrl, printPdfFromUrl } from "../../../../utils/pdfPrint";
+import VisitCardActionModal from "./VisitCardActionModal";
 import {
   isRadiologistAppointment,
   getRadiologistVisitTypeFields,
@@ -117,51 +119,6 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
             className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
           >
             Usuń
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Visit Card Confirmation Modal Component
-const VisitCardConfirmationModal = ({ isOpen, onClose, onViewExisting, onGenerateNew, existingUrl }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-        <div className="flex items-center mb-4">
-          <FileText className="text-teal-500 mr-3" size={24} />
-          <h2 className="text-xl font-semibold">Karta wizyty już istnieje</h2>
-        </div>
-        <p className="text-gray-600 mb-6">
-          Dla tej wizyty została już wygenerowana karta wizyty. Czy chcesz wyświetlić istniejącą kartę, czy wygenerować nową?
-        </p>
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            Anuluj
-          </button>
-          <button
-            onClick={() => {
-              onGenerateNew();
-              onClose();
-            }}
-            className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
-          >
-            Wygeneruj nową
-          </button>
-          <button
-            onClick={() => {
-              onViewExisting();
-              onClose();
-            }}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          >
-            Wyświetl istniejącą
           </button>
         </div>
       </div>
@@ -1608,16 +1565,21 @@ const PatientDetailsPage = () => {
 
         // Check if visit card already exists
         if (response.message === "Karta wizyty już istnieje" && !forceNew) {
-          // Store the data for the modal
           setPendingVisitCardData({
             appointmentId,
             url: response.data.url,
-            event: e
+            event: e,
+            mode: "exists",
           });
           setShowVisitCardModal(true);
         } else {
-          // Normal case - open the visit card
-          window.open(response.data.url, '_blank');
+          setPendingVisitCardData({
+            appointmentId,
+            url: response.data.url,
+            event: e,
+            mode: "ready",
+          });
+          setShowVisitCardModal(true);
           toast.success("Karta wizyty wygenerowana i dodana do dokumentacji wizyty");
         }
       } else {
@@ -1631,20 +1593,36 @@ const PatientDetailsPage = () => {
     }
   };
 
-  // Handle viewing existing visit card
-  const handleViewExistingCard = () => {
-    if (pendingVisitCardData?.url) {
-      window.open(pendingVisitCardData.url, '_blank');
+  const visitCardOpenUrl = () =>
+    resolveDocumentOpenUrl(pendingVisitCardData?.url) || pendingVisitCardData?.url;
+
+  const handleViewExistingCard = async () => {
+    const url = visitCardOpenUrl();
+    if (url) {
+      try {
+        await openPdfUrl(url);
+      } catch {
+        window.open(url, "_blank");
+      }
     }
     setPendingVisitCardData(null);
   };
 
-  // Handle generating new visit card
+  const handlePrintVisitCard = async () => {
+    const url = visitCardOpenUrl();
+    if (!url) return;
+    try {
+      await printPdfFromUrl(url);
+    } catch (e) {
+      console.error(e);
+      toast.error("Nie udało się otworzyć okna drukowania");
+    }
+  };
+
   const handleGenerateNewCard = async () => {
     if (pendingVisitCardData) {
       await handleGenerateVisitCard(pendingVisitCardData.appointmentId, pendingVisitCardData.event, true);
     }
-    setPendingVisitCardData(null);
   };
 
   if (isLoading) {
@@ -1992,15 +1970,16 @@ const PatientDetailsPage = () => {
         }}
       />
 
-      <VisitCardConfirmationModal
+      <VisitCardActionModal
         isOpen={showVisitCardModal}
+        mode={pendingVisitCardData?.mode || "ready"}
         onClose={() => {
           setShowVisitCardModal(false);
           setPendingVisitCardData(null);
         }}
-        onViewExisting={handleViewExistingCard}
+        onOpen={handleViewExistingCard}
+        onPrint={handlePrintVisitCard}
         onGenerateNew={handleGenerateNewCard}
-        existingUrl={pendingVisitCardData?.url}
       />
     </div>
   );

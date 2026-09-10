@@ -5,7 +5,7 @@ import DoctorSelectionWithSlots, {
   doctorSpecializationLabel,
 } from "../../admin/DoctorsAppointments";
 import userServiceHelper, {
-  fetchStaffPickerServices,
+  fetchTechnicalPickerServices,
   formatCatalogTax,
 } from "../../../helpers/userServiceHelper";
 import { Search, Plus, Minus, CheckCircle, ChevronRight, ChevronLeft } from "lucide-react";
@@ -146,14 +146,12 @@ function AppointmentFormModal({
     (async () => {
       setLoadingServices(true);
       try {
-        const rows = await fetchStaffPickerServices();
+        const rows = await fetchTechnicalPickerServices();
         if (cancelled) return;
-        if (rows.length) setAllServices(rows);
-        else if (availableServices?.length) setAllServices(availableServices);
-        else if (contextServices?.length) setAllServices(contextServices);
+        setAllServices(rows);
       } catch (err) {
         console.error("Error loading appointment services:", err);
-        if (!cancelled && contextServices?.length) setAllServices(contextServices);
+        if (!cancelled) setAllServices([]);
       } finally {
         if (!cancelled) setLoadingServices(false);
       }
@@ -1474,8 +1472,6 @@ function AppointmentFormModal({
       (s) => s.id === (service.id || service._id)
     );
     const quantity = selectedService ? selectedService.quantity || 1 : 1;
-    const isSystem =
-      service.source === "system" || service.serviceModel === "SystemService";
 
     return (
       <div
@@ -1501,15 +1497,10 @@ function AppointmentFormModal({
               <span className="ml-2 font-medium">
                 {service.title || service.name}
               </span>
-              {isSystem && (
-                <span className="ml-2 text-xs text-slate-500 font-normal">
-                  systemowa
-                </span>
-              )}
             </div>
             <div className="ml-6 mt-1 text-sm text-gray-600">
               {service.price} zł
-              {isSystem && service.tax != null && service.tax !== "" && (
+              {service.tax != null && service.tax !== "" && (
                 <span className="text-gray-500">
                   {" "}
                   · VAT {formatCatalogTax(service.tax)}
@@ -1546,13 +1537,6 @@ function AppointmentFormModal({
   };
 
   const renderServicesStep = () => {
-    const websiteFiltered = filteredServices.filter(
-      (s) => s.source !== "system" && s.serviceModel !== "SystemService"
-    );
-    const systemFiltered = filteredServices.filter(
-      (s) => s.source === "system" || s.serviceModel === "SystemService"
-    );
-
     return (
       <div className="space-y-4">
         <h3 className="text-lg font-medium mb-4">Wybór Usług</h3>
@@ -1572,41 +1556,20 @@ function AppointmentFormModal({
         </div>
 
         <div className="bg-gray-50 rounded-lg p-3 max-h-[28rem] overflow-y-auto">
-          {loadingServices ? (
-            <div className="p-4 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
-              <p>Ładowanie usług...</p>
-            </div>
-          ) : filteredServices.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
-              Nie znaleziono usług
-            </div>
-          ) : (
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-gray-700">
-                  Usługi na stronie
-                </h4>
-                {websiteFiltered.length === 0 ? (
-                  <p className="text-sm text-gray-500 px-1">Brak usług ze strony</p>
-                ) : (
-                  websiteFiltered.map(renderServiceCheckboxRow)
-                )}
+          <div className="space-y-2">
+            {loadingServices ? (
+              <div className="p-4 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
+                <p>Ładowanie usług...</p>
               </div>
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-gray-700">
-                  Usługi systemowe (techniczne)
-                </h4>
-                {systemFiltered.length === 0 ? (
-                  <p className="text-sm text-gray-500 px-1">
-                    Brak usług systemowych. Dodaj je w Zarządzanie usługami → Usługi systemowe.
-                  </p>
-                ) : (
-                  systemFiltered.map(renderServiceCheckboxRow)
-                )}
+            ) : filteredServices.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                Brak usług technicznych
               </div>
-            </div>
-          )}
+            ) : (
+              filteredServices.map(renderServiceCheckboxRow)
+            )}
+          </div>
         </div>
 
         {/* Selected Services Summary */}

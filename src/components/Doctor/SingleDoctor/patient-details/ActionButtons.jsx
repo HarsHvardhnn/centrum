@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { useLoader } from "../../../../context/LoaderContext";
-import { Download, Tag, Save, FileText } from "lucide-react";
+import { Download, Tag, Save } from "lucide-react";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
 import { toast } from "sonner";
+import { resolveDocumentOpenUrl } from "../../../../utils/documentUrl";
+import { openPdfUrl, printPdfFromUrl } from "../../../../utils/pdfPrint";
+import VisitCardActionModal from "./VisitCardActionModal";
 
 const ActionButtons = ({ patientId, onAddServicesClick, onSave, appointmentId }) => {
   const { showLoader, hideLoader } = useLoader();
@@ -14,31 +17,24 @@ const ActionButtons = ({ patientId, onAddServicesClick, onSave, appointmentId })
       showLoader();
       const response = await appointmentHelper.generateVisitCard(appointmentId, forceNew);
       
-      //("response", response);
       if (response.success && response.data.url) {
-        // Check if visit card already exists
         if (response.message === "Karta wizyty już istnieje" && !forceNew) {
-          // Store the data for the modal
           setPendingVisitCardData({
-            url: response.data.url
+            url: response.data.url,
+            mode: "exists",
           });
           setShowVisitCardModal(true);
           hideLoader();
           return;
         }
-        
-        // Download the visit card
-        const downloadLink = document.createElement("a");
-        downloadLink.href = response.data.url;
-        downloadLink.target = "_blank";
-        downloadLink.download = `karta_wizyty_${patientId}.pdf`;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-        
-        toast.success("Karta wizyty została pobrana");
+
+        setPendingVisitCardData({
+          url: response.data.url,
+          mode: "ready",
+        });
+        setShowVisitCardModal(true);
+        toast.success("Karta wizyty wygenerowana");
       } else {
-        console.error("Nie udało się wygenerować karty wizyty:", response.message);
         toast.error("Nie udało się wygenerować karty wizyty");
       }
     } catch (error) {
@@ -49,63 +45,34 @@ const ActionButtons = ({ patientId, onAddServicesClick, onSave, appointmentId })
     }
   };
 
-  // Handle viewing existing visit card
-  const handleViewExistingCard = () => {
-    if (pendingVisitCardData?.url) {
-      window.open(pendingVisitCardData.url, '_blank');
+  const visitCardOpenUrl = () =>
+    resolveDocumentOpenUrl(pendingVisitCardData?.url) || pendingVisitCardData?.url;
+
+  const handleViewExistingCard = async () => {
+    const url = visitCardOpenUrl();
+    if (url) {
+      try {
+        await openPdfUrl(url);
+      } catch {
+        window.open(url, "_blank");
+      }
     }
     setPendingVisitCardData(null);
   };
 
-  // Handle generating new visit card
-  const handleGenerateNewCard = async () => {
-    await handleDownloadVisitCard(true);
-    setPendingVisitCardData(null);
+  const handlePrintVisitCard = async () => {
+    const url = visitCardOpenUrl();
+    if (!url) return;
+    try {
+      await printPdfFromUrl(url);
+    } catch (e) {
+      console.error(e);
+      toast.error("Nie udało się otworzyć okna drukowania");
+    }
   };
 
-  // Visit Card Confirmation Modal Component
-  const VisitCardConfirmationModal = ({ isOpen, onClose, onViewExisting, onGenerateNew }) => {
-    if (!isOpen) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-          <div className="flex items-center mb-4">
-            <FileText className="text-teal-500 mr-3" size={24} />
-            <h2 className="text-xl font-semibold">Karta wizyty już istnieje</h2>
-          </div>
-          <p className="text-gray-600 mb-6">
-            Dla tej wizyty została już wygenerowana karta wizyty. Czy chcesz wyświetlić istniejącą kartę, czy pobrać nową?
-          </p>
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Anuluj
-            </button>
-            <button
-              onClick={() => {
-                onGenerateNew();
-                onClose();
-              }}
-              className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
-            >
-              Pobierz nową
-            </button>
-            <button
-              onClick={() => {
-                onViewExisting();
-                onClose();
-              }}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-            >
-              Wyświetl istniejącą
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+  const handleGenerateNewCard = async () => {
+    await handleDownloadVisitCard(true);
   };
 
   return (
@@ -137,13 +104,15 @@ const ActionButtons = ({ patientId, onAddServicesClick, onSave, appointmentId })
       </div>
       
       {/* Visit Card Confirmation Modal */}
-      <VisitCardConfirmationModal
+      <VisitCardActionModal
         isOpen={showVisitCardModal}
+        mode={pendingVisitCardData?.mode || "ready"}
         onClose={() => {
           setShowVisitCardModal(false);
           setPendingVisitCardData(null);
         }}
-        onViewExisting={handleViewExistingCard}
+        onOpen={handleViewExistingCard}
+        onPrint={handlePrintVisitCard}
         onGenerateNew={handleGenerateNewCard}
       />
     </>

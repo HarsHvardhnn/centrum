@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import PatientSearchField from "../AppointmentForm/PatientSearchField";
 import DoctorSelectionWithSlots from "./DoctorsAppointments";
 import userServiceHelper, {
-  fetchStaffPickerServices,
+  fetchTechnicalPickerServices,
   formatCatalogTax,
 } from "../../helpers/userServiceHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
@@ -77,14 +77,12 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
     (async () => {
       setLoadingServices(true);
       try {
-        const rows = await fetchStaffPickerServices();
+        const rows = await fetchTechnicalPickerServices();
         if (cancelled) return;
-        if (rows.length) setAllServices(rows);
-        else if (availableServices?.length) setAllServices(availableServices);
-        else if (contextServices?.length) setAllServices(contextServices);
+        setAllServices(rows);
       } catch (err) {
         console.error("Error loading appointment services:", err);
-        if (!cancelled && contextServices?.length) setAllServices(contextServices);
+        if (!cancelled) setAllServices([]);
       } finally {
         if (!cancelled) setLoadingServices(false);
       }
@@ -710,48 +708,18 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
             </div>
 
             <div className="bg-gray-50 rounded-lg p-3 max-h-[28rem] overflow-y-auto">
-              {loadingServices ? (
+              <div className="space-y-2">
+                {loadingServices ? (
                   <div className="p-4 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
                     <p>Ładowanie usług...</p>
                   </div>
                 ) : filteredServices.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
-                    Nie znaleziono usług
+                    Brak usług technicznych
                   </div>
                 ) : (
-                  <div className="space-y-5">
-                    {[
-                      {
-                        title: "Usługi na stronie",
-                        rows: filteredServices.filter(
-                          (s) =>
-                            s.source !== "system" &&
-                            s.serviceModel !== "SystemService"
-                        ),
-                        empty: "Brak usług ze strony",
-                      },
-                      {
-                        title: "Usługi systemowe (techniczne)",
-                        rows: filteredServices.filter(
-                          (s) =>
-                            s.source === "system" ||
-                            s.serviceModel === "SystemService"
-                        ),
-                        empty:
-                          "Brak usług systemowych. Dodaj je w Zarządzanie usługami → Usługi systemowe.",
-                      },
-                    ].map((group) => (
-                      <div key={group.title} className="space-y-2">
-                        <h4 className="text-sm font-medium text-gray-700">
-                          {group.title}
-                        </h4>
-                        {group.rows.length === 0 ? (
-                          <p className="text-sm text-gray-500 px-1">
-                            {group.empty}
-                          </p>
-                        ) : (
-                          group.rows.map((service) => {
+                  filteredServices.map((service) => {
                     const isSelected = appointmentData.selectedServices.some(s => 
                       s.id === (service.id || service._id));
                     const selectedService = appointmentData.selectedServices.find(s => 
@@ -778,17 +746,10 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                                 className="h-4 w-4 text-teal-600 border-gray-300 rounded"
                               />
                               <span className="ml-2 font-medium">{service.title || service.name}</span>
-                              {(service.source === "system" || service.serviceModel === "SystemService") && (
-                                <span className="ml-2 text-xs text-slate-500 font-normal">
-                                  systemowa
-                                </span>
-                              )}
                             </div>
                             <div className="ml-6 mt-1 text-sm text-gray-600">
                               {service.price} zł
-                              {(service.source === "system" || service.serviceModel === "SystemService") &&
-                                service.tax != null &&
-                                service.tax !== "" && (
+                              {service.tax != null && service.tax !== "" && (
                                   <span className="text-gray-500"> · VAT {formatCatalogTax(service.tax)}</span>
                                 )}
                             </div>
@@ -814,12 +775,9 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                         </div>
                       </div>
                     );
-                          })
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  })
                 )}
+              </div>
             </div>
 
             {appointmentData.selectedServices.length > 0 && (

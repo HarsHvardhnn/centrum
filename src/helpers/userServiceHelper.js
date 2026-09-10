@@ -147,9 +147,33 @@ export async function loadDoctorAssignedCatalog(doctorIds) {
   return rows;
 }
 
+function mapSystemServiceRows(payload) {
+  const raw = Array.isArray(payload)
+    ? payload
+    : extractServiceArray(payload);
+  return uniqueCatalogRows(
+    raw
+      .map((item) => {
+        const svc = item?.service ?? item;
+        if (!svc || (!svc._id && !svc.id)) return null;
+        return {
+          _id: svc._id || svc.id,
+          id: svc._id || svc.id,
+          title: svc.title || "",
+          price: svc.price,
+          shortDescription: svc.shortDescription,
+          source: "system",
+          serviceModel: "SystemService",
+          tax: svc.tax,
+        };
+      })
+      .filter(Boolean)
+  );
+}
+
 /**
- * Staff pickers (appointments, billing): website catalog + technical SystemService rows.
- * Website = GET /services (public CMS). Technical = GET /system-services (staff).
+ * Staff pickers that need both catalogs (e.g. admin billing).
+ * Website = GET /services. Technical = GET /system-services.
  */
 export async function fetchStaffPickerServices() {
   let website = [];
@@ -166,30 +190,20 @@ export async function fetchStaffPickerServices() {
 
   try {
     const systemRes = await apiCaller("GET", "/system-services", null);
-    const raw = Array.isArray(systemRes?.data)
-      ? systemRes.data
-      : extractServiceArray(systemRes?.data ?? systemRes);
-    system = raw
-      .map((item) => {
-        const svc = item?.service ?? item;
-        if (!svc || (!svc._id && !svc.id)) return null;
-        return {
-          _id: svc._id || svc.id,
-          id: svc._id || svc.id,
-          title: svc.title || "",
-          price: svc.price,
-          shortDescription: svc.shortDescription,
-          source: "system",
-          serviceModel: "SystemService",
-          tax: svc.tax,
-        };
-      })
-      .filter(Boolean);
+    system = mapSystemServiceRows(systemRes?.data ?? systemRes);
   } catch (err) {
     console.error("fetchStaffPickerServices system:", err);
   }
 
   return uniqueCatalogRows([...website, ...system]);
+}
+
+/**
+ * Appointment / visit pickers: technical catalog only (no website CMS pages).
+ */
+export async function fetchTechnicalPickerServices() {
+  const systemRes = await apiCaller("GET", "/system-services", null);
+  return mapSystemServiceRows(systemRes?.data ?? systemRes);
 }
 
 // User services helper
