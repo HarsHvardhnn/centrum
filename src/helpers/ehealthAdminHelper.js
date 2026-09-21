@@ -28,6 +28,31 @@ const ehealthAdminHelper = {
     });
     return response.data;
   },
+
+  async createOrganization(payload = {}) {
+    const response = await apiCaller("POST", "/api/ehealth/admin/organization", payload);
+    return response.data;
+  },
+
+  async createPractitioner(payload) {
+    const response = await apiCaller("POST", "/api/ehealth/admin/practitioner", payload);
+    return response.data;
+  },
+
+  async uploadP1Certificates(payload) {
+    const response = await apiCaller("POST", "/api/ehealth/admin/p1-certificates", payload);
+    return response.data;
+  },
+
+  async uploadZusCertificate(payload) {
+    const response = await apiCaller("POST", "/api/ehealth/admin/zus-certificate", payload);
+    return response.data;
+  },
+
+  async configureEwus(payload) {
+    const response = await apiCaller("POST", "/api/ehealth/admin/ewus", payload);
+    return response.data;
+  },
 };
 
 export default ehealthAdminHelper;

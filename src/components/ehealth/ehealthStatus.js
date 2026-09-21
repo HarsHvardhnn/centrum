@@ -1,5 +1,5 @@
 export const STATUS_LABELS = {
-  draft: "Szkic",
+  draft: "Sprawdzone (nie wysłane do P1)",
   needs_signature: "Wymaga podpisu",
   submitted: "Wysłane",
   issued: "Wystawione",

@@ -19,19 +19,29 @@ const SERVICE_LABELS = {
   eligibility: "eWUŚ",
 };
 
-const STATUS_OPTIONS = [
-  { value: "missing", label: "Brak" },
-  { value: "present", label: "Obecny" },
-  { value: "expired", label: "Wygasły" },
-];
-
 const emptyEnv = () => ({
   integratorUuid: "",
   organizationUuid: "",
+  practitionerUuid: "",
+  oidRoot: "",
+  practitionerNpwz: "",
   secret: "",
   hasSecret: false,
   secretMasked: "",
 });
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const s = String(reader.result || "");
+      const i = s.indexOf(",");
+      resolve(i >= 0 ? s.slice(i + 1) : s);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 const EhealthIntegrationsPage = () => {
   const { showLoader, hideLoader } = useLoader();
@@ -44,6 +54,7 @@ const EhealthIntegrationsPage = () => {
   const [facilityTlsStatus, setFacilityTlsStatus] = useState("missing");
   const [facilityWssStatus, setFacilityWssStatus] = useState("missing");
   const [ewusMfaConfigured, setEwusMfaConfigured] = useState(false);
+  const [liveSendEnabled, setLiveSendEnabled] = useState(false);
   const [lastConnectionTest, setLastConnectionTest] = useState(null);
   const [runtimeProvider, setRuntimeProvider] = useState("mock");
   const [licenseCaps, setLicenseCaps] = useState({
@@ -54,6 +65,23 @@ const EhealthIntegrationsPage = () => {
   });
   const [licenseSnapshot, setLicenseSnapshot] = useState(null);
   const [testing, setTesting] = useState(false);
+  const [creatingOrg, setCreatingOrg] = useState(false);
+  const [creatingDoc, setCreatingDoc] = useState(false);
+  const [doctorForm, setDoctorForm] = useState({ firstName: "", lastName: "", npwz: "" });
+  const [oidRoot, setOidRoot] = useState("");
+  const [tlsFile, setTlsFile] = useState(null);
+  const [wssFile, setWssFile] = useState(null);
+  const [p1Password, setP1Password] = useState("");
+  const [zusFile, setZusFile] = useState(null);
+  const [zusPassword, setZusPassword] = useState("");
+  const [ewusForm, setEwusForm] = useState({
+    domain: "13",
+    operatorType: "LEK",
+    identifier: "",
+    username: "",
+    password: "",
+  });
+  const [uploadingCerts, setUploadingCerts] = useState(false);
 
   const envForm = activeEnvironment === "production" ? production : test;
   const setEnvForm = activeEnvironment === "production" ? setProduction : setTest;
@@ -82,9 +110,11 @@ const EhealthIntegrationsPage = () => {
         ...d.production,
         secret: "",
       });
+      setOidRoot(d.test?.oidRoot || d.production?.oidRoot || "2.16.840.1.113883.3.4424.2.7.153506");
       setFacilityTlsStatus(d.facilityTlsStatus || "missing");
       setFacilityWssStatus(d.facilityWssStatus || "missing");
       setEwusMfaConfigured(Boolean(d.ewusMfaConfigured));
+      setLiveSendEnabled(Boolean(d.liveSendEnabled));
       setLastConnectionTest(d.lastConnectionTest || null);
       setRuntimeProvider(d.runtimeProvider || "mock");
       setLicenseCaps({
@@ -118,14 +148,18 @@ const EhealthIntegrationsPage = () => {
         facilityTlsStatus,
         facilityWssStatus,
         ewusMfaConfigured,
+        liveSendEnabled,
         test: {
           integratorUuid: test.integratorUuid,
           organizationUuid: test.organizationUuid,
+          practitionerUuid: test.practitionerUuid,
+          oidRoot,
           ...(test.secret.trim() ? { secret: test.secret.trim() } : {}),
         },
         production: {
           integratorUuid: production.integratorUuid,
           organizationUuid: production.organizationUuid,
+          practitionerUuid: production.practitionerUuid,
           ...(production.secret.trim() ? { secret: production.secret.trim() } : {}),
         },
       };
@@ -203,9 +237,10 @@ const EhealthIntegrationsPage = () => {
         <div className="flex items-start">
           <Info className="text-blue-500 mr-2 mt-1" size={20} />
           <div className="text-sm text-blue-800">
-            Secret po zapisaniu nie jest ponownie wyświetlany. Lekarze nie mają dostępu do tej strony.
+            Brak konta Medfile HIS — tylko API. Secret po zapisaniu nie wraca na ekran.
             Provider runtime: <strong>{runtimeProvider}</strong>
             {runtimeProvider === "mock" && " (mock — bez wywołania Medfile)"}.
+            Certyfikaty P1/ZUS są wysyłane do API i nie są trzymane w CM7MED.
           </div>
         </div>
       </div>
@@ -312,43 +347,267 @@ const EhealthIntegrationsPage = () => {
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               autoComplete="off"
             />
+            <input
+              type="text"
+              placeholder="OID P1 (oidRoot) z maila przy certyfikatach"
+              value={oidRoot}
+              onChange={(e) => setOidRoot(e.target.value)}
+              className="mt-2 w-full p-2 border border-gray-300 rounded-lg text-sm"
+              autoComplete="off"
+            />
+            <button
+              type="button"
+              disabled={creatingOrg}
+              onClick={async () => {
+                try {
+                  setCreatingOrg(true);
+                  const res = await ehealthAdminHelper.createOrganization({ oidRoot });
+                  if (!res?.success) throw new Error(res?.error?.message || "Błąd");
+                  setEnvForm({ ...envForm, organizationUuid: res.data.organizationUuid || envForm.organizationUuid });
+                  toast.success("Organizacja utworzona przez API");
+                } catch (err) {
+                  toast.error(err.message || "Nie udało się utworzyć organizacji");
+                } finally {
+                  setCreatingOrg(false);
+                }
+              }}
+              className="mt-2 text-sm text-teal-700 hover:underline"
+            >
+              {creatingOrg ? "Tworzę…" : "Utwórz organizację przez API (dane CM7)"}
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">TLS placówki</label>
-              <select
-                value={facilityTlsStatus}
-                onChange={(e) => setFacilityTlsStatus(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg"
-              >
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Practitioner UUID (lekarz w API, nie konto HIS)
+            </label>
+            <input
+              type="text"
+              value={envForm.practitionerUuid}
+              onChange={(e) => setEnvForm({ ...envForm, practitionerUuid: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              autoComplete="off"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
+              <input
+                placeholder="Imię"
+                value={doctorForm.firstName}
+                onChange={(e) => setDoctorForm({ ...doctorForm, firstName: e.target.value })}
+                className="p-2 border rounded-lg text-sm"
+              />
+              <input
+                placeholder="Nazwisko"
+                value={doctorForm.lastName}
+                onChange={(e) => setDoctorForm({ ...doctorForm, lastName: e.target.value })}
+                className="p-2 border rounded-lg text-sm"
+              />
+              <input
+                placeholder="PWZ (NPWZ)"
+                value={doctorForm.npwz}
+                onChange={(e) => setDoctorForm({ ...doctorForm, npwz: e.target.value })}
+                className="p-2 border rounded-lg text-sm"
+              />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">WSS placówki</label>
-              <select
-                value={facilityWssStatus}
-                onChange={(e) => setFacilityWssStatus(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg"
-              >
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-end">
-              <label className="flex items-center gap-2 text-sm text-gray-700 pb-3">
-                <input
-                  type="checkbox"
-                  checked={ewusMfaConfigured}
-                  onChange={(e) => setEwusMfaConfigured(e.target.checked)}
-                />
-                eWUŚ MFA skonfigurowane
+            <button
+              type="button"
+              disabled={creatingDoc}
+              onClick={async () => {
+                try {
+                  setCreatingDoc(true);
+                  const res = await ehealthAdminHelper.createPractitioner({
+                    firstName: doctorForm.firstName,
+                    lastName: doctorForm.lastName,
+                    npwz: doctorForm.npwz,
+                  });
+                  if (!res?.success) throw new Error(res?.error?.message || "Błąd");
+                  setEnvForm({ ...envForm, practitionerUuid: res.data.practitionerUuid || envForm.practitionerUuid });
+                  toast.success("Lekarz utworzony w Medfile");
+                } catch (err) {
+                  toast.error(err.message || "Nie udało się utworzyć lekarza");
+                } finally {
+                  setCreatingDoc(false);
+                }
+              }}
+              className="mt-2 text-sm text-teal-700 hover:underline"
+            >
+              {creatingDoc ? "Tworzę…" : "Utwórz lekarza przez API"}
+            </button>
+          </div>
+
+          <div className="border border-gray-100 rounded-lg p-4 space-y-3">
+            <p className="text-sm font-medium text-gray-800">
+              Certyfikaty P1 (TLS + WSS) — pliki produkcyjne, wysyłka do API
+            </p>
+            <p className="text-xs text-gray-500">
+              Status: TLS {facilityTlsStatus} · WSS {facilityWssStatus}. Pliki nie są zapisywane w CM7MED.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <label className="text-xs text-gray-600">
+                TLS .p12
+                <input type="file" className="block mt-1 text-sm" onChange={(e) => setTlsFile(e.target.files?.[0] || null)} />
               </label>
+              <label className="text-xs text-gray-600">
+                WSS .p12
+                <input type="file" className="block mt-1 text-sm" onChange={(e) => setWssFile(e.target.files?.[0] || null)} />
+              </label>
+              <input
+                type="password"
+                placeholder="Hasło do certyfikatów"
+                value={p1Password}
+                onChange={(e) => setP1Password(e.target.value)}
+                className="p-2 border rounded-lg text-sm"
+                autoComplete="new-password"
+              />
             </div>
+            <button
+              type="button"
+              disabled={uploadingCerts}
+              onClick={async () => {
+                if (!tlsFile || !wssFile || !p1Password) {
+                  toast.error("Wskaż TLS, WSS i hasło");
+                  return;
+                }
+                try {
+                  setUploadingCerts(true);
+                  const [tlsCertificate, wssCertificate] = await Promise.all([
+                    fileToBase64(tlsFile),
+                    fileToBase64(wssFile),
+                  ]);
+                  const res = await ehealthAdminHelper.uploadP1Certificates({
+                    tlsCertificate,
+                    wssCertificate,
+                    tlsPassword: p1Password,
+                    wssPassword: p1Password,
+                  });
+                  if (!res?.success) throw new Error(res?.error?.message || "Błąd");
+                  setFacilityTlsStatus("present");
+                  setFacilityWssStatus("present");
+                  setP1Password("");
+                  toast.success("Certyfikaty P1 wysłane do API");
+                } catch (err) {
+                  toast.error(err.message || "Nie udało się wysłać certyfikatów P1");
+                } finally {
+                  setUploadingCerts(false);
+                }
+              }}
+              className="text-sm text-teal-700 hover:underline"
+            >
+              {uploadingCerts ? "Wysyłam…" : "Wyślij TLS + WSS do API"}
+            </button>
+          </div>
+
+          <div className="border border-gray-100 rounded-lg p-4 space-y-3">
+            <p className="text-sm font-medium text-gray-800">Certyfikat ZUS (.pfx) — eZLA</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input type="file" className="text-sm" onChange={(e) => setZusFile(e.target.files?.[0] || null)} />
+              <input
+                type="password"
+                placeholder="Hasło .pfx"
+                value={zusPassword}
+                onChange={(e) => setZusPassword(e.target.value)}
+                className="p-2 border rounded-lg text-sm"
+                autoComplete="new-password"
+              />
+            </div>
+            <button
+              type="button"
+              disabled={uploadingCerts}
+              onClick={async () => {
+                if (!zusFile || !zusPassword) {
+                  toast.error("Wskaż .pfx i hasło");
+                  return;
+                }
+                try {
+                  setUploadingCerts(true);
+                  const certificate = await fileToBase64(zusFile);
+                  const res = await ehealthAdminHelper.uploadZusCertificate({
+                    certificate,
+                    password: zusPassword,
+                  });
+                  if (!res?.success) throw new Error(res?.error?.message || "Błąd");
+                  setZusPassword("");
+                  toast.success("Certyfikat ZUS wysłany do API");
+                } catch (err) {
+                  toast.error(err.message || "Nie udało się wysłać certyfikatu ZUS");
+                } finally {
+                  setUploadingCerts(false);
+                }
+              }}
+              className="text-sm text-teal-700 hover:underline"
+            >
+              Wyślij ZUS .pfx do API
+            </button>
+          </div>
+
+          <div className="border border-gray-100 rounded-lg p-4 space-y-3">
+            <p className="text-sm font-medium text-gray-800">eWUŚ — operator NFZ (dane publiczne / test)</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <input
+                placeholder="Oddział NFZ (13 = Świętokrzyski)"
+                value={ewusForm.domain}
+                onChange={(e) => setEwusForm({ ...ewusForm, domain: e.target.value })}
+                className="p-2 border rounded-lg text-sm"
+              />
+              <input
+                placeholder="Login NFZ"
+                value={ewusForm.username}
+                onChange={(e) => setEwusForm({ ...ewusForm, username: e.target.value })}
+                className="p-2 border rounded-lg text-sm"
+              />
+              <input
+                type="password"
+                placeholder="Hasło NFZ"
+                value={ewusForm.password}
+                onChange={(e) => setEwusForm({ ...ewusForm, password: e.target.value })}
+                className="p-2 border rounded-lg text-sm"
+                autoComplete="new-password"
+              />
+              <input
+                placeholder="Identyfikator (jeśli wymagany)"
+                value={ewusForm.identifier}
+                onChange={(e) => setEwusForm({ ...ewusForm, identifier: e.target.value })}
+                className="p-2 border rounded-lg text-sm"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={ewusMfaConfigured}
+                onChange={(e) => setEwusMfaConfigured(e.target.checked)}
+              />
+              MFA (TOTP) wymagane
+            </label>
+            <label className="flex items-center gap-2 text-sm text-red-800">
+              <input
+                type="checkbox"
+                checked={liveSendEnabled}
+                onChange={(e) => setLiveSendEnabled(e.target.checked)}
+              />
+              Wystawianie na żywo (P1) — tylko uzgodniony test issue + cancel. Domyślnie wyłączone (tylko validate).
+            </label>
+            <button
+              type="button"
+              disabled={uploadingCerts}
+              onClick={async () => {
+                try {
+                  setUploadingCerts(true);
+                  const res = await ehealthAdminHelper.configureEwus({
+                    ...ewusForm,
+                    mfa: ewusMfaConfigured,
+                  });
+                  if (!res?.success) throw new Error(res?.error?.message || "Błąd");
+                  setEwusForm({ ...ewusForm, password: "" });
+                  toast.success("eWUŚ skonfigurowane w API");
+                } catch (err) {
+                  toast.error(err.message || "Nie udało się zapisać eWUŚ");
+                } finally {
+                  setUploadingCerts(false);
+                }
+              }}
+              className="text-sm text-teal-700 hover:underline"
+            >
+              Zapisz operatora eWUŚ w API
+            </button>
           </div>
 
           <div className="flex flex-wrap gap-3 items-center">
