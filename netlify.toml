@@ -1,7 +1,3 @@
 [build]
   command = "npm run build"
-  publish = "dist"
   install = "npm install --force"
-
-[build.environment]
-  VITE_REACT_APP_API_BASE_URL = "https://centrum-be-1.onrender.com/"

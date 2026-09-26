@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Search, Trash2, Plus, Zap } from "lucide-react";
 import { MedicationForm } from "./MedicationForm";
-import EhealthDocumentPanel from "../../../../ehealth/EhealthDocumentPanel";
+import FeatureComingSoonModal from "../FeatureComingSoonModal";
 
 const SECTION_BG = "bg-white";
 const INPUT_CLASS = "w-full px-3 py-2 bg-white border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400";
@@ -13,9 +13,6 @@ export const MedicationsSection = ({
   setShowForm,
   onAddMedication,
   onRemoveMedication,
-  visitId,
-  patientId,
-  onDocumentsChanged,
   className = "",
 }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -209,13 +206,10 @@ export const MedicationsSection = ({
           </div>
         </div>
       )}
-      <EhealthDocumentPanel
-        open={showEReceptaModal}
+      <FeatureComingSoonModal
+        isOpen={showEReceptaModal}
         onClose={() => setShowEReceptaModal(false)}
-        service="prescription"
-        visitId={visitId}
-        patientId={patientId}
-        onDocumentsChanged={onDocumentsChanged}
+        featureName="E-recepta"
       />
     </div>
   );

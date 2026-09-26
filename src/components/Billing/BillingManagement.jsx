@@ -1784,6 +1784,7 @@ const BillingManagement = () => {
             </div>
           )}
         </div>
+      </div>
 
       {/* Patient Settlement modal (reception/admin only) */}
       {isEditModalOpen && isBillingStaff && (

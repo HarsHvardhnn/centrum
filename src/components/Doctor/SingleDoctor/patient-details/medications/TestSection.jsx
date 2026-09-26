@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Trash2, Plus, Zap } from "lucide-react";
 import { TestForm } from "./TestForm";
-import EhealthDocumentPanel from "../../../../ehealth/EhealthDocumentPanel";
+import FeatureComingSoonModal from "../FeatureComingSoonModal";
 import appointmentHelper from "../../../../../helpers/appointmentHelper";
 
 const SECTION_BG = "bg-white";
@@ -15,9 +15,6 @@ export const TestsSection = ({
   setShowForm,
   onAddTest,
   onRemoveTest,
-  visitId,
-  patientId,
-  onDocumentsChanged,
   className = "",
 }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -384,13 +381,10 @@ export const TestsSection = ({
           </div>
         </div>
       )}
-      <EhealthDocumentPanel
-        open={showESkierowanieModal}
+      <FeatureComingSoonModal
+        isOpen={showESkierowanieModal}
         onClose={() => setShowESkierowanieModal(false)}
-        service="referral"
-        visitId={visitId}
-        patientId={patientId}
-        onDocumentsChanged={onDocumentsChanged}
+        featureName="E-skierowanie"
       />
     </div>
   );

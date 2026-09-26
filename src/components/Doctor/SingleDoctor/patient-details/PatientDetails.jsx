@@ -30,9 +30,6 @@ import billingHelper from "../../../../helpers/billingHelper";
 import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
-import EwusStatusCard from "../../../ehealth/EwusStatusCard";
-import EhealthDocumentPanel from "../../../ehealth/EhealthDocumentPanel";
-import EhealthVisitDocuments from "../../../ehealth/EhealthVisitDocuments";
 import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity, Save } from "lucide-react";
 import { toast } from "sonner";
 import { translateStatus, getVisitModeLabel, getVisitModeStyle, getVisitTypeDisplayLabel, stripDoctorTitle } from "../../../../utils/statusHelper";
@@ -440,8 +437,6 @@ const PatientDetailsPage = () => {
   // Stany modali
   const [showMedicationForm, setShowMedicationForm] = useState(false);
   const [showTestForm, setShowTestForm] = useState(false);
-  const [showEzlaPanel, setShowEzlaPanel] = useState(false);
-  const [ehealthTick, setEhealthTick] = useState(0);
   const [showServiceModal, setShowServiceModal] = useState(false);
   
   // State for delete confirmation modal
@@ -1671,23 +1666,6 @@ const PatientDetailsPage = () => {
               }}
               onShowMoreDetails={handleShowDetails}
             />
-            <EwusStatusCard
-              pesel={patientData.govtId || patientData.pesel || patientData.PESEL}
-              patientId={patientData.patient_id || patientData.id}
-              visitId={currentAppointmentId}
-            />
-            <button
-              type="button"
-              onClick={() => setShowEzlaPanel(true)}
-              className="w-full px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800"
-            >
-              Wystaw e-ZLA
-            </button>
-            <EhealthVisitDocuments
-              visitId={currentAppointmentId}
-              patientId={patientData.patient_id || patientData.id}
-              refreshKey={ehealthTick}
-            />
             <LifeParamsCard
               patient={patientData}
               onLifeParamsChange={(updates) =>
@@ -1882,9 +1860,6 @@ const PatientDetailsPage = () => {
                   setShowForm={setShowMedicationForm}
                   onAddMedication={handleAddMedicine}
                   onRemoveMedication={handleRemoveMedication}
-                  visitId={currentAppointmentId}
-                  patientId={patientData.patient_id || patientData.id}
-                  onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
                 />
                 <TestsSection
                   tests={tests}
@@ -1893,9 +1868,6 @@ const PatientDetailsPage = () => {
                   setShowForm={setShowTestForm}
                   onAddTest={handleAddTest}
                   onRemoveTest={handleRemoveTest}
-                  visitId={currentAppointmentId}
-                  patientId={patientData.patient_id || patientData.id}
-                  onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
                 />
               </>
             )}
@@ -2008,15 +1980,6 @@ const PatientDetailsPage = () => {
         onOpen={handleViewExistingCard}
         onPrint={handlePrintVisitCard}
         onGenerateNew={handleGenerateNewCard}
-      />
-
-      <EhealthDocumentPanel
-        open={showEzlaPanel}
-        onClose={() => setShowEzlaPanel(false)}
-        service="ezla"
-        visitId={currentAppointmentId}
-        patientId={patientData.patient_id || patientData.id}
-        onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
       />
     </div>
   );
