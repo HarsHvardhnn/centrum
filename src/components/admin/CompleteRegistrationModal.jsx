@@ -5,6 +5,7 @@ import patientService from "../../helpers/patientHelper";
 import { normalizePesel, getPeselChecksumWarning } from "../../utils/peselUtils";
 import { PHONE_COUNTRY_CODES, FlagIcon } from "../../constants/phoneCountryCodes";
 import IpadSessionPanel from "./IpadSessionPanel";
+import EwusStatusCard from "../ehealth/EwusStatusCard";
 
 /**
  * Admin: Complete registration for a visit that has no patient yet.
@@ -413,6 +414,14 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
               className={`w-full p-2 border border-gray-300 rounded-lg ${isInternational ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""}`}
             />
             {!isInternational && peselCheckLoading && <p className="text-xs text-gray-500 mt-1">Sprawdzam PESEL...</p>}
+            <div className="mt-3">
+              <EwusStatusCard
+                compact
+                pesel={completeRegPesel}
+                visitId={visitId}
+                patientId={existingPatientData?._id || existingPatientData?.id}
+              />
+            </div>
             {!isInternational && completeRegPesel.length === 11 && (peselWarningFromApi ?? getPeselChecksumWarning(completeRegPesel)) && (
               <p className="mt-1 text-sm text-amber-600">{peselWarningFromApi ?? getPeselChecksumWarning(completeRegPesel)}</p>
             )}
