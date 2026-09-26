@@ -15,6 +15,7 @@ export const MedicationsSection = ({
   onRemoveMedication,
   visitId,
   patientId,
+  onDocumentsChanged,
   className = "",
 }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -214,6 +215,7 @@ export const MedicationsSection = ({
         service="prescription"
         visitId={visitId}
         patientId={patientId}
+        onDocumentsChanged={onDocumentsChanged}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
-import ehealthHelper from "../../helpers/ehealthHelper";
+import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import { STATUS_LABELS, statusClass } from "./ehealthStatus";
 
 const EwusStatusCard = ({ pesel, patientId, visitId, compact = false }) => {
@@ -30,7 +30,7 @@ const EwusStatusCard = ({ pesel, patientId, visitId, compact = false }) => {
         toast.message("eWUŚ: opieka nadal możliwa (informacja operacyjna)");
       }
     } catch (err) {
-      toast.error(err.message || "Błąd eWUŚ");
+      toast.error(unwrapEhealthError(err).message);
     } finally {
       setBusy(false);
     }

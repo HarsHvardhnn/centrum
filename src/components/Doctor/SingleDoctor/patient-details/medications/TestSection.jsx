@@ -17,6 +17,7 @@ export const TestsSection = ({
   onRemoveTest,
   visitId,
   patientId,
+  onDocumentsChanged,
   className = "",
 }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -389,6 +390,7 @@ export const TestsSection = ({
         service="referral"
         visitId={visitId}
         patientId={patientId}
+        onDocumentsChanged={onDocumentsChanged}
       />
     </div>
   );

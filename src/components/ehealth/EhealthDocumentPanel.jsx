@@ -1,8 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
-import ehealthHelper from "../../helpers/ehealthHelper";
-import { SERVICE_LABELS, STATUS_LABELS, statusClass } from "./ehealthStatus";
+import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
+import {
+  SERVICE_LABELS,
+  STATUS_LABELS,
+  ERROR_CODE_LABELS,
+  statusClass,
+  canRetry,
+  canCancel,
+  canPrint,
+  accessCodeOf,
+} from "./ehealthStatus";
 
 const EhealthDocumentPanel = ({
   open,
@@ -10,6 +19,7 @@ const EhealthDocumentPanel = ({
   service,
   visitId,
   patientId,
+  onDocumentsChanged,
 }) => {
   const [step, setStep] = useState(1);
   const [query, setQuery] = useState("");
@@ -27,6 +37,19 @@ const EhealthDocumentPanel = ({
   const [familyCare, setFamilyCare] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
+  const [isMock, setIsMock] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    ehealthHelper
+      .runtime()
+      .then((res) => {
+        const row = (res?.data?.services || []).find((s) => s.service === service);
+        setIsMock((row?.provider || res?.data?.defaultProvider) === "mock");
+      })
+      .catch(() => setIsMock(false));
+  }, [open, service]);
 
   if (!open) return null;
 
@@ -46,7 +69,10 @@ const EhealthDocumentPanel = ({
     setInsurancePlace("ZUS");
     setFamilyCare(false);
     setResult(null);
+    setSubmitError(null);
   };
+
+  const notifyChanged = () => onDocumentsChanged?.();
 
   const handleClose = () => {
     reset();
@@ -60,10 +86,21 @@ const EhealthDocumentPanel = ({
       if (!res?.success) throw new Error(res?.error?.message || "Szukanie nieudane");
       setDrugs(res.data || []);
     } catch (err) {
-      toast.error(err.message || "Nie udało się wyszukać leków");
+      toast.error(unwrapEhealthError(err).message);
     } finally {
       setSearching(false);
     }
+  };
+
+  const applyResult = (doc) => {
+    setResult(doc);
+    setSubmitError(null);
+    notifyChanged();
+    if (doc?.status === "failed") {
+      toast.error(doc.error?.message || `${title}: błąd`);
+      return;
+    }
+    toast.success(`${title}: ${STATUS_LABELS[doc?.status] || doc?.status}`);
   };
 
   const submit = async (simulate) => {
@@ -73,16 +110,13 @@ const EhealthDocumentPanel = ({
     }
     try {
       setBusy(true);
+      setSubmitError(null);
       let res;
       const common = { visitId, patientId, simulate };
       if (service === "prescription") {
         res = await ehealthHelper.submitPrescription({
           ...common,
-          payload: {
-            drug: selectedDrug,
-            quantity,
-            dosage,
-          },
+          payload: { drug: selectedDrug, quantity, dosage },
         });
       } else if (service === "referral") {
         res = await ehealthHelper.submitReferral({
@@ -92,19 +126,15 @@ const EhealthDocumentPanel = ({
       } else {
         res = await ehealthHelper.submitEzla({
           ...common,
-          payload: {
-            from: ezlaFrom,
-            to: ezlaTo,
-            insurancePlace,
-            familyCare,
-          },
+          payload: { from: ezlaFrom, to: ezlaTo, insurancePlace, familyCare },
         });
       }
       if (!res?.success) throw new Error(res?.error?.message || "Wystawianie nieudane");
-      setResult(res.data);
-      toast.success(`${title}: ${STATUS_LABELS[res.data?.status] || res.data?.status}`);
+      applyResult(res.data);
     } catch (err) {
-      toast.error(err.message || "Nie udało się wystawić dokumentu");
+      const parsed = unwrapEhealthError(err);
+      setSubmitError(parsed);
+      toast.error(parsed.message);
     } finally {
       setBusy(false);
     }
@@ -119,10 +149,11 @@ const EhealthDocumentPanel = ({
       else if (service === "referral") res = await ehealthHelper.retryReferral(result.id);
       else res = await ehealthHelper.retryEzla(result.id);
       if (!res?.success) throw new Error(res?.error?.message || "Ponowienie nieudane");
-      setResult(res.data);
-      toast.success("Ponowiono");
+      applyResult(res.data);
     } catch (err) {
-      toast.error(err.message || "Nie udało się ponowić");
+      const parsed = unwrapEhealthError(err);
+      setSubmitError(parsed);
+      toast.error(parsed.message);
     } finally {
       setBusy(false);
     }
@@ -134,14 +165,45 @@ const EhealthDocumentPanel = ({
       setBusy(true);
       const res = await ehealthHelper.handoffEzla(result.id);
       if (!res?.success) throw new Error(res?.error?.message || "Przekazanie nieudane");
-      setResult(res.data);
-      toast.success("Przekazano do podpisu / wysłano");
+      applyResult(res.data);
     } catch (err) {
-      toast.error(err.message || "Nie udało się przekazać");
+      toast.error(unwrapEhealthError(err).message);
     } finally {
       setBusy(false);
     }
   };
+
+  const printDoc = async () => {
+    if (!result?.id) return;
+    try {
+      setBusy(true);
+      await ehealthHelper.printDocument(service, result.id);
+    } catch (err) {
+      toast.error(unwrapEhealthError(err).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancelDoc = async () => {
+    if (!result?.id) return;
+    if (!window.confirm("Anulować ten dokument?")) return;
+    try {
+      setBusy(true);
+      const res = await ehealthHelper.cancelDocument(service, result.id);
+      if (!res?.success) throw new Error(res?.error?.message || "Anulowanie nieudane");
+      applyResult(res.data);
+    } catch (err) {
+      toast.error(unwrapEhealthError(err).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const draftChecked = result?.status === "draft";
+  const failed = result?.status === "failed" || result?.status === "retry";
+  const code = result?.error?.code || submitError?.code;
+  const errorText = result?.error?.message || submitError?.message;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -248,14 +310,16 @@ const EhealthDocumentPanel = ({
                     >
                       Wystaw
                     </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => submit("fail")}
-                      className="px-3 py-2 border rounded-lg text-sm text-gray-600"
-                    >
-                      Symuluj błąd
-                    </button>
+                    {isMock && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => submit("fail")}
+                        className="px-3 py-2 border rounded-lg text-sm text-gray-600"
+                      >
+                        Symuluj błąd
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -339,6 +403,18 @@ const EhealthDocumentPanel = ({
             </>
           )}
 
+          {submitError && !result && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 space-y-1">
+              <div className="font-medium">{ERROR_CODE_LABELS[submitError.code] || "Błąd"}</div>
+              <div>{submitError.message}</div>
+              {(submitError.code === "AUTH" || submitError.code === "UNAVAILABLE") && (
+                <a href="/administracja/integracje-ezdrowie" className="text-teal-800 underline">
+                  Otwórz ustawienia integracji
+                </a>
+              )}
+            </div>
+          )}
+
           {result && (
             <div className="space-y-3">
               <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${statusClass(result.status)}`}>
@@ -347,11 +423,33 @@ const EhealthDocumentPanel = ({
               {result.externalId && (
                 <div className="text-sm text-gray-600">Id zewnętrzny: {result.externalId}</div>
               )}
-              {result.error?.message && (
-                <div className="text-sm text-red-700">{result.error.message}</div>
+              {accessCodeOf(result) && (
+                <div className="text-sm font-medium text-gray-800">
+                  Kod dostępu: <span className="font-mono tracking-widest">{accessCodeOf(result)}</span>
+                </div>
+              )}
+              {draftChecked && (
+                <div className="p-3 rounded-lg bg-amber-50 text-amber-900 text-sm">
+                  {result.error?.message ||
+                    "Dokument sprawdzony. Nie wysłano do P1 — tryb wystawiania na żywo jest wyłączony."}
+                </div>
+              )}
+              {failed && errorText && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 space-y-1">
+                  <div className="font-medium">{ERROR_CODE_LABELS[code] || "Błąd"}</div>
+                  <div>{errorText}</div>
+                  {(code === "AUTH" || code === "UNAVAILABLE") && (
+                    <a href="/administracja/integracje-ezdrowie" className="text-teal-800 underline">
+                      Otwórz ustawienia integracji
+                    </a>
+                  )}
+                </div>
+              )}
+              {!failed && !draftChecked && result.error?.message && (
+                <div className="text-sm text-gray-700">{result.error.message}</div>
               )}
               <div className="flex gap-2 flex-wrap">
-                {(result.status === "failed" || result.status === "retry") && (
+                {canRetry(result) && (
                   <button type="button" disabled={busy} onClick={retry} className="px-4 py-2 border border-teal-700 text-teal-700 rounded-lg text-sm">
                     Ponów
                   </button>
@@ -359,6 +457,16 @@ const EhealthDocumentPanel = ({
                 {service === "ezla" && result.status === "needs_signature" && (
                   <button type="button" disabled={busy} onClick={handoff} className="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm">
                     Przekaż do podpisu
+                  </button>
+                )}
+                {canPrint(result) && (
+                  <button type="button" disabled={busy} onClick={printDoc} className="px-4 py-2 border rounded-lg text-sm">
+                    Drukuj
+                  </button>
+                )}
+                {canCancel(result) && (
+                  <button type="button" disabled={busy} onClick={cancelDoc} className="px-4 py-2 border border-red-300 text-red-700 rounded-lg text-sm">
+                    Anuluj
                   </button>
                 )}
               </div>

@@ -31,6 +31,7 @@ import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
 import EwusStatusCard from "../../../ehealth/EwusStatusCard";
 import EhealthDocumentPanel from "../../../ehealth/EhealthDocumentPanel";
+import EhealthVisitDocuments from "../../../ehealth/EhealthVisitDocuments";
 import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity, Save } from "lucide-react";
 import { toast } from "sonner";
 import { translateStatus, getVisitModeLabel, getVisitModeStyle, getVisitTypeDisplayLabel, stripDoctorTitle } from "../../../../utils/statusHelper";
@@ -471,6 +472,7 @@ const PatientDetailsPage = () => {
   const [showMedicationForm, setShowMedicationForm] = useState(false);
   const [showTestForm, setShowTestForm] = useState(false);
   const [showEzlaPanel, setShowEzlaPanel] = useState(false);
+  const [ehealthTick, setEhealthTick] = useState(0);
   const [showServiceModal, setShowServiceModal] = useState(false);
   
   // State for delete confirmation modal
@@ -1658,12 +1660,11 @@ const PatientDetailsPage = () => {
             >
               Wystaw e-ZLA
             </button>
-            <a
-              href={`/e-zdrowie?visitId=${encodeURIComponent(currentAppointmentId || "")}&patientId=${encodeURIComponent(patientData.patient_id || patientData.id || "")}`}
-              className="block w-full text-center px-4 py-2 border border-teal-700 text-teal-700 rounded-lg text-sm font-medium hover:bg-teal-50"
-            >
-              Historia e-Zdrowie
-            </a>
+            <EhealthVisitDocuments
+              visitId={currentAppointmentId}
+              patientId={patientData.patient_id || patientData.id}
+              refreshKey={ehealthTick}
+            />
             <LifeParamsCard
               patient={patientData}
               onLifeParamsChange={(updates) =>
@@ -1860,6 +1861,7 @@ const PatientDetailsPage = () => {
                   onRemoveMedication={handleRemoveMedication}
                   visitId={currentAppointmentId}
                   patientId={patientData.patient_id || patientData.id}
+                  onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
                 />
                 <TestsSection
                   tests={tests}
@@ -1870,6 +1872,7 @@ const PatientDetailsPage = () => {
                   onRemoveTest={handleRemoveTest}
                   visitId={currentAppointmentId}
                   patientId={patientData.patient_id || patientData.id}
+                  onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
                 />
               </>
             )}
@@ -1968,6 +1971,7 @@ const PatientDetailsPage = () => {
         service="ezla"
         visitId={currentAppointmentId}
         patientId={patientData.patient_id || patientData.id}
+        onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
       />
     </div>
   );

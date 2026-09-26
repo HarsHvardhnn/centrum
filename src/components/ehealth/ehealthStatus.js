@@ -5,6 +5,7 @@ export const STATUS_LABELS = {
   issued: "Wystawione",
   failed: "Błąd",
   retry: "Ponów",
+  cancelled: "Anulowane",
   confirmed: "Potwierdzone",
   not_confirmed: "Niepotwierdzone",
   not_checked: "Nie sprawdzono",
@@ -19,9 +20,18 @@ export const SERVICE_LABELS = {
   eligibility: "eWUŚ",
 };
 
+export const ERROR_CODE_LABELS = {
+  VALIDATION: "Dane formularza",
+  UNAVAILABLE: "Usługa niedostępna",
+  AUTH: "Brak uprawnień / certyfikatu",
+  REJECTED: "Odrzucone przez dostawcę",
+  DUPLICATE: "Duplikat",
+  UNKNOWN: "Błąd",
+};
+
 export function statusTone(status) {
   if (["issued", "confirmed", "submitted"].includes(status)) return "green";
-  if (["failed", "not_confirmed"].includes(status)) return "red";
+  if (["failed", "not_confirmed", "cancelled"].includes(status)) return "red";
   if (["needs_signature", "needs_recheck", "unavailable", "retry"].includes(status)) {
     return "amber";
   }
@@ -37,4 +47,21 @@ export function statusClass(status) {
     grey: "bg-gray-100 text-gray-700",
   };
   return map[tone];
+}
+
+export function canRetry(doc) {
+  return doc?.status === "failed" || doc?.status === "retry";
+}
+
+export function canCancel(doc) {
+  if (!doc?.id || doc.service === "eligibility") return false;
+  return doc.status !== "cancelled";
+}
+
+export function canPrint(doc) {
+  return Boolean(doc?.id) && doc.service !== "eligibility";
+}
+
+export function accessCodeOf(doc) {
+  return doc?.accessCode || doc?.payload?.accessCode || doc?.payload?.refs?.accessCode || "";
 }
