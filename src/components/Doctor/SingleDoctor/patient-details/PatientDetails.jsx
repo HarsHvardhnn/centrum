@@ -29,7 +29,6 @@ import billingHelper from "../../../../helpers/billingHelper";
 import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
-import EwusStatusCard from "../../../ehealth/EwusStatusCard";
 import EhealthDocumentPanel from "../../../ehealth/EhealthDocumentPanel";
 import EhealthVisitDocuments from "../../../ehealth/EhealthVisitDocuments";
 import { Trash2, Calendar, PlusCircle, Info, X, FileText, Clock, User, Video, Activity, Save } from "lucide-react";
@@ -1633,6 +1632,9 @@ const PatientDetailsPage = () => {
           visitReasonVerifyLoading={visitReasonVerifyLoading}
           canVerifyVisitReason={canVerifyVisitReason}
           onVerifyVisitReason={handleVerifyVisitReason}
+          ewusPesel={patientData.govtId || patientData.pesel || patientData.PESEL}
+          ewusPatientId={patientData.patient_id || patientData.id}
+          ewusVisitId={currentAppointmentId}
         />
       )}
 
@@ -1647,11 +1649,6 @@ const PatientDetailsPage = () => {
                 patientId: patientData.patientId ?? patientData.patient_id,
               }}
               onShowMoreDetails={handleShowDetails}
-            />
-            <EwusStatusCard
-              pesel={patientData.govtId || patientData.pesel || patientData.PESEL}
-              patientId={patientData.patient_id || patientData.id}
-              visitId={currentAppointmentId}
             />
             <button
               type="button"

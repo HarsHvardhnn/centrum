@@ -29,6 +29,18 @@ const ehealthAdminHelper = {
     return response.data;
   },
 
+  async getLicenseDoctors() {
+    const response = await apiCaller("GET", "/api/ehealth/admin/licenses/doctors");
+    return response.data;
+  },
+
+  async saveDoctorAccess(doctorId, access) {
+    const response = await apiCaller("PUT", `/api/ehealth/admin/licenses/doctors/${doctorId}`, {
+      access,
+    });
+    return response.data;
+  },
+
   async createOrganization(payload = {}) {
     const response = await apiCaller("POST", "/api/ehealth/admin/organization", payload);
     return response.data;

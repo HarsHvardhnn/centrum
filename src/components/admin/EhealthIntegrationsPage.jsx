@@ -14,7 +14,16 @@ import ehealthAdminHelper from "../../helpers/ehealthAdminHelper";
 
 const SERVICE_LABELS = {
   prescription: "e-Recepta",
+  drugs: "Baza leków",
   referral: "e-Skierowanie",
+  ezla: "e-ZLA",
+  eligibility: "eWUŚ",
+};
+
+const USAGE_SHORT = {
+  prescription: "e-Rx",
+  drugs: "baza",
+  referral: "skier.",
   ezla: "e-ZLA",
   eligibility: "eWUŚ",
 };
@@ -59,11 +68,14 @@ const EhealthIntegrationsPage = () => {
   const [runtimeProvider, setRuntimeProvider] = useState("mock");
   const [licenseCaps, setLicenseCaps] = useState({
     prescription: 0,
+    drugs: 0,
     referral: 0,
     ezla: 0,
     eligibility: 0,
   });
   const [licenseSnapshot, setLicenseSnapshot] = useState(null);
+  const [licenseDoctors, setLicenseDoctors] = useState([]);
+  const [savingAccessKey, setSavingAccessKey] = useState("");
   const [testing, setTesting] = useState(false);
   const [creatingOrg, setCreatingOrg] = useState(false);
   const [creatingDoc, setCreatingDoc] = useState(false);
@@ -91,9 +103,10 @@ const EhealthIntegrationsPage = () => {
       setLoading(true);
       setError(null);
       showLoader();
-      const [settingsRes, licensesRes] = await Promise.all([
+      const [settingsRes, licensesRes, doctorsRes] = await Promise.all([
         ehealthAdminHelper.getSettings(),
         ehealthAdminHelper.getLicenses(),
+        ehealthAdminHelper.getLicenseDoctors(),
       ]);
       if (!settingsRes?.success) {
         throw new Error(settingsRes?.error?.message || "Nie udało się pobrać ustawień");
@@ -119,12 +132,16 @@ const EhealthIntegrationsPage = () => {
       setRuntimeProvider(d.runtimeProvider || "mock");
       setLicenseCaps({
         prescription: d.licenseCaps?.prescription || 0,
+        drugs: d.licenseCaps?.drugs || 0,
         referral: d.licenseCaps?.referral || 0,
         ezla: d.licenseCaps?.ezla || 0,
         eligibility: d.licenseCaps?.eligibility || 0,
       });
       if (licensesRes?.success) {
         setLicenseSnapshot(licensesRes.data);
+      }
+      if (doctorsRes?.success) {
+        setLicenseDoctors(doctorsRes.data?.doctors || []);
       }
     } catch (err) {
       console.error(err);
@@ -220,6 +237,31 @@ const EhealthIntegrationsPage = () => {
       toast.error("Nie udało się zapisać limitów");
     } finally {
       hideLoader();
+    }
+  };
+
+  const handleDoctorAccess = async (doctorId, service, enabled) => {
+    const key = `${doctorId}:${service}`;
+    const previous = licenseDoctors;
+    setSavingAccessKey(key);
+    setLicenseDoctors((rows) =>
+      rows.map((row) =>
+        String(row.id) === String(doctorId)
+          ? { ...row, access: { ...row.access, [service]: enabled } }
+          : row
+      )
+    );
+    try {
+      const res = await ehealthAdminHelper.saveDoctorAccess(doctorId, { [service]: enabled });
+      if (!res?.success) {
+        throw new Error(res?.error?.message || "Save failed");
+      }
+    } catch (err) {
+      console.error(err);
+      setLicenseDoctors(previous);
+      toast.error("Nie udało się zmienić dostępu lekarza");
+    } finally {
+      setSavingAccessKey("");
     }
   };
 
@@ -710,6 +752,63 @@ const EhealthIntegrationsPage = () => {
             <Save size={16} />
             Zapisz limity
           </button>
+
+          <div className="pt-2">
+            <h3 className="text-sm font-semibold text-gray-800 mb-1">Dostęp lekarzy</h3>
+            <p className="text-xs text-gray-500 mb-3">
+              Włączenie usługi nie zużywa licencji. Licznik miesiąca rośnie dopiero przy pierwszym użyciu.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 border-b">
+                    <th className="py-2 pr-3 font-medium">Lekarz</th>
+                    {Object.entries(SERVICE_LABELS).map(([service, label]) => (
+                      <th key={service} className="py-2 px-2 font-medium whitespace-nowrap">
+                        {label}
+                      </th>
+                    ))}
+                    <th className="py-2 pl-2 font-medium">Użycie w miesiącu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {licenseDoctors.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="py-4 text-gray-500">
+                        Brak aktywnych lekarzy.
+                      </td>
+                    </tr>
+                  )}
+                  {licenseDoctors.map((doctor) => (
+                    <tr key={doctor.id} className="border-b border-gray-100">
+                      <td className="py-2 pr-3 text-gray-800 whitespace-nowrap">{doctor.name}</td>
+                      {Object.keys(SERVICE_LABELS).map((service) => {
+                        const key = `${doctor.id}:${service}`;
+                        return (
+                          <td key={service} className="py-2 px-2 text-center">
+                            <input
+                              type="checkbox"
+                              checked={doctor.access?.[service] !== false}
+                              disabled={savingAccessKey === key}
+                              aria-label={`${doctor.name} ${SERVICE_LABELS[service]}`}
+                              onChange={(e) => handleDoctorAccess(doctor.id, service, e.target.checked)}
+                            />
+                          </td>
+                        );
+                      })}
+                      <td className="py-2 pl-2 text-gray-600">
+                        {doctor.usedServices?.length
+                          ? doctor.usedServices
+                              .map((service) => `${USAGE_SHORT[service] || service}: użyto`)
+                              .join("; ")
+                          : "Nie użyto"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
     </div>

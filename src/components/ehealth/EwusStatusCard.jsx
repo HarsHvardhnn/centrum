@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import { STATUS_LABELS, statusClass } from "./ehealthStatus";
 
-const EwusStatusCard = ({ pesel, patientId, visitId, compact = false }) => {
+const EwusStatusCard = ({ pesel, patientId, visitId, compact = false, inline = false }) => {
   const [doc, setDoc] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -37,6 +37,29 @@ const EwusStatusCard = ({ pesel, patientId, visitId, compact = false }) => {
   };
 
   const status = doc?.status || "not_checked";
+
+  const checkButton = (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => check(doc ? "recheck" : "manual")}
+      className="px-3 py-1.5 bg-teal-700 text-white rounded text-xs font-medium disabled:opacity-50"
+    >
+      {busy ? "Sprawdzam…" : doc ? "Sprawdź ponownie" : "Sprawdź uprawnienia"}
+    </button>
+  );
+
+  if (inline) {
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm text-gray-600 shrink-0">eWUŚ — uprawnienia NFZ</span>
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusClass(status)}`}>
+          {STATUS_LABELS[status] || status}
+        </span>
+        {checkButton}
+      </div>
+    );
+  }
 
   return (
     <div className={`bg-white rounded-lg border border-gray-200 ${compact ? "p-3" : "p-4"}`}>
