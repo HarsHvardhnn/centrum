@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
+import PrescriptionComposer from "./PrescriptionComposer";
+import ReferralForm from "./ReferralForm";
+import EzlaForm from "./EzlaForm";
 import {
   SERVICE_LABELS,
   STATUS_LABELS,
@@ -13,6 +16,47 @@ import {
   accessCodeOf,
 } from "./ehealthStatus";
 
+function drugKey(drug) {
+  return String(drug?.ean || drug?.id || drug?.name || "");
+}
+
+export function DrugSuggestions({ historyDrugs = [], catalogDrugs = [], showHistory = false, onPick }) {
+  const historyKeys = new Set(historyDrugs.map(drugKey));
+  const catalog = catalogDrugs.filter((drug) => !historyKeys.has(drugKey(drug)));
+  if ((!showHistory || historyDrugs.length === 0) && catalog.length === 0) return null;
+
+  const renderDrug = (drug) => (
+    <button
+      key={drugKey(drug)}
+      type="button"
+      onClick={() => onPick(drug)}
+      className="w-full text-left p-3 border rounded-lg hover:border-teal-600"
+    >
+      <div className="font-medium text-sm">{drug.name}</div>
+      <div className="text-xs text-gray-500">
+        {[drug.activeSubstance, drug.package, drug.ean ? `EAN ${drug.ean}` : ""].filter(Boolean).join(" · ")}
+      </div>
+    </button>
+  );
+
+  return (
+    <div className="space-y-3">
+      {showHistory && historyDrugs.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-gray-500">Z historii wizyt</p>
+          {historyDrugs.map(renderDrug)}
+        </div>
+      )}
+      {catalog.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-gray-500">Baza leków</p>
+          {catalog.map(renderDrug)}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const EhealthDocumentPanel = ({
   open,
   onClose,
@@ -20,54 +64,17 @@ const EhealthDocumentPanel = ({
   visitId,
   patientId,
   onDocumentsChanged,
+  initialPayload,
+  diagnoses,
 }) => {
-  const [step, setStep] = useState(1);
-  const [query, setQuery] = useState("");
-  const [drugs, setDrugs] = useState([]);
-  const [searching, setSearching] = useState(false);
-  const [selectedDrug, setSelectedDrug] = useState(null);
-  const [quantity, setQuantity] = useState("1");
-  const [dosage, setDosage] = useState("");
-  const [specialty, setSpecialty] = useState("");
-  const [reason, setReason] = useState("");
-  const [urgency, setUrgency] = useState("planowe");
-  const [ezlaFrom, setEzlaFrom] = useState("");
-  const [ezlaTo, setEzlaTo] = useState("");
-  const [insurancePlace, setInsurancePlace] = useState("ZUS");
-  const [familyCare, setFamilyCare] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [submitError, setSubmitError] = useState(null);
-  const [isMock, setIsMock] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    ehealthHelper
-      .runtime()
-      .then((res) => {
-        const row = (res?.data?.services || []).find((s) => s.service === service);
-        setIsMock((row?.provider || res?.data?.defaultProvider) === "mock");
-      })
-      .catch(() => setIsMock(false));
-  }, [open, service]);
 
   if (!open) return null;
 
   const title = SERVICE_LABELS[service] || service;
   const reset = () => {
-    setStep(1);
-    setQuery("");
-    setDrugs([]);
-    setSelectedDrug(null);
-    setQuantity("1");
-    setDosage("");
-    setSpecialty("");
-    setReason("");
-    setUrgency("planowe");
-    setEzlaFrom("");
-    setEzlaTo("");
-    setInsurancePlace("ZUS");
-    setFamilyCare(false);
     setResult(null);
     setSubmitError(null);
   };
@@ -77,19 +84,6 @@ const EhealthDocumentPanel = ({
   const handleClose = () => {
     reset();
     onClose?.();
-  };
-
-  const searchDrugs = async () => {
-    try {
-      setSearching(true);
-      const res = await ehealthHelper.searchDrugs(query);
-      if (!res?.success) throw new Error(res?.error?.message || "Szukanie nieudane");
-      setDrugs(res.data || []);
-    } catch (err) {
-      toast.error(unwrapEhealthError(err).message);
-    } finally {
-      setSearching(false);
-    }
   };
 
   const applyResult = (doc) => {
@@ -103,7 +97,7 @@ const EhealthDocumentPanel = ({
     toast.success(`${title}: ${STATUS_LABELS[doc?.status] || doc?.status}`);
   };
 
-  const submit = async (simulate) => {
+  const submit = async (payload) => {
     if (!visitId || !patientId) {
       toast.error("Brak wizyty lub pacjenta — otwórz kartę wizyty");
       return;
@@ -111,25 +105,13 @@ const EhealthDocumentPanel = ({
     try {
       setBusy(true);
       setSubmitError(null);
-      let res;
-      const common = { visitId, patientId, simulate };
-      if (service === "prescription") {
-        res = await ehealthHelper.submitPrescription({
-          ...common,
-          payload: { drug: selectedDrug, quantity, dosage },
-        });
-      } else if (service === "referral") {
-        res = await ehealthHelper.submitReferral({
-          ...common,
-          payload: { specialty, reason, urgency },
-        });
-      } else {
-        res = await ehealthHelper.submitEzla({
-          ...common,
-          payload: { from: ezlaFrom, to: ezlaTo, insurancePlace, familyCare },
-        });
-      }
+      const common = { visitId, patientId, payload };
+      const res =
+        service === "referral"
+          ? await ehealthHelper.submitReferral(common)
+          : await ehealthHelper.submitEzla(common);
       if (!res?.success) throw new Error(res?.error?.message || "Wystawianie nieudane");
+      if (res.licenseWarning) toast.warning(res.licenseWarning);
       applyResult(res.data);
     } catch (err) {
       const parsed = unwrapEhealthError(err);
@@ -217,190 +199,21 @@ const EhealthDocumentPanel = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {service === "prescription" && !result && (
-            <>
-              <div className="flex gap-2 text-xs text-gray-500">
-                <span className={step === 1 ? "font-semibold text-teal-700" : ""}>1. Lek</span>
-                <span className={step === 2 ? "font-semibold text-teal-700" : ""}>2. Dawka</span>
-                <span className={step === 3 ? "font-semibold text-teal-700" : ""}>3. Potwierdź</span>
-              </div>
-              {step === 1 && (
-                <>
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Szukaj leku (np. para)"
-                    className="w-full p-3 border rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={searchDrugs}
-                    disabled={searching}
-                    className="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm"
-                  >
-                    {searching ? "Szukam…" : "Szukaj"}
-                  </button>
-                  <div className="space-y-2">
-                    {drugs.map((d) => (
-                      <button
-                        key={d.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedDrug(d);
-                          setStep(2);
-                        }}
-                        className="w-full text-left p-3 border rounded-lg hover:border-teal-600"
-                      >
-                        <div className="font-medium text-sm">{d.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {d.activeSubstance} · {d.package} · EAN {d.ean}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-              {step === 2 && (
-                <>
-                  <div className="text-sm text-gray-700">{selectedDrug?.name}</div>
-                  <label className="block text-sm">
-                    Ilość
-                    <input
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                      className="mt-1 w-full p-3 border rounded-lg"
-                    />
-                  </label>
-                  <label className="block text-sm">
-                    Dawkowanie
-                    <input
-                      value={dosage}
-                      onChange={(e) => setDosage(e.target.value)}
-                      placeholder="np. 1×3"
-                      className="mt-1 w-full p-3 border rounded-lg"
-                    />
-                  </label>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => setStep(1)} className="px-3 py-2 border rounded-lg text-sm">
-                      Wstecz
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setStep(3)}
-                      className="px-3 py-2 bg-teal-700 text-white rounded-lg text-sm"
-                    >
-                      Dalej
-                    </button>
-                  </div>
-                </>
-              )}
-              {step === 3 && (
-                <>
-                  <div className="text-sm bg-gray-50 p-3 rounded-lg">
-                    {selectedDrug?.name}<br />
-                    Ilość: {quantity}<br />
-                    Dawkowanie: {dosage || "—"}
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => submit()}
-                      className="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm"
-                    >
-                      Wystaw
-                    </button>
-                    {isMock && (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => submit("fail")}
-                        className="px-3 py-2 border rounded-lg text-sm text-gray-600"
-                      >
-                        Symuluj błąd
-                      </button>
-                    )}
-                  </div>
-                </>
-              )}
-            </>
+          {service === "prescription" && (
+            <PrescriptionComposer
+              visitId={visitId}
+              patientId={patientId}
+              onDocumentsChanged={notifyChanged}
+              initialPayload={initialPayload}
+            />
           )}
 
           {service === "referral" && !result && (
-            <>
-              <label className="block text-sm">
-                Specjalizacja / usługa
-                <input
-                  value={specialty}
-                  onChange={(e) => setSpecialty(e.target.value)}
-                  className="mt-1 w-full p-3 border rounded-lg"
-                />
-              </label>
-              <label className="block text-sm">
-                Powód
-                <textarea
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  className="mt-1 w-full p-3 border rounded-lg"
-                  rows={3}
-                />
-              </label>
-              <label className="block text-sm">
-                Pilność
-                <select
-                  value={urgency}
-                  onChange={(e) => setUrgency(e.target.value)}
-                  className="mt-1 w-full p-3 border rounded-lg"
-                >
-                  <option value="planowe">Planowe</option>
-                  <option value="pilne">Pilne</option>
-                </select>
-              </label>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => submit()}
-                className="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm"
-              >
-                Wystaw skierowanie
-              </button>
-            </>
+            <ReferralForm busy={busy} onIssue={submit} diagnoses={diagnoses} initialPayload={initialPayload} />
           )}
 
           {service === "ezla" && !result && (
-            <>
-              <div className="p-3 rounded-lg bg-amber-50 text-amber-800 text-sm">
-                Certyfikat ZUS jest w Medfile — CM7MED nie przechowuje PIN/PFX.
-              </div>
-              <label className="block text-sm">
-                Od
-                <input type="date" value={ezlaFrom} onChange={(e) => setEzlaFrom(e.target.value)} className="mt-1 w-full p-3 border rounded-lg" />
-              </label>
-              <label className="block text-sm">
-                Do
-                <input type="date" value={ezlaTo} onChange={(e) => setEzlaTo(e.target.value)} className="mt-1 w-full p-3 border rounded-lg" />
-              </label>
-              <label className="block text-sm">
-                Miejsce ubezpieczenia
-                <select value={insurancePlace} onChange={(e) => setInsurancePlace(e.target.value)} className="mt-1 w-full p-3 border rounded-lg">
-                  <option value="ZUS">ZUS</option>
-                  <option value="KRUS">KRUS</option>
-                  <option value="inne">Inne</option>
-                </select>
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={familyCare} onChange={(e) => setFamilyCare(e.target.checked)} />
-                Opieka nad członkiem rodziny
-              </label>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => submit()}
-                className="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm"
-              >
-                Wystaw e-ZLA
-              </button>
-            </>
+            <EzlaForm busy={busy} patientId={patientId} onIssue={submit} initialPayload={initialPayload} />
           )}
 
           {submitError && !result && (

@@ -17,6 +17,7 @@ export const TestsSection = ({
   onRemoveTest,
   visitId,
   patientId,
+  diagnoses = [],
   onDocumentsChanged,
   className = "",
 }) => {
@@ -390,6 +391,7 @@ export const TestsSection = ({
         service="referral"
         visitId={visitId}
         patientId={patientId}
+        diagnoses={diagnoses}
         onDocumentsChanged={onDocumentsChanged}
       />
     </div>

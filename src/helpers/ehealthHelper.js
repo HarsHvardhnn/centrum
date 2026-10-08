@@ -24,6 +24,33 @@ export function unwrapEhealthError(err) {
   };
 }
 
+export function drugsFromHistory(rows) {
+  const seen = new Set();
+  const drugs = [];
+  for (const row of rows || []) {
+    const fromItems = Array.isArray(row?.payload?.items) ? row.payload.items.map((item) => item?.drug) : [];
+    const candidates = row?.service === "prescription" ? [...fromItems, row.payload?.drug] : [];
+    for (const drug of candidates) {
+      if (!drug?.name && !drug?.activeSubstance) continue;
+      const key = String(drug.ean || drug.id || `${drug.name}|${drug.activeSubstance}`);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      drugs.push({ ...drug, fromHistory: true });
+    }
+  }
+  return drugs;
+}
+
+export function drugMatches(drug, term) {
+  const q = String(term || "").trim().toLowerCase();
+  if (q.length < 1 || !drug) return false;
+  return [drug.name, drug.activeSubstance, drug.ean, drug.code]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+    .includes(q);
+}
+
 function pathFor(service) {
   return SERVICE_PATH[service] || service;
 }
@@ -106,6 +133,14 @@ const ehealthHelper = {
     return apiCaller("POST", "/api/ehealth/ezla", body).then(unwrap);
   },
 
+  ezlaContext(patientId, institution) {
+    const params = new URLSearchParams({
+      patientId: String(patientId || ""),
+      institution: institution || "ZUS",
+    });
+    return apiCaller("GET", `/api/ehealth/ezla/context?${params.toString()}`).then(unwrap);
+  },
+
   retryEzla(id) {
     return apiCaller("POST", `/api/ehealth/ezla/${id}/retry`, { retry: true }).then(unwrap);
   },
@@ -145,12 +180,25 @@ const ehealthHelper = {
     return apiCaller("POST", "/api/ehealth/ewus/check", body).then(unwrap);
   },
 
-  history({ visitId, patientId } = {}) {
+  history(filters = {}) {
     const params = new URLSearchParams();
-    if (visitId) params.set("visitId", visitId);
-    if (patientId) params.set("patientId", patientId);
+    ["visitId", "patientId", "service", "status", "doctorId", "from", "to", "q", "mine"].forEach((key) => {
+      if (filters[key]) params.set(key, String(filters[key]));
+    });
     const q = params.toString();
     return apiCaller("GET", `/api/ehealth/history${q ? `?${q}` : ""}`).then(unwrap);
+  },
+
+  referralReadout({ code, pesel, key }) {
+    const params = new URLSearchParams();
+    if (code) params.set("code", code);
+    if (pesel) params.set("pesel", pesel);
+    if (key) params.set("key", key);
+    return apiCaller("GET", `/api/ehealth/referrals/readout?${params.toString()}`).then(unwrap);
+  },
+
+  referralRealize(body) {
+    return apiCaller("POST", "/api/ehealth/referrals/realize", body).then(unwrap);
   },
 };
 

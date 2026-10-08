@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
+import EhealthDocumentPanel from "./EhealthDocumentPanel";
 import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import {
@@ -16,6 +17,13 @@ const EhealthHistoryPage = () => {
   const [searchParams] = useSearchParams();
   const [visitId, setVisitId] = useState(searchParams.get("visitId") || "");
   const [patientId, setPatientId] = useState(searchParams.get("patientId") || "");
+  const [service, setService] = useState(searchParams.get("service") || "");
+  const [status, setStatus] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [q, setQ] = useState("");
+  const [mine, setMine] = useState(false);
+  const [copy, setCopy] = useState(null);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState("");
@@ -26,6 +34,12 @@ const EhealthHistoryPage = () => {
       const res = await ehealthHelper.history({
         visitId: visitId || undefined,
         patientId: patientId || undefined,
+        service: service || undefined,
+        status: status || undefined,
+        from: from || undefined,
+        to: to || undefined,
+        q: q || undefined,
+        mine: mine ? "1" : undefined,
       });
       if (!res?.success) throw new Error(res?.error?.message || "Błąd historii");
       setRows(res.data || []);
@@ -73,6 +87,28 @@ const EhealthHistoryPage = () => {
           placeholder="ID pacjenta"
           className="p-2 border rounded-lg text-sm"
         />
+        <select value={service} onChange={(e) => setService(e.target.value)} className="p-2 border rounded-lg text-sm">
+          <option value="">Wszystkie usługi</option>
+          <option value="prescription">e-Recepta</option>
+          <option value="referral">e-Skierowanie</option>
+          <option value="ezla">e-ZLA</option>
+          <option value="eligibility">eWUŚ</option>
+        </select>
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className="p-2 border rounded-lg text-sm">
+          <option value="">Wszystkie statusy</option>
+          <option value="action">Szkice / do działania</option>
+          <option value="failed">Błędy / retry</option>
+          <option value="issued">Wystawione</option>
+          <option value="cancelled">Anulowane</option>
+          <option value="draft">Sprawdzone</option>
+        </select>
+        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="p-2 border rounded-lg text-sm" />
+        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="p-2 border rounded-lg text-sm" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Lek, kod, rozpoznanie" className="p-2 border rounded-lg text-sm" />
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} />
+          Moje
+        </label>
         <button
           type="button"
           onClick={load}
@@ -141,6 +177,11 @@ const EhealthHistoryPage = () => {
                     </td>
                     <td className="p-3">
                       <div className="flex flex-wrap gap-1">
+                        {row.service !== "eligibility" && row.visitId && row.patientId && (
+                          <button type="button" className="px-2 py-1 text-xs border rounded" onClick={() => setCopy(row)}>
+                            Kopiuj jako szkic
+                          </button>
+                        )}
                         {canRetry(row) && (
                           <button
                             type="button"
@@ -199,6 +240,15 @@ const EhealthHistoryPage = () => {
           </table>
         </div>
       )}
+      <EhealthDocumentPanel
+        open={Boolean(copy)}
+        onClose={() => setCopy(null)}
+        service={copy?.service || "prescription"}
+        visitId={copy?.visitId}
+        patientId={copy?.patientId}
+        initialPayload={copy?.payload}
+        onDocumentsChanged={load}
+      />
     </div>
   );
 };

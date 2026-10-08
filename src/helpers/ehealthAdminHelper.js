@@ -22,10 +22,41 @@ const ehealthAdminHelper = {
     return response.data;
   },
 
-  async saveLicenses(licenseCaps) {
-    const response = await apiCaller("PUT", "/api/ehealth/admin/licenses", {
-      licenseCaps,
+  async saveLicenses(body) {
+    const payload = body.licenseCaps ? body : { licenseCaps: body };
+    const response = await apiCaller("PUT", "/api/ehealth/admin/licenses", payload);
+    return response.data;
+  },
+
+  async exportLicenses() {
+    const response = await apiCaller("GET", "/api/ehealth/admin/licenses/export");
+    return response.data;
+  },
+
+  async saveDoctorPractitioner(doctorId, body) {
+    const response = await apiCaller(
+      "PUT",
+      `/api/ehealth/admin/licenses/doctors/${doctorId}/practitioner`,
+      body
+    );
+    return response.data;
+  },
+
+  async approveLicense(doctorId, service) {
+    const response = await apiCaller("POST", "/api/ehealth/admin/licenses/approvals", {
+      doctorId,
+      service,
     });
+    return response.data;
+  },
+
+  async getAudit() {
+    const response = await apiCaller("GET", "/api/ehealth/admin/audit");
+    return response.data;
+  },
+
+  async getQueue() {
+    const response = await apiCaller("GET", "/api/ehealth/admin/queue");
     return response.data;
   },
 

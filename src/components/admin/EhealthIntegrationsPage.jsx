@@ -75,6 +75,11 @@ const EhealthIntegrationsPage = () => {
   });
   const [licenseSnapshot, setLicenseSnapshot] = useState(null);
   const [licenseDoctors, setLicenseDoctors] = useState([]);
+  const [warningPercent, setWarningPercent] = useState(80);
+  const [overCapMode, setOverCapMode] = useState({});
+  const [auditRows, setAuditRows] = useState([]);
+  const [configAudit, setConfigAudit] = useState([]);
+  const [queueRows, setQueueRows] = useState([]);
   const [savingAccessKey, setSavingAccessKey] = useState("");
   const [testing, setTesting] = useState(false);
   const [creatingOrg, setCreatingOrg] = useState(false);
@@ -103,10 +108,12 @@ const EhealthIntegrationsPage = () => {
       setLoading(true);
       setError(null);
       showLoader();
-      const [settingsRes, licensesRes, doctorsRes] = await Promise.all([
+      const [settingsRes, licensesRes, doctorsRes, auditRes, queueRes] = await Promise.all([
         ehealthAdminHelper.getSettings(),
         ehealthAdminHelper.getLicenses(),
         ehealthAdminHelper.getLicenseDoctors(),
+        ehealthAdminHelper.getAudit(),
+        ehealthAdminHelper.getQueue(),
       ]);
       if (!settingsRes?.success) {
         throw new Error(settingsRes?.error?.message || "Nie udało się pobrać ustawień");
@@ -140,9 +147,18 @@ const EhealthIntegrationsPage = () => {
       if (licensesRes?.success) {
         setLicenseSnapshot(licensesRes.data);
       }
+      if (d.licensePolicy) {
+        setWarningPercent(d.licensePolicy.warningPercent || 80);
+        setOverCapMode(d.licensePolicy.overCapMode || {});
+      }
       if (doctorsRes?.success) {
         setLicenseDoctors(doctorsRes.data?.doctors || []);
       }
+      if (auditRes?.success) {
+        setAuditRows(auditRes.data?.events || []);
+        setConfigAudit(auditRes.data?.config || []);
+      }
+      if (queueRes?.success) setQueueRows(queueRes.data || []);
     } catch (err) {
       console.error(err);
       setError("Nie udało się pobrać ustawień integracji e-Zdrowie.");
@@ -225,7 +241,10 @@ const EhealthIntegrationsPage = () => {
   const handleSaveLicenses = async () => {
     try {
       showLoader();
-      const res = await ehealthAdminHelper.saveLicenses(licenseCaps);
+      const res = await ehealthAdminHelper.saveLicenses({
+        licenseCaps,
+        licensePolicy: { warningPercent, overCapMode },
+      });
       if (!res?.success) {
         throw new Error(res?.error?.message || "Save failed");
       }
@@ -725,11 +744,26 @@ const EhealthIntegrationsPage = () => {
                       className="w-full p-2 border border-gray-300 rounded-lg"
                     />
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 space-y-2">
+                    <label className="block text-xs text-gray-500">
+                      Po przekroczeniu
+                      <select
+                        value={overCapMode[service] || "block"}
+                        onChange={(e) => setOverCapMode({ ...overCapMode, [service]: e.target.value })}
+                        className="mt-1 w-full p-2 border border-gray-300 rounded-lg"
+                      >
+                        <option value="notify">Tylko powiadom</option>
+                        <option value="approval">Wymagaj zgody</option>
+                        <option value="block">Blokuj</option>
+                      </select>
+                    </label>
                     Użyte: <strong>{snap?.uniqueDoctors ?? 0}</strong>
                     {snap?.cap > 0 && (
                       <>
                         {" "}/ {snap.cap}
+                        {snap.nearWarning && !snap.overCap && (
+                          <span className="ml-2 text-amber-700 font-medium">próg {warningPercent}%</span>
+                        )}
                         {snap.overCap && (
                           <span className="ml-2 text-red-600 font-medium">ponad limit</span>
                         )}
@@ -744,14 +778,48 @@ const EhealthIntegrationsPage = () => {
             })}
           </div>
 
-          <button
-            type="button"
-            onClick={handleSaveLicenses}
-            className="px-4 py-2 bg-teal-700 text-white rounded-lg flex items-center gap-2 hover:bg-teal-800"
-          >
-            <Save size={16} />
-            Zapisz limity
-          </button>
+          <label className="block text-sm text-gray-700 max-w-xs">
+            Próg ostrzeżenia (%)
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={warningPercent}
+              onChange={(e) => setWarningPercent(Math.min(100, Math.max(1, parseInt(e.target.value, 10) || 80)))}
+              className="mt-1 w-full p-2 border border-gray-300 rounded-lg"
+            />
+          </label>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleSaveLicenses}
+              className="px-4 py-2 bg-teal-700 text-white rounded-lg flex items-center gap-2 hover:bg-teal-800"
+            >
+              <Save size={16} />
+              Zapisz limity
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const csv = await ehealthAdminHelper.exportLicenses();
+                  const blob = new Blob([typeof csv === "string" ? csv : ""], { type: "text/csv" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "medfile-licenses.csv";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                } catch (err) {
+                  toast.error("Nie udało się pobrać CSV");
+                }
+              }}
+              className="px-4 py-2 border border-teal-700 text-teal-800 rounded-lg text-sm"
+            >
+              Pobierz CSV
+            </button>
+          </div>
 
           <div className="pt-2">
             <h3 className="text-sm font-semibold text-gray-800 mb-1">Dostęp lekarzy</h3>
@@ -781,7 +849,29 @@ const EhealthIntegrationsPage = () => {
                   )}
                   {licenseDoctors.map((doctor) => (
                     <tr key={doctor.id} className="border-b border-gray-100">
-                      <td className="py-2 pr-3 text-gray-800 whitespace-nowrap">{doctor.name}</td>
+                      <td className="py-2 pr-3 text-gray-800">
+                        <div className="whitespace-nowrap">{doctor.name}</div>
+                        <input
+                          defaultValue={doctor.npwz || ""}
+                          placeholder="PWZ"
+                          className="mt-1 w-28 p-1 border rounded text-xs"
+                          onBlur={(e) => {
+                            if (e.target.value === (doctor.npwz || "")) return;
+                            ehealthAdminHelper.saveDoctorPractitioner(doctor.id, { npwz: e.target.value });
+                          }}
+                        />
+                        <input
+                          defaultValue={doctor.medfilePractitionerId || ""}
+                          placeholder="ID Medfile"
+                          className="mt-1 w-40 p-1 border rounded text-xs"
+                          onBlur={(e) => {
+                            if (e.target.value === (doctor.medfilePractitionerId || "")) return;
+                            ehealthAdminHelper.saveDoctorPractitioner(doctor.id, {
+                              medfilePractitionerId: e.target.value,
+                            });
+                          }}
+                        />
+                      </td>
                       {Object.keys(SERVICE_LABELS).map((service) => {
                         const key = `${doctor.id}:${service}`;
                         return (
@@ -797,17 +887,60 @@ const EhealthIntegrationsPage = () => {
                         );
                       })}
                       <td className="py-2 pl-2 text-gray-600">
-                        {doctor.usedServices?.length
-                          ? doctor.usedServices
-                              .map((service) => `${USAGE_SHORT[service] || service}: użyto`)
-                              .join("; ")
+                        {doctor.usage?.length
+                          ? doctor.usage.map((row) => (
+                              <div key={row.service} className="text-xs">
+                                {USAGE_SHORT[row.service] || row.service}: {row.requestCount || 1}× {row.lastResult || "użyto"}
+                                {row.lastExternalId ? ` · ${row.lastExternalId}` : ""}
+                              </div>
+                            ))
                           : "Nie użyto"}
+                        {Object.entries(overCapMode)
+                          .filter(([, mode]) => mode === "approval")
+                          .map(([service]) => (
+                            <button
+                              key={service}
+                              type="button"
+                              className="mt-1 block text-xs text-teal-800 underline"
+                              onClick={() =>
+                                ehealthAdminHelper
+                                  .approveLicense(doctor.id, service)
+                                  .then(() => toast.success("Zgoda zapisana"))
+                              }
+                            >
+                              Zgoda: {SERVICE_LABELS[service]}
+                            </button>
+                          ))}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+          </div>
+
+          <div className="pt-4 space-y-2">
+            <h3 className="text-sm font-semibold text-gray-800">Kolejka błędów i ponowień</h3>
+            {queueRows.length === 0 && <p className="text-xs text-gray-500">Brak dokumentów do ponowienia.</p>}
+            {queueRows.slice(0, 20).map((row) => (
+              <div key={row.id} className="text-xs text-gray-700">
+                {row.service} · {row.status} · {row.error?.message || row.externalId || row.id}
+              </div>
+            ))}
+            <h3 className="text-sm font-semibold text-gray-800 pt-2">Audyt integracji</h3>
+            {auditRows.slice(0, 15).map((row, index) => (
+              <div key={`${row.correlationId}-${index}`} className="text-xs text-gray-600">
+                {row.at ? new Date(row.at).toLocaleString("pl-PL") : ""} · {row.action} · {row.service} · {row.status}
+                {row.errorCategory ? ` · ${row.errorCategory}` : ""}
+              </div>
+            ))}
+            <h3 className="text-sm font-semibold text-gray-800 pt-2">Audyt konfiguracji</h3>
+            {configAudit.slice(0, 10).map((row, index) => (
+              <div key={`${row.action}-${index}`} className="text-xs text-gray-600">
+                {row.at ? new Date(row.at).toLocaleString("pl-PL") : ""} · {row.action}
+                {row.service ? ` · ${row.service}` : ""}
+              </div>
+            ))}
           </div>
         </div>
       )}
