@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import PrescriptionComposer from "../../../../ehealth/PrescriptionComposer";
 
 const SECTION_BG = "bg-white";
 
@@ -7,6 +6,7 @@ export const MedicationsSection = ({
   visitId,
   patientId,
   onDocumentsChanged,
+  onOpenIssue,
   className = "",
 }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -25,11 +25,16 @@ export const MedicationsSection = ({
       </button>
       {!collapsed && (
         <div className="px-5 pb-5">
-          <PrescriptionComposer
-            visitId={visitId}
-            patientId={patientId}
-            onDocumentsChanged={onDocumentsChanged}
-          />
+          <p className="text-sm text-gray-600 mb-3">
+            Leki tej wizyty wystawia się w module e-recepty: formularz Rp/Rpw, kontrola kto–gdzie–kiedy i podpis certyfikatem z komputera.
+          </p>
+          <button
+            type="button"
+            onClick={onOpenIssue}
+            className="px-4 py-2 rounded-lg bg-[#0D5C46] text-white text-sm font-semibold"
+          >
+            Wystaw e-receptę
+          </button>
         </div>
       )}
     </div>

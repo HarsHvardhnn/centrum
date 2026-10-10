@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
-import PrescriptionComposer from "./PrescriptionComposer";
+import EPrescriptionIssueModal from "./EPrescriptionIssueModal";
 import ReferralForm from "./ReferralForm";
 import EzlaForm from "./EzlaForm";
 import {
@@ -66,6 +66,7 @@ const EhealthDocumentPanel = ({
   onDocumentsChanged,
   initialPayload,
   diagnoses,
+  patient,
 }) => {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
@@ -85,6 +86,20 @@ const EhealthDocumentPanel = ({
     reset();
     onClose?.();
   };
+
+  if (service === "prescription") {
+    return (
+      <EPrescriptionIssueModal
+        open
+        onClose={handleClose}
+        visitId={visitId}
+        patientId={patientId}
+        patient={patient}
+        initialPayload={initialPayload}
+        onDocumentsChanged={notifyChanged}
+      />
+    );
+  }
 
   const applyResult = (doc) => {
     setResult(doc);
@@ -199,15 +214,6 @@ const EhealthDocumentPanel = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {service === "prescription" && (
-            <PrescriptionComposer
-              visitId={visitId}
-              patientId={patientId}
-              onDocumentsChanged={notifyChanged}
-              initialPayload={initialPayload}
-            />
-          )}
-
           {service === "referral" && !result && (
             <ReferralForm busy={busy} onIssue={submit} diagnoses={diagnoses} initialPayload={initialPayload} />
           )}

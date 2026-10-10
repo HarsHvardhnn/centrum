@@ -1867,6 +1867,7 @@ const PatientDetailsPage = () => {
                   visitId={currentAppointmentId}
                   patientId={patientData.patient_id || patientData.id}
                   onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
+                  onOpenIssue={() => setIssueService("prescription")}
                 />
                 <TestsSection
                   tests={tests}
@@ -1976,6 +1977,18 @@ const PatientDetailsPage = () => {
         patientId={patientData.patient_id || patientData.id}
         initialPayload={issuePayload}
         diagnoses={diagnoses}
+        patient={{
+          name: `${patientData.name?.first || ""} ${patientData.name?.last || ""}`.trim(),
+          pesel: patientData.govtId || patientData.pesel || patientData.PESEL || "",
+          phone: patientData.phone || "",
+          email: patientData.email || "",
+          birthDate: patientData.birthDate || patientData.dateOfBirth || "",
+          address: typeof patientData.address === "string"
+            ? patientData.address
+            : [patientData.address?.street, patientData.address?.city, patientData.city].filter(Boolean).join(", "),
+          doctorName: typeof user?.name === "string" ? user.name : `${user?.name?.first || ""} ${user?.name?.last || ""}`.trim(),
+          pwz: user?.npwz || "",
+        }}
         onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
       />
 
