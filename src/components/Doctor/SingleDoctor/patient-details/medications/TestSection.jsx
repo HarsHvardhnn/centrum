@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Search, Trash2, Plus, Zap } from "lucide-react";
 import { TestForm } from "./TestForm";
 import EhealthDocumentPanel from "../../../../ehealth/EhealthDocumentPanel";
+import VisitIssuedDocuments from "../../../../ehealth/VisitIssuedDocuments";
 import appointmentHelper from "../../../../../helpers/appointmentHelper";
 
 const SECTION_BG = "bg-white";
@@ -19,6 +20,11 @@ export const TestsSection = ({
   patientId,
   diagnoses = [],
   onDocumentsChanged,
+  onOpenIssue,
+  onCopy,
+  patientPhone,
+  refreshKey = 0,
+  patient,
   className = "",
 }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -376,24 +382,39 @@ export const TestsSection = ({
             </button>
             <button
               type="button"
-              onClick={() => setShowESkierowanieModal(true)}
+              onClick={() => (onOpenIssue ? onOpenIssue() : setShowESkierowanieModal(true))}
               className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded text-sm font-medium hover:bg-teal-700"
             >
               <Zap size={18} />
               Wystaw e-skierowanie
             </button>
           </div>
+          <div className="mt-4">
+            <p className="text-[11px] font-medium tracking-wide text-gray-400 uppercase mb-2">Wystawione podczas tej wizyty</p>
+            <VisitIssuedDocuments
+              service="referral"
+              visitId={visitId}
+              patientId={patientId}
+              patientPhone={patientPhone}
+              refreshKey={refreshKey}
+              onCopy={onCopy}
+              onChanged={onDocumentsChanged}
+            />
+          </div>
         </div>
       )}
-      <EhealthDocumentPanel
-        open={showESkierowanieModal}
-        onClose={() => setShowESkierowanieModal(false)}
-        service="referral"
-        visitId={visitId}
-        patientId={patientId}
-        diagnoses={diagnoses}
-        onDocumentsChanged={onDocumentsChanged}
-      />
+      {!onOpenIssue && (
+        <EhealthDocumentPanel
+          open={showESkierowanieModal}
+          onClose={() => setShowESkierowanieModal(false)}
+          service="referral"
+          visitId={visitId}
+          patientId={patientId}
+          diagnoses={diagnoses}
+          patient={patient}
+          onDocumentsChanged={onDocumentsChanged}
+        />
+      )}
     </div>
   );
 };

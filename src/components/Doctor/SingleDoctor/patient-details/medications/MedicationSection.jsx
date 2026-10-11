@@ -1,12 +1,18 @@
 import React, { useState } from "react";
+import VisitIssuedDocuments from "../../../../ehealth/VisitIssuedDocuments";
 
 const SECTION_BG = "bg-white";
 
 export const MedicationsSection = ({
+  medications = [],
+  onRemoveMedication,
   visitId,
   patientId,
+  patientPhone,
+  refreshKey = 0,
   onDocumentsChanged,
   onOpenIssue,
+  onCopy,
   className = "",
 }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -24,17 +30,37 @@ export const MedicationsSection = ({
         </svg>
       </button>
       {!collapsed && (
-        <div className="px-5 pb-5">
-          <p className="text-sm text-gray-600 mb-3">
-            Leki tej wizyty wystawia się w module e-recepty: formularz Rp/Rpw, kontrola kto–gdzie–kiedy i podpis certyfikatem z komputera.
-          </p>
-          <button
-            type="button"
-            onClick={onOpenIssue}
-            className="px-4 py-2 rounded-lg bg-[#0D5C46] text-white text-sm font-semibold"
-          >
-            Wystaw e-receptę
-          </button>
+        <div className="px-5 pb-5 space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
+              {medications.length > 0 && <span className="text-xs text-gray-500">Z kartoteki:</span>}
+              {medications.map((medication, index) => (
+                <span key={`${medication.name}-${index}`} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200 bg-gray-50 text-xs text-gray-800">
+                  {[medication.name, medication.dosage].filter(Boolean).join(" ")}
+                  <button type="button" onClick={() => onRemoveMedication?.(index)} className="text-gray-400 hover:text-gray-700" aria-label="Usuń z kartoteki">×</button>
+                </span>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={onOpenIssue}
+              className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-emerald-700 text-white text-sm font-semibold hover:bg-emerald-800"
+            >
+              + Nowa e-recepta
+            </button>
+          </div>
+          <div>
+            <p className="text-[11px] font-medium tracking-wide text-gray-400 uppercase mb-2">Wystawione podczas tej wizyty</p>
+            <VisitIssuedDocuments
+              service="prescription"
+              visitId={visitId}
+              patientId={patientId}
+              patientPhone={patientPhone}
+              refreshKey={refreshKey}
+              onCopy={onCopy}
+              onChanged={onDocumentsChanged}
+            />
+          </div>
         </div>
       )}
     </div>

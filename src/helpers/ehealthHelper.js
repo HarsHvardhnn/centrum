@@ -155,19 +155,37 @@ const ehealthHelper = {
     }).then(unwrap);
   },
 
+  async fetchDocumentBlob(service, id) {
+    const res = await axiosInstance.get(`/api/ehealth/${pathFor(service)}/${id}/print`, {
+      responseType: "blob",
+    });
+    const blob = res.data;
+    if (blob?.type && blob.type.includes("json")) {
+      const text = await blob.text();
+      const parsed = JSON.parse(text);
+      throw Object.assign(new Error(parsed?.error?.message || "Podgląd nieudany"), {
+        response: { data: parsed },
+      });
+    }
+    return blob;
+  },
+
+  async previewDocument(service, id) {
+    try {
+      const blob = await this.fetchDocumentBlob(service, id);
+      const objectUrl = URL.createObjectURL(blob);
+      window.open(objectUrl, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 120_000);
+      return { success: true };
+    } catch (err) {
+      const { message } = unwrapEhealthError(err);
+      throw new Error(message);
+    }
+  },
+
   async printDocument(service, id) {
     try {
-      const res = await axiosInstance.get(`/api/ehealth/${pathFor(service)}/${id}/print`, {
-        responseType: "blob",
-      });
-      const blob = res.data;
-      if (blob?.type && blob.type.includes("json")) {
-        const text = await blob.text();
-        const parsed = JSON.parse(text);
-        throw Object.assign(new Error(parsed?.error?.message || "Wydruk nieudany"), {
-          response: { data: parsed },
-        });
-      }
+      const blob = await this.fetchDocumentBlob(service, id);
       printBlob(blob, "Wydruk e-zdrowie");
       return { success: true };
     } catch (err) {

@@ -30,7 +30,6 @@ import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
 import { EzlaSection } from "./medications/EzlaSection";
-import EhealthVisitDocuments from "../../../ehealth/EhealthVisitDocuments";
 import EhealthIssueShortcuts from "../../../ehealth/EhealthIssueShortcuts";
 import ReferralRealizationCard from "../../../ehealth/ReferralRealizationCard";
 import EhealthDocumentPanel from "../../../ehealth/EhealthDocumentPanel";
@@ -1636,9 +1635,6 @@ const PatientDetailsPage = () => {
           visitReasonVerifyLoading={visitReasonVerifyLoading}
           canVerifyVisitReason={canVerifyVisitReason}
           onVerifyVisitReason={handleVerifyVisitReason}
-          ewusPesel={patientData.govtId || patientData.pesel || patientData.PESEL}
-          ewusPatientId={patientData.patient_id || patientData.id}
-          ewusVisitId={currentAppointmentId}
         />
       )}
 
@@ -1653,22 +1649,7 @@ const PatientDetailsPage = () => {
                 patientId: patientData.patientId ?? patientData.patient_id,
               }}
               onShowMoreDetails={handleShowDetails}
-            />
-            <EhealthIssueShortcuts
-              onIssue={(service) => {
-                setIssuePayload(null);
-                setIssueService(service);
-              }}
-            />
-            <ReferralRealizationCard />
-            <EhealthVisitDocuments
-              visitId={currentAppointmentId}
-              patientId={patientData.patient_id || patientData.id}
-              refreshKey={ehealthTick}
-              onCopy={(row) => {
-                setIssuePayload(row.payload || null);
-                setIssueService(row.service);
-              }}
+              ewusPatientId={patientData.patient_id || patientData.id}
             />
             <LifeParamsCard
               patient={patientData}
@@ -1676,11 +1657,24 @@ const PatientDetailsPage = () => {
                 setPatientData((prev) => ({ ...prev, ...updates }))
               }
             />
+            <EhealthIssueShortcuts
+              onIssue={(service) => {
+                setIssuePayload(null);
+                setIssueService(service);
+              }}
+            />
             <VisitHistoryCard
               appointments={appointments}
               currentAppointmentId={currentAppointmentId}
               onSelectVisit={handleAppointmentSelect}
+              patientId={patientData.patient_id || patientData.id}
+              refreshKey={ehealthTick}
+              onCopy={(row) => {
+                setIssuePayload(row.payload || null);
+                setIssueService(row.service);
+              }}
             />
+            <ReferralRealizationCard />
           </div>
 
           {/* Right column */}
@@ -1866,8 +1860,17 @@ const PatientDetailsPage = () => {
                   onRemoveMedication={handleRemoveMedication}
                   visitId={currentAppointmentId}
                   patientId={patientData.patient_id || patientData.id}
+                  patientPhone={patientData.phone}
+                  refreshKey={ehealthTick}
                   onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
-                  onOpenIssue={() => setIssueService("prescription")}
+                  onOpenIssue={() => {
+                    setIssuePayload(null);
+                    setIssueService("prescription");
+                  }}
+                  onCopy={(row) => {
+                    setIssuePayload(row.payload || null);
+                    setIssueService("prescription");
+                  }}
                 />
                 <TestsSection
                   tests={tests}
@@ -1878,13 +1881,33 @@ const PatientDetailsPage = () => {
                   onRemoveTest={handleRemoveTest}
                   visitId={currentAppointmentId}
                   patientId={patientData.patient_id || patientData.id}
+                  patientPhone={patientData.phone}
+                  refreshKey={ehealthTick}
                   diagnoses={diagnoses}
                   onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
+                  onOpenIssue={() => {
+                    setIssuePayload(null);
+                    setIssueService("referral");
+                  }}
+                  onCopy={(row) => {
+                    setIssuePayload(row.payload || null);
+                    setIssueService("referral");
+                  }}
                 />
                 <EzlaSection
                   visitId={currentAppointmentId}
                   patientId={patientData.patient_id || patientData.id}
+                  patientPhone={patientData.phone}
+                  refreshKey={ehealthTick}
                   onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
+                  onOpenIssue={() => {
+                    setIssuePayload(null);
+                    setIssueService("ezla");
+                  }}
+                  onCopy={(row) => {
+                    setIssuePayload(row.payload || null);
+                    setIssueService("ezla");
+                  }}
                 />
               </>
             )}

@@ -5,7 +5,6 @@ import { isRadiologistAppointment } from "../../../../utils/radiologistVisitHelp
 import appointmentHelper from "../../../../helpers/appointmentHelper";
 import VisitReasonCascadeDropdown from "../../../UtilComponents/VisitReasonCascadeDropdown";
 import { toast } from "sonner";
-import EwusStatusCard from "../../../ehealth/EwusStatusCard";
 
 const VisitInfoHeader = ({
   appointment,
@@ -19,9 +18,6 @@ const VisitInfoHeader = ({
   visitReasonVerifyLoading = false,
   canVerifyVisitReason = false,
   onVerifyVisitReason,
-  ewusPesel,
-  ewusPatientId,
-  ewusVisitId,
 }) => {
   const [visitReasonsCategories, setVisitReasonsCategories] = useState([]);
   const [savingVisitType, setSavingVisitType] = useState(false);
@@ -248,12 +244,6 @@ const VisitInfoHeader = ({
           </>
         )}
       </div>
-      <EwusStatusCard
-        inline
-        pesel={ewusPesel}
-        patientId={ewusPatientId}
-        visitId={ewusVisitId}
-      />
     </header>
   );
 };

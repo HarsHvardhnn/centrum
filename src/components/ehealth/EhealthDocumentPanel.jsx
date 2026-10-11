@@ -3,8 +3,8 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import EPrescriptionIssueModal from "./EPrescriptionIssueModal";
-import ReferralForm from "./ReferralForm";
-import EzlaForm from "./EzlaForm";
+import EReferralIssueModal from "./EReferralIssueModal";
+import EZlaIssueModal from "./EZlaIssueModal";
 import {
   SERVICE_LABELS,
   STATUS_LABELS,
@@ -90,6 +90,35 @@ const EhealthDocumentPanel = ({
   if (service === "prescription") {
     return (
       <EPrescriptionIssueModal
+        open
+        onClose={handleClose}
+        visitId={visitId}
+        patientId={patientId}
+        patient={patient}
+        initialPayload={initialPayload}
+        onDocumentsChanged={notifyChanged}
+      />
+    );
+  }
+
+  if (service === "referral") {
+    return (
+      <EReferralIssueModal
+        open
+        onClose={handleClose}
+        visitId={visitId}
+        patientId={patientId}
+        patient={patient}
+        diagnoses={diagnoses}
+        initialPayload={initialPayload}
+        onDocumentsChanged={notifyChanged}
+      />
+    );
+  }
+
+  if (service === "ezla") {
+    return (
+      <EZlaIssueModal
         open
         onClose={handleClose}
         visitId={visitId}
@@ -214,14 +243,6 @@ const EhealthDocumentPanel = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {service === "referral" && !result && (
-            <ReferralForm busy={busy} onIssue={submit} diagnoses={diagnoses} initialPayload={initialPayload} />
-          )}
-
-          {service === "ezla" && !result && (
-            <EzlaForm busy={busy} patientId={patientId} onIssue={submit} initialPayload={initialPayload} />
-          )}
-
           {submitError && !result && (
             <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 space-y-1">
               <div className="font-medium">{ERROR_CODE_LABELS[submitError.code] || "Błąd"}</div>

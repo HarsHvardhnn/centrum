@@ -1,7 +1,8 @@
 import React from "react";
 import { User } from "lucide-react";
+import EwusStatusCard from "../../../ehealth/EwusStatusCard";
 
-const PatientHeaderCard = ({ patient, onShowMoreDetails }) => {
+const PatientHeaderCard = ({ patient, onShowMoreDetails, ewusPatientId }) => {
   const calculateAgeFromBirthDate = (birthDateValue) => {
     if (!birthDateValue) return null;
 
@@ -90,6 +91,12 @@ const PatientHeaderCard = ({ patient, onShowMoreDetails }) => {
             </span>
           </div>
         </div>
+
+        <EwusStatusCard
+          variant="patient"
+          pesel={pesel === "—" ? "" : pesel}
+          patientId={ewusPatientId || patient?.patient_id || patient?.id}
+        />
 
         {/* Action: 90% width, teal text, darker gray hover */}
         <div className="mt-5 flex justify-center">

@@ -66,6 +66,35 @@ function birthFromPesel(pesel) {
   return `${year}-${String(month).padStart(2, "0")}-${day}`;
 }
 
+function copyItems(payload) {
+  const source = Array.isArray(payload?.items) && payload.items.length
+    ? payload.items
+    : payload?.drug
+      ? [payload]
+      : [];
+  return source.map((item) => ({
+    ...blankItem(payload?.form || item.category || "Rp"),
+    drug: item.drug || (item.name ? { name: item.name } : null),
+    quantity: String(item.quantity || "1"),
+    payment: item.payment || "100%",
+    refundCode: item.refundCode || "",
+    dosage: item.dosage || "",
+    frequency: item.frequency || "",
+    periodHours: item.periodHours || "24",
+    durationDays: item.durationDays || "",
+    doseQuantity: item.doseQuantity || "",
+    doseUnit: item.doseUnit || "tabl.",
+    substanceName: item.substanceName || "",
+    substanceQuantity: item.substanceQuantity || "",
+    substanceUnit: item.substanceUnit || "g",
+    substanceWords: item.substanceWords || "",
+    recipeText: item.recipeText || "",
+    patientNote: item.infoForPatient || item.patientNote || "",
+    pharmacyNote: item.infoForPerformer || item.pharmacyNote || "",
+    noSubstitution: Boolean(item.noSubstitution),
+  }));
+}
+
 function blankItem(form) {
   return {
     key: `item-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -159,7 +188,7 @@ export default function EPrescriptionIssueModal({
     entitlement: initialPayload?.entitlement || "",
     entitlementDocument: initialPayload?.entitlementDocument || "",
   }));
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(() => copyItems(initialPayload));
   const [query, setQuery] = useState("");
   const [catalog, setCatalog] = useState([]);
   const [historyDrugs, setHistoryDrugs] = useState([]);
@@ -279,9 +308,11 @@ export default function EPrescriptionIssueModal({
     };
     const res = await ehealthHelper.submitPrescription({ visitId, patientId, payload });
     if (!res?.success) throw new Error(res?.error?.message || "Wystawianie nieudane");
-    setResult(res.data);
     onDocumentsChanged?.();
     if (res.licenseWarning) toast.warning(res.licenseWarning);
+    if (res.data?.status === "failed") toast.error(res.data.error?.message || "E-recepta zapisana z błędem wysyłki.");
+    else toast.success("E-recepta jest na liście dokumentów tej wizyty.");
+    onClose?.();
   };
 
   const cancelResult = async () => {

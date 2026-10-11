@@ -1,48 +1,19 @@
 import React, { useState } from "react";
-import { toast } from "sonner";
-import EzlaForm from "../../../../ehealth/EzlaForm";
-import ehealthHelper, { unwrapEhealthError } from "../../../../../helpers/ehealthHelper";
-import { ERROR_CODE_LABELS, STATUS_LABELS, statusClass } from "../../../../ehealth/ehealthStatus";
+import VisitIssuedDocuments from "../../../../ehealth/VisitIssuedDocuments";
 
 const SECTION_BG = "bg-white";
 
 export const EzlaSection = ({
+  onOpenIssue,
+  onCopy,
   visitId,
   patientId,
+  patientPhone,
+  refreshKey = 0,
   onDocumentsChanged,
   className = "",
 }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState(null);
-  const [submitError, setSubmitError] = useState(null);
-
-  const submit = async (payload) => {
-    if (!visitId || !patientId) {
-      toast.error("Brak wizyty lub pacjenta — otwórz kartę wizyty");
-      return;
-    }
-    try {
-      setBusy(true);
-      setSubmitError(null);
-      const res = await ehealthHelper.submitEzla({ visitId, patientId, payload });
-      if (!res?.success) throw new Error(res?.error?.message || "Wystawianie nieudane");
-      setResult(res.data);
-      onDocumentsChanged?.();
-      if (res.licenseWarning) toast.warning(res.licenseWarning);
-      if (res.data?.status === "failed") {
-        toast.error(res.data.error?.message || "e-ZLA: błąd");
-        return;
-      }
-      toast.success(`e-ZLA: ${STATUS_LABELS[res.data?.status] || res.data?.status}`);
-    } catch (err) {
-      const parsed = unwrapEhealthError(err);
-      setSubmitError(parsed);
-      toast.error(parsed.message);
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <div className={`${SECTION_BG} rounded border border-gray-200 overflow-hidden ${className}`}>
@@ -57,39 +28,28 @@ export const EzlaSection = ({
         </svg>
       </button>
       {!collapsed && (
-        <div className="px-5 pb-5">
-          {result ? (
-            <div className="space-y-3">
-              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${statusClass(result.status)}`}>
-                {STATUS_LABELS[result.status] || result.status}
-              </span>
-              {result.error?.message && (
-                <p className={`text-sm ${result.status === "draft" ? "text-amber-800" : "text-red-700"}`}>
-                  {result.error.message}
-                </p>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  setResult(null);
-                  setSubmitError(null);
-                }}
-                className="text-sm text-teal-700 hover:underline"
-              >
-                Wystaw kolejne
-              </button>
-            </div>
-          ) : (
-            <>
-              <EzlaForm busy={busy} patientId={patientId} onIssue={submit} />
-              {submitError && (
-                <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 space-y-1">
-                  <div className="font-medium">{ERROR_CODE_LABELS[submitError.code] || "Błąd"}</div>
-                  <div>{submitError.message}</div>
-                </div>
-              )}
-            </>
-          )}
+        <div className="px-5 pb-5 space-y-4">
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={onOpenIssue}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-amber-700 text-white text-sm font-semibold hover:bg-amber-800"
+            >
+              + Nowe e-ZLA
+            </button>
+          </div>
+          <div>
+            <p className="text-[11px] font-medium tracking-wide text-gray-400 uppercase mb-2">Wystawione podczas tej wizyty</p>
+            <VisitIssuedDocuments
+              service="ezla"
+              visitId={visitId}
+              patientId={patientId}
+              patientPhone={patientPhone}
+              refreshKey={refreshKey}
+              onCopy={onCopy}
+              onChanged={onDocumentsChanged}
+            />
+          </div>
         </div>
       )}
     </div>

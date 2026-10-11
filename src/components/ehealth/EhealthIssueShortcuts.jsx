@@ -11,7 +11,7 @@ const EhealthIssueShortcuts = ({ onIssue }) => (
   <div className="bg-white rounded-lg border border-gray-200 p-3">
     <div className="text-xs font-medium text-gray-500 mb-2">Wystaw dla tej wizyty</div>
     <div className="grid grid-cols-3 gap-2">
-        {ACTIONS.map(({ service, label, icon: Icon }) => (
+      {ACTIONS.map(({ service, label, icon: Icon }) => (
         <button
           key={service}
           type="button"
