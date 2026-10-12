@@ -2,33 +2,31 @@ import React, { useEffect, useState } from "react";
 import { FileText, Plus, Eye, Printer, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import clinicDocumentsHelper from "../../../../helpers/clinicDocumentsHelper";
+import ClinicDocumentSheet, { printClinicSheet } from "../../../ehealth/ClinicDocumentSheet";
 
-function printDocument(doc, patient, doctorName) {
-  const fields = doc.templateSnapshot?.fields || [];
-  const rows = fields.map((field) => {
-    const value = doc.values?.[field.key] || "—";
-    return `<p><strong>${field.label}</strong><br/>${String(value).replace(/\n/g, "<br/>")}</p>`;
-  }).join("");
-  const html = `<!doctype html><html><head><title>${doc.templateSnapshot?.name || "Dokument"}</title>
-    <style>body{font-family:Arial,sans-serif;padding:32px;color:#111} h1{font-size:20px;margin-bottom:4px} .muted{color:#555;font-size:13px}</style>
-    </head><body>
-    <div class="muted">Centrum Medyczne 7</div>
-    <h1>${doc.templateSnapshot?.name || "Dokument"}</h1>
-    <p class="muted">${doc.documentNumber ? `Nr ${doc.documentNumber}` : "Szkic"} · ${patient?.name || ""} · PESEL ${patient?.pesel || "—"}</p>
-    ${rows}
-    <p class="muted" style="margin-top:40px">Wystawił: ${doctorName || doc.createdByName || ""}</p>
-    <script>window.onload=function(){window.print()}<\/script>
-    </body></html>`;
-  const popup = window.open("", "_blank");
-  if (!popup) {
-    toast.error("Przeglądarka zablokowała okno podglądu.");
-    return;
-  }
-  popup.document.write(html);
-  popup.document.close();
+function sheetProps(doc, patient, doctorName, doctorPwz) {
+  const snapshot = doc.templateSnapshot || doc.template || {};
+  return {
+    title: snapshot.printTitle || snapshot.name,
+    fields: snapshot.fields || [],
+    values: doc.values || {},
+    patient,
+    doctorName: doctorName || doc.createdByName || "",
+    doctorPwz,
+    documentNumber: doc.documentNumber || "",
+    status: doc.status || "draft",
+  };
 }
 
-const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName }) => {
+function visitHintFor(field, hints) {
+  const label = `${field.key || ""} ${field.label || ""}`.toLowerCase();
+  if (!hints) return "";
+  if ((label.includes("rozpozn") || label.includes("icd")) && hints.diagnosis) return hints.diagnosis;
+  if ((label.includes("zalecen") || label.includes("uwag")) && hints.recommendations) return hints.recommendations;
+  return "";
+}
+
+const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorPwz = "", visitHints = {} }) => {
   const [templates, setTemplates] = useState([]);
   const [docs, setDocs] = useState([]);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -61,6 +59,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName }) => {
       template: {
         _id: doc.templateId,
         name: doc.templateSnapshot?.name,
+        printTitle: doc.templateSnapshot?.printTitle || doc.templateSnapshot?.name,
         code: doc.templateSnapshot?.code,
         fields: doc.templateSnapshot?.fields || [],
       },
@@ -140,7 +139,9 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName }) => {
                 {doc.status === "issued" ? <Eye size={14} /> : <Pencil size={14} />}
                 {doc.status === "issued" ? "Otwórz dokument" : "Kontynuuj edycję"}
               </button>
-              <button type="button" onClick={() => printDocument(doc, patient, doctorName)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
+              <button type="button" onClick={() => {
+                if (!printClinicSheet(sheetProps(doc, patient, doctorName, doctorPwz))) toast.error("Przeglądarka zablokowała okno podglądu.");
+              }} className="inline-flex items-center gap-1 text-teal-700 font-medium">
                 <Printer size={14} /> Drukuj
               </button>
             </div>
@@ -173,54 +174,53 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName }) => {
       )}
 
       {draft && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-5 space-y-3">
-            <div className="flex items-start justify-between">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3">
+          <div className="bg-slate-100 rounded-2xl w-full max-w-[980px] h-[92vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="bg-white px-5 py-3 border-b flex items-center justify-between">
               <div>
-                <div className="text-[11px] font-bold text-teal-700">[{draft.template.code}]</div>
-                <h3 className="font-bold text-lg">{draft.template.name}</h3>
-                {draft.documentNumber && <p className="text-xs text-gray-500">Nr {draft.documentNumber}</p>}
+                <div className="text-[11px] font-bold text-teal-700">{draft.template.code ? `[${draft.template.code}]` : "Dokument"}</div>
+                <h3 className="font-bold">{draft.template.printTitle || draft.template.name}</h3>
+                <p className="text-xs text-slate-500">Pisz bezpośrednio na podglądzie. Wydruk pokazuje tę samą stronę.</p>
               </div>
-              <button type="button" onClick={() => setDraft(null)}>×</button>
+              <button type="button" onClick={() => setDraft(null)} className="text-xl leading-none">×</button>
             </div>
-            <p className="text-xs text-gray-500">{patient?.name} · PESEL {patient?.pesel || "—"}</p>
-            {(draft.template.fields || []).map((field) => (
-              <label key={field.key} className="block text-sm">
-                {field.label}{field.required ? " *" : ""}
-                {field.type === "textarea" ? (
-                  <textarea
-                    rows={4}
-                    disabled={draft.status === "issued"}
-                    value={draft.values[field.key] || ""}
-                    onChange={(e) => setDraft({ ...draft, values: { ...draft.values, [field.key]: e.target.value } })}
-                    className="mt-1 w-full border rounded-lg px-3 py-2"
-                  />
-                ) : (
-                  <input
-                    type={field.type === "date" ? "date" : "text"}
-                    disabled={draft.status === "issued"}
-                    value={draft.values[field.key] || ""}
-                    onChange={(e) => setDraft({ ...draft, values: { ...draft.values, [field.key]: e.target.value } })}
-                    className="mt-1 w-full border rounded-lg px-3 py-2"
-                  />
-                )}
-              </label>
-            ))}
-            <div className="flex justify-end gap-2">
+            <div className="flex-1 overflow-y-auto p-4">
+              <ClinicDocumentSheet
+                mode={draft.status === "issued" ? "preview" : "fill"}
+                title={draft.template.printTitle || draft.template.name}
+                fields={draft.template.fields || []}
+                values={draft.values}
+                patient={patient}
+                doctorName={doctorName}
+                doctorPwz={doctorPwz}
+                documentNumber={draft.documentNumber}
+                status={draft.status}
+                visitHint={(field) => visitHintFor(field, visitHints)}
+                onChange={(key, value) => setDraft({ ...draft, values: { ...draft.values, [key]: value } })}
+              />
+            </div>
+            <div className="bg-white px-5 py-3 border-t flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const ok = printClinicSheet(sheetProps({
+                    templateSnapshot: draft.template,
+                    values: draft.values,
+                    documentNumber: draft.documentNumber,
+                    status: draft.status,
+                    createdByName: draft.createdByName,
+                  }, patient, doctorName, doctorPwz));
+                  if (!ok) toast.error("Przeglądarka zablokowała okno podglądu.");
+                }}
+                className="px-4 py-2 border rounded-lg inline-flex items-center gap-1"
+              >
+                <Printer size={14} /> Drukuj
+              </button>
               {draft.status !== "issued" && (
                 <>
                   <button type="button" onClick={() => save("draft")} className="px-4 py-2 border rounded-lg">Zapisz szkic</button>
-                  <button type="button" onClick={() => save("issued")} className="px-4 py-2 bg-[#1b766a] text-white rounded-lg font-semibold">Zatwierdź</button>
+                  <button type="button" onClick={() => save("issued")} className="px-4 py-2 bg-[#1b766a] text-white rounded-lg font-semibold">Zatwierdź dokument</button>
                 </>
-              )}
-              {draft.status === "issued" && (
-                <button
-                  type="button"
-                  onClick={() => printDocument({ ...draft, templateSnapshot: draft.template, values: draft.values, documentNumber: draft.documentNumber }, patient, doctorName)}
-                  className="px-4 py-2 border rounded-lg"
-                >
-                  Drukuj
-                </button>
               )}
             </div>
           </div>

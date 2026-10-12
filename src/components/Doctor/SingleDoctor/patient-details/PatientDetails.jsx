@@ -1845,9 +1845,20 @@ const PatientDetailsPage = () => {
                   visitId={currentAppointmentId}
                   patientId={patientData.patient_id || patientData.id}
                   doctorName={typeof user?.name === "string" ? user.name : `${user?.name?.first || ""} ${user?.name?.last || ""}`.trim()}
+                  doctorPwz={user?.npwz || user?.pwz || ""}
+                  visitHints={{
+                    recommendations: consultationData.recommendations || "",
+                    diagnosis: (diagnoses || []).map((item) => [item.code || item.icd10, item.name || item.description].filter(Boolean).join(" ")).filter(Boolean).join("; "),
+                  }}
                   patient={{
                     name: `${patientData.name?.first || ""} ${patientData.name?.last || ""}`.trim(),
                     pesel: patientData.govtId || patientData.pesel || patientData.PESEL || "",
+                    birthDate: patientData.birthDate || patientData.dateOfBirth || "",
+                    address: [
+                      typeof patientData.address === "string" ? patientData.address : patientData.address?.street,
+                      patientData.pinCode || patientData.address?.postalCode,
+                      patientData.city || patientData.address?.city,
+                    ].filter(Boolean).join(", "),
                   }}
                 />
 

@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FileStack, Plus, Pencil, Trash2 } from "lucide-react";
+import { FileStack, Plus, Pencil, Trash2, X, Printer } from "lucide-react";
 import { toast } from "sonner";
 import clinicDocumentsHelper from "../../helpers/clinicDocumentsHelper";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
+import ClinicDocumentSheet, { printClinicSheet, SAMPLE_PATIENT } from "../ehealth/ClinicDocumentSheet";
 
 const CATEGORIES = [
   { value: "certificate", label: "Zaświadczenia i orzeczenia" },
@@ -13,15 +14,29 @@ const CATEGORIES = [
   { value: "other", label: "Inne dokumenty" },
 ];
 
+const FIELD_TYPES = [
+  ["text", "Krótki tekst"],
+  ["textarea", "Długi tekst"],
+  ["date", "Data"],
+];
+
 const emptyForm = {
   name: "",
+  printTitle: "",
   code: "",
   category: "certificate",
   description: "",
+  active: true,
   doctorAvailability: "all",
   assignedDoctorIds: [],
-  fields: [{ key: "content", label: "Treść", type: "textarea", required: true }],
+  fields: [{ key: "purpose", label: "Cel wydania zaświadczenia", type: "textarea", required: true }],
 };
+
+function codeFromName(name, existing) {
+  if (existing) return existing;
+  const letters = String(name || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z]/g, "").toUpperCase();
+  return `${(letters.slice(0, 6) || "DOK")}-${Date.now().toString().slice(-4)}`;
+}
 
 function categoryLabel(value) {
   return CATEGORIES.find((row) => row.value === value)?.label || value;
@@ -32,6 +47,9 @@ export default function ClinicDocumentTemplatesPage() {
   const [doctors, setDoctors] = useState([]);
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState(null);
+  const [selectedKey, setSelectedKey] = useState("");
+  const [fieldDraft, setFieldDraft] = useState(null);
+  const [printOpen, setPrintOpen] = useState(false);
 
   const load = async () => {
     try {
@@ -53,8 +71,12 @@ export default function ClinicDocumentTemplatesPage() {
   }, [rows, query]);
 
   const save = async () => {
-    if (!editing.name.trim() || !editing.code.trim()) {
-      toast.error("Podaj nazwę i kod wzoru.");
+    if (!editing.name.trim()) {
+      toast.error("Podaj nazwę wzoru.");
+      return;
+    }
+    if (!String(editing.printTitle || "").trim()) {
+      toast.error("Podaj tytuł na wydruku.");
       return;
     }
     const fields = (editing.fields || []).filter((field) => field.label.trim()).map((field, index) => ({
@@ -64,7 +86,12 @@ export default function ClinicDocumentTemplatesPage() {
       required: Boolean(field.required),
     }));
     try {
-      await clinicDocumentsHelper.saveTemplate({ ...editing, fields }, editing._id);
+      await clinicDocumentsHelper.saveTemplate({
+        ...editing,
+        printTitle: editing.printTitle.trim(),
+        code: codeFromName(editing.name, editing.code),
+        fields,
+      }, editing._id);
       toast.success("Zapisano wzór");
       setEditing(null);
       load();
@@ -88,7 +115,10 @@ export default function ClinicDocumentTemplatesPage() {
           </div>
           <button
             type="button"
-            onClick={() => setEditing({ ...emptyForm, fields: emptyForm.fields.map((field) => ({ ...field })) })}
+            onClick={() => {
+              setSelectedKey("purpose");
+              setEditing({ ...emptyForm, fields: emptyForm.fields.map((field) => ({ ...field })) });
+            }}
             className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-emerald-700 text-white text-sm font-semibold"
           >
             <Plus size={16} /> Nowy wzór
@@ -112,7 +142,11 @@ export default function ClinicDocumentTemplatesPage() {
                   {" · "}{row.fields?.length || 0} pól
                 </span>
                 <span className="flex gap-2">
-                  <button type="button" onClick={() => setEditing({ ...row, assignedDoctorIds: (row.assignedDoctorIds || []).map(String) })} className="inline-flex items-center gap-1 text-teal-700 font-medium">
+                  <button type="button" onClick={() => {
+                    const next = { ...row, printTitle: row.printTitle || row.name, active: row.active !== false, assignedDoctorIds: (row.assignedDoctorIds || []).map(String) };
+                    setSelectedKey(next.fields?.[0]?.key || "");
+                    setEditing(next);
+                  }} className="inline-flex items-center gap-1 text-teal-700 font-medium">
                     <Pencil size={14} /> Edytuj
                   </button>
                   <button
@@ -139,83 +173,157 @@ export default function ClinicDocumentTemplatesPage() {
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-5 space-y-3">
-            <h2 className="font-bold text-lg">{editing._id ? "Edytuj wzór" : "Nowy wzór"}</h2>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <label className="text-sm">Nazwa<input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className="mt-1 w-full border rounded-lg px-3 py-2" /></label>
-              <label className="text-sm">Kod<input value={editing.code} onChange={(e) => setEditing({ ...editing, code: e.target.value.toUpperCase() })} className="mt-1 w-full border rounded-lg px-3 py-2" /></label>
+        <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3">
+          <div className="bg-white rounded-2xl w-full max-w-[1280px] h-[92vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="px-6 py-4 border-b flex items-start justify-between">
+              <div>
+                <h2 className="font-bold text-lg">Nowy wzór dokumentu</h2>
+                <p className="text-sm text-slate-500">Zdefiniuj tytuł i pola, które lekarz uzupełni podczas wystawiania dokumentu.</p>
+              </div>
+              <button type="button" onClick={() => setEditing(null)} aria-label="Zamknij"><X size={18} /></button>
             </div>
-            <label className="text-sm block">Kategoria
-              <select value={editing.category} onChange={(e) => setEditing({ ...editing, category: e.target.value })} className="mt-1 w-full border rounded-lg px-3 py-2">
-                {CATEGORIES.map((row) => <option key={row.value} value={row.value}>{row.label}</option>)}
+            <div className="flex-1 grid lg:grid-cols-[380px_minmax(0,1fr)] overflow-hidden">
+              <div className="overflow-y-auto p-5 space-y-4 border-r border-slate-200">
+                <h3 className="text-xs font-bold uppercase tracking-wider">Dane wzoru</h3>
+                <label className="block text-xs font-semibold">Nazwa wzoru *
+                  <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="np. Zaświadczenie do pracy" className="mt-1 w-full border rounded-lg px-3 py-2 font-normal" />
+                  <span className="block font-normal text-slate-500 mt-1">Nazwa administracyjna widoczna na liście wzorów w systemie.</span>
+                </label>
+                <label className="block text-xs font-semibold">Tytuł na wydruku *
+                  <input value={editing.printTitle || ""} onChange={(e) => setEditing({ ...editing, printTitle: e.target.value.toUpperCase() })} placeholder="np. ZAŚWIADCZENIE LEKARSKIE" className="mt-1 w-full border rounded-lg px-3 py-2 font-semibold tracking-wide" />
+                  <span className="block font-normal text-slate-500 mt-1">Ten tekst jest wyśrodkowany jako oficjalny nagłówek dokumentu A4.</span>
+                </label>
+                <label className="block text-xs font-semibold">Kategoria *
+                  <select value={editing.category} onChange={(e) => setEditing({ ...editing, category: e.target.value })} className="mt-1 w-full border rounded-lg px-3 py-2 font-normal bg-white">
+                    {CATEGORIES.map((row) => <option key={row.value} value={row.value}>{row.label}</option>)}
+                  </select>
+                </label>
+                <label className="flex items-start gap-3 p-3 bg-slate-50 border rounded-xl text-xs">
+                  <input type="checkbox" checked={editing.active !== false} onChange={(e) => setEditing({ ...editing, active: e.target.checked })} className="mt-0.5" />
+                  <span><span className="font-bold block">Wzór aktywny</span><span className="text-slate-500">Aktywny wzór będzie dostępny dla personelu placówki zgodnie z uprawnieniami.</span></span>
+                </label>
+                <div className="text-xs font-bold">Dostępność dokumentu dla lekarzy</div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <label className={`p-3 rounded-xl border ${editing.doctorAvailability !== "specific" ? "border-teal-600 bg-teal-50" : "border-slate-200"}`}>
+                    <input type="radio" className="mr-2" checked={editing.doctorAvailability !== "specific"} onChange={() => setEditing({ ...editing, doctorAvailability: "all", assignedDoctorIds: [] })} />
+                    <span className="font-bold">Wszyscy lekarze</span>
+                    <span className="block text-slate-500 mt-1">Wzór dostępny dla całego personelu medycznego placówki.</span>
+                  </label>
+                  <label className={`p-3 rounded-xl border ${editing.doctorAvailability === "specific" ? "border-teal-600 bg-teal-50" : "border-slate-200"}`}>
+                    <input type="radio" className="mr-2" checked={editing.doctorAvailability === "specific"} onChange={() => setEditing({ ...editing, doctorAvailability: "specific" })} />
+                    <span className="font-bold">Wybrani lekarze z listy</span>
+                    <span className="block text-slate-500 mt-1">Dostępny tylko dla lekarzy wskazanych z listy.</span>
+                  </label>
+                </div>
+                {editing.doctorAvailability === "specific" && (
+                  <div className="max-h-28 overflow-y-auto border rounded-lg p-2 space-y-1">
+                    {doctors.map((doctor) => {
+                      const id = String(doctor._id);
+                      const checked = (editing.assignedDoctorIds || []).includes(id);
+                      return (
+                        <label key={id} className="flex items-center gap-2 text-xs">
+                          <input type="checkbox" checked={checked} onChange={() => {
+                            const next = checked ? editing.assignedDoctorIds.filter((item) => item !== id) : [...(editing.assignedDoctorIds || []), id];
+                            setEditing({ ...editing, assignedDoctorIds: next });
+                          }} />
+                          {doctor.name}
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider">Pola dokumentu</h3>
+                  <button type="button" onClick={() => setFieldDraft({ key: `field_${Date.now()}`, label: "", type: "textarea", required: true, isNew: true })} className="text-xs font-semibold text-teal-700 border border-teal-300 rounded-lg px-2 py-1">+ Dodaj pole</button>
+                </div>
+                <p className="text-[11px] text-slate-500">Dodaj informacje, które lekarz ma uzupełnić w treści dokumentu.</p>
+                {(editing.fields || []).map((field, index) => (
+                  <div key={field.key} id={`field-row-${field.key}`} className={`border rounded-xl p-3 text-xs ${selectedKey === field.key ? "border-teal-600 bg-teal-50" : "border-slate-200"}`}>
+                    <button type="button" className="w-full text-left" onClick={() => {
+                      setSelectedKey(field.key);
+                      document.getElementById(`a4-section-${field.key}`)?.scrollIntoView({ block: "center" });
+                    }}>
+                      <div className="font-semibold">{index + 1}. {field.label || "Nowe pole"}</div>
+                      <div className="text-slate-500 mt-1">{FIELD_TYPES.find((row) => row[0] === field.type)?.[1] || field.type}{field.required ? " · Wymagane" : ""}{selectedKey === field.key ? " · Wybrana na A4" : ""}</div>
+                    </button>
+                    <div className="flex gap-3 mt-2">
+                      <button type="button" className="text-teal-700 font-semibold" onClick={() => setFieldDraft({ ...field, isNew: false })}>Edytuj</button>
+                      <button type="button" className="text-rose-600" onClick={() => {
+                        const fields = editing.fields.filter((item) => item.key !== field.key);
+                        setEditing({ ...editing, fields });
+                        if (selectedKey === field.key) setSelectedKey(fields[0]?.key || "");
+                      }}>Usuń</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-slate-100 overflow-y-auto p-4">
+                <div className="flex items-center justify-between mb-3 text-xs text-slate-600">
+                  <span>Interaktywny podgląd arkusza A4 · Kliknij sekcję, aby zaznaczyć pole; dwuklik otwiera edycję</span>
+                  <button type="button" onClick={() => setPrintOpen(true)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border bg-white font-semibold"><Printer size={14} /> Podgląd wydruku</button>
+                </div>
+                <ClinicDocumentSheet
+                  mode="admin"
+                  title={editing.printTitle || editing.name}
+                  fields={editing.fields || []}
+                  selectedKey={selectedKey}
+                  onSelectField={(key) => {
+                    setSelectedKey(key);
+                    document.getElementById(`field-row-${key}`)?.scrollIntoView({ block: "nearest" });
+                  }}
+                  onEditField={(field) => setFieldDraft({ ...field, isNew: false })}
+                />
+              </div>
+            </div>
+            <div className="px-6 py-3 border-t flex justify-between">
+              <button type="button" onClick={() => setEditing(null)} className="px-4 py-2 border rounded-lg">Anuluj</button>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setPrintOpen(true)} className="px-4 py-2 border rounded-lg inline-flex items-center gap-1"><Printer size={14} /> Podgląd i druk</button>
+                <button type="button" onClick={save} className="px-4 py-2 bg-emerald-700 text-white rounded-full font-semibold">Zapisz wzór</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {fieldDraft && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl w-full max-w-md p-5 space-y-3 shadow-xl">
+            <h3 className="font-bold">{fieldDraft.isNew ? "Nowe pole" : "Edytuj pole"}</h3>
+            <label className="block text-sm">Etykieta na dokumencie *
+              <input value={fieldDraft.label} onChange={(e) => setFieldDraft({ ...fieldDraft, label: e.target.value })} className="mt-1 w-full border rounded-lg px-3 py-2" />
+            </label>
+            <label className="block text-sm">Typ
+              <select value={fieldDraft.type} onChange={(e) => setFieldDraft({ ...fieldDraft, type: e.target.value })} className="mt-1 w-full border rounded-lg px-3 py-2 bg-white">
+                {FIELD_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
             </label>
-            <label className="text-sm block">Opis
-              <textarea value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} rows={2} className="mt-1 w-full border rounded-lg px-3 py-2" />
-            </label>
-            <div className="text-sm">
-              <div className="font-medium mb-1">Dostępność lekarzy</div>
-              <label className="flex items-center gap-2"><input type="radio" checked={editing.doctorAvailability !== "specific"} onChange={() => setEditing({ ...editing, doctorAvailability: "all", assignedDoctorIds: [] })} /> Wszyscy lekarze</label>
-              <label className="flex items-center gap-2 mt-1"><input type="radio" checked={editing.doctorAvailability === "specific"} onChange={() => setEditing({ ...editing, doctorAvailability: "specific" })} /> Wybrani lekarze</label>
-              {editing.doctorAvailability === "specific" && (
-                <div className="mt-2 max-h-32 overflow-y-auto border rounded-lg p-2 space-y-1">
-                  {doctors.map((doctor) => {
-                    const id = String(doctor._id);
-                    const checked = (editing.assignedDoctorIds || []).includes(id);
-                    return (
-                      <label key={id} className="flex items-center gap-2 text-xs">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => {
-                            const next = checked
-                              ? editing.assignedDoctorIds.filter((item) => item !== id)
-                              : [...(editing.assignedDoctorIds || []), id];
-                            setEditing({ ...editing, assignedDoctorIds: next });
-                          }}
-                        />
-                        {doctor.name}
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(fieldDraft.required)} onChange={(e) => setFieldDraft({ ...fieldDraft, required: e.target.checked })} /> Pole wymagane</label>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setFieldDraft(null)} className="px-3 py-2 border rounded-lg">Anuluj</button>
+              <button type="button" onClick={() => {
+                if (!fieldDraft.label.trim()) { toast.error("Podaj etykietę pola."); return; }
+                const next = { key: fieldDraft.key, label: fieldDraft.label.trim(), type: fieldDraft.type || "textarea", required: Boolean(fieldDraft.required) };
+                const fields = fieldDraft.isNew
+                  ? [...(editing.fields || []), next]
+                  : (editing.fields || []).map((field) => (field.key === next.key ? next : field));
+                setEditing({ ...editing, fields });
+                setSelectedKey(next.key);
+                setFieldDraft(null);
+              }} className="px-3 py-2 bg-teal-700 text-white rounded-lg">Zapisz pole</button>
             </div>
-            <div className="text-sm space-y-2">
-              <div className="font-medium">Pola dokumentu</div>
-              {(editing.fields || []).map((field, index) => (
-                <div key={field.key || index} className="grid grid-cols-12 gap-2">
-                  <input value={field.label} onChange={(e) => {
-                    const fields = editing.fields.slice();
-                    fields[index] = { ...field, label: e.target.value };
-                    setEditing({ ...editing, fields });
-                  }} className="col-span-6 border rounded px-2 py-1" placeholder="Etykieta" />
-                  <select value={field.type} onChange={(e) => {
-                    const fields = editing.fields.slice();
-                    fields[index] = { ...field, type: e.target.value };
-                    setEditing({ ...editing, fields });
-                  }} className="col-span-3 border rounded px-2 py-1">
-                    <option value="text">Tekst</option>
-                    <option value="textarea">Akapit</option>
-                    <option value="date">Data</option>
-                  </select>
-                  <label className="col-span-2 text-xs flex items-center gap-1"><input type="checkbox" checked={field.required} onChange={(e) => {
-                    const fields = editing.fields.slice();
-                    fields[index] = { ...field, required: e.target.checked };
-                    setEditing({ ...editing, fields });
-                  }} />Wymagane</label>
-                  <button type="button" className="text-red-600" onClick={() => setEditing({ ...editing, fields: editing.fields.filter((_, i) => i !== index) })}>×</button>
-                </div>
-              ))}
-              <button type="button" className="text-teal-700 text-xs font-semibold" onClick={() => setEditing({ ...editing, fields: [...(editing.fields || []), { key: `field_${Date.now()}`, label: "", type: "textarea", required: false }] })}>
-                + Dodaj pole
-              </button>
+          </div>
+        </div>
+      )}
+
+      {printOpen && editing && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/70 overflow-y-auto p-6">
+          <div className="max-w-[900px] mx-auto">
+            <div className="flex justify-end gap-2 mb-3">
+              <button type="button" onClick={() => printClinicSheet({ title: editing.printTitle || editing.name, fields: editing.fields, patient: SAMPLE_PATIENT, status: "template" })} className="px-4 py-2 bg-white rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
+              <button type="button" onClick={() => setPrintOpen(false)} className="px-4 py-2 bg-white rounded-lg">Zamknij</button>
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button type="button" onClick={() => setEditing(null)} className="px-4 py-2 border rounded-lg">Anuluj</button>
-              <button type="button" onClick={save} className="px-4 py-2 bg-emerald-700 text-white rounded-lg font-semibold">Zapisz</button>
-            </div>
+            <ClinicDocumentSheet mode="preview" title={editing.printTitle || editing.name} fields={editing.fields || []} />
           </div>
         </div>
       )}
