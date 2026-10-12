@@ -99,7 +99,7 @@ const settingsCards = [
     id: "document-templates",
     title: "Szablony dokumentów",
     description:
-      "Zarządzanie repozytorium plików i wzorów dokumentacji do uzupełnienia danymi pacjenta",
+      "Wzory dokumentów spoza P1. Administrator tworzy szablon i przypisuje go lekarzom.",
     icon: FileStack,
     to: "/administracja/repo-dokumentow",
     roles: ["admin"],

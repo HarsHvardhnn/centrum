@@ -58,7 +58,7 @@ import PermanentDeletePage from "./components/admin/PermanentDeletePage";
 import SystemSettingsPage from "./components/admin/SystemSettingsPage";
 import VisitTemplatesPage from "./components/admin/VisitTemplatesPage";
 import DocumentTemplatesPlaceholder from "./components/admin/DocumentTemplatesPlaceholder";
-import DocumentRepositoryPlaceholder from "./components/admin/DocumentRepositoryPlaceholder";
+import ClinicDocumentTemplatesPage from "./components/admin/ClinicDocumentTemplatesPage";
 import EhealthIntegrationsPage from "./components/admin/EhealthIntegrationsPage";
 import EhealthHistoryPage from "./components/ehealth/EhealthHistoryPage";
 import KioskApp from "./components/Kiosk/KioskApp";
@@ -226,7 +226,7 @@ const routes = createBrowserRouter([
           { path: "/e-zdrowie", element: <EhealthHistoryPage /> },
           { path: "/ustawienia", element: <SystemSettingsPage /> },
           { path: "/administracja/szablony-dokumentow", element: <DocumentTemplatesPlaceholder /> },
-          { path: "/administracja/repo-dokumentow", element: <DocumentRepositoryPlaceholder /> },
+          { path: "/administracja/repo-dokumentow", element: <ClinicDocumentTemplatesPage /> },
         ],
       },
     ],

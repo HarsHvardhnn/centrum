@@ -30,6 +30,7 @@ import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
 import { EzlaSection } from "./medications/EzlaSection";
+import VisitClinicDocuments from "./VisitClinicDocuments";
 import EhealthIssueShortcuts from "../../../ehealth/EhealthIssueShortcuts";
 import ReferralRealizationCard from "../../../ehealth/ReferralRealizationCard";
 import EhealthDocumentPanel from "../../../ehealth/EhealthDocumentPanel";
@@ -1838,6 +1839,16 @@ const PatientDetailsPage = () => {
                   value={consultationData.notes}
                   onChange={(v) => setConsultationData((prev) => ({ ...prev, notes: v }))}
                   onChooseTemplate={() => setSectionTemplatePickerKey("notes")}
+                />
+
+                <VisitClinicDocuments
+                  visitId={currentAppointmentId}
+                  patientId={patientData.patient_id || patientData.id}
+                  doctorName={typeof user?.name === "string" ? user.name : `${user?.name?.first || ""} ${user?.name?.last || ""}`.trim()}
+                  patient={{
+                    name: `${patientData.name?.first || ""} ${patientData.name?.last || ""}`.trim(),
+                    pesel: patientData.govtId || patientData.pesel || patientData.PESEL || "",
+                  }}
                 />
 
                 <MedicalDocumentsCard
