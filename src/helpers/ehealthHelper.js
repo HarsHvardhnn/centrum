@@ -149,9 +149,9 @@ const ehealthHelper = {
     return apiCaller("POST", `/api/ehealth/ezla/${id}/handoff`, { handoff: true }).then(unwrap);
   },
 
-  cancelDocument(service, id) {
+  cancelDocument(service, id, reason) {
     return apiCaller("POST", `/api/ehealth/${pathFor(service)}/${id}/cancel`, {
-      reason: "I",
+      reason: reason || "I",
     }).then(unwrap);
   },
 
@@ -196,6 +196,13 @@ const ehealthHelper = {
 
   checkEwus(body) {
     return apiCaller("POST", "/api/ehealth/ewus/check", body).then(unwrap);
+  },
+
+  prescriptionHistory({ patientId, range = "12m" } = {}) {
+    const params = new URLSearchParams();
+    if (patientId) params.set("patientId", String(patientId));
+    if (range) params.set("range", String(range));
+    return apiCaller("GET", `/api/ehealth/prescriptions/history?${params.toString()}`).then(unwrap);
   },
 
   history(filters = {}) {

@@ -4,6 +4,7 @@ import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { STATUS_LABELS, statusClass, accessCodeOf } from "./ehealthStatus";
 import P1SignDialog from "./P1SignDialog";
+import IssuePatientCard, { normalizePatient, patientForDocument } from "./IssuePatientCard";
 import {
   ANATOMICAL_SITES,
   COMMON_ICD9,
@@ -36,8 +37,10 @@ const EReferralIssueModal = ({
   diagnoses = [],
   initialPayload,
   onDocumentsChanged,
+  onPatientSaved,
 }) => {
   const copied = initialPayload || {};
+  const [details, setDetails] = useState(() => normalizePatient(patient));
   const [referralType, setReferralType] = useState(
     copied.type === "02.10REH" ? "rehabilitation" : "specialist_clinic"
   );
@@ -189,6 +192,7 @@ const EReferralIssueModal = ({
       observation: referralType === "rehabilitation" ? justification.trim() : "",
       clientReferralType: referralType,
       anatomicalSite: site,
+      patientForDocument: patientForDocument(details),
     };
     try {
       setBusy(true);
@@ -312,19 +316,13 @@ const EReferralIssueModal = ({
               )}
 
               <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <span className="text-slate-500">Pacjent: </span>
-                    <strong>{patient?.name || "—"}</strong>
-                    <span className="ml-2 font-mono bg-slate-100 px-2 py-0.5 rounded">PESEL: {patient?.pesel || "Brak"}</span>
-                  </div>
-                  <div>
+                <IssuePatientCard patient={details} patientId={patientId} onChange={setDetails} onSavedToRecord={onPatientSaved} />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3">
                     <div className="text-[11px] font-semibold mb-1">Tryb skierowania *</div>
                     <div className="inline-flex border rounded-lg p-0.5 bg-white">
                       <button type="button" onClick={() => setPriority("normal")} className={`px-3 py-1 rounded-md font-semibold ${priority === "normal" ? "bg-blue-600 text-white" : ""}`}>Zwykły</button>
                       <button type="button" onClick={() => setPriority("urgent")} className={`px-3 py-1 rounded-md font-semibold ${priority === "urgent" ? "bg-rose-600 text-white" : ""}`}>Pilny (cito!)</button>
                     </div>
-                  </div>
                 </div>
                 <label className="flex items-center gap-2">
                   <input type="checkbox" checked={isNfzFunded} onChange={(e) => setIsNfzFunded(e.target.checked)} />

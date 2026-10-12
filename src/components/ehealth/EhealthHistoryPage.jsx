@@ -221,9 +221,11 @@ const EhealthHistoryPage = () => {
                             className="px-2 py-1 text-xs border border-red-300 text-red-700 rounded"
                             onClick={() => {
                               if (!window.confirm("Anulować ten dokument?")) return;
+                              const reason = row.service === "prescription" ? window.prompt("Powód anulowania e-recepty (co najmniej 5 znaków)") : "I";
+                              if (row.service === "prescription" && (!reason || reason.trim().length < 5)) return;
                               run(
                                 row.id,
-                                () => ehealthHelper.cancelDocument(row.service, row.id),
+                                () => ehealthHelper.cancelDocument(row.service, row.id, reason.trim()),
                                 "Anulowano"
                               );
                             }}

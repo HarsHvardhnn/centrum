@@ -73,6 +73,10 @@ function blankItem(form, drug) {
     substanceWords: "",
     recipeText: "",
     recipeSummary: "M.f.",
+    cito: false,
+    annual: false,
+    realizationFrom: "",
+    noSubstitution: false,
   };
 }
 
@@ -90,6 +94,10 @@ function itemsFromPayload(payload) {
     drug: item.drug || blankItem(form).drug,
     quantity: String(item.quantity || "1"),
     category: item.category || item.drug?.kdlek || (form === "recipe" ? "Rp" : form),
+    cito: item.cito === true,
+    annual: item.annual === true,
+    realizationFrom: item.realizationFrom || "",
+    noSubstitution: item.noSubstitution === true,
   }));
 }
 
@@ -98,10 +106,6 @@ function headerFrom(payload) {
     form: payload?.form || "Rp",
     kind: payload?.kind || "ZW",
     issueMode: payload?.issueMode || "Z",
-    cito: Boolean(payload?.cito),
-    annual: Boolean(payload?.annual),
-    realizationFrom: payload?.realizationFrom || "",
-    noSubstitution: Boolean(payload?.noSubstitution),
     examMode: payload?.examMode || "",
     entitlement: payload?.entitlement || "",
     entitlementDocument: payload?.entitlementDocument || "",
@@ -109,7 +113,7 @@ function headerFrom(payload) {
 }
 
 function needsScheme(header, item) {
-  return header.form !== "recipe" && (header.annual || (item.payment && item.payment !== "100%"));
+  return header.form !== "recipe" && (item.annual === true || (item.payment && item.payment !== "100%"));
 }
 
 function formIssues(header, items) {
@@ -248,11 +252,13 @@ const PrescriptionComposer = ({ visitId, patientId, onDocumentsChanged, initialP
       toast.error("Najpierw zostaw jedną pozycję. Rpw, Rpz i receptura mieszczą tylko jeden lek.");
       return;
     }
-    patchHeader({ form, annual: form === "recipe" ? false : header.annual });
+    patchHeader({ form });
     setItems((prev) => prev.map((item) => ({
       ...item,
       category: form === "recipe" ? "Rp" : form === "Rp" ? (item.category === "OTC" ? "OTC" : "Rp") : form,
       drug: form === "recipe" ? { name: item.drug?.name || "Receptura własna" } : item.drug,
+      annual: form === "recipe" || form === "Rpw" ? false : item.annual,
+      realizationFrom: form === "Rpw" ? "" : item.realizationFrom,
     })));
   };
 
@@ -359,6 +365,10 @@ const PrescriptionComposer = ({ visitId, patientId, onDocumentsChanged, initialP
             substanceWords: item.substanceWords,
             recipeText: item.recipeText,
             recipeSummary: item.recipeSummary,
+            cito: item.cito === true,
+            annual: header.form === "Rpw" || header.form === "recipe" ? false : item.annual === true,
+            realizationFrom: header.form === "Rpw" ? "" : (item.realizationFrom || ""),
+            noSubstitution: item.noSubstitution === true,
           })),
         },
       });
@@ -543,28 +553,7 @@ const PrescriptionComposer = ({ visitId, patientId, onDocumentsChanged, initialP
 function PackageOptions({ header, onChange }) {
   return (
     <div className="border rounded-lg p-3 space-y-2">
-      <p className="text-xs font-medium text-gray-500">Ważność, CITO i uprawnienia</p>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={header.cito} onChange={(e) => onChange({ cito: e.target.checked })} />
-        CITO
-      </label>
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={header.annual}
-          disabled={header.form === "recipe"}
-          onChange={(e) => onChange({ annual: e.target.checked })}
-        />
-        Recepta na 365 dni
-      </label>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={header.noSubstitution} onChange={(e) => onChange({ noSubstitution: e.target.checked })} />
-        Nie zamieniać
-      </label>
-      <label className="block text-xs text-gray-600">
-        Realizacja od (odroczona)
-        <input type="date" value={header.realizationFrom} onChange={(e) => onChange({ realizationFrom: e.target.value })} className="mt-1 w-full p-2 border rounded-lg text-sm" />
-      </label>
+      <p className="text-xs font-medium text-gray-500">Uprawnienia</p>
       {header.form === "Rpw" && (
         <label className="block text-xs text-gray-600">
           Sposób badania pacjenta
@@ -633,6 +622,37 @@ function ItemFields({ item, header, onChange }) {
       ) : (
         <Field label={header.form === "recipe" ? "Sposób użycia" : "Dawkowanie"} value={item.dosage} onChange={(value) => onChange({ dosage: value })} placeholder="np. 1x1" />
       )}
+      {header.form !== "Rpw" && (
+        <div className="space-y-2 border-t pt-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={item.cito === true} onChange={(e) => onChange({ cito: e.target.checked })} />
+            Cito — tylko ten lek
+          </label>
+          {header.form !== "recipe" && (
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={item.annual === true} onChange={(e) => onChange({ annual: e.target.checked })} />
+              e-Recepta roczna (ważna 365 dni) — tylko ten lek
+            </label>
+          )}
+          <label className="block text-xs text-gray-600">
+            Data realizacji od — tylko ten lek
+            <input type="date" value={item.realizationFrom || ""} onChange={(e) => onChange({ realizationFrom: e.target.value })} className="mt-1 w-full p-2 border rounded-lg text-sm" />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={item.noSubstitution === true} onChange={(e) => onChange({ noSubstitution: e.target.checked })} />
+            Nie zamieniać
+          </label>
+        </div>
+      )}
+      {header.form === "Rpw" && (
+        <div className="border-t pt-2 space-y-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={item.cito === true} onChange={(e) => onChange({ cito: e.target.checked })} />
+            Cito — tylko ten lek
+          </label>
+          <p className="text-xs text-gray-500">Rpw: ważność 30 dni, kuracja maksymalnie 90 dni. Nie można odroczyć realizacji ani wystawić recepty na 365 dni.</p>
+        </div>
+      )}
       {(header.form === "Rpw" || item.category === "Rpw") && (
         <div className="space-y-2 border-t pt-2">
           <p className="text-xs font-medium text-gray-500">Środek odurzający</p>
@@ -677,13 +697,18 @@ function Preview({ header, items }) {
     <div className="border rounded-lg p-3 space-y-2 text-sm">
       <div className="font-medium text-gray-800">Podgląd przed wystawieniem</div>
       <div className="text-gray-600">{formLabel}</div>
-      <div className="text-gray-600">{kindLabel}{header.cito ? " · CITO" : ""}{header.annual ? " · 365 dni" : ""}{header.noSubstitution ? " · nie zamieniać" : ""}</div>
-      {header.realizationFrom && <div className="text-gray-600">Realizacja od {header.realizationFrom}</div>}
+      <div className="text-gray-600">{kindLabel}</div>
       {header.examMode && <div className="text-gray-600">Badanie: {EXAMS.find((option) => option.value === header.examMode)?.label}</div>}
       <ul className="space-y-2">
         {items.map((item) => (
           <li key={item.key} className="bg-gray-50 p-2 rounded-lg">
-            <div className="font-medium">{item.category} · {item.drug?.name}</div>
+            <div className="font-medium">
+              {item.category} · {item.drug?.name}
+              {item.cito ? " · CITO" : ""}
+              {item.annual ? " · 365 dni" : ""}
+              {item.noSubstitution ? " · nie zamieniać" : ""}
+            </div>
+            {item.realizationFrom && <div className="text-gray-600">Realizacja od {item.realizationFrom}</div>}
             <div className="text-gray-600">
               {item.quantity} op. · {paymentLabel(item.payment)}
               {item.refundCode ? ` · wskazanie ${item.refundCode}` : ""}

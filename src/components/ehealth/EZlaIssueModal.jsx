@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import { STATUS_LABELS, statusClass } from "./ehealthStatus";
 import P1SignDialog from "./P1SignDialog";
+import IssuePatientCard, { normalizePatient, patientForDocument } from "./IssuePatientCard";
 
 const LETTERS = [
   { code: "A", label: "A – po przerwie < 60 dni" },
@@ -16,7 +17,7 @@ function iso(date) {
   return date.toISOString().slice(0, 10);
 }
 
-const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, initialPayload, onDocumentsChanged }) => {
+const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, initialPayload, onDocumentsChanged, onPatientSaved }) => {
   const today = iso(new Date());
   const inSix = iso(new Date(Date.now() + 6 * 86400000));
   const copied = initialPayload || {};
@@ -36,6 +37,7 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, initialPay
   const [icd10, setIcd10] = useState(String(copied.icd10 || "").replace(/\..*$/, ""));
   const [icdName, setIcdName] = useState(copied.icd10Display || "");
   const [reasonInPast, setReasonInPast] = useState(copied.reasonInPast || "");
+  const [details, setDetails] = useState(() => normalizePatient(patient));
   const [signOpen, setSignOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
@@ -99,6 +101,7 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, initialPay
       disease3: letters[2] || "",
       disease4: letters[3] || "",
       reasonInPast: backdated && !psychiatry ? reasonInPast.trim() : "",
+      patientForDocument: patientForDocument(details),
     };
     try {
       setBusy(true);
@@ -153,13 +156,8 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, initialPay
           ) : (
             <>
               <div className="bg-slate-50 border rounded-xl p-4 space-y-3">
+                <IssuePatientCard patient={details} patientId={patientId} onChange={setDetails} onSavedToRecord={onPatientSaved} />
                 <div className="grid sm:grid-cols-2 gap-3">
-                  <div>
-                    <span className="text-slate-500 block">Ubezpieczony (pacjent)</span>
-                    <strong className="text-sm">{patient?.name || "—"}</strong>
-                    <div className="font-mono">PESEL: {patient?.pesel || "Brak"}</div>
-                  </div>
-                  <div className="space-y-1">
                     <label className="text-slate-500 block">Instytucja</label>
                     <select value={institution} onChange={(e) => setInstitution(e.target.value)} className="w-full border rounded px-2 py-1">
                       <option value="ZUS">ZUS</option>
@@ -181,7 +179,6 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, initialPay
                       </>
                     )}
                     {payersForbidden && <p className="text-[11px] text-slate-500">Dla KRUS i ubezpieczenia za granicą nie podaje się płatnika.</p>}
-                  </div>
                 </div>
                 <label className="block">
                   <span className="font-bold">Adres pobytu w okresie niezdolności</span>

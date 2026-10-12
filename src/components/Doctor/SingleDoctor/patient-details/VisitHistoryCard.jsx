@@ -218,7 +218,9 @@ const VisitHistoryCard = ({
                                 className="px-2 py-0.5 text-[11px] border border-red-300 text-red-700 rounded disabled:opacity-50"
                                 onClick={() => {
                                   if (!window.confirm("Anulować ten dokument?")) return;
-                                  run(row.id, () => ehealthHelper.cancelDocument(row.service, row.id), "Anulowano");
+                                  const reason = row.service === "prescription" ? window.prompt("Powód anulowania e-recepty (co najmniej 5 znaków)") : "I";
+                                  if (row.service === "prescription" && (!reason || reason.trim().length < 5)) return;
+                                  run(row.id, () => ehealthHelper.cancelDocument(row.service, row.id, reason.trim()), "Anulowano");
                                 }}
                               >
                                 Anuluj

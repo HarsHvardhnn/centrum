@@ -154,7 +154,9 @@ const VisitIssuedDocuments = ({ service, visitId, patientId, refreshKey = 0, pat
                   className="px-2.5 py-1 text-xs font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
                   onClick={() => {
                     if (!window.confirm("Anulować ten dokument?")) return;
-                    run(row.id, () => ehealthHelper.cancelDocument(row.service, row.id), "Anulowano");
+                    const reason = row.service === "prescription" ? window.prompt("Powód anulowania e-recepty (co najmniej 5 znaków)") : "I";
+                    if (row.service === "prescription" && (!reason || reason.trim().length < 5)) return;
+                    run(row.id, () => ehealthHelper.cancelDocument(row.service, row.id, reason.trim()), "Anulowano");
                   }}
                 >
                   Anuluj

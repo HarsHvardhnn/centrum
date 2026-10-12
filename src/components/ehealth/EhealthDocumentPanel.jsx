@@ -64,6 +64,7 @@ const EhealthDocumentPanel = ({
   visitId,
   patientId,
   onDocumentsChanged,
+  onPatientSaved,
   initialPayload,
   diagnoses,
   patient,
@@ -96,7 +97,9 @@ const EhealthDocumentPanel = ({
         patientId={patientId}
         patient={patient}
         initialPayload={initialPayload}
+        diagnoses={diagnoses}
         onDocumentsChanged={notifyChanged}
+        onPatientSaved={onPatientSaved}
       />
     );
   }
@@ -112,6 +115,7 @@ const EhealthDocumentPanel = ({
         diagnoses={diagnoses}
         initialPayload={initialPayload}
         onDocumentsChanged={notifyChanged}
+        onPatientSaved={onPatientSaved}
       />
     );
   }
@@ -126,6 +130,7 @@ const EhealthDocumentPanel = ({
         patient={patient}
         initialPayload={initialPayload}
         onDocumentsChanged={notifyChanged}
+        onPatientSaved={onPatientSaved}
       />
     );
   }
@@ -214,9 +219,11 @@ const EhealthDocumentPanel = ({
   const cancelDoc = async () => {
     if (!result?.id) return;
     if (!window.confirm("Anulować ten dokument?")) return;
+    const reason = service === "prescription" ? window.prompt("Powód anulowania e-recepty (co najmniej 5 znaków)") : "I";
+    if (service === "prescription" && (!reason || reason.trim().length < 5)) return;
     try {
       setBusy(true);
-      const res = await ehealthHelper.cancelDocument(service, result.id);
+      const res = await ehealthHelper.cancelDocument(service, result.id, reason.trim());
       if (!res?.success) throw new Error(res?.error?.message || "Anulowanie nieudane");
       applyResult(res.data);
     } catch (err) {

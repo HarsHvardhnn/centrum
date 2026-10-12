@@ -2017,13 +2017,36 @@ const PatientDetailsPage = () => {
           phone: patientData.phone || "",
           email: patientData.email || "",
           birthDate: patientData.birthDate || patientData.dateOfBirth || "",
-          address: typeof patientData.address === "string"
-            ? patientData.address
-            : [patientData.address?.street, patientData.address?.city, patientData.city].filter(Boolean).join(", "),
+          street: typeof patientData.address === "string" ? patientData.address : (patientData.address?.street || ""),
+          city: patientData.city || patientData.address?.city || "",
+          postalCode: patientData.pinCode || patientData.address?.postalCode || "",
+          address: [
+            typeof patientData.address === "string" ? patientData.address : patientData.address?.street,
+            patientData.pinCode || patientData.address?.postalCode,
+            patientData.city || patientData.address?.city,
+          ].filter(Boolean).join(", "),
           doctorName: typeof user?.name === "string" ? user.name : `${user?.name?.first || ""} ${user?.name?.last || ""}`.trim(),
           pwz: user?.npwz || "",
         }}
         onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
+        onPatientSaved={(saved) => {
+          const [first, ...rest] = String(saved.name || "").trim().split(/\s+/);
+          setPatientData((prev) => ({
+            ...prev,
+            name: {
+              ...(prev.name || {}),
+              first: first || prev.name?.first || "",
+              last: rest.join(" ") || prev.name?.last || "",
+            },
+            govtId: saved.pesel || prev.govtId,
+            dateOfBirth: saved.birthDate || prev.dateOfBirth,
+            address: saved.street || prev.address,
+            city: saved.city || prev.city,
+            pinCode: saved.postalCode || prev.pinCode,
+            phone: saved.phone || prev.phone,
+            email: saved.email || prev.email,
+          }));
+        }}
       />
 
       <VisitCardConfirmationModal
