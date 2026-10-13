@@ -128,6 +128,7 @@ const EhealthDocumentPanel = ({
         visitId={visitId}
         patientId={patientId}
         patient={patient}
+        diagnoses={diagnoses}
         initialPayload={initialPayload}
         onDocumentsChanged={notifyChanged}
         onPatientSaved={onPatientSaved}
