@@ -227,6 +227,7 @@ const routes = createBrowserRouter([
           { path: "/ustawienia", element: <SystemSettingsPage /> },
           { path: "/administracja/szablony-dokumentow", element: <DocumentTemplatesPlaceholder /> },
           { path: "/administracja/repo-dokumentow", element: <ClinicDocumentTemplatesPage /> },
+          { path: "/moje-wzory-dokumentow", element: <ClinicDocumentTemplatesPage personal /> },
         ],
       },
     ],

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { FileText, Plus, Eye, Printer, Pencil, User, X, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import clinicDocumentsHelper from "../../../../helpers/clinicDocumentsHelper";
@@ -51,26 +52,45 @@ function visitHintFor(field, hints) {
   return "";
 }
 
-function splitPrintedAddress(text) {
-  const raw = String(text || "").trim();
-  const match = raw.match(/^(.*?),?\s*(\d{2}-\d{3})\s+([^,]+?)(?:,\s*(.*))?$/);
-  if (!match) return { address: raw, pinCode: "", city: "", state: "" };
-  const rest = String(match[4] || "").split(",").map((part) => part.trim()).filter(Boolean);
+function addressParts(patient) {
+  const street = String(patient?.street || "").trim();
+  const postalCode = String(patient?.postalCode || patient?.pinCode || "").trim();
+  const city = String(patient?.city || "").trim();
+  if (street || postalCode || city) return { street, postalCode, city };
+  const raw = String(patient?.address || "").trim();
+  const postal = raw.match(/(\d{2}-\d{3}|\d{5})/);
+  if (!postal) return { street: raw, postalCode: "", city: "" };
+  const before = raw.slice(0, postal.index).replace(/[,\s]+$/, "").trim();
+  const after = raw.slice(postal.index + postal[0].length).replace(/^[,\s]+/, "");
+  return { street: before, postalCode: postal[0], city: after.split(",")[0].trim() };
+}
+
+function printedAddress(parts) {
+  return [parts.street, parts.postalCode, parts.city].map((part) => String(part || "").trim()).filter(Boolean).join(", ");
+}
+
+function patientForSheet(patient) {
+  const parts = addressParts(patient);
   return {
-    address: match[1].replace(/,\s*$/, "").trim(),
-    pinCode: match[2],
-    city: match[3].trim(),
-    state: rest[0] || "",
-    country: rest.slice(1).join(", "),
+    name: patient?.name || "",
+    pesel: patient?.pesel || "",
+    birthDate: String(patient?.birthDate || "").slice(0, 10),
+    street: parts.street,
+    postalCode: parts.postalCode,
+    city: parts.city,
+    address: printedAddress(parts) || String(patient?.address || "").trim(),
   };
 }
 
 function PatientDetailsDialog({ patient, busy, onClose, onSave }) {
+  const address = addressParts(patient);
   const [form, setForm] = useState({
     name: patient?.name || "",
     pesel: patient?.pesel || "",
     birthDate: String(patient?.birthDate || "").slice(0, 10),
-    address: patient?.address || "",
+    street: address.street,
+    postalCode: address.postalCode,
+    city: address.city,
   });
   const [scope, setScope] = useState("document");
   const set = (key) => (event) => setForm((prev) => ({ ...prev, [key]: event.target.value }));
@@ -98,9 +118,17 @@ function PatientDetailsDialog({ patient, busy, onClose, onSave }) {
           <label className="block text-sm">Data urodzenia
             <input type="date" value={form.birthDate} onChange={set("birthDate")} className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2" />
           </label>
-          <label className="block text-sm">Adres
-            <textarea value={form.address} onChange={set("address")} rows={2} className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2" />
+          <label className="block text-sm">Ulica
+            <input value={form.street} onChange={set("street")} className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2" />
           </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-sm">Kod pocztowy
+              <input value={form.postalCode} onChange={set("postalCode")} className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2" />
+            </label>
+            <label className="block text-sm">Miasto
+              <input value={form.city} onChange={set("city")} className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2" />
+            </label>
+          </div>
           <div>
             <p className="text-sm font-semibold text-slate-800 mb-2">Zakres zmiany</p>
             <label className={`block rounded-xl border px-3 py-2 mb-2 cursor-pointer ${scope === "document" ? "border-teal-600 bg-teal-50" : "border-slate-200"}`}>
@@ -191,6 +219,42 @@ function visitCardVersions(reports) {
 
 function openVisitCard(url) {
   if (url) window.open(url, "_blank", "noopener,noreferrer");
+}
+
+async function printVisitFile(url) {
+  if (!url) return;
+  let source = url;
+  let objectUrl = "";
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("plik");
+    objectUrl = URL.createObjectURL(await response.blob());
+    source = objectUrl;
+  } catch {
+    openVisitCard(url);
+    return;
+  }
+  const frame = document.createElement("iframe");
+  frame.setAttribute("aria-hidden", "true");
+  frame.style.cssText = "position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0;";
+  frame.src = source;
+  const cleanup = () => {
+    frame.onload = null;
+    frame.remove();
+    if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  };
+  frame.onload = () => {
+    try {
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+      frame.contentWindow.onafterprint = cleanup;
+      setTimeout(cleanup, 60000);
+    } catch {
+      cleanup();
+      openVisitCard(url);
+    }
+  };
+  document.body.appendChild(frame);
 }
 
 function uploadedVisitFiles(reports) {
@@ -323,12 +387,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
       template,
       values,
       headerTitle: template.printTitle || template.name || "",
-      patient: {
-        name: patient?.name || "",
-        pesel: patient?.pesel || "",
-        birthDate: String(patient?.birthDate || "").slice(0, 10),
-        address: patient?.address || "",
-      },
+      patient: patientForSheet(patient),
       sectionLabels: {},
       existingId: null,
       status: "draft",
@@ -347,14 +406,9 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
       },
       values: { ...(doc.values || {}) },
       headerTitle: doc.headerTitle || doc.templateSnapshot?.printTitle || doc.templateSnapshot?.name || "",
-      patient: (doc.patientSnapshot && (doc.patientSnapshot.name || doc.patientSnapshot.pesel || doc.patientSnapshot.birthDate || doc.patientSnapshot.address))
-        ? doc.patientSnapshot
-        : {
-            name: patient?.name || "",
-            pesel: patient?.pesel || "",
-            birthDate: String(patient?.birthDate || "").slice(0, 10),
-            address: patient?.address || "",
-          },
+      patient: (doc.patientSnapshot && (doc.patientSnapshot.name || doc.patientSnapshot.pesel || doc.patientSnapshot.birthDate || doc.patientSnapshot.address || doc.patientSnapshot.street))
+        ? patientForSheet(doc.patientSnapshot)
+        : patientForSheet(patient),
       sectionLabels: { ...(doc.sectionLabels || {}) },
       existingId: doc._id,
       status: doc.status,
@@ -495,7 +549,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               <button type="button" onClick={() => openVisitCard(card.url)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
                 <Eye size={14} /> Otwórz dokument
               </button>
-              <button type="button" onClick={() => openVisitCard(card.url)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
+              <button type="button" onClick={() => printVisitFile(card.url)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
                 <Printer size={14} /> Drukuj
               </button>
             </div>
@@ -565,14 +619,15 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               <h3 className="font-bold">Wystaw dokument</h3>
               <button type="button" onClick={() => setPickerOpen(false)}>×</button>
             </div>
-            <div className="p-4">
+            <div className="p-4 space-y-2">
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Szukaj wzoru..." className="w-full border rounded-lg px-3 py-2 text-sm" />
+              <Link to="/moje-wzory-dokumentow" className="inline-flex text-xs font-semibold text-teal-700">Zarządzaj moimi wzorami</Link>
             </div>
             <div className="overflow-y-auto px-4 pb-4 space-y-2">
               {filtered.length === 0 && <p className="text-sm text-gray-500">Brak wzorów przypisanych do tego lekarza.</p>}
               {filtered.map((template) => (
                 <button key={template._id} type="button" onClick={() => openNew(template)} className="w-full text-left border rounded-lg p-3 hover:border-teal-400">
-                  <div className="text-[11px] font-bold text-teal-700">[{template.code}]</div>
+                  <div className="text-[11px] font-bold text-teal-700">[{template.code}]{template.ownerId ? " · Mój wzór" : ""}</div>
                   <div className="font-semibold text-sm">{template.name}</div>
                   <div className="text-xs text-gray-500">{template.description}</div>
                 </button>
@@ -674,11 +729,17 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
           busy={patientSaveBusy}
           onClose={() => !patientSaveBusy && setPatientEditorOpen(false)}
           onSave={async (form, scope) => {
+            const street = String(form.street || "").trim();
+            const postalCode = String(form.postalCode || "").trim();
+            const city = String(form.city || "").trim();
             const next = {
               name: String(form.name || "").trim(),
               pesel: String(form.pesel || "").replace(/\s+/g, ""),
               birthDate: String(form.birthDate || "").slice(0, 10),
-              address: String(form.address || "").trim(),
+              street,
+              postalCode,
+              city,
+              address: printedAddress({ street, postalCode, city }),
             };
             if (!next.name) {
               toast.error("Podaj imię i nazwisko.");
@@ -692,18 +753,22 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
             }
             try {
               setPatientSaveBusy(true);
-              const address = splitPrintedAddress(next.address);
               await patientService.updatePatient(patientId, {
                 fullName: next.name,
                 govtId: next.pesel,
                 ...(next.birthDate ? { dateOfBirth: next.birthDate } : {}),
-                address: address.address,
-                pinCode: address.pinCode,
-                city: address.city,
-                state: address.state,
-                country: address.country,
+                address: street,
+                pinCode: postalCode,
+                city,
               });
-              onPatientRecordSaved?.({ ...next, ...address });
+              onPatientRecordSaved?.({
+                name: next.name,
+                pesel: next.pesel,
+                birthDate: next.birthDate,
+                address: street,
+                pinCode: postalCode,
+                city,
+              });
               setPatientEditorOpen(false);
               toast.success("Dane zapisane w dokumencie i w karcie pacjenta.");
             } catch (err) {

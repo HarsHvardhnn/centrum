@@ -139,7 +139,7 @@ function fieldCountLabel(count) {
   return `${n} pól`;
 }
 
-export default function ClinicDocumentTemplatesPage() {
+export default function ClinicDocumentTemplatesPage({ personal = false }) {
   const [rows, setRows] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [query, setQuery] = useState("");
@@ -152,10 +152,12 @@ export default function ClinicDocumentTemplatesPage() {
   const [menuFor, setMenuFor] = useState("");
   const [previewRow, setPreviewRow] = useState(null);
   const [accessTarget, setAccessTarget] = useState(null);
+  const [copyOpen, setCopyOpen] = useState(false);
+  const [clinicRows, setClinicRows] = useState([]);
 
   const load = async () => {
     try {
-      setRows(await clinicDocumentsHelper.listTemplates());
+      setRows(await clinicDocumentsHelper.listTemplates({ manage: personal }));
     } catch (err) {
       toast.error(err.message);
     }
@@ -163,8 +165,8 @@ export default function ClinicDocumentTemplatesPage() {
 
   useEffect(() => {
     load();
-    doctorStatsHelper.getDoctorsList().then((res) => setDoctors(res?.data || [])).catch(() => setDoctors([]));
-  }, []);
+    if (!personal) doctorStatsHelper.getDoctorsList().then((res) => setDoctors(res?.data || [])).catch(() => setDoctors([]));
+  }, [personal]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -189,6 +191,7 @@ export default function ClinicDocumentTemplatesPage() {
         category: row.category,
         description: row.description || "",
         active: row.active !== false,
+        personal,
         doctorAvailability: row.doctorAvailability || "all",
         assignedDoctorIds: row.assignedDoctorIds || [],
         fields: (row.fields || []).map((field) => ({ ...field })),
@@ -205,7 +208,9 @@ export default function ClinicDocumentTemplatesPage() {
     const hidden = row.active === false;
     try {
       await clinicDocumentsHelper.saveTemplate({ active: hidden }, row._id);
-      toast.success(hidden ? "Wzór jest znów widoczny dla lekarzy" : "Wzór ukryty dla lekarzy");
+      toast.success(personal
+        ? (hidden ? "Wzór jest znów na liście przy wystawianiu" : "Wzór ukryty na liście przy wystawianiu")
+        : (hidden ? "Wzór jest znów widoczny dla lekarzy" : "Wzór ukryty dla lekarzy"));
       setMenuFor("");
       load();
     } catch (err) {
@@ -227,10 +232,16 @@ export default function ClinicDocumentTemplatesPage() {
       label: field.label.trim(),
       type: field.type || "textarea",
       required: Boolean(field.required),
+      options: Array.isArray(field.options) ? field.options : [],
+      defaultValue: field.defaultValue || "",
+      helpText: field.helpText || "",
+      placeholder: field.placeholder || "",
+      printWhenFilled: Boolean(field.printWhenFilled),
     }));
     try {
       await clinicDocumentsHelper.saveTemplate({
         ...editing,
+        personal,
         printTitle: editing.printTitle.trim(),
         code: codeFromName(editing.name, editing.code),
         fields,
@@ -252,20 +263,39 @@ export default function ClinicDocumentTemplatesPage() {
               <FileStack size={20} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">Szablony dokumentów</h1>
-              <p className="text-sm text-slate-500">Twórz wzory dokumentów spoza P1 i przypisuj je lekarzom. {rows.length} wzorów</p>
+              <h1 className="text-xl font-bold text-slate-900">{personal ? "Moje wzory dokumentów" : "Szablony dokumentów"}</h1>
+              <p className="text-sm text-slate-500">{personal ? "Wzory widoczne tylko na Twojej liście przy wystawianiu dokumentu z wizyty." : "Twórz wzory dokumentów spoza P1 i przypisuj je lekarzom."} {rows.length} wzorów</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedKey("purpose");
-              setEditing({ ...emptyForm, fields: emptyForm.fields.map((field) => ({ ...field })) });
-            }}
-            className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-emerald-700 text-white text-sm font-semibold"
-          >
-            <Plus size={16} /> Nowy wzór
-          </button>
+          <div className="flex flex-wrap justify-end gap-2">
+            {personal && (
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const catalog = await clinicDocumentsHelper.listTemplates();
+                    setClinicRows(catalog.filter((row) => !row.ownerId));
+                    setCopyOpen(true);
+                  } catch (err) {
+                    toast.error(err.message);
+                  }
+                }}
+                className="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-teal-700 text-teal-800 text-sm font-semibold"
+              >
+                <Copy size={16} /> Skopiuj wzór placówki
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedKey("purpose");
+                setEditing({ ...emptyForm, fields: emptyForm.fields.map((field) => ({ ...field })) });
+              }}
+              className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-emerald-700 text-white text-sm font-semibold"
+            >
+              <Plus size={16} /> Nowy wzór
+            </button>
+          </div>
         </div>
         <input
           value={query}
@@ -274,6 +304,9 @@ export default function ClinicDocumentTemplatesPage() {
           className="w-full mb-5 px-3 py-2 border border-slate-200 rounded-lg text-sm"
         />
         <div className="grid md:grid-cols-2 gap-4">
+          {visible.length === 0 && (
+            <p className="text-sm text-slate-500">{personal ? "Nie masz jeszcze własnych wzorów. Utwórz nowy albo skopiuj wzór placówki." : "Brak wzorów."}</p>
+          )}
           {visible.map((row) => (
             <article key={row._id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
               <div className="text-[11px] font-bold text-teal-700">[{row.code}] {categoryLabel(row.category)}</div>
@@ -281,7 +314,9 @@ export default function ClinicDocumentTemplatesPage() {
               <p className="text-sm text-slate-500 mt-1 min-h-[40px]">{row.description}</p>
               <div className="flex items-center justify-between mt-3 text-xs text-slate-500 gap-2">
                 <span>
-                  Dostępność lekarzy: {row.active === false ? "Ukryty" : row.doctorAvailability === "specific" ? `Wybrani (${row.assignedDoctorIds?.length || 0})` : "Wszyscy lekarze"}
+                  {personal
+                    ? (row.active === false ? "Ukryty przy wystawianiu" : "Widoczny przy wystawianiu")
+                    : `Dostępność lekarzy: ${row.active === false ? "Ukryty" : row.doctorAvailability === "specific" ? `Wybrani (${row.assignedDoctorIds?.length || 0})` : "Wszyscy lekarze"}`}
                   {" · "}{fieldCountLabel(row.fields?.length)}
                 </span>
                 <span className="flex items-center gap-1 relative">
@@ -298,8 +333,10 @@ export default function ClinicDocumentTemplatesPage() {
                         <button type="button" onClick={() => { setPreviewRow(row); setMenuFor(""); }} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2"><Eye size={14} /> Podgląd wzoru</button>
                         <button type="button" onClick={() => openEditor(row)} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2"><Pencil size={14} /> Edytuj wzór</button>
                         <button type="button" onClick={() => duplicateTemplate(row)} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2"><Copy size={14} /> Duplikuj wzór</button>
-                        <button type="button" onClick={() => { setAccessTarget({ ...row, assignedDoctorIds: (row.assignedDoctorIds || []).map(String) }); setDoctorQuery(""); setMenuFor(""); }} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2"><Users size={14} /> Dostępność lekarzy</button>
-                        <button type="button" onClick={() => toggleHidden(row)} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2 text-amber-800"><EyeOff size={14} /> {row.active === false ? "Pokaż lekarzom" : "Ukryj dla lekarzy"}</button>
+                        {!personal && (
+                          <button type="button" onClick={() => { setAccessTarget({ ...row, assignedDoctorIds: (row.assignedDoctorIds || []).map(String) }); setDoctorQuery(""); setMenuFor(""); }} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2"><Users size={14} /> Dostępność lekarzy</button>
+                        )}
+                        <button type="button" onClick={() => toggleHidden(row)} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2 text-amber-800"><EyeOff size={14} /> {row.active === false ? (personal ? "Pokaż przy wystawianiu" : "Pokaż lekarzom") : (personal ? "Ukryj przy wystawianiu" : "Ukryj dla lekarzy")}</button>
                         <button type="button" onClick={async () => {
                           if (!window.confirm("Usunąć ten wzór?")) return;
                           try {
@@ -348,10 +385,10 @@ export default function ClinicDocumentTemplatesPage() {
                 </label>
                 <label className="flex items-start gap-3 p-3 bg-slate-50 border rounded-xl text-xs">
                   <input type="checkbox" checked={editing.active !== false} onChange={(e) => setEditing({ ...editing, active: e.target.checked })} className="mt-0.5" />
-                  <span><span className="font-bold block">Wzór aktywny</span><span className="text-slate-500">Aktywny wzór będzie dostępny dla personelu placówki zgodnie z uprawnieniami.</span></span>
+                  <span><span className="font-bold block">Wzór aktywny</span><span className="text-slate-500">{personal ? "Aktywny wzór pojawi się na Twojej liście przy wystawianiu dokumentu." : "Aktywny wzór będzie dostępny dla personelu placówki zgodnie z uprawnieniami."}</span></span>
                 </label>
-                <div className="text-xs font-bold">Dostępność dokumentu dla lekarzy</div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                {!personal && <div className="text-xs font-bold">Dostępność dokumentu dla lekarzy</div>}
+                {!personal && <div className="grid grid-cols-2 gap-2 text-xs">
                   <label className={`p-3 rounded-xl border ${editing.doctorAvailability !== "specific" ? "border-teal-600 bg-teal-50" : "border-slate-200"}`}>
                     <input type="radio" className="mr-2" checked={editing.doctorAvailability !== "specific"} onChange={() => setEditing({ ...editing, doctorAvailability: "all", assignedDoctorIds: [] })} />
                     <span className="font-bold">Wszyscy lekarze</span>
@@ -362,8 +399,8 @@ export default function ClinicDocumentTemplatesPage() {
                     <span className="font-bold">Wybrani lekarze z listy</span>
                     <span className="block text-slate-500 mt-1">Dostępny tylko dla lekarzy wskazanych z listy.</span>
                   </label>
-                </div>
-                {editing.doctorAvailability === "specific" && (
+                </div>}
+                {!personal && editing.doctorAvailability === "specific" && (
                   <div className="space-y-2">
                     <button type="button" onClick={() => { setDoctorQuery(""); setDoctorPickerOpen(true); }} className="w-full text-left border border-teal-300 rounded-xl px-3 py-2 text-xs">
                       <span className="font-semibold text-teal-800">Wybierz lekarzy z systemu</span>
@@ -462,6 +499,49 @@ export default function ClinicDocumentTemplatesPage() {
             }
           }}
         />
+      )}
+
+      {copyOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="px-5 py-4 border-b flex items-center justify-between">
+              <h3 className="font-bold">Skopiuj wzór placówki</h3>
+              <button type="button" onClick={() => setCopyOpen(false)} aria-label="Zamknij"><X size={18} /></button>
+            </div>
+            <div className="overflow-y-auto p-4 space-y-2">
+              {clinicRows.length === 0 && <p className="text-sm text-slate-500">Brak wzorów placówki przypisanych do Ciebie.</p>}
+              {clinicRows.map((row) => (
+                <button
+                  key={row._id}
+                  type="button"
+                  className="w-full text-left border rounded-lg p-3 hover:border-teal-400"
+                  onClick={async () => {
+                    try {
+                      await clinicDocumentsHelper.saveTemplate({
+                        name: `${row.name} (mój)`,
+                        printTitle: row.printTitle || row.name,
+                        code: codeFromName(`${row.name} moj`, ""),
+                        category: row.category,
+                        description: row.description || "",
+                        personal: true,
+                        active: true,
+                        fields: (row.fields || []).map((field) => ({ ...field })),
+                      });
+                      toast.success("Wzór skopiowany do Twojej listy");
+                      setCopyOpen(false);
+                      load();
+                    } catch (err) {
+                      toast.error(err.message);
+                    }
+                  }}
+                >
+                  <div className="text-[11px] font-bold text-teal-700">[{row.code}]</div>
+                  <div className="font-semibold text-sm">{row.name}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       {previewRow && (

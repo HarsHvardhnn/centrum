@@ -1842,12 +1842,9 @@ const PatientDetailsPage = () => {
                     name: `${patientData.name?.first || ""} ${patientData.name?.last || ""}`.trim(),
                     pesel: patientData.govtId || patientData.pesel || patientData.PESEL || "",
                     birthDate: patientData.birthDate || patientData.dateOfBirth || "",
-                    address: [
-                      (typeof patientData.address === "string" ? patientData.address : patientData.address?.street) || patientData.street,
-                      [patientData.pinCode || patientData.zipCode || patientData.postalCode || patientData.address?.postalCode, patientData.city || patientData.address?.city].filter(Boolean).join(" "),
-                      patientData.state || patientData.province,
-                      patientData.country,
-                    ].map((part) => String(part || "").trim()).filter(Boolean).join(", "),
+                    street: (typeof patientData.address === "string" ? patientData.address : patientData.address?.street) || patientData.street || "",
+                    postalCode: patientData.pinCode || patientData.zipCode || patientData.postalCode || patientData.address?.postalCode || "",
+                    city: patientData.city || patientData.address?.city || "",
                   }}
                   onReportsChanged={() => currentAppointmentId && fetchAppointmentDetails(currentAppointmentId)}
                   onPatientRecordSaved={(saved) => {

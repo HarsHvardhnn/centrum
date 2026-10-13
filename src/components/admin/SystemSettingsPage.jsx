@@ -105,6 +105,15 @@ const settingsCards = [
     roles: ["admin"],
   },
   {
+    id: "my-document-templates",
+    title: "Moje wzory dokumentów",
+    description:
+      "Własne wzory zaświadczeń i informacji. Widoczne tylko dla Ciebie przy wystawianiu dokumentu z wizyty.",
+    icon: FileStack,
+    to: "/moje-wzory-dokumentow",
+    roles: ["doctor"],
+  },
+  {
     id: "sms",
     title: "Ustawienia SMS",
     description:

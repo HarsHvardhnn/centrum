@@ -1,7 +1,5 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 
 export const CLINIC_LETTERHEAD = {
@@ -47,12 +45,14 @@ const SHEET_CSS = `
 .clinic-pages .patient-details { display: grid; gap: 2mm; margin: 0; }
 .clinic-pages .patient-details > div { display: flex; align-items: baseline; gap: 2mm; }
 .clinic-pages .patient-details dt { color: #666; font-size: 10.5pt; }
-.clinic-pages .patient-details dd { margin: 0; color: #1f1f1f; font-size: 10.5pt; font-weight: 500; }
+.clinic-pages .patient-details dd { margin: 0; color: #1f1f1f; font-size: 10.5pt; font-weight: 500; white-space: pre-wrap; }
 .clinic-pages .document-content { margin: 6mm 0; }
 .clinic-pages .document-content > .document-section + .document-section { margin-top: 6mm; }
 .clinic-pages .document-section__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 2mm; margin: 0 0 1.5mm; }
 .clinic-pages .document-section__label { margin: 0; color: #27272a; font-size: 9.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.35; }
-.clinic-pages .document-section__value { margin: 0; color: #18181b; font-size: 10.5pt; line-height: 1.6; white-space: pre-wrap; }
+.clinic-pages .document-section { max-width: 100%; min-width: 0; }
+.clinic-pages .document-section__value { margin: 0; color: #18181b; font-size: 10.5pt; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
+.clinic-pages .sheet-page-break { display: block; width: auto; margin: 0 -2mm; padding: 0 2mm; background: #fff; overflow: hidden; pointer-events: none; user-select: none; }
 .clinic-pages .document-section__value.is-empty { color: #a1a1aa; font-style: italic; }
 .clinic-pages .doctor-signature__label { margin: 0 0 2mm; color: #666; font-size: 9pt; letter-spacing: 0.08em; line-height: 1.3; text-transform: uppercase; }
 .clinic-pages .doctor-signature__name { margin: 0 0 1.5mm; color: #1b1b1b; font-size: 11pt; font-weight: 600; line-height: 1.35; }
@@ -61,7 +61,7 @@ const SHEET_CSS = `
 .clinic-pages .doctor-signature__line { width: 100%; border-top: 0.75px solid #777; }
 .clinic-pages .doctor-signature__caption { margin: 2mm 0 0; color: #666; font-size: 9pt; text-align: center; }
 .clinic-pages .sheet-page-footer { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 8.5pt; color: #71717a; text-align: center; border-top: 0.5px solid #e4e4e7; padding-top: 3mm; }
-.clinic-pages .sheet-write, .clinic-pages .sheet-input { width: 100%; min-height: 1.5em; padding: 1.5mm 2mm; color: #1f1f1f; font: inherit; font-size: 10.5pt; line-height: 1.5; background: rgba(0, 128, 115, 0.045); border: 0; border-bottom: 1px dashed rgba(0, 128, 115, 0.42); border-radius: 2px; outline: none; }
+.clinic-pages .sheet-write, .clinic-pages .sheet-input { width: 100%; max-width: 100%; min-height: 1.5em; padding: 1.5mm 2mm; color: #1f1f1f; font: inherit; font-size: 10.5pt; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; background: rgba(0, 128, 115, 0.045); border: 0; border-bottom: 1px dashed rgba(0, 128, 115, 0.42); border-radius: 2px; outline: none; }
 .clinic-pages .sheet-write:focus, .clinic-pages .sheet-input:focus { background: #fff; border-bottom: 2px solid #008073; }
 .clinic-pages .sheet-write:empty:before { content: attr(data-placeholder); color: #8b96a3; font-style: italic; }
 .clinic-pages .document-help { margin: 0.6mm 0 0; color: #64748b; font-size: 8pt; font-style: italic; font-weight: 400; letter-spacing: 0; text-transform: none; }
@@ -72,65 +72,177 @@ function todayLabel() {
 }
 
 const PAGE_GAP = 16;
+const SIGNATURE_BOTTOM_MM = 22;
+const FOOTER_RESERVE_MM = 18;
+const PAGE_TOP_MM = 14;
+
+function clearPageBreaks(root) {
+  root.querySelectorAll(".sheet-page-break").forEach((node) => node.remove());
+}
+
+function makePageBreak(height) {
+  const spacer = document.createElement("span");
+  spacer.className = "sheet-page-break";
+  spacer.setAttribute("contenteditable", "false");
+  spacer.setAttribute("aria-hidden", "true");
+  spacer.style.height = `${Math.round(height)}px`;
+  return spacer;
+}
+
+function textLines(block) {
+  const hosts = [...block.querySelectorAll(".document-section__value, .sheet-write")];
+  const lines = [];
+  hosts.forEach((host) => {
+    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.textContent) return NodeFilter.FILTER_REJECT;
+        if (node.parentElement?.closest(".sheet-page-break")) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+    let textNode;
+    while ((textNode = walker.nextNode())) {
+      const range = document.createRange();
+      range.selectNodeContents(textNode);
+      [...range.getClientRects()].forEach((rect) => {
+        if (rect.height >= 1) lines.push({ node: textNode, top: rect.top, bottom: rect.bottom });
+      });
+    }
+  });
+  return lines;
+}
+
+function splitOffset(node, viewportTop) {
+  const text = node.textContent || "";
+  let low = 0;
+  let high = text.length;
+  const range = document.createRange();
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    range.setStart(node, mid);
+    range.setEnd(node, Math.min(text.length, mid + 1));
+    const rect = range.getBoundingClientRect();
+    if (!rect.height || rect.top < viewportTop - 0.5) low = mid + 1;
+    else high = mid;
+  }
+  return low;
+}
+
+function insertPageBreak(node, offset, height) {
+  const extra = Math.round(height);
+  if (extra < 1 || !node?.parentNode) return false;
+  const grow = (spacer) => {
+    const current = parseFloat(spacer.style.height) || 0;
+    const next = Math.round(current + extra);
+    if (next - current < 1) return false;
+    spacer.style.height = `${next}px`;
+    return true;
+  };
+  if (offset <= 0) {
+    if (node.previousSibling?.classList?.contains("sheet-page-break")) return grow(node.previousSibling);
+    node.parentNode.insertBefore(makePageBreak(extra), node);
+    return true;
+  }
+  if (offset >= (node.textContent || "").length) return false;
+  const after = node.splitText(offset);
+  if (after.previousSibling?.classList?.contains("sheet-page-break")) return grow(after.previousSibling);
+  after.parentNode.insertBefore(makePageBreak(extra), after);
+  return true;
+}
+
+function pageBudget(page, metrics, signaturePage, ceilings) {
+  const signatureBudget = metrics.pageH - metrics.signatureCut;
+  const footerBudget = metrics.pageH - metrics.footerReserve;
+  let budget = page === signaturePage ? signatureBudget : footerBudget;
+  if (ceilings.has(page)) budget = Math.min(budget, ceilings.get(page));
+  return budget;
+}
+
+function fragmentBlock(block, origin, metrics, signaturePage, ceilings) {
+  const { pageH, stride, topInset } = metrics;
+  for (let guard = 0; guard < 24; guard += 1) {
+    const lines = textLines(block);
+    let moved = false;
+    for (const line of lines) {
+      const top = line.top - origin;
+      const bottom = line.bottom - origin;
+      const page = Math.floor(Math.max(0, top) / stride);
+      const limit = page * stride + pageBudget(page, metrics, signaturePage, ceilings);
+      if (bottom <= limit + 1) continue;
+      const nextStart = (page + 1) * stride + topInset;
+      const gap = nextStart - top;
+      if (gap < 1) continue;
+      moved = insertPageBreak(line.node, splitOffset(line.node, line.top), gap);
+      break;
+    }
+    if (!moved) break;
+  }
+}
+
+function layoutPass(root, metrics, signaturePage, ceilings) {
+  const { stride, topInset } = metrics;
+  const blocks = [...root.querySelectorAll(".sheet-block")];
+  clearPageBreaks(root);
+  blocks.forEach((block) => { block.style.marginTop = ""; });
+  blocks.forEach((block) => {
+    const top = block.offsetTop;
+    const height = block.offsetHeight;
+    const page = Math.floor(Math.max(0, top) / stride);
+    const limit = page * stride + pageBudget(page, metrics, signaturePage, ceilings);
+    const remaining = limit - top;
+    const fitsOnNext = height <= pageBudget(page + 1, metrics, signaturePage, ceilings) - topInset;
+    const startsTooLow = remaining < 36;
+    if ((startsTooLow || fitsOnNext) && top + height > limit - 4 && top > page * stride + 24) {
+      const nextTop = (page + 1) * stride + topInset;
+      const shift = Math.round(nextTop - top);
+      if (shift > 2) block.style.marginTop = `${shift}px`;
+    }
+    fragmentBlock(block, root.getBoundingClientRect().top, metrics, signaturePage, ceilings);
+  });
+}
+
+function lastContentPage(root, stride) {
+  let last = 0;
+  root.querySelectorAll(".sheet-block").forEach((block) => {
+    const bottom = block.offsetTop + block.offsetHeight;
+    last = Math.max(last, Math.floor(Math.max(0, bottom - 1) / stride));
+  });
+  return last;
+}
 
 function layoutA4(root) {
   const ruler = root.parentElement?.querySelector("[data-page-ruler]");
   const pageH = ruler?.offsetHeight || Math.round((297 / 25.4) * 96);
-  const footer = 64;
-  const signatureH = root.parentElement?.querySelector("[data-sheet-signature]")?.offsetHeight || 260;
-  const stride = pageH + PAGE_GAP;
-  const blocks = [...root.querySelectorAll(".sheet-block")];
-  if (!blocks.length) return 1;
-  const applied = blocks.map((block) => parseFloat(block.style.marginTop) || 0);
-  let carried = 0;
-  const natural = blocks.map((block, index) => {
-    carried += applied[index];
-    return block.offsetTop - carried;
-  });
-  const heights = blocks.map((block) => block.offsetHeight);
-  const gaps = heights.map((height, index) => (
-    index < natural.length - 1 ? Math.max(0, natural[index + 1] - (natural[index] + height)) : 0
-  ));
-  const pack = (signaturePage) => {
-    let cursor = natural[0];
-    let page = 0;
-    const shifts = [];
-    const tops = [];
-    heights.forEach((height, index) => {
-      const reserve = page === signaturePage ? signatureH : 0;
-      const limit = page * stride + pageH - footer - reserve;
-      const used = cursor - page * stride;
-      let shift = 0;
-      if (cursor + height > limit - 4 && used > 48) {
-        const nextTop = (page + 1) * stride + 12;
-        shift = Math.max(0, nextTop - cursor);
-        cursor = nextTop;
-        page += 1;
-      }
-      shifts.push(shift);
-      tops.push(cursor);
-      cursor += height + gaps[index];
-      const bottomPage = Math.floor(Math.max(0, cursor - 1) / stride);
-      if (bottomPage > page) page = bottomPage;
-    });
-    return { shifts, tops, page };
+  const mm = (value) => (value / 297) * pageH;
+  const signatureH = root.parentElement?.querySelector("[data-sheet-signature]")?.offsetHeight || mm(70);
+  const metrics = {
+    pageH,
+    stride: pageH + PAGE_GAP,
+    topInset: Math.round(mm(PAGE_TOP_MM)),
+    footerReserve: mm(FOOTER_RESERVE_MM),
+    signatureCut: mm(SIGNATURE_BOTTOM_MM) + signatureH + mm(8),
   };
-  let signaturePage = 0;
-  let laid = pack(signaturePage);
-  for (let guard = 0; guard < 6; guard += 1) {
-    const ceiling = laid.page * stride + pageH - footer - signatureH;
-    const overlaps = laid.tops.some((top, index) => top >= laid.page * stride - 2 && top + heights[index] > ceiling + 2);
-    if (!overlaps && laid.page === signaturePage) break;
-    if (overlaps && laid.page === signaturePage) break;
-    signaturePage = laid.page;
-    laid = pack(signaturePage);
+  if (!root.querySelector(".sheet-block")) return 1;
+
+  let signaturePage = -1;
+  let pages = 1;
+  const ceilings = new Map();
+  for (let pass = 0; pass < 8; pass += 1) {
+    layoutPass(root, metrics, signaturePage, ceilings);
+    const last = lastContentPage(root, metrics.stride);
+    if (signaturePage < 0) {
+      signaturePage = last;
+      continue;
+    }
+    if (last > signaturePage) {
+      ceilings.set(signaturePage, metrics.pageH - metrics.signatureCut);
+      signaturePage = last;
+      continue;
+    }
+    pages = Math.max(last, signaturePage) + 1;
+    return pages;
   }
-  blocks.forEach((block, index) => {
-    const desired = laid.shifts[index] > 0 ? Math.round(laid.shifts[index]) : 0;
-    const current = parseFloat(block.style.marginTop) || 0;
-    if (Math.abs(current - desired) > 1) block.style.marginTop = desired > 0 ? `${desired}px` : "";
-  });
-  return laid.page + 1;
+  return Math.max(lastContentPage(root, metrics.stride), signaturePage, 0) + 1;
 }
 
 function signatureIdentity({ doctorTitle, doctorName, doctorPwz, sample }) {
@@ -143,10 +255,30 @@ function signatureIdentity({ doctorTitle, doctorName, doctorPwz, sample }) {
   return { line: [title, name].filter(Boolean).join(" "), pwz, specialty: "" };
 }
 
+function visibleFieldText(element) {
+  let text = "";
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  let node;
+  while ((node = walker.nextNode())) {
+    if (node.parentElement?.closest(".sheet-page-break")) continue;
+    text += node.textContent;
+  }
+  return text;
+}
+
+function SheetText({ text, className }) {
+  const ref = useRef(null);
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (node && visibleFieldText(node) !== text) node.textContent = text;
+  }, [text]);
+  return <p ref={ref} className={className} />;
+}
+
 function InlineText({ id, value, placeholder, multiline, onChange }) {
   const ref = useRef(null);
-  useEffect(() => {
-    if (ref.current && document.activeElement !== ref.current && ref.current.innerText !== (value || "")) {
+  useLayoutEffect(() => {
+    if (ref.current && document.activeElement !== ref.current && visibleFieldText(ref.current) !== (value || "")) {
       ref.current.innerText = value || "";
     }
   }, [value]);
@@ -159,7 +291,7 @@ function InlineText({ id, value, placeholder, multiline, onChange }) {
       contentEditable="plaintext-only"
       suppressContentEditableWarning
       data-placeholder={placeholder || "Kliknij, aby wpisać treść"}
-      onInput={(event) => onChange(event.currentTarget.innerText || "")}
+      onInput={(event) => onChange(visibleFieldText(event.currentTarget))}
       onPaste={(event) => {
         event.preventDefault();
         const text = event.clipboardData.getData("text/plain");
@@ -209,11 +341,46 @@ export default function ClinicDocumentSheet({
     const root = contentRef.current;
     if (!root) return undefined;
     let frame = 0;
+    const placeCaret = (offset) => {
+      if (offset == null) return;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          return node.parentElement?.closest(".sheet-page-break") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+        },
+      });
+      let left = offset;
+      let node;
+      while ((node = walker.nextNode())) {
+        if (left <= node.textContent.length) {
+          const range = document.createRange();
+          range.setStart(node, left);
+          range.collapse(true);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          return;
+        }
+        left -= node.textContent.length;
+      }
+    };
+    const caretOffset = () => {
+      const selection = window.getSelection();
+      if (!selection.rangeCount || !root.contains(selection.anchorNode)) return null;
+      const range = document.createRange();
+      range.selectNodeContents(root);
+      range.setEnd(selection.anchorNode, selection.anchorOffset);
+      const holder = document.createElement("div");
+      holder.appendChild(range.cloneContents());
+      holder.querySelectorAll(".sheet-page-break").forEach((node) => node.remove());
+      return holder.textContent.length;
+    };
     const run = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
+        const offset = caretOffset();
         const next = layoutA4(root);
         setPages((current) => (current === next ? current : next));
+        placeCaret(offset);
       });
     };
     run();
@@ -226,17 +393,17 @@ export default function ClinicDocumentSheet({
   }, [layoutKey]);
 
   return (
-    <div className="clinic-pages relative mx-auto w-[210mm]" style={{ height: `calc(${pages} * 297mm + ${(pages - 1) * PAGE_GAP}px)` }}>
+    <div className="clinic-pages relative mx-auto w-[210mm]" style={{ position: "relative", width: "210mm", height: `calc(${pages} * 297mm + ${(pages - 1) * PAGE_GAP}px)` }}>
       <style>{SHEET_CSS}</style>
-      <div data-page-ruler className="absolute top-0 left-0 h-[297mm] w-px opacity-0 pointer-events-none" />
+      <div data-page-ruler className="absolute top-0 left-0 h-[297mm] w-px opacity-0 pointer-events-none" style={{ position: "absolute", top: 0, left: 0, height: "297mm", width: "1px" }} />
       {Array.from({ length: pages }, (_, index) => (
         <article
           key={index}
           className="absolute left-0 w-[210mm] h-[297mm] bg-white"
-          style={{ top: `calc(${index} * 297mm + ${index * PAGE_GAP}px)`, boxShadow: "0 2px 16px rgba(0, 0, 0, 0.12)" }}
+          style={{ position: "absolute", left: 0, width: "210mm", height: "297mm", background: "#fff", top: `calc(${index} * 297mm + ${index * PAGE_GAP}px)`, boxShadow: "0 2px 16px rgba(0, 0, 0, 0.12)" }}
         >
           {index === pages - 1 && (
-            <div data-sheet-signature className="absolute z-30 bg-white" style={{ right: "15mm", bottom: "16mm", width: "78mm" }}>
+            <div data-sheet-signature className="absolute z-30 bg-white" style={{ position: "absolute", zIndex: 30, background: "#fff", right: "15mm", bottom: `${SIGNATURE_BOTTOM_MM}mm`, width: "78mm" }}>
               <p className="doctor-signature__label">Lekarz orzekający / wystawiający</p>
               <p className="doctor-signature__name">{sign.line || "—"}</p>
               <p className="doctor-signature__pwz">PWZ: {sign.pwz || "—"}</p>
@@ -246,12 +413,12 @@ export default function ClinicDocumentSheet({
               <p className="doctor-signature__caption">podpis i pieczątka lekarza</p>
             </div>
           )}
-          <footer className="sheet-page-footer absolute z-30 bg-white" style={{ left: "15mm", right: "15mm", bottom: "6mm" }}>
+          <footer className="sheet-page-footer absolute z-30 bg-white" style={{ position: "absolute", zIndex: 30, background: "#fff", left: "15mm", right: "15mm", bottom: "6mm" }}>
             Strona {index + 1} z {pages}
           </footer>
         </article>
       ))}
-      <div ref={contentRef} className="relative z-10" style={{ padding: "14mm 15mm 4mm" }}>
+      <div ref={contentRef} className="relative z-10" style={{ position: "relative", zIndex: 10, padding: `${PAGE_TOP_MM}mm 15mm 4mm`, minWidth: 0, overflowWrap: "anywhere" }}>
       <header className="sheet-block medical-document-header">
         <div>
           <p className="clinic-name">{CLINIC_LETTERHEAD.name}</p>
@@ -408,9 +575,10 @@ export default function ClinicDocumentSheet({
                   />
                 )
               ) : (
-                <p className={`document-section__value ${printed ? "" : "is-empty"}`}>
-                  {printed || "[ wartość uzupełniana przez lekarza ]"}
-                </p>
+                <SheetText
+                  text={printed || "[ wartość uzupełniana przez lekarza ]"}
+                  className={`document-section__value ${printed ? "" : "is-empty"}`}
+                />
               )}
               {selected && (
                 <p className="mt-1.5 pt-1 border-t border-teal-200 text-[10px] text-teal-700">
@@ -436,7 +604,8 @@ function waitForSheet(host) {
     const tick = () => {
       const articles = host.querySelectorAll("article").length;
       const blocks = host.querySelectorAll(".sheet-block").length;
-      const key = `${articles}:${blocks}`;
+      const breaks = host.querySelectorAll(".sheet-page-break").length;
+      const key = `${articles}:${blocks}:${breaks}`;
       stableFrames = key === previous && articles > 0 && blocks > 0 ? stableFrames + 1 : 0;
       previous = key;
       if (stableFrames >= 4 || performance.now() - started > 2000) resolve();
@@ -446,21 +615,30 @@ function waitForSheet(host) {
   });
 }
 
-function openPdf(pdf, filename) {
-  const blob = pdf.output("blob");
-  const url = URL.createObjectURL(blob);
-  const popup = window.open(url, "_blank");
-  if (!popup) {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    link.click();
-  }
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+}
+
+function whenReady(popup) {
+  const links = [...popup.document.querySelectorAll('link[rel="stylesheet"]')];
+  const styles = Promise.all(links.map((link) => new Promise((resolve) => {
+    if (link.sheet) resolve();
+    else {
+      link.onload = () => resolve();
+      link.onerror = () => resolve();
+    }
+  })));
+  const fonts = popup.document.fonts?.ready || Promise.resolve();
+  return Promise.all([styles, fonts]);
 }
 
 export async function printClinicSheet({ title, fields, values, patient, doctorName, doctorTitle, doctorPwz, documentNumber, status }) {
-  const notice = toast.loading("Przygotowuję plik PDF…");
+  const popup = window.open("", "_blank");
+  if (!popup) {
+    toast.error("Przeglądarka zablokowała okno wydruku. Zezwól na wyskakujące okna.");
+    return false;
+  }
+  const notice = toast.loading("Otwieram okno wydruku…");
   const host = document.createElement("div");
   host.setAttribute("aria-hidden", "true");
   host.style.cssText = "position:fixed;left:0;top:0;width:210mm;z-index:-1;pointer-events:none;background:#fff;";
@@ -485,39 +663,43 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
     const sheet = host.querySelector(".clinic-pages");
     const articles = [...host.querySelectorAll("article")];
     if (!sheet || !articles.length) throw new Error("Podgląd dokumentu jest pusty.");
-    articles.forEach((article) => {
+    sheet.style.position = "relative";
+    sheet.style.width = "210mm";
+    sheet.style.margin = "0";
+    articles.forEach((article, index) => {
+      article.style.position = "absolute";
+      article.style.left = "0";
+      article.style.width = "210mm";
+      article.style.height = "297mm";
+      article.style.background = "#fff";
       article.style.boxShadow = "none";
-      article.style.borderColor = "#ffffff";
+      article.style.top = `calc(${index} * 297mm + ${index * PAGE_GAP}px)`;
     });
-    const canvas = await html2canvas(sheet, {
-      scale: 2,
-      backgroundColor: "#ffffff",
-      useCORS: true,
-      logging: false,
-    });
-    const pdf = new jsPDF({ unit: "mm", format: "a4", compress: true });
-    pdf.setProperties({ title: title || "Dokument" });
-    const ratio = canvas.width / sheet.offsetWidth;
-    const pagePx = Math.round(articles[0].offsetHeight * ratio);
-    const gapPx = Math.round(PAGE_GAP * ratio);
-    articles.forEach((_, index) => {
-      if (index > 0) pdf.addPage();
-      const slice = document.createElement("canvas");
-      slice.width = canvas.width;
-      slice.height = pagePx;
-      const ctx = slice.getContext("2d");
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, slice.width, slice.height);
-      ctx.drawImage(canvas, 0, index * (pagePx + gapPx), canvas.width, pagePx, 0, 0, canvas.width, pagePx);
-      pdf.addImage(slice.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, 210, 297);
-    });
-    const filename = `${String(title || "dokument").replace(/[\\/:*?"<>|]+/g, "").trim() || "dokument"}.pdf`;
-    openPdf(pdf, filename);
-    toast.success("Plik PDF jest gotowy do wydruku.", { id: notice });
+    const pageHeight = articles[0].offsetHeight;
+    const styles = [...document.querySelectorAll('link[rel="stylesheet"], style')].map((node) => node.outerHTML).join("\n");
+    const pages = articles.map((_, index) => (
+      `<section class="print-page"><div style="margin-top:-${index * (pageHeight + PAGE_GAP)}px">${sheet.outerHTML}</div></section>`
+    )).join("");
+    const heading = escapeHtml(title || "Dokument");
+    popup.document.open();
+    popup.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8" /><title>${heading}</title>${styles}
+      <style>
+        @page { size: A4; margin: 0; }
+        html, body { margin: 0; padding: 0; background: #fff; }
+        .print-page { width: 210mm; height: 297mm; overflow: hidden; break-after: page; page-break-after: always; }
+        .print-page:last-child { break-after: auto; page-break-after: auto; }
+      </style></head><body>${pages}</body></html>`);
+    popup.document.close();
+    await whenReady(popup);
+    popup.focus();
+    popup.print();
+    popup.onafterprint = () => popup.close();
+    toast.success("Okno wydruku jest otwarte.", { id: notice });
     return true;
   } catch (err) {
     console.error(err);
-    toast.error("Nie udało się przygotować pliku PDF.", { id: notice });
+    popup.close();
+    toast.error("Nie udało się otworzyć okna wydruku.", { id: notice });
     return false;
   } finally {
     root.unmount();
