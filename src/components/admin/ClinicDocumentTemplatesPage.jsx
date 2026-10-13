@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { FileStack, Plus, Pencil, Trash2, X, Printer } from "lucide-react";
+import { FileStack, Plus, Pencil, Trash2, X, Printer, Eye, Copy, MoreVertical, EyeOff, Users, Check } from "lucide-react";
 import { toast } from "sonner";
 import clinicDocumentsHelper from "../../helpers/clinicDocumentsHelper";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
@@ -14,10 +14,19 @@ const CATEGORIES = [
   { value: "other", label: "Inne dokumenty" },
 ];
 
+function toCamelKey(label) {
+  const ascii = String(label || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/gi, "l");
+  const parts = ascii.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  if (!parts.length) return "";
+  return parts[0] + parts.slice(1).map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join("");
+}
+
 const FIELD_TYPES = [
   ["text", "Krótki tekst"],
   ["textarea", "Długi tekst"],
   ["date", "Data"],
+  ["select", "Lista wyboru"],
+  ["checkbox", "Checkbox Tak/Nie"],
 ];
 
 const emptyForm = {
@@ -32,6 +41,85 @@ const emptyForm = {
   fields: [{ key: "purpose", label: "Cel wydania zaświadczenia", type: "textarea", required: true }],
 };
 
+function initials(name) {
+  return String(name || "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function DoctorAccessModal({ templateName, templateCode, doctors, query, onQuery, selectedIds, onChange, onClose, onSave }) {
+  const q = query.trim().toLowerCase();
+  const visible = doctors.filter((doctor) => !q || `${doctor.name} ${doctor.npwz} ${(doctor.specializations || []).join(" ")}`.toLowerCase().includes(q));
+  const selected = new Set(selectedIds.map(String));
+  const toggle = (id) => {
+    const key = String(id);
+    onChange(selected.has(key) ? selectedIds.filter((item) => String(item) !== key) : [...selectedIds, key]);
+  };
+  return (
+    <div className="fixed inset-0 z-[60] bg-slate-900/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-[86vh] overflow-hidden flex flex-col shadow-2xl">
+        <div className="px-5 py-4 border-b flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-bold text-teal-700">{templateCode ? `[${templateCode}] ` : ""}Dostępność wzoru dla lekarzy</div>
+            <p className="text-xs text-slate-500 mt-1">Wybierz lekarzy z kartoteki placówki, którzy mogą użyć tego wzoru.</p>
+            <p className="text-sm font-semibold mt-1">Wzór: „{templateName}”</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Zamknij"><X size={18} /></button>
+        </div>
+        <div className="px-5 py-3 space-y-2 border-b">
+          <label className="flex items-start gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={doctors.length > 0 && doctors.every((doctor) => selected.has(String(doctor._id)))}
+              onChange={(e) => onChange(e.target.checked ? doctors.map((doctor) => String(doctor._id)) : [])}
+            />
+            <span>
+              <span className="font-semibold block">Udostępnij wszystkim aktywnym lekarzom</span>
+              <span className="text-slate-500">Lista pochodzi z kont lekarzy w systemie, a nie z przykładowych nazwisk.</span>
+            </span>
+          </label>
+          <input value={query} onChange={(e) => onQuery(e.target.value)} placeholder="Szukaj lekarza..." className="w-full border rounded-lg px-3 py-2 text-sm" />
+          <div className="flex items-center justify-between text-xs">
+            <span>Wybrano: {selectedIds.length} z {doctors.length}</span>
+            <span className="flex gap-3">
+              <button type="button" className="text-teal-700 font-semibold" onClick={() => onChange(visible.map((doctor) => String(doctor._id)))}>Zaznacz widocznych</button>
+              <button type="button" className="text-slate-500" onClick={() => onChange([])}>Wyczyść wybór</button>
+            </span>
+          </div>
+          {selectedIds.length === 0 && (
+            <p className="text-xs bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-3 py-2">Wzór będzie niedostępny dla lekarzy. Żaden lekarz nie będzie mógł wybrać tego wzoru.</p>
+          )}
+        </div>
+        <div className="overflow-y-auto px-5 py-2 flex-1">
+          {visible.length === 0 && <p className="text-sm text-slate-500 py-6">Brak lekarzy w systemie. Dodaj lekarza w Kontach i wpisz numer PWZ.</p>}
+          {visible.map((doctor) => {
+            const id = String(doctor._id);
+            return (
+              <label key={id} className="flex items-center gap-3 py-2.5 border-b border-slate-100 text-sm">
+                <input type="checkbox" checked={selected.has(id)} onChange={() => toggle(id)} />
+                <span className="w-8 h-8 rounded-full bg-slate-100 text-[11px] font-bold flex items-center justify-center shrink-0">{initials(doctor.name)}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="font-semibold block truncate">{doctor.name}</span>
+                  <span className="text-xs text-slate-500 block truncate">{(doctor.specializations || []).join(" / ") || "Brak specjalizacji"}</span>
+                </span>
+                <span className={`text-xs shrink-0 ${doctor.npwz ? "text-slate-600" : "text-amber-700"}`}>{doctor.npwz ? `PWZ: ${doctor.npwz}` : "Brak PWZ"}</span>
+              </label>
+            );
+          })}
+        </div>
+        <div className="px-5 py-3 border-t flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="px-4 py-2 border rounded-lg">Anuluj</button>
+          <button type="button" onClick={() => (onSave ? onSave() : onClose())} className="px-4 py-2 bg-teal-700 text-white rounded-lg font-semibold">Zapisz dostępność</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function codeFromName(name, existing) {
   if (existing) return existing;
   const letters = String(name || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z]/g, "").toUpperCase();
@@ -42,6 +130,15 @@ function categoryLabel(value) {
   return CATEGORIES.find((row) => row.value === value)?.label || value;
 }
 
+function fieldCountLabel(count) {
+  const n = Number(count) || 0;
+  if (n === 1) return "1 pole";
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${n} pola`;
+  return `${n} pól`;
+}
+
 export default function ClinicDocumentTemplatesPage() {
   const [rows, setRows] = useState([]);
   const [doctors, setDoctors] = useState([]);
@@ -50,6 +147,11 @@ export default function ClinicDocumentTemplatesPage() {
   const [selectedKey, setSelectedKey] = useState("");
   const [fieldDraft, setFieldDraft] = useState(null);
   const [printOpen, setPrintOpen] = useState(false);
+  const [doctorPickerOpen, setDoctorPickerOpen] = useState(false);
+  const [doctorQuery, setDoctorQuery] = useState("");
+  const [menuFor, setMenuFor] = useState("");
+  const [previewRow, setPreviewRow] = useState(null);
+  const [accessTarget, setAccessTarget] = useState(null);
 
   const load = async () => {
     try {
@@ -69,6 +171,47 @@ export default function ClinicDocumentTemplatesPage() {
     if (!q) return rows;
     return rows.filter((row) => `${row.name} ${row.code} ${row.description}`.toLowerCase().includes(q));
   }, [rows, query]);
+
+  const openEditor = (row) => {
+    const next = { ...row, printTitle: row.printTitle || row.name, active: row.active !== false, assignedDoctorIds: (row.assignedDoctorIds || []).map(String) };
+    setSelectedKey(next.fields?.[0]?.key || "");
+    setEditing(next);
+    setMenuFor("");
+  };
+
+  const duplicateTemplate = async (row) => {
+    const name = `${row.name} (kopia)`;
+    try {
+      await clinicDocumentsHelper.saveTemplate({
+        name,
+        printTitle: row.printTitle || row.name,
+        code: codeFromName(name, ""),
+        category: row.category,
+        description: row.description || "",
+        active: row.active !== false,
+        doctorAvailability: row.doctorAvailability || "all",
+        assignedDoctorIds: row.assignedDoctorIds || [],
+        fields: (row.fields || []).map((field) => ({ ...field })),
+      });
+      toast.success("Utworzono kopię wzoru");
+      setMenuFor("");
+      load();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const toggleHidden = async (row) => {
+    const hidden = row.active === false;
+    try {
+      await clinicDocumentsHelper.saveTemplate({ active: hidden }, row._id);
+      toast.success(hidden ? "Wzór jest znów widoczny dla lekarzy" : "Wzór ukryty dla lekarzy");
+      setMenuFor("");
+      load();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
 
   const save = async () => {
     if (!editing.name.trim()) {
@@ -136,35 +279,40 @@ export default function ClinicDocumentTemplatesPage() {
               <div className="text-[11px] font-bold text-teal-700">[{row.code}] {categoryLabel(row.category)}</div>
               <h2 className="font-semibold text-slate-900 mt-1">{row.name}</h2>
               <p className="text-sm text-slate-500 mt-1 min-h-[40px]">{row.description}</p>
-              <div className="flex items-center justify-between mt-3 text-xs text-slate-500">
+              <div className="flex items-center justify-between mt-3 text-xs text-slate-500 gap-2">
                 <span>
-                  Dostępność lekarzy: {row.doctorAvailability === "specific" ? `Wybrani (${row.assignedDoctorIds?.length || 0})` : "Wszyscy lekarze"}
-                  {" · "}{row.fields?.length || 0} pól
+                  Dostępność lekarzy: {row.active === false ? "Ukryty" : row.doctorAvailability === "specific" ? `Wybrani (${row.assignedDoctorIds?.length || 0})` : "Wszyscy lekarze"}
+                  {" · "}{fieldCountLabel(row.fields?.length)}
                 </span>
-                <span className="flex gap-2">
-                  <button type="button" onClick={() => {
-                    const next = { ...row, printTitle: row.printTitle || row.name, active: row.active !== false, assignedDoctorIds: (row.assignedDoctorIds || []).map(String) };
-                    setSelectedKey(next.fields?.[0]?.key || "");
-                    setEditing(next);
-                  }} className="inline-flex items-center gap-1 text-teal-700 font-medium">
+                <span className="flex items-center gap-1 relative">
+                  <button type="button" onClick={() => openEditor(row)} className="inline-flex items-center gap-1 text-teal-700 font-semibold px-2 py-1 rounded-lg hover:bg-teal-50">
                     <Pencil size={14} /> Edytuj
                   </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!window.confirm("Usunąć ten wzór?")) return;
-                      try {
-                        await clinicDocumentsHelper.deleteTemplate(row._id);
-                        load();
-                      } catch (err) {
-                        toast.error(err.message);
-                      }
-                    }}
-                    className="text-slate-400 hover:text-red-600"
-                    aria-label="Usuń"
-                  >
-                    <Trash2 size={14} />
+                  <button type="button" aria-label="Więcej" onClick={() => setMenuFor(menuFor === row._id ? "" : row._id)} className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100">
+                    <MoreVertical size={16} />
                   </button>
+                  {menuFor === row._id && (
+                    <>
+                      <button type="button" className="fixed inset-0 z-10 cursor-default" aria-label="Zamknij menu" onClick={() => setMenuFor("")} />
+                      <div className="absolute right-0 top-8 z-20 w-52 bg-white border border-slate-200 rounded-xl shadow-lg py-1 text-sm text-slate-800">
+                        <button type="button" onClick={() => { setPreviewRow(row); setMenuFor(""); }} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2"><Eye size={14} /> Podgląd wzoru</button>
+                        <button type="button" onClick={() => openEditor(row)} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2"><Pencil size={14} /> Edytuj wzór</button>
+                        <button type="button" onClick={() => duplicateTemplate(row)} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2"><Copy size={14} /> Duplikuj wzór</button>
+                        <button type="button" onClick={() => { setAccessTarget({ ...row, assignedDoctorIds: (row.assignedDoctorIds || []).map(String) }); setDoctorQuery(""); setMenuFor(""); }} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2"><Users size={14} /> Dostępność lekarzy</button>
+                        <button type="button" onClick={() => toggleHidden(row)} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2 text-amber-800"><EyeOff size={14} /> {row.active === false ? "Pokaż lekarzom" : "Ukryj dla lekarzy"}</button>
+                        <button type="button" onClick={async () => {
+                          if (!window.confirm("Usunąć ten wzór?")) return;
+                          try {
+                            await clinicDocumentsHelper.deleteTemplate(row._id);
+                            setMenuFor("");
+                            load();
+                          } catch (err) {
+                            toast.error(err.message);
+                          }
+                        }} className="w-full px-3 py-2 text-left hover:bg-slate-50 inline-flex items-center gap-2 text-rose-700"><Trash2 size={14} /> Usuń wzór</button>
+                      </div>
+                    </>
+                  )}
                 </span>
               </div>
             </article>
@@ -216,25 +364,27 @@ export default function ClinicDocumentTemplatesPage() {
                   </label>
                 </div>
                 {editing.doctorAvailability === "specific" && (
-                  <div className="max-h-28 overflow-y-auto border rounded-lg p-2 space-y-1">
-                    {doctors.map((doctor) => {
-                      const id = String(doctor._id);
-                      const checked = (editing.assignedDoctorIds || []).includes(id);
-                      return (
-                        <label key={id} className="flex items-center gap-2 text-xs">
-                          <input type="checkbox" checked={checked} onChange={() => {
-                            const next = checked ? editing.assignedDoctorIds.filter((item) => item !== id) : [...(editing.assignedDoctorIds || []), id];
-                            setEditing({ ...editing, assignedDoctorIds: next });
-                          }} />
-                          {doctor.name}
-                        </label>
-                      );
-                    })}
+                  <div className="space-y-2">
+                    <button type="button" onClick={() => { setDoctorQuery(""); setDoctorPickerOpen(true); }} className="w-full text-left border border-teal-300 rounded-xl px-3 py-2 text-xs">
+                      <span className="font-semibold text-teal-800">Wybierz lekarzy z systemu</span>
+                      <span className="block text-slate-500 mt-0.5">
+                        {(editing.assignedDoctorIds || []).length
+                          ? `${editing.assignedDoctorIds.length} wybranych`
+                          : "Żaden lekarz nie jest jeszcze wskazany"}
+                      </span>
+                    </button>
+                    <div className="flex flex-wrap gap-1">
+                      {(editing.assignedDoctorIds || []).map((id) => {
+                        const doctor = doctors.find((row) => String(row._id) === String(id));
+                        if (!doctor) return null;
+                        return <span key={id} className="px-2 py-0.5 rounded-full bg-slate-100 text-[11px]">{doctor.name}{doctor.npwz ? ` · PWZ ${doctor.npwz}` : ""}</span>;
+                      })}
+                    </div>
                   </div>
                 )}
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold uppercase tracking-wider">Pola dokumentu</h3>
-                  <button type="button" onClick={() => setFieldDraft({ key: `field_${Date.now()}`, label: "", type: "textarea", required: true, isNew: true })} className="text-xs font-semibold text-teal-700 border border-teal-300 rounded-lg px-2 py-1">+ Dodaj pole</button>
+                  <button type="button" onClick={() => setFieldDraft({ key: "", label: "", type: "text", required: false, printWhenFilled: true, helpText: "", placeholder: "", defaultValue: "", options: [], isNew: true, keyTouched: false })} className="text-xs font-semibold text-teal-700 border border-teal-300 rounded-lg px-2 py-1">+ Dodaj pole</button>
                 </div>
                 <p className="text-[11px] text-slate-500">Dodaj informacje, które lekarz ma uzupełnić w treści dokumentu.</p>
                 {(editing.fields || []).map((field, index) => (
@@ -247,7 +397,7 @@ export default function ClinicDocumentTemplatesPage() {
                       <div className="text-slate-500 mt-1">{FIELD_TYPES.find((row) => row[0] === field.type)?.[1] || field.type}{field.required ? " · Wymagane" : ""}{selectedKey === field.key ? " · Wybrana na A4" : ""}</div>
                     </button>
                     <div className="flex gap-3 mt-2">
-                      <button type="button" className="text-teal-700 font-semibold" onClick={() => setFieldDraft({ ...field, isNew: false })}>Edytuj</button>
+                      <button type="button" className="text-teal-700 font-semibold" onClick={() => setFieldDraft({ ...field, isNew: false, keyTouched: true, originalKey: field.key })}>Edytuj</button>
                       <button type="button" className="text-rose-600" onClick={() => {
                         const fields = editing.fields.filter((item) => item.key !== field.key);
                         setEditing({ ...editing, fields });
@@ -286,31 +436,206 @@ export default function ClinicDocumentTemplatesPage() {
         </div>
       )}
 
+      {accessTarget && (
+        <DoctorAccessModal
+          templateName={accessTarget.name || "wzór"}
+          templateCode={accessTarget.code}
+          doctors={doctors}
+          query={doctorQuery}
+          onQuery={setDoctorQuery}
+          selectedIds={accessTarget.assignedDoctorIds || []}
+          onChange={(ids) => setAccessTarget({ ...accessTarget, assignedDoctorIds: ids })}
+          onClose={() => setAccessTarget(null)}
+          onSave={async () => {
+            try {
+              const ids = accessTarget.assignedDoctorIds || [];
+              const everyone = doctors.length > 0 && ids.length === doctors.length;
+              await clinicDocumentsHelper.saveTemplate({
+                doctorAvailability: everyone ? "all" : "specific",
+                assignedDoctorIds: everyone ? [] : ids,
+              }, accessTarget._id);
+              toast.success("Zapisano dostępność lekarzy");
+              setAccessTarget(null);
+              load();
+            } catch (err) {
+              toast.error(err.message);
+            }
+          }}
+        />
+      )}
+
+      {previewRow && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/70 overflow-y-auto p-6">
+          <div className="max-w-[900px] mx-auto">
+            <div className="flex justify-between items-center mb-3 text-white">
+              <div>
+                <div className="text-xs font-bold">[{previewRow.code}] Podgląd wzoru</div>
+                <div className="font-semibold">{previewRow.name}</div>
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => { printClinicSheet({ title: previewRow.printTitle || previewRow.name, fields: previewRow.fields, patient: SAMPLE_PATIENT, status: "template" }); }} className="px-4 py-2 bg-white text-slate-800 rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
+                <button type="button" onClick={() => setPreviewRow(null)} className="px-4 py-2 bg-white text-slate-800 rounded-lg">Zamknij</button>
+              </div>
+            </div>
+            <ClinicDocumentSheet mode="preview" title={previewRow.printTitle || previewRow.name} fields={previewRow.fields || []} />
+          </div>
+        </div>
+      )}
+
+      {doctorPickerOpen && editing && (
+        <DoctorAccessModal
+          templateName={editing.name || "wzór"}
+          templateCode={editing.code}
+          doctors={doctors}
+          query={doctorQuery}
+          onQuery={setDoctorQuery}
+          selectedIds={editing.assignedDoctorIds || []}
+          onChange={(ids) => setEditing({ ...editing, assignedDoctorIds: ids, doctorAvailability: "specific" })}
+          onClose={() => setDoctorPickerOpen(false)}
+        />
+      )}
+
       {fieldDraft && (
         <div className="fixed inset-0 z-[60] bg-slate-900/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-md p-5 space-y-3 shadow-xl">
-            <h3 className="font-bold">{fieldDraft.isNew ? "Nowe pole" : "Edytuj pole"}</h3>
-            <label className="block text-sm">Etykieta na dokumencie *
-              <input value={fieldDraft.label} onChange={(e) => setFieldDraft({ ...fieldDraft, label: e.target.value })} className="mt-1 w-full border rounded-lg px-3 py-2" />
-            </label>
-            <label className="block text-sm">Typ
-              <select value={fieldDraft.type} onChange={(e) => setFieldDraft({ ...fieldDraft, type: e.target.value })} className="mt-1 w-full border rounded-lg px-3 py-2 bg-white">
-                {FIELD_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
-            </label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(fieldDraft.required)} onChange={(e) => setFieldDraft({ ...fieldDraft, required: e.target.checked })} /> Pole wymagane</label>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setFieldDraft(null)} className="px-3 py-2 border rounded-lg">Anuluj</button>
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
+            <div className="px-5 py-4 border-b flex items-center justify-between">
+              <h3 className="font-bold text-lg">{fieldDraft.isNew ? "Dodaj pole" : "Edytuj pole"}</h3>
+              <button type="button" onClick={() => setFieldDraft(null)} aria-label="Zamknij"><X size={18} /></button>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <label className="block text-sm font-medium">Nazwa pola widoczna dla lekarza *
+                <input
+                  value={fieldDraft.label}
+                  onChange={(e) => {
+                    const label = e.target.value;
+                    const next = { ...fieldDraft, label };
+                    if (fieldDraft.isNew && !fieldDraft.keyTouched) next.key = toCamelKey(label);
+                    setFieldDraft(next);
+                  }}
+                  placeholder="np. Zalecenia ogólne i postępowanie dietetyczno-ruchowe"
+                  className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 font-normal"
+                />
+              </label>
+              <label className="block text-sm font-medium">Identyfikator techniczny *
+                <input
+                  value={fieldDraft.key || ""}
+                  onChange={(e) => setFieldDraft({ ...fieldDraft, key: e.target.value.replace(/[^a-zA-Z0-9_]/g, ""), keyTouched: true })}
+                  placeholder="np. zaleceniaOgolne"
+                  className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 font-normal"
+                />
+                <span className="mt-1 block text-xs font-normal text-slate-500">Automatycznie generowany jako camelCase. Widoczny tylko w konfiguracji wzoru.</span>
+              </label>
+              <label className="block text-sm font-medium">Typ pola *
+                <select
+                  value={fieldDraft.type}
+                  onChange={(e) => {
+                    const type = e.target.value;
+                    const options = type === "select" && !(fieldDraft.options || []).length ? ["Opcja 1", "Opcja 2"] : (fieldDraft.options || []);
+                    let defaultValue = fieldDraft.defaultValue || "";
+                    if (type === "checkbox") defaultValue = defaultValue === "tak" ? "tak" : "";
+                    else if (type === "select") defaultValue = options.includes(defaultValue) ? defaultValue : "";
+                    else if (fieldDraft.type === "checkbox" || fieldDraft.type === "select") defaultValue = "";
+                    setFieldDraft({ ...fieldDraft, type, options, defaultValue });
+                  }}
+                  className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-normal"
+                >
+                  {FIELD_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </label>
+              <label className="block text-sm font-medium">Tekst pomocniczy
+                <input value={fieldDraft.helpText || ""} onChange={(e) => setFieldDraft({ ...fieldDraft, helpText: e.target.value })} placeholder="Widoczny tylko lekarzowi podczas wystawiania dokumentu (opcjonalny)" className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 font-normal" />
+              </label>
+              {fieldDraft.type !== "checkbox" && fieldDraft.type !== "date" && (
+                <label className="block text-sm font-medium">Placeholder
+                  <input value={fieldDraft.placeholder || ""} onChange={(e) => setFieldDraft({ ...fieldDraft, placeholder: e.target.value })} placeholder="np. Wpisz szczegółowe zalecenia..." className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 font-normal" />
+                </label>
+              )}
+              {fieldDraft.type === "select" ? (
+                <label className="block text-sm font-medium">Domyślna wartość
+                  <select value={fieldDraft.defaultValue || ""} onChange={(e) => setFieldDraft({ ...fieldDraft, defaultValue: e.target.value })} className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-normal">
+                    <option value="">Brak</option>
+                    {(fieldDraft.options || []).filter((option) => option.trim()).map((option) => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                </label>
+              ) : fieldDraft.type === "checkbox" ? (
+                <div>
+                  <span className="block text-sm font-medium mb-1">Domyślna wartość</span>
+                  <label className="flex items-center gap-2 text-sm border border-slate-300 rounded-lg px-3 py-2 font-normal">
+                    <input type="checkbox" checked={fieldDraft.defaultValue === "tak"} onChange={(e) => setFieldDraft({ ...fieldDraft, defaultValue: e.target.checked ? "tak" : "" })} />
+                    Domyślnie zaznaczony (Tak)
+                  </label>
+                </div>
+              ) : (
+                <label className="block text-sm font-medium">Domyślna wartość
+                  <input type={fieldDraft.type === "date" ? "date" : "text"} value={fieldDraft.defaultValue || ""} onChange={(e) => setFieldDraft({ ...fieldDraft, defaultValue: e.target.value })} placeholder="Wprowadź opcjonalną domyślną wartość..." className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 font-normal" />
+                </label>
+              )}
+              {fieldDraft.type === "select" && (
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Opcje listy *</span>
+                    <button type="button" onClick={() => setFieldDraft({ ...fieldDraft, options: [...(fieldDraft.options || []), ""] })} className="text-xs font-semibold text-teal-700">+ Dodaj opcję</button>
+                  </div>
+                  <div className="mt-2 space-y-2">
+                    {(fieldDraft.options || []).map((option, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <span className="w-5 text-sm text-slate-500">{index + 1}.</span>
+                        <input
+                          value={option}
+                          onChange={(e) => {
+                            const options = [...(fieldDraft.options || [])];
+                            options[index] = e.target.value;
+                            setFieldDraft({ ...fieldDraft, options, defaultValue: options.includes(fieldDraft.defaultValue) ? fieldDraft.defaultValue : "" });
+                          }}
+                          className="flex-1 border border-slate-300 rounded-lg px-3 py-2"
+                        />
+                        <button type="button" aria-label="Usuń opcję" onClick={() => {
+                          const options = (fieldDraft.options || []).filter((_, item) => item !== index);
+                          setFieldDraft({ ...fieldDraft, options, defaultValue: options.includes(fieldDraft.defaultValue) ? fieldDraft.defaultValue : "" });
+                        }} className="text-slate-400 hover:text-rose-600"><Trash2 size={16} /></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(fieldDraft.required)} onChange={(e) => setFieldDraft({ ...fieldDraft, required: e.target.checked })} /> Pole wymagane</label>
+              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(fieldDraft.printWhenFilled)} onChange={(e) => setFieldDraft({ ...fieldDraft, printWhenFilled: e.target.checked })} /> Pokaż na wydruku, gdy posiada wartość</label>
+            </div>
+            <div className="px-5 py-4 border-t flex justify-end gap-2">
+              <button type="button" onClick={() => setFieldDraft(null)} className="px-4 py-2 border border-slate-300 rounded-lg">Anuluj</button>
               <button type="button" onClick={() => {
-                if (!fieldDraft.label.trim()) { toast.error("Podaj etykietę pola."); return; }
-                const next = { key: fieldDraft.key, label: fieldDraft.label.trim(), type: fieldDraft.type || "textarea", required: Boolean(fieldDraft.required) };
+                if (!fieldDraft.label.trim()) { toast.error("Podaj nazwę pola."); return; }
+                const key = (fieldDraft.key || toCamelKey(fieldDraft.label)).trim();
+                if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(key)) { toast.error("Identyfikator musi zaczynać się od litery."); return; }
+                const originalKey = fieldDraft.originalKey || (fieldDraft.isNew ? "" : fieldDraft.key);
+                if ((editing.fields || []).some((field) => field.key === key && field.key !== originalKey)) { toast.error("Taki identyfikator już istnieje w tym wzorze."); return; }
+                const options = fieldDraft.type === "select" ? [...new Set((fieldDraft.options || []).map((option) => option.trim()).filter(Boolean))] : [];
+                if (fieldDraft.type === "select" && options.length < 1) { toast.error("Dodaj co najmniej jedną opcję listy."); return; }
+                const defaultValue = fieldDraft.type === "checkbox"
+                  ? (fieldDraft.defaultValue === "tak" ? "tak" : "")
+                  : fieldDraft.type === "select"
+                    ? (options.includes(fieldDraft.defaultValue) ? fieldDraft.defaultValue : "")
+                    : String(fieldDraft.defaultValue || "").trim();
+                const next = {
+                  key,
+                  label: fieldDraft.label.trim(),
+                  type: fieldDraft.type || "text",
+                  required: Boolean(fieldDraft.required),
+                  options,
+                  defaultValue,
+                  helpText: String(fieldDraft.helpText || "").trim(),
+                  placeholder: String(fieldDraft.placeholder || "").trim(),
+                  printWhenFilled: Boolean(fieldDraft.printWhenFilled),
+                };
                 const fields = fieldDraft.isNew
                   ? [...(editing.fields || []), next]
-                  : (editing.fields || []).map((field) => (field.key === next.key ? next : field));
+                  : (editing.fields || []).map((field) => (field.key === originalKey ? next : field));
                 setEditing({ ...editing, fields });
                 setSelectedKey(next.key);
                 setFieldDraft(null);
-              }} className="px-3 py-2 bg-teal-700 text-white rounded-lg">Zapisz pole</button>
+              }} className="px-4 py-2 bg-[#1b766a] text-white rounded-lg font-semibold inline-flex items-center gap-1">
+                <Check size={16} /> {fieldDraft.isNew ? "Dodaj pole" : "Zapisz pole"}
+              </button>
             </div>
           </div>
         </div>
@@ -320,7 +645,7 @@ export default function ClinicDocumentTemplatesPage() {
         <div className="fixed inset-0 z-[60] bg-slate-900/70 overflow-y-auto p-6">
           <div className="max-w-[900px] mx-auto">
             <div className="flex justify-end gap-2 mb-3">
-              <button type="button" onClick={() => printClinicSheet({ title: editing.printTitle || editing.name, fields: editing.fields, patient: SAMPLE_PATIENT, status: "template" })} className="px-4 py-2 bg-white rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
+              <button type="button" onClick={() => { printClinicSheet({ title: editing.printTitle || editing.name, fields: editing.fields, patient: SAMPLE_PATIENT, status: "template" }); }} className="px-4 py-2 bg-white rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
               <button type="button" onClick={() => setPrintOpen(false)} className="px-4 py-2 bg-white rounded-lg">Zamknij</button>
             </div>
             <ClinicDocumentSheet mode="preview" title={editing.printTitle || editing.name} fields={editing.fields || []} />

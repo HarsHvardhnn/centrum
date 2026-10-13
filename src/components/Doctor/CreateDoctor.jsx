@@ -214,6 +214,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             qualifications: initialData?.qualifications || [],
             shortDescription: initialData?.shortDescription || "",
             bio: initialData?.bio || "",
+            professionalTitle: initialData?.professionalTitle || "",
+            npwz: initialData?.npwz || initialData?.pwz || "",
             // In edit mode, set to existing URL if available, otherwise null
             // This ensures validation passes when editing with existing picture
             profilePicture: isEditMode && initialData?.profilePicture ? initialData.profilePicture : null,
@@ -361,6 +363,38 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         className="text-red-500 text-xs mt-1"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="professionalTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                      Tytuł
+                    </label>
+                    <Field
+                      type="text"
+                      name="professionalTitle"
+                      id="professionalTitle"
+                      placeholder="np. Dr n. med."
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Tytuł drukowany w stopce dokumentu, przed imieniem i nazwiskiem. Specjalizacja nie jest tam pokazywana.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="npwz" className="block text-sm font-medium text-gray-700 mb-1">
+                      Numer PWZ
+                    </label>
+                    <Field
+                      type="text"
+                      name="npwz"
+                      id="npwz"
+                      placeholder="np. 9017575"
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Prawo wykonywania zawodu. Ten numer jest wymagany, gdy lekarz wystawia e-receptę, e-skierowanie albo e-ZLA w systemie P1.
+                    </p>
                   </div>
 
                   <div>

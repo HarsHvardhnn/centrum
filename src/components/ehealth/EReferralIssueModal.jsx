@@ -4,6 +4,7 @@ import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { STATUS_LABELS, statusClass, accessCodeOf } from "./ehealthStatus";
 import P1SignDialog from "./P1SignDialog";
+import ReferralHistoryModal from "./ReferralHistoryModal";
 import IssuePatientCard, { normalizePatient, patientForDocument } from "./IssuePatientCard";
 import {
   ANATOMICAL_SITES,
@@ -70,7 +71,6 @@ const EReferralIssueModal = ({
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [history, setHistory] = useState([]);
 
   useEffect(() => {
     const term = primaryIcd10.trim();
@@ -192,6 +192,7 @@ const EReferralIssueModal = ({
       observation: referralType === "rehabilitation" ? justification.trim() : "",
       clientReferralType: referralType,
       anatomicalSite: site,
+      doctorName: patient?.doctorName || "",
       patientForDocument: patientForDocument(details),
     };
     try {
@@ -211,17 +212,6 @@ const EReferralIssueModal = ({
     }
   };
 
-  const openHistory = async () => {
-    setHistoryOpen(true);
-    try {
-      const res = await ehealthHelper.history({ patientId, service: "referral" });
-      const rows = res?.data?.documents || res?.data || [];
-      setHistory(Array.isArray(rows) ? rows : []);
-    } catch {
-      setHistory([]);
-    }
-  };
-
   const applyHistory = (row) => {
     const payload = row?.payload || {};
     if (payload.type === "02.10REH" || payload.clientReferralType === "rehabilitation") setReferralType("rehabilitation");
@@ -234,6 +224,8 @@ const EReferralIssueModal = ({
     if (payload.nfzDepartment) setNfzBranch(payload.nfzDepartment);
     if (payload.nfzContract) setNfzContract(payload.nfzContract);
     if (payload.icd9Code) setProcedures([`${payload.icd9Code} - ${payload.icd9Display || ""}`]);
+    setContraindications(payload.previousTests || "");
+    setSite(payload.anatomicalSite || (payload.bodySite === "L" ? "left" : payload.bodySite === "R" ? "right" : ""));
     setResult(null);
     setHistoryOpen(false);
     toast.success("Dane skierowania wstawiono do formularza");
@@ -256,7 +248,7 @@ const EReferralIssueModal = ({
             {result ? "E-Skierowanie zarejestrowane w CeZ / P1" : "Moduł wystawiania e-Skierowania"}
           </h2>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={openHistory} className="px-3 py-1.5 rounded-xl border border-white/40 bg-white/10 text-xs font-semibold">
+            <button type="button" onClick={() => setHistoryOpen(true)} className="px-3 py-1.5 rounded-xl border border-white/40 bg-white/10 text-xs font-semibold">
               Historia e-Skierowań
             </button>
             <button type="button" onClick={onClose} className="px-2 py-1 text-lg" aria-label="Zamknij">×</button>
@@ -453,23 +445,14 @@ const EReferralIssueModal = ({
         </div>
       </div>
 
-      {historyOpen && (
-        <div className="fixed inset-0 z-[60] bg-slate-900/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[70vh] overflow-y-auto p-4 space-y-2">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold">Historia e-skierowań</h3>
-              <button type="button" onClick={() => setHistoryOpen(false)}>×</button>
-            </div>
-            {history.length === 0 && <p className="text-slate-500">Brak skierowań tego pacjenta w CM7MED.</p>}
-            {history.map((row) => (
-              <button key={row.id} type="button" onClick={() => applyHistory(row)} className="w-full text-left border rounded-xl p-3 hover:bg-blue-50">
-                <div className="font-bold">{row.payload?.title || "e-Skierowanie"}</div>
-                <div className="text-slate-500">{STATUS_LABELS[row.status] || row.status} · {accessCodeOf(row) || "bez kodu P1"}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <ReferralHistoryModal
+        open={historyOpen}
+        patientId={patientId}
+        patientName={details?.name || patient?.name}
+        pesel={details?.pesel || patient?.pesel}
+        onClose={() => setHistoryOpen(false)}
+        onDuplicate={applyHistory}
+      />
 
       <P1SignDialog
         open={signOpen}

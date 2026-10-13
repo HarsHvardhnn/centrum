@@ -27,7 +27,9 @@ const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
     }
   };
   
-  if (!reports || reports.length === 0) {
+  const visibleReports = (reports || []).filter((report) => report.type !== "visit-card" && report.type !== "Visit Card");
+
+  if (visibleReports.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 mb-4 text-center py-8">
         <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -69,7 +71,7 @@ const ReportsList = ({ appointmentId, reports = [], onReportDeleted }) => {
       <h3 className="text-lg font-semibold mb-4">Raporty Medyczne</h3>
       
       <div className="space-y-4">
-        {reports.map(report => (
+        {visibleReports.map(report => (
           <div key={report._id} className="border rounded-lg overflow-hidden">
             <div className="p-4 flex items-start">
               <div className="flex-shrink-0 mr-4">

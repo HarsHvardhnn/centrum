@@ -1089,6 +1089,30 @@ export default function EPrescriptionIssueModal({
                   <input value={header.entitlementDocument} onChange={(e) => patchHeader({ entitlementDocument: e.target.value })} placeholder="Nr dokumentu uprawnienia" className="w-full p-2 border border-slate-300 rounded-lg" />
                 )}
               </section>
+              <section className="border border-slate-200 rounded-xl p-3 space-y-2">
+                <div className="font-bold uppercase tracking-wider text-slate-500">Kontrola: kto, gdzie, kiedy</div>
+                {checks.blocking.map((row) => <p key={row} className="text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2">{row}</p>)}
+                {checks.passed.map((row) => <p key={row} className="text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-2">{row}</p>)}
+                {!checks.blocking.length && tabs.some((tab) => tab.items.length) && <p className="font-semibold text-emerald-800">Brak błędów blokujących podpis.</p>}
+              </section>
+              {packages.length > 0 && (
+                <section className="border border-slate-200 rounded-xl p-3 space-y-2">
+                  <div className="font-bold uppercase tracking-wider text-slate-500">Recepty do podpisu</div>
+                  {packages.map((pack, index) => (
+                    <div key={`${pack.title}-${pack.form}-${index}`} className="bg-slate-50 rounded-lg p-2">
+                      <div className="font-semibold text-slate-800">{pack.title} · {pack.form === "Rpw" ? "Rpw — osobna" : pack.form}</div>
+                      {pack.items.map((item) => (
+                        <div key={item.key} className="text-slate-600 break-words">
+                          {item.drug?.name || "Receptura"}
+                          {item.cito ? " · CITO" : ""}
+                          {item.annual ? " · 365 dni" : ""}
+                          {item.realizationFrom && item.realizationFrom > todayIso() ? ` · od ${item.realizationFrom}` : ""}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </section>
+              )}
             </aside>
 
             <main className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -1103,12 +1127,6 @@ export default function EPrescriptionIssueModal({
                     )}
                   </div>
                 ))}
-                <button type="button" onClick={addPrescription} title="Dodaj nową e-receptę do tej wizyty" className="px-3 py-1.5 rounded-lg border border-[#0D5C46]/40 text-[#0D5C46] text-sm font-semibold inline-flex items-center gap-1 bg-white">
-                  <Plus size={14} /> Nowa recepta
-                </button>
-                <button type="button" onClick={() => setHistoryOpen(true)} title="Pobierz historię wystawionych e-recept pacjenta" className="px-3 py-1.5 rounded-lg border border-[#0D5C46]/40 text-[#0D5C46] text-sm font-semibold inline-flex items-center gap-1 bg-white">
-                  <History size={14} /> Pobierz historię e-Recept
-                </button>
               </div>
               <section className="bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1190,31 +1208,6 @@ export default function EPrescriptionIssueModal({
                 />
               ))}
             </main>
-
-            <aside className="w-full lg:w-[300px] shrink-0 border-l border-slate-200 bg-white p-3.5 overflow-y-auto text-xs space-y-3">
-              <div className="font-bold uppercase tracking-wider text-slate-500">Kontrola: kto, gdzie, kiedy</div>
-              {checks.blocking.map((row) => <p key={row} className="text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2">{row}</p>)}
-              {checks.passed.map((row) => <p key={row} className="text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-2">{row}</p>)}
-              {!checks.blocking.length && tabs.some((tab) => tab.items.length) && <p className="font-semibold text-emerald-800">Brak błędów blokujących podpis.</p>}
-              {packages.length > 0 && (
-                <div className="border border-slate-200 rounded-xl p-3 space-y-2">
-                  <div className="font-bold uppercase tracking-wider text-slate-500">Recepty do podpisu</div>
-                  {packages.map((pack, index) => (
-                    <div key={`${pack.title}-${pack.form}-${index}`} className="bg-slate-50 rounded-lg p-2">
-                      <div className="font-semibold text-slate-800">{pack.title} · {pack.form === "Rpw" ? "Rpw — osobna" : pack.form}</div>
-                      {pack.items.map((item) => (
-                        <div key={item.key} className="text-slate-600 break-words">
-                          {item.drug?.name || "Receptura"}
-                          {item.cito ? " · CITO" : ""}
-                          {item.annual ? " · 365 dni" : ""}
-                          {item.realizationFrom && item.realizationFrom > todayIso() ? ` · od ${item.realizationFrom}` : ""}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </aside>
           </div>
         )}
 

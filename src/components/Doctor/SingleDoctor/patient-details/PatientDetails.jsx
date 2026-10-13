@@ -6,8 +6,6 @@ import PatientProfile from "./PatientProfile";
 import ConsultationForm from "./ConsultationForm";
 import ActionButtons from "./ActionButtons";
 import ServiceSelectionModal from "./ServiceSelectionModal";
-import ReportUploader from "./ReportUploader";
-import ReportsList from "./ReportsList";
 import VisitInfoHeader from "./VisitInfoHeader";
 import PatientHeaderCard from "./PatientHeaderCard";
 import VisitHistoryCard from "./VisitHistoryCard";
@@ -16,7 +14,6 @@ import DiagnosisCard from "./DiagnosisCard";
 import ProceduresCard from "./ProceduresCard";
 import DocumentationCard from "./DocumentationCard";
 import NotesCard from "./NotesCard";
-import MedicalDocumentsCard from "./MedicalDocumentsCard";
 import SectionTemplatePickerModal from "./SectionTemplatePickerModal";
 import GlobalTemplatePickerModal from "./GlobalTemplatePickerModal";
 import PatientDetailsFooter from "./PatientDetailsFooter";
@@ -1305,17 +1302,6 @@ const PatientDetailsPage = () => {
     }
   };
 
-  // Handle report upload success – refetch so reports list updates
-  const handleReportUploadSuccess = () => {
-    if (currentAppointmentId) fetchAppointmentDetails(currentAppointmentId);
-  };
-
-  // Handle report deletion
-  const handleReportDeleted = (remainingReports) => {
-    window.location.reload();
-    setReports(remainingReports);
-  };
-
   const handleBack = () => {
     navigate(-1);
   };
@@ -1843,8 +1829,10 @@ const PatientDetailsPage = () => {
 
                 <VisitClinicDocuments
                   visitId={currentAppointmentId}
+                  reports={reports}
                   patientId={patientData.patient_id || patientData.id}
                   doctorName={typeof user?.name === "string" ? user.name : `${user?.name?.first || ""} ${user?.name?.last || ""}`.trim()}
+                  doctorTitle={user?.professionalTitle || ""}
                   doctorPwz={user?.npwz || user?.pwz || ""}
                   visitHints={{
                     recommendations: consultationData.recommendations || "",
@@ -1855,21 +1843,31 @@ const PatientDetailsPage = () => {
                     pesel: patientData.govtId || patientData.pesel || patientData.PESEL || "",
                     birthDate: patientData.birthDate || patientData.dateOfBirth || "",
                     address: [
-                      typeof patientData.address === "string" ? patientData.address : patientData.address?.street,
-                      patientData.pinCode || patientData.address?.postalCode,
-                      patientData.city || patientData.address?.city,
-                    ].filter(Boolean).join(", "),
+                      (typeof patientData.address === "string" ? patientData.address : patientData.address?.street) || patientData.street,
+                      [patientData.pinCode || patientData.zipCode || patientData.postalCode || patientData.address?.postalCode, patientData.city || patientData.address?.city].filter(Boolean).join(" "),
+                      patientData.state || patientData.province,
+                      patientData.country,
+                    ].map((part) => String(part || "").trim()).filter(Boolean).join(", "),
                   }}
-                />
-
-                <MedicalDocumentsCard
-                  appointmentId={currentAppointmentId}
-                  onSuccess={handleReportUploadSuccess}
-                />
-                <ReportsList
-                  appointmentId={currentAppointmentId}
-                  reports={reports}
-                  onReportDeleted={handleReportDeleted}
+                  onReportsChanged={() => currentAppointmentId && fetchAppointmentDetails(currentAppointmentId)}
+                  onPatientRecordSaved={(saved) => {
+                    const [first, ...rest] = String(saved.name || "").trim().split(/\s+/);
+                    setPatientData((prev) => ({
+                      ...prev,
+                      name: {
+                        ...(prev.name || {}),
+                        first: first || prev.name?.first || "",
+                        last: rest.join(" ") || prev.name?.last || "",
+                      },
+                      govtId: saved.pesel || prev.govtId,
+                      dateOfBirth: saved.birthDate || prev.dateOfBirth,
+                      address: saved.address ?? prev.address,
+                      pinCode: saved.pinCode ?? prev.pinCode,
+                      city: saved.city ?? prev.city,
+                      state: saved.state ?? prev.state,
+                      country: saved.country ?? prev.country,
+                    }));
+                  }}
                 />
 
                 <PatientServicesSection />
