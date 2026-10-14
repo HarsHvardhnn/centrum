@@ -41,6 +41,7 @@ import {
 } from "../../../../utils/radiologistVisitHelper";
 import { useAutoSave } from "../../../../hooks/useAutoSave";
 import { useUser } from "../../../../context/userContext";
+import { apiCaller } from "../../../../utils/axiosInstance";
 import {
   collectDoctorCatalogIds,
   loadDoctorAssignedCatalog,
@@ -396,12 +397,32 @@ const PatientDetailsPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showLoader, hideLoader } = useLoader();
-  const { user } = useUser();
+  const { user, updateUserField } = useUser();
   const [isLoading, setIsLoading] = useState(() => {
     if (!appointmentIdFromUrl) return true;
     return !queryClient.getQueryData(queryKeys.visitConsolidated(appointmentIdFromUrl));
   });
   const [error, setError] = useState(null);
+
+  // The login session does not carry PWZ. Read it from the doctor profile
+  // so a number saved in Konta shows on the document without a new login.
+  useEffect(() => {
+    if (user?.role !== "doctor" || !user?.id) return;
+    let cancelled = false;
+    apiCaller("GET", "/auth/profile/user")
+      .then((response) => {
+        const data = response?.data?.data;
+        if (cancelled || !data) return;
+        const pwz = String(data.npwz || data.pwz || "").trim();
+        const title = String(data.professionalTitle || "").trim();
+        if (pwz) updateUserField("npwz", pwz);
+        if (title) updateUserField("professionalTitle", title);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.role]);
 
   // Add saving-related states
   const [isSaving, setIsSaving] = useState(false);

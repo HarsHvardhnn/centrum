@@ -250,9 +250,9 @@ function signatureIdentity({ doctorTitle, doctorName, doctorPwz, sample }) {
   const name = String(doctorName || "").trim();
   const pwz = String(doctorPwz || "").trim();
   if (sample && !title && !name && !pwz) {
-    return { line: "Dr n. med. Jan Kowalski", pwz: "7481920", specialty: "Kardiologia / Choroby wewnętrzne" };
+    return { line: "Dr n. med. Jan Kowalski", pwz: "7481920" };
   }
-  return { line: [title, name].filter(Boolean).join(" "), pwz, specialty: "" };
+  return { line: [title, name].filter(Boolean).join(" "), pwz };
 }
 
 function visibleFieldText(element) {
@@ -407,7 +407,6 @@ export default function ClinicDocumentSheet({
               <p className="doctor-signature__label">Lekarz orzekający / wystawiający</p>
               <p className="doctor-signature__name">{sign.line || "—"}</p>
               <p className="doctor-signature__pwz">PWZ: {sign.pwz || "—"}</p>
-              {sign.specialty ? <p className="doctor-signature__specialty">{sign.specialty}</p> : null}
               <div className="doctor-signature__stamp-space" aria-hidden="true" />
               <div className="doctor-signature__line" />
               <p className="doctor-signature__caption">podpis i pieczątka lekarza</p>
@@ -685,9 +684,9 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
     popup.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8" /><title>${heading}</title>${styles}
       <style>
         @page { size: A4; margin: 0; }
-        html, body { margin: 0; padding: 0; background: #fff; }
-        .print-page { width: 210mm; height: 297mm; overflow: hidden; break-after: page; page-break-after: always; }
-        .print-page:last-child { break-after: auto; page-break-after: auto; }
+        html, body { margin: 0; padding: 0; background: #fff; height: auto; }
+        .print-page { box-sizing: border-box; width: 210mm; height: 296.8mm; overflow: hidden; position: relative; break-inside: avoid; page-break-inside: avoid; }
+        .print-page + .print-page { break-before: page; page-break-before: always; }
       </style></head><body>${pages}</body></html>`);
     popup.document.close();
     await whenReady(popup);

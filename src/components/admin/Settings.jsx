@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import adminHelper from "../../helpers/adminHelper";
+import { apiCaller } from "../../utils/axiosInstance";
 import { useLoader } from "../../context/LoaderContext";
 import { useUser } from "../../context/userContext";
 import DoctorScheduleManager from "./DoctorScheduleEditor";
@@ -872,8 +873,21 @@ export default function UserManagement() {
     try {
       showLoader();
       const response = await doctorService.getDoctorDetailsById(userId);
-      // Map specializations to {id, name}
-      setSelectedDoctor(response.data);
+      let doctor = response.data || {};
+      if (String(user?.id || "") === String(userId) && !doctor.npwz) {
+        try {
+          const profile = await apiCaller("GET", "/auth/profile/user");
+          const data = profile?.data?.data || {};
+          doctor = {
+            ...doctor,
+            professionalTitle: doctor.professionalTitle || data.professionalTitle || "",
+            npwz: data.npwz || data.pwz || "",
+          };
+        } catch (_) {
+          /* the account form still opens with the details we already have */
+        }
+      }
+      setSelectedDoctor(doctor);
       setShowAddDoctorModal(true);
       hideLoader();
     } catch (error) {

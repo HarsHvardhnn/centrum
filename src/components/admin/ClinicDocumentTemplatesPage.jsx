@@ -3,6 +3,8 @@ import { FileStack, Plus, Pencil, Trash2, X, Printer, Eye, Copy, MoreVertical, E
 import { toast } from "sonner";
 import clinicDocumentsHelper from "../../helpers/clinicDocumentsHelper";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
+import { useUser } from "../../context/userContext";
+import { apiCaller } from "../../utils/axiosInstance";
 import ClinicDocumentSheet, { printClinicSheet, SAMPLE_PATIENT } from "../ehealth/ClinicDocumentSheet";
 
 const CATEGORIES = [
@@ -40,6 +42,22 @@ const emptyForm = {
   assignedDoctorIds: [],
   fields: [{ key: "purpose", label: "Cel wydania zaświadczenia", type: "textarea", required: true }],
 };
+
+function personName(user) {
+  if (!user) return "";
+  if (typeof user.name === "string") return user.name.trim();
+  return `${user.name?.first || ""} ${user.name?.last || ""}`.trim();
+}
+
+function signatureFromUser(user, { allowAnyRole = false } = {}) {
+  if (!user) return {};
+  if (!allowAnyRole && user.role !== "doctor") return {};
+  const name = personName(user);
+  const title = user.professionalTitle || "";
+  const pwz = user.npwz || user.pwz || "";
+  if (!name && !title && !pwz) return {};
+  return { doctorName: name, doctorTitle: title, doctorPwz: pwz };
+}
 
 function initials(name) {
   return String(name || "")
@@ -140,6 +158,8 @@ function fieldCountLabel(count) {
 }
 
 export default function ClinicDocumentTemplatesPage({ personal = false }) {
+  const { user, updateUserField } = useUser();
+  const [signer, setSigner] = useState(() => signatureFromUser(user, { allowAnyRole: personal }));
   const [rows, setRows] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [query, setQuery] = useState("");
@@ -154,6 +174,35 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
   const [accessTarget, setAccessTarget] = useState(null);
   const [copyOpen, setCopyOpen] = useState(false);
   const [clinicRows, setClinicRows] = useState([]);
+
+  useEffect(() => {
+    const next = signatureFromUser(user, { allowAnyRole: personal });
+    setSigner((current) => ({
+      doctorName: next.doctorName || current.doctorName || "",
+      doctorTitle: next.doctorTitle || current.doctorTitle || "",
+      doctorPwz: next.doctorPwz || current.doctorPwz || "",
+    }));
+  }, [user?.id, user?.role, user?.name, user?.npwz, user?.pwz, user?.professionalTitle, personal]);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiCaller("GET", "/auth/profile/user")
+      .then((response) => {
+        const data = response?.data?.data;
+        if (cancelled || !data) return;
+        const next = signatureFromUser(
+          { ...user, ...data, name: personName(data) || personName(user) },
+          { allowAnyRole: personal || data.role === "doctor" }
+        );
+        if (next.doctorName || next.doctorPwz || next.doctorTitle) setSigner(next);
+        if (data.npwz) updateUserField("npwz", data.npwz);
+        if (data.professionalTitle) updateUserField("professionalTitle", data.professionalTitle);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, personal]);
 
   const load = async () => {
     try {
@@ -453,6 +502,7 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
                   mode="admin"
                   title={editing.printTitle || editing.name}
                   fields={editing.fields || []}
+                  {...signer}
                   selectedKey={selectedKey}
                   onSelectField={(key) => {
                     setSelectedKey(key);
@@ -553,11 +603,11 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
                 <div className="font-semibold">{previewRow.name}</div>
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={() => { printClinicSheet({ title: previewRow.printTitle || previewRow.name, fields: previewRow.fields, patient: SAMPLE_PATIENT, status: "template" }); }} className="px-4 py-2 bg-white text-slate-800 rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
+                <button type="button" onClick={() => { printClinicSheet({ title: previewRow.printTitle || previewRow.name, fields: previewRow.fields, patient: SAMPLE_PATIENT, status: "template", ...signer }); }} className="px-4 py-2 bg-white text-slate-800 rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
                 <button type="button" onClick={() => setPreviewRow(null)} className="px-4 py-2 bg-white text-slate-800 rounded-lg">Zamknij</button>
               </div>
             </div>
-            <ClinicDocumentSheet mode="preview" title={previewRow.printTitle || previewRow.name} fields={previewRow.fields || []} />
+            <ClinicDocumentSheet mode="preview" title={previewRow.printTitle || previewRow.name} fields={previewRow.fields || []} {...signer} />
           </div>
         </div>
       )}
@@ -725,10 +775,10 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
         <div className="fixed inset-0 z-[60] bg-slate-900/70 overflow-y-auto p-6">
           <div className="max-w-[900px] mx-auto">
             <div className="flex justify-end gap-2 mb-3">
-              <button type="button" onClick={() => { printClinicSheet({ title: editing.printTitle || editing.name, fields: editing.fields, patient: SAMPLE_PATIENT, status: "template" }); }} className="px-4 py-2 bg-white rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
+              <button type="button" onClick={() => { printClinicSheet({ title: editing.printTitle || editing.name, fields: editing.fields, patient: SAMPLE_PATIENT, status: "template", ...signer }); }} className="px-4 py-2 bg-white rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
               <button type="button" onClick={() => setPrintOpen(false)} className="px-4 py-2 bg-white rounded-lg">Zamknij</button>
             </div>
-            <ClinicDocumentSheet mode="preview" title={editing.printTitle || editing.name} fields={editing.fields || []} />
+            <ClinicDocumentSheet mode="preview" title={editing.printTitle || editing.name} fields={editing.fields || []} {...signer} />
           </div>
         </div>
       )}
