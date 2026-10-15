@@ -251,8 +251,6 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
     }
   }
 
-  console.log("patinet data",patientData)
-
   // Add appointment flags section if any of the 5 fields are true
   if (patientData.isWalkin || patientData.needsAttention || patientData.isBackdated || patientData.overrideConflicts || patientData.isEmergency) {
     sections["Informacje o wizycie"] = filterEmptyFields({
@@ -280,12 +278,14 @@ const PatientDetailsModal = ({ isOpen, onClose, patientData }) => {
     };
   }
 
-  // Add documents section if there are any documents
-  if (patientData.documents && patientData.documents.length > 0) {
+  const registrationDocuments = (patientData.documents || []).filter(
+    (doc) => doc.kioskSource === "ipad_kiosk" || doc.metadata?.source === "ipad_kiosk"
+  );
+  if (registrationDocuments.length > 0) {
     sections["Dokumenty"] = {
       "Dokumenty": (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {patientData.documents.map((doc, index) => (
+          {registrationDocuments.map((doc, index) => (
             <div
               key={doc.id || index}
               className="bg-white rounded-lg p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow w-64 max-w-full relative group"
