@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import { toast } from "sonner";
 
 export const CLINIC_LETTERHEAD = {
@@ -100,173 +100,6 @@ export function previewFieldValues(fields) {
   return values;
 }
 
-const PAGE_GAP = 16;
-const SIGNATURE_BOTTOM_MM = 22;
-const FOOTER_RESERVE_MM = 18;
-const PAGE_TOP_MM = 14;
-
-function clearPageBreaks(root) {
-  root.querySelectorAll(".sheet-page-break").forEach((node) => node.remove());
-}
-
-function makePageBreak(height) {
-  const spacer = document.createElement("span");
-  spacer.className = "sheet-page-break";
-  spacer.setAttribute("contenteditable", "false");
-  spacer.setAttribute("aria-hidden", "true");
-  spacer.style.height = `${Math.round(height)}px`;
-  return spacer;
-}
-
-function textLines(block) {
-  const hosts = [...block.querySelectorAll(".document-section__value, .sheet-write")];
-  const lines = [];
-  hosts.forEach((host) => {
-    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        if (!node.textContent) return NodeFilter.FILTER_REJECT;
-        if (node.parentElement?.closest(".sheet-page-break")) return NodeFilter.FILTER_REJECT;
-        return NodeFilter.FILTER_ACCEPT;
-      },
-    });
-    let textNode;
-    while ((textNode = walker.nextNode())) {
-      const range = document.createRange();
-      range.selectNodeContents(textNode);
-      [...range.getClientRects()].forEach((rect) => {
-        if (rect.height >= 1) lines.push({ node: textNode, top: rect.top, bottom: rect.bottom });
-      });
-    }
-  });
-  return lines;
-}
-
-function splitOffset(node, viewportTop) {
-  const text = node.textContent || "";
-  let low = 0;
-  let high = text.length;
-  const range = document.createRange();
-  while (low < high) {
-    const mid = Math.floor((low + high) / 2);
-    range.setStart(node, mid);
-    range.setEnd(node, Math.min(text.length, mid + 1));
-    const rect = range.getBoundingClientRect();
-    if (!rect.height || rect.top < viewportTop - 0.5) low = mid + 1;
-    else high = mid;
-  }
-  return low;
-}
-
-function insertPageBreak(node, offset, height) {
-  const extra = Math.round(height);
-  if (extra < 1 || !node?.parentNode) return false;
-  const grow = (spacer) => {
-    const current = parseFloat(spacer.style.height) || 0;
-    const next = Math.round(current + extra);
-    if (next - current < 1) return false;
-    spacer.style.height = `${next}px`;
-    return true;
-  };
-  if (offset <= 0) {
-    if (node.previousSibling?.classList?.contains("sheet-page-break")) return grow(node.previousSibling);
-    node.parentNode.insertBefore(makePageBreak(extra), node);
-    return true;
-  }
-  if (offset >= (node.textContent || "").length) return false;
-  const after = node.splitText(offset);
-  if (after.previousSibling?.classList?.contains("sheet-page-break")) return grow(after.previousSibling);
-  after.parentNode.insertBefore(makePageBreak(extra), after);
-  return true;
-}
-
-function contentLimit(page, metrics) {
-  return page * metrics.stride + metrics.pageH - metrics.footerReserve;
-}
-
-function pageContentStart(page, metrics) {
-  return page * metrics.stride + (page > 0 ? metrics.topInset : 0);
-}
-
-function fragmentBlock(block, origin, metrics) {
-  const { stride } = metrics;
-  for (let guard = 0; guard < 24; guard += 1) {
-    const lines = textLines(block);
-    let moved = false;
-    for (const line of lines) {
-      const top = line.top - origin;
-      const bottom = line.bottom - origin;
-      const page = Math.floor(Math.max(0, top) / stride);
-      if (bottom <= contentLimit(page, metrics) + 1) continue;
-      const gap = pageContentStart(page + 1, metrics) - top;
-      if (gap < 1) continue;
-      moved = insertPageBreak(line.node, splitOffset(line.node, line.top), gap);
-      break;
-    }
-    if (!moved) break;
-  }
-}
-
-function layoutPass(root, metrics) {
-  const { stride, pageH, footerReserve, topInset } = metrics;
-  const blocks = [...root.querySelectorAll(".sheet-block")];
-  clearPageBreaks(root);
-  blocks.forEach((block) => { block.style.marginTop = ""; });
-  blocks.forEach((block) => {
-    let top = block.offsetTop;
-    let page = Math.floor(Math.max(0, top) / stride);
-    const start = pageContentStart(page, metrics);
-    if (top < start - 1) {
-      block.style.marginTop = `${Math.round(start - top)}px`;
-      top = block.offsetTop;
-      page = Math.floor(Math.max(0, top) / stride);
-    }
-    const height = block.offsetHeight;
-    const limit = contentLimit(page, metrics);
-    const fitsOnNext = height <= pageH - footerReserve - topInset;
-    if (top + height > limit - 4 && fitsOnNext && top > page * stride + 24) {
-      const shift = Math.round(pageContentStart(page + 1, metrics) - top);
-      if (shift > 2) block.style.marginTop = `${(parseFloat(block.style.marginTop) || 0) + shift}px`;
-    }
-    fragmentBlock(block, root.getBoundingClientRect().top, metrics);
-  });
-}
-
-function lastContentPage(root, stride) {
-  let last = 0;
-  root.querySelectorAll(".sheet-block").forEach((block) => {
-    const bottom = block.offsetTop + block.offsetHeight;
-    last = Math.max(last, Math.floor(Math.max(0, bottom - 1) / stride));
-  });
-  return last;
-}
-
-function layoutA4(root) {
-  const ruler = root.parentElement?.querySelector("[data-page-ruler]");
-  const measured = ruler?.offsetHeight || 0;
-  const pageH = measured >= 200 ? measured : Math.round((297 / 25.4) * 96);
-  const mm = (value) => (value / 297) * pageH;
-  const signatureH = root.parentElement?.querySelector("[data-sheet-signature]")?.offsetHeight || mm(70);
-  const metrics = {
-    pageH,
-    stride: pageH + PAGE_GAP,
-    topInset: Math.round(mm(PAGE_TOP_MM)),
-    footerReserve: mm(FOOTER_RESERVE_MM),
-    signatureCut: mm(SIGNATURE_BOTTOM_MM) + signatureH + mm(8),
-  };
-  if (!root.querySelector(".sheet-block")) return 1;
-
-  layoutPass(root, metrics);
-  layoutPass(root, metrics);
-  const last = lastContentPage(root, metrics.stride);
-  let contentBottom = 0;
-  root.querySelectorAll(".sheet-block").forEach((block) => {
-    contentBottom = Math.max(contentBottom, block.offsetTop + block.offsetHeight);
-  });
-  const signatureTop = last * metrics.stride + metrics.pageH - metrics.signatureCut;
-  const signaturePage = contentBottom <= signatureTop - 8 ? last : last + 1;
-  return signaturePage + 1;
-}
-
 function signatureIdentity({ doctorTitle, doctorName, doctorPwz, sample }) {
   const title = String(doctorTitle || "").trim();
   const name = String(doctorName || "").trim();
@@ -355,94 +188,15 @@ export default function ClinicDocumentSheet({
     doctorPwz,
     sample: mode === "admin" || mode === "preview",
   });
-  const contentRef = useRef(null);
-  const [pages, setPages] = useState(1);
-  const layoutKey = `${heading}|${fields.map((field) => `${field.key}:${field.label}:${values[field.key] || ""}`).join("|")}|${person.name}|${person.pesel}|${person.birthDate}|${person.address}|${mode}`;
-
-  useLayoutEffect(() => {
-    const root = contentRef.current;
-    if (!root) return undefined;
-    let frame = 0;
-    const placeCaret = (offset) => {
-      if (offset == null) return;
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-        acceptNode(node) {
-          return node.parentElement?.closest(".sheet-page-break") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
-        },
-      });
-      let left = offset;
-      let node;
-      while ((node = walker.nextNode())) {
-        if (left <= node.textContent.length) {
-          const range = document.createRange();
-          range.setStart(node, left);
-          range.collapse(true);
-          const selection = window.getSelection();
-          selection.removeAllRanges();
-          selection.addRange(range);
-          return;
-        }
-        left -= node.textContent.length;
-      }
-    };
-    const caretOffset = () => {
-      const selection = window.getSelection();
-      if (!selection.rangeCount || !root.contains(selection.anchorNode)) return null;
-      const range = document.createRange();
-      range.selectNodeContents(root);
-      range.setEnd(selection.anchorNode, selection.anchorOffset);
-      const holder = document.createElement("div");
-      holder.appendChild(range.cloneContents());
-      holder.querySelectorAll(".sheet-page-break").forEach((node) => node.remove());
-      return holder.textContent.length;
-    };
-    const run = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        const offset = caretOffset();
-        const next = layoutA4(root);
-        setPages((current) => (current === next ? current : next));
-        placeCaret(offset);
-      });
-    };
-    run();
-    const observer = new ResizeObserver(run);
-    observer.observe(root);
-    const ruler = root.parentElement?.querySelector("[data-page-ruler]");
-    if (ruler) observer.observe(ruler);
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [layoutKey]);
-
   return (
-    <div className="clinic-pages relative mx-auto w-[210mm]" style={{ position: "relative", width: "210mm", height: `calc(${pages} * 297mm + ${(pages - 1) * PAGE_GAP}px)` }}>
-      <style>{SHEET_CSS}</style>
-      <div data-page-ruler className="absolute top-0 left-0 h-[297mm] w-px opacity-0 pointer-events-none" style={{ position: "absolute", top: 0, left: 0, height: "297mm", width: "1px" }} />
-      {Array.from({ length: pages }, (_, index) => (
-        <article
-          key={index}
-          className="absolute left-0 w-[210mm] h-[297mm] bg-white"
-          style={{ position: "absolute", left: 0, width: "210mm", height: "297mm", background: "#fff", top: `calc(${index} * 297mm + ${index * PAGE_GAP}px)`, boxShadow: "0 2px 16px rgba(0, 0, 0, 0.12)" }}
-        >
-          {index === pages - 1 && (
-            <div data-sheet-signature className="absolute z-30 bg-white" style={{ position: "absolute", zIndex: 30, background: "#fff", right: "15mm", bottom: `${SIGNATURE_BOTTOM_MM}mm`, width: "78mm" }}>
-              <p className="doctor-signature__label">Lekarz orzekający / wystawiający</p>
-              <p className="doctor-signature__name">{sign.line || "—"}</p>
-              <p className="doctor-signature__pwz">PWZ: {sign.pwz || "—"}</p>
-              <div className="doctor-signature__stamp-space" aria-hidden="true" />
-              <div className="doctor-signature__line" />
-              <p className="doctor-signature__caption">podpis i pieczątka lekarza</p>
-            </div>
-          )}
-          <footer className="sheet-page-footer absolute z-30 bg-white" style={{ position: "absolute", zIndex: 30, background: "#fff", left: "15mm", right: "15mm", bottom: "6mm" }}>
-            Strona {index + 1} z {pages}
-          </footer>
-        </article>
-      ))}
-      <div ref={contentRef} className="relative z-10" style={{ position: "relative", zIndex: 10, padding: `${PAGE_TOP_MM}mm 15mm 4mm`, minWidth: 0, overflowWrap: "anywhere" }}>
-      <header className="sheet-block medical-document-header">
+    <article className="print-sheet clinic-pages mx-auto bg-white" style={{ boxShadow: "0 2px 16px rgba(0, 0, 0, 0.12)" }}>
+      <style>{`${SHEET_CSS}
+        .print-sheet { width: 210mm; min-height: 296mm; box-sizing: border-box; padding: 14mm 15mm 12mm; display: flex; flex-direction: column; }
+        .print-main { flex: 1 1 auto; min-width: 0; }
+        .print-sign { width: 78mm; margin: 12mm 0 0 auto; }
+      `}</style>
+      <div className="print-main">
+      <header className="medical-document-header">
         <div>
           <p className="clinic-name">{CLINIC_LETTERHEAD.name}</p>
           <p className="clinic-legal-name">{CLINIC_LETTERHEAD.legalName}</p>
@@ -459,7 +213,7 @@ export default function ClinicDocumentSheet({
           <p className="document-meta-label document-meta-label--number">Numer dokumentu</p>
           {issued && documentNumber ? (
             <p className="document-meta-value" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" }}>{documentNumber}</p>
-          ) : sample ? (
+          ) : sample || status === "template" ? (
             <p className="document-draft-note">Wzór formularza</p>
           ) : (
             <>
@@ -509,7 +263,7 @@ export default function ClinicDocumentSheet({
           const hint = visitHint?.(field);
           const checkboxAnswer = value === "tak" || value === "nie" ? value : "";
           const filled = field.type === "checkbox" ? Boolean(checkboxAnswer) : Boolean(String(value).trim());
-          if (!editable && mode !== "admin" && field.type === "checkbox" && !checkboxAnswer) return null;
+          if (!editable && mode !== "admin" && status !== "template" && field.type === "checkbox" && !checkboxAnswer) return null;
           if (issued && field.printWhenFilled && !filled) return null;
           const printed = field.type === "checkbox"
             ? (checkboxAnswer === "tak" ? "Tak" : checkboxAnswer === "nie" ? "Nie" : "Tak / Nie")
@@ -622,7 +376,15 @@ export default function ClinicDocumentSheet({
       </section>
 
       </div>
-    </div>
+      <div className="print-sign">
+        <p className="doctor-signature__label">Lekarz orzekający / wystawiający</p>
+        <p className="doctor-signature__name">{sign.line || "—"}</p>
+        <p className="doctor-signature__pwz">PWZ: {sign.pwz || "—"}</p>
+        <div className="doctor-signature__stamp-space" aria-hidden="true" />
+        <div className="doctor-signature__line" />
+        <p className="doctor-signature__caption">podpis i pieczątka lekarza</p>
+      </div>
+    </article>
   );
 }
 
@@ -637,11 +399,13 @@ function patientAddress(patient) {
   return [patient.street, locality].filter(Boolean).join(", ");
 }
 
-function printFieldText(field, values, issued) {
+function printFieldText(field, values, status) {
+  const issued = status === "issued";
   const value = values?.[field.key] || "";
   if (field.type === "checkbox") {
     if (value === "tak") return "Tak";
     if (value === "nie") return "Nie";
+    if (status === "template") return "Tak / Nie";
     return null;
   }
   const filled = Boolean(String(value).trim());
@@ -668,7 +432,7 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
     });
     const heading = escapeHtml((title || "DOKUMENT").toUpperCase());
     const sections = (fields || []).map((field) => {
-      const text = printFieldText(field, values, issued);
+      const text = printFieldText(field, values, status);
       if (text == null) return "";
       const empty = text.startsWith("[");
       return `<section class="document-section">
@@ -682,17 +446,28 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
         ? `<p class="document-draft-note">Wzór formularza</p>`
         : `<p class="document-draft-label">Szkic roboczy</p><p class="document-draft-note">Numer zostanie nadany po zatwierdzeniu</p>`;
     popup.document.open();
-    popup.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8" /><title>${heading}</title>
+    popup.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8" /><title> </title>
       <style>
         ${SHEET_CSS}
-        @page { size: A4; margin: 14mm 15mm 16mm; }
-        html, body { margin: 0; padding: 0; background: #fff; }
-        .print-sheet { width: 100%; color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
-        .print-sign { width: 78mm; margin: 16mm 0 0 auto; break-inside: avoid; page-break-inside: avoid; }
+        @page, @page :first, @page :left, @page :right { size: 210mm 297mm; margin: 0; }
+        html, body { margin: 0; padding: 0; background: #fff; width: 210mm; }
+        .print-sheet {
+          width: 210mm;
+          min-height: 296mm;
+          box-sizing: border-box;
+          padding: 14mm 15mm 12mm;
+          display: flex;
+          flex-direction: column;
+          color: #202020;
+          font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+        }
+        .print-main { flex: 1 1 auto; }
+        .print-sign { width: 78mm; margin: 12mm 0 0 auto; break-inside: avoid; page-break-inside: avoid; }
         .document-section { break-inside: avoid; page-break-inside: avoid; }
         .document-section + .document-section { margin-top: 6mm; }
       </style></head><body>
       <article class="print-sheet clinic-pages">
+        <div class="print-main">
         <header class="medical-document-header">
           <div>
             <p class="clinic-name">${escapeHtml(CLINIC_LETTERHEAD.name)}</p>
@@ -722,6 +497,7 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
           </dl>
         </section>
         <section class="document-content">${sections}</section>
+        </div>
         <div class="print-sign">
           <p class="doctor-signature__label">Lekarz orzekający / wystawiający</p>
           <p class="doctor-signature__name">${escapeHtml(sign.line || "—")}</p>
@@ -733,6 +509,7 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
       </article>
       </body></html>`);
     popup.document.close();
+    popup.document.title = " ";
     const openPrint = () => {
       popup.focus();
       popup.print();

@@ -204,6 +204,18 @@ function SectionRenameDialog({ field, onClose, onSave }) {
   );
 }
 
+function formatDocumentWhen(value) {
+  const date = new Date(value);
+  if (!value || Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function visitCardVersions(reports) {
   const cards = (reports || []).filter((report) => report.type === "visit-card" || report.type === "Visit Card");
   return cards
@@ -536,7 +548,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               <div>
                 <div className="text-sm font-semibold text-gray-900">Karta wizyty</div>
                 <div className="text-xs text-gray-500 mt-0.5">
-                  {card.at ? new Date(card.at).toLocaleDateString("pl-PL") : "Wygenerowana"}
+                  {card.at ? formatDocumentWhen(card.at) : "Wygenerowana"}
                 </div>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-800 border-emerald-200">
@@ -559,7 +571,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               <div>
                 <div className="text-sm font-semibold text-gray-900">{file.name}</div>
                 <div className="text-xs text-gray-500 mt-0.5">
-                  {file.type}{file.at ? ` · ${new Date(file.at).toLocaleDateString("pl-PL")}` : ""}
+                  {file.type}{file.at ? ` · ${formatDocumentWhen(file.at)}` : ""}
                 </div>
                 {file.description ? <p className="text-xs text-gray-500 mt-1">{file.description}</p> : null}
               </div>
@@ -585,8 +597,8 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                 )}
                 <div className="text-xs text-gray-500 mt-0.5">
                   {doc.status === "issued"
-                    ? `${new Date(doc.issuedAt || doc.updatedAt).toLocaleDateString("pl-PL")}${doc.documentNumber ? ` · Nr ${doc.documentNumber}` : ""}`
-                    : `Ostatnia zmiana: ${new Date(doc.updatedAt).toLocaleDateString("pl-PL")}`}
+                    ? `${formatDocumentWhen(doc.issuedAt || doc.createdAt || doc.updatedAt)}${doc.documentNumber ? ` · Nr ${doc.documentNumber}` : ""}`
+                    : `Ostatnia zmiana: ${formatDocumentWhen(doc.updatedAt || doc.createdAt)}`}
                 </div>
               </div>
               <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${doc.status === "issued" ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-amber-50 text-amber-800 border-amber-200"}`}>
