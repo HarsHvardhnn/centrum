@@ -2,12 +2,14 @@ import React, { useState } from "react";
 import { useLoader } from "../../../../context/LoaderContext";
 import { Download, Tag, Save, FileText } from "lucide-react";
 import appointmentHelper from "../../../../helpers/appointmentHelper";
+import { VisitFilePreview } from "./VisitClinicDocuments";
 import { toast } from "sonner";
 
 const ActionButtons = ({ patientId, onAddServicesClick, onSave, appointmentId }) => {
   const { showLoader, hideLoader } = useLoader();
   const [showVisitCardModal, setShowVisitCardModal] = useState(false);
   const [pendingVisitCardData, setPendingVisitCardData] = useState(null);
+  const [visitCardPreviewUrl, setVisitCardPreviewUrl] = useState("");
 
   const handleDownloadVisitCard = async (forceNew = false) => {
     try {
@@ -28,15 +30,8 @@ const ActionButtons = ({ patientId, onAddServicesClick, onSave, appointmentId })
         }
         
         // Download the visit card
-        const downloadLink = document.createElement("a");
-        downloadLink.href = response.data.url;
-        downloadLink.target = "_blank";
-        downloadLink.download = `karta_wizyty_${patientId}.pdf`;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-        
-        toast.success("Karta wizyty została pobrana");
+        setVisitCardPreviewUrl(response.data.url);
+        toast.success("Karta wizyty wygenerowana");
       } else {
         console.error("Nie udało się wygenerować karty wizyty:", response.message);
         toast.error("Nie udało się wygenerować karty wizyty");
@@ -51,9 +46,7 @@ const ActionButtons = ({ patientId, onAddServicesClick, onSave, appointmentId })
 
   // Handle viewing existing visit card
   const handleViewExistingCard = () => {
-    if (pendingVisitCardData?.url) {
-      window.open(pendingVisitCardData.url, '_blank');
-    }
+    if (pendingVisitCardData?.url) setVisitCardPreviewUrl(pendingVisitCardData.url);
     setPendingVisitCardData(null);
   };
 
@@ -137,6 +130,9 @@ const ActionButtons = ({ patientId, onAddServicesClick, onSave, appointmentId })
       </div>
       
       {/* Visit Card Confirmation Modal */}
+      {visitCardPreviewUrl && (
+        <VisitFilePreview title="Karta wizyty" url={visitCardPreviewUrl} onClose={() => setVisitCardPreviewUrl("")} />
+      )}
       <VisitCardConfirmationModal
         isOpen={showVisitCardModal}
         onClose={() => {

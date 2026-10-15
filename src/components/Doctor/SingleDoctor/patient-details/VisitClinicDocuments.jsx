@@ -233,6 +233,69 @@ function openVisitCard(url) {
   if (url) window.open(url, "_blank", "noopener,noreferrer");
 }
 
+export function VisitFilePreview({ title, url, onClose }) {
+  const [src, setSrc] = useState("");
+  const [kind, setKind] = useState("pdf");
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let objectUrl = "";
+    let cancelled = false;
+    setSrc("");
+    setFailed(false);
+    (async () => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("plik");
+        const blob = await response.blob();
+        const type = blob.type || "";
+        const image = type.startsWith("image/") || /\.(png|jpe?g|webp|gif)(\?|$)/i.test(url);
+        objectUrl = URL.createObjectURL(new Blob([blob], { type: image ? (type || "image/jpeg") : (type || "application/pdf") }));
+        if (cancelled) {
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+        setKind(image ? "image" : "pdf");
+        setSrc(objectUrl);
+      } catch {
+        if (!cancelled) setFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [url]);
+
+  return (
+    <div className="fixed inset-0 z-[70] bg-slate-900/60 flex items-center justify-center p-3">
+      <div className="bg-slate-100 rounded-2xl w-full max-w-[980px] h-[92vh] overflow-hidden flex flex-col shadow-2xl">
+        <div className="bg-white px-5 py-3 border-b flex items-center justify-between">
+          <h3 className="font-bold">{title || "Karta wizyty"}</h3>
+          <button type="button" onClick={onClose} className="text-xl leading-none" aria-label="Zamknij">×</button>
+        </div>
+        <div className="flex-1 min-h-0 overflow-auto p-4">
+          {failed ? (
+            <p className="text-sm text-slate-600">Nie udało się otworzyć podglądu karty wizyty.</p>
+          ) : !src ? (
+            <p className="text-sm text-slate-500">Otwieram podgląd…</p>
+          ) : kind === "image" ? (
+            <img src={src} alt={title || "Karta wizyty"} className="mx-auto max-h-full max-w-full bg-white" />
+          ) : (
+            <iframe title={title || "Karta wizyty"} src={src} className="w-full h-full bg-white rounded-lg border-0" />
+          )}
+        </div>
+        <div className="bg-white px-5 py-3 border-t flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="px-4 py-2 border rounded-lg">Zamknij</button>
+          <button type="button" onClick={() => printVisitFile(url)} className="px-4 py-2 bg-[#1b766a] text-white rounded-lg font-semibold inline-flex items-center gap-1">
+            <Printer size={14} /> Drukuj
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 async function printVisitFile(url) {
   if (!url) return;
   let source = url;
@@ -243,7 +306,7 @@ async function printVisitFile(url) {
     objectUrl = URL.createObjectURL(await response.blob());
     source = objectUrl;
   } catch {
-    openVisitCard(url);
+    toast.error("Nie udało się otworzyć podglądu wydruku.");
     return;
   }
   const frame = document.createElement("iframe");
@@ -263,7 +326,7 @@ async function printVisitFile(url) {
       setTimeout(cleanup, 60000);
     } catch {
       cleanup();
-      openVisitCard(url);
+      toast.error("Nie udało się otworzyć podglądu wydruku.");
     }
   };
   document.body.appendChild(frame);
@@ -373,6 +436,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   const [renameField, setRenameField] = useState(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [cardPreview, setCardPreview] = useState(null);
 
   const loadDocs = async () => {
     if (!visitId) return;
@@ -486,6 +550,16 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
 
   const cards = visitCardVersions(reports).slice().reverse();
   const files = uploadedVisitFiles(reports);
+  const documentRows = [
+    ...cards.map((card) => ({ kind: "card", at: new Date(card.at || 0).getTime() || 0, key: `card-${card.id}`, card })),
+    ...files.map((file) => ({ kind: "file", at: new Date(file.at || 0).getTime() || 0, key: `file-${file.id || file.url}`, file })),
+    ...docs.map((doc) => ({
+      kind: "doc",
+      at: new Date((doc.status === "issued" ? doc.issuedAt || doc.createdAt || doc.updatedAt : doc.updatedAt || doc.createdAt) || 0).getTime() || 0,
+      key: `doc-${doc._id}`,
+      doc,
+    })),
+  ].sort((a, b) => b.at - a.at);
 
   const uploadFile = async ({ name, type, description, file }) => {
     if (!visitId) return;
@@ -541,8 +615,8 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
         </button>
       </div>
       <div className="p-4 space-y-2">
-        {docs.length === 0 && cards.length === 0 && files.length === 0 && <p className="text-xs text-gray-400">Brak dokumentów tej wizyty.</p>}
-        {cards.map((card) => (
+        {documentRows.length === 0 && <p className="text-xs text-gray-400">Brak dokumentów tej wizyty.</p>}
+        {documentRows.map((row) => row.kind === "card" ? (() => { const card = row.card; return (
           <div key={card.id} className="border border-gray-200 rounded-lg p-3">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -556,7 +630,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               </span>
             </div>
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 text-xs">
-              <button type="button" onClick={() => openVisitCard(card.url)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
+              <button type="button" onClick={() => setCardPreview(card)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
                 <Eye size={14} /> Otwórz dokument
               </button>
               <button type="button" onClick={() => printVisitFile(card.url)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
@@ -564,8 +638,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               </button>
             </div>
           </div>
-        ))}
-        {files.map((file) => (
+        ); })() : row.kind === "file" ? (() => { const file = row.file; return (
           <div key={file.id || file.url} className="border border-gray-200 rounded-lg p-3">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -586,8 +659,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               </button>
             </div>
           </div>
-        ))}
-        {docs.map((doc) => (
+        ); })() : (() => { const doc = row.doc; return (
           <div key={doc._id} className="border border-gray-200 rounded-lg p-3">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -615,8 +687,16 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               </button>
             </div>
           </div>
-        ))}
+        ); })())}
       </div>
+
+      {cardPreview && (
+        <VisitFilePreview
+          title={cardPreview.total > 1 ? `Karta wizyty · Wersja ${cardPreview.version}` : "Karta wizyty"}
+          url={cardPreview.url}
+          onClose={() => setCardPreview(null)}
+        />
+      )}
 
       {uploadOpen && (
         <UploadVisitFileDialog busy={uploading} onClose={() => !uploading && setUploadOpen(false)} onSubmit={uploadFile} />

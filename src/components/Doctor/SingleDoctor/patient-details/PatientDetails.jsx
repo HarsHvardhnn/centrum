@@ -27,7 +27,7 @@ import { useLoader } from "../../../../context/LoaderContext";
 import { MedicationsSection } from "./medications/MedicationSection";
 import { TestsSection } from "./medications/TestSection";
 import { EzlaSection } from "./medications/EzlaSection";
-import VisitClinicDocuments from "./VisitClinicDocuments";
+import VisitClinicDocuments, { VisitFilePreview } from "./VisitClinicDocuments";
 import EhealthIssueShortcuts from "../../../ehealth/EhealthIssueShortcuts";
 import ReferralRealizationCard from "../../../ehealth/ReferralRealizationCard";
 import EhealthDocumentPanel from "../../../ehealth/EhealthDocumentPanel";
@@ -512,6 +512,7 @@ const PatientDetailsPage = () => {
   // Add states for Visit Card Confirmation Modal
   const [showVisitCardModal, setShowVisitCardModal] = useState(false);
   const [pendingVisitCardData, setPendingVisitCardData] = useState(null);
+  const [visitCardPreviewUrl, setVisitCardPreviewUrl] = useState("");
 
   // Diagnoses (ICD-10) and procedures (ICD-9) – from visit APIs
   const [diagnoses, setDiagnoses] = useState([]);
@@ -1587,7 +1588,7 @@ const PatientDetailsPage = () => {
           setShowVisitCardModal(true);
         } else {
           // Normal case - open the visit card
-          window.open(response.data.url, '_blank');
+          setVisitCardPreviewUrl(response.data.url);
           toast.success("Karta wizyty wygenerowana i dodana do dokumentacji wizyty");
         }
       } else {
@@ -1603,9 +1604,7 @@ const PatientDetailsPage = () => {
 
   // Handle viewing existing visit card
   const handleViewExistingCard = () => {
-    if (pendingVisitCardData?.url) {
-      window.open(pendingVisitCardData.url, '_blank');
-    }
+    if (pendingVisitCardData?.url) setVisitCardPreviewUrl(pendingVisitCardData.url);
     setPendingVisitCardData(null);
   };
 
@@ -2075,6 +2074,10 @@ const PatientDetailsPage = () => {
           }));
         }}
       />
+
+      {visitCardPreviewUrl && (
+        <VisitFilePreview title="Karta wizyty" url={visitCardPreviewUrl} onClose={() => setVisitCardPreviewUrl("")} />
+      )}
 
       <VisitCardConfirmationModal
         isOpen={showVisitCardModal}

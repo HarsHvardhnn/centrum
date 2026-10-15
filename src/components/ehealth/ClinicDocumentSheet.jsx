@@ -449,20 +449,23 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
     popup.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8" /><title> </title>
       <style>
         ${SHEET_CSS}
-        @page, @page :first, @page :left, @page :right { size: 210mm 297mm; margin: 0; }
-        html, body { margin: 0; padding: 0; background: #fff; width: 210mm; }
+        @page, @page :first, @page :left, @page :right { size: A4; margin: 0; }
+        html, body { margin: 0; padding: 0; background: #fff; width: 210mm; height: auto; }
         .print-sheet {
           width: 210mm;
-          min-height: 296mm;
           box-sizing: border-box;
-          padding: 14mm 15mm 12mm;
-          display: flex;
-          flex-direction: column;
+          padding: 14mm 15mm 18mm;
           color: #202020;
           font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif;
         }
-        .print-main { flex: 1 1 auto; }
-        .print-sign { width: 78mm; margin: 12mm 0 0 auto; break-inside: avoid; page-break-inside: avoid; }
+        .print-sign {
+          display: table;
+          width: 78mm;
+          margin: 16mm 0 0 auto;
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+        .print-sign .doctor-signature__stamp-space { height: 18mm; }
         .document-section { break-inside: avoid; page-break-inside: avoid; }
         .document-section + .document-section { margin-top: 6mm; }
       </style></head><body>
