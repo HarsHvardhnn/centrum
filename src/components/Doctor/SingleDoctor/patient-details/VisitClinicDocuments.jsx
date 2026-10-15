@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import clinicDocumentsHelper from "../../../../helpers/clinicDocumentsHelper";
 import patientService from "../../../../helpers/patientHelper";
 import { apiCaller } from "../../../../utils/axiosInstance";
-import ClinicDocumentSheet, { printClinicSheet } from "../../../ehealth/ClinicDocumentSheet";
+import ClinicDocumentSheet, { initialFieldValue, printClinicSheet } from "../../../ehealth/ClinicDocumentSheet";
 
 const UPLOAD_TYPES = [
   "Wynik badania laboratoryjnego",
@@ -379,9 +379,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   const openNew = (template) => {
     const values = {};
     (template.fields || []).forEach((field) => {
-      values[field.key] = field.type === "checkbox"
-        ? (field.defaultValue === "tak" ? "tak" : "")
-        : (field.defaultValue || "");
+      values[field.key] = initialFieldValue(field);
     });
     setDraft({
       template,

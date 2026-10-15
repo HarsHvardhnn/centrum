@@ -5,7 +5,7 @@ import clinicDocumentsHelper from "../../helpers/clinicDocumentsHelper";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 import { useUser } from "../../context/userContext";
 import { apiCaller } from "../../utils/axiosInstance";
-import ClinicDocumentSheet, { printClinicSheet, SAMPLE_PATIENT } from "../ehealth/ClinicDocumentSheet";
+import ClinicDocumentSheet, { ISSUE_DATE_VALUE, localIsoDate, previewFieldValues, printClinicSheet, SAMPLE_PATIENT } from "../ehealth/ClinicDocumentSheet";
 
 const CATEGORIES = [
   { value: "certificate", label: "Zaświadczenia i orzeczenia" },
@@ -470,7 +470,7 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
                 )}
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-bold uppercase tracking-wider">Pola dokumentu</h3>
-                  <button type="button" onClick={() => setFieldDraft({ key: "", label: "", type: "text", required: false, printWhenFilled: true, helpText: "", placeholder: "", defaultValue: "", options: [], isNew: true, keyTouched: false })} className="text-xs font-semibold text-teal-700 border border-teal-300 rounded-lg px-2 py-1">+ Dodaj pole</button>
+                  <button type="button" onClick={() => setFieldDraft({ key: "", label: "", type: "text", required: false, printWhenFilled: false, helpText: "", placeholder: "", defaultValue: "", options: [], isNew: true, keyTouched: false })} className="text-xs font-semibold text-teal-700 border border-teal-300 rounded-lg px-2 py-1">+ Dodaj pole</button>
                 </div>
                 <p className="text-[11px] text-slate-500">Dodaj informacje, które lekarz ma uzupełnić w treści dokumentu.</p>
                 {(editing.fields || []).map((field, index) => (
@@ -502,6 +502,7 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
                   mode="admin"
                   title={editing.printTitle || editing.name}
                   fields={editing.fields || []}
+                  values={previewFieldValues(editing.fields)}
                   {...signer}
                   selectedKey={selectedKey}
                   onSelectField={(key) => {
@@ -603,11 +604,11 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
                 <div className="font-semibold">{previewRow.name}</div>
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={() => { printClinicSheet({ title: previewRow.printTitle || previewRow.name, fields: previewRow.fields, patient: SAMPLE_PATIENT, status: "template", ...signer }); }} className="px-4 py-2 bg-white text-slate-800 rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
+                <button type="button" onClick={() => { printClinicSheet({ title: previewRow.printTitle || previewRow.name, fields: previewRow.fields, values: previewFieldValues(previewRow.fields), patient: SAMPLE_PATIENT, status: "template", ...signer }); }} className="px-4 py-2 bg-white text-slate-800 rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
                 <button type="button" onClick={() => setPreviewRow(null)} className="px-4 py-2 bg-white text-slate-800 rounded-lg">Zamknij</button>
               </div>
             </div>
-            <ClinicDocumentSheet mode="preview" title={previewRow.printTitle || previewRow.name} fields={previewRow.fields || []} {...signer} />
+            <ClinicDocumentSheet mode="preview" title={previewRow.printTitle || previewRow.name} fields={previewRow.fields || []} values={previewFieldValues(previewRow.fields)} patient={SAMPLE_PATIENT} {...signer} />
           </div>
         </div>
       )}
@@ -662,9 +663,10 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
                     const type = e.target.value;
                     const options = type === "select" && !(fieldDraft.options || []).length ? ["Opcja 1", "Opcja 2"] : (fieldDraft.options || []);
                     let defaultValue = fieldDraft.defaultValue || "";
-                    if (type === "checkbox") defaultValue = defaultValue === "tak" ? "tak" : "";
+                    if (type === "checkbox") defaultValue = defaultValue === "tak" || defaultValue === "nie" ? defaultValue : "";
                     else if (type === "select") defaultValue = options.includes(defaultValue) ? defaultValue : "";
-                    else if (fieldDraft.type === "checkbox" || fieldDraft.type === "select") defaultValue = "";
+                    else if (type === "date") defaultValue = defaultValue === ISSUE_DATE_VALUE || /^\d{4}-\d{2}-\d{2}$/.test(defaultValue) ? defaultValue : "";
+                    else if (fieldDraft.type === "checkbox" || fieldDraft.type === "select" || fieldDraft.type === "date") defaultValue = "";
                     setFieldDraft({ ...fieldDraft, type, options, defaultValue });
                   }}
                   className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-normal"
@@ -688,16 +690,39 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
                   </select>
                 </label>
               ) : fieldDraft.type === "checkbox" ? (
+                <label className="block text-sm font-medium">Domyślna wartość
+                  <select value={fieldDraft.defaultValue === "tak" || fieldDraft.defaultValue === "nie" ? fieldDraft.defaultValue : ""} onChange={(e) => setFieldDraft({ ...fieldDraft, defaultValue: e.target.value })} className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-normal">
+                    <option value="">Brak — pole nie pojawi się na wydruku</option>
+                    <option value="tak">Tak</option>
+                    <option value="nie">Nie</option>
+                  </select>
+                </label>
+              ) : fieldDraft.type === "date" ? (
                 <div>
-                  <span className="block text-sm font-medium mb-1">Domyślna wartość</span>
-                  <label className="flex items-center gap-2 text-sm border border-slate-300 rounded-lg px-3 py-2 font-normal">
-                    <input type="checkbox" checked={fieldDraft.defaultValue === "tak"} onChange={(e) => setFieldDraft({ ...fieldDraft, defaultValue: e.target.checked ? "tak" : "" })} />
-                    Domyślnie zaznaczony (Tak)
+                  <label className="block text-sm font-medium">Domyślna wartość
+                    <select
+                      value={fieldDraft.defaultValue === ISSUE_DATE_VALUE ? ISSUE_DATE_VALUE : fieldDraft.defaultValue ? "fixed" : ""}
+                      onChange={(e) => {
+                        const mode = e.target.value;
+                        const fixed = /^\d{4}-\d{2}-\d{2}$/.test(fieldDraft.defaultValue || "") ? fieldDraft.defaultValue : localIsoDate();
+                        setFieldDraft({ ...fieldDraft, defaultValue: mode === ISSUE_DATE_VALUE ? ISSUE_DATE_VALUE : mode === "fixed" ? fixed : "" });
+                      }}
+                      className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 bg-white font-normal"
+                    >
+                      <option value="">Brak</option>
+                      <option value={ISSUE_DATE_VALUE}>Data wystawienia (bieżąca data systemu)</option>
+                      <option value="fixed">Wybrana data</option>
+                    </select>
                   </label>
+                  {fieldDraft.defaultValue === ISSUE_DATE_VALUE ? (
+                    <p className="mt-1 text-xs font-normal text-slate-500">W dniu wystawienia dokumentu pole otrzyma datę z systemu. Lekarz może ją zmienić.</p>
+                  ) : fieldDraft.defaultValue ? (
+                    <input type="date" value={fieldDraft.defaultValue} onChange={(e) => setFieldDraft({ ...fieldDraft, defaultValue: e.target.value })} className="mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 font-normal" />
+                  ) : null}
                 </div>
               ) : (
                 <label className="block text-sm font-medium">Domyślna wartość
-                  <input type={fieldDraft.type === "date" ? "date" : "text"} value={fieldDraft.defaultValue || ""} onChange={(e) => setFieldDraft({ ...fieldDraft, defaultValue: e.target.value })} placeholder="Wprowadź opcjonalną domyślną wartość..." className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 font-normal" />
+                  <input type="text" value={fieldDraft.defaultValue || ""} onChange={(e) => setFieldDraft({ ...fieldDraft, defaultValue: e.target.value })} placeholder="Wprowadź opcjonalną domyślną wartość..." className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2 font-normal" />
                 </label>
               )}
               {fieldDraft.type === "select" && (
@@ -741,11 +766,14 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
                 if ((editing.fields || []).some((field) => field.key === key && field.key !== originalKey)) { toast.error("Taki identyfikator już istnieje w tym wzorze."); return; }
                 const options = fieldDraft.type === "select" ? [...new Set((fieldDraft.options || []).map((option) => option.trim()).filter(Boolean))] : [];
                 if (fieldDraft.type === "select" && options.length < 1) { toast.error("Dodaj co najmniej jedną opcję listy."); return; }
+                const rawDefault = String(fieldDraft.defaultValue || "").trim();
                 const defaultValue = fieldDraft.type === "checkbox"
-                  ? (fieldDraft.defaultValue === "tak" ? "tak" : "")
+                  ? (rawDefault === "tak" || rawDefault === "nie" ? rawDefault : "")
                   : fieldDraft.type === "select"
-                    ? (options.includes(fieldDraft.defaultValue) ? fieldDraft.defaultValue : "")
-                    : String(fieldDraft.defaultValue || "").trim();
+                    ? (options.includes(rawDefault) ? rawDefault : "")
+                    : fieldDraft.type === "date"
+                      ? (rawDefault === ISSUE_DATE_VALUE || /^\d{4}-\d{2}-\d{2}$/.test(rawDefault) ? rawDefault : "")
+                      : rawDefault;
                 const next = {
                   key,
                   label: fieldDraft.label.trim(),
@@ -775,10 +803,10 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
         <div className="fixed inset-0 z-[60] bg-slate-900/70 overflow-y-auto p-6">
           <div className="max-w-[900px] mx-auto">
             <div className="flex justify-end gap-2 mb-3">
-              <button type="button" onClick={() => { printClinicSheet({ title: editing.printTitle || editing.name, fields: editing.fields, patient: SAMPLE_PATIENT, status: "template", ...signer }); }} className="px-4 py-2 bg-white rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
+              <button type="button" onClick={() => { printClinicSheet({ title: editing.printTitle || editing.name, fields: editing.fields, values: previewFieldValues(editing.fields), patient: SAMPLE_PATIENT, status: "template", ...signer }); }} className="px-4 py-2 bg-white rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
               <button type="button" onClick={() => setPrintOpen(false)} className="px-4 py-2 bg-white rounded-lg">Zamknij</button>
             </div>
-            <ClinicDocumentSheet mode="preview" title={editing.printTitle || editing.name} fields={editing.fields || []} {...signer} />
+            <ClinicDocumentSheet mode="preview" title={editing.printTitle || editing.name} fields={editing.fields || []} values={previewFieldValues(editing.fields)} patient={SAMPLE_PATIENT} {...signer} />
           </div>
         </div>
       )}

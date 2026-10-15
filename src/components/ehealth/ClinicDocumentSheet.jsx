@@ -1,5 +1,4 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
 import { toast } from "sonner";
 
 export const CLINIC_LETTERHEAD = {
@@ -69,6 +68,36 @@ const SHEET_CSS = `
 
 function todayLabel() {
   return new Date().toLocaleDateString("pl-PL");
+}
+
+/** Stored on a date field when the value should be the day the document is issued. */
+export const ISSUE_DATE_VALUE = "today";
+
+export function localIsoDate(date = new Date()) {
+  const pad = (part) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+export function formatSheetDate(value) {
+  const raw = String(value || "").trim();
+  if (raw === ISSUE_DATE_VALUE) return todayLabel();
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (!match) return raw;
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).toLocaleDateString("pl-PL");
+}
+
+export function initialFieldValue(field) {
+  if (field?.type === "checkbox") return field.defaultValue === "tak" || field.defaultValue === "nie" ? field.defaultValue : "";
+  if (field?.type === "date" && field.defaultValue === ISSUE_DATE_VALUE) return localIsoDate();
+  return field?.defaultValue || "";
+}
+
+export function previewFieldValues(fields) {
+  const values = {};
+  (fields || []).forEach((field) => {
+    values[field.key] = initialFieldValue(field);
+  });
+  return values;
 }
 
 const PAGE_GAP = 16;
@@ -150,16 +179,16 @@ function insertPageBreak(node, offset, height) {
   return true;
 }
 
-function pageBudget(page, metrics, signaturePage, ceilings) {
-  const signatureBudget = metrics.pageH - metrics.signatureCut;
-  const footerBudget = metrics.pageH - metrics.footerReserve;
-  let budget = page === signaturePage ? signatureBudget : footerBudget;
-  if (ceilings.has(page)) budget = Math.min(budget, ceilings.get(page));
-  return budget;
+function contentLimit(page, metrics) {
+  return page * metrics.stride + metrics.pageH - metrics.footerReserve;
 }
 
-function fragmentBlock(block, origin, metrics, signaturePage, ceilings) {
-  const { pageH, stride, topInset } = metrics;
+function pageContentStart(page, metrics) {
+  return page * metrics.stride + (page > 0 ? metrics.topInset : 0);
+}
+
+function fragmentBlock(block, origin, metrics) {
+  const { stride } = metrics;
   for (let guard = 0; guard < 24; guard += 1) {
     const lines = textLines(block);
     let moved = false;
@@ -167,10 +196,8 @@ function fragmentBlock(block, origin, metrics, signaturePage, ceilings) {
       const top = line.top - origin;
       const bottom = line.bottom - origin;
       const page = Math.floor(Math.max(0, top) / stride);
-      const limit = page * stride + pageBudget(page, metrics, signaturePage, ceilings);
-      if (bottom <= limit + 1) continue;
-      const nextStart = (page + 1) * stride + topInset;
-      const gap = nextStart - top;
+      if (bottom <= contentLimit(page, metrics) + 1) continue;
+      const gap = pageContentStart(page + 1, metrics) - top;
       if (gap < 1) continue;
       moved = insertPageBreak(line.node, splitOffset(line.node, line.top), gap);
       break;
@@ -179,25 +206,28 @@ function fragmentBlock(block, origin, metrics, signaturePage, ceilings) {
   }
 }
 
-function layoutPass(root, metrics, signaturePage, ceilings) {
-  const { stride, topInset } = metrics;
+function layoutPass(root, metrics) {
+  const { stride, pageH, footerReserve, topInset } = metrics;
   const blocks = [...root.querySelectorAll(".sheet-block")];
   clearPageBreaks(root);
   blocks.forEach((block) => { block.style.marginTop = ""; });
   blocks.forEach((block) => {
-    const top = block.offsetTop;
-    const height = block.offsetHeight;
-    const page = Math.floor(Math.max(0, top) / stride);
-    const limit = page * stride + pageBudget(page, metrics, signaturePage, ceilings);
-    const remaining = limit - top;
-    const fitsOnNext = height <= pageBudget(page + 1, metrics, signaturePage, ceilings) - topInset;
-    const startsTooLow = remaining < 36;
-    if ((startsTooLow || fitsOnNext) && top + height > limit - 4 && top > page * stride + 24) {
-      const nextTop = (page + 1) * stride + topInset;
-      const shift = Math.round(nextTop - top);
-      if (shift > 2) block.style.marginTop = `${shift}px`;
+    let top = block.offsetTop;
+    let page = Math.floor(Math.max(0, top) / stride);
+    const start = pageContentStart(page, metrics);
+    if (top < start - 1) {
+      block.style.marginTop = `${Math.round(start - top)}px`;
+      top = block.offsetTop;
+      page = Math.floor(Math.max(0, top) / stride);
     }
-    fragmentBlock(block, root.getBoundingClientRect().top, metrics, signaturePage, ceilings);
+    const height = block.offsetHeight;
+    const limit = contentLimit(page, metrics);
+    const fitsOnNext = height <= pageH - footerReserve - topInset;
+    if (top + height > limit - 4 && fitsOnNext && top > page * stride + 24) {
+      const shift = Math.round(pageContentStart(page + 1, metrics) - top);
+      if (shift > 2) block.style.marginTop = `${(parseFloat(block.style.marginTop) || 0) + shift}px`;
+    }
+    fragmentBlock(block, root.getBoundingClientRect().top, metrics);
   });
 }
 
@@ -212,7 +242,8 @@ function lastContentPage(root, stride) {
 
 function layoutA4(root) {
   const ruler = root.parentElement?.querySelector("[data-page-ruler]");
-  const pageH = ruler?.offsetHeight || Math.round((297 / 25.4) * 96);
+  const measured = ruler?.offsetHeight || 0;
+  const pageH = measured >= 200 ? measured : Math.round((297 / 25.4) * 96);
   const mm = (value) => (value / 297) * pageH;
   const signatureH = root.parentElement?.querySelector("[data-sheet-signature]")?.offsetHeight || mm(70);
   const metrics = {
@@ -224,25 +255,16 @@ function layoutA4(root) {
   };
   if (!root.querySelector(".sheet-block")) return 1;
 
-  let signaturePage = -1;
-  let pages = 1;
-  const ceilings = new Map();
-  for (let pass = 0; pass < 8; pass += 1) {
-    layoutPass(root, metrics, signaturePage, ceilings);
-    const last = lastContentPage(root, metrics.stride);
-    if (signaturePage < 0) {
-      signaturePage = last;
-      continue;
-    }
-    if (last > signaturePage) {
-      ceilings.set(signaturePage, metrics.pageH - metrics.signatureCut);
-      signaturePage = last;
-      continue;
-    }
-    pages = Math.max(last, signaturePage) + 1;
-    return pages;
-  }
-  return Math.max(lastContentPage(root, metrics.stride), signaturePage, 0) + 1;
+  layoutPass(root, metrics);
+  layoutPass(root, metrics);
+  const last = lastContentPage(root, metrics.stride);
+  let contentBottom = 0;
+  root.querySelectorAll(".sheet-block").forEach((block) => {
+    contentBottom = Math.max(contentBottom, block.offsetTop + block.offsetHeight);
+  });
+  const signatureTop = last * metrics.stride + metrics.pageH - metrics.signatureCut;
+  const signaturePage = contentBottom <= signatureTop - 8 ? last : last + 1;
+  return signaturePage + 1;
 }
 
 function signatureIdentity({ doctorTitle, doctorName, doctorPwz, sample }) {
@@ -386,6 +408,8 @@ export default function ClinicDocumentSheet({
     run();
     const observer = new ResizeObserver(run);
     observer.observe(root);
+    const ruler = root.parentElement?.querySelector("[data-page-ruler]");
+    if (ruler) observer.observe(ruler);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
@@ -483,19 +507,26 @@ export default function ClinicDocumentSheet({
           const selected = selectedKey === field.key;
           const value = values[field.key] || "";
           const hint = visitHint?.(field);
-          const filled = field.type === "checkbox" ? value === "tak" : Boolean(String(value).trim());
-          if (mode !== "admin" && !editable && field.printWhenFilled && !filled) return null;
-          const printed = field.type === "checkbox" ? (value === "tak" ? "Tak" : "Nie") : value;
+          const checkboxAnswer = value === "tak" || value === "nie" ? value : "";
+          const filled = field.type === "checkbox" ? Boolean(checkboxAnswer) : Boolean(String(value).trim());
+          if (!editable && mode !== "admin" && field.type === "checkbox" && !checkboxAnswer) return null;
+          if (issued && field.printWhenFilled && !filled) return null;
+          const printed = field.type === "checkbox"
+            ? (checkboxAnswer === "tak" ? "Tak" : checkboxAnswer === "nie" ? "Nie" : "Tak / Nie")
+            : field.type === "date" ? formatSheetDate(value) : value;
           const checkbox = (
-            <label className="inline-flex items-center gap-2 text-[10.5pt]">
-              <input
-                type="checkbox"
-                checked={value === "tak"}
-                disabled={!editable}
-                onChange={(event) => onChange?.(field.key, event.target.checked ? "tak" : "")}
-              />
-              {value === "tak" ? "Tak" : "Nie"}
-            </label>
+            <div className="inline-flex gap-2">
+              {[["tak", "Tak"], ["nie", "Nie"]].map(([answer, label]) => (
+                <button
+                  key={answer}
+                  type="button"
+                  onClick={() => onChange?.(field.key, checkboxAnswer === answer ? "" : answer)}
+                  className={`px-3 py-1 rounded-md border text-[10.5pt] ${checkboxAnswer === answer ? "bg-teal-700 border-teal-700 text-white" : "bg-white border-slate-300 text-slate-700"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           );
           return (
             <section
@@ -595,40 +626,28 @@ export default function ClinicDocumentSheet({
   );
 }
 
-function waitForSheet(host) {
-  return new Promise((resolve) => {
-    const started = performance.now();
-    let previous = "";
-    let stableFrames = 0;
-    const tick = () => {
-      const articles = host.querySelectorAll("article").length;
-      const blocks = host.querySelectorAll(".sheet-block").length;
-      const breaks = host.querySelectorAll(".sheet-page-break").length;
-      const key = `${articles}:${blocks}:${breaks}`;
-      stableFrames = key === previous && articles > 0 && blocks > 0 ? stableFrames + 1 : 0;
-      previous = key;
-      if (stableFrames >= 4 || performance.now() - started > 2000) resolve();
-      else requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  });
-}
-
 function escapeHtml(value) {
   return String(value || "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 }
 
-function whenReady(popup) {
-  const links = [...popup.document.querySelectorAll('link[rel="stylesheet"]')];
-  const styles = Promise.all(links.map((link) => new Promise((resolve) => {
-    if (link.sheet) resolve();
-    else {
-      link.onload = () => resolve();
-      link.onerror = () => resolve();
-    }
-  })));
-  const fonts = popup.document.fonts?.ready || Promise.resolve();
-  return Promise.all([styles, fonts]);
+function patientAddress(patient) {
+  if (!patient) return "";
+  if (patient.address) return patient.address;
+  const locality = [patient.postalCode, patient.city].filter(Boolean).join(" ");
+  return [patient.street, locality].filter(Boolean).join(", ");
+}
+
+function printFieldText(field, values, issued) {
+  const value = values?.[field.key] || "";
+  if (field.type === "checkbox") {
+    if (value === "tak") return "Tak";
+    if (value === "nie") return "Nie";
+    return null;
+  }
+  const filled = Boolean(String(value).trim());
+  if (issued && field.printWhenFilled && !filled) return null;
+  const text = field.type === "date" ? formatSheetDate(value) : String(value);
+  return text.trim() || "[ wartość uzupełniana przez lekarza ]";
 }
 
 export async function printClinicSheet({ title, fields, values, patient, doctorName, doctorTitle, doctorPwz, documentNumber, status }) {
@@ -638,60 +657,88 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
     return false;
   }
   const notice = toast.loading("Otwieram okno wydruku…");
-  const host = document.createElement("div");
-  host.setAttribute("aria-hidden", "true");
-  host.style.cssText = "position:fixed;left:0;top:0;width:210mm;z-index:-1;pointer-events:none;background:#fff;";
-  document.body.appendChild(host);
-  const root = createRoot(host);
   try {
-    root.render(
-      <ClinicDocumentSheet
-        mode="preview"
-        title={title}
-        fields={fields || []}
-        values={values || {}}
-        patient={patient}
-        doctorName={doctorName}
-        doctorTitle={doctorTitle}
-        doctorPwz={doctorPwz}
-        documentNumber={documentNumber}
-        status={status}
-      />
-    );
-    await waitForSheet(host);
-    const sheet = host.querySelector(".clinic-pages");
-    const articles = [...host.querySelectorAll("article")];
-    if (!sheet || !articles.length) throw new Error("Podgląd dokumentu jest pusty.");
-    sheet.style.position = "relative";
-    sheet.style.width = "210mm";
-    sheet.style.margin = "0";
-    articles.forEach((article, index) => {
-      article.style.position = "absolute";
-      article.style.left = "0";
-      article.style.width = "210mm";
-      article.style.height = "297mm";
-      article.style.background = "#fff";
-      article.style.boxShadow = "none";
-      article.style.top = `calc(${index} * 297mm + ${index * PAGE_GAP}px)`;
+    const issued = status === "issued";
+    const person = patient || {};
+    const sign = signatureIdentity({
+      doctorTitle,
+      doctorName,
+      doctorPwz,
+      sample: !doctorName && !doctorTitle && !doctorPwz,
     });
-    const pageHeight = articles[0].offsetHeight;
-    const styles = [...document.querySelectorAll('link[rel="stylesheet"], style')].map((node) => node.outerHTML).join("\n");
-    const pages = articles.map((_, index) => (
-      `<section class="print-page"><div style="margin-top:-${index * (pageHeight + PAGE_GAP)}px">${sheet.outerHTML}</div></section>`
-    )).join("");
-    const heading = escapeHtml(title || "Dokument");
+    const heading = escapeHtml((title || "DOKUMENT").toUpperCase());
+    const sections = (fields || []).map((field) => {
+      const text = printFieldText(field, values, issued);
+      if (text == null) return "";
+      const empty = text.startsWith("[");
+      return `<section class="document-section">
+        <h3 class="document-section__label">${escapeHtml(field.label || "Pole")}</h3>
+        <p class="document-section__value${empty ? " is-empty" : ""}">${escapeHtml(text)}</p>
+      </section>`;
+    }).join("");
+    const numberBlock = issued && documentNumber
+      ? `<p class="document-meta-value" style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">${escapeHtml(documentNumber)}</p>`
+      : status === "template"
+        ? `<p class="document-draft-note">Wzór formularza</p>`
+        : `<p class="document-draft-label">Szkic roboczy</p><p class="document-draft-note">Numer zostanie nadany po zatwierdzeniu</p>`;
     popup.document.open();
-    popup.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8" /><title>${heading}</title>${styles}
+    popup.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8" /><title>${heading}</title>
       <style>
-        @page { size: A4; margin: 0; }
-        html, body { margin: 0; padding: 0; background: #fff; height: auto; }
-        .print-page { box-sizing: border-box; width: 210mm; height: 296.8mm; overflow: hidden; position: relative; break-inside: avoid; page-break-inside: avoid; }
-        .print-page + .print-page { break-before: page; page-break-before: always; }
-      </style></head><body>${pages}</body></html>`);
+        ${SHEET_CSS}
+        @page { size: A4; margin: 14mm 15mm 16mm; }
+        html, body { margin: 0; padding: 0; background: #fff; }
+        .print-sheet { width: 100%; color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
+        .print-sign { width: 78mm; margin: 16mm 0 0 auto; break-inside: avoid; page-break-inside: avoid; }
+        .document-section { break-inside: avoid; page-break-inside: avoid; }
+        .document-section + .document-section { margin-top: 6mm; }
+      </style></head><body>
+      <article class="print-sheet clinic-pages">
+        <header class="medical-document-header">
+          <div>
+            <p class="clinic-name">${escapeHtml(CLINIC_LETTERHEAD.name)}</p>
+            <p class="clinic-legal-name">${escapeHtml(CLINIC_LETTERHEAD.legalName)}</p>
+            <address class="clinic-address">
+              <span>${escapeHtml(CLINIC_LETTERHEAD.street)}</span>
+              <span>${escapeHtml(CLINIC_LETTERHEAD.postal)} ${escapeHtml(CLINIC_LETTERHEAD.city)}</span>
+            </address>
+            <p class="clinic-registry-data">NIP: ${escapeHtml(CLINIC_LETTERHEAD.nip)} · REGON: ${escapeHtml(CLINIC_LETTERHEAD.regon)} · KRS: ${escapeHtml(CLINIC_LETTERHEAD.krs)}</p>
+            <p class="clinic-registry-number">Nr księgi rejestrowej (RPWDL): ${escapeHtml(CLINIC_LETTERHEAD.rpwdl)}</p>
+          </div>
+          <div class="medical-document-header__meta">
+            <p class="document-meta-label">Miejsce i data wystawienia</p>
+            <p class="document-meta-value">${escapeHtml(CLINIC_LETTERHEAD.city)}, ${escapeHtml(todayLabel())}</p>
+            <p class="document-meta-label document-meta-label--number">Numer dokumentu</p>
+            ${numberBlock}
+          </div>
+        </header>
+        <div class="document-title">${heading}</div>
+        <section class="patient-block">
+          <div class="patient-block__header"><h2>Dane pacjenta</h2></div>
+          <p class="patient-name">${escapeHtml(person.name || "—")}</p>
+          <dl class="patient-details">
+            <div><dt>PESEL:</dt><dd class="font-mono">${escapeHtml(person.pesel || "—")}</dd></div>
+            <div><dt>Data urodzenia:</dt><dd>${escapeHtml(person.birthDate || "—")}</dd></div>
+            <div><dt>Adres:</dt><dd>${escapeHtml(patientAddress(person) || "—")}</dd></div>
+          </dl>
+        </section>
+        <section class="document-content">${sections}</section>
+        <div class="print-sign">
+          <p class="doctor-signature__label">Lekarz orzekający / wystawiający</p>
+          <p class="doctor-signature__name">${escapeHtml(sign.line || "—")}</p>
+          <p class="doctor-signature__pwz">PWZ: ${escapeHtml(sign.pwz || "—")}</p>
+          <div class="doctor-signature__stamp-space"></div>
+          <div class="doctor-signature__line"></div>
+          <p class="doctor-signature__caption">podpis i pieczątka lekarza</p>
+        </div>
+      </article>
+      </body></html>`);
     popup.document.close();
-    await whenReady(popup);
-    popup.focus();
-    popup.print();
+    const openPrint = () => {
+      popup.focus();
+      popup.print();
+    };
+    if (popup.document.readyState === "complete") popup.setTimeout(openPrint, 50);
+    else popup.onload = openPrint;
     popup.onafterprint = () => popup.close();
     toast.success("Okno wydruku jest otwarte.", { id: notice });
     return true;
@@ -700,8 +747,5 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
     popup.close();
     toast.error("Nie udało się otworzyć okna wydruku.", { id: notice });
     return false;
-  } finally {
-    root.unmount();
-    host.remove();
   }
 }
