@@ -415,12 +415,9 @@ function printFieldText(field, values, status) {
 }
 
 export async function printClinicSheet({ title, fields, values, patient, doctorName, doctorTitle, doctorPwz, documentNumber, status }) {
-  const popup = window.open("", "_blank");
-  if (!popup) {
-    toast.error("Przeglądarka zablokowała okno wydruku. Zezwól na wyskakujące okna.");
-    return false;
-  }
   const notice = toast.loading("Otwieram okno wydruku…");
+  let popup = null;
+  let objectUrl = "";
   try {
     const issued = status === "issued";
     const person = patient || {};
@@ -445,8 +442,7 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
       : status === "template"
         ? `<p class="document-draft-note">Wzór formularza</p>`
         : `<p class="document-draft-label">Szkic roboczy</p><p class="document-draft-note">Numer zostanie nadany po zatwierdzeniu</p>`;
-    popup.document.open();
-    popup.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8" /><title> </title>
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8" /><title></title>
       <style>
         ${SHEET_CSS}
         @page, @page :first, @page :left, @page :right { size: A4; margin: 0; }
@@ -510,21 +506,31 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
           <p class="doctor-signature__caption">podpis i pieczątka lekarza</p>
         </div>
       </article>
-      </body></html>`);
-    popup.document.close();
-    popup.document.title = " ";
+      </body></html>`;
+    objectUrl = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+    popup = window.open(objectUrl, "_blank");
+    if (!popup) {
+      URL.revokeObjectURL(objectUrl);
+      toast.error("Przeglądarka zablokowała okno wydruku. Zezwól na wyskakujące okna.", { id: notice });
+      return false;
+    }
     const openPrint = () => {
       popup.focus();
       popup.print();
     };
-    if (popup.document.readyState === "complete") popup.setTimeout(openPrint, 50);
-    else popup.onload = openPrint;
-    popup.onafterprint = () => popup.close();
+    const release = () => {
+      popup.close();
+      URL.revokeObjectURL(objectUrl);
+    };
+    popup.onafterprint = release;
+    if (popup.document.readyState === "complete") popup.setTimeout(openPrint, 200);
+    else popup.addEventListener("load", () => popup.setTimeout(openPrint, 50));
     toast.success("Okno wydruku jest otwarte.", { id: notice });
     return true;
   } catch (err) {
     console.error(err);
-    popup.close();
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    popup?.close();
     toast.error("Nie udało się otworzyć okna wydruku.", { id: notice });
     return false;
   }
