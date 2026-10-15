@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export const CLINIC_LETTERHEAD = {
@@ -188,11 +188,87 @@ export default function ClinicDocumentSheet({
     doctorPwz,
     sample: mode === "admin" || mode === "preview",
   });
+  const contentRef = useRef(null);
+  const [pages, setPages] = useState(1);
+  const [pageH, setPageH] = useState(() => Math.round((297 / 25.4) * 96));
+  const layoutKey = `${heading}|${selectedKey}|${fields.map((field) => `${field.key}:${field.label}:${values[field.key] || ""}`).join("|")}|${person.name}|${person.pesel}|${mode}`;
+
+  useLayoutEffect(() => {
+    const root = contentRef.current;
+    if (!root) return undefined;
+    const PAGE_GAP = 16;
+    let frame = 0;
+    let ignore = 0;
+    const layout = () => {
+      ignore += 1;
+      const ruler = root.parentElement?.querySelector("[data-page-ruler]");
+      const measured = ruler?.offsetHeight || 0;
+      const height = measured >= 200 ? measured : Math.round((297 / 25.4) * 96);
+      const mm = (value) => (value / 297) * height;
+      const bottomReserve = mm(16);
+      const topInset = Math.round(mm(14));
+      const stride = height + PAGE_GAP;
+      const pageStart = (page) => page * stride + (page > 0 ? topInset : 0);
+      const limit = (page) => page * stride + height - bottomReserve;
+      const blocks = [...root.querySelectorAll(".sheet-block, .print-sign")];
+      blocks.forEach((block) => { block.style.marginTop = ""; });
+      blocks.forEach((block) => {
+        let top = block.offsetTop;
+        let page = Math.max(0, Math.floor(top / stride));
+        if (top < pageStart(page) - 1) {
+          block.style.marginTop = `${Math.round(pageStart(page) - top)}px`;
+          top = block.offsetTop;
+          page = Math.max(0, Math.floor(top / stride));
+        }
+        const blockHeight = block.offsetHeight;
+        const room = height - bottomReserve - topInset;
+        if (top + blockHeight > limit(page) - 2 && blockHeight <= room && top > page * stride + 24) {
+          const shift = Math.round(pageStart(page + 1) - top);
+          if (shift > 2) block.style.marginTop = `${Math.round((parseFloat(block.style.marginTop) || 0) + shift)}px`;
+        }
+      });
+      let bottom = 0;
+      blocks.forEach((block) => {
+        bottom = Math.max(bottom, block.offsetTop + block.offsetHeight);
+      });
+      const nextPages = Math.max(1, Math.floor(Math.max(0, bottom - 1) / stride) + 1);
+      setPageH(height);
+      setPages(nextPages);
+      requestAnimationFrame(() => { ignore -= 1; });
+    };
+    const run = () => {
+      if (ignore > 0) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(layout);
+    };
+    run();
+    const observer = new ResizeObserver(run);
+    observer.observe(root);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [layoutKey]);
+
+  const pageGap = 16;
   return (
-    <article className="print-sheet clinic-pages mx-auto bg-white" style={{ boxShadow: "0 2px 16px rgba(0, 0, 0, 0.12)" }}>
+    <div className="relative mx-auto" style={{ width: "210mm", height: pages * pageH + (pages - 1) * pageGap }}>
+      <div data-page-ruler className="absolute top-0 left-0 opacity-0 pointer-events-none" style={{ height: "297mm", width: "1px" }} />
+      {Array.from({ length: pages }, (_, index) => (
+        <div
+          key={index}
+          aria-hidden="true"
+          style={{ position: "absolute", left: 0, top: index * pageH + index * pageGap, width: "210mm", height: pageH, background: "#fff", boxShadow: "0 2px 16px rgba(0, 0, 0, 0.12)" }}
+        >
+          <footer className="sheet-page-footer" style={{ position: "absolute", left: "15mm", right: "15mm", bottom: "6mm" }}>
+            Strona {index + 1} z {pages}
+          </footer>
+        </div>
+      ))}
+    <article ref={contentRef} className="print-sheet clinic-pages mx-auto" style={{ position: "relative", zIndex: 1, background: "transparent", boxShadow: "none" }}>
       <style>{`${SHEET_CSS}
-        .print-sheet { width: 210mm; min-height: 296mm; box-sizing: border-box; padding: 14mm 15mm 12mm; display: flex; flex-direction: column; }
-        .print-main { flex: 1 1 auto; min-width: 0; }
+        .print-sheet { width: 210mm; box-sizing: border-box; padding: 14mm 15mm 8mm; background: transparent; min-height: 0; }
+        .print-main { min-width: 0; }
         .print-sign { width: 78mm; margin: 12mm 0 0 auto; }
       `}</style>
       <div className="print-main">
@@ -385,6 +461,7 @@ export default function ClinicDocumentSheet({
         <p className="doctor-signature__caption">podpis i pieczątka lekarza</p>
       </div>
     </article>
+    </div>
   );
 }
 
