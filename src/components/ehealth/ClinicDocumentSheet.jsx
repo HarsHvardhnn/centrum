@@ -446,7 +446,7 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
       <style>
         ${SHEET_CSS}
         @page { size: A4; margin: 0; }
-        html, body { margin: 0; padding: 12mm 16mm; background: #fff; width: auto; height: auto; }
+        html, body { margin: 0; padding: 10mm 14mm 8mm; background: #fff; width: auto; height: auto; }
         .print-sheet {
           width: auto;
           box-sizing: border-box;
@@ -455,14 +455,16 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
           font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif;
         }
         .print-sign {
-          display: block;
+          display: inline-block;
           width: 78mm;
-          margin: 14mm 0 0 0;
+          margin: 8mm 0 0 0;
           text-align: left;
           break-inside: avoid;
           page-break-inside: avoid;
+          break-before: avoid;
+          page-break-before: avoid;
         }
-        .print-sign .doctor-signature__stamp-space { height: 18mm; }
+        .print-sign .doctor-signature__stamp-space { display: none; height: 0; }
         .document-section { break-inside: avoid; page-break-inside: avoid; }
         .document-section + .document-section { margin-top: 6mm; }
       </style></head><body>
