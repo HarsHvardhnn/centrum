@@ -66,6 +66,13 @@ const SHEET_CSS = `
 .clinic-pages .document-help { margin: 0.6mm 0 0; color: #64748b; font-size: 8pt; font-style: italic; font-weight: 400; letter-spacing: 0; text-transform: none; }
 `;
 
+const FLOW_CSS = `
+.print-sheet { width: 100%; max-width: 190mm; box-sizing: border-box; padding: 12mm 0 8mm; background: #fff; color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
+.print-main { min-width: 0; }
+.print-sign { display: block; width: 78mm; margin: 12mm 0 0 0; text-align: left; break-inside: avoid; page-break-inside: avoid; }
+.print-sign .doctor-signature__stamp-space { display: block; height: 28mm; }
+`;
+
 function todayLabel() {
   return new Date().toLocaleDateString("pl-PL");
 }
@@ -190,11 +197,7 @@ export default function ClinicDocumentSheet({
   });
   return (
     <article className="print-sheet clinic-pages mx-auto bg-white" style={{ boxShadow: "0 2px 16px rgba(0, 0, 0, 0.12)" }}>
-      <style>{`${SHEET_CSS}
-        .print-sheet { width: 100%; max-width: 190mm; box-sizing: border-box; padding: 12mm 0 8mm; background: #fff; }
-        .print-main { min-width: 0; }
-        .print-sign { width: 78mm; margin: 12mm 0 0 0; text-align: left; }
-      `}</style>
+      <style>{`${SHEET_CSS}${FLOW_CSS}`}</style>
       <div className="print-main">
       <header className="medical-document-header">
         <div>
@@ -445,28 +448,10 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8" /><title></title>
       <style>
         ${SHEET_CSS}
+        ${FLOW_CSS}
         @page { size: A4; margin: 0; }
-        html, body { margin: 0; padding: 10mm 14mm 8mm; background: #fff; width: auto; height: auto; }
-        .print-sheet {
-          width: auto;
-          box-sizing: border-box;
-          padding: 0;
-          color: #202020;
-          font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif;
-        }
-        .print-sign {
-          display: inline-block;
-          width: 78mm;
-          margin: 8mm 0 0 0;
-          text-align: left;
-          break-inside: avoid;
-          page-break-inside: avoid;
-          break-before: avoid;
-          page-break-before: avoid;
-        }
-        .print-sign .doctor-signature__stamp-space { display: none; height: 0; }
-        .document-section { break-inside: avoid; page-break-inside: avoid; }
-        .document-section + .document-section { margin-top: 6mm; }
+        html, body { margin: 0; padding: 12mm 16mm 10mm; background: #fff; width: auto; height: auto; }
+        .print-sheet { max-width: none; padding: 0; }
       </style></head><body>
       <article class="print-sheet clinic-pages">
         <div class="print-main">
