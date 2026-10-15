@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import { toast } from "sonner";
 
 export const CLINIC_LETTERHEAD = {
@@ -24,19 +24,19 @@ const TYPE_LABELS = { text: "Krótki tekst", textarea: "Długi tekst", date: "Da
 
 const SHEET_CSS = `
 .clinic-pages { color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
-.clinic-pages .medical-document-header { display: grid; grid-template-columns: minmax(0, 1fr) 56mm; gap: 8mm; align-items: start; padding: 0 0 7mm; border-bottom: 0.5px solid #cbd5e1; }
+.clinic-pages .medical-document-header { display: block; padding: 0 0 7mm; border-bottom: 0.5px solid #cbd5e1; }
 .clinic-pages .clinic-name { margin: 0 0 1.2mm; color: #0f172a; font-size: 13.5pt; font-weight: 700; letter-spacing: -0.015em; line-height: 1.2; }
 .clinic-pages .clinic-legal-name { margin: 0 0 2.2mm; color: #475569; font-size: 8.8pt; font-weight: 600; line-height: 1.35; letter-spacing: 0.03em; text-transform: uppercase; }
 .clinic-pages .clinic-address { display: flex; flex-direction: column; margin: 0 0 2.5mm; color: #334155; font-size: 9.3pt; font-style: normal; line-height: 1.4; }
 .clinic-pages .clinic-registry-data, .clinic-pages .clinic-registry-number { margin: 0; color: #64748b; font-size: 8.6pt; line-height: 1.45; font-variant-numeric: tabular-nums; }
 .clinic-pages .clinic-registry-number { margin-top: 0.8mm; }
-.clinic-pages .medical-document-header__meta { width: 56mm; min-width: 56mm; text-align: right; }
+.clinic-pages .medical-document-header__meta { width: auto; max-width: 80mm; text-align: left; margin-top: 5mm; }
 .clinic-pages .document-meta-label { margin: 0 0 1.2mm; color: #64748b; font-size: 8pt; font-weight: 600; letter-spacing: 0.08em; line-height: 1.35; text-transform: uppercase; }
 .clinic-pages .document-meta-label--number { margin-top: 6mm; }
 .clinic-pages .document-meta-value { margin: 0; color: #0f172a; font-size: 10.5pt; font-weight: 700; line-height: 1.35; }
 .clinic-pages .document-draft-label { margin: 0 0 1.2mm; color: #475569; font-size: 10pt; font-style: italic; font-weight: 600; line-height: 1.35; }
 .clinic-pages .document-draft-note { margin: 0; color: #64748b; font-size: 8.8pt; font-style: italic; line-height: 1.35; }
-.clinic-pages .document-title { margin: 9mm 0 10mm; color: #1d1d1d; font-size: 17pt; font-weight: 700; line-height: 1.25; letter-spacing: 0.015em; text-align: center; text-transform: uppercase; }
+.clinic-pages .document-title { margin: 9mm 0 10mm; color: #1d1d1d; font-size: 17pt; font-weight: 700; line-height: 1.25; letter-spacing: 0.015em; text-align: left; text-transform: uppercase; }
 .clinic-pages .patient-block { margin: 0 0 8mm; padding: 5mm 0; border-top: 0.5px solid #d8d8d8; border-bottom: 0.5px solid #d8d8d8; }
 .clinic-pages .patient-block__header { display: flex; justify-content: space-between; align-items: center; margin: 0 0 4mm; }
 .clinic-pages .patient-block h2 { margin: 0; color: #2d2d2d; font-size: 9pt; font-weight: 700; letter-spacing: 0.08em; line-height: 1.3; text-transform: uppercase; }
@@ -58,7 +58,7 @@ const SHEET_CSS = `
 .clinic-pages .doctor-signature__pwz, .clinic-pages .doctor-signature__specialty { margin: 0 0 1.5mm; color: #333; font-size: 10pt; line-height: 1.35; }
 .clinic-pages .doctor-signature__stamp-space { height: 28mm; }
 .clinic-pages .doctor-signature__line { width: 100%; border-top: 0.75px solid #777; }
-.clinic-pages .doctor-signature__caption { margin: 2mm 0 0; color: #666; font-size: 9pt; text-align: center; }
+.clinic-pages .doctor-signature__caption { margin: 2mm 0 0; color: #666; font-size: 9pt; text-align: left; }
 .clinic-pages .sheet-page-footer { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 8.5pt; color: #71717a; text-align: center; border-top: 0.5px solid #e4e4e7; padding-top: 3mm; }
 .clinic-pages .sheet-write, .clinic-pages .sheet-input { width: 100%; max-width: 100%; min-height: 1.5em; padding: 1.5mm 2mm; color: #1f1f1f; font: inherit; font-size: 10.5pt; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; background: rgba(0, 128, 115, 0.045); border: 0; border-bottom: 1px dashed rgba(0, 128, 115, 0.42); border-radius: 2px; outline: none; }
 .clinic-pages .sheet-write:focus, .clinic-pages .sheet-input:focus { background: #fff; border-bottom: 2px solid #008073; }
@@ -188,88 +188,12 @@ export default function ClinicDocumentSheet({
     doctorPwz,
     sample: mode === "admin" || mode === "preview",
   });
-  const contentRef = useRef(null);
-  const [pages, setPages] = useState(1);
-  const [pageH, setPageH] = useState(() => Math.round((297 / 25.4) * 96));
-  const layoutKey = `${heading}|${selectedKey}|${fields.map((field) => `${field.key}:${field.label}:${values[field.key] || ""}`).join("|")}|${person.name}|${person.pesel}|${mode}`;
-
-  useLayoutEffect(() => {
-    const root = contentRef.current;
-    if (!root) return undefined;
-    const PAGE_GAP = 16;
-    let frame = 0;
-    let ignore = 0;
-    const layout = () => {
-      ignore += 1;
-      const ruler = root.parentElement?.querySelector("[data-page-ruler]");
-      const measured = ruler?.offsetHeight || 0;
-      const height = measured >= 200 ? measured : Math.round((297 / 25.4) * 96);
-      const mm = (value) => (value / 297) * height;
-      const bottomReserve = mm(16);
-      const topInset = Math.round(mm(14));
-      const stride = height + PAGE_GAP;
-      const pageStart = (page) => page * stride + (page > 0 ? topInset : 0);
-      const limit = (page) => page * stride + height - bottomReserve;
-      const blocks = [...root.querySelectorAll(".sheet-block, .print-sign")];
-      blocks.forEach((block) => { block.style.marginTop = ""; });
-      blocks.forEach((block) => {
-        let top = block.offsetTop;
-        let page = Math.max(0, Math.floor(top / stride));
-        if (top < pageStart(page) - 1) {
-          block.style.marginTop = `${Math.round(pageStart(page) - top)}px`;
-          top = block.offsetTop;
-          page = Math.max(0, Math.floor(top / stride));
-        }
-        const blockHeight = block.offsetHeight;
-        const room = height - bottomReserve - topInset;
-        if (top + blockHeight > limit(page) - 2 && blockHeight <= room && top > page * stride + 24) {
-          const shift = Math.round(pageStart(page + 1) - top);
-          if (shift > 2) block.style.marginTop = `${Math.round((parseFloat(block.style.marginTop) || 0) + shift)}px`;
-        }
-      });
-      let bottom = 0;
-      blocks.forEach((block) => {
-        bottom = Math.max(bottom, block.offsetTop + block.offsetHeight);
-      });
-      const nextPages = Math.max(1, Math.floor(Math.max(0, bottom - 1) / stride) + 1);
-      setPageH(height);
-      setPages(nextPages);
-      requestAnimationFrame(() => { ignore -= 1; });
-    };
-    const run = () => {
-      if (ignore > 0) return;
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(layout);
-    };
-    run();
-    const observer = new ResizeObserver(run);
-    observer.observe(root);
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [layoutKey]);
-
-  const pageGap = 16;
   return (
-    <div className="relative mx-auto" style={{ width: "210mm", height: pages * pageH + (pages - 1) * pageGap }}>
-      <div data-page-ruler className="absolute top-0 left-0 opacity-0 pointer-events-none" style={{ height: "297mm", width: "1px" }} />
-      {Array.from({ length: pages }, (_, index) => (
-        <div
-          key={index}
-          aria-hidden="true"
-          style={{ position: "absolute", left: 0, top: index * pageH + index * pageGap, width: "210mm", height: pageH, background: "#fff", boxShadow: "0 2px 16px rgba(0, 0, 0, 0.12)" }}
-        >
-          <footer className="sheet-page-footer" style={{ position: "absolute", left: "15mm", right: "15mm", bottom: "6mm" }}>
-            Strona {index + 1} z {pages}
-          </footer>
-        </div>
-      ))}
-    <article ref={contentRef} className="print-sheet clinic-pages mx-auto" style={{ position: "relative", zIndex: 1, background: "transparent", boxShadow: "none" }}>
+    <article className="print-sheet clinic-pages mx-auto bg-white" style={{ boxShadow: "0 2px 16px rgba(0, 0, 0, 0.12)" }}>
       <style>{`${SHEET_CSS}
-        .print-sheet { width: 210mm; box-sizing: border-box; padding: 14mm 15mm 8mm; background: transparent; min-height: 0; }
+        .print-sheet { width: 100%; max-width: 190mm; box-sizing: border-box; padding: 12mm 0 8mm; background: #fff; }
         .print-main { min-width: 0; }
-        .print-sign { width: 78mm; margin: 12mm 0 0 auto; }
+        .print-sign { width: 78mm; margin: 12mm 0 0 0; text-align: left; }
       `}</style>
       <div className="print-main">
       <header className="medical-document-header">
@@ -461,7 +385,6 @@ export default function ClinicDocumentSheet({
         <p className="doctor-signature__caption">podpis i pieczątka lekarza</p>
       </div>
     </article>
-    </div>
   );
 }
 
@@ -522,19 +445,20 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8" /><title></title>
       <style>
         ${SHEET_CSS}
-        @page, @page :first, @page :left, @page :right { size: A4; margin: 0; }
-        html, body { margin: 0; padding: 0; background: #fff; width: 210mm; height: auto; }
+        @page { size: A4; margin: 0; }
+        html, body { margin: 0; padding: 12mm 16mm; background: #fff; width: auto; height: auto; }
         .print-sheet {
-          width: 210mm;
+          width: auto;
           box-sizing: border-box;
-          padding: 14mm 15mm 18mm;
+          padding: 0;
           color: #202020;
           font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif;
         }
         .print-sign {
-          display: table;
+          display: block;
           width: 78mm;
-          margin: 16mm 0 0 auto;
+          margin: 14mm 0 0 0;
+          text-align: left;
           break-inside: avoid;
           page-break-inside: avoid;
         }
