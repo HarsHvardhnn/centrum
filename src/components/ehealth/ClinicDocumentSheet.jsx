@@ -67,9 +67,9 @@ const SHEET_CSS = `
 `;
 
 const FLOW_CSS = `
-.print-sheet { width: 100%; max-width: 190mm; box-sizing: border-box; padding: 12mm 0 8mm; background: #fff; color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
+.print-sheet { width: 100%; max-width: 210mm; box-sizing: border-box; margin-left: auto; margin-right: auto; padding: 12mm 16mm 10mm; background: #fff; color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
 .print-main { min-width: 0; }
-.print-sign { display: block; width: 78mm; margin: 12mm 0 0 0; text-align: left; break-inside: avoid; page-break-inside: avoid; }
+.print-sign { display: block; width: 78mm; max-width: 100%; margin: 12mm 0 0 0; text-align: left; break-inside: avoid; page-break-inside: avoid; }
 .print-sign .doctor-signature__stamp-space { display: block; height: 28mm; }
 `;
 
