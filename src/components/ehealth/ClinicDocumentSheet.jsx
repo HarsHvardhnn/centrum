@@ -24,20 +24,20 @@ const TYPE_LABELS = { text: "Krótki tekst", textarea: "Długi tekst", date: "Da
 
 const SHEET_CSS = `
 .clinic-pages { color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
-.clinic-pages .medical-document-header { display: block; padding: 0 0 7mm; border-bottom: 0.5px solid #cbd5e1; }
-.clinic-pages .clinic-name { margin: 0 0 1.2mm; color: #0f172a; font-size: 13.5pt; font-weight: 700; letter-spacing: -0.015em; line-height: 1.2; }
-.clinic-pages .clinic-legal-name { margin: 0 0 2.2mm; color: #475569; font-size: 8.8pt; font-weight: 600; line-height: 1.35; letter-spacing: 0.03em; text-transform: uppercase; overflow-wrap: anywhere; }
-.clinic-pages .clinic-address { display: flex; flex-direction: column; margin: 0 0 2.5mm; color: #334155; font-size: 9.3pt; font-style: normal; line-height: 1.4; }
+.clinic-pages .medical-document-header { display: block; padding: 0 0 7mm; border-bottom: 0.5px solid #cbd5e1; text-align: center; }
+.clinic-pages .clinic-name { margin: 0 0 1.2mm; color: #0f172a; font-size: 13.5pt; font-weight: 700; letter-spacing: -0.015em; line-height: 1.2; text-align: center; }
+.clinic-pages .clinic-legal-name { margin: 0 0 2.2mm; color: #475569; font-size: 8.8pt; font-weight: 600; line-height: 1.35; letter-spacing: 0.03em; text-transform: uppercase; overflow-wrap: anywhere; text-align: center; }
+.clinic-pages .clinic-address { display: flex; flex-direction: column; align-items: center; margin: 0 0 2.5mm; color: #334155; font-size: 9.3pt; font-style: normal; line-height: 1.4; text-align: center; }
 .clinic-pages .clinic-registry-data, .clinic-pages .clinic-registry-number { margin: 0; color: #64748b; font-size: 8.6pt; line-height: 1.45; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .clinic-pages .clinic-registry-number { margin-top: 0.8mm; }
-.clinic-pages .medical-document-header__meta { width: auto; max-width: 80mm; text-align: left; margin-top: 5mm; }
+.clinic-pages .medical-document-header__meta { width: auto; max-width: none; text-align: center; margin: 5mm auto 0; }
 .clinic-pages .document-meta-label { margin: 0 0 1.2mm; color: #64748b; font-size: 8pt; font-weight: 600; letter-spacing: 0.08em; line-height: 1.35; text-transform: uppercase; }
 .clinic-pages .document-meta-label--number { margin-top: 6mm; }
 .clinic-pages .document-meta-value { margin: 0; color: #0f172a; font-size: 10.5pt; font-weight: 700; line-height: 1.35; }
 .clinic-pages .document-draft-label { margin: 0 0 1.2mm; color: #475569; font-size: 10pt; font-style: italic; font-weight: 600; line-height: 1.35; }
 .clinic-pages .document-draft-note { margin: 0; color: #64748b; font-size: 8.8pt; font-style: italic; line-height: 1.35; }
-.clinic-pages .document-title { margin: 9mm 0 10mm; color: #1d1d1d; font-size: 17pt; font-weight: 700; line-height: 1.25; letter-spacing: 0.015em; text-align: left; text-transform: uppercase; }
-.clinic-pages .patient-block { margin: 0 0 8mm; padding: 5mm 0; border-top: 0.5px solid #d8d8d8; border-bottom: 0.5px solid #d8d8d8; }
+.clinic-pages .document-title { margin: 9mm 0 10mm; color: #1d1d1d; font-size: 17pt; font-weight: 700; line-height: 1.25; letter-spacing: 0.015em; text-align: center; text-transform: uppercase; }
+.clinic-pages .patient-block { margin: 0 0 8mm; padding: 5mm 0; border-top: 0.5px solid #d8d8d8; border-bottom: 0.5px solid #d8d8d8; text-align: left; }
 .clinic-pages .patient-block__header { display: flex; justify-content: space-between; align-items: center; margin: 0 0 4mm; }
 .clinic-pages .patient-block h2 { margin: 0; color: #2d2d2d; font-size: 9pt; font-weight: 700; letter-spacing: 0.08em; line-height: 1.3; text-transform: uppercase; }
 .clinic-pages .patient-name { margin: 0 0 3mm; color: #1f1f1f; font-size: 12pt; font-weight: 600; line-height: 1.35; }
@@ -45,7 +45,7 @@ const SHEET_CSS = `
 .clinic-pages .patient-details > div { display: flex; align-items: baseline; gap: 2mm; }
 .clinic-pages .patient-details dt { color: #666; font-size: 10.5pt; }
 .clinic-pages .patient-details dd { margin: 0; color: #1f1f1f; font-size: 10.5pt; font-weight: 500; white-space: pre-wrap; }
-.clinic-pages .document-content { margin: 6mm 0; }
+.clinic-pages .document-content { margin: 6mm 0; text-align: left; }
 .clinic-pages .document-content > .document-section + .document-section { margin-top: 6mm; }
 .clinic-pages .document-section__header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 2mm; margin: 0 0 1.5mm; }
 .clinic-pages .document-section__label { margin: 0; color: #27272a; font-size: 9.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.35; }
@@ -58,7 +58,7 @@ const SHEET_CSS = `
 .clinic-pages .doctor-signature__pwz, .clinic-pages .doctor-signature__specialty { margin: 0 0 1.5mm; color: #333; font-size: 10pt; line-height: 1.35; }
 .clinic-pages .doctor-signature__stamp-space { height: 28mm; }
 .clinic-pages .doctor-signature__line { width: 100%; border-top: 0.75px solid #777; }
-.clinic-pages .doctor-signature__caption { margin: 2mm 0 0; color: #666; font-size: 9pt; text-align: left; }
+.clinic-pages .doctor-signature__caption { margin: 2mm 0 0; color: #666; font-size: 9pt; text-align: center; }
 .clinic-pages .sheet-page-footer { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 8.5pt; color: #71717a; text-align: center; border-top: 0.5px solid #e4e4e7; padding-top: 3mm; }
 .clinic-pages .sheet-write, .clinic-pages .sheet-input { width: 100%; max-width: 100%; min-height: 1.5em; padding: 1.5mm 2mm; color: #1f1f1f; font: inherit; font-size: 10.5pt; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; background: rgba(0, 128, 115, 0.045); border: 0; border-bottom: 1px dashed rgba(0, 128, 115, 0.42); border-radius: 2px; outline: none; }
 .clinic-pages .sheet-write:focus, .clinic-pages .sheet-input:focus { background: #fff; border-bottom: 2px solid #008073; }
@@ -67,9 +67,9 @@ const SHEET_CSS = `
 `;
 
 const FLOW_CSS = `
-.print-sheet { width: 100%; max-width: min(210mm, 100%); min-width: 0; box-sizing: border-box; margin-left: auto; margin-right: auto; padding: 12mm 16mm 10mm; background: #fff; color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; overflow: visible; }
+.print-sheet { width: 100%; max-width: min(210mm, 100%); min-width: 0; box-sizing: border-box; margin-left: auto; margin-right: auto; padding: 14mm 18mm 12mm; background: #fff; color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; overflow: visible; }
 .print-main { min-width: 0; }
-.print-sign { display: block; width: 78mm; max-width: 100%; margin: 12mm 0 0 0; text-align: left; break-inside: avoid; page-break-inside: avoid; }
+.print-sign { display: table; width: 78mm; max-width: 100%; margin: 12mm auto 0; text-align: center; break-inside: avoid; page-break-inside: avoid; }
 .print-sign .doctor-signature__stamp-space { display: block; height: 28mm; }
 `;
 
@@ -448,8 +448,8 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
         ${SHEET_CSS}
         ${FLOW_CSS}
         @page { size: A4; margin: 0; }
-        html, body { margin: 0; padding: 12mm 16mm 10mm; background: #fff; width: auto; height: auto; }
-        .print-sheet { max-width: none; padding: 0; }
+        html, body { margin: 0; padding: 0; background: #fff; width: 210mm; }
+        .print-sheet { width: 210mm; max-width: 210mm; margin: 0 auto; }
       </style></head><body>
       <article class="print-sheet clinic-pages">
         <div class="print-main">
@@ -495,7 +495,7 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
       </body></html>`;
     const iframe = document.createElement("iframe");
     iframe.setAttribute("aria-hidden", "true");
-    iframe.style.cssText = "position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0;";
+    iframe.style.cssText = "position:fixed;left:0;top:0;width:210mm;height:297mm;border:0;background:#fff;z-index:2147483646;";
     document.body.appendChild(iframe);
     const printWindow = iframe.contentWindow;
     const printDocument = printWindow?.document;
