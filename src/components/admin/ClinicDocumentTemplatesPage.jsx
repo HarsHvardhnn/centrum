@@ -416,8 +416,8 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
               </div>
               <button type="button" onClick={() => setEditing(null)} aria-label="Zamknij"><X size={18} /></button>
             </div>
-            <div className="flex-1 grid lg:grid-cols-[380px_minmax(0,1fr)] overflow-hidden">
-              <div className="overflow-y-auto p-5 space-y-4 border-r border-slate-200">
+            <div className="flex-1 min-h-0 grid lg:grid-cols-[380px_minmax(0,1fr)] overflow-hidden">
+              <div className="min-h-0 overflow-y-auto p-5 space-y-4 border-r border-slate-200">
                 <h3 className="text-xs font-bold uppercase tracking-wider">Dane wzoru</h3>
                 <label className="block text-xs font-semibold">Nazwa wzoru *
                   <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="np. Zaświadczenie do pracy" className="mt-1 w-full border rounded-lg px-3 py-2 font-normal" />
@@ -493,7 +493,7 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
                   </div>
                 ))}
               </div>
-              <div className="bg-slate-100 overflow-y-auto p-4">
+              <div className="min-h-0 min-w-0 bg-slate-100 overflow-auto p-4">
                 <div className="flex items-center justify-between mb-3 text-xs text-slate-600">
                   <span>Interaktywny podgląd arkusza A4 · Kliknij sekcję, aby zaznaczyć pole; dwuklik otwiera edycję</span>
                   <button type="button" onClick={() => setPrintOpen(true)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border bg-white font-semibold"><Printer size={14} /> Podgląd wydruku</button>

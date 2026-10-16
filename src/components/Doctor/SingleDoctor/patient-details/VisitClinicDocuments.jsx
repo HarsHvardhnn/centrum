@@ -751,7 +751,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               </div>
               <button type="button" onClick={() => setDraft(null)} className="text-xl leading-none">×</button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 min-h-0 min-w-0 overflow-auto p-4">
               <ClinicDocumentSheet
                 mode={draft.status === "issued" ? "preview" : "fill"}
                 title={draft.headerTitle || draft.template.printTitle || draft.template.name}

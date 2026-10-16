@@ -26,9 +26,9 @@ const SHEET_CSS = `
 .clinic-pages { color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
 .clinic-pages .medical-document-header { display: block; padding: 0 0 7mm; border-bottom: 0.5px solid #cbd5e1; }
 .clinic-pages .clinic-name { margin: 0 0 1.2mm; color: #0f172a; font-size: 13.5pt; font-weight: 700; letter-spacing: -0.015em; line-height: 1.2; }
-.clinic-pages .clinic-legal-name { margin: 0 0 2.2mm; color: #475569; font-size: 8.8pt; font-weight: 600; line-height: 1.35; letter-spacing: 0.03em; text-transform: uppercase; }
+.clinic-pages .clinic-legal-name { margin: 0 0 2.2mm; color: #475569; font-size: 8.8pt; font-weight: 600; line-height: 1.35; letter-spacing: 0.03em; text-transform: uppercase; overflow-wrap: anywhere; }
 .clinic-pages .clinic-address { display: flex; flex-direction: column; margin: 0 0 2.5mm; color: #334155; font-size: 9.3pt; font-style: normal; line-height: 1.4; }
-.clinic-pages .clinic-registry-data, .clinic-pages .clinic-registry-number { margin: 0; color: #64748b; font-size: 8.6pt; line-height: 1.45; font-variant-numeric: tabular-nums; }
+.clinic-pages .clinic-registry-data, .clinic-pages .clinic-registry-number { margin: 0; color: #64748b; font-size: 8.6pt; line-height: 1.45; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .clinic-pages .clinic-registry-number { margin-top: 0.8mm; }
 .clinic-pages .medical-document-header__meta { width: auto; max-width: 80mm; text-align: left; margin-top: 5mm; }
 .clinic-pages .document-meta-label { margin: 0 0 1.2mm; color: #64748b; font-size: 8pt; font-weight: 600; letter-spacing: 0.08em; line-height: 1.35; text-transform: uppercase; }
@@ -47,7 +47,7 @@ const SHEET_CSS = `
 .clinic-pages .patient-details dd { margin: 0; color: #1f1f1f; font-size: 10.5pt; font-weight: 500; white-space: pre-wrap; }
 .clinic-pages .document-content { margin: 6mm 0; }
 .clinic-pages .document-content > .document-section + .document-section { margin-top: 6mm; }
-.clinic-pages .document-section__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 2mm; margin: 0 0 1.5mm; }
+.clinic-pages .document-section__header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 2mm; margin: 0 0 1.5mm; }
 .clinic-pages .document-section__label { margin: 0; color: #27272a; font-size: 9.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.35; }
 .clinic-pages .document-section { max-width: 100%; min-width: 0; }
 .clinic-pages .document-section__value { margin: 0; color: #18181b; font-size: 10.5pt; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
@@ -67,7 +67,7 @@ const SHEET_CSS = `
 `;
 
 const FLOW_CSS = `
-.print-sheet { width: 100%; max-width: 210mm; box-sizing: border-box; margin-left: auto; margin-right: auto; padding: 12mm 16mm 10mm; background: #fff; color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
+.print-sheet { width: 100%; max-width: min(210mm, 100%); min-width: 0; box-sizing: border-box; margin-left: auto; margin-right: auto; padding: 12mm 16mm 10mm; background: #fff; color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; overflow: visible; }
 .print-main { min-width: 0; }
 .print-sign { display: block; width: 78mm; max-width: 100%; margin: 12mm 0 0 0; text-align: left; break-inside: avoid; page-break-inside: avoid; }
 .print-sign .doctor-signature__stamp-space { display: block; height: 28mm; }
