@@ -419,8 +419,6 @@ function printFieldText(field, values, status) {
 
 export async function printClinicSheet({ title, fields, values, patient, doctorName, doctorTitle, doctorPwz, documentNumber, status }) {
   const notice = toast.loading("Otwieram okno wydruku…");
-  let popup = null;
-  let objectUrl = "";
   try {
     const issued = status === "issued";
     const person = patient || {};
@@ -495,30 +493,30 @@ export async function printClinicSheet({ title, fields, values, patient, doctorN
         </div>
       </article>
       </body></html>`;
-    objectUrl = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-    popup = window.open(objectUrl, "_blank");
-    if (!popup) {
-      URL.revokeObjectURL(objectUrl);
-      toast.error("Przeglądarka zablokowała okno wydruku. Zezwól na wyskakujące okna.", { id: notice });
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.cssText = "position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0;";
+    document.body.appendChild(iframe);
+    const printWindow = iframe.contentWindow;
+    const printDocument = printWindow?.document;
+    if (!printWindow || !printDocument) {
+      iframe.remove();
+      toast.error("Nie udało się otworzyć okna wydruku.", { id: notice });
       return false;
     }
-    const openPrint = () => {
-      popup.focus();
-      popup.print();
-    };
+    printDocument.open();
+    printDocument.write(html);
+    printDocument.close();
     const release = () => {
-      popup.close();
-      URL.revokeObjectURL(objectUrl);
+      setTimeout(() => iframe.remove(), 300);
     };
-    popup.onafterprint = release;
-    if (popup.document.readyState === "complete") popup.setTimeout(openPrint, 200);
-    else popup.addEventListener("load", () => popup.setTimeout(openPrint, 50));
+    printWindow.onafterprint = release;
+    printWindow.focus();
+    printWindow.print();
     toast.success("Okno wydruku jest otwarte.", { id: notice });
     return true;
   } catch (err) {
     console.error(err);
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
-    popup?.close();
     toast.error("Nie udało się otworzyć okna wydruku.", { id: notice });
     return false;
   }
