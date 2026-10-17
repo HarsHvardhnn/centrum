@@ -417,9 +417,9 @@ function printFieldText(field, values, status) {
 }
 
 const PDF_PAGE_CSS = `
-@page { size: A4; margin: 18mm 0 22mm 0; }
+@page { size: A4; margin: 0; }
 html, body { margin: 0; padding: 0; background: #fff; width: 100%; }
-.print-sheet { width: 100% !important; max-width: none !important; min-width: 0 !important; margin: 0 auto !important; padding: 0 18mm !important; box-sizing: border-box !important; box-shadow: none !important; }
+.print-sheet { width: 100% !important; max-width: none !important; min-width: 0 !important; margin: 0 !important; padding: 4mm 14mm 2mm !important; box-sizing: border-box !important; box-shadow: none !important; }
 .print-main, .document-section, .document-title, .document-section__label, .patient-name, .patient-details dd { max-width: 100% !important; min-width: 0 !important; word-break: normal !important; overflow-wrap: break-word !important; }
 .document-section__value { max-width: 100% !important; min-width: 0 !important; overflow-wrap: anywhere !important; word-break: break-word !important; }
 table.print-sign, table.print-sign tr, table.print-sign td { break-inside: avoid !important; page-break-inside: avoid !important; }
