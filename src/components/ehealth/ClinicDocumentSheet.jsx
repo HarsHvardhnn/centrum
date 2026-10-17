@@ -37,7 +37,7 @@ const SHEET_CSS = `
 .clinic-pages .document-meta-value { margin: 0; color: #0f172a; font-size: 10.5pt; font-weight: 700; line-height: 1.35; }
 .clinic-pages .document-draft-label { margin: 0 0 1.2mm; color: #475569; font-size: 10pt; font-style: italic; font-weight: 600; line-height: 1.35; }
 .clinic-pages .document-draft-note { margin: 0; color: #64748b; font-size: 8.8pt; font-style: italic; line-height: 1.35; }
-.clinic-pages .document-title { margin: 9mm 0 10mm; color: #1d1d1d; font-size: 17pt; font-weight: 700; line-height: 1.25; letter-spacing: 0.015em; text-align: center; text-transform: uppercase; }
+.clinic-pages .document-title { margin: 9mm 0 10mm; color: #1d1d1d; font-size: 17pt; font-weight: 700; line-height: 1.25; letter-spacing: 0.015em; text-align: center; text-transform: uppercase; word-break: normal; overflow-wrap: break-word; }
 .clinic-pages .patient-block { margin: 0 0 8mm; padding: 5mm 0; border-top: 0.5px solid #d8d8d8; border-bottom: 0.5px solid #d8d8d8; text-align: left; }
 .clinic-pages .patient-block__header { display: flex; justify-content: space-between; align-items: center; margin: 0 0 4mm; }
 .clinic-pages .patient-block h2 { margin: 0; color: #2d2d2d; font-size: 9pt; font-weight: 700; letter-spacing: 0.08em; line-height: 1.3; text-transform: uppercase; }
@@ -423,7 +423,8 @@ const PDF_PAGE_CSS = `
 @page { size: A4; margin: 0; }
 html, body { margin: 0; padding: 0; background: #fff; width: 100%; max-width: 178mm; }
 .print-sheet { width: 100% !important; max-width: 178mm !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important; box-shadow: none !important; }
-.print-main, .document-section, .document-section__value, .patient-details dd { max-width: 100% !important; min-width: 0 !important; overflow-wrap: anywhere !important; word-break: break-all !important; }
+.print-main, .document-section, .document-title, .document-section__label, .patient-name, .patient-details dd { max-width: 100% !important; min-width: 0 !important; word-break: normal !important; overflow-wrap: break-word !important; }
+.document-section__value { max-width: 100% !important; min-width: 0 !important; overflow-wrap: anywhere !important; word-break: break-word !important; }
 table.print-sign, table.print-sign tr, table.print-sign td { break-inside: avoid !important; page-break-inside: avoid !important; }
 table.print-sign { width: 78mm !important; margin: 10mm 0 0 auto !important; }
 `;
