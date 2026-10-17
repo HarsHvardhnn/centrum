@@ -50,8 +50,8 @@ const SHEET_CSS = `
 .clinic-pages .document-content > .document-section + .document-section { margin-top: 6mm; }
 .clinic-pages .document-section__header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 2mm; margin: 0 0 1.5mm; }
 .clinic-pages .document-section__label { margin: 0; color: #27272a; font-size: 9.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.35; }
-.clinic-pages .document-section { max-width: 100%; min-width: 0; }
-.clinic-pages .document-section__value { margin: 0; color: #18181b; font-size: 10.5pt; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
+.clinic-pages .document-section { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
+.clinic-pages .document-section__value { margin: 0; color: #18181b; font-size: 10.5pt; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-all; max-width: 100%; }
 .clinic-pages .sheet-page-break { display: block; width: auto; margin: 0 -2mm; padding: 0 2mm; background: #fff; overflow: hidden; pointer-events: none; user-select: none; }
 .clinic-pages .document-section__value.is-empty { color: #a1a1aa; font-style: italic; }
 .clinic-pages .doctor-signature__label { margin: 0 0 2mm; color: #666; font-size: 9pt; letter-spacing: 0.08em; line-height: 1.3; text-transform: uppercase; }
@@ -420,8 +420,9 @@ function printFieldText(field, values, status) {
 
 const PDF_PAGE_CSS = `
 @page { size: A4; margin: 0; }
-html, body { margin: 0; padding: 0; background: #fff; width: auto; }
-.print-sheet { width: auto !important; max-width: none !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
+html, body { margin: 0; padding: 0; background: #fff; width: 178mm; max-width: 178mm; }
+.print-sheet { width: 178mm !important; max-width: 178mm !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important; box-shadow: none !important; }
+.print-main, .document-section, .document-section__value, .patient-details dd { max-width: 100% !important; min-width: 0 !important; overflow-wrap: anywhere !important; word-break: break-all !important; }
 `;
 
 export function buildClinicSheetHtml({ title, fields, values, patient, doctorName, doctorTitle, doctorPwz, documentNumber, status }) {
