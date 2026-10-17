@@ -70,7 +70,8 @@ const SHEET_CSS = `
 const FLOW_CSS = `
 .print-sheet { width: 100%; max-width: min(210mm, 100%); min-width: 0; box-sizing: border-box; margin-left: auto; margin-right: auto; padding: 14mm 18mm 12mm; background: #fff; color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; overflow: visible; }
 .print-main { min-width: 0; }
-.print-sign { display: table; width: 78mm; max-width: 100%; margin: 12mm 0 0 auto; text-align: center; break-inside: avoid; page-break-inside: avoid; }
+.print-sign { width: 78mm; max-width: 100%; margin: 12mm 0 0 auto; border-collapse: collapse; text-align: center; break-inside: avoid; page-break-inside: avoid; }
+.print-sign td { break-inside: avoid; page-break-inside: avoid; text-align: center; }
 .print-sign .doctor-signature__stamp-space { display: block; height: 28mm; }
 `;
 
@@ -420,9 +421,11 @@ function printFieldText(field, values, status) {
 
 const PDF_PAGE_CSS = `
 @page { size: A4; margin: 0; }
-html, body { margin: 0; padding: 0; background: #fff; width: 178mm; max-width: 178mm; }
-.print-sheet { width: 178mm !important; max-width: 178mm !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important; box-shadow: none !important; }
+html, body { margin: 0; padding: 0; background: #fff; width: 100%; max-width: 178mm; }
+.print-sheet { width: 100% !important; max-width: 178mm !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important; box-shadow: none !important; }
 .print-main, .document-section, .document-section__value, .patient-details dd { max-width: 100% !important; min-width: 0 !important; overflow-wrap: anywhere !important; word-break: break-all !important; }
+table.print-sign, table.print-sign tr, table.print-sign td { break-inside: avoid !important; page-break-inside: avoid !important; }
+table.print-sign { width: 78mm !important; margin: 10mm 0 0 auto !important; }
 `;
 
 export function buildClinicSheetHtml({ title, fields, values, patient, doctorName, doctorTitle, doctorPwz, documentNumber, status }) {
@@ -483,16 +486,33 @@ export function buildClinicSheetHtml({ title, fields, values, patient, doctorNam
       </section>
       <section class="document-content">${sections}</section>
       </div>
-      <div class="print-sign">
-        <p class="doctor-signature__label">Lekarz orzekający / wystawiający</p>
-        <p class="doctor-signature__name">${escapeHtml(sign.line || "—")}</p>
-        <p class="doctor-signature__pwz">PWZ: ${escapeHtml(sign.pwz || "—")}</p>
-        <div class="doctor-signature__stamp-space"></div>
-        <div class="doctor-signature__line"></div>
-        <p class="doctor-signature__caption">podpis i pieczątka lekarza</p>
-      </div>
+      <table class="print-sign">
+        <tr>
+          <td>
+            <p class="doctor-signature__label">Lekarz orzekający / wystawiający</p>
+            <p class="doctor-signature__name">${escapeHtml(sign.line || "—")}</p>
+            <p class="doctor-signature__pwz">PWZ: ${escapeHtml(sign.pwz || "—")}</p>
+            <div class="doctor-signature__stamp-space"></div>
+            <div class="doctor-signature__line"></div>
+            <p class="doctor-signature__caption">podpis i pieczątka lekarza</p>
+          </td>
+        </tr>
+      </table>
     </article>
     </body></html>`;
+}
+
+function pdfPageCount(buffer) {
+  const raw = new TextDecoder("latin1").decode(buffer);
+  return (raw.match(/\/Type\s*\/Page(?!s)/g) || []).length;
+}
+
+function stronyLabel(count) {
+  if (count === 1) return "1 strona";
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} strony`;
+  return `${count} stron`;
 }
 
 function printPdfUrl(url) {
@@ -521,7 +541,9 @@ function printPdfUrl(url) {
 export const ClinicSheetPdfView = forwardRef(function ClinicSheetPdfView(props, ref) {
   const frameRef = useRef(null);
   const [src, setSrc] = useState("");
+  const [pages, setPages] = useState(0);
   const [failed, setFailed] = useState(false);
+  const [pending, setPending] = useState(true);
   const requestKey = JSON.stringify({
     title: props.title,
     fields: props.fields,
@@ -535,28 +557,37 @@ export const ClinicSheetPdfView = forwardRef(function ClinicSheetPdfView(props, 
   });
 
   useEffect(() => {
-    let objectUrl = "";
     let cancelled = false;
-    setSrc("");
-    setFailed(false);
-    (async () => {
+    let localUrl = "";
+    setPending(true);
+    const timer = setTimeout(async () => {
       try {
         const blob = await clinicDocumentsHelper.previewPdf(buildClinicSheetHtml(JSON.parse(requestKey)));
-        objectUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+        const buffer = await blob.arrayBuffer();
+        const count = pdfPageCount(buffer);
+        localUrl = URL.createObjectURL(new Blob([buffer], { type: "application/pdf" }));
         if (cancelled) {
-          URL.revokeObjectURL(objectUrl);
+          URL.revokeObjectURL(localUrl);
           return;
         }
-        setSrc(objectUrl);
+        setPages(count);
+        setFailed(false);
+        setSrc(localUrl);
       } catch {
         if (!cancelled) setFailed(true);
+      } finally {
+        if (!cancelled) setPending(false);
       }
-    })();
+    }, props.debounceMs || 0);
     return () => {
       cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      clearTimeout(timer);
     };
-  }, [requestKey]);
+  }, [requestKey, props.debounceMs]);
+
+  useEffect(() => () => {
+    if (src) URL.revokeObjectURL(src);
+  }, [src]);
 
   useImperativeHandle(ref, () => ({
     print() {
@@ -569,9 +600,21 @@ export const ClinicSheetPdfView = forwardRef(function ClinicSheetPdfView(props, 
     },
   }), [src]);
 
-  if (failed) return <p className="m-4 rounded-lg bg-white p-4 text-sm text-slate-700">Nie udało się przygotować podglądu wydruku.</p>;
-  if (!src) return <p className="m-4 rounded-lg bg-white p-4 text-sm text-slate-600">Przygotowuję podgląd wydruku…</p>;
-  return <iframe ref={frameRef} title={props.title || "Dokument"} src={src} className="w-full h-full min-h-[72vh] bg-white border-0 rounded-lg" />;
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <p className="mb-2 text-xs font-semibold text-slate-700">
+        {pages > 0 ? `Wydruk: ${stronyLabel(pages)}` : pending ? "Przygotowuję podgląd wydruku…" : "Podgląd wydruku"}
+        {pending && pages > 0 ? " · odświeżanie…" : ""}
+      </p>
+      {failed && !src ? (
+        <p className="rounded-lg bg-white p-4 text-sm text-slate-700">Nie udało się przygotować podglądu wydruku.</p>
+      ) : src ? (
+        <iframe ref={frameRef} title={props.title || "Dokument"} src={`${src}#navpanes=0&view=FitH`} className="min-h-0 w-full flex-1 rounded-lg border-0 bg-neutral-600" />
+      ) : (
+        <p className="rounded-lg bg-white p-4 text-sm text-slate-600">Przygotowuję podgląd wydruku…</p>
+      )}
+    </div>
+  );
 });
 
 export async function printClinicSheet(props) {
