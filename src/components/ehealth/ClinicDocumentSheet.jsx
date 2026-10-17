@@ -70,7 +70,7 @@ const SHEET_CSS = `
 const FLOW_CSS = `
 .print-sheet { width: 100%; max-width: min(210mm, 100%); min-width: 0; box-sizing: border-box; margin-left: auto; margin-right: auto; padding: 14mm 18mm 12mm; background: #fff; color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; overflow: visible; }
 .print-main { min-width: 0; }
-.print-sign { width: 78mm; max-width: 100%; margin: 12mm 0 0 auto; border-collapse: collapse; text-align: center; break-inside: avoid; page-break-inside: avoid; }
+.print-sign { width: 78mm; max-width: 100%; margin: 8mm 0 0 auto; border-collapse: collapse; text-align: center; break-inside: avoid; page-break-inside: avoid; }
 .print-sign td { break-inside: avoid; page-break-inside: avoid; text-align: center; }
 .print-sign .doctor-signature__stamp-space { display: block; height: 28mm; }
 `;
@@ -385,9 +385,6 @@ export default function ClinicDocumentSheet({
         <p className="doctor-signature__label">Lekarz orzekający / wystawiający</p>
         <p className="doctor-signature__name">{sign.line || "—"}</p>
         <p className="doctor-signature__pwz">PWZ: {sign.pwz || "—"}</p>
-        <div className="doctor-signature__stamp-space" aria-hidden="true" />
-        <div className="doctor-signature__line" />
-        <p className="doctor-signature__caption">podpis i pieczątka lekarza</p>
       </div>
     </article>
   );
@@ -426,7 +423,7 @@ html, body { margin: 0; padding: 0; background: #fff; width: 100%; }
 .print-main, .document-section, .document-title, .document-section__label, .patient-name, .patient-details dd { max-width: 100% !important; min-width: 0 !important; word-break: normal !important; overflow-wrap: break-word !important; }
 .document-section__value { max-width: 100% !important; min-width: 0 !important; overflow-wrap: anywhere !important; word-break: break-word !important; }
 table.print-sign, table.print-sign tr, table.print-sign td { break-inside: avoid !important; page-break-inside: avoid !important; }
-table.print-sign { width: 78mm !important; margin: 10mm 0 0 auto !important; }
+table.print-sign { width: 78mm !important; margin: 8mm 0 0 auto !important; }
 `;
 
 export function buildClinicSheetHtml({ title, fields, values, patient, doctorName, doctorTitle, doctorPwz, documentNumber, status }) {
@@ -493,9 +490,6 @@ export function buildClinicSheetHtml({ title, fields, values, patient, doctorNam
             <p class="doctor-signature__label">Lekarz orzekający / wystawiający</p>
             <p class="doctor-signature__name">${escapeHtml(sign.line || "—")}</p>
             <p class="doctor-signature__pwz">PWZ: ${escapeHtml(sign.pwz || "—")}</p>
-            <div class="doctor-signature__stamp-space"></div>
-            <div class="doctor-signature__line"></div>
-            <p class="doctor-signature__caption">podpis i pieczątka lekarza</p>
           </td>
         </tr>
       </table>
