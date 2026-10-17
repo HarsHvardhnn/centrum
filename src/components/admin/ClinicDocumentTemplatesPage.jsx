@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FileStack, Plus, Pencil, Trash2, X, Printer, Eye, Copy, MoreVertical, EyeOff, Users, Check } from "lucide-react";
 import { toast } from "sonner";
 import clinicDocumentsHelper from "../../helpers/clinicDocumentsHelper";
 import doctorStatsHelper from "../../helpers/doctorStatsHelper";
 import { useUser } from "../../context/userContext";
 import { apiCaller } from "../../utils/axiosInstance";
-import ClinicDocumentSheet, { ISSUE_DATE_VALUE, localIsoDate, previewFieldValues, printClinicSheet, SAMPLE_PATIENT } from "../ehealth/ClinicDocumentSheet";
+import ClinicDocumentSheet, { ClinicSheetPdfView, ISSUE_DATE_VALUE, localIsoDate, previewFieldValues, SAMPLE_PATIENT } from "../ehealth/ClinicDocumentSheet";
 
 const CATEGORIES = [
   { value: "certificate", label: "Zaświadczenia i orzeczenia" },
@@ -167,6 +167,8 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
   const [selectedKey, setSelectedKey] = useState("");
   const [fieldDraft, setFieldDraft] = useState(null);
   const [printOpen, setPrintOpen] = useState(false);
+  const previewPdfRef = useRef(null);
+  const printPdfRef = useRef(null);
   const [doctorPickerOpen, setDoctorPickerOpen] = useState(false);
   const [doctorQuery, setDoctorQuery] = useState("");
   const [menuFor, setMenuFor] = useState("");
@@ -603,12 +605,12 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
               <div className="font-semibold truncate">{previewRow.name}</div>
             </div>
             <div className="flex gap-2 shrink-0">
-              <button type="button" onClick={() => { printClinicSheet({ title: previewRow.printTitle || previewRow.name, fields: previewRow.fields, values: previewFieldValues(previewRow.fields), patient: SAMPLE_PATIENT, status: "template", ...signer }); }} className="px-4 py-2 bg-white text-slate-800 rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
+              <button type="button" onClick={() => previewPdfRef.current?.print()} className="px-4 py-2 bg-white text-slate-800 rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
               <button type="button" onClick={() => setPreviewRow(null)} className="px-4 py-2 bg-white text-slate-800 rounded-lg">Zamknij</button>
             </div>
           </div>
-          <div className="mx-auto w-full max-w-[210mm] px-4 py-6">
-            <ClinicDocumentSheet mode="preview" title={previewRow.printTitle || previewRow.name} fields={previewRow.fields || []} values={previewFieldValues(previewRow.fields)} patient={SAMPLE_PATIENT} {...signer} />
+          <div className="h-[calc(100vh-4.5rem)] px-4 py-4">
+            <ClinicSheetPdfView ref={previewPdfRef} title={previewRow.printTitle || previewRow.name} fields={previewRow.fields || []} values={previewFieldValues(previewRow.fields)} patient={SAMPLE_PATIENT} status="template" {...signer} />
           </div>
         </div>
       )}
@@ -802,11 +804,11 @@ export default function ClinicDocumentTemplatesPage({ personal = false }) {
       {printOpen && editing && (
         <div className="fixed inset-0 z-[60] bg-slate-700 overflow-y-auto">
           <div className="sticky top-0 z-10 flex justify-end gap-2 px-6 py-4 bg-slate-800">
-            <button type="button" onClick={() => { printClinicSheet({ title: editing.printTitle || editing.name, fields: editing.fields, values: previewFieldValues(editing.fields), patient: SAMPLE_PATIENT, status: "template", ...signer }); }} className="px-4 py-2 bg-white rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
+            <button type="button" onClick={() => printPdfRef.current?.print()} className="px-4 py-2 bg-white rounded-lg font-semibold inline-flex items-center gap-1"><Printer size={14} /> Drukuj</button>
             <button type="button" onClick={() => setPrintOpen(false)} className="px-4 py-2 bg-white rounded-lg">Zamknij</button>
           </div>
-          <div className="mx-auto w-full max-w-[210mm] px-4 py-6">
-            <ClinicDocumentSheet mode="preview" title={editing.printTitle || editing.name} fields={editing.fields || []} values={previewFieldValues(editing.fields)} patient={SAMPLE_PATIENT} {...signer} />
+          <div className="h-[calc(100vh-4.5rem)] px-4 py-4">
+            <ClinicSheetPdfView ref={printPdfRef} title={editing.printTitle || editing.name} fields={editing.fields || []} values={previewFieldValues(editing.fields)} patient={SAMPLE_PATIENT} status="template" {...signer} />
           </div>
         </div>
       )}

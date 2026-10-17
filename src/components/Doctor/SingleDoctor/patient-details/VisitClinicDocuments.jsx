@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FileText, Plus, Eye, Printer, Pencil, User, X, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import clinicDocumentsHelper from "../../../../helpers/clinicDocumentsHelper";
 import patientService from "../../../../helpers/patientHelper";
 import { apiCaller } from "../../../../utils/axiosInstance";
-import ClinicDocumentSheet, { initialFieldValue, printClinicSheet } from "../../../ehealth/ClinicDocumentSheet";
+import ClinicDocumentSheet, { ClinicSheetPdfView, initialFieldValue, printClinicSheet } from "../../../ehealth/ClinicDocumentSheet";
 
 const UPLOAD_TYPES = [
   "Wynik badania laboratoryjnego",
@@ -437,6 +437,9 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [cardPreview, setCardPreview] = useState(null);
+  const [pdfPreview, setPdfPreview] = useState(false);
+  const issuedPdfRef = useRef(null);
+  const previewPdfRef = useRef(null);
 
   const loadDocs = async () => {
     if (!visitId) return;
@@ -535,18 +538,16 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
     }
   };
 
-  const printDraft = () => {
-    printClinicSheet(sheetProps({
-      headerTitle: draft.headerTitle,
-      patientSnapshot: draft.patient,
-      sectionLabels: draft.sectionLabels,
-      templateSnapshot: draft.template,
-      values: draft.values,
-      documentNumber: draft.documentNumber,
-      status: draft.status,
-      createdByName: draft.createdByName,
-    }, patient, doctorName, doctorPwz, doctorTitle));
-  };
+  const draftSheet = () => sheetProps({
+    headerTitle: draft.headerTitle,
+    patientSnapshot: draft.patient,
+    sectionLabels: draft.sectionLabels,
+    templateSnapshot: draft.template,
+    values: draft.values,
+    documentNumber: draft.documentNumber,
+    status: draft.status,
+    createdByName: draft.createdByName,
+  }, patient, doctorName, doctorPwz, doctorTitle);
 
   const cards = visitCardVersions(reports).slice().reverse();
   const files = uploadedVisitFiles(reports);
@@ -751,42 +752,66 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               </div>
               <button type="button" onClick={() => setDraft(null)} className="text-xl leading-none">×</button>
             </div>
-            <div className="flex-1 min-h-0 min-w-0 overflow-auto p-4">
-              <ClinicDocumentSheet
-                mode={draft.status === "issued" ? "preview" : "fill"}
-                title={draft.headerTitle || draft.template.printTitle || draft.template.name}
-                fields={withSectionLabels(draft.template.fields, draft.sectionLabels)}
-                values={draft.values}
-                patient={draft.patient || patient}
-                doctorName={doctorName}
-                doctorTitle={doctorTitle}
-                doctorPwz={doctorPwz}
-                documentNumber={draft.documentNumber}
-                status={draft.status}
-                visitHint={(field) => visitHintFor(field, visitHints)}
-                onChange={(key, value) => setDraft({ ...draft, values: { ...draft.values, [key]: value } })}
-                onTitleChange={draft.status === "issued" ? undefined : (headerTitle) => setDraft({ ...draft, headerTitle })}
-                onEditPatient={draft.status === "issued" ? undefined : () => setPatientEditorOpen(true)}
-                onRenameSection={draft.status === "issued" ? undefined : (field) => setRenameField(field)}
-              />
+            <div className="flex-1 min-h-0 min-w-0 overflow-hidden p-4">
+              {draft.status === "issued" ? (
+                <ClinicSheetPdfView ref={issuedPdfRef} {...draftSheet()} />
+              ) : (
+                <div className="h-full overflow-auto">
+                  <ClinicDocumentSheet
+                    mode="fill"
+                    title={draft.headerTitle || draft.template.printTitle || draft.template.name}
+                    fields={withSectionLabels(draft.template.fields, draft.sectionLabels)}
+                    values={draft.values}
+                    patient={draft.patient || patient}
+                    doctorName={doctorName}
+                    doctorTitle={doctorTitle}
+                    doctorPwz={doctorPwz}
+                    documentNumber={draft.documentNumber}
+                    status={draft.status}
+                    visitHint={(field) => visitHintFor(field, visitHints)}
+                    onChange={(key, value) => setDraft({ ...draft, values: { ...draft.values, [key]: value } })}
+                    onTitleChange={(headerTitle) => setDraft({ ...draft, headerTitle })}
+                    onEditPatient={() => setPatientEditorOpen(true)}
+                    onRenameSection={(field) => setRenameField(field)}
+                  />
+                </div>
+              )}
             </div>
             <div className="bg-white px-5 py-3 border-t flex justify-end gap-2">
               {draft.status === "issued" ? (
                 <>
                   <button type="button" onClick={() => setDraft(null)} className="px-4 py-2 border rounded-lg">Zamknij</button>
-                  <button type="button" onClick={printDraft} className="px-4 py-2 bg-[#1b766a] text-white rounded-lg font-semibold inline-flex items-center gap-1">
+                  <button type="button" onClick={() => issuedPdfRef.current?.print()} className="px-4 py-2 bg-[#1b766a] text-white rounded-lg font-semibold inline-flex items-center gap-1">
                     <Printer size={14} /> Drukuj
                   </button>
                 </>
               ) : (
                 <>
-                  <button type="button" onClick={printDraft} className="px-4 py-2 border rounded-lg inline-flex items-center gap-1">
+                  <button type="button" onClick={() => setPdfPreview(true)} className="px-4 py-2 border rounded-lg inline-flex items-center gap-1">
                     <Printer size={14} /> Podgląd wydruku
                   </button>
                   <button type="button" onClick={() => save("draft")} className="px-4 py-2 border rounded-lg">Zapisz szkic</button>
                   <button type="button" onClick={() => save("issued")} className="px-4 py-2 bg-[#1b766a] text-white rounded-lg font-semibold">Zatwierdź dokument</button>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {pdfPreview && draft && (
+        <div className="fixed inset-0 z-[80] bg-slate-900/70 flex items-center justify-center p-3">
+          <div className="bg-slate-800 rounded-2xl w-full max-w-[980px] h-[92vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="px-5 py-3 flex items-center justify-between text-white">
+              <h3 className="font-bold">Podgląd wydruku</h3>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => previewPdfRef.current?.print()} className="px-4 py-2 bg-white text-slate-800 rounded-lg font-semibold inline-flex items-center gap-1">
+                  <Printer size={14} /> Drukuj
+                </button>
+                <button type="button" onClick={() => setPdfPreview(false)} className="px-4 py-2 bg-white text-slate-800 rounded-lg">Zamknij</button>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 px-4 pb-4">
+              <ClinicSheetPdfView ref={previewPdfRef} {...draftSheet()} />
             </div>
           </div>
         </div>

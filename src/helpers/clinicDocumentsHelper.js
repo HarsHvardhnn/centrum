@@ -1,4 +1,4 @@
-import { apiCaller } from "../utils/axiosInstance";
+import { apiCaller, axiosInstance } from "../utils/axiosInstance";
 
 const BASE = "/api/clinic-documents";
 
@@ -33,6 +33,14 @@ const clinicDocumentsHelper = {
     const data = unwrap(await apiCaller("POST", `${BASE}/issued`, payload));
     if (!data?.success) throw new Error(data?.message || "Nie udało się zapisać dokumentu");
     return data.data;
+  },
+  async previewPdf(html) {
+    const response = await axiosInstance.post(`${BASE}/preview-pdf`, { html }, { responseType: "blob" });
+    const type = response.headers?.["content-type"] || "";
+    if (!type.includes("pdf")) {
+      throw new Error("Nie udało się przygotować podglądu wydruku.");
+    }
+    return response.data;
   },
   async updateIssued(id, payload) {
     const data = unwrap(await apiCaller("PATCH", `${BASE}/issued/${id}`, payload));

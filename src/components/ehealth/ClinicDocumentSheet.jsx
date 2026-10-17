@@ -1,5 +1,6 @@
-import React, { useLayoutEffect, useRef } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import clinicDocumentsHelper from "../../helpers/clinicDocumentsHelper";
 
 export const CLINIC_LETTERHEAD = {
   name: "Centrum Medyczne 7",
@@ -24,15 +25,15 @@ const TYPE_LABELS = { text: "Krótki tekst", textarea: "Długi tekst", date: "Da
 
 const SHEET_CSS = `
 .clinic-pages { color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
-.clinic-pages .medical-document-header { display: block; padding: 0 0 7mm; border-bottom: 0.5px solid #cbd5e1; text-align: center; }
-.clinic-pages .clinic-name { margin: 0 0 1.2mm; color: #0f172a; font-size: 13.5pt; font-weight: 700; letter-spacing: -0.015em; line-height: 1.2; text-align: center; }
-.clinic-pages .clinic-legal-name { margin: 0 0 2.2mm; color: #475569; font-size: 8.8pt; font-weight: 600; line-height: 1.35; letter-spacing: 0.03em; text-transform: uppercase; overflow-wrap: anywhere; text-align: center; }
-.clinic-pages .clinic-address { display: flex; flex-direction: column; align-items: center; margin: 0 0 2.5mm; color: #334155; font-size: 9.3pt; font-style: normal; line-height: 1.4; text-align: center; }
+.clinic-pages .medical-document-header { display: grid; grid-template-columns: minmax(0, 1fr) 68mm; gap: 8mm; align-items: start; padding: 0 0 7mm; border-bottom: 0.5px solid #cbd5e1; text-align: left; }
+.clinic-pages .clinic-name { margin: 0 0 1.2mm; color: #0f172a; font-size: 13.5pt; font-weight: 700; letter-spacing: -0.015em; line-height: 1.2; text-align: left; }
+.clinic-pages .clinic-legal-name { margin: 0 0 2.2mm; color: #475569; font-size: 8.8pt; font-weight: 600; line-height: 1.35; letter-spacing: 0.03em; text-transform: uppercase; overflow-wrap: anywhere; text-align: left; }
+.clinic-pages .clinic-address { display: flex; flex-direction: column; align-items: flex-start; margin: 0 0 2.5mm; color: #334155; font-size: 9.3pt; font-style: normal; line-height: 1.4; text-align: left; }
 .clinic-pages .clinic-registry-data, .clinic-pages .clinic-registry-number { margin: 0; color: #64748b; font-size: 8.6pt; line-height: 1.45; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .clinic-pages .clinic-registry-number { margin-top: 0.8mm; }
-.clinic-pages .medical-document-header__meta { width: auto; max-width: none; text-align: center; margin: 5mm auto 0; }
+.clinic-pages .medical-document-header__meta { width: 68mm; min-width: 68mm; text-align: right; margin: 0; }
 .clinic-pages .document-meta-label { margin: 0 0 1.2mm; color: #64748b; font-size: 8pt; font-weight: 600; letter-spacing: 0.08em; line-height: 1.35; text-transform: uppercase; }
-.clinic-pages .document-meta-label--number { margin-top: 6mm; }
+.clinic-pages .document-meta-label--date { margin-top: 6mm; }
 .clinic-pages .document-meta-value { margin: 0; color: #0f172a; font-size: 10.5pt; font-weight: 700; line-height: 1.35; }
 .clinic-pages .document-draft-label { margin: 0 0 1.2mm; color: #475569; font-size: 10pt; font-style: italic; font-weight: 600; line-height: 1.35; }
 .clinic-pages .document-draft-note { margin: 0; color: #64748b; font-size: 8.8pt; font-style: italic; line-height: 1.35; }
@@ -69,7 +70,7 @@ const SHEET_CSS = `
 const FLOW_CSS = `
 .print-sheet { width: 100%; max-width: min(210mm, 100%); min-width: 0; box-sizing: border-box; margin-left: auto; margin-right: auto; padding: 14mm 18mm 12mm; background: #fff; color: #202020; font-family: Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif; overflow: visible; }
 .print-main { min-width: 0; }
-.print-sign { display: table; width: 78mm; max-width: 100%; margin: 12mm auto 0; text-align: center; break-inside: avoid; page-break-inside: avoid; }
+.print-sign { display: table; width: 78mm; max-width: 100%; margin: 12mm 0 0 auto; text-align: center; break-inside: avoid; page-break-inside: avoid; }
 .print-sign .doctor-signature__stamp-space { display: block; height: 28mm; }
 `;
 
@@ -211,9 +212,7 @@ export default function ClinicDocumentSheet({
           <p className="clinic-registry-number">Nr księgi rejestrowej (RPWDL): {CLINIC_LETTERHEAD.rpwdl}</p>
         </div>
         <div className="medical-document-header__meta">
-          <p className="document-meta-label">Miejsce i data wystawienia</p>
-          <p className="document-meta-value">{CLINIC_LETTERHEAD.city}, {todayLabel()}</p>
-          <p className="document-meta-label document-meta-label--number">Numer dokumentu</p>
+          <p className="document-meta-label">Numer dokumentu</p>
           {issued && documentNumber ? (
             <p className="document-meta-value" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" }}>{documentNumber}</p>
           ) : sample || status === "template" ? (
@@ -224,6 +223,8 @@ export default function ClinicDocumentSheet({
               <p className="document-draft-note">Numer zostanie nadany po zatwierdzeniu</p>
             </>
           )}
+          <p className="document-meta-label document-meta-label--date">Miejsce i data wystawienia</p>
+          <p className="document-meta-value">{CLINIC_LETTERHEAD.city}, {todayLabel()}</p>
         </div>
       </header>
 
@@ -417,107 +418,173 @@ function printFieldText(field, values, status) {
   return text.trim() || "[ wartość uzupełniana przez lekarza ]";
 }
 
-export async function printClinicSheet({ title, fields, values, patient, doctorName, doctorTitle, doctorPwz, documentNumber, status }) {
-  const notice = toast.loading("Otwieram okno wydruku…");
-  try {
-    const issued = status === "issued";
-    const person = patient || {};
-    const sign = signatureIdentity({
-      doctorTitle,
-      doctorName,
-      doctorPwz,
-      sample: !doctorName && !doctorTitle && !doctorPwz,
-    });
-    const heading = escapeHtml((title || "DOKUMENT").toUpperCase());
-    const sections = (fields || []).map((field) => {
-      const text = printFieldText(field, values, status);
-      if (text == null) return "";
-      const empty = text.startsWith("[");
-      return `<section class="document-section">
-        <h3 class="document-section__label">${escapeHtml(field.label || "Pole")}</h3>
-        <p class="document-section__value${empty ? " is-empty" : ""}">${escapeHtml(text)}</p>
-      </section>`;
-    }).join("");
-    const numberBlock = issued && documentNumber
-      ? `<p class="document-meta-value" style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">${escapeHtml(documentNumber)}</p>`
-      : status === "template"
-        ? `<p class="document-draft-note">Wzór formularza</p>`
-        : `<p class="document-draft-label">Szkic roboczy</p><p class="document-draft-note">Numer zostanie nadany po zatwierdzeniu</p>`;
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8" /><title></title>
-      <style>
-        ${SHEET_CSS}
-        ${FLOW_CSS}
-        @page { size: A4; margin: 0; }
-        html, body { margin: 0; padding: 0; background: #fff; width: 210mm; }
-        .print-sheet { width: 210mm; max-width: 210mm; margin: 0 auto; }
-      </style></head><body>
-      <article class="print-sheet clinic-pages">
-        <div class="print-main">
-        <header class="medical-document-header">
-          <div>
-            <p class="clinic-name">${escapeHtml(CLINIC_LETTERHEAD.name)}</p>
-            <p class="clinic-legal-name">${escapeHtml(CLINIC_LETTERHEAD.legalName)}</p>
-            <address class="clinic-address">
-              <span>${escapeHtml(CLINIC_LETTERHEAD.street)}</span>
-              <span>${escapeHtml(CLINIC_LETTERHEAD.postal)} ${escapeHtml(CLINIC_LETTERHEAD.city)}</span>
-            </address>
-            <p class="clinic-registry-data">NIP: ${escapeHtml(CLINIC_LETTERHEAD.nip)} · REGON: ${escapeHtml(CLINIC_LETTERHEAD.regon)} · KRS: ${escapeHtml(CLINIC_LETTERHEAD.krs)}</p>
-            <p class="clinic-registry-number">Nr księgi rejestrowej (RPWDL): ${escapeHtml(CLINIC_LETTERHEAD.rpwdl)}</p>
-          </div>
-          <div class="medical-document-header__meta">
-            <p class="document-meta-label">Miejsce i data wystawienia</p>
-            <p class="document-meta-value">${escapeHtml(CLINIC_LETTERHEAD.city)}, ${escapeHtml(todayLabel())}</p>
-            <p class="document-meta-label document-meta-label--number">Numer dokumentu</p>
-            ${numberBlock}
-          </div>
-        </header>
-        <div class="document-title">${heading}</div>
-        <section class="patient-block">
-          <div class="patient-block__header"><h2>Dane pacjenta</h2></div>
-          <p class="patient-name">${escapeHtml(person.name || "—")}</p>
-          <dl class="patient-details">
-            <div><dt>PESEL:</dt><dd class="font-mono">${escapeHtml(person.pesel || "—")}</dd></div>
-            <div><dt>Data urodzenia:</dt><dd>${escapeHtml(person.birthDate || "—")}</dd></div>
-            <div><dt>Adres:</dt><dd>${escapeHtml(patientAddress(person) || "—")}</dd></div>
-          </dl>
-        </section>
-        <section class="document-content">${sections}</section>
+const PDF_PAGE_CSS = `
+@page { size: A4; margin: 0; }
+html, body { margin: 0; padding: 0; background: #fff; width: auto; }
+.print-sheet { width: auto !important; max-width: none !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
+`;
+
+export function buildClinicSheetHtml({ title, fields, values, patient, doctorName, doctorTitle, doctorPwz, documentNumber, status }) {
+  const issued = status === "issued";
+  const person = patient || {};
+  const sign = signatureIdentity({
+    doctorTitle,
+    doctorName,
+    doctorPwz,
+    sample: !doctorName && !doctorTitle && !doctorPwz,
+  });
+  const heading = escapeHtml((title || "DOKUMENT").toUpperCase());
+  const sections = (fields || []).map((field) => {
+    const text = printFieldText(field, values, status);
+    if (text == null) return "";
+    const empty = text.startsWith("[");
+    return `<section class="document-section">
+      <h3 class="document-section__label">${escapeHtml(field.label || "Pole")}</h3>
+      <p class="document-section__value${empty ? " is-empty" : ""}">${escapeHtml(text)}</p>
+    </section>`;
+  }).join("");
+  const numberBlock = issued && documentNumber
+    ? `<p class="document-meta-value" style="font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">${escapeHtml(documentNumber)}</p>`
+    : status === "template"
+      ? `<p class="document-draft-note">Wzór formularza</p>`
+      : `<p class="document-draft-label">Szkic roboczy</p><p class="document-draft-note">Numer zostanie nadany po zatwierdzeniu</p>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8" /><title></title>
+    <style>${SHEET_CSS}${FLOW_CSS}${PDF_PAGE_CSS}</style></head><body>
+    <article class="print-sheet clinic-pages">
+      <div class="print-main">
+      <header class="medical-document-header">
+        <div>
+          <p class="clinic-name">${escapeHtml(CLINIC_LETTERHEAD.name)}</p>
+          <p class="clinic-legal-name">${escapeHtml(CLINIC_LETTERHEAD.legalName)}</p>
+          <address class="clinic-address">
+            <span>${escapeHtml(CLINIC_LETTERHEAD.street)}</span>
+            <span>${escapeHtml(CLINIC_LETTERHEAD.postal)} ${escapeHtml(CLINIC_LETTERHEAD.city)}</span>
+          </address>
+          <p class="clinic-registry-data">NIP: ${escapeHtml(CLINIC_LETTERHEAD.nip)} · REGON: ${escapeHtml(CLINIC_LETTERHEAD.regon)} · KRS: ${escapeHtml(CLINIC_LETTERHEAD.krs)}</p>
+          <p class="clinic-registry-number">Nr księgi rejestrowej (RPWDL): ${escapeHtml(CLINIC_LETTERHEAD.rpwdl)}</p>
         </div>
-        <div class="print-sign">
-          <p class="doctor-signature__label">Lekarz orzekający / wystawiający</p>
-          <p class="doctor-signature__name">${escapeHtml(sign.line || "—")}</p>
-          <p class="doctor-signature__pwz">PWZ: ${escapeHtml(sign.pwz || "—")}</p>
-          <div class="doctor-signature__stamp-space"></div>
-          <div class="doctor-signature__line"></div>
-          <p class="doctor-signature__caption">podpis i pieczątka lekarza</p>
+        <div class="medical-document-header__meta">
+          <p class="document-meta-label">Numer dokumentu</p>
+          ${numberBlock}
+          <p class="document-meta-label document-meta-label--date">Miejsce i data wystawienia</p>
+          <p class="document-meta-value">${escapeHtml(CLINIC_LETTERHEAD.city)}, ${escapeHtml(todayLabel())}</p>
         </div>
-      </article>
-      </body></html>`;
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("aria-hidden", "true");
-    iframe.style.cssText = "position:fixed;left:0;top:0;width:210mm;height:297mm;border:0;background:#fff;z-index:2147483646;";
-    document.body.appendChild(iframe);
-    const printWindow = iframe.contentWindow;
-    const printDocument = printWindow?.document;
-    if (!printWindow || !printDocument) {
-      iframe.remove();
-      toast.error("Nie udało się otworzyć okna wydruku.", { id: notice });
-      return false;
+      </header>
+      <div class="document-title">${heading}</div>
+      <section class="patient-block">
+        <div class="patient-block__header"><h2>Dane pacjenta</h2></div>
+        <p class="patient-name">${escapeHtml(person.name || "—")}</p>
+        <dl class="patient-details">
+          <div><dt>PESEL:</dt><dd>${escapeHtml(person.pesel || "—")}</dd></div>
+          <div><dt>Data urodzenia:</dt><dd>${escapeHtml(person.birthDate || "—")}</dd></div>
+          <div><dt>Adres:</dt><dd>${escapeHtml(patientAddress(person) || "—")}</dd></div>
+        </dl>
+      </section>
+      <section class="document-content">${sections}</section>
+      </div>
+      <div class="print-sign">
+        <p class="doctor-signature__label">Lekarz orzekający / wystawiający</p>
+        <p class="doctor-signature__name">${escapeHtml(sign.line || "—")}</p>
+        <p class="doctor-signature__pwz">PWZ: ${escapeHtml(sign.pwz || "—")}</p>
+        <div class="doctor-signature__stamp-space"></div>
+        <div class="doctor-signature__line"></div>
+        <p class="doctor-signature__caption">podpis i pieczątka lekarza</p>
+      </div>
+    </article>
+    </body></html>`;
+}
+
+function printPdfUrl(url) {
+  const frame = document.createElement("iframe");
+  frame.setAttribute("aria-hidden", "true");
+  frame.style.cssText = "position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0;";
+  frame.src = url;
+  const cleanup = () => {
+    frame.onload = null;
+    frame.remove();
+  };
+  frame.onload = () => {
+    try {
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+      frame.contentWindow.onafterprint = cleanup;
+      setTimeout(cleanup, 60000);
+    } catch {
+      cleanup();
+      toast.error("Nie udało się otworzyć okna wydruku.");
     }
-    printDocument.open();
-    printDocument.write(html);
-    printDocument.close();
-    const release = () => {
-      setTimeout(() => iframe.remove(), 300);
+  };
+  document.body.appendChild(frame);
+}
+
+export const ClinicSheetPdfView = forwardRef(function ClinicSheetPdfView(props, ref) {
+  const frameRef = useRef(null);
+  const [src, setSrc] = useState("");
+  const [failed, setFailed] = useState(false);
+  const requestKey = JSON.stringify({
+    title: props.title,
+    fields: props.fields,
+    values: props.values,
+    patient: props.patient,
+    doctorName: props.doctorName,
+    doctorTitle: props.doctorTitle,
+    doctorPwz: props.doctorPwz,
+    documentNumber: props.documentNumber,
+    status: props.status,
+  });
+
+  useEffect(() => {
+    let objectUrl = "";
+    let cancelled = false;
+    setSrc("");
+    setFailed(false);
+    (async () => {
+      try {
+        const blob = await clinicDocumentsHelper.previewPdf(buildClinicSheetHtml(JSON.parse(requestKey)));
+        objectUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+        if (cancelled) {
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+        setSrc(objectUrl);
+      } catch {
+        if (!cancelled) setFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-    printWindow.onafterprint = release;
-    printWindow.focus();
-    printWindow.print();
+  }, [requestKey]);
+
+  useImperativeHandle(ref, () => ({
+    print() {
+      if (!src) {
+        toast.error("Podgląd wydruku jeszcze się przygotowuje.");
+        return false;
+      }
+      printPdfUrl(src);
+      return true;
+    },
+  }), [src]);
+
+  if (failed) return <p className="m-4 rounded-lg bg-white p-4 text-sm text-slate-700">Nie udało się przygotować podglądu wydruku.</p>;
+  if (!src) return <p className="m-4 rounded-lg bg-white p-4 text-sm text-slate-600">Przygotowuję podgląd wydruku…</p>;
+  return <iframe ref={frameRef} title={props.title || "Dokument"} src={src} className="w-full h-full min-h-[72vh] bg-white border-0 rounded-lg" />;
+});
+
+export async function printClinicSheet(props) {
+  const notice = toast.loading("Przygotowuję wydruk…");
+  try {
+    const blob = await clinicDocumentsHelper.previewPdf(buildClinicSheetHtml(props));
+    const objectUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+    printPdfUrl(objectUrl);
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
     toast.success("Okno wydruku jest otwarte.", { id: notice });
     return true;
   } catch (err) {
     console.error(err);
-    toast.error("Nie udało się otworzyć okna wydruku.", { id: notice });
+    toast.error("Nie udało się przygotować wydruku.", { id: notice });
     return false;
   }
 }
