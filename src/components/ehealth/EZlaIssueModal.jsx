@@ -5,7 +5,8 @@ import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import P1SignDialog from "./P1SignDialog";
 import { patientForDocument } from "./IssuePatientCard";
-import { STATUS_LABELS, accessCodeOf, statusClass } from "./ehealthStatus";
+import { STATUS_LABELS, accessCodeOf } from "./ehealthStatus";
+import { icdRoot, visitDiagnosisRows } from "./visitIcd";
 
 const INSTITUTIONS = [
   { id: "ZUS", label: "ZUS", hint: "Ubezpieczenie chorobowe", code: "1" },
@@ -102,8 +103,55 @@ function parseAddress(patient) {
   return { postalCode: postal, city, street, houseNumber: house[1] || "", apartment: house[2] || "" };
 }
 
-function icdRoot(code) {
-  return String(code || "").toUpperCase().replace(/\s/g, "").split(".")[0];
+function buildLeaveCards(clinic, zus) {
+  const cards = [];
+  const bySeries = new Map();
+  for (const row of zus || []) {
+    const card = { ...row, source: "zus", document: null };
+    const key = row.series && row.number ? `${row.series}|${row.number}` : "";
+    if (key) bySeries.set(key, card);
+    cards.push(card);
+  }
+  for (const row of clinic || []) {
+    const payload = row.payload || {};
+    const refs = payload.refs || {};
+    const series = refs.ezlaSeries || "";
+    const number = refs.ezlaNumber || "";
+    const key = series && number ? `${series}|${number}` : "";
+    const existing = key ? bySeries.get(key) : null;
+    if (existing) {
+      existing.source = "both";
+      existing.document = row;
+      if (!existing.icd) existing.icd = icdRoot(payload.icd10 || payload.diseaseStatisticalNumber || "");
+      if (!existing.doctorName) existing.doctorName = payload.doctorName || "";
+      continue;
+    }
+    cards.push({
+      source: "centrum",
+      document: row,
+      series,
+      number: number || row.externalId || "",
+      from: String(payload.from || "").slice(0, 10),
+      to: String(payload.to || "").slice(0, 10),
+      issuedAt: String(row.createdAt || "").slice(0, 10),
+      status: STATUS_LABELS[row.status] || row.status || "",
+      icd: icdRoot(payload.icd10 || payload.diseaseStatisticalNumber || ""),
+      doctorName: payload.doctorName || "",
+      pwz: "",
+      facility: "Centrum Medyczne 7",
+      place: [payload.city, payload.postalCode].filter(Boolean).join(", "),
+      payerId: "",
+      hospitalDays: "",
+    });
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  return cards
+    .map((card, index) => {
+      const cancelled = /anul|uniewa|cancel/i.test(String(card.status || ""));
+      const active = !cancelled && Boolean(card.from) && Boolean(card.to) && card.from <= today && today <= card.to;
+      return { ...card, active, key: `${card.series}|${card.number}|${card.from}|${index}` };
+    })
+    .sort((a, b) => String(b.from || b.issuedAt).localeCompare(String(a.from || a.issuedAt)));
 }
 
 function validate(form, patient) {
@@ -156,6 +204,8 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
   const [result, setResult] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyRows, setHistoryRows] = useState([]);
+  const [zusRows, setZusRows] = useState([]);
+  const [zusError, setZusError] = useState("");
   const [historyBusy, setHistoryBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
@@ -280,12 +330,16 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
     setHistoryOpen(true);
     setHistoryBusy(true);
     try {
-      const res = await ehealthHelper.history({ patientId, service: "ezla" });
-      const rows = res?.data;
-      setHistoryRows(Array.isArray(rows) ? rows : rows?.documents || []);
+      const res = await ehealthHelper.ezlaHistory({ patientId });
+      const data = res?.data || {};
+      setHistoryRows(Array.isArray(data.clinic) ? data.clinic : []);
+      setZusRows(Array.isArray(data.zus) ? data.zus : []);
+      setZusError(data.zusError || "");
     } catch (err) {
       toast.error(unwrapEhealthError(err).message);
       setHistoryRows([]);
+      setZusRows([]);
+      setZusError("");
     } finally {
       setHistoryBusy(false);
     }
@@ -323,6 +377,8 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
     setHistoryOpen(false);
     toast.success("Dane zwolnienia wstawiono do formularza. Sprawdź daty przed podpisem.");
   };
+
+  const leaveCards = buildLeaveCards(historyRows, zusRows);
 
   const runCheck = () => {
     const next = validate(form, patient);
@@ -457,14 +513,10 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
     setNewPayer({ name: "", nip: "", type: "1", hasPue: true });
   };
 
-  const copyVisitDiagnosis = () => {
-    const list = (diagnoses || []).map((row) => ({
-      code: row?.code || row?.icd10 || row?.icd10Code || "",
-      name: row?.name || row?.title || row?.icd10Display || row?.description || "",
-      isPrimary: Boolean(row?.isPrimary),
-    })).filter((row) => row.code);
-    const row = list.find((item) => item.isPrimary) || list[0];
-    const code = icdRoot(row?.code || "");
+  const visitIcd = visitDiagnosisRows(diagnoses);
+
+  const applyVisitDiagnosis = (row) => {
+    const code = icdRoot(row?.code || row?.name || "");
     if (!/^[A-Z][0-9]{2}$/.test(code)) {
       toast.error("Na wizycie nie ma kodu ICD-10.");
       return;
@@ -472,6 +524,15 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
     patch({ icd10: code, icdName: row?.name || "" });
     setIcdQuery("");
     setIcdHits([]);
+  };
+
+  const copyVisitDiagnosis = () => {
+    const row = visitIcd.find((item) => item.isPrimary) || visitIcd[0];
+    if (!row) {
+      toast.error("Na wizycie nie ma kodu ICD-10.");
+      return;
+    }
+    applyVisitDiagnosis(row);
   };
 
   const series = result?.payload?.refs?.ezlaSeries && result?.payload?.refs?.ezlaNumber
@@ -658,6 +719,20 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
                     <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Rozpoznanie ICD-10</h4>
                     <button type="button" onClick={copyVisitDiagnosis} className="text-xs font-semibold text-indigo-700">Pobierz rozpoznanie z wizyty</button>
                   </div>
+                  {visitIcd.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      {visitIcd.map((row) => (
+                        <button
+                          key={`${row.code}-${row.name}`}
+                          type="button"
+                          onClick={() => applyVisitDiagnosis(row)}
+                          className={`rounded-lg border px-2 py-1 text-left text-xs ${form.icd10 && icdRoot(row.code) === form.icd10 ? "border-indigo-600 bg-indigo-50" : "border-slate-200 bg-white hover:bg-slate-50"}`}
+                        >
+                          <span className="font-semibold">{row.code}</span> {row.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div className="relative">
                     <Search size={14} className="absolute left-2 top-2.5 text-slate-400" />
                     <input value={icdQuery} onChange={(e) => setIcdQuery(e.target.value)} placeholder={form.icd10 ? `${form.icd10}${form.icdName ? ` — ${form.icdName}` : ""}` : "Szukaj kodu lub nazwy"} className="w-full rounded-lg border py-2 pl-7 pr-2 text-sm" />
@@ -665,8 +740,8 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
                   {icdHits.length > 0 && (
                     <ul className="mt-1 max-h-36 overflow-auto rounded-lg border bg-white text-sm">
                       {icdHits.slice(0, 8).map((hit) => {
-                        const code = hit.code || hit.icd10 || hit.id;
-                        const name = hit.name || hit.description || hit.title || "";
+                        const code = hit.code || "";
+                        const name = hit.name || "";
                         return (
                           <li key={`${code}-${name}`}>
                             <button type="button" className="block w-full px-2 py-1.5 text-left hover:bg-slate-50" onClick={() => { patch({ icd10: icdRoot(code), icdName: name }); setIcdQuery(""); setIcdHits([]); }}>
@@ -725,28 +800,39 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
             <div className="flex items-center justify-between border-b px-4 py-3">
               <div>
                 <h4 className="font-bold">Historia zwolnień e-ZLA z bazy ZUS PUE</h4>
-                <p className="text-xs text-slate-500">{patient?.name} · PESEL {pesel || "—"} · zwolnienia zapisane w Centrum</p>
+                <p className="text-xs text-slate-500">{patient?.name} · PESEL {pesel || "—"} · zwolnienia z Centrum i wystawione w innych placówkach</p>
               </div>
               <button type="button" onClick={() => setHistoryOpen(false)}><X size={16} /></button>
             </div>
             <div className="flex-1 space-y-2 overflow-y-auto p-4">
-              {historyBusy && <p className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={14} className="animate-spin" /> Pobieranie…</p>}
-              {!historyBusy && historyRows.length === 0 && <p className="text-sm text-slate-500">Brak zwolnień tego pacjenta w Centrum.</p>}
-              {historyRows.map((row) => {
-                const p = row.payload || {};
-                return (
-                  <div key={row.id || row._id} className="rounded-xl border p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold">{String(p.from || "").slice(0, 10)} — {String(p.to || "").slice(0, 10)} · {icdRoot(p.icd10 || p.diseaseStatisticalNumber || "")}</p>
-                        <p className="text-xs text-slate-500">{p.institution || "ZUS"} · {accessCodeOf(row) || row.externalId || "szkic"}</p>
-                      </div>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusClass(row.status)}`}>{STATUS_LABELS[row.status] || row.status}</span>
+              {historyBusy && <p className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={14} className="animate-spin" /> Pobieranie z Centrum i z ZUS…</p>}
+              {zusError && <p className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">{zusError}</p>}
+              {!historyBusy && leaveCards.length === 0 && <p className="text-sm text-slate-500">Brak zwolnień dla tego numeru PESEL.</p>}
+              {leaveCards.map((card) => (
+                <div key={card.key} className={`rounded-xl border p-3 ${card.active ? "border-emerald-300 bg-emerald-50/40" : ""}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold">{card.from || "—"} — {card.to || "—"}{card.icd ? ` · ${card.icd}` : ""}</p>
+                      <p className="mt-1 text-xs text-slate-600">
+                        {[card.series, card.number].filter(Boolean).join(" ") || "bez serii i numeru"}
+                        {card.issuedAt ? ` · wystawione ${card.issuedAt}` : ""}
+                      </p>
                     </div>
-                    <button type="button" onClick={() => applyHistory(row)} className="mt-2 text-xs font-semibold text-indigo-700">Powiel</button>
+                    <div className="flex flex-col items-end gap-1">
+                      {card.active && <span className="rounded-full bg-emerald-700 px-2 py-0.5 text-[10px] font-bold text-white">Aktywne</span>}
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">{card.source === "both" ? "Centrum i ZUS" : card.source === "zus" ? "ZUS" : "Centrum"}</span>
+                      {card.status && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">{card.status}</span>}
+                    </div>
                   </div>
-                );
-              })}
+                  <div className="mt-2 space-y-0.5 text-xs text-slate-700">
+                    <p>Wystawił: {card.doctorName || "—"}{card.pwz ? ` · PWZ ${card.pwz}` : ""}</p>
+                    <p>Miejsce: {[card.facility, card.place].filter(Boolean).join(" · ") || "—"}</p>
+                    {card.payerId && <p>Płatnik: {card.payerId}</p>}
+                    {card.hospitalDays && card.hospitalDays !== "0" && <p>Pobyt w szpitalu: {card.hospitalDays} dni</p>}
+                  </div>
+                  {card.document && <button type="button" onClick={() => applyHistory(card.document)} className="mt-2 text-xs font-semibold text-indigo-700">Powiel</button>}
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -6,6 +6,7 @@ import appointmentHelper from "../../helpers/appointmentHelper";
 import IssuePatientCard, { normalizePatient, patientForDocument } from "./IssuePatientCard";
 import PrescriptionHistoryModal from "./PrescriptionHistoryModal";
 import { STATUS_LABELS, statusClass, accessCodeOf } from "./ehealthStatus";
+import { visitDiagnosisRows } from "./visitIcd";
 
 const PAYMENTS = [
   { value: "100%", label: "100%" },
@@ -46,27 +47,6 @@ function offsetDate(days) {
   const day = String(date.getDate()).padStart(2, "0");
   return `${date.getFullYear()}-${month}-${day}`;
 }
-
-const RAW_MATERIALS = [
-  "Hydrocortisonum",
-  "Urea (Mocznik)",
-  "Acidum salicylicum",
-  "Acidum boricum",
-  "Eucerinum anhydricum",
-  "Vaselinum album",
-  "Paraffinum liquidum",
-  "Lekobaza",
-  "Cholesteroli unguentum",
-  "Aqua purificata",
-  "Ethanolum 70°",
-  "Glycerolum 85%",
-  "Zinci oxydum",
-  "Mentholum",
-  "Detreomycinum (Chloramphenicolum)",
-  "Nystatinum",
-  "Prednisolonum",
-  "Metronidazolum",
-];
 
 const RECIPE_FORMS = [
   "Maść (Unguentum)",
@@ -547,11 +527,7 @@ function blankItem(form) {
 }
 
 function visitDiagnoses(rows) {
-  return (Array.isArray(rows) ? rows : []).map((row) => ({
-    code: String(row?.code || row?.icd10Code || "").trim(),
-    name: String(row?.name || row?.title || row?.icd10Display || "").trim(),
-    isPrimary: Boolean(row?.isPrimary),
-  })).filter((row) => row.code && row.name);
+  return visitDiagnosisRows(rows).filter((row) => row.code);
 }
 
 function primaryDiagnosis(rows) {
@@ -561,8 +537,13 @@ function primaryDiagnosis(rows) {
 }
 
 function catalogClass(drug) {
-  const raw = String(drug?.kdlek || drug?.category || drug?.prescriptionType || "").trim();
-  return ["Rp", "Rpw", "Rpz", "OTC"].includes(raw) ? raw : "";
+  if (drug?.isRpw === true || drug?.isRpw === 1 || drug?.isRpw === "true") return "Rpw";
+  const raw = String(drug?.kdlek || drug?.category || drug?.prescriptionType || "").trim().toLowerCase();
+  if (raw === "rpw") return "Rpw";
+  if (raw === "rpz") return "Rpz";
+  if (raw === "rp") return "Rp";
+  if (raw === "otc") return "OTC";
+  return "";
 }
 
 function itemKind(item, headerForm) {
@@ -902,52 +883,55 @@ export default function EPrescriptionIssueModal({
 
   const repeatFromHistory = (rows) => {
     if (!rows.length) return;
-    if (!header.form) {
-      toast.error("Najpierw wybierz typ recepty. Dopiero wtedy można dodać lek.");
-      return;
-    }
-    const accepted = [];
-    let blockedRpw = false;
-    rows.forEach((row) => {
-      const klass = catalogClass(row.drug) || catalogClass({ category: row.category });
-      if (header.form === "Rp" && klass === "Rpw") {
-        blockedRpw = true;
-        return;
-      }
-      if (header.form === "Rpw" && klass !== "Rpw") return;
-      if (header.form === "Rpz" && klass && klass !== "Rpz") return;
-      accepted.push(row);
-    });
-    if (blockedRpw) toast.error("Lek psychotropowy nie może być dodany do recepty Rp. Dodaj nową receptę i wybierz typ Rpw.");
-    if (!accepted.length) return;
     const stamp = Date.now();
-    let created = 0;
-    const next = tabs.map((tab) => ({ ...tab, items: tab.items.slice() }));
-    let index = Math.max(0, next.findIndex((tab) => tab.id === activeTabId));
-    accepted.forEach((row) => {
-      const tab = next[index];
-      if (tab.form === "Rp" && tab.items.length >= 5) {
-        next.push({ id: `rx-${stamp}-${created}`, title: `e-Recepta #${next.length + 1}`, form: "Rp", kind: header.kind || "ZW", examMode: "", items: [] });
-        created += 1;
-        index = next.length - 1;
-      } else if (tab.form !== "Rp" && tab.items.length >= 1) {
-        return;
-      }
+    const kept = tabs.map((tab) => ({ ...tab, items: tab.items.slice() }));
+    const rpItems = [];
+    const separate = [];
+    rows.forEach((row) => {
+      const klass = catalogClass(row.drug) || catalogClass({ category: row.category, isRpw: row.isRpw || row.drug?.isRpw });
       const item = itemFromHistory(row);
-      if (next[index].form === "Rpw") {
+      if (klass === "Rpw") {
         item.category = "Rpw";
         fillRpwSubstance(item);
+        separate.push({ form: "Rpw", item });
+      } else if (klass === "Rpz") {
+        item.category = "Rpz";
+        separate.push({ form: "Rpz", item });
+      } else {
+        if (item.category === "Rpw" || item.category === "Rpz") item.category = "Rp";
+        rpItems.push(item);
       }
-      else if (next[index].form === "Rpz") item.category = "Rpz";
-      else if (item.category === "Rpw" || item.category === "Rpz") item.category = "Rp";
-      next[index].items.push(item);
     });
-    setTabs(next);
-    setActiveTabId(next[index].id);
-    setHeader((prev) => ({ ...prev, form: next[index].form, kind: next[index].kind || "ZW", examMode: next[index].examMode || "" }));
+    const created = [];
+    for (let offset = 0; offset < rpItems.length; offset += 5) {
+      created.push({
+        id: `rx-${stamp}-rp-${offset}`,
+        form: "Rp",
+        kind: header.kind || "ZW",
+        examMode: "",
+        items: rpItems.slice(offset, offset + 5),
+      });
+    }
+    separate.forEach((entry, index) => {
+      created.push({
+        id: `rx-${stamp}-${entry.form}-${index}`,
+        form: entry.form,
+        kind: header.kind || "ZW",
+        examMode: entry.form === "Rpw" ? (header.examMode || "") : "",
+        items: [entry.item],
+      });
+    });
+    if (!created.length) return;
+    created.forEach((tab, index) => {
+      tab.title = `e-Recepta #${kept.length + index + 1}`;
+    });
+    const focus = created[0];
+    setTabs([...kept, ...created]);
+    setActiveTabId(focus.id);
+    setHeader((prev) => ({ ...prev, form: focus.form, kind: focus.kind || "ZW", examMode: focus.examMode || "" }));
     setHistoryOpen(false);
-    toast.success(accepted.length === 1 ? "Dodano lek do kontynuacji." : `Dodano leki do kontynuacji (${accepted.length}).`);
-    if (accepted.some((row) => !row.dosage)) toast.message("Część leków z P1 nie ma dawkowania. Uzupełnij je przed podpisem.");
+    toast.success(created.length === 1 ? "Utworzono nową receptę z historii. Bieżąca recepta została bez zmian." : `Utworzono ${created.length} nowe recepty z historii. Bieżąca recepta została bez zmian.`);
+    if (rows.some((row) => !row.dosage)) toast.message("Część leków z P1 nie ma dawkowania. Uzupełnij je przed podpisem.");
   };
 
   const mapPayloadItem = (item, form) => ({
@@ -1192,6 +1176,9 @@ export default function EPrescriptionIssueModal({
                   {header.form === "Rpw" && !searching && catalog.length > 0 && !catalog.some((drug) => catalogClass(drug) === "Rpw") && (
                     <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl p-3">Znalezione leki nie są odurzające ani psychotropowe. Na recepcie Rpw można dodać tylko lek typu Rpw.</p>
                   )}
+                  {!searching && query.trim().length >= 2 && catalog.length === 0 && (
+                    <p className="text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-3">Brak leków w bazie dla „{query.trim()}”.</p>
+                  )}
                   <DrugList title="Z historii wizyt" drugs={(query.trim() ? historyDrugs.filter((drug) => drugMatches(drug, query)) : []).filter((drug) => header.form === "Rp" || catalogClass(drug) === header.form)} onAdd={addDrug} />
                   <DrugList title="Baza leków" drugs={catalog.filter((drug) => header.form === "Rp" || catalogClass(drug) === header.form)} onAdd={addDrug} />
                 </>
@@ -1281,14 +1268,12 @@ function Switch({ checked, onClick, onClass, label }) {
 }
 
 function IcdPicker({ diagnoses, code, name, onChange }) {
-  const listed = diagnoses.some((row) => row.code === code);
-  const [searching, setSearching] = useState(!listed && Boolean(code));
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState([]);
 
   useEffect(() => {
     const term = query.trim();
-    if (!searching || term.length < 2) {
+    if (term.length < 2) {
       setHits([]);
       return undefined;
     }
@@ -1301,11 +1286,10 @@ function IcdPicker({ diagnoses, code, name, onChange }) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query, searching]);
+  }, [query]);
 
   const pick = (nextCode, nextName) => {
     onChange({ code: nextCode, name: nextName });
-    setSearching(false);
     setQuery("");
     setHits([]);
   };
@@ -1313,55 +1297,125 @@ function IcdPicker({ diagnoses, code, name, onChange }) {
   return (
     <div className="text-xs font-semibold text-slate-700">
       Rozpoznanie (ICD-10) *
-      {diagnoses.length > 0 && !searching ? (
-        <select
-          value={code || ""}
-          onChange={(e) => {
-            if (e.target.value === "__search__") {
-              setSearching(true);
-              return;
-            }
-            const row = diagnoses.find((item) => item.code === e.target.value);
-            onChange({ code: row?.code || "", name: row?.name || "" });
-          }}
-          className="mt-1 w-full p-2 border rounded-lg font-medium"
-        >
-          <option value="">— Wybierz rozpoznanie z wizyty —</option>
+      {code && <div className="mt-1 font-medium text-slate-900">{code} — {name}</div>}
+      {diagnoses.length > 0 && (
+        <div className="mt-1 flex flex-wrap gap-1">
           {diagnoses.map((row) => (
-            <option key={row.code} value={row.code}>{row.code} — {row.name}</option>
+            <button
+              key={`${row.code}-${row.name}`}
+              type="button"
+              onClick={() => pick(row.code, row.name)}
+              className={`px-2 py-1 rounded-lg border text-left font-medium ${row.code === code ? "border-emerald-600 bg-emerald-50" : "border-slate-200 bg-white hover:bg-emerald-50"}`}
+            >
+              <span className="font-mono">{row.code}</span>
+              {row.name ? <span className="ml-1 font-normal text-slate-700">{row.name}</span> : null}
+            </button>
           ))}
-          {code && !listed && <option value={code}>{code} — {name}</option>}
-          <option value="__search__">Inne rozpoznanie — wyszukaj</option>
-        </select>
-      ) : (
-        <div className="relative mt-1">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={code ? `${code} — ${name}` : "Kod lub nazwa, np. I10"}
-            className="w-full p-2 border rounded-lg font-medium"
-          />
-          {hits.length > 0 && (
-            <div className="absolute z-20 mt-1 w-full max-h-40 overflow-y-auto bg-white border rounded-lg shadow">
-              {hits.map((row) => (
-                <button key={row.code} type="button" onMouseDown={() => pick(row.code, row.name)} className="w-full text-left px-3 py-2 hover:bg-emerald-50">
-                  <span className="font-mono text-[#0D5C46]">{row.code}</span>
-                  <span className="ml-2 font-normal text-slate-700">{row.name}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {diagnoses.length > 0 && (
-            <button type="button" onClick={() => { setSearching(false); setQuery(""); setHits([]); }} className="mt-1 text-[11px] font-medium text-[#0D5C46]">Wróć do rozpoznań z wizyty</button>
-          )}
         </div>
+      )}
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={code ? "Inny kod lub nazwa" : "Kod lub nazwa, np. I10"}
+        className="mt-1 w-full p-2 border rounded-lg font-medium"
+      />
+      {hits.length > 0 && (
+        <ul className="mt-1 max-h-40 overflow-y-auto bg-white border rounded-lg">
+          {hits.map((row) => (
+            <li key={`${row.code}-${row.name}`}>
+              <button type="button" onMouseDown={() => pick(row.code, row.name)} className="w-full text-left px-3 py-2 hover:bg-emerald-50">
+                <span className="font-mono text-[#0D5C46]">{row.code}</span>
+                <span className="ml-2 font-normal text-slate-700">{row.name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function IngredientNameField({ value, onChange, onPick }) {
+  const [hits, setHits] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const term = String(value || "").trim();
+    if (!open || term.length < 2) {
+      setHits([]);
+      setSearching(false);
+      setFailed(false);
+      return undefined;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        setSearching(true);
+        setFailed(false);
+        const res = await ehealthHelper.searchDrugs(term, "ingredient");
+        if (!cancelled) setHits(Array.isArray(res?.data) ? res.data : []);
+      } catch {
+        if (!cancelled) {
+          setHits([]);
+          setFailed(true);
+        }
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [value, open]);
+
+  const term = String(value || "").trim();
+
+  return (
+    <div>
+      <input
+        value={value || ""}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 180)}
+        onChange={(e) => {
+          setOpen(true);
+          onChange(e.target.value);
+        }}
+        placeholder="Nazwa z bazy leków, np. Hydrocortisonum"
+        className="w-full p-2 bg-white border border-slate-300 rounded-lg font-medium"
+      />
+      {open && term.length >= 2 && (
+        <ul className="mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-lg">
+          {searching && <li className="px-3 py-2 text-slate-500 font-normal">Szukam w bazie leków…</li>}
+          {!searching && hits.map((drug) => (
+            <li key={drug.ean || drug.id || drug.name}>
+              <button
+                type="button"
+                onMouseDown={() => {
+                  onPick(drug);
+                  setOpen(false);
+                  setHits([]);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-emerald-50"
+              >
+                <span className="font-medium text-slate-900">{drug.name}</span>
+                <span className="block text-[11px] font-normal text-slate-500">
+                  {[drug.kdlek, drug.activeSubstance, drug.strength, drug.form, drug.package, drug.code, drug.unit, drug.ean].filter(Boolean).join(" · ")}
+                </span>
+              </button>
+            </li>
+          ))}
+          {!searching && failed && <li className="px-3 py-2 text-slate-400 font-normal">Nie udało się przeszukać bazy leków. Możesz zostawić wpisaną nazwę.</li>}
+          {!searching && !failed && !hits.length && <li className="px-3 py-2 text-slate-400 font-normal">Brak w bazie leków — możesz zostawić wpisaną nazwę.</li>}
+        </ul>
       )}
     </div>
   );
 }
 
 function RecipeCard({ item, diagnoses, onChange, onClear }) {
-  const [openIndex, setOpenIndex] = useState(null);
   const [optionsOpen, setOptionsOpen] = useState(Boolean(item.recipePackageType || item.recipeSummary));
   const ingredients = Array.isArray(item.ingredients) && item.ingredients.length ? item.ingredients : [emptyIngredient(), emptyIngredient("100,0", "ad")];
   const hasNames = ingredients.some((ingredient) => String(ingredient.name || "").trim());
@@ -1464,27 +1518,15 @@ function RecipeCard({ item, diagnoses, onChange, onClear }) {
                 <div className="col-span-2">Ilość / jedn. *</div>
                 <div className="col-span-1 text-center">Usuń</div>
               </div>
-              {ingredients.map((ingredient, index) => {
-                const suggestions = RAW_MATERIALS.filter((name) => !ingredient.name || name.toLowerCase().includes(String(ingredient.name).toLowerCase()));
+              {ingredients.map((ingredient) => {
                 return (
                   <div key={ingredient.key} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-                    <div className="md:col-span-6 relative">
-                      <input
+                    <div className="md:col-span-6">
+                      <IngredientNameField
                         value={ingredient.name}
-                        onFocus={() => setOpenIndex(index)}
-                        onBlur={() => setTimeout(() => setOpenIndex((current) => (current === index ? null : current)), 180)}
-                        onChange={(e) => updateIngredient(ingredient.key, { name: e.target.value })}
-                        placeholder="Wpisz lub wybierz surowiec, np. Hydrocortisonum"
-                        className="w-full p-2 bg-white border border-slate-300 rounded-lg font-medium"
+                        onChange={(name) => updateIngredient(ingredient.key, { name })}
+                        onPick={(drug) => updateIngredient(ingredient.key, { name: drug.name || drug.activeSubstance || "" })}
                       />
-                      {openIndex === index && (
-                        <div className="absolute z-20 mt-1 w-full max-h-40 overflow-y-auto bg-white border rounded-lg shadow" onMouseDown={(e) => e.preventDefault()}>
-                          {suggestions.map((name) => (
-                            <button key={name} type="button" onClick={() => { updateIngredient(ingredient.key, { name }); setOpenIndex(null); }} className="w-full text-left px-3 py-1.5 hover:bg-emerald-50">{name}</button>
-                          ))}
-                          {!suggestions.length && <p className="px-3 py-2 text-slate-400">Brak podpowiedzi — możesz wpisać własną nazwę</p>}
-                        </div>
-                      )}
                     </div>
                     <select value={ingredient.modifier || "none"} onChange={(e) => updateIngredient(ingredient.key, { modifier: e.target.value })} className="md:col-span-3 p-2 bg-white border border-slate-300 rounded-lg">
                       {RECIPE_MODIFIERS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}

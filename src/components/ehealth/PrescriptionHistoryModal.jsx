@@ -93,7 +93,7 @@ export default function PrescriptionHistoryModal({ open, patientId, patientName,
               <History size={16} />
               <h3 className="font-semibold text-slate-900">Historia e-recept</h3>
             </div>
-            <p className="text-xs text-slate-500 mt-1">{patientName || "Pacjent"} · wybierz leki do kontynuacji</p>
+            <p className="text-xs text-slate-500 mt-1">{patientName || "Pacjent"} · wybrane leki trafią na nową receptę, bieżąca zostaje bez zmian</p>
           </div>
           <button type="button" onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center" aria-label="Zamknij"><X size={16} /></button>
         </div>

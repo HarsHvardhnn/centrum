@@ -109,8 +109,10 @@ const ehealthHelper = {
     return apiCaller("GET", "/api/ehealth/runtime").then(unwrap);
   },
 
-  searchDrugs(q) {
-    return apiCaller("GET", `/api/ehealth/drugs?q=${encodeURIComponent(q || "")}`).then(unwrap);
+  searchDrugs(q, kind) {
+    const params = new URLSearchParams({ q: q || "" });
+    if (kind) params.set("kind", kind);
+    return apiCaller("GET", `/api/ehealth/drugs?${params}`).then(unwrap);
   },
 
   submitPrescription(body) {
@@ -203,6 +205,12 @@ const ehealthHelper = {
     if (patientId) params.set("patientId", String(patientId));
     if (range) params.set("range", String(range));
     return apiCaller("GET", `/api/ehealth/prescriptions/history?${params.toString()}`).then(unwrap);
+  },
+
+  ezlaHistory({ patientId } = {}) {
+    const params = new URLSearchParams();
+    if (patientId) params.set("patientId", String(patientId));
+    return apiCaller("GET", `/api/ehealth/ezla/history?${params.toString()}`).then(unwrap);
   },
 
   history(filters = {}) {

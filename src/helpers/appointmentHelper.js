@@ -563,18 +563,23 @@ class AppointmentService {
   /** Normalize ICD search result so each item has { code, name } for dropdown and add */
   _normalizeIcdItem(item) {
     if (!item || typeof item !== "object") return null;
-    const code = item.code ?? item.icdCode ?? item.id ?? item._id ?? "";
-    const name = item.name ?? item.title ?? item.displayName ?? item.description ?? item.label ?? "";
+    const code = item.code ?? item.icdCode ?? item.icd10Code ?? item.icd10_code ?? item.icd9Code ?? item.icd9_code ?? "";
+    const name = item.name ?? item.full_name ?? item.icd10_name ?? item.icd9_name ?? item.icd10Display ?? item.title ?? item.displayName ?? item.description ?? item.label ?? "";
     if (!code && !name) return null;
     return { code: String(code), name: String(name) };
+  }
+
+  _unwrapIcdList(response) {
+    const body = response?.data;
+    const raw = Array.isArray(body) ? body : body?.data ?? body?.items ?? body?.results ?? [];
+    return (Array.isArray(raw) ? raw : []).map((item) => this._normalizeIcdItem(item)).filter(Boolean);
   }
 
   async searchIcd10(query) {
     if (!query?.trim()) return [];
     try {
       const response = await apiCaller("GET", `/api/icd10/search?q=${encodeURIComponent(query.trim())}`);
-      const raw = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
-      return raw.map((item) => this._normalizeIcdItem(item)).filter(Boolean);
+      return this._unwrapIcdList(response);
     } catch (error) {
       console.error("Error searching ICD-10:", error);
       return [];
@@ -585,8 +590,7 @@ class AppointmentService {
     if (!query?.trim()) return [];
     try {
       const response = await apiCaller("GET", `/api/icd9/search?q=${encodeURIComponent(query.trim())}`);
-      const raw = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
-      return raw.map((item) => this._normalizeIcdItem(item)).filter(Boolean);
+      return this._unwrapIcdList(response);
     } catch (error) {
       console.error("Error searching ICD-9:", error);
       return [];

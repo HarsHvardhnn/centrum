@@ -14,6 +14,7 @@ import {
   RESORT_CODES,
   RESORT_HINTS,
 } from "./eReferralCatalog";
+import { formatCoded, visitDiagnosisRows } from "./visitIcd";
 
 const inputClass = "w-full h-9 px-3 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900";
 
@@ -54,10 +55,11 @@ const EReferralIssueModal = ({
   );
   const [targetOpen, setTargetOpen] = useState(false);
   const [primaryIcd10, setPrimaryIcd10] = useState(
-    copied.icd10Code ? `${copied.icd10Code} - ${copied.icd10Display || ""}`.trim() : ""
+    copied.icd10Code ? formatCoded(copied.icd10Code, copied.icd10Display) : ""
   );
+  const [icdQuery, setIcdQuery] = useState("");
   const [icdHits, setIcdHits] = useState([]);
-  const [icdOpen, setIcdOpen] = useState(false);
+  const visitIcd = useMemo(() => visitDiagnosisRows(diagnoses), [diagnoses]);
   const [site, setSite] = useState(copied.bodySite === "L" ? "left" : copied.bodySite === "R" ? "right" : "");
   const [procedures, setProcedures] = useState(
     copied.icd9Code ? [`${copied.icd9Code} - ${copied.icd9Display || ""}`] : [""]
@@ -73,8 +75,8 @@ const EReferralIssueModal = ({
   const [historyOpen, setHistoryOpen] = useState(false);
 
   useEffect(() => {
-    const term = primaryIcd10.trim();
-    if (term.length < 2 || term.includes(" - ")) {
+    const term = icdQuery.trim();
+    if (term.length < 2) {
       setIcdHits([]);
       return undefined;
     }
@@ -91,7 +93,7 @@ const EReferralIssueModal = ({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [primaryIcd10]);
+  }, [icdQuery]);
 
   const filteredResort = useMemo(() => {
     const q = targetSearch.trim().toLowerCase();
@@ -117,15 +119,25 @@ const EReferralIssueModal = ({
     if (next === "diagnostic_exam" && procedures.every((row) => !row.trim())) setProcedures([""]);
   };
 
+  const applyVisitDiagnosis = (row) => {
+    if (!row?.code || !row?.name) {
+      setIcdQuery(row?.code || row?.name || "");
+      toast.error("To rozpoznanie nie ma kodu i nazwy. Wyszukaj je poniżej.");
+      return;
+    }
+    setPrimaryIcd10(formatCoded(row.code, row.name));
+    setIcdQuery("");
+    setIcdHits([]);
+  };
+
   const pullVisitDiagnosis = () => {
-    const primary = diagnoses.find((row) => row.isPrimary) || diagnoses[0];
-    const label = diagnosisLabel(primary);
-    if (!label) {
+    const primary = visitIcd.find((row) => row.isPrimary) || visitIcd[0];
+    if (!primary) {
       toast.error("Na tej wizycie nie ma jeszcze rozpoznania ICD-10.");
       return;
     }
-    setPrimaryIcd10(label);
-    toast.success("Pobrano rozpoznanie z wizyty");
+    applyVisitDiagnosis(primary);
+    if (primary.code && primary.name) toast.success("Pobrano rozpoznanie z wizyty");
   };
 
   const searchProcedure = async (index, value) => {
@@ -368,17 +380,34 @@ const EReferralIssueModal = ({
                   <label className="font-bold">Rozpoznanie główne (ICD-10) *</label>
                   <button type="button" onClick={pullVisitDiagnosis} className="font-bold text-blue-700">[Pobierz rozpoznanie z wizyty]</button>
                 </div>
+                {visitIcd.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {visitIcd.map((row) => (
+                      <button
+                        key={`${row.code}-${row.name}`}
+                        type="button"
+                        onClick={() => applyVisitDiagnosis(row)}
+                        className={`px-2 py-1 rounded-lg border text-left ${formatCoded(row.code, row.name) === primaryIcd10 ? "border-blue-600 bg-blue-50" : "border-slate-200 bg-white hover:bg-blue-50"}`}
+                      >
+                        <span className="font-mono font-bold text-blue-700 mr-1">{row.code}</span>{row.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="grid sm:grid-cols-12 gap-2">
-                  <div className="sm:col-span-9 relative">
-                    <input value={primaryIcd10} onFocus={() => setIcdOpen(true)} onChange={(e) => { setPrimaryIcd10(e.target.value); setIcdOpen(true); }} className={inputClass} placeholder="Kod lub nazwa, np. I10" />
-                    {icdOpen && icdHits.length > 0 && (
-                      <div className="absolute z-20 left-0 right-0 mt-1 bg-white border rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                  <div className="sm:col-span-9">
+                    {primaryIcd10 && <p className="mb-1 font-semibold text-slate-900">Wybrane: {primaryIcd10}</p>}
+                    <input value={icdQuery} onChange={(e) => setIcdQuery(e.target.value)} className={inputClass} placeholder={primaryIcd10 ? "Inny kod lub nazwa" : "Kod lub nazwa, np. I10"} />
+                    {icdHits.length > 0 && (
+                      <ul className="mt-1 bg-white border rounded-xl max-h-48 overflow-y-auto">
                         {icdHits.map((row) => (
-                          <button key={row.code || row.icd10Code} type="button" onMouseDown={() => { setPrimaryIcd10(diagnosisLabel(row)); setIcdOpen(false); }} className="w-full text-left px-3 py-2 hover:bg-blue-50">
-                            <span className="font-mono font-bold text-blue-700 mr-2">{row.code || row.icd10Code}</span>{row.name || row.display || row.icd10Display}
-                          </button>
+                          <li key={`${row.code}-${row.name}`}>
+                            <button type="button" onMouseDown={() => { setPrimaryIcd10(diagnosisLabel(row)); setIcdQuery(""); setIcdHits([]); }} className="w-full text-left px-3 py-2 hover:bg-blue-50">
+                              <span className="font-mono font-bold text-blue-700 mr-2">{row.code}</span>{row.name}
+                            </button>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     )}
                   </div>
                   <select value={site} onChange={(e) => setSite(e.target.value)} className={`${inputClass} sm:col-span-3`}>
@@ -399,7 +428,7 @@ const EReferralIssueModal = ({
                         placeholder="Kod lub nazwa procedury"
                       />
                       {procIndex === index && procHits.length > 0 && (
-                        <div className="absolute z-20 left-0 right-0 mt-1 bg-white border rounded-xl shadow-xl max-h-40 overflow-y-auto">
+                        <div className="mt-1 bg-white border rounded-xl max-h-40 overflow-y-auto">
                           {procHits.map((row) => (
                             <button
                               key={`${row.code}-${row.name}`}
