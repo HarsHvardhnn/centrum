@@ -16,6 +16,7 @@ import {
   UserPlus,
   DollarSign,
   FileText,
+  Upload,
   X,
 } from "lucide-react";
 import { apiCaller } from "../../utils/axiosInstance";
@@ -29,6 +30,8 @@ import patientServicesHelper from "../../helpers/patientServicesHelper";
 import billingHelper from "../../helpers/billingHelper";
 import { createPortal } from "react-dom";
 import CheckInModal from "../admin/CheckinModal";
+import AttachVisitFileModal from "../admin/AttachVisitFileModal";
+import InternalOrdersPanel from "./InternalOrdersPanel";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
 import {
   translateStatus,
@@ -373,6 +376,7 @@ const PatientList = () => {
   const [error, setError] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showCheckin, setShowCheckin] = useState(false);
+  const [showAttach, setShowAttach] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [billingServices, setBillingServices] = useState([]);
@@ -820,6 +824,8 @@ const PatientList = () => {
   const isToday = selectedDate === new Date().toISOString().split("T")[0];
 
   return (
+    <>
+    {(user?.role === "receptionist" || user?.role === "admin") && <InternalOrdersPanel />}
     <div className="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
       <div className="p-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-wrap">
@@ -1171,6 +1177,19 @@ const PatientList = () => {
                               </DropdownMenu.Item>
                             )}
 
+                            {!isCancelled(patient) && (user?.role === "receptionist" || user?.role === "admin") && (
+                              <DropdownMenu.Item
+                                className="flex items-center px-4 py-2 text-sm text-teal-800 hover:bg-teal-50 rounded-md cursor-pointer"
+                                onClick={() => {
+                                  setSelectedAppointment(patient);
+                                  setShowAttach(true);
+                                }}
+                              >
+                                <Upload size={16} className="mr-2" />
+                                Dodaj plik do wizyty
+                              </DropdownMenu.Item>
+                            )}
+
                             {/* Reschedule option for admin and receptionist */}
                             {(user?.role === "admin" || user?.role === "receptionist") && patient.status === "booked" && (
                               <DropdownMenu.Item
@@ -1333,6 +1352,12 @@ const PatientList = () => {
         patientData={{ ...selectedAppointment, id: selectedAppointment?.patient_id } || {}}
         appointmentId={selectedAppointment?._id}
         onAppointmentUpdate={handleAppointmentUpdate}
+      />
+      <AttachVisitFileModal
+        isOpen={showAttach}
+        appointmentId={selectedAppointment?._id || selectedAppointment?.id}
+        patientName={typeof selectedAppointment?.name === "string" ? selectedAppointment.name : selectedAppointment?.patientName || ""}
+        onClose={() => setShowAttach(false)}
       />
 
       {/* Reschedule Modal */}
@@ -1503,6 +1528,7 @@ const PatientList = () => {
         </button>
       </div>
     </div>
+    </>
   );
 };
 
@@ -1552,6 +1578,7 @@ const UpcomingAppointments = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [showCheckin, setShowCheckin] = useState(false);
+  const [showAttach, setShowAttach] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const limit = 4;
 
@@ -1770,6 +1797,20 @@ const UpcomingAppointments = () => {
                           </DropdownMenu.Item>
                         )}
 
+                        {(user?.role === "receptionist" || user?.role === "admin") && appointment.status !== "cancelled" && (
+                          <DropdownMenu.Item
+                            className="flex items-center px-4 py-2 text-sm text-teal-800 hover:bg-teal-50 rounded-md cursor-pointer"
+                            onSelect={() => {
+                              const aptId = appointment.id ?? appointment._id;
+                              setSelectedAppointment({ ...appointment, id: aptId, _id: aptId, patientName: appointment.patientName });
+                              setShowAttach(true);
+                            }}
+                          >
+                            <Upload size={16} className="mr-2 flex-shrink-0" />
+                            Dodaj plik do wizyty
+                          </DropdownMenu.Item>
+                        )}
+
                         {appointment.status === "completed" && appointment.isAppointment !== false && (
                           <DropdownMenu.Item
                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
@@ -1807,6 +1848,12 @@ const UpcomingAppointments = () => {
           fetchAppointments();
         }}
         onAppointmentUpdate={() => fetchAppointments()}
+      />
+      <AttachVisitFileModal
+        isOpen={showAttach}
+        appointmentId={selectedAppointment?._id || selectedAppointment?.id}
+        patientName={selectedAppointment?.patientName || ""}
+        onClose={() => setShowAttach(false)}
       />
     </div>
   );

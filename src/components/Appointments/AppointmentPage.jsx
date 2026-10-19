@@ -3,13 +3,17 @@ import AppointmentFormModal from "../Doctor/Appointments/AddAppointmentForm";
 import { toast } from "sonner";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { useLoader } from "../../context/LoaderContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import clinicFlowHelper from "../../helpers/clinicFlowHelper";
 import userServiceHelper from "../../helpers/userServiceHelper";
 import { useServices } from "../../context/serviceContext.jsx";
 import { useUser } from "../../context/userContext";
 
 function AppointmentPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const orderId = searchParams.get("orderId") || "";
+  const [linkedOrder, setLinkedOrder] = useState(null);
   const { user } = useUser();
   const { showLoader, hideLoader } = useLoader();
   const { services, loading } = useServices(); // Use the services context
@@ -20,6 +24,11 @@ function AppointmentPage() {
   const [isLoadingServices, setIsLoadingServices] = useState(false);
 
   // Load services from context
+  useEffect(() => {
+    if (!orderId) return;
+    clinicFlowHelper.getOrder(orderId).then(setLinkedOrder).catch(() => setLinkedOrder(null));
+  }, [orderId]);
+
   useEffect(() => {
     if (services && services.length > 0) {
       setAvailableServices(services);
@@ -57,6 +66,15 @@ function AppointmentPage() {
         }
         
         toast.success(successMessage);
+        const createdId = response?.data?.appointment?._id || response?.data?.appointment?.id;
+        if (orderId && createdId) {
+          try {
+            await clinicFlowHelper.bookOrder(orderId, createdId);
+            toast.success("Zlecenie wewnętrzne powiązane z tą wizytą.");
+          } catch (linkError) {
+            toast.error(linkError.response?.data?.message || "Wizyta jest umówiona, ale zlecenia nie udało się powiązać.");
+          }
+        }
 
         // Navigate to the patients page where doctor can generate invoice
         navigate("/clinic");
@@ -104,6 +122,11 @@ function AppointmentPage() {
         <p className="text-gray-600">
           Wyszukaj lekarza bezpośrednio po imieniu lub nazwisku albo wybierz specjalizację, aby wyświetlić dostępnych lekarzy. Następnie wybierz termin wizyty i uzupełnij dane pacjenta.
         </p>
+        {orderId && (
+          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+            Umówienie ze zlecenia wewnętrznego{linkedOrder ? `: ${linkedOrder.exam} dla ${linkedOrder.patientName || "pacjenta"}` : ""}. Wybierz termin tak jak przy zwykłej wizycie. Po zapisie zlecenie zostanie powiązane z tą wizytą.
+          </p>
+        )}
       </div>
       
       <AppointmentFormModal

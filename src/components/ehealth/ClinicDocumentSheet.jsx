@@ -1,5 +1,6 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import clinicDocumentsHelper from "../../helpers/clinicDocumentsHelper";
 
 export const CLINIC_LETTERHEAD = {
@@ -419,7 +420,9 @@ function printFieldText(field, values, status) {
 const PDF_PAGE_CSS = `
 @page { size: A4; margin: 0; }
 html, body { margin: 0; padding: 0; background: #fff; }
-.print-sheet { width: auto !important; max-width: 100% !important; min-width: 0 !important; margin: 0 !important; padding: 4mm 14mm 0 !important; box-sizing: border-box !important; box-shadow: none !important; }
+.print-sheet { width: auto !important; max-width: 100% !important; min-width: 0 !important; margin: 0 !important; padding: 8mm 16mm 12mm !important; box-sizing: border-box !important; box-shadow: none !important; }
+.medical-document-header__meta, .document-meta-value, .document-meta-label { max-width: 100% !important; overflow: visible !important; }
+.document-meta-value { overflow-wrap: anywhere !important; }
 .document-section__value { line-height: 1.35 !important; }
 .print-main, .document-section, .document-title, .document-section__label, .patient-name, .patient-details dd { max-width: 100% !important; min-width: 0 !important; word-break: normal !important; overflow-wrap: break-word !important; }
 .document-section__value { max-width: 100% !important; min-width: 0 !important; overflow-wrap: anywhere !important; word-break: break-word !important; }
@@ -511,27 +514,63 @@ function stronyLabel(count) {
   return `${count} stron`;
 }
 
+function canvasPngUrl(canvas) {
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob ? URL.createObjectURL(blob) : ""), "image/png");
+  });
+}
+
 function printPdfUrl(url) {
   const frame = document.createElement("iframe");
   frame.setAttribute("aria-hidden", "true");
-  frame.style.cssText = "position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0;";
-  frame.src = url;
+  frame.style.cssText = "position:fixed;left:0;top:0;width:210mm;height:297mm;border:0;opacity:0;pointer-events:none;";
+  document.body.appendChild(frame);
+  const imageUrls = [];
   const cleanup = () => {
-    frame.onload = null;
     frame.remove();
+    imageUrls.forEach((imageUrl) => URL.revokeObjectURL(imageUrl));
   };
-  frame.onload = () => {
+  (async () => {
     try {
+      const pdfjs = await import("pdfjs-dist");
+      pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+      const data = await fetch(url).then((response) => response.arrayBuffer());
+      const pdf = await pdfjs.getDocument({ data }).promise;
+      for (let index = 1; index <= pdf.numPages; index += 1) {
+        const page = await pdf.getPage(index);
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+        const imageUrl = await canvasPngUrl(canvas);
+        if (!imageUrl) throw new Error("podgląd strony");
+        imageUrls.push(imageUrl);
+      }
+      const doc = frame.contentDocument;
+      doc.open();
+      doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Dokument</title><style>
+        @page { size: A4; margin: 0; }
+        html, body { margin: 0; padding: 0; background: #fff; }
+        .sheet { width: 210mm; height: 297mm; overflow: hidden; break-after: page; page-break-after: always; }
+        .sheet:last-child { break-after: auto; page-break-after: auto; }
+        img { display: block; width: 210mm; height: 297mm; }
+      </style></head><body>${imageUrls.map((imageUrl) => `<div class="sheet"><img src="${imageUrl}" alt=""></div>`).join("")}</body></html>`);
+      doc.close();
+      await Promise.all(Array.from(doc.images).map((img) => (img.complete ? Promise.resolve() : new Promise((resolve) => {
+        img.onload = resolve;
+        img.onerror = resolve;
+      }))));
       frame.contentWindow.focus();
       frame.contentWindow.print();
       frame.contentWindow.onafterprint = cleanup;
       setTimeout(cleanup, 60000);
-    } catch {
+    } catch (err) {
+      console.error(err);
       cleanup();
       toast.error("Nie udało się otworzyć okna wydruku.");
     }
-  };
-  document.body.appendChild(frame);
+  })();
 }
 
 export const ClinicSheetPdfView = forwardRef(function ClinicSheetPdfView(props, ref) {

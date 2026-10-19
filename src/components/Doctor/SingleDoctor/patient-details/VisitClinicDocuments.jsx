@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { FileText, Plus, Eye, Printer, Pencil, User, X, Upload, Trash2 } from "lucide-react";
+import { FileText, Plus, Eye, Printer, Pencil, User, X, Upload, Trash2, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { useUser } from "../../../../context/userContext";
 import clinicDocumentsHelper from "../../../../helpers/clinicDocumentsHelper";
+import clinicFlowHelper from "../../../../helpers/clinicFlowHelper";
 import patientService from "../../../../helpers/patientHelper";
 import { apiCaller } from "../../../../utils/axiosInstance";
 import ClinicDocumentSheet, { ClinicSheetPdfView, initialFieldValue, printClinicSheet } from "../../../ehealth/ClinicDocumentSheet";
@@ -425,7 +427,11 @@ function UploadVisitFileDialog({ busy, onClose, onSubmit }) {
   );
 }
 
+const EXAMS = ["EEG", "USG", "RTG", "TK", "MR", "Holter"];
+
 const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorTitle = "", doctorPwz = "", visitHints = {}, reports = [], onPatientRecordSaved, onReportsChanged }) => {
+  const { user } = useUser();
+  const canShare = user?.role === "doctor" || user?.role === "admin";
   const [templates, setTemplates] = useState([]);
   const [docs, setDocs] = useState([]);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -437,6 +443,17 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [cardPreview, setCardPreview] = useState(null);
+  const [incoming, setIncoming] = useState([]);
+  const [outgoing, setOutgoing] = useState([]);
+  const [visitOrders, setVisitOrders] = useState([]);
+  const [shareTarget, setShareTarget] = useState(null);
+  const [doctors, setDoctors] = useState([]);
+  const [doctorQuery, setDoctorQuery] = useState("");
+  const [orderOpen, setOrderOpen] = useState(false);
+  const [exam, setExam] = useState(EXAMS[0]);
+  const [customExam, setCustomExam] = useState("");
+  const [orderNote, setOrderNote] = useState("");
+  const [sharedPreview, setSharedPreview] = useState(null);
   const issuedPdfRef = useRef(null);
   const previewPdfRef = useRef(null);
 
@@ -449,10 +466,73 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
     }
   };
 
+  const loadFlow = () => {
+    if (!visitId) return;
+    clinicFlowHelper.incomingShares(visitId).then((rows) => setIncoming(Array.isArray(rows) ? rows : [])).catch(() => setIncoming([]));
+    clinicFlowHelper.outgoingShares(visitId).then((rows) => setOutgoing(Array.isArray(rows) ? rows : [])).catch(() => setOutgoing([]));
+    clinicFlowHelper.ordersForVisit(visitId).then((rows) => setVisitOrders(Array.isArray(rows) ? rows : [])).catch(() => setVisitOrders([]));
+  };
+
   useEffect(() => {
     loadDocs();
+    loadFlow();
     clinicDocumentsHelper.listTemplates().then(setTemplates).catch(() => setTemplates([]));
   }, [visitId]);
+
+  const openShare = (file) => {
+    setShareTarget(file);
+    setDoctorQuery("");
+    clinicFlowHelper.doctors().then((rows) => setDoctors(Array.isArray(rows) ? rows : [])).catch(() => setDoctors([]));
+  };
+
+  const sendShare = async (doctor) => {
+    if (!visitId || !shareTarget) return;
+    try {
+      await clinicFlowHelper.shareReport({ visitId, reportId: shareTarget.id, toDoctorId: doctor._id });
+      toast.success(`Wynik wysłany do ${doctor.name}. Reszta wizyty zostaje prywatna.`);
+      setShareTarget(null);
+      loadFlow();
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || "Nie udało się udostępnić pliku");
+    }
+  };
+
+  const openIncoming = async (share) => {
+    try {
+      const file = await clinicFlowHelper.openSharedFile(share.id);
+      setSharedPreview({ ...share, url: file?.url, name: file?.name || share.fileName });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Nie udało się otworzyć wyniku");
+    }
+  };
+
+  const markReviewed = async (share) => {
+    try {
+      await clinicFlowHelper.reviewShare(share.id);
+      toast.success("Wynik oznaczony jako przejrzany");
+      setSharedPreview(null);
+      loadFlow();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Nie udało się zapisać przeglądu");
+    }
+  };
+
+  const submitOrder = async () => {
+    const chosen = exam === "Inne" ? customExam.trim() : exam;
+    if (!chosen) {
+      toast.error("Podaj nazwę badania.");
+      return;
+    }
+    try {
+      await clinicFlowHelper.createOrder({ visitId, exam: chosen, note: orderNote });
+      toast.success("Zlecenie trafiło do recepcji. Wizyta pozostaje bez zmian.");
+      setOrderOpen(false);
+      setOrderNote("");
+      loadFlow();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Nie udało się zapisać zlecenia");
+    }
+  };
 
   const openNew = (template) => {
     const values = {};
@@ -613,8 +693,45 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
         <button type="button" onClick={() => setUploadOpen(true)} className="h-10 px-3 rounded-lg border border-[#1b766a] bg-white text-[#1b766a] text-sm font-semibold inline-flex items-center gap-1.5">
           <Upload size={16} /> Dodaj plik
         </button>
+        {canShare && (
+          <button type="button" onClick={() => setOrderOpen(true)} className="h-10 px-3 rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold">
+            Zleć badanie
+          </button>
+        )}
       </div>
       <div className="p-4 space-y-2">
+        {incoming.map((share) => (
+          <div key={share.id} className="border border-amber-300 bg-amber-50 rounded-lg p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">Wynik do przeglądu: {share.fileName}</div>
+                <div className="text-xs text-slate-600 mt-0.5">
+                  Wysłał {share.fromDoctorName || "lekarz"}{share.sourceVisitLabel ? ` · wizyta ${share.sourceVisitLabel}` : ""}
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Widać tylko ten plik. Pozostała część tamtej wizyty zostaje u lekarza, który ją prowadził.</p>
+              </div>
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${share.reviewedAt ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-amber-100 text-amber-900 border-amber-300"}`}>
+                {share.reviewedAt ? "Przejrzane" : "Do przeglądu"}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-amber-200 text-xs">
+              <button type="button" onClick={() => openIncoming(share)} className="inline-flex items-center gap-1 text-teal-800 font-medium">
+                <Eye size={14} /> Otwórz wynik
+              </button>
+              {!share.reviewedAt && (
+                <button type="button" onClick={() => markReviewed(share)} className="inline-flex items-center gap-1 text-slate-700 font-medium">
+                  Oznacz jako przejrzane
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        {visitOrders.filter((row) => String(row.sourceVisitId) === String(visitId)).map((row) => (
+          <div key={row.id} className="border border-slate-200 rounded-lg p-3 text-xs text-slate-600">
+            Zlecenie w przychodni: <span className="font-semibold text-slate-900">{row.exam}</span>
+            {" · "}{row.status === "booked" ? "recepcja umówiła wizytę" : "czeka na recepcję"}
+          </div>
+        ))}
         {documentRows.length === 0 && <p className="text-xs text-gray-400">Brak dokumentów tej wizyty.</p>}
         {documentRows.map((row) => row.kind === "card" ? (() => { const card = row.card; return (
           <div key={card.id} className="border border-gray-200 rounded-lg p-3">
@@ -647,6 +764,11 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                   {file.type}{file.at ? ` · ${formatDocumentWhen(file.at)}` : ""}
                 </div>
                 {file.description ? <p className="text-xs text-gray-500 mt-1">{file.description}</p> : null}
+                {outgoing.filter((share) => String(share.reportId) === String(file.id)).map((share) => (
+                  <p key={share.id} className="text-xs text-slate-500 mt-1">
+                    Udostępniono {share.toDoctorName}: {share.reviewedAt ? "przejrzane" : "do przeglądu"}
+                  </p>
+                ))}
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-slate-50 text-slate-700 border-slate-200">Plik</span>
             </div>
@@ -654,9 +776,16 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               <button type="button" onClick={() => openVisitCard(file.url)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
                 <Eye size={14} /> Otwórz dokument
               </button>
-              <button type="button" onClick={() => removeFile(file.id)} className="inline-flex items-center gap-1 text-slate-500 font-medium">
-                <Trash2 size={14} /> Usuń
-              </button>
+              <div className="flex items-center gap-3">
+                {canShare && (
+                  <button type="button" onClick={() => openShare(file)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
+                    <Share2 size={14} /> Udostępnij
+                  </button>
+                )}
+                <button type="button" onClick={() => removeFile(file.id)} className="inline-flex items-center gap-1 text-slate-500 font-medium">
+                  <Trash2 size={14} /> Usuń
+                </button>
+              </div>
             </div>
           </div>
         ); })() : (() => { const doc = row.doc; return (
@@ -700,6 +829,70 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
 
       {uploadOpen && (
         <UploadVisitFileDialog busy={uploading} onClose={() => !uploading && setUploadOpen(false)} onSubmit={uploadFile} />
+      )}
+
+      {sharedPreview && (
+        <VisitFilePreview title={sharedPreview.name || "Wynik"} url={sharedPreview.url} onClose={() => setSharedPreview(null)} />
+      )}
+
+      {shareTarget && (
+        <div className="fixed inset-0 z-[70] bg-slate-900/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="p-4 border-b">
+              <h3 className="font-bold">Udostępnij wynik</h3>
+              <p className="text-xs text-slate-500 mt-1">{shareTarget.name}. Lekarz zobaczy tylko ten plik.</p>
+              <input value={doctorQuery} onChange={(event) => setDoctorQuery(event.target.value)} placeholder="Szukaj lekarza..." className="mt-3 w-full border rounded-lg px-3 py-2 text-sm" />
+              {visitOrders.filter((row) => String(row.bookedVisitId) === String(visitId) && row.orderedById).map((row) => (
+                <button key={row.id} type="button" onClick={() => sendShare({ _id: row.orderedById, name: row.orderedByName })} className="mt-2 w-full text-left rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm">
+                  Odeślij do lekarza zlecającego: {row.orderedByName}
+                </button>
+              ))}
+            </div>
+            <div className="overflow-y-auto p-3 space-y-1">
+              {doctors
+                .filter((doctor) => ![user?._id, user?.id, user?.d_id].filter(Boolean).map(String).includes(String(doctor._id)))
+                .filter((doctor) => !doctorQuery.trim() || `${doctor.name} ${(doctor.specializations || []).join(" ")}`.toLowerCase().includes(doctorQuery.trim().toLowerCase()))
+                .map((doctor) => (
+                  <button key={doctor._id} type="button" onClick={() => sendShare(doctor)} className="w-full text-left border rounded-lg px-3 py-2 hover:border-teal-400">
+                    <div className="text-sm font-semibold">{doctor.name}</div>
+                    <div className="text-xs text-slate-500">{(doctor.specializations || []).join(", ")}</div>
+                  </button>
+                ))}
+            </div>
+            <div className="p-3 border-t flex justify-end">
+              <button type="button" onClick={() => setShareTarget(null)} className="px-3 py-1.5 border rounded-lg text-sm">Zamknij</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {orderOpen && (
+        <div className="fixed inset-0 z-[70] bg-slate-900/50 flex items-center justify-center p-4">
+          <form
+            className="bg-white rounded-xl w-full max-w-md p-4 space-y-3"
+            onSubmit={(event) => { event.preventDefault(); submitOrder(); }}
+          >
+            <h3 className="font-bold">Zleć badanie w przychodni</h3>
+            <p className="text-xs text-slate-500">Recepcja umówi termin. To nie jest e-skierowanie i nie zmienia statusu tej wizyty.</p>
+            <label className="block text-sm">Badanie
+              <select value={exam} onChange={(event) => setExam(event.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2 bg-white">
+                {EXAMS.map((item) => <option key={item}>{item}</option>)}
+                <option>Inne</option>
+              </select>
+            </label>
+            {exam === "Inne" && (
+              <input value={customExam} onChange={(event) => setCustomExam(event.target.value)} placeholder="Nazwa badania" className="w-full border rounded-lg px-3 py-2 text-sm" />
+            )}
+            <textarea value={orderNote} onChange={(event) => setOrderNote(event.target.value)} rows={3} placeholder="Krótka informacja dla recepcji i lekarza wykonującego" className="w-full border rounded-lg px-3 py-2 text-sm" />
+            {visitOrders.some((row) => String(row.bookedVisitId) === String(visitId) && row.orderedByName) && (
+              <p className="text-xs text-slate-500">Wynik tego badania odeślij przez „Udostępnij” do lekarza, który je zlecił.</p>
+            )}
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setOrderOpen(false)} className="px-3 py-1.5 border rounded-lg text-sm">Anuluj</button>
+              <button type="submit" className="px-3 py-1.5 rounded-lg bg-[#1b766a] text-white text-sm font-semibold">Wyślij do recepcji</button>
+            </div>
+          </form>
+        </div>
       )}
 
       {pickerOpen && (
