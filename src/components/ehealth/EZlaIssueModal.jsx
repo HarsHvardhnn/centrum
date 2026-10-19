@@ -213,6 +213,7 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
   const [newPayer, setNewPayer] = useState({ name: "", nip: "", type: "1", hasPue: true });
   const [icdQuery, setIcdQuery] = useState("");
   const [icdHits, setIcdHits] = useState([]);
+  const [icdEmpty, setIcdEmpty] = useState(false);
   const [contextNote, setContextNote] = useState("");
 
   const pesel = String(patient?.pesel || "").replace(/\D/g, "");
@@ -314,12 +315,14 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
 
   useEffect(() => {
     const q = icdQuery.trim();
-    if (q.length < 2) { setIcdHits([]); return undefined; }
+    if (q.length < 2) { setIcdHits([]); setIcdEmpty(false); return undefined; }
     const timer = setTimeout(async () => {
       try {
         const rows = await appointmentHelper.searchIcd10(q);
-        setIcdHits(Array.isArray(rows) ? rows : []);
-      } catch { setIcdHits([]); }
+        const hits = Array.isArray(rows) ? rows : [];
+        setIcdHits(hits);
+        setIcdEmpty(hits.length === 0);
+      } catch { setIcdHits([]); setIcdEmpty(true); }
     }, 250);
     return () => clearTimeout(timer);
   }, [icdQuery]);
@@ -735,16 +738,27 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
                   )}
                   <div className="relative">
                     <Search size={14} className="absolute left-2 top-2.5 text-slate-400" />
-                    <input value={icdQuery} onChange={(e) => setIcdQuery(e.target.value)} placeholder={form.icd10 ? `${form.icd10}${form.icdName ? ` — ${form.icdName}` : ""}` : "Szukaj kodu lub nazwy"} className="w-full rounded-lg border py-2 pl-7 pr-2 text-sm" />
+                    <input
+                      value={icdQuery}
+                      onChange={(e) => setIcdQuery(e.target.value)}
+                      onBlur={() => { setIcdHits([]); setIcdEmpty(false); }}
+                      onKeyDown={(e) => { if (e.key === "Escape") { setIcdHits([]); setIcdEmpty(false); } }}
+                      placeholder={form.icd10 ? `${form.icd10}${form.icdName ? ` — ${form.icdName}` : ""}` : "Szukaj kodu lub nazwy"}
+                      className="w-full rounded-lg border py-2 pl-7 pr-2 text-sm"
+                    />
                   </div>
+                  {icdEmpty && icdHits.length === 0 && <p className="mt-1 text-[11px] text-slate-500">Brak kodów ICD-10 dla „{icdQuery.trim()}”.</p>}
                   {icdHits.length > 0 && (
                     <ul className="mt-1 max-h-36 overflow-auto rounded-lg border bg-white text-sm">
+                      <li>
+                        <button type="button" className="block w-full px-2 py-1 text-right text-[11px] font-semibold text-slate-500" onMouseDown={(e) => { e.preventDefault(); setIcdHits([]); setIcdEmpty(false); }}>Zamknij listę</button>
+                      </li>
                       {icdHits.slice(0, 8).map((hit) => {
                         const code = hit.code || "";
                         const name = hit.name || "";
                         return (
                           <li key={`${code}-${name}`}>
-                            <button type="button" className="block w-full px-2 py-1.5 text-left hover:bg-slate-50" onClick={() => { patch({ icd10: icdRoot(code), icdName: name }); setIcdQuery(""); setIcdHits([]); }}>
+                            <button type="button" className="block w-full px-2 py-1.5 text-left hover:bg-slate-50" onMouseDown={(e) => { e.preventDefault(); patch({ icd10: icdRoot(code), icdName: name }); setIcdQuery(""); setIcdHits([]); setIcdEmpty(false); }}>
                               <span className="font-semibold">{icdRoot(code)}</span> {name}
                             </button>
                           </li>

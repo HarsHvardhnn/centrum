@@ -21,27 +21,35 @@ const DiagnosisCard = ({
   const [searchLoading, setSearchLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+  const searchFnRef = useRef(onSearchIcd10);
+  searchFnRef.current = onSearchIcd10;
 
   useEffect(() => {
-    if (!onSearchIcd10 || !searchValue.trim()) {
+    const term = searchValue.trim();
+    if (term.length < 2) {
       setSearchResults([]);
       setShowDropdown(false);
-      return;
+      setSearchLoading(false);
+      return undefined;
     }
+    let cancelled = false;
     const timer = setTimeout(async () => {
       setSearchLoading(true);
       setShowDropdown(true);
       try {
-        const results = await onSearchIcd10(searchValue);
-        setSearchResults(Array.isArray(results) ? results : []);
+        const results = await searchFnRef.current?.(term);
+        if (!cancelled) setSearchResults(Array.isArray(results) ? results : []);
       } catch (e) {
-        setSearchResults([]);
+        if (!cancelled) setSearchResults([]);
       } finally {
-        setSearchLoading(false);
+        if (!cancelled) setSearchLoading(false);
       }
     }, DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [searchValue, onSearchIcd10]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchValue]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -75,12 +83,14 @@ const DiagnosisCard = ({
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
+          onKeyDown={(e) => { if (e.key === "Escape") setShowDropdown(false); }}
           placeholder="Kod ICD-10 lub nazwa (od 2 znaków, np. cuk, E11)…"
           disabled={disabled}
           className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm placeholder-gray-500 focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700 outline-none disabled:bg-gray-50"
         />
         {showDropdown && (searchValue.trim() || searchResults.length > 0) && (
           <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-teal-200 rounded-lg shadow-lg z-[100] max-h-60 overflow-y-auto">
+            <button type="button" onMouseDown={(e) => { e.preventDefault(); setShowDropdown(false); }} className="w-full text-right px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50">Zamknij listę</button>
             {searchLoading ? (
               <div className="p-3 text-sm text-gray-500">Szukam...</div>
             ) : searchResults.length === 0 ? (

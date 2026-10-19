@@ -571,11 +571,13 @@ export default function VisitTemplatesPage() {
                     value={icd10SearchValue}
                     onChange={(e) => setIcd10SearchValue(e.target.value)}
                     onFocus={() => icd10SearchResults.length > 0 && setIcd10ShowDropdown(true)}
+                    onKeyDown={(e) => { if (e.key === "Escape") setIcd10ShowDropdown(false); }}
                     placeholder="Wyszukaj wg kodu ICD-10 lub nazwy choroby..."
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
                   />
                   {icd10ShowDropdown && (icd10SearchValue.trim() || icd10SearchResults.length > 0) && (
                     <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                      <button type="button" onMouseDown={(e) => { e.preventDefault(); setIcd10ShowDropdown(false); }} className="w-full text-right px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50">Zamknij listę</button>
                       {icd10SearchLoading ? (
                         <div className="p-3 text-sm text-gray-500">Szukam...</div>
                       ) : icd10SearchResults.length === 0 ? (
@@ -633,11 +635,13 @@ export default function VisitTemplatesPage() {
                     value={icd9SearchValue}
                     onChange={(e) => setIcd9SearchValue(e.target.value)}
                     onFocus={() => icd9SearchResults.length > 0 && setIcd9ShowDropdown(true)}
+                    onKeyDown={(e) => { if (e.key === "Escape") setIcd9ShowDropdown(false); }}
                     placeholder="Wyszukaj wg kodu ICD-9 lub nazwy procedury..."
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none"
                   />
                   {icd9ShowDropdown && (icd9SearchValue.trim() || icd9SearchResults.length > 0) && (
                     <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                      <button type="button" onMouseDown={(e) => { e.preventDefault(); setIcd9ShowDropdown(false); }} className="w-full text-right px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50">Zamknij listę</button>
                       {icd9SearchLoading ? (
                         <div className="p-3 text-sm text-gray-500">Szukam...</div>
                       ) : icd9SearchResults.length === 0 ? (

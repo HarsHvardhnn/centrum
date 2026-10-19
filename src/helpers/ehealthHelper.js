@@ -109,10 +109,11 @@ const ehealthHelper = {
     return apiCaller("GET", "/api/ehealth/runtime").then(unwrap);
   },
 
-  searchDrugs(q, kind) {
+  searchDrugs(q, kind, rx) {
     const params = new URLSearchParams({ q: q || "" });
     if (kind) params.set("kind", kind);
-    return apiCaller("GET", `/api/ehealth/drugs?${params}`).then(unwrap);
+    if (rx) params.set("rx", rx);
+    return apiCaller("GET", `/api/ehealth/drugs?${params}`, null).then(unwrap);
   },
 
   submitPrescription(body) {

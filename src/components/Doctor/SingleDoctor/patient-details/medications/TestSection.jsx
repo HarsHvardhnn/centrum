@@ -210,11 +210,13 @@ export const TestsSection = ({
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Escape") setShowDropdown(false); }}
               placeholder="Szukaj badania wg ICD-9..."
               className={`${INPUT_CLASS} pl-10`}
             />
             {showDropdown && (search.trim() || searchResults.length > 0) && (
               <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] max-h-60 overflow-y-auto">
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); setShowDropdown(false); }} className="w-full text-right px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50">Zamknij listę</button>
                 {searchLoading ? (
                   <div className="p-3 text-sm text-gray-500">Szukam...</div>
                 ) : searchResults.length === 0 ? (
@@ -292,11 +294,13 @@ export const TestsSection = ({
                     onBlur={() => {
                       setTimeout(() => setShowIcd10Dropdown(false), 150);
                     }}
+                    onKeyDown={(e) => { if (e.key === "Escape") setShowIcd10Dropdown(false); }}
                     className={INPUT_CLASS}
                   />
 
                   {icd10ActiveIndex === fullIndex && showIcd10Dropdown && (icd10Search.trim() || icd10Results.length > 0) && (
                     <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[120] max-h-60 overflow-y-auto">
+                      <button type="button" onMouseDown={(e) => { e.preventDefault(); setShowIcd10Dropdown(false); }} className="w-full text-right px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50">Zamknij listę</button>
                       {icd10Loading ? (
                         <div className="p-3 text-sm text-gray-500">Szukam...</div>
                       ) : icd10Results.length === 0 ? (

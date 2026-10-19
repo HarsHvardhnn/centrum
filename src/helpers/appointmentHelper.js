@@ -578,7 +578,7 @@ class AppointmentService {
   async searchIcd10(query) {
     if (!query?.trim()) return [];
     try {
-      const response = await apiCaller("GET", `/api/icd10/search?q=${encodeURIComponent(query.trim())}`);
+      const response = await apiCaller("GET", `/api/icd10/search?q=${encodeURIComponent(query.trim())}`, null);
       return this._unwrapIcdList(response);
     } catch (error) {
       console.error("Error searching ICD-10:", error);
@@ -589,7 +589,7 @@ class AppointmentService {
   async searchIcd9(query) {
     if (!query?.trim()) return [];
     try {
-      const response = await apiCaller("GET", `/api/icd9/search?q=${encodeURIComponent(query.trim())}`);
+      const response = await apiCaller("GET", `/api/icd9/search?q=${encodeURIComponent(query.trim())}`, null);
       return this._unwrapIcdList(response);
     } catch (error) {
       console.error("Error searching ICD-9:", error);

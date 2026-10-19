@@ -5,14 +5,17 @@ const IcdField = ({ label, kind = "icd10", code, name, onPick, hint }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [open, setOpen] = useState(false);
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
     const term = query.trim();
     if (term.length < 2) {
       setResults([]);
+      setSettled(false);
       return undefined;
     }
     let cancelled = false;
+    setSettled(false);
     const timer = setTimeout(async () => {
       try {
         const rows =
@@ -22,9 +25,13 @@ const IcdField = ({ label, kind = "icd10", code, name, onPick, hint }) => {
         if (!cancelled) {
           setResults(Array.isArray(rows) ? rows : []);
           setOpen(true);
+          setSettled(true);
         }
       } catch {
-        if (!cancelled) setResults([]);
+        if (!cancelled) {
+          setResults([]);
+          setSettled(true);
+        }
       }
     }, 250);
     return () => {
@@ -44,19 +51,26 @@ const IcdField = ({ label, kind = "icd10", code, name, onPick, hint }) => {
       )}
       <input
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
         onFocus={() => results.length > 0 && setOpen(true)}
+        onBlur={() => setOpen(false)}
+        onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
         placeholder="Wpisz kod lub nazwę"
         className="mt-1 w-full p-2.5 border rounded-lg"
       />
+      {open && settled && query.trim().length >= 2 && results.length === 0 && (
+        <p className="mt-1 text-xs text-slate-500">Brak kodów dla „{query.trim()}”.</p>
+      )}
       {open && results.length > 0 && (
         <div className="mt-1 border rounded-lg max-h-40 overflow-y-auto bg-white">
+          <button type="button" onMouseDown={(e) => { e.preventDefault(); setOpen(false); }} className="w-full text-right px-3 py-1 text-[11px] font-semibold text-slate-500">Zamknij listę</button>
           {results.map((item, index) => (
             <button
               key={`${item.code || "x"}-${index}`}
               type="button"
               className="w-full text-left px-3 py-2 text-sm hover:bg-teal-50 border-b last:border-0"
-              onClick={() => {
+              onMouseDown={(e) => {
+                e.preventDefault();
                 onPick({ code: item.code || "", name: item.name || item.title || "" });
                 setQuery("");
                 setOpen(false);

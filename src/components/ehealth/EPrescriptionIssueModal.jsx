@@ -740,7 +740,7 @@ export default function EPrescriptionIssueModal({
     const timer = setTimeout(async () => {
       try {
         setSearching(true);
-        const res = await ehealthHelper.searchDrugs(term);
+        const res = await ehealthHelper.searchDrugs(term, "", header.form === "Rpw" ? "Rpw" : "");
         if (!cancelled) setCatalog(res?.data || []);
       } catch (err) {
         if (!cancelled) {
@@ -823,7 +823,21 @@ export default function EPrescriptionIssueModal({
     }
     const klass = catalogClass(drug);
     if (header.form === "Rp" && klass === "Rpw") {
-      toast.error("Lek psychotropowy nie może być dodany do recepty Rp. Dodaj nową receptę i wybierz typ Rpw.");
+      if (items.length > 0) {
+        toast.error("Lek psychotropowy nie może być dodany do recepty Rp. Dodaj nową receptę i wybierz typ Rpw.");
+        return;
+      }
+      const item = blankItem("Rpw");
+      item.drug = drug;
+      item.category = "Rpw";
+      fillRpwSubstance(item);
+      item.payment = drug.reimbursed ? "30%" : "100%";
+      Object.assign(item, primaryDiagnosis(diagnoses));
+      setHeader((prev) => ({ ...prev, form: "Rpw" }));
+      setTabs((prev) => prev.map((tab) => (tab.id !== activeTab?.id ? tab : { ...tab, form: "Rpw", items: [item] })));
+      setQuery("");
+      setCatalog([]);
+      toast.success("To jest lek Rpw. Recepta została przełączona na Rpw.");
       return;
     }
     if (header.form === "Rp" && klass === "Rpz") {
@@ -1270,17 +1284,25 @@ function Switch({ checked, onClick, onClass, label }) {
 function IcdPicker({ diagnoses, code, name, onChange }) {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [empty, setEmpty] = useState(false);
 
   useEffect(() => {
     const term = query.trim();
     if (term.length < 2) {
       setHits([]);
+      setEmpty(false);
       return undefined;
     }
     let cancelled = false;
     const timer = setTimeout(async () => {
       const rows = await appointmentHelper.searchIcd10(term);
-      if (!cancelled) setHits(Array.isArray(rows) ? rows : []);
+      const next = Array.isArray(rows) ? rows : [];
+      if (!cancelled) {
+        setHits(next);
+        setEmpty(next.length === 0);
+        setOpen(true);
+      }
     }, 250);
     return () => {
       cancelled = true;
@@ -1292,6 +1314,8 @@ function IcdPicker({ diagnoses, code, name, onChange }) {
     onChange({ code: nextCode, name: nextName });
     setQuery("");
     setHits([]);
+    setOpen(false);
+    setEmpty(false);
   };
 
   return (
@@ -1315,15 +1339,21 @@ function IcdPicker({ diagnoses, code, name, onChange }) {
       )}
       <input
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+        onBlur={() => setOpen(false)}
+        onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
         placeholder={code ? "Inny kod lub nazwa" : "Kod lub nazwa, np. I10"}
         className="mt-1 w-full p-2 border rounded-lg font-medium"
       />
-      {hits.length > 0 && (
+      {open && empty && <p className="mt-1 text-[11px] font-normal text-slate-500">Brak kodów ICD-10 dla „{query.trim()}”.</p>}
+      {open && hits.length > 0 && (
         <ul className="mt-1 max-h-40 overflow-y-auto bg-white border rounded-lg">
+          <li>
+            <button type="button" onMouseDown={(e) => { e.preventDefault(); setOpen(false); }} className="w-full text-right px-3 py-1 text-[11px] font-semibold text-slate-500">Zamknij listę</button>
+          </li>
           {hits.map((row) => (
             <li key={`${row.code}-${row.name}`}>
-              <button type="button" onMouseDown={() => pick(row.code, row.name)} className="w-full text-left px-3 py-2 hover:bg-emerald-50">
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); pick(row.code, row.name); }} className="w-full text-left px-3 py-2 hover:bg-emerald-50">
                 <span className="font-mono text-[#0D5C46]">{row.code}</span>
                 <span className="ml-2 font-normal text-slate-700">{row.name}</span>
               </button>

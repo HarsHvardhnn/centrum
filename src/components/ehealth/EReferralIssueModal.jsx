@@ -8,7 +8,6 @@ import ReferralHistoryModal from "./ReferralHistoryModal";
 import IssuePatientCard, { normalizePatient, patientForDocument } from "./IssuePatientCard";
 import {
   ANATOMICAL_SITES,
-  COMMON_ICD9,
   NFZ_BRANCHES,
   REFERRAL_TYPES,
   RESORT_CODES,
@@ -22,12 +21,6 @@ function parseCoded(value) {
   const match = String(value || "").match(/^([A-Z0-9.]+)\s*[-—]\s*(.+)$/i);
   if (!match) return { code: "", name: "" };
   return { code: match[1].trim(), name: match[2].trim() };
-}
-
-function diagnosisLabel(row) {
-  const code = row?.icd10Code || row?.code || "";
-  const name = row?.icd10Display || row?.name || row?.display || "";
-  return code && name ? `${code} - ${name}` : code || name || "";
 }
 
 const EReferralIssueModal = ({
@@ -59,6 +52,7 @@ const EReferralIssueModal = ({
   );
   const [icdQuery, setIcdQuery] = useState("");
   const [icdHits, setIcdHits] = useState([]);
+  const [icdState, setIcdState] = useState("idle");
   const visitIcd = useMemo(() => visitDiagnosisRows(diagnoses), [diagnoses]);
   const [site, setSite] = useState(copied.bodySite === "L" ? "left" : copied.bodySite === "R" ? "right" : "");
   const [procedures, setProcedures] = useState(
@@ -66,6 +60,7 @@ const EReferralIssueModal = ({
   );
   const [procHits, setProcHits] = useState([]);
   const [procIndex, setProcIndex] = useState(-1);
+  const [procQuery, setProcQuery] = useState("");
   const [contraindications, setContraindications] = useState(copied.previousTests || "");
   const [justification, setJustification] = useState(copied.purpose || "");
   const [errors, setErrors] = useState([]);
@@ -78,15 +73,24 @@ const EReferralIssueModal = ({
     const term = icdQuery.trim();
     if (term.length < 2) {
       setIcdHits([]);
+      setIcdState("idle");
       return undefined;
     }
     let cancelled = false;
+    setIcdState("loading");
     const timer = setTimeout(async () => {
       try {
         const rows = await appointmentHelper.searchIcd10(term);
-        if (!cancelled) setIcdHits(Array.isArray(rows) ? rows.slice(0, 8) : []);
+        const hits = Array.isArray(rows) ? rows.slice(0, 8) : [];
+        if (!cancelled) {
+          setIcdHits(hits);
+          setIcdState(hits.length ? "ready" : "empty");
+        }
       } catch {
-        if (!cancelled) setIcdHits([]);
+        if (!cancelled) {
+          setIcdHits([]);
+          setIcdState("empty");
+        }
       }
     }, 250);
     return () => {
@@ -144,17 +148,27 @@ const EReferralIssueModal = ({
     const next = procedures.slice();
     next[index] = value;
     setProcedures(next);
-    setProcIndex(index);
     if (value.trim().length < 2) {
-      setProcHits(COMMON_ICD9);
+      setProcHits([]);
+      setProcIndex(-1);
       return;
     }
+    setProcIndex(index);
     try {
       const rows = await appointmentHelper.searchIcd9(value.trim());
-      setProcHits(Array.isArray(rows) && rows.length ? rows.slice(0, 8) : COMMON_ICD9);
+      const hits = Array.isArray(rows) ? rows.slice(0, 8) : [];
+      setProcHits(hits);
+      setProcQuery(value.trim());
+      setProcIndex(index);
     } catch {
-      setProcHits(COMMON_ICD9);
+      setProcHits([]);
+      setProcIndex(index);
     }
+  };
+
+  const closeIcdList = () => {
+    setIcdHits([]);
+    setIcdState("idle");
   };
 
   const validate = () => {
@@ -170,7 +184,6 @@ const EReferralIssueModal = ({
       next.push("Dla pracowni diagnostycznej wskaż co najmniej jedną procedurę ICD-9.");
     }
     if (isNfzFunded && !nfzBranch) next.push("Pole Oddział NFZ jest wymagane dla skierowania w ramach NFZ.");
-    if (isNfzFunded && !nfzContract.trim()) next.push("Skierowanie w ramach NFZ wymaga numeru umowy z NFZ.");
     setErrors(next);
     return next.length === 0;
   };
@@ -337,7 +350,7 @@ const EReferralIssueModal = ({
                     <select value={nfzBranch} onChange={(e) => setNfzBranch(e.target.value)} className={inputClass}>
                       {NFZ_BRANCHES.map((branch) => <option key={branch.code} value={branch.code}>{branch.label}</option>)}
                     </select>
-                    <input value={nfzContract} onChange={(e) => setNfzContract(e.target.value)} placeholder="Numer umowy z NFZ *" className={inputClass} />
+                    <input value={nfzContract} onChange={(e) => setNfzContract(e.target.value)} placeholder="Numer umowy z NFZ (opcjonalnie)" className={inputClass} />
                   </div>
                 )}
               </div>
@@ -355,12 +368,15 @@ const EReferralIssueModal = ({
                 <input
                   value={targetSearch}
                   onFocus={() => setTargetOpen(true)}
+                  onBlur={() => setTargetOpen(false)}
+                  onKeyDown={(e) => { if (e.key === "Escape") setTargetOpen(false); }}
                   onChange={(e) => { setTargetSearch(e.target.value); setTargetOpen(true); }}
                   className={inputClass}
                   placeholder="Kod resortowy lub nazwa komórki"
                 />
                 {targetOpen && (
                   <div className="absolute z-20 left-0 right-0 mt-1 bg-white border rounded-xl shadow-xl max-h-56 overflow-y-auto">
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); setTargetOpen(false); }} className="w-full text-right px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50">Zamknij listę</button>
                     {filteredResort.matched.map((item) => (
                       <button key={`${item.category}-${item.code}-${item.name}`} type="button" onMouseDown={() => { setTargetSearch(item.full); setTargetOpen(false); }} className="w-full text-left px-3 py-2 hover:bg-blue-50">
                         <span className="font-mono font-bold text-blue-700 mr-2">{item.code}</span>{item.name}
@@ -397,16 +413,28 @@ const EReferralIssueModal = ({
                 <div className="grid sm:grid-cols-12 gap-2">
                   <div className="sm:col-span-9">
                     {primaryIcd10 && <p className="mb-1 font-semibold text-slate-900">Wybrane: {primaryIcd10}</p>}
-                    <input value={icdQuery} onChange={(e) => setIcdQuery(e.target.value)} className={inputClass} placeholder={primaryIcd10 ? "Inny kod lub nazwa" : "Kod lub nazwa, np. I10"} />
-                    {icdHits.length > 0 && (
+                    <input
+                      value={icdQuery}
+                      onChange={(e) => setIcdQuery(e.target.value)}
+                      onBlur={closeIcdList}
+                      onKeyDown={(e) => { if (e.key === "Escape") closeIcdList(); }}
+                      className={inputClass}
+                      placeholder={primaryIcd10 ? "Inny kod lub nazwa" : "Kod lub nazwa, np. I10"}
+                    />
+                    {icdState === "loading" && <p className="mt-1 text-[11px] text-slate-500">Szukam w ICD-10…</p>}
+                    {(icdHits.length > 0 || icdState === "empty") && (
                       <ul className="mt-1 bg-white border rounded-xl max-h-48 overflow-y-auto">
                         {icdHits.map((row) => (
                           <li key={`${row.code}-${row.name}`}>
-                            <button type="button" onMouseDown={() => { setPrimaryIcd10(diagnosisLabel(row)); setIcdQuery(""); setIcdHits([]); }} className="w-full text-left px-3 py-2 hover:bg-blue-50">
+                            <button type="button" onMouseDown={() => { setPrimaryIcd10(formatCoded(row.code, row.name)); setIcdQuery(""); closeIcdList(); }} className="w-full text-left px-3 py-2 hover:bg-blue-50">
                               <span className="font-mono font-bold text-blue-700 mr-2">{row.code}</span>{row.name}
                             </button>
                           </li>
                         ))}
+                        {icdState === "empty" && <li className="px-3 py-2 text-slate-500">Brak kodów ICD-10 dla „{icdQuery.trim()}”.</li>}
+                        <li>
+                          <button type="button" onMouseDown={(e) => { e.preventDefault(); closeIcdList(); }} className="w-full text-right px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50">Zamknij listę</button>
+                        </li>
                       </ul>
                     )}
                   </div>
@@ -422,12 +450,13 @@ const EReferralIssueModal = ({
                     <div key={index} className="relative">
                       <input
                         value={value}
-                        onFocus={() => searchProcedure(index, value)}
                         onChange={(e) => searchProcedure(index, e.target.value)}
+                        onBlur={() => setProcIndex(-1)}
+                        onKeyDown={(e) => { if (e.key === "Escape") setProcIndex(-1); }}
                         className={inputClass}
-                        placeholder="Kod lub nazwa procedury"
+                        placeholder="Kod lub nazwa procedury, np. USG"
                       />
-                      {procIndex === index && procHits.length > 0 && (
+                      {procIndex === index && (procHits.length > 0 || value.trim().length >= 2) && (
                         <div className="mt-1 bg-white border rounded-xl max-h-40 overflow-y-auto">
                           {procHits.map((row) => (
                             <button
@@ -444,6 +473,8 @@ const EReferralIssueModal = ({
                               <span className="font-mono mr-2">{row.code}</span>{row.name || row.display}
                             </button>
                           ))}
+                          {procHits.length === 0 && procQuery === value.trim() && <p className="px-3 py-2 text-slate-500">Brak kodów ICD-9 dla „{value.trim()}”.</p>}
+                          <button type="button" onMouseDown={(e) => { e.preventDefault(); setProcIndex(-1); }} className="w-full text-right px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50">Zamknij listę</button>
                         </div>
                       )}
                     </div>

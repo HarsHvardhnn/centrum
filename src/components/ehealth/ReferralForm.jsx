@@ -69,7 +69,7 @@ function blockers(form) {
   if (form.type === "02.10LU") {
     if (!["TS", "TA"].includes(form.serviceMode)) messages.push("Wybierz tryb realizacji uzdrowiska (TS albo TA).");
     if (!["P", "E"].includes(form.modeOfCommunication)) messages.push("Wybierz sposób korespondencji (P albo E).");
-    if (!form.nfzContract?.trim()) messages.push("Skierowanie do uzdrowiska wymaga numeru umowy z NFZ.");
+    if (!form.nfzDepartment) messages.push("Skierowanie do uzdrowiska wymaga oddziału NFZ.");
     if (SPA_FINDINGS.some(([type]) => !String(form.physicalFindings?.[type] || "").trim())) {
       messages.push("Uzupełnij całe badanie przedmiotowe.");
     }
@@ -85,8 +85,8 @@ function blockers(form) {
   if ((form.icd9Code && !form.icd9Display) || (!form.icd9Code && form.icd9Display)) {
     messages.push("Procedura ICD-9 wymaga kodu i nazwy.");
   }
-  if (form.reimbursed === "Y" && (!form.nfzDepartment || !form.nfzContract.trim())) {
-    messages.push("Skierowanie refundowane wymaga oddziału NFZ i numeru umowy z NFZ.");
+  if (form.reimbursed === "Y" && !form.nfzDepartment) {
+    messages.push("Skierowanie refundowane wymaga oddziału NFZ.");
   }
   if (form.observation.trim() && form.type !== "02.10REH") {
     messages.push("Opis obserwacji jest dozwolony tylko dla rehabilitacji (02.10REH).");
@@ -188,7 +188,7 @@ const ReferralForm = ({ busy, onIssue, diagnoses = [], initialPayload }) => {
             </select>
           </label>
           <label className="block">
-            Numer umowy NFZ
+            Numer umowy NFZ (opcjonalnie)
             <input value={form.nfzContract} onChange={(e) => set({ nfzContract: e.target.value })} className="mt-1 w-full p-2.5 border rounded-lg" />
           </label>
         </div>
