@@ -67,7 +67,7 @@ function AppointmentPage() {
         
         toast.success(successMessage);
         const createdId = response?.data?.appointment?._id || response?.data?.appointment?.id;
-        if (orderId && createdId) {
+        if (orderId && createdId && linkedOrder) {
           try {
             await clinicFlowHelper.bookOrder(orderId, createdId);
             toast.success("Zlecenie wewnętrzne powiązane z tą wizytą.");
@@ -122,9 +122,14 @@ function AppointmentPage() {
         <p className="text-gray-600">
           Wyszukaj lekarza bezpośrednio po imieniu lub nazwisku albo wybierz specjalizację, aby wyświetlić dostępnych lekarzy. Następnie wybierz termin wizyty i uzupełnij dane pacjenta.
         </p>
-        {orderId && (
+        {orderId && linkedOrder && (
           <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-            Umówienie ze zlecenia wewnętrznego{linkedOrder ? `: ${linkedOrder.exam} dla ${linkedOrder.patientName || "pacjenta"}` : ""}. Wybierz termin tak jak przy zwykłej wizycie. Po zapisie zlecenie zostanie powiązane z tą wizytą.
+            Umówienie ze zlecenia wewnętrznego: {linkedOrder.exam} dla {linkedOrder.patientName || "pacjenta"}. Wybierz termin tak jak przy zwykłej wizycie. Po zapisie zlecenie zostanie powiązane z tą wizytą.
+          </p>
+        )}
+        {orderId && !linkedOrder && (
+          <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            To zlecenie wewnętrzne zostało anulowane albo nie istnieje. Możesz umówić zwykłą wizytę.
           </p>
         )}
       </div>

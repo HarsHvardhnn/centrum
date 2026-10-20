@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, Building2, CheckCircle2, History, Loader2, Plus, Printer, Search, ShieldCheck, X } from "lucide-react";
+import { AlertTriangle, Building2, CheckCircle2, History, Loader2, Plus, Printer, ShieldCheck, X } from "lucide-react";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
-import appointmentHelper from "../../helpers/appointmentHelper";
 import P1SignDialog from "./P1SignDialog";
 import { patientForDocument } from "./IssuePatientCard";
 import { STATUS_LABELS, accessCodeOf } from "./ehealthStatus";
+import IcdField from "./IcdField";
 import { icdRoot, visitDiagnosisRows } from "./visitIcd";
 
 const INSTITUTIONS = [
@@ -103,31 +103,27 @@ function parseAddress(patient) {
   return { postalCode: postal, city, street, houseNumber: house[1] || "", apartment: house[2] || "" };
 }
 
+function isCm7Facility(name) {
+  const text = String(name || "").toLowerCase();
+  return text.includes("centrum medyczne 7") || /\bcm7\b/.test(text);
+}
+
+function leaveOrigin(card) {
+  return card?.origin === "cm7" ? "cm7" : "other";
+}
+
 function buildLeaveCards(clinic, zus) {
   const cards = [];
   const bySeries = new Map();
-  for (const row of zus || []) {
-    const card = { ...row, source: "zus", document: null };
-    const key = row.series && row.number ? `${row.series}|${row.number}` : "";
-    if (key) bySeries.set(key, card);
-    cards.push(card);
-  }
+
   for (const row of clinic || []) {
     const payload = row.payload || {};
     const refs = payload.refs || {};
     const series = refs.ezlaSeries || "";
     const number = refs.ezlaNumber || "";
     const key = series && number ? `${series}|${number}` : "";
-    const existing = key ? bySeries.get(key) : null;
-    if (existing) {
-      existing.source = "both";
-      existing.document = row;
-      if (!existing.icd) existing.icd = icdRoot(payload.icd10 || payload.diseaseStatisticalNumber || "");
-      if (!existing.doctorName) existing.doctorName = payload.doctorName || "";
-      continue;
-    }
-    cards.push({
-      source: "centrum",
+    const card = {
+      origin: "cm7",
       document: row,
       series,
       number: number || row.externalId || "",
@@ -137,19 +133,57 @@ function buildLeaveCards(clinic, zus) {
       status: STATUS_LABELS[row.status] || row.status || "",
       icd: icdRoot(payload.icd10 || payload.diseaseStatisticalNumber || ""),
       doctorName: payload.doctorName || "",
-      pwz: "",
+      pwz: payload.pwz || "",
       facility: "Centrum Medyczne 7",
       place: [payload.city, payload.postalCode].filter(Boolean).join(", "),
       payerId: "",
       hospitalDays: "",
+    };
+    cards.push(card);
+    if (key) bySeries.set(key, card);
+  }
+
+  for (const row of zus || []) {
+    const key = row.series && row.number ? `${row.series}|${row.number}` : "";
+    const existing = key ? bySeries.get(key) : null;
+    if (existing) {
+      existing.from = existing.from || row.from;
+      existing.to = existing.to || row.to;
+      existing.issuedAt = existing.issuedAt || row.issuedAt;
+      existing.status = existing.status || row.status;
+      existing.icd = existing.icd || icdRoot(row.icd);
+      existing.doctorName = existing.doctorName || row.doctorName;
+      existing.pwz = existing.pwz || row.pwz;
+      existing.place = existing.place || row.place;
+      existing.payerId = existing.payerId || row.payerId;
+      existing.hospitalDays = existing.hospitalDays || row.hospitalDays;
+      continue;
+    }
+    cards.push({
+      origin: isCm7Facility(row.facility) ? "cm7" : "other",
+      document: null,
+      series: row.series || "",
+      number: row.number || "",
+      from: row.from || "",
+      to: row.to || "",
+      issuedAt: row.issuedAt || "",
+      status: row.status || "",
+      icd: icdRoot(row.icd),
+      doctorName: row.doctorName || "",
+      pwz: row.pwz || "",
+      facility: row.facility || (isCm7Facility(row.facility) ? "Centrum Medyczne 7" : ""),
+      place: row.place || "",
+      payerId: row.payerId || "",
+      hospitalDays: row.hospitalDays || "",
     });
   }
+
   const today = new Date().toISOString().slice(0, 10);
   return cards
     .map((card, index) => {
       const cancelled = /anul|uniewa|cancel/i.test(String(card.status || ""));
       const active = !cancelled && Boolean(card.from) && Boolean(card.to) && card.from <= today && today <= card.to;
-      return { ...card, active, key: `${card.series}|${card.number}|${card.from}|${index}` };
+      return { ...card, active, key: `${card.origin}|${card.series}|${card.number}|${card.from}|${index}` };
     })
     .sort((a, b) => String(b.from || b.issuedAt).localeCompare(String(a.from || a.issuedAt)));
 }
@@ -207,13 +241,11 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
   const [zusRows, setZusRows] = useState([]);
   const [zusError, setZusError] = useState("");
   const [historyBusy, setHistoryBusy] = useState(false);
+  const [historyOrigin, setHistoryOrigin] = useState("all");
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [newPayer, setNewPayer] = useState({ name: "", nip: "", type: "1", hasPue: true });
-  const [icdQuery, setIcdQuery] = useState("");
-  const [icdHits, setIcdHits] = useState([]);
-  const [icdEmpty, setIcdEmpty] = useState(false);
   const [contextNote, setContextNote] = useState("");
 
   const pesel = String(patient?.pesel || "").replace(/\D/g, "");
@@ -275,8 +307,6 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
     setChecked(false);
     setErrors([]);
     setResult(null);
-    setIcdQuery("");
-    setIcdHits([]);
   }, [open]);
 
   useEffect(() => {
@@ -313,24 +343,19 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
     return () => { cancelled = true; };
   }, [open, patientId, form.institution]);
 
-  useEffect(() => {
-    const q = icdQuery.trim();
-    if (q.length < 2) { setIcdHits([]); setIcdEmpty(false); return undefined; }
-    const timer = setTimeout(async () => {
-      try {
-        const rows = await appointmentHelper.searchIcd10(q);
-        const hits = Array.isArray(rows) ? rows : [];
-        setIcdHits(hits);
-        setIcdEmpty(hits.length === 0);
-      } catch { setIcdHits([]); setIcdEmpty(true); }
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [icdQuery]);
+  const leaveCards = useMemo(() => buildLeaveCards(historyRows, zusRows), [historyRows, zusRows]);
+  const visibleLeaveCards = useMemo(
+    () => (historyOrigin === "all" ? leaveCards : leaveCards.filter((card) => leaveOrigin(card) === historyOrigin)),
+    [leaveCards, historyOrigin],
+  );
+  const cm7LeaveCards = visibleLeaveCards.filter((card) => leaveOrigin(card) === "cm7");
+  const otherLeaveCards = visibleLeaveCards.filter((card) => leaveOrigin(card) === "other");
 
   if (!open) return null;
 
   const loadHistory = async () => {
     setHistoryOpen(true);
+    setHistoryOrigin("all");
     setHistoryBusy(true);
     try {
       const res = await ehealthHelper.ezlaHistory({ patientId });
@@ -380,8 +405,6 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
     setHistoryOpen(false);
     toast.success("Dane zwolnienia wstawiono do formularza. Sprawdź daty przed podpisem.");
   };
-
-  const leaveCards = buildLeaveCards(historyRows, zusRows);
 
   const runCheck = () => {
     const next = validate(form, patient);
@@ -477,7 +500,7 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
       onDocumentsChanged?.(doc);
       toast.success("Wysłano anulowanie e-ZLA");
     } catch (err) {
-      toast.error(unwrapEhealthError(err).message);
+      throw new Error(unwrapEhealthError(err).message);
     } finally {
       setBusy(false);
     }
@@ -517,26 +540,6 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
   };
 
   const visitIcd = visitDiagnosisRows(diagnoses);
-
-  const applyVisitDiagnosis = (row) => {
-    const code = icdRoot(row?.code || row?.name || "");
-    if (!/^[A-Z][0-9]{2}$/.test(code)) {
-      toast.error("Na wizycie nie ma kodu ICD-10.");
-      return;
-    }
-    patch({ icd10: code, icdName: row?.name || "" });
-    setIcdQuery("");
-    setIcdHits([]);
-  };
-
-  const copyVisitDiagnosis = () => {
-    const row = visitIcd.find((item) => item.isPrimary) || visitIcd[0];
-    if (!row) {
-      toast.error("Na wizycie nie ma kodu ICD-10.");
-      return;
-    }
-    applyVisitDiagnosis(row);
-  };
 
   const series = result?.payload?.refs?.ezlaSeries && result?.payload?.refs?.ezlaNumber
     ? `${result.payload.refs.ezlaSeries} ${result.payload.refs.ezlaNumber}`
@@ -718,55 +721,15 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
                 </section>
 
                 <section className="rounded-xl border border-slate-200 p-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Rozpoznanie ICD-10</h4>
-                    <button type="button" onClick={copyVisitDiagnosis} className="text-xs font-semibold text-indigo-700">Pobierz rozpoznanie z wizyty</button>
-                  </div>
-                  {visitIcd.length > 0 && (
-                    <div className="mb-2 flex flex-wrap gap-1">
-                      {visitIcd.map((row) => (
-                        <button
-                          key={`${row.code}-${row.name}`}
-                          type="button"
-                          onClick={() => applyVisitDiagnosis(row)}
-                          className={`rounded-lg border px-2 py-1 text-left text-xs ${form.icd10 && icdRoot(row.code) === form.icd10 ? "border-indigo-600 bg-indigo-50" : "border-slate-200 bg-white hover:bg-slate-50"}`}
-                        >
-                          <span className="font-semibold">{row.code}</span> {row.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <div className="relative">
-                    <Search size={14} className="absolute left-2 top-2.5 text-slate-400" />
-                    <input
-                      value={icdQuery}
-                      onChange={(e) => setIcdQuery(e.target.value)}
-                      onBlur={() => { setIcdHits([]); setIcdEmpty(false); }}
-                      onKeyDown={(e) => { if (e.key === "Escape") { setIcdHits([]); setIcdEmpty(false); } }}
-                      placeholder={form.icd10 ? `${form.icd10}${form.icdName ? ` — ${form.icdName}` : ""}` : "Szukaj kodu lub nazwy"}
-                      className="w-full rounded-lg border py-2 pl-7 pr-2 text-sm"
-                    />
-                  </div>
-                  {icdEmpty && icdHits.length === 0 && <p className="mt-1 text-[11px] text-slate-500">Brak kodów ICD-10 dla „{icdQuery.trim()}”.</p>}
-                  {icdHits.length > 0 && (
-                    <ul className="mt-1 max-h-36 overflow-auto rounded-lg border bg-white text-sm">
-                      <li>
-                        <button type="button" className="block w-full px-2 py-1 text-right text-[11px] font-semibold text-slate-500" onMouseDown={(e) => { e.preventDefault(); setIcdHits([]); setIcdEmpty(false); }}>Zamknij listę</button>
-                      </li>
-                      {icdHits.slice(0, 8).map((hit) => {
-                        const code = hit.code || "";
-                        const name = hit.name || "";
-                        return (
-                          <li key={`${code}-${name}`}>
-                            <button type="button" className="block w-full px-2 py-1.5 text-left hover:bg-slate-50" onMouseDown={(e) => { e.preventDefault(); patch({ icd10: icdRoot(code), icdName: name }); setIcdQuery(""); setIcdHits([]); setIcdEmpty(false); }}>
-                              <span className="font-semibold">{icdRoot(code)}</span> {name}
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                  <p className="mt-2 text-[11px] text-slate-500">Do ZUS idzie kod główny {form.icd10 || "—"}. Numer statystyczny nie jest pokazywany pracodawcy.</p>
+                  <IcdField
+                    label="Rozpoznanie ICD-10"
+                    hint={`Do ZUS idzie kod główny ${form.icd10 || "—"}. Numer statystyczny nie jest pokazywany pracodawcy.`}
+                    code={form.icd10}
+                    name={form.icdName}
+                    diagnoses={visitIcd}
+                    importLabel="Pobierz z wizyty"
+                    onPick={(item) => patch({ icd10: icdRoot(item.code) || "", icdName: item.name || "" })}
+                  />
                   <div className="mt-3 space-y-1">
                     {LETTERS.map((item) => (
                       <label key={item.id} className={`flex items-center gap-2 text-xs ${item.id === "B" && male ? "text-slate-400" : "text-slate-700"}`}>
@@ -802,51 +765,55 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
       <P1SignDialog
         open={signOpen}
         title="Autoryzacja wystawienia e-ZLA"
-        busy={busy}
-        accent="blue"
+        actionText="Podpisz i wyślij do ZUS"
+        doctorLine={[patient?.doctorName, patient?.pwz ? `PWZ ${patient.pwz}` : ""].filter(Boolean).join(" · ")}
         onClose={() => !busy && setSignOpen(false)}
-        onConfirm={() => submit({}).then(() => setSignOpen(false)).catch((err) => toast.error(err?.message || "Nie udało się wysłać e-ZLA"))}
+        onConfirm={() => submit({}).then(() => setSignOpen(false))}
       />
 
       {historyOpen && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="flex max-h-[80vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-xl">
+          <div className="flex max-h-[86vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b px-4 py-3">
               <div>
-                <h4 className="font-bold">Historia zwolnień e-ZLA z bazy ZUS PUE</h4>
-                <p className="text-xs text-slate-500">{patient?.name} · PESEL {pesel || "—"} · zwolnienia z Centrum i wystawione w innych placówkach</p>
+                <h4 className="font-bold">Historia zwolnień e-ZLA</h4>
+                <p className="text-xs text-slate-500">{patient?.name} · PESEL {pesel || "—"} · osobno CM7 i inne placówki</p>
               </div>
               <button type="button" onClick={() => setHistoryOpen(false)}><X size={16} /></button>
             </div>
-            <div className="flex-1 space-y-2 overflow-y-auto p-4">
-              {historyBusy && <p className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={14} className="animate-spin" /> Pobieranie z Centrum i z ZUS…</p>}
-              {zusError && <p className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">{zusError}</p>}
-              {!historyBusy && leaveCards.length === 0 && <p className="text-sm text-slate-500">Brak zwolnień dla tego numeru PESEL.</p>}
-              {leaveCards.map((card) => (
-                <div key={card.key} className={`rounded-xl border p-3 ${card.active ? "border-emerald-300 bg-emerald-50/40" : ""}`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold">{card.from || "—"} — {card.to || "—"}{card.icd ? ` · ${card.icd}` : ""}</p>
-                      <p className="mt-1 text-xs text-slate-600">
-                        {[card.series, card.number].filter(Boolean).join(" ") || "bez serii i numeru"}
-                        {card.issuedAt ? ` · wystawione ${card.issuedAt}` : ""}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      {card.active && <span className="rounded-full bg-emerald-700 px-2 py-0.5 text-[10px] font-bold text-white">Aktywne</span>}
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">{card.source === "both" ? "Centrum i ZUS" : card.source === "zus" ? "ZUS" : "Centrum"}</span>
-                      {card.status && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">{card.status}</span>}
-                    </div>
-                  </div>
-                  <div className="mt-2 space-y-0.5 text-xs text-slate-700">
-                    <p>Wystawił: {card.doctorName || "—"}{card.pwz ? ` · PWZ ${card.pwz}` : ""}</p>
-                    <p>Miejsce: {[card.facility, card.place].filter(Boolean).join(" · ") || "—"}</p>
-                    {card.payerId && <p>Płatnik: {card.payerId}</p>}
-                    {card.hospitalDays && card.hospitalDays !== "0" && <p>Pobyt w szpitalu: {card.hospitalDays} dni</p>}
-                  </div>
-                  {card.document && <button type="button" onClick={() => applyHistory(card.document)} className="mt-2 text-xs font-semibold text-indigo-700">Powiel</button>}
-                </div>
+            <div className="flex flex-wrap gap-1.5 border-b bg-slate-50 px-4 py-2">
+              {[
+                ["all", `Wszystkie (${leaveCards.length})`],
+                ["cm7", `Wystawione w CM7 (${leaveCards.filter((card) => leaveOrigin(card) === "cm7").length})`],
+                ["other", `Inne placówki (${leaveCards.filter((card) => leaveOrigin(card) === "other").length})`],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setHistoryOrigin(value)}
+                  className={`rounded-lg border px-3 py-1 text-xs font-semibold ${historyOrigin === value ? "border-indigo-700 bg-indigo-700 text-white" : "border-slate-200 bg-white text-slate-600"}`}
+                >
+                  {label}
+                </button>
               ))}
+            </div>
+            <div className="flex-1 space-y-4 overflow-y-auto p-4">
+              {historyBusy && <p className="flex items-center gap-2 text-sm text-slate-500"><Loader2 size={14} className="animate-spin" /> Pobieranie z CM7 i z ZUS…</p>}
+              {zusError && <p className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">{zusError}</p>}
+              {!historyBusy && visibleLeaveCards.length === 0 && <p className="text-sm text-slate-500">Brak zwolnień w wybranej kategorii.</p>}
+              {historyOrigin === "all" && cm7LeaveCards.length > 0 && (
+                <LeaveGroup title="Wystawione w CM7" cards={cm7LeaveCards} onDuplicate={applyHistory} />
+              )}
+              {historyOrigin === "all" && otherLeaveCards.length > 0 && (
+                <LeaveGroup title="Wystawione w innych placówkach" cards={otherLeaveCards} onDuplicate={applyHistory} />
+              )}
+              {historyOrigin !== "all" && visibleLeaveCards.length > 0 && (
+                <LeaveGroup
+                  title={historyOrigin === "cm7" ? "Wystawione w CM7" : "Wystawione w innych placówkach"}
+                  cards={visibleLeaveCards}
+                  onDuplicate={applyHistory}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -876,21 +843,86 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
         </div>
       )}
 
-      {cancelOpen && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl">
-            <h4 className="font-bold">Anulowanie e-ZLA</h4>
-            <textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} rows={3} placeholder="Powód anulowania" className="mt-3 w-full rounded-lg border px-2 py-2 text-sm" />
-            <div className="mt-4 flex justify-end gap-2">
-              <button type="button" onClick={() => setCancelOpen(false)} className="rounded-lg px-3 py-2 text-sm">Wróć</button>
-              <button type="button" disabled={cancelReason.trim().length < 3 || busy} onClick={cancelIssued} className="rounded-lg bg-rose-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">Anuluj zaświadczenie</button>
-            </div>
+      <P1SignDialog
+        open={cancelOpen}
+        isDestructive
+        title="Autoryzacja anulowania e-ZLA w ZUS"
+        actionText="Podpisz i anuluj w ZUS"
+        doctorLine={[patient?.doctorName, patient?.pwz ? `PWZ ${patient.pwz}` : ""].filter(Boolean).join(" · ")}
+        onClose={() => setCancelOpen(false)}
+        onConfirm={async () => {
+          if (cancelReason.trim().length < 5) {
+            throw new Error("Powód anulowania musi mieć co najmniej 5 znaków.");
+          }
+          await cancelIssued();
+        }}
+      >
+        <div className="space-y-3.5">
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-950">
+            <strong className="font-bold text-amber-900 block mb-0.5">Uwaga: Ta operacja trwale wycofa dokument z systemu ZUS.</strong>
+            Wymaga podania powodu oraz autoryzacji kodem PIN certyfikatu.
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700">Powód anulowania zaświadczenia lekarskiego *</label>
+            <textarea
+              rows={3}
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="np. Błąd w dacie początkowej, błędnie wskazany płatnik..."
+              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs"
+            />
           </div>
         </div>
-      )}
+      </P1SignDialog>
     </div>
   );
 };
+
+function LeaveGroup({ title, cards, onDuplicate }) {
+  return (
+    <section className="space-y-2">
+      <h5 className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{title}</h5>
+      {cards.map((card) => (
+        <LeaveCard key={card.key} card={card} onDuplicate={onDuplicate} />
+      ))}
+    </section>
+  );
+}
+
+function LeaveCard({ card, onDuplicate }) {
+  const cm7 = leaveOrigin(card) === "cm7";
+  return (
+    <div className={`rounded-xl border p-3 ${card.active ? "border-emerald-300 bg-emerald-50/40" : "border-slate-200 bg-white"}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-semibold">{card.from || "—"} — {card.to || "—"}{card.icd ? ` · ${card.icd}` : ""}</p>
+          <p className="mt-1 text-xs text-slate-600">
+            {[card.series, card.number].filter(Boolean).join(" ") || "bez serii i numeru"}
+            {card.issuedAt ? ` · wystawione ${card.issuedAt}` : ""}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          {card.active && <span className="rounded-full bg-emerald-700 px-2 py-0.5 text-[10px] font-bold text-white">Aktywne</span>}
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${cm7 ? "bg-slate-800 text-white" : "bg-sky-100 text-sky-800"}`}>
+            {cm7 ? "CM7" : "Inna placówka"}
+          </span>
+          {card.status && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">{card.status}</span>}
+        </div>
+      </div>
+      <div className="mt-2 space-y-0.5 text-xs text-slate-700">
+        <p>Wystawił: {card.doctorName || "—"}{card.pwz ? ` · PWZ ${card.pwz}` : ""}</p>
+        <p>Miejsce: {[card.facility, card.place].filter(Boolean).join(" · ") || (cm7 ? "Centrum Medyczne 7" : "—")}</p>
+        {card.payerId && <p>Płatnik: {card.payerId}</p>}
+        {card.hospitalDays && card.hospitalDays !== "0" && <p>Pobyt w szpitalu: {card.hospitalDays} dni</p>}
+      </div>
+      {card.document && (
+        <button type="button" onClick={() => onDuplicate(card.document)} className="mt-2 text-xs font-semibold text-indigo-700">
+          Powiel
+        </button>
+      )}
+    </div>
+  );
+}
 
 function Field({ label, value, onChange, type = "text", placeholder, className = "" }) {
   return (

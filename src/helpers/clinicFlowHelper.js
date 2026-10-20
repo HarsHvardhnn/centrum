@@ -11,8 +11,8 @@ const clinicFlowHelper = {
   outgoingShares(visitId) {
     return apiCaller("GET", `/api/clinic-flow/shares/outgoing?visitId=${visitId}`).then(unwrap);
   },
-  shareReport({ visitId, reportId, toDoctorId }) {
-    return apiCaller("POST", "/api/clinic-flow/shares", { visitId, reportId, toDoctorId }).then(unwrap);
+  shareReport({ visitId, reportId, clinicDocumentId, toDoctorId }) {
+    return apiCaller("POST", "/api/clinic-flow/shares", { visitId, reportId, clinicDocumentId, toDoctorId }).then(unwrap);
   },
   openSharedFile(shareId) {
     return apiCaller("GET", `/api/clinic-flow/shares/${shareId}/file`).then(unwrap);

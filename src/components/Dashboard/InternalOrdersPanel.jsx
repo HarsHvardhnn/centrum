@@ -23,7 +23,10 @@ export default function InternalOrdersPanel() {
         {rows.map((row) => (
           <div key={row.id} className="border border-slate-200 rounded-lg p-3 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-sm font-semibold text-slate-900">{row.exam}</div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="text-sm font-semibold text-slate-900">{row.exam}</div>
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-amber-50 text-amber-800 border-amber-200">Czeka na recepcję</span>
+              </div>
               <div className="text-xs text-slate-600 mt-0.5">
                 {row.patientName || "Pacjent"} · zlecił {row.orderedByName || "lekarz"}
               </div>
@@ -48,7 +51,7 @@ export default function InternalOrdersPanel() {
                     toast.error(err.response?.data?.message || "Nie udało się anulować zlecenia");
                   }
                 }}
-                className="px-3 py-1.5 rounded-lg border text-xs"
+                className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-600"
               >
                 Anuluj
               </button>

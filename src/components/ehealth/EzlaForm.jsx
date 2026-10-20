@@ -97,7 +97,7 @@ function inclusiveDays(from, to) {
   return Math.round((end - start) / 86400000) + 1;
 }
 
-const EzlaForm = ({ busy, patientId, onIssue, initialPayload }) => {
+const EzlaForm = ({ busy, patientId, onIssue, initialPayload, diagnoses = [] }) => {
   const [form, setForm] = useState(() => ({ ...empty, ...(initialPayload || {}) }));
   const [suggestedPayers, setSuggestedPayers] = useState([]);
   const [family, setFamily] = useState([]);
@@ -199,7 +199,8 @@ const EzlaForm = ({ busy, patientId, onIssue, initialPayload }) => {
         hint="Do ZUS trafia tylko kod główny, bez części po kropce."
         code={form.icd10}
         name={form.icdName}
-        onPick={(item) => set({ icd10: item.code, icdName: item.name })}
+        diagnoses={diagnoses}
+        onPick={(item) => set({ icd10: String(item.code || "").toUpperCase().replace(/\..*$/, ""), icdName: item.name })}
       />
       <div className="grid grid-cols-4 gap-2">
         {["disease1", "disease2", "disease3", "disease4"].map((key, index) => (

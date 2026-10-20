@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import IcdField from "./IcdField";
 
 const CELLS = [
@@ -98,15 +98,6 @@ const ReferralForm = ({ busy, onIssue, diagnoses = [], initialPayload }) => {
   const [form, setForm] = useState(() => ({ ...empty, ...(initialPayload || {}) }));
   const issues = useMemo(() => blockers(form), [form]);
   const set = (patch) => setForm((prev) => ({ ...prev, ...patch }));
-
-  useEffect(() => {
-    if (form.icd10Code || !diagnoses.length) return;
-    const primary = diagnoses.find((row) => row.isPrimary) || diagnoses[0];
-    const code = primary.code || primary.icd10Code || "";
-    const name = primary.name || primary.icd10Display || primary.title || "";
-    if (!code) return;
-    set({ icd10Code: code, icd10Display: name });
-  }, [diagnoses, form.icd10Code]);
   const cell = CELLS.find((row) => row.specialityCode === form.performerCode);
 
   return (
@@ -142,6 +133,7 @@ const ReferralForm = ({ busy, onIssue, diagnoses = [], initialPayload }) => {
         label="Rozpoznanie ICD-10"
         code={form.icd10Code}
         name={form.icd10Display}
+        diagnoses={diagnoses}
         onPick={(item) => set({ icd10Code: item.code, icd10Display: item.name })}
       />
       <label className="block">

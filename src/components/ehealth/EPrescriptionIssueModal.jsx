@@ -7,6 +7,8 @@ import IssuePatientCard, { normalizePatient, patientForDocument } from "./IssueP
 import PrescriptionHistoryModal from "./PrescriptionHistoryModal";
 import { STATUS_LABELS, statusClass, accessCodeOf } from "./ehealthStatus";
 import { visitDiagnosisRows } from "./visitIcd";
+import { classifyDrug } from "./drugClass";
+import P1SignDialog from "./P1SignDialog";
 
 const PAYMENTS = [
   { value: "100%", label: "100%" },
@@ -160,7 +162,6 @@ function syncRecipeItem(item, patch) {
 function blankRecipe(diagnoses) {
   return syncRecipeItem({
     ...blankItem("recipe"),
-    ...primaryDiagnosis(diagnoses),
     payment: "R",
     recipeForm: RECIPE_FORMS[0],
     recipePackaging: RECIPE_PACKS[0],
@@ -530,25 +531,15 @@ function visitDiagnoses(rows) {
   return visitDiagnosisRows(rows).filter((row) => row.code);
 }
 
-function primaryDiagnosis(rows) {
-  const list = visitDiagnoses(rows);
-  const row = list.find((item) => item.isPrimary) || list[0];
-  return row ? { icd10Code: row.code, icd10Display: row.name } : { icd10Code: "", icd10Display: "" };
-}
-
 function catalogClass(drug) {
-  if (drug?.isRpw === true || drug?.isRpw === 1 || drug?.isRpw === "true") return "Rpw";
-  const raw = String(drug?.kdlek || drug?.category || drug?.prescriptionType || "").trim().toLowerCase();
-  if (raw === "rpw") return "Rpw";
-  if (raw === "rpz") return "Rpz";
-  if (raw === "rp") return "Rp";
-  if (raw === "otc") return "OTC";
-  return "";
+  return classifyDrug(drug);
 }
 
 function itemKind(item, headerForm) {
   if (headerForm === "recipe") return "recipe";
   if (headerForm === "Rpz") return "Rpz";
+  const fromDrug = classifyDrug(item?.drug || item);
+  if (fromDrug === "Rpw" || fromDrug === "Rpz") return fromDrug;
   const raw = String(item?.category || item?.drug?.kdlek || item?.drug?.category || "").trim();
   if (raw === "Rpw") return "Rpw";
   if (raw === "Rpz") return "Rpz";
@@ -832,7 +823,6 @@ export default function EPrescriptionIssueModal({
       item.category = "Rpw";
       fillRpwSubstance(item);
       item.payment = drug.reimbursed ? "30%" : "100%";
-      Object.assign(item, primaryDiagnosis(diagnoses));
       setHeader((prev) => ({ ...prev, form: "Rpw" }));
       setTabs((prev) => prev.map((tab) => (tab.id !== activeTab?.id ? tab : { ...tab, form: "Rpw", items: [item] })));
       setQuery("");
@@ -866,7 +856,6 @@ export default function EPrescriptionIssueModal({
     if (header.form === "Rpw") fillRpwSubstance(item);
     else item.substanceName = drug.activeSubstance || "";
     item.payment = drug.reimbursed ? "30%" : "100%";
-    Object.assign(item, primaryDiagnosis(diagnoses));
     setItems((prev) => [...prev, item]);
     setQuery("");
     setCatalog([]);
@@ -891,7 +880,6 @@ export default function EPrescriptionIssueModal({
     item.substanceName = row.substanceName || row.drug?.activeSubstance || "";
     item.icd10Code = row.icd10Code || "";
     item.icd10Display = row.icd10Display || "";
-    if (!item.icd10Code) Object.assign(item, primaryDiagnosis(diagnoses));
     return item;
   };
 
@@ -1241,25 +1229,30 @@ export default function EPrescriptionIssueModal({
         onClose={() => setHistoryOpen(false)}
         onRepeat={repeatFromHistory}
       />
-      {signOpen && (
-        <SignModal
-          count={packages.length}
-          onClose={() => setSignOpen(false)}
-          onPreview={() => setPreviewOpen(true)}
-          onConfirm={async () => {
-            try {
-              setBusy(true);
-              await submitSigned();
-              setSignOpen(false);
-            } catch (err) {
-              toast.error(unwrapEhealthError(err).message);
-            } finally {
-              setBusy(false);
-            }
-          }}
-          busy={busy}
-        />
-      )}
+      <P1SignDialog
+        open={signOpen}
+        title="Autoryzacja wysyłki do P1"
+        actionText="Podpisz i wyślij"
+        doctorLine={[patient?.doctorName, patient?.pwz ? `PWZ ${patient.pwz}` : ""].filter(Boolean).join(" · ") || "Bezpieczny podpis P1"}
+        onClose={() => setSignOpen(false)}
+        onConfirm={async () => {
+          try {
+            setBusy(true);
+            await submitSigned();
+            setSignOpen(false);
+          } catch (err) {
+            toast.error(unwrapEhealthError(err).message);
+            throw err;
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between text-sm">
+          <span>{packages.length <= 1 ? "1 e-recepta" : `${packages.length} e-recepty, każda z osobnym kodem`}</span>
+          <button type="button" onClick={() => setPreviewOpen(true)} className="text-slate-700 font-semibold text-xs underline underline-offset-4">Podgląd</button>
+        </div>
+      </P1SignDialog>
     </div>
   );
 }
@@ -1286,6 +1279,7 @@ function IcdPicker({ diagnoses, code, name, onChange }) {
   const [hits, setHits] = useState([]);
   const [open, setOpen] = useState(false);
   const [empty, setEmpty] = useState(false);
+  const primary = diagnoses.find((row) => row.isPrimary) || diagnoses[0];
 
   useEffect(() => {
     const term = query.trim();
@@ -1318,23 +1312,51 @@ function IcdPicker({ diagnoses, code, name, onChange }) {
     setEmpty(false);
   };
 
+  const clear = () => {
+    onChange({ code: "", name: "" });
+    setQuery("");
+    setHits([]);
+    setOpen(false);
+    setEmpty(false);
+  };
+
   return (
     <div className="text-xs font-semibold text-slate-700">
       Rozpoznanie (ICD-10) *
-      {code && <div className="mt-1 font-medium text-slate-900">{code} — {name}</div>}
+      {code ? (
+        <div className="mt-1 flex items-start justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1.5">
+          <div className="font-medium text-slate-900">
+            <span className="font-mono">{code}</span>
+            {name ? <span className="ml-1 font-normal text-slate-700">— {name}</span> : null}
+          </div>
+          <button type="button" onClick={clear} className="shrink-0 text-[11px] font-semibold text-slate-500 hover:text-slate-800">Usuń</button>
+        </div>
+      ) : (
+        <p className="mt-1 text-[11px] font-normal text-slate-500">Pole jest puste. Wybierz rozpoznanie z wizyty albo wyszukaj inny kod.</p>
+      )}
       {diagnoses.length > 0 && (
-        <div className="mt-1 flex flex-wrap gap-1">
-          {diagnoses.map((row) => (
-            <button
-              key={`${row.code}-${row.name}`}
-              type="button"
-              onClick={() => pick(row.code, row.name)}
-              className={`px-2 py-1 rounded-lg border text-left font-medium ${row.code === code ? "border-emerald-600 bg-emerald-50" : "border-slate-200 bg-white hover:bg-emerald-50"}`}
-            >
-              <span className="font-mono">{row.code}</span>
-              {row.name ? <span className="ml-1 font-normal text-slate-700">{row.name}</span> : null}
-            </button>
-          ))}
+        <div className="mt-1 space-y-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-normal text-slate-500">Z tej wizyty</span>
+            {primary?.code && (
+              <button type="button" onClick={() => pick(primary.code, primary.name)} className="text-[11px] font-semibold text-[#0D5C46]">
+                Pobierz z wizyty
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {diagnoses.map((row) => (
+              <button
+                key={`${row.code}-${row.name}`}
+                type="button"
+                onClick={() => (row.code === code && row.name === name ? clear() : pick(row.code, row.name))}
+                className={`px-2 py-1 rounded-lg border text-left font-medium ${row.code === code ? "border-emerald-600 bg-emerald-50" : "border-slate-200 bg-white hover:bg-emerald-50"}`}
+              >
+                <span className="font-mono">{row.code}</span>
+                {row.name ? <span className="ml-1 font-normal text-slate-700">{row.name}</span> : null}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       <input
@@ -1342,7 +1364,7 @@ function IcdPicker({ diagnoses, code, name, onChange }) {
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
         onBlur={() => setOpen(false)}
         onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
-        placeholder={code ? "Inny kod lub nazwa" : "Kod lub nazwa, np. I10"}
+        placeholder={code ? "Zamień na inny kod lub nazwę" : "Kod lub nazwa, np. I10"}
         className="mt-1 w-full p-2 border rounded-lg font-medium"
       />
       {open && empty && <p className="mt-1 text-[11px] font-normal text-slate-500">Brak kodów ICD-10 dla „{query.trim()}”.</p>}
@@ -1956,8 +1978,13 @@ function DrugList({ title, drugs, onAdd }) {
       <p className="text-[11px] font-semibold text-slate-500">{title}</p>
       {drugs.map((drug) => (
         <button key={`${title}-${drug.ean || drug.name}`} type="button" onClick={() => onAdd(drug)} className="w-full text-left bg-white border border-slate-200 rounded-lg px-3 py-2 hover:border-[#0D5C46]">
-          <div className="text-sm font-medium">{drug.name}</div>
-          <div className="text-[11px] text-slate-500">{[drug.kdlek, drug.activeSubstance, drug.package, drug.ean].filter(Boolean).join(" · ")}</div>
+          <div className="text-sm font-medium flex items-center gap-2">
+            <span>{drug.name}</span>
+            {classifyDrug(drug) === "Rpw" && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">Rpw</span>
+            )}
+          </div>
+          <div className="text-[11px] text-slate-500">{[classifyDrug(drug) || drug.kdlek, drug.activeSubstance, drug.package, drug.ean].filter(Boolean).join(" · ")}</div>
         </button>
       ))}
     </div>
@@ -1984,65 +2011,6 @@ function PreviewOverlay({ items, header, onClose }) {
   );
 }
 
-function SignModal({ count, onClose, onConfirm, onPreview, busy }) {
-  const [fileName, setFileName] = useState("");
-  const [digits, setDigits] = useState(["", "", "", ""]);
-  const [error, setError] = useState("");
-  const pin = digits.join("");
-
-  const setDigit = (index, value) => {
-    const clean = value.replace(/\D/g, "").slice(-1);
-    const next = [...digits];
-    next[index] = clean;
-    setDigits(next);
-    if (clean && index < 3) document.getElementById(`rx-pin-${index + 1}`)?.focus();
-  };
-
-  return (
-    <div className="fixed inset-0 z-[70] bg-slate-900/60 flex items-center justify-center p-4">
-      <div className="w-[520px] max-w-[95vw] bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="bg-[#0D5C46] px-6 py-4 flex items-center justify-between text-white">
-          <div className="flex items-center gap-2 font-semibold"><ShieldCheck size={18} /> Autoryzacja wysyłki do P1</div>
-          <button type="button" onClick={onClose} disabled={busy}><X size={18} /></button>
-        </div>
-        <div className="p-6 space-y-4">
-          <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between text-sm">
-            <span>{count <= 1 ? "1 e-recepta" : `${count} e-recepty, każda z osobnym kodem`}</span>
-            <button type="button" onClick={onPreview} className="text-[#0D5C46] font-semibold text-xs inline-flex items-center gap-1"><Eye size={14} /> Podgląd</button>
-          </div>
-          <label className="border border-slate-200 rounded-xl p-3 flex items-center justify-between cursor-pointer">
-            <span className="text-sm font-semibold truncate">{fileName || "Wybierz certyfikat ZUS z komputera (.p12 / .pfx)"}</span>
-            <span className="text-xs text-slate-500 shrink-0 ml-3">Zmień plik</span>
-            <input type="file" accept=".p12,.pfx,.cer" className="hidden" onChange={(e) => setFileName(e.target.files?.[0]?.name || "")} />
-          </label>
-          <p className="text-xs text-slate-500">Plik zostaje na tym komputerze. Nie jest wysyłany do CM7MED ani do Medfile. PIN nie jest zapisywany.</p>
-          <div className="text-center">
-            <div className="text-sm text-slate-500 mb-3">Wprowadź 4-cyfrowy PIN certyfikatu</div>
-            <div className="flex justify-center gap-3">
-              {digits.map((digit, index) => (
-                <input id={`rx-pin-${index}`} key={index} type="password" maxLength={1} value={digit} onChange={(e) => setDigit(index, e.target.value)} className="w-14 h-16 text-center text-2xl border border-slate-200 rounded-xl bg-slate-50" />
-              ))}
-            </div>
-            {error && <p className="text-xs text-rose-600 mt-2">{error}</p>}
-          </div>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => {
-              if (!fileName) { setError("Wybierz plik certyfikatu ZUS z pendrive lub dysku."); return; }
-              if (pin.length < 4) { setError("Kod PIN musi składać się z 4 cyfr."); return; }
-              setError("");
-              onConfirm();
-            }}
-            className="w-full py-3 rounded-xl bg-[#0D5C46] text-white font-semibold disabled:opacity-50"
-          >
-            {busy ? "Sprawdzam receptę…" : "Podpisz i wyślij"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
   const [active, setActive] = useState(0);
@@ -2207,70 +2175,59 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
 
 function CancelPrescriptionModal({ row, patient, onClose, onConfirm }) {
   const [reason, setReason] = useState("");
-  const [fileName, setFileName] = useState("");
-  const [digits, setDigits] = useState(["", "", "", ""]);
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const pin = digits.join("");
+  const [reasonError, setReasonError] = useState("");
   const code = accessCodeOf(row.result);
-
-  const setDigit = (index, value) => {
-    const clean = value.replace(/\D/g, "").slice(-1);
-    const next = [...digits];
-    next[index] = clean;
-    setDigits(next);
-    if (clean && index < 3) document.getElementById(`rx-cancel-pin-${index + 1}`)?.focus();
-  };
+  const drugs = row.items.map((item) => item.drug?.name).filter(Boolean).join(", ");
 
   return (
-    <div className="fixed inset-0 z-[70] bg-slate-900/60 flex items-center justify-center p-4">
-      <div className="w-[560px] max-w-[95vw] bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="bg-rose-800 px-6 py-4 flex items-center justify-between text-white">
-          <div className="font-semibold inline-flex items-center gap-2"><AlertTriangle size={18} /> Autoryzacja anulowania e-recepty</div>
-          <button type="button" onClick={onClose} disabled={busy}><X size={18} /></button>
+    <P1SignDialog
+      open
+      isDestructive
+      title="Autoryzacja anulowania e-Recepty"
+      actionText="Podpisz i anuluj w P1"
+      doctorLine={[patient?.doctorName, patient?.pwz ? `PWZ ${patient.pwz}` : ""].filter(Boolean).join(" · ")}
+      onClose={onClose}
+      onConfirm={async () => {
+        if (reason.trim().length < 5) {
+          setReasonError("Powód anulowania musi mieć co najmniej 5 znaków.");
+          throw new Error("Powód anulowania musi mieć co najmniej 5 znaków.");
+        }
+        setReasonError("");
+        await onConfirm(reason.trim());
+      }}
+    >
+      <div className="space-y-3.5">
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-amber-950">
+          <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+          <div className="text-xs leading-relaxed">
+            <strong className="font-bold text-amber-900 block mb-0.5">Uwaga: Ta operacja trwale wycofa dokument z systemu P1.</strong>
+            Wymaga podania powodu oraz autoryzacji kodem PIN certyfikatu.
+          </div>
         </div>
-        <div className="p-6 space-y-4">
-          <p className="text-xs text-amber-950 bg-amber-50 border border-amber-200 rounded-xl p-3">Ta operacja wycofuje dokument. Wymaga powodu oraz podpisu certyfikatem. PIN zostaje na tym komputerze i nie jest wysyłany.</p>
-          <div className="text-xs bg-slate-50 border rounded-xl p-3 space-y-1">
-            <div>Kod: <span className="font-mono font-bold">{code || "—"}</span></div>
-            <div>Pacjent: {patient?.name || "—"}{patient?.pesel ? ` · PESEL ${patient.pesel}` : ""}</div>
-            <div>{row.items.map((item) => item.drug?.name).filter(Boolean).join(", ")}</div>
+        <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-xs space-y-1">
+          <div className="flex items-center justify-between text-slate-600">
+            <span>Kod dostępu / Pacjent:</span>
+            <span className="font-mono font-bold text-slate-800">{code || "—"} — {patient?.name || "—"}</span>
           </div>
-          <label className="block text-xs font-bold text-slate-700">Powód anulowania *
-            <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="np. pomyłka w dawkowaniu, zmiana decyzji klinicznej" className="mt-1 w-full p-2 border rounded-xl font-normal" />
-          </label>
-          <label className="border border-slate-200 rounded-xl p-3 flex items-center justify-between cursor-pointer text-sm">
-            <span className="truncate">{fileName || "Wybierz certyfikat ZUS (.p12 / .pfx)"}</span>
-            <span className="text-xs text-slate-500 shrink-0 ml-3">Zmień plik</span>
-            <input type="file" accept=".p12,.pfx,.cer" className="hidden" onChange={(e) => setFileName(e.target.files?.[0]?.name || "")} />
-          </label>
-          <div className="flex justify-center gap-3">
-            {digits.map((digit, index) => (
-              <input id={`rx-cancel-pin-${index}`} key={index} type="password" maxLength={1} value={digit} onChange={(e) => setDigit(index, e.target.value)} className="w-12 h-14 text-center text-xl border rounded-xl bg-slate-50" />
-            ))}
-          </div>
-          {error && <p className="text-xs text-rose-600">{error}</p>}
-          <button
-            type="button"
-            disabled={busy}
-            onClick={async () => {
-              if (reason.trim().length < 5) { setError("Powód anulowania musi mieć co najmniej 5 znaków."); return; }
-              if (!fileName) { setError("Wybierz plik certyfikatu ZUS."); return; }
-              if (pin.length < 4) { setError("Kod PIN musi składać się z 4 cyfr."); return; }
-              setError("");
-              setBusy(true);
-              try {
-                await onConfirm(reason.trim());
-              } finally {
-                setBusy(false);
-              }
-            }}
-            className="w-full py-3 rounded-xl bg-rose-700 text-white font-semibold disabled:opacity-50"
-          >
-            {busy ? "Anuluję…" : "Podpisz i anuluj"}
-          </button>
+          {drugs && (
+            <div className="flex items-start justify-between text-slate-600 pt-1 border-t border-slate-200">
+              <span className="shrink-0 mr-2">Pozycje leków:</span>
+              <span className="font-medium text-slate-700 text-right">{drugs}</span>
+            </div>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <label className="block text-xs font-bold text-slate-700">Powód anulowania w rejestrze P1 <span className="text-rose-600">*</span></label>
+          <textarea
+            rows={2}
+            value={reason}
+            onChange={(e) => { setReason(e.target.value); setReasonError(""); }}
+            placeholder="np. Błąd formalny, pomyłka w dawkowaniu leku, zmiana decyzji klinicznej..."
+            className={`w-full p-2.5 bg-white border rounded-xl text-xs ${reasonError ? "border-rose-400" : "border-slate-200"}`}
+          />
+          {reasonError && <p className="text-[11px] text-rose-600 font-medium">{reasonError}</p>}
         </div>
       </div>
-    </div>
+    </P1SignDialog>
   );
 }

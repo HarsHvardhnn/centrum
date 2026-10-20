@@ -21,13 +21,14 @@ import {
   History,
   Settings,
   Loader2,
+  Upload,
 } from "lucide-react";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
 import { toast } from "sonner";
 import { useLoader } from "../../context/LoaderContext";
 import { useUser } from "../../context/userContext";
-import CheckInModal from "../admin/CheckinModal";
+import AttachVisitFileModal from "../admin/AttachVisitFileModal";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { apiCaller } from "../../utils/axiosInstance";
@@ -122,7 +123,7 @@ function LabAppointmentsContent({ clinic }) {
   const { showLoader, hideLoader } = useLoader();
   const { user } = useUser();
   const queryClient = useQueryClient();
-  const [showCheckin, setShowCheckin] = useState(false);
+  const [showAttach, setShowAttach] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [billingServices, setBillingServices] = useState([]);
@@ -1645,9 +1646,9 @@ function LabAppointmentsContent({ clinic }) {
                                   <History size={16} className="mr-2" /> Historia wizyt
                                 </DropdownMenu.Item>
                               )}
-                              {appointment.patient && appointment.status === "booked" && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCheckin(true); }}>
-                                  <UserCheck size={16} className="mr-2" /> Zamelduj
+                              {clinic && appointment.patient && !isCancelledStatus && (user?.role === "receptionist" || user?.role === "admin") && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-teal-800 hover:bg-teal-50 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowAttach(true); }}>
+                                  <Upload size={16} className="mr-2" /> Dodaj plik do wizyty
                                 </DropdownMenu.Item>
                               )}
                               {(user?.role === "admin" || user?.role === "receptionist") && appointment.status === "booked" && (
@@ -1837,9 +1838,9 @@ function LabAppointmentsContent({ clinic }) {
                                   <History size={16} className="mr-2" /> Historia wizyt
                                 </DropdownMenu.Item>
                               )}
-                              {clinic && appointment.patient && appointment.status === "booked" && (
-                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCheckin(true); }}>
-                                  <UserCheck size={16} className="mr-2" /> Zamelduj
+                              {clinic && appointment.patient && !isCancelled(appointment) && (user?.role === "receptionist" || user?.role === "admin") && (
+                                <DropdownMenu.Item className="flex items-center px-4 py-2 text-sm text-teal-800 hover:bg-teal-50 rounded-md cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowAttach(true); }}>
+                                  <Upload size={16} className="mr-2" /> Dodaj plik do wizyty
                                 </DropdownMenu.Item>
                               )}
                               {clinic && (user?.role === "admin" || user?.role === "receptionist") && appointment.status === "booked" && (
@@ -1950,13 +1951,11 @@ function LabAppointmentsContent({ clinic }) {
           ) : <div />}
         </div>
 
-        {/* Check-in Modal */}
-        <CheckInModal
-          isOpen={showCheckin}
-          setIsOpen={setShowCheckin}
-          patientData={selectedAppointment || {}}
-          appointmentId={selectedAppointment?.id}
-          onAppointmentUpdate={handleAppointmentUpdate}
+        <AttachVisitFileModal
+          isOpen={showAttach}
+          appointmentId={selectedAppointment?.id || selectedAppointment?._id}
+          patientName={selectedAppointment ? getAppointmentPatientDisplayName(selectedAppointment) : ""}
+          onClose={() => setShowAttach(false)}
         />
 
         {/* Billing Confirmation Modal */}

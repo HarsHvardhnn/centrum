@@ -206,6 +206,12 @@ function SectionRenameDialog({ field, onClose, onSave }) {
   );
 }
 
+function orderStatusBadge(status) {
+  if (status === "cancelled") return { label: "Anulowane", className: "bg-slate-50 text-slate-700 border-slate-200" };
+  if (status === "booked") return { label: "Umówione", className: "bg-emerald-50 text-emerald-800 border-emerald-200" };
+  return { label: "Czeka na recepcję", className: "bg-amber-50 text-amber-800 border-amber-200" };
+}
+
 function formatDocumentWhen(value) {
   const date = new Date(value);
   if (!value || Number.isNaN(date.getTime())) return "";
@@ -454,6 +460,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   const [customExam, setCustomExam] = useState("");
   const [orderNote, setOrderNote] = useState("");
   const [sharedPreview, setSharedPreview] = useState(null);
+  const [sharedClinicDoc, setSharedClinicDoc] = useState(null);
   const issuedPdfRef = useRef(null);
   const previewPdfRef = useRef(null);
 
@@ -488,18 +495,27 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   const sendShare = async (doctor) => {
     if (!visitId || !shareTarget) return;
     try {
-      await clinicFlowHelper.shareReport({ visitId, reportId: shareTarget.id, toDoctorId: doctor._id });
-      toast.success(`Wynik wysłany do ${doctor.name}. Reszta wizyty zostaje prywatna.`);
+      await clinicFlowHelper.shareReport({
+        visitId,
+        reportId: shareTarget.id,
+        clinicDocumentId: shareTarget.clinicDocumentId,
+        toDoctorId: doctor._id,
+      });
+      toast.success(`Dokument wysłany do ${doctor.name}. Reszta wizyty zostaje prywatna.`);
       setShareTarget(null);
       loadFlow();
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || "Nie udało się udostępnić pliku");
+      toast.error(err.response?.data?.message || err.message || "Nie udało się udostępnić dokumentu");
     }
   };
 
   const openIncoming = async (share) => {
     try {
       const file = await clinicFlowHelper.openSharedFile(share.id);
+      if (file?.kind === "clinic-document" && file.document) {
+        setSharedClinicDoc({ ...share, document: file.document, name: file.name || share.fileName });
+        return;
+      }
       setSharedPreview({ ...share, url: file?.url, name: file?.name || share.fileName });
     } catch (err) {
       toast.error(err.response?.data?.message || "Nie udało się otworzyć wyniku");
@@ -514,6 +530,17 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
       loadFlow();
     } catch (err) {
       toast.error(err.response?.data?.message || "Nie udało się zapisać przeglądu");
+    }
+  };
+
+  const cancelVisitOrder = async (row) => {
+    if (row.status === "cancelled") return;
+    try {
+      await clinicFlowHelper.cancelOrder(row.id);
+      toast.success("Zlecenie anulowane. Recepcja już go nie umawia.");
+      loadFlow();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Nie udało się anulować zlecenia");
     }
   };
 
@@ -726,13 +753,34 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
             </div>
           </div>
         ))}
-        {visitOrders.filter((row) => String(row.sourceVisitId) === String(visitId)).map((row) => (
-          <div key={row.id} className="border border-slate-200 rounded-lg p-3 text-xs text-slate-600">
-            Zlecenie w przychodni: <span className="font-semibold text-slate-900">{row.exam}</span>
-            {" · "}{row.status === "booked" ? "recepcja umówiła wizytę" : "czeka na recepcję"}
+        {visitOrders.filter((row) => String(row.sourceVisitId) === String(visitId)).map((row) => {
+          const badge = orderStatusBadge(row.status);
+          const canCancelOrder = canShare && row.status !== "cancelled";
+          return (
+          <div key={row.id} className="border border-gray-200 rounded-lg p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-gray-900">Zlecenie w przychodni: {row.exam}</div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  {row.createdAt ? formatDocumentWhen(row.createdAt) : "Zlecone z tej wizyty"}
+                  {row.note ? ` · ${row.note}` : ""}
+                </div>
+              </div>
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${badge.className}`}>{badge.label}</span>
+            </div>
+            {canCancelOrder && (
+              <div className="flex items-center justify-end mt-2 pt-2 border-t border-gray-100 text-xs">
+                <button type="button" onClick={() => cancelVisitOrder(row)} className="inline-flex items-center gap-1 text-slate-500 font-medium">
+                  Anuluj
+                </button>
+              </div>
+            )}
           </div>
-        ))}
-        {documentRows.length === 0 && <p className="text-xs text-gray-400">Brak dokumentów tej wizyty.</p>}
+          );
+        })}
+        {documentRows.length === 0 && incoming.length === 0 && visitOrders.length === 0 && (
+          <p className="text-xs text-gray-400">Brak dokumentów tej wizyty.</p>
+        )}
         {documentRows.map((row) => row.kind === "card" ? (() => { const card = row.card; return (
           <div key={card.id} className="border border-gray-200 rounded-lg p-3">
             <div className="flex items-start justify-between gap-3">
@@ -764,7 +812,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                   {file.type}{file.at ? ` · ${formatDocumentWhen(file.at)}` : ""}
                 </div>
                 {file.description ? <p className="text-xs text-gray-500 mt-1">{file.description}</p> : null}
-                {outgoing.filter((share) => String(share.reportId) === String(file.id)).map((share) => (
+                {outgoing.filter((share) => String(share.reportId) === String(file.id) || String(share.clinicDocumentId) === String(file.id)).map((share) => (
                   <p key={share.id} className="text-xs text-slate-500 mt-1">
                     Udostępniono {share.toDoctorName}: {share.reviewedAt ? "przejrzane" : "do przeglądu"}
                   </p>
@@ -811,10 +859,30 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                 {doc.status === "issued" ? <Eye size={14} /> : <Pencil size={14} />}
                 {doc.status === "issued" ? "Otwórz dokument" : "Kontynuuj edycję"}
               </button>
-              <button type="button" onClick={() => { printClinicSheet(sheetProps(doc, patient, doctorName, doctorPwz, doctorTitle)); }} className="inline-flex items-center gap-1 text-teal-700 font-medium">
-                <Printer size={14} /> Drukuj
-              </button>
+              <div className="flex items-center gap-3">
+                {canShare && doc.status === "issued" && (
+                  <button
+                    type="button"
+                    onClick={() => openShare({
+                      id: `clinic-${doc._id}`,
+                      name: doc.headerTitle || doc.templateSnapshot?.printTitle || doc.templateSnapshot?.name || "Dokument",
+                      clinicDocumentId: doc._id,
+                    })}
+                    className="inline-flex items-center gap-1 text-teal-700 font-medium"
+                  >
+                    <Share2 size={14} /> Udostępnij
+                  </button>
+                )}
+                <button type="button" onClick={() => { printClinicSheet(sheetProps(doc, patient, doctorName, doctorPwz, doctorTitle)); }} className="inline-flex items-center gap-1 text-teal-700 font-medium">
+                  <Printer size={14} /> Drukuj
+                </button>
+              </div>
             </div>
+            {outgoing.filter((share) => String(share.clinicDocumentId) === String(doc._id) || String(share.reportId) === `clinic-${doc._id}`).map((share) => (
+              <p key={share.id} className="text-xs text-slate-500 mt-2">
+                Udostępniono {share.toDoctorName}: {share.reviewedAt ? "przejrzane" : "do przeglądu"}
+              </p>
+            ))}
           </div>
         ); })())}
       </div>
@@ -835,12 +903,29 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
         <VisitFilePreview title={sharedPreview.name || "Wynik"} url={sharedPreview.url} onClose={() => setSharedPreview(null)} />
       )}
 
+      {sharedClinicDoc && (
+        <div className="fixed inset-0 z-[75] bg-slate-900/60 flex items-center justify-center p-3">
+          <div className="bg-white rounded-2xl w-full max-w-[980px] h-[92vh] overflow-hidden flex flex-col">
+            <div className="px-5 py-3 border-b flex items-center justify-between">
+              <div>
+                <h3 className="font-bold">{sharedClinicDoc.name || "Dokument"}</h3>
+                <p className="text-xs text-slate-500">Wysłany przez {sharedClinicDoc.fromDoctorName || "lekarza"} · widać tylko ten dokument</p>
+              </div>
+              <button type="button" onClick={() => setSharedClinicDoc(null)} aria-label="Zamknij"><X size={16} /></button>
+            </div>
+            <div className="flex-1 overflow-auto p-4 bg-slate-100">
+              <ClinicDocumentSheet {...sheetProps(sharedClinicDoc.document, patient, sharedClinicDoc.document?.createdByName, "", "")} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {shareTarget && (
         <div className="fixed inset-0 z-[70] bg-slate-900/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
             <div className="p-4 border-b">
-              <h3 className="font-bold">Udostępnij wynik</h3>
-              <p className="text-xs text-slate-500 mt-1">{shareTarget.name}. Lekarz zobaczy tylko ten plik.</p>
+              <h3 className="font-bold">Udostępnij do przeglądu</h3>
+              <p className="text-xs text-slate-500 mt-1">{shareTarget.name}. Lekarz zobaczy tylko ten dokument, nie całą wizytę.</p>
               <input value={doctorQuery} onChange={(event) => setDoctorQuery(event.target.value)} placeholder="Szukaj lekarza..." className="mt-3 w-full border rounded-lg px-3 py-2 text-sm" />
               {visitOrders.filter((row) => String(row.bookedVisitId) === String(visitId) && row.orderedById).map((row) => (
                 <button key={row.id} type="button" onClick={() => sendShare({ _id: row.orderedById, name: row.orderedByName })} className="mt-2 w-full text-left rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm">
@@ -978,6 +1063,19 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               {draft.status === "issued" ? (
                 <>
                   <button type="button" onClick={() => setDraft(null)} className="px-4 py-2 border rounded-lg">Zamknij</button>
+                  {canShare && draft.existingId && (
+                    <button
+                      type="button"
+                      onClick={() => openShare({
+                        id: `clinic-${draft.existingId}`,
+                        name: draft.headerTitle || draft.template?.printTitle || draft.template?.name || "Dokument",
+                        clinicDocumentId: draft.existingId,
+                      })}
+                      className="px-4 py-2 border rounded-lg inline-flex items-center gap-1"
+                    >
+                      <Share2 size={14} /> Udostępnij
+                    </button>
+                  )}
                   <button type="button" onClick={() => issuedPdfRef.current?.print()} className="px-4 py-2 bg-[#1b766a] text-white rounded-lg font-semibold inline-flex items-center gap-1">
                     <Printer size={14} /> Drukuj
                   </button>

@@ -12,7 +12,6 @@ import {
   RefreshCcw,
   AlertCircle,
   Eye,
-  UserCheck,
   UserPlus,
   DollarSign,
   FileText,
@@ -29,7 +28,6 @@ import { toast } from "sonner";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
 import billingHelper from "../../helpers/billingHelper";
 import { createPortal } from "react-dom";
-import CheckInModal from "../admin/CheckinModal";
 import AttachVisitFileModal from "../admin/AttachVisitFileModal";
 import InternalOrdersPanel from "./InternalOrdersPanel";
 import CompleteRegistrationModal from "../admin/CompleteRegistrationModal";
@@ -375,7 +373,6 @@ const PatientList = () => {
   const [actionLoading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showCheckin, setShowCheckin] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showBillingModal, setShowBillingModal] = useState(false);
@@ -1164,19 +1161,6 @@ const PatientList = () => {
                               </DropdownMenu.Item>
                             )}
 
-                            {!isVisitOnlyAppointment(patient) && patient.status === "booked" && (
-                              <DropdownMenu.Item
-                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                                onClick={() => {
-                                  setSelectedAppointment(patient);
-                                  setShowCheckin(true);
-                                }}
-                              >
-                                <UserCheck size={16} className="mr-2" />
-                                Zamelduj
-                              </DropdownMenu.Item>
-                            )}
-
                             {!isCancelled(patient) && (user?.role === "receptionist" || user?.role === "admin") && (
                               <DropdownMenu.Item
                                 className="flex items-center px-4 py-2 text-sm text-teal-800 hover:bg-teal-50 rounded-md cursor-pointer"
@@ -1345,14 +1329,6 @@ const PatientList = () => {
         </div>
       )}
 
-      {/* Check-in Modal */}
-      <CheckInModal
-        isOpen={showCheckin}
-        setIsOpen={setShowCheckin}
-        patientData={{ ...selectedAppointment, id: selectedAppointment?.patient_id } || {}}
-        appointmentId={selectedAppointment?._id}
-        onAppointmentUpdate={handleAppointmentUpdate}
-      />
       <AttachVisitFileModal
         isOpen={showAttach}
         appointmentId={selectedAppointment?._id || selectedAppointment?.id}
@@ -1577,7 +1553,6 @@ const UpcomingAppointments = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const [showCheckin, setShowCheckin] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const limit = 4;
@@ -1773,30 +1748,6 @@ const UpcomingAppointments = () => {
                           Zobacz szczegóły pacjenta
                         </DropdownMenu.Item>
 
-                        {appointment.status === "booked" && (
-                          <DropdownMenu.Item
-                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md cursor-pointer"
-                            onSelect={() => {
-                              const aptId = appointment.id ?? appointment._id;
-                              setSelectedAppointment({
-                                ...appointment,
-                                id: aptId,
-                                _id: aptId,
-                                patient_id: appointment.patientObjectId,
-                                patient: {
-                                  id: appointment.patientObjectId,
-                                  _id: appointment.patientObjectId,
-                                  name: appointment.patientName,
-                                },
-                              });
-                              setShowCheckin(true);
-                            }}
-                          >
-                            <UserCheck size={16} className="mr-2 flex-shrink-0" />
-                            Zamelduj
-                          </DropdownMenu.Item>
-                        )}
-
                         {(user?.role === "receptionist" || user?.role === "admin") && appointment.status !== "cancelled" && (
                           <DropdownMenu.Item
                             className="flex items-center px-4 py-2 text-sm text-teal-800 hover:bg-teal-50 rounded-md cursor-pointer"
@@ -1830,25 +1781,6 @@ const UpcomingAppointments = () => {
         </div>
       )}
 
-      <CheckInModal
-        isOpen={showCheckin}
-        setIsOpen={setShowCheckin}
-        patientData={
-          selectedAppointment
-            ? {
-                ...selectedAppointment,
-                id: selectedAppointment.patient_id ?? selectedAppointment.patient?.id ?? selectedAppointment.patient?._id,
-              }
-            : null
-        }
-        appointmentId={selectedAppointment?.id ?? selectedAppointment?._id}
-        onCheckinSuccess={() => {
-          setShowCheckin(false);
-          setSelectedAppointment(null);
-          fetchAppointments();
-        }}
-        onAppointmentUpdate={() => fetchAppointments()}
-      />
       <AttachVisitFileModal
         isOpen={showAttach}
         appointmentId={selectedAppointment?._id || selectedAppointment?.id}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
@@ -13,14 +13,17 @@ import {
   RESORT_CODES,
   RESORT_HINTS,
 } from "./eReferralCatalog";
+import IcdField from "./IcdField";
 import { formatCoded, visitDiagnosisRows } from "./visitIcd";
 
 const inputClass = "w-full h-9 px-3 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900";
 
 function parseCoded(value) {
-  const match = String(value || "").match(/^([A-Z0-9.]+)\s*[-—]\s*(.+)$/i);
-  if (!match) return { code: "", name: "" };
-  return { code: match[1].trim(), name: match[2].trim() };
+  const text = String(value || "").trim();
+  const match = text.match(/^([A-Z][0-9A-Z.*]+)\s*[-—]\s*(.+)$/i);
+  if (match) return { code: match[1].trim(), name: match[2].trim() };
+  if (/^[A-Z][0-9A-Z.*]+$/i.test(text)) return { code: text, name: "" };
+  return { code: "", name: "" };
 }
 
 const EReferralIssueModal = ({
@@ -50,9 +53,6 @@ const EReferralIssueModal = ({
   const [primaryIcd10, setPrimaryIcd10] = useState(
     copied.icd10Code ? formatCoded(copied.icd10Code, copied.icd10Display) : ""
   );
-  const [icdQuery, setIcdQuery] = useState("");
-  const [icdHits, setIcdHits] = useState([]);
-  const [icdState, setIcdState] = useState("idle");
   const visitIcd = useMemo(() => visitDiagnosisRows(diagnoses), [diagnoses]);
   const [site, setSite] = useState(copied.bodySite === "L" ? "left" : copied.bodySite === "R" ? "right" : "");
   const [procedures, setProcedures] = useState(
@@ -68,36 +68,9 @@ const EReferralIssueModal = ({
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
-
-  useEffect(() => {
-    const term = icdQuery.trim();
-    if (term.length < 2) {
-      setIcdHits([]);
-      setIcdState("idle");
-      return undefined;
-    }
-    let cancelled = false;
-    setIcdState("loading");
-    const timer = setTimeout(async () => {
-      try {
-        const rows = await appointmentHelper.searchIcd10(term);
-        const hits = Array.isArray(rows) ? rows.slice(0, 8) : [];
-        if (!cancelled) {
-          setIcdHits(hits);
-          setIcdState(hits.length ? "ready" : "empty");
-        }
-      } catch {
-        if (!cancelled) {
-          setIcdHits([]);
-          setIcdState("empty");
-        }
-      }
-    }, 250);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [icdQuery]);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelReasonError, setCancelReasonError] = useState("");
 
   const filteredResort = useMemo(() => {
     const q = targetSearch.trim().toLowerCase();
@@ -123,27 +96,6 @@ const EReferralIssueModal = ({
     if (next === "diagnostic_exam" && procedures.every((row) => !row.trim())) setProcedures([""]);
   };
 
-  const applyVisitDiagnosis = (row) => {
-    if (!row?.code || !row?.name) {
-      setIcdQuery(row?.code || row?.name || "");
-      toast.error("To rozpoznanie nie ma kodu i nazwy. Wyszukaj je poniżej.");
-      return;
-    }
-    setPrimaryIcd10(formatCoded(row.code, row.name));
-    setIcdQuery("");
-    setIcdHits([]);
-  };
-
-  const pullVisitDiagnosis = () => {
-    const primary = visitIcd.find((row) => row.isPrimary) || visitIcd[0];
-    if (!primary) {
-      toast.error("Na tej wizycie nie ma jeszcze rozpoznania ICD-10.");
-      return;
-    }
-    applyVisitDiagnosis(primary);
-    if (primary.code && primary.name) toast.success("Pobrano rozpoznanie z wizyty");
-  };
-
   const searchProcedure = async (index, value) => {
     const next = procedures.slice();
     next[index] = value;
@@ -164,11 +116,6 @@ const EReferralIssueModal = ({
       setProcHits([]);
       setProcIndex(index);
     }
-  };
-
-  const closeIcdList = () => {
-    setIcdHits([]);
-    setIcdState("idle");
   };
 
   const validate = () => {
@@ -302,16 +249,7 @@ const EReferralIssueModal = ({
                 <button type="button" onClick={() => ehealthHelper.printDocument("referral", result.id)} className="py-2 border rounded-xl font-bold">Podgląd / wydruk</button>
                 <button
                   type="button"
-                  onClick={async () => {
-                    try {
-                      const res = await ehealthHelper.cancelDocument("referral", result.id);
-                      setResult(res.data || { ...result, status: "cancelled" });
-                      onDocumentsChanged?.();
-                      toast.success("Anulowano e-skierowanie");
-                    } catch (err) {
-                      toast.error(unwrapEhealthError(err).message);
-                    }
-                  }}
+                  onClick={() => { setCancelReason(""); setCancelReasonError(""); setCancelOpen(true); }}
                   className="py-2 border border-rose-200 text-rose-700 rounded-xl font-bold"
                 >
                   Anuluj e-Skierowanie
@@ -392,55 +330,23 @@ const EReferralIssueModal = ({
               </div>
 
               <div className="bg-slate-50 border rounded-xl p-3 space-y-2">
-                <div className="flex justify-between">
-                  <label className="font-bold">Rozpoznanie główne (ICD-10) *</label>
-                  <button type="button" onClick={pullVisitDiagnosis} className="font-bold text-blue-700">[Pobierz rozpoznanie z wizyty]</button>
-                </div>
-                {visitIcd.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {visitIcd.map((row) => (
-                      <button
-                        key={`${row.code}-${row.name}`}
-                        type="button"
-                        onClick={() => applyVisitDiagnosis(row)}
-                        className={`px-2 py-1 rounded-lg border text-left ${formatCoded(row.code, row.name) === primaryIcd10 ? "border-blue-600 bg-blue-50" : "border-slate-200 bg-white hover:bg-blue-50"}`}
-                      >
-                        <span className="font-mono font-bold text-blue-700 mr-1">{row.code}</span>{row.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
                 <div className="grid sm:grid-cols-12 gap-2">
                   <div className="sm:col-span-9">
-                    {primaryIcd10 && <p className="mb-1 font-semibold text-slate-900">Wybrane: {primaryIcd10}</p>}
-                    <input
-                      value={icdQuery}
-                      onChange={(e) => setIcdQuery(e.target.value)}
-                      onBlur={closeIcdList}
-                      onKeyDown={(e) => { if (e.key === "Escape") closeIcdList(); }}
-                      className={inputClass}
-                      placeholder={primaryIcd10 ? "Inny kod lub nazwa" : "Kod lub nazwa, np. I10"}
+                    <IcdField
+                      label="Rozpoznanie główne (ICD-10) *"
+                      code={parseCoded(primaryIcd10).code}
+                      name={parseCoded(primaryIcd10).name}
+                      diagnoses={visitIcd}
+                      importLabel="Pobierz z wizyty"
+                      onPick={(item) => setPrimaryIcd10(item.code ? formatCoded(item.code, item.name || item.code) : "")}
                     />
-                    {icdState === "loading" && <p className="mt-1 text-[11px] text-slate-500">Szukam w ICD-10…</p>}
-                    {(icdHits.length > 0 || icdState === "empty") && (
-                      <ul className="mt-1 bg-white border rounded-xl max-h-48 overflow-y-auto">
-                        {icdHits.map((row) => (
-                          <li key={`${row.code}-${row.name}`}>
-                            <button type="button" onMouseDown={() => { setPrimaryIcd10(formatCoded(row.code, row.name)); setIcdQuery(""); closeIcdList(); }} className="w-full text-left px-3 py-2 hover:bg-blue-50">
-                              <span className="font-mono font-bold text-blue-700 mr-2">{row.code}</span>{row.name}
-                            </button>
-                          </li>
-                        ))}
-                        {icdState === "empty" && <li className="px-3 py-2 text-slate-500">Brak kodów ICD-10 dla „{icdQuery.trim()}”.</li>}
-                        <li>
-                          <button type="button" onMouseDown={(e) => { e.preventDefault(); closeIcdList(); }} className="w-full text-right px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50">Zamknij listę</button>
-                        </li>
-                      </ul>
-                    )}
                   </div>
-                  <select value={site} onChange={(e) => setSite(e.target.value)} className={`${inputClass} sm:col-span-3`}>
-                    {ANATOMICAL_SITES.map((row) => <option key={row.value} value={row.value}>{row.label}</option>)}
-                  </select>
+                  <div className="sm:col-span-3">
+                    <div className="font-medium text-gray-800 text-sm">Strona ciała</div>
+                    <select value={site} onChange={(e) => setSite(e.target.value)} className={`${inputClass} mt-1`}>
+                      {ANATOMICAL_SITES.map((row) => <option key={row.value} value={row.value}>{row.label}</option>)}
+                    </select>
+                  </div>
                 </div>
                 <p className="text-[11px] text-slate-500">Strona lewa i prawa idzie do P1 jako L albo R. Obie strony zostają w opisie, bo P1 przyjmuje jedną stronę.</p>
 
@@ -448,14 +354,31 @@ const EReferralIssueModal = ({
                   <div className="font-bold">{referralType === "diagnostic_exam" ? "Procedury (ICD-9) *" : "Procedury (ICD-9) — opcjonalnie"}</div>
                   {procedures.map((value, index) => (
                     <div key={index} className="relative">
-                      <input
-                        value={value}
-                        onChange={(e) => searchProcedure(index, e.target.value)}
-                        onBlur={() => setProcIndex(-1)}
-                        onKeyDown={(e) => { if (e.key === "Escape") setProcIndex(-1); }}
-                        className={inputClass}
-                        placeholder="Kod lub nazwa procedury, np. USG"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          value={value}
+                          onChange={(e) => searchProcedure(index, e.target.value)}
+                          onBlur={() => setProcIndex(-1)}
+                          onKeyDown={(e) => { if (e.key === "Escape") setProcIndex(-1); }}
+                          className={inputClass}
+                          placeholder="Kod lub nazwa procedury, np. USG"
+                        />
+                        {value ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = procedures.slice();
+                              if (procedures.length === 1) next[0] = "";
+                              else next.splice(index, 1);
+                              setProcedures(next);
+                              setProcIndex(-1);
+                            }}
+                            className="shrink-0 text-[11px] font-semibold text-slate-500 hover:text-slate-800"
+                          >
+                            Usuń
+                          </button>
+                        ) : null}
+                      </div>
                       {procIndex === index && (procHits.length > 0 || value.trim().length >= 2) && (
                         <div className="mt-1 bg-white border rounded-xl max-h-40 overflow-y-auto">
                           {procHits.map((row) => (
@@ -516,13 +439,56 @@ const EReferralIssueModal = ({
 
       <P1SignDialog
         open={signOpen}
-        accent="blue"
-        title="Podpis certyfikatem lekarza"
+        title="Autoryzacja wystawienia e-skierowania"
+        actionText="Podpisz i wyślij"
         doctorLine={doctorLine}
-        busy={busy}
         onClose={() => setSignOpen(false)}
         onConfirm={submit}
       />
+      <P1SignDialog
+        open={cancelOpen}
+        isDestructive
+        title="Autoryzacja anulowania w P1"
+        actionText="Podpisz i anuluj w P1"
+        doctorLine={doctorLine}
+        onClose={() => setCancelOpen(false)}
+        onConfirm={async () => {
+          if (cancelReason.trim().length < 5) {
+            setCancelReasonError("Powód anulowania musi mieć co najmniej 5 znaków.");
+            throw new Error("Powód anulowania musi mieć co najmniej 5 znaków.");
+          }
+          setCancelReasonError("");
+          const res = await ehealthHelper.cancelDocument("referral", result.id, cancelReason.trim());
+          setResult(res.data || { ...result, status: "cancelled" });
+          setCancelOpen(false);
+          onDocumentsChanged?.();
+          toast.success("Anulowano e-skierowanie");
+        }}
+      >
+        <div className="space-y-3.5">
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-950">
+            <strong className="font-bold text-amber-900 block mb-0.5">Uwaga: Ta operacja trwale wycofa dokument z systemu P1.</strong>
+            Wymaga podania powodu oraz autoryzacji kodem PIN certyfikatu.
+          </div>
+          <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-xs">
+            <div className="flex items-center justify-between text-slate-600">
+              <span>Kod dostępu / Pacjent:</span>
+              <span className="font-mono font-bold text-slate-800">{code || "—"} — {details?.name || patient?.name || "—"}</span>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700">Powód anulowania w rejestrze P1 <span className="text-rose-600">*</span></label>
+            <textarea
+              rows={2}
+              value={cancelReason}
+              onChange={(e) => { setCancelReason(e.target.value); setCancelReasonError(""); }}
+              placeholder="np. Błąd formalny, pomyłka w kodzie ICD-10, zmiana wskazań medycznych..."
+              className={`w-full p-2.5 bg-white border rounded-xl text-xs ${cancelReasonError ? "border-rose-400" : "border-slate-200"}`}
+            />
+            {cancelReasonError && <p className="text-[11px] text-rose-600 font-medium">{cancelReasonError}</p>}
+          </div>
+        </div>
+      </P1SignDialog>
     </div>
   );
 };
