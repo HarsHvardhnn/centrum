@@ -19,6 +19,7 @@ import OurDoctorsPage from "./components/User/Pages/OurDoctorsPage";
 import OurServicesPage from "./components/User/Pages/OurServicesPage";
 import ServicesDetailPage from "./components/User/Pages/ServicesDetailPage";
 import MedicalDashboard from "./components/Dashboard";
+import InternalOrdersHistory from "./components/Dashboard/InternalOrdersHistory";
 import DoctorDetailPage from "./components/Doctor/DoctorDetailsPage";
 import NotFound404 from "./components/UtilComponents/NotFound";
 import {
@@ -227,6 +228,7 @@ const routes = createBrowserRouter([
           { path: "/ustawienia", element: <SystemSettingsPage /> },
           { path: "/administracja/szablony-dokumentow", element: <DocumentTemplatesPlaceholder /> },
           { path: "/administracja/repo-dokumentow", element: <ClinicDocumentTemplatesPage /> },
+          { path: "/administracja/zlecenia-wewnetrzne", element: <InternalOrdersHistory /> },
           { path: "/moje-wzory-dokumentow", element: <ClinicDocumentTemplatesPage personal /> },
         ],
       },

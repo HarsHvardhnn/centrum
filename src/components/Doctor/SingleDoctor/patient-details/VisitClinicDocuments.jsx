@@ -4,7 +4,7 @@ import { FileText, Plus, Eye, Printer, Pencil, User, X, Upload, Trash2, Share2 }
 import { toast } from "sonner";
 import { useUser } from "../../../../context/userContext";
 import clinicDocumentsHelper from "../../../../helpers/clinicDocumentsHelper";
-import clinicFlowHelper from "../../../../helpers/clinicFlowHelper";
+import clinicFlowHelper, { CONSULTATION_EXAM, orderStatusMeta } from "../../../../helpers/clinicFlowHelper";
 import patientService from "../../../../helpers/patientHelper";
 import { apiCaller } from "../../../../utils/axiosInstance";
 import ClinicDocumentSheet, { ClinicSheetPdfView, initialFieldValue, printClinicSheet } from "../../../ehealth/ClinicDocumentSheet";
@@ -207,9 +207,7 @@ function SectionRenameDialog({ field, onClose, onSave }) {
 }
 
 function orderStatusBadge(status) {
-  if (status === "cancelled") return { label: "Anulowane", className: "bg-slate-50 text-slate-700 border-slate-200" };
-  if (status === "booked") return { label: "Umówione", className: "bg-emerald-50 text-emerald-800 border-emerald-200" };
-  return { label: "Czeka na recepcję", className: "bg-amber-50 text-amber-800 border-amber-200" };
+  return orderStatusMeta(status);
 }
 
 function formatDocumentWhen(value) {
@@ -433,7 +431,7 @@ function UploadVisitFileDialog({ busy, onClose, onSubmit }) {
   );
 }
 
-const EXAMS = ["EEG", "USG", "RTG", "TK", "MR", "Holter"];
+const EXAMS = ["EEG", "USG", "RTG", "TK", "MR", "Holter", CONSULTATION_EXAM];
 
 const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorTitle = "", doctorPwz = "", visitHints = {}, reports = [], onPatientRecordSaved, onReportsChanged }) => {
   const { user } = useUser();
@@ -459,6 +457,8 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   const [exam, setExam] = useState(EXAMS[0]);
   const [customExam, setCustomExam] = useState("");
   const [orderNote, setOrderNote] = useState("");
+  const [orderSpecialization, setOrderSpecialization] = useState("");
+  const [orderDoctorId, setOrderDoctorId] = useState("any");
   const [sharedPreview, setSharedPreview] = useState(null);
   const [sharedClinicDoc, setSharedClinicDoc] = useState(null);
   const issuedPdfRef = useRef(null);
@@ -544,14 +544,36 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
     }
   };
 
+  const openOrderForm = () => {
+    setOrderOpen(true);
+    setExam(EXAMS[0]);
+    setCustomExam("");
+    setOrderNote("");
+    setOrderSpecialization("");
+    setOrderDoctorId("any");
+    clinicFlowHelper.doctors().then((rows) => setDoctors(Array.isArray(rows) ? rows : [])).catch(() => setDoctors([]));
+  };
+
   const submitOrder = async () => {
     const chosen = exam === "Inne" ? customExam.trim() : exam;
     if (!chosen) {
       toast.error("Podaj nazwę badania.");
       return;
     }
+    const isConsultation = chosen === CONSULTATION_EXAM;
+    if (isConsultation && !orderSpecialization) {
+      toast.error("Wybierz specjalizację konsultacji.");
+      return;
+    }
     try {
-      await clinicFlowHelper.createOrder({ visitId, exam: chosen, note: orderNote });
+      await clinicFlowHelper.createOrder({
+        visitId,
+        exam: chosen,
+        note: orderNote,
+        kind: isConsultation ? "consultation" : "exam",
+        specialization: isConsultation ? orderSpecialization : "",
+        requestedDoctorId: isConsultation ? orderDoctorId : "",
+      });
       toast.success("Zlecenie trafiło do recepcji. Wizyta pozostaje bez zmian.");
       setOrderOpen(false);
       setOrderNote("");
@@ -721,7 +743,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
           <Upload size={16} /> Dodaj plik
         </button>
         {canShare && (
-          <button type="button" onClick={() => setOrderOpen(true)} className="h-10 px-3 rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold">
+          <button type="button" onClick={openOrderForm} className="h-10 px-3 rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold">
             Zleć badanie
           </button>
         )}
@@ -763,6 +785,8 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                 <div className="text-sm font-semibold text-gray-900">Zlecenie w przychodni: {row.exam}</div>
                 <div className="text-xs text-gray-500 mt-0.5">
                   {row.createdAt ? formatDocumentWhen(row.createdAt) : "Zlecone z tej wizyty"}
+                  {row.specialization ? ` · ${row.specialization}` : ""}
+                  {row.requestedDoctorName ? ` · ${row.requestedDoctorName}` : row.anySpecialist ? " · Dowolny specjalista" : ""}
                   {row.note ? ` · ${row.note}` : ""}
                 </div>
               </div>
@@ -954,19 +978,71 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
       {orderOpen && (
         <div className="fixed inset-0 z-[70] bg-slate-900/50 flex items-center justify-center p-4">
           <form
-            className="bg-white rounded-xl w-full max-w-md p-4 space-y-3"
+            className="bg-white rounded-xl w-full max-w-lg p-4 space-y-3"
             onSubmit={(event) => { event.preventDefault(); submitOrder(); }}
           >
             <h3 className="font-bold">Zleć badanie w przychodni</h3>
             <p className="text-xs text-slate-500">Recepcja umówi termin. To nie jest e-skierowanie i nie zmienia statusu tej wizyty.</p>
             <label className="block text-sm">Badanie
-              <select value={exam} onChange={(event) => setExam(event.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2 bg-white">
+              <select
+                value={exam}
+                onChange={(event) => {
+                  setExam(event.target.value);
+                  setOrderSpecialization("");
+                  setOrderDoctorId("any");
+                }}
+                className="mt-1 w-full border rounded-lg px-3 py-2 bg-white"
+              >
                 {EXAMS.map((item) => <option key={item}>{item}</option>)}
                 <option>Inne</option>
               </select>
             </label>
             {exam === "Inne" && (
               <input value={customExam} onChange={(event) => setCustomExam(event.target.value)} placeholder="Nazwa badania" className="w-full border rounded-lg px-3 py-2 text-sm" />
+            )}
+            {exam === CONSULTATION_EXAM && (
+              <>
+                <label className="block text-sm">Specjalizacja
+                  {[...new Set(doctors.flatMap((doctor) => doctor.specializations || []))].length ? (
+                    <select
+                      value={orderSpecialization}
+                      onChange={(event) => {
+                        setOrderSpecialization(event.target.value);
+                        setOrderDoctorId("any");
+                      }}
+                      className="mt-1 w-full border rounded-lg px-3 py-2 bg-white"
+                    >
+                      <option value="">Wybierz specjalizację</option>
+                      {[...new Set(doctors.flatMap((doctor) => doctor.specializations || []))].sort().map((name) => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      value={orderSpecialization}
+                      onChange={(event) => setOrderSpecialization(event.target.value)}
+                      placeholder="np. kardiologia"
+                      className="mt-1 w-full border rounded-lg px-3 py-2 text-sm"
+                    />
+                  )}
+                </label>
+                <label className="block text-sm">Lekarz
+                  <select
+                    value={orderDoctorId}
+                    onChange={(event) => setOrderDoctorId(event.target.value)}
+                    disabled={!orderSpecialization}
+                    className="mt-1 w-full border rounded-lg px-3 py-2 bg-white disabled:bg-slate-50"
+                  >
+                    <option value="any">Dowolny specjalista</option>
+                    {doctors
+                      .filter((doctor) => String(doctor._id) !== String(user?.id) && String(doctor._id) !== String(user?.d_id))
+                      .filter((doctor) => !orderSpecialization || (doctor.specializations || []).includes(orderSpecialization))
+                      .map((doctor) => (
+                        <option key={doctor._id} value={doctor._id}>{doctor.name}</option>
+                      ))}
+                  </select>
+                </label>
+              </>
             )}
             <textarea value={orderNote} onChange={(event) => setOrderNote(event.target.value)} rows={3} placeholder="Krótka informacja dla recepcji i lekarza wykonującego" className="w-full border rounded-lg px-3 py-2 text-sm" />
             {visitOrders.some((row) => String(row.bookedVisitId) === String(visitId) && row.orderedByName) && (

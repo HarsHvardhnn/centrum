@@ -19,6 +19,7 @@ import {
   GraduationCap,
   LayoutGrid,
   Plug,
+  ClipboardList,
 } from "lucide-react";
 import SpecializationManagement from "./SpecializationManagement";
 
@@ -103,6 +104,15 @@ const settingsCards = [
     icon: FileStack,
     to: "/administracja/repo-dokumentow",
     roles: ["admin"],
+  },
+  {
+    id: "internal-orders",
+    title: "Zlecenia wewnętrzne",
+    description:
+      "Historia badań i konsultacji specjalistycznych zleconych w przychodni, z filtrami dla recepcji i administratora.",
+    icon: ClipboardList,
+    to: "/administracja/zlecenia-wewnetrzne",
+    roles: ["admin", "doctor", "receptionist"],
   },
   {
     id: "my-document-templates",

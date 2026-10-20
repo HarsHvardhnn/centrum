@@ -47,6 +47,9 @@ function AppointmentFormModal({
   embedded = false, // When true, render as page content (no modal overlay); used on /wizyta/utworz
   /** Doctor document id: when set, doctor picker only lists this doctor (logged-in doctor on /wizyta/utworz). */
   allowedDoctorId = null,
+  initialPatient = null,
+  initialVisitType = "",
+  initialNotes = "",
 }) {
   const { services: contextServices, loading: contextLoading } = useServices();
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -676,10 +679,30 @@ function AppointmentFormModal({
       };
       handleDoctorSelect(doctor);
     } else if (doctorId) {
-      const doctor = { _id: doctorId };
+      const sameDoctor = doctorInfo && String(doctorInfo._id || doctorInfo.id) === String(doctorId);
+      const doctor = sameDoctor
+        ? {
+            _id: doctorId,
+            name: doctorInfo.name,
+            specialty: doctorInfo.specialty,
+            specialization: doctorInfo.specialization,
+            specializations: doctorInfo.specializations,
+            profilePicture: doctorInfo.profilePicture,
+          }
+        : { _id: doctorId };
       handleDoctorSelect(doctor);
     }
   }, [doctorId, skipDoctorSelection, doctorInfo]);
+
+  useEffect(() => {
+    if (!initialPatient) return;
+    handlePatientSelect(initialPatient);
+    setAppointmentData((prev) => ({
+      ...prev,
+      visitType: initialVisitType || prev.visitType || "re-visit",
+      notes: initialNotes || prev.notes,
+    }));
+  }, [initialPatient]);
 
   // Effect to handle SMS consent on component mount and when date changes
   useEffect(() => {

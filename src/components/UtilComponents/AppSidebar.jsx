@@ -11,6 +11,7 @@ import {
   FilePlus,
   FileCheck,
   FileEdit,
+  ClipboardList,
   History,
   TrendingUp,
   Settings,
@@ -168,6 +169,13 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
               collapsed={collapsed}
             />
           )}
+          <NavItem
+            icon={<ClipboardList size={ICON_SIZE} strokeWidth={2} />}
+            label="Zlecenia wewnętrzne"
+            to="/administracja/zlecenia-wewnetrzne"
+            isActive={currentPath === "/administracja/zlecenia-wewnetrzne"}
+            collapsed={collapsed}
+          />
           <NavItem
             icon={<Stethoscope size={ICON_SIZE} strokeWidth={2} />}
             label="Wizyty lekarskie"

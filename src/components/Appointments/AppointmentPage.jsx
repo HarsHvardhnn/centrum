@@ -5,6 +5,7 @@ import appointmentHelper from "../../helpers/appointmentHelper";
 import { useLoader } from "../../context/LoaderContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import clinicFlowHelper from "../../helpers/clinicFlowHelper";
+import patientService from "../../helpers/patientHelper";
 import userServiceHelper from "../../helpers/userServiceHelper";
 import { useServices } from "../../context/serviceContext.jsx";
 import { useUser } from "../../context/userContext";
@@ -14,6 +15,8 @@ function AppointmentPage() {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("orderId") || "";
   const [linkedOrder, setLinkedOrder] = useState(null);
+  const [orderPatient, setOrderPatient] = useState(null);
+  const [orderDoctor, setOrderDoctor] = useState(null);
   const { user } = useUser();
   const { showLoader, hideLoader } = useLoader();
   const { services, loading } = useServices(); // Use the services context
@@ -25,9 +28,45 @@ function AppointmentPage() {
 
   // Load services from context
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId) {
+      setLinkedOrder(null);
+      setOrderPatient(null);
+      setOrderDoctor(null);
+      return;
+    }
     clinicFlowHelper.getOrder(orderId).then(setLinkedOrder).catch(() => setLinkedOrder(null));
   }, [orderId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!linkedOrder?.patientId) {
+      setOrderPatient(null);
+      return undefined;
+    }
+    patientService.getPatientById(linkedOrder.patientId).then((payload) => {
+      if (cancelled) return;
+      setOrderPatient(payload?.data || payload);
+    }).catch(() => {
+      if (!cancelled) setOrderPatient({ _id: linkedOrder.patientId, name: linkedOrder.patientName || "" });
+    });
+    return () => { cancelled = true; };
+  }, [linkedOrder]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!linkedOrder?.requestedDoctorId) {
+      setOrderDoctor(null);
+      return undefined;
+    }
+    clinicFlowHelper.doctors().then((rows) => {
+      if (cancelled) return;
+      const found = (Array.isArray(rows) ? rows : []).find((doctor) => String(doctor._id) === String(linkedOrder.requestedDoctorId));
+      setOrderDoctor(found || { _id: linkedOrder.requestedDoctorId, name: linkedOrder.requestedDoctorName || "" });
+    }).catch(() => {
+      if (!cancelled) setOrderDoctor({ _id: linkedOrder.requestedDoctorId, name: linkedOrder.requestedDoctorName || "" });
+    });
+    return () => { cancelled = true; };
+  }, [linkedOrder]);
 
   useEffect(() => {
     if (services && services.length > 0) {
@@ -124,7 +163,11 @@ function AppointmentPage() {
         </p>
         {orderId && linkedOrder && (
           <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-            Umówienie ze zlecenia wewnętrznego: {linkedOrder.exam} dla {linkedOrder.patientName || "pacjenta"}. Wybierz termin tak jak przy zwykłej wizycie. Po zapisie zlecenie zostanie powiązane z tą wizytą.
+            Umówienie ze zlecenia wewnętrznego: {linkedOrder.exam}
+            {linkedOrder.specialization ? ` (${linkedOrder.specialization})` : ""}
+            {" "}dla {linkedOrder.patientName || "pacjenta"}
+            {linkedOrder.requestedDoctorName ? `, lekarz: ${linkedOrder.requestedDoctorName}` : linkedOrder.anySpecialist ? ", dowolny specjalista" : ""}.
+            Pacjent i lekarz z zlecenia są już ustawieni. Wybierz termin tak jak przy zwykłej wizycie.
           </p>
         )}
         {orderId && !linkedOrder && (
@@ -137,7 +180,11 @@ function AppointmentPage() {
       <AppointmentFormModal
         onClose={handleClose}
         onComplete={handleAppointmentComplete}
-        doctorId={null} // No doctorId means user can select any doctor
+        doctorId={linkedOrder?.requestedDoctorId || null}
+        doctorInfo={orderDoctor}
+        initialPatient={orderPatient}
+        initialVisitType={orderPatient ? "re-visit" : ""}
+        initialNotes={linkedOrder?.note || ""}
         allowedDoctorId={allowedDoctorId}
         availableServices={availableServices}
         isLoadingServices={isLoadingServices}
