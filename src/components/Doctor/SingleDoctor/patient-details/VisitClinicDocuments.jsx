@@ -453,6 +453,8 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   const [shareTarget, setShareTarget] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [doctorQuery, setDoctorQuery] = useState("");
+  const [selectedDoctorIds, setSelectedDoctorIds] = useState([]);
+  const [sharing, setSharing] = useState(false);
   const [orderOpen, setOrderOpen] = useState(false);
   const [exam, setExam] = useState(EXAMS[0]);
   const [customExam, setCustomExam] = useState("");
@@ -489,23 +491,39 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   const openShare = (file) => {
     setShareTarget(file);
     setDoctorQuery("");
+    setSelectedDoctorIds([]);
     clinicFlowHelper.doctors().then((rows) => setDoctors(Array.isArray(rows) ? rows : [])).catch(() => setDoctors([]));
   };
 
-  const sendShare = async (doctor) => {
-    if (!visitId || !shareTarget) return;
+  const toggleShareDoctor = (doctorId) => {
+    const id = String(doctorId);
+    setSelectedDoctorIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+  };
+
+  const sendShares = async () => {
+    if (!visitId || !shareTarget || !selectedDoctorIds.length) return;
+    const chosen = doctors.filter((doctor) => selectedDoctorIds.includes(String(doctor._id)));
+    if (!chosen.length) return;
+    setSharing(true);
     try {
-      await clinicFlowHelper.shareReport({
-        visitId,
-        reportId: shareTarget.id,
-        clinicDocumentId: shareTarget.clinicDocumentId,
-        toDoctorId: doctor._id,
-      });
-      toast.success(`Dokument wysłany do ${doctor.name}. Reszta wizyty zostaje prywatna.`);
+      for (const doctor of chosen) {
+        await clinicFlowHelper.shareReport({
+          visitId,
+          reportId: shareTarget.id,
+          clinicDocumentId: shareTarget.clinicDocumentId,
+          toDoctorId: doctor._id,
+        });
+      }
+      const names = chosen.map((doctor) => doctor.name).join(", ");
+      toast.success(`Dokument wysłany do: ${names}. Lekarz otwiera go i oznacza jako przejrzany.`);
       setShareTarget(null);
+      setSelectedDoctorIds([]);
       loadFlow();
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || "Nie udało się udostępnić dokumentu");
+      loadFlow();
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -540,7 +558,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
       toast.success("Zlecenie anulowane. Recepcja już go nie umawia.");
       loadFlow();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Nie udało się anulować zlecenia");
+      toast.error(err.response?.data?.message || err.message || "Nie udało się anulować zlecenia");
     }
   };
 
@@ -753,11 +771,15 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
           <div key={share.id} className="border border-amber-300 bg-amber-50 rounded-lg p-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900">Wynik do przeglądu: {share.fileName}</div>
+                <div className="text-sm font-semibold text-slate-900">Dokument do przejrzenia: {share.fileName}</div>
                 <div className="text-xs text-slate-600 mt-0.5">
                   Wysłał {share.fromDoctorName || "lekarz"}{share.sourceVisitLabel ? ` · wizyta ${share.sourceVisitLabel}` : ""}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Widać tylko ten plik. Pozostała część tamtej wizyty zostaje u lekarza, który ją prowadził.</p>
+                <p className="text-xs text-slate-600 mt-1">
+                  {share.reviewedAt
+                    ? "Oznaczono jako przejrzane. Nic więcej nie trzeba robić."
+                    : "Otwórz dokument, a potem kliknij „Oznacz jako przejrzane”. Nie umawiasz wizyty i nie czekasz na recepcję."}
+                </p>
               </div>
               <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${share.reviewedAt ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-amber-100 text-amber-900 border-amber-300"}`}>
                 {share.reviewedAt ? "Przejrzane" : "Do przeglądu"}
@@ -777,7 +799,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
         ))}
         {visitOrders.filter((row) => String(row.sourceVisitId) === String(visitId)).map((row) => {
           const badge = orderStatusBadge(row.status);
-          const canCancelOrder = canShare && row.status !== "cancelled";
+          const canCancelOrder = (canShare || user?.role === "receptionist") && row.status !== "cancelled" && row.status !== "completed";
           return (
           <div key={row.id} className="border border-gray-200 rounded-lg p-3">
             <div className="flex items-start justify-between gap-3">
@@ -838,7 +860,9 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                 {file.description ? <p className="text-xs text-gray-500 mt-1">{file.description}</p> : null}
                 {outgoing.filter((share) => String(share.reportId) === String(file.id) || String(share.clinicDocumentId) === String(file.id)).map((share) => (
                   <p key={share.id} className="text-xs text-slate-500 mt-1">
-                    Udostępniono {share.toDoctorName}: {share.reviewedAt ? "przejrzane" : "do przeglądu"}
+                    {share.reviewedAt
+                      ? `${share.toDoctorName}: dokument oznaczono jako przejrzany.`
+                      : `Wysłano do ${share.toDoctorName}. Czeka na otwarcie i oznaczenie jako przejrzane.`}
                   </p>
                 ))}
               </div>
@@ -904,7 +928,9 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
             </div>
             {outgoing.filter((share) => String(share.clinicDocumentId) === String(doc._id) || String(share.reportId) === `clinic-${doc._id}`).map((share) => (
               <p key={share.id} className="text-xs text-slate-500 mt-2">
-                Udostępniono {share.toDoctorName}: {share.reviewedAt ? "przejrzane" : "do przeglądu"}
+                {share.reviewedAt
+                  ? `${share.toDoctorName}: dokument oznaczono jako przejrzany.`
+                  : `Wysłano do ${share.toDoctorName}. Czeka na otwarcie i oznaczenie jako przejrzane.`}
               </p>
             ))}
           </div>
@@ -949,27 +975,44 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
           <div className="bg-white rounded-xl w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
             <div className="p-4 border-b">
               <h3 className="font-bold">Udostępnij do przeglądu</h3>
-              <p className="text-xs text-slate-500 mt-1">{shareTarget.name}. Lekarz zobaczy tylko ten dokument, nie całą wizytę.</p>
+              <p className="text-xs text-slate-500 mt-1">{shareTarget.name}. Zaznacz lekarzy, a potem kliknij „Udostępnij”. Kliknięcie nazwiska niczego jeszcze nie wysyła.</p>
+              <p className="text-xs text-slate-500 mt-1">Lekarz zobaczy tylko ten dokument. Otwiera go i oznacza jako przejrzany. Nie czeka na recepcję.</p>
               <input value={doctorQuery} onChange={(event) => setDoctorQuery(event.target.value)} placeholder="Szukaj lekarza..." className="mt-3 w-full border rounded-lg px-3 py-2 text-sm" />
-              {visitOrders.filter((row) => String(row.bookedVisitId) === String(visitId) && row.orderedById).map((row) => (
-                <button key={row.id} type="button" onClick={() => sendShare({ _id: row.orderedById, name: row.orderedByName })} className="mt-2 w-full text-left rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm">
-                  Odeślij do lekarza zlecającego: {row.orderedByName}
-                </button>
-              ))}
             </div>
             <div className="overflow-y-auto p-3 space-y-1">
               {doctors
                 .filter((doctor) => ![user?._id, user?.id, user?.d_id].filter(Boolean).map(String).includes(String(doctor._id)))
                 .filter((doctor) => !doctorQuery.trim() || `${doctor.name} ${(doctor.specializations || []).join(" ")}`.toLowerCase().includes(doctorQuery.trim().toLowerCase()))
-                .map((doctor) => (
-                  <button key={doctor._id} type="button" onClick={() => sendShare(doctor)} className="w-full text-left border rounded-lg px-3 py-2 hover:border-teal-400">
-                    <div className="text-sm font-semibold">{doctor.name}</div>
-                    <div className="text-xs text-slate-500">{(doctor.specializations || []).join(", ")}</div>
-                  </button>
-                ))}
+                .map((doctor) => {
+                  const selected = selectedDoctorIds.includes(String(doctor._id));
+                  const ordering = visitOrders.some((row) => String(row.bookedVisitId) === String(visitId) && String(row.orderedById) === String(doctor._id));
+                  return (
+                    <label key={doctor._id} className={`flex items-start gap-3 border rounded-lg px-3 py-2 cursor-pointer ${selected ? "border-teal-600 bg-teal-50" : "border-slate-200"}`}>
+                      <input
+                        type="checkbox"
+                        className="mt-1"
+                        checked={selected}
+                        onChange={() => toggleShareDoctor(doctor._id)}
+                      />
+                      <span>
+                        <span className="block text-sm font-semibold">{doctor.name}</span>
+                        <span className="block text-xs text-slate-500">{(doctor.specializations || []).join(", ") || "Lekarz"}</span>
+                        {ordering ? <span className="block text-xs text-amber-800 mt-0.5">Lekarz zlecający to badanie</span> : null}
+                      </span>
+                    </label>
+                  );
+                })}
             </div>
-            <div className="p-3 border-t flex justify-end">
-              <button type="button" onClick={() => setShareTarget(null)} className="px-3 py-1.5 border rounded-lg text-sm">Zamknij</button>
+            <div className="p-3 border-t flex justify-end gap-2">
+              <button type="button" onClick={() => setShareTarget(null)} disabled={sharing} className="px-3 py-1.5 border rounded-lg text-sm">Zamknij</button>
+              <button
+                type="button"
+                onClick={sendShares}
+                disabled={sharing || !selectedDoctorIds.length}
+                className="px-3 py-1.5 rounded-lg bg-[#1b766a] text-white text-sm font-semibold disabled:opacity-60"
+              >
+                {sharing ? "Wysyłanie..." : `Udostępnij${selectedDoctorIds.length ? ` (${selectedDoctorIds.length})` : ""}`}
+              </button>
             </div>
           </div>
         </div>

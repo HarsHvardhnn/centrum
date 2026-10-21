@@ -18,7 +18,7 @@ const clinicFlowHelper = {
     return apiCaller("GET", `/api/clinic-flow/shares/${shareId}/file`).then(unwrap);
   },
   reviewShare(shareId) {
-    return apiCaller("POST", `/api/clinic-flow/shares/${shareId}/review`, {}).then(unwrap);
+    return apiCaller("POST", `/api/clinic-flow/shares/${shareId}/review`, { review: true }).then(unwrap);
   },
   createOrder({ visitId, exam, note, kind, specialization, requestedDoctorId }) {
     return apiCaller("POST", "/api/clinic-flow/orders", {
@@ -51,7 +51,7 @@ const clinicFlowHelper = {
     return apiCaller("POST", `/api/clinic-flow/orders/${orderId}/book`, { visitId }).then(unwrap);
   },
   cancelOrder(orderId) {
-    return apiCaller("POST", `/api/clinic-flow/orders/${orderId}/cancel`, {}).then(unwrap);
+    return apiCaller("POST", `/api/clinic-flow/orders/${orderId}/cancel`, { cancel: true }).then(unwrap);
   },
   doctors() {
     return apiCaller("GET", "/doctor-stats/doctors-list").then((response) => response?.data?.data || []);

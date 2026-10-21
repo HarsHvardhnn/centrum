@@ -419,7 +419,7 @@ function printFieldText(field, values, status) {
 const PDF_PAGE_CSS = `
 @page { size: A4; margin: 0; }
 html, body { margin: 0; padding: 0; background: #fff; }
-.print-sheet { width: auto !important; max-width: 100% !important; min-width: 0 !important; margin: 0 !important; padding: 0 16mm !important; box-sizing: border-box !important; box-shadow: none !important; }
+.print-sheet { width: auto !important; max-width: 100% !important; min-width: 0 !important; margin: 0 !important; padding: 14mm 16mm 0 !important; box-sizing: border-box !important; box-shadow: none !important; }
 .medical-document-header__meta, .document-meta-value, .document-meta-label { max-width: 100% !important; overflow: visible !important; }
 .document-meta-value { overflow-wrap: anywhere !important; }
 .document-section__value { line-height: 1.35 !important; }

@@ -179,7 +179,7 @@ export default function InternalOrdersHistory() {
                             toast.success("Zlecenie anulowane");
                             load(filters);
                           } catch (err) {
-                            toast.error(err.response?.data?.message || "Nie udało się anulować");
+                            toast.error(err.response?.data?.message || err.message || "Nie udało się anulować");
                           }
                         }}
                         className="ml-2 px-3 py-1.5 rounded-lg border text-xs font-semibold text-slate-600"
