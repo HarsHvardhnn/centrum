@@ -236,10 +236,6 @@ function visitCardVersions(reports) {
     .map((card, index, all) => ({ ...card, version: index + 1, total: all.length }));
 }
 
-function openVisitCard(url) {
-  if (url) window.open(url, "_blank", "noopener,noreferrer");
-}
-
 export function VisitFilePreview({ title, url, onClose }) {
   const [src, setSrc] = useState("");
   const [kind, setKind] = useState("pdf");
@@ -473,6 +469,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   const [orderSpecialization, setOrderSpecialization] = useState("");
   const [orderDoctorId, setOrderDoctorId] = useState("any");
   const [sharedPreview, setSharedPreview] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
   const [sharedClinicDoc, setSharedClinicDoc] = useState(null);
   const issuedPdfRef = useRef(null);
   const previewPdfRef = useRef(null);
@@ -882,7 +879,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-blue-50 text-blue-700 border-blue-200">Plik</span>
             </div>
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 text-xs">
-              <button type="button" onClick={() => openVisitCard(file.url)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
+              <button type="button" onClick={() => setFilePreview({ name: file.name, url: file.url })} className="inline-flex items-center gap-1 text-teal-700 font-medium">
                 <Eye size={14} /> Otwórz dokument
               </button>
               <div className="flex items-center gap-3">
@@ -964,6 +961,10 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
 
       {sharedPreview && (
         <VisitFilePreview title={sharedPreview.name || "Wynik"} url={sharedPreview.url} onClose={() => setSharedPreview(null)} />
+      )}
+
+      {filePreview && (
+        <VisitFilePreview title={filePreview.name || "Dokument"} url={filePreview.url} onClose={() => setFilePreview(null)} />
       )}
 
       {sharedClinicDoc && (
