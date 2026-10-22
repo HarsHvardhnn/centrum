@@ -487,7 +487,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   useEffect(() => {
     loadDocs();
     loadFlow();
-    clinicDocumentsHelper.listTemplates().then(setTemplates).catch(() => setTemplates([]));
+    clinicDocumentsHelper.listTemplates({ use: true }).then(setTemplates).catch(() => setTemplates([]));
   }, [visitId]);
 
   const openShare = (file) => {
@@ -682,7 +682,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
       toast.success("Zapisano szkic");
       setDraft(null);
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.response?.data?.message || err.message);
     }
   };
 

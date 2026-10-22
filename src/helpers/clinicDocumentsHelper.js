@@ -6,7 +6,7 @@ const unwrap = (res) => res?.data ?? res;
 
 const clinicDocumentsHelper = {
   async listTemplates(options = {}) {
-    const query = options.manage ? "?manage=1" : "";
+    const query = options.manage ? "?manage=1" : options.use ? "?use=1" : "";
     const data = unwrap(await apiCaller("GET", `${BASE}/templates${query}`));
     if (!data?.success) throw new Error(data?.message || "Nie udało się pobrać wzorów");
     return data.data || [];
