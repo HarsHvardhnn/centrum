@@ -8,6 +8,7 @@ import PrescriptionHistoryModal from "./PrescriptionHistoryModal";
 import { STATUS_LABELS, statusClass, accessCodeOf } from "./ehealthStatus";
 import { visitDiagnosisRows } from "./visitIcd";
 import IcdCombobox from "./IcdCombobox";
+import IssueSummaryBar from "./IssueSummaryBar";
 import { classifyDrug } from "./drugClass";
 import P1SignDialog from "./P1SignDialog";
 
@@ -1043,11 +1044,7 @@ export default function EPrescriptionIssueModal({
           </div>
         </div>
 
-        <div className="bg-slate-50 border-b border-slate-200 px-6 py-2.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-700">
-          <span className="break-words"><span className="text-slate-500">Pacjent:</span> <strong>{details?.name || "—"}</strong> · PESEL {details?.pesel || "—"} · {details?.address || "brak adresu"}</span>
-          <span><span className="text-slate-500">Wystawiający:</span> <strong>{patient?.doctorName || "—"}</strong> {patient?.pwz ? `(PWZ ${patient.pwz})` : ""}</span>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">eWUŚ: sprawdzenie z wizyty</span>
-        </div>
+        <IssueSummaryBar patientName={details?.name} pesel={details?.pesel} birthDate={details?.birthDate} address={details?.address || "brak adresu"} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} />
 
         {issued.length ? (
           <IssuedBatch

@@ -4,6 +4,7 @@ import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { STATUS_LABELS, statusClass, accessCodeOf } from "./ehealthStatus";
 import P1SignDialog from "./P1SignDialog";
+import IssueSummaryBar from "./IssueSummaryBar";
 import ReferralHistoryModal from "./ReferralHistoryModal";
 import IssuePatientCard, { normalizePatient, patientForDocument } from "./IssuePatientCard";
 import {
@@ -242,6 +243,8 @@ const EReferralIssueModal = ({
             <button type="button" onClick={onClose} className="px-2 py-1 text-lg" aria-label="Zamknij">×</button>
           </div>
         </div>
+
+        <IssueSummaryBar patientName={details?.name || patient?.name} pesel={details?.pesel || patient?.pesel} birthDate={details?.birthDate || patient?.birthDate} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} />
 
         <div className="p-6 overflow-y-auto text-xs text-slate-700 space-y-4">
           {result ? (

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
+import IssueSummaryBar from "./IssueSummaryBar";
 import { toast } from "sonner";
-import { AlertTriangle, Building2, CheckCircle2, History, Loader2, Plus, Printer, ShieldCheck, X } from "lucide-react";
+import { AlertTriangle, Building2, CheckCircle2, History, Loader2, Plus, Printer, X } from "lucide-react";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import P1SignDialog from "./P1SignDialog";
 import { patientForDocument } from "./IssuePatientCard";
@@ -561,16 +562,7 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-slate-50 px-5 py-3 text-sm">
-          <div>
-            <p className="font-bold text-slate-900">{patient?.name || "Pacjent"}</p>
-            <p className="text-xs text-slate-500">{pesel.length === 11 ? `PESEL ${pesel}` : "Brak PESEL — e-ZLA wymaga numeru PESEL"}</p>
-          </div>
-          <p className="text-xs text-slate-600">{patient?.doctorName || "Lekarz wystawiający"}</p>
-          <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200">
-            <ShieldCheck size={12} /> eWUŚ jest na karcie wizyty
-          </span>
-        </div>
+        <IssueSummaryBar patientName={patient?.name} pesel={pesel} birthDate={patient?.birthDate} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} />
 
         <div className="flex-1 overflow-y-auto p-5">
           {result ? (

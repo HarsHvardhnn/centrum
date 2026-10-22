@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import { NFZ_BRANCHES } from "./eReferralCatalog";
 
-function formatValidUntil(iso) {
+export function formatValidUntil(iso) {
   if (!iso) return "";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
@@ -19,7 +19,7 @@ function formatValidUntil(iso) {
   return `${day}.${month}.${year}, ${time}`;
 }
 
-function branchLabel(code) {
+export function branchLabel(code) {
   if (!code) return "";
   return NFZ_BRANCHES.find((branch) => branch.code === code)?.label || code;
 }
@@ -121,7 +121,7 @@ function warsawDay(date) {
   }).format(date);
 }
 
-function formatChecked(iso) {
+export function formatChecked(iso) {
   if (!iso) return "";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
@@ -135,7 +135,7 @@ function formatChecked(iso) {
   return `${day}.${month}.${year}, ${time}`;
 }
 
-function badgeFor(doc) {
+export function badgeFor(doc) {
   const status = doc?.status || "not_checked";
   const validUntil = doc?.payload?.validUntil ? new Date(doc.payload.validUntil) : null;
   const expired = validUntil && !Number.isNaN(validUntil.getTime()) && validUntil.getTime() < Date.now();
