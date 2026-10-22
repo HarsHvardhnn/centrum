@@ -435,16 +435,18 @@ const EReferralIssueModal = ({
                   <textarea rows={3} value={justification} onChange={(e) => setJustification(e.target.value)} className="mt-1 w-full p-2 border rounded-xl" />
                 </label>
               </div>
-
-              <div className="flex justify-end gap-2 border-t pt-3">
-                <button type="button" onClick={onClose} className="px-4 py-2 border rounded-xl font-bold">Anuluj</button>
-                <button type="button" onClick={() => { if (validate()) setSignOpen(true); }} className="px-5 py-2.5 bg-blue-700 text-white rounded-xl font-bold">
-                  Zapisz i przejdź do podpisu
-                </button>
-              </div>
             </>
           )}
         </div>
+
+        {!result && (
+          <div className="flex shrink-0 justify-end gap-2 border-t border-slate-200 bg-white px-6 py-3">
+            <button type="button" onClick={onClose} className="px-4 py-2 border rounded-xl font-bold text-xs">Anuluj</button>
+            <button type="button" onClick={() => { if (validate()) setSignOpen(true); }} className="px-5 py-2.5 bg-blue-700 text-white rounded-xl font-bold text-xs">
+              Zapisz i przejdź do podpisu
+            </button>
+          </div>
+        )}
       </div>
 
       <ReferralHistoryModal
