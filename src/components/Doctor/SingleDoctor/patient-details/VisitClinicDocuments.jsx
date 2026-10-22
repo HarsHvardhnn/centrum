@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useUser } from "../../../../context/userContext";
 import clinicDocumentsHelper from "../../../../helpers/clinicDocumentsHelper";
 import clinicFlowHelper, { CONSULTATION_EXAM, orderStatusMeta } from "../../../../helpers/clinicFlowHelper";
+import { OrderDetailsDialog } from "../../../Dashboard/InternalOrdersPanel";
 import patientService from "../../../../helpers/patientHelper";
 import { apiCaller } from "../../../../utils/axiosInstance";
 import ClinicDocumentSheet, { ClinicSheetPdfView, initialFieldValue, printClinicSheet } from "../../../ehealth/ClinicDocumentSheet";
@@ -451,6 +452,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   const [outgoing, setOutgoing] = useState([]);
   const [visitOrders, setVisitOrders] = useState([]);
   const [shareTarget, setShareTarget] = useState(null);
+  const [orderDetailsId, setOrderDetailsId] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [doctorQuery, setDoctorQuery] = useState("");
   const [selectedDoctorIds, setSelectedDoctorIds] = useState([]);
@@ -768,30 +770,30 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
       </div>
       <div className="p-4 space-y-2">
         {incoming.map((share) => (
-          <div key={share.id} className="border border-amber-300 bg-amber-50 rounded-lg p-3">
+          <div key={share.id} className="border border-teal-200 bg-teal-50/40 rounded-xl p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900">Dokument do przejrzenia: {share.fileName}</div>
-                <div className="text-xs text-slate-600 mt-0.5">
+                <div className="text-sm font-bold text-slate-900">Dokument do weryfikacji: {share.fileName}</div>
+                <div className="text-xs text-slate-500 mt-0.5">
                   Wysłał {share.fromDoctorName || "lekarz"}{share.sourceVisitLabel ? ` · wizyta ${share.sourceVisitLabel}` : ""}
                 </div>
-                <p className="text-xs text-slate-600 mt-1">
+                <p className="text-xs text-slate-700 mt-2">
                   {share.reviewedAt
-                    ? "Oznaczono jako przejrzane. Nic więcej nie trzeba robić."
-                    : "Otwórz dokument, a potem kliknij „Oznacz jako przejrzane”. Nie umawiasz wizyty i nie czekasz na recepcję."}
+                    ? "Dokument został zweryfikowany. Nic więcej nie trzeba robić."
+                    : "Otwórz dokument i kliknij „Potwierdź zapoznanie”, aby potwierdzić zapoznanie się z udostępnionym plikiem."}
                 </p>
               </div>
-              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${share.reviewedAt ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-amber-100 text-amber-900 border-amber-300"}`}>
-                {share.reviewedAt ? "Przejrzane" : "Do przeglądu"}
+              <span className={`shrink-0 text-xs font-semibold px-2.5 py-0.5 rounded-md border ${share.reviewedAt ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-amber-100 text-amber-900 border-amber-300"}`}>
+                {share.reviewedAt ? "Zweryfikowano" : "Do weryfikacji"}
               </span>
             </div>
-            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-amber-200 text-xs">
-              <button type="button" onClick={() => openIncoming(share)} className="inline-flex items-center gap-1 text-teal-800 font-medium">
-                <Eye size={14} /> Otwórz wynik
+            <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-teal-200 text-xs">
+              <button type="button" onClick={() => openIncoming(share)} className="inline-flex items-center gap-1.5 text-teal-800 font-medium">
+                <Eye size={14} /> Otwórz dokument
               </button>
               {!share.reviewedAt && (
-                <button type="button" onClick={() => markReviewed(share)} className="inline-flex items-center gap-1 text-slate-700 font-medium">
-                  Oznacz jako przejrzane
+                <button type="button" onClick={() => markReviewed(share)} className="h-9 px-4 rounded-lg bg-[#1b766a] text-white text-xs font-semibold">
+                  Potwierdź zapoznanie
                 </button>
               )}
             </div>
@@ -809,18 +811,20 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                   {row.createdAt ? formatDocumentWhen(row.createdAt) : "Zlecone z tej wizyty"}
                   {row.specialization ? ` · ${row.specialization}` : ""}
                   {row.requestedDoctorName ? ` · ${row.requestedDoctorName}` : row.anySpecialist ? " · Dowolny specjalista" : ""}
-                  {row.note ? ` · ${row.note}` : ""}
                 </div>
               </div>
               <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${badge.className}`}>{badge.label}</span>
             </div>
-            {canCancelOrder && (
-              <div className="flex items-center justify-end mt-2 pt-2 border-t border-gray-100 text-xs">
-                <button type="button" onClick={() => cancelVisitOrder(row)} className="inline-flex items-center gap-1 text-slate-500 font-medium">
+            <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-gray-100 text-xs">
+              <button type="button" onClick={() => setOrderDetailsId(row.id)} className="px-3 py-1.5 rounded-lg border border-slate-300 font-semibold text-slate-700">
+                Zobacz szczegóły
+              </button>
+              {canCancelOrder && (
+                <button type="button" onClick={() => cancelVisitOrder(row)} className="px-3 py-1.5 rounded-lg border border-red-300 font-semibold text-red-600">
                   Anuluj
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
           );
         })}
@@ -970,13 +974,18 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
         </div>
       )}
 
+      {orderDetailsId && (() => {
+        const detailsRow = visitOrders.find((row) => String(row.id) === String(orderDetailsId));
+        return detailsRow ? <OrderDetailsDialog row={detailsRow} onClose={() => setOrderDetailsId(null)} /> : null;
+      })()}
+
       {shareTarget && (
         <div className="fixed inset-0 z-[70] bg-slate-900/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl w-full max-w-md max-h-[80vh] overflow-hidden flex flex-col">
             <div className="p-4 border-b">
-              <h3 className="font-bold">Udostępnij do przeglądu</h3>
-              <p className="text-xs text-slate-500 mt-1">{shareTarget.name}. Zaznacz lekarzy, a potem kliknij „Udostępnij”. Kliknięcie nazwiska niczego jeszcze nie wysyła.</p>
-              <p className="text-xs text-slate-500 mt-1">Lekarz zobaczy tylko ten dokument. Otwiera go i oznacza jako przejrzany. Nie czeka na recepcję.</p>
+              <h3 className="font-bold">Udostępnij dokument</h3>
+              <p className="text-xs text-slate-500 mt-1">Wybrany dokument: {shareTarget.name}</p>
+              <p className="text-xs text-slate-500 mt-1">Wybierz lekarzy, którym chcesz udostępnić ten dokument. Specjalista zobaczy wyłącznie ten załącznik – szczegóły wizyty pozostaną ukryte.</p>
               <input value={doctorQuery} onChange={(event) => setDoctorQuery(event.target.value)} placeholder="Szukaj lekarza..." className="mt-3 w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div className="overflow-y-auto p-3 space-y-1">

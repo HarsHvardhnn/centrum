@@ -19,7 +19,7 @@ function detailRows(row) {
   ].filter(Boolean);
 }
 
-function OrderDetailsDialog({ row, onClose, onBook, onCancel }) {
+export function OrderDetailsDialog({ row, onClose, onBook, onCancel }) {
   const badge = orderStatusMeta(row.status);
   return (
     <div className="fixed inset-0 z-[80] bg-slate-900/50 flex items-center justify-center p-4" onClick={onClose}>
@@ -51,11 +51,11 @@ function OrderDetailsDialog({ row, onClose, onBook, onCancel }) {
         </dl>
         <div className="px-5 py-3 border-t flex justify-end gap-2">
           <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg border border-slate-300 text-sm font-semibold text-slate-600">Zamknij</button>
-          {row.status === "open" && (
-            <>
-              <button type="button" onClick={onCancel} className="px-3 py-1.5 rounded-lg border border-slate-300 text-sm font-semibold text-slate-600">Anuluj zlecenie</button>
-              <button type="button" onClick={onBook} className="px-3 py-1.5 rounded-lg bg-[#1b766a] text-white text-sm font-semibold">Umów wizytę</button>
-            </>
+          {row.status === "open" && onCancel && (
+            <button type="button" onClick={onCancel} className="px-3 py-1.5 rounded-lg border border-red-300 text-sm font-semibold text-red-600">Anuluj zlecenie</button>
+          )}
+          {row.status === "open" && onBook && (
+            <button type="button" onClick={onBook} className="px-3 py-1.5 rounded-lg bg-[#1b766a] text-white text-sm font-semibold">Umów wizytę</button>
           )}
         </div>
       </div>
@@ -100,7 +100,7 @@ export default function InternalOrdersPanel() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-amber-200 mt-6 p-4">
+    <div className="bg-white rounded-lg shadow-sm border border-[#1b766a] mt-6 p-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-bold text-slate-900">Zlecenia wewnętrzne</h2>
         <Link to="/administracja/zlecenia-wewnetrzne" className="text-xs font-semibold text-teal-800">Historia zleceń</Link>
@@ -139,7 +139,7 @@ export default function InternalOrdersPanel() {
                 <button
                   type="button"
                   onClick={() => cancel(row)}
-                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-600"
+                  className="px-3 py-1.5 rounded-lg border border-red-300 text-xs font-semibold text-red-600"
                 >
                   Anuluj
                 </button>
