@@ -417,7 +417,7 @@ function printFieldText(field, values, status) {
 }
 
 const PDF_PAGE_CSS = `
-@page { size: A4; margin: 0; }
+@page { size: A4; margin: 22mm 0 22mm 0; }
 html, body { margin: 0; padding: 0; background: #fff; }
 .print-sheet { width: auto !important; max-width: 100% !important; min-width: 0 !important; margin: 0 !important; padding: 14mm 16mm 0 !important; box-sizing: border-box !important; box-shadow: none !important; }
 .medical-document-header__meta, .document-meta-value, .document-meta-label { max-width: 100% !important; overflow: visible !important; }
@@ -425,8 +425,7 @@ html, body { margin: 0; padding: 0; background: #fff; }
 .document-section__value { line-height: 1.35 !important; }
 .print-main, .document-section, .document-title, .document-section__label, .patient-name, .patient-details dd { max-width: 100% !important; min-width: 0 !important; word-break: normal !important; overflow-wrap: break-word !important; }
 .document-section__value { max-width: 100% !important; min-width: 0 !important; overflow-wrap: anywhere !important; word-break: break-word !important; }
-table.print-sign, table.print-sign tr, table.print-sign td { break-inside: avoid !important; page-break-inside: avoid !important; }
-table.print-sign { width: 78mm !important; margin: 8mm 0 0 auto !important; }
+.print-sign { display: block !important; width: 78mm !important; margin: 8mm 0 0 auto !important; padding-bottom: 3mm !important; text-align: center !important; break-inside: avoid !important; page-break-inside: avoid !important; }
 `;
 
 export function buildClinicSheetHtml({ title, fields, values, patient, doctorName, doctorTitle, doctorPwz, documentNumber, status }) {
@@ -487,15 +486,11 @@ export function buildClinicSheetHtml({ title, fields, values, patient, doctorNam
       </section>
       <section class="document-content">${sections}</section>
       </div>
-      <table class="print-sign">
-        <tr>
-          <td>
-            <p class="doctor-signature__label">Lekarz orzekający / wystawiający</p>
-            <p class="doctor-signature__name">${escapeHtml(sign.line || "—")}</p>
-            <p class="doctor-signature__pwz">PWZ: ${escapeHtml(sign.pwz || "—")}</p>
-          </td>
-        </tr>
-      </table>
+      <div class="print-sign">
+        <p class="doctor-signature__label">Lekarz orzekający / wystawiający</p>
+        <p class="doctor-signature__name">${escapeHtml(sign.line || "—")}</p>
+        <p class="doctor-signature__pwz">PWZ: ${escapeHtml(sign.pwz || "—")}</p>
+      </div>
     </article>
     </body></html>`;
 }

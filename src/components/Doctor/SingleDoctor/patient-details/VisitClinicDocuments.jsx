@@ -339,13 +339,22 @@ async function printVisitFile(url) {
   document.body.appendChild(frame);
 }
 
+const GENERIC_FILE_TYPES = new Set(["report", "other", "general", "file"]);
+
+/** The type the doctor picked at upload is saved in `type`; `documentType` is only a storage category ("report"). */
+function uploadedFileType(report) {
+  const picked = String(report.type || "").trim();
+  if (picked && !GENERIC_FILE_TYPES.has(picked.toLowerCase())) return picked;
+  return "Załącznik";
+}
+
 function uploadedVisitFiles(reports) {
   return (reports || [])
     .filter((report) => report.type !== "visit-card" && report.type !== "Visit Card")
     .map((report) => ({
       id: report._id,
       name: report.name || report.fileName || report.originalName || "Dokument",
-      type: report.documentType || report.type || "Załącznik",
+      type: uploadedFileType(report),
       description: report.description || "",
       url: report.downloadUrl || report.fileUrl || report.url || report.path || "",
       at: report.uploadedAt || report.uploadDate || report.createdAt || report.updatedAt,
@@ -779,7 +788,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                 </div>
                 <p className="text-xs text-slate-700 mt-2">
                   {share.reviewedAt
-                    ? "Dokument został zweryfikowany. Nic więcej nie trzeba robić."
+                    ? "Dokument zweryfikowany. Lekarz został powiadomiony o odczycie."
                     : "Otwórz dokument i kliknij „Potwierdź zapoznanie”, aby potwierdzić zapoznanie się z udostępnionym plikiem."}
                 </p>
               </div>
@@ -803,7 +812,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
           const badge = orderStatusBadge(row.status);
           const canCancelOrder = (canShare || user?.role === "receptionist") && row.status !== "cancelled" && row.status !== "completed";
           return (
-          <div key={row.id} className="border border-gray-200 rounded-lg p-3">
+          <div key={row.id} className="border border-[#1b766a] rounded-lg p-3">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-gray-900">Zlecenie w przychodni: {row.exam}</div>
@@ -815,7 +824,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               </div>
               <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${badge.className}`}>{badge.label}</span>
             </div>
-            <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-gray-100 text-xs">
+            <div className="flex items-center justify-start gap-2 mt-2 pt-2 border-t border-gray-100 text-xs">
               <button type="button" onClick={() => setOrderDetailsId(row.id)} className="px-3 py-1.5 rounded-lg border border-slate-300 font-semibold text-slate-700">
                 Zobacz szczegóły
               </button>
@@ -854,7 +863,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
             </div>
           </div>
         ); })() : row.kind === "file" ? (() => { const file = row.file; return (
-          <div key={file.id || file.url} className="border border-gray-200 rounded-lg p-3">
+          <div key={file.id || file.url} className="border border-blue-300 rounded-lg p-3">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-gray-900">{file.name}</div>
@@ -870,7 +879,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                   </p>
                 ))}
               </div>
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-slate-50 text-slate-700 border-slate-200">Plik</span>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-blue-50 text-blue-700 border-blue-200">Plik</span>
             </div>
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 text-xs">
               <button type="button" onClick={() => openVisitCard(file.url)} className="inline-flex items-center gap-1 text-teal-700 font-medium">

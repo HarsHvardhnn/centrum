@@ -62,7 +62,7 @@ export const CONSULTATION_EXAM = "Konsultacja specjalistyczna";
 
 export function orderStatusMeta(status) {
   if (status === "cancelled") {
-    return { label: "Anulowana", className: "bg-slate-50 text-slate-700 border-slate-200" };
+    return { label: "Anulowana", className: "bg-red-50 text-red-700 border-red-200" };
   }
   if (status === "completed") {
     return { label: "Zrealizowana", className: "bg-emerald-50 text-emerald-800 border-emerald-200" };
