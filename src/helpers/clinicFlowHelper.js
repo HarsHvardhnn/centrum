@@ -62,15 +62,15 @@ export const CONSULTATION_EXAM = "Konsultacja specjalistyczna";
 
 export function orderStatusMeta(status) {
   if (status === "cancelled") {
-    return { label: "Anulowana", className: "bg-red-50 text-red-700 border-red-200" };
+    return { label: "Anulowana", className: "bg-red-100 text-red-800 border-red-200" };
   }
   if (status === "completed") {
-    return { label: "Zrealizowana", className: "bg-emerald-50 text-emerald-800 border-emerald-200" };
+    return { label: "Zakończona", className: "bg-green-100 text-green-800 border-green-200" };
   }
   if (status === "booked") {
-    return { label: "Zarezerwowana", className: "bg-sky-50 text-sky-800 border-sky-200" };
+    return { label: "Zarezerwowana", className: "bg-yellow-100 text-yellow-800 border-yellow-200" };
   }
-  return { label: "Skierowana", className: "bg-amber-50 text-amber-800 border-amber-200" };
+  return { label: "Skierowana", className: "bg-orange-100 text-orange-800 border-orange-200" };
 }
 
 export function formatOrderWhen(value) {

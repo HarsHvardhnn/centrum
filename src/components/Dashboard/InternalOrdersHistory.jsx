@@ -7,12 +7,13 @@ import clinicFlowHelper, {
   formatOrderWhen,
   orderStatusMeta,
 } from "../../helpers/clinicFlowHelper";
+import { OrderDetailsDialog } from "./InternalOrdersPanel";
 
 const STATUSES = [
   { id: "all", label: "Wszystkie" },
   { id: "open", label: "Skierowana" },
   { id: "booked", label: "Zarezerwowana" },
-  { id: "completed", label: "Zrealizowana" },
+  { id: "completed", label: "Zakończona" },
   { id: "cancelled", label: "Anulowana" },
 ];
 
@@ -33,6 +34,7 @@ export default function InternalOrdersHistory() {
   const [rows, setRows] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [filters, setFilters] = useState(emptyFilters);
+  const [openId, setOpenId] = useState(null);
   const isStaff = user?.role === "admin" || user?.role === "receptionist";
 
   const load = (next = filters) => {
@@ -53,15 +55,27 @@ export default function InternalOrdersHistory() {
   );
 
   const setFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
+  const selected = rows.find((row) => row.id === openId) || null;
+
+  const cancel = async (row) => {
+    try {
+      await clinicFlowHelper.cancelOrder(row.id);
+      toast.success("Zlecenie anulowane");
+      setOpenId(null);
+      load(filters);
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || "Nie udało się anulować");
+    }
+  };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="w-full max-w-[1680px] mx-auto px-6 lg:px-10 py-6">
       <h1 className="text-2xl font-bold text-teal-800">Historia zleceń wewnętrznych</h1>
       <p className="text-sm text-slate-600 mt-1">
         Badania i konsultacje specjalistyczne zlecone w przychodni. Status zmienia się wraz z umówioną wizytą.
       </p>
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 bg-white border border-slate-200 rounded-xl p-4">
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-4 bg-white border border-slate-200 rounded-xl p-5">
         <label className="text-xs font-semibold text-slate-600">Status
           <select value={filters.status} onChange={(event) => setFilter("status", event.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2 text-sm bg-white">
             {STATUSES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
@@ -110,7 +124,7 @@ export default function InternalOrdersHistory() {
             </select>
           </label>
         )}
-        <div className="flex items-end gap-2 md:col-span-3 lg:col-span-4">
+        <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
           <button type="button" onClick={() => load(filters)} className="px-4 py-2 rounded-lg bg-[#1b766a] text-white text-sm font-semibold">Filtruj</button>
           <button
             type="button"
@@ -122,71 +136,69 @@ export default function InternalOrdersHistory() {
         </div>
       </div>
 
-      <div className="mt-4 bg-white border border-slate-200 rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="mt-4 bg-white border border-slate-200 rounded-xl overflow-x-auto">
+        <table className="w-full min-w-[960px] text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-3 py-2">Utworzono</th>
-              <th className="px-3 py-2">Pacjent</th>
-              <th className="px-3 py-2">Zlecenie</th>
-              <th className="px-3 py-2">Lekarze</th>
-              <th className="px-3 py-2">Status</th>
-              <th className="px-3 py-2" />
+              <th className="px-4 py-3 whitespace-nowrap">Utworzono</th>
+              <th className="px-4 py-3">Pacjent</th>
+              <th className="px-4 py-3">Zlecenie</th>
+              <th className="px-4 py-3">Lekarze</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3 text-right">Akcje</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && (
-              <tr><td colSpan={6} className="px-3 py-8 text-center text-slate-500">Brak zleceń dla wybranych filtrów.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">Brak zleceń dla wybranych filtrów.</td></tr>
             )}
             {rows.map((row) => {
               const badge = orderStatusMeta(row.status);
               return (
-                <tr key={row.id} className="border-t border-slate-100 align-top">
-                  <td className="px-3 py-3 whitespace-nowrap">{formatOrderWhen(row.createdAt) || "—"}</td>
-                  <td className="px-3 py-3">{row.patientName || "Pacjent"}</td>
-                  <td className="px-3 py-3">
+                <tr key={row.id} className="border-t border-slate-100 align-middle">
+                  <td className="px-4 py-3 whitespace-nowrap text-slate-700">{formatOrderWhen(row.createdAt) || "—"}</td>
+                  <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">{row.patientName || "Pacjent"}</td>
+                  <td className="px-4 py-3">
                     <div className="font-semibold text-slate-900">{row.exam}</div>
-                    <div className="text-xs text-slate-500">
-                      {row.specialization || ""}
-                      {row.note ? ` · ${row.note}` : ""}
-                    </div>
+                    {row.specialization ? <div className="text-xs text-slate-500">{row.specialization}</div> : null}
                   </td>
-                  <td className="px-3 py-3 text-xs text-slate-600">
-                    <div>Zlecił: {row.orderedByName || "—"}</div>
+                  <td className="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
+                    <div><span className="text-slate-500">Zlecił:</span> {row.orderedByName || "—"}</div>
                     <div>
-                      Wykonanie: {row.performingDoctorName || row.requestedDoctorName || (row.anySpecialist ? "Dowolny specjalista" : "—")}
+                      <span className="text-slate-500">Wykonanie:</span> {row.performingDoctorName || row.requestedDoctorName || (row.anySpecialist ? "Dowolny specjalista" : "—")}
                     </div>
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${badge.className}`}>{badge.label}</span>
                   </td>
-                  <td className="px-3 py-3 text-right">
-                    {row.status === "open" && isStaff && (
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-2 whitespace-nowrap">
                       <button
                         type="button"
-                        onClick={() => navigate(`/wizyta/utworz?orderId=${row.id}`)}
-                        className="px-3 py-1.5 rounded-lg bg-[#1b766a] text-white text-xs font-semibold"
+                        onClick={() => setOpenId(row.id)}
+                        className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-700"
                       >
-                        Umów wizytę
+                        Zobacz szczegóły
                       </button>
-                    )}
-                    {row.status === "open" && (
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            await clinicFlowHelper.cancelOrder(row.id);
-                            toast.success("Zlecenie anulowane");
-                            load(filters);
-                          } catch (err) {
-                            toast.error(err.response?.data?.message || err.message || "Nie udało się anulować");
-                          }
-                        }}
-                        className="ml-2 px-3 py-1.5 rounded-lg border text-xs font-semibold text-slate-600"
-                      >
-                        Anuluj
-                      </button>
-                    )}
+                      {row.status === "open" && isStaff && (
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/wizyta/utworz?orderId=${row.id}`)}
+                          className="px-3 py-1.5 rounded-lg bg-[#1b766a] text-white text-xs font-semibold"
+                        >
+                          Umów wizytę
+                        </button>
+                      )}
+                      {row.status === "open" && (
+                        <button
+                          type="button"
+                          onClick={() => cancel(row)}
+                          className="px-3 py-1.5 rounded-lg border border-red-300 text-xs font-semibold text-red-600"
+                        >
+                          Anuluj
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
@@ -194,6 +206,14 @@ export default function InternalOrdersHistory() {
           </tbody>
         </table>
       </div>
+      {selected && (
+        <OrderDetailsDialog
+          row={selected}
+          onClose={() => setOpenId(null)}
+          onBook={isStaff ? () => navigate(`/wizyta/utworz?orderId=${selected.id}`) : undefined}
+          onCancel={() => cancel(selected)}
+        />
+      )}
     </div>
   );
 }

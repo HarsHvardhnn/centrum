@@ -31,11 +31,11 @@ export function OrderDetailsDialog({ row, onClose, onBook, onCancel }) {
         onClick={(event) => event.stopPropagation()}
       >
         <div className="px-5 py-4 border-b flex items-start justify-between gap-3">
-          <div>
-            <h3 id="order-details-title" className="text-base font-bold text-slate-900">{row.exam}</h3>
-            <span className={`mt-2 inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-md border ${badge.className}`}>{badge.label}</span>
+          <h3 id="order-details-title" className="text-base font-bold text-slate-900">{row.exam}</h3>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className={`inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-md border ${badge.className}`}>{badge.label}</span>
+            <button type="button" onClick={onClose} className="text-slate-500 text-xl leading-none" aria-label="Zamknij">×</button>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-500 text-xl leading-none" aria-label="Zamknij">×</button>
         </div>
         <dl className="px-5 py-4 space-y-3">
           {detailRows(row).map(([label, value]) => (
@@ -49,14 +49,18 @@ export function OrderDetailsDialog({ row, onClose, onBook, onCancel }) {
             <dd className="mt-1 text-sm text-slate-800 whitespace-pre-wrap break-words">{row.note || "Brak opisu."}</dd>
           </div>
         </dl>
-        <div className="px-5 py-3 border-t flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg border border-slate-300 text-sm font-semibold text-slate-600">Zamknij</button>
-          {row.status === "open" && onCancel && (
-            <button type="button" onClick={onCancel} className="px-3 py-1.5 rounded-lg border border-red-300 text-sm font-semibold text-red-600">Anuluj zlecenie</button>
-          )}
-          {row.status === "open" && onBook && (
-            <button type="button" onClick={onBook} className="px-3 py-1.5 rounded-lg bg-[#1b766a] text-white text-sm font-semibold">Umów wizytę</button>
-          )}
+        <div className="px-5 py-3 border-t grid grid-cols-3 items-center gap-2">
+          <button type="button" onClick={onClose} className="justify-self-start px-3 py-1.5 rounded-lg border border-slate-300 text-sm font-semibold text-slate-600">Zamknij</button>
+          <div className="justify-self-center">
+            {row.status === "open" && onCancel && (
+              <button type="button" onClick={onCancel} className="px-3 py-1.5 rounded-lg border border-red-300 text-sm font-semibold text-red-600">Anuluj zlecenie</button>
+            )}
+          </div>
+          <div className="justify-self-end">
+            {row.status === "open" && onBook && (
+              <button type="button" onClick={onBook} className="px-3 py-1.5 rounded-lg bg-[#1b766a] text-white text-sm font-semibold">Umów wizytę</button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -117,8 +121,10 @@ export default function InternalOrdersPanel() {
                   <span className={`shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-md border ${badge.className}`}>{badge.label}</span>
                 </div>
                 <div className="text-xs text-slate-600 mt-0.5 truncate">
-                  {row.patientName || "Pacjent"} · {row.orderedByName || "lekarz"}
-                  {row.createdAt ? ` · ${formatOrderWhen(row.createdAt)}` : ""}
+                  <span className="text-slate-500">Pacjent:</span> <span className="font-medium text-slate-800">{row.patientName || "—"}</span>
+                  <span className="text-slate-300"> · </span>
+                  <span className="text-slate-500">Zlecił:</span> <span className="font-medium text-slate-800">{row.orderedByName || "—"}</span>
+                  {row.createdAt ? <span className="text-slate-500">{` · ${formatOrderWhen(row.createdAt)}`}</span> : null}
                 </div>
               </div>
               <div className="flex shrink-0 gap-2">
