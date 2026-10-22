@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Pill, X, Plus, ShieldCheck, Eye, Printer, Mail, Smartphone, Copy, ChevronDown, ChevronUp, AlertTriangle, Info, History, Trash2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError, drugsFromHistory, drugMatches } from "../../helpers/ehealthHelper";
@@ -7,6 +7,7 @@ import IssuePatientCard, { normalizePatient, patientForDocument } from "./IssueP
 import PrescriptionHistoryModal from "./PrescriptionHistoryModal";
 import { STATUS_LABELS, statusClass, accessCodeOf } from "./ehealthStatus";
 import { visitDiagnosisRows } from "./visitIcd";
+import IcdCombobox from "./IcdCombobox";
 import { classifyDrug } from "./drugClass";
 import P1SignDialog from "./P1SignDialog";
 
@@ -1275,116 +1276,19 @@ function Switch({ checked, onClick, onClass, label }) {
 }
 
 function IcdPicker({ diagnoses, code, name, onChange }) {
-  const [query, setQuery] = useState("");
-  const [hits, setHits] = useState([]);
-  const [open, setOpen] = useState(false);
-  const [empty, setEmpty] = useState(false);
-  const primary = diagnoses.find((row) => row.isPrimary) || diagnoses[0];
+  return <IcdCombobox visitDiagnoses={diagnoses} code={code} name={name} onChange={onChange} />;
+}
 
-  useEffect(() => {
-    const term = query.trim();
-    if (term.length < 2) {
-      setHits([]);
-      setEmpty(false);
-      return undefined;
-    }
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      const rows = await appointmentHelper.searchIcd10(term);
-      const next = Array.isArray(rows) ? rows : [];
-      if (!cancelled) {
-        setHits(next);
-        setEmpty(next.length === 0);
-        setOpen(true);
-      }
-    }, 250);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [query]);
+const COMMON_RAW_MATERIALS = [
+  "Hydrocortisonum", "Urea", "Acidum salicylicum", "Acidum boricum", "Eucerinum anhydricum", "Vaselinum album",
+  "Paraffinum liquidum", "Lekobaza", "Cholesteroli unguentum", "Aqua purificata", "Ethanolum 70°", "Glycerolum 85%",
+  "Zinci oxydum", "Mentholum", "Chloramphenicolum", "Nystatinum", "Prednisolonum", "Metronidazolum",
+];
 
-  const pick = (nextCode, nextName) => {
-    onChange({ code: nextCode, name: nextName });
-    setQuery("");
-    setHits([]);
-    setOpen(false);
-    setEmpty(false);
-  };
+const ingredientCache = new Map();
 
-  const clear = () => {
-    onChange({ code: "", name: "" });
-    setQuery("");
-    setHits([]);
-    setOpen(false);
-    setEmpty(false);
-  };
-
-  return (
-    <div className="text-xs font-semibold text-slate-700">
-      Rozpoznanie (ICD-10) *
-      {code ? (
-        <div className="mt-1 flex items-start justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1.5">
-          <div className="font-medium text-slate-900">
-            <span className="font-mono">{code}</span>
-            {name ? <span className="ml-1 font-normal text-slate-700">— {name}</span> : null}
-          </div>
-          <button type="button" onClick={clear} className="shrink-0 text-[11px] font-semibold text-slate-500 hover:text-slate-800">Usuń</button>
-        </div>
-      ) : (
-        <p className="mt-1 text-[11px] font-normal text-slate-500">Pole jest puste. Wybierz rozpoznanie z wizyty albo wyszukaj inny kod.</p>
-      )}
-      {diagnoses.length > 0 && (
-        <div className="mt-1 space-y-1">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-normal text-slate-500">Z tej wizyty</span>
-            {primary?.code && (
-              <button type="button" onClick={() => pick(primary.code, primary.name)} className="text-[11px] font-semibold text-[#0D5C46]">
-                Pobierz z wizyty
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {diagnoses.map((row) => (
-              <button
-                key={`${row.code}-${row.name}`}
-                type="button"
-                onClick={() => (row.code === code && row.name === name ? clear() : pick(row.code, row.name))}
-                className={`px-2 py-1 rounded-lg border text-left font-medium ${row.code === code ? "border-emerald-600 bg-emerald-50" : "border-slate-200 bg-white hover:bg-emerald-50"}`}
-              >
-                <span className="font-mono">{row.code}</span>
-                {row.name ? <span className="ml-1 font-normal text-slate-700">{row.name}</span> : null}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      <input
-        value={query}
-        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-        onBlur={() => setOpen(false)}
-        onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
-        placeholder={code ? "Zamień na inny kod lub nazwę" : "Kod lub nazwa, np. I10"}
-        className="mt-1 w-full p-2 border rounded-lg font-medium"
-      />
-      {open && empty && <p className="mt-1 text-[11px] font-normal text-slate-500">Brak kodów ICD-10 dla „{query.trim()}”.</p>}
-      {open && hits.length > 0 && (
-        <ul className="mt-1 max-h-40 overflow-y-auto bg-white border rounded-lg">
-          <li>
-            <button type="button" onMouseDown={(e) => { e.preventDefault(); setOpen(false); }} className="w-full text-right px-3 py-1 text-[11px] font-semibold text-slate-500">Zamknij listę</button>
-          </li>
-          {hits.map((row) => (
-            <li key={`${row.code}-${row.name}`}>
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); pick(row.code, row.name); }} className="w-full text-left px-3 py-2 hover:bg-emerald-50">
-                <span className="font-mono text-[#0D5C46]">{row.code}</span>
-                <span className="ml-2 font-normal text-slate-700">{row.name}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+function foldText(text) {
+  return String(text || "").toLowerCase().replace(/ł/g, "l").normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
 function IngredientNameField({ value, onChange, onPick }) {
@@ -1392,22 +1296,40 @@ function IngredientNameField({ value, onChange, onPick }) {
   const [searching, setSearching] = useState(false);
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [cursor, setCursor] = useState(0);
+  const boxRef = useRef(null);
+  const term = String(value || "").trim();
 
   useEffect(() => {
-    const term = String(value || "").trim();
+    if (!open) return undefined;
+    const onDown = (e) => { if (boxRef.current && !boxRef.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  useEffect(() => {
     if (!open || term.length < 2) {
       setHits([]);
       setSearching(false);
       setFailed(false);
       return undefined;
     }
+    const key = foldText(term);
+    if (ingredientCache.has(key)) {
+      setHits(ingredientCache.get(key));
+      setSearching(false);
+      setFailed(false);
+      return undefined;
+    }
     let cancelled = false;
+    setSearching(true);
     const timer = setTimeout(async () => {
       try {
-        setSearching(true);
         setFailed(false);
         const res = await ehealthHelper.searchDrugs(term, "ingredient");
-        if (!cancelled) setHits(Array.isArray(res?.data) ? res.data : []);
+        const rows = Array.isArray(res?.data) ? res.data : [];
+        ingredientCache.set(key, rows);
+        if (!cancelled) setHits(rows);
       } catch {
         if (!cancelled) {
           setHits([]);
@@ -1416,52 +1338,92 @@ function IngredientNameField({ value, onChange, onPick }) {
       } finally {
         if (!cancelled) setSearching(false);
       }
-    }, 250);
+    }, 150);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [value, open]);
+  }, [term, open]);
 
-  const term = String(value || "").trim();
+  const quick = useMemo(() => {
+    const q = foldText(term);
+    return COMMON_RAW_MATERIALS.filter((name) => !q || foldText(name).includes(q)).map((name) => ({ name, quick: true }));
+  }, [term]);
+  const seen = new Set(quick.map((row) => foldText(row.name)));
+  const dictionary = hits.filter((row) => {
+    const key = `${foldText(row.name)}|${row.producer || ""}|${row.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const flat = [...quick, ...dictionary];
+
+  useEffect(() => { setCursor(0); }, [term, open]);
+
+  const choose = (row) => {
+    if (row.quick) onChange(row.name);
+    else onPick(row);
+    setOpen(false);
+  };
+
+  const onKeyDown = (e) => {
+    if (e.key === "Escape") setOpen(false);
+    else if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setCursor((i) => Math.min(i + 1, flat.length - 1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setCursor((i) => Math.max(i - 1, 0)); }
+    else if (e.key === "Enter" && open && flat[cursor] && term) { e.preventDefault(); choose(flat[cursor]); }
+  };
 
   return (
-    <div>
+    <div ref={boxRef} className="relative">
       <input
         value={value || ""}
         onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 180)}
-        onChange={(e) => {
-          setOpen(true);
-          onChange(e.target.value);
-        }}
-        placeholder="Nazwa z bazy leków, np. Hydrocortisonum"
+        onChange={(e) => { setOpen(true); onChange(e.target.value); }}
+        onKeyDown={onKeyDown}
+        placeholder="Wpisz lub wybierz surowiec, np. Hydrocortisonum"
         className="w-full p-2 bg-white border border-slate-300 rounded-lg font-medium"
       />
-      {open && term.length >= 2 && (
-        <ul className="mt-1 max-h-40 overflow-y-auto bg-white border border-slate-200 rounded-lg">
-          {searching && <li className="px-3 py-2 text-slate-500 font-normal">Szukam w bazie leków…</li>}
-          {!searching && hits.map((drug) => (
-            <li key={drug.ean || drug.id || drug.name}>
-              <button
-                type="button"
-                onMouseDown={() => {
-                  onPick(drug);
-                  setOpen(false);
-                  setHits([]);
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-emerald-50"
-              >
-                <span className="font-medium text-slate-900">{drug.name}</span>
-                <span className="block text-[11px] font-normal text-slate-500">
-                  {[drug.kdlek, drug.activeSubstance, drug.strength, drug.form, drug.package, drug.code, drug.unit, drug.ean].filter(Boolean).join(" · ")}
-                </span>
-              </button>
-            </li>
-          ))}
-          {!searching && failed && <li className="px-3 py-2 text-slate-400 font-normal">Nie udało się przeszukać bazy leków. Możesz zostawić wpisaną nazwę.</li>}
-          {!searching && !failed && !hits.length && <li className="px-3 py-2 text-slate-400 font-normal">Brak w bazie leków — możesz zostawić wpisaną nazwę.</li>}
-        </ul>
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+          {quick.length > 0 && (
+            <>
+              <div className="sticky top-0 border-b border-slate-100 bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">Najczęstsze surowce</div>
+              <ul className="divide-y divide-slate-100">
+                {quick.map((row, i) => (
+                  <li key={`q-${row.name}`}>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); choose(row); }} onMouseEnter={() => setCursor(i)} className={`w-full px-3 py-1.5 text-left text-xs font-medium text-slate-800 ${cursor === i ? "bg-emerald-50" : ""}`}>
+                      {row.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {term.length >= 2 && (
+            <>
+              <div className="sticky top-0 border-b border-t border-slate-100 bg-slate-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">Baza surowców RPL (Medfile)</div>
+              <ul className="divide-y divide-slate-100">
+                {dictionary.map((drug, j) => {
+                  const i = quick.length + j;
+                  return (
+                    <li key={`d-${drug.id || drug.name}-${j}`}>
+                      <button type="button" onMouseDown={(e) => { e.preventDefault(); choose(drug); }} onMouseEnter={() => setCursor(i)} className={`w-full px-3 py-1.5 text-left ${cursor === i ? "bg-emerald-50" : ""}`}>
+                        <span className="text-xs font-medium text-slate-900">{drug.name}</span>
+                        {drug.expired && <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">pozwolenie wygasło</span>}
+                        <span className="block text-[11px] font-normal text-slate-500">
+                          {[drug.polishName || drug.activeSubstance, drug.strength, drug.form, drug.producer, drug.code, drug.unit].filter(Boolean).join(" · ")}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+                {searching && <li className="px-3 py-2 text-[11px] text-slate-500">Szukam w bazie surowców…</li>}
+                {!searching && failed && <li className="px-3 py-2 text-[11px] text-slate-400">Nie udało się przeszukać bazy. Możesz zostawić wpisaną nazwę.</li>}
+                {!searching && !failed && dictionary.length === 0 && <li className="px-3 py-2 text-[11px] text-slate-400">Brak w bazie — możesz zostawić wpisaną nazwę.</li>}
+              </ul>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

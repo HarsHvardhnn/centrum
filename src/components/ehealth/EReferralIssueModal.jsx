@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
@@ -46,6 +46,22 @@ const EReferralIssueModal = ({
   const [isNfzFunded, setIsNfzFunded] = useState(copied.reimbursed === "Y");
   const [nfzBranch, setNfzBranch] = useState(copied.nfzDepartment || "07");
   const [nfzContract, setNfzContract] = useState(copied.nfzContract || "");
+
+  // Fill the branch from the patient's latest eWUŚ answer unless a copied referral already carries one.
+  useEffect(() => {
+    if (!open || !patientId || copied.nfzDepartment) return undefined;
+    let cancelled = false;
+    ehealthHelper
+      .history({ patientId, service: "eligibility" })
+      .then((res) => {
+        const code = (Array.isArray(res?.data) ? res.data : [])[0]?.payload?.nfzBranch;
+        if (!cancelled && code) setNfzBranch(code);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [open, patientId, copied.nfzDepartment]);
   const [targetSearch, setTargetSearch] = useState(
     copied.performerCode && copied.performer ? `${copied.performerCode} - ${copied.performer}` : "1100 - Poradnia kardiologiczna"
   );

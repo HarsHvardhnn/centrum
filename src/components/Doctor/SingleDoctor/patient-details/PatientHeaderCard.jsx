@@ -94,6 +94,7 @@ const PatientHeaderCard = ({ patient, onShowMoreDetails, ewusPatientId }) => {
 
         <EwusStatusCard
           variant="patient"
+          patientName={name}
           pesel={pesel === "—" ? "" : pesel}
           patientId={ewusPatientId || patient?.patient_id || patient?.id}
         />
@@ -105,7 +106,7 @@ const PatientHeaderCard = ({ patient, onShowMoreDetails, ewusPatientId }) => {
             onClick={() => onShowMoreDetails?.()}
             className="w-[90%] px-4 py-2 rounded text-sm font-medium text-teal-600 hover:text-teal-700 bg-gray-50/50 hover:bg-gray-100 transition-colors"
           >
-            Pokaż więcej szczegółów
+            Pokaż więcej danych pacjenta
           </button>
         </div>
       </div>
