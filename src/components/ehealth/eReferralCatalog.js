@@ -1,3 +1,5 @@
+import { RESORT_CODE_ROWS, RESORT_SECTIONS } from "./resortCodeList";
+
 export const NFZ_BRANCHES = [
   { code: "01", label: "01 - Dolnośląski Oddział Wojewódzki NFZ" },
   { code: "02", label: "02 - Kujawsko-Pomorski Oddział Wojewódzki NFZ" },
@@ -25,58 +27,30 @@ export const REFERRAL_TYPES = [
   { value: "rehabilitation", label: "Na rehabilitację" },
 ];
 
-export const RESORT_CODES = [
-  { code: "1100", name: "Poradnia kardiologiczna", category: "specialist_clinic" },
-  { code: "1200", name: "Poradnia dermatologiczna", category: "specialist_clinic" },
-  { code: "1220", name: "Poradnia neurologiczna", category: "specialist_clinic" },
-  { code: "1580", name: "Poradnia ortopedii i traumatologii narządu ruchu", category: "specialist_clinic" },
-  { code: "1600", name: "Poradnia okulistyczna", category: "specialist_clinic" },
-  { code: "1610", name: "Poradnia otolaryngologiczna", category: "specialist_clinic" },
-  { code: "1050", name: "Poradnia endokrynologiczna", category: "specialist_clinic" },
-  { code: "1030", name: "Poradnia diabetologiczna", category: "specialist_clinic" },
-  { code: "1060", name: "Poradnia gastroenterologiczna", category: "specialist_clinic" },
-  { code: "1010", name: "Poradnia alergologiczna", category: "specialist_clinic" },
-  { code: "1020", name: "Poradnia gruźlicy i chorób płuc", category: "specialist_clinic" },
-  { code: "1160", name: "Poradnia nefrologiczna", category: "specialist_clinic" },
-  { code: "1300", name: "Poradnia onkologiczna", category: "specialist_clinic" },
-  { code: "1400", name: "Poradnia reumatologiczna", category: "specialist_clinic" },
-  { code: "1450", name: "Poradnia położniczo-ginekologiczna", category: "specialist_clinic" },
-  { code: "1500", name: "Poradnia chirurgii ogólnej", category: "specialist_clinic" },
-  { code: "1640", name: "Poradnia urologiczna", category: "specialist_clinic" },
-  { code: "1700", name: "Poradnia zdrowia psychicznego", category: "specialist_clinic" },
-  { code: "1800", name: "Poradnia hematologiczna", category: "specialist_clinic" },
-  { code: "1810", name: "Poradnia chorób zakaźnych", category: "specialist_clinic" },
-  { code: "7100", name: "Pracownia kardiologiczna", category: "diagnostic_exam" },
-  { code: "7200", name: "Pracownia tomografii komputerowej (TK)", category: "diagnostic_exam" },
-  { code: "7210", name: "Pracownia rezonansu magnetycznego (RM)", category: "diagnostic_exam" },
-  { code: "7220", name: "Pracownia ultrasonograficzna (USG)", category: "diagnostic_exam" },
-  { code: "7230", name: "Pracownia rentgenodiagnostyki (RTG)", category: "diagnostic_exam" },
-  { code: "7240", name: "Pracownia endoskopii", category: "diagnostic_exam" },
-  { code: "7140", name: "Pracownia badań czynnościowych płuc", category: "diagnostic_exam" },
-  { code: "7110", name: "Pracownia elektroencefalografii (EEG)", category: "diagnostic_exam" },
-  { code: "7120", name: "Pracownia elektromiografii (EMG)", category: "diagnostic_exam" },
-  { code: "7250", name: "Pracownia angiografii i hemodynamiki", category: "diagnostic_exam" },
-  { code: "7260", name: "Pracownia medycyny nuklearnej", category: "diagnostic_exam" },
-  { code: "4000", name: "Oddział chorób wewnętrznych", category: "hospital_treatment" },
-  { code: "4100", name: "Oddział kardiologiczny", category: "hospital_treatment" },
-  { code: "4200", name: "Oddział chirurgii ogólnej", category: "hospital_treatment" },
-  { code: "4580", name: "Oddział ortopedii i traumatologii narządu ruchu", category: "hospital_treatment" },
-  { code: "4220", name: "Oddział neurologiczny", category: "hospital_treatment" },
-  { code: "4450", name: "Oddział położniczo-ginekologiczny", category: "hospital_treatment" },
-  { code: "4600", name: "Oddział okulistyczny", category: "hospital_treatment" },
-  { code: "4610", name: "Oddział otolaryngologiczny", category: "hospital_treatment" },
-  { code: "4640", name: "Oddział urologiczny", category: "hospital_treatment" },
-  { code: "4300", name: "Oddział anestezjologii i intensywnej terapii", category: "hospital_treatment" },
-  { code: "9450", name: "Punkt szczepień", category: "vaccination" },
-  { code: "0010", name: "Poradnia lekarza POZ", category: "vaccination" },
-  { code: "1810", name: "Poradnia chorób zakaźnych (szczepienia)", category: "vaccination" },
-  { code: "1310", name: "Poradnia rehabilitacyjna", category: "rehabilitation" },
-  { code: "2300", name: "Dział (pracownia) fizjoterapii", category: "rehabilitation" },
-  { code: "4300", name: "Oddział rehabilitacji narządu ruchu", category: "rehabilitation" },
-  { code: "4302", name: "Oddział rehabilitacji kardiologicznej", category: "rehabilitation" },
-  { code: "4304", name: "Oddział rehabilitacji neurologicznej", category: "rehabilitation" },
-  { code: "2302", name: "Ośrodek rehabilitacji dziennej", category: "rehabilitation" },
-].map((item) => ({ ...item, full: `${item.code} - ${item.name}` }));
+const REHAB_NAME = /rehabilit|fizjoter|fizykoter|kinezyter|hydroter|krioter|balneoter|masa[żz]u leczn/i;
+
+/** Which referral types a unit can be chosen for. A unit may fit more than one. */
+function referralCategories([code, name, section]) {
+  const categories = [];
+  if (section === "0" || section === "1") categories.push("specialist_clinic");
+  if (section === "7") categories.push("diagnostic_exam");
+  if (section === "4" || section === "5") categories.push("hospital_treatment");
+  if (section === "0" || /szczepie/i.test(name)) categories.push("vaccination");
+  if (REHAB_NAME.test(name)) categories.push("rehabilitation");
+  return categories;
+}
+
+export const RESORT_CODES = RESORT_CODE_ROWS.map((row) => {
+  const [code, name, section] = row;
+  return {
+    code,
+    name,
+    section,
+    group: RESORT_SECTIONS[section] || "",
+    categories: referralCategories(row),
+    full: `${code} - ${name}`,
+  };
+});
 
 export const COMMON_ICD9 = [
   { code: "88.721", name: "Echokardiografia serca" },
@@ -101,9 +75,9 @@ export const ANATOMICAL_SITES = [
 ];
 
 export const RESORT_HINTS = {
-  specialist_clinic: "Podpowiedź: poradnie specjalistyczne (kody 1000+)",
-  diagnostic_exam: "Podpowiedź: pracownie diagnostyczne (kody 7000+)",
-  hospital_treatment: "Podpowiedź: oddziały szpitalne (kody 4000+)",
-  vaccination: "Podpowiedź: punkty szczepień",
-  rehabilitation: "Podpowiedź: jednostki rehabilitacyjne (1310, 2300, 4300+)",
+  specialist_clinic: "Poradnie: kody 0xxx–1xxx (wg rozporządzenia MZ)",
+  diagnostic_exam: "Pracownie diagnostyczne i zabiegowe: kody 7xxx",
+  hospital_treatment: "Oddziały szpitalne i zakłady opiekuńcze: kody 4xxx–5xxx",
+  vaccination: "Punkty szczepień, poradnie POZ i szczepień",
+  rehabilitation: "Poradnie i pracownie rehabilitacyjne oraz fizjoterapii",
 };

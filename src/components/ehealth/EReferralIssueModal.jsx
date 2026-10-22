@@ -90,11 +90,12 @@ const EReferralIssueModal = ({
   const [cancelReasonError, setCancelReasonError] = useState("");
 
   const filteredResort = useMemo(() => {
-    const q = targetSearch.trim().toLowerCase();
-    const matches = (item) => !q || item.full.toLowerCase().includes(q) || item.code.includes(q);
+    const fold = (text) => String(text || "").toLowerCase().replace(/ł/g, "l").normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const q = fold(parseCoded(targetSearch).code && targetSearch.includes(" - ") ? "" : targetSearch.trim());
+    const matches = (item) => !q || fold(item.full).includes(q) || item.code.includes(q);
     return {
-      matched: RESORT_CODES.filter((item) => item.category === referralType && matches(item)).slice(0, 8),
-      others: RESORT_CODES.filter((item) => item.category !== referralType && matches(item)).slice(0, 6),
+      matched: RESORT_CODES.filter((item) => item.categories.includes(referralType) && matches(item)),
+      others: RESORT_CODES.filter((item) => !item.categories.includes(referralType) && matches(item)),
     };
   }, [referralType, targetSearch]);
 
@@ -108,8 +109,8 @@ const EReferralIssueModal = ({
 
   const changeType = (next) => {
     setReferralType(next);
-    const first = RESORT_CODES.find((item) => item.category === next);
-    if (first) setTargetSearch(first.full);
+    setTargetSearch("");
+    setTargetOpen(true);
     if (next === "diagnostic_exam" && procedures.every((row) => !row.trim())) setProcedures([""]);
   };
 
@@ -332,18 +333,41 @@ const EReferralIssueModal = ({
                   placeholder="Kod resortowy lub nazwa komórki"
                 />
                 {targetOpen && (
-                  <div className="absolute z-20 left-0 right-0 mt-1 bg-white border rounded-xl shadow-xl max-h-56 overflow-y-auto">
-                    <button type="button" onMouseDown={(e) => { e.preventDefault(); setTargetOpen(false); }} className="w-full text-right px-3 py-1.5 text-[11px] font-semibold text-slate-500 hover:bg-slate-50">Zamknij listę</button>
-                    {filteredResort.matched.map((item) => (
-                      <button key={`${item.category}-${item.code}-${item.name}`} type="button" onMouseDown={() => { setTargetSearch(item.full); setTargetOpen(false); }} className="w-full text-left px-3 py-2 hover:bg-blue-50">
-                        <span className="font-mono font-bold text-blue-700 mr-2">{item.code}</span>{item.name}
-                      </button>
-                    ))}
-                    {filteredResort.others.map((item) => (
-                      <button key={`${item.category}-${item.code}-${item.name}`} type="button" onMouseDown={() => { setTargetSearch(item.full); setTargetOpen(false); }} className="w-full text-left px-3 py-2 hover:bg-slate-50 text-slate-600">
-                        <span className="font-mono mr-2">{item.code}</span>{item.name}
-                      </button>
-                    ))}
+                  <div className="absolute z-20 left-0 right-0 mt-1 bg-white border rounded-xl shadow-xl max-h-80 overflow-y-auto">
+                    <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-3 py-1.5 text-[10px] text-slate-500">
+                      <span>Oficjalny wykaz kodów komórek organizacyjnych (cz. VIII kodu resortowego) · {filteredResort.matched.length + filteredResort.others.length} pozycji</span>
+                      <button type="button" onMouseDown={(e) => { e.preventDefault(); setTargetOpen(false); }} className="font-semibold text-slate-500">Zamknij listę</button>
+                    </div>
+                    {[{ title: `Pasuje do: ${typeLabel}`, rows: filteredResort.matched, strong: true }, { title: "Pozostałe komórki", rows: filteredResort.others, strong: false }].map((block) => {
+                      const groups = [];
+                      block.rows.forEach((item) => {
+                        let group = groups[groups.length - 1];
+                        if (!group || group.name !== item.group) {
+                          group = { name: item.group, rows: [] };
+                          groups.push(group);
+                        }
+                        group.rows.push(item);
+                      });
+                      return groups.length ? (
+                        <div key={block.title}>
+                          <div className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wide ${block.strong ? "bg-blue-50 text-blue-800" : "bg-slate-100 text-slate-500"}`}>{block.title}</div>
+                          {groups.map((group) => (
+                            <div key={`${block.title}-${group.name}`}>
+                              <div className="border-b border-slate-100 bg-slate-50 px-3 py-1 text-[10px] font-semibold text-slate-500">{group.name}</div>
+                              {group.rows.map((item) => (
+                                <button key={`${block.title}-${item.code}`} type="button" onMouseDown={() => { setTargetSearch(item.full); setTargetOpen(false); }} className={`w-full text-left px-3 py-1.5 hover:bg-blue-50 ${block.strong ? "" : "text-slate-600"}`}>
+                                  <span className="font-mono font-bold text-blue-700 mr-2">{item.code}</span>{item.name}
+                                </button>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      ) : null;
+                    })}
+                    {!filteredResort.matched.length && !filteredResort.others.length && (
+                      <div className="px-3 py-3 text-center text-[11px] text-slate-500">Brak komórki o takim kodzie lub nazwie.</div>
+                    )}
+                    <div className="border-t bg-slate-50 px-3 py-1.5 text-[10px] text-slate-500">Komórki dla dzieci mają kod nieparzysty, o jeden wyższy (np. 1010 → 1011).</div>
                   </div>
                 )}
               </div>
