@@ -192,6 +192,15 @@ function AppointmentFormModal({
     }
   }, [appointmentData.customStartTime, appointmentData.customEndTime, appointmentData.selectedSlot]);
 
+  const summaryPatientName = (patient) => {
+    const raw = patient?.name;
+    const first = patient?.firstName || (raw && typeof raw === "object" ? raw.first : "");
+    const last = patient?.lastName || (raw && typeof raw === "object" ? raw.last : "");
+    const full = [first, last].filter(Boolean).join(" ");
+    if (full) return full;
+    return typeof raw === "string" && raw ? raw : "N/A";
+  };
+
   const handlePatientSelect = async (patient) => {
     setSelectedPatient(patient);
     
@@ -1985,7 +1994,7 @@ function AppointmentFormModal({
                 (isFirstTimeVisit && isNewPatientValid) || (isVisitOnly && isVisitOnlyValid)
                   ? `${appointmentData.newPatientFirstName} ${appointmentData.newPatientLastName}`
                   : selectedPatient
-                    ? `${selectedPatient.firstName || selectedPatient.name || "N/A"} ${selectedPatient.lastName || ""}`
+                    ? summaryPatientName(selectedPatient)
                     : "Nie wybrano"
               }
             </div>

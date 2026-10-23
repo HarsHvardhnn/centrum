@@ -1,7 +1,27 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import clinicFlowHelper, { formatOrderWhen, orderStatusMeta } from "../../helpers/clinicFlowHelper";
+import clinicFlowHelper, { formatOrderWhen, formatOrderWhenExact, orderStatusMeta } from "../../helpers/clinicFlowHelper";
+
+function bookingRows(row) {
+  if (row.status !== "booked" && row.status !== "completed") return [];
+  const visitDate = row.bookedVisitDate ? new Date(row.bookedVisitDate) : null;
+  const visitDay = visitDate && !Number.isNaN(visitDate.getTime()) ? visitDate.toLocaleDateString("pl-PL") : "";
+  const visitWhen = [visitDay, row.bookedVisitStartTime].filter(Boolean).join(", ");
+  return [
+    visitWhen ? ["Termin wizyty", visitWhen] : null,
+    ["Umówił(a)", row.bookedByName || "—"],
+    row.bookedAt ? ["Data umówienia", formatOrderWhenExact(row.bookedAt)] : null,
+  ];
+}
+
+function cancellationRows(row) {
+  if (row.status !== "cancelled") return [];
+  return [
+    ["Anulował(a)", row.cancelledByName || "—"],
+    ["Data anulowania", row.cancelledAt ? formatOrderWhenExact(row.cancelledAt) : "—"],
+  ];
+}
 
 function detailRows(row) {
   const doctor = row.requestedDoctorName
@@ -16,6 +36,8 @@ function detailRows(row) {
     row.specialization ? ["Specjalizacja", row.specialization] : null,
     doctor ? ["Lekarz", doctor] : null,
     row.performingDoctorName ? ["Wykonuje", row.performingDoctorName] : null,
+    ...bookingRows(row),
+    ...cancellationRows(row),
   ].filter(Boolean);
 }
 

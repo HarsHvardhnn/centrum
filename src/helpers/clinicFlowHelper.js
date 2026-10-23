@@ -73,6 +73,19 @@ export function orderStatusMeta(status) {
   return { label: "Skierowana", className: "bg-orange-100 text-orange-800 border-orange-200" };
 }
 
+export function formatOrderWhenExact(value) {
+  const date = new Date(value);
+  if (!value || Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("pl-PL", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
 export function formatOrderWhen(value) {
   const date = new Date(value);
   if (!value || Number.isNaN(date.getTime())) return "";

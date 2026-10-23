@@ -123,11 +123,10 @@ export async function loadDoctorAssignedCatalog(doctorIds) {
     return cached.rows;
   }
 
-  let rows = await fetchCatalogForDoctorId(ids[0]);
-  if (!rows.length && ids.length > 1) {
-    const rest = await Promise.all(ids.slice(1).map(fetchCatalogForDoctorId));
-    rows = uniqueCatalogRows(rest.flat());
-  }
+  // Visit doctor first, then the logged-in doctor: a specialist finalizing a referred visit
+  // must be able to pick their own services as well as the visit doctor's.
+  const catalogs = await Promise.all(ids.map(fetchCatalogForDoctorId));
+  const rows = uniqueCatalogRows(catalogs.flat());
 
   assignedCatalogCache.set(cacheKey, { at: Date.now(), rows });
   return rows;

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { FileText, Plus, Eye, Printer, Pencil, User, X, Upload, Trash2, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "../../../../context/userContext";
@@ -8,6 +7,7 @@ import clinicFlowHelper, { CONSULTATION_EXAM, orderStatusMeta } from "../../../.
 import { OrderDetailsDialog } from "../../../Dashboard/InternalOrdersPanel";
 import patientService from "../../../../helpers/patientHelper";
 import { apiCaller } from "../../../../utils/axiosInstance";
+import ClinicTemplatePicker from "./ClinicTemplatePicker";
 import ClinicDocumentSheet, { ClinicSheetPdfView, initialFieldValue, printClinicSheet } from "../../../ehealth/ClinicDocumentSheet";
 
 const UPLOAD_TYPES = [
@@ -445,7 +445,6 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
   const [templates, setTemplates] = useState([]);
   const [docs, setDocs] = useState([]);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [query, setQuery] = useState("");
   const [draft, setDraft] = useState(null);
   const [patientEditorOpen, setPatientEditorOpen] = useState(false);
   const [patientSaveBusy, setPatientSaveBusy] = useState(false);
@@ -747,11 +746,6 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
     }
   };
 
-  const filtered = templates.filter((row) => {
-    const q = query.trim().toLowerCase();
-    return !q || `${row.name} ${row.code} ${row.description}`.toLowerCase().includes(q);
-  });
-
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
@@ -854,9 +848,20 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               <button type="button" onClick={() => setCardPreview(card)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
                 <Eye size={14} /> Otwórz dokument
               </button>
-              <button type="button" onClick={() => printVisitFile(card.url)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
-                <Printer size={14} /> Drukuj
-              </button>
+              <div className="flex items-center gap-3">
+                {canShare && (
+                  <button
+                    type="button"
+                    onClick={() => openShare({ id: card.id, name: card.total > 1 ? `Karta wizyty · Wersja ${card.version}` : "Karta wizyty", type: "visit-card" })}
+                    className="inline-flex items-center gap-1 text-teal-700 font-medium"
+                  >
+                    <Share2 size={14} /> Udostępnij
+                  </button>
+                )}
+                <button type="button" onClick={() => printVisitFile(card.url)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
+                  <Printer size={14} /> Drukuj
+                </button>
+              </div>
             </div>
           </div>
         ); })() : row.kind === "file" ? (() => { const file = row.file; return (
@@ -1119,28 +1124,12 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
       )}
 
       {pickerOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="font-bold">Wystaw dokument</h3>
-              <button type="button" onClick={() => setPickerOpen(false)}>×</button>
-            </div>
-            <div className="p-4 space-y-2">
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Szukaj wzoru..." className="w-full border rounded-lg px-3 py-2 text-sm" />
-              <Link to="/moje-wzory-dokumentow" className="inline-flex text-xs font-semibold text-teal-700">Zarządzaj moimi wzorami</Link>
-            </div>
-            <div className="overflow-y-auto px-4 pb-4 space-y-2">
-              {filtered.length === 0 && <p className="text-sm text-gray-500">Brak wzorów przypisanych do tego lekarza.</p>}
-              {filtered.map((template) => (
-                <button key={template._id} type="button" onClick={() => openNew(template)} className="w-full text-left border rounded-lg p-3 hover:border-teal-400">
-                  <div className="text-[11px] font-bold text-teal-700">[{template.code}]{template.ownerId ? " · Mój wzór" : ""}</div>
-                  <div className="font-semibold text-sm">{template.name}</div>
-                  <div className="text-xs text-gray-500">{template.description}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <ClinicTemplatePicker
+          templates={templates}
+          doctorId={user?.id || user?._id}
+          onSelect={openNew}
+          onClose={() => setPickerOpen(false)}
+        />
       )}
 
       {draft && (
