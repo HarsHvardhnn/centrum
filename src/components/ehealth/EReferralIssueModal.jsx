@@ -513,7 +513,7 @@ const EReferralIssueModal = ({
         <div className="space-y-3.5">
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-950">
             <strong className="font-bold text-amber-900 block mb-0.5">Uwaga: Ta operacja trwale wycofa dokument z systemu P1.</strong>
-            Wymaga podania powodu oraz autoryzacji kodem PIN certyfikatu.
+            Wymaga podania powodu oraz autoryzacji PIN-em i kodem SMS.
           </div>
           <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-xs">
             <div className="flex items-center justify-between text-slate-600">
