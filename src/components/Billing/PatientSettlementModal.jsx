@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader, Plus, Trash2, X, Eye, Printer, FileDown } from "lucide-react";
+import { Loader, Plus, Trash2, X, Eye, Printer, FileDown, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import billingHelper from "../../helpers/billingHelper";
+import billingHelper, {
+  invoiceGeneratedFromReceiptNote,
+} from "../../helpers/billingHelper";
 import { queryKeys } from "../../lib/queryKeys";
 import { useUser } from "../../context/userContext";
 import { formatPersonName } from "../../utils/formatPersonName";
@@ -53,7 +55,14 @@ function isFormalInvoiceNumber(value) {
   return /^\d+\/\d{2}\/\d{4}$/.test(String(value || "").trim());
 }
 
-/** Header document ref: invoice N/MM/YYYY, paragon TRX, awaiting nothing. */
+function formatFvInvoiceNumber(number) {
+  const n = String(number || "").trim();
+  if (!n) return "";
+  if (/^FV\//i.test(n)) return n;
+  if (/^P\//i.test(n)) return `FV/${n.slice(2)}`;
+  return `FV/${n}`;
+}
+
 function headerDocumentLabel(bill, issuedNumber) {
   const invoiceNumber = String(
     issuedNumber || bill?.invoiceSnapshot?.number || bill?.invoiceId || ""
@@ -77,6 +86,36 @@ function toDateInput(value) {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+/** YYYY-MM-DD without timezone shift (appointment dates are calendar days). */
+function ymdFromValue(value) {
+  if (!value) return "";
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+    return value.slice(0, 10);
+  }
+  return toDateInput(value);
+}
+
+function appointmentYmd(bill) {
+  return ymdFromValue(bill?.appointment?.date || bill?.saleDate);
+}
+
+function hasLinkedReceipt(bill) {
+  if (!bill) return false;
+  return Boolean(
+    String(bill.internalTxnId || "").trim() ||
+      String(bill.receiptNumber || "").trim()
+  );
+}
+
+function isIssuedInvoice(bill) {
+  const snap = bill?.invoiceSnapshot;
+  return Boolean(snap?.number) && snap?.status && snap.status !== "draft";
+}
+
+function isSettledReceiptView(bill) {
+  return hasLinkedReceipt(bill) && !isIssuedInvoice(bill);
 }
 
 function patientName(patient) {
@@ -216,6 +255,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
 
   // Invoice draft (independent snapshot fields)
   const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [invoiceNumberEditing, setInvoiceNumberEditing] = useState(false);
   const [place, setPlace] = useState("Skarżysko-Kamienna");
   const [issueDate, setIssueDate] = useState(toDateInput(new Date()));
   const [sellDate, setSellDate] = useState(toDateInput(new Date()));
@@ -238,9 +278,29 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
   const [issuedPdfUrl, setIssuedPdfUrl] = useState(null);
   const [issuedNumber, setIssuedNumber] = useState("");
   const [locked, setLocked] = useState(false);
+  const [fromReceiptInvoice, setFromReceiptInvoice] = useState(false);
+  const [receiptEditing, setReceiptEditing] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [showServicePicker, setShowServicePicker] = useState(false);
   const suggestedInvoiceNumberRef = useRef("");
+
+  const invoiceFromReceiptNote = invoiceGeneratedFromReceiptNote({
+    ...(bill || {}),
+    invoiceId: issuedNumber || bill?.invoiceId,
+    documentType:
+      fromReceiptInvoice || bill?.documentType === "invoice"
+        ? "invoice"
+        : bill?.documentType,
+  });
+  const showInvoiceOnTrxLine =
+    fromReceiptInvoice ||
+    documentType === "invoice" ||
+    isIssuedInvoice(bill);
+  const trxSecondaryNumber = showInvoiceOnTrxLine
+    ? formatFvInvoiceNumber(
+        issuedNumber || bill?.invoiceSnapshot?.number || bill?.invoiceId
+      )
+    : String(bill?.receiptNumber || "").trim();
 
   // Hydrate form once per bill open (avoid resetting while user edits)
   useEffect(() => {
@@ -280,17 +340,35 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       Boolean(snap?.number) && snap?.status && snap.status !== "draft";
     setIssuerName(alreadyIssued ? snap?.issuerName || "" : "");
     setPlace(snap?.place || "Skarżysko-Kamienna");
-    setIssueDate(toDateInput(snap?.issueDate || new Date()));
-    setSellDate(toDateInput(snap?.sellDate || new Date()));
+    const aptYmd = appointmentYmd(bill);
+    const alreadySettled = Boolean(bill.settledAt) || alreadyIssued;
+    const defaultIssue =
+      ymdFromValue(
+        alreadySettled
+          ? snap?.issueDate || bill.billedAt || bill.settledAt
+          : null
+      ) || aptYmd || toDateInput(new Date());
+    setIssueDate(defaultIssue);
+    setSellDate(
+      ymdFromValue(snap?.sellDate || bill.saleDate) || aptYmd || toDateInput(new Date())
+    );
     setPaymentDueKind(snap?.paymentDueKind || "immediate");
     setPaymentDueDate(toDateInput(snap?.paymentDueDate || new Date()));
     const rawNumber = snap?.number || bill.invoiceId || "";
     const validNumber = /^\d+\/\d{2}\/\d{4}$/.test(String(rawNumber).trim());
-    setInvoiceNumber(validNumber ? rawNumber : "");
-    suggestedInvoiceNumberRef.current = validNumber ? rawNumber : "";
+    if (validNumber) {
+      setInvoiceNumber(rawNumber);
+      suggestedInvoiceNumberRef.current = rawNumber;
+    } else {
+      setInvoiceNumber("");
+      suggestedInvoiceNumberRef.current = "";
+    }
     if (snap?.vatExemptionText) setVatExemptionText(snap.vatExemptionText);
 
-    setLocked(alreadyIssued);
+    setLocked(alreadyIssued || isSettledReceiptView(bill));
+    setReceiptEditing(false);
+    setFromReceiptInvoice(false);
+    setInvoiceNumberEditing(false);
     setIssuedPdfUrl(bill.invoiceUrl || snap?.pdfUrl || null);
     setIssuedNumber(snap?.number || bill.invoiceId || "");
   }, [isOpen, bill, hydratedBillId]);
@@ -300,12 +378,19 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       setHydratedBillId(null);
       suggestedInvoiceNumberRef.current = "";
       setShowServicePicker(false);
+      setDocumentType("fiscal_receipt");
+      setInvoiceNumber("");
+      setInvoiceNumberEditing(false);
+      setFromReceiptInvoice(false);
+      setReceiptEditing(false);
+      setLocked(false);
     }
   }, [isOpen]);
 
-  // Suggest next invoice number from issue date month/year (N/MM/RRRR)
+  // Preview next invoice number (does not consume the counter — issue allocates atomically)
   useEffect(() => {
     if (!isOpen || documentType !== "invoice" || locked || !issueDate) return;
+    if (invoiceNumberEditing) return;
     const [year, month] = issueDate.split("-").map(Number);
     if (!year || !month) return;
 
@@ -314,17 +399,20 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       try {
         const suggested = await billingHelper.suggestInvoiceId(month, year);
         if (cancelled || !suggested) return;
-        setInvoiceNumber((current) =>
-          !current || current === suggestedInvoiceNumberRef.current ? suggested : current
-        );
-        suggestedInvoiceNumberRef.current = suggested;
+        setInvoiceNumber((current) => {
+          if (!current || current === suggestedInvoiceNumberRef.current) {
+            suggestedInvoiceNumberRef.current = suggested;
+            return suggested;
+          }
+          return current;
+        });
       } catch (_) {}
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [isOpen, documentType, locked, issueDate]);
+  }, [isOpen, documentType, locked, issueDate, hydratedBillId, invoiceNumberEditing]);
 
   useEffect(() => {
     if (billRes && !billRes.success && isOpen && billId && !isLoading) {
@@ -423,7 +511,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
           quantity: qty,
           unit: DEFAULT_LINE_ITEM_UNIT,
           status: "active",
-          tax: "zw",
+          tax: normalizeTaxRate(svc.tax),
         });
       });
       return next;
@@ -476,10 +564,14 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
         changeDue: changeDue != null ? changeDue : undefined,
         notes,
         lineItems: payloadLineItems(),
+        saleDate: sellDate || undefined,
+        settlementDate: issueDate || undefined,
       });
       if (res?.success) {
         toast.success(
-          `Rozliczono (paragon). Nr: ${res.data?.receiptNumber || res.data?.internalTxnId || "—"}`
+          hasLinkedReceipt(bill)
+            ? `Zapisano paragon (${res.data?.internalTxnId || res.data?.receiptNumber || "TRX"})`
+            : `Rozliczono (paragon). Nr: ${res.data?.receiptNumber || res.data?.internalTxnId || "—"}`
         );
         queryClient.invalidateQueries({ queryKey: queryKeys.billDetail(billId, "settlement") });
         queryClient.invalidateQueries({ queryKey: ["billing-list"] });
@@ -493,6 +585,21 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEditReceipt = () => {
+    setReceiptEditing(true);
+    setLocked(false);
+  };
+
+  const handleIssueInvoiceFromReceipt = () => {
+    setFromReceiptInvoice(true);
+    setReceiptEditing(false);
+    setLocked(false);
+    setDocumentType("invoice");
+    setIssueDate(toDateInput(new Date()));
+    const visit = appointmentYmd(bill);
+    if (visit) setSellDate(visit);
   };
 
   const handleIssueInvoice = async () => {
@@ -510,40 +617,15 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
     }
     setSaving(true);
     try {
-      // Save settlement draft first
     const paidNow = paymentDueKind === "immediate";
     const cashReceived =
       paymentMethod === "cash"
         ? toMoney(amountReceived === "" ? total : amountReceived)
         : undefined;
 
-      await billingHelper.settlePatient(billId, {
-        documentType: "invoice",
-        paymentMethod,
-        amountReceived: cashReceived,
-        changeDue:
-          paymentMethod === "cash"
-            ? toMoney(Math.max(0, cashReceived - total))
-            : undefined,
-        notes,
-        lineItems: payloadLineItems(),
-        invoiceDraft: {
-          place,
-          issueDate,
-          sellDate,
-          paymentDueKind,
-          paymentDueDate: paymentDueKind === "other" ? paymentDueDate : undefined,
-          paymentType: paymentMethod,
-          buyer,
-          recipientName: String(recipientName || "").trim(),
-          issuerName: String(issuerName || "").trim(),
-          vatExemptionText: showVatExemptionField ? vatExemptionText : "",
-          paidAmount: paidNow ? total : 0,
-        },
-      });
-
       const res = await billingHelper.issueInvoice(billId, {
-        number: invoiceNumber || undefined,
+        fromReceipt: hasLinkedReceipt(bill) || fromReceiptInvoice,
+        number: invoiceNumberEditing ? String(invoiceNumber || "").trim() : "",
         place,
         issueDate,
         sellDate,
@@ -558,6 +640,8 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
         amountReceived: cashReceived,
         lineItems: payloadLineItems(),
         positions: invoicePositions,
+        notes,
+        paymentMethod,
       });
 
       if (res?.success) {
@@ -601,7 +685,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       toast.error(
         e?.response?.data?.message ||
           e?.response?.data?.error ||
-          "Nie udało się wygenerować PDF (sprawdź Chrome na serwerze)"
+          "Nie udało się wygenerować PDF"
       );
     } finally {
       setPdfGenerating(false);
@@ -670,6 +754,32 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
           {/* Document type */}
           <section className="border border-gray-200 rounded-lg p-4">
             <h4 className="font-medium mb-3">Typ dokumentu</h4>
+            {hasLinkedReceipt(bill) || fromReceiptInvoice ? (
+              <div className="text-sm text-gray-700 space-y-1">
+                <p>
+                  {fromReceiptInvoice || documentType === "invoice"
+                    ? "Faktura do istniejącego paragonu"
+                    : "Paragon fiskalny (zapisany)"}
+                </p>
+                {bill?.internalTxnId && (
+                  <p className="text-xs text-gray-500">
+                    Nr TRX: {bill.internalTxnId}
+                    {trxSecondaryNumber ? ` · ${trxSecondaryNumber}` : ""}
+                  </p>
+                )}
+                {invoiceFromReceiptNote && (
+                  <p className="text-sm text-teal-800 bg-teal-50 border border-teal-100 rounded-md px-3 py-2 mt-2">
+                    {invoiceFromReceiptNote}
+                  </p>
+                )}
+                {locked && isSettledReceiptView(bill) && (
+                  <p className="text-xs text-amber-700 mt-2">
+                    Dokument zamknięty. Użyj „Edytuj paragon” albo „Wystaw fakturę z paragonu”.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
             <div className="flex flex-wrap gap-4">
               <label className="inline-flex items-center gap-2 cursor-pointer">
                 <input
@@ -702,6 +812,8 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                 Domyślna stawka to ZW. Możesz zmienić ją na 8%, 23% lub inną — podstawa zwolnienia jest wtedy ukrywana.
               </p>
             )}
+              </>
+            )}
           </section>
 
           {/* Line items */}
@@ -709,7 +821,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <h4 className="font-medium text-gray-800">Pozycje</h4>
               <div className="flex flex-wrap items-center gap-2">
-                {documentType === "invoice" && !locked && (
+                {!locked && (
                   <label className="inline-flex items-center gap-2 text-sm text-gray-600">
                     <span className="text-xs text-gray-500">Stawka VAT (wszystkie):</span>
                     <select
@@ -759,7 +871,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                   key={item.key}
                   className="border border-gray-200 rounded-lg p-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-end"
                 >
-                  <div className={documentType === "invoice" ? "md:col-span-2" : "md:col-span-3"}>
+                  <div className="md:col-span-2">
                     <label className="text-xs text-gray-500">Nazwa</label>
                     <input
                       type="text"
@@ -819,7 +931,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                       className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm disabled:bg-gray-50"
                     />
                   </div>
-                  <div className={documentType === "invoice" ? "md:col-span-2" : "md:col-span-3"}>
+                  <div className="md:col-span-2">
                     <label className="text-xs text-gray-500">Powód rabatu</label>
                     <input
                       type="text"
@@ -831,7 +943,6 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                       className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm disabled:bg-gray-50"
                     />
                   </div>
-                  {documentType === "invoice" && (
                   <div className="md:col-span-2">
                     <label className="text-xs text-gray-500">Stawka VAT</label>
                     <div className="flex gap-1 mt-0.5">
@@ -878,14 +989,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
                       />
                     )}
                   </div>
-                  )}
-                  <div
-                    className={
-                      documentType === "invoice"
-                        ? "md:col-span-2 flex items-center justify-between gap-2"
-                        : "md:col-span-1 flex items-center justify-between gap-2"
-                    }
-                  >
+                  <div className="md:col-span-1 flex items-center justify-between gap-2">
                     <div>
                       <div className="text-xs text-gray-500">Suma</div>
                       <div className="font-semibold text-sm">{toMoney(item.finalPrice).toFixed(2)}</div>
@@ -915,6 +1019,36 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
           {/* Payment */}
           <section className="border border-gray-200 rounded-lg p-4 space-y-3">
             <h4 className="font-medium">Płatność</h4>
+            {documentType === "fiscal_receipt" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-gray-500">Data sprzedaży / usługi</label>
+                  <input
+                    type="date"
+                    disabled={locked}
+                    value={sellDate}
+                    onChange={(e) => setSellDate(e.target.value)}
+                    className="w-full mt-0.5 px-2 py-2 border rounded-md text-sm disabled:bg-gray-50"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Domyślnie data wizyty.
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500">Data wystawienia dokumentu</label>
+                  <input
+                    type="date"
+                    disabled={locked}
+                    value={issueDate}
+                    onChange={(e) => setIssueDate(e.target.value)}
+                    className="w-full mt-0.5 px-2 py-2 border rounded-md text-sm disabled:bg-gray-50"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Data paragonu na kasie. Domyślnie data wizyty — zmień, jeśli wydruk był innego dnia.
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-gray-500">Metoda</label>
@@ -975,14 +1109,51 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs text-gray-500">Numer (N/MM/RRRR)</label>
-                  <input
-                    type="text"
-                    disabled={locked}
-                    value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    className="w-full mt-0.5 px-2 py-1.5 border rounded-md text-sm bg-white disabled:bg-gray-50"
-                    placeholder="np. 17/08/2026"
-                  />
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <input
+                      type="text"
+                      readOnly={!invoiceNumberEditing || locked}
+                      disabled={locked}
+                      value={invoiceNumber}
+                      onChange={(e) => setInvoiceNumber(e.target.value)}
+                      placeholder="np. 6/09/2026"
+                      className={`flex-1 px-2 py-1.5 border rounded-md text-sm disabled:bg-gray-50 ${
+                        invoiceNumberEditing && !locked
+                          ? "bg-white"
+                          : "bg-gray-50 text-gray-800"
+                      }`}
+                    />
+                    {!locked && !invoiceNumberEditing && (
+                      <button
+                        type="button"
+                        onClick={() => setInvoiceNumberEditing(true)}
+                        className="shrink-0 inline-flex items-center gap-1 px-2 py-1.5 text-xs text-teal-700 border border-teal-200 rounded-md hover:bg-teal-50"
+                        title="Edytuj numer"
+                      >
+                        <Pencil size={14} />
+                        Edytuj numer
+                      </button>
+                    )}
+                    {!locked && invoiceNumberEditing && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInvoiceNumberEditing(false);
+                          setInvoiceNumber(suggestedInvoiceNumberRef.current || "");
+                        }}
+                        className="shrink-0 px-2 py-1.5 text-xs text-gray-600 border border-gray-200 rounded-md hover:bg-gray-50"
+                      >
+                        Kolejny
+                      </button>
+                    )}
+                  </div>
+                  {!locked && (
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      {invoiceNumberEditing
+                        ? "Wpisz własny numer (N/MM/RRRR). „Kolejny” wraca do automatycznego podglądu."
+                        : "Kolejny numer w miesiącu. Kliknij „Edytuj numer”, jeśli ma być inny."}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs text-gray-500">Miejsce</label>
@@ -1253,10 +1424,31 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
               disabled={saving}
               className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm hover:bg-teal-700 disabled:opacity-60"
             >
-              Rozlicz pacjenta
+              {receiptEditing || hasLinkedReceipt(bill)
+                ? "Zapisz paragon"
+                : "Rozlicz pacjenta"}
             </button>
           )}
-          {!locked && documentType === "invoice" && (
+          {locked && isSettledReceiptView(bill) && (
+            <>
+              <button
+                type="button"
+                onClick={handleEditReceipt}
+                className="inline-flex items-center gap-2 px-4 py-2 border border-teal-600 text-teal-700 rounded-lg text-sm hover:bg-teal-50"
+              >
+                <Pencil size={16} />
+                Edytuj paragon
+              </button>
+              <button
+                type="button"
+                onClick={handleIssueInvoiceFromReceipt}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm hover:bg-teal-700"
+              >
+                Wystaw fakturę z paragonu
+              </button>
+            </>
+          )}
+                {documentType === "invoice" && !locked && (
             <button
               type="button"
               onClick={handleIssueInvoice}
@@ -1274,7 +1466,7 @@ const PatientSettlementModal = ({ isOpen, onClose, billId, onUpdate }) => {
       onClose={() => setShowServicePicker(false)}
       onSave={addServicesFromCatalog}
       patientId={bill?.patient?._id || bill?.patient}
-      doctorUserId={null}
+      catalogKind="system"
     />
     </>
   );

@@ -1,5 +1,13 @@
 import { apiCaller } from "../utils/axiosInstance";
 
+export function formatCatalogTax(tax) {
+  if (tax == null || tax === "") return "—";
+  const value = String(tax).toLowerCase();
+  if (value === "zw") return "zw";
+  if (value === "8" || value === "23") return `${value}%`;
+  return String(tax);
+}
+
 function asId(value) {
   if (value == null || value === "") return null;
   if (typeof value === "string" || typeof value === "number") return String(value);
@@ -19,7 +27,7 @@ export function collectDoctorCatalogIds(...sources) {
   return ids;
 }
 
-function uniqueCatalogRows(rows) {
+export function uniqueCatalogRows(rows) {
   const byId = new Map();
   rows.forEach((row) => {
     const id = asId(row?._id || row?.id);
@@ -57,6 +65,9 @@ export function mapDoctorServicesResponseToCatalog(response) {
           title: svc.title || "",
           price,
           shortDescription: svc.shortDescription,
+          source: item?.serviceModel === "SystemService" || svc.source === "system" ? "system" : "website",
+          serviceModel: item?.serviceModel || (svc.source === "system" ? "SystemService" : "Service"),
+          tax: svc.tax,
         };
       })
       .filter(Boolean)
@@ -78,6 +89,9 @@ export function mapServicesResponseToCatalog(response) {
           title: item.title || "",
           price: svc?.price != null && svc?.price !== "" ? svc.price : item.price,
           shortDescription: item.shortDescription,
+          source: item.source || "website",
+          serviceModel: item.source === "system" ? "SystemService" : "Service",
+          tax: item.tax,
         };
       })
       .filter(Boolean)
@@ -130,6 +144,65 @@ export async function loadDoctorAssignedCatalog(doctorIds) {
 
   assignedCatalogCache.set(cacheKey, { at: Date.now(), rows });
   return rows;
+}
+
+function mapSystemServiceRows(payload) {
+  const raw = Array.isArray(payload)
+    ? payload
+    : extractServiceArray(payload);
+  return uniqueCatalogRows(
+    raw
+      .map((item) => {
+        const svc = item?.service ?? item;
+        if (!svc || (!svc._id && !svc.id)) return null;
+        return {
+          _id: svc._id || svc.id,
+          id: svc._id || svc.id,
+          title: svc.title || "",
+          price: svc.price,
+          shortDescription: svc.shortDescription,
+          source: "system",
+          serviceModel: "SystemService",
+          tax: svc.tax,
+        };
+      })
+      .filter(Boolean)
+  );
+}
+
+/**
+ * Staff pickers that need both catalogs (e.g. admin billing).
+ * Website = GET /services. Technical = GET /system-services.
+ */
+export async function fetchStaffPickerServices() {
+  let website = [];
+  let system = [];
+
+  try {
+    const catalogRes = await apiCaller("GET", "/services", null);
+    website = mapServicesResponseToCatalog(catalogRes).filter(
+      (row) => row.source !== "system"
+    );
+  } catch (err) {
+    console.error("fetchStaffPickerServices website:", err);
+  }
+
+  try {
+    const systemRes = await apiCaller("GET", "/system-services", null);
+    system = mapSystemServiceRows(systemRes?.data ?? systemRes);
+  } catch (err) {
+    console.error("fetchStaffPickerServices system:", err);
+  }
+
+  return uniqueCatalogRows([...website, ...system]);
+}
+
+/**
+ * Appointment / visit pickers: technical catalog only (no website CMS pages).
+ */
+export async function fetchTechnicalPickerServices() {
+  const systemRes = await apiCaller("GET", "/system-services", null);
+  return mapSystemServiceRows(systemRes?.data ?? systemRes);
 }
 
 // User services helper
@@ -195,7 +268,7 @@ const userServiceHelper = {
   // Get all available services (for admin or general selection)
   getAllServices: async () => {
     try {
-      const response = await apiCaller("GET", "/services");
+      const response = await apiCaller("GET", "/services?scope=catalog");
       return response;
     } catch (error) {
       console.error("Error getting all services:", error);
@@ -209,6 +282,7 @@ const userServiceHelper = {
       const params = new URLSearchParams();
       if (doctorId) params.set("doctorId", doctorId);
       if (compact) params.set("compact", "1");
+      params.set("scope", "catalog");
       const query = params.toString() ? `?${params.toString()}` : "";
       const response = await apiCaller("GET", `/services${query}`);
       return response;

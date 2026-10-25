@@ -120,3 +120,16 @@ export function isPhoneComplete(phone, countryCode) {
   const requiredLength = getRequiredPhoneLength(countryCode);
   return cleanPhone.length === requiredLength;
 }
+
+/** Internal DB placeholder when a patient was created without a phone. Never show this to users. */
+export function isPlaceholderPhone(phone) {
+  const value = String(phone ?? "").trim();
+  if (!value) return true;
+  return /_no_phone_/i.test(value) || /^__no_phone/i.test(value);
+}
+
+/** User-facing phone: hides `__no_phone_...` placeholders. */
+export function displayPatientPhone(phone, emptyLabel = "—") {
+  if (isPlaceholderPhone(phone)) return emptyLabel;
+  return String(phone).trim();
+}

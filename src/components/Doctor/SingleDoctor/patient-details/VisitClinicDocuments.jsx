@@ -223,6 +223,32 @@ function formatDocumentWhen(value) {
   });
 }
 
+/** Who a document was shared with, and when (plus the review state). */
+function ShareLines({ shares, className = "mt-2" }) {
+  if (!shares.length) return null;
+  return (
+    <div className={`${className} space-y-0.5`}>
+      {shares.map((share) => (
+        <p key={share.id} className="text-xs text-slate-500">
+          Udostępniono: <span className="font-medium text-slate-700">{share.toDoctorName}</span>
+          {share.sharedAt ? ` · ${formatDocumentWhen(share.sharedAt)}` : ""}
+          {share.reviewedAt
+            ? ` · przejrzano${share.reviewedAt ? ` ${formatDocumentWhen(share.reviewedAt)}` : ""}`
+            : " · czeka na otwarcie"}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function SharedBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 text-slate-400 font-medium cursor-default" title="Ten dokument został już udostępniony">
+      <Share2 size={14} /> Udostępniono
+    </span>
+  );
+}
+
 function visitCardVersions(reports) {
   const cards = (reports || []).filter((report) => report.type === "visit-card" || report.type === "Visit Card");
   return cards
@@ -849,7 +875,9 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                 <Eye size={14} /> Otwórz dokument
               </button>
               <div className="flex items-center gap-3">
-                {canShare && (
+                {canShare && (outgoing.some((share) => String(share.reportId) === String(card.id)) ? (
+                  <SharedBadge />
+                ) : (
                   <button
                     type="button"
                     onClick={() => openShare({ id: card.id, name: card.total > 1 ? `Karta wizyty · Wersja ${card.version}` : "Karta wizyty", type: "visit-card" })}
@@ -857,12 +885,13 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                   >
                     <Share2 size={14} /> Udostępnij
                   </button>
-                )}
+                ))}
                 <button type="button" onClick={() => printVisitFile(card.url)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
                   <Printer size={14} /> Drukuj
                 </button>
               </div>
             </div>
+            <ShareLines shares={outgoing.filter((share) => String(share.reportId) === String(card.id))} />
           </div>
         ); })() : row.kind === "file" ? (() => { const file = row.file; return (
           <div key={file.id || file.url} className="border border-blue-300 rounded-lg p-3">
@@ -873,13 +902,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                   {file.type}{file.at ? ` · ${formatDocumentWhen(file.at)}` : ""}
                 </div>
                 {file.description ? <p className="text-xs text-gray-500 mt-1">{file.description}</p> : null}
-                {outgoing.filter((share) => String(share.reportId) === String(file.id) || String(share.clinicDocumentId) === String(file.id)).map((share) => (
-                  <p key={share.id} className="text-xs text-slate-500 mt-1">
-                    {share.reviewedAt
-                      ? `${share.toDoctorName}: dokument oznaczono jako przejrzany.`
-                      : `Wysłano do ${share.toDoctorName}. Czeka na otwarcie i oznaczenie jako przejrzane.`}
-                  </p>
-                ))}
+                <ShareLines className="mt-1" shares={outgoing.filter((share) => String(share.reportId) === String(file.id) || String(share.clinicDocumentId) === String(file.id))} />
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md border bg-blue-50 text-blue-700 border-blue-200">Plik</span>
             </div>
@@ -888,11 +911,13 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                 <Eye size={14} /> Otwórz dokument
               </button>
               <div className="flex items-center gap-3">
-                {canShare && (
+                {canShare && (outgoing.some((share) => String(share.reportId) === String(file.id) || String(share.clinicDocumentId) === String(file.id)) ? (
+                  <SharedBadge />
+                ) : (
                   <button type="button" onClick={() => openShare(file)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
                     <Share2 size={14} /> Udostępnij
                   </button>
-                )}
+                ))}
                 <button type="button" onClick={() => removeFile(file.id)} className="inline-flex items-center gap-1 text-slate-500 font-medium">
                   <Trash2 size={14} /> Usuń
                 </button>
@@ -923,7 +948,9 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                 {doc.status === "issued" ? "Otwórz dokument" : "Kontynuuj edycję"}
               </button>
               <div className="flex items-center gap-3">
-                {canShare && doc.status === "issued" && (
+                {canShare && doc.status === "issued" && (outgoing.some((share) => String(share.clinicDocumentId) === String(doc._id) || String(share.reportId) === `clinic-${doc._id}`) ? (
+                  <SharedBadge />
+                ) : (
                   <button
                     type="button"
                     onClick={() => openShare({
@@ -935,19 +962,13 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                   >
                     <Share2 size={14} /> Udostępnij
                   </button>
-                )}
+                ))}
                 <button type="button" onClick={() => { printClinicSheet(sheetProps(doc, patient, doctorName, doctorPwz, doctorTitle)); }} className="inline-flex items-center gap-1 text-teal-700 font-medium">
                   <Printer size={14} /> Drukuj
                 </button>
               </div>
             </div>
-            {outgoing.filter((share) => String(share.clinicDocumentId) === String(doc._id) || String(share.reportId) === `clinic-${doc._id}`).map((share) => (
-              <p key={share.id} className="text-xs text-slate-500 mt-2">
-                {share.reviewedAt
-                  ? `${share.toDoctorName}: dokument oznaczono jako przejrzany.`
-                  : `Wysłano do ${share.toDoctorName}. Czeka na otwarcie i oznaczenie jako przejrzane.`}
-              </p>
-            ))}
+            <ShareLines shares={outgoing.filter((share) => String(share.clinicDocumentId) === String(doc._id) || String(share.reportId) === `clinic-${doc._id}`)} />
           </div>
         ); })())}
       </div>

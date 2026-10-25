@@ -1,5 +1,19 @@
 import { apiCaller, axiosInstance } from "../utils/axiosInstance";
 
+/** Note when a faktura was issued later from an existing paragon. */
+export function invoiceGeneratedFromReceiptNote(bill) {
+  const invoiceNo = String(
+    bill?.invoiceId || bill?.invoiceSnapshot?.number || ""
+  ).trim();
+  const receiptNo = String(bill?.receiptNumber || "").trim();
+  if (!invoiceNo || !receiptNo) return "";
+  const fromReceipt = Boolean(
+    bill?.invoiceSnapshot?.issuedFromReceipt || bill?.documentType === "invoice"
+  );
+  if (!fromReceipt) return "";
+  return `Numer faktury ${invoiceNo} został wygenerowany z numeru paragonu ${receiptNo}.`;
+}
+
 /**
  * Billing helper functions for API interactions
  */
@@ -168,15 +182,7 @@ const billingHelper = {
   /**
    * Fetch invoice PDF blob (for auth-protected download URLs).
    */
-  fetchInvoicePdfBlob: async (billId, invoiceUrl) => {
-    const needsAuth =
-      !invoiceUrl ||
-      invoiceUrl.includes("/invoice/download") ||
-      (invoiceUrl.includes("/patient-bills/") && !invoiceUrl.includes("cloudinary"));
-    if (!needsAuth && invoiceUrl) {
-      const ext = await fetch(invoiceUrl);
-      return ext.blob();
-    }
+  fetchInvoicePdfBlob: async (billId) => {
     const response = await axiosInstance.get(
       `/patient-bills/${billId}/invoice/download`,
       { responseType: "blob" }
@@ -185,18 +191,11 @@ const billingHelper = {
   },
 
   /**
-   * Open invoice PDF in new tab (handles auth for local API download URLs).
+   * Open invoice PDF in new tab (always via API so current layout is used).
    */
-  openInvoicePdf: async (billId, invoiceUrl) => {
-    if (!invoiceUrl) return;
-    const needsAuth =
-      invoiceUrl.includes("/invoice/download") ||
-      (invoiceUrl.includes("/patient-bills/") && !invoiceUrl.includes("cloudinary"));
-    if (!needsAuth) {
-      window.open(invoiceUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
-    const blob = await billingHelper.fetchInvoicePdfBlob(billId, invoiceUrl);
+  openInvoicePdf: async (billId) => {
+    if (!billId) return;
+    const blob = await billingHelper.fetchInvoicePdfBlob(billId);
     const objectUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
     window.open(objectUrl, "_blank", "noopener,noreferrer");
     setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
@@ -205,8 +204,8 @@ const billingHelper = {
   /**
    * Open the system print dialog for the invoice PDF (does not only preview).
    */
-  printInvoicePdf: async (billId, invoiceUrl) => {
-    const blob = await billingHelper.fetchInvoicePdfBlob(billId, invoiceUrl);
+  printInvoicePdf: async (billId) => {
+    const blob = await billingHelper.fetchInvoicePdfBlob(billId);
     const objectUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
     const iframe = document.createElement("iframe");
     iframe.setAttribute("title", "Druk faktury");
@@ -251,7 +250,12 @@ const billingHelper = {
         month,
         year,
       });
-      return response.data?.invoiceId || "";
+      const payload = response?.data || {};
+      return (
+        payload.invoiceId ||
+        payload.data?.invoiceId ||
+        ""
+      );
     } catch (error) {
       console.error("Error suggesting invoice ID:", error);
       return "";

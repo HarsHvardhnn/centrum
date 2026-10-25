@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useUser } from "../../context/userContext";
@@ -8,7 +8,7 @@ import clinicFlowHelper, {
   orderStatusMeta,
 } from "../../helpers/clinicFlowHelper";
 import { OrderDetailsDialog } from "./InternalOrdersPanel";
-import { printOrdersReport } from "./internalOrdersReport";
+import OrdersReportDialog from "./OrdersReportDialog";
 
 const STATUSES = [
   { id: "all", label: "Wszystkie" },
@@ -37,17 +37,28 @@ export default function InternalOrdersHistory() {
   const [doctors, setDoctors] = useState([]);
   const [filters, setFilters] = useState(emptyFilters);
   const [openId, setOpenId] = useState(null);
+  const [reportFilters, setReportFilters] = useState(null);
   const isStaff = user?.role === "admin" || user?.role === "receptionist";
 
+  const requestRef = useRef(0);
+
+  // Ignore answers of older requests so fast typing never shows stale rows.
   const load = (next = filters) => {
+    const request = ++requestRef.current;
     clinicFlowHelper
       .listOrders(next)
-      .then((data) => setRows(Array.isArray(data) ? data : []))
-      .catch(() => setRows([]));
+      .then((data) => { if (request === requestRef.current) setRows(Array.isArray(data) ? data : []); })
+      .catch(() => { if (request === requestRef.current) setRows([]); });
   };
 
+  // Results follow the fields as they are filled in (no "Filtruj" button).
   useEffect(() => {
-    load(emptyFilters);
+    const timer = setTimeout(() => load(filters), 250);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
+  useEffect(() => {
     clinicFlowHelper.doctors().then((data) => setDoctors(Array.isArray(data) ? data : [])).catch(() => setDoctors([]));
   }, []);
 
@@ -79,7 +90,7 @@ export default function InternalOrdersHistory() {
 
       <form
         className="mt-4 bg-white border border-slate-200 rounded-xl p-5 space-y-4"
-        onSubmit={(event) => { event.preventDefault(); load(filters); }}
+        onSubmit={(event) => event.preventDefault()}
       >
         <div className="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4">
           <label className="text-xs font-semibold text-slate-600 md:col-span-2">Pacjent
@@ -146,18 +157,16 @@ export default function InternalOrdersHistory() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button type="submit" className="px-4 py-2 rounded-lg bg-[#1b766a] text-white text-sm font-semibold">Filtruj</button>
             <button
               type="button"
-              onClick={() => { setFilters(emptyFilters); load(emptyFilters); }}
+              onClick={() => setFilters(emptyFilters)}
               className="px-4 py-2 rounded-lg border text-sm font-semibold text-slate-600"
             >
               Wyczyść
             </button>
             <button
               type="button"
-              onClick={() => printOrdersReport(rows, filters, user)}
-              disabled={!rows.length}
+              onClick={() => setReportFilters({ ...filters })}
               className="px-4 py-2 rounded-lg border border-[#1b766a] text-sm font-semibold text-[#1b766a] disabled:opacity-40"
             >
               Generuj raport
@@ -236,6 +245,7 @@ export default function InternalOrdersHistory() {
           </tbody>
         </table>
       </div>
+      {reportFilters && <OrdersReportDialog filters={reportFilters} onClose={() => setReportFilters(null)} />}
       {selected && (
         <OrderDetailsDialog
           row={selected}

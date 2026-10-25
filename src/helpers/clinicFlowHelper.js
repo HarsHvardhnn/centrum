@@ -1,10 +1,19 @@
-import { apiCaller } from "../utils/axiosInstance";
+import { apiCaller, axiosInstance } from "../utils/axiosInstance";
 
 function unwrap(response) {
   return response?.data?.data;
 }
 
 const clinicFlowHelper = {
+  /** Report file for the current order filters: format is pdf, csv or xml. */
+  async orderReport(filters, format) {
+    const params = new URLSearchParams({ format });
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      if (value != null && String(value).trim() !== "") params.set(key, String(value).trim());
+    });
+    const res = await axiosInstance.get(`/api/clinic-flow/orders/report?${params.toString()}`, { responseType: "blob" });
+    return res.data;
+  },
   incomingShares(visitId) {
     return apiCaller("GET", `/api/clinic-flow/shares/incoming?visitId=${visitId}`).then(unwrap);
   },

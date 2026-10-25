@@ -23,7 +23,9 @@ import {
   Loader,
   Trash2
 } from "lucide-react";
-import billingHelper from "../../helpers/billingHelper";
+import billingHelper, {
+  invoiceGeneratedFromReceiptNote,
+} from "../../helpers/billingHelper";
 import patientServicesHelper from "../../helpers/patientServicesHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { toast } from "sonner";
@@ -37,6 +39,8 @@ import GenerateBillModal from "./GenerateBillModal";
 import userServiceHelper, {
   mapDoctorServicesResponseToCatalog,
   mapServicesResponseToCatalog,
+  fetchStaffPickerServices,
+  uniqueCatalogRows,
 } from "../../helpers/userServiceHelper";
 import { queryKeys } from "../../lib/queryKeys";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
@@ -148,6 +152,12 @@ const BillingManagement = () => {
     totalOverdue: 0
   });
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (isDoctorViewOnly && documentTypeFilter) {
+      setDocumentTypeFilter("");
+    }
+  }, [isDoctorViewOnly, documentTypeFilter]);
   
   // Add EditBillModal component
   const EditBillModal = ({ isOpen, onClose, billId, onUpdate, isRedirectedFromAppointment }) => {
@@ -249,7 +259,10 @@ const BillingManagement = () => {
         try {
           const res = await userServiceHelper.getServicesCatalog(doctorUserId);
           if (!cancelled) {
-            setCatalogServices(mapServicesResponseToCatalog(res));
+            const assigned = mapServicesResponseToCatalog(res);
+            const staff = await fetchStaffPickerServices();
+            const systemOnly = staff.filter((s) => s.source === "system");
+            setCatalogServices(uniqueCatalogRows([...assigned, ...systemOnly]));
           }
         } catch (e) {
           console.error("EditBillModal getDoctorServices:", e);
@@ -461,7 +474,12 @@ const BillingManagement = () => {
                       className="p-3 rounded-lg cursor-pointer border border-gray-200 hover:border-teal-500 hover:bg-teal-50"
                     >
                       <div className="flex justify-between">
-                        <span>{service.title}</span>
+                        <span>
+                          {service.title}
+                          {service.source === "system" && (
+                            <span className="ml-2 text-xs text-slate-500">systemowa</span>
+                          )}
+                        </span>
                         <span className="font-medium">{service.price} zł</span>
                       </div>
                     </div>
@@ -1131,12 +1149,31 @@ const BillingManagement = () => {
   
   // Format date
   const formatDate = (dateString) => {
+    if (!dateString) return "—";
+    if (typeof dateString === "string" && /^\d{4}-\d{2}-\d{2}/.test(dateString)) {
+      const [year, month, day] = dateString.slice(0, 10).split("-");
+      return `${day}.${month}.${year}`;
+    }
     const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
+    if (Number.isNaN(date.getTime())) return "—";
+    return date.toLocaleDateString("pl-PL", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
     });
+  };
+
+  const calendarDayKey = (value) => {
+    if (!value) return "";
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+      return value.slice(0, 10);
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
   };
   
   // Get color for payment status
@@ -1172,6 +1209,18 @@ const BillingManagement = () => {
       default:
         return status;
     }
+  };
+
+  const formatSettlementBasis = (bill) => {
+    const fromLines = (bill?.lineItems || [])
+      .map((item) => String(item?.name || "").trim())
+      .filter(Boolean);
+    if (fromLines.length) return fromLines.join(", ");
+    const fromServices = (bill?.services || [])
+      .map((s) => String(s?.title || "").trim())
+      .filter(Boolean);
+    if (fromServices.length) return fromServices.join(", ");
+    return "Wizyta";
   };
 
   const formatBillDocumentRef = (bill) => {
@@ -1231,17 +1280,19 @@ const BillingManagement = () => {
           </h1>
           <p className="text-gray-600">
             {isDoctorViewOnly
-              ? "Podgląd rozliczeń z wizyt. Edycja, faktury i oznaczanie płatności — tylko recepcja. Szacowane przychody: Raporty."
+              ? "Kwoty i usługi z Twoich wizyt — żebyś widział, za co jest rozliczenie. Faktury, paragony i płatności obsługuje recepcja."
               : "Przeglądaj i zarządzaj fakturami pacjentów"}
           </p>
         </div>
         
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className={`grid grid-cols-1 ${isDoctorViewOnly ? "md:grid-cols-3" : "md:grid-cols-4"} gap-6 mb-8`}>
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Suma faktur</p>
+                <p className="text-sm text-gray-500">
+                  {isDoctorViewOnly ? "Suma rozliczeń" : "Suma faktur"}
+                </p>
                 <h3 className="text-2xl font-semibold mt-1">{formatCurrency(stats.totalBilled)}</h3>
               </div>
               <div className="p-3 bg-teal-100 rounded-full">
@@ -1284,6 +1335,7 @@ const BillingManagement = () => {
             </div>
           </button>
           
+          {!isDoctorViewOnly && (
           <button
             type="button"
             onClick={() => setPaymentStatusFilter(paymentStatusFilter === "overdue" ? "" : "overdue")}
@@ -1305,15 +1357,18 @@ const BillingManagement = () => {
               </div>
             </div>
           </button>
+          )}
         </div>
-        
-        {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <div className="relative w-full md:w-64">
               <input
                 type="text"
-                placeholder="Szukaj: nazwisko, PESEL, numer dokumentu"
+                placeholder={
+                  isDoctorViewOnly
+                    ? "Szukaj: nazwisko, PESEL"
+                    : "Szukaj: nazwisko, PESEL, numer dokumentu"
+                }
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -1322,6 +1377,8 @@ const BillingManagement = () => {
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
+              {isBillingStaff && (
+                <>
               <button
                 type="button"
                 onClick={() => handleToggleDocumentType("invoice")}
@@ -1344,7 +1401,6 @@ const BillingManagement = () => {
               >
                 Pokaż paragony
               </button>
-              {isBillingStaff && (
                 <button
                   type="button"
                   onClick={handleDownloadInvoicesZip}
@@ -1355,6 +1411,7 @@ const BillingManagement = () => {
                   <Archive size={16} />
                   {zipDownloading ? "Przygotowywanie ZIP…" : "Pobierz faktury (ZIP)"}
                 </button>
+              </>
               )}
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -1364,15 +1421,6 @@ const BillingManagement = () => {
                 <span>Filtry</span>
                 <ChevronDown size={16} />
               </button>
-            </div>
-              {/*               
-              <button
-                onClick={() => navigate('/billing/new')}
-                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg"
-              >
-                <DollarSign size={18} />
-                <span>New Bill</span>
-              </button> */}
             </div>
           </div>
           
@@ -1408,8 +1456,8 @@ const BillingManagement = () => {
                   <option value="">Wszystkie statusy</option>
                   <option value="paid">Opłacone</option>
                   <option value="pending">Oczekujące</option>
-                  <option value="overdue">Zaległe</option>
-                  <option value="partial">Częściowo opłacone</option>
+                  {!isDoctorViewOnly && <option value="overdue">Zaległe</option>}
+                  {!isDoctorViewOnly && <option value="partial">Częściowo opłacone</option>}
                 </select>
               </div>
               
@@ -1475,14 +1523,10 @@ const BillingManagement = () => {
                   </th> */}
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort("billNumber")}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     <div className="flex items-center">
-                    Nr dokumentu
-                      {sortConfig.key === "billNumber" && (
-                        <ArrowUpDown size={16} className="ml-1" />
-                      )}
+                    {isDoctorViewOnly ? "Podstawa" : "Nr dokumentu"}
                     </div>
                   </th>
                   <th
@@ -1533,25 +1577,29 @@ const BillingManagement = () => {
                       )}
                     </div>
                   </th>
+                  {!isDoctorViewOnly && (
                   <th
                     scope="col"
                     className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     Akcje
                   </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {tableLoading ? (
                   Array.from({ length: 8 }).map((_, i) => (
                     <tr key={`skel-${i}`} className="animate-pulse">
-                      <td colSpan={user?.role === "admin" ? 7 : 6} className="px-6 py-4">
+                      <td colSpan={user?.role === "admin" ? 7 : isDoctorViewOnly ? 5 : 6} className="px-6 py-4">
                         <div className="h-4 bg-gray-200 rounded w-full" />
                       </td>
                     </tr>
                   ))
                 ) : bills.length > 0 ? (
-                  bills.map((bill) => (
+                  bills.map((bill) => {
+                    const fromReceiptNote = invoiceGeneratedFromReceiptNote(bill);
+                    return (
                     <tr
                       key={bill._id}
                       className={`hover:bg-gray-50 ${selectedInvoiceIds.includes(bill._id) ? 'bg-teal-50' : ''}`}
@@ -1570,7 +1618,13 @@ const BillingManagement = () => {
                       {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {bill?._id}
                       </td> */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className={`px-6 py-4 ${isDoctorViewOnly ? "" : "whitespace-nowrap"} text-sm font-medium text-gray-900`}>
+                        {isDoctorViewOnly ? (
+                          <span className="text-gray-800 font-normal leading-snug">
+                            {formatSettlementBasis(bill)}
+                          </span>
+                        ) : (
+                          <>
                         <button
                           type="button"
                           onClick={() =>
@@ -1593,6 +1647,13 @@ const BillingManagement = () => {
                         {bill.documentType === "invoice" && (
                           <div className="text-xs text-gray-400 font-normal">Faktura</div>
                         )}
+                        {fromReceiptNote && (
+                          <div className="text-xs text-teal-700 font-normal mt-1 max-w-[16rem] whitespace-normal leading-snug">
+                            {fromReceiptNote}
+                          </div>
+                        )}
+                          </>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -1610,7 +1671,19 @@ const BillingManagement = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(bill.billedAt)}
+                        <div>{formatDate(bill.billedAt)}</div>
+                        {calendarDayKey(bill.saleDate || bill.appointment?.date) &&
+                          calendarDayKey(bill.billedAt) !==
+                            calendarDayKey(
+                              bill.saleDate || bill.appointment?.date
+                            ) && (
+                            <div className="text-xs text-gray-400 font-normal mt-0.5">
+                              Wizyta:{" "}
+                              {formatDate(
+                                bill.saleDate || bill.appointment?.date
+                              )}
+                            </div>
+                          )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {formatCurrency(bill.totalAmount)}
@@ -1620,6 +1693,7 @@ const BillingManagement = () => {
                           {translatePaymentStatus(bill.paymentStatus)}
                         </span>
                       </td>
+                      {!isDoctorViewOnly && (
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
                           <button
@@ -1658,14 +1732,18 @@ const BillingManagement = () => {
                           )}
                         </div>
                       </td>
+                      )}
                     </tr>
-                  ))
+                    );
+                  })
                 ) : (
                   <tr>
-                    <td colSpan={canSelectBills ? "7" : "6"} className="px-6 py-12 text-center">
+                    <td colSpan={canSelectBills ? "7" : isDoctorViewOnly ? "5" : "6"} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center">
                         <FileText size={48} className="text-gray-300 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-1">Nie znaleziono faktur</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">
+                          {isDoctorViewOnly ? "Nie znaleziono rozliczeń" : "Nie znaleziono faktur"}
+                        </h3>
                         <p className="text-gray-500 max-w-sm">
                           Brak faktur spełniających kryteria wyszukiwania. Spróbuj dostosować filtry lub utwórz nową fakturę.
                         </p>
@@ -1706,6 +1784,7 @@ const BillingManagement = () => {
             </div>
           )}
         </div>
+      </div>
 
       {/* Patient Settlement modal (reception/admin only) */}
       {isEditModalOpen && isBillingStaff && (

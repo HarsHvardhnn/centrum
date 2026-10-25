@@ -4,12 +4,10 @@ import { useUser } from "../../context/userContext";
 import { doctorVisitsPath } from "../../utils/useNavigate";
 import {
   Home,
+  FileCheck,
   Stethoscope,
   Calendar,
   Users,
-  Pill,
-  FilePlus,
-  FileCheck,
   FileEdit,
   ClipboardList,
   History,
@@ -28,19 +26,21 @@ const ICON_SIZE = 20;
 const SIDEBAR_OPEN_WIDTH = 256;   // w-64
 const SIDEBAR_COLLAPSED_WIDTH = 80; // w-20
 
-const NavItem = ({ icon, label, to, isActive, onClick, isExternal, externalHref, collapsed }) => {
+const NavItem = ({ icon, label, to, isActive, onClick, isExternal, externalHref, collapsed, danger }) => {
   const baseClass =
     "flex items-center rounded-lg text-sm transition-colors";
   const paddingClass = collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5";
   const activeClass = isActive
     ? "font-medium"
-    : "text-gray-700 hover:bg-gray-100";
+    : danger
+      ? "text-red-600 hover:bg-red-50"
+      : "text-gray-700 hover:bg-gray-100";
 
   const iconEl = (
     <span
       className="shrink-0 flex items-center justify-center"
       style={{
-        color: isActive ? "#0d9488" : "#4b5563",
+        color: isActive ? "#0d9488" : danger ? "#dc2626" : "#4b5563",
         width: ICON_SIZE,
         height: ICON_SIZE,
       }}
@@ -111,7 +111,7 @@ const SidebarSection = ({ title, children, dividerAbove, collapsed }) => (
 );
 
 /**
- * New sidebar matching the design: NAWIGACJA, SZYBKIE AKCJE, SYSTEMOWE, Wyloguj się.
+ * Sidebar: NAWIGACJA, HISTORIA, SYSTEMOWE, Chat, Wyloguj się (P1 history is hidden for reception).
  * Previous component: UtilComponents/Sidebar.jsx (kept, not used).
  */
 const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) => {
@@ -170,13 +170,6 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
             />
           )}
           <NavItem
-            icon={<ClipboardList size={ICON_SIZE} strokeWidth={2} />}
-            label="Zlecenia wewnętrzne"
-            to="/administracja/zlecenia-wewnetrzne"
-            isActive={currentPath === "/administracja/zlecenia-wewnetrzne"}
-            collapsed={collapsed}
-          />
-          <NavItem
             icon={<Stethoscope size={ICON_SIZE} strokeWidth={2} />}
             label="Wizyty lekarskie"
             to={wizytyPath}
@@ -199,40 +192,8 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
           />
         </SidebarSection>
 
-        {/* SZYBKIE AKCJE */}
-        <SidebarSection title="Szybkie akcje" dividerAbove collapsed={collapsed}>
-          <NavItem
-            icon={<Pill size={ICON_SIZE} strokeWidth={2} />}
-            label="E-recepta"
-            to="/e-zdrowie"
-            isActive={currentPath === "/e-zdrowie"}
-            collapsed={collapsed}
-          />
-          <NavItem
-            icon={<FilePlus size={ICON_SIZE} strokeWidth={2} />}
-            label="E-skierowanie"
-            to="/e-zdrowie"
-            isActive={false}
-            collapsed={collapsed}
-          />
-          <NavItem
-            icon={<FileCheck size={ICON_SIZE} strokeWidth={2} />}
-            label="e-ZLA"
-            to="/e-zdrowie"
-            isActive={false}
-            collapsed={collapsed}
-          />
-          <NavItem
-            icon={<History size={ICON_SIZE} strokeWidth={2} />}
-            label="e-Zdrowie"
-            to="/e-zdrowie"
-            isActive={currentPath === "/e-zdrowie"}
-            collapsed={collapsed}
-          />
-        </SidebarSection>
-
-        {/* SYSTEMOWE */}
-        <SidebarSection title="Systemowe" dividerAbove collapsed={collapsed}>
+        {/* HISTORIA */}
+        <SidebarSection title="Historia" dividerAbove collapsed={collapsed}>
           <NavItem
             icon={<History size={ICON_SIZE} strokeWidth={2} />}
             label="Historia wizyt"
@@ -240,6 +201,26 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
             isActive={currentPath === "/klinika"}
             collapsed={collapsed}
           />
+          {user?.role !== "receptionist" && (
+            <NavItem
+              icon={<FileCheck size={ICON_SIZE} strokeWidth={2} />}
+              label="Historia e-Zdrowie (P1)"
+              to="/e-zdrowie"
+              isActive={currentPath === "/e-zdrowie"}
+              collapsed={collapsed}
+            />
+          )}
+          <NavItem
+            icon={<ClipboardList size={ICON_SIZE} strokeWidth={2} />}
+            label="Zlecenia wewnętrzne"
+            to="/administracja/zlecenia-wewnetrzne"
+            isActive={currentPath === "/administracja/zlecenia-wewnetrzne"}
+            collapsed={collapsed}
+          />
+        </SidebarSection>
+
+        {/* SYSTEMOWE */}
+        <SidebarSection title="Systemowe" dividerAbove collapsed={collapsed}>
           <NavItem
             icon={<TrendingUp size={ICON_SIZE} strokeWidth={2} />}
             label={user?.role === "doctor" ? "Podgląd rozliczeń" : "Rozliczenia"}
@@ -278,6 +259,7 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
             icon={<LogOut size={ICON_SIZE} strokeWidth={2} />}
             label="Wyloguj się"
             onClick={handleLogout}
+            danger
             isActive={false}
             collapsed={collapsed}
           />

@@ -489,9 +489,7 @@ const GenerateBillModal = ({
         onClose={() => setShowServiceModal(false)}
         onSave={handleAddServices}
         patientId={patient?._id}
-        doctorUserId={
-          user?.role === "admin" ? null : resolveVisitDoctorUserId(appointment)
-        }
+        catalogKind="system"
       />
     </div>
   );

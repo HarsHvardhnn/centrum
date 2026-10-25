@@ -52,7 +52,7 @@ import Adminmsgs from "./components/admin/Contact";
 import IPConfigPage from "./components/admin/IPConfigPage";
 import TwoFactorSettings from "./components/Auth/TwoFactorSettings";
 import DoctorProfilePage from "./components/User/Pages/DoctorProfilePage";
-import ReportsDashboard from "./components/Reports/ReportsDashboard";
+import ReportsHub from "./components/Reports/ReportsHub";
 import AppointmentConfigPage from "./components/admin/AppointmentConfigPage";
 import JWTSettingsPage from "./components/admin/JWTSettingsPage";
 import PermanentDeletePage from "./components/admin/PermanentDeletePage";
@@ -213,7 +213,7 @@ const routes = createBrowserRouter([
             path: "/centrum-pomocy",
             element: <ChatComponent />,
           },
-          { path: "/administracja/dane", element: <ReportsDashboard /> },
+          { path: "/administracja/dane", element: <ReportsHub /> },
           
           { path: "/administracja/rozliczenia", element: <BillingManagement /> },
           { path: "/administracja/rozliczenia/szczegoly/:billId", element: <BillDetails /> },

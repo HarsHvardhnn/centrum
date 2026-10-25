@@ -11,10 +11,13 @@ import {
   Check,
   FileText
 } from "lucide-react";
-import billingHelper from "../../helpers/billingHelper";
+import billingHelper, {
+  invoiceGeneratedFromReceiptNote,
+} from "../../helpers/billingHelper";
 import { toast } from "sonner";
 import { queryKeys } from "../../lib/queryKeys";
 import { useUser } from "../../context/userContext";
+import { isPlaceholderPhone } from "../../utils/phoneUtils";
 
 const BillDetails = () => {
   const { billId } = useParams();
@@ -23,6 +26,7 @@ const BillDetails = () => {
   const { user } = useUser();
   const isBillingStaff =
     user?.role === "admin" || user?.role === "receptionist";
+  const isDoctorViewOnly = user?.role === "doctor";
 
   const {
     data: billResponse,
@@ -37,6 +41,9 @@ const BillDetails = () => {
   });
 
   const billData = billResponse?.success ? billResponse.data : null;
+  const invoiceFromReceiptNote = billData
+    ? invoiceGeneratedFromReceiptNote(billData)
+    : "";
   const error =
     isError || (billResponse && !billResponse.success)
       ? "Nie udało się załadować szczegółów faktury"
@@ -199,7 +206,9 @@ const BillDetails = () => {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {billData.documentType === "fiscal_receipt"
+                {isDoctorViewOnly
+                  ? "Podstawa rozliczenia"
+                  : billData.documentType === "fiscal_receipt"
                   ? `Rozliczenie ${billData.internalTxnId || ""}`
                   : billData.documentType === "invoice"
                     ? `Faktura #${billData.invoiceId || billData.invoiceSnapshot?.number || billData._id}`
@@ -226,10 +235,9 @@ const BillDetails = () => {
           </div>
         </div>
         
-        {user?.role === "doctor" && (
+        {isDoctorViewOnly && (
           <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-            Podgląd tylko do odczytu. Rozliczenie pacjenta i faktury wykonuje recepcja.
-            Szacowane przychody — w sekcji Raporty.
+            Usługi i kwoty z Twojej wizyty. Faktury i paragony wystawia recepcja.
           </div>
         )}
 
@@ -240,12 +248,15 @@ const BillDetails = () => {
             <div className="flex flex-wrap justify-between items-start mb-8">
               <div>
                 <h2 className="text-xl font-bold text-gray-900 mb-1">
-                  {billData.documentType === "fiscal_receipt"
+                  {isDoctorViewOnly
+                    ? "Rozliczenie wizyty"
+                    : billData.documentType === "fiscal_receipt"
                     ? "Rozliczenie (paragon)"
                     : billData.documentType === "invoice"
                       ? "Faktura"
                       : "Rozliczenie pacjenta"}
                 </h2>
+                {!isDoctorViewOnly && (
                 <p className="text-sm text-gray-600 mb-3">
                   {billData.documentType === "invoice" &&
                   (billData.invoiceId || billData.invoiceSnapshot?.number)
@@ -256,6 +267,12 @@ const BillDetails = () => {
                       ? `Nr paragonu ${billData.receiptNumber}`
                     : `ID: ${billData._id}`}
                 </p>
+                )}
+                {!isDoctorViewOnly && invoiceFromReceiptNote && (
+                  <p className="text-sm text-teal-800 bg-teal-50 border border-teal-100 rounded-md px-3 py-2 mb-3">
+                    {invoiceFromReceiptNote}
+                  </p>
+                )}
                 
                 <div className="flex items-center text-sm text-gray-600 mb-1">
                   <Calendar size={16} className="mr-2 text-gray-400" />
@@ -271,21 +288,27 @@ const BillDetails = () => {
                     </span>
                   </span>
                 </div>
-                {(billData.invoiceUrl || billData.invoiceSnapshot?.pdfUrl) && (
+                {!isDoctorViewOnly && (billData.invoiceUrl || billData.invoiceSnapshot?.pdfUrl) && (
                   <div className="mt-3 flex gap-2">
-                    <a
-                      href={billData.invoiceUrl || billData.invoiceSnapshot.pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await billingHelper.openInvoicePdf(billData._id);
+                        } catch (_) {
+                          toast.error("Nie udało się otworzyć PDF");
+                        }
+                      }}
                       className="inline-flex items-center px-3 py-1.5 text-sm border rounded-md hover:bg-gray-50"
                     >
                       <FileText size={14} className="mr-1" />
                       Podgląd PDF
-                    </a>
+                    </button>
                   </div>
                 )}
               </div>
               
+              {!isDoctorViewOnly && (
               <div className="mt-4 sm:mt-0">
                 <div className="text-right">
                   <div className="text-gray-600 text-sm">Metoda Płatności</div>
@@ -295,6 +318,7 @@ const BillDetails = () => {
                   </div>
                 </div>
               </div>
+              )}
             </div>
             
             {/* Client & Provider Info */}
@@ -306,8 +330,14 @@ const BillDetails = () => {
                     {billData.patient?.name?.first} {billData.patient?.name?.last}
                   </p>
                   <p className="text-gray-600 mt-1">ID: {billData.patient?.patientId}</p>
-                  <p className="text-gray-600 mt-1">{billData.patient?.email}</p>
-                  <p className="text-gray-600 mt-1">{billData.patient?.phone || "Brak numeru telefonu"}</p>
+                  {billData.patient?.email ? (
+                    <p className="text-gray-600 mt-1">{billData.patient.email}</p>
+                  ) : null}
+                  <p className="text-gray-600 mt-1">
+                    {isPlaceholderPhone(billData.patient?.phone)
+                      ? "Brak numeru telefonu"
+                      : billData.patient.phone}
+                  </p>
                 </div>
               </div>
               
@@ -404,10 +434,12 @@ const BillDetails = () => {
                     <span className="font-medium">{formatCurrency(billData.subtotal)}</span>
                   </div>
                   
+                  {!isDoctorViewOnly && (
                   <div className="flex justify-between py-2 text-sm">
                     <span className="text-gray-600">Podatek ({billData.taxPercentage}%{billData.taxPercentage === 0 ? ' ZW' : ''})</span>
                     <span className="font-medium">{formatCurrency(billData.taxAmount)}</span>
                   </div>
+                  )}
                   
                   {billData.appointment?.mode === 'online' && billData.consultationCharges > 0 && (
                     <div className="flex justify-between py-2 text-sm">
