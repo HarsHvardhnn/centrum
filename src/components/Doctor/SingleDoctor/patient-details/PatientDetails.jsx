@@ -869,8 +869,11 @@ const PatientDetailsPage = () => {
     };
   }, [id, appointmentIdFromUrl, queryClient]);
 
-  const fetchAppointmentDetails = async (appointmentId) => {
+  const fetchAppointmentDetails = async (appointmentId, { fresh = false } = {}) => {
     try {
+      // The consolidated payload is cached for a short time; after the visit changed
+      // (card generated, file added, reason verified) the cached copy is outdated.
+      if (fresh) queryClient.removeQueries({ queryKey: queryKeys.visitConsolidated(appointmentId) });
       const cached = unwrapVisitConsolidated(
         queryClient.getQueryData(queryKeys.visitConsolidated(appointmentId))
       );
@@ -1049,6 +1052,7 @@ const PatientDetailsPage = () => {
       const v = res?.visitReasonVerified;
       const verified = typeof v === "boolean" ? v : true;
       setVisitReasonVerified(verified);
+      queryClient.removeQueries({ queryKey: queryKeys.visitConsolidated(currentAppointmentId) });
       if (verified) {
         setConsultationData((prev) => ({
           ...prev,
@@ -1563,7 +1567,7 @@ const PatientDetailsPage = () => {
       if (response.success && response.data.url) {
         // Refresh visit reports so the card appears in documentation without a full page reload
         if (typeof fetchAppointmentDetails === "function") {
-          await fetchAppointmentDetails(appointmentId);
+          await fetchAppointmentDetails(appointmentId, { fresh: true });
         } else if (response.data.report) {
           setReports((prev) => {
             const next = Array.isArray(prev) ? [...prev] : [];
@@ -1866,7 +1870,7 @@ const PatientDetailsPage = () => {
                     postalCode: patientData.pinCode || patientData.zipCode || patientData.postalCode || patientData.address?.postalCode || "",
                     city: patientData.city || patientData.address?.city || "",
                   }}
-                  onReportsChanged={() => currentAppointmentId && fetchAppointmentDetails(currentAppointmentId)}
+                  onReportsChanged={() => currentAppointmentId && fetchAppointmentDetails(currentAppointmentId, { fresh: true })}
                   onPatientRecordSaved={(saved) => {
                     const [first, ...rest] = String(saved.name || "").trim().split(/\s+/);
                     setPatientData((prev) => ({
