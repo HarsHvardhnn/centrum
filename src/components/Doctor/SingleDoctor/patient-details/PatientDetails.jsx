@@ -513,6 +513,7 @@ const PatientDetailsPage = () => {
   const [showVisitCardModal, setShowVisitCardModal] = useState(false);
   const [pendingVisitCardData, setPendingVisitCardData] = useState(null);
   const [visitCardPreviewUrl, setVisitCardPreviewUrl] = useState("");
+  const [cardShareRequest, setCardShareRequest] = useState(null);
 
   // Diagnoses (ICD-10) and procedures (ICD-9) – from visit APIs
   const [diagnoses, setDiagnoses] = useState([]);
@@ -1854,6 +1855,7 @@ const PatientDetailsPage = () => {
                 <VisitClinicDocuments
                   visitId={currentAppointmentId}
                   reports={reports}
+                  shareRequest={cardShareRequest}
                   patientId={patientData.patient_id || patientData.id}
                   doctorName={typeof user?.name === "string" ? user.name : `${user?.name?.first || ""} ${user?.name?.last || ""}`.trim()}
                   doctorTitle={user?.professionalTitle || ""}
@@ -2080,7 +2082,20 @@ const PatientDetailsPage = () => {
       />
 
       {visitCardPreviewUrl && (
-        <VisitFilePreview title="Karta wizyty" url={visitCardPreviewUrl} onClose={() => setVisitCardPreviewUrl("")} />
+        <VisitFilePreview
+          title="Karta wizyty"
+          url={visitCardPreviewUrl}
+          onClose={() => setVisitCardPreviewUrl("")}
+          onShare={(user?.role === "doctor" || user?.role === "admin") ? () => {
+            const card = (reports || []).find((r) => r.type === "visit-card" && (r.fileUrl || r.url) === visitCardPreviewUrl);
+            if (!card?._id) {
+              toast.error("Karta jest jeszcze zapisywana. Spróbuj za chwilę.");
+              return;
+            }
+            setCardShareRequest({ id: String(card._id), name: "Karta wizyty", type: "visit-card", at: Date.now() });
+            setVisitCardPreviewUrl("");
+          } : undefined}
+        />
       )}
 
       <VisitCardConfirmationModal

@@ -254,7 +254,7 @@ function visitCardVersions(reports) {
     .map((card, index, all) => ({ ...card, version: index + 1, total: all.length }));
 }
 
-export function VisitFilePreview({ title, url, onClose }) {
+export function VisitFilePreview({ title, url, onClose, onShare }) {
   const [src, setSrc] = useState("");
   const [kind, setKind] = useState("pdf");
   const [failed, setFailed] = useState(false);
@@ -308,6 +308,11 @@ export function VisitFilePreview({ title, url, onClose }) {
         </div>
         <div className="bg-white px-5 py-3 border-t flex justify-end gap-2">
           <button type="button" onClick={onClose} className="px-4 py-2 border rounded-lg">Zamknij</button>
+          {onShare && (
+            <button type="button" onClick={onShare} className="px-4 py-2 border rounded-lg inline-flex items-center gap-1">
+              <Share2 size={14} /> Udostępnij
+            </button>
+          )}
           <button type="button" onClick={() => printVisitFile(url)} className="px-4 py-2 bg-[#1b766a] text-white rounded-lg font-semibold inline-flex items-center gap-1">
             <Printer size={14} /> Drukuj
           </button>
@@ -457,7 +462,7 @@ function UploadVisitFileDialog({ busy, onClose, onSubmit }) {
 
 const EXAMS = ["EEG", "USG", "RTG", "TK", "MR", "Holter", CONSULTATION_EXAM];
 
-const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorTitle = "", doctorPwz = "", visitHints = {}, reports = [], onPatientRecordSaved, onReportsChanged }) => {
+const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorTitle = "", doctorPwz = "", visitHints = {}, reports = [], shareRequest = null, onPatientRecordSaved, onReportsChanged }) => {
   const { user } = useUser();
   const canShare = user?.role === "doctor" || user?.role === "admin";
   const [templates, setTemplates] = useState([]);
@@ -531,6 +536,11 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
     const count = alreadySharedWith(target).size;
     return count ? `Udostępniono (${count}) · udostępnij dalej` : "Udostępnij";
   };
+
+  useEffect(() => {
+    if (shareRequest && canShare) openShare(shareRequest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shareRequest]);
 
   const toggleShareDoctor = (doctorId) => {
     const id = String(doctorId);
@@ -976,6 +986,10 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
           title={cardPreview.total > 1 ? `Karta wizyty · Wersja ${cardPreview.version}` : "Karta wizyty"}
           url={cardPreview.url}
           onClose={() => setCardPreview(null)}
+          onShare={canShare ? () => {
+            openShare({ id: cardPreview.id, name: cardPreview.total > 1 ? `Karta wizyty · Wersja ${cardPreview.version}` : "Karta wizyty", type: "visit-card" });
+            setCardPreview(null);
+          } : undefined}
         />
       )}
 
