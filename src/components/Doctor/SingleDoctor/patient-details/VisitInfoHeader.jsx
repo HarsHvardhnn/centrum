@@ -164,7 +164,7 @@ const VisitInfoHeader = ({
           value={formatTimeForInput(timeValue)}
           onChange={(e) => onTimeChange?.(e.target.value)}
           disabled={readOnly}
-          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+          className="w-[4.5rem] px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center tabular-nums"
           min=""
           max=""
           title="Dowolna godzina (także z przeszłości)"
@@ -177,7 +177,7 @@ const VisitInfoHeader = ({
           value={formatTimeForInput(endTimeValue)}
           onChange={(e) => onEndTimeChange?.(e.target.value)}
           disabled={readOnly}
-          className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+          className="w-[4.5rem] px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center tabular-nums"
           min=""
           max=""
           title="Dowolna godzina (także z przeszłości)"
