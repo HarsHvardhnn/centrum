@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import TimeInput from "../../UtilComponents/TimeInput";
 import PatientSearchField from "../../AppointmentForm/PatientSearchField"
 import DoctorSelectionWithSlots, {
   doctorDisplayName,
@@ -1087,8 +1088,7 @@ function AppointmentFormModal({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Czas rozpoczęcia
               </label>
-              <input
-                type="time"
+              <TimeInput
                 name="customStartTime"
                 value={appointmentData.customStartTime || ""}
                 onChange={handleCustomTimeChange}
@@ -1099,8 +1099,7 @@ function AppointmentFormModal({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Czas zakończenia
               </label>
-              <input
-                type="time"
+              <TimeInput
                 name="customEndTime"
                 value={appointmentData.customEndTime || ""}
                 onChange={handleCustomTimeChange}

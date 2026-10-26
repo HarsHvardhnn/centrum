@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import TimeInput from "../../../UtilComponents/TimeInput";
 import { Calendar, Clock } from "lucide-react";
 import { translateStatus, getStatusStyle, getVisitTypeDisplayLabel, stripDoctorTitle } from "../../../../utils/statusHelper";
 import { isRadiologistAppointment } from "../../../../utils/radiologistVisitHelper";
@@ -159,8 +160,7 @@ const VisitInfoHeader = ({
       <div className="flex items-center gap-2">
         <Clock size={18} className="text-gray-500 shrink-0" />
         <label className="text-sm text-gray-600 shrink-0">Godzina rozpoczęcia</label>
-        <input
-          type="time"
+        <TimeInput
           value={formatTimeForInput(timeValue)}
           onChange={(e) => onTimeChange?.(e.target.value)}
           disabled={readOnly}
@@ -173,8 +173,7 @@ const VisitInfoHeader = ({
       <div className="flex items-center gap-2">
         <Clock size={18} className="text-gray-500 shrink-0" />
         <label className="text-sm text-gray-600 shrink-0">Godzina zakończenia</label>
-        <input
-          type="time"
+        <TimeInput
           value={formatTimeForInput(endTimeValue)}
           onChange={(e) => onEndTimeChange?.(e.target.value)}
           disabled={readOnly}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import TimeInput from "../UtilComponents/TimeInput";
 import PatientSearchField from "../AppointmentForm/PatientSearchField";
 import DoctorSelectionWithSlots from "./DoctorsAppointments";
 import userServiceHelper from "../../helpers/userServiceHelper";
@@ -628,8 +629,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Niestandardowy czas rozpoczęcia
                     </label>
-                    <input
-                      type="time"
+                    <TimeInput
                       name="customStartTime"
                       value={appointmentData.customStartTime}
                       onChange={handleInputChange}
@@ -640,8 +640,7 @@ function ReceptionAppointmentForm({ onClose, onComplete, doctorId, availableServ
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Niestandardowy czas zakończenia
                     </label>
-                    <input
-                      type="time"
+                    <TimeInput
                       name="customEndTime"
                       value={appointmentData.customEndTime}
                       onChange={handleInputChange}

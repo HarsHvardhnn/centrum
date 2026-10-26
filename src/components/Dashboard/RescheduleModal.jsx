@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import TimeInput from "../UtilComponents/TimeInput";
 import { Calendar, Clock, User, AlertCircle, CheckCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiCaller } from "../../utils/axiosInstance";
 import appointmentHelper from "../../helpers/appointmentHelper";
@@ -1070,8 +1071,7 @@ const RescheduleModal = ({
                       <label className="block text-xs font-medium text-gray-600 mb-1">
                         Godzina rozpoczęcia
                       </label>
-                      <input
-                        type="time"
+                      <TimeInput
                         value={customStartTime}
                         onChange={(e) => handleCustomTimeChange("start", e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
@@ -1081,8 +1081,7 @@ const RescheduleModal = ({
                       <label className="block text-xs font-medium text-gray-600 mb-1">
                         Godzina zakończenia (opcjonalnie)
                       </label>
-                      <input
-                        type="time"
+                      <TimeInput
                         value={customEndTime}
                         onChange={(e) => handleCustomTimeChange("end", e.target.value)}
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
