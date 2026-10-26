@@ -527,6 +527,11 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
       .map((share) => String(share.toDoctorId))
   );
 
+  const shareButtonLabel = (target) => {
+    const count = alreadySharedWith(target).size;
+    return count ? `Udostępniono (${count}) · udostępnij dalej` : "Udostępnij";
+  };
+
   const toggleShareDoctor = (doctorId) => {
     const id = String(doctorId);
     setSelectedDoctorIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
@@ -880,7 +885,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                     onClick={() => openShare({ id: card.id, name: card.total > 1 ? `Karta wizyty · Wersja ${card.version}` : "Karta wizyty", type: "visit-card" })}
                     className="inline-flex items-center gap-1 text-teal-700 font-medium"
                   >
-                    <Share2 size={14} /> Udostępnij
+                    <Share2 size={14} /> {shareButtonLabel({ id: card.id })}
                   </button>
                 )}
                 <button type="button" onClick={() => printVisitFile(card.url)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
@@ -910,7 +915,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               <div className="flex items-center gap-3">
                 {canShare && (
                   <button type="button" onClick={() => openShare(file)} className="inline-flex items-center gap-1 text-teal-700 font-medium">
-                    <Share2 size={14} /> Udostępnij
+                    <Share2 size={14} /> {shareButtonLabel({ id: file.id, clinicDocumentId: file.clinicDocumentId })}
                   </button>
                 )}
                 <button type="button" onClick={() => removeFile(file.id)} className="inline-flex items-center gap-1 text-slate-500 font-medium">
@@ -953,7 +958,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                     })}
                     className="inline-flex items-center gap-1 text-teal-700 font-medium"
                   >
-                    <Share2 size={14} /> Udostępnij
+                    <Share2 size={14} /> {shareButtonLabel({ id: `clinic-${doc._id}`, clinicDocumentId: doc._id })}
                   </button>
                 )}
                 <button type="button" onClick={() => { printClinicSheet(sheetProps(doc, patient, doctorName, doctorPwz, doctorTitle)); }} className="inline-flex items-center gap-1 text-teal-700 font-medium">
@@ -1018,6 +1023,13 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
               <input value={doctorQuery} onChange={(event) => setDoctorQuery(event.target.value)} placeholder="Szukaj lekarza..." className="mt-3 w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div className="overflow-y-auto p-3 space-y-1">
+              {alreadySharedWith(shareTarget).size > 0 && (
+                <p className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                  Już udostępniono: {outgoing
+                    .filter((share) => alreadySharedWith(shareTarget).has(String(share.toDoctorId)) && (String(share.reportId) === String(shareTarget.id) || (shareTarget.clinicDocumentId && String(share.clinicDocumentId) === String(shareTarget.clinicDocumentId))))
+                    .map((share) => share.toDoctorName).join(", ")}
+                </p>
+              )}
               {doctors
                 .filter((doctor) => !alreadySharedWith(shareTarget).has(String(doctor._id)))
                 .filter((doctor) => ![user?._id, user?.id, user?.d_id].filter(Boolean).map(String).includes(String(doctor._id)))
@@ -1215,7 +1227,7 @@ const VisitClinicDocuments = ({ visitId, patientId, patient, doctorName, doctorT
                       })}
                       className="px-4 py-2 border rounded-lg inline-flex items-center gap-1"
                     >
-                      <Share2 size={14} /> Udostępnij
+                      <Share2 size={14} /> {shareButtonLabel({ id: `clinic-${draft.existingId}`, clinicDocumentId: draft.existingId })}
                     </button>
                   )}
                   <button type="button" onClick={() => issuedPdfRef.current?.print()} className="px-4 py-2 bg-[#1b766a] text-white rounded-lg font-semibold inline-flex items-center gap-1">
