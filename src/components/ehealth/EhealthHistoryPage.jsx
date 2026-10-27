@@ -127,7 +127,7 @@ const EhealthHistoryPage = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500">
               <tr>
-                <th className="text-left p-3">Typ</th>
+                <th className="text-left p-3">Dokument</th>
                 <th className="text-left p-3">Status</th>
                 <th className="text-left p-3">Czas</th>
                 <th className="text-left p-3">PIN / kod dostępu</th>
@@ -148,7 +148,10 @@ const EhealthHistoryPage = () => {
                 const busy = busyId === row.id;
                 return (
                   <tr key={row.id} className="border-t align-top">
-                    <td className="p-3">{SERVICE_LABELS[row.service] || row.service}</td>
+                    <td className="p-3">
+                      <div>{SERVICE_LABELS[row.service] || row.service}</div>
+                      {row.externalId ? <div className="mt-0.5 font-mono text-[11px] text-slate-500 break-all" title="Unikalny numer dokumentu w P1">{row.externalId}</div> : null}
+                    </td>
                     <td className="p-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusClass(row.status)}`}>
                         {STATUS_LABELS[row.status] || row.status}
@@ -163,7 +166,6 @@ const EhealthHistoryPage = () => {
                       ) : (
                         <span className="text-slate-400">—</span>
                       )}
-                      {row.externalId ? <div className="mt-0.5 text-[10px] text-slate-400 break-all" title="Identyfikator dokumentu w P1">{row.externalId}</div> : null}
                     </td>
                     <td className="p-3 text-xs text-red-700 max-w-xs">
                       {row.status === "draft" ? "" : row.error?.message || "—"}
