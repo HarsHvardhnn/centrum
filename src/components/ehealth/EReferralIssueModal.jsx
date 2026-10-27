@@ -101,6 +101,7 @@ const EReferralIssueModal = ({
 
   if (!open) return null;
 
+  const nfzAllowed = referralType === "hospital_treatment";
   const typeLabel = REFERRAL_TYPES.find((row) => row.value === referralType)?.label || "Skierowanie";
   const justificationRequired =
     referralType === "hospital_treatment" || referralType === "rehabilitation" || priority === "urgent";
@@ -109,6 +110,8 @@ const EReferralIssueModal = ({
 
   const changeType = (next) => {
     setReferralType(next);
+    // NFZ referrals are only allowed for a hospital stay.
+    if (next !== "hospital_treatment") setIsNfzFunded(false);
     setTargetSearch("");
     setTargetOpen(true);
     if (next === "diagnostic_exam" && procedures.every((row) => !row.trim())) setProcedures([""]);
@@ -175,9 +178,9 @@ const EReferralIssueModal = ({
       icd9Display: parsedProcedures[0]?.name || "",
       performerCode: target.code,
       performer: target.name,
-      reimbursed: isNfzFunded ? "Y" : "N",
-      nfzDepartment: isNfzFunded ? nfzBranch : "",
-      nfzContract: isNfzFunded ? nfzContract.trim() : "",
+      reimbursed: isNfzFunded && nfzAllowed ? "Y" : "N",
+      nfzDepartment: isNfzFunded && nfzAllowed ? nfzBranch : "",
+      nfzContract: isNfzFunded && nfzAllowed ? nfzContract.trim() : "",
       cito: priority === "urgent",
       observation: referralType === "rehabilitation" ? justification.trim() : "",
       clientReferralType: referralType,
@@ -210,7 +213,7 @@ const EReferralIssueModal = ({
     if (payload.icd10Code) setPrimaryIcd10(`${payload.icd10Code} - ${payload.icd10Display || ""}`.trim());
     if (payload.purpose) setJustification(payload.purpose);
     setPriority(payload.cito || payload.priorityCode === "UR" ? "urgent" : "normal");
-    setIsNfzFunded(payload.reimbursed === "Y");
+    setIsNfzFunded(payload.reimbursed === "Y" && payload.clientReferralType === "hospital_treatment");
     if (payload.nfzDepartment) setNfzBranch(payload.nfzDepartment);
     if (payload.nfzContract) setNfzContract(payload.nfzContract);
     if (payload.icd9Code) setProcedures([`${payload.icd9Code} - ${payload.icd9Display || ""}`]);
@@ -300,10 +303,11 @@ const EReferralIssueModal = ({
                     </div>
                 </div>
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={isNfzFunded} onChange={(e) => setIsNfzFunded(e.target.checked)} />
-                  <span>Skierowanie do realizacji w ramach NFZ</span>
+                  <input type="checkbox" checked={isNfzFunded && nfzAllowed} disabled={!nfzAllowed} onChange={(e) => setIsNfzFunded(e.target.checked)} />
+                  <span className={nfzAllowed ? "" : "text-slate-400"}>Skierowanie do realizacji w ramach NFZ</span>
+                  {!nfzAllowed && <span className="text-[10px] text-amber-700">Dostępne tylko dla typu „Na pobyt w szpitalu”</span>}
                 </label>
-                {isNfzFunded && (
+                {isNfzFunded && nfzAllowed && (
                   <div className="grid sm:grid-cols-2 gap-2">
                     <select value={nfzBranch} onChange={(e) => setNfzBranch(e.target.value)} className={inputClass}>
                       {NFZ_BRANCHES.map((branch) => <option key={branch.code} value={branch.code}>{branch.label}</option>)}

@@ -183,6 +183,11 @@ const ehealthHelper = {
     return withAuth("issue", () => apiCaller("POST", "/api/ehealth/ezla", body).then(unwrap));
   },
 
+  ezlaAddresses(patientId) {
+    const params = new URLSearchParams({ patientId: String(patientId || "") });
+    return apiCaller("GET", `/api/ehealth/ezla/addresses?${params.toString()}`).then(unwrap);
+  },
+
   ezlaContext(patientId, institution) {
     const params = new URLSearchParams({
       patientId: String(patientId || ""),

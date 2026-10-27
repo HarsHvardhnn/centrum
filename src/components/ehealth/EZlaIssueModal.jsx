@@ -246,6 +246,8 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [payerLookup, setPayerLookup] = useState("loading"); // loading | ok | failed
+  const [zusAddr, setZusAddr] = useState({ open: false, loading: false, list: [], message: "" });
   const [newPayer, setNewPayer] = useState({ name: "", nip: "", type: "1", hasPue: true });
   const [contextNote, setContextNote] = useState("");
 
@@ -313,9 +315,11 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
   useEffect(() => {
     if (!open || !patientId) return;
     let cancelled = false;
+    setPayerLookup("loading");
     ehealthHelper.ezlaContext(patientId, form.institution).then((res) => {
       if (cancelled) return;
       const data = res?.data || {};
+      setPayerLookup(Array.isArray(data.payers) && data.payers.length ? "ok" : "failed");
       setContextNote(data.canIssue === false ? (data.message || "Lekarz nie ma uprawnienia do wystawienia zwolnienia na ten dzień.") : "");
       const remote = Array.isArray(data.payers) ? data.payers : [];
       if (remote.length) {
@@ -340,9 +344,25 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
           familyBirth: String(family[0].date || family[0].birthDate || "").slice(0, 10) || prev.familyBirth,
         }));
       }
-    }).catch(() => {});
+    }).catch(() => { if (!cancelled) setPayerLookup("failed"); });
     return () => { cancelled = true; };
   }, [open, patientId, form.institution]);
+
+  const loadZusAddresses = async () => {
+    setZusAddr({ open: true, loading: true, list: [], message: "" });
+    try {
+      const res = await ehealthHelper.ezlaAddresses(patientId);
+      const data = res?.data || {};
+      setZusAddr({ open: true, loading: false, list: Array.isArray(data.addresses) ? data.addresses : [], message: data.message || "" });
+    } catch (err) {
+      setZusAddr({ open: true, loading: false, list: [], message: err?.response?.data?.error?.message || "Nie udało się pobrać adresów z ZUS." });
+    }
+  };
+
+  const pickZusAddress = (row) => {
+    patch({ postalCode: row.postalCode, city: row.city, street: row.street, houseNumber: row.houseNumber, apartment: row.apartment, stayAbroad: false });
+    setZusAddr({ open: false, loading: false, list: [], message: "" });
+  };
 
   const leaveCards = useMemo(() => buildLeaveCards(historyRows, zusRows), [historyRows, zusRows]);
   const visibleLeaveCards = useMemo(
@@ -605,8 +625,29 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
                 <section className="rounded-xl border border-slate-200 p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Adres pobytu w czasie niezdolności</h4>
-                    <button type="button" onClick={() => patch(parseAddress(patient))} className="text-xs font-semibold text-indigo-700">Zaczytaj z kartoteki</button>
+                    <div className="flex items-center gap-3">
+                      <button type="button" onClick={() => patch(parseAddress(patient))} className="text-xs font-semibold text-indigo-700">Adres z kartoteki</button>
+                      <button type="button" onClick={loadZusAddresses} className="text-xs font-semibold text-indigo-700">Załaduj adres z systemu ZUS</button>
+                    </div>
                   </div>
+                  {zusAddr.open && (
+                    <div className="mb-3 rounded-lg border border-indigo-200 bg-indigo-50/50 p-2">
+                      <div className="mb-1 flex items-center justify-between text-xs font-semibold text-slate-600">
+                        <span>Adresy pacjenta w ZUS (wg PESEL)</span>
+                        <button type="button" onClick={() => setZusAddr({ open: false, loading: false, list: [], message: "" })} aria-label="Zamknij">×</button>
+                      </div>
+                      {zusAddr.loading && <p className="text-xs text-slate-500">Pobieranie z ZUS…</p>}
+                      {!zusAddr.loading && zusAddr.message && <p className="text-xs text-amber-800">{zusAddr.message}</p>}
+                      <div className="space-y-1">
+                        {zusAddr.list.map((row, index) => (
+                          <button key={index} type="button" onClick={() => pickZusAddress(row)} className="block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs hover:border-indigo-500">
+                            <span className="font-semibold">{[row.street, [row.houseNumber, row.apartment].filter(Boolean).join("/")].filter(Boolean).join(" ") || "—"}</span>
+                            <span className="block text-slate-500">{[row.postalCode, row.city].filter(Boolean).join(" ")}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-2">
                     <Field label={form.stayAbroad ? "Kod pocztowy zagraniczny" : "Kod pocztowy"} value={form.postalCode} onChange={(v) => patch({ postalCode: v })} placeholder={form.stayAbroad ? "do 9 znaków" : "00-000"} />
                     <Field label="Miejscowość" value={form.city} onChange={(v) => patch({ city: v })} />
@@ -628,6 +669,38 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
                   )}
                 </section>
 
+              </div>
+
+              <div className="space-y-4">
+                {!payersForbidden && (
+                  <section className="rounded-xl border border-slate-200 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Płatnicy składek</h4>
+                      {payerLookup === "failed" && (
+                        <button type="button" onClick={() => setAddOpen(true)} className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700"><Plus size={12} /> Dodaj ręcznie</button>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {form.payers.map((payer) => (
+                        <button key={payer.id} type="button" onClick={() => patch({ selectedPayerId: payer.id, doNotSend: payer.hasPue === false ? true : form.doNotSend })} className={`flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-left ${form.selectedPayerId === payer.id ? "border-indigo-600 bg-indigo-50" : "border-slate-200"}`}>
+                          <Building2 size={16} className="mt-0.5 text-slate-500" />
+                          <span>
+                            <span className="block text-sm font-semibold">{payer.name}</span>
+                            <span className="text-[11px] text-slate-500">{payer.type === "2" ? "PESEL" : payer.type === "3" ? "Paszport" : "NIP"} {payer.nip || payer.identifier || "—"} · {payer.hasPue === false ? "bez profilu PUE" : "profil PUE"}</span>
+                          </span>
+                        </button>
+                      ))}
+                      {!form.payers.length && payerLookup === "loading" && <p className="text-xs text-slate-500">Pobieranie płatników z ZUS na podstawie numeru PESEL…</p>}
+                      {!form.payers.length && payerLookup === "failed" && <p className="text-xs text-slate-500">Nie udało się pobrać płatnika z ZUS. Dodaj płatnika ręcznie (NIP).</p>}
+                    </div>
+                    <label className="mt-3 flex items-center gap-2 text-xs text-slate-700">
+                      <input type="checkbox" checked={form.doNotSend || selectedPayer?.hasPue === false} disabled={selectedPayer?.hasPue === false} onChange={(e) => patch({ doNotSend: e.target.checked })} />
+                      Nie przesyłaj informacji płatnikowi
+                    </label>
+                    {selectedPayer?.hasPue === false && <p className="mt-2 text-xs text-amber-800">Płatnik nie ma profilu PUE. Po wystawieniu potrzebny jest wydruk papierowy.</p>}
+                  </section>
+                )}
+
                 <section className="rounded-xl border border-slate-200 p-4">
                   <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Cel zwolnienia</h4>
                   <div className="grid grid-cols-2 gap-2">
@@ -648,34 +721,6 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
                   )}
                 </section>
 
-                {!payersForbidden && (
-                  <section className="rounded-xl border border-slate-200 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Płatnicy składek</h4>
-                      <button type="button" onClick={() => setAddOpen(true)} className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-700"><Plus size={12} /> Dodaj</button>
-                    </div>
-                    <div className="space-y-2">
-                      {form.payers.map((payer) => (
-                        <button key={payer.id} type="button" onClick={() => patch({ selectedPayerId: payer.id, doNotSend: payer.hasPue === false ? true : form.doNotSend })} className={`flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-left ${form.selectedPayerId === payer.id ? "border-indigo-600 bg-indigo-50" : "border-slate-200"}`}>
-                          <Building2 size={16} className="mt-0.5 text-slate-500" />
-                          <span>
-                            <span className="block text-sm font-semibold">{payer.name}</span>
-                            <span className="text-[11px] text-slate-500">{payer.type === "2" ? "PESEL" : payer.type === "3" ? "Paszport" : "NIP"} {payer.nip || payer.identifier || "—"} · {payer.hasPue === false ? "bez profilu PUE" : "profil PUE"}</span>
-                          </span>
-                        </button>
-                      ))}
-                      {!form.payers.length && <p className="text-xs text-slate-500">Brak płatnika z ZUS. Dodaj płatnika z NIP.</p>}
-                    </div>
-                    <label className="mt-3 flex items-center gap-2 text-xs text-slate-700">
-                      <input type="checkbox" checked={form.doNotSend || selectedPayer?.hasPue === false} disabled={selectedPayer?.hasPue === false} onChange={(e) => patch({ doNotSend: e.target.checked })} />
-                      Nie przesyłaj informacji płatnikowi
-                    </label>
-                    {selectedPayer?.hasPue === false && <p className="mt-2 text-xs text-amber-800">Płatnik nie ma profilu PUE. Po wystawieniu potrzebny jest wydruk papierowy.</p>}
-                  </section>
-                )}
-              </div>
-
-              <div className="space-y-4">
                 <section className="rounded-xl border border-slate-200 p-4">
                   <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Okres niezdolności {days > 0 ? `· ${days} dni` : ""}</h4>
                   <div className="grid grid-cols-2 gap-2">
