@@ -210,9 +210,31 @@ const ehealthHelper = {
     }).then(unwrap));
   },
 
-  async fetchDocumentBlob(service, id) {
+  shareDocument(id, toDoctorId) {
+    return apiCaller("POST", `/api/ehealth/documents/${id}/share`, { toDoctorId }).then(unwrap);
+  },
+
+  unshareDocument(id, doctorId) {
+    return apiCaller("DELETE", `/api/ehealth/documents/${id}/share/${doctorId}`).then(unwrap);
+  },
+
+  /** Reports a click that has no backend call of its own, for the P1 audit log. */
+  logDocumentAction(id, action) {
+    return apiCaller("POST", `/api/ehealth/documents/${id}/log`, { action }).then(unwrap).catch(() => null);
+  },
+
+  auditLog(filters = {}) {
+    const params = new URLSearchParams();
+    ["from", "to", "service", "action", "userId", "limit"].forEach((key) => {
+      if (filters[key]) params.set(key, String(filters[key]));
+    });
+    return apiCaller("GET", `/api/ehealth/admin/audit/log?${params.toString()}`).then(unwrap);
+  },
+
+  async fetchDocumentBlob(service, id, { purpose } = {}) {
     const res = await axiosInstance.get(`/api/ehealth/${pathFor(service)}/${id}/print`, {
       responseType: "blob",
+      params: purpose ? { purpose } : undefined,
     });
     const blob = res.data;
     if (blob?.type && blob.type.includes("json")) {
@@ -268,7 +290,11 @@ const ehealthHelper = {
 
   history(filters = {}) {
     const params = new URLSearchParams();
-    ["visitId", "patientId", "service", "status", "doctorId", "from", "to", "q", "mine"].forEach((key) => {
+    [
+      "visitId", "patientId", "service", "status", "doctorId", "from", "to", "q", "mine",
+      "patient", "visitFrom", "visitTo", "visitType", "visitDoctorId", "issuerId",
+      "drug", "icd10", "pin", "documentNumber", "text",
+    ].forEach((key) => {
       if (filters[key]) params.set(key, String(filters[key]));
     });
     const q = params.toString();

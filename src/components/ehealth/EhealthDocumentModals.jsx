@@ -16,7 +16,7 @@ export function DocumentPreviewModal({ doc, onClose }) {
     setSrc("");
     setError("");
     ehealthHelper
-      .fetchDocumentBlob(doc.service, doc.id)
+      .fetchDocumentBlob(doc.service, doc.id, { purpose: "preview" })
       .then((blob) => {
         objectUrl = URL.createObjectURL(blob);
         if (cancelled) URL.revokeObjectURL(objectUrl);
