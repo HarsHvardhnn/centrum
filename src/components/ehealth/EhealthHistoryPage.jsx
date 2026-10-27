@@ -130,7 +130,7 @@ const EhealthHistoryPage = () => {
                 <th className="text-left p-3">Typ</th>
                 <th className="text-left p-3">Status</th>
                 <th className="text-left p-3">Czas</th>
-                <th className="text-left p-3">Kod / id</th>
+                <th className="text-left p-3">PIN / kod dostępu</th>
                 <th className="text-left p-3">Błąd</th>
                 <th className="text-left p-3">Wizyta</th>
                 <th className="text-left p-3">Akcje</th>
@@ -158,7 +158,12 @@ const EhealthHistoryPage = () => {
                       {row.updatedAt ? new Date(row.updatedAt).toLocaleString("pl-PL") : "—"}
                     </td>
                     <td className="p-3 font-mono text-xs">
-                      {accessCodeOf(row) || row.externalId || "—"}
+                      {accessCodeOf(row) ? (
+                        <span className="text-sm font-bold tracking-widest text-slate-900" title="PIN, którego pacjent używa np. w aptece">{accessCodeOf(row)}</span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                      {row.externalId ? <div className="mt-0.5 text-[10px] text-slate-400 break-all" title="Identyfikator dokumentu w P1">{row.externalId}</div> : null}
                     </td>
                     <td className="p-3 text-xs text-red-700 max-w-xs">
                       {row.status === "draft" ? "" : row.error?.message || "—"}
