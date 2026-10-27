@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import { SERVICE_LABELS, accessCodeOf, canCancel, canPrint } from "./ehealthStatus";
 
@@ -92,6 +93,14 @@ const VisitIssuedDocuments = ({ service, visitId, patientId, refreshKey = 0, pat
     window.location.href = `sms:${phone}?body=${encodeURIComponent(text)}`;
   };
 
+  const [searchParams] = useSearchParams();
+  const focusId = searchParams.get("ehealthDoc");
+  useEffect(() => {
+    if (!focusId || !rows.some((row) => String(row.id) === String(focusId))) return;
+    const node = document.getElementById(`ehealth-doc-${focusId}`);
+    node?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focusId, rows]);
+
   if (!rows.length) {
     return <p className="text-xs text-gray-400">Brak dokumentów tej wizyty.</p>;
   }
@@ -106,7 +115,11 @@ const VisitIssuedDocuments = ({ service, visitId, patientId, refreshKey = 0, pat
         const cancelled = row.status === "cancelled";
         const buttonClass = "px-2.5 py-1 text-xs border border-gray-200 rounded-md bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50";
         return (
-          <li key={row.id} className="rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+          <li
+            key={row.id}
+            id={`ehealth-doc-${row.id}`}
+            className={`rounded-lg border bg-white px-3 py-2.5 ${String(row.id) === String(focusId) ? "border-teal-500 ring-2 ring-teal-200" : "border-gray-200"}`}
+          >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">

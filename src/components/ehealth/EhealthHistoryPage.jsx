@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import EhealthDocumentPanel from "./EhealthDocumentPanel";
+import { DocumentPreviewModal, DocumentDetailsModal } from "./EhealthDocumentModals";
 import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import {
@@ -24,6 +25,8 @@ const EhealthHistoryPage = () => {
   const [q, setQ] = useState("");
   const [mine, setMine] = useState(false);
   const [copy, setCopy] = useState(null);
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [detailsDoc, setDetailsDoc] = useState(null);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState("");
@@ -132,7 +135,7 @@ const EhealthHistoryPage = () => {
                 <th className="text-left p-3">Czas</th>
                 <th className="text-left p-3">PIN / kod dostępu</th>
                 <th className="text-left p-3">Błąd</th>
-                <th className="text-left p-3">Wizyta</th>
+                <th className="text-left p-3">Podgląd</th>
                 <th className="text-left p-3">Akcje</th>
               </tr>
             </thead>
@@ -171,16 +174,26 @@ const EhealthHistoryPage = () => {
                       {row.status === "draft" ? "" : row.error?.message || "—"}
                     </td>
                     <td className="p-3">
-                      {row.visitId ? (
-                        <Link
-                          className="text-teal-700 hover:underline"
-                          to={`/szczegoly-pacjenta/${row.patientId || ""}?appointmentId=${row.visitId}`}
-                        >
-                          Karta wizyty
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
+                      <div className="flex flex-col items-start gap-1 text-xs">
+                        {canPrint(row) && (
+                          <button type="button" className="text-teal-700 hover:underline" onClick={() => setPreviewDoc(row)}>
+                            Podgląd PDF
+                          </button>
+                        )}
+                        <button type="button" className="text-teal-700 hover:underline" onClick={() => setDetailsDoc(row)}>
+                          Szczegóły techniczne
+                        </button>
+                        {row.visitId ? (
+                          <Link
+                            className="text-teal-700 hover:underline"
+                            to={`/szczegoly-pacjenta/${row.patientId || ""}?appointmentId=${row.visitId}&ehealthDoc=${row.id}`}
+                          >
+                            Przejdź do wizyty i dokumentu
+                          </Link>
+                        ) : (
+                          <span className="text-slate-400">Brak wizyty</span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-3">
                       <div className="flex flex-wrap gap-1">
@@ -249,6 +262,8 @@ const EhealthHistoryPage = () => {
           </table>
         </div>
       )}
+      {previewDoc && <DocumentPreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />}
+      {detailsDoc && <DocumentDetailsModal doc={detailsDoc} onClose={() => setDetailsDoc(null)} />}
       <EhealthDocumentPanel
         open={Boolean(copy)}
         onClose={() => setCopy(null)}
