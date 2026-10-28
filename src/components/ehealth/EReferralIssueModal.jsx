@@ -21,9 +21,9 @@ const inputClass = "w-full h-9 px-3 bg-white border border-slate-300 rounded-xl 
 
 function parseCoded(value) {
   const text = String(value || "").trim();
-  const match = text.match(/^([A-Z][0-9A-Z.*]+)\s*[-—]\s*(.+)$/i);
+  const match = text.match(/^([0-9A-Z][0-9A-Z.*]*)\s*[-—]\s*(.+)$/i);
   if (match) return { code: match[1].trim(), name: match[2].trim() };
-  if (/^[A-Z][0-9A-Z.*]+$/i.test(text)) return { code: text, name: "" };
+  if (/^[0-9A-Z][0-9A-Z.*]*$/i.test(text)) return { code: text, name: "" };
   return { code: "", name: "" };
 }
 

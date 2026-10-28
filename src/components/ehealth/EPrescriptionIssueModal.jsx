@@ -414,6 +414,21 @@ function therapyDays(item, dosesPerDay) {
   return Math.max(1, Math.floor((perPack * packs) / perDay));
 }
 
+/** New duration and dosage text after the number of packs changed, so "Wystarczy na" follows the packs. */
+function durationPatchForQuantity(item, quantity, { rpw = false } = {}) {
+  const asNeeded = !item.frequency && /doraźnie/i.test(item.dosage || "");
+  if (!asNeeded && !Number(item.frequency)) return {};
+  const perDay = asNeeded ? 1 : (Number(item.frequency) * (Number(String(item.doseQuantity || "1").replace(",", ".")) || 1)) / (item.periodHours === "48" ? 2 : 1);
+  let days = therapyDays({ ...item, quantity }, perDay);
+  if (item.annual && days > 360) days = 360;
+  if (rpw && days > 90) days = 90;
+  const patch = { durationDays: String(days) };
+  patch.dosage = asNeeded
+    ? `Doraźnie po ${item.doseQuantity || 1} ${item.doseUnit || "tabl."} przez ${days} dni`
+    : composeDosage({ ...item, durationDays: String(days) });
+  return patch;
+}
+
 function composeDosage(item) {
   if (!item.frequency && /doraźnie/i.test(item.dosage || "")) return "Doraźnie";
   const times = Number(item.frequency);
@@ -598,7 +613,8 @@ function review(header, items, patient) {
     const kind = itemKind(item, header.form);
     if (header.form !== "recipe" && !item.drug?.ean && !item.drug?.code) blocking.push(`${name}: wybierz lek z bazy.`);
     if (!Number(item.quantity)) blocking.push(`${name}: wybierz liczbę opakowań.`);
-    if (!String(item.icd10Code || "").trim() || !String(item.icd10Display || "").trim()) {
+    // ICD-10 is optional when the drug is fully paid by the patient (100%).
+    if (item.payment !== "100%" && (!String(item.icd10Code || "").trim() || !String(item.icd10Display || "").trim())) {
       blocking.push(`${name}: przypisz rozpoznanie ICD-10 (kod i nazwa).`);
     }
     if (header.form === "recipe") {
@@ -761,10 +777,8 @@ export default function EPrescriptionIssueModal({
   const patchHeader = (patch) => setHeader((prev) => ({ ...prev, ...patch }));
   const setActiveForm = (form) => {
     const recipeBlank = header.form === "recipe" && items.every((item) => !(item.ingredients || []).some((ingredient) => String(ingredient.name || "").trim()) && !String(item.dosage || "").trim());
-    if (items.length && !recipeBlank) {
-      toast.error("Typ tej recepty jest już wybrany. Dodaj nową receptę, aby wybrać inny typ.");
-      return;
-    }
+    if (form === header.form) return;
+    if (items.length && !recipeBlank && !window.confirm("Zmiana typu recepty usunie leki dodane do tej recepty. Kontynuować?")) return;
     setHeader((prev) => ({ ...prev, form }));
     setTabs((prev) => prev.map((tab) => {
       if (tab.id !== activeTabId) return tab;
@@ -1120,7 +1134,7 @@ export default function EPrescriptionIssueModal({
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <select value={header.form} onChange={(e) => setActiveForm(e.target.value)} disabled={items.length > 0} aria-label="Typ recepty" className="p-2 border border-slate-300 rounded-lg text-sm bg-white disabled:bg-slate-100">
+                  <select value={header.form} onChange={(e) => setActiveForm(e.target.value)} aria-label="Typ recepty" className="p-2 border border-slate-300 rounded-lg text-sm bg-white">
                     <option value="">Wybierz typ recepty</option>
                     <option value="Rp">Rp — do 5 leków</option>
                     <option value="Rpw">Rpw — 1 lek odurzający / psychotropowy</option>
@@ -1272,8 +1286,8 @@ function Switch({ checked, onClick, onClass, label }) {
   );
 }
 
-function IcdPicker({ diagnoses, code, name, onChange }) {
-  return <IcdCombobox visitDiagnoses={diagnoses} code={code} name={name} onChange={onChange} />;
+function IcdPicker({ diagnoses, code, name, onChange, optional }) {
+  return <IcdCombobox visitDiagnoses={diagnoses} code={code} name={name} onChange={onChange} optional={optional} />;
 }
 
 const COMMON_RAW_MATERIALS = [
@@ -1512,6 +1526,7 @@ function RecipeCard({ item, diagnoses, onChange, onClear }) {
                 diagnoses={diagnoses}
                 code={item.icd10Code}
                 name={item.icd10Display}
+                optional={item.payment === "100%"}
                 onChange={(next) => onChange({ icd10Code: next.code, icd10Display: next.name })}
               />
             </div>
@@ -1736,7 +1751,7 @@ function DrugCard({ item, index, form, diagnoses = [], onChange, onRemove }) {
 
       <div className="grid sm:grid-cols-3 gap-2">
         <label className="text-xs font-semibold text-slate-700">Liczba opakowań *
-          <select value={item.quantity || ""} onChange={(e) => onChange(rpw ? syncRpwQuantity(item, e.target.value) : { quantity: e.target.value })} className="mt-1 w-full p-2 border rounded-lg font-medium">
+          <select value={item.quantity || ""} onChange={(e) => onChange({ ...(rpw ? syncRpwQuantity(item, e.target.value) : { quantity: e.target.value }), ...durationPatchForQuantity(item, e.target.value, { rpw }) })} className="mt-1 w-full p-2 border rounded-lg font-medium">
             <option value="">— Wybierz liczbę opakowań —</option>
             {packs.map((qty) => <option key={qty} value={qty}>{qty} op.</option>)}
             {item.quantity && !packs.includes(Number(item.quantity)) && <option value={item.quantity}>{item.quantity} op.</option>}
@@ -1751,6 +1766,7 @@ function DrugCard({ item, index, form, diagnoses = [], onChange, onRemove }) {
           diagnoses={diagnoses}
           code={item.icd10Code}
           name={item.icd10Display}
+          optional={item.payment === "100%"}
           onChange={(next) => onChange({ icd10Code: next.code, icd10Display: next.name })}
         />
       </div>
@@ -1939,11 +1955,12 @@ function DrugList({ title, drugs, onAdd }) {
         <button key={`${title}-${drug.ean || drug.name}`} type="button" onClick={() => onAdd(drug)} className="w-full text-left bg-white border border-slate-200 rounded-lg px-3 py-2 hover:border-[#0D5C46]">
           <div className="text-sm font-medium flex items-center gap-2">
             <span>{drug.name}</span>
+            {drug.strength && <span className="text-xs font-bold text-[#0D5C46]">{drug.strength}</span>}
             {classifyDrug(drug) === "Rpw" && (
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">Rpw</span>
             )}
           </div>
-          <div className="text-[11px] text-slate-500">{[classifyDrug(drug) || drug.kdlek, drug.activeSubstance, drug.package, drug.ean].filter(Boolean).join(" · ")}</div>
+          <div className="text-[11px] text-slate-500">{[classifyDrug(drug) || drug.kdlek, drug.activeSubstance, drug.strength, drug.form, drug.package, drug.ean ? `EAN ${drug.ean}` : ""].filter(Boolean).join(" · ")}</div>
         </button>
       ))}
     </div>

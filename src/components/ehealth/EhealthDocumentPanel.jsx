@@ -34,7 +34,7 @@ export function DrugSuggestions({ historyDrugs = [], catalogDrugs = [], showHist
     >
       <div className="font-medium text-sm">{drug.name}</div>
       <div className="text-xs text-gray-500">
-        {[drug.activeSubstance, drug.package, drug.ean ? `EAN ${drug.ean}` : ""].filter(Boolean).join(" · ")}
+        {[drug.activeSubstance, drug.strength, drug.form, drug.package, drug.ean ? `EAN ${drug.ean}` : ""].filter(Boolean).join(" · ")}
       </div>
     </button>
   );

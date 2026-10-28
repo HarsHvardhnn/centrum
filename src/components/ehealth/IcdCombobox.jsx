@@ -68,7 +68,7 @@ function Row({ row, selected, active, onPick, onHover }) {
  * One field for ICD-10: opens on focus with the visit's diagnoses and common codes,
  * filters them as you type, and adds matches from the full ICD-10 dictionary.
  */
-export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange }) {
+export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange, optional = false }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [remote, setRemote] = useState([]);
@@ -165,7 +165,7 @@ export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange 
 
   return (
     <div ref={boxRef} className="relative text-xs font-semibold text-slate-700">
-      Rozpoznanie (ICD-10) *
+      Rozpoznanie (ICD-10){optional ? " (opcjonalne)" : " *"}
       <div className="relative mt-1 flex items-center">
         <Search size={14} className="pointer-events-none absolute left-2.5 text-slate-400" />
         <input
