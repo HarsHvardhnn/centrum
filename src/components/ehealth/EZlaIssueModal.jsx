@@ -897,7 +897,7 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
         <div className="space-y-3.5">
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-950">
             <strong className="font-bold text-amber-900 block mb-0.5">Uwaga: Ta operacja trwale wycofa dokument z systemu ZUS.</strong>
-            Wymaga podania powodu oraz autoryzacji PIN-em i kodem SMS.
+            Wymaga podania powodu oraz autoryzacji kodem PIN certyfikatu.
           </div>
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-700">Powód anulowania zaświadczenia lekarskiego *</label>

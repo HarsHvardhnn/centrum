@@ -14,7 +14,6 @@ import { Toaster } from "sonner"; // 👈 import sonner's Toaster
 import { ServicesProvider } from "./context/serviceContext";
 import { SpecializationProvider } from "./context/SpecializationContext.jsx";
 import { queryClient } from "./lib/queryClient";
-import { EhealthAuthHost } from "./components/ehealth/P1SignDialog";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -30,7 +29,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                   <SpecializationProvider>
                     <RouterProvider router={routes} />
                     <Toaster richColors position="top-right" />
-                    <EhealthAuthHost />
                   </SpecializationProvider>
                 </GoogleOAuthProvider>
               </ServicesProvider>

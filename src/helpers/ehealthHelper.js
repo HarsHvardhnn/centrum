@@ -1,5 +1,4 @@
 import { apiCaller, axiosInstance } from "../utils/axiosInstance";
-import { requestAuthorization } from "../components/ehealth/ehealthAuthPrompt";
 
 const unwrap = (response) => response.data;
 
@@ -50,34 +49,6 @@ export function drugMatches(drug, term) {
     .join(" ")
     .toLowerCase()
     .includes(q);
-}
-
-const AUTH_HEADER = "X-Ehealth-Auth";
-let authTimer = null;
-
-/** Keeps the short-lived authorization token on every API call until it expires. */
-function storeAuthToken(token, seconds) {
-  axiosInstance.defaults.headers.common[AUTH_HEADER] = token;
-  if (authTimer) clearTimeout(authTimer);
-  authTimer = setTimeout(clearAuthToken, Math.max(5, (seconds || 300) - 5) * 1000);
-}
-
-export function clearAuthToken() {
-  delete axiosInstance.defaults.headers.common[AUTH_HEADER];
-  if (authTimer) clearTimeout(authTimer);
-  authTimer = null;
-}
-
-/** If the API asks for PIN + SMS authorization, show the dialog once and repeat the call. */
-async function withAuth(purpose, call) {
-  try {
-    return await call();
-  } catch (err) {
-    if (unwrapEhealthError(err).code !== "AUTH_REQUIRED") throw err;
-    clearAuthToken();
-    await requestAuthorization(purpose);
-    return call();
-  }
 }
 
 function pathFor(service) {
@@ -145,42 +116,24 @@ const ehealthHelper = {
     return apiCaller("GET", `/api/ehealth/drugs?${params}`, null).then(unwrap);
   },
 
-  authStatus() {
-    return apiCaller("GET", "/api/ehealth/auth/status", null).then(unwrap);
-  },
-
-  setAuthPin(pin, password) {
-    return apiCaller("POST", "/api/ehealth/auth/pin", { pin, password }).then(unwrap);
-  },
-
-  verifyAuthPin(pin, purpose) {
-    return apiCaller("POST", "/api/ehealth/auth/verify-pin", { pin, purpose }).then(unwrap);
-  },
-
-  async verifyAuthCode(challengeId, code) {
-    const res = await apiCaller("POST", "/api/ehealth/auth/verify-code", { challengeId, code }).then(unwrap);
-    if (res?.data?.token) storeAuthToken(res.data.token, res.data.expiresInSeconds);
-    return res;
-  },
-
   submitPrescription(body) {
-    return withAuth("issue", () => apiCaller("POST", "/api/ehealth/prescriptions", body).then(unwrap));
+    return apiCaller("POST", "/api/ehealth/prescriptions", body).then(unwrap);
   },
 
   retryPrescription(id) {
-    return withAuth("issue", () => apiCaller("POST", `/api/ehealth/prescriptions/${id}/retry`, { retry: true }).then(unwrap));
+    return apiCaller("POST", `/api/ehealth/prescriptions/${id}/retry`, { retry: true }).then(unwrap);
   },
 
   submitReferral(body) {
-    return withAuth("issue", () => apiCaller("POST", "/api/ehealth/referrals", body).then(unwrap));
+    return apiCaller("POST", "/api/ehealth/referrals", body).then(unwrap);
   },
 
   retryReferral(id) {
-    return withAuth("issue", () => apiCaller("POST", `/api/ehealth/referrals/${id}/retry`, { retry: true }).then(unwrap));
+    return apiCaller("POST", `/api/ehealth/referrals/${id}/retry`, { retry: true }).then(unwrap);
   },
 
   submitEzla(body) {
-    return withAuth("issue", () => apiCaller("POST", "/api/ehealth/ezla", body).then(unwrap));
+    return apiCaller("POST", "/api/ehealth/ezla", body).then(unwrap);
   },
 
   ezlaAddresses(patientId) {
@@ -197,7 +150,7 @@ const ehealthHelper = {
   },
 
   retryEzla(id) {
-    return withAuth("issue", () => apiCaller("POST", `/api/ehealth/ezla/${id}/retry`, { retry: true }).then(unwrap));
+    return apiCaller("POST", `/api/ehealth/ezla/${id}/retry`, { retry: true }).then(unwrap);
   },
 
   handoffEzla(id) {
@@ -205,9 +158,9 @@ const ehealthHelper = {
   },
 
   cancelDocument(service, id, reason) {
-    return withAuth("cancel", () => apiCaller("POST", `/api/ehealth/${pathFor(service)}/${id}/cancel`, {
+    return apiCaller("POST", `/api/ehealth/${pathFor(service)}/${id}/cancel`, {
       reason: reason || "I",
-    }).then(unwrap));
+    }).then(unwrap);
   },
 
   shareDocument(id, toDoctorId) {
