@@ -245,6 +245,9 @@ const EhealthHistoryPage = () => {
                   <tr key={row.id} className="border-t align-top">
                     <td className="p-3">
                       <div className="font-medium">{SERVICE_LABELS[row.service] || row.service}</div>
+                      {row.externalId
+                        ? <div className="font-mono text-[11px] text-slate-600 break-all" title="Unikalny numer dokumentu w P1">{row.externalId}</div>
+                        : <div className="text-[11px] italic text-slate-400" title="P1 nie nadał numeru (dokument nie został przyjęty)">brak numeru P1</div>}
                       {row.patientName ? <div className="text-xs text-gray-700">{row.patientName}{row.patientPesel ? ` · ${row.patientPesel}` : ""}</div> : null}
                       {row.visitDate ? (
                         <div className="text-[11px] text-gray-500">
@@ -253,7 +256,6 @@ const EhealthHistoryPage = () => {
                         </div>
                       ) : null}
                       {!row.ownedByMe && row.doctorName ? <div className="text-[11px] text-amber-700">Udostępnione przez: {row.doctorName}</div> : null}
-                      {row.externalId ? <div className="mt-0.5 font-mono text-[11px] text-slate-500 break-all" title="Unikalny numer dokumentu w P1">{row.externalId}</div> : null}
                     </td>
                     <td className="p-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusClass(row.status)}`}>
