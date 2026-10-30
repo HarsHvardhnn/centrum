@@ -5,6 +5,7 @@ import LoginScreen from "./components/Auth/AuthScreen";
 import LoginImage from "/images/new_login_wp.png";
 import SignupImage from "./assets/Signup.png";
 import ForgotPasswordScreen from "./components/Auth/ForgotPasswordScreen";
+import AccountUnlock from "./components/Auth/AccountUnlock";
 import DoctorCalendar from "./components/admin/DoctorCalendar";
 
 import { createBrowserRouter, Outlet, Navigate, useLocation } from "react-router-dom";
@@ -160,6 +161,10 @@ const routes = createBrowserRouter([
       {
         path: "/zapomniane-haslo",
         element: <ForgotPasswordScreen />,
+      },
+      {
+        path: "/odblokowanie-konta",
+        element: <AccountUnlock />,
       },
       {
         path: "/kontakt",
