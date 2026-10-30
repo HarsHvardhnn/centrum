@@ -871,6 +871,62 @@ const EhealthIntegrationsPage = () => {
                             });
                           }}
                         />
+                        <div className="mt-1 flex flex-wrap items-center gap-1">
+                          <input
+                            defaultValue={doctor.pesel || ""}
+                            placeholder="PESEL lekarza"
+                            maxLength={11}
+                            className="w-28 p-1 border rounded text-xs"
+                            onBlur={(e) => {
+                              if (e.target.value === (doctor.pesel || "")) return;
+                              ehealthAdminHelper
+                                .saveDoctorPractitioner(doctor.id, { pesel: e.target.value })
+                                .catch((err) => toast.error(err.message || "Nie udało się zapisać PESEL"));
+                            }}
+                          />
+                          <select
+                            defaultValue={doctor.medfileRole || "LEK"}
+                            className="p-1 border rounded text-xs"
+                            aria-label="Rola w Medfile"
+                            onChange={(e) => ehealthAdminHelper.saveDoctorPractitioner(doctor.id, { medfileRole: e.target.value })}
+                          >
+                            <option value="LEK">LEK — lekarz</option>
+                            <option value="LEKD">LEKD — lekarz dentysta</option>
+                            <option value="FIZJO">FIZJO — fizjoterapeuta</option>
+                            <option value="PIEL">PIEL — pielęgniarka</option>
+                          </select>
+                        </div>
+                        <textarea
+                          defaultValue={(doctor.medfileQualifications || []).map((q) => `${q.code} ${q.display}`).join("\n")}
+                          placeholder={"Specjalizacje, po jednej w linii:\n0713 medycyna rodzinna"}
+                          rows={2}
+                          className="mt-1 w-64 p-1 border rounded text-xs"
+                          onBlur={(e) => {
+                            const rows = e.target.value
+                              .split("\n")
+                              .map((line) => line.trim())
+                              .filter(Boolean)
+                              .map((line) => ({ code: line.split(/\s+/)[0], display: line.split(/\s+/).slice(1).join(" ") }));
+                            ehealthAdminHelper
+                              .saveDoctorPractitioner(doctor.id, { medfileQualifications: rows })
+                              .catch((err) => toast.error(err.message || "Nie udało się zapisać specjalizacji"));
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="mt-1 block rounded border border-[#1b766a] px-2 py-1 text-xs font-semibold text-[#1b766a] hover:bg-[#1b766a]/10"
+                          onClick={async () => {
+                            try {
+                              const res = await ehealthAdminHelper.syncDoctorPractitioner(doctor.id);
+                              toast.success(res?.created ? "Lekarz utworzony w Medfile" : "Dane lekarza zaktualizowane w Medfile");
+                              setLicenseDoctors((rows) => rows.map((row) => (row.id === doctor.id ? { ...row, medfilePractitionerId: res?.practitionerUuid || row.medfilePractitionerId } : row)));
+                            } catch (err) {
+                              toast.error(err?.response?.data?.error?.message || err.message || "Nie udało się wysłać do Medfile");
+                            }
+                          }}
+                        >
+                          Wyślij lekarza do Medfile
+                        </button>
                       </td>
                       {Object.keys(SERVICE_LABELS).map((service) => {
                         const key = `${doctor.id}:${service}`;

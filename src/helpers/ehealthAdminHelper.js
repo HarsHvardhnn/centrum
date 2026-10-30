@@ -42,6 +42,12 @@ const ehealthAdminHelper = {
     return response.data;
   },
 
+  /** Creates or updates the doctor in Medfile from the saved professional data. */
+  async syncDoctorPractitioner(doctorId) {
+    const response = await apiCaller("POST", `/api/ehealth/admin/licenses/doctors/${doctorId}/practitioner/sync`);
+    return response.data;
+  },
+
   async approveLicense(doctorId, service) {
     const response = await apiCaller("POST", "/api/ehealth/admin/licenses/approvals", {
       doctorId,
