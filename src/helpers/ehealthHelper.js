@@ -1,4 +1,5 @@
 import { apiCaller, axiosInstance } from "../utils/axiosInstance";
+import { obtainSigning } from "../components/ehealth/ehealthSigning";
 
 const unwrap = (response) => response.data;
 
@@ -116,16 +117,18 @@ const ehealthHelper = {
     return apiCaller("GET", `/api/ehealth/drugs?${params}`, null).then(unwrap);
   },
 
-  submitPrescription(body) {
-    return apiCaller("POST", "/api/ehealth/prescriptions", body).then(unwrap);
+  async submitPrescription(body) {
+    const signing = await obtainSigning({ title: "Podpis e-recepty", actionText: "Podpisz i wyślij" });
+    return apiCaller("POST", "/api/ehealth/prescriptions", signing ? { ...body, signing } : body).then(unwrap);
   },
 
   retryPrescription(id) {
     return apiCaller("POST", `/api/ehealth/prescriptions/${id}/retry`, { retry: true }).then(unwrap);
   },
 
-  submitReferral(body) {
-    return apiCaller("POST", "/api/ehealth/referrals", body).then(unwrap);
+  async submitReferral(body) {
+    const signing = await obtainSigning({ title: "Podpis e-skierowania", actionText: "Podpisz i wyślij" });
+    return apiCaller("POST", "/api/ehealth/referrals", signing ? { ...body, signing } : body).then(unwrap);
   },
 
   retryReferral(id) {
@@ -157,9 +160,11 @@ const ehealthHelper = {
     return apiCaller("POST", `/api/ehealth/ezla/${id}/handoff`, { handoff: true }).then(unwrap);
   },
 
-  cancelDocument(service, id, reason) {
+  async cancelDocument(service, id, reason) {
+    const signing = await obtainSigning({ title: "Podpis anulowania", actionText: "Podpisz i anuluj", isDestructive: true });
     return apiCaller("POST", `/api/ehealth/${pathFor(service)}/${id}/cancel`, {
       reason: reason || "I",
+      ...(signing ? { signing } : {}),
     }).then(unwrap);
   },
 

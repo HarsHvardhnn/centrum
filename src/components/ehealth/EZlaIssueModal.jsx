@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { AlertTriangle, Building2, CheckCircle2, History, Loader2, Plus, Printer, X } from "lucide-react";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import P1SignDialog from "./P1SignDialog";
+import ZusCertificateGate from "./ZusCertificateGate";
+import { endZusSession, signingRequired } from "./ehealthSigning";
 import { patientForDocument } from "./IssuePatientCard";
 import { STATUS_LABELS, accessCodeOf } from "./ehealthStatus";
 import IcdField from "./IcdField";
@@ -230,7 +232,7 @@ function validate(form, patient) {
   return errors;
 }
 
-const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses, initialPayload, onDocumentsChanged }) => {
+const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagnoses, initialPayload, onDocumentsChanged }) => {
   const [form, setForm] = useState(emptyForm);
   const [checked, setChecked] = useState(false);
   const [errors, setErrors] = useState([]);
@@ -804,6 +806,7 @@ const EZlaIssueModal = ({ open, onClose, visitId, patientId, patient, diagnoses,
         title="Autoryzacja wystawienia e-ZLA"
         actionText="Podpisz i wyślij do ZUS"
         doctorLine={[patient?.doctorName, patient?.pwz ? `PWZ ${patient.pwz}` : ""].filter(Boolean).join(" · ")}
+        noCertificate
         onClose={() => !busy && setSignOpen(false)}
         onConfirm={() => submit({}).then(() => setSignOpen(false))}
       />
@@ -994,5 +997,45 @@ function IssuedView({ result, form, series, days, busy, onPrint, onCancel }) {
     </div>
   );
 }
+
+/**
+ * A doctor first loads the ZUS certificate from the flash drive (file + PIN); only then does the form
+ * open, because ZUS lookups, the check and the send all need it. The certificate is removed again when
+ * the window closes or the document is sent. Admin and reception users skip this step.
+ */
+const EZlaIssueModal = (props) => {
+  const { open, onClose } = props;
+  const [required, setRequired] = useState(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setReady(false);
+      return undefined;
+    }
+    let cancelled = false;
+    signingRequired().then((value) => {
+      if (cancelled) return;
+      setRequired(value);
+      if (!value) setReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  const close = () => {
+    if (required && ready) endZusSession();
+    setReady(false);
+    onClose?.();
+  };
+
+  if (!open || required === null) return null;
+  if (!ready && required !== false) {
+    const doctorLine = [props.patient?.doctorName, props.patient?.pwz ? `PWZ ${props.patient.pwz}` : ""].filter(Boolean).join(" · ");
+    return <ZusCertificateGate doctorLine={doctorLine} onClose={close} onReady={() => setReady(true)} />;
+  }
+  return <EZlaIssueModalInner {...props} onClose={close} />;
+};
 
 export default EZlaIssueModal;
