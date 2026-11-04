@@ -45,6 +45,8 @@ const ORG_FIELD_LABELS = [
   ["unitId", "Numer lokalu", ""],
   ["city", "Miejscowość", ""],
   ["postalCode", "Kod pocztowy", ""],
+  ["nfzDepartment", "Oddział NFZ (2 cyfry)", "np. 07"],
+  ["nfzContract", "Numer umowy z NFZ (recepty refundowane)", "np. 01-06-02336-20-03/06"],
 ];
 
 const emptyEnv = () => ({

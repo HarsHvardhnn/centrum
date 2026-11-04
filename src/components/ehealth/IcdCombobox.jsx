@@ -170,7 +170,7 @@ export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange,
 
   return (
     <div ref={boxRef} className="relative text-xs font-semibold text-slate-700">
-      {label}{optional ? " (opcjonalne)" : label.includes("opcjonalne") ? "" : " *"}
+      {label}{optional && !label.includes("opcjonalne") ? " (opcjonalne)" : optional || label.includes("opcjonalne") ? "" : " *"}
       <div className="relative mt-1 flex items-center">
         <Search size={14} className="pointer-events-none absolute left-2.5 text-slate-400" />
         <input
