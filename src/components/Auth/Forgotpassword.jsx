@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { apiCaller } from "../../utils/axiosInstance";
 
+// Removes spaces, line breaks and invisible characters that email clients add when a code is copied
+const cleanCode = (value) => String(value || "").replace(/[\s​-‍⁠﻿]/g, "");
+
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState(1);
@@ -78,7 +81,7 @@ const ForgotPassword = () => {
     try {
       // Using the apiCaller to reset password
       await apiCaller("POST", "/auth/reset-password", {
-        resetToken: otp, // Using OTP as the reset token
+        resetToken: cleanCode(otp), // Using OTP as the reset token
         newPassword,
         email,
       });
@@ -291,7 +294,13 @@ const ForgotPassword = () => {
                     id="otp"
                     placeholder="Wprowadź kod OTP z emaila"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) => setOtp(cleanCode(e.target.value))}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      setOtp(cleanCode(e.clipboardData.getData("text")));
+                    }}
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#80C5C5]"
                     required
                   />

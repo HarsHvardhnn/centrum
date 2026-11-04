@@ -9,6 +9,10 @@ import { apiCaller, setCookie } from "../../utils/axiosInstance";
 import { toast } from "sonner";
 import { useUser } from "../../context/userContext";
 
+// Removes spaces, line breaks and invisible characters that email clients add when a code is copied
+const stripCodeSpaces = (value) =>
+  String(value || "").replace(/[\s​-‍⁠﻿]/g, "");
+
 const AuthForm = ({ isLogin = false }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -382,7 +386,7 @@ const AuthForm = ({ isLogin = false }) => {
     try {
       const response = await apiCaller("POST", "/auth/verify-otp", {
         email: email,
-        otp: values.otp,
+        otp: stripCodeSpaces(values.otp),
         password: values?.password,
         purpose: "signup",
         firstName: registrationData.firstName,
@@ -621,7 +625,7 @@ const AuthForm = ({ isLogin = false }) => {
               validationSchema={otpSchema}
               onSubmit={handleOtpSubmit}
             >
-              {({ isSubmitting, errors, touched }) => (
+              {({ isSubmitting, errors, touched, setFieldValue }) => (
                 <Form className="space-y-6 w-full">
                   <div>
                     <label
@@ -635,6 +639,13 @@ const AuthForm = ({ isLogin = false }) => {
                       id="otp"
                       name="otp"
                       placeholder="Wprowadź 6-cyfrowy kod"
+                      autoComplete="one-time-code"
+                      inputMode="numeric"
+                      onChange={(e) => setFieldValue("otp", stripCodeSpaces(e.target.value))}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        setFieldValue("otp", stripCodeSpaces(e.clipboardData.getData("text")));
+                      }}
                       className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none bg-gray-50 ${
                         errors.otp && touched.otp
                           ? "border-red-500"
