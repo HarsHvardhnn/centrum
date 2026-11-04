@@ -36,6 +36,11 @@ const doctorService = {
       formData.append("shortDescription", doctorData.shortDescription || "");
       formData.append("professionalTitle", doctorData.professionalTitle || "");
       formData.append("npwz", doctorData.npwz || "");
+      ["pesel", "secondName", "medfileRole"].forEach((k) => {
+        if (doctorData[k] !== undefined) formData.append(k, doctorData[k] || "");
+      });
+      if (doctorData.medfileQualifications !== undefined) formData.append("medfileQualifications", JSON.stringify(doctorData.medfileQualifications));
+      if (doctorData.practitionerAddress !== undefined) formData.append("practitionerAddress", JSON.stringify(doctorData.practitionerAddress));
       
       // Update consultation fee fields to include both online and offline fees
       formData.append("onlineConsultationFee", doctorData.consultationFee || 0);
@@ -229,6 +234,11 @@ const doctorService = {
       if (updateData.shortDescription) formData.append("shortDescription", updateData.shortDescription);
       if (updateData.professionalTitle !== undefined) formData.append("professionalTitle", updateData.professionalTitle || "");
       if (updateData.npwz !== undefined) formData.append("npwz", updateData.npwz || "");
+      ["pesel", "secondName", "medfileRole"].forEach((k) => {
+        if (updateData[k] !== undefined) formData.append(k, updateData[k] || "");
+      });
+      if (updateData.medfileQualifications !== undefined) formData.append("medfileQualifications", JSON.stringify(updateData.medfileQualifications));
+      if (updateData.practitionerAddress !== undefined) formData.append("practitionerAddress", JSON.stringify(updateData.practitionerAddress));
       // Handle arrays
       if (updateData.specialization) {
         updateData.specialization.forEach(item => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import {
@@ -12,6 +12,7 @@ import {
   Camera,
 } from "lucide-react";
 import { useSpecializations } from "../../context/SpecializationContext";
+import ehealthAdminHelper from "../../helpers/ehealthAdminHelper";
 import SpecializationDropdown from "./SpecializationDropdown";
 import ImageCropper from "../UtilComponents/ImageCropper";
 import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
@@ -76,6 +77,7 @@ const getDoctorSchema = (isEditMode) =>
 
 
 export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode, onFormDataChange, saveStatus }) {
+  const practitionerLoadedRef = useRef(false);
   //("doctors",initialData)
 
   console.log("intitial data", initialData?.profilePicture)
@@ -216,6 +218,16 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             bio: initialData?.bio || "",
             professionalTitle: initialData?.professionalTitle || "",
             npwz: initialData?.npwz || initialData?.pwz || "",
+            // Medfile / P1 practitioner data (loaded from the e-health admin API in edit mode)
+            secondName: "",
+            pesel: "",
+            medfileRole: "LEK",
+            medfileQualificationsText: "",
+            addrStreet: "",
+            addrHouseNumber: "",
+            addrUnitId: "",
+            addrCity: "",
+            addrPostalCode: "",
             // In edit mode, set to existing URL if available, otherwise null
             // This ensures validation passes when editing with existing picture
             profilePicture: isEditMode && initialData?.profilePicture ? initialData.profilePicture : null,
@@ -229,6 +241,21 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                 specialization: (values.specialization || []).map(spec => spec.id),
               };
               
+              const quals = String(values.medfileQualificationsText || "")
+                .split("\n").map((l) => l.trim()).filter(Boolean)
+                .map((l) => ({ code: l.split(/\s+/)[0], display: l.split(/\s+/).slice(1).join(" ") }));
+              submitValues.medfileQualifications = quals;
+              submitValues.practitionerAddress = {
+                street: values.addrStreet, houseNumber: values.addrHouseNumber, unitId: values.addrUnitId,
+                city: values.addrCity, postalCode: values.addrPostalCode,
+              };
+              // Edit mode: never overwrite P1 data with blanks if it could not be loaded first
+              if (isEditMode && !practitionerLoadedRef.current) {
+                ["pesel", "secondName", "medfileRole", "medfileQualifications", "practitionerAddress"].forEach((k) => delete submitValues[k]);
+              }
+              delete submitValues.medfileQualificationsText;
+              ["addrStreet", "addrHouseNumber", "addrUnitId", "addrCity", "addrPostalCode"].forEach((k) => delete submitValues[k]);
+
               // Remove password fields when empty (optional in both create and edit)
               if (!submitValues.password || submitValues.password.trim() === '') {
                 delete submitValues.password;
@@ -251,6 +278,29 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
           }}
         >
           {({ values, errors, touched, isSubmitting, setFieldValue, setTouched, handleSubmit }) => {
+            useEffect(() => {
+              const id = initialData?.id || initialData?._id;
+              if (!isEditMode || !id) return undefined;
+              let cancelled = false;
+              ehealthAdminHelper.getLicenses().then((res) => {
+                const row = (res?.data?.doctors || res?.doctors || []).find((d) => String(d.id) === String(id));
+                if (cancelled || !row) return;
+                const a = row.practitionerAddress || {};
+                setFieldValue("secondName", row.secondName || "");
+                setFieldValue("pesel", row.pesel || "");
+                setFieldValue("medfileRole", row.medfileRole || "LEK");
+                setFieldValue("medfileQualificationsText", (row.medfileQualifications || []).map((q) => `${q.code} ${q.display}`).join("\n"));
+                setFieldValue("addrStreet", a.street || "");
+                setFieldValue("addrHouseNumber", a.houseNumber || "");
+                setFieldValue("addrUnitId", a.unitId || "");
+                setFieldValue("addrCity", a.city || "");
+                setFieldValue("addrPostalCode", a.postalCode || "");
+                practitionerLoadedRef.current = true;
+              }).catch(() => {});
+              return () => { cancelled = true; };
+              // eslint-disable-next-line react-hooks/exhaustive-deps
+            }, []);
+
             // Track form data changes for auto-save
             useEffect(() => {
               if (onFormDataChange && !isEditMode) {
@@ -395,6 +445,44 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                     <p className="text-xs text-gray-500 mt-1">
                       Prawo wykonywania zawodu. Ten numer jest wymagany, gdy lekarz wystawia e-receptę, e-skierowanie albo e-ZLA w systemie P1.
                     </p>
+                  </div>
+
+                  <div className="rounded-md border border-teal-200 bg-teal-50/40 p-3 space-y-3">
+                    <p className="text-sm font-semibold text-teal-800">Dane lekarza dla P1 (Medfile)</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label htmlFor="secondName" className="block text-xs font-medium text-gray-700 mb-1">Drugie imię</label>
+                        <Field type="text" name="secondName" id="secondName" className="w-full p-2 border border-gray-300 rounded-md" />
+                      </div>
+                      <div>
+                        <label htmlFor="pesel" className="block text-xs font-medium text-gray-700 mb-1">PESEL lekarza</label>
+                        <Field type="text" name="pesel" id="pesel" maxLength={11} inputMode="numeric" className="w-full p-2 border border-gray-300 rounded-md" />
+                      </div>
+                      <div>
+                        <label htmlFor="medfileRole" className="block text-xs font-medium text-gray-700 mb-1">Rola w P1</label>
+                        <Field as="select" name="medfileRole" id="medfileRole" className="w-full p-2 border border-gray-300 rounded-md">
+                          <option value="LEK">LEK — lekarz / felczer</option>
+                          <option value="LEKD">LEKD — lekarz dentysta</option>
+                          <option value="FIZJO">FIZJO — fizjoterapeuta</option>
+                          <option value="PIEL">PIEL — pielęgniarka</option>
+                        </Field>
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="medfileQualificationsText" className="block text-xs font-medium text-gray-700 mb-1">Specjalizacje (kod i nazwa, po jednej w linii)</label>
+                      <Field as="textarea" rows={2} name="medfileQualificationsText" id="medfileQualificationsText" placeholder="0713 medycyna rodzinna" className="w-full p-2 border border-gray-300 rounded-md" />
+                      <p className="text-xs text-gray-500 mt-1">Wymagane m.in. dla e-skierowań.</p>
+                    </div>
+                    <div>
+                      <p className="block text-xs font-medium text-gray-700 mb-1">Adres praktyki (wymagany m.in. dla recept PA, PF)</p>
+                      <div className="grid grid-cols-6 gap-2">
+                        <Field name="addrStreet" placeholder="Ulica" className="col-span-6 sm:col-span-3 p-2 border border-gray-300 rounded-md" />
+                        <Field name="addrHouseNumber" placeholder="Nr domu" className="col-span-3 sm:col-span-1 p-2 border border-gray-300 rounded-md" />
+                        <Field name="addrUnitId" placeholder="Lokal" className="col-span-3 sm:col-span-2 p-2 border border-gray-300 rounded-md" />
+                        <Field name="addrPostalCode" placeholder="00-000" className="col-span-2 p-2 border border-gray-300 rounded-md" />
+                        <Field name="addrCity" placeholder="Miasto" className="col-span-4 p-2 border border-gray-300 rounded-md" />
+                      </div>
+                    </div>
                   </div>
 
                   <div>
