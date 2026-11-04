@@ -28,7 +28,27 @@ const USAGE_SHORT = {
   eligibility: "eWUŚ",
 };
 
+const ORG_FIELD_LABELS = [
+  ["rpwdl", "Numer księgi RPWDL (część I)", "000000928201"],
+  ["rpwdlUnit", "Jednostka organizacyjna (część V)", "np. 01"],
+  ["unitName", "Nazwa jednostki", ""],
+  ["rpwdlCell", "Komórka organizacyjna (część VII)", "np. 001"],
+  ["cellName", "Nazwa komórki", ""],
+  ["specialityCode", "Kod specjalności komórki (część VIII)", "np. 1220"],
+  ["speciality", "Specjalność komórki", ""],
+  ["name", "Nazwa podmiotu", ""],
+  ["regon", "REGON", ""],
+  ["nip", "NIP", ""],
+  ["phone", "Telefon", "+48..."],
+  ["street", "Ulica", ""],
+  ["houseNumber", "Numer domu", ""],
+  ["unitId", "Numer lokalu", ""],
+  ["city", "Miejscowość", ""],
+  ["postalCode", "Kod pocztowy", ""],
+];
+
 const emptyEnv = () => ({
+  org: {},
   integratorUuid: "",
   organizationUuid: "",
   practitionerUuid: "",
@@ -186,6 +206,7 @@ const EhealthIntegrationsPage = () => {
           integratorUuid: test.integratorUuid,
           organizationUuid: test.organizationUuid,
           practitionerUuid: test.practitionerUuid,
+          org: test.org || {},
           oidRoot,
           ...(test.secret.trim() ? { secret: test.secret.trim() } : {}),
         },
@@ -193,6 +214,7 @@ const EhealthIntegrationsPage = () => {
           integratorUuid: production.integratorUuid,
           organizationUuid: production.organizationUuid,
           practitionerUuid: production.practitionerUuid,
+          org: production.org || {},
           ...(production.secret.trim() ? { secret: production.secret.trim() } : {}),
         },
       };
@@ -425,7 +447,7 @@ const EhealthIntegrationsPage = () => {
                   const res = await ehealthAdminHelper.createOrganization({ oidRoot });
                   if (!res?.success) throw new Error(res?.error?.message || "Błąd");
                   setEnvForm({ ...envForm, organizationUuid: res.data.organizationUuid || envForm.organizationUuid });
-                  toast.success("Organizacja utworzona przez API");
+                  toast.success(res.data?.updatedInPlace ? "Dane organizacji zaktualizowane w Medfile" : "Organizacja utworzona w Medfile");
                 } catch (err) {
                   toast.error(err.message || "Nie udało się utworzyć organizacji");
                 } finally {
@@ -434,8 +456,32 @@ const EhealthIntegrationsPage = () => {
               }}
               className="mt-2 text-sm text-teal-700 hover:underline"
             >
-              {creatingOrg ? "Tworzę…" : "Utwórz organizację przez API (dane CM7)"}
+              {creatingOrg ? "Wysyłam…" : "Wyślij dane organizacji do Medfile"}
             </button>
+          </div>
+
+          <div className="rounded-lg border border-gray-200 p-3">
+            <p className="text-sm font-medium text-gray-700">Dane organizacji i miejsca pracy (jednostka / komórka)</p>
+            <p className="mt-1 text-xs text-gray-500">
+              Numery z rejestru RPWDL wystawcy. Po zapisaniu ustawień kliknij „Wyślij dane organizacji do Medfile”.
+            </p>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {ORG_FIELD_LABELS.map(([key, label, placeholder]) => (
+                <label key={key} className="block text-xs text-gray-600">
+                  {label}
+                  <input
+                    type="text"
+                    value={envForm.org?.[key] || ""}
+                    placeholder={placeholder}
+                    onChange={(e) =>
+                      setEnvForm({ ...envForm, org: { ...(envForm.org || {}), [key]: e.target.value } })
+                    }
+                    className="mt-1 w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+                    autoComplete="off"
+                  />
+                </label>
+              ))}
+            </div>
           </div>
 
           <div>
