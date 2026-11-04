@@ -7,7 +7,7 @@ import IssuePatientCard, { normalizePatient, patientForDocument } from "./IssueP
 import PrescriptionHistoryModal from "./PrescriptionHistoryModal";
 import { STATUS_LABELS, statusClass, accessCodeOf } from "./ehealthStatus";
 import { visitDiagnosisRows } from "./visitIcd";
-import IcdCombobox from "./IcdCombobox";
+import IcdMulti from "./IcdMulti";
 import IssueSummaryBar from "./IssueSummaryBar";
 import { classifyDrug } from "./drugClass";
 import P1SignDialog from "./P1SignDialog";
@@ -510,6 +510,7 @@ function copyItems(payload) {
     category: item.category || item.drug?.kdlek || item.drug?.category || "",
     icd10Code: item.icd10Code || "",
     icd10Display: item.icd10Display || "",
+    icd10Extra: Array.isArray(item.icd10Extra) ? item.icd10Extra : [],
   }));
 }
 
@@ -541,6 +542,7 @@ function blankItem(form) {
     category: "",
     icd10Code: "",
     icd10Display: "",
+    icd10Extra: [],
   };
 }
 
@@ -896,6 +898,7 @@ export default function EPrescriptionIssueModal({
     item.substanceName = row.substanceName || row.drug?.activeSubstance || "";
     item.icd10Code = row.icd10Code || "";
     item.icd10Display = row.icd10Display || "";
+    item.icd10Extra = Array.isArray(row.icd10Extra) ? row.icd10Extra : [];
     return item;
   };
 
@@ -960,6 +963,7 @@ export default function EPrescriptionIssueModal({
     refundCode: item.refundCode,
     icd10Code: item.icd10Code,
     icd10Display: item.icd10Display,
+    icd10Extra: (item.icd10Extra || []).map((row) => ({ icd10Code: row.code, icd10Display: row.name })),
     dosage: item.dosage,
     frequency: item.frequency,
     periodHours: item.periodHours,
@@ -1286,8 +1290,8 @@ function Switch({ checked, onClick, onClass, label }) {
   );
 }
 
-function IcdPicker({ diagnoses, code, name, onChange, optional }) {
-  return <IcdCombobox visitDiagnoses={diagnoses} code={code} name={name} onChange={onChange} optional={optional} />;
+function IcdPicker({ diagnoses, code, name, extra, onChange, optional }) {
+  return <IcdMulti visitDiagnoses={diagnoses} code={code} name={name} extra={extra} optional={optional} onChange={onChange} />;
 }
 
 const COMMON_RAW_MATERIALS = [
@@ -1526,8 +1530,9 @@ function RecipeCard({ item, diagnoses, onChange, onClear }) {
                 diagnoses={diagnoses}
                 code={item.icd10Code}
                 name={item.icd10Display}
+                extra={item.icd10Extra}
                 optional={item.payment === "100%"}
-                onChange={(next) => onChange({ icd10Code: next.code, icd10Display: next.name })}
+                onChange={(next) => onChange({ icd10Code: next.code, icd10Display: next.name, icd10Extra: next.extra })}
               />
             </div>
           </div>
@@ -1766,8 +1771,9 @@ function DrugCard({ item, index, form, diagnoses = [], onChange, onRemove }) {
           diagnoses={diagnoses}
           code={item.icd10Code}
           name={item.icd10Display}
+          extra={item.icd10Extra}
           optional={item.payment === "100%"}
-          onChange={(next) => onChange({ icd10Code: next.code, icd10Display: next.name })}
+          onChange={(next) => onChange({ icd10Code: next.code, icd10Display: next.name, icd10Extra: next.extra })}
         />
       </div>
       <Small label="Wskazanie refundacyjne" value={item.refundCode} onChange={(value) => onChange({ refundCode: value })} />
@@ -1977,7 +1983,7 @@ function PreviewOverlay({ items, header, onClose }) {
           <div key={item.key} className="text-sm border rounded-lg p-2">
             <div className="font-medium">{item.drug?.name}{item.cito ? " · CITO" : ""}{item.annual ? " · 365 dni" : ""}</div>
             <div className="text-slate-600">{item.quantity} op. · {item.payment} · {item.dosage || `${item.frequency}× / ${item.durationDays} dni`}</div>
-            {item.icd10Code && <div className="text-slate-600">{item.icd10Code} — {item.icd10Display}</div>}
+            {item.icd10Code && <div className="text-slate-600">{[`${item.icd10Code} — ${item.icd10Display}`, ...(item.icd10Extra || []).map((row) => `${row.code} — ${row.name}`)].join("; ")}</div>}
             {item.realizationFrom && <div className="text-slate-600">Realizacja od {item.realizationFrom}</div>}
             {item.substanceWords && <div>Słownie: {item.substanceWords}</div>}
           </div>

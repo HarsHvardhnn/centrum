@@ -40,6 +40,11 @@ function fold(text) {
     .replace(/[̀-ͯ]/g, "");
 }
 
+/** ICD-10 chapters/blocks such as "E10–E14" are headings, not diagnoses P1 accepts. */
+export function isIcdRange(code) {
+  return /^[A-Z]\d{2}(\.\d+)?\s*[–—-]\s*[A-Z]?\d{2}/i.test(String(code || "").trim());
+}
+
 function matches(row, query) {
   const q = fold(query);
   return fold(row.code).includes(q) || fold(row.name).includes(q);
@@ -68,7 +73,7 @@ function Row({ row, selected, active, onPick, onHover }) {
  * One field for ICD-10: opens on focus with the visit's diagnoses and common codes,
  * filters them as you type, and adds matches from the full ICD-10 dictionary.
  */
-export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange, optional = false }) {
+export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange, optional = false, label = "Rozpoznanie (ICD-10)", exclude = [] }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [remote, setRemote] = useState([]);
@@ -117,10 +122,10 @@ export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange,
   }, [term]);
 
   const sections = useMemo(() => {
-    const seen = new Set();
+    const seen = new Set(exclude);
     const take = (rows) => rows.filter((row) => {
       const key = row.code;
-      if (!key || seen.has(key)) return false;
+      if (!key || seen.has(key) || isIcdRange(key)) return false;
       seen.add(key);
       return true;
     });
@@ -132,7 +137,7 @@ export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange,
       common.length ? { title: term ? "Najczęstsze" : "Najczęściej używane", rows: common } : null,
       dictionary.length ? { title: "Słownik ICD-10", rows: dictionary } : null,
     ].filter(Boolean);
-  }, [visitDiagnoses, term, remote]);
+  }, [visitDiagnoses, term, remote, exclude.join("|")]);
 
   const flat = sections.flatMap((section) => section.rows);
 
@@ -165,7 +170,7 @@ export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange,
 
   return (
     <div ref={boxRef} className="relative text-xs font-semibold text-slate-700">
-      Rozpoznanie (ICD-10){optional ? " (opcjonalne)" : " *"}
+      {label}{optional ? " (opcjonalne)" : label.includes("opcjonalne") ? "" : " *"}
       <div className="relative mt-1 flex items-center">
         <Search size={14} className="pointer-events-none absolute left-2.5 text-slate-400" />
         <input

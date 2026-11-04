@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import appointmentHelper from "../../helpers/appointmentHelper";
 import { visitDiagnosisRows } from "./visitIcd";
+import { isIcdRange } from "./IcdCombobox";
 
 const IcdField = ({
   label,
@@ -36,7 +37,7 @@ const IcdField = ({
             ? await appointmentHelper.searchIcd9(term)
             : await appointmentHelper.searchIcd10(term);
         if (!cancelled) {
-          setResults(Array.isArray(rows) ? rows : []);
+          setResults((Array.isArray(rows) ? rows : []).filter((row) => kind !== "icd10" || !isIcdRange(row.code)));
           setOpen(true);
           setSettled(true);
         }

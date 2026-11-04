@@ -15,13 +15,14 @@ import {
   RESORT_HINTS,
 } from "./eReferralCatalog";
 import IcdField from "./IcdField";
+import IcdMulti from "./IcdMulti";
 import { formatCoded, visitDiagnosisRows } from "./visitIcd";
 
 const inputClass = "w-full h-9 px-3 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900";
 
 function parseCoded(value) {
   const text = String(value || "").trim();
-  const match = text.match(/^([0-9A-Z][0-9A-Z.*]*)\s*[-—]\s*(.+)$/i);
+  const match = text.match(/^(\S+)\s+[-—–]\s+(.+)$/i);
   if (match) return { code: match[1].trim(), name: match[2].trim() };
   if (/^[0-9A-Z][0-9A-Z.*]*$/i.test(text)) return { code: text, name: "" };
   return { code: "", name: "" };
@@ -67,6 +68,9 @@ const EReferralIssueModal = ({
     copied.performerCode && copied.performer ? `${copied.performerCode} - ${copied.performer}` : "1100 - Poradnia kardiologiczna"
   );
   const [targetOpen, setTargetOpen] = useState(false);
+  const [extraIcd10, setExtraIcd10] = useState(
+    Array.isArray(copied.icd10Extra) ? copied.icd10Extra.map((row) => ({ code: row.icd10Code, name: row.icd10Display })) : []
+  );
   const [primaryIcd10, setPrimaryIcd10] = useState(
     copied.icd10Code ? formatCoded(copied.icd10Code, copied.icd10Display) : ""
   );
@@ -173,6 +177,7 @@ const EReferralIssueModal = ({
       previousTests: notes,
       icd10Code: icd.code,
       icd10Display: icd.name,
+      icd10Extra: extraIcd10.map((row) => ({ icd10Code: row.code, icd10Display: row.name })),
       bodySite: site === "left" ? "L" : site === "right" ? "R" : "",
       icd9Code: parsedProcedures[0]?.code || "",
       icd9Display: parsedProcedures[0]?.name || "",
@@ -211,6 +216,7 @@ const EReferralIssueModal = ({
     else if (payload.clientReferralType) setReferralType(payload.clientReferralType);
     if (payload.performerCode && payload.performer) setTargetSearch(`${payload.performerCode} - ${payload.performer}`);
     if (payload.icd10Code) setPrimaryIcd10(`${payload.icd10Code} - ${payload.icd10Display || ""}`.trim());
+    setExtraIcd10(Array.isArray(payload.icd10Extra) ? payload.icd10Extra.map((r) => ({ code: r.icd10Code, name: r.icd10Display })) : []);
     if (payload.purpose) setJustification(payload.purpose);
     setPriority(payload.cito || payload.priorityCode === "UR" ? "urgent" : "normal");
     setIsNfzFunded(payload.reimbursed === "Y" && payload.clientReferralType === "hospital_treatment");
@@ -379,13 +385,16 @@ const EReferralIssueModal = ({
               <div className="bg-slate-50 border rounded-xl p-3 space-y-2">
                 <div className="grid sm:grid-cols-12 gap-2">
                   <div className="sm:col-span-9">
-                    <IcdField
-                      label="Rozpoznanie główne (ICD-10) *"
+                    <IcdMulti
+                      label="Rozpoznanie główne (ICD-10)"
                       code={parseCoded(primaryIcd10).code}
                       name={parseCoded(primaryIcd10).name}
-                      diagnoses={visitIcd}
-                      importLabel="Pobierz z wizyty"
-                      onPick={(item) => setPrimaryIcd10(item.code ? formatCoded(item.code, item.name || item.code) : "")}
+                      extra={extraIcd10}
+                      visitDiagnoses={visitIcd}
+                      onChange={(next) => {
+                        setPrimaryIcd10(next.code ? formatCoded(next.code, next.name || next.code) : "");
+                        setExtraIcd10(next.extra || []);
+                      }}
                     />
                   </div>
                   <div className="sm:col-span-3">
