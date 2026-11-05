@@ -85,6 +85,7 @@ const EReferralIssueModal = ({
   const [contraindications, setContraindications] = useState(copied.previousTests || "");
   const [justification, setJustification] = useState(copied.purpose || "");
   const [errors, setErrors] = useState([]);
+  const [checkedOk, setCheckedOk] = useState(false);
   const [signOpen, setSignOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
@@ -113,6 +114,7 @@ const EReferralIssueModal = ({
     setContraindications(copied.previousTests || "");
     setJustification(copied.purpose || "");
     setErrors([]);
+    setCheckedOk(false);
     setSignOpen(false);
     setBusy(false);
     setResult(null);
@@ -509,7 +511,9 @@ const EReferralIssueModal = ({
 
         {!result && (
           <div className="flex shrink-0 justify-end gap-2 border-t border-slate-200 bg-white px-6 py-3">
+            {checkedOk && errors.length === 0 && <span className="mr-auto self-center text-xs font-semibold text-emerald-700">Dokument sprawdzony — gotowy do podpisu</span>}
             <button type="button" onClick={onClose} className="px-4 py-2 border rounded-xl font-bold text-xs">Anuluj</button>
+            <button type="button" onClick={() => setCheckedOk(validate())} className="px-4 py-2 border border-slate-300 rounded-xl font-bold text-xs">Sprawdź dokument</button>
             <button type="button" onClick={() => { if (validate()) setSignOpen(true); }} className="px-5 py-2.5 bg-blue-700 text-white rounded-xl font-bold text-xs">
               Zapisz i przejdź do podpisu
             </button>
