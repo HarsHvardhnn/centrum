@@ -46,7 +46,7 @@ const EReferralIssueModal = ({
   );
   const [priority, setPriority] = useState(copied.cito ? "urgent" : "normal");
   const [isNfzFunded, setIsNfzFunded] = useState(copied.reimbursed === "Y");
-  const [nfzBranch, setNfzBranch] = useState(copied.nfzDepartment || "07");
+  const [nfzBranch, setNfzBranch] = useState(copied.nfzDepartment || "");
   const [nfzContract, setNfzContract] = useState(copied.nfzContract || "");
 
   // Fill the branch from the patient's latest eWUŚ answer unless a copied referral already carries one.
@@ -65,7 +65,7 @@ const EReferralIssueModal = ({
     };
   }, [open, patientId, copied.nfzDepartment]);
   const [targetSearch, setTargetSearch] = useState(
-    copied.performerCode && copied.performer ? `${copied.performerCode} - ${copied.performer}` : "1100 - Poradnia kardiologiczna"
+    copied.performerCode && copied.performer ? `${copied.performerCode} - ${copied.performer}` : ""
   );
   const [targetOpen, setTargetOpen] = useState(false);
   const [extraIcd10, setExtraIcd10] = useState(
@@ -92,6 +92,36 @@ const EReferralIssueModal = ({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelReasonError, setCancelReasonError] = useState("");
+
+  // Every time the form is opened it starts empty (or from the referral being copied), never from the previous entry.
+  useEffect(() => {
+    if (!open) return;
+    setReferralType(copied.type === "02.10REH" ? "rehabilitation" : "specialist_clinic");
+    setPriority(copied.cito ? "urgent" : "normal");
+    setIsNfzFunded(copied.reimbursed === "Y");
+    setNfzBranch(copied.nfzDepartment || "");
+    setNfzContract(copied.nfzContract || "");
+    setTargetSearch(copied.performerCode && copied.performer ? `${copied.performerCode} - ${copied.performer}` : "");
+    setTargetOpen(false);
+    setExtraIcd10(Array.isArray(copied.icd10Extra) ? copied.icd10Extra.map((row) => ({ code: row.icd10Code, name: row.icd10Display })) : []);
+    setPrimaryIcd10(copied.icd10Code ? formatCoded(copied.icd10Code, copied.icd10Display) : "");
+    setSite(copied.bodySite === "L" ? "left" : copied.bodySite === "R" ? "right" : "");
+    setProcedures(copied.icd9Code ? [`${copied.icd9Code} - ${copied.icd9Display || ""}`] : [""]);
+    setProcHits([]);
+    setProcIndex(-1);
+    setProcQuery("");
+    setContraindications(copied.previousTests || "");
+    setJustification(copied.purpose || "");
+    setErrors([]);
+    setSignOpen(false);
+    setBusy(false);
+    setResult(null);
+    setHistoryOpen(false);
+    setCancelOpen(false);
+    setCancelReason("");
+    setCancelReasonError("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const filteredResort = useMemo(() => {
     const fold = (text) => String(text || "").toLowerCase().replace(/ł/g, "l").normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -316,6 +346,7 @@ const EReferralIssueModal = ({
                 {isNfzFunded && nfzAllowed && (
                   <div className="grid sm:grid-cols-2 gap-2">
                     <select value={nfzBranch} onChange={(e) => setNfzBranch(e.target.value)} className={inputClass}>
+                      <option value="">— wybierz oddział NFZ —</option>
                       {NFZ_BRANCHES.map((branch) => <option key={branch.code} value={branch.code}>{branch.label}</option>)}
                     </select>
                     <input value={nfzContract} onChange={(e) => setNfzContract(e.target.value)} placeholder="Numer umowy z NFZ (opcjonalnie)" className={inputClass} />
