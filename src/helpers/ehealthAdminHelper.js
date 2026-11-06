@@ -102,6 +102,31 @@ const ehealthAdminHelper = {
     const response = await apiCaller("POST", "/api/ehealth/admin/ewus", payload);
     return response.data;
   },
+
+  async getEwus() {
+    const response = await apiCaller("GET", "/api/ehealth/admin/ewus");
+    return response.data;
+  },
+
+  async testEwus(code) {
+    const response = await apiCaller("POST", "/api/ehealth/admin/ewus/test", code ? { code } : {});
+    return response.data;
+  },
+
+  async getMyEwus() {
+    const response = await apiCaller("GET", "/api/ehealth/ewus/me");
+    return response.data;
+  },
+
+  async putMyEwus(payload) {
+    const response = await apiCaller("PUT", "/api/ehealth/ewus/me", payload);
+    return response.data;
+  },
+
+  async loginMyEwus(code) {
+    const response = await apiCaller("POST", "/api/ehealth/ewus/login", code ? { code } : {});
+    return response.data;
+  },
 };
 
 export default ehealthAdminHelper;

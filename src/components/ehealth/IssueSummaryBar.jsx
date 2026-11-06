@@ -66,7 +66,7 @@ export default function IssueSummaryBar({ patientName, pesel, birthDate, address
     }
     try {
       setBusy(true);
-      const res = await ehealthHelper.checkEwus({ pesel: cleanPesel, patientId, visitId, trigger: doc ? "recheck" : "manual" });
+      const res = await ehealthHelper.checkEwusWithLogin({ pesel: cleanPesel, patientId, visitId, trigger: doc ? "recheck" : "manual" });
       if (!res?.success && !res?.data) throw new Error(res?.error?.message || "Sprawdzenie nieudane");
       setDoc(res.data);
     } catch (err) {

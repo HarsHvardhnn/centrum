@@ -3,6 +3,7 @@ import { format, parseISO, addDays } from 'date-fns';
 import doctorService from '../../helpers/doctorHelper';
 import DoctorScheduleEditor from './DoctorScheduleEditor';
 import { useUser } from '../../context/userContext';
+import EwusAccountForm from '../ehealth/EwusAccountForm';
 
 const DoctorScheduleSettings = () => {
   const { user } = useUser();
@@ -274,6 +275,11 @@ const DoctorScheduleSettings = () => {
 
           {/* Main Content Area */}
           <div className="flex-1">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-1">eWUŚ — moje konto NFZ</h2>
+              <p className="text-xs text-gray-500 mb-4">Login do Portalu Świadczeniodawcy NFZ (z uprawnieniem eWUŚ). Hasło i klucz MFA są szyfrowane i nie są pokazywane ponownie.</p>
+              <EwusAccountForm scope="me" />
+            </div>
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h1 className="text-2xl font-bold text-gray-800 mb-6">
                 Ustawienia Harmonogramu

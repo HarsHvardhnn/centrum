@@ -1,3 +1,4 @@
+import EwusAccountForm from "../ehealth/EwusAccountForm";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -649,43 +650,8 @@ const EhealthIntegrationsPage = () => {
           </div>
 
           <div className="border border-gray-100 rounded-lg p-4 space-y-3">
-            <p className="text-sm font-medium text-gray-800">eWUŚ — operator NFZ (dane publiczne / test)</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <input
-                placeholder="Oddział NFZ (13 = Świętokrzyski)"
-                value={ewusForm.domain}
-                onChange={(e) => setEwusForm({ ...ewusForm, domain: e.target.value })}
-                className="p-2 border rounded-lg text-sm"
-              />
-              <input
-                placeholder="Login NFZ"
-                value={ewusForm.username}
-                onChange={(e) => setEwusForm({ ...ewusForm, username: e.target.value })}
-                className="p-2 border rounded-lg text-sm"
-              />
-              <input
-                type="password"
-                placeholder="Hasło NFZ"
-                value={ewusForm.password}
-                onChange={(e) => setEwusForm({ ...ewusForm, password: e.target.value })}
-                className="p-2 border rounded-lg text-sm"
-                autoComplete="new-password"
-              />
-              <input
-                placeholder="Identyfikator (jeśli wymagany)"
-                value={ewusForm.identifier}
-                onChange={(e) => setEwusForm({ ...ewusForm, identifier: e.target.value })}
-                className="p-2 border rounded-lg text-sm"
-              />
-            </div>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={ewusMfaConfigured}
-                onChange={(e) => setEwusMfaConfigured(e.target.checked)}
-              />
-              MFA (TOTP) wymagane
-            </label>
+            <p className="text-sm font-medium text-gray-800">eWUŚ — konto NFZ (Portal Świadczeniodawcy)</p>
+            <EwusAccountForm scope="facility" />
             <label className="flex items-center gap-2 text-sm text-red-800">
               <input
                 type="checkbox"
@@ -694,29 +660,6 @@ const EhealthIntegrationsPage = () => {
               />
               Wystawianie na żywo (P1) — tylko uzgodniony test issue + cancel. Domyślnie wyłączone (tylko validate).
             </label>
-            <button
-              type="button"
-              disabled={uploadingCerts}
-              onClick={async () => {
-                try {
-                  setUploadingCerts(true);
-                  const res = await ehealthAdminHelper.configureEwus({
-                    ...ewusForm,
-                    mfa: ewusMfaConfigured,
-                  });
-                  if (!res?.success) throw new Error(res?.error?.message || "Błąd");
-                  setEwusForm({ ...ewusForm, password: "" });
-                  toast.success("eWUŚ skonfigurowane w API");
-                } catch (err) {
-                  toast.error(err.message || "Nie udało się zapisać eWUŚ");
-                } finally {
-                  setUploadingCerts(false);
-                }
-              }}
-              className="text-sm text-teal-700 hover:underline"
-            >
-              Zapisz operatora eWUŚ w API
-            </button>
           </div>
 
           <div className="flex flex-wrap gap-3 items-center">

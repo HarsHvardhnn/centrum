@@ -178,7 +178,7 @@ const EwusStatusCard = ({ pesel, patientId, patientName, visitId, compact = fals
     }
     try {
       setBusy(true);
-      const res = await ehealthHelper.checkEwus({
+      const res = await ehealthHelper.checkEwusWithLogin({
         pesel,
         patientId,
         visitId,

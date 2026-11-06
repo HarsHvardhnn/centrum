@@ -233,6 +233,24 @@ const ehealthHelper = {
     return apiCaller("POST", "/api/ehealth/ewus/check", body).then(unwrap);
   },
 
+  ewusLogin(code) {
+    return apiCaller("POST", "/api/ehealth/ewus/login", code ? { code } : {}).then(unwrap);
+  },
+
+  /** eWUŚ check that asks for the NFZ app code when the 14-minute session ran out (manual MFA mode). */
+  async checkEwusWithLogin(body) {
+    let res = await ehealthHelper.checkEwus(body);
+    if (res?.data?.error?.code === "EWUS_MFA") {
+      const { promptEwusCode } = await import("../components/ehealth/ewusCodePrompt");
+      const code = await promptEwusCode(res.data.error.message);
+      if (!code) return res;
+      const login = await ehealthHelper.ewusLogin(code);
+      if (!login?.data?.ok) throw new Error(login?.data?.message || "Logowanie do eWUŚ nie powiodło się");
+      res = await ehealthHelper.checkEwus(body);
+    }
+    return res;
+  },
+
   prescriptionHistory({ patientId, range = "12m" } = {}) {
     const params = new URLSearchParams();
     if (patientId) params.set("patientId", String(patientId));
