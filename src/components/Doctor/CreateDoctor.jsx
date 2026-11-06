@@ -14,6 +14,8 @@ import {
 import { useSpecializations } from "../../context/SpecializationContext";
 import ehealthAdminHelper from "../../helpers/ehealthAdminHelper";
 import SpecializationDropdown from "./SpecializationDropdown";
+import SpecialtyPicker from "../ehealth/SpecialtyPicker";
+import { isValidPesel, pwzError, isDoctorRole } from "../ehealth/p1Validation";
 import ImageCropper from "../UtilComponents/ImageCropper";
 import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
 
@@ -56,6 +58,26 @@ const getDoctorSchema = (isEditMode) =>
       : Yup.string()
           .required("Potwierdzenie hasła jest wymagane")
           .oneOf([Yup.ref("password"), null], "Hasła muszą być zgodne"),
+    pesel: Yup.string().test("pesel-p1", function (value) {
+      const v = String(value || "").trim();
+      if (!v) return this.parent.issuesEDocuments ? this.createError({ message: "PESEL jest wymagany dla lekarza wystawiającego e-dokumenty" }) : true;
+      return isValidPesel(v) ? true : this.createError({ message: "PESEL musi mieć 11 cyfr i poprawną cyfrę kontrolną" });
+    }),
+    npwz: Yup.string().test("pwz-p1", function (value) {
+      const v = String(value || "").trim();
+      if (!v) return this.parent.issuesEDocuments ? this.createError({ message: "Numer PWZ jest wymagany dla lekarza wystawiającego e-dokumenty" }) : true;
+      const msg = pwzError(v, this.parent.medfileRole);
+      return msg ? this.createError({ message: msg }) : true;
+    }),
+    medfileQualifications: Yup.array().test("spec-p1", function (value) {
+      const { medfileRole, noSpecialization, issuesEDocuments } = this.parent;
+      if (!isDoctorRole(medfileRole)) return true;
+      if (noSpecialization && (value || []).length) return this.createError({ message: "Wybierz specjalizację albo „Bez specjalizacji”, nie oba naraz" });
+      if (issuesEDocuments && !noSpecialization && !(value || []).length) return this.createError({ message: "Wybierz specjalizację albo zaznacz „Bez specjalizacji”" });
+      return true;
+    }),
+    homePostalCode: Yup.string().matches(/^(\d{2}-\d{3})?$/, "Kod pocztowy w formacie 00-000"),
+    addrPostalCode: Yup.string().matches(/^(\d{2}-\d{3})?$/, "Kod pocztowy w formacie 00-000"),
     specialization: Yup.array()
       .min(1, "Wymagana jest co najmniej jedna specjalizacja")
       .required("Specjalizacja jest wymagana"),
@@ -222,7 +244,15 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             secondName: "",
             pesel: "",
             medfileRole: "LEK",
-            medfileQualificationsText: "",
+            medfileQualifications: [],
+            noSpecialization: false,
+            issuesEDocuments: false,
+            prescribingRights: "independent",
+            homeStreet: "",
+            homeHouseNumber: "",
+            homeUnitId: "",
+            homeCity: "",
+            homePostalCode: "",
             addrStreet: "",
             addrHouseNumber: "",
             addrUnitId: "",
@@ -241,19 +271,20 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                 specialization: (values.specialization || []).map(spec => spec.id),
               };
               
-              const quals = String(values.medfileQualificationsText || "")
-                .split("\n").map((l) => l.trim()).filter(Boolean)
-                .map((l) => ({ code: l.split(/\s+/)[0], display: l.split(/\s+/).slice(1).join(" ") }));
-              submitValues.medfileQualifications = quals;
+              submitValues.medfileQualifications = values.medfileQualifications || [];
+              submitValues.residentialAddress = {
+                street: values.homeStreet, houseNumber: values.homeHouseNumber, unitId: values.homeUnitId,
+                city: values.homeCity, postalCode: values.homePostalCode,
+              };
               submitValues.practitionerAddress = {
                 street: values.addrStreet, houseNumber: values.addrHouseNumber, unitId: values.addrUnitId,
                 city: values.addrCity, postalCode: values.addrPostalCode,
               };
               // Edit mode: never overwrite P1 data with blanks if it could not be loaded first
               if (isEditMode && !practitionerLoadedRef.current) {
-                ["pesel", "secondName", "medfileRole", "medfileQualifications", "practitionerAddress"].forEach((k) => delete submitValues[k]);
+                ["pesel", "secondName", "medfileRole", "medfileQualifications", "practitionerAddress", "residentialAddress", "noSpecialization", "issuesEDocuments", "prescribingRights"].forEach((k) => delete submitValues[k]);
               }
-              delete submitValues.medfileQualificationsText;
+              ["homeStreet", "homeHouseNumber", "homeUnitId", "homeCity", "homePostalCode"].forEach((k) => delete submitValues[k]);
               ["addrStreet", "addrHouseNumber", "addrUnitId", "addrCity", "addrPostalCode"].forEach((k) => delete submitValues[k]);
 
               // Remove password fields when empty (optional in both create and edit)
@@ -289,7 +320,16 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                 setFieldValue("secondName", row.secondName || "");
                 setFieldValue("pesel", row.pesel || "");
                 setFieldValue("medfileRole", row.medfileRole || "LEK");
-                setFieldValue("medfileQualificationsText", (row.medfileQualifications || []).map((q) => `${q.code} ${q.display}`).join("\n"));
+                setFieldValue("medfileQualifications", (row.medfileQualifications || []).map((q) => ({ code: q.code, display: q.display })));
+                setFieldValue("noSpecialization", !!row.noSpecialization);
+                setFieldValue("issuesEDocuments", !!row.issuesEDocuments);
+                setFieldValue("prescribingRights", row.prescribingRights || "independent");
+                const h = row.residentialAddress || {};
+                setFieldValue("homeStreet", h.street || "");
+                setFieldValue("homeHouseNumber", h.houseNumber || "");
+                setFieldValue("homeUnitId", h.unitId || "");
+                setFieldValue("homeCity", h.city || "");
+                setFieldValue("homePostalCode", h.postalCode || "");
                 setFieldValue("addrStreet", a.street || "");
                 setFieldValue("addrHouseNumber", a.houseNumber || "");
                 setFieldValue("addrUnitId", a.unitId || "");
@@ -445,6 +485,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                     <p className="text-xs text-gray-500 mt-1">
                       Prawo wykonywania zawodu. Ten numer jest wymagany, gdy lekarz wystawia e-receptę, e-skierowanie albo e-ZLA w systemie P1.
                     </p>
+                    <ErrorMessage name="npwz" component="p" className="text-red-500 text-xs mt-1" />
                   </div>
 
                   <div className="rounded-md border border-teal-200 bg-teal-50/40 p-3 space-y-3">
@@ -457,10 +498,22 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       <div>
                         <label htmlFor="pesel" className="block text-xs font-medium text-gray-700 mb-1">PESEL lekarza</label>
                         <Field type="text" name="pesel" id="pesel" maxLength={11} inputMode="numeric" className="w-full p-2 border border-gray-300 rounded-md" />
+                        <ErrorMessage name="pesel" component="p" className="text-red-500 text-xs mt-1" />
                       </div>
                       <div>
                         <label htmlFor="medfileRole" className="block text-xs font-medium text-gray-700 mb-1">Rola w P1</label>
-                        <Field as="select" name="medfileRole" id="medfileRole" className="w-full p-2 border border-gray-300 rounded-md">
+                        <Field
+                          as="select"
+                          name="medfileRole"
+                          id="medfileRole"
+                          className="w-full p-2 border border-gray-300 rounded-md"
+                          onChange={(e) => {
+                            const role = e.target.value;
+                            setFieldValue("medfileRole", role);
+                            if (!isDoctorRole(role)) { setFieldValue("medfileQualifications", []); setFieldValue("noSpecialization", false); }
+                            setFieldValue("prescribingRights", isDoctorRole(role) ? "independent" : role === "FIZJO" ? "none" : (values.prescribingRights === "independent" ? "on-order" : values.prescribingRights));
+                          }}
+                        >
                           <option value="LEK">LEK — lekarz / felczer</option>
                           <option value="LEKD">LEKD — lekarz dentysta</option>
                           <option value="FIZJO">FIZJO — fizjoterapeuta</option>
@@ -469,9 +522,57 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       </div>
                     </div>
                     <div>
-                      <label htmlFor="medfileQualificationsText" className="block text-xs font-medium text-gray-700 mb-1">Specjalizacje (kod i nazwa, po jednej w linii)</label>
-                      <Field as="textarea" rows={2} name="medfileQualificationsText" id="medfileQualificationsText" placeholder="0713 medycyna rodzinna" className="w-full p-2 border border-gray-300 rounded-md" />
-                      <p className="text-xs text-gray-500 mt-1">Wymagane m.in. dla e-skierowań.</p>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Specjalizacje (lista ministerialna)</label>
+                      <SpecialtyPicker
+                        role={values.medfileRole}
+                        value={values.medfileQualifications}
+                        disabled={!isDoctorRole(values.medfileRole) || values.noSpecialization}
+                        onChange={(next) => setFieldValue("medfileQualifications", next)}
+                      />
+                      {isDoctorRole(values.medfileRole) && (
+                        <label className="mt-2 flex items-center gap-2 text-xs text-gray-700">
+                          <input
+                            type="checkbox"
+                            checked={values.noSpecialization}
+                            onChange={(e) => { setFieldValue("noSpecialization", e.target.checked); if (e.target.checked) setFieldValue("medfileQualifications", []); }}
+                          />
+                          Bez specjalizacji / w trakcie specjalizacji
+                        </label>
+                      )}
+                      <ErrorMessage name="medfileQualifications" component="p" className="text-red-500 text-xs mt-1" />
+                      <p className="text-xs text-gray-500 mt-1">Wymagane m.in. dla e-skierowań. Nazwa uzupełnia się z listy.</p>
+                    </div>
+                    <div>
+                      <p className="block text-xs font-medium text-gray-700 mb-1">Uprawnienia do wystawiania recept</p>
+                      {values.medfileRole === "PIEL" ? (
+                        <Field as="select" name="prescribingRights" className="w-full p-2 border border-gray-300 rounded-md">
+                          <option value="none">Brak</option>
+                          <option value="on-order">Tylko na zlecenie lekarza (kontynuacja leczenia)</option>
+                          <option value="independent">Samodzielnie i na zlecenie lekarza</option>
+                        </Field>
+                      ) : (
+                        <p className="text-sm text-gray-700">
+                          {isDoctorRole(values.medfileRole) ? "Samodzielnie i na zlecenie lekarza (wynika z zawodu)" : "Brak (nie dotyczy zawodu)"}
+                        </p>
+                      )}
+                    </div>
+                    <label className="flex items-start gap-2 text-sm text-gray-800">
+                      <input type="checkbox" className="mt-1" checked={values.issuesEDocuments} onChange={(e) => setFieldValue("issuesEDocuments", e.target.checked)} />
+                      <span>
+                        <span className="font-medium">Wystawia e-dokumenty</span>
+                        <span className="block text-xs text-gray-500">Włącz, gdy lekarz wystawia e-recepty, e-skierowania lub e-ZLA. Wtedy PESEL, PWZ i specjalizacja są wymagane. Certyfikat ZUS lekarz dodaje w swoich ustawieniach.</span>
+                      </span>
+                    </label>
+                    <div>
+                      <p className="block text-xs font-medium text-gray-700 mb-1">Adres zamieszkania (do recept dla siebie i rodziny)</p>
+                      <div className="grid grid-cols-6 gap-2">
+                        <Field name="homeStreet" placeholder="Ulica" className="col-span-6 sm:col-span-3 p-2 border border-gray-300 rounded-md" />
+                        <Field name="homeHouseNumber" placeholder="Nr domu" className="col-span-3 sm:col-span-1 p-2 border border-gray-300 rounded-md" />
+                        <Field name="homeUnitId" placeholder="Lokal" className="col-span-3 sm:col-span-2 p-2 border border-gray-300 rounded-md" />
+                        <Field name="homePostalCode" placeholder="00-000" className="col-span-2 p-2 border border-gray-300 rounded-md" />
+                        <Field name="homeCity" placeholder="Miasto" className="col-span-4 p-2 border border-gray-300 rounded-md" />
+                      </div>
+                      <ErrorMessage name="homePostalCode" component="p" className="text-red-500 text-xs mt-1" />
                     </div>
                     <div>
                       <p className="block text-xs font-medium text-gray-700 mb-1">Adres praktyki (wymagany m.in. dla recept PA, PF)</p>

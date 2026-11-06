@@ -36,9 +36,13 @@ const doctorService = {
       formData.append("shortDescription", doctorData.shortDescription || "");
       formData.append("professionalTitle", doctorData.professionalTitle || "");
       formData.append("npwz", doctorData.npwz || "");
-      ["pesel", "secondName", "medfileRole"].forEach((k) => {
+      ["pesel", "secondName", "medfileRole", "prescribingRights"].forEach((k) => {
         if (doctorData[k] !== undefined) formData.append(k, doctorData[k] || "");
       });
+      ["noSpecialization", "issuesEDocuments"].forEach((k) => {
+        if (doctorData[k] !== undefined) formData.append(k, doctorData[k] ? "true" : "false");
+      });
+      if (doctorData.residentialAddress !== undefined) formData.append("residentialAddress", JSON.stringify(doctorData.residentialAddress));
       if (doctorData.medfileQualifications !== undefined) formData.append("medfileQualifications", JSON.stringify(doctorData.medfileQualifications));
       if (doctorData.practitionerAddress !== undefined) formData.append("practitionerAddress", JSON.stringify(doctorData.practitionerAddress));
       
@@ -234,9 +238,13 @@ const doctorService = {
       if (updateData.shortDescription) formData.append("shortDescription", updateData.shortDescription);
       if (updateData.professionalTitle !== undefined) formData.append("professionalTitle", updateData.professionalTitle || "");
       if (updateData.npwz !== undefined) formData.append("npwz", updateData.npwz || "");
-      ["pesel", "secondName", "medfileRole"].forEach((k) => {
+      ["pesel", "secondName", "medfileRole", "prescribingRights"].forEach((k) => {
         if (updateData[k] !== undefined) formData.append(k, updateData[k] || "");
       });
+      ["noSpecialization", "issuesEDocuments"].forEach((k) => {
+        if (updateData[k] !== undefined) formData.append(k, updateData[k] ? "true" : "false");
+      });
+      if (updateData.residentialAddress !== undefined) formData.append("residentialAddress", JSON.stringify(updateData.residentialAddress));
       if (updateData.medfileQualifications !== undefined) formData.append("medfileQualifications", JSON.stringify(updateData.medfileQualifications));
       if (updateData.practitionerAddress !== undefined) formData.append("practitionerAddress", JSON.stringify(updateData.practitionerAddress));
       // Handle arrays
