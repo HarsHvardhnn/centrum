@@ -181,6 +181,10 @@ export default function EwusAccountForm({ scope = "facility" }) {
               <input type="radio" checked={form.mode === "manual"} onChange={() => set({ mode: "manual" })} />
               Osoba wpisuje kod z telefonu
             </label>
+            <label className="flex items-center gap-1.5">
+              <input type="radio" checked={form.mode === "none"} onChange={() => set({ mode: "none" })} />
+              Konto bez MFA (testowe konta NFZ)
+            </label>
           </div>
           {form.mode === "auto" ? (
             <label className="block text-xs text-gray-600">
@@ -195,6 +199,8 @@ export default function EwusAccountForm({ scope = "facility" }) {
               />
               <span className="text-gray-500">Serwer wylicza z niego 6-cyfrowy kod (30 s) przy każdym logowaniu. Nie jest pokazywany ponownie.</span>
             </label>
+          ) : form.mode === "none" ? (
+            <p className="text-xs text-gray-500">Dla kont testowych NFZ, które nie używają kodu. Konta produkcyjne wymagają MFA.</p>
           ) : (
             <p className="text-xs text-gray-500">Po wygaśnięciu sesji (14 minut) system poprosi o kod z aplikacji NFZ.</p>
           )}
