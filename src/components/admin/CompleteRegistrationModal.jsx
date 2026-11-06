@@ -38,6 +38,8 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
     email: regInitial?.email ?? "",
     sex: regInitial?.sex ?? regInitial?.gender ?? "",
     street: regInitial?.street ?? regInitial?.address ?? "",
+    houseNumber: regInitial?.houseNumber ?? "",
+    apartmentNumber: regInitial?.apartmentNumber ?? "",
     zipCode: regInitial?.zipCode ?? regInitial?.pinCode ?? "",
     city: regInitial?.city ?? "",
     isInternationalPatient: !!regInitial?.isInternationalPatient,
@@ -70,6 +72,8 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
       email: reg.email ?? "",
       sex: reg.sex ?? reg.gender ?? "",
       street: reg.street ?? reg.address ?? "",
+      houseNumber: reg.houseNumber ?? "",
+      apartmentNumber: reg.apartmentNumber ?? "",
       zipCode: reg.zipCode ?? reg.pinCode ?? "",
       city: reg.city ?? "",
       isInternationalPatient: !!reg.isInternationalPatient,
@@ -152,6 +156,8 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
         email: patient.email ?? "",
         sex: patient.sex ?? "",
         street: patient.street ?? patient.address ?? "",
+        houseNumber: patient.houseNumber ?? "",
+        apartmentNumber: patient.apartmentNumber ?? "",
         zipCode: patient.zipCode ?? patient.pinCode ?? "",
         city: patient.city ?? "",
         isInternationalPatient: !!patient.isInternationalPatient,
@@ -264,6 +270,8 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
           email: formData.email?.trim() || undefined,
           sex: formData.sex || undefined,
           street: formData.street?.trim() || undefined,
+          houseNumber: formData.houseNumber?.trim() || undefined,
+          apartmentNumber: formData.apartmentNumber?.trim() || undefined,
           zipCode: formData.zipCode?.trim() || undefined,
           city: formData.city?.trim() || undefined,
           smsConsentAgreed: true,
@@ -297,6 +305,8 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
           email: formData.email?.trim() || undefined,
           sex: formData.sex || undefined,
           street: formData.street?.trim() || undefined,
+          houseNumber: formData.houseNumber?.trim() || undefined,
+          apartmentNumber: formData.apartmentNumber?.trim() || undefined,
           zipCode: formData.zipCode?.trim() || undefined,
           city: formData.city?.trim() || undefined,
           smsConsentAgreed: true,
@@ -315,6 +325,8 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
           email: formData.email?.trim() || undefined,
           sex: formData.sex || undefined,
           street: formData.street?.trim() || undefined,
+          houseNumber: formData.houseNumber?.trim() || undefined,
+          apartmentNumber: formData.apartmentNumber?.trim() || undefined,
           zipCode: formData.zipCode?.trim() || undefined,
           city: formData.city?.trim() || undefined,
           smsConsentAgreed: true,
@@ -592,6 +604,14 @@ export default function CompleteRegistrationModal({ isOpen, onClose, appointment
               <div className="md:col-span-3">
                 <label className="block text-sm text-gray-600 mb-1">Ulica</label>
                 <input type="text" value={formData.street} onChange={(e) => setFormData(prev => ({ ...prev, street: e.target.value }))} placeholder="np. ul. Marszałkowska 1" className="w-full p-2 border border-gray-300 rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Nr domu</label>
+                <input type="text" value={formData.houseNumber || ""} onChange={(e) => setFormData(prev => ({ ...prev, houseNumber: e.target.value }))} placeholder="np. 12A" className="w-full p-2 border border-gray-300 rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Nr lokalu</label>
+                <input type="text" value={formData.apartmentNumber || ""} onChange={(e) => setFormData(prev => ({ ...prev, apartmentNumber: e.target.value }))} placeholder="np. 5" className="w-full p-2 border border-gray-300 rounded-lg" />
               </div>
               <div>
                 <label className="block text-sm text-gray-600 mb-1">Kod pocztowy</label>

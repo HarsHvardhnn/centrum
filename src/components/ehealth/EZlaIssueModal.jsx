@@ -98,7 +98,18 @@ function malePatient(patient) {
 
 function parseAddress(patient) {
   const raw = String(patient?.address || patient?.street || "").trim();
-  const postal = String(patient?.postalCode || "").match(/\d{2}-\d{3}/)?.[0] || raw.match(/\d{2}-\d{3}/)?.[0] || "";
+  const postal = String(patient?.postalCode || patient?.pinCode || patient?.zipCode || "").match(/\d{2}-\d{3}/)?.[0] || raw.match(/\d{2}-\d{3}/)?.[0] || "";
+  // House and flat number saved on the patient record win over guessing them from the street line.
+  const savedHouse = String(patient?.houseNumber || "").trim();
+  if (savedHouse) {
+    return {
+      postalCode: postal,
+      city: String(patient?.city || "").trim(),
+      street: raw.split(",")[0].replace(/^ul\.?\s*/i, "").trim(),
+      houseNumber: savedHouse,
+      apartment: String(patient?.apartmentNumber || "").trim(),
+    };
+  }
   const city = String(patient?.city || "").trim() || raw.split(",").map((p) => p.trim()).find((p) => p && !/\d/.test(p) && !/^ul/i.test(p)) || "";
   const streetPart = raw.split(",")[0].replace(/\d{2}-\d{3}/, "").trim();
   const house = streetPart.match(/(\d+[A-Za-z]?)(?:\s*\/\s*(\d+[A-Za-z]?))?$/) || [];

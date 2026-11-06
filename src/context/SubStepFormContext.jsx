@@ -38,6 +38,8 @@ export const FormProvider = ({ children, initialData }) => {
     address: "",
     city: "",
     pinCode: "",
+    houseNumber: "",
+    apartmentNumber: "",
     state: "swietokrzyskie",
     country: "",
     district: "",

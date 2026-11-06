@@ -50,6 +50,8 @@ export default function PatientDataEditModal({
         sex: formData.sex || "",
         // Address
         street: formData.street || "",
+        houseNumber: formData.houseNumber || "",
+        apartmentNumber: formData.apartmentNumber || "",
         zipCode: formData.zipCode || "",
         city: formData.city || "",
         province: formData.province || "",
@@ -422,6 +424,26 @@ export default function PatientDataEditModal({
                   type="text"
                   value={editData.street || ""}
                   onChange={(e) => update("street", e.target.value)}
+                  readOnly={readOnlyFields}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nr domu</label>
+                <input
+                  type="text"
+                  value={editData.houseNumber || ""}
+                  onChange={(e) => update("houseNumber", e.target.value)}
+                  readOnly={readOnlyFields}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nr lokalu</label>
+                <input
+                  type="text"
+                  value={editData.apartmentNumber || ""}
+                  onChange={(e) => update("apartmentNumber", e.target.value)}
                   readOnly={readOnlyFields}
                   className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 />

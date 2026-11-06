@@ -53,6 +53,31 @@ const AddressForm = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Nr domu</label>
+          <input
+            type="text"
+            name="houseNumber"
+            value={formData.houseNumber || ""}
+            onChange={handleChange}
+            placeholder="np. 12A"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Nr lokalu</label>
+          <input
+            type="text"
+            name="apartmentNumber"
+            value={formData.apartmentNumber || ""}
+            onChange={handleChange}
+            placeholder="np. 5"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Województwo</label>
           <select 
             name="state"

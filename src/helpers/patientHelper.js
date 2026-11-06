@@ -80,6 +80,8 @@ const patientService = {
       appendIfExists("occupation", patientData.occupation);
       appendIfExists("otherHospitalIds", patientData.otherHospitalIds);
       appendIfExists("pinCode", patientData.pinCode);
+      appendIfExists("houseNumber", patientData.houseNumber);
+      appendIfExists("apartmentNumber", patientData.apartmentNumber);
       appendIfExists("referrerEmail", patientData.referrerEmail);
       appendIfExists("referrerName", patientData.referrerName);
       appendIfExists("referrerNumber", patientData.referrerNumber);
@@ -191,6 +193,8 @@ const patientService = {
     if (patientData.occupation !== undefined) formData.append("occupation", patientData.occupation);
     if (patientData.otherHospitalIds !== undefined) formData.append("otherHospitalIds", patientData.otherHospitalIds);
     if (patientData.pinCode !== undefined) formData.append("pinCode", patientData.pinCode);
+    if (patientData.houseNumber !== undefined) formData.append("houseNumber", patientData.houseNumber);
+    if (patientData.apartmentNumber !== undefined) formData.append("apartmentNumber", patientData.apartmentNumber);
     if (patientData.referrerEmail !== undefined) formData.append("referrerEmail", patientData.referrerEmail);
     if (patientData.referrerName !== undefined) formData.append("referrerName", patientData.referrerName);
     if (patientData.referrerNumber !== undefined) formData.append("referrerNumber", patientData.referrerNumber);

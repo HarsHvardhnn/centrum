@@ -320,6 +320,8 @@ export async function loadPatientEditFormData(
     address: details.address,
     city: details.city,
     pinCode: details.pinCode,
+    houseNumber: details.houseNumber ?? "",
+    apartmentNumber: details.apartmentNumber ?? "",
     state: normalizeVoivodeship(
       details.state || details.province || ""
     ),

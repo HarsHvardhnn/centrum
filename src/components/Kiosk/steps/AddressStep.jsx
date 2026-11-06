@@ -59,6 +59,31 @@ export default function AddressStep({
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nr domu</label>
+            <input
+              type="text"
+              value={formData.houseNumber || ""}
+              onChange={(e) => update("houseNumber", e.target.value)}
+              readOnly={readOnlyFields}
+              placeholder="np. 12A"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nr lokalu</label>
+            <input
+              type="text"
+              value={formData.apartmentNumber || ""}
+              onChange={(e) => update("apartmentNumber", e.target.value)}
+              readOnly={readOnlyFields}
+              placeholder="np. 5"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            />
+          </div>
+        </div>
+
         {/* Reorganized layout for better UX with longer Polish names */}
         <div className="space-y-4">
           {/* First row: Postal code (smaller) and City (larger) */}

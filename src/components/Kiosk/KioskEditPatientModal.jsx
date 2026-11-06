@@ -83,6 +83,10 @@ export default function KioskEditPatientModal({ form, onChange, onClose, onSave,
           <Field label="Email" value={form.email} onChange={(v) => update("email", v)} type="email" />
           <Field label="Ulica" value={form.street} onChange={(v) => update("street", v)} />
           <div className="grid grid-cols-2 gap-4">
+            <Field label="Nr domu" value={form.houseNumber} onChange={(v) => update("houseNumber", v)} />
+            <Field label="Nr lokalu" value={form.apartmentNumber} onChange={(v) => update("apartmentNumber", v)} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <Field label="Kod pocztowy" value={form.zipCode} onChange={(v) => update("zipCode", v)} />
             <Field label="Miasto" value={form.city} onChange={(v) => update("city", v)} />
           </div>
