@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import IssueSummaryBar from "./IssueSummaryBar";
 import { toast } from "sonner";
 import { AlertTriangle, Building2, CheckCircle2, History, Loader2, Plus, Printer, X } from "lucide-react";
@@ -243,7 +243,7 @@ function validate(form, patient) {
   return errors;
 }
 
-const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagnoses, initialPayload, onDocumentsChanged }) => {
+const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagnoses, initialPayload, onDocumentsChanged, zusMissing, requestZus }) => {
   const [form, setForm] = useState(emptyForm);
   const [checked, setChecked] = useState(false);
   const [errors, setErrors] = useState([]);
@@ -507,6 +507,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
     };
     setBusy(true);
     try {
+      if (zusMissing) await requestZus();
       const res = await ehealthHelper.submitEzla({ visitId, patientId, payload });
       if (!res?.success) throw new Error(res?.error?.message || "Wystawianie nieudane");
       const doc = res?.data;
@@ -802,7 +803,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
         </div>
 
         <div className="flex items-center justify-between border-t px-5 py-3">
-          <button type="button" onClick={onClose} className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">{result ? "Zamknij" : "Anuluj i wróć"}</button>
+          <button type="button" onClick={onClose} className={result ? "rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100" : "rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"}>{result ? "Zamknij" : "Anuluj i wróć"}</button>
           {!result && (
             <div className="flex gap-2">
               <button type="button" onClick={runCheck} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold">Sprawdź dokument</button>
@@ -1018,10 +1019,15 @@ const EZlaIssueModal = (props) => {
   const { open, onClose } = props;
   const [required, setRequired] = useState(null);
   const [ready, setReady] = useState(false);
+  const [skipped, setSkipped] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
+  const pending = useRef(null);
 
   useEffect(() => {
     if (!open) {
       setReady(false);
+      setSkipped(false);
+      setGateOpen(false);
       return undefined;
     }
     let cancelled = false;
@@ -1042,11 +1048,35 @@ const EZlaIssueModal = (props) => {
   };
 
   if (!open || required === null) return null;
-  if (!ready && required !== false) {
-    const doctorLine = [props.patient?.doctorName, props.patient?.pwz ? `PWZ ${props.patient.pwz}` : ""].filter(Boolean).join(" · ");
-    return <ZusCertificateGate doctorLine={doctorLine} onClose={close} onReady={() => setReady(true)} />;
+  const doctorLine = [props.patient?.doctorName, props.patient?.pwz ? `PWZ ${props.patient.pwz}` : ""].filter(Boolean).join(" · ");
+  if (!ready && !skipped && required !== false) {
+    return <ZusCertificateGate doctorLine={doctorLine} onClose={close} onSkip={() => setSkipped(true)} onReady={() => setReady(true)} />;
   }
-  return <EZlaIssueModalInner {...props} onClose={close} />;
+  const zusMissing = required !== false && !ready;
+  // The form is open without a certificate: ask for it only when the doctor presses send.
+  const requestZus = () => new Promise((resolve, reject) => {
+    pending.current = { resolve, reject };
+    setGateOpen(true);
+  });
+  return (
+    <>
+      <EZlaIssueModalInner {...props} onClose={close} zusMissing={zusMissing} requestZus={requestZus} />
+      {gateOpen && (
+        <ZusCertificateGate
+          doctorLine={doctorLine}
+          onClose={() => {
+            setGateOpen(false);
+            pending.current?.reject(new Error("Aby wysłać e-ZLA, wczytaj certyfikat ZUS."));
+          }}
+          onReady={() => {
+            setReady(true);
+            setGateOpen(false);
+            pending.current?.resolve();
+          }}
+        />
+      )}
+    </>
+  );
 };
 
 export default EZlaIssueModal;

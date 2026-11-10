@@ -4,7 +4,7 @@ import { startZusSession } from "./ehealthSigning";
 
 /** First step of an e-ZLA: the doctor loads the ZUS certificate from the flash drive.
  *  It is handed to the server only for this session and removed when the window closes. */
-const ZusCertificateGate = ({ onReady, onClose, doctorLine }) => (
+const ZusCertificateGate = ({ onReady, onClose, onSkip, doctorLine }) => (
   <CertificateModal
     open
     title="Certyfikat ZUS do e-ZLA"
@@ -23,6 +23,11 @@ const ZusCertificateGate = ({ onReady, onClose, doctorLine }) => (
       Aby wystawić zwolnienie, podłącz pendrive z certyfikatem ZUS, wybierz plik i wpisz PIN. Certyfikat jest używany tylko do tego
       zwolnienia i zostaje usunięty po zamknięciu okna.
     </p>
+    {onSkip && (
+      <button type="button" onClick={onSkip} className="mt-3 text-sm font-semibold text-teal-700 underline">
+        Otwórz formularz bez certyfikatu — certyfikat poproszę przy wysyłaniu
+      </button>
+    )}
   </CertificateModal>
 );
 
