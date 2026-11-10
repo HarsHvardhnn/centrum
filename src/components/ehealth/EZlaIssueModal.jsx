@@ -328,6 +328,10 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
 
   useEffect(() => {
     if (!open || !patientId) return;
+    if (zusMissing) {
+      setPayerLookup("needs-cert");
+      return;
+    }
     let cancelled = false;
     setPayerLookup("loading");
     ehealthHelper.ezlaContext(patientId, form.institution).then((res) => {
@@ -360,9 +364,16 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
       }
     }).catch(() => { if (!cancelled) setPayerLookup("failed"); });
     return () => { cancelled = true; };
-  }, [open, patientId, form.institution]);
+  }, [open, patientId, form.institution, zusMissing]);
 
   const loadZusAddresses = async () => {
+    if (zusMissing) {
+      try {
+        await requestZus();
+      } catch {
+        return;
+      }
+    }
     setZusAddr({ open: true, loading: true, list: [], message: "" });
     try {
       const res = await ehealthHelper.ezlaAddresses(patientId);
@@ -599,6 +610,12 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
         </div>
 
         <IssueSummaryBar patientName={patient?.name} pesel={pesel} birthDate={patient?.birthDate} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} />
+        {zusMissing && (
+          <div className="flex flex-wrap items-center gap-3 border-b border-amber-200 bg-amber-50 px-6 py-2 text-xs text-amber-900">
+            <span>e-ZLA wysyła się do ZUS, który potwierdza lekarza jego certyfikatem. Wypełnij formularz — certyfikat (plik i PIN) poprosimy przy pobieraniu danych z ZUS albo przy wysyłce.</span>
+            <button type="button" onClick={() => requestZus().catch(() => {})} className="rounded-lg border border-amber-700 px-2.5 py-1 font-semibold text-amber-900">Wczytaj certyfikat teraz</button>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto p-5">
           {result ? (
@@ -708,6 +725,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
                       ))}
                       {!form.payers.length && payerLookup === "loading" && <p className="text-xs text-slate-500">Pobieranie płatników z ZUS na podstawie numeru PESEL…</p>}
                       {!form.payers.length && payerLookup === "failed" && <p className="text-xs text-slate-500">Nie udało się pobrać płatnika z ZUS. Dodaj płatnika ręcznie (NIP).</p>}
+                      {!form.payers.length && payerLookup === "needs-cert" && <p className="text-xs text-slate-500">Płatnika pobierzemy z ZUS po wczytaniu certyfikatu. Możesz też dodać go ręcznie (NIP).</p>}
                     </div>
                     <label className="mt-3 flex items-center gap-2 text-xs text-slate-700">
                       <input type="checkbox" checked={form.doNotSend || selectedPayer?.hasPue === false} disabled={selectedPayer?.hasPue === false} onChange={(e) => patch({ doNotSend: e.target.checked })} />
@@ -1021,14 +1039,15 @@ const EZlaIssueModal = (props) => {
   const { open, onClose } = props;
   const [required, setRequired] = useState(null);
   const [ready, setReady] = useState(false);
-  const [skipped, setSkipped] = useState(false);
+  // The form opens at once, like the prescription and the referral; the certificate is asked for when ZUS is needed.
+  const [skipped, setSkipped] = useState(true);
   const [gateOpen, setGateOpen] = useState(false);
   const pending = useRef(null);
 
   useEffect(() => {
     if (!open) {
       setReady(false);
-      setSkipped(false);
+      setSkipped(true);
       setGateOpen(false);
       return undefined;
     }

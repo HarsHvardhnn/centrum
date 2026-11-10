@@ -62,6 +62,8 @@ function EwusDetailsDialog({ doc, badge, patientName, pesel, busy, onRecheck, on
   const banner = DIALOG_BANNER[doc?.status] || DIALOG_BANNER.fallback;
   const branchCode = payload.nfzBranch;
   const branchText = branchLabel(branchCode);
+  // eWUŚ does not return the patient's branch; it does return the branch of the NFZ account that made the check.
+  const operatorText = !branchCode ? branchLabel(payload.operatorBranch) : "";
   return (
     <div className="fixed inset-0 z-[80] bg-slate-900/50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-xl shadow-xl overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="ewus-details-title" onClick={(event) => event.stopPropagation()}>
@@ -85,9 +87,11 @@ function EwusDetailsDialog({ doc, badge, patientName, pesel, busy, onRecheck, on
                 <div className="font-bold">{patientName || "—"}</div>
                 <div className="text-xs">PESEL: {pesel || "—"}</div>
               </DetailCard>
-              <DetailCard label="Oddział Wojewódzki NFZ">
-                <div className="font-bold">{branchText || "—"}</div>
+              <DetailCard label={operatorText ? "Oddział NFZ konta eWUŚ" : "Oddział Wojewódzki NFZ"}>
+                <div className="font-bold">{branchText || operatorText || "—"}</div>
                 {branchCode && <div className="text-xs text-gray-600">kod adresata: {branchCode}</div>}
+                {operatorText && <div className="text-xs text-gray-600">eWUŚ nie podaje oddziału pacjenta — to oddział konta, którym sprawdzono.</div>}
+                {!branchCode && !operatorText && <div className="text-xs text-gray-600">eWUŚ nie zwrócił oddziału w tej odpowiedzi.</div>}
               </DetailCard>
               <DetailCard label="Identyfikator operacji eWUŚ">
                 <div className="font-bold break-all">{doc?.externalId || "—"}</div>
