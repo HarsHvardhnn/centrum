@@ -20,6 +20,7 @@ const CertificateModal = ({
   plainText = "Potwierdź wykonanie tej operacji.",
   busyText = "Trwa podpisywanie i wysyłka. Proszę czekać.",
   children,
+  layer = "z-[70]",
   onCancel,
   onSubmit,
 }) => {
@@ -65,7 +66,7 @@ const CertificateModal = ({
   const accent = isDestructive ? "bg-rose-600 hover:bg-rose-700" : "bg-slate-900 hover:bg-slate-800";
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-[2px]">
+    <div className={`fixed inset-0 ${layer} flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-[2px]`}>
       <div className="flex w-[500px] max-w-[95vw] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4">
           <div className="flex items-center gap-2.5">
