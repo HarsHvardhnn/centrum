@@ -62,7 +62,9 @@ export default function EwusAccountForm({ scope = "facility", doctorId, onSaved 
   if (isMe && !info.own) {
     return (
       <p className="text-sm text-gray-600">
-        Placówka używa wspólnego konta eWUŚ. Nie musisz podawać własnego loginu — administrator ustawia go w ustawieniach integracji.
+        Placówka używa teraz wspólnego konta eWUŚ, więc nie musisz podawać własnego loginu. Aby każdy lekarz używał własnego konta NFZ,
+        administrator musi w Administracja → Integracje e-Zdrowie wybrać „Konto każdego lekarza” i zapisać. Wtedy w tym miejscu pojawią się pola
+        na login, hasło i klucz MFA.
       </p>
     );
   }
