@@ -123,6 +123,47 @@ const ehealthAdminHelper = {
     return response.data;
   },
 
+  async listCells() {
+    const response = await apiCaller("GET", "/api/ehealth/admin/cells");
+    return response.data;
+  },
+
+  async createCell(payload) {
+    const response = await apiCaller("POST", "/api/ehealth/admin/cells", payload);
+    return response.data;
+  },
+
+  async updateCell(id, payload) {
+    const response = await apiCaller("PUT", `/api/ehealth/admin/cells/${id}`, payload);
+    return response.data;
+  },
+
+  async deleteCell(id) {
+    const response = await apiCaller("DELETE", `/api/ehealth/admin/cells/${id}`);
+    return response.data;
+  },
+
+  async seedCells() {
+    const response = await apiCaller("POST", "/api/ehealth/admin/cells/seed", { seed: true });
+    return response.data;
+  },
+
+  async syncCell(id) {
+    const response = await apiCaller("POST", `/api/ehealth/admin/cells/${id}/sync`, { sync: true });
+    return response.data;
+  },
+
+  async syncAllCells() {
+    const response = await apiCaller("POST", "/api/ehealth/admin/cells/sync-all", { all: true });
+    return response.data;
+  },
+
+  /** Cells the signed-in person (or the given doctor) may issue documents under. */
+  async doctorCells(doctorId) {
+    const response = await apiCaller("GET", `/api/ehealth/cells/doctor${doctorId ? `?doctorId=${doctorId}` : ""}`);
+    return response.data;
+  },
+
   async listDoctorEwus() {
     const response = await apiCaller("GET", "/api/ehealth/admin/ewus/doctors");
     return response.data;

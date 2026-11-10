@@ -120,12 +120,12 @@ export default function EwusAccountForm({ scope = "facility", doctorId, onSaved 
         <div className="flex flex-wrap gap-4 text-sm text-gray-800">
           <span className="font-medium">Czyje konto:</span>
           <label className="flex items-center gap-1.5">
-            <input type="radio" checked={form.operatorType === "SWD"} onChange={() => set({ operatorType: "SWD" })} />
-            Konto przychodni
+            <input type="radio" checked={form.operatorType === "LEK"} onChange={() => set({ operatorType: "LEK" })} />
+            Konto każdego lekarza (zalecane)
           </label>
           <label className="flex items-center gap-1.5">
-            <input type="radio" checked={form.operatorType === "LEK"} onChange={() => set({ operatorType: "LEK" })} />
-            Konto każdego lekarza
+            <input type="radio" checked={form.operatorType === "SWD"} onChange={() => set({ operatorType: "SWD" })} />
+            Jedno konto przychodni (tylko testy lub mały gabinet)
           </label>
         </div>
       )}

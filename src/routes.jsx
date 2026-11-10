@@ -202,7 +202,7 @@ const routes = createBrowserRouter([
           { path: "/szczegoly-pacjenta/:id", element: <PatientDetailsGuard /> },
           { path: "/administracja", element: <MedicalDashboard /> },
           { path: "/administracja/sms", element: <UserMessaging /> },
-          { path: "/lekarz/utworz", element: <AddDoctorForm /> },
+          { path: "/lekarz/utworz", element: <Navigate to="/lekarze?dodaj=1" replace /> },
           { path: "/administracja/konta", element: <UserManagement /> },
           { path: "/administracja/uslugi", element: <ServicesManagement /> },
           { path: "/administracja/aktualnosci", element: <NewsManagement /> },

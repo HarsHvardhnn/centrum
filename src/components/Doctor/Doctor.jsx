@@ -40,7 +40,7 @@ const BillingPage = () => {
   const [searchTerm, setSearchTerm] = useState(savedDoctors.searchTerm || "");
   const [debouncedSearch, setDebouncedSearch] = useState(savedDoctors.searchTerm || "");
   const [activeFilters, setActiveFilters] = useState(savedDoctors.activeFilters || {});
-  const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
+  const [showAddDoctorModal, setShowAddDoctorModal] = useState(() => new URLSearchParams(window.location.search).get("dodaj") === "1");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [scheduleDoctorId, setScheduleDoctorId] = useState(null);
   const [allDoctors, setAllDoctors] = useState([]);

@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { ChevronDown, RefreshCw, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
+import ehealthAdminHelper from "../../helpers/ehealthAdminHelper";
+import { setIssueCellId } from "./issueCell";
 import { badgeFor, branchLabel, formatChecked, formatValidUntil } from "./EwusStatusCard";
 
 const PILL = {
@@ -36,6 +38,32 @@ export default function IssueSummaryBar({ patientName, pesel, birthDate, address
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const boxRef = useRef(null);
+  const [cellList, setCellList] = useState([]);
+  const [cellId, setCellId] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    ehealthAdminHelper
+      .doctorCells()
+      .then((res) => {
+        if (cancelled) return;
+        const list = res?.data?.cells || [];
+        setCellList(list);
+        const first = res?.data?.defaultCellId || list[0]?.id || "";
+        setCellId(first);
+        setIssueCellId(first);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      setIssueCellId("");
+    };
+  }, []);
+
+  const pickCell = (id) => {
+    setCellId(id);
+    setIssueCellId(id);
+  };
   const cleanPesel = String(pesel || "").replace(/\D/g, "");
   const hasPesel = cleanPesel.length === 11;
 
@@ -99,6 +127,24 @@ export default function IssueSummaryBar({ patientName, pesel, birthDate, address
         <strong className="text-slate-900 font-bold">{doctorName || "—"}</strong>
         {pwz ? <span className="font-mono text-[11px] text-slate-500">(PWZ: {pwz})</span> : null}
       </div>
+      {cellList.length > 0 && (
+        <>
+          <span className="text-slate-300 hidden md:inline">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-500 font-medium">Komórka:</span>
+            <select
+              value={cellId}
+              onChange={(e) => pickCell(e.target.value)}
+              className="rounded-lg border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-800"
+              title="Komórka organizacyjna, pod którą zostanie wystawiony dokument"
+            >
+              {cellList.map((c) => (
+                <option key={c.id} value={c.id}>{c.code} — {c.name}{c.synced ? "" : " (nie wysłana do Medfile)"}</option>
+              ))}
+            </select>
+          </div>
+        </>
+      )}
       <span className="text-slate-300 hidden md:inline">|</span>
       <div ref={boxRef} className="relative flex items-center gap-1.5">
         <span className="text-slate-500 font-medium">eWUŚ:</span>

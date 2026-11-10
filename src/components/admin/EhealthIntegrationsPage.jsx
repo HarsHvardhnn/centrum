@@ -1,5 +1,6 @@
 import EwusAccountForm from "../ehealth/EwusAccountForm";
 import DoctorEwusPanel from "../ehealth/DoctorEwusPanel";
+import CellsPanel from "../ehealth/CellsPanel";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -648,6 +649,10 @@ const EhealthIntegrationsPage = () => {
             >
               Wyślij ZUS .pfx do API
             </button>
+          </div>
+
+          <div className="border border-gray-100 rounded-lg p-4 space-y-3">
+            <CellsPanel />
           </div>
 
           <div className="border border-gray-100 rounded-lg p-4 space-y-3">

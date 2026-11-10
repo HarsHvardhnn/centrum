@@ -1,6 +1,14 @@
 // services/doctorService.js
 
 import { apiCaller } from "../utils/axiosInstance";
+import { toast } from "sonner";
+
+const reportMedfile = (data) => {
+  const m = data?.medfile;
+  if (!m) return;
+  if (m.ok) toast.success(m.created ? "Utworzono w Medfile (konto do e-dokumentów)." : "Zaktualizowano w Medfile.");
+  else toast.error(`Zapisano w Centrum, ale nie w Medfile: ${m.message}`);
+};
 
 /**
  * Service for doctor-related API calls
@@ -45,6 +53,10 @@ const doctorService = {
       if (doctorData.residentialAddress !== undefined) formData.append("residentialAddress", JSON.stringify(doctorData.residentialAddress));
       if (doctorData.medfileQualifications !== undefined) formData.append("medfileQualifications", JSON.stringify(doctorData.medfileQualifications));
       if (doctorData.practitionerAddress !== undefined) formData.append("practitionerAddress", JSON.stringify(doctorData.practitionerAddress));
+      if (doctorData.cellIds !== undefined) {
+        formData.append("cellIds", JSON.stringify(doctorData.cellIds));
+        formData.append("defaultCellId", doctorData.defaultCellId || "");
+      }
       
       // Update consultation fee fields to include both online and offline fees
       formData.append("onlineConsultationFee", doctorData.consultationFee || 0);
@@ -74,6 +86,7 @@ const doctorService = {
         },
       });
 
+      reportMedfile(response.data);
       return response.data;
     } catch (error) {
       console.error("Error creating doctor:", error);
@@ -247,6 +260,10 @@ const doctorService = {
       if (updateData.residentialAddress !== undefined) formData.append("residentialAddress", JSON.stringify(updateData.residentialAddress));
       if (updateData.medfileQualifications !== undefined) formData.append("medfileQualifications", JSON.stringify(updateData.medfileQualifications));
       if (updateData.practitionerAddress !== undefined) formData.append("practitionerAddress", JSON.stringify(updateData.practitionerAddress));
+      if (updateData.cellIds !== undefined) {
+        formData.append("cellIds", JSON.stringify(updateData.cellIds));
+        formData.append("defaultCellId", updateData.defaultCellId || "");
+      }
       // Handle arrays
       if (updateData.specialization) {
         updateData.specialization.forEach(item => {
@@ -288,6 +305,7 @@ const doctorService = {
         },
       });
 
+      reportMedfile(response.data);
       return response.data;
     } catch (error) {
       console.error(`Error updating doctor with ID ${id}:`, error);

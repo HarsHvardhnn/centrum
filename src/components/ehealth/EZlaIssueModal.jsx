@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import IssueSummaryBar from "./IssueSummaryBar";
+import { getIssueCellId } from "./issueCell";
 import { toast } from "sonner";
 import { AlertTriangle, Building2, CheckCircle2, History, Loader2, Plus, Printer, X } from "lucide-react";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
@@ -504,6 +505,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
       payers: payer ? [{ type: payer.type || "1", id: payer.identifier || payer.nip, name: payer.name, hasPue: payer.hasPue !== false }] : [],
       selectedPayerId: form.selectedPayerId,
       clientCertFileName: certFileName || "",
+      cellId: getIssueCellId() || undefined,
     };
     setBusy(true);
     try {

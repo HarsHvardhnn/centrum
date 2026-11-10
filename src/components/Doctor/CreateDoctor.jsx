@@ -15,6 +15,7 @@ import { useSpecializations } from "../../context/SpecializationContext";
 import ehealthAdminHelper from "../../helpers/ehealthAdminHelper";
 import SpecializationDropdown from "./SpecializationDropdown";
 import SpecialtyPicker from "../ehealth/SpecialtyPicker";
+import DoctorCellsField from "../ehealth/DoctorCellsField";
 import { isValidPesel, pwzError, isDoctorRole } from "../ehealth/p1Validation";
 import ImageCropper from "../UtilComponents/ImageCropper";
 import AutoSaveIndicator from "../UtilComponents/AutoSaveIndicator";
@@ -247,6 +248,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             medfileQualifications: [],
             noSpecialization: false,
             issuesEDocuments: false,
+            cellIds: [],
+            defaultCellId: "",
             prescribingRights: "independent",
             homeStreet: "",
             homeHouseNumber: "",
@@ -282,7 +285,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
               };
               // Edit mode: never overwrite P1 data with blanks if it could not be loaded first
               if (isEditMode && !practitionerLoadedRef.current) {
-                ["pesel", "secondName", "medfileRole", "medfileQualifications", "practitionerAddress", "residentialAddress", "noSpecialization", "issuesEDocuments", "prescribingRights"].forEach((k) => delete submitValues[k]);
+                ["pesel", "secondName", "medfileRole", "medfileQualifications", "practitionerAddress", "residentialAddress", "noSpecialization", "issuesEDocuments", "prescribingRights", "cellIds", "defaultCellId"].forEach((k) => delete submitValues[k]);
               }
               ["homeStreet", "homeHouseNumber", "homeUnitId", "homeCity", "homePostalCode"].forEach((k) => delete submitValues[k]);
               ["addrStreet", "addrHouseNumber", "addrUnitId", "addrCity", "addrPostalCode"].forEach((k) => delete submitValues[k]);
@@ -324,6 +327,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                 setFieldValue("noSpecialization", !!row.noSpecialization);
                 setFieldValue("issuesEDocuments", !!row.issuesEDocuments);
                 setFieldValue("prescribingRights", row.prescribingRights || "independent");
+                setFieldValue("cellIds", row.cellIds || []);
+                setFieldValue("defaultCellId", row.defaultCellId || "");
                 const h = row.residentialAddress || {};
                 setFieldValue("homeStreet", h.street || "");
                 setFieldValue("homeHouseNumber", h.houseNumber || "");
@@ -563,6 +568,11 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         <span className="block text-xs text-gray-500">Włącz, gdy lekarz wystawia e-recepty, e-skierowania lub e-ZLA. Wtedy PESEL, PWZ i specjalizacja są wymagane. Certyfikat ZUS lekarz dodaje w swoich ustawieniach.</span>
                       </span>
                     </label>
+                    <DoctorCellsField
+                      cellIds={values.cellIds || []}
+                      defaultCellId={values.defaultCellId || ""}
+                      onChange={(ids, def) => { setFieldValue("cellIds", ids); setFieldValue("defaultCellId", def); }}
+                    />
                     <div>
                       <p className="block text-xs font-medium text-gray-700 mb-1">Adres zamieszkania (do recept dla siebie i rodziny)</p>
                       <div className="grid grid-cols-6 gap-2">

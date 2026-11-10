@@ -5,6 +5,7 @@ import appointmentHelper from "../../helpers/appointmentHelper";
 import { STATUS_LABELS, statusClass, accessCodeOf } from "./ehealthStatus";
 import P1SignDialog from "./P1SignDialog";
 import IssueSummaryBar from "./IssueSummaryBar";
+import { getIssueCellId } from "./issueCell";
 import ReferralHistoryModal from "./ReferralHistoryModal";
 import IssuePatientCard, { normalizePatient, patientForDocument } from "./IssuePatientCard";
 import {
@@ -203,6 +204,7 @@ const EReferralIssueModal = ({
     const extra = parsedProcedures.slice(1).map((row) => `${row.code} ${row.name}`).join("; ");
     const notes = [contraindications.trim(), extra ? `Dodatkowe ICD-9: ${extra}` : ""].filter(Boolean).join("\n");
     const payload = {
+      cellId: getIssueCellId() || undefined,
       type: referralType === "rehabilitation" ? "02.10REH" : "02.10",
       title: `${typeLabel}: ${target.name}`,
       purpose: justification.trim() || "Wskazanie kliniczne w oparciu o stan pacjenta.",

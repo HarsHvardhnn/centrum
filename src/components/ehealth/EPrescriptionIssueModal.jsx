@@ -9,6 +9,7 @@ import { STATUS_LABELS, statusClass, accessCodeOf } from "./ehealthStatus";
 import { visitDiagnosisRows } from "./visitIcd";
 import IcdMulti from "./IcdMulti";
 import IssueSummaryBar from "./IssueSummaryBar";
+import { getIssueCellId } from "./issueCell";
 import { classifyDrug } from "./drugClass";
 import P1SignDialog from "./P1SignDialog";
 
@@ -998,6 +999,7 @@ export default function EPrescriptionIssueModal({
     for (const pack of packs) {
       const payload = {
         ...header,
+        cellId: getIssueCellId() || undefined,
         form: pack.form,
         kind: pack.kind,
         examMode: pack.examMode,
