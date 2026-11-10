@@ -1,4 +1,5 @@
 import EwusAccountForm from "../ehealth/EwusAccountForm";
+import DoctorEwusPanel from "../ehealth/DoctorEwusPanel";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -652,6 +653,7 @@ const EhealthIntegrationsPage = () => {
           <div className="border border-gray-100 rounded-lg p-4 space-y-3">
             <p className="text-sm font-medium text-gray-800">eWUŚ — konto NFZ (Portal Świadczeniodawcy)</p>
             <EwusAccountForm scope="facility" />
+            <div className="border-t border-gray-100 pt-3"><DoctorEwusPanel /></div>
             <label className="flex items-center gap-2 text-sm text-red-800">
               <input
                 type="checkbox"

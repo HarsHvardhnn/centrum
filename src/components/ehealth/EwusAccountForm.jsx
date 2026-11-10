@@ -15,10 +15,12 @@ const input = "w-full p-2 border border-gray-300 rounded-lg text-sm disabled:bg-
 /**
  * NFZ eWUŚ account. scope="facility": the clinic's account, or only the NFZ branch when every doctor uses their own.
  * scope="me": the signed-in doctor's own account (used when the clinic chose "account of each doctor").
+ * scope="doctor": the same account, filled in by an administrator for the doctor given in `doctorId`.
  * Password and MFA key are write-only: the screen never receives them back.
  */
-export default function EwusAccountForm({ scope = "facility" }) {
-  const isMe = scope === "me";
+export default function EwusAccountForm({ scope = "facility", doctorId, onSaved }) {
+  const isDoctor = scope === "doctor";
+  const isMe = scope === "me" || isDoctor;
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [info, setInfo] = useState({ branches: FALLBACK_BRANCHES, identifierBranches: FALLBACK_ID_BRANCHES, own: true });
@@ -29,7 +31,7 @@ export default function EwusAccountForm({ scope = "facility" }) {
 
   const load = async () => {
     try {
-      const res = await (isMe ? ehealthAdminHelper.getMyEwus() : ehealthAdminHelper.getEwus());
+      const res = await (isDoctor ? ehealthAdminHelper.getDoctorEwus(doctorId) : isMe ? ehealthAdminHelper.getMyEwus() : ehealthAdminHelper.getEwus());
       const d = res?.data || {};
       setInfo({
         branches: d.branches || FALLBACK_BRANCHES,
@@ -54,7 +56,7 @@ export default function EwusAccountForm({ scope = "facility" }) {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scope]);
+  }, [scope, doctorId]);
 
   if (!loaded) return <p className="text-sm text-gray-500">Wczytywanie ustawień eWUŚ…</p>;
   if (isMe && !info.own) {
@@ -73,10 +75,11 @@ export default function EwusAccountForm({ scope = "facility" }) {
     try {
       setBusy(true);
       const payload = { ...form, password: secrets.password, totpSecret: secrets.totpSecret };
-      const res = await (isMe ? ehealthAdminHelper.putMyEwus(payload) : ehealthAdminHelper.configureEwus(payload));
+      const res = await (isDoctor ? ehealthAdminHelper.putDoctorEwus(doctorId, payload) : isMe ? ehealthAdminHelper.putMyEwus(payload) : ehealthAdminHelper.configureEwus(payload));
       if (!res?.success) throw new Error(res?.error?.message || res?.message || "Błąd zapisu");
       setSecrets({ password: "", totpSecret: "" });
       await load();
+      onSaved?.();
       const failed = res.data?.failed || [];
       toast.success(
         isMe
@@ -95,11 +98,11 @@ export default function EwusAccountForm({ scope = "facility" }) {
     try {
       setBusy(true);
       setLoginResult(null);
-      let res = isMe ? await ehealthAdminHelper.loginMyEwus() : await ehealthAdminHelper.testEwus();
+      let res = isDoctor ? await ehealthAdminHelper.testDoctorEwus(doctorId) : isMe ? await ehealthAdminHelper.loginMyEwus() : await ehealthAdminHelper.testEwus();
       if (res?.data?.needsCode) {
         const code = await promptEwusCode(res.data.message);
         if (!code) return;
-        res = isMe ? await ehealthAdminHelper.loginMyEwus(code) : await ehealthAdminHelper.testEwus(code);
+        res = isDoctor ? await ehealthAdminHelper.testDoctorEwus(doctorId, code) : isMe ? await ehealthAdminHelper.loginMyEwus(code) : await ehealthAdminHelper.testEwus(code);
       }
       setLoginResult({ ok: Boolean(res?.data?.ok), text: res?.data?.message || (res?.data?.ok ? "Zalogowano" : "Nie zalogowano") });
     } catch (err) {
