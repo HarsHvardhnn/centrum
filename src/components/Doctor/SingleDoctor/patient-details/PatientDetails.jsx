@@ -2052,6 +2052,8 @@ const PatientDetailsPage = () => {
           street: typeof patientData.address === "string" ? patientData.address : (patientData.address?.street || ""),
           city: patientData.city || patientData.address?.city || "",
           postalCode: patientData.pinCode || patientData.address?.postalCode || "",
+          houseNumber: patientData.houseNumber || "",
+          apartmentNumber: patientData.apartmentNumber || "",
           address: [
             typeof patientData.address === "string" ? patientData.address : patientData.address?.street,
             patientData.pinCode || patientData.address?.postalCode,
