@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import ehealthAdminHelper from "../../helpers/ehealthAdminHelper";
+import ResortSpecialtyPicker from "./ResortSpecialtyPicker";
 
 const EMPTY = { code: "", name: "", specialityCode: "", speciality: "", unitCode: "", unitName: "" };
 const input = "w-full p-2 border border-gray-300 rounded-lg text-sm";
@@ -112,12 +113,9 @@ export default function CellsPanel() {
             <label className="text-xs text-gray-600">Nazwa komórki *
               <input className={input} value={form.name} placeholder="np. Poradnia Kardiologiczna" onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </label>
-            <label className="text-xs text-gray-600">Kod specjalności (część VIII)
-              <input className={input} value={form.specialityCode} maxLength={4} placeholder="np. 1100" onChange={(e) => setForm({ ...form, specialityCode: e.target.value.replace(/\D/g, "") })} />
-            </label>
-            <label className="text-xs text-gray-600">Nazwa specjalności
-              <input className={input} value={form.speciality} placeholder="np. Poradnia kardiologiczna" onChange={(e) => setForm({ ...form, speciality: e.target.value })} />
-            </label>
+            <div className="text-xs text-gray-600 md:col-span-2">Specjalność komórki (część VIII) * — z oficjalnej listy, nazwa uzupełnia się sama
+              <ResortSpecialtyPicker code={form.specialityCode} onChange={(code, name) => setForm({ ...form, specialityCode: code, speciality: name })} />
+            </div>
             <label className="text-xs text-gray-600">Kod jednostki (część V) — puste = z danych placówki
               <input className={input} value={form.unitCode} maxLength={2} placeholder="np. 01" onChange={(e) => setForm({ ...form, unitCode: e.target.value.replace(/\D/g, "") })} />
             </label>

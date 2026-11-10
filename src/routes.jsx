@@ -27,6 +27,7 @@ import {
   PublicRoute,
 } from "./components/UtilComponents/ProtectedRoutes";
 import AddDoctorForm from "./components/Doctor/CreateDoctor";
+import MyEhealthSettings from "./components/ehealth/MyEhealthSettings";
 import LabAppointments from "./components/Patients/PatientList";
 import UserManagement from "./components/admin/Settings";
 import ChatComponent from "./components/User/ChatComponent";
@@ -207,6 +208,7 @@ const routes = createBrowserRouter([
           { path: "/administracja/uslugi", element: <ServicesManagement /> },
           { path: "/administracja/aktualnosci", element: <NewsManagement /> },
           { path: "/lekarz/ustawienia", element: <DoctorScheduleSettings /> },
+          { path: "/moje-ustawienia-e-zdrowie", element: <MyEhealthSettings /> },
           { path: "/administracja/profil", element: <ProfilePage /> },
           { path: "/administracja/kalendarz", element: <DoctorCalendar /> },
           {

@@ -248,6 +248,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             medfileQualifications: [],
             noSpecialization: false,
             issuesEDocuments: false,
+            paAllowed: false,
             cellIds: [],
             defaultCellId: "",
             prescribingRights: "independent",
@@ -285,7 +286,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
               };
               // Edit mode: never overwrite P1 data with blanks if it could not be loaded first
               if (isEditMode && !practitionerLoadedRef.current) {
-                ["pesel", "secondName", "medfileRole", "medfileQualifications", "practitionerAddress", "residentialAddress", "noSpecialization", "issuesEDocuments", "prescribingRights", "cellIds", "defaultCellId"].forEach((k) => delete submitValues[k]);
+                ["pesel", "secondName", "medfileRole", "medfileQualifications", "practitionerAddress", "residentialAddress", "noSpecialization", "issuesEDocuments", "prescribingRights", "cellIds", "defaultCellId", "paAllowed"].forEach((k) => delete submitValues[k]);
               }
               ["homeStreet", "homeHouseNumber", "homeUnitId", "homeCity", "homePostalCode"].forEach((k) => delete submitValues[k]);
               ["addrStreet", "addrHouseNumber", "addrUnitId", "addrCity", "addrPostalCode"].forEach((k) => delete submitValues[k]);
@@ -327,6 +328,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                 setFieldValue("noSpecialization", !!row.noSpecialization);
                 setFieldValue("issuesEDocuments", !!row.issuesEDocuments);
                 setFieldValue("prescribingRights", row.prescribingRights || "independent");
+                setFieldValue("paAllowed", !!row.paAllowed);
                 setFieldValue("cellIds", row.cellIds || []);
                 setFieldValue("defaultCellId", row.defaultCellId || "");
                 const h = row.residentialAddress || {};
@@ -566,6 +568,13 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       <span>
                         <span className="font-medium">Wystawia e-dokumenty</span>
                         <span className="block text-xs text-gray-500">Włącz, gdy lekarz wystawia e-recepty, e-skierowania lub e-ZLA. Wtedy PESEL, PWZ i specjalizacja są wymagane. Certyfikat ZUS lekarz dodaje w swoich ustawieniach.</span>
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-2 text-sm text-gray-800">
+                      <input type="checkbox" className="mt-1" checked={!!values.paAllowed} onChange={(e) => setFieldValue("paAllowed", e.target.checked)} />
+                      <span>
+                        <span className="font-medium">Może wystawiać recepty dla siebie i rodziny</span>
+                        <span className="block text-xs text-gray-500">Domyślnie wyłączone. Po włączeniu osoba uzupełnia adres i telefon w „Moje ustawienia e-Zdrowie”. Po wyłączeniu takie recepty są blokowane od razu.</span>
                       </span>
                     </label>
                     <DoctorCellsField

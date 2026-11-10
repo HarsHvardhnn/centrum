@@ -61,6 +61,11 @@ const ehealthAdminHelper = {
     return response.data;
   },
 
+  async getErrorLog() {
+    const response = await apiCaller("GET", "/api/ehealth/admin/error-log");
+    return response.data;
+  },
+
   async getQueue() {
     const response = await apiCaller("GET", "/api/ehealth/admin/queue");
     return response.data;
@@ -120,6 +125,37 @@ const ehealthAdminHelper = {
 
   async putMyEwus(payload) {
     const response = await apiCaller("PUT", "/api/ehealth/ewus/me", payload);
+    return response.data;
+  },
+
+  async sendMyChangeRequest(message) {
+    const response = await apiCaller("POST", "/api/ehealth/me/change-request", { message });
+    return response.data;
+  },
+
+  async getMyProfile() {
+    const response = await apiCaller("GET", "/api/ehealth/me/profile");
+    return response.data;
+  },
+
+  async putMyPaAddress(address) {
+    const response = await apiCaller("PUT", "/api/ehealth/me/pa-address", address);
+    return response.data;
+  },
+
+  async putMyDefaultCell(cellId) {
+    const response = await apiCaller("PUT", "/api/ehealth/me/default-cell", { cellId });
+    return response.data;
+  },
+
+  async putMyZlaWorkplace(workplaceId) {
+    const response = await apiCaller("PUT", "/api/ehealth/me/zla-workplace", { workplaceId });
+    return response.data;
+  },
+
+  /** Reads the doctor's data and workplaces from ZUS with the presented certificate; nothing is stored but metadata. */
+  async checkMyZus(signing) {
+    const response = await apiCaller("POST", "/api/ehealth/me/zus-check", { signing });
     return response.data;
   },
 

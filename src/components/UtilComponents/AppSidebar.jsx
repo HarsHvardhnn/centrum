@@ -18,6 +18,7 @@ import {
   PanelLeftOpen,
   MessageCircle,
   Mail,
+  ShieldCheck,
 } from "lucide-react";
 
 const SECTION_HEADING = "text-xs font-bold uppercase tracking-wider text-gray-500";
@@ -233,6 +234,13 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
             label="Ustawienia"
             to="/ustawienia"
             isActive={currentPath === "/ustawienia"}
+            collapsed={collapsed}
+          />
+          <NavItem
+            icon={<ShieldCheck size={ICON_SIZE} strokeWidth={2} />}
+            label="Moje ustawienia e-Zdrowie"
+            to="/moje-ustawienia-e-zdrowie"
+            isActive={currentPath === "/moje-ustawienia-e-zdrowie"}
             collapsed={collapsed}
           />
           {user?.role !== "doctor" && (

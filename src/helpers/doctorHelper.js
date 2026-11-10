@@ -47,7 +47,7 @@ const doctorService = {
       ["pesel", "secondName", "medfileRole", "prescribingRights"].forEach((k) => {
         if (doctorData[k] !== undefined) formData.append(k, doctorData[k] || "");
       });
-      ["noSpecialization", "issuesEDocuments"].forEach((k) => {
+      ["noSpecialization", "issuesEDocuments", "paAllowed"].forEach((k) => {
         if (doctorData[k] !== undefined) formData.append(k, doctorData[k] ? "true" : "false");
       });
       if (doctorData.residentialAddress !== undefined) formData.append("residentialAddress", JSON.stringify(doctorData.residentialAddress));
@@ -254,7 +254,7 @@ const doctorService = {
       ["pesel", "secondName", "medfileRole", "prescribingRights"].forEach((k) => {
         if (updateData[k] !== undefined) formData.append(k, updateData[k] || "");
       });
-      ["noSpecialization", "issuesEDocuments"].forEach((k) => {
+      ["noSpecialization", "issuesEDocuments", "paAllowed"].forEach((k) => {
         if (updateData[k] !== undefined) formData.append(k, updateData[k] ? "true" : "false");
       });
       if (updateData.residentialAddress !== undefined) formData.append("residentialAddress", JSON.stringify(updateData.residentialAddress));

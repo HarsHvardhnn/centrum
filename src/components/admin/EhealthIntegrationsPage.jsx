@@ -1,6 +1,7 @@
 import EwusAccountForm from "../ehealth/EwusAccountForm";
 import DoctorEwusPanel from "../ehealth/DoctorEwusPanel";
 import CellsPanel from "../ehealth/CellsPanel";
+import ErrorLogTable from "../ehealth/ErrorLogTable";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -35,10 +36,6 @@ const ORG_FIELD_LABELS = [
   ["rpwdl", "Numer księgi RPWDL (część I)", "000000928201"],
   ["rpwdlUnit", "Jednostka organizacyjna (część V)", "np. 01"],
   ["unitName", "Nazwa jednostki", ""],
-  ["rpwdlCell", "Komórka organizacyjna (część VII)", "np. 001"],
-  ["cellName", "Nazwa komórki", ""],
-  ["specialityCode", "Kod specjalności komórki (część VIII)", "np. 1220"],
-  ["speciality", "Specjalność komórki", ""],
   ["name", "Nazwa podmiotu", ""],
   ["regon", "REGON", ""],
   ["nip", "NIP", ""],
@@ -51,6 +48,36 @@ const ORG_FIELD_LABELS = [
   ["nfzDepartment", "Oddział NFZ (2 cyfry)", "np. 07"],
   ["nfzContract", "Numer umowy z NFZ (opcjonalnie)", "np. 01-06-02336-20-03/06"],
 ];
+
+// Checksums the Polish registers use (NIP, REGON); the same rules the briefs ask for.
+const digits = (v) => String(v || "").replace(/\D/g, "");
+const nipOk = (v) => {
+  const d = digits(v);
+  if (d.length !== 10) return false;
+  const w = [6, 5, 7, 2, 3, 4, 5, 6, 7];
+  const sum = w.reduce((a, x, i) => a + x * Number(d[i]), 0) % 11;
+  return sum !== 10 && sum === Number(d[9]);
+};
+const regonOk = (v) => {
+  const d = digits(v);
+  if (d.length === 9) {
+    const w = [8, 9, 2, 3, 4, 5, 6, 7];
+    const sum = w.reduce((a, x, i) => a + x * Number(d[i]), 0) % 11;
+    return (sum === 10 ? 0 : sum) === Number(d[8]);
+  }
+  return d.length === 14;
+};
+function validateEntity(org = {}) {
+  const problems = [];
+  if (!String(org.name || "").trim()) problems.push("Podaj nazwę podmiotu.");
+  if (org.nip && !nipOk(org.nip)) problems.push("NIP: 10 cyfr z poprawną sumą kontrolną.");
+  if (org.regon && !regonOk(org.regon)) problems.push("REGON: 9 cyfr (z sumą kontrolną) albo 14 cyfr jednostki.");
+  if (org.rpwdl && digits(org.rpwdl).length !== 12) problems.push("Numer księgi rejestrowej (RPWDL): 12 cyfr.");
+  if (org.rpwdlUnit && !/^\d{2}$/.test(String(org.rpwdlUnit).trim())) problems.push("Kod jednostki (część V): 2 cyfry.");
+  if (org.postalCode && !/^\d{2}-\d{3}$/.test(String(org.postalCode).trim())) problems.push("Kod pocztowy: 00-000.");
+  if (org.phone && !/^\+48\d{9}$/.test(String(org.phone).replace(/\s/g, ""))) problems.push("Telefon: +48 i 9 cyfr.");
+  return problems;
+}
 
 const emptyEnv = () => ({
   org: {},
@@ -79,7 +106,7 @@ function fileToBase64(file) {
 
 const EhealthIntegrationsPage = () => {
   const { showLoader, hideLoader } = useLoader();
-  const [tab, setTab] = useState("credentials");
+  const [tab, setTab] = useState("connection");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeEnvironment, setActiveEnvironment] = useState("test");
@@ -113,7 +140,9 @@ const EhealthIntegrationsPage = () => {
   const [oidRoot, setOidRoot] = useState("");
   const [tlsFile, setTlsFile] = useState(null);
   const [wssFile, setWssFile] = useState(null);
-  const [p1Password, setP1Password] = useState("");
+  const [tlsPassword, setTlsPassword] = useState("");
+  const [wssPassword, setWssPassword] = useState("");
+  const [notifyEmail, setNotifyEmail] = useState("");
   const [zusFile, setZusFile] = useState(null);
   const [zusPassword, setZusPassword] = useState("");
   const [ewusForm, setEwusForm] = useState({
@@ -175,6 +204,7 @@ const EhealthIntegrationsPage = () => {
       if (d.licensePolicy) {
         setWarningPercent(d.licensePolicy.warningPercent || 80);
         setOverCapMode(d.licensePolicy.overCapMode || {});
+        setNotifyEmail(d.licensePolicy.notifyEmail || "");
       }
       if (doctorsRes?.success) {
         setLicenseDoctors(doctorsRes.data?.doctors || []);
@@ -199,6 +229,11 @@ const EhealthIntegrationsPage = () => {
   }, []);
 
   const handleSaveCredentials = async () => {
+    const problems = validateEntity(envForm.org || {});
+    if (problems.length) {
+      toast.error(problems.join(" "));
+      return;
+    }
     try {
       showLoader();
       const payload = {
@@ -270,7 +305,7 @@ const EhealthIntegrationsPage = () => {
       showLoader();
       const res = await ehealthAdminHelper.saveLicenses({
         licenseCaps,
-        licensePolicy: { warningPercent, overCapMode },
+        licensePolicy: { warningPercent, overCapMode, notifyEmail },
       });
       if (!res?.success) {
         throw new Error(res?.error?.message || "Save failed");
@@ -311,6 +346,13 @@ const EhealthIntegrationsPage = () => {
     }
   };
 
+  const holdersOf = (service) => {
+    const list = licenseDoctors
+      .filter((d) => d.usage?.some((u) => u.service === service))
+      .map((d) => `${d.name} (${d.usage.find((u) => u.service === service).requestCount || 1}×)`);
+    return list.length ? list.join(", ") : "nikt jeszcze w tym miesiącu";
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex items-center mb-6">
@@ -340,24 +382,69 @@ const EhealthIntegrationsPage = () => {
         </div>
       )}
 
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-1 mb-6 border-b border-gray-200">
         <button
           type="button"
-          onClick={() => setTab("credentials")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${
-            tab === "credentials" ? "bg-teal-700 text-white" : "bg-gray-100 text-gray-700"
+          onClick={() => setTab("connection")}
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+            tab === "connection" ? "border-teal-700 text-teal-800" : "border-transparent text-gray-600 hover:text-gray-900"
           }`}
         >
-          Poświadczenia
+          Połączenie
         </button>
         <button
           type="button"
-          onClick={() => setTab("licenses")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${
-            tab === "licenses" ? "bg-teal-700 text-white" : "bg-gray-100 text-gray-700"
+          onClick={() => setTab("entity")}
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+            tab === "entity" ? "border-teal-700 text-teal-800" : "border-transparent text-gray-600 hover:text-gray-900"
           }`}
         >
-          Licencje
+          Podmiot i certyfikaty
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("ewus")}
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+            tab === "ewus" ? "border-teal-700 text-teal-800" : "border-transparent text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          eWUŚ
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("cells")}
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+            tab === "cells" ? "border-teal-700 text-teal-800" : "border-transparent text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          Komórki organizacyjne
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("access")}
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+            tab === "access" ? "border-teal-700 text-teal-800" : "border-transparent text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          Dostęp lekarzy
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("licences")}
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+            tab === "licences" ? "border-teal-700 text-teal-800" : "border-transparent text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          Licencje i limity
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("errors")}
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${
+            tab === "errors" ? "border-teal-700 text-teal-800" : "border-transparent text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          Dziennik błędów
         </button>
       </div>
 
@@ -365,8 +452,10 @@ const EhealthIntegrationsPage = () => {
         <div className="flex justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-500" />
         </div>
-      ) : tab === "credentials" ? (
+      ) : ["connection", "entity", "ewus", "cells"].includes(tab) ? (
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 space-y-6">
+          {(tab === "connection") && (
+            <>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Środowisko</label>
             <div className="flex gap-2">
@@ -425,19 +514,52 @@ const EhealthIntegrationsPage = () => {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tryb wystawiania</label>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setLiveSendEnabled(false)}
+                className={`px-4 py-2 rounded-lg text-sm ${!liveSendEnabled ? "bg-teal-700 text-white" : "bg-gray-100 text-gray-700"}`}
+              >
+                Tylko sprawdzanie
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (liveSendEnabled) return;
+                  if (window.confirm("Wystawianie na żywo wysyła dokumenty do pacjentów i do P1. Włączyć?")) setLiveSendEnabled(true);
+                }}
+                className={`px-4 py-2 rounded-lg text-sm ${liveSendEnabled ? "bg-red-600 text-white" : "bg-gray-100 text-gray-700"}`}
+              >
+                Wystawianie na żywo
+              </button>
+              {liveSendEnabled && <span className="rounded bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-700">NA ŻYWO</span>}
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Domyślnie „Tylko sprawdzanie”: dokument jest weryfikowany, ale nic nie trafia do pacjenta. Zmiana zapisuje się przyciskiem „Zapisz”.
+            </p>
+          </div>
+
+            </>
+          )}
+          {(tab === "entity") && (
+            <>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Organization UUID (opcjonalnie)
+              Identyfikator w Medfile (UUID organizacji)
             </label>
             <input
               type="text"
-              value={envForm.organizationUuid}
-              onChange={(e) => setEnvForm({ ...envForm, organizationUuid: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              autoComplete="off"
+              readOnly
+              value={envForm.organizationUuid || ""}
+              placeholder="Nadaje Medfile po wysłaniu danych organizacji"
+              className="w-full p-3 border border-gray-200 bg-gray-50 rounded-lg text-gray-600"
             />
+            <label className="mt-3 block text-sm font-medium text-gray-700">OID przychodni</label>
+            <p className="text-xs text-gray-500">Numer OID przychodzi e-mailem z P1 po wygenerowaniu certyfikatów. Format: 2.16.840.1.113883.3.4424.2.7.N</p>
             <input
               type="text"
-              placeholder="OID P1 (oidRoot) z maila przy certyfikatach"
+              placeholder="np. 2.16.840.1.113883.3.4424.2.7.153506"
               value={oidRoot}
               onChange={(e) => setOidRoot(e.target.value)}
               className="mt-2 w-full p-2 border border-gray-300 rounded-lg text-sm"
@@ -466,12 +588,12 @@ const EhealthIntegrationsPage = () => {
           </div>
 
           <div className="rounded-lg border border-gray-200 p-3">
-            <p className="text-sm font-medium text-gray-700">Dane organizacji i miejsca pracy (jednostka / komórka)</p>
+            <p className="text-sm font-medium text-gray-700">Dane podmiotu i jednostki</p>
             <p className="mt-1 text-xs text-gray-500">
-              Numery z rejestru RPWDL wystawcy. Po zapisaniu ustawień kliknij „Wyślij dane organizacji do Medfile”.
+              Numery z rejestru RPWDL. Komórki organizacyjne dodajesz w osobnej zakładce. Po zapisaniu kliknij „Wyślij dane organizacji do Medfile”.
             </p>
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {ORG_FIELD_LABELS.map(([key, label, placeholder]) => (
+              {ORG_FIELD_LABELS.filter(([key]) => !["nfzDepartment", "nfzContract"].includes(key)).map(([key, label, placeholder]) => (
                 <label key={key} className="block text-xs text-gray-600">
                   {label}
                   <input
@@ -487,63 +609,35 @@ const EhealthIntegrationsPage = () => {
                 </label>
               ))}
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Practitioner UUID (lekarz w API, nie konto HIS)
-            </label>
-            <input
-              type="text"
-              value={envForm.practitionerUuid}
-              onChange={(e) => setEnvForm({ ...envForm, practitionerUuid: e.target.value })}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-              autoComplete="off"
-            />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
-              <input
-                placeholder="Imię"
-                value={doctorForm.firstName}
-                onChange={(e) => setDoctorForm({ ...doctorForm, firstName: e.target.value })}
-                className="p-2 border rounded-lg text-sm"
-              />
-              <input
-                placeholder="Nazwisko"
-                value={doctorForm.lastName}
-                onChange={(e) => setDoctorForm({ ...doctorForm, lastName: e.target.value })}
-                className="p-2 border rounded-lg text-sm"
-              />
-              <input
-                placeholder="PWZ (NPWZ)"
-                value={doctorForm.npwz}
-                onChange={(e) => setDoctorForm({ ...doctorForm, npwz: e.target.value })}
-                className="p-2 border rounded-lg text-sm"
-              />
+            <div className="mt-3 border-t border-gray-100 pt-3">
+              <label className="flex items-center gap-2 text-sm text-gray-800">
+                <input
+                  type="checkbox"
+                  checked={envForm.org?.hasNfz === "true"}
+                  onChange={(e) => setEnvForm({ ...envForm, org: { ...(envForm.org || {}), hasNfz: e.target.checked ? "true" : "" } })}
+                />
+                Przychodnia ma umowę z NFZ
+              </label>
+              <p className="text-xs text-gray-500">
+                Domyślnie wyłączone: placówka prywatna bez kontraktu, recepty refundowane wystawia lekarz na własny numer PWZ. Gdy wyłączone, oddział i numer umowy nie są wymagane ani wysyłane.
+              </p>
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {[["nfzDepartment", "Oddział NFZ (01–16)", "np. 07"], ["nfzContract", "Numer umowy z NFZ", "np. 01-06-02336-20-03/06"]].map(([key, label, ph]) => (
+                  <label key={key} className="block text-xs text-gray-600">
+                    {label}
+                    <input
+                      type="text"
+                      disabled={envForm.org?.hasNfz !== "true"}
+                      value={envForm.org?.[key] || ""}
+                      placeholder={ph}
+                      onChange={(e) => setEnvForm({ ...envForm, org: { ...(envForm.org || {}), [key]: e.target.value } })}
+                      className="mt-1 w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-400"
+                      autoComplete="off"
+                    />
+                  </label>
+                ))}
+              </div>
             </div>
-            <button
-              type="button"
-              disabled={creatingDoc}
-              onClick={async () => {
-                try {
-                  setCreatingDoc(true);
-                  const res = await ehealthAdminHelper.createPractitioner({
-                    firstName: doctorForm.firstName,
-                    lastName: doctorForm.lastName,
-                    npwz: doctorForm.npwz,
-                  });
-                  if (!res?.success) throw new Error(res?.error?.message || "Błąd");
-                  setEnvForm({ ...envForm, practitionerUuid: res.data.practitionerUuid || envForm.practitionerUuid });
-                  toast.success("Lekarz utworzony w Medfile");
-                } catch (err) {
-                  toast.error(err.message || "Nie udało się utworzyć lekarza");
-                } finally {
-                  setCreatingDoc(false);
-                }
-              }}
-              className="mt-2 text-sm text-teal-700 hover:underline"
-            >
-              {creatingDoc ? "Tworzę…" : "Utwórz lekarza przez API"}
-            </button>
           </div>
 
           <div className="border border-gray-100 rounded-lg p-4 space-y-3">
@@ -553,7 +647,7 @@ const EhealthIntegrationsPage = () => {
             <p className="text-xs text-gray-500">
               Status: TLS {facilityTlsStatus} · WSS {facilityWssStatus}. Pliki nie są zapisywane w CM7MED.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <label className="text-xs text-gray-600">
                 TLS .p12
                 <input type="file" className="block mt-1 text-sm" onChange={(e) => setTlsFile(e.target.files?.[0] || null)} />
@@ -564,9 +658,17 @@ const EhealthIntegrationsPage = () => {
               </label>
               <input
                 type="password"
-                placeholder="Hasło do certyfikatów"
-                value={p1Password}
-                onChange={(e) => setP1Password(e.target.value)}
+                placeholder="Hasło do TLS"
+                value={tlsPassword}
+                onChange={(e) => setTlsPassword(e.target.value)}
+                className="p-2 border rounded-lg text-sm"
+                autoComplete="new-password"
+              />
+              <input
+                type="password"
+                placeholder="Hasło do WSS"
+                value={wssPassword}
+                onChange={(e) => setWssPassword(e.target.value)}
                 className="p-2 border rounded-lg text-sm"
                 autoComplete="new-password"
               />
@@ -575,8 +677,8 @@ const EhealthIntegrationsPage = () => {
               type="button"
               disabled={uploadingCerts}
               onClick={async () => {
-                if (!tlsFile || !wssFile || !p1Password) {
-                  toast.error("Wskaż TLS, WSS i hasło");
+                if (!tlsFile || !wssFile || !tlsPassword || !wssPassword) {
+                  toast.error("Wskaż pliki TLS i WSS oraz hasło do każdego z nich");
                   return;
                 }
                 try {
@@ -588,13 +690,14 @@ const EhealthIntegrationsPage = () => {
                   const res = await ehealthAdminHelper.uploadP1Certificates({
                     tlsCertificate,
                     wssCertificate,
-                    tlsPassword: p1Password,
-                    wssPassword: p1Password,
+                    tlsPassword,
+                    wssPassword,
                   });
                   if (!res?.success) throw new Error(res?.error?.message || "Błąd");
                   setFacilityTlsStatus("present");
                   setFacilityWssStatus("present");
-                  setP1Password("");
+                  setTlsPassword("");
+                  setWssPassword("");
                   toast.success("Certyfikaty P1 wysłane do API");
                 } catch (err) {
                   toast.error(err.message || "Nie udało się wysłać certyfikatów P1");
@@ -608,67 +711,28 @@ const EhealthIntegrationsPage = () => {
             </button>
           </div>
 
-          <div className="border border-gray-100 rounded-lg p-4 space-y-3">
-            <p className="text-sm font-medium text-gray-800">Certyfikat ZUS (.pfx) — eZLA</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <input type="file" className="text-sm" onChange={(e) => setZusFile(e.target.files?.[0] || null)} />
-              <input
-                type="password"
-                placeholder="Hasło .pfx"
-                value={zusPassword}
-                onChange={(e) => setZusPassword(e.target.value)}
-                className="p-2 border rounded-lg text-sm"
-                autoComplete="new-password"
-              />
-            </div>
-            <button
-              type="button"
-              disabled={uploadingCerts}
-              onClick={async () => {
-                if (!zusFile || !zusPassword) {
-                  toast.error("Wskaż .pfx i hasło");
-                  return;
-                }
-                try {
-                  setUploadingCerts(true);
-                  const certificate = await fileToBase64(zusFile);
-                  const res = await ehealthAdminHelper.uploadZusCertificate({
-                    certificate,
-                    password: zusPassword,
-                  });
-                  if (!res?.success) throw new Error(res?.error?.message || "Błąd");
-                  setZusPassword("");
-                  toast.success("Certyfikat ZUS wysłany do API");
-                } catch (err) {
-                  toast.error(err.message || "Nie udało się wysłać certyfikatu ZUS");
-                } finally {
-                  setUploadingCerts(false);
-                }
-              }}
-              className="text-sm text-teal-700 hover:underline"
-            >
-              Wyślij ZUS .pfx do API
-            </button>
-          </div>
-
+            </>
+          )}
+          {(tab === "cells") && (
+            <>
           <div className="border border-gray-100 rounded-lg p-4 space-y-3">
             <CellsPanel />
           </div>
 
+            </>
+          )}
+          {(tab === "ewus") && (
+            <>
           <div className="border border-gray-100 rounded-lg p-4 space-y-3">
             <p className="text-sm font-medium text-gray-800">eWUŚ — konto NFZ (Portal Świadczeniodawcy)</p>
             <EwusAccountForm scope="facility" />
             <div className="border-t border-gray-100 pt-3"><DoctorEwusPanel /></div>
-            <label className="flex items-center gap-2 text-sm text-red-800">
-              <input
-                type="checkbox"
-                checked={liveSendEnabled}
-                onChange={(e) => setLiveSendEnabled(e.target.checked)}
-              />
-              Wystawianie na żywo (P1) — tylko uzgodniony test issue + cancel. Domyślnie wyłączone (tylko validate).
-            </label>
           </div>
 
+            </>
+          )}
+          {(tab === "connection" || tab === "entity") && (
+            <>
           <div className="flex flex-wrap gap-3 items-center">
             <button
               type="button"
@@ -689,6 +753,10 @@ const EhealthIntegrationsPage = () => {
             </button>
           </div>
 
+            </>
+          )}
+          {(tab === "connection") && (
+            <>
           {lastConnectionTest?.at && (
             <div
               className={`p-3 rounded-lg flex items-start gap-2 text-sm ${
@@ -710,9 +778,13 @@ const EhealthIntegrationsPage = () => {
               </div>
             </div>
           )}
+            </>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 space-y-6">
+          {tab === "licences" && (
+            <>
           <div className="flex items-center gap-2 text-gray-700">
             <Shield size={18} className="text-teal-700" />
             <span className="text-sm">
@@ -750,12 +822,12 @@ const EhealthIntegrationsPage = () => {
                         onChange={(e) => setOverCapMode({ ...overCapMode, [service]: e.target.value })}
                         className="mt-1 w-full p-2 border border-gray-300 rounded-lg"
                       >
-                        <option value="notify">Tylko powiadom</option>
-                        <option value="approval">Wymagaj zgody</option>
-                        <option value="block">Blokuj</option>
+                        <option value="notify">Pozwól – dodatkowo płatne</option>
+                        <option value="approval">Wymagaj zgody administratora</option>
+                        <option value="block">Blokuj kolejne osoby</option>
                       </select>
                     </label>
-                    Użyte: <strong>{snap?.uniqueDoctors ?? 0}</strong>
+                    Użyte: <strong>{snap?.uniqueDoctors ?? 0}</strong>{snap?.paidOverPool > 0 && <span className="ml-2 font-medium text-red-600">+{snap.paidOverPool} płatne</span>}
                     {snap?.cap > 0 && (
                       <>
                         {" "}/ {snap.cap}
@@ -770,6 +842,7 @@ const EhealthIntegrationsPage = () => {
                     {(!snap?.cap || snap.cap === 0) && (
                       <span className="text-gray-400"> (bez limitu)</span>
                     )}
+                    <div className="text-xs text-gray-500">Licencję mają: {holdersOf(service)}</div>
                   </div>
                 </div>
               );
@@ -786,6 +859,18 @@ const EhealthIntegrationsPage = () => {
               onChange={(e) => setWarningPercent(Math.min(100, Math.max(1, parseInt(e.target.value, 10) || 80)))}
               className="mt-1 w-full p-2 border border-gray-300 rounded-lg"
             />
+          </label>
+
+          <label className="block text-sm text-gray-700 max-w-md">
+            E-mail do powiadomień
+            <input
+              type="email"
+              value={notifyEmail}
+              onChange={(e) => setNotifyEmail(e.target.value)}
+              placeholder="np. administrator@przychodnia.pl"
+              className="mt-1 w-full p-2 border border-gray-300 rounded-lg"
+            />
+            <span className="block text-xs text-gray-500">Wiadomość przychodzi po przekroczeniu progu ostrzeżenia oraz przy pierwszej licencji ponad pulę (raz w miesiącu dla usługi).</span>
           </label>
 
           <div className="flex flex-wrap gap-2">
@@ -819,6 +904,10 @@ const EhealthIntegrationsPage = () => {
             </button>
           </div>
 
+            </>
+          )}
+          {tab === "access" && (
+            <>
           <div className="pt-2">
             <h3 className="text-sm font-semibold text-gray-800 mb-1">Dostęp lekarzy</h3>
             <p className="text-xs text-gray-500 mb-3">
@@ -834,13 +923,15 @@ const EhealthIntegrationsPage = () => {
                         {label}
                       </th>
                     ))}
+                    <th className="py-2 px-2 font-medium whitespace-nowrap">Certyfikat ZUS</th>
+                    <th className="py-2 px-2 font-medium whitespace-nowrap">Konto eWUŚ</th>
                     <th className="py-2 pl-2 font-medium">Użycie w miesiącu</th>
                   </tr>
                 </thead>
                 <tbody>
                   {licenseDoctors.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-4 text-gray-500">
+                      <td colSpan={9} className="py-4 text-gray-500">
                         Brak aktywnych lekarzy.
                       </td>
                     </tr>
@@ -940,6 +1031,30 @@ const EhealthIntegrationsPage = () => {
                           </td>
                         );
                       })}
+                      <td className="py-2 px-2 text-xs whitespace-nowrap">
+                        {!["LEK", "LEKD"].includes(doctor.medfileRole || "LEK") ? (
+                          <span className="text-gray-400">nie dotyczy</span>
+                        ) : !doctor.zusCert ? (
+                          <span className="rounded bg-rose-50 px-2 py-0.5 text-rose-700">brak</span>
+                        ) : new Date(doctor.zusCert.validTo).getTime() < Date.now() ? (
+                          <span className="rounded bg-rose-50 px-2 py-0.5 text-rose-700">wygasł</span>
+                        ) : new Date(doctor.zusCert.validTo).getTime() - Date.now() < 30 * 86400000 ? (
+                          <span className="rounded bg-amber-50 px-2 py-0.5 text-amber-800">wygasa {new Date(doctor.zusCert.validTo).toLocaleDateString("pl-PL")}</span>
+                        ) : (
+                          <span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-700">sprawdzony do {new Date(doctor.zusCert.validTo).toLocaleDateString("pl-PL")}</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-2 text-xs whitespace-nowrap">
+                        {doctor.access?.eligibility === false ? (
+                          <span className="text-gray-400">wyłączone</span>
+                        ) : !doctor.ewusAccount?.configured ? (
+                          <span className="rounded bg-rose-50 px-2 py-0.5 text-rose-700">brak</span>
+                        ) : doctor.ewusAccount.mode === "auto" && !doctor.ewusAccount.hasTotp ? (
+                          <span className="rounded bg-amber-50 px-2 py-0.5 text-amber-800">brak klucza MFA</span>
+                        ) : (
+                          <span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-700">konto uzupełnione</span>
+                        )}
+                      </td>
                       <td className="py-2 pl-2 text-gray-600">
                         {doctor.usage?.length
                           ? doctor.usage.map((row) => (
@@ -973,14 +1088,12 @@ const EhealthIntegrationsPage = () => {
             </div>
           </div>
 
+            </>
+          )}
+          {tab === "errors" && (
+            <>
           <div className="pt-4 space-y-2">
-            <h3 className="text-sm font-semibold text-gray-800">Kolejka błędów i ponowień</h3>
-            {queueRows.length === 0 && <p className="text-xs text-gray-500">Brak dokumentów do ponowienia.</p>}
-            {queueRows.slice(0, 20).map((row) => (
-              <div key={row.id} className="text-xs text-gray-700">
-                {row.service} · {row.status} · {row.error?.message || row.externalId || row.id}
-              </div>
-            ))}
+            <ErrorLogTable />
             <h3 className="text-sm font-semibold text-gray-800 pt-2">Audyt integracji</h3>
             {auditRows.slice(0, 15).map((row, index) => (
               <div key={`${row.correlationId}-${index}`} className="text-xs text-gray-600">
@@ -996,6 +1109,8 @@ const EhealthIntegrationsPage = () => {
               </div>
             ))}
           </div>
+            </>
+          )}
         </div>
       )}
     </div>
