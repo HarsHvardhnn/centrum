@@ -2088,13 +2088,13 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
         )}
       </div>
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 overflow-hidden">
-        <div className="lg:col-span-5 overflow-y-auto space-y-3">
-          <section className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+        <div className="lg:col-span-5 overflow-y-auto flex flex-col gap-3">
+          <section className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-xl bg-emerald-100 text-[#0D5C46] flex items-center justify-center"><ShieldCheck size={22} /></div>
               <div>
-                <div className="text-[10px] font-black uppercase tracking-wider text-emerald-800">Zarejestrowano</div>
-                <h2 className="font-bold text-slate-900">{rows.length > 1 ? `Wystawiono ${rows.length} e-recepty` : "e-Recepta wystawiona"}</h2>
+                <div className="text-[10px] font-black uppercase tracking-wider text-emerald-800">{rows.some((row) => accessCodeOf(row.result)) ? "Przyjęto w P1" : "Przekazano do P1"}</div>
+                <h2 className="font-bold text-slate-900">{rows.some((row) => accessCodeOf(row.result)) ? (rows.length > 1 ? `Wystawiono ${rows.length} e-recepty` : "e-Recepta wystawiona") : (rows.length > 1 ? `Wysłano ${rows.length} e-recepty — czekamy na kod z P1` : "e-Recepta wysłana — czekamy na kod z P1")}</h2>
               </div>
             </div>
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{rows.length > 1 ? "Kody dostępu dla pacjenta" : "Kod dostępu dla pacjenta"}</p>
@@ -2127,7 +2127,7 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
               </div>
             )}
           </section>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mt-auto sticky bottom-0 bg-slate-100 border-t border-slate-200 py-3 shrink-0">
             <button type="button" onClick={onAnother} className="px-3 py-2 rounded-lg bg-[#0D5C46] text-white text-sm inline-flex items-center gap-1"><Plus size={14} /> Wystaw kolejne</button>
             <button type="button" onClick={onClose} className="px-3 py-2 rounded-lg border text-sm">Wróć do wizyty</button>
           </div>
