@@ -49,9 +49,10 @@ export const ProtectedRoute = ({ allowedRoles, redirectPath = "/login" }) => {
   const hasRequiredRole =
     user.role === "admin" || !allowedRoles || allowedRoles.includes(user.role);
 
-  // if (!hasRequiredRole) {
-  //   return <NotFound404 />;
-  // }
+  // A role that is not allowed on this page gets the "not found" page, never the page itself.
+  if (!hasRequiredRole) {
+    return <NotFound404 />;
+  }
 
   // User is authenticated and authorized
   return <Outlet />;

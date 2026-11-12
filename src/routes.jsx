@@ -194,44 +194,69 @@ const routes = createBrowserRouter([
       {
         element: <MainLayout />,
         children: [
-          { path: "/lekarze", element: <BillingPage /> },
+          // ---- every staff role
           { path: "/lekarze/wizyty/:id", element: <DoctorsPage /> },
           { path: "/szczegoly-lekarza/:id", element: <DoctorDetailPage /> },
           { path: "/pacjenci", element: <LabAppointments key="patients" clinic={false} /> },
           { path: "/klinika", element: <LabAppointments key="clinic" clinic={true} /> },
-          { path: "/wizyta/utworz", element: <AppointmentPage /> },
           { path: "/szczegoly-pacjenta/:id", element: <PatientDetailsGuard /> },
           { path: "/administracja", element: <MedicalDashboard /> },
-          { path: "/administracja/sms", element: <UserMessaging /> },
-          { path: "/lekarz/utworz", element: <Navigate to="/lekarze?dodaj=1" replace /> },
-          { path: "/administracja/konta", element: <UserManagement /> },
-          { path: "/administracja/uslugi", element: <ServicesManagement /> },
-          { path: "/administracja/aktualnosci", element: <NewsManagement /> },
-          { path: "/lekarz/ustawienia", element: <DoctorScheduleSettings /> },
-          { path: "/moje-ustawienia-e-zdrowie", element: <MyEhealthSettings /> },
           { path: "/administracja/profil", element: <ProfilePage /> },
           { path: "/administracja/kalendarz", element: <DoctorCalendar /> },
-          {
-            path: "/centrum-pomocy",
-            element: <ChatComponent />,
-          },
+          { path: "/centrum-pomocy", element: <ChatComponent /> },
           { path: "/administracja/dane", element: <ReportsHub /> },
-          
           { path: "/administracja/rozliczenia", element: <BillingManagement /> },
           { path: "/administracja/rozliczenia/szczegoly/:billId", element: <BillDetails /> },
-          { path: "/administracja/wiadomosci-kontaktowe", element: <Adminmsgs /> },
-          { path: "/administracja/konfiguracja-ip", element: <IPConfigPage /> },
           { path: "/administracja/bezpieczenstwo/2fa", element: <TwoFactorSettings /> },
-          { path: "/administracja/konfiguracja-wizyt", element: <AppointmentConfigPage /> },
-          { path: "/administracja/ustawienia-jwt", element: <JWTSettingsPage /> },
-          { path: "/administracja/trwale-usuwanie", element: <PermanentDeletePage /> },
-          { path: "/administracja/integracje-ezdrowie", element: <EhealthIntegrationsPage /> },
-          { path: "/e-zdrowie", element: <EhealthHistoryPage /> },
           { path: "/ustawienia", element: <SystemSettingsPage /> },
-          { path: "/administracja/szablony-dokumentow", element: <DocumentTemplatesPlaceholder /> },
-          { path: "/administracja/repo-dokumentow", element: <ClinicDocumentTemplatesPage /> },
           { path: "/administracja/zlecenia-wewnetrzne", element: <InternalOrdersHistory /> },
-          { path: "/moje-wzory-dokumentow", element: <ClinicDocumentTemplatesPage personal /> },
+
+          // ---- administrator only
+          {
+            element: <ProtectedRoute allowedRoles={["admin"]} />,
+            children: [
+              { path: "/administracja/konta", element: <UserManagement /> },
+              { path: "/administracja/uslugi", element: <ServicesManagement /> },
+              { path: "/administracja/aktualnosci", element: <NewsManagement /> },
+              { path: "/administracja/konfiguracja-ip", element: <IPConfigPage /> },
+              { path: "/administracja/konfiguracja-wizyt", element: <AppointmentConfigPage /> },
+              { path: "/administracja/ustawienia-jwt", element: <JWTSettingsPage /> },
+              { path: "/administracja/trwale-usuwanie", element: <PermanentDeletePage /> },
+              { path: "/administracja/integracje-ezdrowie", element: <EhealthIntegrationsPage /> },
+              { path: "/administracja/repo-dokumentow", element: <ClinicDocumentTemplatesPage /> },
+            ],
+          },
+
+          // ---- administrator and reception (not doctors)
+          {
+            element: <ProtectedRoute allowedRoles={["admin", "receptionist"]} />,
+            children: [
+              { path: "/lekarze", element: <BillingPage /> },
+              { path: "/lekarz/utworz", element: <Navigate to="/lekarze?dodaj=1" replace /> },
+              { path: "/wizyta/utworz", element: <AppointmentPage /> },
+              { path: "/administracja/sms", element: <UserMessaging /> },
+              { path: "/administracja/wiadomosci-kontaktowe", element: <Adminmsgs /> },
+            ],
+          },
+
+          // ---- administrator and doctors (not reception)
+          {
+            element: <ProtectedRoute allowedRoles={["admin", "doctor"]} />,
+            children: [
+              { path: "/e-zdrowie", element: <EhealthHistoryPage /> },
+              { path: "/administracja/szablony-dokumentow", element: <DocumentTemplatesPlaceholder /> },
+            ],
+          },
+
+          // ---- a doctor's own pages
+          {
+            element: <ProtectedRoute allowedRoles={["doctor"]} />,
+            children: [
+              { path: "/lekarz/ustawienia", element: <DoctorScheduleSettings /> },
+              { path: "/moje-ustawienia-e-zdrowie", element: <MyEhealthSettings /> },
+              { path: "/moje-wzory-dokumentow", element: <ClinicDocumentTemplatesPage personal /> },
+            ],
+          },
         ],
       },
     ],
