@@ -14,15 +14,30 @@ const PENDING_TTL_MS = 2 * 60 * 1000;
 let pending = null;
 let host = null;
 
-/** Does the logged-in user have to present a certificate? (doctors yes, admin/reception no) */
-export function signingRequired() {
+/** { required, stored }: doctors sign; "stored" means the certificate was uploaded once and only the PIN is asked for. */
+export function signingStatus() {
   if (!statusPromise || Date.now() - statusAt > STATUS_TTL_MS) {
     statusAt = Date.now();
     statusPromise = apiCaller("GET", "/api/ehealth/signing/status")
-      .then((res) => Boolean(res?.data?.data?.required))
-      .catch(() => false);
+      .then((res) => ({ required: Boolean(res?.data?.data?.required), stored: Boolean(res?.data?.data?.stored) }))
+      .catch(() => ({ required: false, stored: false }));
   }
   return statusPromise;
+}
+
+/** Does the logged-in user have to present a certificate? (doctors yes, admin/reception no) */
+export function signingRequired() {
+  return signingStatus().then((s) => s.required);
+}
+
+/** True when the doctor's certificate is already uploaded: signing then needs only the PIN. */
+export function signingStored() {
+  return signingStatus().then((s) => s.required && s.stored);
+}
+
+/** The signing a dialog just handed over for the next request, without opening a prompt. */
+export function takeProvidedSigning() {
+  return takePending();
 }
 
 export function resetSigningStatus() {

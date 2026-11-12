@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import ehealthAdminHelper from "../../helpers/ehealthAdminHelper";
-import { readCertificateFile } from "./ehealthSigning";
+import { readCertificateFile, resetSigningStatus } from "./ehealthSigning";
 import EwusAccountForm from "./EwusAccountForm";
 
 const inp = "w-full p-2 border border-gray-300 rounded-lg text-sm disabled:bg-gray-100 disabled:text-gray-400";
@@ -36,6 +36,8 @@ export default function MyEhealthSettings() {
   const [pa, setPa] = useState(null);
   const [zusFile, setZusFile] = useState(null);
   const [zusPin, setZusPin] = useState("");
+  const [actionPin, setActionPin] = useState("");
+  const [replacing, setReplacing] = useState(false);
   const [changeOpen, setChangeOpen] = useState(false);
   const [changeText, setChangeText] = useState("");
   const fileRef = useRef(null);
@@ -59,7 +61,7 @@ export default function MyEhealthSettings() {
   const todo = p.readiness.filter((r) => !r.ready).length;
   const cert = p.zus.cert;
   const certTone = !cert ? "red" : cert.state === "expiring" || cert.state === "expired" ? "yellow" : "green";
-  const certText = !cert ? "brak" : cert.state === "expired" ? "wygasł" : cert.state === "expiring" ? "wygasa" : "sprawdzony";
+  const certText = !cert ? "brak" : cert.state === "expired" ? "wygasł" : cert.state === "expiring" ? "wygasa" : p.zus.stored ? "wgrany" : "sprawdzony";
   const paTone = !p.pa.allowed ? "grey" : p.pa.filled ? "green" : "yellow";
   const paText = !p.pa.allowed ? "wyłączone" : p.pa.filled ? "włączone" : "uzupełnij";
   const ewusTone = !p.ewus.enabled ? "grey" : p.ewus.configured || !p.ewus.perDoctor ? "green" : "red";
@@ -93,18 +95,42 @@ export default function MyEhealthSettings() {
     }
   };
 
-  const checkZus = async () => {
+  const resetUpload = () => {
+    setZusPin("");
+    setZusFile(null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  // Upload once: the file and its password go to Medfile and stay there; from now on only a PIN per document.
+  const uploadZus = async () => {
     try {
       const certificate = await readCertificateFile(zusFile);
-      if (!zusPin) throw new Error("Wpisz PIN certyfikatu.");
-      const res = await run(() => ehealthAdminHelper.checkMyZus({ certificate, pin: zusPin }), "Sprawdzono dane w ZUS.");
+      if (!zusPin) throw new Error("Wpisz PIN (hasło) certyfikatu.");
+      const res = await run(() => ehealthAdminHelper.uploadMyZusCertificate({ certificate, pin: zusPin }), "Certyfikat wgrany i sprawdzony w ZUS. Przy dokumentach wystarczy teraz PIN.");
       if (res) {
-        setZusPin("");
-        setZusFile(null);
-        if (fileRef.current) fileRef.current.value = "";
+        resetUpload();
+        setReplacing(false);
+        resetSigningStatus();
+        if (res.warning) toast.warning(res.warning);
       }
     } catch (err) {
       toast.error(errText(err));
+    }
+  };
+
+  const refreshZus = async () => {
+    if (!actionPin) return toast.error("Wpisz PIN certyfikatu.");
+    const res = await run(() => ehealthAdminHelper.refreshMyZus(actionPin), "Dane z ZUS odświeżone.");
+    if (res) setActionPin("");
+  };
+
+  const removeZus = async () => {
+    if (!actionPin) return toast.error("Wpisz PIN certyfikatu, aby go usunąć.");
+    if (!window.confirm("Usunąć certyfikat? Do czasu wgrania nowego e-ZLA i podpis e-skierowań będą zablokowane.")) return;
+    const res = await run(() => ehealthAdminHelper.deleteMyZusCertificate(actionPin), "Certyfikat usunięty.");
+    if (res) {
+      setActionPin("");
+      resetSigningStatus();
     }
   };
 
@@ -203,18 +229,37 @@ export default function MyEhealthSettings() {
 
       {tab === "zus" && (
         <div className="space-y-3">
-          <Card title="Certyfikat ZUS" hint="Plik z pendrive’a i PIN wpisujesz przy podpisie. Tu możesz sprawdzić, czy dane w ZUS zgadzają się z kontem. Plik i PIN nie są zapisywane.">
-            <input ref={fileRef} type="file" accept=".p12,.pfx" onChange={(e) => setZusFile(e.target.files?.[0] || null)} className="block w-full text-sm" />
-            <input type="password" className={inp} placeholder="PIN certyfikatu" value={zusPin} onChange={(e) => setZusPin(e.target.value)} autoComplete="off" />
-            <button type="button" disabled={busy || !zusFile || !zusPin} onClick={checkZus} className="rounded-lg bg-teal-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50">
-              {busy ? "Sprawdzam…" : "Sprawdź dane w ZUS"}
-            </button>
-            {cert && (
-              <p className="text-sm text-gray-700">
-                Wystawiony dla: <b>{cert.owner}</b> · ważny do: <b>{cert.validTo ? new Date(cert.validTo).toLocaleDateString("pl-PL") : "—"}</b>
-                {cert.state === "expiring" && <Badge tone="yellow">wygasa za {cert.daysLeft} dni</Badge>}
-                {cert.state === "expired" && <Badge tone="red">wygasł</Badge>}
-              </p>
+          <Card
+            title="Certyfikat ZUS"
+            hint="Wgrywasz go raz. Plik i hasło trafiają do Medfile i tam zostają — CM7Med nie przechowuje pliku ani hasła. Potem przy każdym dokumencie (e-ZLA, e-skierowanie) wpisujesz tylko PIN."
+          >
+            {p.zus.stored && !replacing ? (
+              <>
+                <p className="text-sm text-gray-800">
+                  <Badge tone={cert?.state === "expired" ? "red" : cert?.state === "expiring" ? "yellow" : "green"}>
+                    {cert?.state === "expired" ? "wygasł" : cert?.state === "expiring" ? `wygasa za ${cert.daysLeft} dni` : "wgrany"}
+                  </Badge>
+                  <span className="ml-2">Wystawiony dla: <b>{cert?.owner || "—"}</b> · ważny do: <b>{cert?.validTo ? new Date(cert.validTo).toLocaleDateString("pl-PL") : "—"}</b></span>
+                </p>
+                <input type="password" className={inp} placeholder="PIN certyfikatu (do odświeżenia lub usunięcia)" value={actionPin} onChange={(e) => setActionPin(e.target.value)} autoComplete="off" />
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" disabled={busy} onClick={refreshZus} className="rounded-lg bg-teal-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Pracuję…" : "Odśwież dane z ZUS"}</button>
+                  <button type="button" disabled={busy} onClick={() => setReplacing(true)} className="rounded-lg border border-teal-700 px-3 py-1.5 text-sm font-semibold text-teal-800">Wymień certyfikat</button>
+                  <button type="button" disabled={busy} onClick={removeZus} className="rounded-lg border border-rose-300 px-3 py-1.5 text-sm font-semibold text-rose-700">Usuń certyfikat</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <input ref={fileRef} type="file" accept=".p12,.pfx" onChange={(e) => setZusFile(e.target.files?.[0] || null)} className="block w-full text-sm" />
+                <input type="password" className={inp} placeholder="PIN (hasło) certyfikatu" value={zusPin} onChange={(e) => setZusPin(e.target.value)} autoComplete="off" />
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" disabled={busy || !zusFile || !zusPin} onClick={uploadZus} className="rounded-lg bg-teal-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50">
+                    {busy ? "Wgrywam i sprawdzam…" : "Wgraj i sprawdź w ZUS"}
+                  </button>
+                  {replacing && <button type="button" onClick={() => { setReplacing(false); resetUpload(); }} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700">Anuluj</button>}
+                </div>
+                <p className="text-xs text-gray-500">Plik .p12 / .pfx musi należeć do Ciebie (numer PESEL w certyfikacie jest porównywany z Twoim kontem). Zapamiętaj PIN — bez niego nie podpiszesz dokumentu.</p>
+              </>
             )}
           </Card>
           {p.zus.compare && (
@@ -234,7 +279,7 @@ export default function MyEhealthSettings() {
           )}
           <Card title="Miejsce wystawiania e-zwolnień" hint="Lista pochodzi z ZUS. Wybierz miejsce, w którym wystawiasz e-ZLA.">
             {p.zus.workplaces.length === 0 ? (
-              <p className="text-sm text-gray-600">Najpierw sprawdź dane w ZUS (certyfikat powyżej).</p>
+              <p className="text-sm text-gray-600">{p.zus.stored ? "Wpisz PIN powyżej i kliknij „Odśwież dane z ZUS”, aby pobrać listę miejsc." : "Najpierw wgraj certyfikat ZUS (powyżej)."}</p>
             ) : (
               <>
                 <select className={inp} value={p.zus.workplaceId} onChange={(e) => run(() => ehealthAdminHelper.putMyZlaWorkplace(e.target.value), "Zapisano miejsce wystawiania.")}>

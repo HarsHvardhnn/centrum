@@ -16,6 +16,7 @@ import {
 import { useLoader } from "../../context/LoaderContext";
 import ehealthAdminHelper from "../../helpers/ehealthAdminHelper";
 
+const ROLE_LABELS = { LEK: "lekarz", LEKD: "lekarz dentysta", FIZJO: "fizjoterapeuta", PIEL: "pielęgniarka" };
 const SERVICE_LABELS = {
   prescription: "e-Recepta",
   drugs: "Baza leków",
@@ -140,6 +141,7 @@ const EhealthIntegrationsPage = () => {
   const [oidRoot, setOidRoot] = useState("");
   const [tlsFile, setTlsFile] = useState(null);
   const [wssFile, setWssFile] = useState(null);
+  const [certInfo, setCertInfo] = useState({ tls: null, wss: null });
   const [tlsPassword, setTlsPassword] = useState("");
   const [wssPassword, setWssPassword] = useState("");
   const [notifyEmail, setNotifyEmail] = useState("");
@@ -187,6 +189,7 @@ const EhealthIntegrationsPage = () => {
       setOidRoot(d.test?.oidRoot || d.production?.oidRoot || "2.16.840.1.113883.3.4424.2.7.153506");
       setFacilityTlsStatus(d.facilityTlsStatus || "missing");
       setFacilityWssStatus(d.facilityWssStatus || "missing");
+      setCertInfo({ tls: d.facilityCertInfo?.tls || null, wss: d.facilityCertInfo?.wss || null });
       setEwusMfaConfigured(Boolean(d.ewusMfaConfigured));
       setLiveSendEnabled(Boolean(d.liveSendEnabled));
       setLastConnectionTest(d.lastConnectionTest || null);
@@ -645,8 +648,30 @@ const EhealthIntegrationsPage = () => {
               Certyfikaty P1 (TLS + WSS) — pliki produkcyjne, wysyłka do API
             </p>
             <p className="text-xs text-gray-500">
-              Status: TLS {facilityTlsStatus} · WSS {facilityWssStatus}. Pliki nie są zapisywane w CM7MED.
+              Pliki i hasła nie są zapisywane w CM7MED. Przed wysyłką sprawdzamy hasło, klucz i ważność każdego pliku; poniżej zostają tylko jawne dane certyfikatu.
             </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {[["TLS", "tls", facilityTlsStatus], ["WSS", "wss", facilityWssStatus]].map(([label, key, status]) => {
+                const info = certInfo[key];
+                const left = info?.notAfter ? Math.ceil((new Date(info.notAfter) - Date.now()) / 86400000) : null;
+                const expired = left !== null && left < 0;
+                return (
+                  <div key={key} className={`rounded-lg border p-3 text-xs ${status !== "present" ? "border-gray-200 bg-gray-50 text-gray-600" : expired ? "border-red-200 bg-red-50 text-red-800" : "border-green-200 bg-green-50 text-green-900"}`}>
+                    <p className="font-semibold">{label}: {status !== "present" ? "brak certyfikatu" : expired ? "WYGASŁ" : "wgrany i sprawdzony"}</p>
+                    {status === "present" && info ? (
+                      <>
+                        <p>Podmiot: {info.name || "—"}</p>
+                        <p>Wystawca: {info.issuer || "—"}</p>
+                        <p>Ważny: {String(info.notBefore).slice(0, 10)} → {String(info.notAfter).slice(0, 10)}{left !== null && !expired ? ` (jeszcze ${left} dni)` : ""}</p>
+                        <p>Sprawdzono: {info.checkedAt ? new Date(info.checkedAt).toLocaleString("pl-PL") : "—"}</p>
+                      </>
+                    ) : status === "present" ? (
+                      <p>Wgrany przed wprowadzeniem sprawdzania — wgraj ponownie, aby zobaczyć dane i ważność.</p>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <label className="text-xs text-gray-600">
                 TLS .p12
@@ -696,11 +721,12 @@ const EhealthIntegrationsPage = () => {
                   if (!res?.success) throw new Error(res?.error?.message || "Błąd");
                   setFacilityTlsStatus("present");
                   setFacilityWssStatus("present");
+                  if (res.data?.certificates) setCertInfo({ tls: res.data.certificates.tls || null, wss: res.data.certificates.wss || null });
                   setTlsPassword("");
                   setWssPassword("");
                   toast.success("Certyfikaty P1 wysłane do API");
                 } catch (err) {
-                  toast.error(err.message || "Nie udało się wysłać certyfikatów P1");
+                  toast.error(err?.response?.data?.error?.message || err?.response?.data?.message || err.message || "Nie udało się wysłać certyfikatów P1");
                 } finally {
                   setUploadingCerts(false);
                 }
@@ -911,7 +937,7 @@ const EhealthIntegrationsPage = () => {
           <div className="pt-2">
             <h3 className="text-sm font-semibold text-gray-800 mb-1">Dostęp lekarzy</h3>
             <p className="text-xs text-gray-500 mb-3">
-              Włączenie usługi nie zużywa licencji. Licznik miesiąca rośnie dopiero przy pierwszym użyciu.
+              Tu włączasz usługi i widzisz stan kont. Dane lekarza (PWZ, PESEL, rola, specjalizacje, komórki, Medfile) edytujesz w Konta użytkowników → Edytuj lekarza. Włączenie usługi nie zużywa licencji.
             </p>
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
@@ -940,82 +966,19 @@ const EhealthIntegrationsPage = () => {
                     <tr key={doctor.id} className="border-b border-gray-100">
                       <td className="py-2 pr-3 text-gray-800">
                         <div className="whitespace-nowrap">{doctor.name}</div>
-                        <input
-                          defaultValue={doctor.npwz || ""}
-                          placeholder="PWZ"
-                          className="mt-1 w-28 p-1 border rounded text-xs"
-                          onBlur={(e) => {
-                            if (e.target.value === (doctor.npwz || "")) return;
-                            ehealthAdminHelper.saveDoctorPractitioner(doctor.id, { npwz: e.target.value });
-                          }}
-                        />
-                        <input
-                          defaultValue={doctor.medfilePractitionerId || ""}
-                          placeholder="ID Medfile"
-                          className="mt-1 w-40 p-1 border rounded text-xs"
-                          onBlur={(e) => {
-                            if (e.target.value === (doctor.medfilePractitionerId || "")) return;
-                            ehealthAdminHelper.saveDoctorPractitioner(doctor.id, {
-                              medfilePractitionerId: e.target.value,
-                            });
-                          }}
-                        />
-                        <div className="mt-1 flex flex-wrap items-center gap-1">
-                          <input
-                            defaultValue={doctor.pesel || ""}
-                            placeholder="PESEL lekarza"
-                            maxLength={11}
-                            className="w-28 p-1 border rounded text-xs"
-                            onBlur={(e) => {
-                              if (e.target.value === (doctor.pesel || "")) return;
-                              ehealthAdminHelper
-                                .saveDoctorPractitioner(doctor.id, { pesel: e.target.value })
-                                .catch((err) => toast.error(err.message || "Nie udało się zapisać PESEL"));
-                            }}
-                          />
-                          <select
-                            defaultValue={doctor.medfileRole || "LEK"}
-                            className="p-1 border rounded text-xs"
-                            aria-label="Rola w Medfile"
-                            onChange={(e) => ehealthAdminHelper.saveDoctorPractitioner(doctor.id, { medfileRole: e.target.value })}
-                          >
-                            <option value="LEK">LEK — lekarz</option>
-                            <option value="LEKD">LEKD — lekarz dentysta</option>
-                            <option value="FIZJO">FIZJO — fizjoterapeuta</option>
-                            <option value="PIEL">PIEL — pielęgniarka</option>
-                          </select>
-                        </div>
-                        <textarea
-                          defaultValue={(doctor.medfileQualifications || []).map((q) => `${q.code} ${q.display}`).join("\n")}
-                          placeholder={"Specjalizacje, po jednej w linii:\n0713 medycyna rodzinna"}
-                          rows={2}
-                          className="mt-1 w-64 p-1 border rounded text-xs"
-                          onBlur={(e) => {
-                            const rows = e.target.value
-                              .split("\n")
-                              .map((line) => line.trim())
-                              .filter(Boolean)
-                              .map((line) => ({ code: line.split(/\s+/)[0], display: line.split(/\s+/).slice(1).join(" ") }));
-                            ehealthAdminHelper
-                              .saveDoctorPractitioner(doctor.id, { medfileQualifications: rows })
-                              .catch((err) => toast.error(err.message || "Nie udało się zapisać specjalizacji"));
-                          }}
-                        />
-                        <button
-                          type="button"
-                          className="mt-1 block rounded border border-[#1b766a] px-2 py-1 text-xs font-semibold text-[#1b766a] hover:bg-[#1b766a]/10"
-                          onClick={async () => {
-                            try {
-                              const res = await ehealthAdminHelper.syncDoctorPractitioner(doctor.id);
-                              toast.success(res?.created ? "Lekarz utworzony w Medfile" : "Dane lekarza zaktualizowane w Medfile");
-                              setLicenseDoctors((rows) => rows.map((row) => (row.id === doctor.id ? { ...row, medfilePractitionerId: res?.practitionerUuid || row.medfilePractitionerId } : row)));
-                            } catch (err) {
-                              toast.error(err?.response?.data?.error?.message || err.message || "Nie udało się wysłać do Medfile");
-                            }
-                          }}
-                        >
-                          Wyślij lekarza do Medfile
-                        </button>
+                        <p className="mt-1 text-xs text-gray-500">
+                          {ROLE_LABELS[doctor.medfileRole || "LEK"] || doctor.medfileRole} · PWZ {doctor.npwz || "—"}
+                        </p>
+                        <p className="text-xs">
+                          {doctor.medfilePractitionerId ? (
+                            <span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-700">konto w Medfile</span>
+                          ) : (
+                            <span className="rounded bg-rose-50 px-2 py-0.5 text-rose-700">nie wysłano do Medfile</span>
+                          )}
+                        </p>
+                        <a href="/administracja/konta" className="mt-1 inline-block text-xs text-teal-700 hover:underline">
+                          Edytuj dane i wyślij do Medfile → Konta użytkowników
+                        </a>
                       </td>
                       {Object.keys(SERVICE_LABELS).map((service) => {
                         const key = `${doctor.id}:${service}`;
@@ -1041,7 +1004,7 @@ const EhealthIntegrationsPage = () => {
                         ) : new Date(doctor.zusCert.validTo).getTime() - Date.now() < 30 * 86400000 ? (
                           <span className="rounded bg-amber-50 px-2 py-0.5 text-amber-800">wygasa {new Date(doctor.zusCert.validTo).toLocaleDateString("pl-PL")}</span>
                         ) : (
-                          <span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-700">sprawdzony do {new Date(doctor.zusCert.validTo).toLocaleDateString("pl-PL")}</span>
+                          <span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-700">{doctor.zusStored ? "wgrany" : "sprawdzony"} do {new Date(doctor.zusCert.validTo).toLocaleDateString("pl-PL")}</span>
                         )}
                       </td>
                       <td className="py-2 px-2 text-xs whitespace-nowrap">

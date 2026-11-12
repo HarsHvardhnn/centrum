@@ -128,6 +128,22 @@ const ehealthAdminHelper = {
     return response.data;
   },
 
+  /** Uploads the ZUS certificate for good (it stays with Medfile); afterwards only a PIN per document is asked for. */
+  async uploadMyZusCertificate(signing) {
+    const response = await apiCaller("POST", "/api/ehealth/me/zus-certificate", { signing });
+    return response.data;
+  },
+
+  async refreshMyZus(pin) {
+    const response = await apiCaller("POST", "/api/ehealth/me/zus-refresh", { signing: { certificate: "", pin } });
+    return response.data;
+  },
+
+  async deleteMyZusCertificate(pin) {
+    const response = await apiCaller("POST", "/api/ehealth/me/zus-certificate/delete", { signing: { certificate: "", pin } });
+    return response.data;
+  },
+
   async sendMyChangeRequest(message) {
     const response = await apiCaller("POST", "/api/ehealth/me/change-request", { message });
     return response.data;

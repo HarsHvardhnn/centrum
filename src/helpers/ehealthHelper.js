@@ -1,5 +1,5 @@
 import { apiCaller, axiosInstance } from "../utils/axiosInstance";
-import { obtainSigning } from "../components/ehealth/ehealthSigning";
+import { obtainSigning, takeProvidedSigning } from "../components/ehealth/ehealthSigning";
 
 const unwrap = (response) => response.data;
 
@@ -136,7 +136,9 @@ const ehealthHelper = {
   },
 
   submitEzla(body) {
-    return apiCaller("POST", "/api/ehealth/ezla", body).then(unwrap);
+    // With a stored certificate the dialog handed over the PIN; otherwise the e-ZLA session is used.
+    const signing = takeProvidedSigning();
+    return apiCaller("POST", "/api/ehealth/ezla", signing ? { ...body, signing } : body).then(unwrap);
   },
 
   ezlaAddresses(patientId) {

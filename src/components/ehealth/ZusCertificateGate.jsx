@@ -11,6 +11,7 @@ const ZusCertificateGate = ({ onReady, onClose, onSkip, doctorLine }) => (
     actionText="Wczytaj certyfikat"
     doctorLine={doctorLine}
     needsCertificate
+    forceFile
     layer="z-[120]"
     verify={false}
     busyText="Sprawdzam certyfikat i łączę z ZUS…"

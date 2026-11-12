@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Shield, X } from "lucide-react";
 import CertificateFields from "./CertificateFields";
-import { verifyCertificate } from "./ehealthSigning";
+import { signingStored, verifyCertificate } from "./ehealthSigning";
 
 /**
  * The one window that asks for the doctor's certificate + PIN. Variants:
@@ -21,6 +21,7 @@ const CertificateModal = ({
   busyText = "Trwa podpisywanie i wysyłka. Proszę czekać.",
   children,
   layer = "z-[70]",
+  forceFile = false,
   onCancel,
   onSubmit,
 }) => {
@@ -29,6 +30,16 @@ const CertificateModal = ({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [version, setVersion] = useState(0);
+  const [stored, setStored] = useState(false);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    let cancelled = false;
+    signingStored().then((v) => !cancelled && setStored(Boolean(v)));
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -42,7 +53,9 @@ const CertificateModal = ({
 
   if (!open) return null;
 
-  const ready = !needsCertificate || (signing.certificate && signing.pin);
+  // The certificate was uploaded once and stays with Medfile: only the PIN is asked for.
+  const pinOnly = needsCertificate && stored && !forceFile;
+  const ready = !needsCertificate || (pinOnly ? Boolean(signing.pin) : signing.certificate && signing.pin);
 
   const submit = async () => {
     if (busy || !ready) return;
@@ -92,7 +105,32 @@ const CertificateModal = ({
         {(
           <div className="p-6" style={{ display: busy ? "none" : "block" }}>
             {children ? <div className="mb-5">{children}</div> : null}
-            {needsCertificate ? (
+            {pinOnly ? (
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">PIN certyfikatu</label>
+                <input
+                  type="password"
+                  autoFocus
+                  autoComplete="off"
+                  value={signing.pin}
+                  onChange={(e) => {
+                    setSigning({ certificate: "", pin: e.target.value });
+                    setError("");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") submit();
+                  }}
+                  className="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm tracking-widest outline-none focus:ring-2 focus:border-slate-800 focus:ring-slate-800/15"
+                  placeholder="Wpisz PIN"
+                />
+                <p className="mt-1.5 text-xs text-slate-500">Certyfikat jest już wgrany. PIN zatwierdza ten jeden dokument i nie jest nigdzie zapisywany.</p>
+                {error && (
+                  <div role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                    {error}
+                  </div>
+                )}
+              </div>
+            ) : needsCertificate ? (
               <CertificateFields
                 key={version}
                 onChange={(next) => {
@@ -130,7 +168,7 @@ const CertificateModal = ({
                 onClick={submit}
                 className={`h-10 rounded-xl px-5 text-xs font-semibold ${ready ? `${accent} text-white` : "cursor-not-allowed bg-slate-200 text-slate-400"}`}
               >
-                {ready ? actionText : needsCertificate ? "Wybierz plik i wpisz PIN…" : actionText}
+                {ready ? actionText : pinOnly ? "Wpisz PIN…" : needsCertificate ? "Wybierz plik i wpisz PIN…" : actionText}
               </button>
             </div>
           </div>

@@ -6,7 +6,7 @@ import { AlertTriangle, Building2, CheckCircle2, History, Loader2, Plus, Printer
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import P1SignDialog from "./P1SignDialog";
 import ZusCertificateGate from "./ZusCertificateGate";
-import { endZusSession, signingRequired } from "./ehealthSigning";
+import { endZusSession, signingRequired, signingStored } from "./ehealthSigning";
 import { patientForDocument } from "./IssuePatientCard";
 import { STATUS_LABELS, accessCodeOf } from "./ehealthStatus";
 import IcdField from "./IcdField";
@@ -244,7 +244,7 @@ function validate(form, patient) {
   return errors;
 }
 
-const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagnoses, initialPayload, onDocumentsChanged, zusMissing, requestZus }) => {
+const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagnoses, initialPayload, onDocumentsChanged, zusMissing, requestZus, zusStored }) => {
   const [form, setForm] = useState(emptyForm);
   const [checked, setChecked] = useState(false);
   const [errors, setErrors] = useState([]);
@@ -838,7 +838,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
         title="Autoryzacja wystawienia e-ZLA"
         actionText="Podpisz i wyślij do ZUS"
         doctorLine={[patient?.doctorName, patient?.pwz ? `PWZ ${patient.pwz}` : ""].filter(Boolean).join(" · ")}
-        noCertificate
+        noCertificate={!zusStored}
         onClose={() => !busy && setSignOpen(false)}
         onConfirm={() => submit({}).then(() => setSignOpen(false))}
       />
@@ -1039,6 +1039,7 @@ const EZlaIssueModal = (props) => {
   const { open, onClose } = props;
   const [required, setRequired] = useState(null);
   const [ready, setReady] = useState(false);
+  const [stored, setStored] = useState(false);
   // The form opens at once, like the prescription and the referral; the certificate is asked for when ZUS is needed.
   const [skipped, setSkipped] = useState(true);
   const [gateOpen, setGateOpen] = useState(false);
@@ -1052,10 +1053,12 @@ const EZlaIssueModal = (props) => {
       return undefined;
     }
     let cancelled = false;
-    signingRequired().then((value) => {
+    Promise.all([signingRequired(), signingStored()]).then(([value, isStored]) => {
       if (cancelled) return;
       setRequired(value);
-      if (!value) setReady(true);
+      setStored(isStored);
+      // A stored certificate is already with Medfile, so nothing has to be loaded before the form works.
+      if (!value || isStored) setReady(true);
     });
     return () => {
       cancelled = true;
@@ -1063,7 +1066,7 @@ const EZlaIssueModal = (props) => {
   }, [open]);
 
   const close = () => {
-    if (required && ready) endZusSession();
+    if (required && ready && !stored) endZusSession();
     setReady(false);
     onClose?.();
   };
@@ -1081,7 +1084,7 @@ const EZlaIssueModal = (props) => {
   });
   return (
     <>
-      <EZlaIssueModalInner {...props} onClose={close} zusMissing={zusMissing} requestZus={requestZus} />
+      <EZlaIssueModalInner {...props} onClose={close} zusMissing={zusMissing} requestZus={requestZus} zusStored={stored} />
       {gateOpen && (
         <ZusCertificateGate
           doctorLine={doctorLine}

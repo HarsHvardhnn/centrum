@@ -12,6 +12,7 @@ import {
   Camera,
 } from "lucide-react";
 import { useSpecializations } from "../../context/SpecializationContext";
+import { toast } from "sonner";
 import ehealthAdminHelper from "../../helpers/ehealthAdminHelper";
 import SpecializationDropdown from "./SpecializationDropdown";
 import SpecialtyPicker from "../ehealth/SpecialtyPicker";
@@ -101,6 +102,8 @@ const getDoctorSchema = (isEditMode) =>
 
 export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode, onFormDataChange, saveStatus }) {
   const practitionerLoadedRef = useRef(false);
+  const medfileIdRef = useRef("");
+  const [medfileSending, setMedfileSending] = useState(false);
   //("doctors",initialData)
 
   console.log("intitial data", initialData?.profilePicture)
@@ -245,6 +248,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             secondName: "",
             pesel: "",
             medfileRole: "LEK",
+            medfilePractitionerId: "",
             medfileQualifications: [],
             noSpecialization: false,
             issuesEDocuments: false,
@@ -284,6 +288,13 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                 street: values.addrStreet, houseNumber: values.addrHouseNumber, unitId: values.addrUnitId,
                 city: values.addrCity, postalCode: values.addrPostalCode,
               };
+              // Medfile ID typed by hand (an existing practitioner): saved first, so the automatic sync that follows the save updates that record.
+              const typedMedfileId = String(values.medfilePractitionerId || "").trim();
+              delete submitValues.medfilePractitionerId;
+              if (isEditMode && practitionerLoadedRef.current && typedMedfileId !== medfileIdRef.current) {
+                await ehealthAdminHelper.saveDoctorPractitioner(initialData?.id || initialData?._id, { medfilePractitionerId: typedMedfileId });
+                medfileIdRef.current = typedMedfileId;
+              }
               // Edit mode: never overwrite P1 data with blanks if it could not be loaded first
               if (isEditMode && !practitionerLoadedRef.current) {
                 ["pesel", "secondName", "medfileRole", "medfileQualifications", "practitionerAddress", "residentialAddress", "noSpecialization", "issuesEDocuments", "prescribingRights", "cellIds", "defaultCellId", "paAllowed"].forEach((k) => delete submitValues[k]);
@@ -312,7 +323,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             }
           }}
         >
-          {({ values, errors, touched, isSubmitting, setFieldValue, setTouched, handleSubmit }) => {
+          {({ values, errors, touched, isSubmitting, setFieldValue, setTouched, handleSubmit, dirty }) => {
             useEffect(() => {
               const id = initialData?.id || initialData?._id;
               if (!isEditMode || !id) return undefined;
@@ -323,6 +334,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                 const a = row.practitionerAddress || {};
                 setFieldValue("secondName", row.secondName || "");
                 setFieldValue("pesel", row.pesel || "");
+                setFieldValue("medfilePractitionerId", row.medfilePractitionerId || "");
+                medfileIdRef.current = row.medfilePractitionerId || "";
                 setFieldValue("medfileRole", row.medfileRole || "LEK");
                 setFieldValue("medfileQualifications", (row.medfileQualifications || []).map((q) => ({ code: q.code, display: q.display })));
                 setFieldValue("noSpecialization", !!row.noSpecialization);
@@ -527,6 +540,40 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                           <option value="PIEL">PIEL — pielęgniarka</option>
                         </Field>
                       </div>
+                    </div>
+                    <div className="rounded-md border border-teal-200 bg-white p-3 space-y-2">
+                      <label htmlFor="medfilePractitionerId" className="block text-xs font-medium text-gray-700">Konto w Medfile (ID praktyka)</label>
+                      {isEditMode ? (
+                        <>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Field type="text" name="medfilePractitionerId" id="medfilePractitionerId" placeholder="Uzupełnia się po wysłaniu do Medfile" className="flex-1 min-w-[16rem] p-2 border border-gray-300 rounded-md text-sm" />
+                            <button
+                              type="button"
+                              disabled={dirty || medfileSending}
+                              title={dirty ? "Najpierw zapisz zmiany w formularzu" : undefined}
+                              className="rounded-md border border-[#1b766a] px-3 py-2 text-sm font-semibold text-[#1b766a] hover:bg-[#1b766a]/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                              onClick={async () => {
+                                try {
+                                  setMedfileSending(true);
+                                  const res = await ehealthAdminHelper.syncDoctorPractitioner(initialData?.id || initialData?._id);
+                                  const uuid = res?.practitionerUuid || "";
+                                  if (uuid) { setFieldValue("medfilePractitionerId", uuid); medfileIdRef.current = uuid; }
+                                  toast.success(res?.created ? "Konto utworzone w Medfile" : "Dane zaktualizowane w Medfile");
+                                } catch (err) {
+                                  toast.error(err?.response?.data?.error?.message || err.message || "Nie udało się wysłać do Medfile");
+                                } finally {
+                                  setMedfileSending(false);
+                                }
+                              }}
+                            >
+                              {medfileSending ? "Wysyłam…" : values.medfilePractitionerId ? "Wyślij zmiany do Medfile" : "Utwórz konto w Medfile"}
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-500">Zapis formularza sam wysyła dane lekarza do Medfile. Przycisk służy do ponowienia wysyłki (np. po błędzie); działa na zapisanych danych{dirty ? " — najpierw zapisz zmiany" : ""}. ID wpisuj ręcznie tylko, gdy lekarz już istnieje w Medfile.</p>
+                        </>
+                      ) : (
+                        <p className="text-xs text-gray-600">Po zapisaniu lekarz zostanie automatycznie utworzony w Medfile (dotyczy każdej roli: lekarz, pielęgniarka, fizjoterapeuta). Jeśli się nie uda, konto i tak zostanie zapisane, a wysyłkę ponowisz tutaj w edycji.</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Specjalizacje (lista ministerialna)</label>
