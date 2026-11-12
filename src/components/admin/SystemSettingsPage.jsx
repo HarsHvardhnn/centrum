@@ -20,6 +20,7 @@ import {
   LayoutGrid,
   Plug,
   ClipboardList,
+  HeartPulse,
 } from "lucide-react";
 import SpecializationManagement from "./SpecializationManagement";
 
@@ -121,6 +122,15 @@ const settingsCards = [
       "Własne wzory zaświadczeń i informacji. Widoczne tylko dla Ciebie przy wystawianiu dokumentu z wizyty.",
     icon: FileStack,
     to: "/moje-wzory-dokumentow",
+    roles: ["doctor"],
+  },
+  {
+    id: "my-ehealth",
+    title: "Moje ustawienia e-Zdrowie",
+    description:
+      "Twoje konto eWUŚ (login, hasło, klucz MFA), certyfikat ZUS, recepty dla siebie i rodziny oraz komórka domyślna.",
+    icon: HeartPulse,
+    to: "/moje-ustawienia-e-zdrowie",
     roles: ["doctor"],
   },
   {
