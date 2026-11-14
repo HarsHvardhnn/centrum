@@ -31,17 +31,17 @@ function AccessTab({ doctorId, row, setRow, reload }) {
   const [sending, setSending] = useState(false);
   const [saving, setSaving] = useState({});
   const pending = useRef(0);
+  const refreshSeq = useRef(0);
   // The switch moves at once (optimistic); the server answer confirms it, or the switch goes back with an error.
   const toggle = async (service, enabled) => {
     const prev = row?.access || {};
     setRow((r) => (r ? { ...r, access: { ...r.access, [service]: enabled } } : r));
     setSaving((m) => ({ ...m, [service]: true }));
     pending.current += 1;
+    refreshSeq.current += 1; // any refresh still on its way is now out of date
     try {
       const res = await ehealthAdminHelper.saveDoctorAccess(doctorId, { [service]: enabled });
       if (!res?.success) throw new Error(res?.error?.message || "Nie udało się zapisać");
-      const confirmed = res?.data?.access;
-      if (confirmed) setRow((r) => (r ? { ...r, access: { ...r.access, ...confirmed } } : r));
     } catch (err) {
       setRow((r) => (r ? { ...r, access: { ...r.access, [service]: prev[service] } } : r));
       toast.error(errText(err));
@@ -49,7 +49,11 @@ function AccessTab({ doctorId, row, setRow, reload }) {
       setSaving((m) => ({ ...m, [service]: false }));
       pending.current -= 1;
       // once the last change is saved, refresh the derived state (blocked-by-professional-data notes) quietly
-      if (pending.current === 0) ehealthAdminHelper.getStaffRow(doctorId).then((r) => r?.data && setRow(r.data)).catch(() => {});
+      // (only the newest answer counts: an older one arriving late must not put a switch back to its old position)
+      if (pending.current === 0) {
+        const seq = (refreshSeq.current += 1);
+        ehealthAdminHelper.getStaffRow(doctorId).then((r) => { if (r?.data && seq === refreshSeq.current && pending.current === 0) setRow(r.data); }).catch(() => {});
+      }
     }
   };
   if (!row) return <p className="text-sm text-gray-500">Wczytywanie…</p>;
