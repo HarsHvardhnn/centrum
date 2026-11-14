@@ -83,7 +83,7 @@ function AccessTab({ doctorId, row, setRow, reload }) {
                       <input type="checkbox" checked={on} disabled={!!saving[service]} onChange={(e) => toggle(service, e.target.checked)} />
                       <span className={on ? "text-emerald-700" : "text-gray-500"}>{on ? "włączony" : "wyłączony"}</span>
                     </label>
-                    {on && (((service === "referral" || service === "ezla") && !row.issuesEDocuments) || ((service === "prescription" || service === "drugs") && (!row.issuesEDocuments || (row.prescribingRights || "none") === "none"))) && (
+                    {on && (((service === "referral" || service === "ezla") && (!row.issuesEDocuments || (!["LEK", "LEKD"].includes(row.medfileRole || "LEK") && (row.prescribingRights || "none") === "none"))) || ((service === "prescription" || service === "drugs") && (!row.issuesEDocuments || (row.prescribingRights || "none") === "none"))) && (
                       <p className="mt-1 text-xs text-amber-700">Włączony, ale zablokowany: {!row.issuesEDocuments ? "w zapisanych danych zawodowych nie ma zaznaczonego „Wystawia e-dokumenty” (zaznacz i zapisz konto)" : "uprawnienia do recept w zapisanych danych to „Brak” (zmień i zapisz konto)"}.</p>
                     )}
                   </td>
