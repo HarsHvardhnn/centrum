@@ -79,8 +79,8 @@ function AccessTab({ doctorId, row, setRow, reload }) {
                       <input type="checkbox" checked={on} disabled={!!saving[service]} onChange={(e) => toggle(service, e.target.checked)} />
                       <span className={on ? "text-emerald-700" : "text-gray-500"}>{on ? "włączony" : "wyłączony"}</span>
                     </label>
-                    {on && row.effectiveAccess && row.effectiveAccess[service] === false && (
-                      <p className="mt-1 text-xs text-amber-700">Włączony, ale zablokowany: w danych zawodowych tego konta brak „Wystawia e-dokumenty”{service === "prescription" || service === "drugs" ? " lub uprawnień do recept (Brak)" : ""}.</p>
+                    {on && (((service === "referral" || service === "ezla") && !row.issuesEDocuments) || ((service === "prescription" || service === "drugs") && (!row.issuesEDocuments || (row.prescribingRights || "none") === "none"))) && (
+                      <p className="mt-1 text-xs text-amber-700">Włączony, ale zablokowany: {!row.issuesEDocuments ? "w zapisanych danych zawodowych nie ma zaznaczonego „Wystawia e-dokumenty” (zaznacz i zapisz konto)" : "uprawnienia do recept w zapisanych danych to „Brak” (zmień i zapisz konto)"}.</p>
                     )}
                   </td>
                   <td className="px-3 py-2 text-gray-600">{u ? `${u.requestCount}×` : "nie użyto"}</td>
@@ -144,7 +144,12 @@ function AccessTab({ doctorId, row, setRow, reload }) {
         </div>
         <div className="rounded-lg border border-gray-200 p-3">
           <p className="text-xs text-gray-500">Konto eWUŚ</p>
-          {row.access?.eligibility === false ? <Pill tone="grey">wyłączone</Pill> : ewus.configured ? <Pill tone="green">uzupełnione</Pill> : <Pill tone="red">brak</Pill>}
+          {row.access?.eligibility !== true ? <Pill tone="grey">wyłączone</Pill>
+            : !ewus.configured ? <Pill tone="red">brak</Pill>
+            : ewus.lastLogin?.ok === true ? <Pill tone="green">logowanie działa</Pill>
+            : ewus.lastLogin?.ok === false ? <Pill tone="red">błędne dane logowania</Pill>
+            : <Pill tone="amber">uzupełnione, nie sprawdzono</Pill>}
+          {ewus.lastLogin?.at && <p className="mt-1 text-[11px] text-gray-500">{new Date(ewus.lastLogin.at).toLocaleString("pl-PL")}{ewus.lastLogin.ok === false && ewus.lastLogin.message ? " — " + ewus.lastLogin.message : ""}</p>}
         </div>
       </div>
     </div>

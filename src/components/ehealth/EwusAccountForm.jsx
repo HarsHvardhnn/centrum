@@ -107,8 +107,10 @@ export default function EwusAccountForm({ scope = "facility", doctorId, onSaved 
         res = isDoctor ? await ehealthAdminHelper.testDoctorEwus(doctorId, code) : isMe ? await ehealthAdminHelper.loginMyEwus(code) : await ehealthAdminHelper.testEwus(code);
       }
       setLoginResult({ ok: Boolean(res?.data?.ok), text: res?.data?.message || (res?.data?.ok ? "Zalogowano" : "Nie zalogowano") });
+      onSaved?.();
     } catch (err) {
       setLoginResult({ ok: false, text: err?.response?.data?.error?.message || err?.message || "Logowanie nie powiodło się" });
+      onSaved?.(); // the server remembers the failed login; refresh the status shown elsewhere
     } finally {
       setBusy(false);
     }
