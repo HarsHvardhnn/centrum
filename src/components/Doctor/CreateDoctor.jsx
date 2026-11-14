@@ -115,7 +115,7 @@ const getDoctorSchema = (isEditMode) =>
   });
 
 
-export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode, onFormDataChange, saveStatus, inline = false, selfMode = false, onMedfileSynced }) {
+export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode, onFormDataChange, saveStatus, inline = false, selfMode = false, onMedfileSynced, defaultRole }) {
   const practitionerLoadedRef = useRef(false);
   const medfileIdRef = useRef("");
   const [medfileSending, setMedfileSending] = useState(false);
@@ -264,13 +264,13 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             // Medfile / P1 practitioner data (loaded from the e-health admin API in edit mode)
             secondName: initialData?.secondName || "",
             pesel: initialData?.pesel || "",
-            medfileRole: initialData?.medfileRole || "LEK",
+            medfileRole: initialData?.medfileRole || defaultRole || "LEK",
             // Shown on the public website? Existing accounts keep their setting; one that never had a public profile stays off.
             showOnWebsite: isEditMode
               ? (initialData?.showOnWebsite !== undefined
                   ? initialData.showOnWebsite !== false
                   : Boolean(String(initialData?.shortDescription || "").trim()) && (initialData?.specializations || initialData?.specialization || []).length > 0 && (initialData?.qualifications || []).length > 0)
-              : true,
+              : isDoctorRole(defaultRole || "LEK"),
             medfilePractitionerId: initialData?.medfilePractitionerId || "",
             medfileQualifications: (initialData?.medfileQualifications || []).map((q) => ({ code: q.code, display: q.display })),
             noSpecialization: !!initialData?.noSpecialization,
@@ -278,7 +278,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             paAllowed: !!initialData?.paAllowed,
             cellIds: initialData?.cellIds || [],
             defaultCellId: initialData?.defaultCellId || "",
-            prescribingRights: initialData?.prescribingRights || "independent",
+            prescribingRights: initialData?.prescribingRights || (isDoctorRole(defaultRole || "LEK") ? "independent" : defaultRole === "FIZJO" ? "none" : "on-order"),
             homeStreet: initialData?.residentialAddress?.street || "",
             homeHouseNumber: initialData?.residentialAddress?.houseNumber || "",
             homeUnitId: initialData?.residentialAddress?.unitId || "",
@@ -557,6 +557,9 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       </div>
                       <div>
                         <label htmlFor="medfileRole" className="block text-xs font-medium text-gray-700 mb-1">Rola w P1</label>
+                        {defaultRole && !isEditMode ? (
+                          <p className="w-full p-2 border border-gray-200 bg-gray-50 rounded-md text-sm text-gray-700">{{ LEK: "LEK — lekarz / felczer", LEKD: "LEKD — lekarz dentysta", FIZJO: "FIZJO — fizjoterapeuta", PIEL: "PIEL — pielęgniarka" }[values.medfileRole] || values.medfileRole}</p>
+                        ) : (
                         <Field
                           as="select"
                           name="medfileRole"
@@ -574,6 +577,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                           <option value="FIZJO">FIZJO — fizjoterapeuta</option>
                           <option value="PIEL">PIEL — pielęgniarka</option>
                         </Field>
+                        )}
                       </div>
                     </div>
                     {!selfMode && (

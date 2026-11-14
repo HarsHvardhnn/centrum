@@ -179,6 +179,7 @@ export default function StaffAccountPage() {
   const allowed = isAdmin || isSelf;
 
   const [doctor, setDoctor] = useState(null);
+  const [createRole, setCreateRole] = useState(null); // chosen first when creating: who the account is for
   const [row, setRow] = useState(null);
   const [params] = useSearchParams();
   const [tab, setTab] = useState(params.get("tab") || "data");
@@ -267,19 +268,39 @@ export default function StaffAccountPage() {
         ))}
       </div>
 
-      {creating && (
-        <p className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900">
-          Tu zakładasz konto lekarza, pielęgniarki lub fizjoterapeuty: dane osobowe, rola, PWZ, PESEL, specjalizacje, komórki. Po zapisaniu wyślesz je do Medfile przyciskiem na końcu formularza,
-          a ta sama strona pokaże zakładki „Dostęp do usług” i „Konto eWUŚ”.
+      {creating && !createRole && (
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-gray-800">Dla kogo zakładasz konto?</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              ["LEK", "Lekarz", "Recepty, e-skierowania, e-ZLA. Może mieć publiczny profil na stronie."],
+              ["LEKD", "Lekarz dentysta", "Jak lekarz, ze specjalizacjami stomatologicznymi."],
+              ["PIEL", "Pielęgniarka / położna", "Bez profilu na stronie. Uprawnienia do recept na zlecenie lekarza."],
+              ["FIZJO", "Fizjoterapeuta", "Bez profilu na stronie i bez recept."],
+            ].map(([role, title, hint]) => (
+              <button key={role} type="button" onClick={() => setCreateRole(role)} className="rounded-lg border border-gray-200 bg-white p-4 text-left hover:border-teal-600 hover:bg-teal-50/40">
+                <span className="block text-base font-semibold text-gray-900">{title}</span>
+                <span className="mt-1 block text-xs text-gray-600">{hint}</span>
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500">Recepcję i administratorów dodasz w Konta → Dodaj Użytkownika.</p>
+        </div>
+      )}
+      {creating && createRole && (
+        <p className="flex flex-wrap items-center gap-3 rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900">
+          <span>Typ konta: <strong>{{ LEK: "lekarz", LEKD: "lekarz dentysta", PIEL: "pielęgniarka / położna", FIZJO: "fizjoterapeuta" }[createRole]}</strong>. Po zapisaniu wyślesz konto do Medfile przyciskiem na końcu formularza, a ta sama strona pokaże zakładki „Dostęp do usług” i „Konto eWUŚ”.</span>
+          <button type="button" onClick={() => setCreateRole(null)} className="rounded-md border border-blue-300 bg-white px-2 py-1 text-xs font-semibold hover:bg-blue-100">Zmień typ</button>
         </p>
       )}
-      {!creating && !doctor ? (
+      {creating && !createRole ? null : !creating && !doctor ? (
         <p className="text-sm text-gray-500">Wczytywanie…</p>
       ) : (
         <>
           {tab === "data" && (
             <AddDoctorForm
-              key={formKey}
+              key={formKey + (createRole || "")}
+              defaultRole={creating ? createRole : undefined}
               inline
               isOpen
               isEditMode={!creating}
