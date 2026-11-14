@@ -119,7 +119,7 @@ const ehealthAdminHelper = {
   },
 
   async testEwus(code) {
-    const response = await apiCaller("POST", "/api/ehealth/admin/ewus/test", code ? { code } : {});
+    const response = await apiCaller("POST", "/api/ehealth/admin/ewus/test", { code: code || "" });
     return response.data;
   },
 
@@ -237,12 +237,12 @@ const ehealthAdminHelper = {
   },
 
   async testDoctorEwus(doctorId, code) {
-    const response = await apiCaller("POST", `/api/ehealth/admin/ewus/doctors/${doctorId}/test`, code ? { code } : {});
+    const response = await apiCaller("POST", `/api/ehealth/admin/ewus/doctors/${doctorId}/test`, { code: code || "" });
     return response.data;
   },
 
   async loginMyEwus(code) {
-    const response = await apiCaller("POST", "/api/ehealth/ewus/login", code ? { code } : {});
+    const response = await apiCaller("POST", "/api/ehealth/ewus/login", { code: code || "" });
     return response.data;
   },
 };

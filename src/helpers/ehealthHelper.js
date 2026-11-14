@@ -236,7 +236,7 @@ const ehealthHelper = {
   },
 
   ewusLogin(code) {
-    return apiCaller("POST", "/api/ehealth/ewus/login", code ? { code } : {}).then(unwrap);
+    return apiCaller("POST", "/api/ehealth/ewus/login", { code: code || "" }).then(unwrap);
   },
 
   /** eWUŚ check that asks for the NFZ app code when the 14-minute session ran out (manual MFA mode). */
