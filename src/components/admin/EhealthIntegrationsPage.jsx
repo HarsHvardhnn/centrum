@@ -992,10 +992,10 @@ const EhealthIntegrationsPage = () => {
                         return (
                           <td key={service} className="py-2 px-2 text-center">
                             <span
-                              className={doctor.access?.[service] !== false ? "text-emerald-600" : "text-gray-400"}
-                              title={`${doctor.name}: ${SERVICE_LABELS[service]} ${doctor.access?.[service] !== false ? "włączony" : "wyłączony"} (zmiana w karcie konta)`}
+                              className={doctor.access?.[service] === true ? "text-emerald-600" : "text-gray-400"}
+                              title={`${doctor.name}: ${SERVICE_LABELS[service]} ${doctor.access?.[service] === true ? "włączony" : "wyłączony"} (zmiana w karcie konta)`}
                             >
-                              {doctor.access?.[service] !== false ? "✓" : "✗"}
+                              {doctor.access?.[service] === true ? "✓" : "✗"}
                             </span>
                           </td>
                         );

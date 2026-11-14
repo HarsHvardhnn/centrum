@@ -49,7 +49,7 @@ function AccessTab({ doctorId, row, reload }) {
     <div className="space-y-4">
       <p className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900">
         To jest jedyne miejsce, w którym włączasz i wyłączasz usługi e-Zdrowie tej osoby. Wyłączona usługa znika z jej menu i przycisków, a serwer odrzuca jej użycie.
-        Włączenie nie zużywa licencji — licznik miesiąca rośnie dopiero przy pierwszym użyciu.
+        Nowe konto startuje ze wszystkimi usługami wyłączonymi. Dokumenty działają dopiero, gdy usługa jest włączona tutaj ORAZ konto ma w danych zawodowych „Wystawia e-dokumenty” (recepty: także uprawnienia inne niż „Brak”). Włączenie nie zużywa licencji — licznik miesiąca rośnie dopiero przy pierwszym użyciu.
       </p>
       <div className="overflow-hidden rounded-lg border border-gray-200">
         <table className="min-w-full text-sm">
@@ -58,7 +58,7 @@ function AccessTab({ doctorId, row, reload }) {
           </thead>
           <tbody>
             {SERVICES.map(([service, label]) => {
-              const on = row.access?.[service] !== false;
+              const on = row.access?.[service] === true;
               const u = usageOf(service);
               return (
                 <tr key={service} className="border-t border-gray-100">
@@ -68,6 +68,9 @@ function AccessTab({ doctorId, row, reload }) {
                       <input type="checkbox" checked={on} disabled={saving === service} onChange={(e) => toggle(service, e.target.checked)} />
                       <span className={on ? "text-emerald-700" : "text-gray-500"}>{on ? "włączony" : "wyłączony"}</span>
                     </label>
+                    {on && row.effectiveAccess && row.effectiveAccess[service] === false && (
+                      <p className="mt-1 text-xs text-amber-700">Włączony, ale zablokowany: w danych zawodowych tego konta brak „Wystawia e-dokumenty”{service === "prescription" || service === "drugs" ? " lub uprawnień do recept (Brak)" : ""}.</p>
+                    )}
                   </td>
                   <td className="px-3 py-2 text-gray-600">{u ? `${u.requestCount}×` : "nie użyto"}</td>
                 </tr>
