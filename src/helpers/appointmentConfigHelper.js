@@ -67,7 +67,7 @@ class AppointmentConfigService {
    */
   async resetConfig(key) {
     try {
-      const response = await apiCaller("POST", `/api/appointment-config/${key}/reset`);
+      const response = await apiCaller("POST", `/api/appointment-config/${key}/reset`, { reset: true });
       return response.data;
     } catch (error) {
       console.error(`Error resetting appointment configuration for key ${key}:`, error);

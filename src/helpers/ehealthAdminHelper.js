@@ -12,7 +12,7 @@ const ehealthAdminHelper = {
   },
 
   async connectionTest() {
-    const response = await apiCaller("POST", "/api/ehealth/admin/connection-test");
+    const response = await apiCaller("POST", "/api/ehealth/admin/connection-test", { run: true });
     return response.data;
   },
 
@@ -49,7 +49,7 @@ const ehealthAdminHelper = {
 
   /** Creates or updates the doctor in Medfile from the saved professional data. */
   async syncDoctorPractitioner(doctorId) {
-    const response = await apiCaller("POST", `/api/ehealth/admin/licenses/doctors/${doctorId}/practitioner/sync`);
+    const response = await apiCaller("POST", `/api/ehealth/admin/licenses/doctors/${doctorId}/practitioner/sync`, { doctorId });
     return response.data;
   },
 
