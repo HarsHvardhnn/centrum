@@ -80,23 +80,31 @@ const getDoctorSchema = (isEditMode) =>
     }),
     homePostalCode: Yup.string().matches(/^(\d{2}-\d{3})?$/, "Kod pocztowy w formacie 00-000"),
     addrPostalCode: Yup.string().matches(/^(\d{2}-\d{3})?$/, "Kod pocztowy w formacie 00-000"),
-    specialization: Yup.array()
-      .min(1, "Wymagana jest co najmniej jedna specjalizacja")
-      .required("Specjalizacja jest wymagana"),
-    qualifications: Yup.array()
-      .min(1, "Wymagana jest co najmniej jedna kwalifikacja")
-      .required("Kwalifikacja jest wymagana"),
-    shortDescription: Yup.string()
-      .required("Krótki opis jest wymagany")
-      .min(10, "Krótki opis musi zawierać co najmniej 10 znaków")
-      .max(200, "Krótki opis nie może przekraczać 200 znaków"),
-    bio: Yup.string().required("Bio jest wymagane"),
-    // Create: required (File). Edit: optional
-    profilePicture: isEditMode
-      ? Yup.mixed().notRequired()
-      : Yup.mixed()
-          .required("Zdjęcie profilowe jest wymagane")
-          .test("is-file", "Zdjęcie profilowe jest wymagane", (value) => value instanceof File),
+    // The fields below only build the public profile page. An account that is not shown on the website
+    // (staff who only work in CM7Med: nurses, physiotherapists, doctors without a page) does not need them.
+    showOnWebsite: Yup.boolean(),
+    specialization: Yup.array().test("spec-site", "Wymagana jest co najmniej jedna specjalizacja", function (value) {
+      return !this.parent.showOnWebsite || (value || []).length > 0;
+    }),
+    qualifications: Yup.array().test("qual-site", "Wymagana jest co najmniej jedna kwalifikacja", function (value) {
+      return !this.parent.showOnWebsite || (value || []).length > 0;
+    }),
+    shortDescription: Yup.string().test("short-site", function (value) {
+      if (!this.parent.showOnWebsite) return true;
+      const v = String(value || "").trim();
+      if (!v) return this.createError({ message: "Krótki opis jest wymagany" });
+      if (v.length < 10) return this.createError({ message: "Krótki opis musi zawierać co najmniej 10 znaków" });
+      if (v.length > 200) return this.createError({ message: "Krótki opis nie może przekraczać 200 znaków" });
+      return true;
+    }),
+    bio: Yup.string().test("bio-site", "Bio jest wymagane", function (value) {
+      return !this.parent.showOnWebsite || Boolean(String(value || "").trim());
+    }),
+    // Create: required (File) only for a profile shown on the website. Edit: optional
+    profilePicture: Yup.mixed().nullable().notRequired().test("photo-site", "Zdjęcie profilowe jest wymagane", function (value) {
+      if (isEditMode || !this.parent.showOnWebsite) return true;
+      return value instanceof File;
+    }),
   });
 
 
@@ -248,6 +256,12 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             secondName: "",
             pesel: "",
             medfileRole: "LEK",
+            // Shown on the public website? Existing accounts keep their setting; one that never had a public profile stays off.
+            showOnWebsite: isEditMode
+              ? (initialData?.showOnWebsite !== undefined
+                  ? initialData.showOnWebsite !== false
+                  : Boolean(String(initialData?.shortDescription || "").trim()) && (initialData?.specializations || initialData?.specialization || []).length > 0 && (initialData?.qualifications || []).length > 0)
+              : true,
             medfilePractitionerId: "",
             medfileQualifications: [],
             noSpecialization: false,
@@ -388,6 +402,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
               <div className="flex flex-col md:flex-row gap-8">
                 {/* Left column */}
                 <div className="flex-1 space-y-6">
+                  {values.showOnWebsite && (<>
                   <div className="flex justify-center mb-6">
                     <div className="relative">
                       <div className="w-32 h-32 rounded-full bg-teal-50 flex items-center justify-center overflow-hidden border-4 border-teal-100">
@@ -432,6 +447,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       Zdjęcie profilowe już istnieje. Kliknij ikonę, aby zmienić.
                     </div>
                   )}
+                  </>)}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -530,7 +546,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                           onChange={(e) => {
                             const role = e.target.value;
                             setFieldValue("medfileRole", role);
-                            if (!isDoctorRole(role)) { setFieldValue("medfileQualifications", []); setFieldValue("noSpecialization", false); }
+                            if (!isDoctorRole(role)) { setFieldValue("medfileQualifications", []); setFieldValue("noSpecialization", false); setFieldValue("showOnWebsite", false); }
                             setFieldValue("prescribingRights", isDoctorRole(role) ? "independent" : role === "FIZJO" ? "none" : (values.prescribingRights === "independent" ? "on-order" : values.prescribingRights));
                           }}
                         >
@@ -783,6 +799,21 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                     />
                   </div> */}
 
+                  <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
+                    <label className="flex items-start gap-2 text-sm text-gray-800">
+                      <input type="checkbox" className="mt-1" checked={!!values.showOnWebsite} onChange={(e) => setFieldValue("showOnWebsite", e.target.checked)} />
+                      <span>
+                        <span className="font-medium">Pokaż na stronie internetowej (profil publiczny)</span>
+                        <span className="block text-xs text-gray-500">
+                          {values.showOnWebsite
+                            ? "Do profilu na stronie potrzebne są: zdjęcie, specjalizacje, kwalifikacje, krótki opis i bio."
+                            : "To konto służy tylko do pracy w systemie (e-recepty, wizyty, e-ZLA). Nie powstaje strona lekarza, więc zdjęcie, bio i opisy nie są potrzebne."}
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+
+                  {values.showOnWebsite && (<>
                   <SpecializationDropdown
                     values={values}
                     setFieldValue={setFieldValue}
@@ -918,6 +949,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       </span>
                     </div>
                   </div>
+                  </>)}
                 </div>
               </div>
 

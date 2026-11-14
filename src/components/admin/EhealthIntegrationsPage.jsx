@@ -493,6 +493,9 @@ const EhealthIntegrationsPage = () => {
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               autoComplete="off"
             />
+            {envForm.integratorUuidFromEnv && (
+              <p className="mt-1 text-xs text-amber-700">Wartość pochodzi ze zmiennych środowiska serwera (nie jest zapisana w bazie). Zapis tego ekranu zapisze ją w bazie.</p>
+            )}
           </div>
 
           <div>
@@ -512,7 +515,7 @@ const EhealthIntegrationsPage = () => {
               autoComplete="new-password"
             />
             {envForm.hasSecret && (
-              <p className="mt-1 text-xs text-gray-500">Secret zapisany: {envForm.secretMasked}</p>
+              <p className="mt-1 text-xs text-gray-500">Secret: {envForm.secretMasked}{envForm.secretFromEnv ? " — połączenie z niego korzysta; wpisz nowy tylko, aby go zmienić." : ""}</p>
             )}
           </div>
 
