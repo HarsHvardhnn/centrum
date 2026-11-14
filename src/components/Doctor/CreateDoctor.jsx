@@ -638,6 +638,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       onChange={(ids, def) => { setFieldValue("cellIds", ids); setFieldValue("defaultCellId", def); }}
                     />
                     </fieldset>
+                    {values.paAllowed && (
+                    <>
                     <div>
                       <p className="block text-xs font-medium text-gray-700 mb-1">Adres zamieszkania (do recept dla siebie i rodziny)</p>
                       <div className="grid grid-cols-6 gap-2">
@@ -659,6 +661,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         <Field name="addrCity" placeholder="Miasto" className="col-span-4 p-2 border border-gray-300 rounded-md" />
                       </div>
                     </div>
+                    </>
+                    )}
                   </div>
 
                   <fieldset disabled={selfMode} className="contents">
