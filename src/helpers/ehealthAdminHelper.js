@@ -16,6 +16,11 @@ const ehealthAdminHelper = {
     return response.data;
   },
 
+  async getStaffRow(doctorId) {
+    const response = await apiCaller("GET", `/api/ehealth/staff/${doctorId}`);
+    return response.data;
+  },
+
   async getLicenses(yearMonth) {
     const q = yearMonth ? `?yearMonth=${encodeURIComponent(yearMonth)}` : "";
     const response = await apiCaller("GET", `/api/ehealth/admin/licenses${q}`);

@@ -1,8 +1,10 @@
 import React from "react";
 import { User } from "lucide-react";
 import EwusStatusCard from "../../../ehealth/EwusStatusCard";
+import useEhealthAccess, { NO_ACCESS_HINT } from "../../../../hooks/useEhealthAccess";
 
 const PatientHeaderCard = ({ patient, onShowMoreDetails, ewusPatientId }) => {
+  const ehealthAccess = useEhealthAccess();
   const calculateAgeFromBirthDate = (birthDateValue) => {
     if (!birthDateValue) return null;
 
@@ -92,12 +94,18 @@ const PatientHeaderCard = ({ patient, onShowMoreDetails, ewusPatientId }) => {
           </div>
         </div>
 
-        <EwusStatusCard
-          variant="patient"
-          patientName={name}
-          pesel={pesel === "—" ? "" : pesel}
-          patientId={ewusPatientId || patient?.patient_id || patient?.id}
-        />
+        {ehealthAccess.can("eligibility") ? (
+          <EwusStatusCard
+            variant="patient"
+            patientName={name}
+            pesel={pesel === "—" ? "" : pesel}
+            patientId={ewusPatientId || patient?.patient_id || patient?.id}
+          />
+        ) : (
+          <div className="mt-3 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-500" title={NO_ACCESS_HINT}>
+            Sprawdzanie ubezpieczenia (eWUŚ): brak dostępu
+          </div>
+        )}
 
         {/* Action: 90% width, teal text, darker gray hover */}
         <div className="mt-5 flex justify-center">

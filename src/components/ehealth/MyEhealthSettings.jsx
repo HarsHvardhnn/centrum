@@ -29,7 +29,11 @@ function Card({ title, hint, children }) {
  * "Moje ustawienia e-Zdrowie": what a staff member sets up about themselves. Professional data is read-only
  * (the administrator changes it). Passwords, keys and the certificate file are never shown again.
  */
-export default function MyEhealthSettings() {
+/**
+ * The signed-in person's own e-Zdrowie settings (readiness, ZUS certificate, eWUŚ, prescriptions for themselves, defaults).
+ * `embedded`: shown as a tab of the account page, which already has the personal data tab.
+ */
+export default function MyEhealthSettings({ embedded = false, onOpenData }) {
   const [p, setP] = useState(null);
   const [tab, setTab] = useState("ready");
   const [busy, setBusy] = useState(false);
@@ -137,14 +141,14 @@ export default function MyEhealthSettings() {
   const mfaBadge = p.medfile.hasPractitioner ? <Badge tone="green">Aktywne w P1</Badge> : <Badge tone="yellow">Niewysłane</Badge>;
 
   return (
-    <div className="mx-auto max-w-5xl p-4 md:p-6 space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className={embedded ? "space-y-4" : "mx-auto max-w-5xl p-4 md:p-6 space-y-4"}>
+      <div className={embedded ? "hidden" : "flex flex-wrap items-center justify-between gap-2"}>
         <h1 className="text-xl font-bold text-gray-900">Moje ustawienia e-Zdrowie</h1>
         <div className="text-sm text-gray-700">{p.fullName}{mfaBadge}</div>
       </div>
 
       <div className="flex flex-wrap gap-1 border-b border-gray-200">
-        {tabs.map((t) => (
+        {tabs.filter((t) => !(embedded && t.id === "mydata")).map((t) => (
           <button key={t.id} type="button" onClick={() => setTab(t.id)} className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${tab === t.id ? "border-teal-700 text-teal-800" : "border-transparent text-gray-600 hover:text-gray-900"}`}>
             {t.label}{t.badge}
           </button>
@@ -168,7 +172,7 @@ export default function MyEhealthSettings() {
                       <td className="px-3 py-2 font-medium">{r.label}</td>
                       <td className="px-3 py-2">{r.ready ? <Badge tone="green">gotowe</Badge> : <Badge tone="red">do uzupełnienia</Badge>}</td>
                       <td className="px-3 py-2 text-gray-600">{r.todo || "—"}</td>
-                      <td className="px-3 py-2 text-right"><button type="button" onClick={() => setTab(r.tab)} className="rounded-lg border border-teal-700 px-2.5 py-1 text-xs font-semibold text-teal-800">Ustaw</button></td>
+                      <td className="px-3 py-2 text-right"><button type="button" onClick={() => (embedded && r.tab === "mydata" && onOpenData ? onOpenData() : setTab(r.tab))} className="rounded-lg border border-teal-700 px-2.5 py-1 text-xs font-semibold text-teal-800">Ustaw</button></td>
                     </tr>
                   ))}
                 </tbody>

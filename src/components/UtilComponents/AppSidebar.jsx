@@ -1,6 +1,7 @@
 import React from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useUser } from "../../context/userContext";
+import useEhealthAccess from "../../hooks/useEhealthAccess";
 import { doctorVisitsPath } from "../../utils/useNavigate";
 import {
   Home,
@@ -117,6 +118,7 @@ const SidebarSection = ({ title, children, dividerAbove, collapsed }) => (
 const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) => {
   const location = useLocation();
   const { user, logout } = useUser();
+  const ehealthAccess = useEhealthAccess();
   const currentPath = location.pathname;
   const handleLogout = () => {
     logout();
@@ -201,7 +203,7 @@ const AppSidebar = ({ isOpen = true, toggleSidebar, isDarkMode, toggleTheme }) =
             isActive={currentPath === "/klinika"}
             collapsed={collapsed}
           />
-          {user?.role !== "receptionist" && (
+          {user?.role !== "receptionist" && ehealthAccess.hasAny && (
             <NavItem
               icon={<FileCheck size={ICON_SIZE} strokeWidth={2} />}
               label="Historia e-Zdrowie (P1)"

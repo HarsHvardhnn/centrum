@@ -940,7 +940,7 @@ const EhealthIntegrationsPage = () => {
           <div className="pt-2">
             <h3 className="text-sm font-semibold text-gray-800 mb-1">Dostęp lekarzy</h3>
             <p className="text-xs text-gray-500 mb-3">
-              Tu włączasz usługi i widzisz stan kont. Dane lekarza (PWZ, PESEL, rola, specjalizacje, komórki, Medfile) edytujesz w Konta użytkowników → Edytuj lekarza. Włączenie usługi nie zużywa licencji.
+              Przegląd wszystkich kont. Dane, dostęp do usług i konto eWUŚ konkretnej osoby ustawiasz w jej karcie konta (Konta użytkowników → Edytuj, albo link „Otwórz kartę konta” w wierszu). Włączenie usługi nie zużywa licencji.
             </p>
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
@@ -979,8 +979,8 @@ const EhealthIntegrationsPage = () => {
                             <span className="rounded bg-rose-50 px-2 py-0.5 text-rose-700">nie wysłano do Medfile</span>
                           )}
                         </p>
-                        <a href="/administracja/konta" className="mt-1 inline-block text-xs text-teal-700 hover:underline">
-                          Edytuj dane i wyślij do Medfile → Konta użytkowników
+                        <a href={`/konto/${doctor.id}`} className="mt-1 inline-block text-xs text-teal-700 hover:underline">
+                          Otwórz kartę konta (dane, dostęp, Medfile) →
                         </a>
                       </td>
                       {Object.keys(SERVICE_LABELS).map((service) => {

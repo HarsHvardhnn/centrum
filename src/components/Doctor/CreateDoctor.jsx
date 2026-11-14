@@ -108,7 +108,7 @@ const getDoctorSchema = (isEditMode) =>
   });
 
 
-export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode, onFormDataChange, saveStatus }) {
+export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode, onFormDataChange, saveStatus, inline = false, selfMode = false }) {
   const practitionerLoadedRef = useRef(false);
   const medfileIdRef = useRef("");
   const [medfileSending, setMedfileSending] = useState(false);
@@ -217,9 +217,9 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
     (specs || []).map(spec => ({ id: spec._id || spec.id, name: spec.name }));
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
+    <div className={inline ? "" : "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"}>
+      <div className={inline ? "bg-white rounded-lg border border-gray-200 p-6 w-full" : "bg-white rounded-lg shadow-lg p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto"}>
+        <div className={inline ? "hidden" : "flex justify-between items-center mb-6"}>
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-semibold text-gray-800">
               {isEditMode ? "Edytuj Lekarza" : "Dodaj Nowego Lekarza"}
@@ -342,8 +342,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
               const id = initialData?.id || initialData?._id;
               if (!isEditMode || !id) return undefined;
               let cancelled = false;
-              ehealthAdminHelper.getLicenses().then((res) => {
-                const row = (res?.data?.doctors || res?.doctors || []).find((d) => String(d.id) === String(id));
+              ehealthAdminHelper.getStaffRow(id).then((res) => {
+                const row = res?.data || null;
                 if (cancelled || !row) return;
                 const a = row.practitionerAddress || {};
                 setFieldValue("secondName", row.secondName || "");
@@ -449,6 +449,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                   )}
                   </>)}
 
+                  <fieldset disabled={selfMode} className="contents space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label
@@ -524,8 +525,14 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                     <ErrorMessage name="npwz" component="p" className="text-red-500 text-xs mt-1" />
                   </div>
 
+                  </fieldset>
+
                   <div className="rounded-md border border-teal-200 bg-teal-50/40 p-3 space-y-3">
                     <p className="text-sm font-semibold text-teal-800">Dane lekarza dla P1 (Medfile)</p>
+                    {selfMode && (
+                      <p className="text-xs text-gray-600">Te dane ustawia administrator. Jeśli coś się nie zgadza, napisz do niego (zakładka „e-Zdrowie” → „Zgłoś zmianę danych”). Adresy poniżej możesz zmienić sam.</p>
+                    )}
+                    <fieldset disabled={selfMode} className="contents space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label htmlFor="secondName" className="block text-xs font-medium text-gray-700 mb-1">Drugie imię</label>
@@ -557,6 +564,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         </Field>
                       </div>
                     </div>
+                    {!selfMode && (
                     <div className="rounded-md border border-teal-200 bg-white p-3 space-y-2">
                       <label htmlFor="medfilePractitionerId" className="block text-xs font-medium text-gray-700">Konto w Medfile (ID praktyka)</label>
                       {isEditMode ? (
@@ -591,6 +599,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         <p className="text-xs text-gray-600">Po zapisaniu lekarz zostanie automatycznie utworzony w Medfile (dotyczy każdej roli: lekarz, pielęgniarka, fizjoterapeuta). Jeśli się nie uda, konto i tak zostanie zapisane, a wysyłkę ponowisz tutaj w edycji.</p>
                       )}
                     </div>
+                    )}
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Specjalizacje (lista ministerialna)</label>
                       <SpecialtyPicker
@@ -645,6 +654,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       defaultCellId={values.defaultCellId || ""}
                       onChange={(ids, def) => { setFieldValue("cellIds", ids); setFieldValue("defaultCellId", def); }}
                     />
+                    </fieldset>
                     <div>
                       <p className="block text-xs font-medium text-gray-700 mb-1">Adres zamieszkania (do recept dla siebie i rodziny)</p>
                       <div className="grid grid-cols-6 gap-2">
@@ -668,6 +678,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                     </div>
                   </div>
 
+                  <fieldset disabled={selfMode} className="contents">
                   <div>
                     <label
                       htmlFor="email"
@@ -694,6 +705,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                     />
                   </div>
 
+                  </fieldset>
+
                   <div>
                     <label
                       htmlFor="phone"
@@ -714,6 +727,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                     />
                   </div>
 
+                  {!selfMode && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label
@@ -753,6 +767,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       )}
                     </div>
                   </div>
+                  )}
                 </div>
 
                 {/* Right column */}
@@ -799,6 +814,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                     />
                   </div> */}
 
+                  <fieldset disabled={selfMode} className="contents">
                   <div className="rounded-md border border-gray-200 bg-gray-50 p-3">
                     <label className="flex items-start gap-2 text-sm text-gray-800">
                       <input type="checkbox" className="mt-1" checked={!!values.showOnWebsite} onChange={(e) => setFieldValue("showOnWebsite", e.target.checked)} />
@@ -813,7 +829,10 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                     </label>
                   </div>
 
+                  </fieldset>
+
                   {values.showOnWebsite && (<>
+                  <fieldset disabled={selfMode} className="contents space-y-6">
                   <SpecializationDropdown
                     values={values}
                     setFieldValue={setFieldValue}
@@ -883,6 +902,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       </div>
                     )}
                   </div>
+
+                  </fieldset>
 
                   <div>
                     <label

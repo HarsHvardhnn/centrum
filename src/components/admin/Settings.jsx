@@ -1220,7 +1220,7 @@ export default function UserManagement() {
                                 Harmonogram
                               </button>
                               <button
-                                onClick={() => handleEditDoctor(user._id)}
+                                onClick={() => navigate(`/konto/${user._id}`)}
                                 className="text-blue-600 hover:text-blue-900"
                               >
                                 Edytuj

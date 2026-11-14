@@ -27,7 +27,13 @@ import {
   PublicRoute,
 } from "./components/UtilComponents/ProtectedRoutes";
 import AddDoctorForm from "./components/Doctor/CreateDoctor";
-import MyEhealthSettings from "./components/ehealth/MyEhealthSettings";
+import StaffAccountPage from "./components/admin/StaffAccountPage";
+// The old "Moje ustawienia e-Zdrowie" address now opens the person's own account page, e-Zdrowie tab.
+const MyAccountRedirect = () => {
+  const { user } = useUser();
+  const id = user?.id || user?._id;
+  return id ? <Navigate to={`/konto/${id}?tab=ehealth`} replace /> : null;
+};
 import LabAppointments from "./components/Patients/PatientList";
 import UserManagement from "./components/admin/Settings";
 import ChatComponent from "./components/User/ChatComponent";
@@ -244,6 +250,7 @@ const routes = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={["admin", "doctor"]} />,
             children: [
               { path: "/e-zdrowie", element: <EhealthHistoryPage /> },
+              { path: "/konto/:id", element: <StaffAccountPage /> },
               { path: "/administracja/szablony-dokumentow", element: <DocumentTemplatesPlaceholder /> },
             ],
           },
@@ -253,7 +260,7 @@ const routes = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={["doctor"]} />,
             children: [
               { path: "/lekarz/ustawienia", element: <DoctorScheduleSettings /> },
-              { path: "/moje-ustawienia-e-zdrowie", element: <MyEhealthSettings /> },
+              { path: "/moje-ustawienia-e-zdrowie", element: <MyAccountRedirect /> },
               { path: "/moje-wzory-dokumentow", element: <ClinicDocumentTemplatesPage personal /> },
             ],
           },

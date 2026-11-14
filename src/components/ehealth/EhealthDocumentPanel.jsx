@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
+import useEhealthAccess, { NO_ACCESS_HINT } from "../../hooks/useEhealthAccess";
 import EPrescriptionIssueModal from "./EPrescriptionIssueModal";
 import EReferralIssueModal from "./EReferralIssueModal";
 import EZlaIssueModal from "./EZlaIssueModal";
@@ -72,8 +73,24 @@ const EhealthDocumentPanel = ({
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [submitError, setSubmitError] = useState(null);
+  const access = useEhealthAccess();
 
   if (!open) return null;
+
+  // The administrator switched this service off for the signed-in doctor: say so instead of showing the form.
+  if (service && !access.can(service)) {
+    return (
+      <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4">
+        <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+          <h3 className="text-lg font-semibold text-gray-900">{SERVICE_LABELS[service] || service}: brak dostępu</h3>
+          <p className="mt-2 text-sm text-gray-600">{NO_ACCESS_HINT}</p>
+          <div className="mt-5 flex justify-end">
+            <button type="button" onClick={onClose} className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800">Zamknij</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const title = SERVICE_LABELS[service] || service;
   const reset = () => {
