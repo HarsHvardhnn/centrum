@@ -189,7 +189,7 @@ export default function StaffAccountPage() {
         )}
         <h1 className="text-xl font-bold text-gray-900">{creating ? "Nowe konto pracownika" : isSelf ? "Moje konto" : "Konto pracownika"}{name ? `: ${name}` : ""}</h1>
         {row && <Pill tone="grey">{ROLE_LABEL[role] || role}</Pill>}
-        {row && (row.medfilePractitionerId ? <Pill tone="green">aktywne w Medfile</Pill> : <Pill tone="amber">niewysłane do Medfile</Pill>)}
+        {row && (row.medfileSync?.status === "synced" ? <Pill tone="green">wysłane do Medfile</Pill> : row.medfileSync?.status === "outdated" ? <Pill tone="amber">zmiany niewysłane do Medfile</Pill> : <Pill tone="amber">niewysłane do Medfile</Pill>)}
       </div>
 
       <div className="flex flex-wrap gap-1 border-b border-gray-200">
@@ -207,7 +207,7 @@ export default function StaffAccountPage() {
 
       {creating && (
         <p className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900">
-          Tu zakładasz konto lekarza, pielęgniarki lub fizjoterapeuty: dane osobowe, rola, PWZ, PESEL, specjalizacje, komórki. Po zapisaniu konto zostanie wysłane do Medfile,
+          Tu zakładasz konto lekarza, pielęgniarki lub fizjoterapeuty: dane osobowe, rola, PWZ, PESEL, specjalizacje, komórki. Po zapisaniu wyślesz je do Medfile przyciskiem na końcu formularza,
           a ta sama strona pokaże zakładki „Dostęp do usług” i „Konto eWUŚ”.
         </p>
       )}

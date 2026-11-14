@@ -112,6 +112,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
   const practitionerLoadedRef = useRef(false);
   const medfileIdRef = useRef("");
   const [medfileSending, setMedfileSending] = useState(false);
+  const [medfileSync, setMedfileSync] = useState(initialData?.medfileSync || null);
   //("doctors",initialData)
 
   console.log("intitial data", initialData?.profilePicture)
@@ -352,6 +353,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                 setFieldValue("pesel", row.pesel || "");
                 setFieldValue("medfilePractitionerId", row.medfilePractitionerId || "");
                 medfileIdRef.current = row.medfilePractitionerId || "";
+                setMedfileSync(row.medfileSync || null);
                 setFieldValue("medfileRole", row.medfileRole || "LEK");
                 setFieldValue("medfileQualifications", (row.medfileQualifications || []).map((q) => ({ code: q.code, display: q.display })));
                 setFieldValue("noSpecialization", !!row.noSpecialization);
@@ -573,32 +575,11 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         <>
                           <div className="flex flex-wrap items-center gap-2">
                             <Field type="text" name="medfilePractitionerId" id="medfilePractitionerId" placeholder="Uzupełnia się po wysłaniu do Medfile" className="flex-1 min-w-[16rem] p-2 border border-gray-300 rounded-md text-sm" />
-                            <button
-                              type="button"
-                              disabled={dirty || medfileSending}
-                              title={dirty ? "Najpierw zapisz zmiany w formularzu" : undefined}
-                              className="rounded-md border border-[#1b766a] px-3 py-2 text-sm font-semibold text-[#1b766a] hover:bg-[#1b766a]/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                              onClick={async () => {
-                                try {
-                                  setMedfileSending(true);
-                                  const res = await ehealthAdminHelper.syncDoctorPractitioner(initialData?.id || initialData?._id);
-                                  const uuid = res?.practitionerUuid || "";
-                                  if (uuid) { setFieldValue("medfilePractitionerId", uuid); medfileIdRef.current = uuid; }
-                                  toast.success(res?.created ? "Konto utworzone w Medfile" : "Dane zaktualizowane w Medfile");
-                                } catch (err) {
-                                  toast.error(err?.response?.data?.error?.message || err.message || "Nie udało się wysłać do Medfile");
-                                } finally {
-                                  setMedfileSending(false);
-                                }
-                              }}
-                            >
-                              {medfileSending ? "Wysyłam…" : values.medfilePractitionerId ? "Wyślij zmiany do Medfile" : "Utwórz konto w Medfile"}
-                            </button>
                           </div>
-                          <p className="text-xs text-gray-500">Zapis formularza sam wysyła dane lekarza do Medfile. Przycisk służy do ponowienia wysyłki (np. po błędzie); działa na zapisanych danych{dirty ? " — najpierw zapisz zmiany" : ""}. ID wpisuj ręcznie tylko, gdy lekarz już istnieje w Medfile.</p>
+                          <p className="text-xs text-gray-500">Wysyłka do Medfile jest ręczna: przycisk na końcu formularza. ID wpisuj ręcznie tylko, gdy lekarz już istnieje w Medfile.</p>
                         </>
                       ) : (
-                        <p className="text-xs text-gray-600">Po zapisaniu lekarz zostanie automatycznie utworzony w Medfile (dotyczy każdej roli: lekarz, pielęgniarka, fizjoterapeuta). Jeśli się nie uda, konto i tak zostanie zapisane, a wysyłkę ponowisz tutaj w edycji.</p>
+                        <p className="text-xs text-gray-600">Konto w Medfile utworzysz po zapisaniu — przyciskiem „Wyślij do Medfile” na końcu formularza (dotyczy każdej roli: lekarz, pielęgniarka, fizjoterapeuta).</p>
                       )}
                     </div>
                     )}
@@ -975,6 +956,52 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                   </>)}
                 </div>
               </div>
+
+              {!selfMode && (() => {
+                const st = medfileSync;
+                const saved = isEditMode && !!(initialData?.id || initialData?._id);
+                const missing = st?.missing || [];
+                const status = st?.status || "never";
+                let label = "Wyślij do Medfile";
+                if (medfileSending) label = "Wysyłam…";
+                else if (status === "synced") label = "Wysłano do Medfile ✓";
+                else if (status === "outdated") label = "Wyślij zmiany do Medfile";
+                const disabled = !saved || dirty || medfileSending || missing.length > 0 || status === "synced";
+                let hint = "";
+                if (!saved) hint = "Najpierw zapisz konto — potem wyślesz je do Medfile.";
+                else if (dirty) hint = "Masz niezapisane zmiany. Zapisz je, aby móc wysłać dane do Medfile.";
+                else if (missing.length) hint = `Uzupełnij i zapisz: ${missing.join(", ")}.`;
+                else if (status === "synced") hint = "Dane w Medfile są aktualne.";
+                else if (status === "outdated") hint = "Dane zmieniły się od ostatniej wysyłki do Medfile.";
+                else hint = "Wszystkie wymagane dane są uzupełnione. Wyślij konto do Medfile, gdy formularz jest gotowy.";
+                return (
+                  <div className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-md border border-teal-200 bg-teal-50/50 p-3">
+                    <p className="text-sm text-gray-700 max-w-xl">{hint}</p>
+                    <button
+                      type="button"
+                      id="sendToMedfile"
+                      disabled={disabled}
+                      className="rounded-md border border-[#1b766a] bg-white px-4 py-2 text-sm font-semibold text-[#1b766a] hover:bg-[#1b766a]/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={async () => {
+                        try {
+                          setMedfileSending(true);
+                          const res = await ehealthAdminHelper.syncDoctorPractitioner(initialData?.id || initialData?._id);
+                          const uuid = res?.practitionerUuid || "";
+                          if (uuid) { setFieldValue("medfilePractitionerId", uuid); medfileIdRef.current = uuid; }
+                          setMedfileSync({ status: "synced", missing: [], canSend: true, syncedAt: new Date().toISOString() });
+                          toast.success(res?.created ? "Konto utworzone w Medfile" : "Dane zaktualizowane w Medfile");
+                        } catch (err) {
+                          toast.error(err?.response?.data?.error?.message || err?.response?.data?.message || err.message || "Nie udało się wysłać do Medfile");
+                        } finally {
+                          setMedfileSending(false);
+                        }
+                      }}
+                    >
+                      {label}
+                    </button>
+                  </div>
+                );
+              })()}
 
               <div className="flex justify-end gap-4 mt-8">
                 <button
