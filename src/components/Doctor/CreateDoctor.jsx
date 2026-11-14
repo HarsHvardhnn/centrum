@@ -108,7 +108,7 @@ const getDoctorSchema = (isEditMode) =>
   });
 
 
-export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode, onFormDataChange, saveStatus, inline = false, selfMode = false }) {
+export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialData, isEditMode, onFormDataChange, saveStatus, inline = false, selfMode = false, onMedfileSynced }) {
   const practitionerLoadedRef = useRef(false);
   const medfileIdRef = useRef("");
   const [medfileSending, setMedfileSending] = useState(false);
@@ -994,6 +994,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                           if (uuid) { setFieldValue("medfilePractitionerId", uuid); medfileIdRef.current = uuid; }
                           setMedfileSync({ status: "synced", missing: [], canSend: true, syncedAt: new Date().toISOString() });
                           toast.success(res?.created ? "Konto utworzone w Medfile" : "Dane zaktualizowane w Medfile");
+                          if (onMedfileSynced) onMedfileSynced();
                         } catch (err) {
                           toast.error(err?.response?.data?.error?.message || err?.response?.data?.message || err.message || "Nie udało się wysłać do Medfile");
                         } finally {

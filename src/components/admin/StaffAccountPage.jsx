@@ -27,7 +27,8 @@ function Pill({ tone, children }) {
 }
 
 /** Administrator: which e-health services this person may use, with usage and the state of their certificate / eWUŚ account. */
-function AccessTab({ doctorId, row, setRow, onOpenData }) {
+function AccessTab({ doctorId, row, setRow, reload }) {
+  const [sending, setSending] = useState(false);
   const [saving, setSaving] = useState({});
   const pending = useRef(0);
   // The switch moves at once (optimistic); the server answer confirms it, or the switch goes back with an error.
@@ -61,12 +62,6 @@ function AccessTab({ doctorId, row, setRow, onOpenData }) {
         To jest jedyne miejsce, w którym włączasz i wyłączasz usługi e-Zdrowie tej osoby. Wyłączona usługa znika z jej menu i przycisków, a serwer odrzuca jej użycie.
         Nowe konto startuje ze wszystkimi usługami wyłączonymi. Dokumenty działają dopiero, gdy usługa jest włączona tutaj ORAZ konto ma w danych zawodowych „Wystawia e-dokumenty” (recepty: także uprawnienia inne niż „Brak”). Włączenie nie zużywa licencji — licznik miesiąca rośnie dopiero przy pierwszym użyciu.
       </p>
-      {row.medfileSync && row.medfileSync.status !== "synced" && (
-        <p className="flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          <span>{row.medfileSync.status === "outdated" ? "Zmiany tego konta nie zostały jeszcze wysłane do Medfile." : "To konto nie zostało jeszcze wysłane do Medfile."}</span>
-          <button type="button" onClick={onOpenData} className="rounded-md border border-amber-400 bg-white px-3 py-1 text-xs font-semibold hover:bg-amber-100">Przejdź do danych i wyślij do Medfile</button>
-        </p>
-      )}
       <div className="overflow-hidden rounded-lg border border-gray-200">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-left text-xs text-gray-500">
@@ -95,6 +90,45 @@ function AccessTab({ doctorId, row, setRow, onOpenData }) {
           </tbody>
         </table>
       </div>
+      {(() => {
+        const st = row.medfileSync || { status: "never", missing: [] };
+        const missing = st.missing || [];
+        let label = "Wyślij do Medfile";
+        if (sending) label = "Wysyłam…";
+        else if (st.status === "synced") label = "Wysłano do Medfile ✓";
+        else if (st.status === "outdated") label = "Wyślij zmiany do Medfile";
+        const disabled = sending || missing.length > 0 || st.status === "synced";
+        const hint = missing.length
+          ? `Uzupełnij w danych zawodowych: ${missing.join(", ")}.`
+          : st.status === "synced" ? "Dane w Medfile są aktualne."
+          : st.status === "outdated" ? "Dane zmieniły się od ostatniej wysyłki do Medfile."
+          : "Gdy usługi są ustawione, wyślij konto do Medfile.";
+        return (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-teal-200 bg-teal-50/50 p-3">
+            <p className="max-w-xl text-sm text-gray-700">{hint}</p>
+            <button
+              type="button"
+              id="sendToMedfileAccess"
+              disabled={disabled}
+              className="rounded-md border border-[#1b766a] bg-white px-4 py-2 text-sm font-semibold text-[#1b766a] hover:bg-[#1b766a]/10 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={async () => {
+                try {
+                  setSending(true);
+                  const res = await ehealthAdminHelper.syncDoctorPractitioner(doctorId);
+                  toast.success(res?.created ? "Konto utworzone w Medfile" : "Dane zaktualizowane w Medfile");
+                  await reload();
+                } catch (err) {
+                  toast.error(errText(err));
+                } finally {
+                  setSending(false);
+                }
+              }}
+            >
+              {label}
+            </button>
+          </div>
+        );
+      })()}
       <div className="grid gap-3 sm:grid-cols-3 text-sm">
         <div className="rounded-lg border border-gray-200 p-3">
           <p className="text-xs text-gray-500">Konto w Medfile</p>
@@ -244,9 +278,10 @@ export default function StaffAccountPage() {
               initialData={creating ? undefined : doctor}
               onClose={() => navigate(isAdmin ? "/administracja/konta" : "/ustawienia")}
               onAddDoctor={save}
+              onMedfileSynced={load}
             />
           )}
-          {tab === "access" && isAdmin && <AccessTab doctorId={id} row={row} setRow={setRow} onOpenData={() => setTab("data")} />}
+          {tab === "access" && isAdmin && <AccessTab doctorId={id} row={row} setRow={setRow} reload={load} />}
           {tab === "ewus" && isAdmin && (
             <div className="rounded-lg border border-gray-200 bg-white p-4">
               <p className="mb-3 text-sm text-gray-600">Konto eWUŚ jest osobiste. Możesz je uzupełnić w imieniu osoby (login, hasło, klucz MFA); hasła i klucze nie są potem pokazywane.</p>
