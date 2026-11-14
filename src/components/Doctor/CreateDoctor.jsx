@@ -303,7 +303,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
               };
               
               submitValues.medfileQualifications = values.medfileQualifications || [];
-              if (!isDoctorRole(values.medfileRole) && values.prescribingRights === "none") submitValues.issuesEDocuments = false;
+              if (!isDoctorRole(values.medfileRole) && values.prescribingRights === "none") { submitValues.issuesEDocuments = false; submitValues.paAllowed = false; }
               submitValues.residentialAddress = {
                 street: values.homeStreet, houseNumber: values.homeHouseNumber, unitId: values.homeUnitId,
                 city: values.homeCity, postalCode: values.homePostalCode,
@@ -407,6 +407,22 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
 
             return (
               <Form className="space-y-6" onSubmit={handleSubmit}>
+              {(() => {
+                const doctorLike = isDoctorRole(values.medfileRole);
+                const rights = doctorLike ? "independent" : values.prescribingRights;
+                const issues = !!values.issuesEDocuments && (doctorLike || rights !== "none");
+                const parts = [];
+                if (issues && rights !== "none") parts.push(rights === "on-order" ? "e-recepty (na zlecenie lekarza)" : "e-recepty");
+                if (issues) parts.push("e-skierowania");
+                if (issues && doctorLike) parts.push("e-ZLA");
+                if (values.paAllowed && rights !== "none") parts.push("recepty dla siebie i rodziny");
+                return (
+                  <div id="issuingSummary" className={`rounded-md border px-3 py-2 text-sm ${parts.length ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-gray-200 bg-gray-50 text-gray-700"}`}>
+                    <span className="font-semibold">Wystawia: </span>
+                    {parts.length ? parts.join(", ") : "nic — to konto nie wystawia e-dokumentów"}
+                  </div>
+                );
+              })()}
               {submitCount > 0 && Object.keys(errors).length > 0 && (
                 <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
                   Formularz zawiera błędy. Proszę poprawić zaznaczone pola poniżej.
@@ -621,7 +637,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                     <div>
                       <p className="block text-xs font-medium text-gray-700 mb-1">Uprawnienia do wystawiania recept</p>
                       {values.medfileRole === "PIEL" ? (
-                        <Field as="select" name="prescribingRights" className="w-full p-2 border border-gray-300 rounded-md" onChange={(e) => { setFieldValue("prescribingRights", e.target.value); if (e.target.value === "none") setFieldValue("issuesEDocuments", false); }}>
+                        <Field as="select" name="prescribingRights" className="w-full p-2 border border-gray-300 rounded-md" onChange={(e) => { setFieldValue("prescribingRights", e.target.value); if (e.target.value === "none") { setFieldValue("issuesEDocuments", false); setFieldValue("paAllowed", false); } }}>
                           <option value="none">Brak</option>
                           <option value="on-order">Tylko na zlecenie lekarza (kontynuacja leczenia)</option>
                           <option value="independent">Samodzielnie i na zlecenie lekarza</option>
@@ -643,7 +659,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       </span>
                     </label>
                     <label className="flex items-start gap-2 text-sm text-gray-800">
-                      <input type="checkbox" className="mt-1" checked={!!values.paAllowed} onChange={(e) => setFieldValue("paAllowed", e.target.checked)} />
+                      <input type="checkbox" className="mt-1" checked={!!values.paAllowed && !(!isDoctorRole(values.medfileRole) && values.prescribingRights === "none")} disabled={!isDoctorRole(values.medfileRole) && values.prescribingRights === "none"} onChange={(e) => setFieldValue("paAllowed", e.target.checked)} />
                       <span>
                         <span className="font-medium">Może wystawiać recepty dla siebie i rodziny</span>
                         <span className="block text-xs text-gray-500">Domyślnie wyłączone. Po włączeniu osoba uzupełnia adres i telefon w „Moje ustawienia e-Zdrowie”. Po wyłączeniu takie recepty są blokowane od razu.</span>
