@@ -35,6 +35,7 @@ const doctorService = {
 
       formData.append("email", doctorData.email);
       formData.append("phone", doctorData.phone);
+      formData.append("phoneCountryCode", doctorData.phoneCountryCode || "+48");
       if (doctorData.password) {
         formData.append("password", doctorData.password);
       }
@@ -244,6 +245,7 @@ const doctorService = {
       // Handle other fields
       if (updateData.email) formData.append("email", updateData.email);
       if (updateData.phone) formData.append("phone", updateData.phone);
+      if (updateData.phoneCountryCode) formData.append("phoneCountryCode", updateData.phoneCountryCode);
       if (updateData.bio) formData.append("bio", updateData.bio);
       if (updateData.experience) formData.append("experience", updateData.experience);
       if (updateData.consultationFee) formData.append("onlineConsultationFee", updateData.consultationFee);

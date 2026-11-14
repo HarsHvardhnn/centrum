@@ -29,9 +29,16 @@ const getDoctorSchema = (isEditMode) =>
     email: Yup.string()
       .email("Nieprawidłowy adres email")
       .required("Email jest wymagany"),
+    phoneCountryCode: Yup.string()
+      .required("Podaj kod kraju")
+      .matches(/^\+\d{1,3}$/, "Kod kraju w formacie +48"),
     phone: Yup.string()
       .required("Numer telefonu jest wymagany")
-      .matches(/^\d{9}$/, "Numer telefonu musi składać się z dokładnie 9 cyfr"),
+      .test("phone-format", "Numer telefonu: tylko cyfry (dla +48 dokładnie 9)", function (v) {
+        const digits = String(v || "");
+        if (!/^\d+$/.test(digits)) return false;
+        return this.parent.phoneCountryCode === "+48" ? digits.length === 9 : digits.length >= 6 && digits.length <= 12;
+      }),
     // Create: required + min 8. Edit: optional; if provided, min 8
     password: isEditMode
       ? Yup.string()
@@ -243,6 +250,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             lastName: initialData?.name?.last || initialData?.lastName || "",
             email: initialData?.email || "",
             phone: initialData?.phone || "",
+            phoneCountryCode: initialData?.phoneCountryCode || "+48",
             // In edit mode, always start with empty password fields (optional)
             password: isEditMode ? "" : (initialData?.password || ""),
             confirmPassword: "",
@@ -701,12 +709,26 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                     >
                       Numer Telefonu*
                     </label>
-                    <Field
-                      type="text"
-                      name="phone"
-                      id="phone"
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                    />
+                    <div className="flex gap-2">
+                      <Field
+                        type="text"
+                        name="phoneCountryCode"
+                        id="phoneCountryCode"
+                        placeholder="+48"
+                        maxLength={4}
+                        aria-label="Kod kraju"
+                        className="w-20 p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                      />
+                      <Field
+                        type="text"
+                        name="phone"
+                        id="phone"
+                        inputMode="numeric"
+                        placeholder="numer bez kodu kraju"
+                        className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
+                      />
+                    </div>
+                    <ErrorMessage name="phoneCountryCode" component="div" className="text-red-500 text-xs mt-1" />
                     <ErrorMessage
                       name="phone"
                       component="div"
