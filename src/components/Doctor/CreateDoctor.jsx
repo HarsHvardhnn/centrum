@@ -337,7 +337,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             }
           }}
         >
-          {({ values, errors, touched, isSubmitting, setFieldValue, setTouched, handleSubmit, dirty }) => {
+          {({ values, errors, touched, isSubmitting, setFieldValue, setTouched, handleSubmit, dirty, submitCount }) => {
             useEffect(() => {
               const id = initialData?.id || initialData?._id;
               if (!isEditMode || !id) return undefined;
@@ -396,7 +396,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
 
             return (
               <Form className="space-y-6" onSubmit={handleSubmit}>
-              {Object.keys(errors).length > 0 && (
+              {submitCount > 0 && Object.keys(errors).length > 0 && (
                 <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
                   Formularz zawiera błędy. Proszę poprawić zaznaczone pola poniżej.
                 </div>
