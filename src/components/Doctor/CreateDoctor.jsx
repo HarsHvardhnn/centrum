@@ -303,6 +303,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
               };
               
               submitValues.medfileQualifications = values.medfileQualifications || [];
+              if (!isDoctorRole(values.medfileRole) && values.prescribingRights === "none") submitValues.issuesEDocuments = false;
               submitValues.residentialAddress = {
                 street: values.homeStreet, houseNumber: values.homeHouseNumber, unitId: values.homeUnitId,
                 city: values.homeCity, postalCode: values.homePostalCode,
@@ -570,6 +571,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                             setFieldValue("medfileRole", role);
                             if (!isDoctorRole(role)) { setFieldValue("medfileQualifications", []); setFieldValue("noSpecialization", false); setFieldValue("showOnWebsite", false); }
                             setFieldValue("prescribingRights", isDoctorRole(role) ? "independent" : role === "FIZJO" ? "none" : (values.prescribingRights === "independent" ? "on-order" : values.prescribingRights));
+                            if (role === "FIZJO") setFieldValue("issuesEDocuments", false);
                           }}
                         >
                           <option value="LEK">LEK — lekarz / felczer</option>
@@ -619,7 +621,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                     <div>
                       <p className="block text-xs font-medium text-gray-700 mb-1">Uprawnienia do wystawiania recept</p>
                       {values.medfileRole === "PIEL" ? (
-                        <Field as="select" name="prescribingRights" className="w-full p-2 border border-gray-300 rounded-md">
+                        <Field as="select" name="prescribingRights" className="w-full p-2 border border-gray-300 rounded-md" onChange={(e) => { setFieldValue("prescribingRights", e.target.value); if (e.target.value === "none") setFieldValue("issuesEDocuments", false); }}>
                           <option value="none">Brak</option>
                           <option value="on-order">Tylko na zlecenie lekarza (kontynuacja leczenia)</option>
                           <option value="independent">Samodzielnie i na zlecenie lekarza</option>
@@ -631,9 +633,12 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       )}
                     </div>
                     <label className="flex items-start gap-2 text-sm text-gray-800">
-                      <input type="checkbox" className="mt-1" checked={values.issuesEDocuments} onChange={(e) => setFieldValue("issuesEDocuments", e.target.checked)} />
+                      <input type="checkbox" className="mt-1" checked={values.issuesEDocuments && !(!isDoctorRole(values.medfileRole) && values.prescribingRights === "none")} disabled={!isDoctorRole(values.medfileRole) && values.prescribingRights === "none"} onChange={(e) => setFieldValue("issuesEDocuments", e.target.checked)} />
                       <span>
                         <span className="font-medium">Wystawia e-dokumenty</span>
+                        {!isDoctorRole(values.medfileRole) && values.prescribingRights === "none" && (
+                          <span className="block text-xs text-amber-700">Niedostępne: przy uprawnieniach do recept „Brak” ta osoba nie wystawia e-dokumentów. Zmień uprawnienia powyżej.</span>
+                        )}
                         <span className="block text-xs text-gray-500">Włącz, gdy lekarz wystawia e-recepty, e-skierowania lub e-ZLA. Wtedy PESEL, PWZ i specjalizacja są wymagane. Certyfikat ZUS lekarz dodaje w swoich ustawieniach.</span>
                       </span>
                     </label>
