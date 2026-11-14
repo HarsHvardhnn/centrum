@@ -118,7 +118,7 @@ const EhealthIntegrationsPage = () => {
   const [ewusMfaConfigured, setEwusMfaConfigured] = useState(false);
   const [liveSendEnabled, setLiveSendEnabled] = useState(false);
   const [lastConnectionTest, setLastConnectionTest] = useState(null);
-  const [runtimeProvider, setRuntimeProvider] = useState("mock");
+  const [runtimeProvider, setRuntimeProvider] = useState(""); // empty until the settings have loaded
   const [licenseCaps, setLicenseCaps] = useState({
     prescription: 0,
     drugs: 0,
@@ -193,7 +193,7 @@ const EhealthIntegrationsPage = () => {
       setEwusMfaConfigured(Boolean(d.ewusMfaConfigured));
       setLiveSendEnabled(Boolean(d.liveSendEnabled));
       setLastConnectionTest(d.lastConnectionTest || null);
-      setRuntimeProvider(d.runtimeProvider || "mock");
+      setRuntimeProvider(d.runtimeProvider || "");
       setLicenseCaps({
         prescription: d.licenseCaps?.prescription || 0,
         drugs: d.licenseCaps?.drugs || 0,
@@ -371,8 +371,12 @@ const EhealthIntegrationsPage = () => {
           <Info className="text-blue-500 mr-2 mt-1" size={20} />
           <div className="text-sm text-blue-800">
             Brak konta Medfile HIS — tylko API. Secret po zapisaniu nie wraca na ekran.
-            Provider runtime: <strong>{runtimeProvider}</strong>
-            {runtimeProvider === "mock" && " (mock — bez wywołania Medfile)"}.
+            {runtimeProvider && (
+              <>
+                Provider runtime: <strong>{runtimeProvider}</strong>
+                {runtimeProvider === "mock" && " (mock — bez wywołania Medfile)"}.{" "}
+              </>
+            )}
             Certyfikaty P1/ZUS są wysyłane do API i nie są trzymane w CM7MED.
           </div>
         </div>
