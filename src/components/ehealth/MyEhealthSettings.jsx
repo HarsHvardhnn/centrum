@@ -298,7 +298,13 @@ export default function MyEhealthSettings({ embedded = false, onOpenData }) {
 
       {tab === "ewus" && (
         <Card title="eWUŚ — moje konto NFZ" hint="Konto eWUŚ jest osobiste: regulamin zabrania przekazywania loginu i hasła innym osobom. Konto zakłada administrator eWUŚ placówki w Portalu Świadczeniodawcy NFZ.">
-          <EwusAccountForm scope="me" onSaved={load} />
+          {p.ewus.enabled ? (
+            <EwusAccountForm scope="me" onSaved={load} />
+          ) : (
+            <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              eWUŚ jest wyłączony dla tego konta, więc nie można dodać konta eWUŚ. Włącza go administrator w karcie konta (Dostęp do usług).
+            </p>
+          )}
         </Card>
       )}
 
