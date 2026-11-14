@@ -987,13 +987,12 @@ const EhealthIntegrationsPage = () => {
                         const key = `${doctor.id}:${service}`;
                         return (
                           <td key={service} className="py-2 px-2 text-center">
-                            <input
-                              type="checkbox"
-                              checked={doctor.access?.[service] !== false}
-                              disabled={savingAccessKey === key}
-                              aria-label={`${doctor.name} ${SERVICE_LABELS[service]}`}
-                              onChange={(e) => handleDoctorAccess(doctor.id, service, e.target.checked)}
-                            />
+                            <span
+                              className={doctor.access?.[service] !== false ? "text-emerald-600" : "text-gray-400"}
+                              title={`${doctor.name}: ${SERVICE_LABELS[service]} ${doctor.access?.[service] !== false ? "włączony" : "wyłączony"} (zmiana w karcie konta)`}
+                            >
+                              {doctor.access?.[service] !== false ? "✓" : "✗"}
+                            </span>
                           </td>
                         );
                       })}

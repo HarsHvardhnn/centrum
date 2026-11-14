@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "./DoctorHeader";
 import DoctorListing from "./DoctorList";
 import AddDoctorForm from "./CreateDoctor";
@@ -36,6 +37,7 @@ const transformDoctorsResponse = (doctorsList) =>
 const SEARCH_DEBOUNCE_MS = 400;
 
 const BillingPage = () => {
+  const navigate = useNavigate();
   const savedDoctors = readListState("admin-doctors") || {};
   const [searchTerm, setSearchTerm] = useState(savedDoctors.searchTerm || "");
   const [debouncedSearch, setDebouncedSearch] = useState(savedDoctors.searchTerm || "");
@@ -187,7 +189,7 @@ const BillingPage = () => {
           title="Lista lekarzy"
           onSearch={(term) => setSearchTerm(term)}
           onFilter={(filters) => setActiveFilters(filters)}
-          onAddDoctor={() => setShowAddDoctorModal(true)}
+          onAddDoctor={() => navigate("/konto/nowy")}
           filterOptions={filterOptions}
           compact
         />

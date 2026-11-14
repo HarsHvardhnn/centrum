@@ -230,6 +230,7 @@ const routes = createBrowserRouter([
               { path: "/administracja/trwale-usuwanie", element: <PermanentDeletePage /> },
               { path: "/administracja/integracje-ezdrowie", element: <EhealthIntegrationsPage /> },
               { path: "/administracja/repo-dokumentow", element: <ClinicDocumentTemplatesPage /> },
+              { path: "/konto/nowy", element: <StaffAccountPage /> },
             ],
           },
 
@@ -238,7 +239,7 @@ const routes = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={["admin", "receptionist"]} />,
             children: [
               { path: "/lekarze", element: <BillingPage /> },
-              { path: "/lekarz/utworz", element: <Navigate to="/lekarze?dodaj=1" replace /> },
+              { path: "/lekarz/utworz", element: <Navigate to="/konto/nowy" replace /> },
               { path: "/wizyta/utworz", element: <AppointmentPage /> },
               { path: "/administracja/sms", element: <UserMessaging /> },
               { path: "/administracja/wiadomosci-kontaktowe", element: <Adminmsgs /> },

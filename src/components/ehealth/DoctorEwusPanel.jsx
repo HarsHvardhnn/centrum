@@ -72,9 +72,9 @@ export default function DoctorEwusPanel() {
                     {d.configured ? (d.mode === "auto" && !d.hasTotp ? <span className="text-rose-700">brak klucza</span> : MODE_LABEL[d.mode] || d.mode) : "—"}
                   </td>
                   <td className="px-3 py-2 text-right">
-                    <button type="button" onClick={() => setOpenId(openId === d.id ? null : d.id)} className="rounded-lg border border-teal-700 px-2.5 py-1 text-xs font-semibold text-teal-800">
-                      {openId === d.id ? "Zwiń" : d.configured ? "Edytuj" : "Uzupełnij"}
-                    </button>
+                    <a href={`/konto/${d.id}?tab=ewus`} className="rounded-lg border border-teal-700 px-2.5 py-1 text-xs font-semibold text-teal-800">
+                      {d.configured ? "Edytuj w karcie konta" : "Uzupełnij w karcie konta"}
+                    </a>
                   </td>
                 </tr>
                 {openId === d.id && (

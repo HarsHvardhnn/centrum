@@ -105,19 +105,26 @@ function AccessTab({ doctorId, row, reload }) {
  * themselves, defaults) they edit themselves.
  */
 export default function StaffAccountPage() {
-  const { id } = useParams();
+  const { id: routeId } = useParams();
+  const id = routeId ?? "nowy"; // /konto/nowy has no :id
   const navigate = useNavigate();
   const { user } = useUser();
   const { showLoader, hideLoader } = useLoader();
   const isAdmin = user?.role === "admin";
+  const creating = id === "nowy";
   const ownId = String(user?.id || user?._id || "");
-  const isSelf = user?.role === "doctor" && ownId === String(id);
+  const isSelf = !creating && user?.role === "doctor" && ownId === String(id);
   const allowed = isAdmin || isSelf;
 
   const [doctor, setDoctor] = useState(null);
   const [row, setRow] = useState(null);
   const [params] = useSearchParams();
   const [tab, setTab] = useState(params.get("tab") || "data");
+  // the same page instance is reused when saving a new account moves on to /konto/:id?tab=access
+  useEffect(() => {
+    const wanted = params.get("tab");
+    if (wanted) setTab(wanted);
+  }, [params]);
   const [formKey, setFormKey] = useState(0);
 
   const load = useCallback(async () => {
@@ -134,14 +141,22 @@ export default function StaffAccountPage() {
   }, [id, isAdmin]);
 
   useEffect(() => {
-    if (allowed) load();
-  }, [allowed, load]);
+    if (allowed && !creating) load();
+  }, [allowed, creating, load]);
 
   if (!allowed) return <NotFound404 />;
 
   const save = async (values, resetForm) => {
     try {
       showLoader();
+      if (creating) {
+        const created = await doctorService.createDoctor(values);
+        const newId = created?.doctor?._id || created?.doctor?.id;
+        toast.success("Konto utworzone. Ustaw teraz dostęp do usług i konto eWUŚ.");
+        if (newId) navigate(`/konto/${newId}?tab=access`, { replace: true });
+        else navigate("/administracja/konta");
+        return;
+      }
       const res = await doctorService.updateDoctor(id, values);
       toast.success("Zapisano zmiany");
       if (res?.medfile?.warning) toast.warning(res.medfile.warning);
@@ -155,7 +170,9 @@ export default function StaffAccountPage() {
     }
   };
 
-  const tabs = isAdmin
+  const tabs = creating
+    ? [["data", "Dane i uprawnienia zawodowe"]]
+    : isAdmin
     ? [["data", "Dane i uprawnienia zawodowe"], ["access", "Dostęp do usług"], ["ewus", "Konto eWUŚ"]]
     : [["data", "Moje dane"], ["ehealth", "e-Zdrowie: certyfikat ZUS, eWUŚ, recepty dla siebie"]];
 
@@ -170,7 +187,7 @@ export default function StaffAccountPage() {
             <ArrowLeft size={16} /> Konta użytkowników
           </button>
         )}
-        <h1 className="text-xl font-bold text-gray-900">{isSelf ? "Moje konto" : "Konto pracownika"}{name ? `: ${name}` : ""}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{creating ? "Nowe konto pracownika" : isSelf ? "Moje konto" : "Konto pracownika"}{name ? `: ${name}` : ""}</h1>
         {row && <Pill tone="grey">{ROLE_LABEL[role] || role}</Pill>}
         {row && (row.medfilePractitionerId ? <Pill tone="green">aktywne w Medfile</Pill> : <Pill tone="amber">niewysłane do Medfile</Pill>)}
       </div>
@@ -188,7 +205,13 @@ export default function StaffAccountPage() {
         ))}
       </div>
 
-      {!doctor ? (
+      {creating && (
+        <p className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900">
+          Tu zakładasz konto lekarza, pielęgniarki lub fizjoterapeuty: dane osobowe, rola, PWZ, PESEL, specjalizacje, komórki. Po zapisaniu konto zostanie wysłane do Medfile,
+          a ta sama strona pokaże zakładki „Dostęp do usług” i „Konto eWUŚ”.
+        </p>
+      )}
+      {!creating && !doctor ? (
         <p className="text-sm text-gray-500">Wczytywanie…</p>
       ) : (
         <>
@@ -197,9 +220,9 @@ export default function StaffAccountPage() {
               key={formKey}
               inline
               isOpen
-              isEditMode
+              isEditMode={!creating}
               selfMode={!isAdmin}
-              initialData={doctor}
+              initialData={creating ? undefined : doctor}
               onClose={() => navigate(isAdmin ? "/administracja/konta" : "/ustawienia")}
               onAddDoctor={save}
             />

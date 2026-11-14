@@ -253,33 +253,33 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             professionalTitle: initialData?.professionalTitle || "",
             npwz: initialData?.npwz || initialData?.pwz || "",
             // Medfile / P1 practitioner data (loaded from the e-health admin API in edit mode)
-            secondName: "",
-            pesel: "",
-            medfileRole: "LEK",
+            secondName: initialData?.secondName || "",
+            pesel: initialData?.pesel || "",
+            medfileRole: initialData?.medfileRole || "LEK",
             // Shown on the public website? Existing accounts keep their setting; one that never had a public profile stays off.
             showOnWebsite: isEditMode
               ? (initialData?.showOnWebsite !== undefined
                   ? initialData.showOnWebsite !== false
                   : Boolean(String(initialData?.shortDescription || "").trim()) && (initialData?.specializations || initialData?.specialization || []).length > 0 && (initialData?.qualifications || []).length > 0)
               : true,
-            medfilePractitionerId: "",
-            medfileQualifications: [],
-            noSpecialization: false,
-            issuesEDocuments: false,
-            paAllowed: false,
-            cellIds: [],
-            defaultCellId: "",
-            prescribingRights: "independent",
-            homeStreet: "",
-            homeHouseNumber: "",
-            homeUnitId: "",
-            homeCity: "",
-            homePostalCode: "",
-            addrStreet: "",
-            addrHouseNumber: "",
-            addrUnitId: "",
-            addrCity: "",
-            addrPostalCode: "",
+            medfilePractitionerId: initialData?.medfilePractitionerId || "",
+            medfileQualifications: (initialData?.medfileQualifications || []).map((q) => ({ code: q.code, display: q.display })),
+            noSpecialization: !!initialData?.noSpecialization,
+            issuesEDocuments: !!initialData?.issuesEDocuments,
+            paAllowed: !!initialData?.paAllowed,
+            cellIds: initialData?.cellIds || [],
+            defaultCellId: initialData?.defaultCellId || "",
+            prescribingRights: initialData?.prescribingRights || "independent",
+            homeStreet: initialData?.residentialAddress?.street || "",
+            homeHouseNumber: initialData?.residentialAddress?.houseNumber || "",
+            homeUnitId: initialData?.residentialAddress?.unitId || "",
+            homeCity: initialData?.residentialAddress?.city || "",
+            homePostalCode: initialData?.residentialAddress?.postalCode || "",
+            addrStreet: initialData?.practitionerAddress?.street || "",
+            addrHouseNumber: initialData?.practitionerAddress?.houseNumber || "",
+            addrUnitId: initialData?.practitionerAddress?.unitId || "",
+            addrCity: initialData?.practitionerAddress?.city || "",
+            addrPostalCode: initialData?.practitionerAddress?.postalCode || "",
             // In edit mode, set to existing URL if available, otherwise null
             // This ensures validation passes when editing with existing picture
             profilePicture: isEditMode && initialData?.profilePicture ? initialData.profilePicture : null,
@@ -341,6 +341,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             useEffect(() => {
               const id = initialData?.id || initialData?._id;
               if (!isEditMode || !id) return undefined;
+              // The record already came with the professional data: nothing more to load.
+              if (initialData?.medfileRole !== undefined) { practitionerLoadedRef.current = true; medfileIdRef.current = initialData.medfilePractitionerId || ""; return undefined; }
               let cancelled = false;
               ehealthAdminHelper.getStaffRow(id).then((res) => {
                 const row = res?.data || null;
