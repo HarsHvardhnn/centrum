@@ -245,7 +245,7 @@ export default function MyEhealthSettings({ embedded = false, onOpenData, only =
                   </Badge>
                   <span className="ml-2">Wystawiony dla: <b>{cert?.owner || "—"}</b> · ważny do: <b>{cert?.validTo ? new Date(cert.validTo).toLocaleDateString("pl-PL") : "—"}</b></span>
                 </p>
-                <input type="password" className={inp} placeholder="PIN certyfikatu (do odświeżenia lub usunięcia)" value={actionPin} onChange={(e) => setActionPin(e.target.value)} autoComplete="off" />
+                <input type="text" autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellCheck={false} style={{ WebkitTextSecurity: "disc" }} className={inp} placeholder="PIN certyfikatu (do odświeżenia lub usunięcia)" value={actionPin} onChange={(e) => setActionPin(e.target.value)} autoComplete="off" />
                 <div className="flex flex-wrap gap-2">
                   <button type="button" disabled={busy} onClick={refreshZus} className="rounded-lg bg-teal-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? "Pracuję…" : "Odśwież dane z ZUS"}</button>
                   <button type="button" disabled={busy} onClick={() => setReplacing(true)} className="rounded-lg border border-teal-700 px-3 py-1.5 text-sm font-semibold text-teal-800">Wymień certyfikat</button>
@@ -255,7 +255,7 @@ export default function MyEhealthSettings({ embedded = false, onOpenData, only =
             ) : (
               <>
                 <input ref={fileRef} type="file" accept=".p12,.pfx" onChange={(e) => setZusFile(e.target.files?.[0] || null)} className="block w-full text-sm" />
-                <input type="password" className={inp} placeholder="PIN (hasło) certyfikatu" value={zusPin} onChange={(e) => setZusPin(e.target.value)} autoComplete="off" />
+                <input type="text" autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellCheck={false} style={{ WebkitTextSecurity: "disc" }} className={inp} placeholder="PIN (hasło) certyfikatu" value={zusPin} onChange={(e) => setZusPin(e.target.value)} autoComplete="off" />
                 <div className="flex flex-wrap gap-2">
                   <button type="button" disabled={busy || !zusFile || !zusPin} onClick={uploadZus} className="rounded-lg bg-teal-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50">
                     {busy ? "Wgrywam i sprawdzam…" : "Wgraj i sprawdź w ZUS"}

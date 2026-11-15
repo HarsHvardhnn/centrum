@@ -6,7 +6,7 @@ function CodeDialog({ message, onDone }) {
   const valid = /^\d{6}$/.test(code);
   return (
     <div className="fixed inset-0 z-[120] bg-slate-900/50 flex items-center justify-center p-4">
-      <form
+      <form autoComplete="off"
         className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-5 space-y-3"
         onSubmit={(e) => {
           e.preventDefault();

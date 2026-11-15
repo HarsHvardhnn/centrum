@@ -109,9 +109,9 @@ const CertificateModal = ({
               <div>
                 <label className="mb-1.5 block text-xs font-semibold text-slate-700">PIN certyfikatu</label>
                 <input
-                  type="password"
+                  type="text" autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellCheck={false} style={{ WebkitTextSecurity: "disc" }}
                   autoFocus
-                  autoComplete="off"
+                 
                   value={signing.pin}
                   onChange={(e) => {
                     setSigning({ certificate: "", pin: e.target.value });

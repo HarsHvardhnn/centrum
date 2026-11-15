@@ -507,7 +507,7 @@ const EhealthIntegrationsPage = () => {
               Medfile Integrator Secret
             </label>
             <input
-              type="password"
+              type="text" autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellCheck={false} style={{ WebkitTextSecurity: "disc" }}
               value={envForm.secret}
               onChange={(e) => setEnvForm({ ...envForm, secret: e.target.value })}
               placeholder={
@@ -689,7 +689,7 @@ const EhealthIntegrationsPage = () => {
                 <input type="file" className="block mt-1 text-sm" onChange={(e) => setWssFile(e.target.files?.[0] || null)} />
               </label>
               <input
-                type="password"
+                type="text" autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellCheck={false} style={{ WebkitTextSecurity: "disc" }}
                 placeholder="Hasło do TLS"
                 value={tlsPassword}
                 onChange={(e) => setTlsPassword(e.target.value)}
@@ -697,7 +697,7 @@ const EhealthIntegrationsPage = () => {
                 autoComplete="new-password"
               />
               <input
-                type="password"
+                type="text" autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellCheck={false} style={{ WebkitTextSecurity: "disc" }}
                 placeholder="Hasło do WSS"
                 value={wssPassword}
                 onChange={(e) => setWssPassword(e.target.value)}

@@ -164,9 +164,9 @@ export default function EwusAccountForm({ scope = "facility", doctorId, onSaved 
             <label className="text-xs text-gray-600">
               Hasło NFZ {stored.hasPassword ? "(zapisane — wpisz, aby zmienić)" : "*"}
               <input
-                type="password"
+                type="text" autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellCheck={false} style={{ WebkitTextSecurity: "disc" }}
                 className={input}
-                autoComplete="new-password"
+               
                 placeholder={stored.hasPassword ? "••••••••••••" : ""}
                 value={secrets.password}
                 onChange={(e) => setSecrets({ ...secrets, password: e.target.value })}
@@ -197,9 +197,9 @@ export default function EwusAccountForm({ scope = "facility", doctorId, onSaved 
             <label className="block text-xs text-gray-600">
               Klucz MFA (base32) {stored.hasTotp ? "(zapisany — wpisz, aby zmienić)" : "*"}
               <input
-                type="password"
+                type="text" autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellCheck={false} style={{ WebkitTextSecurity: "disc" }}
                 className={input}
-                autoComplete="off"
+               
                 placeholder={stored.hasTotp ? "••••••••••••" : "klucz z konfiguracji aplikacji uwierzytelniającej NFZ"}
                 value={secrets.totpSecret}
                 onChange={(e) => setSecrets({ ...secrets, totpSecret: e.target.value })}

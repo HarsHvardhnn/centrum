@@ -772,6 +772,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       </label>
                       <Field
                         type="password"
+                        autoComplete="new-password"
                         name="password"
                         id="password"
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
@@ -791,6 +792,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                       </label>
                       <Field
                         type="password"
+                        autoComplete="new-password"
                         name="confirmPassword"
                         id="confirmPassword"
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
