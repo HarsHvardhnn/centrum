@@ -33,9 +33,9 @@ function Card({ title, hint, children }) {
  * The signed-in person's own e-Zdrowie settings (readiness, ZUS certificate, eWUŚ, prescriptions for themselves, defaults).
  * `embedded`: shown as a tab of the account page, which already has the personal data tab.
  */
-export default function MyEhealthSettings({ embedded = false, onOpenData }) {
+export default function MyEhealthSettings({ embedded = false, onOpenData, only = null }) {
   const [p, setP] = useState(null);
-  const [tab, setTab] = useState("ready");
+  const [tab, setTab] = useState(only || "ready");
   const [busy, setBusy] = useState(false);
   const [pa, setPa] = useState(null);
   const [zusFile, setZusFile] = useState(null);
@@ -147,7 +147,7 @@ export default function MyEhealthSettings({ embedded = false, onOpenData }) {
         <div className="text-sm text-gray-700">{p.fullName}{mfaBadge}</div>
       </div>
 
-      <div className="flex flex-wrap gap-1 border-b border-gray-200">
+      <div className={only ? "hidden" : "flex flex-wrap gap-1 border-b border-gray-200"}>
         {tabs.filter((t) => !(embedded && t.id === "mydata")).map((t) => (
           <button key={t.id} type="button" onClick={() => setTab(t.id)} className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px ${tab === t.id ? "border-teal-700 text-teal-800" : "border-transparent text-gray-600 hover:text-gray-900"}`}>
             {t.label}{t.badge}

@@ -297,7 +297,8 @@ export default function StaffAccountPage() {
         <p className="text-sm text-gray-500">Wczytywanie…</p>
       ) : (
         <>
-          {tab === "data" && (
+          {tab === "data" && !isAdmin && <MyEhealthSettings embedded only="mydata" />}
+          {tab === "data" && isAdmin && (
             <AddDoctorForm
               key={formKey + (createRole || "")}
               defaultRole={creating ? createRole : undefined}
