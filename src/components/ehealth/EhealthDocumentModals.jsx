@@ -42,7 +42,7 @@ export function DocumentPreviewModal({ doc, onClose }) {
           ) : !src ? (
             <p className="p-4 text-sm text-slate-500">Ładowanie podglądu…</p>
           ) : (
-            <iframe title="Podgląd dokumentu" src={src} className="h-full w-full rounded-lg border-0 bg-white" />
+            <iframe title="Podgląd dokumentu" src={`${src}#toolbar=0&navpanes=0&statusbar=0&scrollbar=0&view=FitH`} className="h-full w-full rounded-lg border-0 bg-white" />
           )}
         </div>
         <div className="flex justify-end gap-2 border-t px-4 py-3">

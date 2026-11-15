@@ -2136,7 +2136,7 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
         </div>
         <div className="lg:col-span-7 bg-slate-200/70 rounded-2xl border border-slate-300 overflow-hidden min-h-[420px]">
           {previewUrl ? (
-            <iframe title="Podgląd informacji o e-recepcie" src={previewUrl} className="w-full h-full min-h-[420px] bg-white" />
+            <iframe title="Podgląd informacji o e-recepcie" src={`${previewUrl}#toolbar=0&navpanes=0&statusbar=0&scrollbar=0&view=FitH`} className="w-full h-full min-h-[420px] bg-white" />
           ) : (
             <p className="p-6 text-sm text-slate-600">{previewError || "Przygotowuję podgląd wydruku…"}</p>
           )}
