@@ -52,7 +52,7 @@ export function DocumentAccessModal({ doc, onClose, onChanged }) {
 
   return (
     <div className={shell}>
-      <div className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+      <div className="flex max-h-[85dvh] w-full max-w-md flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div>
             <h3 className="font-bold">Dostęp do dokumentu</h3>
@@ -168,7 +168,7 @@ export function AuditLogModal({ onClose }) {
 
   return (
     <div className={shell}>
-      <div className="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+      <div className="flex h-[90dvh] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div>
             <h3 className="font-bold">Dziennik zdarzeń dokumentów P1</h3>

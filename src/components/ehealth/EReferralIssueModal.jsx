@@ -275,7 +275,7 @@ const EReferralIssueModal = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-5xl w-full max-h-[92vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-5xl w-full max-h-[92dvh] overflow-hidden flex flex-col">
         <div className="bg-gradient-to-r from-[#1d4ed8] via-[#2563eb] to-[#3b82f6] px-6 py-4 text-white flex items-center justify-between">
           <h2 className="text-base font-bold">
             {result ? "E-Skierowanie zarejestrowane w CeZ / P1" : "Moduł wystawiania e-Skierowania"}

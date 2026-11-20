@@ -137,7 +137,7 @@ function PatientEditDialog({ patient, busy, canSaveRecord, onClose, onApply }) {
 
   return (
     <div className="fixed inset-0 z-[80] bg-slate-900/60 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-5 space-y-3">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90dvh] overflow-y-auto p-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <h3 className="font-semibold text-slate-900">Popraw dane pacjenta</h3>
           <button type="button" onClick={onClose} disabled={busy} aria-label="Zamknij"><X size={16} /></button>

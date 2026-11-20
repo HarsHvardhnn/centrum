@@ -1040,7 +1040,7 @@ export default function EPrescriptionIssueModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[1540px] h-[93vh] max-h-[960px] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[1540px] h-[93dvh] max-h-[960px] overflow-hidden flex flex-col">
         <div className="bg-gradient-to-r from-[#14532d] via-[#166534] to-[#1e7a6f] px-6 py-3.5 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center"><Pill size={20} /></div>
@@ -2089,7 +2089,7 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
           </button>
         )}
       </div>
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 overflow-hidden">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 overflow-y-auto lg:overflow-hidden">
         <div className="lg:col-span-5 overflow-y-auto flex flex-col gap-3">
           <section className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shrink-0">
             <div className="flex items-center gap-3">
@@ -2134,7 +2134,7 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
             <button type="button" onClick={onClose} className="px-3 py-2 rounded-lg border text-sm">Wróć do wizyty</button>
           </div>
         </div>
-        <div className="lg:col-span-7 bg-slate-200/70 rounded-2xl border border-slate-300 overflow-hidden min-h-[420px]">
+        <div className="lg:col-span-7 bg-slate-200/70 rounded-2xl border border-slate-300 overflow-hidden min-h-[320px] lg:min-h-0">
           {previewUrl ? (
             <iframe title="Podgląd informacji o e-recepcie" src={`${previewUrl}#toolbar=0&navpanes=0&statusbar=0&scrollbar=0&view=FitH`} className="w-full h-full min-h-[420px] bg-white" />
           ) : (

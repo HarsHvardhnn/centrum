@@ -31,7 +31,7 @@ export function DocumentPreviewModal({ doc, onClose }) {
 
   return (
     <div className={shell}>
-      <div className="flex h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+      <div className="flex h-[90dvh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h3 className="font-bold">Podgląd: {SERVICE_LABELS[doc.service] || doc.service}</h3>
           <button type="button" onClick={onClose} aria-label="Zamknij"><X size={18} /></button>
@@ -70,7 +70,7 @@ export function DocumentDetailsModal({ doc, onClose }) {
   const refs = doc.payload?.refs || {};
   return (
     <div className={shell}>
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+      <div className="flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h3 className="font-bold">Szczegóły techniczne: {SERVICE_LABELS[doc.service] || doc.service}</h3>
           <button type="button" onClick={onClose} aria-label="Zamknij"><X size={18} /></button>

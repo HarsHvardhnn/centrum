@@ -84,7 +84,7 @@ export default function ReferralHistoryModal({ open, patientId, patientName, pes
 
   return (
     <div className="fixed inset-0 z-[60] bg-slate-900/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[86vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[86dvh] flex flex-col overflow-hidden">
         <div className="bg-gradient-to-r from-[#2563eb] to-[#7c3aed] px-5 py-4 text-white flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center"><History size={18} /></span>

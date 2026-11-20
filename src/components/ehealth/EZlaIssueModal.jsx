@@ -595,7 +595,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="flex max-h-[92vh] w-full max-w-[1360px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+      <div className="flex max-h-[92dvh] w-full max-w-[1360px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between bg-indigo-800 px-5 py-4 text-white">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200">Centrum Medyczne 7 • Zakład Ubezpieczeń Społecznych</p>
@@ -845,7 +845,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
 
       {historyOpen && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="flex max-h-[86vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+          <div className="flex max-h-[86dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b px-4 py-3">
               <div>
                 <h4 className="font-bold">Historia zwolnień e-ZLA</h4>

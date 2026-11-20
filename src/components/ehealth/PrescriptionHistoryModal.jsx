@@ -86,7 +86,7 @@ export default function PrescriptionHistoryModal({ open, patientId, patientName,
 
   return (
     <div className="fixed inset-0 z-[60] bg-slate-900/50 flex items-center justify-center p-3">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl h-[86vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl h-[86dvh] flex flex-col overflow-hidden">
         <div className="px-5 py-3 border-b border-slate-200 flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 text-[#0D5C46]">
