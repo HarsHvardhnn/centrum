@@ -62,6 +62,9 @@ export function canPrint(doc) {
   return Boolean(doc?.id) && doc.service !== "eligibility";
 }
 
+// Medfile returns the patient PIN glued to the PESEL (4 + 11 digits). Patients and pharmacies use only the 4-digit PIN.
 export function accessCodeOf(doc) {
-  return doc?.accessCode || doc?.payload?.accessCode || doc?.payload?.refs?.accessCode || "";
+  const raw = String(doc?.accessCode || doc?.payload?.accessCode || doc?.payload?.refs?.accessCode || "");
+  const m = raw.match(/^(\d{4})\d{11}$/);
+  return m ? m[1] : raw;
 }
