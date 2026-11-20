@@ -140,8 +140,8 @@ const EReferralIssueModal = ({
 
   const nfzAllowed = referralType === "hospital_treatment";
   const typeLabel = REFERRAL_TYPES.find((row) => row.value === referralType)?.label || "Skierowanie";
-  const justificationRequired =
-    referralType === "hospital_treatment" || referralType === "rehabilitation" || priority === "urgent";
+  // Medfile rejects a referral without a purpose, and we no longer invent one for the doctor.
+  const justificationRequired = true;
   const code = accessCodeOf(result);
   const doctorLine = [patient?.doctorName, patient?.pwz ? `PWZ ${patient.pwz}` : ""].filter(Boolean).join(" · ");
 
@@ -183,7 +183,7 @@ const EReferralIssueModal = ({
     const icd = parseCoded(primaryIcd10);
     if (!icd.code || !icd.name) next.push("Pole Rozpoznanie główne (ICD-10) jest wymagane (kod i nazwa).");
     if (justificationRequired && !justification.trim()) {
-      next.push("Cel skierowania jest wymagany dla szpitala, rehabilitacji albo trybu pilnego.");
+      next.push("Wpisz cel skierowania / uzasadnienie medyczne — Medfile wymaga tego pola.");
     }
     if (referralType === "diagnostic_exam" && !procedures.some((row) => parseCoded(row).code)) {
       next.push("Dla pracowni diagnostycznej wskaż co najmniej jedną procedurę ICD-9.");
@@ -207,7 +207,7 @@ const EReferralIssueModal = ({
       cellId: getIssueCellId() || undefined,
       type: referralType === "rehabilitation" ? "02.10REH" : "02.10",
       title: `${typeLabel}: ${target.name}`,
-      purpose: justification.trim() || "Wskazanie kliniczne w oparciu o stan pacjenta.",
+      purpose: justification.trim(),
       previousTests: notes,
       icd10Code: icd.code,
       icd10Display: icd.name,
