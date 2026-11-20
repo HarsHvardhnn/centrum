@@ -38,6 +38,7 @@ export default function IssueSummaryBar({ patientName, pesel, birthDate, address
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const boxRef = useRef(null);
+  const [pos, setPos] = useState({ left: 8, top: 48 });
   const [cellList, setCellList] = useState([]);
   const [cellId, setCellId] = useState("");
 
@@ -150,7 +151,12 @@ export default function IssueSummaryBar({ patientName, pesel, birthDate, address
         <span className="text-slate-500 font-medium">eWUŚ:</span>
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            const w = Math.min(340, window.innerWidth - 16);
+            setPos({ left: Math.max(8, Math.min(r.left, window.innerWidth - w - 8)), top: Math.min(r.bottom + 8, Math.max(8, window.innerHeight - 120)) });
+            setOpen((v) => !v);
+          }}
           title="Kliknij, aby zobaczyć szczegóły i sprawdzić eWUŚ"
           className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-bold transition-colors ${PILL[tone]}`}
         >
@@ -159,7 +165,7 @@ export default function IssueSummaryBar({ patientName, pesel, birthDate, address
           <ChevronDown size={12} className={`transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
         {open && (
-          <div className="absolute left-0 top-full z-50 mt-2 w-[340px] rounded-xl border border-slate-200 bg-white p-3.5 text-xs shadow-xl">
+          <div style={{ left: pos.left, top: pos.top, maxHeight: `calc(100dvh - ${pos.top + 8}px)` }} className="fixed z-[200] w-[340px] max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-slate-200 bg-white p-3.5 text-xs shadow-xl">
             <div className="mb-2.5 flex items-center justify-between border-b border-slate-100 pb-2">
               <div className="flex items-center gap-1.5 font-bold text-slate-800">
                 <ShieldCheck size={16} className="text-emerald-600" />
