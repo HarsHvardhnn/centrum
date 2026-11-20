@@ -236,7 +236,8 @@ const EReferralIssueModal = ({
       if (res.licenseWarning) toast.warning(res.licenseWarning);
       if (res.data?.status === "failed") toast.error(res.data.error?.message || "e-Skierowanie zapisane z błędem wysyłki.");
       else toast.success("E-skierowanie jest na liście dokumentów tej wizyty.");
-      onClose?.();
+      if (res.data) setResult(res.data);
+      else onClose?.();
     } catch (err) {
       toast.error(unwrapEhealthError(err).message);
     } finally {
