@@ -211,8 +211,7 @@ const ehealthHelper = {
     try {
       const blob = await this.fetchDocumentBlob(service, id);
       const objectUrl = URL.createObjectURL(blob);
-      window.open(objectUrl, "_blank", "noopener,noreferrer");
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 120_000);
+      window.dispatchEvent(new CustomEvent("ehealth:preview", { detail: { url: objectUrl, type: blob.type, title: `Podgląd: ${service}`, filename: `${service}-${id}` } }));
       return { success: true };
     } catch (err) {
       const { message } = unwrapEhealthError(err);

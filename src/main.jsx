@@ -15,6 +15,7 @@ import { ServicesProvider } from "./context/serviceContext";
 import { SpecializationProvider } from "./context/SpecializationContext.jsx";
 import { queryClient } from "./lib/queryClient";
 import SigningPromptHost from "./components/ehealth/SigningPromptHost";
+import EhealthPreviewHost from "./components/ehealth/EhealthPreviewHost";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -31,6 +32,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                     <RouterProvider router={routes} />
                     <Toaster richColors position="top-right" />
                     <SigningPromptHost />
+                    <EhealthPreviewHost />
                   </SpecializationProvider>
                 </GoogleOAuthProvider>
               </ServicesProvider>

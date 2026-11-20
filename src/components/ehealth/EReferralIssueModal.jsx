@@ -310,7 +310,7 @@ const EReferralIssueModal = ({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button type="button" onClick={() => sendCode("sms")} className="py-2 border rounded-xl font-bold">Wyślij SMS</button>
                 <button type="button" onClick={() => sendCode("email")} className="py-2 border rounded-xl font-bold">Wyślij e-mail</button>
-                <button type="button" onClick={() => ehealthHelper.printDocument("referral", result.id)} className="py-2 border rounded-xl font-bold">Podgląd / wydruk</button>
+                <button type="button" onClick={() => ehealthHelper.previewDocument("referral", result.id).catch((err) => toast.error(err.message))} className="py-2 border rounded-xl font-bold">Podgląd / wydruk</button>
                 <button
                   type="button"
                   onClick={() => { setCancelReason(""); setCancelReasonError(""); setCancelOpen(true); }}
