@@ -30,15 +30,28 @@ export default function EhealthPreviewHost() {
   });
 
   if (!doc) return null;
+  const isPdf = String(doc.type || "").includes("pdf");
+  // Native print dialog only on "Drukuj": a hidden frame prints the file, the visible one just shows it.
   const print = () => {
-    try {
-      frame.current?.contentWindow?.focus();
-      frame.current?.contentWindow?.print();
-    } catch {
-      window.open(doc.url, "_blank");
-    }
+    const hidden = document.createElement("iframe");
+    hidden.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+    hidden.src = doc.url;
+    hidden.onload = () => {
+      setTimeout(() => {
+        try {
+          hidden.contentWindow.focus();
+          hidden.contentWindow.print();
+        } catch {
+          window.open(doc.url, "_blank");
+        }
+        setTimeout(() => hidden.remove(), 60000);
+      }, 400);
+    };
+    document.body.appendChild(hidden);
   };
-  const ext = String(doc.type || "").includes("pdf") ? "pdf" : "html";
+  const ext = isPdf ? "pdf" : "html";
+  // Plain page view: no browser PDF toolbar or thumbnail pane, fitted to the window width.
+  const viewSrc = isPdf ? `${doc.url}#toolbar=0&navpanes=0&scrollbar=1&view=FitH` : doc.url;
   const btn = "inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50";
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/60 p-3" onClick={close}>
@@ -50,7 +63,7 @@ export default function EhealthPreviewHost() {
           <a href={doc.url} target="_blank" rel="noopener noreferrer" className={btn}><ExternalLink size={14} /> Nowa karta</a>
           <button type="button" onClick={close} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Zamknij"><X size={18} /></button>
         </div>
-        <iframe ref={frame} title={doc.title || "Podgląd dokumentu"} src={doc.url} className="min-h-0 w-full flex-1 bg-slate-100" />
+        <iframe ref={frame} title={doc.title || "Podgląd dokumentu"} src={viewSrc} className="min-h-0 w-full flex-1 bg-slate-100" />
       </div>
     </div>
   );
