@@ -120,7 +120,9 @@ const ProfilePage = () => {
   };
 
   const translateRoleToPolish = (role) => {
-    //("role is", role)
+    // Nurses and physiotherapists are "doctor" accounts with a different P1 role.
+    if (role === "doctor" && profile?.medfileRole === "PIEL") return "Pielęgniarka";
+    if (role === "doctor" && profile?.medfileRole === "FIZJO") return "Fizjoterapeuta";
     switch (role) {
       case "patient":
         return "Pacjent";

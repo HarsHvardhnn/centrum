@@ -270,7 +270,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
               ? (initialData?.showOnWebsite !== undefined
                   ? initialData.showOnWebsite !== false
                   : Boolean(String(initialData?.shortDescription || "").trim()) && (initialData?.specializations || initialData?.specialization || []).length > 0 && (initialData?.qualifications || []).length > 0)
-              : isDoctorRole(defaultRole || "LEK"),
+              : false,
             medfilePractitionerId: initialData?.medfilePractitionerId || "",
             medfileQualifications: (initialData?.medfileQualifications || []).map((q) => ({ code: q.code, display: q.display })),
             noSpecialization: !!initialData?.noSpecialization,
