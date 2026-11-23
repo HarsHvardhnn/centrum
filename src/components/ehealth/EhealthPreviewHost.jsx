@@ -34,7 +34,7 @@ export default function EhealthPreviewHost() {
   // Native print dialog only on "Drukuj": a hidden frame prints the file, the visible one just shows it.
   const print = () => {
     const hidden = document.createElement("iframe");
-    hidden.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+    hidden.style.cssText = "position:fixed;left:-10000px;top:0;width:900px;height:1200px;border:0";
     hidden.src = doc.url;
     hidden.onload = () => {
       setTimeout(() => {

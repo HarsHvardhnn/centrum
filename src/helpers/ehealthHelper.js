@@ -56,51 +56,35 @@ function pathFor(service) {
   return SERVICE_PATH[service] || service;
 }
 
-function printBlob(blob, title) {
-  const type = blob.type || "";
+/** Prints through an off-screen frame (a pop-up opened after an async fetch is blocked by browsers). Falls back to the preview modal. */
+function printBlob(blob, title, filename) {
   const objectUrl = URL.createObjectURL(blob);
-  if (type.includes("html")) {
-    const w = window.open(objectUrl, "_blank", "noopener,noreferrer");
-    const trigger = () => {
-      try {
-        w?.focus();
-        w?.print();
-      } catch {
-        /* ignore */
-      }
-    };
-    if (w) {
-      w.addEventListener("load", () => setTimeout(trigger, 300));
-    }
-    setTimeout(trigger, 1200);
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 120_000);
-    return;
-  }
   const iframe = document.createElement("iframe");
   iframe.setAttribute("title", title || "Wydruk e-zdrowie");
-  iframe.style.position = "fixed";
-  iframe.style.right = "0";
-  iframe.style.bottom = "0";
-  iframe.style.width = "0";
-  iframe.style.height = "0";
-  iframe.style.border = "0";
-  iframe.src = objectUrl;
-  document.body.appendChild(iframe);
+  // Not display:none and not 0x0 - browsers print those as blank pages.
+  iframe.style.cssText = "position:fixed;left:-10000px;top:0;width:900px;height:1200px;border:0";
+  let done = false;
   const cleanup = () => {
     iframe.remove();
     URL.revokeObjectURL(objectUrl);
   };
   const triggerPrint = () => {
+    if (done) return;
+    done = true;
     try {
-      iframe.contentWindow?.focus();
-      iframe.contentWindow?.print();
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(cleanup, 120_000);
     } catch {
-      window.open(objectUrl, "_blank")?.print?.();
+      cleanup();
+      const fallback = URL.createObjectURL(blob);
+      window.dispatchEvent(new CustomEvent("ehealth:preview", { detail: { url: fallback, type: blob.type, title: title || "Wydruk e-zdrowie", filename: filename || "dokument" } }));
     }
   };
-  iframe.addEventListener("load", () => setTimeout(triggerPrint, 300));
-  setTimeout(triggerPrint, 1200);
-  setTimeout(cleanup, 120_000);
+  iframe.addEventListener("load", () => setTimeout(triggerPrint, 500));
+  iframe.src = objectUrl;
+  document.body.appendChild(iframe);
+  setTimeout(triggerPrint, 3000);
 }
 
 const ehealthHelper = {
@@ -222,7 +206,7 @@ const ehealthHelper = {
   async printDocument(service, id) {
     try {
       const blob = await this.fetchDocumentBlob(service, id);
-      printBlob(blob, "Wydruk e-zdrowie");
+      printBlob(blob, "Wydruk e-zdrowie", `${service}-${id}`);
       return { success: true };
     } catch (err) {
       const { message } = unwrapEhealthError(err);
