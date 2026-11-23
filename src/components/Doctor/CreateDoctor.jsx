@@ -278,7 +278,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
             paAllowed: !!initialData?.paAllowed,
             cellIds: initialData?.cellIds || [],
             defaultCellId: initialData?.defaultCellId || "",
-            prescribingRights: initialData?.prescribingRights || (isDoctorRole(defaultRole || "LEK") ? "independent" : defaultRole === "FIZJO" ? "none" : "on-order"),
+            prescribingRights: initialData?.prescribingRights || (isDoctorRole(defaultRole || "LEK") ? "independent" : "none"),
             homeStreet: initialData?.residentialAddress?.street || "",
             homeHouseNumber: initialData?.residentialAddress?.houseNumber || "",
             homeUnitId: initialData?.residentialAddress?.unitId || "",
@@ -586,7 +586,7 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                             const role = e.target.value;
                             setFieldValue("medfileRole", role);
                             if (!isDoctorRole(role)) { setFieldValue("medfileQualifications", []); setFieldValue("noSpecialization", false); setFieldValue("showOnWebsite", false); }
-                            setFieldValue("prescribingRights", isDoctorRole(role) ? "independent" : role === "FIZJO" ? "none" : (values.prescribingRights === "independent" ? "on-order" : values.prescribingRights));
+                            setFieldValue("prescribingRights", isDoctorRole(role) ? "independent" : role === "FIZJO" || role === "PIEL" ? "none" : values.prescribingRights);
                             if (role === "FIZJO") setFieldValue("issuesEDocuments", false);
                           }}
                         >
@@ -648,6 +648,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         </p>
                       )}
                     </div>
+                    {values.medfileRole !== "FIZJO" && (
+                    <>
                     <label className="flex items-start gap-2 text-sm text-gray-800">
                       <input type="checkbox" className="mt-1" checked={values.issuesEDocuments && !(!isDoctorRole(values.medfileRole) && values.prescribingRights === "none")} disabled={!isDoctorRole(values.medfileRole) && values.prescribingRights === "none"} onChange={(e) => setFieldValue("issuesEDocuments", e.target.checked)} />
                       <span>
@@ -665,6 +667,8 @@ export default function AddDoctorForm({ isOpen, onClose, onAddDoctor, initialDat
                         <span className="block text-xs text-gray-500">Domyślnie wyłączone. Po włączeniu osoba uzupełnia adres i telefon w „Moje ustawienia e-Zdrowie”. Po wyłączeniu takie recepty są blokowane od razu.</span>
                       </span>
                     </label>
+                    </>
+                    )}
                     <DoctorCellsField
                       cellIds={values.cellIds || []}
                       defaultCellId={values.defaultCellId || ""}
