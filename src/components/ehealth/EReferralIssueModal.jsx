@@ -289,7 +289,7 @@ const EReferralIssueModal = ({
           </div>
         </div>
 
-        <IssueSummaryBar patientName={details?.name || patient?.name} pesel={details?.pesel || patient?.pesel} birthDate={details?.birthDate || patient?.birthDate} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} />
+        <IssueSummaryBar patientName={details?.name || patient?.name} pesel={details?.pesel || patient?.pesel} birthDate={details?.birthDate || patient?.birthDate} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} issued={Boolean(result)} issuedCellId={result?.payload?.cellId} />
 
         <div className="p-6 overflow-y-auto text-xs text-slate-700 space-y-4">
           {result ? (

@@ -33,7 +33,8 @@ function ageOf(birthDate) {
   return years >= 0 && years < 130 ? `${years} lat` : "";
 }
 
-export default function IssueSummaryBar({ patientName, pesel, birthDate, address, doctorName, pwz, patientId, visitId }) {
+// issued: the document already exists, so the cell is shown as a fact (issuedCellId) and can no longer be changed.
+export default function IssueSummaryBar({ patientName, pesel, birthDate, address, doctorName, pwz, patientId, visitId, issued = false, issuedCellId = "" }) {
   const [doc, setDoc] = useState(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -65,6 +66,7 @@ export default function IssueSummaryBar({ patientName, pesel, birthDate, address
     setCellId(id);
     setIssueCellId(id);
   };
+  const issuedCell = cellList.find((c) => c.id === issuedCellId);
   const cleanPesel = String(pesel || "").replace(/\D/g, "");
   const hasPesel = cleanPesel.length === 11;
 
@@ -133,6 +135,11 @@ export default function IssueSummaryBar({ patientName, pesel, birthDate, address
           <span className="text-slate-300 hidden md:inline">|</span>
           <div className="flex items-center gap-1.5">
             <span className="text-slate-500 font-medium">Komórka:</span>
+            {issued ? (
+              <strong className="text-slate-900 font-bold" title="Komórka, pod którą wystawiono dokument">
+                {issuedCell ? `${issuedCell.code} — ${issuedCell.name}` : "—"}
+              </strong>
+            ) : (
             <select
               value={cellId}
               onChange={(e) => pickCell(e.target.value)}
@@ -143,6 +150,7 @@ export default function IssueSummaryBar({ patientName, pesel, birthDate, address
                 <option key={c.id} value={c.id}>{c.code} — {c.name}{c.synced ? "" : " (nie wysłana do Medfile)"}</option>
               ))}
             </select>
+            )}
           </div>
         </>
       )}

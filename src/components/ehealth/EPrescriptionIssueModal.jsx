@@ -1064,7 +1064,7 @@ export default function EPrescriptionIssueModal({
           </div>
         </div>
 
-        <IssueSummaryBar patientName={details?.name} pesel={details?.pesel} birthDate={details?.birthDate} address={details?.address || "brak adresu"} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} />
+        <IssueSummaryBar patientName={details?.name} pesel={details?.pesel} birthDate={details?.birthDate} address={details?.address || "brak adresu"} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} issued={issued.length > 0} issuedCellId={issued.find((row) => row.result)?.result.payload?.cellId} />
 
         {issued.length ? (
           <IssuedBatch

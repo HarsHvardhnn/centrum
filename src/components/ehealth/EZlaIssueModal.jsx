@@ -618,7 +618,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
           </div>
         </div>
 
-        <IssueSummaryBar patientName={patient?.name} pesel={pesel} birthDate={patient?.birthDate} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} />
+        <IssueSummaryBar patientName={patient?.name} pesel={pesel} birthDate={patient?.birthDate} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} issued={Boolean(result)} issuedCellId={result?.payload?.cellId} />
         {zusMissing && (
           <div className="flex flex-wrap items-center gap-3 border-b border-amber-200 bg-amber-50 px-6 py-2 text-xs text-amber-900">
             <span>e-ZLA wysyła się do ZUS, który potwierdza lekarza jego certyfikatem. Wypełnij formularz — certyfikat (plik i PIN) poprosimy przy pobieraniu danych z ZUS albo przy wysyłce.</span>
