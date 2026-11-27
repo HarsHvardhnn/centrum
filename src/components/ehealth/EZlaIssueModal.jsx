@@ -149,8 +149,9 @@ function buildLeaveCards(clinic, zus) {
       icd: icdRoot(payload.icd10 || payload.diseaseStatisticalNumber || ""),
       doctorName: payload.doctorName || "",
       pwz: payload.pwz || "",
-      facility: "Centrum Medyczne 7",
-      place: [payload.city, payload.postalCode].filter(Boolean).join(", "),
+      // Documents issued without a ZUS workplace carried the facility's own data.
+      facility: payload.issuingPlace?.name || "Centrum Medyczne 7",
+      place: [payload.issuingPlace?.address?.city, payload.issuingPlace?.address?.postalCode].filter(Boolean).join(", "),
       payerId: "",
       hospitalDays: "",
     };
@@ -265,6 +266,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
   const [newPayer, setNewPayer] = useState({ name: "", nip: "", type: "1", hasPue: true });
   const [contextNote, setContextNote] = useState("");
   const [lookupReason, setLookupReason] = useState("");
+  const [issuingPlace, setIssuingPlace] = useState(null);
 
   const pesel = String(patient?.pesel || "").replace(/\D/g, "");
   const male = malePatient(patient);
@@ -342,6 +344,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
       setPayerLookup(Array.isArray(data.payers) && data.payers.length ? "ok" : "failed");
       setContextNote(data.canIssue === false ? (data.message || "Lekarz nie ma uprawnienia do wystawienia zwolnienia na ten dzień.") : "");
       setLookupReason(data.canIssue === false ? "" : data.message || "");
+      setIssuingPlace(data.place || null);
       const remote = Array.isArray(data.payers) ? data.payers : [];
       if (remote.length) {
         setForm((prev) => {
@@ -601,8 +604,11 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
       <div className="flex max-h-[92dvh] w-full max-w-[1360px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between bg-indigo-800 px-5 py-4 text-white">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200">Centrum Medyczne 7 • Zakład Ubezpieczeń Społecznych</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200">{issuingPlace?.name || "Centrum Medyczne 7"} • Zakład Ubezpieczeń Społecznych</p>
             <h3 className="text-lg font-bold">Moduł wystawiania e-ZLA</h3>
+            {issuingPlace && (
+              <p className="text-xs text-indigo-100">Miejsce udzielania świadczeń (z ZUS): {issuingPlace.address} · NIP {issuingPlace.nip}</p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={loadHistory} className="inline-flex items-center gap-1 rounded-lg border border-indigo-400 px-3 py-1.5 text-xs font-semibold hover:bg-indigo-700">
