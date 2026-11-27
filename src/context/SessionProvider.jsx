@@ -9,7 +9,7 @@ import { useIdleTimer } from "react-idle-timer";
 import { useUser } from "./userContext";
 import { SessionContext } from "./sessionContext";
 import appointmentConfigService from "../helpers/appointmentConfigHelper";
-import { refreshAccessToken, getCookie } from "../utils/axiosInstance";
+import { refreshAccessToken } from "../utils/axiosInstance";
 import {
   getAccessToken,
   getMsUntilExpiry,
@@ -42,8 +42,11 @@ import { toast } from "sonner";
 const IDLE_PROMPT_MS = 30 * 1000;
 const DEFAULT_IDLE_MS = 30 * 60 * 1000;
 
-function hasClientSession() {
-  return !!(getCookie("authToken") || localStorage.getItem("authToken"));
+const SIGN_IN_PATHS = ["/logowanie", "/zapomniane-haslo", "/login"];
+
+/** Session warnings make no sense on the sign-in screens. */
+function isSignInPage() {
+  return SIGN_IN_PATHS.includes(window.location.pathname.replace(/\/+$/, ""));
 }
 
 /**
@@ -51,8 +54,10 @@ function hasClientSession() {
  * phase: active | jwtWarning | idlePrompt | loggingOut
  */
 export function SessionProvider({ children }) {
-  const { isAuthenticated } = useUser();
-  const sessionLive = isAuthenticated || hasClientSession();
+  const { user, isAuthenticated } = useUser();
+  // A leftover token in storage is not a session: wait until the user has been
+  // verified (or has just signed in), otherwise a stale token shows "expired".
+  const sessionLive = Boolean(user);
 
   const [idleTimeoutMs, setIdleTimeoutMs] = useState(DEFAULT_IDLE_MS);
   const [phase, setPhase] = useState("active");
@@ -188,7 +193,8 @@ export function SessionProvider({ children }) {
       phaseRef.current === "cookieRequired" ||
       phaseRef.current === "loggingOut" ||
       phaseRef.current === "idlePrompt" ||
-      isSessionEnding()
+      isSessionEnding() ||
+      isSignInPage()
     ) {
       return;
     }
@@ -256,6 +262,13 @@ export function SessionProvider({ children }) {
       if (isSessionEnding() || phaseRef.current === "loggingOut") return;
       if (phaseRef.current === "cookieRequired") return;
       if (phaseRef.current === "idlePrompt") return;
+      if (isSignInPage()) {
+        if (phaseRef.current === "jwtWarning") {
+          setPhase("active");
+          setSessionWarningActive(false);
+        }
+        return;
+      }
 
       const token = getAccessToken();
       if (!token) {
