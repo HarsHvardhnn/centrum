@@ -264,6 +264,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
   const [zusAddr, setZusAddr] = useState({ open: false, loading: false, list: [], message: "" });
   const [newPayer, setNewPayer] = useState({ name: "", nip: "", type: "1", hasPue: true });
   const [contextNote, setContextNote] = useState("");
+  const [lookupReason, setLookupReason] = useState("");
 
   const pesel = String(patient?.pesel || "").replace(/\D/g, "");
   const male = malePatient(patient);
@@ -334,11 +335,13 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
     }
     let cancelled = false;
     setPayerLookup("loading");
+    setLookupReason("");
     ehealthHelper.ezlaContext(patientId, form.institution).then((res) => {
       if (cancelled) return;
       const data = res?.data || {};
       setPayerLookup(Array.isArray(data.payers) && data.payers.length ? "ok" : "failed");
       setContextNote(data.canIssue === false ? (data.message || "Lekarz nie ma uprawnienia do wystawienia zwolnienia na ten dzień.") : "");
+      setLookupReason(data.canIssue === false ? "" : data.message || "");
       const remote = Array.isArray(data.payers) ? data.payers : [];
       if (remote.length) {
         setForm((prev) => {
@@ -725,6 +728,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
                       ))}
                       {!form.payers.length && payerLookup === "loading" && <p className="text-xs text-slate-500">Pobieranie płatników z ZUS na podstawie numeru PESEL…</p>}
                       {!form.payers.length && payerLookup === "failed" && <p className="text-xs text-slate-500">Nie udało się pobrać płatnika z ZUS. Dodaj płatnika ręcznie (NIP).</p>}
+                      {!form.payers.length && payerLookup === "failed" && lookupReason && <p className="text-xs text-amber-800">{lookupReason}</p>}
                       {!form.payers.length && payerLookup === "needs-cert" && <p className="text-xs text-slate-500">Płatnika pobierzemy z ZUS po wczytaniu certyfikatu. Możesz też dodać go ręcznie (NIP).</p>}
                     </div>
                     <label className="mt-3 flex items-center gap-2 text-xs text-slate-700">
