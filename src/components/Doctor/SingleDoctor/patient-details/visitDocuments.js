@@ -10,7 +10,7 @@ export const CATEGORY_TABS = [
 ];
 
 const E_CATEGORY = { prescription: "REC", referral: "SKI", ezla: "ZLA" };
-const ISSUED_LABEL = { prescription: "Wystawiona w P1", referral: "Wystawione w P1", ezla: "Wystawione w ZUS" };
+const ISSUED_LABEL = { prescription: "Wystawiona w P1", referral: "Wystawione", ezla: "Wystawione w ZUS" };
 
 function eName(row) {
   const payload = row.payload || {};

@@ -1,27 +1,22 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Stethoscope } from "lucide-react";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
-import { STATUS_LABELS, statusClass, accessCodeOf, canPrint } from "./ehealthStatus";
+import { accessCodeOf, canCancel, canPrint } from "./ehealthStatus";
 import P1SignDialog from "./P1SignDialog";
 import IssueSummaryBar from "./IssueSummaryBar";
 import { getIssueCellId } from "./issueCell";
 import ReferralHistoryModal from "./ReferralHistoryModal";
 import IssuePatientCard, { normalizePatient, patientForDocument } from "./IssuePatientCard";
-import {
-  ANATOMICAL_SITES,
-  NFZ_BRANCHES,
-  REFERRAL_TYPES,
-  RESORT_CODES,
-  RESORT_HINTS,
-} from "./eReferralCatalog";
-import IcdField from "./IcdField";
+import { ANATOMICAL_SITES, PURPOSE_HINTS, REFERRAL_TYPES, RESORT_HINTS } from "./eReferralCatalog";
+import { useResortCodes } from "./resortCodes";
 import IcdMulti, { uniqueExtra } from "./IcdMulti";
 import { unusedVisitCodes } from "./IcdCombobox";
-import { Stethoscope } from "lucide-react";
 import { formatCoded, visitDiagnosisRows } from "./visitIcd";
 
 const inputClass = "w-full h-9 px-3 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900";
+const missingClass = "!border-rose-500 !bg-rose-50";
 
 function parseCoded(value) {
   const text = String(value || "").trim();
@@ -30,6 +25,30 @@ function parseCoded(value) {
   if (/^[0-9A-Z][0-9A-Z.*]*$/i.test(text)) return { code: text, name: "" };
   return { code: "", name: "" };
 }
+
+/** Form values from a saved referral ("Powiel"). Never the code, number or NFZ data. */
+function fromPayload(payload = {}) {
+  const type = payload.type === "02.10REH" ? "rehabilitation" : payload.clientReferralType || "specialist_clinic";
+  // Referrals saved before the two text fields were separated kept the descriptive diagnosis in previousTests.
+  const separated = payload.clinicalNotes !== undefined;
+  const procedures = (Array.isArray(payload.procedures) && payload.procedures.length ? payload.procedures : [payload])
+    .filter((row) => row.icd9Code)
+    .map((row) => formatCoded(row.icd9Code, row.icd9Display));
+  return {
+    referralType: type,
+    priority: payload.cito || payload.priorityCode === "UR" ? "urgent" : "normal",
+    target: payload.performerCode && payload.performer ? `${payload.performerCode} - ${payload.performer}` : "",
+    primaryIcd10: payload.icd10Code ? formatCoded(payload.icd10Code, payload.icd10Display) : "",
+    extraIcd10: Array.isArray(payload.icd10Extra) ? payload.icd10Extra.map((row) => ({ code: row.icd10Code, name: row.icd10Display })) : [],
+    site: payload.anatomicalSite || (payload.bodySite === "L" ? "left" : payload.bodySite === "R" ? "right" : ""),
+    procedures: procedures.length ? procedures : [""],
+    clinicalNotes: (separated ? payload.clinicalNotes : payload.previousTests) || "",
+    previousTests: separated ? payload.previousTests || "" : "",
+    justification: payload.purpose || "",
+  };
+}
+
+const newKey = () => (window.crypto?.randomUUID ? window.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 
 const EReferralIssueModal = ({
   open,
@@ -43,158 +62,126 @@ const EReferralIssueModal = ({
   onDocumentsChanged,
   onPatientSaved,
 }) => {
-  const copied = initialPayload || {};
   const [details, setDetails] = useState(() => normalizePatient(patient));
-  const [referralType, setReferralType] = useState(
-    copied.type === "02.10REH" ? "rehabilitation" : "specialist_clinic"
-  );
-  const [priority, setPriority] = useState(copied.cito ? "urgent" : "normal");
-  const [isNfzFunded, setIsNfzFunded] = useState(copied.reimbursed === "Y");
-  const [nfzBranch, setNfzBranch] = useState(copied.nfzDepartment || "");
-  const [nfzContract, setNfzContract] = useState(copied.nfzContract || "");
-
-  // Fill the branch from the patient's latest eWUŚ answer unless a copied referral already carries one.
-  useEffect(() => {
-    if (!open || !patientId || copied.nfzDepartment) return undefined;
-    let cancelled = false;
-    ehealthHelper
-      .history({ patientId, service: "eligibility" })
-      .then((res) => {
-        const code = (Array.isArray(res?.data) ? res.data : [])[0]?.payload?.nfzBranch;
-        if (!cancelled && code) setNfzBranch(code);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [open, patientId, copied.nfzDepartment]);
-  const [targetSearch, setTargetSearch] = useState(
-    copied.performerCode && copied.performer ? `${copied.performerCode} - ${copied.performer}` : ""
-  );
+  const [form, setForm] = useState(() => fromPayload(initialPayload || {}));
+  const { referralType, priority, target: targetSearch, primaryIcd10, extraIcd10, site, procedures, clinicalNotes, previousTests, justification } = form;
+  const set = (patch) => setForm((prev) => ({ ...prev, ...patch }));
+  const [hasNfz, setHasNfz] = useState(false);
+  const [isNfzFunded, setIsNfzFunded] = useState(false);
   const [targetOpen, setTargetOpen] = useState(false);
-  const [extraIcd10, setExtraIcd10] = useState(
-    Array.isArray(copied.icd10Extra) ? copied.icd10Extra.map((row) => ({ code: row.icd10Code, name: row.icd10Display })) : []
-  );
-  const [primaryIcd10, setPrimaryIcd10] = useState(
-    copied.icd10Code ? formatCoded(copied.icd10Code, copied.icd10Display) : ""
-  );
-  const visitIcd = useMemo(() => visitDiagnosisRows(diagnoses), [diagnoses]);
-  const [site, setSite] = useState(copied.bodySite === "L" ? "left" : copied.bodySite === "R" ? "right" : "");
-  const [procedures, setProcedures] = useState(
-    copied.icd9Code ? [`${copied.icd9Code} - ${copied.icd9Display || ""}`] : [""]
-  );
+  const [showAll, setShowAll] = useState(false);
   const [procHits, setProcHits] = useState([]);
-  const visitIcd9 = useMemo(() => visitDiagnosisRows(visitProcedures), [visitProcedures]);
   const [procIndex, setProcIndex] = useState(-1);
   const [procQuery, setProcQuery] = useState("");
-  const [contraindications, setContraindications] = useState(copied.previousTests || "");
-  const [justification, setJustification] = useState(copied.purpose || "");
   const [errors, setErrors] = useState([]);
-  const [checkedOk, setCheckedOk] = useState(false);
+  const [missing, setMissing] = useState({});
+  const [checked, setChecked] = useState("");
   const [signOpen, setSignOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelReasonError, setCancelReasonError] = useState("");
+  const [historyVersion, setHistoryVersion] = useState(0);
+  const { rows: resortRows, versionDate, error: resortError } = useResortCodes();
+  const visitIcd = useMemo(() => visitDiagnosisRows(diagnoses), [diagnoses]);
+  const visitIcd9 = useMemo(() => visitDiagnosisRows(visitProcedures), [visitProcedures]);
 
   // Every time the form is opened it starts empty (or from the referral being copied), never from the previous entry.
   useEffect(() => {
     if (!open) return;
-    setReferralType(copied.type === "02.10REH" ? "rehabilitation" : "specialist_clinic");
-    setPriority(copied.cito ? "urgent" : "normal");
-    setIsNfzFunded(copied.reimbursed === "Y");
-    setNfzBranch(copied.nfzDepartment || "");
-    setNfzContract(copied.nfzContract || "");
-    setTargetSearch(copied.performerCode && copied.performer ? `${copied.performerCode} - ${copied.performer}` : "");
+    setForm(fromPayload(initialPayload || {}));
+    setIsNfzFunded(false);
     setTargetOpen(false);
-    setExtraIcd10(Array.isArray(copied.icd10Extra) ? copied.icd10Extra.map((row) => ({ code: row.icd10Code, name: row.icd10Display })) : []);
-    setPrimaryIcd10(copied.icd10Code ? formatCoded(copied.icd10Code, copied.icd10Display) : "");
-    setSite(copied.bodySite === "L" ? "left" : copied.bodySite === "R" ? "right" : "");
-    setProcedures(copied.icd9Code ? [`${copied.icd9Code} - ${copied.icd9Display || ""}`] : [""]);
+    setShowAll(false);
     setProcHits([]);
     setProcIndex(-1);
-    setProcQuery("");
-    setContraindications(copied.previousTests || "");
-    setJustification(copied.purpose || "");
     setErrors([]);
-    setCheckedOk(false);
+    setMissing({});
+    setChecked("");
     setSignOpen(false);
-    setBusy(false);
     setResult(null);
     setHistoryOpen(false);
-    setCancelOpen(false);
-    setCancelReason("");
-    setCancelReasonError("");
+    setCancelTarget(null);
+    ehealthHelper.runtime().then((res) => setHasNfz(Boolean(res?.data?.hasNfz))).catch(() => setHasNfz(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // Any change after a check makes it out of date, and starts a new send request.
+  const snapshot = JSON.stringify([form, isNfzFunded, patientForDocument(details)]);
+  const checkedOk = checked === snapshot;
+  const changedSinceCheck = Boolean(checked) && !checkedOk;
+  const sendKey = useRef({ snapshot: "", key: "" });
+  const idempotencyKey = () => {
+    if (sendKey.current.snapshot !== snapshot) sendKey.current = { snapshot, key: newKey() };
+    return sendKey.current.key;
+  };
+
+  const target = parseCoded(targetSearch);
+  const targetRow = resortRows.find((row) => row.code === target.code);
   const filteredResort = useMemo(() => {
     const fold = (text) => String(text || "").toLowerCase().replace(/ł/g, "l").normalize("NFD").replace(/[̀-ͯ]/g, "");
     const q = fold(parseCoded(targetSearch).code && targetSearch.includes(" - ") ? "" : targetSearch.trim());
-    const matches = (item) => !q || fold(item.full).includes(q) || item.code.includes(q);
+    const matches = (item) => !item.hidden && (!q || fold(item.full).includes(q) || item.code.includes(q));
     return {
-      matched: RESORT_CODES.filter((item) => item.categories.includes(referralType) && matches(item)),
-      others: RESORT_CODES.filter((item) => !item.categories.includes(referralType) && matches(item)),
+      matched: resortRows.filter((item) => item.types.includes(referralType) && matches(item)),
+      others: resortRows.filter((item) => !item.types.includes(referralType) && matches(item)),
     };
-  }, [referralType, targetSearch]);
+  }, [referralType, targetSearch, resortRows]);
 
   if (!open) return null;
 
-  const nfzAllowed = referralType === "hospital_treatment";
   const typeLabel = REFERRAL_TYPES.find((row) => row.value === referralType)?.label || "Skierowanie";
-  // Medfile rejects a referral without a purpose, and we no longer invent one for the doctor.
-  const justificationRequired = true;
   const code = accessCodeOf(result);
+  const accepted = Boolean(code) && (result?.status === "submitted" || result?.status === "issued");
   const doctorLine = [patient?.doctorName, patient?.pwz ? `PWZ ${patient.pwz}` : ""].filter(Boolean).join(" · ");
+  const phone = details?.phone || patient?.phone;
+  const email = details?.email || patient?.email;
 
   const changeType = (next) => {
-    setReferralType(next);
-    // NFZ referrals are only allowed for a hospital stay.
-    if (next !== "hospital_treatment") setIsNfzFunded(false);
-    setTargetSearch("");
+    set({ referralType: next, target: "" });
+    setShowAll(false);
     setTargetOpen(true);
-    if (next === "diagnostic_exam" && procedures.every((row) => !row.trim())) setProcedures([""]);
   };
 
   const searchProcedure = async (index, value) => {
     const next = procedures.slice();
     next[index] = value;
-    setProcedures(next);
+    set({ procedures: next });
     if (value.trim().length < 2) {
       setProcHits([]);
       setProcIndex(-1);
       return;
     }
     setProcIndex(index);
-    try {
-      const rows = await appointmentHelper.searchIcd9(value.trim());
-      const hits = Array.isArray(rows) ? rows.slice(0, 8) : [];
-      setProcHits(hits);
-      setProcQuery(value.trim());
-      setProcIndex(index);
-    } catch {
-      setProcHits([]);
-      setProcIndex(index);
-    }
+    const rows = await appointmentHelper.searchIcd9(value.trim()).catch(() => []);
+    setProcHits(Array.isArray(rows) ? rows.slice(0, 8) : []);
+    setProcQuery(value.trim());
   };
 
   const validate = () => {
+    const found = {
+      target: !target.code || !target.name,
+      icd: !parseCoded(primaryIcd10).code || !parseCoded(primaryIcd10).name,
+      purpose: !justification.trim(),
+      address: !details?.street || !details?.postalCode || !details?.city,
+    };
     const next = [];
-    const target = parseCoded(targetSearch);
-    if (!target.code || !target.name) next.push("Wskaż komórkę docelową w polu Skierowanie do.");
-    const icd = parseCoded(primaryIcd10);
-    if (!icd.code || !icd.name) next.push("Pole Rozpoznanie główne (ICD-10) jest wymagane (kod i nazwa).");
-    if (justificationRequired && !justification.trim()) {
-      next.push("Wpisz cel skierowania / uzasadnienie medyczne — Medfile wymaga tego pola.");
-    }
-    if (referralType === "diagnostic_exam" && !procedures.some((row) => parseCoded(row).code)) {
-      next.push("Dla pracowni diagnostycznej wskaż co najmniej jedną procedurę ICD-9.");
-    }
-    if (isNfzFunded && !nfzBranch) next.push("Pole Oddział NFZ jest wymagane dla skierowania w ramach NFZ.");
+    if (found.target) next.push("Wybierz komórkę, do której kierujesz pacjenta.");
+    if (found.icd) next.push("Wybierz rozpoznanie: kliknij „Pobierz z wizyty” albo wyszukaj kod ICD-10.");
+    if (found.purpose) next.push("Wpisz cel skierowania.");
+    if (found.address) next.push("Uzupełnij adres pacjenta – „Popraw dane”.");
+    setMissing(found);
     setErrors(next);
+    setChecked(next.length ? "" : snapshot);
     return next.length === 0;
+  };
+
+  const startSigning = () => {
+    if (!validate()) return;
+    if (targetRow && !targetRow.types.includes(referralType)
+      && !window.confirm(`Ta komórka nie pasuje do typu „${typeLabel}”. Czy na pewno chcesz kierować tutaj?`)) return;
+    setSignOpen(true);
   };
 
   const submit = async () => {
@@ -202,179 +189,203 @@ const EReferralIssueModal = ({
       toast.error("Brak wizyty lub pacjenta — otwórz kartę wizyty");
       return;
     }
-    const target = parseCoded(targetSearch);
     const icd = parseCoded(primaryIcd10);
     const parsedProcedures = procedures
       .map(parseCoded)
-      .filter((row, i, all) => row.code && row.name && all.findIndex((other) => other.code === row.code) === i);
-    const extra = parsedProcedures.slice(1).map((row) => `${row.code} ${row.name}`).join("; ");
-    const notes = [contraindications.trim(), extra ? `Dodatkowe ICD-9: ${extra}` : ""].filter(Boolean).join("\n");
+      .filter((row, i, all) => row.code && row.name && all.findIndex((other) => other.code === row.code) === i)
+      .map((row) => ({ icd9Code: row.code, icd9Display: row.name }));
+    const funded = hasNfz && isNfzFunded;
     const payload = {
       cellId: getIssueCellId() || undefined,
       type: referralType === "rehabilitation" ? "02.10REH" : "02.10",
       title: `${typeLabel}: ${target.name}`,
       purpose: justification.trim(),
-      previousTests: notes,
+      clinicalNotes: clinicalNotes.trim(),
+      previousTests: previousTests.trim(),
       icd10Code: icd.code,
       icd10Display: icd.name,
       icd10Extra: uniqueExtra(icd.code, extraIcd10).map((row) => ({ icd10Code: row.code, icd10Display: row.name })),
       bodySite: site === "left" ? "L" : site === "right" ? "R" : "",
-      icd9Code: parsedProcedures[0]?.code || "",
-      icd9Display: parsedProcedures[0]?.name || "",
+      anatomicalSite: site,
+      procedures: parsedProcedures,
+      icd9Code: parsedProcedures[0]?.icd9Code || "",
+      icd9Display: parsedProcedures[0]?.icd9Display || "",
       performerCode: target.code,
       performer: target.name,
-      reimbursed: isNfzFunded && nfzAllowed ? "Y" : "N",
-      nfzDepartment: isNfzFunded && nfzAllowed ? nfzBranch : "",
-      nfzContract: isNfzFunded && nfzAllowed ? nfzContract.trim() : "",
+      reimbursed: funded ? "Y" : "N",
       cito: priority === "urgent",
       observation: referralType === "rehabilitation" ? justification.trim() : "",
       clientReferralType: referralType,
-      anatomicalSite: site,
       doctorName: patient?.doctorName || "",
       patientForDocument: patientForDocument(details),
     };
     try {
-      setBusy(true);
-      const res = await ehealthHelper.submitReferral({ visitId, patientId, payload });
-      if (!res?.success) throw new Error(res?.error?.message || "Wystawianie nieudane");
-      setSignOpen(false);
-      onDocumentsChanged?.();
+      const res = await ehealthHelper.submitReferral({ visitId, patientId, payload, idempotencyKey: idempotencyKey() });
+      if (!res?.success || !res.data) throw new Error(res?.error?.message || "Brak odpowiedzi o dokumencie.");
       if (res.licenseWarning) toast.warning(res.licenseWarning);
-      if (res.data?.status === "failed") toast.error(res.data.error?.message || "e-Skierowanie zapisane z błędem wysyłki.");
-      else toast.success("E-skierowanie jest na liście dokumentów tej wizyty.");
-      if (res.data) setResult(res.data);
-      else onClose?.();
+      // The server answered: another attempt is a new request.
+      sendKey.current = { snapshot: "", key: "" };
+      setSignOpen(false);
+      setResult(res.data);
+      setHistoryVersion((v) => v + 1);
+      onDocumentsChanged?.();
     } catch (err) {
-      toast.error(unwrapEhealthError(err).message);
-    } finally {
-      setBusy(false);
+      const info = unwrapEhealthError(err);
+      // The signing window shows its own messages (wrong password); everything else goes to the red screen.
+      if (/has[łl]o|PIN|certyfikat/i.test(info.message) && !info.offline) throw err;
+      if (!info.offline) sendKey.current = { snapshot: "", key: "" };
+      setSignOpen(false);
+      setResult({
+        status: "failed",
+        error: { message: info.offline ? "Brak połączenia – skierowanie nie zostało wysłane. Spróbuj ponownie." : info.message, eventId: info.eventId },
+        offline: info.offline,
+      });
     }
   };
 
-  const applyHistory = (row) => {
-    const payload = row?.payload || {};
-    if (payload.type === "02.10REH" || payload.clientReferralType === "rehabilitation") setReferralType("rehabilitation");
-    else if (payload.clientReferralType) setReferralType(payload.clientReferralType);
-    if (payload.performerCode && payload.performer) setTargetSearch(`${payload.performerCode} - ${payload.performer}`);
-    if (payload.icd10Code) setPrimaryIcd10(`${payload.icd10Code} - ${payload.icd10Display || ""}`.trim());
-    setExtraIcd10(Array.isArray(payload.icd10Extra) ? payload.icd10Extra.map((r) => ({ code: r.icd10Code, name: r.icd10Display })) : []);
-    if (payload.purpose) setJustification(payload.purpose);
-    setPriority(payload.cito || payload.priorityCode === "UR" ? "urgent" : "normal");
-    setIsNfzFunded(payload.reimbursed === "Y" && payload.clientReferralType === "hospital_treatment");
-    if (payload.nfzDepartment) setNfzBranch(payload.nfzDepartment);
-    if (payload.nfzContract) setNfzContract(payload.nfzContract);
-    if (payload.icd9Code) setProcedures([`${payload.icd9Code} - ${payload.icd9Display || ""}`]);
-    setContraindications(payload.previousTests || "");
-    setSite(payload.anatomicalSite || (payload.bodySite === "L" ? "left" : payload.bodySite === "R" ? "right" : ""));
+  const duplicate = (row) => {
+    setForm(fromPayload(row?.payload || {}));
+    setIsNfzFunded(false);
+    setChecked("");
     setResult(null);
     setHistoryOpen(false);
     toast.success("Dane skierowania wstawiono do formularza");
   };
 
-  const sendCode = (kind) => {
-    if (!code) {
-      toast.error("Kod dostępu pojawi się dopiero po przyjęciu skierowania przez P1.");
-      return;
-    }
-    if (kind === "sms" && patient?.phone) window.location.href = `sms:${patient.phone}?body=${encodeURIComponent(`Kod e-skierowania: ${code}`)}`;
-    if (kind === "email" && patient?.email) window.location.href = `mailto:${patient.email}?subject=${encodeURIComponent("e-Skierowanie")}&body=${encodeURIComponent(`Kod dostępu: ${code}`)}`;
+  const askCancel = (doc) => {
+    setCancelReason("");
+    setCancelReasonError("");
+    setCancelTarget(doc);
   };
+
+  const confirmCancel = async () => {
+    if (cancelReason.trim().length < 5) {
+      setCancelReasonError("Powód anulowania musi mieć co najmniej 5 znaków.");
+      throw new Error("Powód anulowania musi mieć co najmniej 5 znaków.");
+    }
+    try {
+      const res = await ehealthHelper.cancelDocument("referral", cancelTarget.id, cancelReason.trim());
+      if (result?.id === cancelTarget.id) setResult(res.data || { ...result, status: "cancelled" });
+      setCancelTarget(null);
+      setHistoryVersion((v) => v + 1);
+      onDocumentsChanged?.();
+      toast.success("Anulowano e-skierowanie");
+    } catch (err) {
+      throw new Error(`Nie udało się anulować e-skierowania. ${unwrapEhealthError(err).message}`);
+    }
+  };
+
+  const sendCode = (kind) => {
+    if (kind === "sms") window.location.href = `sms:${phone}?body=${encodeURIComponent(`Kod e-skierowania: ${code}`)}`;
+    else window.location.href = `mailto:${email}?subject=${encodeURIComponent("e-Skierowanie")}&body=${encodeURIComponent(`Kod dostępu: ${code}`)}`;
+  };
+
+  const title = !result ? "Moduł wystawiania e-skierowania"
+    : result.status === "failed" ? "E-skierowanie nie zostało wystawione"
+      : result.status === "cancelled" ? "E-skierowanie anulowane"
+        : accepted ? "E-skierowanie wystawione"
+          : result.status === "draft" ? "E-skierowanie sprawdzone, niewysłane" : "E-skierowanie bez kodu z P1";
+
+  const renderResult = () => {
+    if (result.status === "failed") {
+      return (
+        <div className="space-y-4">
+          <div className="border-2 border-rose-200 rounded-2xl p-6 text-center bg-rose-50">
+            <p className="text-sm font-bold text-rose-800">{result.offline ? result.error.message : "Nie udało się wysłać e-skierowania do P1."}</p>
+            {!result.offline && <p className="mt-2 text-rose-700">{result.error?.message || "P1 nie podało przyczyny."} Popraw dane i spróbuj ponownie.</p>}
+            {result.error?.eventId && <p className="mt-3 text-[10px] text-slate-500">Numer zdarzenia: {result.error.eventId}</p>}
+          </div>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={onClose} className="px-5 py-2.5 border rounded-xl font-bold">Wróć do karty wizyty</button>
+            <button type="button" onClick={() => { setResult(null); if (!result.offline) setChecked(""); }} className="px-5 py-2.5 bg-blue-700 text-white rounded-xl font-bold">Popraw skierowanie</button>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-4">
+        <div className={`border-2 rounded-2xl p-6 text-center ${accepted ? "border-blue-300 bg-blue-50" : result.status === "cancelled" ? "border-rose-200 bg-rose-50" : "border-amber-200 bg-amber-50"}`}>
+          {accepted && (
+            <>
+              <p className="text-slate-600">Kod dostępu: <span className="sr-only">{code}</span></p>
+              <div className="my-3 font-mono text-4xl font-black text-blue-900">{code}</div>
+              <p className="text-slate-700">Pacjent realizuje je kodem i numerem PESEL{details?.pesel ? ` (${details.pesel})` : ""}.</p>
+            </>
+          )}
+          {result.status === "cancelled" && <p className="text-sm font-bold text-rose-800">To e-skierowanie zostało anulowane w P1.</p>}
+          {!accepted && result.status !== "cancelled" && <p className="text-sm text-amber-900">{result.error?.message || "Kod dostępu pojawi się dopiero po przyjęciu dokumentu przez P1."}</p>}
+          {result.error?.eventId && <p className="mt-3 text-[10px] text-slate-500">Numer zdarzenia: {result.error.eventId}</p>}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {accepted && (
+            <>
+              <button type="button" disabled={!phone} title={phone ? "" : "Brak telefonu pacjenta"} onClick={() => sendCode("sms")} className="py-2 border rounded-xl font-bold disabled:opacity-40">Wyślij SMS</button>
+              <button type="button" disabled={!email} title={email ? "" : "Brak e-maila pacjenta"} onClick={() => sendCode("email")} className="py-2 border rounded-xl font-bold disabled:opacity-40">Wyślij e-mail</button>
+            </>
+          )}
+          {canPrint(result) && (
+            <button type="button" onClick={() => ehealthHelper.previewDocument("referral", result.id).catch((err) => toast.error(err.message))} className="py-2 border rounded-xl font-bold">Podgląd / wydruk</button>
+          )}
+          {canCancel(result) && (
+            <button type="button" onClick={() => askCancel(result)} className="py-2 border border-rose-200 text-rose-700 rounded-xl font-bold">Anuluj e-skierowanie</button>
+          )}
+        </div>
+        {accepted && !phone && !email && <p className="text-center text-slate-500">Brak telefonu i e-maila pacjenta – uzupełnij je w kartotece, aby wysłać kod.</p>}
+        <div className="flex justify-end">
+          <button type="button" onClick={onClose} className="px-5 py-2.5 bg-slate-900 text-white rounded-xl font-bold">Wróć do karty wizyty</button>
+        </div>
+      </div>
+    );
+  };
+
+  const targetBlocks = [
+    { title: `Pasuje do: ${typeLabel}`, rows: filteredResort.matched, strong: true },
+    ...(showAll ? [{ title: "Pozostałe komórki", rows: filteredResort.others, strong: false }] : []),
+  ];
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-5xl w-full max-h-[92dvh] overflow-hidden flex flex-col">
         <div className="bg-gradient-to-r from-[#1d4ed8] via-[#2563eb] to-[#3b82f6] px-6 py-4 text-white flex items-center justify-between">
-          <h2 className="text-base font-bold">
-            {!result ? "Moduł wystawiania e-Skierowania" : result.status === "failed" ? "E-Skierowanie nie zostało wystawione" : "E-Skierowanie zarejestrowane w CeZ / P1"}
-          </h2>
+          <h2 className="text-base font-bold">{title}</h2>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setHistoryOpen(true)} className="px-3 py-1.5 rounded-xl border border-white/40 bg-white/10 text-xs font-semibold">
-              Historia e-Skierowań
+              Historia e-skierowań
             </button>
             <button type="button" onClick={onClose} className="px-2 py-1 text-lg" aria-label="Zamknij">×</button>
           </div>
         </div>
 
-        <IssueSummaryBar patientName={details?.name || patient?.name} pesel={details?.pesel || patient?.pesel} birthDate={details?.birthDate || patient?.birthDate} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} issued={Boolean(result)} issuedCellId={result?.payload?.cellId} />
+        <IssueSummaryBar patientName={details?.name || patient?.name} pesel={details?.pesel || patient?.pesel} birthDate={details?.birthDate || patient?.birthDate} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} issued={Boolean(result?.id)} issuedCellId={result?.payload?.cellId} />
 
         <div className="p-6 overflow-y-auto text-xs text-slate-700 space-y-4">
-          {result?.status === "failed" ? (
-            <div className="space-y-4">
-              <div className="border-2 border-rose-200 rounded-2xl p-6 text-center bg-rose-50">
-                <p className="text-sm font-bold text-rose-800">Skierowanie nie zostało przyjęte.</p>
-                <p className="mt-2 text-rose-700">{result.error?.message || "Brak opisu błędu."}</p>
-              </div>
-              <div className="flex justify-end gap-2">
-                <button type="button" onClick={onClose} className="px-5 py-2.5 border rounded-xl font-bold">Wróć do karty wizyty</button>
-                <button type="button" onClick={() => { setResult(null); setCheckedOk(false); }} className="px-5 py-2.5 bg-blue-700 text-white rounded-xl font-bold">Popraw skierowanie</button>
-              </div>
-            </div>
-          ) : result ? (
-            <div className="space-y-4">
-              <div className="border-2 border-blue-300 rounded-2xl p-6 text-center bg-blue-50">
-                <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${statusClass(result.status)}`}>
-                  {STATUS_LABELS[result.status] || result.status}
-                </span>
-                <p className="mt-3 text-slate-500">Czterocyfrowy kod dostępu do e-skierowania</p>
-                <div className="my-3 font-mono text-4xl font-black text-blue-900">{code || "—"}</div>
-                {!code && (
-                  <p className="text-slate-600">
-                    {result.error?.message || "Kod P1 pojawi się po przyjęciu dokumentu. Sprawdzenie bez wysyłki nie nadaje kodu."}
-                  </p>
-                )}
-                {patient?.pesel && <p className="mt-2">Realizacja: kod i PESEL {patient.pesel}</p>}
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button type="button" onClick={() => sendCode("sms")} className="py-2 border rounded-xl font-bold">Wyślij SMS</button>
-                <button type="button" onClick={() => sendCode("email")} className="py-2 border rounded-xl font-bold">Wyślij e-mail</button>
-                {canPrint(result) && (
-                  <button type="button" onClick={() => ehealthHelper.previewDocument("referral", result.id).catch((err) => toast.error(err.message))} className="py-2 border rounded-xl font-bold">Podgląd / wydruk</button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => { setCancelReason(""); setCancelReasonError(""); setCancelOpen(true); }}
-                  className="py-2 border border-rose-200 text-rose-700 rounded-xl font-bold"
-                >
-                  Anuluj e-Skierowanie
-                </button>
-              </div>
-              <div className="flex justify-end">
-                <button type="button" onClick={onClose} className="px-5 py-2.5 bg-slate-900 text-white rounded-xl font-bold">
-                  Wróć do karty wizyty
-                </button>
-              </div>
-            </div>
-          ) : (
+          {result ? renderResult() : (
             <>
               {errors.length > 0 && (
                 <div className="p-3 rounded-xl border border-rose-300 bg-rose-50 text-rose-900">
-                  <p className="font-bold">Uzupełnij wymagane pola przed przejściem do podpisu:</p>
+                  <p className="font-bold">Uzupełnij:</p>
                   <ul className="list-disc pl-4 mt-1">{errors.map((error) => <li key={error}>{error}</li>)}</ul>
                 </div>
               )}
 
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+              <div className={`bg-slate-50 border rounded-xl p-4 space-y-3 ${missing.address ? "border-rose-400" : "border-slate-200"}`}>
                 <IssuePatientCard patient={details} patientId={patientId} onChange={setDetails} onSavedToRecord={onPatientSaved} />
                 <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3">
-                    <div className="text-[11px] font-semibold mb-1">Tryb skierowania *</div>
-                    <div className="inline-flex border rounded-lg p-0.5 bg-white">
-                      <button type="button" onClick={() => setPriority("normal")} className={`px-3 py-1 rounded-md font-semibold ${priority === "normal" ? "bg-blue-600 text-white" : ""}`}>Zwykły</button>
-                      <button type="button" onClick={() => setPriority("urgent")} className={`px-3 py-1 rounded-md font-semibold ${priority === "urgent" ? "bg-rose-600 text-white" : ""}`}>Pilny (cito!)</button>
-                    </div>
-                </div>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={isNfzFunded && nfzAllowed} disabled={!nfzAllowed} onChange={(e) => setIsNfzFunded(e.target.checked)} />
-                  <span className={nfzAllowed ? "" : "text-slate-400"}>Skierowanie do realizacji w ramach NFZ</span>
-                  {!nfzAllowed && <span className="text-[10px] text-amber-700">Dostępne tylko dla typu „Na pobyt w szpitalu”</span>}
-                </label>
-                {isNfzFunded && nfzAllowed && (
-                  <div className="grid sm:grid-cols-2 gap-2">
-                    <select value={nfzBranch} onChange={(e) => setNfzBranch(e.target.value)} className={inputClass}>
-                      <option value="">— wybierz oddział NFZ —</option>
-                      {NFZ_BRANCHES.map((branch) => <option key={branch.code} value={branch.code}>{branch.label}</option>)}
-                    </select>
-                    <input value={nfzContract} onChange={(e) => setNfzContract(e.target.value)} placeholder="Numer umowy z NFZ (opcjonalnie)" className={inputClass} />
+                  <div className="text-[11px] font-semibold mb-1">Tryb skierowania *</div>
+                  <div className="inline-flex border rounded-lg p-0.5 bg-white">
+                    <button type="button" onClick={() => set({ priority: "normal" })} className={`px-3 py-1 rounded-md font-semibold ${priority === "normal" ? "bg-blue-600 text-white" : ""}`}>Zwykły</button>
+                    <button type="button" onClick={() => set({ priority: "urgent" })} className={`px-3 py-1 rounded-md font-semibold ${priority === "urgent" ? "bg-rose-600 text-white" : ""}`}>Pilny (cito!)</button>
                   </div>
+                </div>
+                {hasNfz ? (
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={isNfzFunded} onChange={(e) => setIsNfzFunded(e.target.checked)} />
+                    <span>Skierowanie do realizacji w ramach NFZ</span>
+                  </label>
+                ) : referralType === "hospital_treatment" ? (
+                  <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-emerald-900">Pacjent może zrealizować to skierowanie w szpitalu w ramach NFZ. Skierowanie do szpitala może wystawić każdy lekarz, także w placówce prywatnej.</p>
+                ) : (
+                  <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">Skierowanie prywatne – pacjent nie zrealizuje go w ramach NFZ. Centrum Medyczne 7 nie ma umowy z NFZ.</p>
                 )}
               </div>
 
@@ -393,17 +404,20 @@ const EReferralIssueModal = ({
                   onFocus={() => setTargetOpen(true)}
                   onBlur={() => setTargetOpen(false)}
                   onKeyDown={(e) => { if (e.key === "Escape") setTargetOpen(false); }}
-                  onChange={(e) => { setTargetSearch(e.target.value); setTargetOpen(true); }}
-                  className={inputClass}
+                  onChange={(e) => { set({ target: e.target.value }); setTargetOpen(true); }}
+                  className={`${inputClass} ${missing.target && !target.code ? missingClass : ""}`}
                   placeholder="Kod resortowy lub nazwa komórki"
                 />
+                {targetRow && !targetRow.types.includes(referralType) && (
+                  <p className="mt-1 text-[11px] font-semibold text-amber-700">Ta komórka nie pasuje do typu „{typeLabel}”.</p>
+                )}
                 {targetOpen && (
                   <div className="absolute z-20 left-0 right-0 mt-1 bg-white border rounded-xl shadow-xl max-h-80 overflow-y-auto">
                     <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-3 py-1.5 text-[10px] text-slate-500">
-                      <span>Oficjalny wykaz kodów komórek organizacyjnych (cz. VIII kodu resortowego) · {filteredResort.matched.length + filteredResort.others.length} pozycji</span>
+                      <span>{resortError || `Wykaz kodów komórek (cz. VIII kodu resortowego)${versionDate ? `, wersja ${versionDate}` : ""} · ${targetBlocks.reduce((sum, b) => sum + b.rows.length, 0)} pozycji`}</span>
                       <button type="button" onMouseDown={(e) => { e.preventDefault(); setTargetOpen(false); }} className="font-semibold text-slate-500">Zamknij listę</button>
                     </div>
-                    {[{ title: `Pasuje do: ${typeLabel}`, rows: filteredResort.matched, strong: true }, { title: "Pozostałe komórki", rows: filteredResort.others, strong: false }].map((block) => {
+                    {targetBlocks.map((block) => {
                       const groups = [];
                       block.rows.forEach((item) => {
                         let group = groups[groups.length - 1];
@@ -420,7 +434,7 @@ const EReferralIssueModal = ({
                             <div key={`${block.title}-${group.name}`}>
                               <div className="border-b border-slate-100 bg-slate-50 px-3 py-1 text-[10px] font-semibold text-slate-500">{group.name}</div>
                               {group.rows.map((item) => (
-                                <button key={`${block.title}-${item.code}`} type="button" onMouseDown={() => { setTargetSearch(item.full); setTargetOpen(false); }} className={`w-full text-left px-3 py-1.5 hover:bg-blue-50 ${block.strong ? "" : "text-slate-600"}`}>
+                                <button key={`${block.title}-${item.code}`} type="button" onMouseDown={() => { set({ target: item.full }); setTargetOpen(false); }} className={`w-full text-left px-3 py-1.5 hover:bg-blue-50 ${block.strong ? "" : "text-slate-600"}`}>
                                   <span className="font-mono font-bold text-blue-700 mr-2">{item.code}</span>{item.name}
                                 </button>
                               ))}
@@ -429,15 +443,16 @@ const EReferralIssueModal = ({
                         </div>
                       ) : null;
                     })}
-                    {!filteredResort.matched.length && !filteredResort.others.length && (
-                      <div className="px-3 py-3 text-center text-[11px] text-slate-500">Brak komórki o takim kodzie lub nazwie.</div>
-                    )}
-                    <div className="border-t bg-slate-50 px-3 py-1.5 text-[10px] text-slate-500">Komórki dla dzieci mają kod nieparzysty, o jeden wyższy (np. 1010 → 1011).</div>
+                    {!targetBlocks.some((b) => b.rows.length) && <div className="px-3 py-3 text-center text-[11px] text-slate-500">Brak komórki o takim kodzie lub nazwie.</div>}
+                    <div className="flex items-center justify-between gap-2 border-t bg-slate-50 px-3 py-1.5 text-[10px] text-slate-500">
+                      <span>Komórki dla dzieci mają kod nieparzysty, o jeden wyższy (np. 1610 → 1611).</span>
+                      <button type="button" onMouseDown={(e) => { e.preventDefault(); setShowAll((v) => !v); }} className="shrink-0 font-semibold text-blue-700">{showAll ? "Pokaż tylko pasujące" : "Pokaż wszystkie"}</button>
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div className="bg-slate-50 border rounded-xl p-3 space-y-2">
+              <div className={`bg-slate-50 border rounded-xl p-3 space-y-2 ${missing.icd && !parseCoded(primaryIcd10).code ? "border-rose-400" : ""}`}>
                 <div className="grid sm:grid-cols-12 gap-2">
                   <div className="sm:col-span-9">
                     <IcdMulti
@@ -446,23 +461,21 @@ const EReferralIssueModal = ({
                       name={parseCoded(primaryIcd10).name}
                       extra={extraIcd10}
                       visitDiagnoses={visitIcd}
-                      onChange={(next) => {
-                        setPrimaryIcd10(next.code ? formatCoded(next.code, next.name || next.code) : "");
-                        setExtraIcd10(next.extra || []);
-                      }}
+                      onChange={(next) => set({ primaryIcd10: next.code ? formatCoded(next.code, next.name || next.code) : "", extraIcd10: next.extra || [] })}
                     />
                   </div>
                   <div className="sm:col-span-3">
                     <div className="font-medium text-gray-800 text-sm">Strona ciała</div>
-                    <select value={site} onChange={(e) => setSite(e.target.value)} className={`${inputClass} mt-1`}>
+                    <select value={site} onChange={(e) => set({ site: e.target.value })} className={`${inputClass} mt-1`}>
                       {ANATOMICAL_SITES.map((row) => <option key={row.value} value={row.value}>{row.label}</option>)}
                     </select>
                   </div>
                 </div>
-                <p className="text-[11px] text-slate-500">Strona lewa i prawa idzie do P1 jako L albo R. Obie strony zostają w opisie, bo P1 przyjmuje jedną stronę.</p>
+                <p className="text-[11px] text-slate-500">Strona lewa i prawa idzie do P1 jako L albo R. „Obie” jest zapisywane w opisie skierowania, bo P1 przyjmuje jedną stronę.</p>
 
                 <div className="pt-2 border-t space-y-2">
-                  <div className="font-bold">{referralType === "diagnostic_exam" ? "Procedury (ICD-9) *" : "Procedury (ICD-9) — opcjonalnie"}</div>
+                  <div className="font-bold">Procedury (ICD-9) — opcjonalnie</div>
+                  {referralType === "diagnostic_exam" && <p className="text-[11px] text-slate-500">Dla pracowni diagnostycznej P1 zaleca podanie procedury ICD-9.</p>}
                   {procedures.map((value, index) => (
                     <div key={index} className="relative">
                       <div className="flex gap-2">
@@ -475,35 +488,13 @@ const EReferralIssueModal = ({
                           placeholder="Kod lub nazwa procedury, np. USG"
                         />
                         {value ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const next = procedures.slice();
-                              if (procedures.length === 1) next[0] = "";
-                              else next.splice(index, 1);
-                              setProcedures(next);
-                              setProcIndex(-1);
-                            }}
-                            className="shrink-0 text-[11px] font-semibold text-slate-500 hover:text-slate-800"
-                          >
-                            Usuń
-                          </button>
+                          <button type="button" onClick={() => { set({ procedures: procedures.length === 1 ? [""] : procedures.filter((_v, i) => i !== index) }); setProcIndex(-1); }} className="shrink-0 text-[11px] font-semibold text-slate-500 hover:text-slate-800">Usuń</button>
                         ) : null}
                       </div>
                       {procIndex === index && (procHits.length > 0 || value.trim().length >= 2) && (
                         <div className="mt-1 bg-white border rounded-xl max-h-40 overflow-y-auto">
                           {procHits.map((row) => (
-                            <button
-                              key={`${row.code}-${row.name}`}
-                              type="button"
-                              onMouseDown={() => {
-                                const next = procedures.slice();
-                                next[index] = `${row.code} - ${row.name || row.display || ""}`;
-                                setProcedures(next);
-                                setProcIndex(-1);
-                              }}
-                              className="w-full text-left px-3 py-2 hover:bg-blue-50"
-                            >
+                            <button key={`${row.code}-${row.name}`} type="button" onMouseDown={() => { set({ procedures: procedures.map((v, i) => (i === index ? `${row.code} - ${row.name || row.display || ""}` : v)) }); setProcIndex(-1); }} className="w-full text-left px-3 py-2 hover:bg-blue-50">
                               <span className="font-mono mr-2">{row.code}</span>{row.name || row.display}
                             </button>
                           ))}
@@ -514,27 +505,26 @@ const EReferralIssueModal = ({
                     </div>
                   ))}
                   {unusedVisitCodes(visitIcd9, procedures.map((value) => parseCoded(value).code)).map((row) => (
-                    <button
-                      key={row.code}
-                      type="button"
-                      onClick={() => setProcedures([...procedures.filter((value) => value.trim()), formatCoded(row.code, row.name || row.code)])}
-                      className="flex items-center gap-1 text-left text-[11px] font-semibold text-[#0D5C46]"
-                    >
+                    <button key={row.code} type="button" onClick={() => set({ procedures: [...procedures.filter((value) => value.trim()), formatCoded(row.code, row.name || row.code)] })} className="flex items-center gap-1 text-left text-[11px] font-semibold text-[#0D5C46]">
                       <Stethoscope size={12} /> Pobierz z wizyty: {row.code} {row.name}
                     </button>
                   ))}
-                  <button type="button" onClick={() => setProcedures([...procedures, ""])} className="font-bold text-blue-700">+ Dodaj procedurę (ICD-9)</button>
+                  <button type="button" onClick={() => set({ procedures: [...procedures, ""] })} className="font-bold text-blue-700">+ Dodaj procedurę (ICD-9)</button>
                 </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="font-bold">Rozpoznanie opisowe / Przeciwwskazania</span>
-                  <textarea rows={3} value={contraindications} onChange={(e) => setContraindications(e.target.value)} className="mt-1 w-full p-2 border rounded-xl" />
+                <label className="block md:col-span-2">
+                  <span className="font-bold">Cel skierowania / Uzasadnienie medyczne *</span>
+                  <textarea rows={3} value={justification} placeholder={PURPOSE_HINTS[referralType]} onChange={(e) => set({ justification: e.target.value })} className={`mt-1 w-full p-2 border rounded-xl ${missing.purpose && !justification.trim() ? missingClass : ""}`} />
                 </label>
                 <label className="block">
-                  <span className="font-bold">Cel skierowania / Uzasadnienie medyczne {justificationRequired ? "*" : ""}</span>
-                  <textarea rows={3} value={justification} onChange={(e) => setJustification(e.target.value)} className="mt-1 w-full p-2 border rounded-xl" />
+                  <span className="font-bold">Rozpoznanie opisowe / Przeciwwskazania</span>
+                  <textarea rows={3} value={clinicalNotes} onChange={(e) => set({ clinicalNotes: e.target.value })} className="mt-1 w-full p-2 border rounded-xl" />
+                </label>
+                <label className="block">
+                  <span className="font-bold">Badania dotychczas wykonane (opcjonalnie)</span>
+                  <textarea rows={3} value={previousTests} onChange={(e) => set({ previousTests: e.target.value })} className="mt-1 w-full p-2 border rounded-xl" />
                 </label>
               </div>
             </>
@@ -543,62 +533,56 @@ const EReferralIssueModal = ({
 
         {!result && (
           <div className="flex shrink-0 justify-end gap-2 border-t border-slate-200 bg-white px-6 py-3">
-            {checkedOk && errors.length === 0 && <span className="mr-auto self-center text-xs font-semibold text-emerald-700">Dokument sprawdzony — gotowy do podpisu</span>}
+            {checkedOk && <span className="mr-auto self-center text-xs font-semibold text-emerald-700">Dokument sprawdzony – gotowy do podpisu</span>}
+            {changedSinceCheck && <span className="mr-auto self-center text-xs font-semibold text-amber-700">Zmieniono dane – sprawdź dokument ponownie przed podpisem.</span>}
             <button type="button" onClick={onClose} className="px-4 py-2 border rounded-xl font-bold text-xs">Anuluj</button>
-            <button type="button" onClick={() => setCheckedOk(validate())} className="px-4 py-2 border border-slate-300 rounded-xl font-bold text-xs">Sprawdź dokument</button>
-            <button type="button" onClick={() => { if (validate()) setSignOpen(true); }} className="px-5 py-2.5 bg-blue-700 text-white rounded-xl font-bold text-xs">
-              Zapisz i przejdź do podpisu
-            </button>
+            <button type="button" onClick={validate} className="px-4 py-2 border border-slate-300 rounded-xl font-bold text-xs">Sprawdź dokument</button>
+            <button type="button" onClick={startSigning} className="px-5 py-2.5 bg-blue-700 text-white rounded-xl font-bold text-xs">Zapisz i przejdź do podpisu</button>
           </div>
         )}
       </div>
 
       <ReferralHistoryModal
         open={historyOpen}
+        version={historyVersion}
         patientId={patientId}
         patientName={details?.name || patient?.name}
         pesel={details?.pesel || patient?.pesel}
+        phone={phone}
+        email={email}
         onClose={() => setHistoryOpen(false)}
-        onDuplicate={applyHistory}
+        onDuplicate={duplicate}
+        onCancelDocument={askCancel}
       />
 
       <P1SignDialog
         open={signOpen}
         title="Autoryzacja wystawienia e-skierowania"
         actionText="Podpisz i wyślij"
+        plainText="Potwierdź wystawienie. E-skierowanie zostanie podpisane i wysłane do P1."
         doctorLine={doctorLine}
         onClose={() => setSignOpen(false)}
         onConfirm={submit}
       />
       <P1SignDialog
-        open={cancelOpen}
+        open={Boolean(cancelTarget)}
         isDestructive
         title="Autoryzacja anulowania w P1"
         actionText="Podpisz i anuluj w P1"
+        plainText="Potwierdź anulowanie e-skierowania w P1. Tej operacji nie można cofnąć."
         doctorLine={doctorLine}
-        onClose={() => setCancelOpen(false)}
-        onConfirm={async () => {
-          if (cancelReason.trim().length < 5) {
-            setCancelReasonError("Powód anulowania musi mieć co najmniej 5 znaków.");
-            throw new Error("Powód anulowania musi mieć co najmniej 5 znaków.");
-          }
-          setCancelReasonError("");
-          const res = await ehealthHelper.cancelDocument("referral", result.id, cancelReason.trim());
-          setResult(res.data || { ...result, status: "cancelled" });
-          setCancelOpen(false);
-          onDocumentsChanged?.();
-          toast.success("Anulowano e-skierowanie");
-        }}
+        onClose={() => setCancelTarget(null)}
+        onConfirm={confirmCancel}
       >
         <div className="space-y-3.5">
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-950">
             <strong className="font-bold text-amber-900 block mb-0.5">Uwaga: Ta operacja trwale wycofa dokument z systemu P1.</strong>
-            Wymaga podania powodu oraz autoryzacji kodem PIN certyfikatu.
+            Wpisz powód anulowania i hasło do certyfikatu ZUS.
           </div>
           <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-xs">
             <div className="flex items-center justify-between text-slate-600">
               <span>Kod dostępu / Pacjent:</span>
-              <span className="font-mono font-bold text-slate-800">{code || "—"} — {details?.name || patient?.name || "—"}</span>
+              <span className="font-mono font-bold text-slate-800">{accessCodeOf(cancelTarget) || "—"} — {details?.name || patient?.name || "—"}</span>
             </div>
           </div>
           <div className="space-y-1.5">

@@ -55,7 +55,8 @@ export default function IssuePatientCard({ patient, patientId, onChange, onSaved
 
   const apply = async (form, mode) => {
     const pesel = String(form.pesel || "").replace(/\D/g, "");
-    if (pesel.length !== 11) {
+    // A foreigner may have no PESEL: P1 then takes the identity document from the patient's record.
+    if (pesel.length !== 11 && pesel.length !== 0) {
       toast.error("PESEL musi mieć 11 cyfr.");
       return;
     }
@@ -79,7 +80,7 @@ export default function IssuePatientCard({ patient, patientId, onChange, onSaved
       if (mode === "record") {
         await patientService.updatePatient(patientId, {
           fullName: next.name,
-          govtId: pesel,
+          ...(pesel ? { govtId: pesel } : {}),
           ...(form.birthDate ? { dateOfBirth: form.birthDate } : {}),
           address: next.street,
           pinCode: next.postalCode,
@@ -109,7 +110,7 @@ export default function IssuePatientCard({ patient, patientId, onChange, onSaved
           <p className="mt-1 text-sm font-bold text-slate-900 break-words">{card.name || "—"}</p>
           <p className="mt-1 text-xs text-slate-700 break-all">PESEL {card.pesel || "—"} · ur. {card.birthDate ? String(card.birthDate).slice(0, 10) : birthFromPesel(card.pesel) || "—"}</p>
           <p className="mt-1 text-xs text-slate-800 break-words whitespace-pre-wrap">{address}</p>
-          <p className="mt-1 text-xs text-slate-600 break-all">{[card.phone, card.email].filter(Boolean).join(" · ") || "Brak telefonu i e-maila"}</p>
+          <p className="mt-1 text-xs text-slate-600 break-all">{[card.phone, card.email].filter(Boolean).join(" · ") || "Brak telefonu i e-maila pacjenta – uzupełnij je w kartotece, aby wysłać kod."}</p>
         </div>
         <button type="button" onClick={() => setOpen(true)} className="shrink-0 text-xs font-semibold text-[#0D5C46]">
           Popraw dane

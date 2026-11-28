@@ -1,7 +1,9 @@
+import { toast } from "sonner";
 import { apiCaller, axiosInstance } from "../utils/axiosInstance";
 import { obtainSigning, signingStored, takeProvidedSigning } from "../components/ehealth/ehealthSigning";
 
 const unwrap = (response) => response.data;
+const busyPrintouts = new Set();
 
 const SERVICE_PATH = {
   prescription: "prescriptions",
@@ -12,15 +14,19 @@ const SERVICE_PATH = {
 export function unwrapEhealthError(err) {
   const data = err?.response?.data;
   const nested = data?.error;
+  // No answer at all means the connection failed.
+  const offline = Boolean(err?.request) && !err?.response;
   const message =
     nested?.message ||
     data?.message ||
     (typeof nested === "string" ? nested : "") ||
-    err?.message ||
-    "Nie udało się wykonać operacji.";
+    (offline ? "Brak połączenia z serwerem. Sprawdź internet i spróbuj ponownie." : err?.message) ||
+    "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.";
   return {
     message,
     code: nested?.code || data?.code || "UNKNOWN",
+    offline,
+    eventId: nested?.eventId || "",
     retryable: Boolean(nested?.retryable),
   };
 }
@@ -209,18 +215,30 @@ const ehealthHelper = {
   },
 
   async previewDocument(service, id) {
+    const key = `${service}:${id}`;
+    // One request at a time, and the window opens at once with "preparing" so the click is visibly heard.
+    if (busyPrintouts.has(key)) return { success: true };
+    busyPrintouts.add(key);
+    window.dispatchEvent(new CustomEvent("ehealth:preview", { detail: { loading: true, title: "Podgląd wydruku" } }));
     try {
       const blob = await this.fetchDocumentBlob(service, id);
       const objectUrl = URL.createObjectURL(blob);
-      window.dispatchEvent(new CustomEvent("ehealth:preview", { detail: { url: objectUrl, type: blob.type, title: `Podgląd: ${service}`, filename: `${service}-${id}` } }));
+      window.dispatchEvent(new CustomEvent("ehealth:preview", { detail: { url: objectUrl, type: blob.type, title: "Podgląd wydruku", filename: `${service}-${id}` } }));
       return { success: true };
     } catch (err) {
+      window.dispatchEvent(new CustomEvent("ehealth:preview", { detail: null }));
       const { message } = unwrapEhealthError(err);
       throw new Error(message);
+    } finally {
+      busyPrintouts.delete(key);
     }
   },
 
   async printDocument(service, id) {
+    const key = `print:${service}:${id}`;
+    if (busyPrintouts.has(key)) return { success: true };
+    busyPrintouts.add(key);
+    const notice = toast.loading("Przygotowuję wydruk…");
     try {
       const blob = await this.fetchDocumentBlob(service, id);
       printBlob(blob, "Wydruk e-zdrowie", `${service}-${id}`);
@@ -228,6 +246,9 @@ const ehealthHelper = {
     } catch (err) {
       const { message } = unwrapEhealthError(err);
       throw new Error(message);
+    } finally {
+      toast.dismiss(notice);
+      busyPrintouts.delete(key);
     }
   },
 

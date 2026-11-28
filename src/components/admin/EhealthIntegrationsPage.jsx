@@ -1,6 +1,7 @@
 import EwusAccountForm from "../ehealth/EwusAccountForm";
 import DoctorEwusPanel from "../ehealth/DoctorEwusPanel";
 import CellsPanel from "../ehealth/CellsPanel";
+import ResortCodesPanel from "../ehealth/ResortCodesPanel";
 import ErrorLogTable from "../ehealth/ErrorLogTable";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -751,6 +752,7 @@ const EhealthIntegrationsPage = () => {
           <div className="border border-gray-100 rounded-lg p-4 space-y-3">
             <CellsPanel />
           </div>
+          <ResortCodesPanel />
 
             </>
           )}

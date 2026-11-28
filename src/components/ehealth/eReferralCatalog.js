@@ -1,5 +1,3 @@
-import { RESORT_CODE_ROWS, RESORT_SECTIONS } from "./resortCodeList";
-
 export const NFZ_BRANCHES = [
   { code: "01", label: "01 - Dolnośląski Oddział Wojewódzki NFZ" },
   { code: "02", label: "02 - Kujawsko-Pomorski Oddział Wojewódzki NFZ" },
@@ -27,31 +25,6 @@ export const REFERRAL_TYPES = [
   { value: "rehabilitation", label: "Na rehabilitację" },
 ];
 
-const REHAB_NAME = /rehabilit|fizjoter|fizykoter|kinezyter|hydroter|krioter|balneoter|masa[żz]u leczn/i;
-
-/** Which referral types a unit can be chosen for. A unit may fit more than one. */
-function referralCategories([code, name, section]) {
-  const categories = [];
-  if (section === "0" || section === "1") categories.push("specialist_clinic");
-  if (section === "7") categories.push("diagnostic_exam");
-  if (section === "4" || section === "5") categories.push("hospital_treatment");
-  if (section === "0" || /szczepie/i.test(name)) categories.push("vaccination");
-  if (REHAB_NAME.test(name)) categories.push("rehabilitation");
-  return categories;
-}
-
-export const RESORT_CODES = RESORT_CODE_ROWS.map((row) => {
-  const [code, name, section] = row;
-  return {
-    code,
-    name,
-    section,
-    group: RESORT_SECTIONS[section] || "",
-    categories: referralCategories(row),
-    full: `${code} - ${name}`,
-  };
-});
-
 export const COMMON_ICD9 = [
   { code: "88.721", name: "Echokardiografia serca" },
   { code: "89.41", name: "Badanie wysiłkowe serca" },
@@ -68,16 +41,26 @@ export const COMMON_ICD9 = [
 ];
 
 export const ANATOMICAL_SITES = [
-  { value: "", label: "Strona ciała: Brak" },
-  { value: "left", label: "Strona: Lewa" },
-  { value: "right", label: "Strona: Prawa" },
-  { value: "both", label: "Strona: Lewa i prawa" },
+  { value: "", label: "Strona ciała: brak" },
+  { value: "left", label: "Strona: lewa" },
+  { value: "right", label: "Strona: prawa" },
+  { value: "both", label: "Strona: obie" },
 ];
 
+export const SITE_LABELS = { left: "lewa", right: "prawa", both: "obie" };
+
 export const RESORT_HINTS = {
-  specialist_clinic: "Poradnie: kody 0xxx–1xxx (wg rozporządzenia MZ)",
+  specialist_clinic: "Poradnie: kody 1xxx",
   diagnostic_exam: "Pracownie diagnostyczne i zabiegowe: kody 7xxx",
-  hospital_treatment: "Oddziały szpitalne i zakłady opiekuńcze: kody 4xxx–5xxx",
+  hospital_treatment: "Oddziały szpitalne: kody 4xxx",
   vaccination: "Punkty szczepień, poradnie POZ i szczepień",
   rehabilitation: "Poradnie i pracownie rehabilitacyjne oraz fizjoterapii",
+};
+
+export const PURPOSE_HINTS = {
+  specialist_clinic: "Po co kierujesz? np. konsultacja i ustalenie leczenia, kontrola po zabiegu",
+  diagnostic_exam: "Jakie badanie i co ma wykluczyć/potwierdzić? np. TK głowy – wykluczenie zmian ogniskowych",
+  hospital_treatment: "Cel pobytu: np. planowa operacja, diagnostyka, leczenie zaostrzenia",
+  rehabilitation: "Zlecone zabiegi, przeciwwskazania, ocena funkcjonalna (np. skala Rankina)",
+  vaccination: "Jaka szczepionka / przeciw czemu, dawka, ewentualne uwagi",
 };

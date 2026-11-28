@@ -575,7 +575,13 @@ class AppointmentService {
     return (Array.isArray(raw) ? raw : []).map((item) => this._normalizeIcdItem(item)).filter(Boolean);
   }
 
+  // Blocks such as "E10–E14" are headings, not diagnoses, so they are never offered.
   async searchIcd10(query) {
+    const rows = await this.searchIcd10All(query);
+    return (Array.isArray(rows) ? rows : []).filter((row) => !/^[A-Z]\d{2}(\.\d+)?\s*[–—-]\s*[A-Z]?\d{2}/i.test(String(row?.code || "").trim()));
+  }
+
+  async searchIcd10All(query) {
     if (!query?.trim()) return [];
     try {
       const response = await apiCaller("GET", `/api/icd10/search?q=${encodeURIComponent(query.trim())}`, null);

@@ -1,6 +1,7 @@
 import React from "react";
 import { X } from "lucide-react";
-import IcdCombobox, { isIcdRange } from "./IcdCombobox";
+import { Stethoscope } from "lucide-react";
+import IcdCombobox, { isIcdRange, unusedVisitCodes } from "./IcdCombobox";
 
 export const MAX_DIAGNOSES = 5;
 
@@ -15,6 +16,14 @@ export default function IcdMulti({ visitDiagnoses = [], code, name, extra = [], 
   const list = uniqueExtra(code, extra);
   const taken = [code, ...list.map((row) => row.code)].filter(Boolean);
   const headings = visitDiagnoses.filter((row) => isIcdRange(row.code)).map((row) => row.code);
+  const fromVisit = unusedVisitCodes(visitDiagnoses, taken);
+  // All of the visit's diagnoses at once: the main one as main (if still empty), the others as additional.
+  const importVisit = () => {
+    const rest = [...fromVisit].sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)));
+    const main = code ? { code, name } : rest.shift();
+    const added = rest.map((row) => ({ code: row.code, name: row.name }));
+    onChange({ code: main.code, name: main.name, extra: uniqueExtra(main.code, [...list, ...added]).slice(0, MAX_DIAGNOSES - 1) });
+  };
   return (
     <div className="space-y-1.5">
       <IcdCombobox
@@ -24,6 +33,7 @@ export default function IcdMulti({ visitDiagnoses = [], code, name, extra = [], 
         optional={optional}
         label={label}
         exclude={list.map((row) => row.code)}
+        hideImport
         onChange={(next) => onChange({ code: next.code, name: next.name, extra: next.code ? list.filter((row) => row.code !== next.code) : list })}
       />
       {list.length > 0 && (
@@ -47,8 +57,14 @@ export default function IcdMulti({ visitDiagnoses = [], code, name, extra = [], 
           optional
           label="Dodaj kolejne rozpoznanie (opcjonalne)"
           exclude={taken}
+          hideImport
           onChange={(next) => next.code && !taken.includes(next.code) && onChange({ code, name, extra: [...list, { code: next.code, name: next.name }] })}
         />
+      )}
+      {fromVisit.length > 0 && taken.length < MAX_DIAGNOSES && (
+        <button type="button" onClick={importVisit} className="inline-flex items-center gap-1 text-left text-[11px] font-semibold text-[#0D5C46]">
+          <Stethoscope size={12} /> Pobierz z wizyty: {fromVisit.map((row) => row.code).join(", ")}
+        </button>
       )}
       {headings.length > 0 && (
         <p className="text-[11px] font-normal text-amber-700">

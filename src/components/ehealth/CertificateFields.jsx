@@ -55,7 +55,7 @@ const CertificateFields = ({ onChange, onSubmit, info, error, disabled, destruct
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs font-semibold text-slate-700">PIN certyfikatu</label>
+        <label className="mb-1.5 block text-xs font-semibold text-slate-700">Hasło do certyfikatu</label>
         <div className="relative">
           <input
             type={show ? "text" : "password"}

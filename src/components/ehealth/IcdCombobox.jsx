@@ -79,7 +79,7 @@ function Row({ row, selected, active, onPick, onHover }) {
  * One field for ICD-10: opens on focus with the visit's diagnoses and common codes,
  * filters them as you type, and adds matches from the full ICD-10 dictionary.
  */
-export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange, optional = false, label = "Rozpoznanie (ICD-10)", exclude = [] }) {
+export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange, optional = false, label = "Rozpoznanie (ICD-10)", exclude = [], hideImport = false }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [remote, setRemote] = useState([]);
@@ -198,7 +198,7 @@ export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange,
           <ChevronDown size={14} className="pointer-events-none absolute right-2.5 text-slate-400" />
         )}
       </div>
-      {!code && !open && primary?.code && (
+      {!hideImport && !code && !open && primary?.code && (
         <button type="button" onClick={() => pick(primary)} className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#0D5C46]">
           <Stethoscope size={12} /> Pobierz z wizyty: {primary.code}
         </button>
@@ -220,7 +220,10 @@ export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange,
           {loading && <div className="px-3 py-2 text-center text-[11px] font-normal text-slate-400">Szukam w słowniku ICD-10…</div>}
           {!loading && flat.length === 0 && (
             <div className="px-3 py-3 text-center text-[11px] font-normal text-slate-500">
-              {term.length < 2 ? "Wpisz co najmniej 2 znaki." : `Brak kodów ICD-10 dla „${term}”.`}
+              {term.length < 2 ? "Wpisz co najmniej 2 znaki."
+                : exclude.some((used) => fold(used) === fold(term)) ? "To rozpoznanie jest już dodane."
+                  : isIcdRange(term) ? `„${term}” to grupa kodów. Wybierz konkretny kod, np. E11.9.`
+                    : `Brak kodów ICD-10 dla „${term}”.`}
             </div>
           )}
         </div>

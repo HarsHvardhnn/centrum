@@ -55,6 +55,8 @@ export function canRetry(doc) {
 
 export function canCancel(doc) {
   if (!doc?.id || doc.service === "eligibility") return false;
+  // An e-prescription or e-referral can be cancelled only if P1 accepted it.
+  if (doc.service === "prescription" || doc.service === "referral") return doc.status === "submitted" || doc.status === "issued";
   return doc.status !== "cancelled";
 }
 

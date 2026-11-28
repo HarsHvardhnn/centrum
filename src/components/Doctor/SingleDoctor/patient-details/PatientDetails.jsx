@@ -851,7 +851,7 @@ const PatientDetailsPage = () => {
       } catch (err) {
         if (cancelled) return;
         console.error("Error fetching data:", err);
-        setError("błąd serwera");
+        setError("Błąd serwera. Spróbuj ponownie za chwilę.");
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -887,7 +887,7 @@ const PatientDetailsPage = () => {
       applyConsolidatedPayload(unwrapVisitConsolidated(response), appointmentId);
     } catch (error) {
       console.error("Error fetching appointment details:", error);
-      toast.error("Wystąpił błąd");
+      toast.error("Błąd serwera. Spróbuj ponownie za chwilę.");
     } finally {
       setVisitReasonVerifyLoading(false);
       hideLoader();
@@ -1713,7 +1713,7 @@ const PatientDetailsPage = () => {
                       }
                       toast.success("Dodano rozpoznanie");
                     } catch (e) {
-                      toast.error(e.response?.data?.message || "Nie udało się dodać rozpoznania");
+                      toast.error(e.response?.data?.message || "Nie udało się dodać rozpoznania. Wybierz konkretny kod ICD-10 z listy.");
                     }
                   }}
                   onRemoveDiagnosis={async (id) => {
@@ -1761,7 +1761,7 @@ const PatientDetailsPage = () => {
                       }
                       toast.success("Dodano procedurę");
                     } catch (e) {
-                      toast.error(e.response?.data?.message || "Nie udało się dodać procedury");
+                      toast.error(e.response?.data?.message || "Nie udało się dodać procedury ICD-9. Wybierz kod z listy.");
                     }
                   }}
                   onRemoveProcedure={async (id) => {

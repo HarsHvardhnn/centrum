@@ -95,7 +95,7 @@ const IcdField = ({
         </div>
       ) : (
         <p className="mt-1 text-xs text-slate-500">
-          {emptyHint || (kind === "icd10" ? "Pole jest puste. Wybierz rozpoznanie z wizyty albo wyszukaj inny kod." : "Pole jest puste. Wyszukaj kod albo nazwę.")}
+          {emptyHint || (kind === "icd10" ? "Wybierz rozpoznanie: kliknij „Pobierz z wizyty” albo wyszukaj kod ICD-10." : "Pole jest puste. Wyszukaj kod albo nazwę.")}
         </p>
       )}
       {visitRows.length > 0 && (

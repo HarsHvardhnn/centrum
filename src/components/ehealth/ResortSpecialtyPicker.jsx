@@ -1,10 +1,8 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
-import { RESORT_CODE_ROWS } from "./resortCodeList";
-
-const BY_CODE = new Map(RESORT_CODE_ROWS.map(([code, name]) => [code, name]));
+import { useResortCodes } from "./resortCodes";
 
 /** Name for a part VIII code; units treating children use the next odd code (1220 -> 1221). */
-export function resortLabel(code) {
+function resortLabel(BY_CODE, code) {
   const c = String(code || "");
   if (BY_CODE.has(c)) return BY_CODE.get(c);
   const n = Number(c);
@@ -16,13 +14,15 @@ export function resortLabel(code) {
 }
 
 /**
- * Specialty of a cell, picked from the official list of 359 codes (part VIII of the ministry code), searchable by
+ * Specialty of a cell, picked from the official list of codes (part VIII of the ministry code), searchable by
  * name or code. The name fills in by itself; units for children use the next odd code.
  */
 export default function ResortSpecialtyPicker({ code, onChange }) {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const boxRef = useRef(null);
+  const { rows: codes } = useResortCodes();
+  const BY_CODE = useMemo(() => new Map(codes.map((row) => [row.code, row.name])), [codes]);
 
   useEffect(() => {
     const onDown = (e) => { if (boxRef.current && !boxRef.current.contains(e.target)) setOpen(false); };
@@ -32,18 +32,18 @@ export default function ResortSpecialtyPicker({ code, onChange }) {
 
   const matches = useMemo(() => {
     const term = q.trim().toLowerCase();
-    const rows = term ? RESORT_CODE_ROWS.filter(([c, name]) => c.includes(term) || name.toLowerCase().includes(term)) : RESORT_CODE_ROWS;
-    return rows.slice(0, 60);
-  }, [q]);
+    const rows = term ? codes.filter((row) => row.code.includes(term) || row.name.toLowerCase().includes(term)) : codes;
+    return rows.slice(0, 60).map((row) => [row.code, row.name]);
+  }, [q, codes]);
 
-  const label = resortLabel(code);
+  const label = resortLabel(BY_CODE, code);
   const n = Number(code);
-  const isChild = /^\d{4}$/.test(String(code || "")) && n % 2 === 1 && !BY_CODE.has(String(code));
+  const isChild = /^\d{4}$/.test(String(code || "")) && n % 2 === 1 && BY_CODE.has(String(n - 1).padStart(4, "0"));
   const baseCode = isChild ? String(n - 1).padStart(4, "0") : String(code || "");
   const canChild = BY_CODE.has(baseCode) && Number(baseCode) % 2 === 0;
 
   const pick = (c) => {
-    onChange(c, resortLabel(c));
+    onChange(c, resortLabel(BY_CODE, c));
     setOpen(false);
     setQ("");
   };
@@ -52,7 +52,7 @@ export default function ResortSpecialtyPicker({ code, onChange }) {
     <div ref={boxRef} className="relative">
       <input
         className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-        placeholder="Szukaj po nazwie lub kodzie (359 specjalności)…"
+        placeholder="Szukaj po nazwie lub kodzie…"
         value={open ? q : code ? `${code} — ${label}` : ""}
         onFocus={() => setOpen(true)}
         onChange={(e) => { setQ(e.target.value); setOpen(true); }}

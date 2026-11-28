@@ -11,6 +11,8 @@ export default function EhealthPreviewHost() {
   useEffect(() => {
     const onOpen = (e) => setDoc((prev) => {
       if (prev?.url) URL.revokeObjectURL(prev.url);
+      // A closed "preparing" window stays closed when the document arrives late.
+      if (e.detail?.url && !prev) { URL.revokeObjectURL(e.detail.url); return null; }
       return e.detail;
     });
     window.addEventListener(EHEALTH_PREVIEW_EVENT, onOpen);
@@ -30,6 +32,17 @@ export default function EhealthPreviewHost() {
   });
 
   if (!doc) return null;
+  if (doc.loading) {
+    return (
+      <div className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/60 p-3">
+        <div className="flex flex-col items-center gap-3 rounded-2xl bg-white px-10 py-8 shadow-2xl">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#0D5C46]" />
+          <p className="text-sm font-semibold text-slate-700">Przygotowuję podgląd wydruku…</p>
+          <button type="button" onClick={close} className="text-xs font-semibold text-slate-500">Zamknij</button>
+        </div>
+      </div>
+    );
+  }
   const isPdf = String(doc.type || "").includes("pdf");
   // Native print dialog only on "Drukuj": a hidden frame prints the file, the visible one just shows it.
   const print = () => {

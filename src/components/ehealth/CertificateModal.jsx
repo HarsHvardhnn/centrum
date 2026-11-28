@@ -107,7 +107,7 @@ const CertificateModal = ({
             {children ? <div className="mb-5">{children}</div> : null}
             {pinOnly ? (
               <div>
-                <label className="mb-1.5 block text-xs font-semibold text-slate-700">PIN certyfikatu</label>
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">Hasło do certyfikatu</label>
                 <input
                   type="text" autoComplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellCheck={false} style={{ WebkitTextSecurity: "disc" }}
                   autoFocus
@@ -121,9 +121,9 @@ const CertificateModal = ({
                     if (e.key === "Enter") submit();
                   }}
                   className="h-11 w-full rounded-xl border border-slate-300 px-3 text-sm tracking-widest outline-none focus:ring-2 focus:border-slate-800 focus:ring-slate-800/15"
-                  placeholder="Wpisz PIN"
+                  placeholder="Wpisz hasło"
                 />
-                <p className="mt-1.5 text-xs text-slate-500">Certyfikat jest już wgrany. PIN zatwierdza ten jeden dokument i nie jest nigdzie zapisywany.</p>
+                <p className="mt-1.5 text-xs text-slate-500">Certyfikat jest już wgrany. Hasło zatwierdza ten jeden dokument i nie jest nigdzie zapisywane.</p>
                 {error && (
                   <div role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
                     {error}
@@ -168,7 +168,7 @@ const CertificateModal = ({
                 onClick={submit}
                 className={`h-10 rounded-xl px-5 text-xs font-semibold ${ready ? `${accent} text-white` : "cursor-not-allowed bg-slate-200 text-slate-400"}`}
               >
-                {ready ? actionText : pinOnly ? "Wpisz PIN…" : needsCertificate ? "Wybierz plik i wpisz PIN…" : actionText}
+                {ready ? actionText : pinOnly ? "Wpisz hasło…" : needsCertificate ? "Wybierz plik certyfikatu i wpisz hasło…" : actionText}
               </button>
             </div>
           </div>

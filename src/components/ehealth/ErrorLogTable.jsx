@@ -38,7 +38,7 @@ export default function ErrorLogTable() {
       setBusy(g.key);
       const res = await fn(g.retryDocumentId);
       const status = res?.data?.status;
-      toast[status === "failed" ? "error" : "success"](status === "failed" ? "Ponowienie nie powiodło się — sprawdź przyczynę." : "Ponowiono dokument.");
+      toast[status === "failed" ? "error" : "success"](status === "failed" ? `Ponowne wysłanie nie powiodło się. Przyczyna: ${res?.data?.error?.message || "brak opisu w odpowiedzi"}.` : "Ponowiono dokument.");
       await load();
     } catch (err) {
       toast.error(unwrapEhealthError(err).message);

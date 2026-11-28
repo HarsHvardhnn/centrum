@@ -2208,7 +2208,7 @@ function CancelPrescriptionModal({ row, patient, onClose, onConfirm }) {
           <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
           <div className="text-xs leading-relaxed">
             <strong className="font-bold text-amber-900 block mb-0.5">Uwaga: Ta operacja trwale wycofa dokument z systemu P1.</strong>
-            Wymaga podania powodu oraz autoryzacji kodem PIN certyfikatu.
+            Wpisz powód anulowania i hasło do certyfikatu ZUS.
           </div>
         </div>
         <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-xs space-y-1">

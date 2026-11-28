@@ -5,7 +5,12 @@ import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import { SERVICE_LABELS, accessCodeOf, canCancel, canPrint } from "./ehealthStatus";
 import { formatDateTime, formatPeriod } from "./ezlaFormat";
 
-function statusView(status) {
+function statusView(status, service) {
+  if (service === "referral") {
+    if (status === "cancelled") return { label: "Anulowane", className: "bg-red-50 text-red-700" };
+    if (status === "issued" || status === "submitted") return { label: "Wystawione", className: "bg-emerald-50 text-emerald-700" };
+    if (status === "failed" || status === "retry") return { label: "Nieudane – nie wysłano", className: "bg-red-50 text-red-700" };
+  }
   if (status === "cancelled") return { label: "Anulowana w P1", className: "bg-red-50 text-red-700" };
   if (status === "issued" || status === "submitted" || status === "confirmed") {
     return { label: "Wystawiona w P1", className: "bg-emerald-50 text-emerald-700" };
@@ -117,7 +122,7 @@ const VisitIssuedDocuments = ({ service, visitId, patientId, refreshKey = 0, pat
   return (
     <ul className="space-y-2">
       {rows.map((row, index) => {
-        const badge = statusView(row.status);
+        const badge = statusView(row.status, row.service);
         const code = accessCodeOf(row);
         const summary = summaryOf(row);
         const busy = busyId === row.id;
