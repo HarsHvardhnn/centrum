@@ -76,7 +76,7 @@ const ProfilePage = () => {
         toast.error(response.message || "Nie udało się załadować profilu");
       }
     } catch (error) {
-      toast.error("Wystąpił błąd");
+      toast.error("Wystąpił nieoczekiwany błąd. Spróbuj ponownie.");
 
       console.error("Error loading profile:", error);
     } finally {
@@ -99,7 +99,7 @@ const ProfilePage = () => {
 
       // Check file size (limit to 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error("Wystąpił błąd");
+        toast.error("Wystąpił nieoczekiwany błąd. Spróbuj ponownie.");
 
         return;
       }
@@ -107,7 +107,7 @@ const ProfilePage = () => {
       // Check file type
       const validTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
       if (!validTypes.includes(file.type)) {
-        toast.error("Wystąpił błąd");
+        toast.error("Wystąpił nieoczekiwany błąd. Spróbuj ponownie.");
 
         return;
       }

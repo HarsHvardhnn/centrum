@@ -46,7 +46,7 @@ const SpecializationManagement = ({ className = "" }) => {
           toast.success("Specjalizacja została zaktualizowana pomyślnie");
           resetForm();
         } else {
-          toast.error("Wystąpił błąd");
+          toast.error("Wystąpił nieoczekiwany błąd. Spróbuj ponownie.");
         }
       } else {
         result = await addSpecialization(specializationData);
@@ -54,11 +54,11 @@ const SpecializationManagement = ({ className = "" }) => {
           toast.success("Specjalizacja została dodana pomyślnie");
           resetForm();
         } else {
-          toast.error("Wystąpił błąd");
+          toast.error("Wystąpił nieoczekiwany błąd. Spróbuj ponownie.");
         }
       }
     } catch (err) {
-      toast.error("Wystąpił błąd");
+      toast.error("Wystąpił nieoczekiwany błąd. Spróbuj ponownie.");
       console.error(err);
     } finally {
       setIsLoading(false);

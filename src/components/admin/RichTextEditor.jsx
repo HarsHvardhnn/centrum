@@ -58,7 +58,7 @@ const RichTextEditor = ({ value, onChange, onCoverPhotoChange }) => {
       }
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('błąd serwera');
+      alert("Błąd serwera. Spróbuj ponownie za chwilę.");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {

@@ -51,7 +51,7 @@ export default function PatientMedicalDetails() {
           setAppointments(response.data.data);
         }
       } catch (err) {
-        setError("błąd serwera");
+        setError("Błąd serwera. Spróbuj ponownie za chwilę.");
         console.error(err);
       } finally {
         setLoading(false);
@@ -68,7 +68,7 @@ export default function PatientMedicalDetails() {
       setMedicalData(response.data);
     } catch (error) {
       console.error("Error fetching medical details:", error);
-      setError("błąd serwera");
+      setError("Błąd serwera. Spróbuj ponownie za chwilę.");
     } finally {
       setLoading(false);
     }

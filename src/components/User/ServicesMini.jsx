@@ -39,7 +39,7 @@ const ServicesMini = () => {
         setIsLoading(false);
       } catch (error) {
         console.error("Failed to fetch services:", error);
-        setError("błąd serwera");
+        setError("Błąd serwera. Spróbuj ponownie za chwilę.");
         setIsLoading(false);
       }
     };

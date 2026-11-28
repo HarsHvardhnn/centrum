@@ -604,7 +604,7 @@ const PatientList = () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-today-list"] });
     } catch (err) {
       console.error("Error canceling appointment:", err);
-      setError("błąd serwera");
+      setError("Błąd serwera. Spróbuj ponownie za chwilę.");
     }
   };
 
@@ -656,7 +656,7 @@ const PatientList = () => {
 
   useEffect(() => {
     if (dashListError) {
-      setError("błąd serwera");
+      setError("Błąd serwera. Spróbuj ponownie za chwilę.");
       console.error("Error fetching patients:", dashListError);
     }
   }, [dashListError]);
@@ -811,7 +811,7 @@ const PatientList = () => {
       }));
       setError(null);
     } catch (err) {
-      setError("błąd serwera");
+      setError("Błąd serwera. Spróbuj ponownie za chwilę.");
       console.error("Error fetching patients:", err);
     } finally {
       setLoading(false);
@@ -1583,7 +1583,7 @@ const UpcomingAppointments = () => {
       (apt.patient != null && (apt.patient.id ?? apt.patient._id))
   );
   const pagination = dashboardData?.pagination ?? { total: 0, limit, totalPages: 0 };
-  const error = dashboardError ? "błąd serwera" : null;
+  const error = dashboardError ? "Błąd serwera. Spróbuj ponownie za chwilę." : null;
 
   const fetchAppointments = () => {
     queryClient.invalidateQueries({ queryKey: ["dashboard-appointments"] });
@@ -1611,7 +1611,7 @@ const UpcomingAppointments = () => {
       fetchAppointments();
     } catch (err) {
       console.error("Failed to cancel appointment:", err);
-      toast.error("błąd serwera");
+      toast.error("Błąd serwera. Spróbuj ponownie za chwilę.");
     }
   };
 

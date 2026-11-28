@@ -295,9 +295,9 @@ export const handleApiError = (error) => {
       case 400:
         return 'Nieprawidłowe dane wejściowe';
       case 500:
-        return 'Błąd serwera. Spróbuj ponownie później.';
+        return "Błąd serwera. Spróbuj ponownie za chwilę.";
       default:
-        return 'Wystąpił błąd. Spróbuj ponownie.';
+        return "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.";
     }
   }
   return 'Błąd połączenia. Sprawdź połączenie internetowe.';

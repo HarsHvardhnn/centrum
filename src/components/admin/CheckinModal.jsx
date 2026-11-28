@@ -211,7 +211,7 @@ const CheckInModal = ({ isOpen, setIsOpen, patientData = null, appointmentId = n
     } catch (error) {
       console.error("Error in handleSubmit:", error);
       // This catch block handles any unexpected errors
-      toast.error("Wystąpił nieoczekiwany błąd");
+      toast.error("Wystąpił nieoczekiwany błąd. Spróbuj ponownie.");
     } finally {
       setUploading(false);
       setLoading(false);

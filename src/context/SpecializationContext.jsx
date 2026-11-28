@@ -23,7 +23,7 @@ export const SpecializationProvider = ({ children }) => {
       setError(null);
     } catch (err) {
       setError(
-        err.response?.data?.message || "błąd serwera"
+        err.response?.data?.message || "Błąd serwera. Spróbuj ponownie za chwilę."
       );
       console.error("Error fetching specializations:", err);
     } finally {
@@ -44,7 +44,7 @@ export const SpecializationProvider = ({ children }) => {
       return { success: true, data };
     } catch (err) {
       const message =
-        err.response?.data?.message || "błąd serwera";
+        err.response?.data?.message || "Błąd serwera. Spróbuj ponownie za chwilę.";
       console.error("Error adding specialization:", err);
       return { success: false, message };
     } finally {
@@ -85,7 +85,7 @@ export const SpecializationProvider = ({ children }) => {
       return { success: true };
     } catch (err) {
       const message =
-        err.response?.data?.message || "błąd serwera";
+        err.response?.data?.message || "Błąd serwera. Spróbuj ponownie za chwilę.";
       console.error("Error deleting specialization:", err);
       return { success: false, message };
     } finally {

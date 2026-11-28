@@ -165,7 +165,7 @@ function DoctorsPage() {
             )
           );
         } else {
-          setError("błąd serwera");
+          setError("Błąd serwera. Spróbuj ponownie za chwilę.");
         }
 
         applyAppointmentsResponse(appointmentsResponse);
@@ -254,11 +254,11 @@ function DoctorsPage() {
       if (response) {
         setPatientDetails(response);
       } else {
-        toast.error("Wystąpił błąd");
+        toast.error("Wystąpił nieoczekiwany błąd. Spróbuj ponownie.");
       }
     } catch (err) {
       console.error("Error fetching patient details:", err);
-      toast.error("Wystąpił błąd");
+      toast.error("Wystąpił nieoczekiwany błąd. Spróbuj ponownie.");
     }
   };
 
@@ -346,7 +346,7 @@ function DoctorsPage() {
         navigate("/klinika");
       } else {
         // Handle error from API that returns success: false
-        toast.error("Wystąpił błąd");
+        toast.error("Wystąpił nieoczekiwany błąd. Spróbuj ponownie.");
 
       }
     } catch (error) {
