@@ -31,9 +31,16 @@ export const MedicationsSection = ({
       </button>
       {!collapsed && (
         <div className="px-5 pb-5 space-y-4">
-          <div className="flex items-start justify-between gap-3">
+          <button
+            type="button"
+            onClick={onOpenIssue}
+            className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-emerald-700 text-white text-sm font-semibold hover:bg-emerald-800"
+          >
+            + Nowa e-recepta
+          </button>
+          {medications.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 min-w-0">
-              {medications.length > 0 && <span className="text-xs text-gray-500">Z kartoteki:</span>}
+              <span className="text-xs text-gray-500">Z kartoteki:</span>
               {medications.map((medication, index) => (
                 <span key={`${medication.name}-${index}`} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-gray-200 bg-gray-50 text-xs text-gray-800">
                   {[medication.name, medication.dosage].filter(Boolean).join(" ")}
@@ -41,14 +48,7 @@ export const MedicationsSection = ({
                 </span>
               ))}
             </div>
-            <button
-              type="button"
-              onClick={onOpenIssue}
-              className="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-emerald-700 text-white text-sm font-semibold hover:bg-emerald-800"
-            >
-              + Nowa e-recepta
-            </button>
-          </div>
+          )}
           <div>
             <p className="text-[11px] font-medium tracking-wide text-gray-400 uppercase mb-2">Wystawione podczas tej wizyty</p>
             <VisitIssuedDocuments

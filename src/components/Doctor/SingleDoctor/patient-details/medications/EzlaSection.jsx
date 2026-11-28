@@ -29,15 +29,13 @@ export const EzlaSection = ({
       </button>
       {!collapsed && (
         <div className="px-5 pb-5 space-y-4">
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={onOpenIssue}
-              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-indigo-700 text-white text-sm font-semibold hover:bg-indigo-800"
-            >
-              + Nowe e-ZLA
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onOpenIssue}
+            className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-indigo-700 text-white text-sm font-semibold hover:bg-indigo-800"
+          >
+            + Nowe e-ZLA
+          </button>
           <div>
             <p className="text-[11px] font-medium tracking-wide text-gray-400 uppercase mb-2">Wystawione podczas tej wizyty</p>
             <VisitIssuedDocuments
