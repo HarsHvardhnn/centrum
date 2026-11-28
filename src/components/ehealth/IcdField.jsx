@@ -18,7 +18,7 @@ const IcdField = ({
   const [results, setResults] = useState([]);
   const [open, setOpen] = useState(false);
   const [settled, setSettled] = useState(false);
-  const visitRows = kind === "icd10" ? visitDiagnosisRows(diagnoses) : [];
+  const visitRows = kind === "icd10" ? visitDiagnosisRows(diagnoses).filter((row) => !isIcdRange(row.code)) : [];
   const primary = visitRows.find((row) => row.isPrimary) || visitRows[0];
 
   useEffect(() => {

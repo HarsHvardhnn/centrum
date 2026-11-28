@@ -68,6 +68,7 @@ const EhealthDocumentPanel = ({
   onPatientSaved,
   initialPayload,
   diagnoses,
+  visitProcedures,
   patient,
 }) => {
   const [busy, setBusy] = useState(false);
@@ -130,6 +131,7 @@ const EhealthDocumentPanel = ({
         patientId={patientId}
         patient={patient}
         diagnoses={diagnoses}
+        visitProcedures={visitProcedures}
         initialPayload={initialPayload}
         onDocumentsChanged={notifyChanged}
         onPatientSaved={onPatientSaved}

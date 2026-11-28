@@ -2034,6 +2034,7 @@ const PatientDetailsPage = () => {
         patientId={patientData.patient_id || patientData.id}
         initialPayload={issuePayload}
         diagnoses={diagnoses}
+        visitProcedures={procedures}
         patient={{
           name: `${patientData.name?.first || ""} ${patientData.name?.last || ""}`.trim(),
           pesel: patientData.govtId || patientData.pesel || patientData.PESEL || "",

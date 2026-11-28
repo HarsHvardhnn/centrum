@@ -45,6 +45,12 @@ export function isIcdRange(code) {
   return /^[A-Z]\d{2}(\.\d+)?\s*[–—-]\s*[A-Z]?\d{2}/i.test(String(code || "").trim());
 }
 
+/** Visit codes that can still be added to a document: real codes (not headings) that are not on it already. */
+export function unusedVisitCodes(rows, used = []) {
+  const taken = new Set(used.filter(Boolean));
+  return (rows || []).filter((row) => row.code && !taken.has(row.code) && !isIcdRange(row.code));
+}
+
 function matches(row, query) {
   const q = fold(query);
   return fold(row.code).includes(q) || fold(row.name).includes(q);
@@ -164,7 +170,9 @@ export default function IcdCombobox({ visitDiagnoses = [], code, name, onChange,
     else if (e.key === "Enter") { e.preventDefault(); if (flat[cursor]) pick(flat[cursor]); }
   };
 
-  const primary = visitDiagnoses.find((row) => row.isPrimary) || visitDiagnoses[0];
+  // Offer only a visit diagnosis that is not on the document yet, so it can never be added twice.
+  const fromVisit = unusedVisitCodes(visitDiagnoses, [code, ...exclude]);
+  const primary = fromVisit.find((row) => row.isPrimary) || fromVisit[0];
   const shown = open ? query : code ? `${code} — ${name || ""}` : "";
   let index = -1;
 

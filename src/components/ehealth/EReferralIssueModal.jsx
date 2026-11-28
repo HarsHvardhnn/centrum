@@ -16,7 +16,9 @@ import {
   RESORT_HINTS,
 } from "./eReferralCatalog";
 import IcdField from "./IcdField";
-import IcdMulti from "./IcdMulti";
+import IcdMulti, { uniqueExtra } from "./IcdMulti";
+import { unusedVisitCodes } from "./IcdCombobox";
+import { Stethoscope } from "lucide-react";
 import { formatCoded, visitDiagnosisRows } from "./visitIcd";
 
 const inputClass = "w-full h-9 px-3 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900";
@@ -36,6 +38,7 @@ const EReferralIssueModal = ({
   patientId,
   patient,
   diagnoses = [],
+  visitProcedures = [],
   initialPayload,
   onDocumentsChanged,
   onPatientSaved,
@@ -81,6 +84,7 @@ const EReferralIssueModal = ({
     copied.icd9Code ? [`${copied.icd9Code} - ${copied.icd9Display || ""}`] : [""]
   );
   const [procHits, setProcHits] = useState([]);
+  const visitIcd9 = useMemo(() => visitDiagnosisRows(visitProcedures), [visitProcedures]);
   const [procIndex, setProcIndex] = useState(-1);
   const [procQuery, setProcQuery] = useState("");
   const [contraindications, setContraindications] = useState(copied.previousTests || "");
@@ -200,7 +204,9 @@ const EReferralIssueModal = ({
     }
     const target = parseCoded(targetSearch);
     const icd = parseCoded(primaryIcd10);
-    const parsedProcedures = procedures.map(parseCoded).filter((row) => row.code && row.name);
+    const parsedProcedures = procedures
+      .map(parseCoded)
+      .filter((row, i, all) => row.code && row.name && all.findIndex((other) => other.code === row.code) === i);
     const extra = parsedProcedures.slice(1).map((row) => `${row.code} ${row.name}`).join("; ");
     const notes = [contraindications.trim(), extra ? `Dodatkowe ICD-9: ${extra}` : ""].filter(Boolean).join("\n");
     const payload = {
@@ -211,7 +217,7 @@ const EReferralIssueModal = ({
       previousTests: notes,
       icd10Code: icd.code,
       icd10Display: icd.name,
-      icd10Extra: extraIcd10.map((row) => ({ icd10Code: row.code, icd10Display: row.name })),
+      icd10Extra: uniqueExtra(icd.code, extraIcd10).map((row) => ({ icd10Code: row.code, icd10Display: row.name })),
       bodySite: site === "left" ? "L" : site === "right" ? "R" : "",
       icd9Code: parsedProcedures[0]?.code || "",
       icd9Display: parsedProcedures[0]?.name || "",
@@ -506,6 +512,16 @@ const EReferralIssueModal = ({
                         </div>
                       )}
                     </div>
+                  ))}
+                  {unusedVisitCodes(visitIcd9, procedures.map((value) => parseCoded(value).code)).map((row) => (
+                    <button
+                      key={row.code}
+                      type="button"
+                      onClick={() => setProcedures([...procedures.filter((value) => value.trim()), formatCoded(row.code, row.name || row.code)])}
+                      className="flex items-center gap-1 text-left text-[11px] font-semibold text-[#0D5C46]"
+                    >
+                      <Stethoscope size={12} /> Pobierz z wizyty: {row.code} {row.name}
+                    </button>
                   ))}
                   <button type="button" onClick={() => setProcedures([...procedures, ""])} className="font-bold text-blue-700">+ Dodaj procedurę (ICD-9)</button>
                 </div>

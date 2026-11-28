@@ -1,13 +1,20 @@
 import React from "react";
 import { X } from "lucide-react";
-import IcdCombobox from "./IcdCombobox";
+import IcdCombobox, { isIcdRange } from "./IcdCombobox";
 
 export const MAX_DIAGNOSES = 5;
 
+/** Additional diagnoses without repeats and without the main one. */
+export function uniqueExtra(code, extra) {
+  const seen = new Set([code]);
+  return (Array.isArray(extra) ? extra : []).filter((row) => row.code && !seen.has(row.code) && seen.add(row.code));
+}
+
 /** Main ICD-10 diagnosis plus any number of additional ones (P1 takes a list of conditions). */
 export default function IcdMulti({ visitDiagnoses = [], code, name, extra = [], onChange, optional = false, label }) {
-  const list = Array.isArray(extra) ? extra : [];
+  const list = uniqueExtra(code, extra);
   const taken = [code, ...list.map((row) => row.code)].filter(Boolean);
+  const headings = visitDiagnoses.filter((row) => isIcdRange(row.code)).map((row) => row.code);
   return (
     <div className="space-y-1.5">
       <IcdCombobox
@@ -40,8 +47,13 @@ export default function IcdMulti({ visitDiagnoses = [], code, name, extra = [], 
           optional
           label="Dodaj kolejne rozpoznanie (opcjonalne)"
           exclude={taken}
-          onChange={(next) => next.code && onChange({ code, name, extra: [...list, { code: next.code, name: next.name }] })}
+          onChange={(next) => next.code && !taken.includes(next.code) && onChange({ code, name, extra: [...list, { code: next.code, name: next.name }] })}
         />
+      )}
+      {headings.length > 0 && (
+        <p className="text-[11px] font-normal text-amber-700">
+          Z wizyty nie można pobrać: {headings.join(", ")}. To zakres kodów, którego P1 nie przyjmuje — wybierz konkretny kod.
+        </p>
       )}
     </div>
   );
