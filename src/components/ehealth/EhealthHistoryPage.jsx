@@ -10,6 +10,7 @@ import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import {
   SERVICE_LABELS,
   STATUS_LABELS,
+  statusLabel,
   statusClass,
   canRetry,
   canCancel,
@@ -259,7 +260,7 @@ const EhealthHistoryPage = () => {
                     </td>
                     <td className="p-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusClass(row.status)}`}>
-                        {STATUS_LABELS[row.status] || row.status}
+                        {statusLabel(row)}
                       </span>
                     </td>
                     <td className="p-3 whitespace-nowrap">

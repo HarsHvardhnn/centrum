@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
-import { SERVICE_LABELS, STATUS_LABELS, accessCodeOf } from "./ehealthStatus";
+import { SERVICE_LABELS, statusLabel, accessCodeOf } from "./ehealthStatus";
 
 const shell = "fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 p-4";
 
@@ -79,7 +79,7 @@ export function DocumentDetailsModal({ doc, onClose }) {
           <Row label="ID dokumentu (CM7MED)" value={doc.id} />
           <Row label="Numer dokumentu w P1" value={doc.externalId} />
           <Row label="PIN / kod dostępu" value={accessCodeOf(doc)} />
-          <Row label="Status" value={`${STATUS_LABELS[doc.status] || doc.status} (${doc.status})`} />
+          <Row label="Status" value={`${statusLabel(doc)} (${doc.status})`} />
           <Row label="ID wizyty" value={doc.visitId} />
           <Row label="ID pacjenta" value={doc.patientId} />
           <Row label="ID lekarza" value={doc.doctorId} />

@@ -13,6 +13,13 @@ export const STATUS_LABELS = {
   needs_recheck: "Wymaga ponownego sprawdzenia",
 };
 
+/** e-Referral wording is the same on every screen (client list ER-34 / ER-38). */
+const REFERRAL_STATUS_LABELS = { submitted: "Wystawione", failed: "Nieudane – nie wysłano" };
+
+export function statusLabel(row) {
+  return (row?.service === "referral" && REFERRAL_STATUS_LABELS[row.status]) || STATUS_LABELS[row?.status] || row?.status || "";
+}
+
 export const SERVICE_LABELS = {
   prescription: "e-Recepta",
   referral: "e-Skierowanie",

@@ -22,6 +22,7 @@ const CertificateModal = ({
   children,
   layer = "z-[70]",
   forceFile = false,
+  offlineText = "Brak połączenia – nic nie zostało wysłane. Spróbuj ponownie.",
   onCancel,
   onSubmit,
 }) => {
@@ -63,7 +64,15 @@ const CertificateModal = ({
     setBusy(true);
     try {
       if (needsCertificate) {
-        if (verify) setInfo(await verifyCertificate(signing));
+        if (verify) {
+          try {
+            setInfo(await verifyCertificate(signing));
+          } catch (err) {
+            // No answer at the password check: nothing has been sent yet. Say so instead of "Network Error".
+            if (err?.request && !err?.response) throw new Error(offlineText);
+            throw err;
+          }
+        }
       }
       await onSubmit?.(needsCertificate ? signing : null);
       setSigning({ certificate: "", pin: "" });

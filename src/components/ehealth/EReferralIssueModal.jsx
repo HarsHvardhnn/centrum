@@ -560,6 +560,7 @@ const EReferralIssueModal = ({
         title="Autoryzacja wystawienia e-skierowania"
         actionText="Podpisz i wyślij"
         plainText="Potwierdź wystawienie. E-skierowanie zostanie podpisane i wysłane do P1."
+        offlineText="Brak połączenia – skierowanie nie zostało wysłane. Spróbuj ponownie."
         doctorLine={doctorLine}
         onClose={() => setSignOpen(false)}
         onConfirm={submit}
