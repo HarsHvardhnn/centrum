@@ -490,7 +490,6 @@ const PatientDetailsPage = () => {
 
   // Stany modali
   const [showMedicationForm, setShowMedicationForm] = useState(false);
-  const [showTestForm, setShowTestForm] = useState(false);
   const [ehealthTick, setEhealthTick] = useState(0);
   const [issueService, setIssueService] = useState(null);
   const [issuePayload, setIssuePayload] = useState(null);
@@ -1236,17 +1235,8 @@ const PatientDetailsPage = () => {
     setShowMedicationForm(false);
   };
 
-  const handleAddTest = (newTest) => {
-    setTests((prev) => [...prev, newTest]);
-    setShowTestForm(false);
-  };
-
   const handleRemoveMedication = (index) => {
     setMedications((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleRemoveTest = (index) => {
-    setTests((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleAddServices = () => {
@@ -1916,17 +1906,10 @@ const PatientDetailsPage = () => {
                   }}
                 />
                 <TestsSection
-                  tests={tests}
-                  setTests={setTests}
-                  showForm={showTestForm}
-                  setShowForm={setShowTestForm}
-                  onAddTest={handleAddTest}
-                  onRemoveTest={handleRemoveTest}
                   visitId={currentAppointmentId}
                   patientId={patientData.patient_id || patientData.id}
                   patientPhone={patientData.phone}
                   refreshKey={ehealthTick}
-                  diagnoses={diagnoses}
                   onDocumentsChanged={() => setEhealthTick((n) => n + 1)}
                   onOpenIssue={() => {
                     setIssuePayload(null);
