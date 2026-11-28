@@ -33,7 +33,7 @@ export const EzlaSection = ({
             <button
               type="button"
               onClick={onOpenIssue}
-              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-amber-700 text-white text-sm font-semibold hover:bg-amber-800"
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-indigo-700 text-white text-sm font-semibold hover:bg-indigo-800"
             >
               + Nowe e-ZLA
             </button>
