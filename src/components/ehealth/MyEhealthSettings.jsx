@@ -235,7 +235,7 @@ export default function MyEhealthSettings({ embedded = false, onOpenData, only =
         <div className="space-y-3">
           <Card
             title="Certyfikat ZUS"
-            hint="Wgrywasz go raz. Plik i hasło trafiają do Medfile i tam zostają — CM7Med nie przechowuje pliku ani hasła. Potem przy każdym dokumencie (e-ZLA, e-skierowanie) wpisujesz tylko PIN."
+            hint="Wgrywasz go raz. Plik i hasło trafiają do Medfile i tam zostają — CM7Med nie przechowuje pliku ani hasła. Potem przy e-recepcie i e-skierowaniu wpisujesz tylko PIN. e-ZLA nie wymaga PIN-u."
           >
             {p.zus.stored && !replacing ? (
               <>

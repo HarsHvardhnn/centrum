@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import IssueSummaryBar from "./IssueSummaryBar";
+import EZlaIssuedView from "./EZlaIssuedView";
+import { formatDateTime, formatPeriod } from "./ezlaFormat";
 import { getIssueCellId } from "./issueCell";
 import { toast } from "sonner";
-import { AlertTriangle, Building2, CheckCircle2, History, Loader2, Plus, Printer, X } from "lucide-react";
+import { AlertTriangle, Building2, CheckCircle2, FileCheck, History, Loader2, Plus, Printer, X } from "lucide-react";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import P1SignDialog from "./P1SignDialog";
 import ZusCertificateGate from "./ZusCertificateGate";
 import { endZusSession, signingRequired, signingStored } from "./ehealthSigning";
 import { patientForDocument } from "./IssuePatientCard";
-import { STATUS_LABELS, accessCodeOf } from "./ehealthStatus";
+import { STATUS_LABELS } from "./ehealthStatus";
 import IcdField from "./IcdField";
 import { icdRoot, visitDiagnosisRows } from "./visitIcd";
 
@@ -141,10 +143,10 @@ function buildLeaveCards(clinic, zus) {
       origin: "cm7",
       document: row,
       series,
-      number: number || row.externalId || "",
+      number,
       from: String(payload.from || "").slice(0, 10),
       to: String(payload.to || "").slice(0, 10),
-      issuedAt: String(row.createdAt || "").slice(0, 10),
+      issuedAt: formatDateTime(row.createdAt),
       status: STATUS_LABELS[row.status] || row.status || "",
       icd: icdRoot(payload.icd10 || payload.diseaseStatisticalNumber || ""),
       doctorName: payload.doctorName || "",
@@ -245,7 +247,7 @@ function validate(form, patient) {
   return errors;
 }
 
-const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagnoses, initialPayload, onDocumentsChanged, zusMissing, requestZus, zusStored }) => {
+const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagnoses, initialPayload, onDocumentsChanged, zusMissing, requestZus }) => {
   const [form, setForm] = useState(emptyForm);
   const [checked, setChecked] = useState(false);
   const [errors, setErrors] = useState([]);
@@ -355,7 +357,9 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
             nip: String(p.type || "1") === "1" ? p.id : "",
             type: String(p.type || "1"),
             identifier: p.id,
-            hasPue: true,
+            company: p.company || "",
+            person: p.person || "",
+            hasPue: p.hasPue !== false,
           }));
           return { ...prev, payers, selectedPayerId: payers[0]?.id || "" };
         });
@@ -534,7 +538,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
       setResult(doc);
       onDocumentsChanged?.(doc);
       if (res.licenseWarning) toast.warning(res.licenseWarning);
-      toast.success("e-ZLA zapisane. Numer i UPO pojawią się po przyjęciu przez ZUS.");
+      toast.success("e-ZLA wysłane do ZUS.");
     } catch (err) {
       throw new Error(unwrapEhealthError(err).message);
     } finally {
@@ -595,14 +599,12 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
 
   const visitIcd = visitDiagnosisRows(diagnoses);
 
-  const series = result?.payload?.refs?.ezlaSeries && result?.payload?.refs?.ezlaNumber
-    ? `${result.payload.refs.ezlaSeries} ${result.payload.refs.ezlaNumber}`
-    : accessCodeOf(result) || result?.externalId || "";
-
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 p-4">
       <div className="flex max-h-[92dvh] w-full max-w-[1360px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between bg-indigo-800 px-5 py-4 text-white">
+        <div className="flex items-center justify-between gap-3 bg-indigo-800 px-5 py-4 text-white">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10"><FileCheck size={22} /></span>
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200">{issuingPlace?.name || "Centrum Medyczne 7"} • Zakład Ubezpieczeń Społecznych</p>
             <h3 className="text-lg font-bold">Moduł wystawiania e-ZLA</h3>
@@ -610,7 +612,13 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
               <p className="text-xs text-indigo-100">Miejsce udzielania świadczeń (z ZUS): {issuingPlace.address} · NIP {issuingPlace.nip}</p>
             )}
           </div>
+          </div>
           <div className="flex items-center gap-2">
+            {result && (
+              <button type="button" onClick={() => ehealthHelper.previewDocument("ezla", result.id).catch((err) => toast.error(unwrapEhealthError(err).message))} className="inline-flex items-center gap-1 rounded-lg border border-white/20 bg-slate-900/40 px-3 py-1.5 text-xs font-semibold hover:bg-slate-900/60">
+                <Printer size={14} /> Podgląd PDF ZUS ZLA
+              </button>
+            )}
             <button type="button" onClick={loadHistory} className="inline-flex items-center gap-1 rounded-lg border border-indigo-400 px-3 py-1.5 text-xs font-semibold hover:bg-indigo-700">
               <History size={14} /> Pobierz historię e-ZLA z ZUS
             </button>
@@ -628,12 +636,11 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
 
         <div className="flex-1 overflow-y-auto p-5">
           {result ? (
-            <IssuedView
+            <EZlaIssuedView
               result={result}
-              form={form}
-              series={series}
-              days={days}
+              days={dayCount(String(result.payload?.from || "").slice(0, 10), String(result.payload?.to || "").slice(0, 10))}
               busy={busy}
+              onPreview={() => ehealthHelper.previewDocument("ezla", result.id).catch((err) => toast.error(unwrapEhealthError(err).message))}
               onPrint={() => ehealthHelper.printDocument("ezla", result.id).catch((err) => toast.error(unwrapEhealthError(err).message))}
               onCancel={() => setCancelOpen(true)}
             />
@@ -698,7 +705,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
                     <Field label="Nr lokalu" value={form.apartment} onChange={(v) => patch({ apartment: v })} />
                   </div>
                   <label className="mt-3 flex items-center gap-2 text-xs text-slate-700">
-                    <input type="checkbox" checked={form.stayAbroad} onChange={(e) => patch({ stayAbroad: e.target.checked, postalCode: "" })} />
+                    <input type="checkbox" checked={form.stayAbroad} onChange={(e) => patch(e.target.checked ? { stayAbroad: true, postalCode: "", homePostalCode: form.postalCode } : { stayAbroad: false, postalCode: form.homePostalCode || "" })} />
                     Pobyt poza Polską (kod pocztowy i państwo z formularza ZUS)
                   </label>
                   {form.stayAbroad && (
@@ -724,7 +731,8 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
                         <button key={payer.id} type="button" onClick={() => patch({ selectedPayerId: payer.id, doNotSend: payer.hasPue === false ? true : form.doNotSend })} className={`flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-left ${form.selectedPayerId === payer.id ? "border-indigo-600 bg-indigo-50" : "border-slate-200"}`}>
                           <Building2 size={16} className="mt-0.5 text-slate-500" />
                           <span>
-                            <span className="block text-sm font-semibold">{payer.name}</span>
+                            <span className="block text-sm font-semibold">{payer.company || payer.name}</span>
+                            {payer.person && <span className="block text-xs text-slate-700">Płatnik (imię i nazwisko): {payer.person}</span>}
                             <span className="text-[11px] text-slate-500">{payer.type === "2" ? "PESEL" : payer.type === "3" ? "Paszport" : "NIP"} {payer.nip || payer.identifier || "—"} · {payer.hasPue === false ? "bez profilu PUE" : "profil PUE"}</span>
                           </span>
                         </button>
@@ -831,23 +839,24 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
           {!result && checked && <p className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-emerald-700"><CheckCircle2 size={16} /> Dokument sprawdzony — gotowy do podpisu</p>}
         </div>
 
-        <div className="flex items-center justify-between border-t px-5 py-3">
-          <button type="button" onClick={onClose} className={result ? "rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100" : "rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"}>{result ? "Zamknij" : "Anuluj i wróć"}</button>
-          {!result && (
+        {!result && (
+          <div className="flex items-center justify-between border-t px-5 py-3">
+            <button type="button" onClick={onClose} className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100">Anuluj i wróć</button>
             <div className="flex gap-2">
               <button type="button" onClick={runCheck} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold">Sprawdź dokument</button>
               <button type="button" disabled={!checked || busy} onClick={() => setSignOpen(true)} className="rounded-lg bg-indigo-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">Podpisz i wyślij do ZUS</button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <P1SignDialog
         open={signOpen}
-        title="Autoryzacja wystawienia e-ZLA"
+        title="Potwierdzenie wystawienia e-ZLA"
         actionText="Podpisz i wyślij do ZUS"
         doctorLine={[patient?.doctorName, patient?.pwz ? `PWZ ${patient.pwz}` : ""].filter(Boolean).join(" · ")}
-        noCertificate={!zusStored}
+        noCertificate
+        plainText="Potwierdź wystawienie. e-ZLA zostanie wysłane do ZUS."
         onClose={() => !busy && setSignOpen(false)}
         onConfirm={() => submit({}).then(() => setSignOpen(false))}
       />
@@ -927,8 +936,10 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
       <P1SignDialog
         open={cancelOpen}
         isDestructive
-        title="Autoryzacja anulowania e-ZLA w ZUS"
-        actionText="Podpisz i anuluj w ZUS"
+        title="Anulowanie e-ZLA w ZUS"
+        actionText="Anuluj w ZUS"
+        noCertificate
+        plainText=""
         doctorLine={[patient?.doctorName, patient?.pwz ? `PWZ ${patient.pwz}` : ""].filter(Boolean).join(" · ")}
         onClose={() => setCancelOpen(false)}
         onConfirm={async () => {
@@ -941,7 +952,7 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
         <div className="space-y-3.5">
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-950">
             <strong className="font-bold text-amber-900 block mb-0.5">Uwaga: Ta operacja trwale wycofa dokument z systemu ZUS.</strong>
-            Wymaga podania powodu oraz autoryzacji kodem PIN certyfikatu.
+            Wymaga podania powodu.
           </div>
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-slate-700">Powód anulowania zaświadczenia lekarskiego *</label>
@@ -976,10 +987,10 @@ function LeaveCard({ card, onDuplicate }) {
     <div className={`rounded-xl border p-3 ${card.active ? "border-emerald-300 bg-emerald-50/40" : "border-slate-200 bg-white"}`}>
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold">{card.from || "—"} — {card.to || "—"}{card.icd ? ` · ${card.icd}` : ""}</p>
+          <p className="text-sm font-semibold">Niezdolność do pracy {formatPeriod(card.from, card.to) || "—"}{card.icd ? ` · ICD-10 ${card.icd}` : ""}</p>
           <p className="mt-1 text-xs text-slate-600">
             {[card.series, card.number].filter(Boolean).join(" ") || "bez serii i numeru"}
-            {card.issuedAt ? ` · wystawione ${card.issuedAt}` : ""}
+            {card.issuedAt ? ` · wystawiono ${card.issuedAt}` : ""}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -1011,31 +1022,6 @@ function Field({ label, value, onChange, type = "text", placeholder, className =
       {label}
       <input type={type} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full rounded-lg border px-2 py-2 text-sm font-normal text-slate-900" />
     </label>
-  );
-}
-
-function IssuedView({ result, form, series, days, busy, onPrint, onCancel }) {
-  const cancelled = result.status === "cancelled";
-  const paper = form.doNotSend || form.payers.find((p) => p.id === form.selectedPayerId)?.hasPue === false;
-  return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <div className={`rounded-xl border px-4 py-3 ${cancelled ? "border-rose-200 bg-rose-50" : paper ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}>
-        <p className="font-bold">{cancelled ? "Zaświadczenie anulowane" : paper ? "Wymagany wydruk papierowy — płatnik bez PUE albo z wyłączonym przekazaniem" : "Przekazano elektronicznie na profil płatnika w PUE"}</p>
-        <p className="mt-1 text-sm">{series ? `Numer / kod: ${series}` : "Numer ZUS pojawi się po przyjęciu dokumentu."} · {STATUS_LABELS[result.status] || result.status}</p>
-        {(result.externalId || result.payload?.upo) && <p className="mt-1 text-xs">UPO: {result.payload?.upo || result.externalId}</p>}
-      </div>
-      <div className="rounded-xl border p-4 text-sm">
-        <p>{form.startDate} — {form.endDate} · {days} dni</p>
-        <p className="text-slate-600">{form.suggestion === "1" ? "Chory powinien leżeć" : "Chory może chodzić"} · ICD-10 {icdRoot(form.icd10)}{form.letters.length ? ` · kody ${form.letters.join(", ")}` : ""}</p>
-        {form.isCare && <p className="text-slate-600">Opieka: {form.relationship}, {form.familyName}</p>}
-      </div>
-      {!cancelled && (
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={onPrint} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm font-semibold"><Printer size={14} /> Wydrukuj zaświadczenie</button>
-          <button type="button" disabled={busy} onClick={onCancel} className="rounded-lg border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700">Anuluj zaświadczenie</button>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -1093,7 +1079,7 @@ const EZlaIssueModal = (props) => {
   });
   return (
     <>
-      <EZlaIssueModalInner {...props} onClose={close} zusMissing={zusMissing} requestZus={requestZus} zusStored={stored} />
+      <EZlaIssueModalInner {...props} onClose={close} zusMissing={zusMissing} requestZus={requestZus} />
       {gateOpen && (
         <ZusCertificateGate
           doctorLine={doctorLine}

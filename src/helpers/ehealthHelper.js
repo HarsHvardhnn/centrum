@@ -1,5 +1,5 @@
 import { apiCaller, axiosInstance } from "../utils/axiosInstance";
-import { obtainSigning, takeProvidedSigning } from "../components/ehealth/ehealthSigning";
+import { obtainSigning, signingStored, takeProvidedSigning } from "../components/ehealth/ehealthSigning";
 
 const unwrap = (response) => response.data;
 
@@ -147,7 +147,10 @@ const ehealthHelper = {
   },
 
   async cancelDocument(service, id, reason) {
-    const signing = await obtainSigning({ title: "Podpis anulowania", actionText: "Podpisz i anuluj", isDestructive: true });
+    // e-ZLA with an uploaded certificate needs no PIN.
+    const signing = service === "ezla" && (await signingStored())
+      ? null
+      : await obtainSigning({ title: "Podpis anulowania", actionText: "Podpisz i anuluj", isDestructive: true });
     return apiCaller("POST", `/api/ehealth/${pathFor(service)}/${id}/cancel`, {
       reason: reason || "I",
       ...(signing ? { signing } : {}),

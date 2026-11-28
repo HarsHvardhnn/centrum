@@ -18,6 +18,7 @@ const P1SignDialog = ({
   isDestructive = false,
   doctorLine,
   noCertificate = false,
+  plainText,
   children,
 }) => {
   const shown = open ?? isOpen;
@@ -43,7 +44,7 @@ const P1SignDialog = ({
       doctorLine={doctorLine}
       needsCertificate={required && !noCertificate}
       verify
-      plainText={isDestructive ? "Potwierdź anulowanie dokumentu w P1." : "Potwierdź wystawienie. Dokument zostanie wysłany do P1."}
+      plainText={plainText ?? (isDestructive ? "Potwierdź anulowanie dokumentu w P1." : "Potwierdź wystawienie. Dokument zostanie wysłany do P1.")}
       onCancel={onClose}
       onSubmit={async (signing) => {
         if (signing) provideSigning(signing);

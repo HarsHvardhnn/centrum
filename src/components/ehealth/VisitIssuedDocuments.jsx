@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import { SERVICE_LABELS, accessCodeOf, canCancel, canPrint } from "./ehealthStatus";
+import { formatDateTime, formatPeriod } from "./ezlaFormat";
 
 function statusView(status) {
   if (status === "cancelled") return { label: "Anulowana w P1", className: "bg-red-50 text-red-700" };
@@ -32,8 +33,16 @@ function summaryOf(row) {
     return [payload.title, payload.icd10Code].filter(Boolean).join(" · ");
   }
   if (row.service === "ezla") {
-    const range = payload.from && payload.to ? `${payload.from} — ${payload.to}` : "";
-    return [range, payload.icd10, payload.payerName].filter(Boolean).join(" · ");
+    const period = formatPeriod(payload.from, payload.to);
+    const number = payload.refs?.ezlaNumber ? `${payload.refs.ezlaSeries || ""} ${payload.refs.ezlaNumber}`.trim() : "";
+    const issued = formatDateTime(row.createdAt);
+    return [
+      number && `Nr ${number}`,
+      period && `niezdolność do pracy ${period}`,
+      payload.icd10 && `ICD-10 ${payload.icd10}`,
+      payload.payers?.[0]?.name,
+      issued && `wystawiono ${issued}`,
+    ].filter(Boolean).join(" · ");
   }
   return "";
 }
