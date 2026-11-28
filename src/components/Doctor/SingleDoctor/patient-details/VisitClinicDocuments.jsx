@@ -30,7 +30,7 @@ function withSectionLabels(fields, labels) {
   }));
 }
 
-function sheetProps(doc, patient, doctorName, doctorPwz, doctorTitle) {
+export function sheetProps(doc, patient, doctorName, doctorPwz, doctorTitle) {
   const snapshot = doc.templateSnapshot || doc.template || {};
   const saved = doc.patientSnapshot;
   const hasSaved = saved && (saved.name || saved.pesel || saved.birthDate || saved.address);
@@ -322,7 +322,7 @@ export function VisitFilePreview({ title, url, onClose, onShare }) {
   );
 }
 
-async function printVisitFile(url) {
+export async function printVisitFile(url) {
   if (!url) return;
   let source = url;
   let objectUrl = "";

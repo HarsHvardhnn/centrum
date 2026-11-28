@@ -16,6 +16,9 @@ import { SpecializationProvider } from "./context/SpecializationContext.jsx";
 import { queryClient } from "./lib/queryClient";
 import SigningPromptHost from "./components/ehealth/SigningPromptHost";
 import EhealthPreviewHost from "./components/ehealth/EhealthPreviewHost";
+import blockBrowserAutofill from "./utils/blockBrowserAutofill";
+
+blockBrowserAutofill();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

@@ -1666,6 +1666,14 @@ const PatientDetailsPage = () => {
               }}
             />
             <VisitHistoryCard
+              patient={{
+                name: `${patientData.name?.first || ""} ${patientData.name?.last || ""}`.trim(),
+                pesel: patientData.govtId || patientData.pesel || patientData.PESEL || "",
+                birthDate: patientData.birthDate || patientData.dateOfBirth || "",
+                street: (typeof patientData.address === "string" ? patientData.address : patientData.address?.street) || patientData.street || "",
+                postalCode: patientData.pinCode || patientData.zipCode || patientData.postalCode || patientData.address?.postalCode || "",
+                city: patientData.city || patientData.address?.city || "",
+              }}
               appointments={appointments}
               currentAppointmentId={currentAppointmentId}
               onSelectVisit={handleAppointmentSelect}

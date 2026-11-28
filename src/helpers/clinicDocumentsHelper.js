@@ -29,6 +29,12 @@ const clinicDocumentsHelper = {
     if (!data?.success) throw new Error(data?.message || "Nie udało się pobrać dokumentów");
     return data.data || [];
   },
+  /** Visit cards, attached files and internal documents of all the patient's visits. */
+  async listForPatient(patientId) {
+    const data = unwrap(await apiCaller("GET", `${BASE}/patient/${encodeURIComponent(patientId)}`));
+    if (!data?.success) throw new Error(data?.message || "Nie udało się pobrać dokumentów");
+    return data.data || { files: [], clinic: [] };
+  },
   async createIssued(payload) {
     const data = unwrap(await apiCaller("POST", `${BASE}/issued`, payload));
     if (!data?.success) throw new Error(data?.message || "Nie udało się zapisać dokumentu");
