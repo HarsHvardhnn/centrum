@@ -711,9 +711,6 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
                   )}
                 </section>
 
-              </div>
-
-              <div className="space-y-4">
                 {!payersForbidden && (
                   <section className="rounded-xl border border-slate-200 p-4">
                     <div className="mb-3 flex items-center justify-between">
@@ -744,7 +741,9 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
                     {selectedPayer?.hasPue === false && <p className="mt-2 text-xs text-amber-800">Płatnik nie ma profilu PUE. Po wystawieniu potrzebny jest wydruk papierowy.</p>}
                   </section>
                 )}
+              </div>
 
+              <div className="space-y-4">
                 <section className="rounded-xl border border-slate-200 p-4">
                   <h4 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Cel zwolnienia</h4>
                   <div className="grid grid-cols-2 gap-2">
