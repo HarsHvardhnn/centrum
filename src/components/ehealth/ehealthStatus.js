@@ -59,7 +59,10 @@ export function canCancel(doc) {
 }
 
 export function canPrint(doc) {
-  return Boolean(doc?.id) && doc.service !== "eligibility";
+  if (!doc?.id || doc.service === "eligibility") return false;
+  if (doc.service !== "prescription" && doc.service !== "referral") return true;
+  // Only Medfile's official printout exists, and only once P1 accepted the document and gave its access code.
+  return (doc.status === "submitted" || doc.status === "issued") && !doc.payload?.sandboxOnly && Boolean(accessCodeOf(doc));
 }
 
 // Medfile returns the patient PIN glued to the PESEL (4 + 11 digits). Patients and pharmacies use only the 4-digit PIN.

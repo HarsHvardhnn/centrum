@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import appointmentHelper from "../../helpers/appointmentHelper";
-import { STATUS_LABELS, statusClass, accessCodeOf } from "./ehealthStatus";
+import { STATUS_LABELS, statusClass, accessCodeOf, canPrint } from "./ehealthStatus";
 import P1SignDialog from "./P1SignDialog";
 import IssueSummaryBar from "./IssueSummaryBar";
 import { getIssueCellId } from "./issueCell";
@@ -321,7 +321,9 @@ const EReferralIssueModal = ({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button type="button" onClick={() => sendCode("sms")} className="py-2 border rounded-xl font-bold">Wyślij SMS</button>
                 <button type="button" onClick={() => sendCode("email")} className="py-2 border rounded-xl font-bold">Wyślij e-mail</button>
-                <button type="button" onClick={() => ehealthHelper.previewDocument("referral", result.id).catch((err) => toast.error(err.message))} className="py-2 border rounded-xl font-bold">Podgląd / wydruk</button>
+                {canPrint(result) && (
+                  <button type="button" onClick={() => ehealthHelper.previewDocument("referral", result.id).catch((err) => toast.error(err.message))} className="py-2 border rounded-xl font-bold">Podgląd / wydruk</button>
+                )}
                 <button
                   type="button"
                   onClick={() => { setCancelReason(""); setCancelReasonError(""); setCancelOpen(true); }}

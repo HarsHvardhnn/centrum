@@ -179,10 +179,24 @@ const ehealthHelper = {
   },
 
   async fetchDocumentBlob(service, id, { purpose } = {}) {
-    const res = await axiosInstance.get(`/api/ehealth/${pathFor(service)}/${id}/print`, {
-      responseType: "blob",
-      params: purpose ? { purpose } : undefined,
-    });
+    let res;
+    try {
+      res = await axiosInstance.get(`/api/ehealth/${pathFor(service)}/${id}/print`, {
+        responseType: "blob",
+        params: purpose ? { purpose } : undefined,
+      });
+    } catch (err) {
+      // A refused printout answers with JSON, which arrives as a blob here: read it so the reason can be shown.
+      if (err?.response?.data instanceof Blob) {
+        try {
+          err.response.data = JSON.parse(await err.response.data.text());
+          err.message = err.response.data?.error?.message || err.message;
+        } catch {
+          /* not JSON: keep the original error */
+        }
+      }
+      throw err;
+    }
     const blob = res.data;
     if (blob?.type && blob.type.includes("json")) {
       const text = await blob.text();

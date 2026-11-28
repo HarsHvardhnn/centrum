@@ -6,6 +6,7 @@ import ClinicDocumentSheet, { printClinicSheet } from "../../../ehealth/ClinicDo
 import { VisitFilePreview, printVisitFile, sheetProps } from "./VisitClinicDocuments";
 import { CATEGORY_TABS } from "./visitDocuments";
 import { formatDateTime } from "../../../ehealth/ezlaFormat";
+import { canPrint } from "../../../ehealth/ehealthStatus";
 
 const LOOK = {
   REC: { Icon: Pill, icon: "bg-emerald-50 text-emerald-600 border-emerald-200", card: "border-emerald-200/80 hover:border-emerald-300", code: "text-emerald-800 bg-emerald-50 border-emerald-200", copy: "text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200" },
@@ -132,8 +133,12 @@ export default function VisitDocumentsDrawer({ visit, documents, loading, patien
                           <Files size={14} /> Powiel
                         </button>
                       )}
-                      <button type="button" onClick={() => preview(doc)} className={`${ACTION} border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}><Eye size={14} className="text-slate-500" /> Podgląd PDF</button>
-                      <button type="button" onClick={() => print(doc)} className={`${ACTION} border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}><Printer size={14} className="text-slate-500" /> Drukuj</button>
+                      {(!doc.row || canPrint(doc.row)) && (
+                        <>
+                          <button type="button" onClick={() => preview(doc)} className={`${ACTION} border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}><Eye size={14} className="text-slate-500" /> Podgląd PDF</button>
+                          <button type="button" onClick={() => print(doc)} className={`${ACTION} border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}><Printer size={14} className="text-slate-500" /> Drukuj</button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

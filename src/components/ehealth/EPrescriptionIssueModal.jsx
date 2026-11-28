@@ -5,7 +5,7 @@ import ehealthHelper, { unwrapEhealthError, drugsFromHistory, drugMatches } from
 import appointmentHelper from "../../helpers/appointmentHelper";
 import IssuePatientCard, { normalizePatient, patientForDocument } from "./IssuePatientCard";
 import PrescriptionHistoryModal from "./PrescriptionHistoryModal";
-import { STATUS_LABELS, statusClass, accessCodeOf } from "./ehealthStatus";
+import { STATUS_LABELS, statusClass, accessCodeOf, canPrint } from "./ehealthStatus";
 import { visitDiagnosisRows } from "./visitIcd";
 import IcdMulti from "./IcdMulti";
 import IssueSummaryBar from "./IssueSummaryBar";
@@ -2018,6 +2018,7 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother, onFix }) {
     }
     let stop = false;
     let url = "";
+    setPreviewUrl("");
     setPreviewError("");
     ehealthHelper.fetchDocumentBlob("prescription", selectedId).then((blob) => {
       const next = URL.createObjectURL(blob);
@@ -2091,9 +2092,9 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother, onFix }) {
             </button>
           );
         })}
-        {usable.length > 1 && (
-          <button type="button" onClick={() => usable.forEach((row) => printOne(row.result.id))} className="ml-auto px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1">
-            <Printer size={14} /> Drukuj wszystkie PDF ({usable.length})
+        {usable.filter((row) => canPrint(row.result)).length > 1 && (
+          <button type="button" onClick={() => usable.filter((row) => canPrint(row.result)).forEach((row) => printOne(row.result.id))} className="ml-auto px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1">
+            <Printer size={14} /> Drukuj wszystkie PDF ({usable.filter((row) => canPrint(row.result)).length})
           </button>
         )}
       </div>
