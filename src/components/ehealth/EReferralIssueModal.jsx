@@ -279,7 +279,7 @@ const EReferralIssueModal = ({
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-5xl w-full max-h-[92dvh] overflow-hidden flex flex-col">
         <div className="bg-gradient-to-r from-[#1d4ed8] via-[#2563eb] to-[#3b82f6] px-6 py-4 text-white flex items-center justify-between">
           <h2 className="text-base font-bold">
-            {result ? "E-Skierowanie zarejestrowane w CeZ / P1" : "Moduł wystawiania e-Skierowania"}
+            {!result ? "Moduł wystawiania e-Skierowania" : result.status === "failed" ? "E-Skierowanie nie zostało wystawione" : "E-Skierowanie zarejestrowane w CeZ / P1"}
           </h2>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setHistoryOpen(true)} className="px-3 py-1.5 rounded-xl border border-white/40 bg-white/10 text-xs font-semibold">
@@ -292,7 +292,18 @@ const EReferralIssueModal = ({
         <IssueSummaryBar patientName={details?.name || patient?.name} pesel={details?.pesel || patient?.pesel} birthDate={details?.birthDate || patient?.birthDate} doctorName={patient?.doctorName} pwz={patient?.pwz} patientId={patientId} visitId={visitId} issued={Boolean(result)} issuedCellId={result?.payload?.cellId} />
 
         <div className="p-6 overflow-y-auto text-xs text-slate-700 space-y-4">
-          {result ? (
+          {result?.status === "failed" ? (
+            <div className="space-y-4">
+              <div className="border-2 border-rose-200 rounded-2xl p-6 text-center bg-rose-50">
+                <p className="text-sm font-bold text-rose-800">Skierowanie nie zostało przyjęte.</p>
+                <p className="mt-2 text-rose-700">{result.error?.message || "Brak opisu błędu."}</p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={onClose} className="px-5 py-2.5 border rounded-xl font-bold">Wróć do karty wizyty</button>
+                <button type="button" onClick={() => { setResult(null); setCheckedOk(false); }} className="px-5 py-2.5 bg-blue-700 text-white rounded-xl font-bold">Popraw skierowanie</button>
+              </div>
+            </div>
+          ) : result ? (
             <div className="space-y-4">
               <div className="border-2 border-blue-300 rounded-2xl p-6 text-center bg-blue-50">
                 <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${statusClass(result.status)}`}>

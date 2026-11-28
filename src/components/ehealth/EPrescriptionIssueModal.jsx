@@ -10,6 +10,7 @@ import { visitDiagnosisRows } from "./visitIcd";
 import IcdMulti from "./IcdMulti";
 import IssueSummaryBar from "./IssueSummaryBar";
 import { getIssueCellId } from "./issueCell";
+import { batchOutcome, rowError, rowState } from "./prescriptionOutcome";
 import { classifyDrug } from "./drugClass";
 import P1SignDialog from "./P1SignDialog";
 
@@ -1072,6 +1073,7 @@ export default function EPrescriptionIssueModal({
             patient={details}
             onCancel={cancelIssued}
             onClose={onClose}
+            onFix={() => setIssued([])}
             onAnother={() => {
               const id = `rx-${Date.now()}`;
               setIssued([]);
@@ -1996,7 +1998,7 @@ function PreviewOverlay({ items, header, onClose }) {
 }
 
 
-function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
+function IssuedBatch({ rows, patient, onCancel, onClose, onAnother, onFix }) {
   const [active, setActive] = useState(0);
   const [previewUrl, setPreviewUrl] = useState("");
   const [previewError, setPreviewError] = useState("");
@@ -2004,9 +2006,13 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
   const selected = rows[active] || rows[0];
   const selectedId = selected?.result?.id || "";
   const selectedStatus = selected?.result?.status || "";
+  const outcome = batchOutcome(rows);
+  const selectedRejected = rowState(selected) === "rejected";
+  const usable = rows.filter((row) => rowState(row) !== "rejected");
 
   useEffect(() => {
-    if (!selectedId) {
+    // A refused prescription has nothing to print.
+    if (!selectedId || selectedRejected) {
       setPreviewUrl("");
       return undefined;
     }
@@ -2028,7 +2034,7 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
       stop = true;
       if (url) URL.revokeObjectURL(url);
     };
-  }, [selectedId, selectedStatus]);
+  }, [selectedId, selectedStatus, selectedRejected]);
 
   const messageText = () => {
     const lines = rows.map((row, index) => {
@@ -2071,21 +2077,23 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-slate-100">
       <div className="bg-white border-b border-slate-200 px-4 py-2 flex flex-wrap items-center gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Wystawione e-recepty ({rows.length})</span>
+        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{usable.length === rows.length ? "Wystawione e-recepty" : "e-Recepty"} ({rows.length})</span>
         {rows.map((row, index) => {
           const code = accessCodeOf(row.result);
           const cancelled = row.result?.status === "cancelled";
+          const rejected = rowState(row) === "rejected";
           return (
-            <button key={row.result?.id || index} type="button" onClick={() => setActive(index)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${cancelled ? "border-rose-300 text-rose-800 bg-rose-50" : index === active ? "bg-[#14532d] text-white border-[#14532d]" : "border-emerald-300 text-emerald-900 bg-emerald-50"}`}>
+            <button key={row.result?.id || index} type="button" onClick={() => setActive(index)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${cancelled || rejected ? "border-rose-300 text-rose-800 bg-rose-50" : index === active ? "bg-[#14532d] text-white border-[#14532d]" : "border-emerald-300 text-emerald-900 bg-emerald-50"}`}>
               {row.form === "recipe" ? "Receptura" : row.form === "Rpw" ? "Rpw" : `e-Recepta #${index + 1}`}
               {code ? ` · kod ${code}` : ""}
               {cancelled ? " · anulowana" : ""}
+              {rejected ? " · odrzucona" : ""}
             </button>
           );
         })}
-        {rows.filter((row) => row.result?.id).length > 1 && (
-          <button type="button" onClick={() => rows.forEach((row) => row.result?.id && printOne(row.result.id))} className="ml-auto px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1">
-            <Printer size={14} /> Drukuj wszystkie PDF ({rows.filter((row) => row.result?.id).length})
+        {usable.length > 1 && (
+          <button type="button" onClick={() => usable.forEach((row) => printOne(row.result.id))} className="ml-auto px-3 py-1.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1">
+            <Printer size={14} /> Drukuj wszystkie PDF ({usable.length})
           </button>
         )}
       </div>
@@ -2093,31 +2101,40 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
         <div className="lg:col-span-5 overflow-y-auto flex flex-col gap-3">
           <section className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-emerald-100 text-[#0D5C46] flex items-center justify-center"><ShieldCheck size={22} /></div>
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${outcome.tone === "red" ? "bg-rose-100 text-rose-700" : outcome.tone === "amber" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-[#0D5C46]"}`}>{outcome.tone === "green" ? <ShieldCheck size={22} /> : <AlertTriangle size={22} />}</div>
               <div>
-                <div className="text-[10px] font-black uppercase tracking-wider text-emerald-800">{rows.some((row) => accessCodeOf(row.result)) ? "Przyjęto w P1" : "Przekazano do P1"}</div>
-                <h2 className="font-bold text-slate-900">{rows.some((row) => accessCodeOf(row.result)) ? (rows.length > 1 ? `Wystawiono ${rows.length} e-recepty` : "e-Recepta wystawiona") : (rows.length > 1 ? `Wysłano ${rows.length} e-recepty — czekamy na kod z P1` : "e-Recepta wysłana — czekamy na kod z P1")}</h2>
+                <div className={`text-[10px] font-black uppercase tracking-wider ${outcome.tone === "red" ? "text-rose-700" : outcome.tone === "amber" ? "text-amber-800" : "text-emerald-800"}`}>{outcome.kicker}</div>
+                <h2 className="font-bold text-slate-900">{outcome.title}</h2>
               </div>
             </div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{rows.length > 1 ? "Kody dostępu dla pacjenta" : "Kod dostępu dla pacjenta"}</p>
+            {usable.length > 0 && <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{usable.length > 1 ? "Kody dostępu dla pacjenta" : "Kod dostępu dla pacjenta"}</p>}
             {rows.map((row, index) => {
               const code = accessCodeOf(row.result);
               const cancelled = row.result?.status === "cancelled";
+              const drugs = row.items.map((item) => item.drug?.name).filter(Boolean).join(", ") || `Recepta ${index + 1}`;
+              if (rowState(row) === "rejected") {
+                return (
+                  <button key={row.result?.id || index} type="button" onClick={() => setActive(index)} className="w-full rounded-2xl border border-rose-200 bg-rose-50 p-4 text-left">
+                    <div className="text-[11px] text-slate-600">{drugs}</div>
+                    <div className="text-sm font-bold text-rose-800">Nie wystawiono</div>
+                    <p className="mt-1 text-xs text-rose-700">{rowError(row)}</p>
+                  </button>
+                );
+              }
               return (
                 <button key={row.result?.id || index} type="button" onClick={() => setActive(index)} className={`w-full rounded-2xl border p-4 ${cancelled ? "border-rose-200 bg-rose-50" : index === active ? "border-[#0D5C46] bg-emerald-50/40" : "border-slate-200 bg-slate-50"}`}>
-                  <div className="text-[11px] text-slate-500">{row.items.map((item) => item.drug?.name).filter(Boolean).join(", ") || `Recepta ${index + 1}`}</div>
+                  <div className="text-[11px] text-slate-500">{drugs}</div>
                   <div className={`font-mono text-4xl font-black tracking-widest ${cancelled ? "line-through text-slate-400" : "text-slate-900"}`}>{code || "—"}</div>
                   {code && !cancelled && (
                     <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(code); toast.success("Skopiowano kod"); }} className="text-xs text-[#0D5C46] inline-flex items-center gap-1"><Copy size={14} /> Kopiuj</span>
                   )}
                   {!code && row.result && <p className="text-xs text-slate-500">Kod pojawi się, gdy P1 przyjmie receptę.</p>}
-                  {row.error && !row.result && <p className="text-xs text-rose-700">{row.error}</p>}
                   {cancelled && <p className="text-xs text-rose-700">Ta e-recepta została anulowana i nie można jej zrealizować.{row.result?.payload?.cancellationReason ? ` Powód: ${row.result.payload.cancellationReason}` : ""}</p>}
                 </button>
               );
             })}
-            <p className="text-xs text-slate-500 text-center">W aptece wystarczy kod oraz PESEL{patient?.pesel ? ` (${patient.pesel})` : ""}.</p>
-            {selected?.result?.id && selected.result.status !== "cancelled" && (
+            {usable.length > 0 && <p className="text-xs text-slate-500 text-center">W aptece wystarczy kod oraz PESEL{patient?.pesel ? ` (${patient.pesel})` : ""}.</p>}
+            {selected?.result?.id && !selectedRejected && selected.result.status !== "cancelled" && (
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-2">
                   <button type="button" onClick={sendSms} className="h-14 rounded-xl bg-blue-50 text-blue-800 border border-blue-100 font-semibold text-xs inline-flex flex-col items-center justify-center gap-1"><Smartphone size={16} /> Wyślij SMS</button>
@@ -2130,7 +2147,12 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
             )}
           </section>
           <div className="flex flex-wrap gap-2 mt-auto sticky bottom-0 bg-slate-100 border-t border-slate-200 py-3 shrink-0">
-            <button type="button" onClick={onAnother} className="px-3 py-2 rounded-lg bg-[#0D5C46] text-white text-sm inline-flex items-center gap-1"><Plus size={14} /> Wystaw kolejne</button>
+            {outcome.allRejected ? (
+              // Nothing was issued, so the filled-in form can safely be opened again.
+              <button type="button" onClick={onFix} className="px-3 py-2 rounded-lg bg-[#0D5C46] text-white text-sm">Popraw receptę</button>
+            ) : (
+              <button type="button" onClick={onAnother} className="px-3 py-2 rounded-lg bg-[#0D5C46] text-white text-sm inline-flex items-center gap-1"><Plus size={14} /> Wystaw kolejne</button>
+            )}
             <button type="button" onClick={onClose} className="px-3 py-2 rounded-lg border text-sm">Wróć do wizyty</button>
           </div>
         </div>
@@ -2138,7 +2160,7 @@ function IssuedBatch({ rows, patient, onCancel, onClose, onAnother }) {
           {previewUrl ? (
             <iframe title="Podgląd informacji o e-recepcie" src={`${previewUrl}#toolbar=0&navpanes=0&statusbar=0&scrollbar=0&view=FitH`} className="w-full h-full min-h-[420px] bg-white" />
           ) : (
-            <p className="p-6 text-sm text-slate-600">{previewError || "Przygotowuję podgląd wydruku…"}</p>
+            <p className="p-6 text-sm text-slate-600">{selectedRejected ? "Brak wydruku — recepta nie została wystawiona." : previewError || "Przygotowuję podgląd wydruku…"}</p>
           )}
         </div>
       </div>
