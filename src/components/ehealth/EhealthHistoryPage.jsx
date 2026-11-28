@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import ehealthHelper, { unwrapEhealthError } from "../../helpers/ehealthHelper";
 import {
   SERVICE_LABELS,
-  STATUS_LABELS,
   statusLabel,
   statusClass,
   canRetry,
