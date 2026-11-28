@@ -836,12 +836,12 @@ const EZlaIssueModalInner = ({ open, onClose, visitId, patientId, patient, diagn
               {errorsByKey.map((err) => <p key={err}>{err}</p>)}
             </div>
           )}
-          {!result && checked && <p className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-emerald-700"><CheckCircle2 size={16} /> Dokument sprawdzony — gotowy do podpisu</p>}
         </div>
 
         {!result && (
-          <div className="flex items-center justify-between border-t px-5 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-3">
             <button type="button" onClick={onClose} className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100">Anuluj i wróć</button>
+            {checked && <p role="status" className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700"><CheckCircle2 size={16} /> Dokument sprawdzony — gotowy do podpisu</p>}
             <div className="flex gap-2">
               <button type="button" onClick={runCheck} className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold">Sprawdź dokument</button>
               <button type="button" disabled={!checked || busy} onClick={() => setSignOpen(true)} className="rounded-lg bg-indigo-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">Podpisz i wyślij do ZUS</button>
